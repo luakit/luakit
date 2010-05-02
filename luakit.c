@@ -61,10 +61,10 @@ destroy_view(View *v) {
 
     /* exit if there are no more views */
     if(!views->len)
-        gtk_main_quit();
+        destroy();
 }
 
-/* destroys the root window */
+/* destroys the root window and all children */
 void
 destroy(void) {
     Luakit *l = &luakit;
@@ -88,6 +88,12 @@ destroy(void) {
     if(l->nbook) { gtk_widget_destroy(GTK_WIDGET(l->nbook)); l->nbook = NULL; }
     if(l->vbox) { gtk_widget_destroy(GTK_WIDGET(l->vbox)); l->vbox = NULL; }
     if(l->win) { gtk_widget_destroy(GTK_WIDGET(l->win)); l->win = NULL; }
+
+    /* quit gracefully */
+    if(gtk_main_level())
+        gtk_main_quit();
+    else
+        exit(luakit.retval);
 }
 
 void
@@ -132,23 +138,29 @@ new_sbar(void) {
 /* creates new webkit webview */
 View*
 new_view(void) {
-    View *v;
     Luakit *l = &luakit;
+    View *v;
 
     /* allocate memory for the view */
     if(!(v = calloc(1, sizeof(View))))
         fatal("Cannot malloc!\n");
 
+    v->title = NULL;
+
+    /* webkit webview */
+    v->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+
     /* create scrolled window */
     v->scroll = gtk_scrolled_window_new(NULL, NULL);
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(v->scroll),
         GTK_POLICY_NEVER, GTK_POLICY_NEVER);
+    gtk_container_add(GTK_CONTAINER(v->scroll), GTK_WIDGET(v->view));
 
-    /* TODO: webkit webview init goes here */
-
+    /* setup */
+    gtk_widget_show(GTK_WIDGET(v->view));
     gtk_widget_show(v->scroll);
     g_ptr_array_add(l->views, (gpointer) v);
-
+    webkit_web_view_set_full_content_zoom(v->view, TRUE);
     /* TODO: Add the ability to change the order in which the new view is
      * added into the notebook (i.e. at the end, after the current). */
     gtk_notebook_append_page(GTK_NOTEBOOK(l->nbook), v->scroll, NULL);
@@ -157,6 +169,18 @@ new_view(void) {
     return v;
 }
 
+void
+load_uri(View *v, gchar *uri) {
+    gchar *u;
+
+    u = g_strrstr(uri, "://") ? g_strdup(uri)
+        : g_strdup_printf("http://%s", uri);
+    webkit_web_view_load_uri(v->view, u);
+    v->progress = 0;
+    if (v->title) g_free(v->title);
+    v->title = g_strdup(u);
+    debug("Navigating view at %p to %s", v, u);
+}
 
 /* setups the root gtk window */
 void
@@ -197,6 +221,7 @@ sigchld(int signum) {
 void
 init(int argc, char *argv[]) {
     Luakit *l = &luakit;
+    l->retval = EXIT_SUCCESS;
 
     /* clean up any zombies immediately */
     sigchld(0);
@@ -213,7 +238,7 @@ init(int argc, char *argv[]) {
 /* load command line options into luakit and return uris to load */
 gchar**
 parseopts(int argc, char *argv[]) {
-    GError *err = NULL; 
+    GError *err = NULL;
     GOptionContext *context;
     Luakit *l = &luakit;
     gboolean *only_version = NULL;
@@ -240,23 +265,24 @@ parseopts(int argc, char *argv[]) {
 
     /* print version and exit */
     if(only_version) {
-        g_printf("Commit: %s\n", COMMIT);
+        g_printf("Version: %s\n", VERSION);
         exit(EXIT_SUCCESS);
     }
-   
-    if (uris && argv[1]) 
-        fatal("invalid mix of --uri and default uri arguments");
+
+    if (uris && argv[1])
+        fatal("invalid mix of -u and default uri arguments");
 
     if (uris)
         return uris;
     else
-        return &argv[1];
+        return argv+1;
 }
 
 int
 main(int argc, char *argv[]) {
     Luakit *l = &luakit;
-    gchar **uris;
+    gchar **uris = NULL;
+    View *v;
     xdgHandle xdg;
 
     /* init app */
@@ -264,7 +290,7 @@ main(int argc, char *argv[]) {
 
     /* parse command line opts and get uris to load */
     uris = parseopts(argc, argv);
-    
+
     /* get XDG basedir data */
     xdgInitHandle(&xdg);
 
@@ -275,26 +301,27 @@ main(int argc, char *argv[]) {
     if(!luaH_parserc(&xdg, l->confpath, TRUE))
         fatal("couldn't find any rc file");
 
+    /* we are finished with this */
+    xdgWipeHandle(&xdg);
+
     /* setup the root window */
     setup_win();
 
-    /* add some debugging playtoys */
-    new_view();
-    new_view();
-    new_view();
-    new_sbar();
-    new_sbar();
-    new_sbar();
+    /* load startup uris */
+    while (*uris) {
+        v = new_view();
+        load_uri(v, *uris++);
+    }
 
-    /* delete some too */
-    destroy_view(l->views->pdata[0]);
-    destroy_sbar(l->sbars->pdata[0]);
+    if(!l->views->len)
+        new_view();
+
+    new_sbar();
 
     /* enter main gtk loop */
     gtk_main();
 
     /* delete all gtk widgets, free memory and exit */
-    xdgWipeHandle(&xdg);
     destroy();
 
     return EXIT_SUCCESS;

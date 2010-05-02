@@ -20,23 +20,28 @@
 
 #define _GNU_SOURCE
 
+#include <JavaScriptCore/JavaScript.h>
 #include <basedir.h>
 #include <basedir_fs.h>
 #include <glib/gstdio.h>
 #include <gtk/gtk.h>
+#include <lauxlib.h>
+#include <lua.h>
+#include <lualib.h>
 #include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <lua.h>
-#include <lauxlib.h>
-#include <lualib.h>
+#include <webkit/webkit.h>
 
 typedef struct {
     GtkWidget *scroll;
-    /* TODO: Add the webkit webview widget */
+    /* WebKit WebView */
+    WebKitWebView *view;
+    gchar *title;
+    guint *progress;
 } View;
 
 typedef struct {
@@ -57,6 +62,8 @@ typedef struct {
     gchar *execpath;
     /* Lua VM state */
     lua_State *L;
+    /* exit return code */
+    int retval;
 } Luakit;
 
 /* Global config/state object */

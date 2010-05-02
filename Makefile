@@ -1,21 +1,37 @@
-CFLAGS:=-std=c99 $(shell pkg-config --cflags gtk+-2.0 gthread-2.0) -ggdb -W -Wall -Wextra -DDEBUG_MESSAGES -DCOMMIT="\"$(shell ./build-tools/hash.sh)\""
-LDFLAGS:=$(shell pkg-config --libs gtk+-2.0 gthread-2.0 lua libxdg-basedir) -pthread $(LDFLAGS)
+# Include makefile config
+include config.mk
 
 SRC=$(wildcard *.c)
 HEAD=$(wildcard *.h)
-OBJ=$(foreach obj, $(SRC:.c=.o), $(obj))
+OBJS=$(foreach obj, $(SRC:.c=.o), $(obj))
 
-all: luakit
+all: options newline luakit
+
+options:
+	@echo luakit build options:
+	@echo "CC         = ${CC}"
+	@echo "CFLAGS     = ${CFLAGS}"
+	@echo "LDFLAGS    = ${LDFLAGS}"
+	@echo "CPPFLAGS   = ${CPPFLAGS}"
+	@echo "PREFIX     = ${PREFIX}"
+	@echo "MANPREFIX  = ${MANPREFIX}"
+	@echo "DESTDIR    = ${DESTDIR}"
 
 .c.o:
-	@echo -e "${CC} -c ${CFLAGS} $<"
+	@echo ${CC} -c $<
 	@${CC} -c ${CFLAGS} $<
 
-${OBJ}: ${HEAD}
+${OBJS}: ${HEAD} config.mk
 
-luakit: ${OBJ}
-	@echo -e "${CC} -o $@ ${OBJ} ${LDFLAGS}"
-	@${CC} -o $@ ${OBJ} ${LDFLAGS}
+luakit: ${OBJS}
+	@echo ${CC} -o $@ ${OBJS}
+	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -f *.o luakit
+	rm -f luakit ${OBJS}
+
+install:
+	@echo Are you insane?
+
+newline:;@echo
+.PHONY: all clean options install newline
