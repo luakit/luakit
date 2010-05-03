@@ -37,15 +37,20 @@
 #include <webkit/webkit.h>
 
 typedef struct {
+    /* scrollable area which holds the webview */
     GtkWidget *scroll;
     /* WebKit WebView */
     WebKitWebView *view;
     gchar *title;
     guint *progress;
+    /* View signals */
+    GHashTable *signals;
 } View;
 
 typedef struct {
     GtkWidget *hbox, *label;
+    /* Status bar signals */
+    GHashTable *signals;
     /* TODO: Order and placement settings */
 } Statusbar;
 
@@ -62,6 +67,8 @@ typedef struct {
     gchar *execpath;
     /* Lua VM state */
     lua_State *L;
+    /* global signals */
+    GHashTable *signals;
     /* exit return code */
     int retval;
 } Luakit;

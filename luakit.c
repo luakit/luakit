@@ -30,6 +30,7 @@
 #include "luakit.h"
 #include "util.h"
 #include "luafuncs.h"
+#include "signals.h"
 
 Luakit luakit;
 
@@ -43,6 +44,8 @@ destroy_sbar(Statusbar *s) {
     GPtrArray *sbars = luakit.sbars;
 
     debug("Destroying status bar at %p, total %d", (gpointer) s, sbars->len-1);
+    if (g_hash_table_size(s->signals))
+        g_hash_table_destroy(s->signals);
     gtk_widget_destroy(GTK_WIDGET(s->label));
     gtk_widget_destroy(GTK_WIDGET(s->hbox));
     g_ptr_array_remove(sbars, (gpointer) s);
@@ -56,6 +59,8 @@ destroy_view(View *v) {
     GPtrArray *views = luakit.views;
 
     debug("Destroying view at %p, total %d", (gpointer) v, views->len-1);
+    if (g_hash_table_size(v->signals))
+        g_hash_table_destroy(v->signals);
     gtk_widget_destroy(GTK_WIDGET(v->scroll));
     g_ptr_array_remove(views, (gpointer) v);
     free(v);
@@ -72,6 +77,7 @@ destroy(void) {
     Luakit *l = &luakit;
     GPtrArray *views = l->views;
     GPtrArray *sbars = l->sbars;
+    GHashTable *signals = l->signals;
 
     /* destroy all webkit webviews */
     if (views) {
@@ -87,6 +93,12 @@ destroy(void) {
             destroy_sbar((Statusbar*) sbars->pdata[sbars->len-1]);
         g_ptr_array_free(sbars, FALSE);
         sbars = NULL;
+    }
+
+    /* destroy global signals array */
+    if (signals && g_hash_table_size(l->signals)) {
+        g_hash_table_destroy(l->signals);
+        signals = NULL;
     }
 
     /* destroy main gtk widgets */
@@ -116,6 +128,9 @@ new_sbar(void) {
     /* allocate memory for the status bar */
     if(!(s = calloc(1, sizeof(Statusbar))))
         fatal("Cannot malloc!\n");
+
+    /* init signals hash table */
+    s->signals = signals_table_new();
 
     /* create status bar */
     s->label = gtk_label_new("GtkLabel");
@@ -149,6 +164,9 @@ new_view(void) {
     /* allocate memory for the view */
     if(!(v = calloc(1, sizeof(View))))
         fatal("Cannot malloc!\n");
+
+    /* init signals hash table */
+    v->signals = signals_table_new();
 
     v->title = NULL;
 
@@ -227,6 +245,9 @@ void
 init(int argc, char *argv[]) {
     Luakit *l = &luakit;
     l->retval = EXIT_SUCCESS;
+
+    /* init global signals hash table */
+    l->signals = signals_table_new();
 
     /* clean up any zombies immediately */
     sigchld(0);
