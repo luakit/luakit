@@ -1,5 +1,5 @@
 /*
- * luah.c - Lua configuration management
+ * luafuncs.c - Lua functions
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2008-2009 Julien Danjou <julien@danjou.info>
@@ -20,15 +20,72 @@
  */
 
 #include "luakit.h"
-#include "luah.h"
 #include "util.h"
 #include "config.h"
+#include "luafuncs.h"
+
+/* Dump the Lua stack. Useful for debugging. */
+static void
+luaH_dumpstack(lua_State *L) {
+    g_fprintf(stderr, "-------- Lua stack dump ---------\n");
+    for(int i = lua_gettop(L); i; i--) {
+        int t = lua_type(L, i);
+        switch (t) {
+          case LUA_TSTRING:
+            g_fprintf(stderr, "%d: string: `%s'\n", i, lua_tostring(L, i));
+            break;
+          case LUA_TBOOLEAN:
+            g_fprintf(stderr, "%d: bool:   %s\n", i, lua_toboolean(L, i) ? "true" : "false");
+            break;
+          case LUA_TNUMBER:
+            g_fprintf(stderr, "%d: number: %g\n", i, lua_tonumber(L, i));
+            break;
+          case LUA_TNIL:
+            g_fprintf(stderr, "%d: nil\n", i);
+            break;
+          default:
+            g_fprintf(stderr, "%d: %s\t#%d\t%p\n", i, lua_typename(L, t),
+                (int) lua_objlen(L, i),
+                lua_topointer(L, i));
+            break;
+        }
+    }
+    g_fprintf(stderr, "------- Lua stack dump end ------\n");
+}
+
+static int
+luaH_dofunction_error(lua_State *L) {
+    if(lualib_dofunction_on_error)
+        return lualib_dofunction_on_error(L);
+    return 0;
+}
+
+/** Execute an Lua function on top of the stack.
+ * `nargs` is the number of arguments for the Lua function.
+ * `nret` is the number of returned values from the Lua function.
+ * Returns TRUE on no error, FALSE otherwise. */
+static gboolean
+luaH_dofunction(lua_State *L, int nargs, int nret) {
+    /* Move function before arguments */
+    lua_insert(L, - nargs - 1);
+    /* Push error handling function */
+    lua_pushcfunction(L, luaH_dofunction_error);
+    /* Move error handling function before args and function */
+    lua_insert(L, - nargs - 2);
+    int error_func_pos = lua_gettop(L) - nargs - 1;
+    if(lua_pcall(L, nargs, nret, - nargs - 2)) {
+        warn("%s", lua_tostring(L, -1));
+        /* Remove error function and error string */
+        lua_pop(L, 2);
+        return FALSE;
+    }
+    /* Remove error function */
+    lua_remove(L, error_func_pos);
+    return TRUE;
+}
 
 /* UTF-8 aware string length computing.
- *
- * param L The Lua VM state.
- * retrun The number of elements pushed on the stack.
- */
+ * Returns the number of elements pushed on the stack. */
 static int
 luaH_utf8_strlen(lua_State *L) {
     const char *cmd  = luaL_checkstring(L, 1);
@@ -37,10 +94,7 @@ luaH_utf8_strlen(lua_State *L) {
 }
 
 /* Overload standard Lua next function to use __next key on metatable.
- *
- * param L The Lua VM state.
- * return The number of elements pushed on stack.
- */
+ * Returns the number of elements pushed on stack. */
 static int
 luaHe_next(lua_State *L) {
     if(luaL_getmetafield(L, 1, "__next")) {
@@ -48,7 +102,6 @@ luaHe_next(lua_State *L) {
         lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
         return lua_gettop(L);
     }
-
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_settop(L, 2);
     if(lua_next(L, 1))
@@ -58,12 +111,8 @@ luaHe_next(lua_State *L) {
 }
 
 /* Overload lua_next() function by using __next metatable field to get
- * next elements.
- *
- * param L The Lua VM stack.
- * param idx The index number of elements in stack.
- * return 1 if more elements to come, 0 otherwise.
- */
+ * next elements. `idx` is the index number of elements in stack.
+ * Returns 1 if more elements to come, 0 otherwise. */
 int
 luaH_next(lua_State *L, int idx) {
     if(luaL_getmetafield(L, idx, "__next")) {
@@ -90,10 +139,7 @@ luaH_next(lua_State *L, int idx) {
 }
 
 /* Generic pairs function.
- *
- * param L The Lua VM state.
- * return The number of elements pushed on stack.
- */
+ * Returns the number of elements pushed on stack. */
 static int
 luaH_generic_pairs(lua_State *L) {
     lua_pushvalue(L, lua_upvalueindex(1));  /* return generator, */
@@ -103,10 +149,7 @@ luaH_generic_pairs(lua_State *L) {
 }
 
 /* Overload standard pairs function to use __pairs field of metatables.
- *
- * param L The Lua VM state.
- * return The number of elements pushed on stack.
- */
+ * Returns the number of elements pushed on stack. */
 static int
 luaHe_pairs(lua_State *L) {
     if(luaL_getmetafield(L, 1, "__pairs")) {
@@ -114,7 +157,6 @@ luaHe_pairs(lua_State *L) {
         lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
         return lua_gettop(L);
     }
-
     luaL_checktype(L, 1, LUA_TTABLE);
     return luaH_generic_pairs(L);
 }
@@ -129,10 +171,7 @@ luaH_ipairs_aux(lua_State *L) {
 }
 
 /* Overload standard ipairs function to use __ipairs field of metatables.
- *
- * param L The Lua VM state.
- * return The number of elements pushed on stack.
- */
+ * Returns the number of elements pushed on stack. */
 static int
 luaHe_ipairs(lua_State *L) {
     if(luaL_getmetafield(L, 1, "__ipairs")) {
@@ -148,6 +187,7 @@ luaHe_ipairs(lua_State *L) {
     return 3;
 }
 
+/* Fix up and add handy standard lib functions */
 static void
 luaH_fixups(lua_State *L) {
     /* export string.wlen */
@@ -200,14 +240,11 @@ luaH_openlib(lua_State *L, const char *name,
     lua_pop(L, 2);
 }
 
-/* Setup the object system at startup.
- *
- * param L The Lua VM state.
- */
+/* Setup the object system at startup. */
 void
 luaH_object_setup(lua_State *L) {
     /* Push identification string */
-    lua_pushliteral(L, LUAH_OBJECT_REGISTRY_KEY);
+    lua_pushliteral(L, LUAKIT_OBJECT_REGISTRY_KEY);
     /* Create an empty table */
     lua_newtable(L);
     /* Create an empty metatable */
@@ -240,6 +277,7 @@ luaH_init(xdgHandle *xdg) {
 
     luaH_object_setup(L);
 
+    /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
 
     /* add Lua search paths */
@@ -337,3 +375,4 @@ bailout:
     if (confpath) free(confpath);
     return ret;
 }
+// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

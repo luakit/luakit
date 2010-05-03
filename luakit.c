@@ -13,6 +13,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 /*
@@ -25,9 +28,8 @@
  */
 
 #include "luakit.h"
-
 #include "util.h"
-#include "luah.h"
+#include "luafuncs.h"
 
 Luakit luakit;
 
@@ -71,6 +73,7 @@ destroy(void) {
     GPtrArray *views = l->views;
     GPtrArray *sbars = l->sbars;
 
+    /* destroy all webkit webviews */
     if (views) {
         while(views->len)
             destroy_view((View*) views->pdata[views->len-1]);
@@ -78,6 +81,7 @@ destroy(void) {
         views = NULL;
     }
 
+    /* destroy all status bars */
     if (sbars) {
         while(sbars->len)
             destroy_sbar((Statusbar*) sbars->pdata[sbars->len-1]);
@@ -85,6 +89,7 @@ destroy(void) {
         sbars = NULL;
     }
 
+    /* destroy main gtk widgets */
     if(l->nbook) { gtk_widget_destroy(GTK_WIDGET(l->nbook)); l->nbook = NULL; }
     if(l->vbox) { gtk_widget_destroy(GTK_WIDGET(l->vbox)); l->vbox = NULL; }
     if(l->win) { gtk_widget_destroy(GTK_WIDGET(l->win)); l->win = NULL; }
