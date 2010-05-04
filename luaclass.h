@@ -51,7 +51,7 @@ typedef struct {
     /** Allocator for creating new objects of that class */
     lua_class_allocator_t allocator;
     /** Class properties */
-    lua_class_property_array_t properties;
+    lua_class_property_array_t *properties;
     /** Function to call when a indexing an unknown property */
     lua_class_propfunc_t index_miss_property;
     /** Function to call when a indexing an unknown property */

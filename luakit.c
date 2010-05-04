@@ -51,36 +51,11 @@ destroy_sbar(Statusbar *s) {
     s = NULL;
 }
 
-/* destroys a webkit webview */
-void
-destroy_view(View *v) {
-    GPtrArray *views = luakit.views;
-
-    debug("Destroying view at %p, total %d", (gpointer) v, views->len-1);
-    gtk_widget_destroy(GTK_WIDGET(v->scroll));
-    g_ptr_array_remove(views, (gpointer) v);
-    free(v);
-    v = NULL;
-
-    /* exit if there are no more views */
-    if(!views->len)
-        destroy();
-}
-
 /* destroys the root window and all children */
 void
 destroy(void) {
     Luakit *l = &luakit;
-    GPtrArray *views = l->views;
     GPtrArray *sbars = l->sbars;
-
-    /* destroy all webkit webviews */
-    if (views) {
-        while(views->len)
-            destroy_view((View*) views->pdata[views->len-1]);
-        g_ptr_array_free(views, FALSE);
-        views = NULL;
-    }
 
     /* destroy all status bars */
     if (sbars) {
@@ -144,53 +119,6 @@ new_sbar(void) {
     return s;
 }
 
-/* creates new webkit webview */
-View*
-new_view(void) {
-    Luakit *l = &luakit;
-    View *v;
-
-    /* allocate memory for the view */
-    if(!(v = calloc(1, sizeof(View))))
-        fatal("Cannot malloc!\n");
-
-    v->title = NULL;
-
-    /* webkit webview */
-    v->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
-
-    /* create scrolled window */
-    v->scroll = gtk_scrolled_window_new(NULL, NULL);
-    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(v->scroll),
-        GTK_POLICY_NEVER, GTK_POLICY_NEVER);
-    gtk_container_add(GTK_CONTAINER(v->scroll), GTK_WIDGET(v->view));
-
-    /* setup */
-    gtk_widget_show(GTK_WIDGET(v->view));
-    gtk_widget_show(v->scroll);
-    g_ptr_array_add(l->views, (gpointer) v);
-    webkit_web_view_set_full_content_zoom(v->view, TRUE);
-    /* TODO: Add the ability to change the order in which the new view is
-     * added into the notebook (i.e. at the end, after the current). */
-    gtk_notebook_append_page(GTK_NOTEBOOK(l->nbook), v->scroll, NULL);
-
-    debug("New view at %p, total %d", v, luakit.views->len);
-    return v;
-}
-
-void
-load_uri(View *v, gchar *uri) {
-    gchar *u;
-
-    u = g_strrstr(uri, "://") ? g_strdup(uri)
-        : g_strdup_printf("http://%s", uri);
-    webkit_web_view_load_uri(v->view, u);
-    v->progress = 0;
-    if (v->title) g_free(v->title);
-    v->title = g_strdup(u);
-    debug("Navigating view at %p to %s", v, u);
-}
-
 /* setups the root gtk window */
 void
 setup_win(void) {
@@ -212,7 +140,12 @@ setup_win(void) {
     gtk_box_pack_start(GTK_BOX(l->vbox), l->nbook, TRUE, TRUE, 0);
     gtk_container_add(GTK_CONTAINER(l->win), GTK_WIDGET(l->vbox));
 
-    /* show widgets */
+}
+
+void
+show_win(void) {
+    Luakit *l = &luakit;
+    /* show window and root gui widgets */
     gtk_widget_show(GTK_WIDGET(l->nbook));
     gtk_widget_show(GTK_WIDGET(l->vbox));
     gtk_widget_show(GTK_WIDGET(l->win));
@@ -243,7 +176,6 @@ init(int argc, char *argv[]) {
 
     /* init luakit struct */
     l->execpath = g_strdup(argv[0]);
-    l->views = g_ptr_array_new();
     l->sbars = g_ptr_array_new();
 }
 
@@ -294,11 +226,13 @@ int
 main(int argc, char *argv[]) {
     Luakit *l = &luakit;
     gchar **uris = NULL;
-    View *v;
     xdgHandle xdg;
 
     /* init app */
     init(argc, argv);
+
+    /* setup root window */
+    setup_win();
 
     /* parse command line opts and get uris to load */
     uris = parseopts(argc, argv);
@@ -313,20 +247,17 @@ main(int argc, char *argv[]) {
     if(!luaH_parserc(&xdg, l->confpath, TRUE))
         fatal("couldn't find any rc file");
 
+
     /* we are finished with this */
     xdgWipeHandle(&xdg);
 
-    /* setup the root window */
-    setup_win();
+    /* show window */
+    show_win();
 
     /* load startup uris */
     while (*uris) {
-        v = new_view();
-        load_uri(v, *uris++);
+        debug("want new uri %s", *uris++);
     }
-
-    if(!l->views->len)
-        new_view();
 
     new_sbar();
 

@@ -42,15 +42,6 @@
 #include "signal.h"
 
 typedef struct {
-    /* scrollable area which holds the webview */
-    GtkWidget *scroll;
-    /* WebKit WebView */
-    WebKitWebView *view;
-    gchar *title;
-    guint *progress;
-} View;
-
-typedef struct {
     GtkWidget *hbox, *label;
     /* TODO: Order and placement settings */
 } Statusbar;
@@ -58,8 +49,6 @@ typedef struct {
 typedef struct {
     /* Root window gtk widgets */
     GtkWidget *win, *vbox, *nbook;
-    /* List of WebKit WebView widgets */
-    GPtrArray *views;
     /* List of status bars */
     GPtrArray *sbars;
     /* Path to the config file */
@@ -78,10 +67,8 @@ typedef struct {
 extern Luakit luakit;
 
 Statusbar* new_sbar(void);
-View* new_view(void);
 void destroy(void);
 void destroy_sbar(Statusbar *s);
-void destroy_view(View *v);
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

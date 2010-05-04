@@ -90,6 +90,8 @@ signal_lookup(signal_t *signals, const gchar *name, gboolean create) {
 
 static inline void
 signal_add(signal_t *signals, const gchar *name, gpointer ref) {
+    debug("to %s in array %s", name, signals);
+
     /* find ptr array for this signal */
     signal_array_t *sigfuncs = signal_lookup(signals, name, TRUE);
     /* add the handler to this signals ptr array */
@@ -98,6 +100,8 @@ signal_add(signal_t *signals, const gchar *name, gpointer ref) {
 
 static inline void
 signal_remove(signal_t *signals, const gchar *name, gpointer ref) {
+    debug("from %s in array %s", name, signals);
+
     /* try to find ptr array for this signal */
     signal_array_t *sigfuncs = signal_lookup(signals, name, FALSE);
 

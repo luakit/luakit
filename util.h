@@ -51,6 +51,8 @@ static inline ssize_t l_strlen(const gchar *s) {
     return s ? strlen(s) : 0;
 }
 
+#define p_clear(p, count)       ((void)memset((p), 0, sizeof(*(p)) * (count)))
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

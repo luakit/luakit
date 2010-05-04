@@ -24,6 +24,10 @@
 #include "config.h"
 #include "luafuncs.h"
 #include "lualib.h"
+#include "view.h"
+
+extern const struct luaL_reg luakit_view_methods[];
+extern const struct luaL_reg luakit_view_meta[];
 
 /* UTF-8 aware string length computing.
  * Returns the number of elements pushed on the stack. */
@@ -376,6 +380,9 @@ luaH_init(xdgHandle *xdg) {
 
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
+
+    /* Export view */
+    view_class_setup(L);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");
