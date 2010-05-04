@@ -1,9 +1,9 @@
 # Include makefile config
 include config.mk
 
-SRC=$(wildcard *.c)
-HEAD=$(wildcard *.h)
-OBJS=$(foreach obj, $(SRC:.c=.o), $(obj))
+SRCS  = $(wildcard *.c)
+HEADS = $(wildcard *.h)
+OBJS  = $(foreach obj, $(SRCS:.c=.o), $(obj))
 
 all: options newline luakit
 
@@ -16,19 +16,22 @@ options:
 	@echo "PREFIX     = ${PREFIX}"
 	@echo "MANPREFIX  = ${MANPREFIX}"
 	@echo "DESTDIR    = ${DESTDIR}"
+	@echo "SRCS       = ${SRCS}"
+	@echo "HEADS      = ${HEADS}"
+	@echo "OBJS       = ${OBJS}"
 
 .c.o:
 	@echo ${CC} -c $<
 	@${CC} -c ${CFLAGS} $<
 
-${OBJS}: ${HEAD} config.mk
+${OBJS}: ${HEADS} config.mk
 
 luakit: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -f luakit ${OBJS}
+	rm -rf luakit ${OBJS}
 
 install:
 	@echo Are you insane?

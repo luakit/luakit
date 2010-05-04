@@ -13,6 +13,9 @@
  * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
  * GNU General Public License for more details.
  *
+ * You should have received a copy of the GNU General Public License
+ * along with this program.  If not, see <http://www.gnu.org/licenses/>.
+ *
  */
 
 #ifndef LUAKIT_LUAKIT_H
@@ -36,6 +39,8 @@
 #include <unistd.h>
 #include <webkit/webkit.h>
 
+#include "signal.h"
+
 typedef struct {
     /* scrollable area which holds the webview */
     GtkWidget *scroll;
@@ -43,14 +48,10 @@ typedef struct {
     WebKitWebView *view;
     gchar *title;
     guint *progress;
-    /* View signals */
-    GHashTable *signals;
 } View;
 
 typedef struct {
     GtkWidget *hbox, *label;
-    /* Status bar signals */
-    GHashTable *signals;
     /* TODO: Order and placement settings */
 } Statusbar;
 
@@ -68,7 +69,7 @@ typedef struct {
     /* Lua VM state */
     lua_State *L;
     /* global signals */
-    GHashTable *signals;
+    signal_t *signals;
     /* exit return code */
     int retval;
 } Luakit;

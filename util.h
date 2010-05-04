@@ -23,19 +23,21 @@
 #ifndef LUAKIT_UTIL_H
 #define LUAKIT_UTIL_H
 
+#include <string.h>
+
 /* Replace NULL strings with "" */
 #define NONULL(x) (x ? x : "")
 
 #define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _fatal(int, const char *, const char *, ...);
+void _fatal(int, const gchar *, const gchar *, ...);
 
 #define warn(string, ...) _warn(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _warn(int, const char *, const char *, ...);
+void _warn(int, const gchar *, const gchar *, ...);
 
 #ifdef DEBUG_MESSAGES
 
 #define debug(string, ...) _debug(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _debug(int, const char *, const char *, ...);
+void _debug(int, const gchar *, const gchar *, ...);
 
 #else
 
@@ -44,14 +46,11 @@ void _debug(int, const char *, const char *, ...);
 #endif
 
 /* A NULL resistant strlen. Unlike it's libc sibling, l_strlen returns a
- * ssize_t, and supports its argument being NULL.
- *
- * param s the string.
- * return the string length (or 0 if s is NULL).
- */
-static inline ssize_t l_strlen(const char *s)
-{
+ * ssize_t, and supports its argument being NULL. */
+static inline ssize_t l_strlen(const gchar *s) {
     return s ? strlen(s) : 0;
 }
 
 #endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

@@ -8,8 +8,8 @@ MANPREFIX ?= ${PREFIX}/share/man
 
 # Generate includes and libs
 PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 lua libxdg-basedir
-INCS := -I. -I/usr/include $(shell pkg-config --cflags ${PKGS})
-LIBS := -L/usr/lib $(shell pkg-config --libs ${PKGS})
+INCS := $(shell pkg-config --cflags ${PKGS})
+LIBS := $(shell pkg-config --libs ${PKGS})
 
 # Add flags
 CPPFLAGS := -DVERSION=\"${VERSION}\" -DDEBUG_MESSAGES ${CPPFLAGS}
