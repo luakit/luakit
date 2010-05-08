@@ -1,9 +1,9 @@
-print("You are walking on fire!\n")
+view.add_signal('new', function (view)
+    print("New view lua callback")
+end)
 
--- luakit.quit();
+uris = { "luakit.org", "http://github.com/mason-larobina/luakit" }
 
-a = view({});
-b = view({});
-
--- Sadly this causes segmentation faults at the moment.
--- a.uri = "google.com";
+for _, uri in ipairs(uris) do
+    view({uri = uri})
+end

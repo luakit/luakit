@@ -32,33 +32,11 @@ LUA_CLASS_FUNCS(view, view_class)
 
 view_t *
 view_new(lua_State *L) {
-    view_t *p = lua_newuserdata(L, sizeof(view_t));
-    p_clear(p, 1);
-    luaH_settype(L, &(view_class));
-    lua_newtable(L);
-    lua_newtable(L);
-    lua_setmetatable(L, -2);
-    lua_setfenv(L, -2);
-    lua_pushvalue(L, -1);
-    luaH_class_emit_signal(L, &(view_class), "new", 1);
-    return p;
-}
+    debug("view new");
+    view_t *v = lua_newuserdata(L, sizeof(view_t));
+    p_clear(v, 1);
 
-static gint
-luaH_view_gc(lua_State *L) {
-    view_t *v = luaH_checkudata(L, 1, &view_class);
-    debug("gc view at %p", v);
-    gtk_widget_destroy(GTK_WIDGET(v->scroll));
-    free(v);
-    v = NULL;
-    return luaH_object_gc(L);
-}
-
-/* Create a new view */
-static gint
-luaH_view_new(lua_State *L) {
-    luaH_class_new(L, &view_class);
-    view_t *v = luaH_checkudata(L, -1, &view_class);
+    v->signals = signal_tree_new();
 
     /* create webkit webview widget */
     v->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
@@ -76,8 +54,31 @@ luaH_view_new(lua_State *L) {
     // TODO this is here just so that I know it works
     gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), v->scroll, NULL);
 
-    debug("new view at %p", v);
+    luaH_settype(L, &(view_class));
+    lua_newtable(L);
+    lua_newtable(L);
+    lua_setmetatable(L, -2);
+    lua_setfenv(L, -2);
+    lua_pushvalue(L, -1);
+    luaH_class_emit_signal(L, &(view_class), "new", 1);
+    return v;
+}
 
+static gint
+luaH_view_gc(lua_State *L) {
+    view_t *v = luaH_checkudata(L, 1, &view_class);
+    debug("gc view at %p", v);
+    gtk_widget_destroy(GTK_WIDGET(v->scroll));
+    free(v);
+    v = NULL;
+    return luaH_object_gc(L);
+}
+
+/* Create a new view */
+static gint
+luaH_view_new(lua_State *L) {
+    luaH_class_new(L, &view_class);
+    luaH_checkudata(L, -1, &view_class);
     return 1;
 }
 
@@ -130,15 +131,13 @@ luaH_view_get_uri(lua_State *L, view_t *v) {
 
 static gint
 luaH_view_set_uri(lua_State *L, view_t *v) {
-    debug("Someone is trying to set the uri");
     const gchar *uri = luaL_checkstring(L, -1);
-
     /* Make sure url starts with scheme */
     uri = g_strrstr(uri, "://") ? g_strdup(uri) :
         g_strdup_printf("http://%s", uri);
 
     webkit_web_view_load_uri(v->view, uri);
-    debug("nav view at %p to %s", v, uri);
+    debug("navigating view at %p to %s", v, uri);
 
     luaH_object_emit_signal(L, -3, "webview::uri", 0);
     return 0;
@@ -146,8 +145,9 @@ luaH_view_set_uri(lua_State *L, view_t *v) {
 
 void
 view_class_setup(lua_State *L) {
-    view_class.signals = (signal_t*) g_tree_new((GCompareFunc) strcmp);
+
     view_class.properties = (lua_class_property_array_t*) g_tree_new((GCompareFunc) strcmp);
+    view_class.signals = signal_tree_new();
 
     static const struct luaL_reg view_methods[] = {
         LUA_CLASS_METHODS(view)

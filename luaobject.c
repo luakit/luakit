@@ -146,7 +146,7 @@ luaH_settype(lua_State *L, lua_class_t *lua_class) {
  * `ud` is the index of function to call when signal is emitted. */
 void
 luaH_object_add_signal(lua_State *L, gint oud,
-                                const gchar *name, gint ud) {
+        const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
     signal_add(obj->signals, name, luaH_object_ref_item(L, oud, ud));
@@ -159,7 +159,7 @@ luaH_object_add_signal(lua_State *L, gint oud,
  */
 void
 luaH_object_remove_signal(lua_State *L, gint oud,
-                                const gchar *name, gint ud) {
+        const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
     gpointer ref = (gpointer) lua_topointer(L, ud);
@@ -171,6 +171,7 @@ luaH_object_remove_signal(lua_State *L, gint oud,
 void
 signal_object_emit(lua_State *L, signal_t *signals,
         const gchar *name, gint nargs) {
+
     signal_array_t *sigfuncs = signal_lookup(signals, name, FALSE);
     if(sigfuncs) {
         gint nbfunc = sigfuncs->len;

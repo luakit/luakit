@@ -102,7 +102,7 @@ luaH_typename(lua_State *L, gint idx) {
 
 void
 luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
-             const struct luaL_reg meta[]) {
+        const struct luaL_reg meta[]) {
     luaL_newmetatable(L, name);                                        /* 1 */
     lua_pushvalue(L, -1);           /* dup metatable                      2 */
     lua_setfield(L, -2, "__index"); /* metatable.__index = metatable      1 */
@@ -116,9 +116,9 @@ luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
 
 void
 luaH_class_add_property(lua_class_t *lua_class, const gchar *name,
-                        lua_class_propfunc_t cb_new,
-                        lua_class_propfunc_t cb_index,
-                        lua_class_propfunc_t cb_newindex) {
+        lua_class_propfunc_t cb_new,
+        lua_class_propfunc_t cb_index,
+        lua_class_propfunc_t cb_newindex) {
 
     debug("Adding property %s to lua class at %p", name, lua_class);
 
@@ -138,12 +138,12 @@ luaH_class_add_property(lua_class_t *lua_class, const gchar *name,
 
 void
 luaH_class_setup(lua_State *L, lua_class_t *class,
-                 const gchar *name,
-                 lua_class_allocator_t allocator,
-                 lua_class_propfunc_t index_miss_property,
-                 lua_class_propfunc_t newindex_miss_property,
-                 const struct luaL_reg methods[],
-                 const struct luaL_reg meta[]) {
+        const gchar *name,
+        lua_class_allocator_t allocator,
+        lua_class_propfunc_t index_miss_property,
+        lua_class_propfunc_t newindex_miss_property,
+        const struct luaL_reg methods[],
+        const struct luaL_reg meta[]) {
     /* Create the metatable */
     lua_newtable(L);
     /* Register it with class pointer as key in the registry */
@@ -171,14 +171,14 @@ luaH_class_setup(lua_State *L, lua_class_t *class,
 
 void
 luaH_class_add_signal(lua_State *L, lua_class_t *lua_class,
-                      const gchar *name, gint ud) {
+        const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     signal_add(lua_class->signals, name, luaH_object_ref(L, ud));
 }
 
 void
 luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
-                         const gchar *name, gint ud) {
+        const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     gpointer ref = (gpointer) lua_topointer(L, ud);
     signal_remove(lua_class->signals, name, ref);
@@ -188,7 +188,7 @@ luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
 
 void
 luaH_class_emit_signal(lua_State *L, lua_class_t *lua_class,
-                       const gchar *name, gint nargs) {
+        const gchar *name, gint nargs) {
     signal_object_emit(L, lua_class->signals, name, nargs);
 }
 
@@ -222,14 +222,11 @@ luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
 static lua_class_property_t *
 luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
     /* Lookup the property */
+
+    debug("getting property on class at %p", lua_class);
     size_t len;
     gconstpointer attr = luaL_checklstring(L, fieldidx, &len);
-
-    if (lua_class->properties)
-        if (g_tree_height((GTree *) &lua_class->properties))
-            return g_tree_lookup((GTree *) &lua_class->properties, attr);
-
-    return NULL;
+    return g_tree_lookup((GTree *) lua_class->properties, attr);
 }
 
 /* Generic index meta function for objects.
@@ -302,7 +299,7 @@ luaH_class_new(lua_State *L, lua_class_t *lua_class) {
             size_t len;
             const char *attr = lua_tolstring(L, -2, &len);
             lua_class_property_t *prop =
-                g_tree_lookup((GTree *) &lua_class->properties, attr);
+                g_tree_lookup((GTree *) lua_class->properties, attr);
 
             if(prop && prop->new)
                 prop->new(L, object);
