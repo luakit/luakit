@@ -61,6 +61,9 @@ typedef struct {
     signal_t *signals;
     /* exit return code */
     int retval;
+
+    /* list of views which are currently inside the gtknotebook */
+    GHashTable *tabs;
 } Luakit;
 
 /* Global config/state object */

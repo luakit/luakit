@@ -25,6 +25,7 @@
 #include "luafuncs.h"
 #include "lualib.h"
 #include "view.h"
+#include "tabs.h"
 
 extern const struct luaL_reg luakit_view_methods[];
 extern const struct luaL_reg luakit_view_meta[];
@@ -383,6 +384,9 @@ luaH_init(xdgHandle *xdg) {
 
     /* Export view */
     view_class_setup(L);
+
+    /* Export tabs */
+    luaH_openlib(L, "tabs", luakit_tabs_methods, luakit_tabs_meta);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");

@@ -38,10 +38,10 @@
         signal_object_emit(L, &luakit.signals, "debug::deprecation", 1); \
     } while(0)
 
-#define luaH_checkscreen(screen) \
+#define luaH_checktab(tab) \
     do { \
-        if(screen < 0 || screen >= globalconf.screens.len) \
-            luaL_error(L, "invalid screen number: %d", screen + 1); \
+        if(tab < 0 || tab >= gtk_notebook_get_n_pages(GTK_NOTEBOOK(luakit.nbook))) \
+            luaL_error(L, "invalid tab index: %d", tab + 1); \
     } while(0)
 
 static inline gboolean

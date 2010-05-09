@@ -54,6 +54,9 @@ view_new(lua_State *L) {
     // TODO this is here just so that I know it works
     gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), v->scroll, NULL);
 
+    /* make the view instance indexable by the scroll widget */
+    g_hash_table_insert(luakit.tabs, (gpointer) v->scroll, (gpointer) v);
+
     luaH_settype(L, &(view_class));
     lua_newtable(L);
     lua_newtable(L);
@@ -68,7 +71,15 @@ static gint
 luaH_view_gc(lua_State *L) {
     view_t *v = luaH_checkudata(L, 1, &view_class);
     debug("gc view at %p", v);
+
+    /* remove from tabs list */
+    g_hash_table_remove(luakit.tabs, (gpointer) v->scroll);
+
+    /* destroy gtk widgets */
     gtk_widget_destroy(GTK_WIDGET(v->scroll));
+    gtk_widget_destroy(GTK_WIDGET(v->view));
+
+
     free(v);
     v = NULL;
     return luaH_object_gc(L);
@@ -92,6 +103,7 @@ luaH_view_new(lua_State *L) {
  */
 static gint
 luaH_view_index(lua_State *L) {
+    luaH_dumpstack(L);
     size_t len;
     // TODO is 2 correct?
     const char *prop = luaL_checklstring(L, 2, &len);

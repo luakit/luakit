@@ -168,6 +168,9 @@ init(int argc, char *argv[]) {
     /* init global signals tree */
     l->signals = signal_tree_new();
 
+    /* init tab list */
+    l->tabs = g_hash_table_new(g_direct_hash, g_direct_equal);
+
     /* clean up any zombies immediately */
     sigchld(0);
     gtk_init(&argc, &argv);
