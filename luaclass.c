@@ -221,9 +221,6 @@ luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
  * Return is the object property if found, NULL otherwise. */
 static lua_class_property_t *
 luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
-    /* Lookup the property */
-
-    debug("getting property on class at %p", lua_class);
     size_t len;
     gconstpointer attr = luaL_checklstring(L, fieldidx, &len);
     return g_tree_lookup((GTree *) lua_class->properties, attr);

@@ -382,11 +382,11 @@ luaH_init(xdgHandle *xdg) {
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
 
-    /* Export view */
-    view_class_setup(L);
-
     /* Export tabs */
     luaH_openlib(L, "tabs", luakit_tabs_methods, luakit_tabs_meta);
+
+    /* Export view */
+    view_class_setup(L);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");
@@ -483,4 +483,20 @@ bailout:
     if (confpath) free(confpath);
     return ret;
 }
+
+gint
+luaH_class_index_miss_property(lua_State *L, lua_object_t *obj) {
+    (void) obj;
+    signal_object_emit(L, luakit.signals, "debug::index::miss", 2);
+    return 0;
+}
+
+gint
+luaH_class_newindex_miss_property(lua_State *L, lua_object_t *obj) {
+    (void) obj;
+    signal_object_emit(L, luakit.signals, "debug::newindex::miss", 3);
+    return 0;
+}
+
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

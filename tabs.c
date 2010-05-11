@@ -29,42 +29,37 @@
 #include "tabs.h"
 
 static gint
-luaH_tab_count(lua_State *L) {
+luaH_tabs_count(lua_State *L) {
     lua_pushnumber(L, gtk_notebook_get_n_pages(GTK_NOTEBOOK(luakit.nbook)));
     return 1;
 }
 
 static gint
-luaH_tab_index(lua_State *L) {
+luaH_tabs_index(lua_State *L) {
     // I'm not sure what this function does yet.
     luaH_dumpstack(L);
     return 0;
 }
 
 static gint
-luaH_pushtab(lua_State *L, view_t *v) {
-    return luaH_object_push(L, v);
-}
-
-static gint
-luaH_tab_view_index(lua_State *L) {
-    luaH_dumpstack(L);
-    gint index = luaL_checknumber(L, 2) - 1;
-    luaH_checktab(index);
-    gpointer widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(luakit.nbook), index);
-    view_t *v = g_hash_table_lookup(luakit.tabs, widget);
-    debug("found view instance at %p", v);
-    return luaH_pushtab(L, v);
+luaH_tabs_module_index(lua_State *L) {
+    gint i = luaL_checknumber(L, 2) - 1;
+    luaH_checktabindex(i);
+    /* get scroll widget */
+    gpointer w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(luakit.nbook), i);
+    /* reverse lookup class instance ref */
+    gpointer ref = g_hash_table_lookup(luakit.tabs, w);
+    return luaH_object_push(L, ref);
 }
 
 const struct luaL_reg luakit_tabs_methods[] = {
-    { "count", luaH_tab_count },
-    { "__index", luaH_tab_view_index },
+    { "count", luaH_tabs_count },
+    { "__index", luaH_tabs_module_index },
     { NULL, NULL }
 };
 
 const struct luaL_reg luakit_tabs_meta[] = {
-    { "__index", luaH_tab_index },
+    { "__index", luaH_tabs_index },
     { NULL, NULL }
 };
 

@@ -54,9 +54,6 @@ view_new(lua_State *L) {
     // TODO this is here just so that I know it works
     gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), v->scroll, NULL);
 
-    /* make the view instance indexable by the scroll widget */
-    g_hash_table_insert(luakit.tabs, (gpointer) v->scroll, (gpointer) v);
-
     luaH_settype(L, &(view_class));
     lua_newtable(L);
     lua_newtable(L);
@@ -64,6 +61,7 @@ view_new(lua_State *L) {
     lua_setfenv(L, -2);
     lua_pushvalue(L, -1);
     luaH_class_emit_signal(L, &(view_class), "new", 1);
+
     return v;
 }
 
@@ -79,7 +77,6 @@ luaH_view_gc(lua_State *L) {
     gtk_widget_destroy(GTK_WIDGET(v->scroll));
     gtk_widget_destroy(GTK_WIDGET(v->view));
 
-
     free(v);
     v = NULL;
     return luaH_object_gc(L);
@@ -90,6 +87,13 @@ static gint
 luaH_view_new(lua_State *L) {
     luaH_class_new(L, &view_class);
     luaH_checkudata(L, -1, &view_class);
+
+    /* duplicate view and insert it into the tabs list indexable by the
+     * scroll widget */
+    lua_pushvalue(L, -1);
+    view_t *v = luaH_checkudata(L, -1, &view_class);
+    gpointer ref = luaH_object_ref_class(L, -1, &view_class);
+    g_hash_table_insert(luakit.tabs, (gpointer) v->scroll, ref);
     return 1;
 }
 
@@ -103,9 +107,7 @@ luaH_view_new(lua_State *L) {
  */
 static gint
 luaH_view_index(lua_State *L) {
-    luaH_dumpstack(L);
     size_t len;
-    // TODO is 2 correct?
     const char *prop = luaL_checklstring(L, 2, &len);
 
     /* Try standard method */
@@ -143,13 +145,17 @@ luaH_view_get_uri(lua_State *L, view_t *v) {
 
 static gint
 luaH_view_set_uri(lua_State *L, view_t *v) {
+    /* free old uri */
+    if (v->uri)
+        free(v->uri);
+
     const gchar *uri = luaL_checkstring(L, -1);
     /* Make sure url starts with scheme */
-    uri = g_strrstr(uri, "://") ? g_strdup(uri) :
+    v->uri = g_strrstr(uri, "://") ? g_strdup(uri) :
         g_strdup_printf("http://%s", uri);
 
-    webkit_web_view_load_uri(v->view, uri);
-    debug("navigating view at %p to %s", v, uri);
+    webkit_web_view_load_uri(v->view, v->uri);
+    debug("navigating view at %p to %s", v, v->uri);
 
     luaH_object_emit_signal(L, -3, "webview::uri", 0);
     return 0;
@@ -176,7 +182,8 @@ view_class_setup(lua_State *L) {
     };
 
     luaH_class_setup(L, &view_class, "view", (lua_class_allocator_t) view_new,
-         NULL, NULL, view_methods, view_meta);
+         luaH_class_index_miss_property, luaH_class_newindex_miss_property,
+         view_methods, view_meta);
 
     luaH_class_add_property(&view_class, "uri",
         (lua_class_propfunc_t) luaH_view_set_uri,

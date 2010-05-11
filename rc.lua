@@ -8,10 +8,10 @@ for _, uri in ipairs(uris) do
     view({uri = uri})
 end
 
-print("There are " .. tabs.count() .. " views created")
-
--- This code will fail as I have not been able to figure how to return
--- view class instances from C in the index meta method.
-for i = 1, tabs.count() do
-    print("This views uri is " .. tabs[i].uri)
+function dumptabs()
+    for i = 1, tabs.count() do
+        print("tab " .. i .. " " .. tabs[i].uri)
+    end
 end
+
+dumptabs()

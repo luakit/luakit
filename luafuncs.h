@@ -38,12 +38,6 @@
         signal_object_emit(L, &luakit.signals, "debug::deprecation", 1); \
     } while(0)
 
-#define luaH_checktab(tab) \
-    do { \
-        if(tab < 0 || tab >= gtk_notebook_get_n_pages(GTK_NOTEBOOK(luakit.nbook))) \
-            luaL_error(L, "invalid tab index: %d", tab + 1); \
-    } while(0)
-
 static inline gboolean
 luaH_checkboolean(lua_State *L, gint n) {
     if(!lua_isboolean(L, n))
