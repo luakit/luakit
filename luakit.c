@@ -139,7 +139,6 @@ setup_win(void) {
     l->vbox = gtk_vbox_new(FALSE, 0);
     gtk_box_pack_start(GTK_BOX(l->vbox), l->nbook, TRUE, TRUE, 0);
     gtk_container_add(GTK_CONTAINER(l->win), GTK_WIDGET(l->vbox));
-
 }
 
 void
@@ -149,6 +148,9 @@ show_win(void) {
     gtk_widget_show(GTK_WIDGET(l->nbook));
     gtk_widget_show(GTK_WIDGET(l->vbox));
     gtk_widget_show(GTK_WIDGET(l->win));
+
+    /* focus notebook */
+    gtk_widget_grab_focus(GTK_WIDGET(l->nbook));
 }
 
 void
