@@ -1,5 +1,5 @@
 /*
- * tabs.c - notebook widget api
+ * tabs.c - root notebook widget wrapper
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -25,8 +25,17 @@
 #include "luaobject.h"
 #include "luafuncs.h"
 #include "view.h"
-
 #include "tabs.h"
+
+/* Returns the view class instance at the given index in the root notebook */
+view_t *
+tabs_atindex(gint i) {
+    luaH_checktabindex(i);
+    /* get scroll widget */
+    gpointer w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(luakit.nbook), i);
+    /* reverse lookup class instance ref */
+    return g_hash_table_lookup(luakit.tabs, w);
+}
 
 static gint
 luaH_tabs_count(lua_State *L) {
@@ -37,6 +46,7 @@ luaH_tabs_count(lua_State *L) {
 static gint
 luaH_tabs_index(lua_State *L) {
     // I'm not sure what this function does yet.
+    debug("I'm called by whatever you are doing now!");
     luaH_dumpstack(L);
     return 0;
 }
@@ -44,17 +54,92 @@ luaH_tabs_index(lua_State *L) {
 static gint
 luaH_tabs_module_index(lua_State *L) {
     gint i = luaL_checknumber(L, 2) - 1;
-    luaH_checktabindex(i);
-    /* get scroll widget */
-    gpointer w = gtk_notebook_get_nth_page(GTK_NOTEBOOK(luakit.nbook), i);
-    /* reverse lookup class instance ref */
-    gpointer ref = g_hash_table_lookup(luakit.tabs, w);
-    return luaH_object_push(L, ref);
+    view_t *v = tabs_atindex(i);
+    return luaH_object_push(L, v->ref);
+}
+
+static gint
+luaH_tabs_current(lua_State *L) {
+    gint i = gtk_notebook_get_current_page(GTK_NOTEBOOK(luakit.nbook));
+    view_t *v = tabs_atindex(i);
+    return luaH_object_push(L, v->ref);
+}
+
+static gint
+luaH_tabs_append(lua_State *L) {
+    view_t *v = luaH_checkudata(L, 1, &view_class);
+    if (v->anchored)
+        luaL_error(L, "tab already in anchored");
+
+    /* create lua reference for the object on demand */
+    if (!v->ref) {
+        /* duplicate userdata object */
+        lua_pushvalue(L, -1);
+        v->ref = luaH_object_ref_class(L, -1, &view_class);
+    }
+
+    /* append widget to notebook */
+    gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), v->scroll, NULL);
+    v->anchored = TRUE;
+
+    /* save reverse lookup from view's scroll widget to view instance */
+    g_hash_table_insert(luakit.tabs, (gpointer) v->scroll, v);
+    return 0;
+}
+
+static gint
+luaH_tabs_insert(lua_State *L) {
+    gint i = luaL_checknumber(L, 1);
+    if (i != -1)
+        luaH_checktabindex(--i);
+
+    view_t *v = luaH_checkudata(L, 2, &view_class);
+    if (v->anchored)
+        luaL_error(L, "tab already anchored");
+
+    gint ret = gtk_notebook_insert_page(GTK_NOTEBOOK(luakit.nbook),
+            v->scroll, NULL, i);
+    v->anchored = TRUE;
+
+    /* return index of new page or -1 for error */
+    lua_pushnumber(L, ret);
+    return 1;
+}
+
+static gint
+luaH_tabs_indexof(lua_State *L) {
+    view_t *v = luaH_checkudata(L, 1, &view_class);
+    if (!v->anchored)
+        luaL_error(L, "tab not anchored");
+
+    gint i = gtk_notebook_page_num(GTK_NOTEBOOK(luakit.nbook), v->scroll);
+    lua_pushnumber(L, ++i);
+    return 1;
+}
+
+static gint
+luaH_tabs_remove(lua_State *L) {
+    view_t *v = luaH_checkudata(L, 1, &view_class);
+    if (!v->anchored)
+        luaL_error(L, "tab not anchored");
+
+    gint i = gtk_notebook_page_num(GTK_NOTEBOOK(luakit.nbook), v->scroll);
+    gtk_notebook_remove_page(GTK_NOTEBOOK(luakit.nbook), i);
+
+    v->anchored = FALSE;
+    // TODO should I dereference the lua object reference stored in the view
+    // struct here?
+    return 0;
 }
 
 const struct luaL_reg luakit_tabs_methods[] = {
-    { "count", luaH_tabs_count },
     { "__index", luaH_tabs_module_index },
+    { "append", luaH_tabs_append },
+    { "count", luaH_tabs_count },
+    { "current", luaH_tabs_current },
+    { "indexof", luaH_tabs_indexof },
+    { "insert", luaH_tabs_insert },
+    { "remove", luaH_tabs_remove },
     { NULL, NULL }
 };
 

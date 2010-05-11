@@ -36,8 +36,8 @@ view_new(lua_State *L) {
     view_t *v = lua_newuserdata(L, sizeof(view_t));
     p_clear(v, 1);
 
+    v->anchored = FALSE;
     v->signals = signal_tree_new();
-
     /* create webkit webview widget */
     v->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 
@@ -51,8 +51,6 @@ view_new(lua_State *L) {
     gtk_widget_show(GTK_WIDGET(v->view));
     gtk_widget_show(v->scroll);
     webkit_web_view_set_full_content_zoom(v->view, TRUE);
-    // TODO this is here just so that I know it works
-    gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), v->scroll, NULL);
 
     luaH_settype(L, &(view_class));
     lua_newtable(L);
@@ -87,13 +85,6 @@ static gint
 luaH_view_new(lua_State *L) {
     luaH_class_new(L, &view_class);
     luaH_checkudata(L, -1, &view_class);
-
-    /* duplicate view and insert it into the tabs list indexable by the
-     * scroll widget */
-    lua_pushvalue(L, -1);
-    view_t *v = luaH_checkudata(L, -1, &view_class);
-    gpointer ref = luaH_object_ref_class(L, -1, &view_class);
-    g_hash_table_insert(luakit.tabs, (gpointer) v->scroll, ref);
     return 1;
 }
 
