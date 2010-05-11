@@ -24,11 +24,8 @@
 #include "config.h"
 #include "luafuncs.h"
 #include "lualib.h"
-#include "view.h"
+#include "tab.h"
 #include "tabs.h"
-
-extern const struct luaL_reg luakit_view_methods[];
-extern const struct luaL_reg luakit_view_meta[];
 
 /* UTF-8 aware string length computing.
  * Returns the number of elements pushed on the stack. */
@@ -385,8 +382,8 @@ luaH_init(xdgHandle *xdg) {
     /* Export tabs */
     luaH_openlib(L, "tabs", luakit_tabs_methods, luakit_tabs_meta);
 
-    /* Export view */
-    view_class_setup(L);
+    /* Export tab */
+    tab_class_setup(L);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");

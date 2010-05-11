@@ -1,5 +1,5 @@
 /*
- * view.h - webkit webview widget
+ * tab.h - webkit webview widget
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_VIEW_H
-#define LUAKIT_VIEW_H
+#ifndef LUAKIT_TAB_H
+#define LUAKIT_TAB_H
 
 #include "luaobject.h"
 
@@ -41,10 +41,10 @@ typedef struct  {
     gpointer ref;
     /* is anchored inside the root gtk notebook */
     gboolean anchored;
-} view_t;
+} tab_t;
 
-lua_class_t view_class;
-void view_class_setup(lua_State *);
+lua_class_t tab_class;
+void tab_class_setup(lua_State *);
 
 #endif
 

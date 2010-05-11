@@ -1,12 +1,12 @@
-view.add_signal('new', function (view)
-    print("The new view signal works!")
+tab.add_signal('new', function (view)
+    print("The new tab signal works!")
 end)
 
 uris = { "luakit.org", "http://github.com/mason-larobina/luakit", "google.com", "uzbl.org" }
 
 for _, uri in ipairs(uris) do
-    tab = view({uri = uri})
-    tabs.append(tab)
+    t = tab({uri = uri})
+    tabs.append(t)
 end
 
 function dumptabs()
@@ -18,7 +18,7 @@ end
 
 dumptabs()
 
-t = view({})
+t = tab({})
 tabs.insert(tabs.count(), t)
 
 print("Removing something")
