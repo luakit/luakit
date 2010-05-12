@@ -30,6 +30,18 @@
 
 LUA_CLASS_FUNCS(tab, tab_class)
 
+void
+title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, tab_t *t) {
+    (void) f;
+    (void) v;
+
+    luaH_object_push(luakit.L, t->ref);
+    lua_pushstring(luakit.L, g_strdup(title));
+    luaH_object_emit_signal(luakit.L, -2, "webview::title_changed", 1);
+    debug("hello");
+    lua_pop(luakit.L, 1);
+}
+
 tab_t *
 tab_new(lua_State *L) {
     tab_t *t = lua_newuserdata(L, sizeof(tab_t));
@@ -39,6 +51,9 @@ tab_new(lua_State *L) {
     t->signals = signal_tree_new();
     /* create webkit webview widget */
     t->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+
+    /* connect webview signals */
+    g_signal_connect(G_OBJECT(t->view), "title-changed", G_CALLBACK(title_changed_cb), t);
 
     /* create scrolled window for webview */
     t->scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -135,19 +150,47 @@ luaH_tab_get_uri(lua_State *L, tab_t *t) {
 
 static gint
 luaH_tab_set_uri(lua_State *L, tab_t *t) {
-    /* free old uri */
-    if (t->uri)
-        free(t->uri);
-
+    /* get new uri from stack */
     const gchar *uri = luaL_checkstring(L, -1);
+
+    if (t->uri)
+        g_free(t->uri);
+
     /* Make sure url starts with scheme */
     t->uri = g_strrstr(uri, "://") ? g_strdup(uri) :
         g_strdup_printf("http://%s", uri);
 
     webkit_web_view_load_uri(t->view, t->uri);
-    debug("navigating tab at %p to %s", t, t->uri);
 
-    luaH_object_emit_signal(L, -3, "webview::uri", 0);
+    /* place new uri in stack and raise property signal */
+    lua_pushstring(L, NONULL(t->uri));
+    luaH_object_emit_signal(L, -4, "webview::uri", 1);
+    return 0;
+}
+
+static gint
+luaH_tab_get_title(lua_State *L, tab_t *t) {
+    lua_pushstring(L, NONULL(t->title));
+    luaH_dumpstack(L);
+    return 1;
+}
+
+static gint
+luaH_tab_set_title(lua_State *L, tab_t *t) {
+    /* get new title from stack */
+    const gchar *title = luaL_checkstring(L, -1);
+
+    if (t->uri)
+        g_free(t->uri);
+
+    t->title = g_strdup(title);
+
+    if (t->anchored)
+        gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(luakit.nbook),
+            t->scroll, t->title);
+
+    lua_pushvalue(L, -1);
+    luaH_object_emit_signal(luakit.L, -4, "property::title", 1);
     return 0;
 }
 
@@ -179,6 +222,11 @@ tab_class_setup(lua_State *L) {
         (lua_class_propfunc_t) luaH_tab_set_uri,
         (lua_class_propfunc_t) luaH_tab_get_uri,
         (lua_class_propfunc_t) luaH_tab_set_uri);
+
+    luaH_class_add_property(&tab_class, "title",
+        (lua_class_propfunc_t) luaH_tab_set_title,
+        (lua_class_propfunc_t) luaH_tab_get_title,
+        (lua_class_propfunc_t) luaH_tab_set_title);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

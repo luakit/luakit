@@ -37,6 +37,8 @@ typedef struct  {
     GtkWidget *scroll;
     /* current uri */
     gchar *uri;
+    /* notebook tab title */
+    gchar *title;
     /* lua class instance object ref */
     gpointer ref;
     /* is anchored inside the root gtk notebook */

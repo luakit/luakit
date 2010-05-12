@@ -1,5 +1,12 @@
-tab.add_signal('new', function (view)
-    print("The new tab signal works!")
+tab.add_signal('new', function (t)
+    t:add_signal('webview::title_changed', function (t, title)
+        print(t, title)
+        -- Now set the notebook tab title
+        t.title = title
+    end)
+    t:add_signal('webview::uri', function (t, uri)
+        print(t, uri)
+    end)
 end)
 
 uris = { "luakit.org", "http://github.com/mason-larobina/luakit", "google.com", "uzbl.org" }
@@ -20,8 +27,6 @@ dumptabs()
 
 t = tab({})
 tabs.insert(tabs.count(), t)
-
-print("Removing something")
 
 tabs.remove(t)
 tabs.remove(tabs[1])
