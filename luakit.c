@@ -47,7 +47,7 @@ destroy_sbar(Statusbar *s) {
     gtk_widget_destroy(GTK_WIDGET(s->label));
     gtk_widget_destroy(GTK_WIDGET(s->hbox));
     g_ptr_array_remove(sbars, (gpointer) s);
-    free(s);
+    g_free(s);
     s = NULL;
 }
 
@@ -230,7 +230,7 @@ parseopts(int argc, char *argv[]) {
 int
 main(int argc, char *argv[]) {
     Luakit *l = &luakit;
-    gchar **uris = NULL;
+    gchar **uris = NULL, *uri = NULL;
     xdgHandle xdg;
 
     /* init app */
@@ -248,6 +248,14 @@ main(int argc, char *argv[]) {
     /* init lua */
     luaH_init(&xdg);
 
+    /* push a table of the statup uris */
+    lua_newtable(luakit.L);
+    for (gint i = 0; (uri = uris[i]); i++) {
+        lua_pushstring(luakit.L, uri);
+        lua_rawseti(luakit.L, -2, i + 1);
+    }
+    lua_setglobal(luakit.L, "uris");
+
     /* parse and run configuration file */
     if(!luaH_parserc(&xdg, l->confpath, TRUE))
         fatal("couldn't find any rc file");
@@ -259,10 +267,6 @@ main(int argc, char *argv[]) {
     /* show window */
     show_win();
 
-    /* load startup uris */
-    while (*uris) {
-        debug("want new uri %s", *uris++);
-    }
 
     new_sbar();
 

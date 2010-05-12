@@ -477,7 +477,7 @@ luaH_parserc(xdgHandle* xdg, const gchar *confpatharg, gboolean run) {
 
 bailout:
 
-    if (confpath) free(confpath);
+    if (confpath) g_free(confpath);
     return ret;
 }
 

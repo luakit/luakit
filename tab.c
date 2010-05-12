@@ -38,7 +38,6 @@ title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, tab_t 
     luaH_object_push(luakit.L, t->ref);
     lua_pushstring(luakit.L, g_strdup(title));
     luaH_object_emit_signal(luakit.L, -2, "webview::title_changed", 1);
-    debug("hello");
     lua_pop(luakit.L, 1);
 }
 
@@ -89,7 +88,7 @@ luaH_tab_gc(lua_State *L) {
     gtk_widget_destroy(GTK_WIDGET(t->scroll));
     gtk_widget_destroy(GTK_WIDGET(t->view));
 
-    free(t);
+    g_free(t);
     t = NULL;
     return luaH_object_gc(L);
 }
@@ -194,6 +193,23 @@ luaH_tab_set_title(lua_State *L, tab_t *t) {
     return 0;
 }
 
+static gint
+luaH_tab_focus(lua_State *L) {
+    tab_t *t = luaH_checkudata(L, -1, &tab_class);
+
+    if (!t->anchored)
+        luaL_error(L, "tab not anchored");
+
+    /* switch to the widgets tab */
+    gint i = gtk_notebook_page_num(GTK_NOTEBOOK(luakit.nbook), t->scroll);
+    gtk_notebook_set_current_page(GTK_NOTEBOOK(luakit.nbook), i);
+
+    /* focus the webview widget */
+    gtk_widget_grab_focus(GTK_WIDGET(t->view));
+
+    return 0;
+}
+
 void
 tab_class_setup(lua_State *L) {
 
@@ -208,6 +224,7 @@ tab_class_setup(lua_State *L) {
 
     static const struct luaL_reg tab_meta[] = {
         LUA_OBJECT_META(tab)
+        { "focus", luaH_tab_focus },
         { "__index", luaH_tab_index },
         { "__newindex", luaH_tab_newindex },
         { "__gc", luaH_tab_gc },
