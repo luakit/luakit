@@ -210,6 +210,8 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     if(!obj)
         luaL_error(L, "trying to emit signal on non-object");
 
+    debug("emitting \"%s\" on %p with %d args", name, obj, nargs);
+
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name, FALSE);
     if(sigfuncs) {
         guint nbfunc = sigfuncs->len;

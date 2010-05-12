@@ -39,6 +39,8 @@ typedef struct  {
     gchar *uri;
     /* notebook tab title */
     gchar *title;
+    /* webview load progress */
+    gint progress;
     /* lua class instance object ref */
     gpointer ref;
     /* is anchored inside the root gtk notebook */

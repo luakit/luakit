@@ -31,13 +31,66 @@
 LUA_CLASS_FUNCS(tab, tab_class)
 
 void
+progress_change_cb(WebKitWebView *v, gint p, tab_t *t) {
+    (void) v;
+
+    t->progress = p;
+
+    luaH_object_push(luakit.L, t->ref);
+    luaH_object_emit_signal(luakit.L, -1, "property::progress", 0);
+    lua_pop(luakit.L, 1);
+}
+
+void
 title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, tab_t *t) {
     (void) f;
     (void) v;
 
     luaH_object_push(luakit.L, t->ref);
-    lua_pushstring(luakit.L, g_strdup(title));
-    luaH_object_emit_signal(luakit.L, -2, "webview::title_changed", 1);
+    lua_pushstring(luakit.L, title);
+    luaH_object_emit_signal(luakit.L, -2, "webview::title-changed", 1);
+    lua_pop(luakit.L, 1);
+}
+
+void
+load_start_cb(WebKitWebView *v, WebKitWebFrame *f, tab_t *t) {
+    (void) v;
+    (void) f;
+
+    /* reset progress */
+    t->progress = 0;
+
+    luaH_object_push(luakit.L, t->ref);
+    luaH_object_emit_signal(luakit.L, -1, "webview::load-start", 0);
+    luaH_object_emit_signal(luakit.L, -1, "property::progress", 0);
+    lua_pop(luakit.L, 1);
+}
+
+void
+load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, tab_t *t) {
+    (void) v;
+
+    if (t->uri)
+        g_free(t->uri);
+
+    /* update uri after redirects, etc */
+    t->uri = g_strdup(webkit_web_frame_get_uri(f));
+
+    luaH_object_push(luakit.L, t->ref);
+    /* emit uri property update signal */
+    luaH_object_emit_signal(luakit.L, -1, "property::uri", 0);
+    /* emit load commit signal */
+    luaH_object_emit_signal(luakit.L, -1, "webview::load-commit", 0);
+    lua_pop(luakit.L, 1);
+}
+
+void
+load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, tab_t *t) {
+    (void) v;
+    (void) f;
+
+    luaH_object_push(luakit.L, t->ref);
+    luaH_object_emit_signal(luakit.L, -1, "webview::load-finish", 0);
     lua_pop(luakit.L, 1);
 }
 
@@ -46,13 +99,31 @@ tab_new(lua_State *L) {
     tab_t *t = lua_newuserdata(L, sizeof(tab_t));
     p_clear(t, 1);
 
+    /* init userdata object */
+    luaH_settype(L, &tab_class);
+    lua_newtable(L);
+    lua_newtable(L);
+    lua_setmetatable(L, -2);
+    lua_setfenv(L, -2);
+    lua_pushvalue(L, -1);
+
+    /* save a reference to the userdata object */
+    lua_pushvalue(L, -1);
+    t->ref = luaH_object_ref_class(L, -1, &tab_class);
+
     t->anchored = FALSE;
+    t->progress = 0;
     t->signals = signal_tree_new();
     /* create webkit webview widget */
     t->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 
     /* connect webview signals */
     g_signal_connect(G_OBJECT(t->view), "title-changed", G_CALLBACK(title_changed_cb), t);
+    g_signal_connect(G_OBJECT(t->view), "load-started", G_CALLBACK(load_start_cb), t);
+    g_signal_connect(G_OBJECT(t->view), "load-committed", G_CALLBACK(load_commit_cb), t);
+    g_signal_connect(G_OBJECT(t->view), "load-finished", G_CALLBACK(load_finish_cb), t);
+    g_signal_connect(G_OBJECT(t->view), "load-progress-changed", G_CALLBACK(progress_change_cb), t);
+
 
     /* create scrolled window for webview */
     t->scroll = gtk_scrolled_window_new(NULL, NULL);
@@ -65,13 +136,7 @@ tab_new(lua_State *L) {
     gtk_widget_show(t->scroll);
     webkit_web_view_set_full_content_zoom(t->view, TRUE);
 
-    luaH_settype(L, &(tab_class));
-    lua_newtable(L);
-    lua_newtable(L);
-    lua_setmetatable(L, -2);
-    lua_setfenv(L, -2);
-    lua_pushvalue(L, -1);
-    luaH_class_emit_signal(L, &(tab_class), "new", 1);
+    luaH_class_emit_signal(L, &tab_class, "new", 1);
 
     return t;
 }
@@ -162,15 +227,13 @@ luaH_tab_set_uri(lua_State *L, tab_t *t) {
     webkit_web_view_load_uri(t->view, t->uri);
 
     /* place new uri in stack and raise property signal */
-    lua_pushstring(L, NONULL(t->uri));
-    luaH_object_emit_signal(L, -4, "webview::uri", 1);
+    luaH_object_emit_signal(L, -3, "property::uri", 0);
     return 0;
 }
 
 static gint
 luaH_tab_get_title(lua_State *L, tab_t *t) {
     lua_pushstring(L, NONULL(t->title));
-    luaH_dumpstack(L);
     return 1;
 }
 
@@ -188,9 +251,14 @@ luaH_tab_set_title(lua_State *L, tab_t *t) {
         gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(luakit.nbook),
             t->scroll, t->title);
 
-    lua_pushvalue(L, -1);
-    luaH_object_emit_signal(luakit.L, -4, "property::title", 1);
+    luaH_object_emit_signal(luakit.L, -3, "property::title", 0);
     return 0;
+}
+
+static gint
+luaH_tab_get_progress(lua_State *L, tab_t *t) {
+    lua_pushnumber(L, t->progress);
+    return 1;
 }
 
 static gint
@@ -244,6 +312,11 @@ tab_class_setup(lua_State *L) {
         (lua_class_propfunc_t) luaH_tab_set_title,
         (lua_class_propfunc_t) luaH_tab_get_title,
         (lua_class_propfunc_t) luaH_tab_set_title);
+
+    luaH_class_add_property(&tab_class, "progress",
+        NULL,
+        (lua_class_propfunc_t) luaH_tab_get_progress,
+        NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

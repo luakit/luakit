@@ -78,8 +78,6 @@ signal_tree_destroy(signal_t *signals) {
 
 static inline signal_array_t *
 signal_lookup(signal_t *signals, const gchar *name, gboolean create) {
-    debug("looking up signal \"%s\" in array at %p", name, signals);
-
     if (!signals) return NULL;
 
     signal_array_t *sigfuncs = g_tree_lookup((GTree *) signals,
@@ -95,7 +93,6 @@ signal_lookup(signal_t *signals, const gchar *name, gboolean create) {
 
 static inline void
 signal_add(signal_t *signals, const gchar *name, gpointer ref) {
-    debug("new %s in array at %p", name, signals);
 
     /* find ptr array for this signal */
     signal_array_t *sigfuncs = signal_lookup(signals, name, TRUE);
@@ -106,8 +103,6 @@ signal_add(signal_t *signals, const gchar *name, gpointer ref) {
 
 static inline void
 signal_remove(signal_t *signals, const gchar *name, gpointer ref) {
-    debug("del %s from array at %p", name, signals);
-
     if(!signals) return;
 
     /* try to find ptr array for this signal */

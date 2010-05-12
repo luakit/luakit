@@ -71,13 +71,6 @@ luaH_tabs_append(lua_State *L) {
     if (t->anchored)
         luaL_error(L, "tab already in anchored");
 
-    /* create lua reference for the object on demand */
-    if (!t->ref) {
-        /* duplicate userdata object */
-        lua_pushvalue(L, -1);
-        t->ref = luaH_object_ref_class(L, -1, &tab_class);
-    }
-
     /* append widget to notebook */
     gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), t->scroll, NULL);
     t->anchored = TRUE;
@@ -138,8 +131,6 @@ luaH_tabs_remove(lua_State *L) {
     gtk_notebook_remove_page(GTK_NOTEBOOK(luakit.nbook), i);
 
     t->anchored = FALSE;
-    // TODO should I dereference the lua object reference stored in the tab
-    // struct here?
     return 0;
 }
 
