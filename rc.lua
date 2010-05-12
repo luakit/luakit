@@ -1,8 +1,10 @@
 tab.add_signal('new', function (t)
+    t.title = "Untitled"
+
     t:add_signal('webview::title_changed', function (t, title)
         print(t, title)
         -- Now set the notebook tab title
-        t.title = title
+        t.title = title or t.uri
     end)
     t:add_signal('webview::uri', function (t, uri)
         print(t, uri)

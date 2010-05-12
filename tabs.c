@@ -82,9 +82,16 @@ luaH_tabs_append(lua_State *L) {
     gtk_notebook_append_page(GTK_NOTEBOOK(luakit.nbook), t->scroll, NULL);
     t->anchored = TRUE;
 
+    if (t->title)
+        gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(luakit.nbook),
+            t->scroll, t->title);
+
     /* save reverse lookup from tab's scroll widget to tab instance */
     g_hash_table_insert(luakit.tabs, (gpointer) t->scroll, t);
-    return 0;
+
+    /* return tab index */
+    lua_pushnumber(L, gtk_notebook_get_n_pages(GTK_NOTEBOOK(luakit.nbook)));
+    return 1;
 }
 
 static gint
@@ -100,6 +107,10 @@ luaH_tabs_insert(lua_State *L) {
     gint ret = gtk_notebook_insert_page(GTK_NOTEBOOK(luakit.nbook),
             t->scroll, NULL, i);
     t->anchored = TRUE;
+
+    if (t->title)
+        gtk_notebook_set_tab_label_text(GTK_NOTEBOOK(luakit.nbook),
+            t->scroll, t->title);
 
     /* return index of new page or -1 for error */
     lua_pushnumber(L, ret);
