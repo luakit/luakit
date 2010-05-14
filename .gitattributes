@@ -1,1 +1,1 @@
-./build-tools/getversion.sh export-subst
+./build-utils/getversion.sh export-subst

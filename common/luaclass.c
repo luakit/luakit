@@ -115,14 +115,15 @@ luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
 }
 
 void
-luaH_class_add_property(lua_class_t *lua_class, const gchar *name,
+luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
         lua_class_propfunc_t cb_new,
         lua_class_propfunc_t cb_index,
         lua_class_propfunc_t cb_newindex) {
 
-    debug("Adding property %s to lua class at %p", name, lua_class);
-
     lua_class_property_t *prop;
+
+    if (token == L_TK_UNKNOWN)
+        warn("Adding L_TK_UNKNOWN to properties array!");
 
     if(!(prop = calloc(1, sizeof(lua_class_property_t))))
         fatal("Cannot malloc!\n");
@@ -133,7 +134,8 @@ luaH_class_add_property(lua_class_t *lua_class, const gchar *name,
     prop->newindex = cb_newindex;
 
     /* add property to class properties tree */
-    g_tree_insert((GTree*) lua_class->properties, (gpointer) name, (gpointer) prop);
+    g_hash_table_insert((GHashTable*) lua_class->properties,
+            (gpointer) token, prop);
 }
 
 void
@@ -222,8 +224,11 @@ luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
 static lua_class_property_t *
 luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
     size_t len;
-    gconstpointer attr = luaL_checklstring(L, fieldidx, &len);
-    return g_tree_lookup((GTree *) lua_class->properties, attr);
+    const gchar *attr = luaL_checklstring(L, fieldidx, &len);
+    luakit_token_t token = l_tokenize(attr, len);
+
+    return g_hash_table_lookup((GHashTable*) lua_class->properties,
+            (gpointer) token);
 }
 
 /* Generic index meta function for objects.
@@ -295,8 +300,9 @@ luaH_class_new(lua_State *L, lua_class_t *lua_class) {
             /* Lookup the property */
             size_t len;
             const char *attr = lua_tolstring(L, -2, &len);
-            lua_class_property_t *prop =
-                g_tree_lookup((GTree *) lua_class->properties, attr);
+            lua_class_property_t *prop = g_hash_table_lookup(
+                    (GHashTable*) lua_class->properties,
+                    (gpointer) l_tokenize(attr, len));
 
             if(prop && prop->new)
                 prop->new(L, object);

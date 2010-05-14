@@ -1,6 +1,6 @@
 # Get the current version which is either a nearby git tag or a short-hash
 # of the current commit.
-VERSION   ?= $(shell ./build-tools/getversion.sh)
+VERSION   ?= $(shell ./build-utils/getversion.sh)
 
 # Paths
 PREFIX    ?= /usr/local
@@ -21,7 +21,7 @@ LDFLAGS  := ${LIBS} ${LDFLAGS}
 #LDFLAGS += -pthread
 
 # Building on FreeBSD (or just use gmake)
-#VERSION != echo `./build-tools/getversion.sh`
+#VERSION != echo `./build-utils/getversion.sh`
 #INCS    != echo -I. -I/usr/include `pkg-config --cflags ${PKGS}`
 #LIBS    != echo -L/usr/lib `pkg-config --libs ${PKGS}`
 

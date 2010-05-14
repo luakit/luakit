@@ -23,6 +23,7 @@
 #include "common/luaclass.h"
 #include "common/luaobject.h"
 #include "common/lualib.h"
+#include "common/tokenize.h"
 
 #include "luakit.h"
 #include "luah.h"
@@ -282,7 +283,7 @@ luaH_tab_focus(lua_State *L) {
 void
 tab_class_setup(lua_State *L) {
 
-    tab_class.properties = (lua_class_property_array_t*) g_tree_new((GCompareFunc) strcmp);
+    tab_class.properties = (lua_class_property_array_t*) g_hash_table_new(g_direct_hash, g_direct_equal);
     tab_class.signals = signal_tree_new();
 
     static const struct luaL_reg tab_methods[] = {
@@ -304,17 +305,17 @@ tab_class_setup(lua_State *L) {
          luaH_class_index_miss_property, luaH_class_newindex_miss_property,
          tab_methods, tab_meta);
 
-    luaH_class_add_property(&tab_class, "uri",
+    luaH_class_add_property(&tab_class, L_TK_URI,
         (lua_class_propfunc_t) luaH_tab_set_uri,
         (lua_class_propfunc_t) luaH_tab_get_uri,
         (lua_class_propfunc_t) luaH_tab_set_uri);
 
-    luaH_class_add_property(&tab_class, "title",
+    luaH_class_add_property(&tab_class, L_TK_TITLE,
         (lua_class_propfunc_t) luaH_tab_set_title,
         (lua_class_propfunc_t) luaH_tab_get_title,
         (lua_class_propfunc_t) luaH_tab_set_title);
 
-    luaH_class_add_property(&tab_class, "progress",
+    luaH_class_add_property(&tab_class, L_TK_PROGRESS,
         NULL,
         (lua_class_propfunc_t) luaH_tab_get_progress,
         NULL);

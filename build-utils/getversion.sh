@@ -6,7 +6,7 @@
 # packaged)). You will find that this file is listed inside the .gitattributes
 # file like so:
 #
-#   ./build-tools/getversion.sh export-subst
+#   ./build-utils/getversion.sh export-subst
 #
 # This tells git to replace the format string in the following line with the
 # current short hash upon the calling of the `git archive <hash/tag>` command.
