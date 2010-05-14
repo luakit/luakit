@@ -1,5 +1,5 @@
 /*
- * luafuncs.h - Lua functions
+ * luah.h - Lua helper functions
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2008-2009 Julien Danjou <julien@danjou.info>
