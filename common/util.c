@@ -20,8 +20,11 @@
  *
  */
 
-#include "luakit.h"
-#include "util.h"
+#include <glib/gprintf.h>
+#include <stdarg.h>
+#include <stdlib.h>
+
+#include "common/util.h"
 
 /* Print error and exit with EXIT_FAILURE code. */
 void

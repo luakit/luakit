@@ -19,11 +19,13 @@
  *
  */
 
-#ifndef LUAKIT_LUACLASS_H
-#define LUAKIT_LUACLASS_H
+#ifndef LUAKIT_COMMON_LUACLASS_H
+#define LUAKIT_COMMON_LUACLASS_H
 
 #include <glib/gtree.h>
-#include "signal.h"
+
+#include "common/lualib.h"
+#include "common/signal.h"
 
 typedef struct    lua_class_property lua_class_property_t;
 typedef GPtrArray lua_class_property_array_t;

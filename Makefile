@@ -1,8 +1,8 @@
 # Include makefile config
 include config.mk
 
-SRCS  = $(wildcard *.c)
-HEADS = $(wildcard *.h)
+SRCS  = $(wildcard *.c) $(wildcard common/*.c)
+HEADS = $(wildcard *.h) $(wildcard common/*.h)
 OBJS  = $(foreach obj, $(SRCS:.c=.o), $(obj))
 
 all: options newline luakit
@@ -16,13 +16,17 @@ options:
 	@echo "PREFIX     = ${PREFIX}"
 	@echo "MANPREFIX  = ${MANPREFIX}"
 	@echo "DESTDIR    = ${DESTDIR}"
+	@echo 
+	@echo build targets:
 	@echo "SRCS       = ${SRCS}"
 	@echo "HEADS      = ${HEADS}"
 	@echo "OBJS       = ${OBJS}"
 
-.c.o:
-	@echo ${CC} -c $<
-	@${CC} -c ${CFLAGS} $<
+
+.c.o: 
+	@echo ${CC} -c $< -o $@
+	@${CC} -c ${CFLAGS} $< -o $@
+
 
 ${OBJS}: ${HEADS} config.mk
 

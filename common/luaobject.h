@@ -19,12 +19,12 @@
  *
  */
 
-#ifndef LUAKIT_LUAOBJECT_H
-#define LUAKIT_LUAOBJECT_H
+#ifndef LUAKIT_COMMON_LUAOBJECT_H
+#define LUAKIT_COMMON_LUAOBJECT_H
 
+#include "common/luaclass.h"
+#include "common/lualib.h"
 #include "config.h"
-#include "luaclass.h"
-#include "lualib.h"
 
 gint luaH_settype(lua_State *L, lua_class_t *lua_class);
 void luaH_object_setup(lua_State *L);

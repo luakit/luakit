@@ -22,7 +22,7 @@
 #ifndef LUAKIT_TAB_H
 #define LUAKIT_TAB_H
 
-#include "luaobject.h"
+#include "common/luaobject.h"
 
 /* View */
 typedef struct  {

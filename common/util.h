@@ -1,5 +1,5 @@
 /*
- * util.c - useful functions
+ * util.h - useful functions
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2008 Julien Danjou <julien@danjou.info>
@@ -20,10 +20,12 @@
  *
  */
 
-#ifndef LUAKIT_UTIL_H
-#define LUAKIT_UTIL_H
+#ifndef LUAKIT_COMMON_UTIL_H
+#define LUAKIT_COMMON_UTIL_H
 
+#include <glib/gtypes.h>
 #include <string.h>
+#include <unistd.h>
 
 /* Replace NULL strings with "" */
 #define NONULL(x) (x ? x : "")

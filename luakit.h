@@ -39,7 +39,7 @@
 #include <unistd.h>
 #include <webkit/webkit.h>
 
-#include "signal.h"
+#include "common/signal.h"
 
 typedef struct {
     GtkWidget *hbox, *label;

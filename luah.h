@@ -27,8 +27,8 @@
 
 #include <basedir.h>
 
-#include "luaobject.h"
-#include "lualib.h"
+#include "common/luaobject.h"
+#include "common/lualib.h"
 
 #define luaH_deprecate(L, repl) \
     do { \

@@ -19,11 +19,15 @@
  *
  */
 
-#ifndef LUAKIT_LUALIB
-#define LUAKIT_LUALIB
+#ifndef LUAKIT_COMMON_LUALIB
+#define LUAKIT_COMMON_LUALIB
 
+#include <glib/gprintf.h>
 #include <lauxlib.h>
-#include "util.h"
+#include <lua.h>
+#include <lualib.h>
+
+#include "common/util.h"
 
 /** Lua function to call on dofuction() error */
 lua_CFunction lualib_dofunction_on_error;

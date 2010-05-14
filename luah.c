@@ -1,5 +1,5 @@
 /*
- * luafuncs.c - Lua functions
+ * luah.c - Lua helper functions
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2008-2009 Julien Danjou <julien@danjou.info>
@@ -19,11 +19,11 @@
  *
  */
 
+#include "common/util.h"
+#include "common/lualib.h"
+
 #include "luakit.h"
-#include "util.h"
-#include "config.h"
-#include "luafuncs.h"
-#include "lualib.h"
+#include "luah.h"
 #include "tab.h"
 #include "tabs.h"
 

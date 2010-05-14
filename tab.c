@@ -19,12 +19,13 @@
  *
  */
 
+#include "common/util.h"
+#include "common/luaclass.h"
+#include "common/luaobject.h"
+#include "common/lualib.h"
+
 #include "luakit.h"
-#include "util.h"
-#include "lualib.h"
-#include "luaclass.h"
-#include "luaobject.h"
-#include "luafuncs.h"
+#include "luah.h"
 
 #include "tab.h"
 

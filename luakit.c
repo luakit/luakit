@@ -27,10 +27,11 @@
  *
  */
 
+#include "common/util.h"
+#include "common/signal.h"
+
 #include "luakit.h"
-#include "util.h"
-#include "luafuncs.h"
-#include "signal.h"
+#include "luah.h"
 
 Luakit luakit;
 

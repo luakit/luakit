@@ -19,12 +19,11 @@
  *
  */
 
-#ifndef LUAKIT_SIGNAL
-#define LUAKIT_SIGNAL
+#ifndef LUAKIT_COMMON_SIGNAL
+#define LUAKIT_COMMON_SIGNAL
 
 #include <glib/garray.h>
 #include <glib/gtree.h>
-#include "util.h"
 
 typedef GTree      signal_t;
 typedef GPtrArray  signal_array_t;

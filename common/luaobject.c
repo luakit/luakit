@@ -19,9 +19,7 @@
  *
  */
 
-#include "luakit.h"
-#include "luaobject.h"
-#include "luafuncs.h"
+#include "common/luaobject.h"
 
 /* Setup the object system at startup. */
 void
