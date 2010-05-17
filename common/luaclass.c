@@ -168,6 +168,10 @@ luaH_class_setup(lua_State *L, lua_class_t *class,
     class->index_miss_property = index_miss_property;
     class->newindex_miss_property = newindex_miss_property;
 
+    class->signals = signal_tree_new();
+    class->properties = (lua_class_property_array_t*) g_hash_table_new(
+            g_direct_hash, g_direct_equal);
+
     g_ptr_array_add(&luaH_classes, class);
 }
 

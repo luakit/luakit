@@ -13,7 +13,7 @@ LIBS := $(shell pkg-config --libs ${PKGS})
 
 # Add flags
 CPPFLAGS := -DVERSION=\"${VERSION}\" -DDEBUG_MESSAGES ${CPPFLAGS}
-CFLAGS   := -std=c99 -ggdb -W -Wall -Wextra ${INCS} ${CPPFLAGS} ${CFLAGS}
+CFLAGS   := -std=c99 -ggdb -W -Wall -Wextra ${INCS} ${CFLAGS}
 LDFLAGS  := ${LIBS} ${LDFLAGS}
 
 # Building on OSX

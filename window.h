@@ -1,5 +1,5 @@
 /*
- * tabs.h - root notebook widget wrapper
+ * window.h - window manager
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -19,19 +19,33 @@
  *
  */
 
-#ifndef LUAKIT_TABS_H
-#define LUAKIT_TABS_H
+#ifndef LUAKIT_WINDOW_H
+#define LUAKIT_WINDOW_H
 
-#include "luakit.h"
+#include <gtk/gtk.h>
 
-static inline void
-luaH_checktabindex(gint i) {
-    if(i < 0 || i >= gtk_notebook_get_n_pages(GTK_NOTEBOOK(luakit.nbook)))
-        luaL_error(luakit.L, "invalid tab index: %d", i + 1);
-}
+typedef struct window_t window_t;
 
-extern const struct luaL_reg luakit_tabs_methods[];
-extern const struct luaL_reg luakit_tabs_meta[];
+#include "widget.h"
+
+struct window_t
+{
+    LUA_OBJECT_HEADER
+    /* gtk window widget */
+    GtkWidget *win;
+    /* store lua object ref to the gtk window */
+    gpointer ref;
+    /* window title */
+    gchar *title;
+    /* child widget */
+    widget_t *child;
+};
+
+lua_class_t window_class;
+void window_class_setup(lua_State *);
+
+GPtrArray *windows;
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

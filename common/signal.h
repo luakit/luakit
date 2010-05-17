@@ -25,6 +25,8 @@
 #include <glib/garray.h>
 #include <glib/gtree.h>
 
+#include "common/util.h"
+
 typedef GTree      signal_t;
 typedef GPtrArray  signal_array_t;
 
@@ -97,6 +99,8 @@ signal_add(signal_t *signals, const gchar *name, gpointer ref) {
     signal_array_t *sigfuncs = signal_lookup(signals, name, TRUE);
 
     /* add the handler to this signals ptr array */
+    debug("signal add %s to %p", name, signals);
+
     g_ptr_array_add((GPtrArray *) sigfuncs, ref);
 }
 

@@ -7,8 +7,8 @@ TSRC   = common/tokenize.c
 THEAD  = common/tokenize.h
 TOBJ   = common/tokenize.o
 
-SRCS  = $(filter-out ${TSRC},$(wildcard *.c) $(wildcard common/*.c)) ${TSRC}
-HEADS = $(filter-out ${THEAD},$(wildcard *.h) $(wildcard common/*.h)) ${THEAD}
+SRCS  = $(filter-out ${TSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard widgets/*.c)) ${TSRC}
+HEADS = $(filter-out ${THEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${THEAD}
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
 all: options newline luakit
@@ -17,8 +17,8 @@ options:
 	@echo luakit build options:
 	@echo "CC         = ${CC}"
 	@echo "CFLAGS     = ${CFLAGS}"
-	@echo "LDFLAGS    = ${LDFLAGS}"
 	@echo "CPPFLAGS   = ${CPPFLAGS}"
+	@echo "LDFLAGS    = ${LDFLAGS}"
 	@echo "PREFIX     = ${PREFIX}"
 	@echo "MANPREFIX  = ${MANPREFIX}"
 	@echo "DESTDIR    = ${DESTDIR}"
@@ -34,7 +34,7 @@ ${TSRC} ${THEAD}: ${TGPERF}
 
 .c.o:
 	@echo ${CC} -c $< -o $@
-	@${CC} -c ${CFLAGS} $< -o $@
+	@${CC} -c ${CFLAGS} ${CPPFLAGS} $< -o $@
 
 
 ${OBJS}: ${HEADS} config.mk

@@ -1,36 +1,27 @@
-tab.add_signal('new', function (t)
-    t.title = "Untitled"
+-- Create main widgets
+win = window{}
+layout = widget{type = "vbox"}
+win:set_child(layout)
 
-    t:add_signal('webview::title-changed', function (t, title)
-        -- Set the notebook tab title
-        t.title = title or t.uri
-    end)
+-- Create tabbed notebook to store webviews
+nbook = widget{type = "notebook"}
+layout:pack_start(nbook, true, true, 0)
 
-    t:add_signal('property::title', function (t)
-        print(t, "Title changed", t.title)
-    end)
+-- Create "status bar"
+sbar = widget{type = "textarea"}
+layout:pack_start(sbar, false, true, 0)
 
-    t:add_signal('property::uri', function (t)
-        print(t, "Uri changed", t.uri)
-    end)
-
-    t:add_signal('property::progress', function (t)
-        print(t, "Progress changed", t.progress .. "%")
-    end)
-
-end)
-
--- Load uris passed to luakit at launch
-for _, uri in ipairs(uris) do
-    t = tab{uri = uri}
-    tabs.append(t)
-end
-
--- If there were no uris passed on the command line go luakit.org
 if #uris == 0 then
-    t = tab{uri = "luakit.org", title = "Homepage"}
-    tabs.append(t)
+    uris = { "http://github.com/mason-larobina/luakit" }
 end
 
--- Focus the first tab
-tabs[1]:focus()
+for _, uri in ipairs(uris) do
+    view = widget{type = "webview"}
+    nbook:append(view)
+
+    view:add_signal("property::title", function (v)
+        sbar.text = v.title
+    end)
+
+    view.uri = uri
+end

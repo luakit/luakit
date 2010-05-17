@@ -24,6 +24,7 @@
 
 #include "common/luaclass.h"
 #include "common/lualib.h"
+#include "common/signal.h"
 #include "config.h"
 
 gint luaH_settype(lua_State *L, lua_class_t *lua_class);
@@ -146,6 +147,7 @@ gint luaH_object_emit_signal_simple(lua_State *L);
     prefix##_new(lua_State *L) {                                               \
         type *p = lua_newuserdata(L, sizeof(type));                            \
         p_clear(p, 1);                                                         \
+        p->signals = signal_tree_new();                                        \
         luaH_settype(L, &(lua_class));                                         \
         lua_newtable(L);                                                       \
         lua_newtable(L);                                                       \

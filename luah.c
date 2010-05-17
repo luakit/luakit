@@ -24,13 +24,14 @@
 
 #include "luakit.h"
 #include "luah.h"
-#include "tab.h"
-#include "tabs.h"
+#include "widget.h"
+#include "window.h"
 
 /* UTF-8 aware string length computing.
  * Returns the number of elements pushed on the stack. */
 static gint
-luaH_utf8_strlen(lua_State *L) {
+luaH_utf8_strlen(lua_State *L)
+{
     const gchar *cmd  = luaL_checkstring(L, 1);
     lua_pushnumber(L, (ssize_t) g_utf8_strlen(NONULL(cmd), -1));
     return 1;
@@ -39,7 +40,8 @@ luaH_utf8_strlen(lua_State *L) {
 /* Overload standard Lua next function to use __next key on metatable.
  * Returns the number of elements pushed on stack. */
 static gint
-luaHe_next(lua_State *L) {
+luaHe_next(lua_State *L)
+{
     if(luaL_getmetafield(L, 1, "__next")) {
         lua_insert(L, 1);
         lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
@@ -57,7 +59,8 @@ luaHe_next(lua_State *L) {
  * next elements. `idx` is the index number of elements in stack.
  * Returns 1 if more elements to come, 0 otherwise. */
 gint
-luaH_next(lua_State *L, gint idx) {
+luaH_next(lua_State *L, gint idx)
+{
     if(luaL_getmetafield(L, idx, "__next")) {
         /* if idx is relative, reduce it since we got __next */
         if(idx < 0) idx--;
@@ -84,7 +87,8 @@ luaH_next(lua_State *L, gint idx) {
 /* Generic pairs function.
  * Returns the number of elements pushed on stack. */
 static gint
-luaH_generic_pairs(lua_State *L) {
+luaH_generic_pairs(lua_State *L)
+{
     lua_pushvalue(L, lua_upvalueindex(1));  /* return generator, */
     lua_pushvalue(L, 1);  /* state, */
     lua_pushnil(L);  /* and initial value */
@@ -94,7 +98,8 @@ luaH_generic_pairs(lua_State *L) {
 /* Overload standard pairs function to use __pairs field of metatables.
  * Returns the number of elements pushed on stack. */
 static gint
-luaHe_pairs(lua_State *L) {
+luaHe_pairs(lua_State *L)
+{
     if(luaL_getmetafield(L, 1, "__pairs")) {
         lua_insert(L, 1);
         lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
@@ -105,7 +110,8 @@ luaHe_pairs(lua_State *L) {
 }
 
 static gint
-luaH_ipairs_aux(lua_State *L) {
+luaH_ipairs_aux(lua_State *L)
+{
     gint i = luaL_checkint(L, 2) + 1;
     luaL_checktype(L, 1, LUA_TTABLE);
     lua_pushinteger(L, i);
@@ -116,7 +122,8 @@ luaH_ipairs_aux(lua_State *L) {
 /* Overload standard ipairs function to use __ipairs field of metatables.
  * Returns the number of elements pushed on stack. */
 static gint
-luaHe_ipairs(lua_State *L) {
+luaHe_ipairs(lua_State *L)
+{
     if(luaL_getmetafield(L, 1, "__ipairs")) {
         lua_insert(L, 1);
         lua_call(L, lua_gettop(L) - 1, LUA_MULTRET);
@@ -135,7 +142,8 @@ luaHe_ipairs(lua_State *L) {
  * \return The number of arguments pushed on the stack.
  */
 static gint
-luaHe_type(lua_State *L) {
+luaHe_type(lua_State *L)
+{
     luaL_checkany(L, 1);
     lua_pushstring(L, luaH_typename(L, 1));
     return 1;
@@ -144,7 +152,8 @@ luaHe_type(lua_State *L) {
 
 /* Fix up and add handy standard lib functions */
 static void
-luaH_fixups(lua_State *L) {
+luaH_fixups(lua_State *L)
+{
     /* export string.wlen */
     lua_getglobal(L, "string");
     lua_pushcfunction(L, &luaH_utf8_strlen);
@@ -175,24 +184,25 @@ luaH_fixups(lua_State *L) {
  * \param item The pointer item.
  */
 gboolean
-luaH_hasitem(lua_State *L, gconstpointer item) {
+luaH_hasitem(lua_State *L, gconstpointer item)
+{
     lua_pushnil(L);
     while(luaH_next(L, -2)) {
         if(lua_topointer(L, -1) == item) {
             /* remove value and key */
             lua_pop(L, 2);
-            return true;
+            return TRUE;
         }
         if(lua_istable(L, -1))
             if(luaH_hasitem(L, item)) {
                 /* remove key and value */
                 lua_pop(L, 2);
-                return true;
+                return TRUE;
             }
         /* remove value */
         lua_pop(L, 1);
     }
-    return false;
+    return FALSE;
 }
 
 /* Browse a table pushed on top of the index, and put all its table and
@@ -202,7 +212,8 @@ luaH_hasitem(lua_State *L, gconstpointer item) {
  * \return False if we encounter an elements already in list.
  */
 static gboolean
-luaH_isloop_check(lua_State *L, GPtrArray *elems) {
+luaH_isloop_check(lua_State *L, GPtrArray *elems)
+{
     if(lua_istable(L, -1)) {
         gconstpointer object = lua_topointer(L, -1);
 
@@ -236,7 +247,8 @@ luaH_isloop_check(lua_State *L, GPtrArray *elems) {
  * \return True if the table loops.
  */
 gboolean
-luaH_isloop(lua_State *L, gint idx) {
+luaH_isloop(lua_State *L, gint idx)
+{
     /* elems is an elements array that we will fill with all array we
      * encounter while browsing the tables */
     GPtrArray *elems = g_ptr_array_new();
@@ -263,7 +275,8 @@ luaH_isloop(lua_State *L, gint idx) {
  * \lfield conffile The configuration file which has been loaded.
  */
 static gint
-luaH_luakit_index(lua_State *L) {
+luaH_luakit_index(lua_State *L)
+{
     if(luaH_usemetatable(L, 1, 2))
         return 1;
 
@@ -280,7 +293,8 @@ luaH_luakit_index(lua_State *L) {
  * \return The number of elements pushed on stack.
  */
 static gint
-luaH_luakit_newindex(lua_State *L) {
+luaH_luakit_newindex(lua_State *L)
+{
     if(luaH_usemetatable(L, 1, 2))
         return 1;
 
@@ -299,7 +313,8 @@ luaH_luakit_newindex(lua_State *L) {
  * \lparam The function to call.
  */
 static gint
-luaH_luakit_add_signal(lua_State *L) {
+luaH_luakit_add_signal(lua_State *L)
+{
     const gchar *name = luaL_checkstring(L, 1);
     luaH_checkfunction(L, 2);
     signal_add(luakit.signals, name, luaH_object_ref(L, 2));
@@ -314,7 +329,8 @@ luaH_luakit_add_signal(lua_State *L) {
  * \lparam The function to call.
  */
 static gint
-luaH_luakit_remove_signal(lua_State *L) {
+luaH_luakit_remove_signal(lua_State *L)
+{
     const gchar *name = luaL_checkstring(L, 1);
     luaH_checkfunction(L, 2);
     gpointer func = (gpointer) lua_topointer(L, 2);
@@ -331,27 +347,31 @@ luaH_luakit_remove_signal(lua_State *L) {
  * \lparam The function to call.
  */
 static gint
-luaH_luakit_emit_signal(lua_State *L) {
+luaH_luakit_emit_signal(lua_State *L)
+{
     signal_object_emit(L, luakit.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1);
     return 0;
 }
 
 static gint
-luaH_panic(lua_State *L) {
+luaH_panic(lua_State *L)
+{
     warn("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
     return 0;
 }
 
 static gint
-luaH_quit(lua_State *L) {
+luaH_quit(lua_State *L)
+{
     (void) L;
     debug("lua calling quit function");
-    destroy();
+    exit(EXIT_SUCCESS);
     return 0;
 }
 
 void
-luaH_init(xdgHandle *xdg) {
+luaH_init(xdgHandle *xdg)
+{
     lua_State *L;
 
     static const struct luaL_reg luakit_lib[] = {
@@ -379,11 +399,11 @@ luaH_init(xdgHandle *xdg) {
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
 
-    /* Export tabs */
-    luaH_openlib(L, "tabs", luakit_tabs_methods, luakit_tabs_meta);
+    /* Export window */
+    window_class_setup(L);
 
-    /* Export tab */
-    tab_class_setup(L);
+    /* Export widget */
+    widget_class_setup(L);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");
@@ -424,7 +444,8 @@ luaH_init(xdgHandle *xdg) {
 }
 
 gboolean
-luaH_loadrc(const gchar *confpath, gboolean run) {
+luaH_loadrc(const gchar *confpath, gboolean run)
+{
     lua_State *L = luakit.L;
 
     if(!luaL_loadfile(L, confpath)) {
@@ -448,7 +469,8 @@ luaH_loadrc(const gchar *confpath, gboolean run) {
  * param run Run the configuration file.
  */
 gboolean
-luaH_parserc(xdgHandle* xdg, const gchar *confpatharg, gboolean run) {
+luaH_parserc(xdgHandle* xdg, const gchar *confpatharg, gboolean run)
+{
     Luakit *l = &luakit;
     gchar *confpath = NULL;
     gboolean ret = FALSE;
@@ -482,14 +504,16 @@ bailout:
 }
 
 gint
-luaH_class_index_miss_property(lua_State *L, lua_object_t *obj) {
+luaH_class_index_miss_property(lua_State *L, lua_object_t *obj)
+{
     (void) obj;
     signal_object_emit(L, luakit.signals, "debug::index::miss", 2);
     return 0;
 }
 
 gint
-luaH_class_newindex_miss_property(lua_State *L, lua_object_t *obj) {
+luaH_class_newindex_miss_property(lua_State *L, lua_object_t *obj)
+{
     (void) obj;
     signal_object_emit(L, luakit.signals, "debug::newindex::miss", 3);
     return 0;

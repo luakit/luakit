@@ -23,7 +23,6 @@
 
 #define _GNU_SOURCE
 
-#include <JavaScriptCore/JavaScript.h>
 #include <basedir.h>
 #include <basedir_fs.h>
 #include <glib/gstdio.h>
@@ -37,20 +36,12 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <webkit/webkit.h>
 
 #include "common/signal.h"
 
 typedef struct {
-    GtkWidget *hbox, *label;
-    /* TODO: Order and placement settings */
-} Statusbar;
-
-typedef struct {
     /* Root window gtk widgets */
-    GtkWidget *win, *vbox, *nbook;
-    /* List of status bars */
-    GPtrArray *sbars;
+    GtkWidget *win, *vbox;
     /* Path to the config file */
     gchar *confpath;
     /* Path of the applications executable (argv[0]) */
@@ -61,16 +52,10 @@ typedef struct {
     signal_t *signals;
     /* exit return code */
     int retval;
-    /* tab reverse lookup by scroll widget */
-    GHashTable *tabs;
 } Luakit;
 
 /* Global config/state object */
 extern Luakit luakit;
-
-Statusbar* new_sbar(void);
-void destroy(void);
-void destroy_sbar(Statusbar *s);
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
