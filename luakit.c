@@ -67,7 +67,6 @@ init(int argc, char *argv[]) {
 /* load command line options into luakit and return uris to load */
 gchar**
 parseopts(int argc, char *argv[]) {
-    GError *err = NULL;
     GOptionContext *context;
     Luakit *l = &luakit;
     gboolean *only_version = NULL;
@@ -87,10 +86,10 @@ parseopts(int argc, char *argv[]) {
     context = g_option_context_new("[URI...]");
     g_option_context_add_main_entries(context, entries, NULL);
     g_option_context_add_group(context, gtk_get_option_group(TRUE));
-    if(!g_option_context_parse(context, &argc, &argv, &err))
-        fatal("option parsing failed: %s\n", err->message);
+    // TODO Passing gtk options (like --sync) to luakit causes a segfault right
+    // here. I'm clueless.
+    g_option_context_parse(context, &argc, &argv, NULL);
     g_option_context_free(context);
-    if(err) g_error_free(err);
 
     /* print version and exit */
     if(only_version) {

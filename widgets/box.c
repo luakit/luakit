@@ -19,6 +19,13 @@
  *
  */
 
+/* TODO
+ *  - Add `remove(child)` method to remove child widgets from the box
+ *  - Add `reorder(child, index)` method to re-order child widgets
+ *  - Add `get_children()` method to return a table of widgets in the box
+ *  - In the box destructor function detach all child windows
+ */
+
 #include "luah.h"
 #include "widget.h"
 

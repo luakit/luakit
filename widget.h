@@ -33,23 +33,27 @@ typedef void (widget_destructor_t)(widget_t *);
 struct widget_t
 {
     LUA_OBJECT_HEADER
+
     /* Widget type */
     const gchar *type;
-    /* Main gtk widget */
-    GtkWidget *widget;
+
     /* Widget destructor */
     widget_destructor_t *destructor;
     /* Index function */
     gint (*index)(lua_State *, luakit_token_t);
     /* Newindex function */
     gint (*newindex)(lua_State *, luakit_token_t);
-    /* Misc private data */
-    gpointer data;
     /* Lua object ref */
     gpointer ref;
 
-    /* Pointer to the parent widget or window */
+    /* Main gtk widget */
+    GtkWidget *widget;
+    /* Misc private data */
+    gpointer data;
+
+    /* Pointer to the parent widget */
     widget_t *parent;
+    /* Or pointer to the parent window (only if root gtk widget) */
     window_t *window;
 };
 
@@ -61,6 +65,14 @@ widget_constructor_t widget_notebook;
 widget_constructor_t widget_textarea;
 widget_constructor_t widget_hbox;
 widget_constructor_t widget_vbox;
+
+static inline widget_t *
+luaH_widget_checkgtk(lua_State *L, widget_t *w)
+{
+    if (!w->widget)
+        luaL_error(L, "expecting gtk-type widget, got \"%s\"", w->type);
+    return w;
+}
 
 #endif
 

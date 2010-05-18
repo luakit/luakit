@@ -19,6 +19,11 @@
  *
  */
 
+/* TODO
+ *  - In the notebook destructor function detach all child widgets
+ *  - Add `get_children()` method which returns a table of the child widgets
+ */
+
 #include "luakit.h"
 #include "luah.h"
 #include "widget.h"
@@ -41,8 +46,9 @@ luaH_notebook_checkindex(lua_State *L, GtkWidget *nbook, gint i)
 
 /* return the child widget at the given index */
 widget_t *
-notebook_atindex(lua_State *L, notebook_data_t *d, gint i)
+notebook_atindex(lua_State *L, widget_t *w, gint i)
 {
+    notebook_data_t *d = w->data;
     luaH_notebook_checkindex(L, d->nbook, i);
     gpointer widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(d->nbook), i);
     /* reverse lookup child widget */
@@ -60,7 +66,7 @@ luaH_notebook_current(lua_State *L)
     if (i == -1)
         return 0;
 
-    widget_t *child = notebook_atindex(L, d, i);
+    widget_t *child = notebook_atindex(L, w, i);
     return luaH_object_push(L, child->ref);
 }
 
@@ -86,21 +92,14 @@ luaH_notebook_remove(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     notebook_data_t *d = w->data;
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
-
-    if (!child->widget)
-        luaL_error(L, "unable to add non-gtk widget");
+    widget_t *child = luaH_widget_checkgtk(L,
+            luaH_checkudata(L, 2, &widget_class));
 
     if (!child->parent || child->parent != w)
         luaL_error(L, "widget not in this notebook");
 
     gint i = gtk_notebook_page_num(GTK_NOTEBOOK(d->nbook), child->widget);
     gtk_notebook_remove_page(GTK_NOTEBOOK(d->nbook), i);
-
-    /* remove reverse lookup */
-    g_hash_table_remove(d->children, (gpointer) child->widget);
-
-    child->parent = NULL;
 
     return 0;
 }
@@ -111,20 +110,18 @@ notebook_insert(lua_State *L, widget_t *w, widget_t *child, gint i)
 {
     notebook_data_t *d = w->data;
 
-    if (!child->widget)
-        luaL_error(L, "unable to insert non-gtk widget");
+    luaH_widget_checkgtk(L, w);
+    luaH_widget_checkgtk(L, child);
 
-    // TODO Should I steal children from their parents?
     if (child->parent || child->window)
-        luaL_error(L, "widget already has parent");
-
-    gint ret = gtk_notebook_insert_page(GTK_NOTEBOOK(d->nbook),
-            child->widget, NULL, i);
-
-    child->parent = w;
+        luaL_error(L, "widget already has parent window");
 
     /* add reverse widget lookup by gtk widget */
     g_hash_table_insert(d->children, child->widget, child);
+    child->parent = w;
+
+    gint ret = gtk_notebook_insert_page(GTK_NOTEBOOK(d->nbook),
+            GTK_WIDGET(child->widget), NULL, i);
 
     /* return tab index */
     lua_pushnumber(L, ret);
@@ -135,20 +132,14 @@ notebook_insert(lua_State *L, widget_t *w, widget_t *child, gint i)
 static gint
 luaH_notebook_insert(lua_State *L)
 {
-    debug("notebook insert");
-    luaH_dumpstack(L);
-
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     notebook_data_t *d = w->data;
-
     /* get index */
     gint i = luaL_checknumber(L, 2);
     if (i != -1)
         i--;
     luaH_notebook_checkindex(L, d->nbook, i);
-
     widget_t *child = luaH_checkudata(L, 3, &widget_class);
-
     return notebook_insert(L, w, child, i);
 }
 
@@ -260,6 +251,42 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
     return 0;
 }
 
+void
+page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
+{
+    (void) i;
+    (void) nbook;
+
+    notebook_data_t *d = w->data;
+    widget_t *child = g_hash_table_lookup(d->children, widget);
+
+    lua_State *L = luakit.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_push(L, child->ref);
+    luaH_object_emit_signal(L, -1, "attached", 0);
+    luaH_object_emit_signal(L, -2, "page-added", 1);
+    lua_pop(L, -1);
+}
+
+void
+page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
+{
+    (void) i;
+    (void) nbook;
+
+    notebook_data_t *d = w->data;
+    widget_t *child = g_hash_table_lookup(d->children, widget);
+    g_hash_table_remove(d->children, widget);
+    child->parent = NULL;
+
+    lua_State *L = luakit.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_push(L, child->ref);
+    luaH_object_emit_signal(L, -1, "detached", 0);
+    luaH_object_emit_signal(L, -2, "page-removed", 1);
+    lua_pop(L, -1);
+}
+
 static void
 notebook_destructor(widget_t *w)
 {
@@ -272,7 +299,6 @@ notebook_destructor(widget_t *w)
     /* destroy lookup table */
     g_hash_table_destroy(d->children);
 }
-
 
 widget_t *
 widget_notebook(widget_t *w)
@@ -287,6 +313,9 @@ widget_notebook(widget_t *w)
     w->widget = d->nbook = gtk_notebook_new();
     gtk_notebook_set_show_border(GTK_NOTEBOOK(d->nbook), FALSE);
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(d->nbook), TRUE);
+
+    g_signal_connect(GTK_OBJECT(d->nbook), "page-added", G_CALLBACK(page_added_cb), w);
+    g_signal_connect(GTK_OBJECT(d->nbook), "page-removed", G_CALLBACK(page_removed_cb), w);
 
     gtk_widget_show(d->nbook);
 

@@ -171,6 +171,8 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 static void
 webview_destructor(widget_t *w)
 {
+    debug("destructing widget");
+
     webview_data_t *d = w->data;
 
     /* destory gtk widgets */
@@ -179,7 +181,9 @@ webview_destructor(widget_t *w)
 
     g_free(d);
     d = NULL;
+    w->widget = NULL;
     w->parent = NULL;
+    w->window = NULL;
 }
 
 widget_t *

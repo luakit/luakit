@@ -169,13 +169,17 @@ luaH_widget_get_type(lua_State *L, widget_t *w)
 static gint
 luaH_widget_get_parent(lua_State *L, widget_t *w)
 {
-    // TODO: Check if parent is the root window and return the window
-    // object.
-    if (!w->parent)
-        return 0;
+    if (w->parent) {
+        luaH_object_push(L, w->parent->ref);
+        return 1;
+    }
 
-    luaH_object_push(L, w->parent->ref);
-    return 1;
+    if (w->window) {
+        luaH_object_push(L, w->window->ref);
+        return 1;
+    }
+
+    return 0;
 }
 
 void

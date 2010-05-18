@@ -19,6 +19,12 @@
  *
  */
 
+/* TODO
+ *  - On window destroy detach the child widget
+ *  - Add some way of getting a list or count of the number of windows active
+ *  - Add ability to remove and change child widget on the fly
+ */
+
 #include "luakit.h"
 #include "luah.h"
 #include "window.h"
@@ -26,12 +32,20 @@
 LUA_OBJECT_FUNCS(window_class, window_t, window);
 
 void
-destroy_win_cb(window_t *w)
+destroy_win_cb(GtkObject *win, window_t *w)
 {
-    if (w->win) {
-        gtk_widget_destroy(w->win);
-        w->win = NULL;
-    }
+    (void) win;
+
+    if (!w->win)
+        return;
+
+    lua_State *L = luakit.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "destroy", 0);
+    lua_pop(L, -1);
+
+    gtk_widget_destroy(w->win);
+    w->win = NULL;
 }
 
 static gint
@@ -39,9 +53,45 @@ luaH_window_gc(lua_State *L)
 {
     window_t *w = luaH_checkudata(L, 1, &window_class);
     if (w->win)
-        destroy_win_cb(w);
+        destroy_win_cb(NULL, w);
 
     return luaH_object_gc(L);
+}
+
+static void
+child_add_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
+{
+    (void) win;
+    (void) widget;
+    debug("child add cb");
+
+
+    widget_t *child = w->child;
+
+    lua_State *L = luakit.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_push(L, child->ref);
+    luaH_object_emit_signal(L, -1, "attached", 0);
+    luaH_object_emit_signal(L, -2, "add", 1);
+    lua_pop(L, -1);
+}
+
+static void
+child_remove_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
+{
+    (void) win;
+    (void) widget;
+
+    widget_t *child = w->child;
+    w->child = NULL;
+    child->parent = NULL;
+
+    lua_State *L = luakit.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_push(L, child->ref);
+    luaH_object_emit_signal(L, -1, "detached", 0);
+    luaH_object_emit_signal(L, -2, "remove", 1);
+    lua_pop(L, -1);
 }
 
 static gint
@@ -57,7 +107,11 @@ luaH_window_new(lua_State *L)
     w->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_wmclass(GTK_WINDOW(w->win), "luakit", "luakit");
     gtk_window_set_default_size(GTK_WINDOW(w->win), 800, 600);
-    g_signal_connect(G_OBJECT(w->win), "destroy", G_CALLBACK(destroy_win_cb), w);
+
+    /* Attach callbacks to window signals */
+    g_signal_connect(G_OBJECT(w->win), "destroy", G_CALLBACK(destroy_win_cb),  w);
+    g_signal_connect(G_OBJECT(w->win), "add",     G_CALLBACK(child_add_cb),    w);
+    g_signal_connect(G_OBJECT(w->win), "remove",  G_CALLBACK(child_remove_cb), w);
 
     /* show new window */
     gtk_widget_show(w->win);
@@ -104,8 +158,10 @@ static gint
 luaH_window_set_title(lua_State *L, window_t *w)
 {
     size_t len;
-    const gchar *title = luaL_checklstring(L, 3, &len);
-    gtk_window_set_title(GTK_WINDOW(w->win), g_strdup(title));
+    if (w->title)
+        g_free(w->title);
+    w->title = g_strdup(luaL_checklstring(L, 3, &len));
+    gtk_window_set_title(GTK_WINDOW(w->win), w->title);
     luaH_object_emit_signal(L, 1, "property::title", 0);
     return 0;
 }
@@ -113,7 +169,7 @@ luaH_window_set_title(lua_State *L, window_t *w)
 static gint
 luaH_window_get_title(lua_State *L, window_t *w)
 {
-    lua_pushstring(L, w->title ? w->title : "");
+    lua_pushstring(L, NONULL(w->title));
     return 1;
 }
 
@@ -121,34 +177,26 @@ static gint
 luaH_window_set_child(lua_State *L)
 {
     window_t *w = luaH_checkudata(L, 1, &window_class);
+    widget_t *child = luaH_widget_checkgtk(L,
+            luaH_checkudata(L, 2, &widget_class));
 
-    /* Check new child */
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
-    // TODO Should I steal children from their parents?
+    if (w->child)
+        luaL_error(L, "window already has child widget");
+
     if (child->parent || child->window)
-        luaL_error(L, "child widget already has a parent");
+        luaL_error(L, "widget already has parent window");
 
-    /* Detach old child widget */
-    if (w->child) {
-        luaH_object_push(L, w->child->ref);
-        w->child->window = NULL;
-        w->child = NULL;
-        luaH_object_emit_signal(L, 1, "remove", 1);
-        //TODO Should I raise a "detached" signal on the widget?
-    }
-
-    debug("child gtk widget %p", child->widget);
-    gtk_container_add(GTK_CONTAINER(w->win), GTK_WIDGET(child->widget));
     child->window = w;
-    luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, 1, "add", 1);
+    w->child = child;
+
+    gtk_container_add(GTK_CONTAINER(w->win), GTK_WIDGET(child->widget));
     return 0;
 }
 
 static gint
 luaH_window_get_child(lua_State *L, window_t *w)
 {
-    if (!w->child)
+    if (w->child)
         return 0;
 
     luaH_object_push(L, w->child);
