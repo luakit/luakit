@@ -2,16 +2,16 @@
 include config.mk
 
 # Token lib generation
-TGPERF = common/tokenize.gperf
-TSRC   = common/tokenize.c
-THEAD  = common/tokenize.h
-TOBJ   = common/tokenize.o
+GPERF = common/tokenize.gperf
+GSRC  = common/tokenize.c
+GHEAD = common/tokenize.h
 
-SRCS  = $(filter-out ${TSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard widgets/*.c)) ${TSRC}
-HEADS = $(filter-out ${THEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${THEAD}
-OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
+SRCS    = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard widgets/*.c)) ${GSRC}
+HEADS   = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${GHEAD}
+OBJS    = $(foreach obj,$(SRCS:.c=.o),$(obj))
+TARGETS = luakit
 
-all: options newline luakit
+all: options newline ${TARGETS}
 
 options:
 	@echo luakit build options:
@@ -27,24 +27,23 @@ options:
 	@echo "SRCS       = ${SRCS}"
 	@echo "HEADS      = ${HEADS}"
 	@echo "OBJS       = ${OBJS}"
+	@echo "TARGETS    = ${TARGETS}"
 
-
-${TSRC} ${THEAD}: ${TGPERF}
+${GSRC} ${GHEAD}: ${GPERF}
 	./build-utils/gperf.sh $< $@
 
 .c.o:
 	@echo ${CC} -c $< -o $@
 	@${CC} -c ${CFLAGS} ${CPPFLAGS} $< -o $@
 
-
 ${OBJS}: ${HEADS} config.mk
 
-luakit: ${OBJS}
+${TARGETS}: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -rf luakit ${OBJS} ${TSRC} ${THEAD}
+	rm -rf ${TARGETS} ${OBJS} ${GSRC} ${GHEAD}
 
 install:
 	@echo Are you insane?
