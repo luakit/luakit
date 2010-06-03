@@ -46,6 +46,11 @@ destroy_win_cb(GtkObject *win, window_t *w)
 
     gtk_widget_destroy(w->win);
     w->win = NULL;
+
+    if (w->icon) {
+        g_free(w->icon);
+        w->icon = NULL;
+    }
 }
 
 static gint
@@ -64,7 +69,6 @@ child_add_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
     (void) win;
     (void) widget;
     debug("child add cb");
-
 
     widget_t *child = w->child;
 
@@ -112,6 +116,8 @@ luaH_window_new(lua_State *L)
     g_signal_connect(G_OBJECT(w->win), "destroy", G_CALLBACK(destroy_win_cb),  w);
     g_signal_connect(G_OBJECT(w->win), "add",     G_CALLBACK(child_add_cb),    w);
     g_signal_connect(G_OBJECT(w->win), "remove",  G_CALLBACK(child_remove_cb), w);
+
+    w->icon = NULL;
 
     /* show new window */
     gtk_widget_show(w->win);
@@ -170,6 +176,28 @@ static gint
 luaH_window_get_title(lua_State *L, window_t *w)
 {
     lua_pushstring(L, NONULL(w->title));
+    return 1;
+}
+
+static gint
+luaH_window_set_icon(lua_State *L, window_t *w)
+{
+    size_t len;
+    if (w->icon)
+        g_free(w->icon);
+    w->icon = g_strdup(luaL_checklstring(L, 3, &len));
+    if (file_exists(w->icon))
+        gtk_window_set_icon_from_file(GTK_WINDOW(w->win), w->icon, NULL);
+    else
+        warn("Unable to open icon at \"%s\"", w->icon);
+    luaH_object_emit_signal(L, 1, "property::icon", 0);
+    return 0;
+}
+
+static gint
+luaH_window_get_icon(lua_State *L, window_t *w)
+{
+    lua_pushstring(L, NONULL(w->icon));
     return 1;
 }
 
@@ -235,6 +263,11 @@ window_class_setup(lua_State *L)
             NULL,
             (lua_class_propfunc_t) luaH_window_get_child,
             NULL);
+
+    luaH_class_add_property(&window_class, L_TK_ICON,
+            (lua_class_propfunc_t) luaH_window_set_icon,
+            (lua_class_propfunc_t) luaH_window_get_icon,
+            (lua_class_propfunc_t) luaH_window_set_icon);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

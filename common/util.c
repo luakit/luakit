@@ -59,3 +59,9 @@ _debug(int line, const char *fct, const char *fmt, ...) {
     va_end(ap);
     g_fprintf(stderr, "\n");
 }
+
+gboolean
+file_exists(const gchar *filename)
+{
+    return (access(filename, F_OK) == 0);
+}
