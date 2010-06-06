@@ -45,25 +45,6 @@ sigchld(int signum) {
     while(0 < waitpid(-1, NULL, WNOHANG));
 }
 
-/* init application */
-void
-init(int argc, char *argv[]) {
-    Luakit *l = &luakit;
-    l->retval = EXIT_SUCCESS;
-
-    /* init global signals tree */
-    l->signals = signal_tree_new();
-
-    /* clean up any zombies immediately */
-    sigchld(0);
-    gtk_init(&argc, &argv);
-    if (!g_thread_supported())
-        g_thread_init(NULL);
-
-    /* init luakit struct */
-    l->execpath = g_strdup(argv[0]);
-}
-
 /* load command line options into luakit and return uris to load */
 gchar**
 parseopts(int argc, char *argv[]) {
@@ -106,17 +87,15 @@ parseopts(int argc, char *argv[]) {
         return argv+1;
 }
 
-int
-main(int argc, char *argv[]) {
+void
+init_lua(gchar **uris)
+{
     Luakit *l = &luakit;
-    gchar **uris = NULL, *uri = NULL;
+    gchar *uri;
     xdgHandle xdg;
 
-    /* init app */
-    init(argc, argv);
-
-    /* parse command line opts and get uris to load */
-    uris = parseopts(argc, argv);
+    /* init global signals tree */
+    l->signals = signal_tree_new();
 
     /* get XDG basedir data */
     xdgInitHandle(&xdg);
@@ -125,24 +104,37 @@ main(int argc, char *argv[]) {
     luaH_init(&xdg);
 
     /* push a table of the statup uris */
-    lua_newtable(luakit.L);
+    lua_newtable(l->L);
     for (gint i = 0; (uri = uris[i]); i++) {
-        lua_pushstring(luakit.L, uri);
-        lua_rawseti(luakit.L, -2, i + 1);
+        lua_pushstring(l->L, uri);
+        lua_rawseti(l->L, -2, i + 1);
     }
-    lua_setglobal(luakit.L, "uris");
+    lua_setglobal(l->L, "uris");
 
     /* parse and run configuration file */
     if(!luaH_parserc(&xdg, l->confpath, TRUE))
-        fatal("couldn't find any rc file");
-
+        fatal("couldn't find rc file \"%s\"", l->confpath);
 
     /* we are finished with this */
     xdgWipeHandle(&xdg);
+}
 
-    /* enter main gtk loop */
+int
+main(int argc, char *argv[]) {
+    gchar **uris = NULL;
+
+    /* clean up any zombies */
+    sigchld(0);
+
+    gtk_init(&argc, &argv);
+    if (!g_thread_supported())
+        g_thread_init(NULL);
+
+    /* parse command line opts and get uris to load */
+    uris = parseopts(argc, argv);
+
+    init_lua(uris);
     gtk_main();
-
     return EXIT_SUCCESS;
 }
 

@@ -10,7 +10,6 @@ end)
 layout = widget{type = "vbox"}
 win:set_child(layout)
 
-
 -- Create tabbed notebook to store webviews
 nbook = widget{type = "notebook"}
 layout:pack_start(nbook, true, true, 0)

@@ -40,18 +40,12 @@
 #include "common/signal.h"
 
 typedef struct {
-    /* Root window gtk widgets */
-    GtkWidget *win, *vbox;
     /* Path to the config file */
     gchar *confpath;
-    /* Path of the applications executable (argv[0]) */
-    gchar *execpath;
     /* Lua VM state */
     lua_State *L;
     /* global signals */
     signal_t *signals;
-    /* exit return code */
-    int retval;
 } Luakit;
 
 /* Global config/state object */
