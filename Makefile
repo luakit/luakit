@@ -6,12 +6,11 @@ GPERF = common/tokenize.gperf
 GSRC  = common/tokenize.c
 GHEAD = common/tokenize.h
 
-SRCS    = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard widgets/*.c)) ${GSRC}
-HEADS   = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${GHEAD}
-OBJS    = $(foreach obj,$(SRCS:.c=.o),$(obj))
-TARGETS = luakit
+SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard widgets/*.c)) ${GSRC}
+HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${GHEAD}
+OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-all: options newline ${TARGETS}
+all: options newline luakit
 
 options:
 	@echo luakit build options:
@@ -38,12 +37,12 @@ ${GSRC} ${GHEAD}: ${GPERF}
 
 ${OBJS}: ${HEADS} config.mk
 
-${TARGETS}: ${OBJS}
+luakit: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -rf ${TARGETS} ${OBJS} ${GSRC} ${GHEAD}
+	rm -rf luakit ${OBJS} ${GSRC} ${GHEAD}
 
 install:
 	@echo Are you insane?
