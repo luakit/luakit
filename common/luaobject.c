@@ -200,15 +200,16 @@ signal_object_emit(lua_State *L, signal_t *signals,
  * `oud` is the object index on the stack.
  * `name` is the name of the signal.
  * `nargs` is the number of arguments to pass to the called functions. */
-void
+gint
 luaH_object_emit_signal(lua_State *L, gint oud,
-        const gchar *name, gint nargs) {
+        const gchar *name, gint nargs, gint nret) {
+    gint ret, top, bot = lua_gettop(L) - nargs + 1;
     gint oud_abs = luaH_absindex(L, oud);
     lua_object_t *obj = lua_touserdata(L, oud);
     if(!obj)
         luaL_error(L, "trying to emit signal on non-object");
 
-    debug("emitting \"%s\" on %p with %d args", name, obj, nargs);
+    debug("emitting \"%s\" on %p with %d args and %d nret", name, obj, nargs, nret);
 
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name, FALSE);
     if(sigfuncs) {
@@ -229,10 +230,34 @@ luaH_object_emit_signal(lua_State *L, gint oud,
             lua_pushvalue(L, - nargs - nbfunc - 1 + i);
             /* remove this first function */
             lua_remove(L, - nargs - nbfunc - 2 + i);
-            luaH_dofunction(L, nargs + 1, 0);
+            top = lua_gettop(L) - 2 - nargs;
+            luaH_dofunction(L, nargs + 1, LUA_MULTRET);
+            ret = lua_gettop(L) - top;
+
+            /* Adjust the number of results to match nret (including 0) */
+            if (nret != LUA_MULTRET && ret != nret) {
+                /* Pad with nils */
+                for (; ret < nret; ret++)
+                    lua_pushnil(L);
+                /* Or truncate stack */
+                if (ret > nret) {
+                    lua_pop(L, ret - nret);
+                    ret = nret;
+                }
+            }
+
+            /* Note that only if nret && ret will the signal execution stop */
+            if (ret) {
+                /* Remove all signal functions and args from the stack */
+                for (gint i = bot; i < top; i++)
+                    lua_remove(L, bot);
+                /* Return the number of returned arguments */
+                return ret;
+            }
         }
     }
     lua_pop(L, nargs);
+    return 0;
 }
 
 gint
@@ -249,8 +274,7 @@ luaH_object_remove_signal_simple(lua_State *L) {
 
 gint
 luaH_object_emit_signal_simple(lua_State *L) {
-    luaH_object_emit_signal(L, 1, luaL_checkstring(L, 2), lua_gettop(L) - 2);
-    return 0;
+    return luaH_object_emit_signal(L, 1, luaL_checkstring(L, 2), lua_gettop(L) - 2, LUA_MULTRET);
 }
 
 gint

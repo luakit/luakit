@@ -152,7 +152,7 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
     // TODO: This is very wasteful
     w->type = g_strdup(type);
 
-    luaH_object_emit_signal(L, -3, "init", 0);
+    luaH_object_emit_signal(L, -3, "init", 0, 0);
     return 0;
 }
 

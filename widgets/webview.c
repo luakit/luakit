@@ -49,7 +49,7 @@ progress_change_cb(WebKitWebView *v, gint p, widget_t *w) {
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::progress", 0);
+    luaH_object_emit_signal(L, -1, "property::progress", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -66,7 +66,7 @@ title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::title", 0);
+    luaH_object_emit_signal(L, -1, "property::title", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -81,8 +81,8 @@ load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::progress", 0);
-    luaH_object_emit_signal(L, -1, "webview::load-start", 0);
+    luaH_object_emit_signal(L, -1, "property::progress", 0, 0);
+    luaH_object_emit_signal(L, -1, "webview::load-start", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -98,8 +98,8 @@ load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::uri", 0);
-    luaH_object_emit_signal(L, -1, "webview::load-commit", 0);
+    luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
+    luaH_object_emit_signal(L, -1, "webview::load-commit", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -110,7 +110,7 @@ load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "webview::load-finish", 0);
+    luaH_object_emit_signal(L, -1, "webview::load-finish", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -159,7 +159,7 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
         d->uri = g_strrstr(str, "://") ? g_strdup(str) :
             g_strdup_printf("http://%s", str);
         webkit_web_view_load_uri(d->view, d->uri);
-        luaH_object_emit_signal(L, 1, "property::uri", 0);
+        luaH_object_emit_signal(L, 1, "property::uri", 0, 0);
         break;
 
       default:

@@ -41,7 +41,7 @@ destroy_win_cb(GtkObject *win, window_t *w)
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "destroy", 0);
+    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, -1);
 
     gtk_widget_destroy(w->win);
@@ -75,8 +75,8 @@ child_add_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -1, "attached", 0);
-    luaH_object_emit_signal(L, -2, "add", 1);
+    luaH_object_emit_signal(L, -1, "attached", 0, 0);
+    luaH_object_emit_signal(L, -2, "add", 1, 0);
     lua_pop(L, -1);
 }
 
@@ -93,8 +93,8 @@ child_remove_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -1, "detached", 0);
-    luaH_object_emit_signal(L, -2, "remove", 1);
+    luaH_object_emit_signal(L, -1, "detached", 0, 0);
+    luaH_object_emit_signal(L, -2, "remove", 1, 0);
     lua_pop(L, -1);
 }
 
@@ -124,7 +124,7 @@ luaH_window_new(lua_State *L)
 
     gtk_window_set_title(GTK_WINDOW(w->win), "luakit");
 
-    luaH_object_emit_signal(L, -1, "init", 0);
+    luaH_object_emit_signal(L, -1, "init", 0, 0);
 
     return 1;
 }
@@ -168,7 +168,7 @@ luaH_window_set_title(lua_State *L, window_t *w)
         g_free(w->title);
     w->title = g_strdup(luaL_checklstring(L, 3, &len));
     gtk_window_set_title(GTK_WINDOW(w->win), w->title);
-    luaH_object_emit_signal(L, 1, "property::title", 0);
+    luaH_object_emit_signal(L, 1, "property::title", 0, 0);
     return 0;
 }
 
@@ -190,7 +190,7 @@ luaH_window_set_icon(lua_State *L, window_t *w)
         gtk_window_set_icon_from_file(GTK_WINDOW(w->win), w->icon, NULL);
     else
         warn("Unable to open icon at \"%s\"", w->icon);
-    luaH_object_emit_signal(L, 1, "property::icon", 0);
+    luaH_object_emit_signal(L, 1, "property::icon", 0, 0);
     return 0;
 }
 

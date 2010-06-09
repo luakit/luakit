@@ -71,7 +71,7 @@ luaH_textarea_newindex(lua_State *L, luakit_token_t token)
             g_free(d->text);
         d->text = g_strdup(tmp);
         gtk_label_set_markup(GTK_LABEL(d->label), d->text);
-        luaH_object_emit_signal(L, 1, "property::text", 0);
+        luaH_object_emit_signal(L, 1, "property::text", 0, 0);
         break;
 
       default:

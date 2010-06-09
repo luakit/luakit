@@ -263,8 +263,8 @@ page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -1, "attached", 0);
-    luaH_object_emit_signal(L, -2, "page-added", 1);
+    luaH_object_emit_signal(L, -1, "attached", 0, 0);
+    luaH_object_emit_signal(L, -2, "page-added", 1, 0);
     lua_pop(L, -1);
 }
 
@@ -282,8 +282,8 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -1, "detached", 0);
-    luaH_object_emit_signal(L, -2, "page-removed", 1);
+    luaH_object_emit_signal(L, -1, "detached", 0, 0);
+    luaH_object_emit_signal(L, -2, "page-removed", 1, 0);
     lua_pop(L, -1);
 }
 

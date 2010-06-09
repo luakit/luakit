@@ -134,8 +134,8 @@ void luaH_object_add_signal(lua_State *L, gint oud,
         const gchar *name, gint ud);
 void luaH_object_remove_signal(lua_State *L, gint oud,
         const gchar *name , gint ud);
-void luaH_object_emit_signal(lua_State *L, gint oud,
-        const gchar *name, gint nargs);
+gint luaH_object_emit_signal(lua_State *L, gint oud,
+        const gchar *name, gint nargs, gint nret);
 
 gint luaH_object_add_signal_simple(lua_State *L);
 gint luaH_object_remove_signal_simple(lua_State *L);
