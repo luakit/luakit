@@ -113,7 +113,7 @@ init_lua(gchar **uris)
 
     /* parse and run configuration file */
     if(!luaH_parserc(&xdg, l->confpath, TRUE))
-        fatal("couldn't find rc file \"%s\"", l->confpath);
+        fatal("couldn't find rc file");
 
     /* we are finished with this */
     xdgWipeHandle(&xdg);
