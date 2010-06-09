@@ -121,12 +121,8 @@ luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
         lua_class_propfunc_t cb_newindex) {
 
     lua_class_property_t *prop;
-
-    if (token == L_TK_UNKNOWN)
-        warn("Adding L_TK_UNKNOWN to properties array!");
-
-    if(!(prop = calloc(1, sizeof(lua_class_property_t))))
-        fatal("Cannot malloc!\n");
+    g_assert(token != L_TK_UNKNOWN);
+    prop = g_new0(lua_class_property_t, 1);
 
     /* populate property */
     prop->new = cb_new;
