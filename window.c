@@ -42,7 +42,7 @@ destroy_win_cb(GtkObject *win, window_t *w)
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
-    lua_pop(L, -1);
+    lua_pop(L, 1);
 
     gtk_widget_destroy(w->win);
     w->win = NULL;
@@ -77,7 +77,7 @@ child_add_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -1, "attached", 0, 0);
     luaH_object_emit_signal(L, -2, "add", 1, 0);
-    lua_pop(L, -1);
+    lua_pop(L, 1);
 }
 
 static void
@@ -95,7 +95,7 @@ child_remove_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -1, "detached", 0, 0);
     luaH_object_emit_signal(L, -2, "remove", 1, 0);
-    lua_pop(L, -1);
+    lua_pop(L, 1);
 }
 
 static gint
