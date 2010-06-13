@@ -117,6 +117,9 @@ luaH_window_new(lua_State *L)
     g_signal_connect(G_OBJECT(w->win), "add",     G_CALLBACK(child_add_cb),    w);
     g_signal_connect(G_OBJECT(w->win), "remove",  G_CALLBACK(child_remove_cb), w);
 
+    /* Catch all events */
+    gdk_window_set_events(GTK_WIDGET(w->win)->window, GDK_ALL_EVENTS_MASK);
+
     w->icon = NULL;
 
     /* show new window */
