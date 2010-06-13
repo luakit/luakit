@@ -35,17 +35,24 @@ typedef struct
     GtkWidget *scroll;
 
     /* state variables */
-    gchar *uri;
-    gchar *title;
-    gint progress;
+    gchar     *uri;
+    gchar     *title;
+    gint      progress;
+    gboolean  disable_plugins;
+    gboolean  disable_scripts;
 
 } webview_data_t;
 
 /* Make update_uri, update_title, .. funcs */
 STR_PROP_FUNC(webview_data_t, uri,      FALSE);
 STR_PROP_FUNC(webview_data_t, title,    FALSE);
-
 INT_PROP_FUNC(webview_data_t, progress, TRUE);
+
+WebKitWebSettings*
+view_settings(WebKitWebView *view)
+{
+    return webkit_web_view_get_settings(view);
+}
 
 void
 progress_cb(WebKitWebView *v, gint p, widget_t *w) {
@@ -120,6 +127,14 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         lua_pushnumber(L, d->progress);
         return 1;
 
+      case L_TK_DISABLE_SCRIPTS:
+        lua_pushboolean(L, d->disable_scripts);
+        return 1;
+
+      case L_TK_DISABLE_PLUGINS:
+        lua_pushboolean(L, d->disable_plugins);
+        return 1;
+
       default:
         break;
     }
@@ -145,6 +160,20 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
             g_strdup_printf("http://%s", str);
         webkit_web_view_load_uri(d->view, d->uri);
         luaH_object_emit_signal(L, 1, "property::uri", 0, 0);
+        break;
+
+      case L_TK_DISABLE_SCRIPTS:
+        d->disable_scripts = luaH_checkboolean(L, 3);
+        g_object_set(G_OBJECT(view_settings(d->view)), "enable-scripts",
+            !d->disable_scripts, NULL);
+        luaH_object_emit_signal(L, 1, "property::disable_scripts", 0, 0);
+        break;
+
+      case L_TK_DISABLE_PLUGINS:
+        d->disable_plugins = luaH_checkboolean(L, 3);
+        g_object_set(G_OBJECT(view_settings(d->view)), "enable-plugins",
+            !d->disable_plugins, NULL);
+        luaH_object_emit_signal(L, 1, "property::disable_plugins", 0, 0);
         break;
 
       default:
@@ -179,9 +208,6 @@ widget_webview(widget_t *w)
     w->destructor = webview_destructor;
 
     webview_data_t *d = w->data = g_new0(webview_data_t, 1);
-
-    /* set initial values */
-    d->progress = 0;
 
     /* create webkit webview widget */
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());

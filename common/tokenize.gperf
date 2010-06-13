@@ -3,9 +3,12 @@ child
 children
 count
 current
+disable_plugins
+disable_scripts
 focus
 hbox
 homogeneous
+icon
 indexof
 insert
 label
@@ -28,4 +31,3 @@ uri
 vbox
 visible
 webview
-icon
