@@ -19,13 +19,7 @@
  *
  */
 
-#include "luakit.h"
-#include "common/util.h"
-#include "common/luaclass.h"
-#include "common/luaobject.h"
-
 #include "widget.h"
-#include "luah.h"
 
 LUA_OBJECT_FUNCS(widget_class, widget_t, widget);
 

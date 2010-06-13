@@ -24,7 +24,12 @@
 
 typedef struct widget_t widget_t;
 
+#include "luakit.h"
+#include "common/util.h"
+#include "common/luaclass.h"
+#include "common/luaobject.h"
 #include "window.h"
+#include "luah.h"
 
 typedef widget_t *(widget_constructor_t)(widget_t *);
 typedef void (widget_destructor_t)(widget_t *);
