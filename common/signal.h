@@ -22,6 +22,7 @@
 #ifndef LUAKIT_COMMON_SIGNAL
 #define LUAKIT_COMMON_SIGNAL
 
+#include <glib/gstrfuncs.h>
 #include <glib/garray.h>
 #include <glib/gtree.h>
 
@@ -53,7 +54,6 @@ signal_array_destroy(signal_array_t *sigfuncs) {
 /* wrapper around g_ptr_array_add */
 static inline void
 signal_array_insert(signal_array_t *sigfuncs, gpointer ref) {
-    debug("inserting %p into ptr array at %p", ref, sigfuncs);
     g_ptr_array_add((GPtrArray *) sigfuncs, ref);
 }
 
@@ -87,39 +87,31 @@ signal_lookup(signal_t *signals, const gchar *name, gboolean create) {
     /* create if asked and not found */
     if (create && !sigfuncs) {
         sigfuncs = signal_array_new();
-        g_tree_insert((GTree *) signals, (gpointer) name, sigfuncs);
+        g_tree_insert((GTree *) signals, (gpointer) g_strdup(name), sigfuncs);
     }
     return sigfuncs;
 }
 
 static inline void
 signal_add(signal_t *signals, const gchar *name, gpointer ref) {
-
     /* find ptr array for this signal */
     signal_array_t *sigfuncs = signal_lookup(signals, name, TRUE);
-
     /* add the handler to this signals ptr array */
-    debug("signal add \"%s\" to %p", name, signals);
-
     g_ptr_array_add((GPtrArray *) sigfuncs, ref);
 }
 
 static inline void
 signal_remove(signal_t *signals, const gchar *name, gpointer ref) {
     if(!signals) return;
-
     /* try to find ptr array for this signal */
     signal_array_t *sigfuncs = signal_lookup(signals, name, FALSE);
-
     /* remove the signal handler if found */
     if (sigfuncs)
         signal_array_remove(sigfuncs, ref);
-
     /* remove empty sigfuncs array from signals */
     if (!sigfuncs->len)
         signal_tree_remove(signals, name);
 }
 
 #endif
-
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
