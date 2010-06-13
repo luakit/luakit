@@ -234,20 +234,20 @@ luaH_object_emit_signal(lua_State *L, gint oud,
             luaH_dofunction(L, nargs + 1, LUA_MULTRET);
             ret = lua_gettop(L) - top;
 
-            /* Adjust the number of results to match nret (including 0) */
-            if (nret != LUA_MULTRET && ret != nret) {
-                /* Pad with nils */
-                for (; ret < nret; ret++)
-                    lua_pushnil(L);
-                /* Or truncate stack */
-                if (ret > nret) {
-                    lua_pop(L, ret - nret);
-                    ret = nret;
-                }
-            }
-
             /* Note that only if nret && ret will the signal execution stop */
             if (ret) {
+                /* Adjust the number of results to match nret (including 0) */
+                if (nret != LUA_MULTRET && ret != nret) {
+                    /* Pad with nils */
+                    for (; ret < nret; ret++)
+                        lua_pushnil(L);
+                    /* Or truncate stack */
+                    if (ret > nret) {
+                        lua_pop(L, ret - nret);
+                        ret = nret;
+                    }
+                }
+
                 /* Remove all signal functions and args from the stack */
                 for (gint i = bot; i < top; i++)
                     lua_remove(L, bot);
@@ -291,7 +291,6 @@ luaH_object_tostring(lua_State *L) {
 gint
 luaH_object_gc(lua_State *L) {
     lua_object_t *item = lua_touserdata(L, 1);
-
     if (item->signals)
         signal_tree_destroy(item->signals);
     return 0;
