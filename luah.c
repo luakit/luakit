@@ -19,6 +19,8 @@
  *
  */
 
+#include <gtk/gtk.h>
+
 #include "common/util.h"
 #include "common/lualib.h"
 
@@ -26,6 +28,48 @@
 #include "luah.h"
 #include "widget.h"
 #include "window.h"
+
+#define MODKEY(key, name)           \
+    if (state & GDK_##key##_MASK) { \
+        lua_pushstring(L, name);    \
+        lua_rawseti(L, -2, i++);    \
+    }
+
+void
+luaH_modifier_table_push(lua_State *L, guint state) {
+    gint i = 1;
+    lua_newtable(L);
+    if (state & GDK_MODIFIER_MASK) {
+        MODKEY(SHIFT, "Shift");
+        MODKEY(LOCK, "Lock");
+        MODKEY(CONTROL, "Control");
+        MODKEY(MOD1, "Mod1");
+        MODKEY(MOD2, "Mod2");
+        MODKEY(MOD3, "Mod3");
+        MODKEY(MOD4, "Mod4");
+        MODKEY(MOD5, "Mod5");
+    }
+}
+
+#undef MODKEY
+
+void
+luaH_keystr_push(lua_State *L, guint keyval)
+{
+    gchar ucs[7];
+    guint ulen;
+    guint32 ukval = gdk_keyval_to_unicode(keyval);
+
+    /* check for printable unicode character */
+    if (g_unichar_isgraph(ukval)) {
+        ulen = g_unichar_to_utf8(ukval, ucs);
+        ucs[ulen] = 0;
+        lua_pushstring(L, ucs);
+    }
+    /* sent keysym for non-printable characters */
+    else
+        lua_pushstring(L, gdk_keyval_name(keyval));
+}
 
 /* UTF-8 aware string length computing.
  * Returns the number of elements pushed on the stack. */

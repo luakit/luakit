@@ -155,6 +155,8 @@ gboolean luaH_isloop(lua_State *, gint);
 
 gint luaH_class_index_miss_property(lua_State *, lua_object_t *);
 gint luaH_class_newindex_miss_property(lua_State *, lua_object_t *);
+void luaH_modifier_table_push(lua_State *, guint);
+void luaH_keystr_push(lua_State *, guint);
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

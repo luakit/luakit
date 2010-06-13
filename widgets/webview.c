@@ -22,6 +22,7 @@
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 
+#include "widgets/common.h"
 #include "luakit.h"
 #include "luah.h"
 #include "widget.h"
@@ -41,7 +42,7 @@ typedef struct
 } webview_data_t;
 
 void
-progress_change_cb(WebKitWebView *v, gint p, widget_t *w) {
+progress_cb(WebKitWebView *v, gint p, widget_t *w) {
     (void) v;
 
     webview_data_t *d = w->data;
@@ -82,7 +83,7 @@ load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "property::progress", 0, 0);
-    luaH_object_emit_signal(L, -1, "webview::load-start", 0, 0);
+    luaH_object_emit_signal(L, -1, "load-start", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -99,7 +100,7 @@ load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
-    luaH_object_emit_signal(L, -1, "webview::load-commit", 0, 0);
+    luaH_object_emit_signal(L, -1, "load-commit", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -110,7 +111,7 @@ load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
 
     lua_State *L = luakit.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "webview::load-finish", 0, 0);
+    luaH_object_emit_signal(L, -1, "load-finish", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -202,11 +203,17 @@ widget_webview(widget_t *w)
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
 
     /* connect webview signals */
-    g_signal_connect(G_OBJECT(d->view), "title-changed", G_CALLBACK(title_changed_cb), w);
-    g_signal_connect(G_OBJECT(d->view), "load-started", G_CALLBACK(load_start_cb), w);
-    g_signal_connect(G_OBJECT(d->view), "load-committed", G_CALLBACK(load_commit_cb), w);
-    g_signal_connect(G_OBJECT(d->view), "load-finished", G_CALLBACK(load_finish_cb), w);
-    g_signal_connect(G_OBJECT(d->view), "load-progress-changed", G_CALLBACK(progress_change_cb), w);
+    g_object_connect((GObject*)d->view,
+      "signal::focus-in-event",        (GCallback)focus_cb,         w,
+      "signal::focus-out-event",       (GCallback)focus_cb,         w,
+      "signal::key-press-event",       (GCallback)key_press_cb,     w,
+      "signal::key-release-event",     (GCallback)key_release_cb,   w,
+      "signal::load-committed",        (GCallback)load_commit_cb,   w,
+      "signal::load-finished",         (GCallback)load_finish_cb,   w,
+      "signal::load-progress-changed", (GCallback)progress_cb,      w,
+      "signal::load-started",          (GCallback)load_start_cb,    w,
+      "signal::title-changed",         (GCallback)title_changed_cb, w,
+      NULL);
 
     /* create scrolled window for webview */
     w->widget = d->scroll = gtk_scrolled_window_new(NULL, NULL);

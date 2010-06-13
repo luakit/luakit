@@ -27,6 +27,7 @@
 #include "luakit.h"
 #include "luah.h"
 #include "widget.h"
+#include "widgets/common.h"
 
 typedef struct
 {
@@ -316,6 +317,15 @@ widget_notebook(widget_t *w)
 
     g_signal_connect(GTK_OBJECT(d->nbook), "page-added", G_CALLBACK(page_added_cb), w);
     g_signal_connect(GTK_OBJECT(d->nbook), "page-removed", G_CALLBACK(page_removed_cb), w);
+
+    g_object_connect((GObject*)d->nbook,
+      "signal::focus-in-event",    (GCallback)focus_cb,        w,
+      "signal::focus-out-event",   (GCallback)focus_cb,        w,
+      "signal::key-press-event",   (GCallback)key_press_cb,    w,
+      "signal::key-release-event", (GCallback)key_release_cb,  w,
+      "signal::page-added",        (GCallback)page_added_cb,   w,
+      "signal::page-removed",      (GCallback)page_removed_cb, w,
+      NULL);
 
     gtk_widget_show(d->nbook);
 
