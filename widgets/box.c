@@ -120,6 +120,8 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_box_newindex(lua_State *L, luakit_token_t token)
 {
+    size_t len;
+    gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     box_data_t *d = w->data;
 
@@ -134,8 +136,12 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
         break;
 
       default:
-        break;
+        return 0;
     }
+
+    tmp = g_strdup_printf("property::%s", luaL_checklstring(L, 2, &len));
+    luaH_object_emit_signal(L, 1, tmp, 0, 0);
+    g_free(tmp);
     return 0;
 }
 

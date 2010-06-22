@@ -57,28 +57,28 @@ luaH_textarea_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_textarea_newindex(lua_State *L, luakit_token_t token)
 {
-    size_t len = 0;
+    size_t len;
+    gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     textarea_data_t *d = w->data;
-    const gchar *tmp = NULL;
-    (void) d;
-    (void) len;
 
     switch(token)
     {
       case L_TK_TEXT:
-        tmp = luaL_checklstring(L, 3, &len);
+        tmp = (gchar*) luaL_checklstring(L, 3, &len);
         if (d->text)
             g_free(d->text);
         d->text = g_strdup(tmp);
         gtk_label_set_markup(GTK_LABEL(d->label), d->text);
-        luaH_object_emit_signal(L, 1, "property::text", 0, 0);
         break;
 
       default:
-        warn("trying to set unknown attribute on textarea widget");
-        break;
+        return 0;
     }
+
+    tmp = g_strdup_printf("property::%s", luaL_checklstring(L, 2, &len));
+    luaH_object_emit_signal(L, 1, tmp, 0, 0);
+    g_free(tmp);
     return 0;
 }
 

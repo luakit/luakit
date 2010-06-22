@@ -3,8 +3,11 @@ child
 children
 count
 current
+cursive_font_family
+default_font_family
 disable_plugins
 disable_scripts
+fantasy_font_family
 focus
 hbox
 homogeneous
@@ -12,12 +15,15 @@ icon
 indexof
 insert
 label
+monospace_font_family
 notebook
 pack_end
 pack_start
 parent
 progress
 remove
+sans_serif_font_family
+serif_font_family
 set_title
 show_border
 show_tabs

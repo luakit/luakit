@@ -38,6 +38,15 @@ typedef struct
     gchar     *uri;
     gchar     *title;
     gint      progress;
+
+    /* font settings */
+    gchar     *default_font_family;
+    gchar     *monospace_font_family;
+    gchar     *sans_serif_font_family;
+    gchar     *serif_font_family;
+    gchar     *fantasy_font_family;
+    gchar     *cursive_font_family;
+
     gboolean  disable_plugins;
     gboolean  disable_scripts;
 
@@ -47,12 +56,6 @@ typedef struct
 STR_PROP_FUNC(webview_data_t, uri,      FALSE);
 STR_PROP_FUNC(webview_data_t, title,    FALSE);
 INT_PROP_FUNC(webview_data_t, progress, TRUE);
-
-WebKitWebSettings*
-view_settings(WebKitWebView *view)
-{
-    return webkit_web_view_get_settings(view);
-}
 
 void
 progress_cb(WebKitWebView *v, gint p, widget_t *w) {
@@ -135,6 +138,30 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         lua_pushboolean(L, d->disable_plugins);
         return 1;
 
+      case L_TK_DEFAULT_FONT_FAMILY:
+        lua_pushstring(L, d->default_font_family);
+        return 1;
+
+      case L_TK_MONOSPACE_FONT_FAMILY:
+        lua_pushstring(L, d->monospace_font_family);
+        return 1;
+
+      case L_TK_SANS_SERIF_FONT_FAMILY:
+        lua_pushstring(L, d->sans_serif_font_family);
+        return 1;
+
+      case L_TK_SERIF_FONT_FAMILY:
+        lua_pushstring(L, d->serif_font_family);
+        return 1;
+
+      case L_TK_CURSIVE_FONT_FAMILY:
+        lua_pushstring(L, d->cursive_font_family);
+        return 1;
+
+      case L_TK_FANTASY_FONT_FAMILY:
+        lua_pushstring(L, d->fantasy_font_family);
+        return 1;
+
       default:
         break;
     }
@@ -145,40 +172,88 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_webview_newindex(lua_State *L, luakit_token_t token)
 {
-    size_t len = 0;
+    size_t len;
+    gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     webview_data_t *d = w->data;
-    const gchar *str = NULL;
+    GObject *settings = G_OBJECT(webkit_web_view_get_settings(d->view));
+
+#define SET_PROP(prop)                             \
+    tmp = (gchar*) luaL_checklstring(L, 3, &len);  \
+    if (prop) g_free(prop);                        \
+    prop = g_strdup(tmp);
 
     switch(token)
     {
       case L_TK_URI:
-        str = luaL_checklstring(L, 3, &len);
+        tmp = (gchar*) luaL_checklstring(L, 3, &len);
         if (d->uri)
             g_free(d->uri);
-        d->uri = g_strrstr(str, "://") ? g_strdup(str) :
-            g_strdup_printf("http://%s", str);
+        d->uri = g_strrstr(tmp, "://") ? g_strdup(tmp) :
+            g_strdup_printf("http://%s", tmp);
         webkit_web_view_load_uri(d->view, d->uri);
-        luaH_object_emit_signal(L, 1, "property::uri", 0, 0);
         break;
 
       case L_TK_DISABLE_SCRIPTS:
         d->disable_scripts = luaH_checkboolean(L, 3);
-        g_object_set(G_OBJECT(view_settings(d->view)), "enable-scripts",
+        g_object_set(settings, "enable-scripts",
             !d->disable_scripts, NULL);
-        luaH_object_emit_signal(L, 1, "property::disable_scripts", 0, 0);
         break;
 
       case L_TK_DISABLE_PLUGINS:
         d->disable_plugins = luaH_checkboolean(L, 3);
-        g_object_set(G_OBJECT(view_settings(d->view)), "enable-plugins",
+        g_object_set(settings, "enable-plugins",
             !d->disable_plugins, NULL);
-        luaH_object_emit_signal(L, 1, "property::disable_plugins", 0, 0);
+        break;
+
+    /* TODO: It would be nice to have these changed changed via a font table
+             like view.font.monospace, view.font.default, ... */
+
+      case L_TK_DEFAULT_FONT_FAMILY:
+        SET_PROP(d->default_font_family);
+        g_object_set(settings, "default-font-family",
+            d->default_font_family, NULL);
+        break;
+
+      case L_TK_MONOSPACE_FONT_FAMILY:
+        SET_PROP(d->monospace_font_family);
+        g_object_set(settings, "monospace-font-family",
+            d->monospace_font_family, NULL);
+        break;
+
+      case L_TK_SANS_SERIF_FONT_FAMILY:
+        SET_PROP(d->sans_serif_font_family);
+        g_object_set(settings, "sans_serif-font-family",
+            d->sans_serif_font_family, NULL);
+        break;
+
+      case L_TK_SERIF_FONT_FAMILY:
+        SET_PROP(d->serif_font_family);
+        g_object_set(settings, "serif-font-family",
+            d->serif_font_family, NULL);
+        break;
+
+      case L_TK_CURSIVE_FONT_FAMILY:
+        SET_PROP(d->cursive_font_family);
+        g_object_set(settings, "cursive-font-family",
+            d->cursive_font_family, NULL);
+        break;
+
+      case L_TK_FANTASY_FONT_FAMILY:
+        SET_PROP(d->fantasy_font_family);
+        g_object_set(settings, "fantasy-font-family",
+            d->fantasy_font_family, NULL);
         break;
 
       default:
-        break;
+        return 0;
     }
+
+#undef SET_PROP
+
+    tmp = g_strdup_printf("property::%s", luaL_checklstring(L, 2, &len));
+    luaH_object_emit_signal(L, 1, tmp, 0, 0);
+    g_free(tmp);
     return 0;
 }
 
