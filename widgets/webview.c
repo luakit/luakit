@@ -39,6 +39,10 @@ typedef struct
     gchar     *title;
     gint      progress;
 
+    /* zoom options */
+    gint      zoom;
+    gboolean  full_zoom;
+
     /* font settings */
     gchar     *default_font_family;
     gchar     *monospace_font_family;
@@ -245,6 +249,16 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
             d->fantasy_font_family, NULL);
         break;
 
+      case L_TK_ZOOM:
+        d->zoom = luaL_checknumber(L, 3);
+        webkit_web_view_set_zoom_level(d->view, d->zoom);
+        break;
+
+      case L_TK_FULL_ZOOM:
+        d->full_zoom = luaH_checkboolean(L, 3);
+        webkit_web_view_set_full_content_zoom(d->view, d->full_zoom);
+        break;
+
       default:
         return 0;
     }
@@ -305,6 +319,12 @@ widget_webview(widget_t *w)
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(d->scroll),
         GTK_POLICY_NEVER, GTK_POLICY_NEVER);
     gtk_container_add(GTK_CONTAINER(d->scroll), GTK_WIDGET(d->view));
+
+    /* default zoom settings */
+    d->zoom = 1;
+    d->full_zoom = TRUE;
+    webkit_web_view_set_zoom_level(d->view, d->zoom);
+    webkit_web_view_set_full_content_zoom(d->view, d->full_zoom);
 
     /* setup */
     gtk_widget_show(GTK_WIDGET(d->view));
