@@ -40,11 +40,18 @@ typedef struct
     gchar     *hovered_uri;
     gint      progress;
 
-    /* zoom options */
+    /* appearance */
     gint      zoom;
     gboolean  full_zoom;
+    gboolean  autoload_images;
+    gboolean  autoshrink_images;
+    gboolean  print_backgrounds;
+    gchar     *stylesheet_uri;
 
     /* font settings */
+    gint      default_font_size;
+    gint      monospace_font_size;
+    gint      minimum_font_size;
     gchar     *default_font_family;
     gchar     *monospace_font_family;
     gchar     *sans_serif_font_family;
@@ -52,8 +59,11 @@ typedef struct
     gchar     *fantasy_font_family;
     gchar     *cursive_font_family;
 
+    /* browsing options */
     gboolean  disable_plugins;
     gboolean  disable_scripts;
+    gboolean  enable_spellcheck;
+    gboolean  enable_private;
 
 } webview_data_t;
 
@@ -210,6 +220,42 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         lua_pushstring(L, d->hovered_uri);
         return 1;
 
+      case L_TK_DEFAULT_FONT_SIZE:
+        lua_pushnumber(L, d->minimum_font_size);
+        return 1;
+
+      case L_TK_MONOSPACE_FONT_SIZE:
+        lua_pushnumber(L, d->monospace_font_size);
+        return 1;
+
+      case L_TK_MINIMUM_FONT_SIZE:
+        lua_pushnumber(L, d->minimum_font_size);
+        return 1;
+
+      case L_TK_ENABLE_SPELLCHECK:
+        lua_pushboolean(L, d->enable_spellcheck);
+        return 1;
+
+      case L_TK_ENABLE_PRIVATE:
+        lua_pushboolean(L, d->enable_private);
+        return 1;
+
+      case L_TK_AUTOLOAD_IMAGES:
+        lua_pushboolean(L, d->autoload_images);
+        return 1;
+
+      case L_TK_AUTOSHRINK_IMAGES:
+        lua_pushboolean(L, d->autoshrink_images);
+        return 1;
+
+      case L_TK_PRINT_BACKGROUNDS:
+        lua_pushboolean(L, d->print_backgrounds);
+        return 1;
+
+      case L_TK_STYLESHEET_URI:
+        lua_pushstring(L, d->stylesheet_uri);
+        return 1;
+
       default:
         break;
     }
@@ -293,6 +339,27 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
             d->fantasy_font_family, NULL);
         break;
 
+      case L_TK_DEFAULT_FONT_SIZE:
+        d->default_font_size = luaL_checknumber(L, 3);
+        if (d->default_font_size > 0)
+            g_object_set(settings, "default-font-size",
+                d->default_font_size, NULL);
+        break;
+
+      case L_TK_MONOSPACE_FONT_SIZE:
+        d->monospace_font_size = luaL_checknumber(L, 3);
+        if (d->monospace_font_size > 0)
+            g_object_set(settings, "default-monospace-font-size",
+                d->monospace_font_size, NULL);
+        break;
+
+      case L_TK_MINIMUM_FONT_SIZE:
+        d->minimum_font_size = luaL_checknumber(L, 3);
+        if (d->minimum_font_size > 0)
+            g_object_set(settings, "minimum-font-size",
+                d->minimum_font_size, NULL);
+        break;
+
       case L_TK_ZOOM:
         d->zoom = luaL_checknumber(L, 3);
         webkit_web_view_set_zoom_level(d->view, d->zoom);
@@ -301,6 +368,42 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
       case L_TK_FULL_ZOOM:
         d->full_zoom = luaH_checkboolean(L, 3);
         webkit_web_view_set_full_content_zoom(d->view, d->full_zoom);
+        break;
+
+      case L_TK_ENABLE_SPELLCHECK:
+        d->enable_spellcheck = luaH_checkboolean(L, 3);
+        g_object_set(settings, "enable-spell-checking",
+            d->enable_spellcheck, NULL);
+        break;
+
+      case L_TK_ENABLE_PRIVATE:
+        d->enable_private = luaH_checkboolean(L, 3);
+        g_object_set(settings, "enable-private-browsing",
+            d->enable_private, NULL);
+        break;
+
+      case L_TK_AUTOLOAD_IMAGES:
+        d->autoload_images = luaH_checkboolean(L, 3);
+        g_object_set(settings, "auto-load-images",
+            d->autoload_images, NULL);
+        break;
+
+      case L_TK_AUTOSHRINK_IMAGES:
+        d->autoshrink_images = luaH_checkboolean(L, 3);
+        g_object_set(settings, "auto-shrink-images",
+            d->autoshrink_images, NULL);
+        break;
+
+      case L_TK_PRINT_BACKGROUNDS:
+        d->print_backgrounds = luaH_checkboolean(L, 3);
+        g_object_set(settings, "print-backgrounds",
+            d->print_backgrounds, NULL);
+        break;
+
+      case L_TK_STYLESHEET_URI:
+        SET_PROP(d->stylesheet_uri);
+        g_object_set(settings, "user-stylesheet-uri",
+            d->stylesheet_uri, NULL);
         break;
 
       default:
