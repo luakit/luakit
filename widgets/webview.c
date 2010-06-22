@@ -270,7 +270,7 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
     gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     webview_data_t *d = w->data;
-    GObject *settings = G_OBJECT(webkit_web_view_get_settings(d->view));
+    GObject *ws = G_OBJECT(webkit_web_view_get_settings(d->view));
 
 #define SET_PROP(prop)                             \
     tmp = (gchar*) luaL_checklstring(L, 3, &len);  \
@@ -290,14 +290,12 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
       case L_TK_DISABLE_SCRIPTS:
         d->disable_scripts = luaH_checkboolean(L, 3);
-        g_object_set(settings, "enable-scripts",
-            !d->disable_scripts, NULL);
+        g_object_set(ws, "enable-scripts", !d->disable_scripts, NULL);
         break;
 
       case L_TK_DISABLE_PLUGINS:
         d->disable_plugins = luaH_checkboolean(L, 3);
-        g_object_set(settings, "enable-plugins",
-            !d->disable_plugins, NULL);
+        g_object_set(ws, "enable-plugins", !d->disable_plugins, NULL);
         break;
 
     /* TODO: It would be nice to have these changed changed via a font table
@@ -305,59 +303,53 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
       case L_TK_DEFAULT_FONT_FAMILY:
         SET_PROP(d->default_font_family);
-        g_object_set(settings, "default-font-family",
-            d->default_font_family, NULL);
+        g_object_set(ws, "default-font-family", d->default_font_family, NULL);
         break;
 
       case L_TK_MONOSPACE_FONT_FAMILY:
         SET_PROP(d->monospace_font_family);
-        g_object_set(settings, "monospace-font-family",
+        g_object_set(ws, "monospace-font-family",
             d->monospace_font_family, NULL);
         break;
 
       case L_TK_SANS_SERIF_FONT_FAMILY:
         SET_PROP(d->sans_serif_font_family);
-        g_object_set(settings, "sans_serif-font-family",
+        g_object_set(ws, "sans_serif-font-family",
             d->sans_serif_font_family, NULL);
         break;
 
       case L_TK_SERIF_FONT_FAMILY:
         SET_PROP(d->serif_font_family);
-        g_object_set(settings, "serif-font-family",
-            d->serif_font_family, NULL);
+        g_object_set(ws, "serif-font-family", d->serif_font_family, NULL);
         break;
 
       case L_TK_CURSIVE_FONT_FAMILY:
         SET_PROP(d->cursive_font_family);
-        g_object_set(settings, "cursive-font-family",
-            d->cursive_font_family, NULL);
+        g_object_set(ws, "cursive-font-family", d->cursive_font_family, NULL);
         break;
 
       case L_TK_FANTASY_FONT_FAMILY:
         SET_PROP(d->fantasy_font_family);
-        g_object_set(settings, "fantasy-font-family",
-            d->fantasy_font_family, NULL);
+        g_object_set(ws, "fantasy-font-family", d->fantasy_font_family, NULL);
         break;
 
       case L_TK_DEFAULT_FONT_SIZE:
         d->default_font_size = luaL_checknumber(L, 3);
         if (d->default_font_size > 0)
-            g_object_set(settings, "default-font-size",
-                d->default_font_size, NULL);
+            g_object_set(ws, "default-font-size", d->default_font_size, NULL);
         break;
 
       case L_TK_MONOSPACE_FONT_SIZE:
         d->monospace_font_size = luaL_checknumber(L, 3);
         if (d->monospace_font_size > 0)
-            g_object_set(settings, "default-monospace-font-size",
+            g_object_set(ws, "default-monospace-font-size",
                 d->monospace_font_size, NULL);
         break;
 
       case L_TK_MINIMUM_FONT_SIZE:
         d->minimum_font_size = luaL_checknumber(L, 3);
         if (d->minimum_font_size > 0)
-            g_object_set(settings, "minimum-font-size",
-                d->minimum_font_size, NULL);
+            g_object_set(ws, "minimum-font-size", d->minimum_font_size, NULL);
         break;
 
       case L_TK_ZOOM:
@@ -372,38 +364,32 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
       case L_TK_ENABLE_SPELLCHECK:
         d->enable_spellcheck = luaH_checkboolean(L, 3);
-        g_object_set(settings, "enable-spell-checking",
-            d->enable_spellcheck, NULL);
+        g_object_set(ws, "enable-spell-checking", d->enable_spellcheck, NULL);
         break;
 
       case L_TK_ENABLE_PRIVATE:
         d->enable_private = luaH_checkboolean(L, 3);
-        g_object_set(settings, "enable-private-browsing",
-            d->enable_private, NULL);
+        g_object_set(ws, "enable-private-browsing", d->enable_private, NULL);
         break;
 
       case L_TK_AUTOLOAD_IMAGES:
         d->autoload_images = luaH_checkboolean(L, 3);
-        g_object_set(settings, "auto-load-images",
-            d->autoload_images, NULL);
+        g_object_set(ws, "auto-load-images", d->autoload_images, NULL);
         break;
 
       case L_TK_AUTOSHRINK_IMAGES:
         d->autoshrink_images = luaH_checkboolean(L, 3);
-        g_object_set(settings, "auto-shrink-images",
-            d->autoshrink_images, NULL);
+        g_object_set(ws, "auto-shrink-images", d->autoshrink_images, NULL);
         break;
 
       case L_TK_PRINT_BACKGROUNDS:
         d->print_backgrounds = luaH_checkboolean(L, 3);
-        g_object_set(settings, "print-backgrounds",
-            d->print_backgrounds, NULL);
+        g_object_set(ws, "print-backgrounds", d->print_backgrounds, NULL);
         break;
 
       case L_TK_STYLESHEET_URI:
         SET_PROP(d->stylesheet_uri);
-        g_object_set(settings, "user-stylesheet-uri",
-            d->stylesheet_uri, NULL);
+        g_object_set(ws, "user-stylesheet-uri", d->stylesheet_uri, NULL);
         break;
 
       default:
