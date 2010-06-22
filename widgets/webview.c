@@ -37,6 +37,7 @@ typedef struct
     /* state variables */
     gchar     *uri;
     gchar     *title;
+    gchar     *hovered_uri;
     gint      progress;
 
     /* zoom options */
@@ -113,6 +114,37 @@ load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     lua_pop(L, 1);
 }
 
+void
+link_hover_cb(WebKitWebView *v, const char *t, const gchar *link, widget_t *w)
+{
+    (void) v;
+    (void) t;
+    lua_State *L = luakit.L;
+    webview_data_t *d = w->data;
+
+    /* links are identical, do nothing */
+    if (d->hovered_uri && !g_strcmp0(d->hovered_uri, link))
+        return;
+
+    luaH_object_push(L, w->ref);
+
+    if (d->hovered_uri) {
+        lua_pushstring(L, d->hovered_uri);
+        luaH_object_emit_signal(L, -2, "link-unhover", 1, 0);
+        g_free(d->hovered_uri);
+        d->hovered_uri = NULL;
+    }
+
+    if (link) {
+        d->hovered_uri = g_strdup(link);
+        lua_pushstring(L, d->hovered_uri);
+        luaH_object_emit_signal(L, -2, "link-hover", 1, 0);
+    }
+
+    luaH_object_emit_signal(L, -1, "property::hovered_uri", 0, 0);
+    lua_pop(L, 1);
+}
+
 /* The __index method for the webview object */
 static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
@@ -164,6 +196,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_FANTASY_FONT_FAMILY:
         lua_pushstring(L, d->fantasy_font_family);
+        return 1;
+
+      case L_TK_HOVERED_URI:
+        lua_pushstring(L, d->hovered_uri);
         return 1;
 
       default:
@@ -312,6 +348,7 @@ widget_webview(widget_t *w)
       "signal::load-progress-changed", (GCallback)progress_cb,      w,
       "signal::load-started",          (GCallback)load_start_cb,    w,
       "signal::title-changed",         (GCallback)title_changed_cb, w,
+      "signal::hovering-over-link",    (GCallback)link_hover_cb,    w,
       NULL);
 
     /* create scrolled window for webview */
