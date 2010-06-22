@@ -26,7 +26,6 @@ options:
 	@echo "SRCS       = ${SRCS}"
 	@echo "HEADS      = ${HEADS}"
 	@echo "OBJS       = ${OBJS}"
-	@echo "TARGETS    = ${TARGETS}"
 
 ${GSRC} ${GHEAD}: ${GPERF}
 	./build-utils/gperf.sh $< $@
