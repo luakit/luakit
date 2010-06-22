@@ -198,6 +198,14 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         lua_pushstring(L, d->fantasy_font_family);
         return 1;
 
+      case L_TK_ZOOM:
+        lua_pushnumber(L, d->zoom);
+        return 1;
+
+      case L_TK_FULL_ZOOM:
+        lua_pushboolean(L, d->full_zoom);
+        return 1;
+
       case L_TK_HOVERED_URI:
         lua_pushstring(L, d->hovered_uri);
         return 1;
