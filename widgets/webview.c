@@ -41,7 +41,7 @@ typedef struct
     gint      progress;
 
     /* appearance */
-    gint      zoom;
+    gdouble   zoom;
     gboolean  full_zoom;
     gboolean  autoload_images;
     gboolean  autoshrink_images;
@@ -353,7 +353,7 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
         break;
 
       case L_TK_ZOOM:
-        d->zoom = luaL_checknumber(L, 3);
+        d->zoom = (gdouble) luaL_checknumber(L, 3);
         webkit_web_view_set_zoom_level(d->view, d->zoom);
         break;
 
