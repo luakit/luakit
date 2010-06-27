@@ -32,7 +32,7 @@ gboolean focus_cb(GtkWidget *, GdkEventFocus *, widget_t *);
     void                                                                      \
     update_##prop(widget_t *w, const gchar *new)                              \
     {                                                                         \
-        lua_State *L = luakit.L;                                              \
+        lua_State *L = globalconf.L;                                          \
         data_t *d = w->data;                                                  \
         if (!force && g_strcmp0(d->prop, new) == 0)                           \
             return;                                                           \
@@ -49,7 +49,7 @@ gboolean focus_cb(GtkWidget *, GdkEventFocus *, widget_t *);
     void                                                                      \
     update_##prop(widget_t *w, gint new)                                      \
     {                                                                         \
-        lua_State *L = luakit.L;                                              \
+        lua_State *L = globalconf.L;                                          \
         data_t *d = w->data;                                                  \
         if (!force && d->prop == new)                                         \
             return;                                                           \

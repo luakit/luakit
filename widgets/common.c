@@ -20,10 +20,10 @@
 
 #include <gtk/gtk.h>
 
+#include "globalconf.h"
 #include "widgets/common.h"
 #include "common/luaobject.h"
 #include "luah.h"
-#include "luakit.h"
 #include "common/lualib.h"
 
 gboolean
@@ -31,7 +31,7 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 {
     (void) win;
     gint ret;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     luaH_keystr_push(L, ev->keyval);
@@ -45,7 +45,7 @@ key_release_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 {
     (void) win;
     gint ret;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     luaH_keystr_push(L, ev->keyval);
@@ -58,7 +58,7 @@ gboolean
 focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
 {
     (void) win;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     if (ev->in)
         luaH_object_emit_signal(L, -1, "focus", 0, 0);

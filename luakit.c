@@ -27,13 +27,14 @@
  *
  */
 
+#include <gtk/gtk.h>
+#include <signal.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include "globalconf.h"
 #include "common/util.h"
-#include "common/signal.h"
-
-#include "luakit.h"
 #include "luah.h"
-
-Luakit luakit;
+#include "luakit.h"
 
 static void sigchld(int sigint);
 
@@ -49,7 +50,6 @@ sigchld(int signum) {
 gchar**
 parseopts(int argc, char *argv[]) {
     GOptionContext *context;
-    Luakit *l = &luakit;
     gboolean *only_version = NULL;
     gchar **uris = NULL;
 
@@ -57,7 +57,7 @@ parseopts(int argc, char *argv[]) {
     const GOptionEntry entries[] = {
         { "uri", 'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,
             "uri(s) to load at startup", "URI" },
-        { "config", 'c', 0, G_OPTION_ARG_STRING, &l->confpath,
+        { "config", 'c', 0, G_OPTION_ARG_STRING, &globalconf.confpath,
             "configuration file to use", "FILE" },
         { "version", 'V', 0, G_OPTION_ARG_NONE, &only_version,
             "show version", NULL },
@@ -90,29 +90,30 @@ parseopts(int argc, char *argv[]) {
 void
 init_lua(gchar **uris)
 {
-    Luakit *l = &luakit;
     gchar *uri;
+    lua_State *L;
     xdgHandle xdg;
 
     /* init global signals tree */
-    l->signals = signal_tree_new();
+    globalconf.signals = signal_tree_new();
 
     /* get XDG basedir data */
     xdgInitHandle(&xdg);
 
     /* init lua */
     luaH_init(&xdg);
+    L = globalconf.L;
 
     /* push a table of the statup uris */
-    lua_newtable(l->L);
+    lua_newtable(L);
     for (gint i = 0; (uri = uris[i]); i++) {
-        lua_pushstring(l->L, uri);
-        lua_rawseti(l->L, -2, i + 1);
+        lua_pushstring(L, uri);
+        lua_rawseti(L, -2, i + 1);
     }
-    lua_setglobal(l->L, "uris");
+    lua_setglobal(L, "uris");
 
     /* parse and run configuration file */
-    if(!luaH_parserc(&xdg, l->confpath, TRUE))
+    if(!luaH_parserc(&xdg, globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
     /* we are finished with this */

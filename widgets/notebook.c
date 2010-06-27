@@ -24,7 +24,7 @@
  *  - Add `get_children()` method which returns a table of the child widgets
  */
 
-#include "luakit.h"
+#include "globalconf.h"
 #include "luah.h"
 #include "widget.h"
 #include "widgets/common.h"
@@ -267,7 +267,7 @@ page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
     notebook_data_t *d = w->data;
     widget_t *child = g_hash_table_lookup(d->children, widget);
 
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -1, "attached", 0, 0);
@@ -286,7 +286,7 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
     g_hash_table_remove(d->children, widget);
     child->parent = NULL;
 
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -1, "detached", 0, 0);

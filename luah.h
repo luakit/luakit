@@ -23,10 +23,8 @@
 #define LUAKIT_LUA_H
 
 #include <lua.h>
-#include <lauxlib.h>
-
 #include <basedir.h>
-
+#include "globalconf.h"
 #include "common/luaobject.h"
 #include "common/lualib.h"
 
@@ -35,7 +33,7 @@
         luaH_warn(L, "%s: This function is deprecated and will be removed, see %s", \
                   __FUNCTION__, repl); \
         lua_pushlstring(L, __FUNCTION__, sizeof(__FUNCTION__)); \
-        signal_object_emit(L, &luakit.signals, "debug::deprecation", 1); \
+        signal_object_emit(L, &globalconf.signals, "debug::deprecation", 1); \
     } while(0)
 
 static inline gboolean

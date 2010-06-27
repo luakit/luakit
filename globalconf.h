@@ -1,5 +1,5 @@
 /*
- * luakit.h - luakit main functions
+ * globalconf.h - main config struct
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,23 +18,28 @@
  *
  */
 
-#ifndef LUAKIT_LUAKIT_H
-#define LUAKIT_LUAKIT_H
+#ifndef LUAKIT_GLOBALCONF
+#define LUAKIT_GLOBALCONF
 
+#define LUAKIT_LUA_LIB_PATH         "/usr/share/luakit/lib"
+#define LUAKIT_OBJECT_REGISTRY_KEY  "luakit.object.registry"
+
+#include <glib/gtypes.h>
 #include <lua.h>
 #include "common/signal.h"
 
 typedef struct {
-    /* Path to the config file */
+    /* Path to the current config file */
     gchar *confpath;
     /* Lua VM state */
     lua_State *L;
-    /* global signals */
+    /* Global signals table */
     signal_t *signals;
-} Luakit;
+    /* Array of windows */
+    GPtrArray *windows;
+} luakit_t;
 
-/* Global config/state object */
-extern Luakit luakit;
+luakit_t globalconf;
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

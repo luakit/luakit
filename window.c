@@ -25,7 +25,7 @@
  *  - Add ability to remove and change child widget on the fly
  */
 
-#include "luakit.h"
+#include "globalconf.h"
 #include "luah.h"
 #include "window.h"
 
@@ -39,7 +39,7 @@ destroy_win_cb(GtkObject *win, window_t *w)
     if (!w->win)
         return;
 
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, 1);
@@ -72,7 +72,7 @@ child_add_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
 
     widget_t *child = w->child;
 
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -1, "attached", 0, 0);
@@ -90,7 +90,7 @@ child_remove_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
     w->child = NULL;
     child->parent = NULL;
 
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -1, "detached", 0, 0);

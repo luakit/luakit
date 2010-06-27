@@ -20,14 +20,14 @@
  */
 
 #include <gtk/gtk.h>
-
+#include <basedir_fs.h>
+#include <stdlib.h>
 #include "common/util.h"
 #include "common/lualib.h"
-
 #include "luakit.h"
-#include "luah.h"
 #include "widget.h"
 #include "window.h"
+#include "luah.h"
 
 #define MODKEY(key, name)           \
     if (state & GDK_##key##_MASK) { \
@@ -361,7 +361,7 @@ luaH_luakit_add_signal(lua_State *L)
 {
     const gchar *name = luaL_checkstring(L, 1);
     luaH_checkfunction(L, 2);
-    signal_add(luakit.signals, name, luaH_object_ref(L, 2));
+    signal_add(globalconf.signals, name, luaH_object_ref(L, 2));
     return 0;
 }
 
@@ -378,7 +378,7 @@ luaH_luakit_remove_signal(lua_State *L)
     const gchar *name = luaL_checkstring(L, 1);
     luaH_checkfunction(L, 2);
     gpointer func = (gpointer) lua_topointer(L, 2);
-    signal_remove(luakit.signals, name, func);
+    signal_remove(globalconf.signals, name, func);
     luaH_object_unref(L, (void *) func);
     return 0;
 }
@@ -393,7 +393,7 @@ luaH_luakit_remove_signal(lua_State *L)
 static gint
 luaH_luakit_emit_signal(lua_State *L)
 {
-    signal_object_emit(L, luakit.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1);
+    signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1);
     return 0;
 }
 
@@ -430,7 +430,7 @@ luaH_init(xdgHandle *xdg)
     };
 
     /* Lua VM init */
-    L = luakit.L = luaL_newstate();
+    L = globalconf.L = luaL_newstate();
 
     /* Set panic fuction */
     lua_atpanic(L, luaH_panic);
@@ -491,7 +491,7 @@ luaH_init(xdgHandle *xdg)
 gboolean
 luaH_loadrc(const gchar *confpath, gboolean run)
 {
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
 
     if(!luaL_loadfile(L, confpath)) {
         if(run) {
@@ -516,7 +516,6 @@ luaH_loadrc(const gchar *confpath, gboolean run)
 gboolean
 luaH_parserc(xdgHandle* xdg, const gchar *confpatharg, gboolean run)
 {
-    Luakit *l = &luakit;
     gchar *confpath = NULL;
     gboolean ret = FALSE;
 
@@ -534,7 +533,7 @@ luaH_parserc(xdgHandle* xdg, const gchar *confpatharg, gboolean run)
     while(*tmp) {
         debug("Loading rc file: %s", tmp);
         if(luaH_loadrc(tmp, run)) {
-            l->confpath = g_strdup(tmp);
+            globalconf.confpath = g_strdup(tmp);
             ret = TRUE;
             goto bailout;
         } else if(!run)
@@ -552,7 +551,7 @@ gint
 luaH_class_index_miss_property(lua_State *L, lua_object_t *obj)
 {
     (void) obj;
-    signal_object_emit(L, luakit.signals, "debug::index::miss", 2);
+    signal_object_emit(L, globalconf.signals, "debug::index::miss", 2);
     return 0;
 }
 
@@ -560,7 +559,7 @@ gint
 luaH_class_newindex_miss_property(lua_State *L, lua_object_t *obj)
 {
     (void) obj;
-    signal_object_emit(L, luakit.signals, "debug::newindex::miss", 3);
+    signal_object_emit(L, globalconf.signals, "debug::newindex::miss", 3);
     return 0;
 }
 

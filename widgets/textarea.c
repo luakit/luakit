@@ -20,7 +20,6 @@
  */
 
 #include "widgets/common.h"
-#include "luakit.h"
 #include "luah.h"
 #include "widget.h"
 

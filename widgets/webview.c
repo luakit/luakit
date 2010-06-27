@@ -21,9 +21,8 @@
 
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
-
+#include "globalconf.h"
 #include "widgets/common.h"
-#include "luakit.h"
 #include "luah.h"
 #include "widget.h"
 
@@ -89,7 +88,7 @@ void
 load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     (void) v;
     (void) f;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
 
     update_progress(w, 0);
 
@@ -102,7 +101,7 @@ load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
 void
 load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     (void) v;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
 
     update_uri(w, webkit_web_frame_get_uri(f));
 
@@ -114,7 +113,7 @@ load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
 void
 load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     (void) v;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
 
     update_progress(w, 100);
     update_uri(w, webkit_web_frame_get_uri(f));
@@ -129,7 +128,7 @@ link_hover_cb(WebKitWebView *v, const char *t, const gchar *link, widget_t *w)
 {
     (void) v;
     (void) t;
-    lua_State *L = luakit.L;
+    lua_State *L = globalconf.L;
     webview_data_t *d = w->data;
 
     /* links are identical, do nothing */
