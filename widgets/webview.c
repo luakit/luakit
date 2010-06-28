@@ -64,6 +64,9 @@ typedef struct
     gboolean  enable_spellcheck;
     gboolean  enable_private;
 
+    /* request related options */
+    gchar     *useragent;
+
 } webview_data_t;
 
 /* Make update_uri, update_title, .. funcs */
@@ -96,7 +99,6 @@ load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
     luaH_object_emit_signal(L, -1, "load-start", 0, 0);
     lua_pop(L, 1);
 }
-
 
 void
 load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
@@ -255,6 +257,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         lua_pushstring(L, d->stylesheet_uri);
         return 1;
 
+      case L_TK_USERAGENT:
+        lua_pushstring(L, d->useragent);
+        return 1;
+
       default:
         break;
     }
@@ -389,6 +395,11 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
       case L_TK_STYLESHEET_URI:
         SET_PROP(d->stylesheet_uri);
         g_object_set(ws, "user-stylesheet-uri", d->stylesheet_uri, NULL);
+        break;
+
+      case L_TK_USERAGENT:
+        SET_PROP(d->useragent);
+        g_object_set(ws, "user-agent", d->useragent, NULL);
         break;
 
       default:

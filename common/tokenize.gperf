@@ -45,6 +45,7 @@ textarea
 title
 type
 uri
+useragent
 vbox
 visible
 webview
