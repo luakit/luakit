@@ -69,57 +69,81 @@ typedef struct
 
 } webview_data_t;
 
-/* Make update_uri, update_title, .. funcs */
-STR_PROP_FUNC(webview_data_t, uri,      FALSE);
-STR_PROP_FUNC(webview_data_t, title,    FALSE);
-INT_PROP_FUNC(webview_data_t, progress, TRUE);
-
 void
-progress_cb(WebKitWebView *v, gint p, widget_t *w) {
-    (void) v;
-    update_progress(w, p);
+update_uri(widget_t *w, const gchar *uri)
+{
+    lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
+
+    if (!g_strcmp0(d->uri, uri))
+        return;
+    if (d->uri)
+        g_free(d->uri);
+    d->uri = g_strdup(uri);
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
+    lua_pop(L, 1);
 }
 
 void
-title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget_t *w) {
+progress_cb(WebKitWebView *v, gint p, widget_t *w)
+{
+    (void) v;
+    lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
+
+    d->progress = p;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "property::progress", 0, 0);
+    lua_pop(L, 1);
+}
+
+void
+title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget_t *w)
+{
     (void) f;
     (void) v;
-    update_title(w, title);
+    lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
+
+    if (d->title)
+        g_free(d->title);
+    d->title = g_strdup(title);
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "property::title", 0, 0);
+    lua_pop(L, 1);
 }
 
 void
-load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
+load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+{
     (void) v;
     (void) f;
     lua_State *L = globalconf.L;
-
-    update_progress(w, 0);
-
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "load-start", 0, 0);
     lua_pop(L, 1);
 }
 
 void
-load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
+load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+{
     (void) v;
     lua_State *L = globalconf.L;
 
     update_uri(w, webkit_web_frame_get_uri(f));
-
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "load-commit", 0, 0);
     lua_pop(L, 1);
 }
 
 void
-load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w) {
+load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+{
     (void) v;
     lua_State *L = globalconf.L;
 
-    update_progress(w, 100);
     update_uri(w, webkit_web_frame_get_uri(f));
-
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "load-finish", 0, 0);
     lua_pop(L, 1);

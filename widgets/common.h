@@ -27,37 +27,5 @@ gboolean key_press_cb(GtkWidget *, GdkEventKey *, widget_t *);
 gboolean key_release_cb(GtkWidget *, GdkEventKey *, widget_t *);
 gboolean focus_cb(GtkWidget *, GdkEventFocus *, widget_t *);
 
-/* Make string property update function */
-#define STR_PROP_FUNC(data_t, prop, force)                                    \
-    void                                                                      \
-    update_##prop(widget_t *w, const gchar *new)                              \
-    {                                                                         \
-        lua_State *L = globalconf.L;                                          \
-        data_t *d = w->data;                                                  \
-        if (!force && g_strcmp0(d->prop, new) == 0)                           \
-            return;                                                           \
-        if (d->prop)                                                          \
-            g_free(d->prop);                                                  \
-        d->prop = g_strdup(new);                                              \
-        luaH_object_push(L, w->ref);                                          \
-        luaH_object_emit_signal(L, -1, "property::" #prop, 0, 0);             \
-        lua_pop(L, 1);                                                        \
-    }
-
-/* Make integer property update function */
-#define INT_PROP_FUNC(data_t, prop, force)                                    \
-    void                                                                      \
-    update_##prop(widget_t *w, gint new)                                      \
-    {                                                                         \
-        lua_State *L = globalconf.L;                                          \
-        data_t *d = w->data;                                                  \
-        if (!force && d->prop == new)                                         \
-            return;                                                           \
-        d->prop = new;                                                        \
-        luaH_object_push(L, w->ref);                                          \
-        luaH_object_emit_signal(L, -1, "property::" #prop, 0, 0);             \
-        lua_pop(L, 1);                                                        \
-    }
-
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
