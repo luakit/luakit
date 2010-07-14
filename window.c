@@ -51,6 +51,9 @@ destroy_win_cb(GtkObject *win, window_t *w)
         g_free(w->icon);
         w->icon = NULL;
     }
+
+    /* remove from global windows list */
+    g_ptr_array_remove(globalconf.windows, w);
 }
 
 static gint
@@ -111,6 +114,8 @@ luaH_window_new(lua_State *L)
     w->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_wmclass(GTK_WINDOW(w->win), "luakit", "luakit");
     gtk_window_set_default_size(GTK_WINDOW(w->win), 800, 600);
+    gtk_window_set_title(GTK_WINDOW(w->win), "luakit");
+    w->icon = NULL;
 
     /* Attach callbacks to window signals */
     g_signal_connect(G_OBJECT(w->win), "destroy", G_CALLBACK(destroy_win_cb),  w);
@@ -120,15 +125,13 @@ luaH_window_new(lua_State *L)
     /* Catch all events */
     gdk_window_set_events(GTK_WIDGET(w->win)->window, GDK_ALL_EVENTS_MASK);
 
-    w->icon = NULL;
-
     /* show new window */
     gtk_widget_show(w->win);
 
-    gtk_window_set_title(GTK_WINDOW(w->win), "luakit");
+    /* add to global windows list */
+    g_ptr_array_add(globalconf.windows, w);
 
     luaH_object_emit_signal(L, -1, "init", 0, 0);
-
     return 1;
 }
 

@@ -325,11 +325,24 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
     size_t len;
-    const gchar *buf = luaL_checklstring(L, 2, &len);
+    window_t *w;
+    const gchar *prop = luaL_checklstring(L, 2, &len);
+    luakit_token_t token = l_tokenize(prop, len);
 
-    debug("Luakit index %s", buf);
+    switch(token)
+    {
+      case L_TK_WINDOWS:
+        lua_newtable(L);
+        for (gint i = 0; (w = globalconf.windows->pdata[i]); i++) {
+            luaH_object_push(L, w->ref);
+            lua_rawseti(L, -2, i+1);
+        }
+        return 1;
 
-    return 1;
+      default:
+        break;
+    }
+    return 0;
 }
 
 /* Newindex function for the luakit global table.

@@ -94,8 +94,9 @@ init_lua(gchar **uris)
     lua_State *L;
     xdgHandle xdg;
 
-    /* init global signals tree */
+    /* init globalconf structs */
     globalconf.signals = signal_tree_new();
+    globalconf.windows = g_ptr_array_new();
 
     /* get XDG basedir data */
     xdgInitHandle(&xdg);
@@ -115,6 +116,9 @@ init_lua(gchar **uris)
     /* parse and run configuration file */
     if(!luaH_parserc(&xdg, globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
+
+    if (!globalconf.windows->len)
+        fatal("no windows spawned by rc file load, exiting");
 
     /* we are finished with this */
     xdgWipeHandle(&xdg);

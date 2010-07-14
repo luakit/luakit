@@ -1,12 +1,14 @@
--- Create main widgets
-win = window{}
+#!./luakit -c
 
-win:add_signal("destroy", function (w)
-    -- TODO Add some logic to check if this is the last window closing
-    -- before calling quit
-    luakit.quit()
+window.add_signal("new", function (w)
+    -- Quit if all windows are destroyed
+    w:add_signal("destroy", function ()
+        if #luakit.windows == 0 then luakit.quit() end
+    end)
 end)
 
+-- Create main widgets
+win = window{}
 layout = widget{type = "vbox"}
 win:set_child(layout)
 
