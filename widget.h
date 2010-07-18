@@ -65,11 +65,12 @@ struct widget_t
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
 
-widget_constructor_t widget_webview;
+widget_constructor_t widget_hbox;
 widget_constructor_t widget_notebook;
 widget_constructor_t widget_textarea;
-widget_constructor_t widget_hbox;
+widget_constructor_t widget_textbutton;
 widget_constructor_t widget_vbox;
+widget_constructor_t widget_webview;
 
 static inline widget_t *
 luaH_widget_checkgtk(lua_State *L, widget_t *w)

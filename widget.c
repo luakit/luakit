@@ -135,6 +135,10 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         wc = widget_vbox;
         break;
 
+      case L_TK_TEXTBUTTON:
+        wc = widget_textbutton;
+        break;
+
       default:
         break;
     }
