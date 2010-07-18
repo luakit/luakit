@@ -321,9 +321,6 @@ widget_notebook(widget_t *w)
     gtk_notebook_set_show_border(GTK_NOTEBOOK(d->nbook), FALSE);
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(d->nbook), TRUE);
 
-    g_signal_connect(GTK_OBJECT(d->nbook), "page-added", G_CALLBACK(page_added_cb), w);
-    g_signal_connect(GTK_OBJECT(d->nbook), "page-removed", G_CALLBACK(page_removed_cb), w);
-
     g_object_connect((GObject*)d->nbook,
       "signal::focus-in-event",    (GCallback)focus_cb,        w,
       "signal::focus-out-event",   (GCallback)focus_cb,        w,
