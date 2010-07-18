@@ -39,6 +39,9 @@ destroy_win_cb(GtkObject *win, window_t *w)
     if (!w->win)
         return;
 
+    /* remove window from global windows list */
+    g_ptr_array_remove(globalconf.windows, w);
+
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
@@ -51,9 +54,6 @@ destroy_win_cb(GtkObject *win, window_t *w)
         g_free(w->icon);
         w->icon = NULL;
     }
-
-    /* remove from global windows list */
-    g_ptr_array_remove(globalconf.windows, w);
 }
 
 static gint

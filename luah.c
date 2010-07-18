@@ -333,7 +333,8 @@ luaH_luakit_index(lua_State *L)
     {
       case L_TK_WINDOWS:
         lua_newtable(L);
-        for (gint i = 0; (w = globalconf.windows->pdata[i]); i++) {
+        for (guint i = 0; i < globalconf.windows->len; i++) {
+            w = globalconf.windows->pdata[i];
             luaH_object_push(L, w->ref);
             lua_rawseti(L, -2, i+1);
         }
