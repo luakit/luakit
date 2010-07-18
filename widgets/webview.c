@@ -180,6 +180,46 @@ link_hover_cb(WebKitWebView *v, const char *t, const gchar *link, widget_t *w)
     lua_pop(L, 1);
 }
 
+/* Raises the "navigation-request" signal on a webkit navigation policy
+ * decision request. The default action is to load the requested uri.
+ *
+ * The signal handler is able to:
+ *  - return true for the handler execution to stop and the request to continue
+ *  - return false for the handler execution to stop and the request to hault
+ *  - do nothing and give the navigation decision to the next signal handler
+ *
+ * This signal is also where you would attach custom scheme handlers to take
+ * over the navigation request by launching an external application.
+ */
+gboolean
+navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, WebKitWebNavigationAction *a,
+        WebKitWebPolicyDecision *p, widget_t *w)
+{
+    (void) v;
+    (void) f;
+    (void) a;
+
+    lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gint ret;
+
+    debug("Navigation requested: %s", uri);
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
+
+    if (ret && !luaH_checkboolean(L, -1))
+        /* User responded with false, do not continue navigation request */
+        webkit_web_policy_decision_ignore(p);
+    else
+        webkit_web_policy_decision_use(p);
+
+    lua_pop(L, ret);
+    return TRUE;
+}
+
 /* The __index method for the webview object */
 static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
@@ -470,16 +510,17 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect((GObject*)d->view,
-      "signal::focus-in-event",        (GCallback)focus_cb,         w,
-      "signal::focus-out-event",       (GCallback)focus_cb,         w,
-      "signal::key-press-event",       (GCallback)key_press_cb,     w,
-      "signal::key-release-event",     (GCallback)key_release_cb,   w,
-      "signal::load-committed",        (GCallback)load_commit_cb,   w,
-      "signal::load-finished",         (GCallback)load_finish_cb,   w,
-      "signal::load-progress-changed", (GCallback)progress_cb,      w,
-      "signal::load-started",          (GCallback)load_start_cb,    w,
-      "signal::title-changed",         (GCallback)title_changed_cb, w,
-      "signal::hovering-over-link",    (GCallback)link_hover_cb,    w,
+      "signal::focus-in-event",                       (GCallback)focus_cb,               w,
+      "signal::focus-out-event",                      (GCallback)focus_cb,               w,
+      "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
+      "signal::key-press-event",                      (GCallback)key_press_cb,           w,
+      "signal::key-release-event",                    (GCallback)key_release_cb,         w,
+      "signal::load-committed",                       (GCallback)load_commit_cb,         w,
+      "signal::load-finished",                        (GCallback)load_finish_cb,         w,
+      "signal::load-progress-changed",                (GCallback)progress_cb,            w,
+      "signal::load-started",                         (GCallback)load_start_cb,          w,
+      "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
+      "signal::title-changed",                        (GCallback)title_changed_cb,       w,
       NULL);
 
     /* create scrolled window for webview */
