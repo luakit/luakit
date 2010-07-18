@@ -44,7 +44,8 @@ luaH_textarea_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       case L_TK_TEXT:
-        lua_pushstring(L, d->text ? d->text : "");
+        if (!d->text) return 0;
+        lua_pushstring(L, d->text);
         return 1;
 
       default:
@@ -84,14 +85,14 @@ luaH_textarea_newindex(lua_State *L, luakit_token_t token)
 static void
 textarea_destructor(widget_t *w)
 {
-    debug("destroying textarea");
-    textarea_data_t *d = w->data;
+    if (!w->data)
+        return;
 
-    /* destroy gtk widgets */
+    textarea_data_t *d = w->data;
     gtk_widget_destroy(d->ebox);
     gtk_widget_destroy(d->label);
-
     g_free(d->text);
+    g_free(d);
 }
 
 widget_t *
@@ -101,14 +102,11 @@ widget_textarea(widget_t *w)
     w->newindex = luaH_textarea_newindex;
     w->destructor = textarea_destructor;
 
+    /* create textarea data struct & gtk widgets */
     textarea_data_t *d = w->data = g_new0(textarea_data_t, 1);
-
-    d->text = NULL;
-
-    /* Create eventbox and set as main gtk widget */
     w->widget = d->ebox = gtk_event_box_new();
-
     d->label = gtk_label_new(NULL);
+
     gtk_container_add(GTK_CONTAINER(d->ebox), d->label);
 
     /* setup default settings */
@@ -119,15 +117,14 @@ widget_textarea(widget_t *w)
     gtk_misc_set_padding(GTK_MISC(d->label), 2, 2);
 
     g_object_connect((GObject*)d->label,
-      "signal::focus-in-event",        (GCallback)focus_cb,         w,
-      "signal::focus-out-event",       (GCallback)focus_cb,         w,
-      "signal::key-press-event",       (GCallback)key_press_cb,     w,
-      "signal::key-release-event",     (GCallback)key_release_cb,   w,
+      "signal::focus-in-event",    (GCallback)focus_cb,       w,
+      "signal::focus-out-event",   (GCallback)focus_cb,       w,
+      "signal::key-press-event",   (GCallback)key_press_cb,   w,
+      "signal::key-release-event", (GCallback)key_release_cb, w,
       NULL);
 
     gtk_widget_show(d->ebox);
     gtk_widget_show(d->label);
-
     return w;
 }
 

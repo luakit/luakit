@@ -481,19 +481,30 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 static void
 webview_destructor(widget_t *w)
 {
-    debug("destructing widget");
+    if (!w->data)
+        return;
 
     webview_data_t *d = w->data;
-
-    /* destory gtk widgets */
     gtk_widget_destroy(GTK_WIDGET(d->scroll));
     gtk_widget_destroy(GTK_WIDGET(d->view));
 
+#define free(v) if (v != NULL) { g_free(v); v = NULL; }
+
+    free(d->uri);
+    free(d->title);
+    free(d->hovered_uri);
+    free(d->stylesheet_uri);
+    free(d->default_font_family);
+    free(d->monospace_font_family);
+    free(d->sans_serif_font_family);
+    free(d->serif_font_family);
+    free(d->fantasy_font_family);
+    free(d->cursive_font_family);
+    free(d->useragent);
+
+#undef free
+
     g_free(d);
-    d = NULL;
-    w->widget = NULL;
-    w->parent = NULL;
-    w->window = NULL;
 }
 
 widget_t *

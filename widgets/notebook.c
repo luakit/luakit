@@ -297,14 +297,15 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 static void
 notebook_destructor(widget_t *w)
 {
-    debug("destroying notebook");
+    if (!w->data)
+        return;
+
     notebook_data_t *d = w->data;
-
-    /* destroy gtk widgets */
     gtk_widget_destroy(d->nbook);
-
-    /* destroy lookup table */
     g_hash_table_destroy(d->children);
+
+    w->widget = NULL;
+    w->data = NULL;
 }
 
 widget_t *

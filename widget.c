@@ -30,9 +30,18 @@ LUA_OBJECT_FUNCS(widget_class, widget_t, widget);
 static gint
 luaH_widget_gc(lua_State *L)
 {
-    widget_t *widget = luaH_checkudata(L, 1, &widget_class);
-    if(widget->destructor)
-        widget->destructor(widget);
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    if(w->destructor)
+        w->destructor(w);
+
+    if (w->type)
+        g_free((gchar*)w->type);
+    w->type = NULL;
+    w->widget = NULL;
+    w->data = NULL;
+    w->parent = NULL;
+    w->window = NULL;
+
     return luaH_object_gc(L);
 }
 

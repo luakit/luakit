@@ -148,15 +148,15 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
 void
 box_destructor(widget_t *w)
 {
+    if (!w->data)
+        return;
+
     box_data_t *d = w->data;
-
-    /* destroy gtk widgets */
     gtk_widget_destroy(d->box);
-
-    w->widget = d->box = NULL;
-
-    /* destroy lookup table */
     g_hash_table_destroy(d->children);
+    g_free(d);
+    w->widget = NULL;
+    w->data = NULL;
 }
 
 #define BOX_WIDGET_CONSTRUCTOR(type)                                         \
