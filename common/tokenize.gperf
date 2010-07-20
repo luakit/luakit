@@ -15,6 +15,8 @@ enable_spellcheck
 fantasy_font_family
 focus
 full_zoom
+get_alignment
+get_padding
 hbox
 homogeneous
 hovered_uri
@@ -34,6 +36,8 @@ progress
 remove
 sans_serif_font_family
 serif_font_family
+set_alignment
+set_padding
 set_title
 show_border
 show_tabs

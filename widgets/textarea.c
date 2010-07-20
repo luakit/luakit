@@ -35,6 +35,52 @@ typedef struct
 } textarea_data_t;
 
 static gint
+luaH_textarea_set_alignment(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    textarea_data_t *d = w->data;
+    gfloat xalign = luaL_checknumber(L, 2);
+    gfloat yalign = luaL_checknumber(L, 3);
+    gtk_misc_set_alignment(GTK_MISC(d->label), xalign, yalign);
+    return 0;
+}
+
+static gint
+luaH_textarea_get_alignment(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    textarea_data_t *d = w->data;
+    gfloat xalign, yalign;
+    gtk_misc_get_alignment(GTK_MISC(d->label), &xalign, &yalign);
+    lua_pushnumber(L, xalign);
+    lua_pushnumber(L, yalign);
+    return 2;
+}
+
+static gint
+luaH_textarea_set_padding(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    textarea_data_t *d = w->data;
+    gint xpad = luaL_checknumber(L, 2);
+    gint ypad = luaL_checknumber(L, 3);
+    gtk_misc_set_padding(GTK_MISC(d->label), xpad, ypad);
+    return 0;
+}
+
+static gint
+luaH_textarea_get_padding(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    textarea_data_t *d = w->data;
+    gint xpad, ypad;
+    gtk_misc_get_padding(GTK_MISC(d->label), &xpad, &ypad);
+    lua_pushnumber(L, xpad);
+    lua_pushnumber(L, ypad);
+    return 2;
+}
+
+static gint
 luaH_textarea_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -46,6 +92,22 @@ luaH_textarea_index(lua_State *L, luakit_token_t token)
       case L_TK_TEXT:
         if (!d->text) return 0;
         lua_pushstring(L, d->text);
+        return 1;
+
+      case L_TK_SET_ALIGNMENT:
+        lua_pushcfunction(L, luaH_textarea_set_alignment);
+        return 1;
+
+      case L_TK_GET_ALIGNMENT:
+        lua_pushcfunction(L, luaH_textarea_get_alignment);
+        return 1;
+
+      case L_TK_SET_PADDING:
+        lua_pushcfunction(L, luaH_textarea_set_padding);
+        return 1;
+
+      case L_TK_GET_PADDING:
+        lua_pushcfunction(L, luaH_textarea_get_padding);
         return 1;
 
       default:
