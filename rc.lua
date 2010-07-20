@@ -153,7 +153,6 @@ function new_window(uris)
     w.layout:pack_start(w.input, false, false, 0)
 
     w.sbar.uri.fg = "#fff"
-    w.sbar.uri.bg = "#000"
     w.sbar.uri.selectable = true
     w.sbar.loaded.fg = "#888"
     w.sbar.loaded:hide()
