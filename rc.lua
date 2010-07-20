@@ -29,6 +29,7 @@ end)
 
 -- Returns a nice window title
 function mktitle(view)
+    if not view:get_prop("title") and not view.uri then return "luakit" end
     return (view:get_prop("title") or "luakit") .. " - " .. (view.uri or "about:blank")
 end
 
