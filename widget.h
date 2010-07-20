@@ -66,8 +66,8 @@ lua_class_t widget_class;
 void widget_class_setup(lua_State *);
 
 widget_constructor_t widget_hbox;
+widget_constructor_t widget_label;
 widget_constructor_t widget_notebook;
-widget_constructor_t widget_textarea;
 widget_constructor_t widget_textbutton;
 widget_constructor_t widget_vbox;
 widget_constructor_t widget_webview;

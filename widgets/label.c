@@ -1,5 +1,5 @@
 /*
- * textarea.c - gtk text area widget
+ * label.c - gtk text area widget
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -23,91 +23,73 @@
 #include "luah.h"
 #include "widget.h"
 
-typedef struct
-{
-    /* gtk label widget */
-    GtkWidget *label;
-    /* gtk event box widget */
-    GtkWidget *ebox;
-    /* label text */
-    gchar *text;
-
-} textarea_data_t;
-
 static gint
-luaH_textarea_set_alignment(lua_State *L)
+luaH_label_set_alignment(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textarea_data_t *d = w->data;
     gfloat xalign = luaL_checknumber(L, 2);
     gfloat yalign = luaL_checknumber(L, 3);
-    gtk_misc_set_alignment(GTK_MISC(d->label), xalign, yalign);
+    gtk_misc_set_alignment(GTK_MISC(w->widget), xalign, yalign);
     return 0;
 }
 
 static gint
-luaH_textarea_get_alignment(lua_State *L)
+luaH_label_get_alignment(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textarea_data_t *d = w->data;
     gfloat xalign, yalign;
-    gtk_misc_get_alignment(GTK_MISC(d->label), &xalign, &yalign);
+    gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
     lua_pushnumber(L, xalign);
     lua_pushnumber(L, yalign);
     return 2;
 }
 
 static gint
-luaH_textarea_set_padding(lua_State *L)
+luaH_label_set_padding(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textarea_data_t *d = w->data;
     gint xpad = luaL_checknumber(L, 2);
     gint ypad = luaL_checknumber(L, 3);
-    gtk_misc_set_padding(GTK_MISC(d->label), xpad, ypad);
+    gtk_misc_set_padding(GTK_MISC(w->widget), xpad, ypad);
     return 0;
 }
 
 static gint
-luaH_textarea_get_padding(lua_State *L)
+luaH_label_get_padding(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textarea_data_t *d = w->data;
     gint xpad, ypad;
-    gtk_misc_get_padding(GTK_MISC(d->label), &xpad, &ypad);
+    gtk_misc_get_padding(GTK_MISC(w->widget), &xpad, &ypad);
     lua_pushnumber(L, xpad);
     lua_pushnumber(L, ypad);
     return 2;
 }
 
 static gint
-luaH_textarea_index(lua_State *L, luakit_token_t token)
+luaH_label_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    (void) w;
-    textarea_data_t *d = w->data;
 
     switch(token)
     {
       case L_TK_TEXT:
-        if (!d->text) return 0;
-        lua_pushstring(L, d->text);
+        lua_pushstring(L, gtk_label_get_label(GTK_LABEL(w->widget)));
         return 1;
 
       case L_TK_SET_ALIGNMENT:
-        lua_pushcfunction(L, luaH_textarea_set_alignment);
+        lua_pushcfunction(L, luaH_label_set_alignment);
         return 1;
 
       case L_TK_GET_ALIGNMENT:
-        lua_pushcfunction(L, luaH_textarea_get_alignment);
+        lua_pushcfunction(L, luaH_label_get_alignment);
         return 1;
 
       case L_TK_SET_PADDING:
-        lua_pushcfunction(L, luaH_textarea_set_padding);
+        lua_pushcfunction(L, luaH_label_set_padding);
         return 1;
 
       case L_TK_GET_PADDING:
-        lua_pushcfunction(L, luaH_textarea_get_padding);
+        lua_pushcfunction(L, luaH_label_get_padding);
         return 1;
 
       default:
@@ -117,21 +99,17 @@ luaH_textarea_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_textarea_newindex(lua_State *L, luakit_token_t token)
+luaH_label_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
     gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textarea_data_t *d = w->data;
 
     switch(token)
     {
       case L_TK_TEXT:
-        tmp = (gchar*) luaL_checklstring(L, 3, &len);
-        if (d->text)
-            g_free(d->text);
-        d->text = g_strdup(tmp);
-        gtk_label_set_markup(GTK_LABEL(d->label), d->text);
+        gtk_label_set_markup(GTK_LABEL(w->widget),
+            luaL_checklstring(L, 3, &len));
         break;
 
       default:
@@ -145,48 +123,38 @@ luaH_textarea_newindex(lua_State *L, luakit_token_t token)
 }
 
 static void
-textarea_destructor(widget_t *w)
+label_destructor(widget_t *w)
 {
-    if (!w->data)
-        return;
-
-    textarea_data_t *d = w->data;
-    gtk_widget_destroy(d->ebox);
-    gtk_widget_destroy(d->label);
-    g_free(d->text);
-    g_free(d);
+    gtk_widget_destroy(w->widget);
 }
 
 widget_t *
-widget_textarea(widget_t *w)
+widget_label(widget_t *w)
 {
-    w->index = luaH_textarea_index;
-    w->newindex = luaH_textarea_newindex;
-    w->destructor = textarea_destructor;
+    w->index = luaH_label_index;
+    w->newindex = luaH_label_newindex;
+    w->destructor = label_destructor;
 
-    /* create textarea data struct & gtk widgets */
-    textarea_data_t *d = w->data = g_new0(textarea_data_t, 1);
-    w->widget = d->ebox = gtk_event_box_new();
-    d->label = gtk_label_new(NULL);
+    /* this simple widget doesn't need any extra data */
+    w->data = NULL;
 
-    gtk_container_add(GTK_CONTAINER(d->ebox), d->label);
+    /* create gtk label widget as main widget */
+    w->widget = gtk_label_new(NULL);
 
     /* setup default settings */
-    gtk_label_set_selectable(GTK_LABEL(d->label), TRUE);
-    gtk_label_set_ellipsize(GTK_LABEL(d->label), PANGO_ELLIPSIZE_END);
-    gtk_label_set_use_markup(GTK_LABEL(d->label), TRUE);
-    gtk_misc_set_alignment(GTK_MISC(d->label), 0, 0);
-    gtk_misc_set_padding(GTK_MISC(d->label), 2, 2);
+    gtk_label_set_selectable(GTK_LABEL(w->widget), TRUE);
+    gtk_label_set_use_markup(GTK_LABEL(w->widget), TRUE);
+    gtk_misc_set_alignment(GTK_MISC(w->widget), 0, 0);
+    gtk_misc_set_padding(GTK_MISC(w->widget), 2, 2);
 
-    g_object_connect((GObject*)d->label,
+    g_object_connect((GObject*)w->widget,
       "signal::focus-in-event",    (GCallback)focus_cb,       w,
       "signal::focus-out-event",   (GCallback)focus_cb,       w,
       "signal::key-press-event",   (GCallback)key_press_cb,   w,
       "signal::key-release-event", (GCallback)key_release_cb, w,
       NULL);
 
-    gtk_widget_show(d->ebox);
-    gtk_widget_show(d->label);
+    gtk_widget_show(w->widget);
     return w;
 }
 

@@ -132,8 +132,8 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         wc = widget_notebook;
         break;
 
-      case L_TK_TEXTAREA:
-        wc = widget_textarea;
+      case L_TK_LABEL:
+        wc = widget_label;
         break;
 
       case L_TK_HBOX:
