@@ -54,7 +54,15 @@ function scroll_parse(p)
     end
 end
 
--- Update & auto hide the progress indicator
+function autohide(nbook, n)
+    if not n then n = nbook:count() end
+    if n == 1 then
+        nbook.show_tabs = false
+    else
+        nbook.show_tabs = true
+    end
+end
+
 function progress_update(w, view, p)
     if not p then p = view:get_prop("progress") end
     if not view:loading() or p == 1 then
@@ -68,6 +76,7 @@ end
 function new_tab(w, uri)
     view = webview()
     w.tabs:append(view)
+    autohide(w.tabs)
 
     -- Attach webview signals
     view:add_signal("title-changed", function (v)
@@ -168,6 +177,7 @@ function new_window(uris)
         w.sbar.uri.text = view.uri or "about:blank"
         w.win.title = mktitle(view)
         progress_update(w, view)
+        autohide(nbook)
     end)
 
     -- Populate notebook
