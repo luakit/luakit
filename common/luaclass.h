@@ -31,8 +31,6 @@
 typedef struct     lua_class_property lua_class_property_t;
 typedef GHashTable lua_class_property_array_t;
 
-static GPtrArray luaH_classes;
-
 #define LUA_OBJECT_HEADER \
         signal_t *signals;
 
