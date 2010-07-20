@@ -33,8 +33,7 @@ struct lua_class_property {
     lua_class_propfunc_t newindex;
 };
 
-typedef GPtrArray lua_class_array_t;
-static lua_class_array_t luaH_classes;
+static GPtrArray *luaH_classes = NULL;
 
 /* Convert a object to a udata if possible.
  * `ud` is the index.
@@ -74,9 +73,9 @@ luaH_class_get(lua_State *L, gint idx) {
     gint type = lua_type(L, idx);
     lua_class_t *class;
 
-    if(type == LUA_TUSERDATA)
-        for (guint i = 0; i < luaH_classes.len; i++) {
-            class = luaH_classes.pdata[i];
+    if(type == LUA_TUSERDATA && luaH_classes)
+        for (guint i = 0; i < luaH_classes->len; i++) {
+            class = luaH_classes->pdata[i];
             if(luaH_toudata(L, idx, class))
                 return class;
         }
@@ -168,7 +167,9 @@ luaH_class_setup(lua_State *L, lua_class_t *class,
     class->properties = (lua_class_property_array_t*) g_hash_table_new(
             g_direct_hash, g_direct_equal);
 
-    g_ptr_array_add(&luaH_classes, class);
+    if (!luaH_classes)
+        luaH_classes = g_ptr_array_new();
+    g_ptr_array_add(luaH_classes, class);
 }
 
 void
