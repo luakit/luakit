@@ -117,11 +117,12 @@ luaH_widget_get_child(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
+    widget_t *child = NULL;
 
     if (!widget)
         return 0;
 
-    widget_t *child = g_object_get_data(G_OBJECT(child), "lua_widget");
+    child = g_object_get_data(G_OBJECT(child), "lua_widget");
     luaH_object_push(L, child->ref);
     return 1;
 }
