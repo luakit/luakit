@@ -132,7 +132,7 @@ load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void inline
+inline static void
 update_uri(GtkWidget *view, const gchar *uri, widget_t *w)
 {
     /* return if uri has not changed */
