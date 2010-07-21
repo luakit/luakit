@@ -9,6 +9,7 @@ get_prop
 get_scroll
 hbox
 homogeneous
+hovered_uri
 icon
 indexof
 insert

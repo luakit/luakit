@@ -365,7 +365,7 @@ luaH_webview_set_prop(lua_State *L)
 static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
-    luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
 
     switch(token)
     {
@@ -379,6 +379,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_GET_PROP:
         lua_pushcfunction(L, luaH_webview_get_prop);
+        return 1;
+
+      case L_TK_HOVERED_URI:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "hovered-uri"));
         return 1;
 
       default:
