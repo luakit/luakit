@@ -1,5 +1,5 @@
 /*
- * common.h - common widget functions
+ * widgets/common.h - common widget functions or callbacks
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -23,9 +23,13 @@
 
 #include "widget.h"
 
-gboolean key_press_cb(GtkWidget *, GdkEventKey *, widget_t *);
-gboolean key_release_cb(GtkWidget *, GdkEventKey *, widget_t *);
-gboolean focus_cb(GtkWidget *, GdkEventFocus *, widget_t *);
+gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
+gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);
+gboolean key_release_cb(GtkWidget*, GdkEventKey*, widget_t*);
+void parent_set_cb(GtkWidget*, GtkObject*, widget_t*);
+
+void add_cb(GtkContainer*, GtkWidget*, widget_t*);
+void remove_cb(GtkContainer*, GtkWidget*, widget_t*);
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

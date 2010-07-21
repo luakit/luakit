@@ -12,11 +12,15 @@ disable_plugins
 disable_scripts
 enable_private
 enable_spellcheck
+eventbox
 fantasy_font_family
 focus
 full_zoom
 get_alignment
+get_child
 get_padding
+get_prop
+get_scroll
 hbox
 homogeneous
 hovered_uri
@@ -37,7 +41,9 @@ remove
 sans_serif_font_family
 serif_font_family
 set_alignment
+set_child
 set_padding
+set_prop
 set_title
 show_border
 show_tabs

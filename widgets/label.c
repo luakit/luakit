@@ -1,5 +1,5 @@
 /*
- * label.c - gtk text area widget
+ * widgets/label.c - gtk text area widget
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -19,9 +19,8 @@
  *
  */
 
-#include "widgets/common.h"
 #include "luah.h"
-#include "widget.h"
+#include "widgets/common.h"
 
 static gint
 luaH_label_set_alignment(lua_State *L)
@@ -102,7 +101,6 @@ static gint
 luaH_label_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
-    gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
 
     switch(token)
@@ -116,10 +114,7 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
         return 0;
     }
 
-    tmp = g_strdup_printf("property::%s", luaL_checklstring(L, 2, &len));
-    luaH_object_emit_signal(L, 1, tmp, 0, 0);
-    g_free(tmp);
-    return 0;
+    return luaH_object_emit_property_signal(L, 1);
 }
 
 static void
@@ -135,11 +130,9 @@ widget_label(widget_t *w)
     w->newindex = luaH_label_newindex;
     w->destructor = label_destructor;
 
-    /* this simple widget doesn't need any extra data */
-    w->data = NULL;
-
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);
+    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
 
     /* setup default settings */
     gtk_label_set_selectable(GTK_LABEL(w->widget), TRUE);
@@ -152,6 +145,7 @@ widget_label(widget_t *w)
       "signal::focus-out-event",   (GCallback)focus_cb,       w,
       "signal::key-press-event",   (GCallback)key_press_cb,   w,
       "signal::key-release-event", (GCallback)key_release_cb, w,
+      "signal::parent-set",        (GCallback)parent_set_cb,  w,
       NULL);
 
     gtk_widget_show(w->widget);

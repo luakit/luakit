@@ -1,5 +1,5 @@
 /*
- * box.c - gtk container widgets
+ * widgets/box.c - gtk hbox & vbox container widgets
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -26,43 +26,11 @@
  *  - In the box destructor function detach all child windows
  */
 
+
 #include "luah.h"
-#include "widget.h"
+#include "widgets/common.h"
 
-typedef struct
-{
-    /* Gtk box */
-    GtkWidget *box;
-    /* Reverse child widget lookup */
-    GHashTable *children;
-
-} box_data_t;
-
-void
-box_pack(lua_State *L, widget_t *w, widget_t *child, gboolean start,
-        gboolean expand, gboolean fill, guint padding)
-{
-    box_data_t *d = w->data;
-
-    if (!child->widget)
-        luaL_error(L, "unable to insert non-gtk widget");
-
-    if (child->parent || child->window)
-        luaL_error(L, "widget already has parent");
-
-    if (start)
-        gtk_box_pack_start(GTK_BOX(d->box), child->widget,
-                expand, fill, padding);
-    else
-        gtk_box_pack_end(GTK_BOX(d->box), child->widget,
-                expand, fill, padding);
-
-    /* add reverse widget lookup by gtk widget */
-    g_hash_table_insert(d->children, child->widget, child);
-
-    child->parent = w;
-}
-
+/* direct wrapper around gtk_box_pack_start */
 static gint
 luaH_box_pack_start(lua_State *L)
 {
@@ -71,10 +39,12 @@ luaH_box_pack_start(lua_State *L)
     gboolean expand = luaH_checkboolean(L, 3);
     gboolean fill = luaH_checkboolean(L, 4);
     guint padding = luaL_checknumber(L, 5);
-    box_pack(L, w, child, TRUE, expand, fill, padding);
+    gtk_box_pack_start(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+        expand, fill, padding);
     return 0;
 }
 
+/* direct wrapper around gtk_box_pack_end */
 static gint
 luaH_box_pack_end(lua_State *L)
 {
@@ -83,7 +53,8 @@ luaH_box_pack_end(lua_State *L)
     gboolean expand = luaH_checkboolean(L, 3);
     gboolean fill = luaH_checkboolean(L, 4);
     guint padding = luaL_checknumber(L, 5);
-    box_pack(L, w, child, TRUE, expand, fill, padding);
+    gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+        expand, fill, padding);
     return 0;
 }
 
@@ -91,7 +62,6 @@ static gint
 luaH_box_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    box_data_t *d = w->data;
 
     switch(token)
     {
@@ -104,11 +74,11 @@ luaH_box_index(lua_State *L, luakit_token_t token)
         return 1;
 
       case L_TK_HOMOGENEOUS:
-        lua_pushboolean(L, gtk_box_get_homogeneous(GTK_BOX(d->box)));
+        lua_pushboolean(L, gtk_box_get_homogeneous(GTK_BOX(w->widget)));
         return 1;
 
       case L_TK_SPACING:
-        lua_pushnumber(L, gtk_box_get_spacing(GTK_BOX(d->box)));
+        lua_pushnumber(L, gtk_box_get_spacing(GTK_BOX(w->widget)));
         return 1;
 
       default:
@@ -120,43 +90,29 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_box_newindex(lua_State *L, luakit_token_t token)
 {
-    size_t len;
-    gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    box_data_t *d = w->data;
 
     switch(token)
     {
       case L_TK_HOMOGENEOUS:
-        gtk_box_set_homogeneous(GTK_BOX(d->box), luaH_checkboolean(L, -1));
+        gtk_box_set_homogeneous(GTK_BOX(w->widget), luaH_checkboolean(L, 3));
         break;
 
       case L_TK_SPACING:
-        gtk_box_set_spacing(GTK_BOX(d->box), luaL_checknumber(L, -1));
+        gtk_box_set_spacing(GTK_BOX(w->widget), luaL_checknumber(L, 3));
         break;
 
       default:
         return 0;
     }
 
-    tmp = g_strdup_printf("property::%s", luaL_checklstring(L, 2, &len));
-    luaH_object_emit_signal(L, 1, tmp, 0, 0);
-    g_free(tmp);
-    return 0;
+    return luaH_object_emit_property_signal(L, 1);
 }
 
 void
 box_destructor(widget_t *w)
 {
-    if (!w->data)
-        return;
-
-    box_data_t *d = w->data;
-    gtk_widget_destroy(d->box);
-    g_hash_table_destroy(d->children);
-    g_free(d);
-    w->widget = NULL;
-    w->data = NULL;
+    gtk_widget_destroy(w->widget);
 }
 
 #define BOX_WIDGET_CONSTRUCTOR(type)                                         \
@@ -166,11 +122,14 @@ box_destructor(widget_t *w)
         w->index = luaH_box_index;                                           \
         w->newindex = luaH_box_newindex;                                     \
         w->destructor = box_destructor;                                      \
-        box_data_t *d = w->data = g_new0(box_data_t, 1);                     \
-        w->widget = d->box = gtk_##type##_new(FALSE, 0);                     \
-        gtk_widget_show(d->box);                                             \
-        /* Create reverse lookup table for child widgets */                  \
-        d->children = g_hash_table_new(g_direct_hash, g_direct_equal);       \
+        w->widget = gtk_##type##_new(FALSE, 0);                              \
+        g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);      \
+        gtk_widget_show(w->widget);                                          \
+        g_object_connect((GObject*)w->widget,                                \
+          "signal::add",        add_cb,        w,                            \
+          "signal::parent-set", parent_set_cb, w,                            \
+          "signal::remove",     remove_cb,     w,                            \
+          NULL);                                                             \
         return w;                                                            \
     }
 

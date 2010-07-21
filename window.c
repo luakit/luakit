@@ -70,15 +70,11 @@ static void
 child_add_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
 {
     (void) win;
-    (void) widget;
-    debug("child add cb");
 
-    widget_t *child = w->child;
-
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -1, "attached", 0, 0);
     luaH_object_emit_signal(L, -2, "add", 1, 0);
     lua_pop(L, 1);
 }
@@ -87,16 +83,11 @@ static void
 child_remove_cb(GtkContainer *win, GtkWidget *widget, window_t *w)
 {
     (void) win;
-    (void) widget;
 
-    widget_t *child = w->child;
-    w->child = NULL;
-    child->parent = NULL;
-
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -1, "detached", 0, 0);
     luaH_object_emit_signal(L, -2, "remove", 1, 0);
     lua_pop(L, 1);
 }
@@ -111,10 +102,15 @@ luaH_window_new(lua_State *L)
     lua_pushvalue(L, -1);
     w->ref = luaH_object_ref_class(L, -1, &window_class);
 
+    /* window setup */
     w->win = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     gtk_window_set_wmclass(GTK_WINDOW(w->win), "luakit", "luakit");
     gtk_window_set_default_size(GTK_WINDOW(w->win), 800, 600);
     gtk_window_set_title(GTK_WINDOW(w->win), "luakit");
+    GdkGeometry hints;
+    hints.min_width = 1;
+    hints.min_height = 1;
+    gtk_window_set_geometry_hints(GTK_WINDOW(w->win), NULL, &hints, GDK_HINT_MIN_SIZE);
     w->icon = NULL;
 
     /* Attach callbacks to window signals */
@@ -122,11 +118,11 @@ luaH_window_new(lua_State *L)
     g_signal_connect(G_OBJECT(w->win), "add",     G_CALLBACK(child_add_cb),    w);
     g_signal_connect(G_OBJECT(w->win), "remove",  G_CALLBACK(child_remove_cb), w);
 
-    /* Catch all events */
-    gdk_window_set_events(GTK_WIDGET(w->win)->window, GDK_ALL_EVENTS_MASK);
-
     /* show new window */
     gtk_widget_show(w->win);
+
+    /* Catch all events */
+    gdk_window_set_events(GTK_WIDGET(w->win)->window, GDK_ALL_EVENTS_MASK);
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);
@@ -211,18 +207,7 @@ static gint
 luaH_window_set_child(lua_State *L)
 {
     window_t *w = luaH_checkudata(L, 1, &window_class);
-    widget_t *child = luaH_widget_checkgtk(L,
-            luaH_checkudata(L, 2, &widget_class));
-
-    if (w->child)
-        luaL_error(L, "window already has child widget");
-
-    if (child->parent || child->window)
-        luaL_error(L, "widget already has parent window");
-
-    child->window = w;
-    w->child = child;
-
+    widget_t *child = luaH_checkudata(L, 2, &widget_class);
     gtk_container_add(GTK_CONTAINER(w->win), GTK_WIDGET(child->widget));
     return 0;
 }

@@ -1,5 +1,13 @@
 #!./luakit -c
 
+-- Widget construction aliases
+function eventbox() return widget{type="eventbox"} end
+function hbox()     return widget{type="hbox"}     end
+function label()    return widget{type="label"}    end
+function notebook() return widget{type="notebook"} end
+function vbox()     return widget{type="vbox"}     end
+function webview()  return widget{type="webview"}  end
+
 window.add_signal("new", function (w)
     -- Quit if all windows are destroyed
     w:add_signal("destroy", function ()
@@ -9,29 +17,54 @@ end)
 
 -- Create main widgets
 win = window{}
-layout = widget{type = "vbox"}
+layout = vbox()
 win:set_child(layout)
 
 -- Create tabbed notebook to store webviews
-nbook = widget{type = "notebook"}
-layout:pack_start(nbook, true, true, 0)
+tabs = notebook()
+layout:pack_start(tabs, true, true, 0)
 
 -- Create "status bar"
-sbar = widget{type = "textarea"}
-layout:pack_start(sbar, false, true, 0)
+
+left = label()
+left.text = "left"
+left:set_alignment(0.0, 0.0)
+
+right = label()
+right.text = "right"
+right:set_alignment(1.0, 0.0)
+
+sbar_layout = hbox()
+sbar_layout:pack_start(left, true, true, 2)
+sbar_layout:pack_start(right, false, false, 2)
+
+statusbar = eventbox()
+statusbar:set_child(sbar_layout)
+
+layout:pack_start(statusbar, false, false, 0)
 
 if #uris == 0 then
     uris = { "http://github.com/mason-larobina/luakit" }
 end
 
 for _, uri in ipairs(uris) do
-    view = widget{type = "webview"}
-    nbook:append(view)
+    view = webview()
+    tabs:append(view)
 
     view:add_signal("property::title", function (v)
-        nbook:set_title(v, v.title)
-        sbar.text = v.title
-        win.title = v.title
+        local title = v:get_prop("title")
+        tabs:set_title(v, title)
+        win.title = title
+        left.text = title
+        right.text = v:get_prop("uri")
+    end)
+
+    view:add_signal("link-hover", function(v, link)
+        print(view, link)
+    end)
+
+    view:add_signal("link-unhover", function(v, link)
+        print(view, link)
     end)
 
     view.uri = uri

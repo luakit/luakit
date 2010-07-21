@@ -34,14 +34,26 @@ typedef struct widget_t widget_t;
 typedef widget_t *(widget_constructor_t)(widget_t *);
 typedef void (widget_destructor_t)(widget_t *);
 
+widget_constructor_t widget_eventbox;
+widget_constructor_t widget_hbox;
+widget_constructor_t widget_vbox;
+widget_constructor_t widget_label;
+widget_constructor_t widget_textbutton;
+widget_constructor_t widget_notebook;
+widget_constructor_t widget_webview;
+
+typedef const struct {
+    luakit_token_t tok;
+    const gchar *name;
+    widget_constructor_t *wc;
+} widget_info_t;
+
 /* Widget */
 struct widget_t
 {
     LUA_OBJECT_HEADER
-
-    /* Widget type */
-    const gchar *type;
-
+    /* Widget type information */
+    widget_info_t *info;
     /* Widget destructor */
     widget_destructor_t *destructor;
     /* Index function */
@@ -50,35 +62,14 @@ struct widget_t
     gint (*newindex)(lua_State *, luakit_token_t);
     /* Lua object ref */
     gpointer ref;
-
     /* Main gtk widget */
     GtkWidget *widget;
     /* Misc private data */
     gpointer data;
-
-    /* Pointer to the parent widget */
-    widget_t *parent;
-    /* Or pointer to the parent window (only if root gtk widget) */
-    window_t *window;
 };
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
-
-widget_constructor_t widget_hbox;
-widget_constructor_t widget_label;
-widget_constructor_t widget_notebook;
-widget_constructor_t widget_textbutton;
-widget_constructor_t widget_vbox;
-widget_constructor_t widget_webview;
-
-static inline widget_t *
-luaH_widget_checkgtk(lua_State *L, widget_t *w)
-{
-    if (!w->widget)
-        luaL_error(L, "expecting gtk-type widget, got \"%s\"", w->type);
-    return w;
-}
 
 #endif
 

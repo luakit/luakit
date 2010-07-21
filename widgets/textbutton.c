@@ -1,5 +1,5 @@
 /*
- * textbutton.c - gtk button with label
+ * widgets/textbutton.c - gtk button with label
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -19,29 +19,18 @@
  *
  */
 
-#include "widgets/common.h"
 #include "luah.h"
-#include "widget.h"
-
-typedef struct
-{
-    /* gtk button widget */
-    GtkWidget *button;
-    /* label text */
-    gchar *label;
-} textbutton_data_t;
+#include "widgets/common.h"
 
 static gint
 luaH_textbutton_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textbutton_data_t *d = w->data;
 
     switch (token)
     {
       case L_TK_LABEL:
-        if (!d->label) return 0;
-        lua_pushstring(L, d->label);
+        lua_pushstring(L, gtk_button_get_label(GTK_BUTTON(w->widget)));
         return 1;
 
       default:
@@ -54,28 +43,20 @@ static gint
 luaH_textbutton_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
-    gchar *tmp;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    textbutton_data_t *d = w->data;
 
     switch(token)
     {
       case L_TK_LABEL:
-        tmp = (gchar *) luaL_checklstring(L, 3, &len);
-        if (d->label)
-            g_free(d->label);
-        d->label = g_strdup(tmp);
-        gtk_button_set_label(GTK_BUTTON(d->button), d->label);
+        gtk_button_set_label(GTK_BUTTON(w->widget),
+            luaL_checklstring(L, 3, &len));
         break;
 
       default:
         return 0;
     }
 
-    tmp = g_strdup_printf("property::%s", luaL_checklstring(L, 2, &len));
-    luaH_object_emit_signal(L, 1, tmp, 0, 0);
-    g_free(tmp);
-    return 0;
+    return luaH_object_emit_property_signal(L, 1);
 }
 
 void
@@ -91,13 +72,7 @@ clicked_cb(GtkWidget *b, widget_t *w)
 static void
 textbutton_destructor(widget_t *w)
 {
-    if (!w->data)
-        return;
-
-    textbutton_data_t *d = w->data;
-    gtk_widget_destroy(d->button);
-    g_free(d->label);
-    g_free(d);
+    gtk_widget_destroy(w->widget);
 }
 
 widget_t *
@@ -107,20 +82,18 @@ widget_textbutton(widget_t *w)
     w->newindex = luaH_textbutton_newindex;
     w->destructor = textbutton_destructor;
 
-    /* create textbutton data struct & gtk widgets */
-    textbutton_data_t *d = w->data = g_new0(textbutton_data_t, 1);
-    w->widget = d->button = gtk_button_new();
+    w->widget = gtk_button_new();
+    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
+    gtk_button_set_focus_on_click(GTK_BUTTON(w->widget), FALSE);
 
-    /* setup default settings */
-    gtk_button_set_focus_on_click(GTK_BUTTON(d->button), FALSE);
-
-    g_object_connect((GObject*)d->button,
-      "signal::clicked",         (GCallback)clicked_cb, w,
-      "signal::focus-in-event",  (GCallback)focus_cb,   w,
-      "signal::focus-out-event", (GCallback)focus_cb,   w,
+    g_object_connect((GObject*)w->widget,
+      "signal::clicked",         (GCallback)clicked_cb,    w,
+      "signal::focus-in-event",  (GCallback)focus_cb,      w,
+      "signal::focus-out-event", (GCallback)focus_cb,      w,
+      "signal::parent-set",      (GCallback)parent_set_cb, w,
       NULL);
 
-    gtk_widget_show(d->button);
+    gtk_widget_show(w->widget);
     return w;
 }
 

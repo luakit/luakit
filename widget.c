@@ -21,6 +21,17 @@
 
 #include "widget.h"
 
+widget_info_t widgets_list[] = {
+  { L_TK_EVENTBOX,   "eventbox",   widget_eventbox   },
+  { L_TK_HBOX,       "hbox",       widget_hbox       },
+  { L_TK_VBOX,       "vbox",       widget_vbox       },
+  { L_TK_LABEL,      "label",      widget_label      },
+  { L_TK_TEXTBUTTON, "textbutton", widget_textbutton },
+  { L_TK_NOTEBOOK,   "notebook",   widget_notebook   },
+  { L_TK_WEBVIEW,    "webview",    widget_webview    },
+  { L_TK_UNKNOWN,    NULL,         NULL              }
+};
+
 LUA_OBJECT_FUNCS(widget_class, widget_t, widget);
 
 /** Collect a widget structure.
@@ -33,15 +44,6 @@ luaH_widget_gc(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     if(w->destructor)
         w->destructor(w);
-
-    if (w->type)
-        g_free((gchar*)w->type);
-    w->type = NULL;
-    w->widget = NULL;
-    w->data = NULL;
-    w->parent = NULL;
-    w->window = NULL;
-
     return luaH_object_gc(L);
 }
 
@@ -57,9 +59,6 @@ luaH_widget_new(lua_State *L)
 {
     luaH_class_new(L, &widget_class);
     widget_t *w = luaH_checkudata(L, -1, &widget_class);
-
-    w->parent = NULL;
-    w->window = NULL;
 
     /* save ref to the lua class instance */
     lua_pushvalue(L, -1);
@@ -114,79 +113,38 @@ luaH_widget_newindex(lua_State *L)
 static gint
 luaH_widget_set_type(lua_State *L, widget_t *w)
 {
-    if (w->type)
-        luaL_error(L, "widget is already of type \"%s\"", w->type);
+    if (w->info)
+        luaL_error(L, "widget is already of type: %s", w->info->name);
 
     size_t len;
     const gchar *type = luaL_checklstring(L, -1, &len);
-    widget_constructor_t *wc = NULL;
     luakit_token_t tok = l_tokenize(type, len);
+    widget_info_t *winfo;
 
-    switch(tok)
+    for (guint i = 0; i < LENGTH(widgets_list); i++)
     {
-      case L_TK_WEBVIEW:
-        wc = widget_webview;
-        break;
+        if (widgets_list[i].tok != tok)
+            continue;
 
-      case L_TK_NOTEBOOK:
-        wc = widget_notebook;
-        break;
-
-      case L_TK_LABEL:
-        wc = widget_label;
-        break;
-
-      case L_TK_HBOX:
-        wc = widget_hbox;
-        break;
-
-      case L_TK_VBOX:
-        wc = widget_vbox;
-        break;
-
-      case L_TK_TEXTBUTTON:
-        wc = widget_textbutton;
-        break;
-
-      default:
-        break;
+        winfo = &widgets_list[i];
+        w->info = winfo;
+        winfo->wc(w);
+        luaH_object_emit_signal(L, -3, "init", 0, 0);
+        return 0;
     }
 
-    if(!wc)
-        luaL_error(L, "unknown widget type: %s", type);
-
-    wc(w);
-    // TODO: This is very wasteful
-    w->type = g_strdup(type);
-
-    luaH_object_emit_signal(L, -3, "init", 0, 0);
+    luaL_error(L, "unknown widget type: %s", type);
     return 0;
 }
 
 static gint
 luaH_widget_get_type(lua_State *L, widget_t *w)
 {
-    if (!w->type)
+    if (!w->info)
         return 0;
 
-    lua_pushstring(L, w->type);
+    lua_pushstring(L, w->info->name);
     return 1;
-}
-
-static gint
-luaH_widget_get_parent(lua_State *L, widget_t *w)
-{
-    if (w->parent) {
-        luaH_object_push(L, w->parent->ref);
-        return 1;
-    }
-
-    if (w->window) {
-        luaH_object_push(L, w->window->ref);
-        return 1;
-    }
-
-    return 0;
 }
 
 void
@@ -211,11 +169,6 @@ widget_class_setup(lua_State *L)
     luaH_class_setup(L, &widget_class, "widget", (lua_class_allocator_t) widget_new,
                      NULL, NULL,
                      widget_methods, widget_meta);
-
-    luaH_class_add_property(&widget_class, L_TK_PARENT,
-                            NULL,
-                            (lua_class_propfunc_t) luaH_widget_get_parent,
-                            NULL);
 
     luaH_class_add_property(&widget_class, L_TK_TYPE,
                             (lua_class_propfunc_t) luaH_widget_set_type,

@@ -27,8 +27,9 @@
 #include <string.h>
 #include <unistd.h>
 
-/* Replace NULL strings with "" */
+/* Useful macros */
 #define NONULL(x) (x ? x : "")
+#define LENGTH(x) sizeof(x)/sizeof((x)[0])
 
 #define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _fatal(int, const gchar *, const gchar *, ...);
