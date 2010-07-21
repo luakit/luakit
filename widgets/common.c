@@ -110,14 +110,16 @@ gint
 luaH_widget_set_child(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *child = luaH_checkudataornil(L, 2, &widget_class);
 
     /* remove old child */
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
-    if (widget)
+    if (widget) {
+        g_object_ref(G_OBJECT(widget));
         gtk_container_remove(GTK_CONTAINER(w->widget), GTK_WIDGET(widget));
+    }
 
     /* add new child to container */
-    widget_t *child = luaH_checkudataornil(L, 2, &widget_class);
     if (child)
         gtk_container_add(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
     return 0;

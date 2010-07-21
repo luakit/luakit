@@ -62,8 +62,12 @@ luaH_notebook_remove(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     widget_t *child = luaH_checkudata(L, 2, &widget_class);
     gint idx = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
-    if (idx != -1)
+    GtkWidget *widget;
+    if (idx != -1) {
+        widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), idx);
+        g_object_ref(G_OBJECT(widget));
         gtk_notebook_remove_page(GTK_NOTEBOOK(w->widget), idx);
+    }
     return 0;
 }
 
