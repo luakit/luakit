@@ -22,39 +22,6 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-/* set child method for gtk container widgets */
-static gint
-luaH_eventbox_set_child(lua_State *L)
-{
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-
-    /* remove old child */
-    GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
-    if (widget)
-        gtk_container_remove(GTK_CONTAINER(w->widget), GTK_WIDGET(widget));
-
-    /* add new child to container */
-    widget_t *child = luaH_checkudataornil(L, 2, &widget_class);
-    if (child)
-        gtk_container_add(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
-    return 0;
-}
-
-/* get child method for gtk container widgets */
-static gint
-luaH_eventbox_get_child(lua_State *L)
-{
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
-
-    if (!widget)
-        return 0;
-
-    widget_t *child = g_object_get_data(G_OBJECT(child), "lua_widget");
-    luaH_object_push(L, child->ref);
-    return 1;
-}
-
 static gint
 luaH_eventbox_index(lua_State *L, luakit_token_t token)
 {
@@ -62,11 +29,11 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       case L_TK_SET_CHILD:
-        lua_pushcfunction(L, luaH_eventbox_set_child);
+        lua_pushcfunction(L, luaH_widget_set_child);
         return 1;
 
       case L_TK_GET_CHILD:
-        lua_pushcfunction(L, luaH_eventbox_get_child);
+        lua_pushcfunction(L, luaH_widget_get_child);
         return 1;
 
       default:

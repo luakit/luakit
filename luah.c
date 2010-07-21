@@ -26,7 +26,6 @@
 #include "common/lualib.h"
 #include "luakit.h"
 #include "widget.h"
-#include "window.h"
 #include "luah.h"
 
 #define MODKEY(key, name)           \
@@ -325,7 +324,7 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
     size_t len;
-    window_t *w;
+    widget_t *w;
     const gchar *prop = luaL_checklstring(L, 2, &len);
     luakit_token_t token = l_tokenize(prop, len);
 
@@ -455,9 +454,6 @@ luaH_init(xdgHandle *xdg)
 
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
-
-    /* Export window */
-    window_class_setup(L);
 
     /* Export widget */
     widget_class_setup(L);

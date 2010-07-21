@@ -7,16 +7,26 @@ function label()    return widget{type="label"}    end
 function notebook() return widget{type="notebook"} end
 function vbox()     return widget{type="vbox"}     end
 function webview()  return widget{type="webview"}  end
+function window()   return widget{type="window"}   end
 
-window.add_signal("new", function (w)
-    -- Quit if all windows are destroyed
-    w:add_signal("destroy", function ()
-        if #luakit.windows == 0 then luakit.quit() end
+function widget_setup(w)
+    print("new widget", w.type)
+    if w.type == "window" then
+        -- Call the quit function if this was the last window left
+        w:add_signal("destroy", function ()
+            if #luakit.windows == 0 then luakit.quit() end
+        end)
+    end
+end
+
+widget.add_signal("new", function(w)
+    w:add_signal("init", function(w)
+        widget_setup(w)
     end)
 end)
 
 -- Create main widgets
-win = window{}
+win = window()
 layout = vbox()
 win:set_child(layout)
 

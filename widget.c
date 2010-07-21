@@ -29,6 +29,7 @@ widget_info_t widgets_list[] = {
   { L_TK_TEXTBUTTON, "textbutton", widget_textbutton },
   { L_TK_NOTEBOOK,   "notebook",   widget_notebook   },
   { L_TK_WEBVIEW,    "webview",    widget_webview    },
+  { L_TK_WINDOW,     "window",     widget_window     },
   { L_TK_UNKNOWN,    NULL,         NULL              }
 };
 

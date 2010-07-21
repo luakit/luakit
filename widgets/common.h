@@ -31,5 +31,8 @@ void parent_set_cb(GtkWidget*, GtkObject*, widget_t*);
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);
 void remove_cb(GtkContainer*, GtkWidget*, widget_t*);
 
+gint luaH_widget_set_child(lua_State *L);
+gint luaH_widget_get_child(lua_State *L);
+
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
