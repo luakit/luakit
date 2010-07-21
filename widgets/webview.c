@@ -104,7 +104,7 @@ progress_cb(WebKitWebView *v, gint p, widget_t *w)
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::progress", 0, 0);
+    luaH_object_emit_signal(L, -1, "progress-update", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -117,7 +117,7 @@ title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::title", 0, 0);
+    luaH_object_emit_signal(L, -1, "title-changed", 0, 0);
     lua_pop(L, 1);
 }
 

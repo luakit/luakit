@@ -61,7 +61,7 @@ for _, uri in ipairs(uris) do
     view = webview()
     tabs:append(view)
 
-    view:add_signal("property::title", function (v)
+    view:add_signal("title-changed", function (v)
         local title = v:get_prop("title")
         tabs:set_title(v, title)
         win.title = title
