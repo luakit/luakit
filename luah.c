@@ -422,9 +422,7 @@ static gint
 luaH_quit(lua_State *L)
 {
     (void) L;
-    debug("lua calling quit function");
-    // TODO This could be cleaner
-    exit(EXIT_SUCCESS);
+    gtk_main_quit();
     return 0;
 }
 
