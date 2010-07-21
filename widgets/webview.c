@@ -417,6 +417,8 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 static void
 webview_destructor(widget_t *w)
 {
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    gtk_widget_destroy(GTK_WIDGET(view));
     gtk_widget_destroy(GTK_WIDGET(w->widget));
 }
 
@@ -430,8 +432,7 @@ widget_webview(widget_t *w)
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
     g_object_set_data(G_OBJECT(w->widget), "widget", w);
-    g_object_set_data_full(G_OBJECT(w->widget), "webview", view,
-        (GDestroyNotify) gtk_widget_destroy);
+    g_object_set_data(G_OBJECT(w->widget), "webview", view);
 
     gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(w->widget),
         GTK_POLICY_NEVER, GTK_POLICY_NEVER);
