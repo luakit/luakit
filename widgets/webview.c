@@ -287,6 +287,7 @@ luaH_webview_get_prop(lua_State *L)
           case FLOAT:
             g_object_get(ws, prop, &tmp.f, NULL);
             lua_pushnumber(L, tmp.f);
+            return 1;
 
           case DOUBLE:
             g_object_get(ws, prop, &tmp.d, NULL);
