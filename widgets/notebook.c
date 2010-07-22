@@ -205,6 +205,14 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
             GTK_NOTEBOOK(w->widget)));
         return 1;
 
+      case L_TK_SHOW:
+        lua_pushcfunction(L, luaH_widget_show);
+        return 1;
+
+      case L_TK_HIDE:
+        lua_pushcfunction(L, luaH_widget_hide);
+        return 1;
+
       default:
         break;
     }

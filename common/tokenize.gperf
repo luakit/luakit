@@ -15,6 +15,7 @@ get_prop
 get_scroll
 get_title
 hbox
+hide
 homogeneous
 hovered_uri
 icon
@@ -31,6 +32,7 @@ set_padding
 set_position
 set_prop
 set_title
+show
 show_border
 show_frame
 show_tabs

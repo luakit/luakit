@@ -126,4 +126,20 @@ luaH_widget_get_child(lua_State *L)
     return 1;
 }
 
+gint
+luaH_widget_show(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gtk_widget_show(w->widget);
+    return 0;
+}
+
+gint
+luaH_widget_hide(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gtk_widget_hide(w->widget);
+    return 0;
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
