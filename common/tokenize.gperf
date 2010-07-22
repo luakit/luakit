@@ -1,6 +1,7 @@
 append
 count
 current
+entry
 eventbox
 get_alignment
 get_child

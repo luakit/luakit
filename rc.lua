@@ -8,6 +8,7 @@ function notebook() return widget{type="notebook"} end
 function vbox()     return widget{type="vbox"}     end
 function webview()  return widget{type="webview"}  end
 function window()   return widget{type="window"}   end
+function entry()    return widget{type="entry"}    end
 
 function widget_setup(w)
     print("new widget", w.type)
@@ -52,6 +53,10 @@ statusbar = eventbox()
 statusbar:set_child(sbar_layout)
 
 layout:pack_start(statusbar, false, false, 0)
+
+-- Input box
+input = entry()
+layout:pack_start(input, false, false, 0)
 
 if #uris == 0 then
     uris = { "http://github.com/mason-larobina/luakit" }

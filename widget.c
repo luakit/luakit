@@ -22,12 +22,13 @@
 #include "widget.h"
 
 widget_info_t widgets_list[] = {
+  { L_TK_ENTRY,      "entry",      widget_entry      },
   { L_TK_EVENTBOX,   "eventbox",   widget_eventbox   },
   { L_TK_HBOX,       "hbox",       widget_hbox       },
-  { L_TK_VBOX,       "vbox",       widget_vbox       },
   { L_TK_LABEL,      "label",      widget_label      },
-  { L_TK_TEXTBUTTON, "textbutton", widget_textbutton },
   { L_TK_NOTEBOOK,   "notebook",   widget_notebook   },
+  { L_TK_TEXTBUTTON, "textbutton", widget_textbutton },
+  { L_TK_VBOX,       "vbox",       widget_vbox       },
   { L_TK_WEBVIEW,    "webview",    widget_webview    },
   { L_TK_WINDOW,     "window",     widget_window     },
   { L_TK_UNKNOWN,    NULL,         NULL              }
