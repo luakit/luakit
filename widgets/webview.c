@@ -376,6 +376,27 @@ luaH_webview_set_prop(lua_State *L)
 }
 
 static gint
+luaH_webview_loading(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    WebKitLoadStatus s;
+    g_object_get(G_OBJECT(view), "load-status", &s, NULL);
+    switch (s) {
+      case WEBKIT_LOAD_PROVISIONAL:
+      case WEBKIT_LOAD_COMMITTED:
+      case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
+        lua_pushboolean(L, TRUE);
+        break;
+
+      default:
+        lua_pushboolean(L, FALSE);
+        break;
+    }
+    return 1;
+}
+
+static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -409,6 +430,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_HIDE:
         lua_pushcfunction(L, luaH_widget_hide);
+        return 1;
+
+      case L_TK_LOADING:
+        lua_pushcfunction(L, luaH_webview_loading);
         return 1;
 
       default:
