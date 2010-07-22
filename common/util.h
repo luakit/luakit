@@ -44,7 +44,7 @@ void _debug(int, const gchar *, const gchar *, ...);
 
 #else
 
-#define debug(string)
+#define debug(string, ...)
 
 #endif
 
