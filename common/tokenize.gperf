@@ -5,13 +5,13 @@ current
 entry
 eventbox
 fg
+font
 get_alignment
 get_child
 get_padding
 get_position
 get_prop
 get_scroll
-has_frame
 hbox
 homogeneous
 hovered_uri
@@ -30,6 +30,7 @@ set_position
 set_prop
 set_title
 show_border
+show_frame
 show_tabs
 spacing
 text
