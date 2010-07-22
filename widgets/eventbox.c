@@ -25,7 +25,8 @@
 static gint
 luaH_eventbox_index(lua_State *L, luakit_token_t token)
 {
-    luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+
     switch(token)
     {
       case L_TK_SET_CHILD:
@@ -34,6 +35,10 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
 
       case L_TK_GET_CHILD:
         lua_pushcfunction(L, luaH_widget_get_child);
+        return 1;
+
+      case L_TK_BG:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "bg"));
         return 1;
 
       default:
@@ -45,9 +50,29 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
 {
-    (void) L;
-    (void) token;
-    return 0;
+    size_t len;
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    const gchar *tmp;
+    GdkColor c;
+
+    switch(token)
+    {
+      case L_TK_BG:
+        tmp = luaL_checklstring(L, 3, &len);
+        if (!gdk_color_parse(tmp, &c)) {
+            warn("invalid color: %s", tmp);
+            return 0;
+        }
+
+        gtk_widget_modify_bg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+        g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
+        break;
+
+      default:
+        return 0;
+    }
+
+    return luaH_object_emit_property_signal(L, 1);
 }
 
 static void
