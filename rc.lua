@@ -54,6 +54,17 @@ function scroll_parse(p)
     end
 end
 
+-- Update & auto hide the progress indicator
+function progress_update(w, view, p)
+    if not p then p = view:get_prop("progress") end
+    if not view:loading() or p == 1 then
+        w.sbar.loaded:hide()
+    else
+        w.sbar.loaded:show()
+        w.sbar.loaded.text = string.format("(%d%%)", p * 100)
+    end
+end
+
 function new_tab(w, uri)
     view = webview()
     w.tabs:append(view)
@@ -74,6 +85,13 @@ function new_tab(w, uri)
         if iscurrent(w.tabs, v) then
             w.sbar.uri.text = v.uri or "about:blank"
         end
+    end)
+
+    view:add_signal("load-start", function (v)
+        if iscurrent(w.tabs, v) then progress_update(w, v, 0) end
+    end)
+    view:add_signal("progress-update", function (v)
+        if iscurrent(w.tabs, v) then progress_update(w, v) end
     end)
 
     view:add_signal("scroll-update", function(v, p)
@@ -98,6 +116,10 @@ function new_window(uris)
             layout = hbox(),
             ebox = eventbox(),
             uri = label(),
+            loaded = label(),
+            sep = label(),
+            rlayout = hbox(),
+            rebox = eventbox(),
             tabi = label(),
             scroll = label(),
         },
@@ -108,20 +130,30 @@ function new_window(uris)
     w.win:set_child(w.layout)
     w.sbar.ebox:set_child(w.sbar.layout)
     w.layout:pack_start(w.tabs, true, true, 0)
-    w.sbar.layout:pack_start(w.sbar.uri, true, true, 2)
-    w.sbar.layout:pack_start(w.sbar.tabi, false, false, 2)
-    w.sbar.layout:pack_start(w.sbar.scroll, false, false, 2)
+    w.sbar.layout:pack_start(w.sbar.uri, false, false, 0)
+    w.sbar.layout:pack_start(w.sbar.loaded, false, false, 0)
+    w.sbar.layout:pack_start(w.sbar.sep, true, true, 0)
+
+    -- Put the right-most labels in something backgroundable
+    w.sbar.rlayout:pack_start(w.sbar.tabi, false, false, 0)
+    w.sbar.rlayout:pack_start(w.sbar.scroll, false, false, 2)
+    w.sbar.rebox:set_child(w.sbar.rlayout)
+
+    w.sbar.layout:pack_start(w.sbar.rebox, false, false, 0)
     w.layout:pack_start(w.sbar.ebox, false, false, 0)
-    w.layout:pack_start(w.input, false, false, 2)
+    w.layout:pack_start(w.input, false, false, 0)
 
     w.sbar.uri.fg = "#fff"
-    w.sbar.uri:set_alignment(0.0, 0.0)
+    w.sbar.uri.bg = "#000"
+    w.sbar.uri.selectable = true
+    w.sbar.loaded.fg = "#888"
+    w.sbar.loaded:hide()
+    w.sbar.rebox.bg = "#000"
     w.sbar.scroll.fg = "#fff"
-    w.sbar.scroll:set_alignment(1.0, 0.0)
     w.sbar.tabi.text = "[0/0]"
     w.sbar.tabi.fg = "#fff"
-    w.sbar.tabi:set_alignment(1.0, 0.0)
     w.sbar.ebox.bg = "#000"
+
     w.input.show_frame = false
     w.input.text = ":command"
     w.input.bg = "#fff"
@@ -135,6 +167,7 @@ function new_window(uris)
         w.sbar.tabi.text = mktabcount(nbook, idx)
         w.sbar.uri.text = view.uri or "about:blank"
         w.win.title = mktitle(view)
+        progress_update(w, view)
     end)
 
     -- Populate notebook
