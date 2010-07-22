@@ -1,13 +1,17 @@
 append
+bg
 count
 current
 entry
 eventbox
+fg
 get_alignment
 get_child
 get_padding
+get_position
 get_prop
 get_scroll
+has_frame
 hbox
 homogeneous
 hovered_uri
@@ -22,6 +26,7 @@ remove
 set_alignment
 set_child
 set_padding
+set_position
 set_prop
 set_title
 show_border

@@ -23,6 +23,57 @@
 #include "widgets/common.h"
 
 static gint
+luaH_entry_append(lua_State *L)
+{
+    size_t len;
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    const gchar *text = luaL_checklstring(L, 2, &len);
+    gint pos = -1;
+
+    gtk_editable_insert_text(GTK_EDITABLE(w->widget),
+        text, g_utf8_strlen(text, len), &pos);
+
+    return pos + 1;
+}
+
+static gint
+luaH_entry_insert(lua_State *L)
+{
+    size_t len;
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint pos = luaL_checknumber(L, 2);
+    /* lua table indexes start at 1 */
+    if (pos > 0) pos--;
+    const gchar *text = luaL_checklstring(L, 3, &len);
+
+    gtk_editable_insert_text(GTK_EDITABLE(w->widget),
+        text, g_utf8_strlen(text, len), &pos);
+
+    return pos + 1;
+}
+
+static gint
+luaH_entry_set_position(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint pos = luaL_checknumber(L, 2);
+    /* lua table indexes start at 1 */
+    if (pos > 0) pos--;
+
+    gtk_editable_set_position(GTK_EDITABLE(w->widget), pos);
+    lua_pushnumber(L, gtk_editable_get_position(GTK_EDITABLE(w->widget)));
+    return 1;
+}
+
+static gint
+luaH_entry_get_position(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    lua_pushnumber(L, gtk_editable_get_position(GTK_EDITABLE(w->widget)));
+    return 1;
+}
+
+static gint
 luaH_entry_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -33,7 +84,32 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
         lua_pushstring(L, gtk_entry_get_text(GTK_ENTRY(w->widget)));
         return 1;
 
+      case L_TK_FG:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "fg"));
+        return 1;
+
+      case L_TK_BG:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "bg"));
+        return 1;
+
+      case L_TK_APPEND:
+        lua_pushcfunction(L, luaH_entry_append);
+        return 1;
+
+      case L_TK_INSERT:
+        lua_pushcfunction(L, luaH_entry_insert);
+        return 1;
+
+      case L_TK_GET_POSITION:
+        lua_pushcfunction(L, luaH_entry_get_position);
+        return 1;
+
+      case L_TK_SET_POSITION:
+        lua_pushcfunction(L, luaH_entry_set_position);
+        return 1;
+
       default:
+        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
     return 0;
@@ -44,6 +120,8 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    const gchar *tmp;
+    GdkColor c;
 
     switch(token)
     {
@@ -52,7 +130,29 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
             luaL_checklstring(L, 3, &len));
         break;
 
+      case L_TK_FG:
+      case L_TK_BG:
+        tmp = luaL_checklstring(L, 3, &len);
+        if (!gdk_color_parse(tmp, &c)) {
+            warn("invalid color: %s", tmp);
+            return 0;
+        }
+
+        if (token == L_TK_FG) {
+            gtk_widget_modify_text(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+            g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
+        } else {
+            gtk_widget_modify_base(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+            g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
+        }
+        break;
+
+      case L_TK_HAS_FRAME:
+        gtk_entry_set_has_frame(GTK_ENTRY(w->widget), luaH_checkboolean(L, 3));
+        break;
+
       default:
+        warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
 
