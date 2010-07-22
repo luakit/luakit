@@ -235,7 +235,7 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-void
+static void
 page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 {
     (void) nbook;
@@ -249,7 +249,7 @@ page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
     lua_pop(L, 1);
 }
 
-void
+static void
 page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 {
     (void) i;
@@ -263,7 +263,7 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
     lua_pop(L, 1);
 }
 
-void
+static void
 switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint i, widget_t *w)
 {
     (void) p;
