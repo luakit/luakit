@@ -449,7 +449,6 @@ widget_webview(widget_t *w)
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,
       "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
       "signal::key-press-event",                      (GCallback)key_press_cb,           w,
-      "signal::key-release-event",                    (GCallback)key_release_cb,         w,
       "signal::load-committed",                       (GCallback)load_commit_cb,         w,
       "signal::load-finished",                        (GCallback)load_finish_cb,         w,
       "signal::load-progress-changed",                (GCallback)progress_cb,            w,

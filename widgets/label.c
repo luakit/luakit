@@ -144,7 +144,6 @@ widget_label(widget_t *w)
       "signal::focus-in-event",    (GCallback)focus_cb,       w,
       "signal::focus-out-event",   (GCallback)focus_cb,       w,
       "signal::key-press-event",   (GCallback)key_press_cb,   w,
-      "signal::key-release-event", (GCallback)key_release_cb, w,
       "signal::parent-set",        (GCallback)parent_set_cb,  w,
       NULL);
 

@@ -41,20 +41,6 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 }
 
 gboolean
-key_release_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
-{
-    (void) win;
-    gint ret;
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_modifier_table_push(L, ev->state);
-    luaH_keystr_push(L, ev->keyval);
-    ret = luaH_object_emit_signal(L, -3, "key-release", 2, 1);
-    lua_pop(L, 1 + ret);
-    return ret ? TRUE : FALSE;
-}
-
-gboolean
 focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
 {
     (void) win;

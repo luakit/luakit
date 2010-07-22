@@ -265,7 +265,6 @@ widget_notebook(widget_t *w)
       "signal::focus-in-event",    (GCallback)focus_cb,        w,
       "signal::focus-out-event",   (GCallback)focus_cb,        w,
       "signal::key-press-event",   (GCallback)key_press_cb,    w,
-      "signal::key-release-event", (GCallback)key_release_cb,  w,
       "signal::page-added",        (GCallback)page_added_cb,   w,
       "signal::page-removed",      (GCallback)page_removed_cb, w,
       "signal::switch-page",       (GCallback)switch_cb,       w,
