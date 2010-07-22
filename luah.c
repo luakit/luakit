@@ -425,6 +425,27 @@ luaH_quit(lua_State *L)
     return 0;
 }
 
+static gint
+luaH_dofunction_on_error(lua_State *L)
+{
+    /* duplicate string error */
+    lua_pushvalue(L, -1);
+    /* emit error signal */
+    signal_object_emit(L, globalconf.signals, "debug::error", 1);
+
+    if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
+    {
+        /* Move traceback before error */
+        lua_insert(L, -2);
+        /* Insert sentence */
+        lua_pushliteral(L, "\nerror: ");
+        /* Move it before error */
+        lua_insert(L, -2);
+        lua_concat(L, 3);
+    }
+    return 1;
+}
+
 void
 luaH_init(xdgHandle *xdg)
 {
@@ -445,6 +466,9 @@ luaH_init(xdgHandle *xdg)
 
     /* Set panic fuction */
     lua_atpanic(L, luaH_panic);
+
+    /* Set error handling function */
+    lualib_dofunction_on_error = luaH_dofunction_on_error;
 
     luaL_openlibs(L);
 
