@@ -175,7 +175,7 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-void
+static void
 activate_cb(GtkEntry *e, widget_t *w)
 {
     (void) e;
@@ -185,7 +185,7 @@ activate_cb(GtkEntry *e, widget_t *w)
     lua_pop(L, 1);
 }
 
-void
+static void
 changed_cb(GtkEditable *e, widget_t *w)
 {
     (void) e;

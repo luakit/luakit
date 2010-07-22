@@ -59,7 +59,7 @@ luaH_textbutton_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-void
+static void
 clicked_cb(GtkWidget *b, widget_t *w)
 {
     (void) b;

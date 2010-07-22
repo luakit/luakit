@@ -22,7 +22,7 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-void
+static void
 destroy_cb(GtkObject *win, widget_t *w)
 {
     (void) win;
@@ -86,7 +86,7 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-void
+static void
 window_destructor(widget_t *w)
 {
     gtk_widget_destroy(w->widget);
