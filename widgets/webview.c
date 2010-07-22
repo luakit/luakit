@@ -28,11 +28,11 @@
 typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE } property_value_type;
 
 typedef union {
-    const gchar *c;
-    gboolean    b;
-    gdouble     d;
-    gfloat      f;
-    gint        i;
+    gchar    *c;
+    gboolean  b;
+    gdouble   d;
+    gfloat    f;
+    gint      i;
 } property_tmp_values;
 
 const struct property_t {
@@ -88,7 +88,6 @@ const struct property_t {
   { "tab-key-cycles-through-elements",              BOOL,   FALSE,  TRUE  },
   { "title",                                        CHAR,   TRUE,   FALSE },
   { "transparent",                                  BOOL,   TRUE,   TRUE  },
-  { "uri",                                          CHAR,   TRUE,   FALSE },
   { "user-agent",                                   CHAR,   FALSE,  TRUE  },
   { "user-stylesheet-uri",                          CHAR,   FALSE,  TRUE  },
   { "zoom-level",                                   FLOAT,  TRUE,   TRUE  },
@@ -96,7 +95,7 @@ const struct property_t {
   { NULL,                                           0,      0,      0     },
 };
 
-void
+static void
 progress_cb(WebKitWebView *v, gint p, widget_t *w)
 {
     (void) v;
@@ -108,7 +107,7 @@ progress_cb(WebKitWebView *v, gint p, widget_t *w)
     lua_pop(L, 1);
 }
 
-void
+static void
 title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget_t *w)
 {
     (void) f;
@@ -121,7 +120,7 @@ title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget
     lua_pop(L, 1);
 }
 
-void
+static void
 load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 {
     (void) v;
@@ -133,31 +132,41 @@ load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
     lua_pop(L, 1);
 }
 
-void
+static void inline
+update_uri(GtkWidget *view, const gchar *uri, widget_t *w)
+{
+    /* return if uri has not changed */
+    if (!g_strcmp0(uri, g_object_get_data(G_OBJECT(view), "uri")))
+        return;
+
+    g_object_set_data_full(G_OBJECT(view), "uri", g_strdup(uri), g_free);
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
+    lua_pop(L, 1);
+}
+
+static void
 load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 {
-    (void) v;
-    (void) f;
-
+    update_uri(GTK_WIDGET(v), webkit_web_frame_get_uri(f), w);
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "load-commit", 0, 0);
     lua_pop(L, 1);
 }
 
-void
+static void
 load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 {
-    (void) v;
-    (void) f;
-
+    update_uri(GTK_WIDGET(v), webkit_web_frame_get_uri(f), w);
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "load-finish", 0, 0);
     lua_pop(L, 1);
 }
 
-void
+static void
 link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w)
 {
     (void) t;
@@ -198,7 +207,7 @@ link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w
  * This signal is also where you would attach custom scheme handlers to take
  * over the navigation request by launching an external application.
  */
-gboolean
+static gboolean
 navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
         WebKitNetworkRequest *r, WebKitWebNavigationAction *a,
         WebKitWebPolicyDecision *p, widget_t *w)
@@ -228,33 +237,36 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 }
 
 static gint
-luaH_webview_get_scroll(lua_State *L)
+get_scroll(GtkWidget *scroll)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scroll));
     gdouble view_size = gtk_adjustment_get_page_size(adjustment);
     gdouble value = gtk_adjustment_get_value(adjustment);
     gdouble max = gtk_adjustment_get_upper(adjustment) - view_size;
 
     if (max == 0)
-        lua_pushnumber(L, -1);
+        return -1;
     else if (value == max)
-        lua_pushnumber(L, 100);
+        return 100;
     else if (value == 0)
-        lua_pushnumber(L, 0);
+        return 0;
     else
-        lua_pushnumber(L, (gint) ceil(((value / max) * 100)));
+        return (gint) ceil(((value / max) * 100));
+}
 
+static gint
+luaH_webview_get_scroll(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    lua_pushnumber(L, get_scroll(w->widget));
     return 1;
 }
 
 static gint
 luaH_webview_get_prop(lua_State *L)
 {
-    size_t len;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    const gchar *prop = luaL_checklstring(L, 2, &len);
+    const gchar *prop = luaL_checkstring(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     GObject *ws;
     property_tmp_values tmp;
@@ -277,6 +289,7 @@ luaH_webview_get_prop(lua_State *L)
           case CHAR:
             g_object_get(ws, prop, &tmp.c, NULL);
             lua_pushstring(L, tmp.c);
+            g_free(tmp.c);
             return 1;
 
           case INT:
@@ -334,7 +347,7 @@ luaH_webview_set_prop(lua_State *L)
             return 0;
 
           case CHAR:
-            tmp.c = luaL_checklstring(L, 3, &len);
+            tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
             g_object_set(ws, prop, tmp.c, NULL);
             return 0;
 
@@ -366,6 +379,7 @@ static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
 
     switch(token)
     {
@@ -382,10 +396,15 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         return 1;
 
       case L_TK_HOVERED_URI:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "hovered-uri"));
+        lua_pushstring(L, g_object_get_data(G_OBJECT(view), "hovered-uri"));
+        return 1;
+
+      case L_TK_URI:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(view), "uri"));
         return 1;
 
       default:
+        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
 
@@ -408,15 +427,36 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
         uri = g_strrstr(uri, "://") ? g_strdup(uri) :
             g_strdup_printf("http://%s", uri);
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), uri);
-        g_free(uri);
+        g_object_set_data_full(G_OBJECT(view), "uri", uri, g_free);
         break;
 
       default:
-        warn("unknown property: %s", luaL_checklstring(L, 2, &len));
+        warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
 
     return luaH_object_emit_property_signal(L, 1);
+}
+
+static gboolean
+expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
+{
+    (void) e;
+    (void) widget;
+
+    gint old = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w->widget), "scroll-percentage"));
+    gint new = get_scroll(w->widget);
+
+    if (old == new)
+        return FALSE;
+
+    g_object_set_data(G_OBJECT(w->widget), "scroll-percentage", GINT_TO_POINTER(new));
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushnumber(L, new);
+    luaH_object_emit_signal(L, -2, "scroll-update", 1, 0);
+    lua_pop(L, 1);
+    return FALSE;
 }
 
 static void
@@ -445,6 +485,7 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect((GObject*)view,
+      "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,
       "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
