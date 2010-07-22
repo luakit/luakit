@@ -126,6 +126,16 @@ luaH_notebook_set_title(lua_State *L)
 }
 
 static gint
+luaH_notebook_get_title(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    lua_pushstring(L, gtk_notebook_get_tab_label_text(
+        GTK_NOTEBOOK(w->widget), child->widget));
+    return 1;
+}
+
+static gint
 luaH_notebook_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -158,6 +168,10 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
 
       case L_TK_SET_TITLE:
         lua_pushcfunction(L, luaH_notebook_set_title);
+        return 1;
+
+      case L_TK_GET_TITLE:
+        lua_pushcfunction(L, luaH_notebook_get_title);
         return 1;
 
       case L_TK_SHOW_TABS:

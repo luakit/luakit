@@ -12,6 +12,7 @@ get_padding
 get_position
 get_prop
 get_scroll
+get_title
 hbox
 homogeneous
 hovered_uri
