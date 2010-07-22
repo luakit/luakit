@@ -31,12 +31,27 @@ static gint
 luaH_notebook_current(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    gint idx = gtk_notebook_get_current_page(GTK_NOTEBOOK(w->widget));
+    gint n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(w->widget));
+    if (n == 1)
+        lua_pushnumber(L, 1);
+    else
+        lua_pushnumber(L, gtk_notebook_get_current_page(
+            GTK_NOTEBOOK(w->widget)) + 1);
+    return 1;
+}
 
-    if (idx == -1)
+static gint
+luaH_notebook_atindex(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint i = luaL_checknumber(L, 2);
+    /* correct index */
+    if (i != -1) i--;
+
+    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
+    if (!widget)
         return 0;
 
-    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), idx);
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     luaH_object_push(L, child->ref);
     return 1;
@@ -48,11 +63,11 @@ luaH_notebook_indexof(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     widget_t *child = luaH_checkudata(L, 2, &widget_class);
 
-    gint idx = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
+    gint i = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
 
     /* return index or nil */
-    if (!++idx) return 0;
-    lua_pushnumber(L, idx);
+    if (!++i) return 0;
+    lua_pushnumber(L, i);
     return 1;
 }
 
@@ -61,13 +76,14 @@ luaH_notebook_remove(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     widget_t *child = luaH_checkudata(L, 2, &widget_class);
-    gint idx = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
-    GtkWidget *widget;
-    if (idx != -1) {
-        widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), idx);
-        g_object_ref(G_OBJECT(widget));
-        gtk_notebook_remove_page(GTK_NOTEBOOK(w->widget), idx);
-    }
+    gint i = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
+
+    if (i != -1)
+        return 0;
+
+    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
+    g_object_ref(G_OBJECT(widget));
+    gtk_notebook_remove_page(GTK_NOTEBOOK(w->widget), i);
     return 0;
 }
 
@@ -77,15 +93,16 @@ luaH_notebook_insert(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     widget_t *child = luaH_checkudata(L, 3, &widget_class);
-    gint idx = luaL_checknumber(L, 2);
-    if (idx != -1) idx--;
+    gint i = luaL_checknumber(L, 2);
+    /* correct index */
+    if (i != -1) i--;
 
-    idx = gtk_notebook_insert_page(GTK_NOTEBOOK(w->widget),
-        child->widget, NULL, idx);
+    i = gtk_notebook_insert_page(GTK_NOTEBOOK(w->widget),
+        child->widget, NULL, i);
 
     /* return new index or nil */
-    if (!++idx) return 0;
-    lua_pushnumber(L, idx);
+    if (!++i) return 0;
+    lua_pushnumber(L, i);
     return 1;
 }
 
@@ -95,12 +112,12 @@ luaH_notebook_append(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     widget_t *child = luaH_checkudata(L, 2, &widget_class);
-    gint idx = gtk_notebook_append_page(GTK_NOTEBOOK(w->widget),
+    gint i = gtk_notebook_append_page(GTK_NOTEBOOK(w->widget),
         child->widget, NULL);
 
     /* return new index or nil */
-    if (!++idx) return 0;
-    lua_pushnumber(L, idx);
+    if (!++i) return 0;
+    lua_pushnumber(L, i);
     return 1;
 }
 
@@ -166,6 +183,10 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
         lua_pushcfunction(L, luaH_notebook_indexof);
         return 1;
 
+      case L_TK_ATINDEX:
+        lua_pushcfunction(L, luaH_notebook_atindex);
+        return 1;
+
       case L_TK_SET_TITLE:
         lua_pushcfunction(L, luaH_notebook_set_title);
         return 1;
@@ -217,14 +238,14 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
 void
 page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 {
-    (void) i;
     (void) nbook;
 
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -2, "page-added", 1, 0);
+    lua_pushnumber(L, i + 1);
+    luaH_object_emit_signal(L, -3, "page-added", 2, 0);
     lua_pop(L, 1);
 }
 
@@ -243,16 +264,17 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 }
 
 void
-switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint idx, widget_t *w)
+switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint i, widget_t *w)
 {
     (void) p;
-    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(nbook), idx);
+    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(nbook), i);
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
-    luaH_object_emit_signal(L, -2, "switch-page", 1, 0);
+    lua_pushnumber(L, i + 1);
+    luaH_object_emit_signal(L, -3, "switch-page", 2, 0);
     lua_pop(L, 1);
 }
 
