@@ -91,7 +91,16 @@ luaH_label_index(lua_State *L, luakit_token_t token)
         lua_pushcfunction(L, luaH_label_get_padding);
         return 1;
 
+      case L_TK_FG:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "fg"));
+        return 1;
+
+      case L_TK_FONT:
+        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "font"));
+        return 1;
+
       default:
+        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
     return 0;
@@ -102,6 +111,9 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    const gchar *tmp;
+    GdkColor c;
+    PangoFontDescription *font;
 
     switch(token)
     {
@@ -110,7 +122,26 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
             luaL_checklstring(L, 3, &len));
         break;
 
+      case L_TK_FG:
+        tmp = luaL_checklstring(L, 3, &len);
+        if (!gdk_color_parse(tmp, &c)) {
+            warn("invalid color: %s", tmp);
+            return 0;
+        }
+
+        gtk_widget_modify_fg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+        g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
+        break;
+
+      case L_TK_FONT:
+        tmp = luaL_checklstring(L, 3, &len);
+        font = pango_font_description_from_string(tmp);
+        gtk_widget_modify_font(GTK_WIDGET(w->widget), font);
+        g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
+        break;
+
       default:
+        warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
 
