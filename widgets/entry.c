@@ -159,6 +159,26 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
+void
+activate_cb(GtkEntry *e, widget_t *w)
+{
+    (void) e;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "activate", 0, 0);
+    lua_pop(L, 1);
+}
+
+void
+changed_cb(GtkEditable *e, widget_t *w)
+{
+    (void) e;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "changed", 0, 0);
+    lua_pop(L, 1);
+}
+
 static void
 entry_destructor(widget_t *w)
 {
@@ -180,6 +200,8 @@ widget_entry(widget_t *w)
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
 
     g_object_connect((GObject*)w->widget,
+      "signal::activate",          (GCallback)activate_cb,    w,
+      "signal::changed",           (GCallback)changed_cb,     w,
       "signal::focus-in-event",    (GCallback)focus_cb,       w,
       "signal::focus-out-event",   (GCallback)focus_cb,       w,
       "signal::key-press-event",   (GCallback)key_press_cb,   w,
