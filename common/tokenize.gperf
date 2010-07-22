@@ -26,6 +26,7 @@ notebook
 pack_end
 pack_start
 remove
+selectable
 set_alignment
 set_child
 set_padding

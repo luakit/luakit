@@ -107,6 +107,10 @@ luaH_label_index(lua_State *L, luakit_token_t token)
         lua_pushcfunction(L, luaH_widget_hide);
         return 1;
 
+      case L_TK_SELECTABLE:
+        lua_pushboolean(L, gtk_label_get_selectable(GTK_LABEL(w->widget)));
+        return 1;
+
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
@@ -148,6 +152,10 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
         break;
 
+      case L_TK_SELECTABLE:
+        gtk_label_set_selectable(GTK_LABEL(w->widget), luaH_checkboolean(L, 3));
+        break;
+
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
@@ -174,7 +182,7 @@ widget_label(widget_t *w)
     g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
 
     /* setup default settings */
-    gtk_label_set_selectable(GTK_LABEL(w->widget), TRUE);
+    gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);
     gtk_label_set_use_markup(GTK_LABEL(w->widget), TRUE);
     gtk_misc_set_alignment(GTK_MISC(w->widget), 0, 0);
     gtk_misc_set_padding(GTK_MISC(w->widget), 2, 2);
