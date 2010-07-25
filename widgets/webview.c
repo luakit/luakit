@@ -492,6 +492,30 @@ expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
     return FALSE;
 }
 
+static gboolean
+button_press_cb(GtkWidget *view, GdkEventButton *event, widget_t *w)
+{
+    if((event->type != GDK_BUTTON_PRESS) || (event->button != 1))
+        return FALSE;
+
+    /* get webview hit context */
+    WebKitHitTestResult *ht = webkit_web_view_get_hit_test_result(WEBKIT_WEB_VIEW(view), event);
+    guint c;
+    g_object_get(ht, "context", &c, NULL);
+    gint context = (gint) c;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    /* raise "form-active" when a user clicks on a form field and raise
+     * "root-active" when a user clicks elsewhere */
+    if (context & WEBKIT_HIT_TEST_RESULT_CONTEXT_EDITABLE)
+        luaH_object_emit_signal(L, -1, "form-active", 0, 0);
+    else if (context & WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT)
+        luaH_object_emit_signal(L, -1, "root-active", 0, 0);
+    lua_pop(L, 1);
+    return FALSE;
+}
+
 static void
 webview_destructor(widget_t *w)
 {
@@ -518,6 +542,7 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect((GObject*)view,
+      "signal::button-press-event",                   (GCallback)button_press_cb,        w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,
