@@ -1,5 +1,7 @@
 #!./luakit -c
 
+require("mode")
+
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
 function hbox()     return widget{type="hbox"}     end
@@ -118,10 +120,12 @@ end
 
 -- Construct new window
 function new_window(uris)
+    -- Widget & state variables
     local w = {
         win = window(),
         layout = vbox(),
         tabs = notebook(),
+        -- Status bar widgets
         sbar = {
             layout = hbox(),
             ebox = eventbox(),
@@ -133,7 +137,13 @@ function new_window(uris)
             tabi = label(),
             scroll = label(),
         },
-        input = entry(),
+        -- Input bar widgets
+        ibar = {
+            layout = hbox(),
+            ebox = eventbox(),
+            prompt = label(),
+            input = entry(),
+        },
     }
 
     -- Pack widgets
@@ -151,7 +161,12 @@ function new_window(uris)
 
     w.sbar.layout:pack_start(w.sbar.rebox, false, false, 0)
     w.layout:pack_start(w.sbar.ebox, false, false, 0)
-    w.layout:pack_start(w.input, false, false, 0)
+
+    -- Pack input bar
+    w.ibar.layout:pack_start(w.ibar.prompt, false, false, 0)
+    w.ibar.layout:pack_start(w.ibar.input, false, false, 0)
+    w.ibar.ebox:set_child(w.ibar.layout)
+    w.layout:pack_start(w.ibar.ebox, false, false, 0)
 
     w.sbar.uri.fg = "#fff"
     w.sbar.uri.selectable = true
@@ -159,14 +174,18 @@ function new_window(uris)
     w.sbar.loaded:hide()
     w.sbar.rebox.bg = "#000"
     w.sbar.scroll.fg = "#fff"
+    w.sbar.scroll.text = "All"
     w.sbar.tabi.text = "[0/0]"
     w.sbar.tabi.fg = "#fff"
     w.sbar.ebox.bg = "#000"
 
-    w.input.show_frame = false
-    w.input.text = ":command"
-    w.input.bg = "#fff"
-    w.input.fg = "#000"
+    w.ibar.input.show_frame = false
+    w.ibar.input.bg = "#fff"
+    w.ibar.input.fg = "#000"
+
+    w.ibar.ebox.bg = "#fff"
+    w.ibar.prompt.text = "Hello"
+    w.ibar.prompt.fg = "#000"
 
     -- Attach notebook signals
     w.tabs:add_signal("page-added", function(nbook, view, idx)
@@ -180,6 +199,27 @@ function new_window(uris)
         autohide(nbook)
     end)
 
+    -- Mode specific actions
+    w.win:add_signal("mode-changed", function(win, mode)
+        if mode == "normal" then
+            w.ibar.prompt.text = ""
+            w.ibar.prompt:show()
+            w.ibar.input:hide()
+            w.ibar.input.text = ""
+        elseif mode == "input" then
+            w.ibar.input:hide()
+            w.ibar.input.text = ""
+            w.ibar.prompt.text = " -- INPUT -- "
+            w.ibar.prompt:show()
+        elseif mode == "command" then
+            w.ibar.prompt:hide()
+            w.ibar.prompt.text = ""
+            w.ibar.input.text = ":"
+            w.ibar.input:show()
+            w.ibar.input:focus()
+        end
+    end)
+
     -- Populate notebook
     for _, uri in ipairs(uris) do
         new_tab(w, uri)
@@ -189,6 +229,9 @@ function new_window(uris)
     if w.tabs:count() == 0 then
         new_tab(w, "http://github.com/mason-larobina/luakit")
     end
+
+    -- Set initial mode
+    mode.set(w.win)
 
     return w
 end
