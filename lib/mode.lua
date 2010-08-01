@@ -51,3 +51,5 @@ function set_default(win, mode)
     end
     default_modes[win] = mode
 end
+
+setmetatable(_M, { __call = function(_, ...) return set(...) end })

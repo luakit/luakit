@@ -231,7 +231,7 @@ function new_window(uris)
     end
 
     -- Set initial mode
-    mode.set(w.win)
+    mode(w.win)
 
     return w
 end
