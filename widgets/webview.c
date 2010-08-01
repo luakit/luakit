@@ -432,6 +432,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         lua_pushcfunction(L, luaH_widget_hide);
         return 1;
 
+      case L_TK_FOCUS:
+        lua_pushcfunction(L, luaH_widget_focus);
+        return 1;
+
       case L_TK_LOADING:
         lua_pushcfunction(L, luaH_webview_loading);
         return 1;

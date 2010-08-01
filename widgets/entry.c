@@ -124,6 +124,10 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
         lua_pushcfunction(L, luaH_widget_hide);
         return 1;
 
+      case L_TK_FOCUS:
+        lua_pushcfunction(L, luaH_widget_focus);
+        return 1;
+
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));
         break;

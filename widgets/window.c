@@ -63,6 +63,10 @@ luaH_window_index(lua_State *L, luakit_token_t token)
         lua_pushcfunction(L, luaH_widget_hide);
         return 1;
 
+      case L_TK_FOCUS:
+        lua_pushcfunction(L, luaH_widget_focus);
+        return 1;
+
       default:
         break;
     }
@@ -119,9 +123,9 @@ widget_window(widget_t *w)
     gtk_window_set_geometry_hints(GTK_WINDOW(w->widget), NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect((GObject*)w->widget,
+      "signal::add",     (GCallback)add_cb,     w,
       "signal::destroy", (GCallback)destroy_cb, w,
-      "signal::add",     (GCallback)add_cb,    w,
-      "signal::remove",  (GCallback)remove_cb, w,
+      "signal::remove",  (GCallback)remove_cb,  w,
       NULL);
 
     gtk_widget_show(w->widget);

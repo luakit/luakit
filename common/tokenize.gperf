@@ -6,6 +6,7 @@ current
 entry
 eventbox
 fg
+focus
 font
 get_alignment
 get_child
