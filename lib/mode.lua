@@ -1,5 +1,7 @@
 local setmetatable = setmetatable
 local type = type
+local io = io
+local debug = debug
 
 module("mode")
 
@@ -22,9 +24,8 @@ end
 -- Return the current mode for a given window widget
 function get(win)
     if not iswindow(win) then
-        -- TODO I should find some better way of printing error messages,
-        -- maybe create lua wrappers around error, warn & debug C functions.
-        print("Warning: attempt to set mode on non-window widget.")
+        io.stderr:write("W: mode.lua: attempt to set mode on non-window widget.\n")
+        io.stderr:write(debug.traceback() .. "\n")
         return nil
     end
     return current_modes[win] or default_modes[win] or default_mode
@@ -33,7 +34,8 @@ end
 -- Set the current mode for a given window widget
 function set(win, mode)
     if not iswindow(win) then
-        print("Warning: attempt to get mode on non-window widget.")
+        io.stderr:write("W: mode.lua: attempt to get mode on non-window widget.\n")
+        io.stderr:write(debug.traceback() .. "\n")
         return nil
     end
     local mode = mode or default_modes[win] or default_mode
@@ -46,7 +48,8 @@ end
 -- Set the default mode for a given window widget
 function set_default(win, mode)
     if not iswindow(win) then
-        print("Warning: attempt to set default mode on non-window widget.")
+        io.stderr:write("W: mode.lua: attempt to set default mode on non-window widget.\n")
+        io.stderr:write(debug.traceback() .. "\n")
         return nil
     end
     default_modes[win] = mode
