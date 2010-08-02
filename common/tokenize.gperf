@@ -10,11 +10,12 @@ focus
 font
 get_alignment
 get_child
+get_hscroll
 get_padding
 get_position
 get_prop
-get_scroll
 get_title
+get_vscroll
 hbox
 hide
 homogeneous
@@ -31,10 +32,12 @@ remove
 selectable
 set_alignment
 set_child
+set_hscroll
 set_padding
 set_position
 set_prop
 set_title
+set_vscroll
 show
 show_border
 show_frame

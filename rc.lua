@@ -45,15 +45,16 @@ function mktabcount(nbook, i)
 end
 
 -- Returns a vim-like scroll indicator
-function scroll_parse(p)
-    if p == -1 then
+function scroll_parse(view)
+    val, max = view:get_vscroll()
+    if max == 0 then
         return "All"
-    elseif p == 0 then
+    elseif val == 0 then
         return "Top"
-    elseif p == 100 then
+    elseif val == max then
         return "Bot"
     else
-        return string.format("%2d%%", p)
+        return string.format("%2d%%", (val/max) * 100)
     end
 end
 
@@ -106,9 +107,9 @@ function new_tab(w, uri)
         if iscurrent(w.tabs, v) then progress_update(w, v) end
     end)
 
-    view:add_signal("scroll-update", function(v, p)
+    view:add_signal("expose", function(v)
         if iscurrent(w.tabs, v) then
-            w.sbar.scroll.text = scroll_parse(p)
+            w.sbar.scroll.text = scroll_parse(v)
         end
     end)
 

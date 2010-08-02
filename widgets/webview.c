@@ -236,30 +236,60 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     return TRUE;
 }
 
-static gint
-get_scroll(GtkWidget *scroll)
+inline static gint
+push_adjustment_values(lua_State *L, GtkAdjustment *adjustment)
 {
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(scroll));
     gdouble view_size = gtk_adjustment_get_page_size(adjustment);
     gdouble value = gtk_adjustment_get_value(adjustment);
     gdouble max = gtk_adjustment_get_upper(adjustment) - view_size;
-
-    if (max == 0)
-        return -1;
-    else if (value == max)
-        return 100;
-    else if (value == 0)
-        return 0;
-    else
-        return (gint) ceil(((value / max) * 100));
+    lua_pushnumber(L, value);
+    lua_pushnumber(L, (max < 0 ? 0 : max));
+    lua_pushnumber(L, view_size);
+    return 3;
 }
 
 static gint
-luaH_webview_get_scroll(lua_State *L)
+luaH_webview_get_vscroll(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    lua_pushnumber(L, get_scroll(w->widget));
-    return 1;
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    return push_adjustment_values(L, adjustment);
+}
+
+static gint
+luaH_webview_get_hscroll(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    return push_adjustment_values(L, adjustment);
+}
+
+inline static void
+set_adjustment(GtkAdjustment *adjustment, gdouble new)
+{
+    gdouble view_size = gtk_adjustment_get_page_size(adjustment);
+    gdouble max = gtk_adjustment_get_upper(adjustment) - view_size;
+    gtk_adjustment_set_value(adjustment, ((new < 0 ? 0 : new) > max ? max : new));
+}
+
+static gint
+luaH_webview_set_vscroll(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gdouble value = (gdouble) luaL_checknumber(L, 2);
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    set_adjustment(adjustment, value);
+    return 0;
+}
+
+static gint
+luaH_webview_set_hscroll(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gdouble value = (gdouble) luaL_checknumber(L, 2);
+    GtkAdjustment *adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    set_adjustment(adjustment, value);
+    return 0;
 }
 
 static gint
@@ -404,8 +434,20 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_GET_SCROLL:
-        lua_pushcfunction(L, luaH_webview_get_scroll);
+      case L_TK_GET_VSCROLL:
+        lua_pushcfunction(L, luaH_webview_get_vscroll);
+        return 1;
+
+      case L_TK_GET_HSCROLL:
+        lua_pushcfunction(L, luaH_webview_get_hscroll);
+        return 1;
+
+      case L_TK_SET_VSCROLL:
+        lua_pushcfunction(L, luaH_webview_set_vscroll);
+        return 1;
+
+      case L_TK_SET_HSCROLL:
+        lua_pushcfunction(L, luaH_webview_set_hscroll);
         return 1;
 
       case L_TK_SET_PROP:
@@ -480,18 +522,9 @@ expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
 {
     (void) e;
     (void) widget;
-
-    gint old = GPOINTER_TO_INT(g_object_get_data(G_OBJECT(w->widget), "scroll-percentage"));
-    gint new = get_scroll(w->widget);
-
-    if (old == new)
-        return FALSE;
-
-    g_object_set_data(G_OBJECT(w->widget), "scroll-percentage", GINT_TO_POINTER(new));
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    lua_pushnumber(L, new);
-    luaH_object_emit_signal(L, -2, "scroll-update", 1, 0);
+    luaH_object_emit_signal(L, -1, "expose", 0, 0);
     lua_pop(L, 1);
     return FALSE;
 }
