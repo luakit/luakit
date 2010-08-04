@@ -83,12 +83,20 @@ remove_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
 void
 parent_set_cb(GtkWidget *widget, GtkObject *old, widget_t *w)
 {
-    (void) w;
+    (void) old;
+    lua_State *L = globalconf.L;
+    widget_t *parent = NULL;
     GtkContainer *new;
     g_object_get(G_OBJECT(widget), "parent", &new, NULL);
-    debug("New %p old %p", new, old);
+    luaH_object_push(L, w->ref);
     if (new)
-        g_object_unref(G_OBJECT(new));
+        parent = g_object_get_data(G_OBJECT(new), "widget");
+    if (parent)
+        luaH_object_push(L, parent->ref);
+    else
+        lua_pushnil(L);
+    luaH_object_emit_signal(L, -2, "parent-set", 1, 0);
+    lua_pop(L, 1);
 }
 
 /* set child method for gtk container widgets */
