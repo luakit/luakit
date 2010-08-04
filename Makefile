@@ -35,7 +35,7 @@ ${GSRC} ${GHEAD}: ${GPERF}
 	@${CC} -c ${CFLAGS} ${CPPFLAGS} $< -o $@
 
 globalconf.h: globalconf.h.in
-	sed 's#LUAKIT_LUA_LIB_PATH .*#LUAKIT_LUA_LIB_PATH "$(PREFIX)/share/luakit/lib"#' globalconf.h.in > globalconf.h
+	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' globalconf.h.in > globalconf.h
 
 ${OBJS}: ${HEADS} config.mk globalconf.h
 
@@ -52,6 +52,8 @@ install:
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
 	cp -r lib/ $(INSTALLDIR)/share/luakit/
 	chmod -R 755 $(INSTALLDIR)/share/luakit/lib/
+	cp -r scripts/ $(INSTALLDIR)/share/luakit/
+	chmod -R 755 $(INSTALLDIR)/share/luakit/scripts/
 	install -D luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
 	install -D rc.lua $(DESTDIR)/etc/xdg/luakit/rc.lua

@@ -379,6 +379,10 @@ luaH_luakit_index(lua_State *L)
         lua_pushcfunction(L, luaH_luakit_selection);
         return 1;
 
+      case L_TK_INSTALL_PATH:
+        lua_pushstring(L, LUAKIT_INSTALL_PATH);
+        return 1;
+
       default:
         break;
     }
@@ -560,8 +564,8 @@ luaH_init(xdgHandle *xdg)
     }
 
     /* add Lua lib path (/usr/share/luakit/lib by default) */
-    lua_pushliteral(L, ";" LUAKIT_LUA_LIB_PATH "/?.lua");
-    lua_pushliteral(L, ";" LUAKIT_LUA_LIB_PATH "/?/init.lua");
+    lua_pushliteral(L, ";" LUAKIT_INSTALL_PATH "/lib/?.lua");
+    lua_pushliteral(L, ";" LUAKIT_INSTALL_PATH "/lib/?/init.lua");
     lua_concat(L, 3); /* concatenate with package.path */
     lua_setfield(L, 1, "path"); /* package.path = "concatenated string" */
 }
