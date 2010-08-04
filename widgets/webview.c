@@ -355,6 +355,22 @@ luaH_webview_clear_search(lua_State *L)
     return 0;
 }
 
+inline static GObject*
+get_settings_object(GtkWidget *view, property_value_scope scope)
+{
+    switch (scope) {
+      case SETTINGS:
+        return G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
+      case WEBKITVIEW:
+        return G_OBJECT(view);
+      case SOUPSESSION:
+        return G_OBJECT(Soup.session);
+      default:
+        break;
+    }
+    return NULL;
+}
+
 static gint
 luaH_webview_get_prop(lua_State *L)
 {
@@ -369,17 +385,7 @@ luaH_webview_get_prop(lua_State *L)
         if (g_strcmp0(properties[i].name, prop))
             continue;
 
-        switch (properties[i].scope) {
-          case SETTINGS:
-            ws = G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
-            break;
-          case WEBKITVIEW:
-            ws = G_OBJECT(view);
-            break;
-          case SOUPSESSION:
-            ws = G_OBJECT(Soup.session);
-            break;
-        }
+        ws = get_settings_object(view, properties[i].scope);
 
         switch(properties[i].type) {
           case BOOL:
@@ -445,17 +451,7 @@ luaH_webview_set_prop(lua_State *L)
             return 0;
         }
 
-        switch (properties[i].scope) {
-          case SETTINGS:
-            ws = G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
-            break;
-          case WEBKITVIEW:
-            ws = G_OBJECT(view);
-            break;
-          case SOUPSESSION:
-            ws = G_OBJECT(Soup.session);
-            break;
-        }
+        ws = get_settings_object(view, properties[i].scope);
 
         switch(properties[i].type) {
           case BOOL:
