@@ -15,6 +15,8 @@ local rtable = table
 local string = string
 local type = type
 local print = print
+local error = error
+local capi = { luakit = luakit }
 
 -- Utility module for awful
 module("util")
@@ -140,19 +142,40 @@ function table.pop(t, k)
 end
 
 -- Check if a file exists
-function exists(f)
-    fh = io.open(f)
-    io.close(fh)
-    return fh ~= nil
-end
-
--- Search locally for a relative path or return install path + relative path
-function find(f)
-    if string.match(f, "^/") or exists(f) then
-        return f
-    else
-        return string.format("%s/%s", luakit.install_path, f)
+function os.exists(f)
+    fh, err = io.open(f)
+    if fh then
+        fh:close()
+        return true
     end
 end
+
+-- Table of xdg home paths or their default locations
+xdg = {
+    config_home = (os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config"))      .. "/luakit",
+    data_home   = (os.getenv("XDG_DATA_HOME")   or (os.getenv("HOME") .. "/.local/share")) .. "/luakit",
+    cache_home  = (os.getenv("XDG_CACHE_HOME")  or (os.getenv("HOME") .. "/.cache"))       .. "/luakit",
+}
+
+-- Search locally, xdg home path and then luakit install path for a given file
+function xdg_find(f, xdg_home_path)
+    -- Ignore absolute paths
+    if string.match(f, "^/") then
+        if os.exists(f) then return f end
+        error(string.format("xdg_find: No such file: %s\n", f))
+    end
+
+    -- Check if file exists at the following locations & return first match
+    local paths = { f, xdg_home_path .. "/" .. f, capi.luakit.install_path .. "/" .. f }
+    for _, p in ipairs(paths) do
+        if os.exists(p) then return p end
+    end
+
+    error(string.format("xdg_find: No such file at:\n\t%s\n", rtable.concat(paths, ",\n\t")))
+end
+
+function find_config(f) return xdg_find(f, xdg.config_home) end
+function find_data(f)   return xdg_find(f, xdg.data_home)   end
+function find_cache(f)  return xdg_find(f, xdg.cache_home)  end
 
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

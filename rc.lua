@@ -306,7 +306,7 @@ function attach_window_signals(w)
             p:hide()
             i:show()
         elseif mode == "follow" then
-            w:eval_js_from_file(util.find("scripts/follow.js"))
+            w:eval_js_from_file(util.find_data("scripts/follow.js"))
             w:eval_js("clear(); show_hints();")
             w.showing_hints = true
             p.text = "Follow:"
