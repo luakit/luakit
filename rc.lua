@@ -374,6 +374,18 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    view:add_signal("link-hover", function (v, link)
+        if w:is_current(v) and link then
+            w.sbar.l.uri.text = "Link: " .. string.gsub(link, "&", "&amp;")
+        end
+    end)
+
+    view:add_signal("link-unhover", function (v)
+        if w:is_current(v) then
+            w:update_uri(v)
+        end
+    end)
+
     view:add_signal("key-press", function ()
         -- Only allow key press events to hit the webview if the user is in
         -- "insert" mode.
@@ -386,6 +398,36 @@ function attach_webview_signals(w, view)
         if w:is_current(v) then
             w:update_progress(v, 0)
             w:set_mode()
+        end
+    end)
+
+    -- 'link' contains the download link
+    -- 'mime' contains the mime type that is requested
+    -- return TRUE to accept or FALSE to reject
+    view:add_signal("mime-type-decision", function (v, link, mime)
+        if w:is_current(v) then
+            print ("Requested link:", link)
+            print ("Mime type:", mime)
+
+            -- i.e. block binary files like *.exe
+            if string.match(mime, "application/octet-stream") then
+                return false
+            end
+        end
+    end)
+
+    -- 'link' contains the download link
+    -- 'filename' contains the suggested filename (from server or webkit)
+    view:add_signal("download-request", function (v, link, filename)
+        if w:is_current(v) and filename then
+            local dir = os.getenv("HOME") or "."
+            local dl = dir .. "/" .. filename
+
+            print ("Download request:", link)
+            print ("Suggested filename:", filename)
+
+            os.execute("wget -q " .. link .. " -O " .. dl)
+            print (filename .. " saved to: " .. dl)
         end
     end)
 
@@ -792,8 +834,9 @@ window_helpers = {
     end,
 
     update_uri = function (w, view, uri)
-        if not view then view = w:get_current() end
-        w.sbar.l.uri.text = (uri or view.uri or "about:blank")
+        local v = view or w:get_current()
+        if not v then return end
+        w.sbar.l.uri.text = (uri or v.uri or "about:blank")
     end,
 
     update_progress = function (w, view, p)
