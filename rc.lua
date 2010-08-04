@@ -1,6 +1,8 @@
 #!./luakit -c
 
+require("math")
 require("mode")
+require("bind")
 
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
@@ -100,8 +102,16 @@ function new_tab(w, uri)
         end
     end)
 
+    view:add_signal("key-press", function ()
+        -- Prevent keys from hitting the webview widget if not in insert mode
+        if mode.get(w.win) ~= "insert" then return true end
+    end)
+
     view:add_signal("load-start", function (v)
-        if iscurrent(w.tabs, v) then progress_update(w, v, 0) end
+        if iscurrent(w.tabs, v) then
+            progress_update(w, v, 0)
+            mode(w.win)
+        end
     end)
     view:add_signal("progress-update", function (v)
         if iscurrent(w.tabs, v) then progress_update(w, v) end
@@ -118,6 +128,63 @@ function new_tab(w, uri)
 
     return view
 end
+
+function parse_scroll(current, max, value)
+    if type(value) == "string" then
+        -- Match absolute "20px"
+        if string.match(value, "^%d+px$") then
+            value = tonumber(string.match(value, "^(%d+)px$"))
+        -- Match absolute "20%"
+        elseif string.match(value, "^%d%%$") then
+            value = math.floor(max * (tonumber(string.match(value, "^(%d+)%%$")) / 100))
+        -- Match relative "+20px" or "-20px"
+        elseif string.match(value, "^[\-\+]%d+px") then
+            value = current + tonumber(string.match(value, "^([\-\+]%d+)px"))
+        -- Match relative "+20%" or "-20%"
+        elseif string.match(value, "^[\-\+]%d+%%$") then
+            value = math.floor(current + (max * (tonumber(string.match(value, "^([\-\+]%d+)%%$")) / 100)))
+        else
+            value = nil
+        end
+    elseif type(value) ~= "number" then
+        value = nil
+    end
+    return value
+end
+
+function vscroll(view, value)
+    local current, max = view:get_vscroll()
+    value = parse_scroll(current, max, value)
+    view:set_vscroll(value)
+end
+
+function hscroll(view, value)
+    local current, max = view:get_hscroll()
+    value = parse_scroll(current, max, value)
+    view:set_hscroll(value)
+end
+
+-- Add key bindings to be used across all windows
+modebinds = {
+    all = {
+        bind.key({}, "Escape",  function(w) mode(w.win) end),
+    },
+    normal = {
+        bind.key({}, "i",       function (w) mode(w.win, "insert") end),
+        bind.key({}, ":",       function (w) mode(w.win, "command") end),
+
+        bind.key({}, "h",       function (w, v) hscroll(v, "-20px") end),
+        bind.key({}, "j",       function (w, v) vscroll(v, "+20px") end),
+        bind.key({}, "k",       function (w, v) vscroll(v, "-20px") end),
+        bind.key({}, "l",       function (w, v) hscroll(v, "+20px") end),
+        bind.key({}, "Left",    function (w, v) hscroll(v, "-20px") end),
+        bind.key({}, "Down",    function (w, v) vscroll(v, "+20px") end),
+        bind.key({}, "Up",      function (w, v) vscroll(v, "-20px") end),
+        bind.key({}, "Right",   function (w, v) hscroll(v, "+20px") end),
+    },
+    command = { },
+    insert = { },
+}
 
 -- Construct new window
 function new_window(uris)
@@ -165,7 +232,7 @@ function new_window(uris)
 
     -- Pack input bar
     w.ibar.layout:pack_start(w.ibar.prompt, false, false, 0)
-    w.ibar.layout:pack_start(w.ibar.input, false, false, 0)
+    w.ibar.layout:pack_start(w.ibar.input, true, true, 0)
     w.ibar.ebox:set_child(w.ibar.layout)
     w.layout:pack_start(w.ibar.ebox, false, false, 0)
 
@@ -200,6 +267,23 @@ function new_window(uris)
         autohide(nbook)
     end)
 
+    w.win:add_signal("key-press", function(win, mods, key)
+        -- Current webview
+        local view = w.tabs:atindex(w.tabs:current())
+
+        -- Try mode specific binds
+        local binds = modebinds[mode.get(win)]
+        if binds and #binds then
+            if bind.hit(binds, mods, key, w, view) then return true end
+        end
+
+        -- Now try binds in the "all" mode
+        binds = modebinds.all
+        if binds and #binds then
+            if bind.hit(binds, mods, key, w, view) then return true end
+        end
+    end)
+
     -- Mode specific actions
     w.win:add_signal("mode-changed", function(win, mode)
         if mode == "normal" then
@@ -207,10 +291,10 @@ function new_window(uris)
             w.ibar.prompt:show()
             w.ibar.input:hide()
             w.ibar.input.text = ""
-        elseif mode == "input" then
+        elseif mode == "insert" then
             w.ibar.input:hide()
             w.ibar.input.text = ""
-            w.ibar.prompt.text = " -- INPUT -- "
+            w.ibar.prompt.text = "-- INSERT --"
             w.ibar.prompt:show()
         elseif mode == "command" then
             w.ibar.prompt:hide()
@@ -218,6 +302,13 @@ function new_window(uris)
             w.ibar.input.text = ":"
             w.ibar.input:show()
             w.ibar.input:focus()
+            w.ibar.input:set_position(-1)
+        end
+    end)
+
+    w.ibar.input:add_signal("changed", function()
+        if mode.get(w.win) == "command" and not string.match(w.ibar.input.text, "^:") then
+            mode(w.win)
         end
     end)
 
