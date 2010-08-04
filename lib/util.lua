@@ -139,4 +139,20 @@ function table.pop(t, k)
     return v
 end
 
+-- Check if a file exists
+function exists(f)
+    fh = io.open(f)
+    io.close(fh)
+    return fh ~= nil
+end
+
+-- Search locally for a relative path or return install path + relative path
+function find(f)
+    if string.match(f, "^/") or exists(f) then
+        return f
+    else
+        return string.format("%s/%s", luakit.install_path, f)
+    end
+end
+
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
