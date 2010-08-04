@@ -453,6 +453,21 @@ window_helpers = {
         w:update_tab_count()
     end,
 
+    -- evaluate javascript code and return string result
+    eval_js = function(w, script, file, view)
+        if not view then view = w:get_current() end
+        return view:eval_js(script, file or "(buffer)")
+    end,
+
+    -- evaluate javascript code from file and return string result
+    eval_js_from_file = function(w, file, view)
+        local fh, err = io.open(file)
+        if not fh then return error(err) end
+        local script = fh:read("*a")
+        fh:close()
+        return w:eval_js(script, file, view)
+    end,
+
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
         local caught, newbuf = bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
