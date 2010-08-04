@@ -123,9 +123,10 @@ widget_window(widget_t *w)
     gtk_window_set_geometry_hints(GTK_WINDOW(w->widget), NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect((GObject*)w->widget,
-      "signal::add",     (GCallback)add_cb,     w,
-      "signal::destroy", (GCallback)destroy_cb, w,
-      "signal::remove",  (GCallback)remove_cb,  w,
+      "signal::add",             (GCallback)add_cb,       w,
+      "signal::destroy",         (GCallback)destroy_cb,   w,
+      "signal::key-press-event", (GCallback)key_press_cb, w,
+      "signal::remove",          (GCallback)remove_cb,    w,
       NULL);
 
     gtk_widget_show(w->widget);
