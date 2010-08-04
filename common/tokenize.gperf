@@ -6,6 +6,7 @@ count
 current
 destroy
 entry
+eval_js
 eventbox
 fg
 focus
