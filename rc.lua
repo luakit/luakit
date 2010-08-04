@@ -116,6 +116,9 @@ mode_binds = {
 
         bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
+
+        -- Link following
+        bind.key({},          "f",        function (w) w:set_mode("follow") end),
     },
     command = {
         bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
@@ -268,8 +271,16 @@ function attach_window_signals(w)
     end)
 
     w.win:add_signal("mode-changed", function(win, mode)
+        local i, p = w.ibar.input, w.ibar.prompt
+
         w:update_binds(mode)
         w.cmd_hist_cursor = nil
+
+        -- Clear following hints if the user exits follow mode
+        if w.showing_hints then
+            w:eval_js("clear();");
+            w.showing_hints = false
+        end
 
         -- If a user aborts a search return to the original position
         if w.search_start_marker then
@@ -278,22 +289,32 @@ function attach_window_signals(w)
         end
 
         if mode == "normal" then
-            w.ibar.prompt:hide()
-            w.ibar.input:hide()
+            p:hide()
+            i:hide()
         elseif mode == "insert" then
-            w.ibar.input:hide()
-            w.ibar.input.text = ""
-            w.ibar.prompt.text = "-- INSERT --"
-            w.ibar.prompt:show()
+            i:hide()
+            i.text = ""
+            p.text = "-- INSERT --"
+            p:show()
         elseif mode == "command" then
-            w.ibar.prompt:hide()
-            w.ibar.input.text = ":"
-            w.ibar.input:show()
-            w.ibar.input:focus()
-            w.ibar.input:set_position(-1)
+            p:hide()
+            i.text = ":"
+            i:show()
+            i:focus()
+            i:set_position(-1)
         elseif mode == "search" then
-            w.ibar.prompt:hide()
-            w.ibar.input:show()
+            p:hide()
+            i:show()
+        elseif mode == "follow" then
+            w:eval_js_from_file(util.find("scripts/follow.js"))
+            w:eval_js("clear(); show_hints();")
+            w.showing_hints = true
+            p.text = "Follow:"
+            p:show()
+            i.text = ""
+            i:show()
+            i:focus()
+            i:set_position(-1)
         else
             w.ibar.prompt.text = ""
             w.ibar.input.text = ""
@@ -314,6 +335,8 @@ function attach_window_signals(w)
                 w:clear_search()
                 w:set_mode()
             end
+        elseif w:is_mode("follow") then
+            w:eval_js(string.format("update(%q)", w.ibar.input.text))
         end
     end)
 
