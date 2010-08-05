@@ -127,4 +127,16 @@ function table.isclone(a, b)
     return true
 end
 
+-- Remove an element at a given position (or key) in a table and return the
+-- value that was in that position.
+function table.pop(t, k)
+    local v = t[k]
+    if type(k) == "number" then
+        table.remove(t, k)
+    else
+        t[k] = nil
+    end
+    return v
+end
+
 -- vim: filetype=lua:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
