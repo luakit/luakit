@@ -124,6 +124,14 @@ init_lua(gchar **uris)
     xdgWipeHandle(&xdg);
 }
 
+void
+init_directories()
+{
+    /* create luakit directory */
+    globalconf.base_directory = g_build_filename(g_get_home_dir(), LUAKIT_CONFIG_DIR, NULL);
+    g_mkdir_with_parents(globalconf.base_directory, 0771);
+}
+
 int
 main(int argc, char *argv[]) {
     gchar **uris = NULL;
@@ -138,6 +146,7 @@ main(int argc, char *argv[]) {
     /* parse command line opts and get uris to load */
     uris = parseopts(argc, argv);
 
+    init_directories();
     init_lua(uris);
     gtk_main();
     return EXIT_SUCCESS;

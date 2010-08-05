@@ -23,7 +23,13 @@
 #include "widgets/common.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
+#include <libsoup/soup.h>
 #include "math.h"
+
+static struct {
+    SoupSession   *session;
+    SoupCookieJar *cookiejar;
+} Soup = { NULL, NULL };
 
 typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE } property_value_type;
 
@@ -595,6 +601,15 @@ widget_webview(widget_t *w)
     w->index = luaH_webview_index;
     w->newindex = luaH_webview_newindex;
     w->destructor = webview_destructor;
+
+    /* init soup session & cookies handling */
+    if (!Soup.session) {
+        Soup.session = webkit_get_default_session();
+        gchar *cookie_file = g_build_filename(globalconf.base_directory, "cookies.txt", NULL);
+        Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
+        soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
+        g_free(cookie_file);
+    }
 
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
