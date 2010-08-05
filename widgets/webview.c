@@ -273,7 +273,7 @@ set_adjustment(GtkAdjustment *adjustment, gdouble new)
 }
 
 static gint
-luaH_webview_set_vscroll(lua_State *L)
+luaH_webview_set_scroll_vert(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     gdouble value = (gdouble) luaL_checknumber(L, 2);
@@ -283,12 +283,32 @@ luaH_webview_set_vscroll(lua_State *L)
 }
 
 static gint
-luaH_webview_set_hscroll(lua_State *L)
+luaH_webview_set_scroll_horiz(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     gdouble value = (gdouble) luaL_checknumber(L, 2);
     GtkAdjustment *adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
     set_adjustment(adjustment, value);
+    return 0;
+}
+
+static gint
+luaH_webview_go_back(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint steps = (gint) luaL_checknumber(L, 2);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps * -1);
+    return 0;
+}
+
+static gint
+luaH_webview_go_forward(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint steps = (gint) luaL_checknumber(L, 2);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps);
     return 0;
 }
 
@@ -434,20 +454,20 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_GET_VSCROLL:
+      case L_TK_GET_SCROLL_VERT:
         lua_pushcfunction(L, luaH_webview_get_vscroll);
         return 1;
 
-      case L_TK_GET_HSCROLL:
+      case L_TK_GET_SCROLL_HORIZ:
         lua_pushcfunction(L, luaH_webview_get_hscroll);
         return 1;
 
-      case L_TK_SET_VSCROLL:
-        lua_pushcfunction(L, luaH_webview_set_vscroll);
+      case L_TK_SET_SCROLL_VERT:
+        lua_pushcfunction(L, luaH_webview_set_scroll_vert);
         return 1;
 
-      case L_TK_SET_HSCROLL:
-        lua_pushcfunction(L, luaH_webview_set_hscroll);
+      case L_TK_SET_SCROLL_HORIZ:
+        lua_pushcfunction(L, luaH_webview_set_scroll_horiz);
         return 1;
 
       case L_TK_SET_PROP:
@@ -480,6 +500,14 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_LOADING:
         lua_pushcfunction(L, luaH_webview_loading);
+        return 1;
+
+      case L_TK_GO_BACK:
+        lua_pushcfunction(L, luaH_webview_go_back);
+        return 1;
+
+      case L_TK_GO_FORWARD:
+        lua_pushcfunction(L, luaH_webview_go_forward);
         return 1;
 
       default:
