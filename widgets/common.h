@@ -27,6 +27,7 @@ gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
 gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);
 gboolean button_press_cb(GtkWidget*, GdkEventButton*, widget_t*);
 gboolean key_release_cb(GtkWidget*, GdkEventKey*, widget_t*);
+gboolean true_cb();
 
 gint luaH_widget_destroy(lua_State*);
 gint luaH_widget_focus(lua_State*);

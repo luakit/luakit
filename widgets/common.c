@@ -112,6 +112,12 @@ parent_set_cb(GtkWidget *widget, GtkObject *old, widget_t *w)
     lua_pop(L, 1);
 }
 
+gboolean
+true_cb()
+{
+    return TRUE;
+}
+
 /* set child method for gtk container widgets */
 gint
 luaH_widget_set_child(lua_State *L)
