@@ -23,15 +23,16 @@
 
 #define LUAKIT_LUA_LIB_PATH         "/usr/share/luakit/lib"
 #define LUAKIT_OBJECT_REGISTRY_KEY  "luakit.object.registry"
-#define LUAKIT_CONFIG_DIR           ".config/luakit/"
 
 #include <glib/gtypes.h>
 #include <lua.h>
 #include "common/signal.h"
 
 typedef struct {
-    /* Path to the config directory */
-    gchar *base_directory;
+    /* XDG directories */
+    gchar *base_cache_directory;
+    gchar *base_config_directory;
+    gchar *base_data_directory;
     /* Path to the current config file */
     gchar *confpath;
     /* Lua VM state */
