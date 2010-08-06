@@ -44,14 +44,14 @@ clean:
 	rm -rf luakit ${OBJS} ${GSRC} ${GHEAD}
 
 install:
-	install -d ${INSTALLDIR}/share/luakit/
-	install -d ${DOCDIR}
+	install -d $(INSTALLDIR)/share/luakit/
+	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* ${DOCDIR}
-	cp -r lib ${INSTALLDIR}/share/luakit/
-	chmod -R 755 ${INSTALLDIR}/share/luakit/lib/
-	install -D luakit ${INSTALLDIR}/bin/luakit
-	install -d /etc/xdg/luakit/
-	install -D rc.lua /etc/xdg/luakit/rc.lua
+	cp -r lib $(INSTALLDIR)/share/luakit/
+	chmod -R 755 $(INSTALLDIR)/share/luakit/lib/
+	install -D luakit $(INSTALLDIR)/bin/luakit
+	install -d $(DESTDIR)/etc/xdg/luakit/
+	install -D rc.lua $(DESTDIR)/etc/xdg/luakit/rc.lua
 
 uninstall:
 	rm -rf ${INSTALLDIR}/bin/luakit ${INSTALLDIR}/share/luakit
