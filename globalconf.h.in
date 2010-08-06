@@ -21,7 +21,7 @@
 #ifndef LUAKIT_GLOBALCONF
 #define LUAKIT_GLOBALCONF
 
-#define LUAKIT_LUA_LIB_PATH         "/usr/share/luakit/lib"
+#define LUAKIT_LUA_LIB_PATH         "/usr/local/share/luakit/lib"
 #define LUAKIT_OBJECT_REGISTRY_KEY  "luakit.object.registry"
 
 #include <glib/gtypes.h>

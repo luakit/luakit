@@ -34,14 +34,17 @@ ${GSRC} ${GHEAD}: ${GPERF}
 	@echo ${CC} -c $< -o $@
 	@${CC} -c ${CFLAGS} ${CPPFLAGS} $< -o $@
 
-${OBJS}: ${HEADS} config.mk
+globalconf.h: globalconf.h.in
+	sed 's#LUAKIT_LUA_LIB_PATH .*#LUAKIT_LUA_LIB_PATH "$(PREFIX)/share/luakit/lib"#' globalconf.h.in > globalconf.h
+
+${OBJS}: ${HEADS} config.mk globalconf.h
 
 luakit: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 clean:
-	rm -rf luakit ${OBJS} ${GSRC} ${GHEAD}
+	rm -rf luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
