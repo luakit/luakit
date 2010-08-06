@@ -29,6 +29,10 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_DESTROY:
+        lua_pushcfunction(L, luaH_widget_destroy);
+        return 1;
+
       case L_TK_SET_CHILD:
         lua_pushcfunction(L, luaH_widget_set_child);
         return 1;

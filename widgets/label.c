@@ -71,6 +71,10 @@ luaH_label_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_DESTROY:
+        lua_pushcfunction(L, luaH_widget_destroy);
+        return 1;
+
       case L_TK_TEXT:
         lua_pushstring(L, gtk_label_get_label(GTK_LABEL(w->widget)));
         return 1;

@@ -43,6 +43,10 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_DESTROY:
+        lua_pushcfunction(L, luaH_widget_destroy);
+        return 1;
+
       case L_TK_TITLE:
         lua_pushstring(L, gtk_window_get_title(GTK_WINDOW(w->widget)));
         return 1;

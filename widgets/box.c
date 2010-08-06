@@ -65,6 +65,10 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_DESTROY:
+        lua_pushcfunction(L, luaH_widget_destroy);
+        return 1;
+
       case L_TK_PACK_START:
         lua_pushcfunction(L, luaH_box_pack_start);
         return 1;

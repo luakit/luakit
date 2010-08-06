@@ -171,6 +171,10 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_DESTROY:
+        lua_pushcfunction(L, luaH_widget_destroy);
+        return 1;
+
       case L_TK_COUNT:
         lua_pushcfunction(L, luaH_notebook_count);
         return 1;

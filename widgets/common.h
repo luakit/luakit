@@ -27,11 +27,12 @@ gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
 gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);
 gboolean key_release_cb(GtkWidget*, GdkEventKey*, widget_t*);
 
+gint luaH_widget_destroy(lua_State*);
+gint luaH_widget_focus(lua_State*);
 gint luaH_widget_get_child(lua_State*);
 gint luaH_widget_hide(lua_State*);
 gint luaH_widget_set_child(lua_State*);
 gint luaH_widget_show(lua_State*);
-gint luaH_widget_focus(lua_State*);
 
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);
 void parent_set_cb(GtkWidget*, GtkObject*, widget_t*);

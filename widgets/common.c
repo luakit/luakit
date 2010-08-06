@@ -159,4 +159,15 @@ luaH_widget_focus(lua_State *L)
     return 0;
 }
 
+gint
+luaH_widget_destroy(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    if (w->destructor)
+        w->destructor(w);
+    w->destructor = NULL;
+    luaH_object_unref(L, w->ref);
+    return 0;
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80

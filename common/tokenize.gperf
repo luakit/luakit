@@ -3,6 +3,7 @@ atindex
 bg
 count
 current
+destroy
 entry
 eventbox
 fg
