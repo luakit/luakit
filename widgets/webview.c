@@ -568,7 +568,7 @@ expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
 }
 
 static gboolean
-button_press_cb(GtkWidget *view, GdkEventButton *event, widget_t *w)
+wv_button_press_cb(GtkWidget *view, GdkEventButton *event, widget_t *w)
 {
     if((event->type != GDK_BUTTON_PRESS) || (event->button != 1))
         return FALSE;
@@ -626,7 +626,7 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect((GObject*)view,
-      "signal::button-press-event",                   (GCallback)button_press_cb,        w,
+      "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,

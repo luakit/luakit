@@ -41,6 +41,19 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 }
 
 gboolean
+button_press_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
+{
+    (void) win;
+    if (ev->type != GDK_BUTTON_PRESS)
+        return FALSE;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "clicked", 0, 0);
+    lua_pop(L, 1);
+    return FALSE;
+}
+
+gboolean
 focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
 {
     (void) win;
