@@ -86,7 +86,7 @@ mode_binds = {
         bind.buf("^[\-\+]?[0-9]+[%%|G]$", function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
         bind.buf("^gH$",                  function (w) w:new_tab(HOMEPAGE) end),
-        bind.buf("^gh$",                  function (w) w:go(HOMEPAGE) end),
+        bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
 
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
     },
