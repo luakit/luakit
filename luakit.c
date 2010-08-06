@@ -88,21 +88,17 @@ parseopts(int argc, char *argv[]) {
 }
 
 void
-init_lua(gchar **uris)
+init_lua(gchar **uris, xdgHandle *xdg)
 {
     gchar *uri;
     lua_State *L;
-    xdgHandle xdg;
 
     /* init globalconf structs */
     globalconf.signals = signal_tree_new();
     globalconf.windows = g_ptr_array_new();
 
-    /* get XDG basedir data */
-    xdgInitHandle(&xdg);
-
     /* init lua */
-    luaH_init(&xdg);
+    luaH_init(xdg);
     L = globalconf.L;
 
     /* push a table of the statup uris */
@@ -114,27 +110,29 @@ init_lua(gchar **uris)
     lua_setglobal(L, "uris");
 
     /* parse and run configuration file */
-    if(!luaH_parserc(&xdg, globalconf.confpath, TRUE))
+    if(!luaH_parserc(xdg, globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file load, exiting");
-
-    /* we are finished with this */
-    xdgWipeHandle(&xdg);
 }
 
 void
-init_directories()
+init_directories(xdgHandle *xdg)
 {
     /* create luakit directory */
-    globalconf.base_directory = g_build_filename(g_get_home_dir(), LUAKIT_CONFIG_DIR, NULL);
-    g_mkdir_with_parents(globalconf.base_directory, 0771);
+    globalconf.base_cache_directory = g_build_filename(xdgCacheHome(xdg), "luakit", NULL);
+    globalconf.base_config_directory = g_build_filename(xdgConfigHome(xdg), "luakit", NULL);
+    globalconf.base_data_directory = g_build_filename(xdgDataHome(xdg), "luakit", NULL);
+    g_mkdir_with_parents(globalconf.base_cache_directory, 0771);
+    g_mkdir_with_parents(globalconf.base_config_directory, 0771);
+    g_mkdir_with_parents(globalconf.base_data_directory, 0771);
 }
 
 int
 main(int argc, char *argv[]) {
     gchar **uris = NULL;
+    xdgHandle xdg;
 
     /* clean up any zombies */
     sigchld(0);
@@ -146,8 +144,15 @@ main(int argc, char *argv[]) {
     /* parse command line opts and get uris to load */
     uris = parseopts(argc, argv);
 
-    init_directories();
-    init_lua(uris);
+    /* get XDG basedir data */
+    xdgInitHandle(&xdg);
+
+    init_directories(&xdg);
+    init_lua(uris, &xdg);
+
+    /* we are finished with this */
+    xdgWipeHandle(&xdg);
+
     gtk_main();
     return EXIT_SUCCESS;
 }
