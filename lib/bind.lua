@@ -35,22 +35,27 @@ function filter_mods(mods, remove_shift)
 end
 
 -- Create new key binding
-function key(mods, key, func, ...)
+function key(mods, key, func, opts)
     local mods = filter_mods(mods, #key == 1)
-    return { mods = mods, key = key, func = func, args = arg}
+    return { mods = mods, key = key, func = func, opts = opts}
 end
 
 -- Create new buffer binding
-function buf(pattern, func, ...)
-    return { pattern = pattern, func = func, args = arg}
+function buf(pattern, func, opts)
+    return { pattern = pattern, func = func, opts = opts}
+end
+
+-- Create new command binding
+function cmd(commands, func, opts)
+    return { commands = commands, func = func, opts = opts}
 end
 
 -- Check if there exists a key binding in the `binds` table which matches the
 -- pressed key and modifier mask and execute it.
 function match_key(binds, mods, key, arg)
-    for _, k in ipairs(binds) do
-        if k.key == key and util.table.isclone(k.mods, mods) then
-            k.func(arg, k.args)
+    for _, b in ipairs(binds) do
+        if b.key == key and util.table.isclone(b.mods, mods) then
+            b.func(arg, b.opts)
             return true
         end
     end
@@ -61,7 +66,28 @@ end
 function match_buf(binds, buffer, arg)
     for _, b in ipairs(binds) do
         if b.pattern and string.match(buffer, b.pattern) then
-            b.func(arg, buffer, b.args)
+            b.func(arg, buffer, b.opts)
+            return true
+        end
+    end
+end
+
+-- Check if there exists a buffer binding in the `binds` table which matches
+-- the given buffer and execute it.
+function match_cmd(binds, buffer, arg)
+    -- The command is the first word in the buffer string
+    local command  = string.match(buffer, "^([^%s]+)")
+    -- And the argument is the entire string thereafter
+    local argument = string.match(buffer, "^[^%s]+%s+(.+)")
+
+    for _, b in ipairs(binds) do
+        -- Command matching
+        if b.commands and util.table.hasitem(b.commands, command) then
+            b.func(arg, argument, b.opts)
+            return true
+        -- Buffer matching
+        elseif b.pattern and string.match(buffer, b.pattern) then
+            b.func(arg, buffer, b.opts)
             return true
         end
     end

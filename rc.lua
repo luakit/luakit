@@ -18,6 +18,7 @@ function entry()    return widget{type="entry"}    end
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
 SCROLL_STEP = 20
+MAX_HISTORY = 100
 
 -- Luakit theme
 theme = theme or {
@@ -58,13 +59,15 @@ end)
 -- Add key bindings to be used across all windows
 mode_binds = {
     all = {
+     -- bind.key({Modifiers}, Key name,   function (w, opts) .. end, opts),
         bind.key({},          "Escape",   function (w) w:set_mode() end),
         bind.key({"Control"}, "[",        function (w) w:set_mode() end),
     },
     normal = {
+     -- bind.key({Modifiers}, Key name,   function (w, opts) .. end, opts),
+        bind.key({},          "Escape",   function (w) w:set_mode() end),
         bind.key({},          "i",        function (w) w:set_mode("insert")  end),
         bind.key({},          ":",        function (w) w:set_mode("command") end),
-
         bind.key({},          "h",        function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
         bind.key({},          "j",        function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "k",        function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
@@ -74,24 +77,34 @@ mode_binds = {
         bind.key({},          "Up",       function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",    function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
 
+     -- bind.buf(Pattern,                 function (w, buffer, opts) .. end, opts),
         bind.buf("^[0-9]*H$",             function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
         bind.buf("^[0-9]*L$",             function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
-
-        bind.buf("^gg$",                  function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
-
+        bind.buf("^gg$",                  function (w)    w:scroll_vert("0%")   end),
+        bind.buf("^G$",                   function (w)    w:scroll_vert("100%") end),
         bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
-
         bind.buf("^[\-\+]?[0-9]+[%%|G]$", function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
-
-        bind.buf("^gH$",                  function (w) w:new_tab(HOMEPAGE) end),
-        bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
-
-        bind.buf("^ZZ$",                  function (w) luakit.quit() end),
+        bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
+        bind.buf("^gh$",                  function (w)    w:navigate(HOMEPAGE) end),
+        bind.buf("^ZZ$",                  function (w)    luakit.quit() end),
     },
-    command = { },
+    command = {
+        bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
+        bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
+    },
     insert = { },
+}
+
+-- Commands
+commands = {
+ -- bind.cmd({Command, Alias1, ...},      function (w, arg, opts) .. end, opts),
+    bind.cmd({"open",    "o"},            function (w, a) w:navigate(a) end),
+    bind.cmd({"tabopen", "t"},            function (w, a) w:new_tab(a) end),
+    bind.cmd({"back"        },            function (w, a) w:back(tonumber(a) or 1) end),
+    bind.cmd({"forward", "f"},            function (w, a) w:forward(tonumber(a) or 1) end),
+    bind.cmd({"scroll"      },            function (w, a) w:scroll_vert(a) end),
+    bind.cmd({"quit",    "q"},            function (w)    luakit.quit() end),
 }
 
 -- Build and pack window widgets
@@ -212,6 +225,7 @@ function attach_window_signals(w)
 
     w.win:add_signal("mode-changed", function(win, mode)
         w:update_binds(mode)
+        w.cmd_hist_cursor = nil
 
         if mode == "normal" then
             w.ibar.prompt.text = ""
@@ -240,6 +254,13 @@ function attach_window_signals(w)
         if w:is_mode("command") and not string.match(w.ibar.input.text, "^:") then
             w:set_mode()
         end
+    end)
+
+    w.ibar.input:add_signal("activate", function()
+        local buffer = w.ibar.input.text
+        w:cmd_hist_add(buffer)
+        w:match_cmd(string.sub(buffer, 2))
+        w:set_mode()
     end)
 end
 
@@ -353,6 +374,51 @@ window_helpers = {
         w.buffer = newbuf
         w:update_buf()
         return caught
+    end,
+
+    -- Wrapper around the bind plugin's match_cmd method
+    match_cmd = function (w, buffer)
+        return bind.match_cmd(commands, buffer, w)
+    end,
+
+    -- Command history adding
+    cmd_hist_add = function(w, cmd)
+        if not w.cmd_hist then w.cmd_hist = {} end
+        -- Make sure history doesn't overflow
+        if #w.cmd_hist > ((MAX_HISTORY or 100) + 5) then
+            while #w.cmd_hist > (MAX_HISTORY or 100) do
+                table.remove(w.cmd_hist, 1)
+            end
+        end
+        table.insert(w.cmd_hist, cmd)
+    end,
+
+    -- Command history traversing
+    cmd_hist_prev = function(w)
+        if not w.cmd_hist then w.cmd_hist = {} end
+        if not w.cmd_hist_cursor then
+            w.cmd_hist_cursor = #w.cmd_hist + 1
+            w.cmd_hist_current = w.ibar.input.text
+        end
+        local c = w.cmd_hist_cursor - 1
+        if w.cmd_hist[c] then
+            w.cmd_hist_cursor = c
+            w.ibar.input.text = w.cmd_hist[c]
+            w.ibar.input:set_position(-1)
+        end
+    end,
+
+    cmd_hist_next = function(w)
+        if not w.cmd_hist then w.cmd_hist = {} end
+        local c = (w.cmd_hist_cursor or #w.cmd_hist) + 1
+        if w.cmd_hist[c] then
+            w.cmd_hist_cursor = c
+            w.ibar.input.text = w.cmd_hist[c]
+            w.ibar.input:set_position(-1)
+        elseif w.cmd_hist_current then
+            w.ibar.input.text = w.cmd_hist_current
+            w.ibar.input:set_position(-1)
+        end
     end,
 
     -- Webview scroll functions
