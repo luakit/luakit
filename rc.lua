@@ -416,6 +416,7 @@ window_helpers = {
             w.ibar.input.text = w.cmd_hist[c]
             w.ibar.input:set_position(-1)
         elseif w.cmd_hist_current then
+            w.cmd_hist_cursor = nil
             w.ibar.input.text = w.cmd_hist_current
             w.ibar.input:set_position(-1)
         end
