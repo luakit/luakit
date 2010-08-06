@@ -94,7 +94,6 @@ mode_binds = {
     insert = { },
 }
 
-
 -- Build and pack window widgets
 function build_window()
     -- Create a table for widgets and state variables for a window
@@ -318,6 +317,17 @@ window_helpers = {
     get_mode    = function(w)          return mode.get(w.win)                             end,
     is_mode     = function(w, name)    return name == w:get_mode()                        end,
     is_any_mode = function(w, t, name) return util.table.hasitem(t, name or w:get_mode()) end,
+
+    -- Wrappers around the view:get_prop & view:set_prop methods
+    get = function (w, prop, view)
+        if not view then view = w:get_current() end
+        return view:get_prop(prop)
+    end,
+
+    set = function (w, prop, val, view)
+        if not view then view = w:get_current() end
+        view:set_prop(prop, val)
+    end,
 
     get_tab_title = function (w, view)
         if not view then view = w:get_current() end
