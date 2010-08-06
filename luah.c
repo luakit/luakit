@@ -497,6 +497,12 @@ luaH_init(xdgHandle *xdg)
         return;
     }
 
+    /* allows for testing luakit in the project directory
+     * (i.e. `./luakit -c rc.lua ...` */
+    lua_pushliteral(L, ";./lib/?.lua;");
+    lua_pushliteral(L, ";./lib/?/init.lua");
+    lua_concat(L, 2);
+
     /* add XDG_CONFIG_DIR as an include path */
     const gchar * const *xdgconfigdirs = xdgSearchableConfigDirectories(xdg);
     for(; *xdgconfigdirs; xdgconfigdirs++)
