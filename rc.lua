@@ -584,11 +584,8 @@ window_helpers = {
     end,
 
     update_binds = function (w, mode)
-        -- Generate the list of binds for this mode + all
-        w.binds = util.table.clone(mode_binds[mode] or {})
-        for _, b in ipairs(mode_binds["all"]) do
-            table.insert(w.binds, b)
-        end
+        -- Generate the list of active key & buffer binds for this mode
+        w.binds = util.table.join(mode_binds[mode], mode_binds.all)
         -- Clear & hide buffer
         w.buffer = nil
         w:update_buf()
