@@ -58,16 +58,17 @@ end)
 
 -- Add key bindings to be used across all windows
 mode_binds = {
+     -- bind.buf(Pattern, function (w, buffer, opts) .. end, opts),
+     -- bind.key({Modifiers}, Key name, function (w, opts) .. end, opts),
     all = {
-     -- bind.key({Modifiers}, Key name,   function (w, opts) .. end, opts),
         bind.key({},          "Escape",   function (w) w:set_mode() end),
         bind.key({"Control"}, "[",        function (w) w:set_mode() end),
     },
     normal = {
-     -- bind.key({Modifiers}, Key name,   function (w, opts) .. end, opts),
-        bind.key({},          "Escape",   function (w) w:set_mode() end),
         bind.key({},          "i",        function (w) w:set_mode("insert")  end),
         bind.key({},          ":",        function (w) w:set_mode("command") end),
+
+        -- Scrolling
         bind.key({},          "h",        function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
         bind.key({},          "j",        function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "k",        function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
@@ -76,18 +77,27 @@ mode_binds = {
         bind.key({},          "Down",     function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "Up",       function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",    function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.buf("^gg$",                  function (w) w:scroll_vert("0%")   end),
+        bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
+        bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
-     -- bind.buf(Pattern,                 function (w, buffer, opts) .. end, opts),
+        -- Searching
+        bind.key({},          "/",        function (w) w:start_search(true)  end),
+        bind.key({},          "?",        function (w) w:start_search(false) end),
+        bind.key({},          "n",        function (w) w:search(nil, true) end),
+        bind.key({},          "N",        function (w) w:search(nil, false) end),
+
+        -- History
         bind.buf("^[0-9]*H$",             function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
         bind.buf("^[0-9]*L$",             function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
-        bind.buf("^gg$",                  function (w)    w:scroll_vert("0%")   end),
-        bind.buf("^G$",                   function (w)    w:scroll_vert("100%") end),
+
+        -- Tab
         bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
-        bind.buf("^[\-\+]?[0-9]+[%%|G]$", function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
         bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
-        bind.buf("^gh$",                  function (w)    w:navigate(HOMEPAGE) end),
-        bind.buf("^ZZ$",                  function (w)    luakit.quit() end),
+
+        bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
+        bind.buf("^ZZ$",                  function (w) luakit.quit() end),
     },
     command = {
         bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
@@ -241,6 +251,9 @@ function attach_window_signals(w)
             w.ibar.input:show()
             w.ibar.input:focus()
             w.ibar.input:set_position(-1)
+        elseif mode == "search" then
+            w.ibar.prompt:hide()
+            w.ibar.input:show()
         else
             w.ibar.prompt.text = ""
             w.ibar.input.text = ""
@@ -249,18 +262,31 @@ function attach_window_signals(w)
 
     -- Attach inputbar widget signals
     w.ibar.input:add_signal("changed", function()
+        local text = w.ibar.input.text
         -- Auto-exit "command" mode if you backspace or delete the ":"
         -- character at the start of the input box when in "command" mode.
-        if w:is_mode("command") and not string.match(w.ibar.input.text, "^:") then
+        if w:is_mode("command") and not string.match(text, "^:") then
             w:set_mode()
+        elseif w:is_mode("search") then
+            if string.match(text, "^[\?\/]") then
+                w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            else
+                w:clear_search()
+                w:set_mode()
+            end
         end
     end)
 
     w.ibar.input:add_signal("activate", function()
-        local buffer = w.ibar.input.text
-        w:cmd_hist_add(buffer)
-        w:match_cmd(string.sub(buffer, 2))
-        w:set_mode()
+        local text = w.ibar.input.text
+        if w:is_mode("command") then
+            w:cmd_hist_add(text)
+            w:match_cmd(string.sub(text, 2))
+            w:set_mode()
+        elseif w:is_mode("search") then
+            -- TODO add search term to some history list
+            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+        end
     end)
 end
 
@@ -422,6 +448,51 @@ window_helpers = {
         end
     end,
 
+    -- Searching functions
+    start_search = function(w, forward)
+        -- Clear previous search results
+        w:clear_search()
+        w:set_mode("search")
+        local i = w.ibar.input
+        if forward then
+            i.text = "/"
+        else
+            i.text = "?"
+        end
+        i:focus()
+        i:set_position(-1)
+    end,
+
+    search = function(w, text, forward)
+        local view = w:get_current()
+        local text = text or w.last_search
+        if forward == nil then forward = true end
+        local case_sensitive = false
+        local wrap = true
+
+        if not text or #text == 0 then
+            w:clear_search()
+            return nil
+        end
+
+        w.last_search = text
+        if w.searching_forward == nil then
+            w.searching_forward = forward
+        else
+            -- Invert the direction if originally searching in reverse
+            forward = (w.searching_forward == forward)
+        end
+
+        view:search(text, case_sensitive, forward, wrap);
+    end,
+
+    clear_search = function (w)
+        w:get_current():clear_search()
+        -- Clear search state
+        w.last_search = nil
+        w.searching_forward = nil
+    end,
+
     -- Webview scroll functions
     scroll_vert = function(w, value, view)
         if not view then view = w:get_current() end
@@ -514,7 +585,7 @@ window_helpers = {
 
     update_binds = function (w, mode)
         -- Generate the list of binds for this mode + all
-        w.binds = util.table.clone(mode_binds[mode])
+        w.binds = util.table.clone(mode_binds[mode] or {})
         for _, b in ipairs(mode_binds["all"]) do
             table.insert(w.binds, b)
         end
