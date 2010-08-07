@@ -294,6 +294,9 @@ function attach_window_signals(w)
             w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
             -- User doesn't want to return to start position
             w.search_start_marker = nil
+            w:set_mode()
+            w.ibar.prompt.text = text
+            w.ibar.prompt:show()
         end
     end)
 end
