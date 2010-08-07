@@ -228,10 +228,8 @@ function attach_window_signals(w)
         w.cmd_hist_cursor = nil
 
         if mode == "normal" then
-            w.ibar.prompt.text = ""
-            w.ibar.prompt:show()
+            w.ibar.prompt:hide()
             w.ibar.input:hide()
-            w.ibar.input.text = ""
         elseif mode == "insert" then
             w.ibar.input:hide()
             w.ibar.input.text = ""
@@ -239,11 +237,13 @@ function attach_window_signals(w)
             w.ibar.prompt:show()
         elseif mode == "command" then
             w.ibar.prompt:hide()
-            w.ibar.prompt.text = ""
             w.ibar.input.text = ":"
             w.ibar.input:show()
             w.ibar.input:focus()
             w.ibar.input:set_position(-1)
+        else
+            w.ibar.prompt.text = ""
+            w.ibar.input.text = ""
         end
     end)
 
