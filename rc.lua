@@ -237,6 +237,12 @@ function attach_window_signals(w)
         w:update_binds(mode)
         w.cmd_hist_cursor = nil
 
+        -- If a user aborts a search return to the original position
+        if w.search_start_marker then
+            w:get_current():set_scroll_vert(w.search_start_marker)
+            w.search_start_marker = nil
+        end
+
         if mode == "normal" then
             w.ibar.prompt:hide()
             w.ibar.input:hide()
@@ -286,6 +292,8 @@ function attach_window_signals(w)
         elseif w:is_mode("search") then
             -- TODO add search term to some history list
             w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            -- User doesn't want to return to start position
+            w.search_start_marker = nil
         end
     end)
 end
@@ -478,6 +486,7 @@ window_helpers = {
         w.last_search = text
         if w.searching_forward == nil then
             w.searching_forward = forward
+            w.search_start_marker = view:get_scroll_vert()
         else
             -- Invert the direction if originally searching in reverse
             forward = (w.searching_forward == forward)
@@ -491,6 +500,7 @@ window_helpers = {
         -- Clear search state
         w.last_search = nil
         w.searching_forward = nil
+        w.search_start_marker = nil
     end,
 
     -- Webview scroll functions
