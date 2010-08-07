@@ -549,6 +549,12 @@ window_helpers = {
     update_tab_labels = function (w, current)
         local tb = w.tbar
         local count, current = w.tabs:count(), current or w.tabs:current()
+        tb.ebox:hide()
+
+        -- Leave the tablist hidden if there is only one tab open
+        if count <= 1 then
+            return nil
+        end
 
         if count ~= #tb.titles then
             -- Grow the number of labels
@@ -571,7 +577,7 @@ window_helpers = {
                 w:apply_tablabel_theme(t, i == current)
             end
         end
-
+        tb.ebox:show()
     end,
 
     -- Theme functions
