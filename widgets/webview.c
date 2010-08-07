@@ -319,6 +319,32 @@ luaH_webview_go_forward(lua_State *L)
 }
 
 static gint
+luaH_webview_search(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview")));
+    const gchar *text = luaL_checkstring(L, 2);
+    gboolean case_sensitive = luaH_checkboolean(L, 3);
+    gboolean forward = luaH_checkboolean(L, 4);
+    gboolean wrap = luaH_checkboolean(L, 5);
+
+    webkit_web_view_unmark_text_matches(view);
+    webkit_web_view_search_text(view, text, case_sensitive, forward, wrap);
+    webkit_web_view_mark_text_matches(view, text, case_sensitive, 0);
+    webkit_web_view_set_highlight_text_matches(view, TRUE);
+    return 0;
+}
+
+static gint
+luaH_webview_clear_search(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview")));
+    webkit_web_view_unmark_text_matches(view);
+    return 0;
+}
+
+static gint
 luaH_webview_get_prop(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -497,6 +523,14 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_SET_SCROLL_HORIZ:
         lua_pushcfunction(L, luaH_webview_set_scroll_horiz);
+        return 1;
+
+      case L_TK_SEARCH:
+        lua_pushcfunction(L, luaH_webview_search);
+        return 1;
+
+      case L_TK_CLEAR_SEARCH:
+        lua_pushcfunction(L, luaH_webview_clear_search);
         return 1;
 
       case L_TK_SET_PROP:

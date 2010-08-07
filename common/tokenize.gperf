@@ -1,6 +1,7 @@
 append
 atindex
 bg
+clear_search
 count
 current
 destroy
@@ -32,6 +33,7 @@ notebook
 pack_end
 pack_start
 remove
+search
 selectable
 set_alignment
 set_child
