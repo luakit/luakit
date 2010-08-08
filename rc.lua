@@ -466,7 +466,7 @@ window_helpers = {
     -- search engine wrapper
     websearch = function(w, args)
         local sep = string.find(args, " ")
-        local engine = string.sub(args, 1, sep-1), " ", ""
+        local engine = string.sub(args, 1, sep-1)
         local search = string.sub(args, sep+1, -1)
         if not search_engines[engine] then
             print("E: No matching search engine found:", engine)
