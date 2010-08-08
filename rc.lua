@@ -458,10 +458,9 @@ window_helpers = {
 
     -- enter command or characters into command line
     enter_cmd = function(w, cmd)
-        w:set_mode("command")
         local i = w.ibar.input
+        w:set_mode("command")
         i.text = cmd
-        i:focus()
         i:set_position(-1)
     end,
 
