@@ -88,6 +88,10 @@ mode_binds = {
         bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
+        -- Commands
+        bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
+
         -- Searching
         bind.key({},          "/",        function (w) w:start_search(true)  end),
         bind.key({},          "?",        function (w) w:start_search(false) end),
@@ -440,6 +444,15 @@ window_helpers = {
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
         return bind.match_cmd(commands, buffer, w)
+    end,
+
+    -- enter command or characters into command line
+    enter_cmd = function(w, cmd)
+        w:set_mode("command")
+        local i = w.ibar.input
+        i.text = cmd
+        i:focus()
+        i:set_position(-1)
     end,
 
     -- search engine wrapper
