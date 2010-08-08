@@ -246,6 +246,7 @@ function attach_window_signals(w)
     w.win:add_signal("key-press", function(win, mods, key)
         -- Reset command line completion
         if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
+            w:update_uri()
             w.compl_index = 0
         end
 
@@ -483,14 +484,14 @@ window_helpers = {
 
         -- Get last completion (is reset on key press other than <Tab>)
         if not w.compl_start or w.compl_index == 0 then
-            w.compl_start = string.sub(i.text, 2, -1)
+            w.compl_start = "^" .. string.sub(i.text, 2, -1)
             w.compl_index = 1
         end
 
         -- Get suitable commands
         for _, b in ipairs(commands) do
             for _, c in pairs(b.commands) do
-                if c and string.match(c, "^" .. w.compl_start) then
+                if c and string.match(c, w.compl_start) then
                     table.insert(cmpl, c)
                 end
             end
