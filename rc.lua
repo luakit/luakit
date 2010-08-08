@@ -95,6 +95,7 @@ mode_binds = {
         bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
+        bind.buf("^d$",                   function (w)    w:close_tab() end),
 
         bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
@@ -115,6 +116,7 @@ commands = {
     bind.cmd({"forward", "f"},            function (w, a) w:forward(tonumber(a) or 1) end),
     bind.cmd({"scroll"      },            function (w, a) w:scroll_vert(a) end),
     bind.cmd({"quit",    "q"},            function (w)    luakit.quit() end),
+    bind.cmd({"close",   "c"},            function (w)    w:close_tab() end),
 }
 
 -- Build and pack window widgets
@@ -393,7 +395,12 @@ window_helpers = {
     end,
 
     navigate = function(w, uri, view)
-        (view or w:get_current()).uri = uri
+        local v = view or w:get_current()
+        if v then
+            v.uri = uri
+        else
+            return w:new_tab(uri)
+        end
     end,
 
     new_tab = function(w, uri)
@@ -402,6 +409,15 @@ window_helpers = {
         attach_webview_signals(w, view)
         if uri then view.uri = uri end
         view.show_scrollbars = false
+        w:update_tab_count()
+    end,
+
+    -- close the current tab
+    close_tab = function(w)
+        view = w:get_current()
+        if not view then return end
+        w.tabs:remove(view)
+        view:destroy()
         w:update_tab_count()
     end,
 
