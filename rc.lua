@@ -91,6 +91,7 @@ mode_binds = {
         -- Commands
         bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
         bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^,g$",                  function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
         bind.key({},          "/",        function (w) w:start_search(true)  end),
