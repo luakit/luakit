@@ -56,6 +56,13 @@ widget.add_signal("new", function(wi)
     end)
 end)
 
+-- Search engines
+search_engines = {
+    google      =  "http://google.com/search?q={0}",
+    imdb        =  "http://imdb.com/find?s=all&q={0}",
+    sourceforge =  "http://sf.net/search/?words={0}"
+}
+
 -- Add key bindings to be used across all windows
 mode_binds = {
      -- bind.buf(Pattern, function (w, buffer, opts) .. end, opts),
@@ -117,6 +124,7 @@ commands = {
     bind.cmd({"scroll"      },            function (w, a) w:scroll_vert(a) end),
     bind.cmd({"quit",    "q"},            function (w)    luakit.quit() end),
     bind.cmd({"close",   "c"},            function (w)    w:close_tab() end),
+    bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
 }
 
 -- Build and pack window widgets
@@ -432,6 +440,19 @@ window_helpers = {
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
         return bind.match_cmd(commands, buffer, w)
+    end,
+
+    -- search engine wrapper
+    websearch = function(w, args)
+        local sep = string.find(args, " ")
+        local engine = string.sub(args, 1, sep-1), " ", ""
+        local search = string.sub(args, sep+1, -1)
+        if not search_engines[engine] then
+            print("E: No matching search engine found:", engine)
+            return 0
+        end
+        local uri = string.gsub(search_engines[engine], "{%d}", search)
+        return w:navigate(uri)
     end,
 
     -- Command history adding
