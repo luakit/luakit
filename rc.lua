@@ -117,6 +117,7 @@ mode_binds = {
         bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
         bind.key({},          "Tab",      function (w) w:cmd_completion() end),
         bind.key({"Control"}, "w",        function (w) w:del_word() end),
+        bind.key({"Control"}, "u",        function (w) w:del_line() end),
     },
     insert = { },
 }
@@ -534,6 +535,14 @@ window_helpers = {
             else
                 i.text = string.gsub(text, "(%w)%W+%s*$", "%1")
             end
+            i:set_position(-1)
+        end
+    end,
+
+    del_line = function(w)
+        local i = w.ibar.input
+        if i.text ~= ":" then
+            i.text = ":"
             i:set_position(-1)
         end
     end,
