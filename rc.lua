@@ -115,6 +115,7 @@ mode_binds = {
     command = {
         bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
         bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
+        bind.key({},          "Tab",      function (w) w:cmd_completion() end),
     },
     insert = { },
 }
@@ -243,6 +244,11 @@ function attach_window_signals(w)
 
     -- Attach window widget signals
     w.win:add_signal("key-press", function(win, mods, key)
+        -- Reset command line completion
+        if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
+            w.compl_index = 0
+        end
+
         if w:hit(mods, key) then
             return true
         end
@@ -467,6 +473,52 @@ window_helpers = {
         end
         local uri = string.gsub(search_engines[engine], "{%d}", search)
         return w:navigate(uri)
+    end,
+
+    -- Command line completion of available commands
+    cmd_completion = function(w)
+        local i = w.ibar.input
+        local s = w.sbar.l.uri
+        local cmpl = {}
+
+        -- Get last completion (is reset on key press other than <Tab>)
+        if not w.compl_start or w.compl_index == 0 then
+            w.compl_start = string.sub(i.text, 2, -1)
+            w.compl_index = 1
+        end
+
+        -- Get suitable commands
+        for _, b in ipairs(commands) do
+            for _, c in pairs(b.commands) do
+                if c and string.match(c, "^" .. w.compl_start) then
+                    table.insert(cmpl, c)
+                end
+            end
+        end
+
+        table.sort(cmpl)
+
+        if #cmpl > 0 then
+            local text = ""
+            for index, comp in pairs(cmpl) do
+                if index == w.compl_index then
+                    i.text = ":" .. comp .. " "
+                    i:set_position(-1)
+                end
+                if text ~= "" then
+                    text = text .. " | "
+                end
+                text = text .. comp
+            end
+
+            -- cycle through all possible completions
+            if w.compl_index == #cmpl then
+                w.compl_index = 1
+            else
+                w.compl_index = w.compl_index + 1
+            end
+            s.text = text
+        end
     end,
 
     -- Command history adding
