@@ -296,4 +296,4 @@ luaH_object_gc(lua_State *L) {
     return 0;
 }
 
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

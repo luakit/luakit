@@ -75,4 +75,4 @@ void widget_class_setup(lua_State *);
 
 #endif
 
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
