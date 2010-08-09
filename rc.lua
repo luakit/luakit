@@ -346,6 +346,18 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    view:add_signal("link-hover", function(v, link)
+        if w:is_current(v) and link then
+            w.sbar.l.uri.text = string.gsub(link, "&", "&amp;")
+        end
+    end)
+
+    view:add_signal("link-unhover", function(v)
+        if w:is_current(v) then
+            w:update_uri(v)
+        end
+    end)
+
     view:add_signal("key-press", function ()
         -- Only allow key press events to hit the webview if the user is in
         -- "insert" mode.
