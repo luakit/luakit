@@ -176,7 +176,6 @@ static gboolean
 download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
 {
     (void) v;
-    (void) dl;
     const gchar *uri = webkit_download_get_uri((WebKitDownload *) dl);
     const gchar *filename = webkit_download_get_suggested_filename((WebKitDownload *) dl);
 
