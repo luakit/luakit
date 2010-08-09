@@ -56,3 +56,5 @@ function set_default(win, mode)
 end
 
 setmetatable(_M, { __call = function(_, ...) return set(...) end })
+
+-- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

@@ -914,3 +914,5 @@ function new_window(uris)
 end
 
 new_window(uris)
+
+-- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
