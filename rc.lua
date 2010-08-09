@@ -346,13 +346,13 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("link-hover", function(v, link)
+    view:add_signal("link-hover", function (v, link)
         if w:is_current(v) and link then
             w.sbar.l.uri.text = "Link: " .. string.gsub(link, "&", "&amp;")
         end
     end)
 
-    view:add_signal("link-unhover", function(v)
+    view:add_signal("link-unhover", function (v)
         if w:is_current(v) then
             w:update_uri(v)
         end
@@ -370,6 +370,15 @@ function attach_webview_signals(w, view)
         if w:is_current(v) then
             w:update_progress(v, 0)
             w:set_mode()
+        end
+    end)
+
+    -- 'link' contains the download link
+    -- 'filename' contains the suggested filename (from server or webkit)
+    view:add_signal("download-request", function (v, link, filename)
+        if w:is_current(v) then
+            print ("Download request:", link)
+            print ("Suggested filename:", filename)
         end
     end)
 

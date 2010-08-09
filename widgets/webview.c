@@ -172,6 +172,24 @@ load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
     lua_pop(L, 1);
 }
 
+static gboolean
+download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
+{
+    (void) v;
+    (void) dl;
+    const gchar *uri = webkit_download_get_uri((WebKitDownload *) dl);
+    const gchar *filename = webkit_download_get_suggested_filename((WebKitDownload *) dl);
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, filename);
+    luaH_object_emit_signal(L, -3, "download-request", 2, 0);
+    lua_pop(L, 1);
+
+    return FALSE;
+}
+
 static void
 link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w)
 {
@@ -695,6 +713,7 @@ widget_webview(widget_t *w)
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
       "signal::title-changed",                        (GCallback)title_changed_cb,       w,
+      "signal::download-requested",                   (GCallback)download_request_cb,    w,
       NULL);
 
     /* setup */
