@@ -531,15 +531,18 @@ window_helpers = {
     del_word = function(w)
         local i = w.ibar.input
         local text = i.text
-        if text and string.len(text) > 1 then
-            if not string.find(text, " ") then
-                i.text = ":"
-            elseif string.find(text, "%w+%s*$") then
-                i.text = string.gsub(text, "(%W)%w+%s*$", "%1")
-            else
-                i.text = string.gsub(text, "(%w)%W+%s*$", "%1")
+        local pos = i:get_position()
+        if text and #text > 1 and pos > 1 then
+            local left, right = string.sub(text, 2, pos), string.sub(text, pos+1)
+            if not string.find(left, "%s") then
+                left = ""
+            elseif string.find(left, "%w+%s*$") then
+                left = string.sub(left, 0, string.find(left, "%w+%s*$") - 1)
+            elseif string.find(left, "%W+%s*$") then
+                left = string.sub(left, 0, string.find(left, "%W+%s*$") - 1)
             end
-            i:set_position(-1)
+            i.text =  string.sub(text, 1, 1) .. left .. right
+            i:set_position(#left + 2)
         end
     end,
 
