@@ -173,6 +173,34 @@ load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 }
 
 static gboolean
+mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
+        widget_t *w)
+{
+    (void) v;
+    (void) f;
+    lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gint ret;
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, mime);
+    ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
+
+    if (ret && !luaH_checkboolean(L, -1))
+        /* User responded with false, do not continue navigation request */
+        webkit_web_policy_decision_ignore(pd);
+    else if (!webkit_web_view_can_show_mime_type(v, mime))
+        webkit_web_policy_decision_download(pd);
+    else
+        webkit_web_policy_decision_use(pd);
+
+    lua_pop(L, ret);
+    return TRUE;
+}
+
+static gboolean
 download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
 {
     (void) v;
@@ -713,6 +741,7 @@ widget_webview(widget_t *w)
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
       "signal::title-changed",                        (GCallback)title_changed_cb,       w,
       "signal::download-requested",                   (GCallback)download_request_cb,    w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       NULL);
 
     /* setup */
