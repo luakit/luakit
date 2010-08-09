@@ -314,4 +314,4 @@ luaH_class_new(lua_State *L, lua_class_t *lua_class) {
     return 1;
 }
 
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -17,8 +17,9 @@ function entry()    return widget{type="entry"}    end
 -- Variable definitions
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
-SCROLL_STEP = 20
-MAX_HISTORY = 100
+SCROLL_STEP      = 20
+MAX_CMD_HISTORY  = 100
+MAX_SRCH_HISTORY = 100
 
 -- Luakit theme
 theme = theme or {
@@ -56,6 +57,13 @@ widget.add_signal("new", function(wi)
     end)
 end)
 
+-- Search engines
+search_engines = {
+    google      =  "http://google.com/search?q={0}",
+    imdb        =  "http://imdb.com/find?s=all&q={0}",
+    sourceforge =  "http://sf.net/search/?words={0}"
+}
+
 -- Add key bindings to be used across all windows
 mode_binds = {
      -- bind.buf(Pattern, function (w, buffer, opts) .. end, opts),
@@ -81,6 +89,11 @@ mode_binds = {
         bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
+        -- Commands
+        bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^,g$",                  function (w, c) w:enter_cmd(":websearch google ") end),
+
         -- Searching
         bind.key({},          "/",        function (w) w:start_search(true)  end),
         bind.key({},          "?",        function (w) w:start_search(false) end),
@@ -95,6 +108,7 @@ mode_binds = {
         bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
+        bind.buf("^d$",                   function (w)    w:close_tab() end),
 
         bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
@@ -102,6 +116,13 @@ mode_binds = {
     command = {
         bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
         bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
+        bind.key({},          "Tab",      function (w) w:cmd_completion() end),
+        bind.key({"Control"}, "w",        function (w) w:del_word() end),
+        bind.key({"Control"}, "u",        function (w) w:del_line() end),
+    },
+    search = {
+        bind.key({},          "Up",       function (w) w:srch_hist_prev() end),
+        bind.key({},          "Down",     function (w) w:srch_hist_next() end),
     },
     insert = { },
 }
@@ -115,6 +136,8 @@ commands = {
     bind.cmd({"forward", "f"},            function (w, a) w:forward(tonumber(a) or 1) end),
     bind.cmd({"scroll"      },            function (w, a) w:scroll_vert(a) end),
     bind.cmd({"quit",    "q"},            function (w)    luakit.quit() end),
+    bind.cmd({"close",   "c"},            function (w)    w:close_tab() end),
+    bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
 }
 
 -- Build and pack window widgets
@@ -228,6 +251,12 @@ function attach_window_signals(w)
 
     -- Attach window widget signals
     w.win:add_signal("key-press", function(win, mods, key)
+        -- Reset command line completion
+        if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
+            w:update_uri()
+            w.compl_index = 0
+        end
+
         if w:hit(mods, key) then
             return true
         end
@@ -290,8 +319,8 @@ function attach_window_signals(w)
             w:match_cmd(string.sub(text, 2))
             w:set_mode()
         elseif w:is_mode("search") then
-            -- TODO add search term to some history list
-            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            w:srch_hist_add(text)
+            w:search(string.sub(text, 2), string.sub(text, 1, 1) == "/")
             -- User doesn't want to return to start position
             w.search_start_marker = nil
             w:set_mode()
@@ -393,7 +422,12 @@ window_helpers = {
     end,
 
     navigate = function(w, uri, view)
-        (view or w:get_current()).uri = uri
+        local v = view or w:get_current()
+        if v then
+            v.uri = uri
+        else
+            return w:new_tab(uri)
+        end
     end,
 
     new_tab = function(w, uri)
@@ -402,6 +436,15 @@ window_helpers = {
         attach_webview_signals(w, view)
         if uri then view.uri = uri end
         view.show_scrollbars = false
+        w:update_tab_count()
+    end,
+
+    -- close the current tab
+    close_tab = function(w)
+        view = w:get_current()
+        if not view then return end
+        w.tabs:remove(view)
+        view:destroy()
         w:update_tab_count()
     end,
 
@@ -418,12 +461,143 @@ window_helpers = {
         return bind.match_cmd(commands, buffer, w)
     end,
 
+    -- enter command or characters into command line
+    enter_cmd = function(w, cmd)
+        local i = w.ibar.input
+        w:set_mode("command")
+        i.text = cmd
+        i:set_position(-1)
+    end,
+
+    -- search engine wrapper
+    websearch = function(w, args)
+        local sep = string.find(args, " ")
+        local engine = string.sub(args, 1, sep-1)
+        local search = string.sub(args, sep+1)
+        if not search_engines[engine] then
+            print("E: No matching search engine found:", engine)
+            return 0
+        end
+        local uri = string.gsub(search_engines[engine], "{%d}", search)
+        return w:navigate(uri)
+    end,
+
+    -- Command line completion of available commands
+    cmd_completion = function(w)
+        local i = w.ibar.input
+        local s = w.sbar.l.uri
+        local cmpl = {}
+
+        -- Get last completion (is reset on key press other than <Tab>)
+        if not w.compl_start or w.compl_index == 0 then
+            w.compl_start = "^" .. string.sub(i.text, 2)
+            w.compl_index = 1
+        end
+
+        -- Get suitable commands
+        for _, b in ipairs(commands) do
+            for _, c in pairs(b.commands) do
+                if c and string.match(c, w.compl_start) then
+                    table.insert(cmpl, c)
+                end
+            end
+        end
+
+        table.sort(cmpl)
+
+        if #cmpl > 0 then
+            local text = ""
+            for index, comp in pairs(cmpl) do
+                if index == w.compl_index then
+                    i.text = ":" .. comp .. " "
+                    i:set_position(-1)
+                end
+                if text ~= "" then
+                    text = text .. " | "
+                end
+                text = text .. comp
+            end
+
+            -- cycle through all possible completions
+            if w.compl_index == #cmpl then
+                w.compl_index = 1
+            else
+                w.compl_index = w.compl_index + 1
+            end
+            s.text = text
+        end
+    end,
+
+    del_word = function(w)
+        local i = w.ibar.input
+        local text = i.text
+        if text and string.len(text) > 1 then
+            if not string.find(text, " ") then
+                i.text = ":"
+            elseif string.find(text, "%w+%s*$") then
+                i.text = string.gsub(text, "(%W)%w+%s*$", "%1")
+            else
+                i.text = string.gsub(text, "(%w)%W+%s*$", "%1")
+            end
+            i:set_position(-1)
+        end
+    end,
+
+    del_line = function(w)
+        local i = w.ibar.input
+        if i.text ~= ":" then
+            i.text = ":"
+            i:set_position(-1)
+        end
+    end,
+
+    -- Search history adding
+    srch_hist_add = function(w, srch)
+        if not w.srch_hist then w.srch_hist = {} end
+        -- Check overflow
+        if #w.srch_hist > ((MAX_SRCH_HISTORY or 100) + 5) then
+            while #w.srch_hist > (MAX_SRCH_HISTORY or 100) do
+                table.remove(w.srch_hist, 1)
+            end
+        end
+        table.insert(w.srch_hist, srch)
+    end,
+
+    -- Search history traversing
+    srch_hist_prev = function(w)
+        if not w.srch_hist then w.srch_hist = {} end
+        if not w.srch_hist_cursor then
+            w.srch_hist_cursor = #w.srch_hist + 1
+            w.srch_hist_current = w.ibar.input.text
+        end
+        local c = w.srch_hist_cursor - 1
+        if w.srch_hist[c] then
+            w.srch_hist_cursor = c
+            w.ibar.input.text = w.srch_hist[c]
+            w.ibar.input:set_position(-1)
+        end
+    end,
+
+    srch_hist_next = function(w)
+        if not w.srch_hist then w.srch_hist = {} end
+        local c = (w.srch_hist_cursor or #w.srch_hist) + 1
+        if w.srch_hist[c] then
+            w.srch_hist_cursor = c
+            w.ibar.input.text = w.srch_hist[c]
+            w.ibar.input:set_position(-1)
+        elseif w.srch_hist_current then
+            w.srch_hist_cursor = nil
+            w.ibar.input.text = w.srch_hist_current
+            w.ibar.input:set_position(-1)
+        end
+    end,
+
     -- Command history adding
     cmd_hist_add = function(w, cmd)
         if not w.cmd_hist then w.cmd_hist = {} end
         -- Make sure history doesn't overflow
-        if #w.cmd_hist > ((MAX_HISTORY or 100) + 5) then
-            while #w.cmd_hist > (MAX_HISTORY or 100) do
+        if #w.cmd_hist > ((MAX_CMD_HISTORY or 100) + 5) then
+            while #w.cmd_hist > (MAX_CMD_HISTORY or 100) do
                 table.remove(w.cmd_hist, 1)
             end
         end
