@@ -348,7 +348,7 @@ function attach_webview_signals(w, view)
 
     view:add_signal("link-hover", function(v, link)
         if w:is_current(v) and link then
-            w.sbar.l.uri.text = string.gsub(link, "&", "&amp;")
+            w.sbar.l.uri.text = "Link: " .. string.gsub(link, "&", "&amp;")
         end
     end)
 
