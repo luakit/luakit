@@ -1,13 +1,13 @@
 See AUTHORS file for list of copyright holders.
 
-Several source files are based on files in the surf micro-browser project and
-those sections are licensed under the MIT licence (see COPYING.MIT).
+Several source files are based on files in the surf micro-browser project
+and those sections have been re-licensed under the GPLv3 licence
+(see COPYING.GPLv3).
 
-Several source files are based on files in the uzbl micro-browser project and
-those sections and are licensed under the GPLv3 license (see COPYING.GPLv3).
+Several source files are based on files in the uzbl micro-browser project
+and those sections are licensed under the GPLv3 license (see COPYING.GPLv3).
 
 Several source files are based on files in the awesome window-manager project
 and those sections are licensed under the GPLv3 licence (see COPYING.GPLv3).
 
-Everything else is GPLv3 (see COPYING.GPLv3) unless otherwise mentioned at
-the beginning of the file.
+Everything else is GPLv3 (see COPYING.GPLv3).
