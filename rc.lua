@@ -373,6 +373,9 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- 'link' contains the download link
+    -- 'mime' contains the mime type that is requested
+    -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
         if w:is_current(v) then
             print ("Requested link:", link)
