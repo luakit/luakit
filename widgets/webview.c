@@ -189,7 +189,7 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
 
     if (ret && !luaH_checkboolean(L, -1))
-        /* User responded with false, do not continue navigation request */
+        /* User responded with false, ignore request */
         webkit_web_policy_decision_ignore(pd);
     else if (!webkit_web_view_can_show_mime_type(v, mime))
         webkit_web_policy_decision_download(pd);
