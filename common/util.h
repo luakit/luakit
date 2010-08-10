@@ -37,16 +37,8 @@ void _fatal(int, const gchar *, const gchar *, ...);
 #define warn(string, ...) _warn(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _warn(int, const gchar *, const gchar *, ...);
 
-#ifdef DEBUG_MESSAGES
-
 #define debug(string, ...) _debug(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _debug(int, const gchar *, const gchar *, ...);
-
-#else
-
-#define debug(string, ...)
-
-#endif
 
 /* A NULL resistant strlen. Unlike it's libc sibling, l_strlen returns a
  * ssize_t, and supports its argument being NULL. */

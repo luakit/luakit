@@ -35,6 +35,8 @@ typedef struct {
     gchar *base_data_directory;
     /* Path to the current config file */
     gchar *confpath;
+    /* Print verbose output */
+    gboolean verbose;
     /* Lua VM state */
     lua_State *L;
     /* Global signals table */

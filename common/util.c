@@ -24,6 +24,7 @@
 #include <stdarg.h>
 #include <stdlib.h>
 
+#include "globalconf.h"
 #include "common/util.h"
 
 /* Print error and exit with EXIT_FAILURE code. */
@@ -52,12 +53,14 @@ _warn(int line, const char *fct, const char *fmt, ...) {
 /* Print debug message on stderr. */
 void
 _debug(int line, const char *fct, const char *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    g_fprintf(stderr, "D: luakit: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    g_fprintf(stderr, "\n");
+    if (globalconf.verbose) {
+        va_list ap;
+        va_start(ap, fmt);
+        g_fprintf(stderr, "D: luakit: %s:%d: ", fct, line);
+        g_vfprintf(stderr, fmt, ap);
+        va_end(ap);
+        g_fprintf(stderr, "\n");
+    }
 }
 
 gboolean
