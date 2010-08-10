@@ -318,7 +318,29 @@ luaH_isloop(lua_State *L, gint idx)
 static gint
 luaH_luakit_selection(lua_State *L)
 {
-    GtkClipboard *selection = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    int n = lua_gettop(L);
+    GdkAtom atom = GDK_SELECTION_PRIMARY;
+
+    if (n)
+    {
+      const gchar *arg = luaL_checklstring(L, 1, NULL);
+
+      /* Follow xclip(1) behavior: check only the first character of argument */
+      switch (arg[0]) {
+          case 'p':
+              break;
+          case 's':
+              atom = GDK_SELECTION_SECONDARY;
+              break;
+          case 'c':
+              atom = GDK_SELECTION_CLIPBOARD;
+              break;
+          default:
+              luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
+              break;
+      }
+    }
+    GtkClipboard *selection = gtk_clipboard_get(atom);
     gchar *text = gtk_clipboard_wait_for_text(selection);
     lua_pushstring(L, text);
     g_free(text);
