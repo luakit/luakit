@@ -118,6 +118,7 @@ mode_binds = {
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
     },
     command = {
+        bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
         bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
         bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
         bind.key({},          "Tab",      function (w) w:cmd_completion() end),
