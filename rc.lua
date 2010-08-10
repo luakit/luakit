@@ -473,6 +473,30 @@ window_helpers = {
         i:set_position(-1)
     end,
 
+    -- insert an arbitrary string into command line in the current cursor position
+    insert_cmd = function(w, str)
+        print("XXX")
+        local i = w.ibar.input
+        local text = i.text
+        local pos = i:get_position()
+        if not text or #text == 0 then
+            text = str
+            pos = -1
+        elseif pos == -1 then
+            text = text + str
+            pos = -1
+        elseif pos == 0 then
+            text = str + text
+            pos = -1
+        else
+            text = string.sub(text, 1, pos)..str..string.sub(text, pos+1)
+            pos = pos + #str + 1
+        end
+        i.text = text
+        i:set_position(pos)
+        return 0
+    end,
+
     -- search engine wrapper
     websearch = function(w, args)
         local sep = string.find(args, " ")
