@@ -91,7 +91,7 @@ mode_binds = {
 
         -- Clipboard
         bind.key({},          "p",        function (w) w:navigate(luakit.selection()) end),
-        bind.key({"Control"}, "v",        function (w) w:navigate(luakit.selection("clipboard")) end),
+        bind.key({},          "P",        function (w) w:new_tab(luakit.selection())  end),
 
         -- Commands
         bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
