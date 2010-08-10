@@ -321,24 +321,22 @@ luaH_luakit_selection(lua_State *L)
     int n = lua_gettop(L);
     GdkAtom atom = GDK_SELECTION_PRIMARY;
 
-    if (n)
-    {
-      const gchar *arg = luaL_checklstring(L, 1, NULL);
-
-      /* Follow xclip(1) behavior: check only the first character of argument */
-      switch (arg[0]) {
+    if (n) {
+        const gchar *arg = luaL_checkstring(L, 1);
+        /* Follow xclip(1) behavior: check only the first character of argument */
+        switch (arg[0]) {
           case 'p':
-              break;
+            break;
           case 's':
-              atom = GDK_SELECTION_SECONDARY;
-              break;
+            atom = GDK_SELECTION_SECONDARY;
+            break;
           case 'c':
-              atom = GDK_SELECTION_CLIPBOARD;
-              break;
+            atom = GDK_SELECTION_CLIPBOARD;
+            break;
           default:
-              luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
-              break;
-      }
+            luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
+            break;
+        }
     }
     GtkClipboard *selection = gtk_clipboard_get(atom);
     gchar *text = gtk_clipboard_wait_for_text(selection);
