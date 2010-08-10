@@ -89,6 +89,10 @@ mode_binds = {
         bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
+        -- Clipboard
+        bind.key({},          "p",        function (w) w:navigate(luakit.selection()) end),
+        bind.key({"Control"}, "v",        function (w) w:navigate(luakit.selection("clipboard")) end),
+
         -- Commands
         bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
         bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
