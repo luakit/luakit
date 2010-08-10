@@ -89,6 +89,10 @@ mode_binds = {
         bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
+        -- Clipboard
+        bind.key({},          "p",        function (w) w:navigate(luakit.selection()) end),
+        bind.key({},          "P",        function (w) w:new_tab(luakit.selection())  end),
+
         -- Commands
         bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
         bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
@@ -114,6 +118,7 @@ mode_binds = {
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
     },
     command = {
+        bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
         bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
         bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
         bind.key({},          "Tab",      function (w) w:cmd_completion() end),
@@ -467,6 +472,17 @@ window_helpers = {
         w:set_mode("command")
         i.text = cmd
         i:set_position(-1)
+    end,
+
+    -- insert a string into the command line at the current cursor position
+    insert_cmd = function(w, str)
+        if not str then return nil end
+        local i = w.ibar.input
+        local text = i.text
+        local pos = i:get_position()
+        local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
+        i.text = left .. str .. right
+        i:set_position(pos + #str + 1)
     end,
 
     -- search engine wrapper
