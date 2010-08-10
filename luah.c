@@ -311,6 +311,20 @@ luaH_isloop(lua_State *L, gint idx)
     return !ret;
 }
 
+/* Returns a string from X selection.
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on stack (1).
+ */
+static gint
+luaH_luakit_selection(lua_State *L)
+{
+    GtkClipboard *selection = gtk_clipboard_get(GDK_SELECTION_CLIPBOARD);
+    gchar *text = gtk_clipboard_wait_for_text(selection);
+    lua_pushstring(L, text);
+    g_free(text);
+    return 1;
+}
+
 /* luakit global table.
  * \param L The Lua VM state.
  * \return The number of elements pushed on stack.
@@ -339,6 +353,10 @@ luaH_luakit_index(lua_State *L)
             luaH_object_push(L, w->ref);
             lua_rawseti(L, -2, i+1);
         }
+        return 1;
+
+      case L_TK_SELECTION:
+        lua_pushcfunction(L, luaH_luakit_selection);
         return 1;
 
       default:

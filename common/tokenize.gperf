@@ -35,6 +35,7 @@ pack_start
 remove
 search
 selectable
+selection
 set_alignment
 set_child
 set_padding
