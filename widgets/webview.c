@@ -93,6 +93,7 @@ const struct property_t {
   { "monospace-font-family",                        CHAR,   SETTINGS,    TRUE  },
   { "print-backgrounds",                            BOOL,   SETTINGS,    TRUE  },
   { "progress",                                     DOUBLE, WEBKITVIEW,  FALSE },
+  { "proxy-uri",                                    URI,    SOUPSESSION, TRUE  },
   { "resizable-text-areas",                         BOOL,   SETTINGS,    TRUE  },
   { "sans-serif-font-family",                       CHAR,   SETTINGS,    TRUE  },
   { "serif-font-family",                            CHAR,   SETTINGS,    TRUE  },

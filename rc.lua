@@ -20,6 +20,7 @@ HOMEPAGE    = "http://luakit.org/"
 SCROLL_STEP      = 20
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
+--HTTPPROXY = "http://example.com:3128"
 
 -- Luakit theme
 theme = theme or {
@@ -146,6 +147,7 @@ commands = {
 }
 
 function set_http_options(w)
+    if HTTPPROXY then w:set('proxy-uri', HTTPPROXY) end
     w:set('user-agent', 'luakit')
     -- Uncomment the following options if you want to enable SSL certs validation.
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
