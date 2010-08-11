@@ -147,7 +147,8 @@ commands = {
 }
 
 function set_http_options(w)
-    if HTTPPROXY then w:set('proxy-uri', HTTPPROXY) end
+    local proxy = HTTPPROXY or os.getenv("http_proxy")
+    if proxy then w:set('proxy-uri', proxy) end
     w:set('user-agent', 'luakit')
     -- Uncomment the following options if you want to enable SSL certs validation.
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
