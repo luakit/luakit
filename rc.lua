@@ -929,6 +929,10 @@ function new_window(uris)
     -- Set initial mode
     w:set_mode()
 
+    -- Set some properties
+    -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
+    -- w:set('ssl-strict', true)
+
     return w
 end
 
