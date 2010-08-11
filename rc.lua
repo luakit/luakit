@@ -145,6 +145,13 @@ commands = {
     bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
 }
 
+function set_http_options(w)
+    w:set('user-agent', 'luakit')
+    -- Uncomment the following options if you want to enable SSL certs validation.
+    -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
+    -- w:set('ssl-strict', false)
+end
+
 -- Build and pack window widgets
 function build_window()
     -- Create a table for widgets and state variables for a window
@@ -438,6 +445,7 @@ window_helpers = {
     new_tab = function(w, uri)
         local view = webview()
         w.tabs:append(view)
+        set_http_options(w)
         attach_webview_signals(w, view)
         if uri then view.uri = uri end
         view.show_scrollbars = false
@@ -928,11 +936,6 @@ function new_window(uris)
 
     -- Set initial mode
     w:set_mode()
-
-    -- Set some properties
-    w:set('user-agent', 'luakit')
-    -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
-    -- w:set('ssl-strict', true)
 
     return w
 end
