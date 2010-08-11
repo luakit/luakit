@@ -31,8 +31,8 @@ static struct {
     SoupCookieJar *cookiejar;
 } Soup = { NULL, NULL };
 
-typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE }    property_value_type;
-typedef enum { SETTINGS, WEBKITVIEW, SOUPSESSION } property_value_scope;
+typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE, URI } property_value_type;
+typedef enum { SETTINGS, WEBKITVIEW, SOUPSESSION }   property_value_scope;
 
 typedef union {
     gchar    *c;
@@ -362,6 +362,7 @@ luaH_webview_get_prop(lua_State *L)
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     GObject *ws;
     property_tmp_values tmp;
+    SoupURI *u;
 
     for (guint i = 0; i < LENGTH(properties); i++) {
         if (g_strcmp0(properties[i].name, prop))
@@ -406,6 +407,14 @@ luaH_webview_get_prop(lua_State *L)
             lua_pushnumber(L, tmp.d);
             return 1;
 
+          case URI:
+            g_object_get(ws, prop, &u, NULL);
+            tmp.c = soup_uri_to_string(u, 0);
+            lua_pushstring(L, tmp.c);
+            soup_uri_free(u);
+            g_free(tmp.c);
+            return 1;
+
           default:
             warn("unknown property type for: %s", properties[i].name);
             break;
@@ -424,6 +433,7 @@ luaH_webview_set_prop(lua_State *L)
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     GObject *ws;
     property_tmp_values tmp;
+    SoupURI *u;
 
     for (guint i = 0; i < LENGTH(properties); i++) {
         if (g_strcmp0(properties[i].name, prop))
@@ -470,6 +480,16 @@ luaH_webview_set_prop(lua_State *L)
           case DOUBLE:
             tmp.d = (gdouble) luaL_checknumber(L, 3);
             g_object_set(ws, prop, tmp.d, NULL);
+            return 0;
+
+          case URI:
+            tmp.c = (gchar*) luaL_checkstring(L, 3);
+            u = soup_uri_new(tmp.c);
+            if (SOUP_URI_VALID_FOR_HTTP(u))
+              g_object_set(ws, prop, u, NULL);
+            else
+              luaL_error(L, "cannot parse uri: %s", tmp.c);
+            soup_uri_free(u);
             return 0;
 
           default:
