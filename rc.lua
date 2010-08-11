@@ -930,6 +930,7 @@ function new_window(uris)
     w:set_mode()
 
     -- Set some properties
+    w:set('user-agent', 'luakit')
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
     -- w:set('ssl-strict', true)
 
