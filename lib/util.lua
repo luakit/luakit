@@ -18,7 +18,7 @@ local print = print
 local error = error
 local capi = { luakit = luakit }
 
--- Utility module for awful
+-- Utility module for luakit
 module("util")
 
 table = {}
