@@ -21,6 +21,10 @@ SCROLL_STEP      = 20
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
 
+-- Setup download directory
+DOWNLOAD_DIR = (os.getenv("HOME") or ".") .. "/downloads"
+os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
+
 -- Luakit theme
 theme = theme or {
     -- Default settings
@@ -406,8 +410,7 @@ function attach_webview_signals(w, view)
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
         if w:is_current(v) then
-            print ("Requested link:", link)
-            print ("Mime type:", mime)
+            print(string.format("Requested link: %s (%s)", link, mime))
 
             -- i.e. block binary files like *.exe
             if string.match(mime, "application/octet-stream") then
@@ -420,14 +423,14 @@ function attach_webview_signals(w, view)
     -- 'filename' contains the suggested filename (from server or webkit)
     view:add_signal("download-request", function (v, link, filename)
         if w:is_current(v) and filename then
-            local dir = os.getenv("HOME") or "."
-            local dl = dir .. "/" .. filename
+            local dl = DOWNLOAD_DIR .. "/" .. filename
 
             print ("Download request:", link)
             print ("Suggested filename:", filename)
 
-            os.execute("wget -q " .. link .. " -O " .. dl)
-            print (filename .. " saved to: " .. dl)
+            local wget = string.format("wget -q %q -O %q &", link, dl)
+            print("Launching: " .. wget)
+            os.execute(wget)
         end
     end)
 
