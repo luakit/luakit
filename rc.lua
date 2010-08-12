@@ -823,8 +823,9 @@ window_helpers = {
     end,
 
     update_uri = function (w, view, uri)
-        if not view then view = w:get_current() end
-        w.sbar.l.uri.text = (uri or view.uri or "about:blank")
+        local v = view or w:get_current()
+        if not v then return end
+        w.sbar.l.uri.text = (uri or v.uri or "about:blank")
     end,
 
     update_progress = function (w, view, p)
