@@ -352,7 +352,7 @@ function attach_window_signals(w)
             -- User doesn't want to return to start position
             w.search_start_marker = nil
             w:set_mode()
-            w.ibar.prompt.text = text
+            w.ibar.prompt.text = util.escape(text)
             w.ibar.prompt:show()
         end
     end)
@@ -376,7 +376,7 @@ function attach_webview_signals(w, view)
 
     view:add_signal("link-hover", function (v, link)
         if w:is_current(v) and link then
-            w.sbar.l.uri.text = "Link: " .. string.gsub(link, "&", "&amp;")
+            w.sbar.l.uri.text = "Link: " .. util.escape(link)
         end
     end)
 
@@ -620,7 +620,7 @@ window_helpers = {
             else
                 w.compl_index = w.compl_index + 1
             end
-            s.text = text
+            s.text = util.escape(text)
         end
     end,
 
@@ -836,7 +836,7 @@ window_helpers = {
     update_uri = function (w, view, uri)
         local v = view or w:get_current()
         if not v then return end
-        w.sbar.l.uri.text = (uri or v.uri or "about:blank")
+        w.sbar.l.uri.text = util.escape((uri or v.uri or "about:blank"))
     end,
 
     update_progress = function (w, view, p)
@@ -863,7 +863,7 @@ window_helpers = {
 
     update_buf = function (w)
         if w.buffer then
-            w.sbar.r.buf.text = string.format(" %-3s", w.buffer)
+            w.sbar.r.buf.text = util.escape(string.format(" %-3s", w.buffer))
             w.sbar.r.buf:show()
         else
             w.sbar.r.buf:hide()
@@ -928,7 +928,7 @@ window_helpers = {
             for i = 1, count do
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(w.tabs:atindex(i))
-                t.label.text = string.format(theme.tablabel_format or "%s", title)
+                t.label.text = util.escape(string.format(theme.tablabel_format or "%s", title))
                 w:apply_tablabel_theme(t, i == current)
             end
         end
