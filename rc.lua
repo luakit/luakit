@@ -460,9 +460,20 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("expose", function(v)
+    view:add_signal("expose", function (v)
         if w:is_current(v) then
             w:update_scroll(v)
+        end
+    end)
+
+    view:add_signal("button-release", function (v, button, state)
+        if w:is_current(v) then
+            print (string.format("Button release - button %d state %d", button, state))
+            if button == 8 then
+                w:back(1)
+            elseif button == 9 then
+                w:forward(1)
+            end
         end
     end)
 end
