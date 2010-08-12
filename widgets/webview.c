@@ -101,6 +101,102 @@ const struct property_t {
   { NULL,                                           0,      0,      0     },
 };
 
+static const gchar*
+webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
+    WebKitWebFrame *frame;
+    JSGlobalContextRef context;
+    JSObjectRef globalobject;
+    JSStringRef js_file;
+    JSStringRef js_script;
+    JSValueRef js_result;
+    JSValueRef js_exc = NULL;
+    JSStringRef js_result_string;
+    GString *result = g_string_new(NULL);
+    size_t js_result_size;
+
+    frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+    context = webkit_web_frame_get_global_context(frame);
+    globalobject = JSContextGetGlobalObject(context);
+
+    /* evaluate the script and get return value*/
+    js_script = JSStringCreateWithUTF8CString(script);
+    js_file = JSStringCreateWithUTF8CString(file);
+    js_result = JSEvaluateScript(context, js_script, globalobject, js_file, 0, &js_exc);
+    if (js_result && !JSValueIsUndefined(context, js_result)) {
+        js_result_string = JSValueToStringCopy(context, js_result, NULL);
+        js_result_size = JSStringGetMaximumUTF8CStringSize(js_result_string);
+
+        if (js_result_size) {
+            char js_result_utf8[js_result_size];
+            JSStringGetUTF8CString(js_result_string, js_result_utf8, js_result_size);
+            g_string_assign(result, js_result_utf8);
+        }
+
+        JSStringRelease(js_result_string);
+    }
+    else if (js_exc) {
+        size_t size;
+        JSStringRef prop, val;
+        JSObjectRef exc = JSValueToObject(context, js_exc, NULL);
+
+        printf("Exception occured while executing script:\n");
+
+        /* Print file */
+        prop = JSStringCreateWithUTF8CString("sourceURL");
+        val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
+        size = JSStringGetMaximumUTF8CStringSize(val);
+        if(size) {
+            char cstr[size];
+            JSStringGetUTF8CString(val, cstr, size);
+            printf("At %s", cstr);
+        }
+        JSStringRelease(prop);
+        JSStringRelease(val);
+
+        /* Print line */
+        prop = JSStringCreateWithUTF8CString("line");
+        val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
+        size = JSStringGetMaximumUTF8CStringSize(val);
+        if(size) {
+            char cstr[size];
+            JSStringGetUTF8CString(val, cstr, size);
+            printf(":%s: ", cstr);
+        }
+        JSStringRelease(prop);
+        JSStringRelease(val);
+
+        /* Print message */
+        val = JSValueToStringCopy(context, exc, NULL);
+        size = JSStringGetMaximumUTF8CStringSize(val);
+        if(size) {
+            char cstr[size];
+            JSStringGetUTF8CString(val, cstr, size);
+            printf("%s\n", cstr);
+        }
+        JSStringRelease(val);
+    }
+
+    /* cleanup */
+    JSStringRelease(js_script);
+    JSStringRelease(js_file);
+
+    return g_string_free(result, FALSE);
+}
+
+static gint
+luaH_webview_eval_js(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    const gchar *script = luaL_checkstring(L, 2);
+    const gchar *filename = luaL_checkstring(L, 3);
+
+    /* evaluate javascript script and push return result onto lua stack */
+    const gchar *result = webview_eval_js(view, script, filename);
+    lua_pushstring(L, result);
+    return 1;
+}
+
 static void
 progress_cb(WebKitWebView *v, gint p, widget_t *w)
 {
@@ -568,6 +664,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_SET_SCROLL_HORIZ:
         lua_pushcfunction(L, luaH_webview_set_scroll_horiz);
+        return 1;
+
+      case L_TK_EVAL_JS:
+        lua_pushcfunction(L, luaH_webview_eval_js);
         return 1;
 
       case L_TK_SEARCH:

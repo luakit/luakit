@@ -47,13 +47,12 @@ parseopts(int argc, char *argv[]) {
 
     /* define command line options */
     const GOptionEntry entries[] = {
-        { "uri", 'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,
-            "uri(s) to load at startup", "URI" },
-        { "config", 'c', 0, G_OPTION_ARG_STRING, &globalconf.confpath,
-            "configuration file to use", "FILE" },
-        { "version", 'V', 0, G_OPTION_ARG_NONE, &only_version,
-            "show version", NULL },
-        { NULL, 0, 0, 0, NULL, NULL, NULL }};
+      { "uri",     'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                 "uri(s) to load at startup", "URI"  },
+      { "config",  'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath,  "configuration file to use", "FILE" },
+      { "version", 'V', 0, G_OPTION_ARG_NONE,         &only_version,         "print version and exit",    NULL   },
+      { "verbose", 'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,   "print debugging output",      NULL   },
+      { NULL,      0,   0, 0,                         NULL,                  NULL,                        NULL   },
+    };
 
     /* parse command line options */
     context = g_option_context_new("[URI...]");

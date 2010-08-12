@@ -14,7 +14,7 @@ INCS := $(shell pkg-config --cflags ${PKGS}) -I./
 LIBS := $(shell pkg-config --libs ${PKGS})
 
 # Add flags
-CPPFLAGS := -DVERSION=\"${VERSION}\" -DDEBUG_MESSAGES ${CPPFLAGS}
+CPPFLAGS := -DVERSION=\"${VERSION}\" ${CPPFLAGS}
 CFLAGS   := -std=c99 -ggdb -W -Wall -Wextra ${INCS} ${CFLAGS}
 LDFLAGS  := ${LIBS} ${LDFLAGS}
 
