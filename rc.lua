@@ -159,7 +159,7 @@ function set_http_options(w)
     w:set('user-agent', 'luakit')
     -- Uncomment the following options if you want to enable SSL certs validation.
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
-    -- w:set('ssl-strict', false)
+    -- w:set('ssl-strict', true)
 end
 
 -- Build and pack window widgets
