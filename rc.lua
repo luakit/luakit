@@ -414,9 +414,15 @@ function attach_webview_signals(w, view)
     -- 'link' contains the download link
     -- 'filename' contains the suggested filename (from server or webkit)
     view:add_signal("download-request", function (v, link, filename)
-        if w:is_current(v) then
+        if w:is_current(v) and filename then
+            local dir = os.getenv("HOME") or "."
+            local dl = dir .. "/" .. filename
+
             print ("Download request:", link)
             print ("Suggested filename:", filename)
+
+            os.execute("wget -q " .. link .. " -O " .. dl)
+            print (filename .. " saved to: " .. dl)
         end
     end)
 
