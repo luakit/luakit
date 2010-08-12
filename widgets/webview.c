@@ -303,7 +303,7 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     else
         webkit_web_policy_decision_use(pd);
 
-    lua_pop(L, ret);
+    lua_pop(L, ret + 1);
     return TRUE;
 }
 
@@ -378,8 +378,6 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     const gchar *uri = webkit_network_request_get_uri(r);
     gint ret;
 
-    debug("Navigation requested: %s", uri);
-
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
@@ -390,7 +388,7 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     else
         webkit_web_policy_decision_use(p);
 
-    lua_pop(L, ret);
+    lua_pop(L, ret + 1);
     return TRUE;
 }
 
