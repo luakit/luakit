@@ -408,6 +408,11 @@ function attach_webview_signals(w, view)
         if w:is_current(v) then
             print ("Requested link:", link)
             print ("Mime type:", mime)
+
+            -- i.e. block binary files like *.exe
+            if string.match(mime, "application/octet-stream") then
+                return false
+            end
         end
     end)
 
