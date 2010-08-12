@@ -21,7 +21,7 @@
 #ifndef LUAKIT_GLOBALCONF
 #define LUAKIT_GLOBALCONF
 
-#define LUAKIT_LUA_LIB_PATH         "/usr/local/share/luakit/lib"
+#define LUAKIT_INSTALL_PATH         "/usr/local/share/luakit"
 #define LUAKIT_OBJECT_REGISTRY_KEY  "luakit.object.registry"
 
 #include <glib/gtypes.h>
@@ -35,6 +35,8 @@ typedef struct {
     gchar *base_data_directory;
     /* Path to the current config file */
     gchar *confpath;
+    /* Print verbose output */
+    gboolean verbose;
     /* Lua VM state */
     lua_State *L;
     /* Global signals table */

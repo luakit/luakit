@@ -2,6 +2,7 @@
  * luakit.c - luakit main functions
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright (C) 2009 Enno Boland <gottox@s01.de>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -15,15 +16,6 @@
  *
  * You should have received a copy of the GNU General Public License
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
- *
- */
-
-/*
- * MIT/X Consortium License (applies to some functions from surf.c)
- *
- * (C) 2009 Enno Boland <gottox@s01.de>
- *
- * See COPYING.MIT for the full license.
  *
  */
 
@@ -55,13 +47,12 @@ parseopts(int argc, char *argv[]) {
 
     /* define command line options */
     const GOptionEntry entries[] = {
-        { "uri", 'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,
-            "uri(s) to load at startup", "URI" },
-        { "config", 'c', 0, G_OPTION_ARG_STRING, &globalconf.confpath,
-            "configuration file to use", "FILE" },
-        { "version", 'V', 0, G_OPTION_ARG_NONE, &only_version,
-            "show version", NULL },
-        { NULL, 0, 0, 0, NULL, NULL, NULL }};
+      { "uri",     'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                 "uri(s) to load at startup", "URI"  },
+      { "config",  'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath,  "configuration file to use", "FILE" },
+      { "version", 'V', 0, G_OPTION_ARG_NONE,         &only_version,         "print version and exit",    NULL   },
+      { "verbose", 'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,   "print debugging output",      NULL   },
+      { NULL,      0,   0, 0,                         NULL,                  NULL,                        NULL   },
+    };
 
     /* parse command line options */
     context = g_option_context_new("[URI...]");
@@ -157,4 +148,4 @@ main(int argc, char *argv[]) {
     return EXIT_SUCCESS;
 }
 
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

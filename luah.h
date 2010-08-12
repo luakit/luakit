@@ -157,4 +157,4 @@ void luaH_modifier_table_push(lua_State *, guint);
 void luaH_keystr_push(lua_State *, guint);
 
 #endif
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

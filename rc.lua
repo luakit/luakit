@@ -17,8 +17,14 @@ function entry()    return widget{type="entry"}    end
 -- Variable definitions
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
-SCROLL_STEP = 20
-MAX_HISTORY = 100
+SCROLL_STEP      = 20
+MAX_CMD_HISTORY  = 100
+MAX_SRCH_HISTORY = 100
+--HTTPPROXY = "http://example.com:3128"
+
+-- Setup download directory
+DOWNLOAD_DIR = (os.getenv("HOME") or ".") .. "/downloads"
+os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
 
 -- Luakit theme
 theme = theme or {
@@ -56,6 +62,13 @@ widget.add_signal("new", function(wi)
     end)
 end)
 
+-- Search engines
+search_engines = {
+    google      =  "http://google.com/search?q={0}",
+    imdb        =  "http://imdb.com/find?s=all&q={0}",
+    sourceforge =  "http://sf.net/search/?words={0}"
+}
+
 -- Add key bindings to be used across all windows
 mode_binds = {
      -- bind.buf(Pattern, function (w, buffer, opts) .. end, opts),
@@ -81,6 +94,15 @@ mode_binds = {
         bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
+        -- Clipboard
+        bind.key({},          "p",        function (w) w:navigate(luakit.selection()) end),
+        bind.key({},          "P",        function (w) w:new_tab(luakit.selection())  end),
+
+        -- Commands
+        bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^,g$",                  function (w, c) w:enter_cmd(":websearch google ") end),
+
         -- Searching
         bind.key({},          "/",        function (w) w:start_search(true)  end),
         bind.key({},          "?",        function (w) w:start_search(false) end),
@@ -95,13 +117,25 @@ mode_binds = {
         bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
+        bind.buf("^d$",                   function (w)    w:close_tab() end),
 
         bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
         bind.buf("^ZZ$",                  function (w) luakit.quit() end),
+
+        -- Link following
+        bind.key({},          "f",        function (w) w:set_mode("follow") end),
     },
     command = {
+        bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
         bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
         bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
+        bind.key({},          "Tab",      function (w) w:cmd_completion() end),
+        bind.key({"Control"}, "w",        function (w) w:del_word() end),
+        bind.key({"Control"}, "u",        function (w) w:del_line() end),
+    },
+    search = {
+        bind.key({},          "Up",       function (w) w:srch_hist_prev() end),
+        bind.key({},          "Down",     function (w) w:srch_hist_next() end),
     },
     insert = { },
 }
@@ -115,7 +149,18 @@ commands = {
     bind.cmd({"forward", "f"},            function (w, a) w:forward(tonumber(a) or 1) end),
     bind.cmd({"scroll"      },            function (w, a) w:scroll_vert(a) end),
     bind.cmd({"quit",    "q"},            function (w)    luakit.quit() end),
+    bind.cmd({"close",   "c"},            function (w)    w:close_tab() end),
+    bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
 }
+
+function set_http_options(w)
+    local proxy = HTTPPROXY or os.getenv("http_proxy")
+    if proxy then w:set('proxy-uri', proxy) end
+    w:set('user-agent', 'luakit')
+    -- Uncomment the following options if you want to enable SSL certs validation.
+    -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
+    -- w:set('ssl-strict', true)
+end
 
 -- Build and pack window widgets
 function build_window()
@@ -228,14 +273,28 @@ function attach_window_signals(w)
 
     -- Attach window widget signals
     w.win:add_signal("key-press", function(win, mods, key)
+        -- Reset command line completion
+        if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
+            w:update_uri()
+            w.compl_index = 0
+        end
+
         if w:hit(mods, key) then
             return true
         end
     end)
 
     w.win:add_signal("mode-changed", function(win, mode)
+        local i, p = w.ibar.input, w.ibar.prompt
+
         w:update_binds(mode)
         w.cmd_hist_cursor = nil
+
+        -- Clear following hints if the user exits follow mode
+        if w.showing_hints then
+            w:eval_js("clear();");
+            w.showing_hints = false
+        end
 
         -- If a user aborts a search return to the original position
         if w.search_start_marker then
@@ -244,22 +303,32 @@ function attach_window_signals(w)
         end
 
         if mode == "normal" then
-            w.ibar.prompt:hide()
-            w.ibar.input:hide()
+            p:hide()
+            i:hide()
         elseif mode == "insert" then
-            w.ibar.input:hide()
-            w.ibar.input.text = ""
-            w.ibar.prompt.text = "-- INSERT --"
-            w.ibar.prompt:show()
+            i:hide()
+            i.text = ""
+            p.text = "-- INSERT --"
+            p:show()
         elseif mode == "command" then
-            w.ibar.prompt:hide()
-            w.ibar.input.text = ":"
-            w.ibar.input:show()
-            w.ibar.input:focus()
-            w.ibar.input:set_position(-1)
+            p:hide()
+            i.text = ":"
+            i:show()
+            i:focus()
+            i:set_position(-1)
         elseif mode == "search" then
-            w.ibar.prompt:hide()
-            w.ibar.input:show()
+            p:hide()
+            i:show()
+        elseif mode == "follow" then
+            w:eval_js_from_file(util.find_data("scripts/follow.js"))
+            w:eval_js("clear(); show_hints();")
+            w.showing_hints = true
+            p.text = "Follow:"
+            p:show()
+            i.text = ""
+            i:show()
+            i:focus()
+            i:set_position(-1)
         else
             w.ibar.prompt.text = ""
             w.ibar.input.text = ""
@@ -280,6 +349,8 @@ function attach_window_signals(w)
                 w:clear_search()
                 w:set_mode()
             end
+        elseif w:is_mode("follow") then
+            w:eval_js(string.format("update(%q)", w.ibar.input.text))
         end
     end)
 
@@ -290,12 +361,12 @@ function attach_window_signals(w)
             w:match_cmd(string.sub(text, 2))
             w:set_mode()
         elseif w:is_mode("search") then
-            -- TODO add search term to some history list
-            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            w:srch_hist_add(text)
+            w:search(string.sub(text, 2), string.sub(text, 1, 1) == "/")
             -- User doesn't want to return to start position
             w.search_start_marker = nil
             w:set_mode()
-            w.ibar.prompt.text = text
+            w.ibar.prompt.text = util.escape(text)
             w.ibar.prompt:show()
         end
     end)
@@ -317,6 +388,18 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    view:add_signal("link-hover", function (v, link)
+        if w:is_current(v) and link then
+            w.sbar.l.uri.text = "Link: " .. util.escape(link)
+        end
+    end)
+
+    view:add_signal("link-unhover", function (v)
+        if w:is_current(v) then
+            w:update_uri(v)
+        end
+    end)
+
     view:add_signal("key-press", function ()
         -- Only allow key press events to hit the webview if the user is in
         -- "insert" mode.
@@ -329,6 +412,35 @@ function attach_webview_signals(w, view)
         if w:is_current(v) then
             w:update_progress(v, 0)
             w:set_mode()
+        end
+    end)
+
+    -- 'link' contains the download link
+    -- 'mime' contains the mime type that is requested
+    -- return TRUE to accept or FALSE to reject
+    view:add_signal("mime-type-decision", function (v, link, mime)
+        if w:is_current(v) then
+            print(string.format("Requested link: %s (%s)", link, mime))
+
+            -- i.e. block binary files like *.exe
+            if string.match(mime, "application/octet-stream") then
+                return false
+            end
+        end
+    end)
+
+    -- 'link' contains the download link
+    -- 'filename' contains the suggested filename (from server or webkit)
+    view:add_signal("download-request", function (v, link, filename)
+        if w:is_current(v) and filename then
+            local dl = DOWNLOAD_DIR .. "/" .. filename
+
+            print ("Download request:", link)
+            print ("Suggested filename:", filename)
+
+            local wget = string.format("wget -q %q -O %q &", link, dl)
+            print("Launching: " .. wget)
+            os.execute(wget)
         end
     end)
 
@@ -393,16 +505,46 @@ window_helpers = {
     end,
 
     navigate = function(w, uri, view)
-        (view or w:get_current()).uri = uri
+        local v = view or w:get_current()
+        if v then
+            v.uri = uri
+        else
+            return w:new_tab(uri)
+        end
     end,
 
     new_tab = function(w, uri)
         local view = webview()
         w.tabs:append(view)
+        set_http_options(w)
         attach_webview_signals(w, view)
         if uri then view.uri = uri end
         view.show_scrollbars = false
         w:update_tab_count()
+    end,
+
+    -- close the current tab
+    close_tab = function(w)
+        view = w:get_current()
+        if not view then return end
+        w.tabs:remove(view)
+        view:destroy()
+        w:update_tab_count()
+    end,
+
+    -- evaluate javascript code and return string result
+    eval_js = function(w, script, file, view)
+        if not view then view = w:get_current() end
+        return view:eval_js(script, file or "(buffer)")
+    end,
+
+    -- evaluate javascript code from file and return string result
+    eval_js_from_file = function(w, file, view)
+        local fh, err = io.open(file)
+        if not fh then return error(err) end
+        local script = fh:read("*a")
+        fh:close()
+        return w:eval_js(script, file, view)
     end,
 
     -- Wrapper around the bind plugin's hit method
@@ -418,12 +560,157 @@ window_helpers = {
         return bind.match_cmd(commands, buffer, w)
     end,
 
+    -- enter command or characters into command line
+    enter_cmd = function(w, cmd)
+        local i = w.ibar.input
+        w:set_mode("command")
+        i.text = cmd
+        i:set_position(-1)
+    end,
+
+    -- insert a string into the command line at the current cursor position
+    insert_cmd = function(w, str)
+        if not str then return nil end
+        local i = w.ibar.input
+        local text = i.text
+        local pos = i:get_position()
+        local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
+        i.text = left .. str .. right
+        i:set_position(pos + #str + 1)
+    end,
+
+    -- search engine wrapper
+    websearch = function(w, args)
+        local sep = string.find(args, " ")
+        local engine = string.sub(args, 1, sep-1)
+        local search = string.sub(args, sep+1)
+        if not search_engines[engine] then
+            print("E: No matching search engine found:", engine)
+            return 0
+        end
+        local uri = string.gsub(search_engines[engine], "{%d}", search)
+        return w:navigate(uri)
+    end,
+
+    -- Command line completion of available commands
+    cmd_completion = function(w)
+        local i = w.ibar.input
+        local s = w.sbar.l.uri
+        local cmpl = {}
+
+        -- Get last completion (is reset on key press other than <Tab>)
+        if not w.compl_start or w.compl_index == 0 then
+            w.compl_start = "^" .. string.sub(i.text, 2)
+            w.compl_index = 1
+        end
+
+        -- Get suitable commands
+        for _, b in ipairs(commands) do
+            for _, c in pairs(b.commands) do
+                if c and string.match(c, w.compl_start) then
+                    table.insert(cmpl, c)
+                end
+            end
+        end
+
+        table.sort(cmpl)
+
+        if #cmpl > 0 then
+            local text = ""
+            for index, comp in pairs(cmpl) do
+                if index == w.compl_index then
+                    i.text = ":" .. comp .. " "
+                    i:set_position(-1)
+                end
+                if text ~= "" then
+                    text = text .. " | "
+                end
+                text = text .. comp
+            end
+
+            -- cycle through all possible completions
+            if w.compl_index == #cmpl then
+                w.compl_index = 1
+            else
+                w.compl_index = w.compl_index + 1
+            end
+            s.text = util.escape(text)
+        end
+    end,
+
+    del_word = function(w)
+        local i = w.ibar.input
+        local text = i.text
+        local pos = i:get_position()
+        if text and #text > 1 and pos > 1 then
+            local left, right = string.sub(text, 2, pos), string.sub(text, pos+1)
+            if not string.find(left, "%s") then
+                left = ""
+            elseif string.find(left, "%w+%s*$") then
+                left = string.sub(left, 0, string.find(left, "%w+%s*$") - 1)
+            elseif string.find(left, "%W+%s*$") then
+                left = string.sub(left, 0, string.find(left, "%W+%s*$") - 1)
+            end
+            i.text =  string.sub(text, 1, 1) .. left .. right
+            i:set_position(#left + 2)
+        end
+    end,
+
+    del_line = function(w)
+        local i = w.ibar.input
+        if i.text ~= ":" then
+            i.text = ":"
+            i:set_position(-1)
+        end
+    end,
+
+    -- Search history adding
+    srch_hist_add = function(w, srch)
+        if not w.srch_hist then w.srch_hist = {} end
+        -- Check overflow
+        if #w.srch_hist > ((MAX_SRCH_HISTORY or 100) + 5) then
+            while #w.srch_hist > (MAX_SRCH_HISTORY or 100) do
+                table.remove(w.srch_hist, 1)
+            end
+        end
+        table.insert(w.srch_hist, srch)
+    end,
+
+    -- Search history traversing
+    srch_hist_prev = function(w)
+        if not w.srch_hist then w.srch_hist = {} end
+        if not w.srch_hist_cursor then
+            w.srch_hist_cursor = #w.srch_hist + 1
+            w.srch_hist_current = w.ibar.input.text
+        end
+        local c = w.srch_hist_cursor - 1
+        if w.srch_hist[c] then
+            w.srch_hist_cursor = c
+            w.ibar.input.text = w.srch_hist[c]
+            w.ibar.input:set_position(-1)
+        end
+    end,
+
+    srch_hist_next = function(w)
+        if not w.srch_hist then w.srch_hist = {} end
+        local c = (w.srch_hist_cursor or #w.srch_hist) + 1
+        if w.srch_hist[c] then
+            w.srch_hist_cursor = c
+            w.ibar.input.text = w.srch_hist[c]
+            w.ibar.input:set_position(-1)
+        elseif w.srch_hist_current then
+            w.srch_hist_cursor = nil
+            w.ibar.input.text = w.srch_hist_current
+            w.ibar.input:set_position(-1)
+        end
+    end,
+
     -- Command history adding
     cmd_hist_add = function(w, cmd)
         if not w.cmd_hist then w.cmd_hist = {} end
         -- Make sure history doesn't overflow
-        if #w.cmd_hist > ((MAX_HISTORY or 100) + 5) then
-            while #w.cmd_hist > (MAX_HISTORY or 100) do
+        if #w.cmd_hist > ((MAX_CMD_HISTORY or 100) + 5) then
+            while #w.cmd_hist > (MAX_CMD_HISTORY or 100) do
                 table.remove(w.cmd_hist, 1)
             end
         end
@@ -561,8 +848,9 @@ window_helpers = {
     end,
 
     update_uri = function (w, view, uri)
-        if not view then view = w:get_current() end
-        w.sbar.l.uri.text = (uri or view.uri or "about:blank")
+        local v = view or w:get_current()
+        if not v then return end
+        w.sbar.l.uri.text = util.escape((uri or v.uri or "about:blank"))
     end,
 
     update_progress = function (w, view, p)
@@ -589,7 +877,7 @@ window_helpers = {
 
     update_buf = function (w)
         if w.buffer then
-            w.sbar.r.buf.text = string.format(" %-3s", w.buffer)
+            w.sbar.r.buf.text = util.escape(string.format(" %-3s", w.buffer))
             w.sbar.r.buf:show()
         else
             w.sbar.r.buf:hide()
@@ -654,7 +942,7 @@ window_helpers = {
             for i = 1, count do
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(w.tabs:atindex(i))
-                t.label.text = string.format(theme.tablabel_format or "%s", title)
+                t.label.text = util.escape(string.format(theme.tablabel_format or "%s", title))
                 w:apply_tablabel_theme(t, i == current)
             end
         end
@@ -740,3 +1028,5 @@ function new_window(uris)
 end
 
 new_window(uris)
+
+-- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

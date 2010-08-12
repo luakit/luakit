@@ -1,16 +1,24 @@
-Luakit project:
- Mason Larobina (mason-l) <mason.larobina<AT>gmail.com> 2010
+Authors in the luakit project:
+  Clint Adams       (Clint)     <schizo<AT>debian.org>          2010
+  Gregor Uhlenheuer (kongo2002) <kongo2002<AT>googlemail.com>   2010
+  Mason Larobina    (mason-l)   <mason.larobina<AT>gmail.com>   2010
+  Pawel Zuzelski    (pawelz)    <pawelz<AT>pld-linux.org>       2010
+
+Author of `scripts/follow.js`:
+  Fabian Streitel               <karottenreibe<AT>gmail.com>    2010
 
 Inherited authors from the awesomewm project:
- Julien Danjou <julien<AT>danjou.info> 2007-2009
- Pierre Habouzit <madcoder<AT>debian.org> 2008
+  Julien Danjou                 <julien<AT>danjou.info>         2007-2009
+  Pierre Habouzit               <madcoder<AT>debian.org>        2008
 
 Inherited authors from the uzbl project:
- Robert Manea (robm) <rob.manea<AT>gmail.com> 2009-2010
- Dieter Plaetinck (Dieter@be) <dieter<AT>plaetinck.be> 2009-2010
+  Dequis                        <dx<AT>dxzone.com.ar>           2009
+  Dieter Plaetinck  (Dieter@be) <dieter<AT>plaetinck.be>        2009-2010
+  Robert Manea      (robm)      <rob.manea<AT>gmail.com>        2009-2010
+  Simon Lipp        (sloonz)    <sloonz<AT>gmail.com>           2010
 
 Inherited authors from the surf project:
- Enno Boland <g<AT>s01.de> 2009
+  Enno Boland       (tox)       <tox<AT>s01.de>                 2009-2010
 
 If you believe you should be in this file or notice that I have missed an
 attribution to somebody else please contact me (Mason) or email me a patch

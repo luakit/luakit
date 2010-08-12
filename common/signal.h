@@ -114,4 +114,4 @@ signal_remove(signal_t *signals, const gchar *name, gpointer ref) {
 }
 
 #endif
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

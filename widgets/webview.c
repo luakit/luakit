@@ -31,7 +31,8 @@ static struct {
     SoupCookieJar *cookiejar;
 } Soup = { NULL, NULL };
 
-typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE } property_value_type;
+typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE, URI } property_value_type;
+typedef enum { SETTINGS, WEBKITVIEW, SOUPSESSION }   property_value_scope;
 
 typedef union {
     gchar    *c;
@@ -44,62 +45,168 @@ typedef union {
 const struct property_t {
     const gchar *name;
     property_value_type type;
-    gboolean webkitview;
+    property_value_scope scope;
     gboolean writable;
 } properties[] = {
-  { "auto-load-images",                             BOOL,   FALSE,  TRUE  },
-  { "auto-resize-window",                           BOOL,   FALSE,  TRUE  },
-  { "auto-shrink-images",                           BOOL,   FALSE,  TRUE  },
-  { "cursive-font-family",                          CHAR,   FALSE,  TRUE  },
-  { "custom-encoding",                              CHAR,   TRUE,   TRUE  },
-  { "default-encoding",                             CHAR,   FALSE,  TRUE  },
-  { "default-font-family",                          CHAR,   FALSE,  TRUE  },
-  { "default-font-size",                            INT,    FALSE,  TRUE  },
-  { "default-monospace-font-size",                  INT,    FALSE,  TRUE  },
-  { "editable",                                     BOOL,   TRUE,   TRUE  },
-  { "enable-caret-browsing",                        BOOL,   FALSE,  TRUE  },
-  { "enable-default-context-menu",                  BOOL,   FALSE,  TRUE  },
-  { "enable-developer-extras",                      BOOL,   FALSE,  TRUE  },
-  { "enable-dom-paste",                             BOOL,   FALSE,  TRUE  },
-  { "enable-file-access-from-file-uris",            BOOL,   FALSE,  TRUE  },
-  { "enable-html5-database",                        BOOL,   FALSE,  TRUE  },
-  { "enable-html5-local-storage",                   BOOL,   FALSE,  TRUE  },
-  { "enable-java-applet",                           BOOL,   FALSE,  TRUE  },
-  { "enable-offline-web-application-cache",         BOOL,   FALSE,  TRUE  },
-  { "enable-page-cache",                            BOOL,   FALSE,  TRUE  },
-  { "enable-plugins",                               BOOL,   FALSE,  TRUE  },
-  { "enable-private-browsing",                      BOOL,   FALSE,  TRUE  },
-  { "enable-scripts",                               BOOL,   FALSE,  TRUE  },
-  { "enable-site-specific-quirks",                  BOOL,   FALSE,  TRUE  },
-  { "enable-spatial-navigation",                    BOOL,   FALSE,  TRUE  },
-  { "enable-spell-checking",                        BOOL,   FALSE,  TRUE  },
-  { "enable-universal-access-from-file-uris",       BOOL,   FALSE,  TRUE  },
-  { "enable-xss-auditor",                           BOOL,   FALSE,  TRUE  },
-  { "encoding",                                     CHAR,   TRUE,   FALSE },
-  { "enforce-96-dpi",                               BOOL,   FALSE,  TRUE  },
-  { "fantasy-font-family",                          CHAR,   FALSE,  TRUE  },
-  { "full-content-zoom",                            BOOL,   TRUE,   TRUE  },
-  { "icon-uri",                                     CHAR,   TRUE,   FALSE },
-  { "javascript-can-access-clipboard",              BOOL,   FALSE,  TRUE  },
-  { "javascript-can-open-windows-automatically",    BOOL,   FALSE,  TRUE  },
-  { "minimum-font-size",                            INT,    FALSE,  TRUE  },
-  { "minimum-logical-font-size",                    INT,    FALSE,  TRUE  },
-  { "monospace-font-family",                        CHAR,   FALSE,  TRUE  },
-  { "print-backgrounds",                            BOOL,   FALSE,  TRUE  },
-  { "progress",                                     DOUBLE, TRUE,   FALSE },
-  { "resizable-text-areas",                         BOOL,   FALSE,  TRUE  },
-  { "sans-serif-font-family",                       CHAR,   FALSE,  TRUE  },
-  { "serif-font-family",                            CHAR,   FALSE,  TRUE  },
-  { "spell-checking-languages",                     CHAR,   FALSE,  TRUE  },
-  { "tab-key-cycles-through-elements",              BOOL,   FALSE,  TRUE  },
-  { "title",                                        CHAR,   TRUE,   FALSE },
-  { "transparent",                                  BOOL,   TRUE,   TRUE  },
-  { "user-agent",                                   CHAR,   FALSE,  TRUE  },
-  { "user-stylesheet-uri",                          CHAR,   FALSE,  TRUE  },
-  { "zoom-level",                                   FLOAT,  TRUE,   TRUE  },
-  { "zoom-step",                                    FLOAT,  FALSE,  TRUE  },
+  { "accept-language",                              CHAR,   SOUPSESSION, TRUE  },
+  { "accept-language-auto",                         BOOL,   SOUPSESSION, TRUE  },
+  { "auto-load-images",                             BOOL,   SETTINGS,    TRUE  },
+  { "auto-resize-window",                           BOOL,   SETTINGS,    TRUE  },
+  { "auto-shrink-images",                           BOOL,   SETTINGS,    TRUE  },
+  { "cursive-font-family",                          CHAR,   SETTINGS,    TRUE  },
+  { "custom-encoding",                              CHAR,   WEBKITVIEW,  TRUE  },
+  { "default-encoding",                             CHAR,   SETTINGS,    TRUE  },
+  { "default-font-family",                          CHAR,   SETTINGS,    TRUE  },
+  { "default-font-size",                            INT,    SETTINGS,    TRUE  },
+  { "default-monospace-font-size",                  INT,    SETTINGS,    TRUE  },
+  { "editable",                                     BOOL,   WEBKITVIEW,  TRUE  },
+  { "enable-caret-browsing",                        BOOL,   SETTINGS,    TRUE  },
+  { "enable-default-context-menu",                  BOOL,   SETTINGS,    TRUE  },
+  { "enable-developer-extras",                      BOOL,   SETTINGS,    TRUE  },
+  { "enable-dom-paste",                             BOOL,   SETTINGS,    TRUE  },
+  { "enable-file-access-from-file-uris",            BOOL,   SETTINGS,    TRUE  },
+  { "enable-html5-database",                        BOOL,   SETTINGS,    TRUE  },
+  { "enable-html5-local-storage",                   BOOL,   SETTINGS,    TRUE  },
+  { "enable-java-applet",                           BOOL,   SETTINGS,    TRUE  },
+  { "enable-offline-web-application-cache",         BOOL,   SETTINGS,    TRUE  },
+  { "enable-page-cache",                            BOOL,   SETTINGS,    TRUE  },
+  { "enable-plugins",                               BOOL,   SETTINGS,    TRUE  },
+  { "enable-private-browsing",                      BOOL,   SETTINGS,    TRUE  },
+  { "enable-scripts",                               BOOL,   SETTINGS,    TRUE  },
+  { "enable-site-specific-quirks",                  BOOL,   SETTINGS,    TRUE  },
+  { "enable-spatial-navigation",                    BOOL,   SETTINGS,    TRUE  },
+  { "enable-spell-checking",                        BOOL,   SETTINGS,    TRUE  },
+  { "enable-universal-access-from-file-uris",       BOOL,   SETTINGS,    TRUE  },
+  { "enable-xss-auditor",                           BOOL,   SETTINGS,    TRUE  },
+  { "encoding",                                     CHAR,   WEBKITVIEW,  FALSE },
+  { "enforce-96-dpi",                               BOOL,   SETTINGS,    TRUE  },
+  { "fantasy-font-family",                          CHAR,   SETTINGS,    TRUE  },
+  { "full-content-zoom",                            BOOL,   WEBKITVIEW,  TRUE  },
+  { "idle-timeout",                                 INT,    SOUPSESSION, TRUE  },
+  { "icon-uri",                                     CHAR,   WEBKITVIEW,  FALSE },
+  { "javascript-can-access-clipboard",              BOOL,   SETTINGS,    TRUE  },
+  { "javascript-can-open-windows-automatically",    BOOL,   SETTINGS,    TRUE  },
+  { "max-conns",                                    INT,    SOUPSESSION, TRUE  },
+  { "max-conns-per-host",                           INT,    SOUPSESSION, TRUE  },
+  { "minimum-font-size",                            INT,    SETTINGS,    TRUE  },
+  { "minimum-logical-font-size",                    INT,    SETTINGS,    TRUE  },
+  { "monospace-font-family",                        CHAR,   SETTINGS,    TRUE  },
+  { "print-backgrounds",                            BOOL,   SETTINGS,    TRUE  },
+  { "progress",                                     DOUBLE, WEBKITVIEW,  FALSE },
+  { "proxy-uri",                                    URI,    SOUPSESSION, TRUE  },
+  { "resizable-text-areas",                         BOOL,   SETTINGS,    TRUE  },
+  { "sans-serif-font-family",                       CHAR,   SETTINGS,    TRUE  },
+  { "serif-font-family",                            CHAR,   SETTINGS,    TRUE  },
+  { "spell-checking-languages",                     CHAR,   SETTINGS,    TRUE  },
+  { "ssl-ca-file",                                  CHAR,   SOUPSESSION, TRUE  },
+  { "ssl-strict",                                   BOOL,   SOUPSESSION, TRUE  },
+  { "tab-key-cycles-through-elements",              BOOL,   SETTINGS,    TRUE  },
+  { "timeout",                                      INT,    SOUPSESSION, TRUE  },
+  { "title",                                        CHAR,   WEBKITVIEW,  FALSE },
+  { "transparent",                                  BOOL,   WEBKITVIEW,  TRUE  },
+  { "use-ntlm",                                     BOOL,   SOUPSESSION, TRUE  },
+  { "user-agent",                                   CHAR,   SETTINGS,    TRUE  },
+  { "user-stylesheet-uri",                          CHAR,   SETTINGS,    TRUE  },
+  { "zoom-level",                                   FLOAT,  WEBKITVIEW,  TRUE  },
+  { "zoom-step",                                    FLOAT,  SETTINGS,    TRUE  },
   { NULL,                                           0,      0,      0     },
 };
+
+static const gchar*
+webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
+    WebKitWebFrame *frame;
+    JSGlobalContextRef context;
+    JSObjectRef globalobject;
+    JSStringRef js_file;
+    JSStringRef js_script;
+    JSValueRef js_result;
+    JSValueRef js_exc = NULL;
+    JSStringRef js_result_string;
+    GString *result = g_string_new(NULL);
+    size_t js_result_size;
+
+    frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+    context = webkit_web_frame_get_global_context(frame);
+    globalobject = JSContextGetGlobalObject(context);
+
+    /* evaluate the script and get return value*/
+    js_script = JSStringCreateWithUTF8CString(script);
+    js_file = JSStringCreateWithUTF8CString(file);
+    js_result = JSEvaluateScript(context, js_script, globalobject, js_file, 0, &js_exc);
+    if (js_result && !JSValueIsUndefined(context, js_result)) {
+        js_result_string = JSValueToStringCopy(context, js_result, NULL);
+        js_result_size = JSStringGetMaximumUTF8CStringSize(js_result_string);
+
+        if (js_result_size) {
+            char js_result_utf8[js_result_size];
+            JSStringGetUTF8CString(js_result_string, js_result_utf8, js_result_size);
+            g_string_assign(result, js_result_utf8);
+        }
+
+        JSStringRelease(js_result_string);
+    }
+    else if (js_exc) {
+        size_t size;
+        JSStringRef prop, val;
+        JSObjectRef exc = JSValueToObject(context, js_exc, NULL);
+
+        printf("Exception occured while executing script:\n");
+
+        /* Print file */
+        prop = JSStringCreateWithUTF8CString("sourceURL");
+        val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
+        size = JSStringGetMaximumUTF8CStringSize(val);
+        if(size) {
+            char cstr[size];
+            JSStringGetUTF8CString(val, cstr, size);
+            printf("At %s", cstr);
+        }
+        JSStringRelease(prop);
+        JSStringRelease(val);
+
+        /* Print line */
+        prop = JSStringCreateWithUTF8CString("line");
+        val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
+        size = JSStringGetMaximumUTF8CStringSize(val);
+        if(size) {
+            char cstr[size];
+            JSStringGetUTF8CString(val, cstr, size);
+            printf(":%s: ", cstr);
+        }
+        JSStringRelease(prop);
+        JSStringRelease(val);
+
+        /* Print message */
+        val = JSValueToStringCopy(context, exc, NULL);
+        size = JSStringGetMaximumUTF8CStringSize(val);
+        if(size) {
+            char cstr[size];
+            JSStringGetUTF8CString(val, cstr, size);
+            printf("%s\n", cstr);
+        }
+        JSStringRelease(val);
+    }
+
+    /* cleanup */
+    JSStringRelease(js_script);
+    JSStringRelease(js_file);
+
+    return g_string_free(result, FALSE);
+}
+
+static gint
+luaH_webview_eval_js(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    const gchar *script = luaL_checkstring(L, 2);
+    const gchar *filename = luaL_checkstring(L, 3);
+
+    /* evaluate javascript script and push return result onto lua stack */
+    const gchar *result = webview_eval_js(view, script, filename);
+    lua_pushstring(L, result);
+    return 1;
+}
 
 static void
 progress_cb(WebKitWebView *v, gint p, widget_t *w)
@@ -172,6 +279,51 @@ load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
     lua_pop(L, 1);
 }
 
+static gboolean
+mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
+        widget_t *w)
+{
+    (void) v;
+    (void) f;
+    lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gint ret;
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, mime);
+    ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
+
+    if (ret && !luaH_checkboolean(L, -1))
+        /* User responded with false, ignore request */
+        webkit_web_policy_decision_ignore(pd);
+    else if (!webkit_web_view_can_show_mime_type(v, mime))
+        webkit_web_policy_decision_download(pd);
+    else
+        webkit_web_policy_decision_use(pd);
+
+    lua_pop(L, ret + 1);
+    return TRUE;
+}
+
+static gboolean
+download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
+{
+    (void) v;
+    const gchar *uri = webkit_download_get_uri((WebKitDownload *) dl);
+    const gchar *filename = webkit_download_get_suggested_filename((WebKitDownload *) dl);
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, filename);
+    luaH_object_emit_signal(L, -3, "download-request", 2, 0);
+    lua_pop(L, 1);
+
+    return FALSE;
+}
+
 static void
 link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w)
 {
@@ -226,8 +378,6 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     const gchar *uri = webkit_network_request_get_uri(r);
     gint ret;
 
-    debug("Navigation requested: %s", uri);
-
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
@@ -238,7 +388,7 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     else
         webkit_web_policy_decision_use(p);
 
-    lua_pop(L, ret);
+    lua_pop(L, ret + 1);
     return TRUE;
 }
 
@@ -344,6 +494,22 @@ luaH_webview_clear_search(lua_State *L)
     return 0;
 }
 
+inline static GObject*
+get_settings_object(GtkWidget *view, property_value_scope scope)
+{
+    switch (scope) {
+      case SETTINGS:
+        return G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
+      case WEBKITVIEW:
+        return G_OBJECT(view);
+      case SOUPSESSION:
+        return G_OBJECT(Soup.session);
+      default:
+        break;
+    }
+    return NULL;
+}
+
 static gint
 luaH_webview_get_prop(lua_State *L)
 {
@@ -352,15 +518,13 @@ luaH_webview_get_prop(lua_State *L)
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     GObject *ws;
     property_tmp_values tmp;
+    SoupURI *u;
 
     for (guint i = 0; i < LENGTH(properties); i++) {
         if (g_strcmp0(properties[i].name, prop))
             continue;
 
-        if (properties[i].webkitview)
-            ws = G_OBJECT(view);
-        else
-            ws = G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
+        ws = get_settings_object(view, properties[i].scope);
 
         switch(properties[i].type) {
           case BOOL:
@@ -389,6 +553,14 @@ luaH_webview_get_prop(lua_State *L)
             lua_pushnumber(L, tmp.d);
             return 1;
 
+          case URI:
+            g_object_get(ws, prop, &u, NULL);
+            tmp.c = soup_uri_to_string(u, 0);
+            lua_pushstring(L, tmp.c);
+            soup_uri_free(u);
+            g_free(tmp.c);
+            return 1;
+
           default:
             warn("unknown property type for: %s", properties[i].name);
             break;
@@ -407,6 +579,7 @@ luaH_webview_set_prop(lua_State *L)
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     GObject *ws;
     property_tmp_values tmp;
+    SoupURI *u;
 
     for (guint i = 0; i < LENGTH(properties); i++) {
         if (g_strcmp0(properties[i].name, prop))
@@ -417,10 +590,7 @@ luaH_webview_set_prop(lua_State *L)
             return 0;
         }
 
-        if (properties[i].webkitview)
-            ws = G_OBJECT(view);
-        else
-            ws = G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
+        ws = get_settings_object(view, properties[i].scope);
 
         switch(properties[i].type) {
           case BOOL:
@@ -446,6 +616,16 @@ luaH_webview_set_prop(lua_State *L)
           case DOUBLE:
             tmp.d = (gdouble) luaL_checknumber(L, 3);
             g_object_set(ws, prop, tmp.d, NULL);
+            return 0;
+
+          case URI:
+            tmp.c = (gchar*) luaL_checkstring(L, 3);
+            u = soup_uri_new(tmp.c);
+            if (SOUP_URI_VALID_FOR_HTTP(u))
+              g_object_set(ws, prop, u, NULL);
+            else
+              luaL_error(L, "cannot parse uri: %s", tmp.c);
+            soup_uri_free(u);
             return 0;
 
           default:
@@ -523,6 +703,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_SET_SCROLL_HORIZ:
         lua_pushcfunction(L, luaH_webview_set_scroll_horiz);
+        return 1;
+
+      case L_TK_EVAL_JS:
+        lua_pushcfunction(L, luaH_webview_eval_js);
         return 1;
 
       case L_TK_SEARCH:
@@ -695,6 +879,8 @@ widget_webview(widget_t *w)
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
       "signal::title-changed",                        (GCallback)title_changed_cb,       w,
+      "signal::download-requested",                   (GCallback)download_request_cb,    w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       NULL);
 
     /* setup */
@@ -704,4 +890,4 @@ widget_webview(widget_t *w)
     return w;
 }
 
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

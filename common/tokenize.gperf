@@ -6,6 +6,7 @@ count
 current
 destroy
 entry
+eval_js
 eventbox
 fg
 focus
@@ -27,6 +28,7 @@ hovered_uri
 icon
 indexof
 insert
+install_path
 label
 loading
 notebook
@@ -35,6 +37,7 @@ pack_start
 remove
 search
 selectable
+selection
 set_alignment
 set_child
 set_padding
