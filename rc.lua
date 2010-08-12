@@ -20,6 +20,7 @@ HOMEPAGE    = "http://luakit.org/"
 SCROLL_STEP      = 20
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
+--HTTPPROXY = "http://example.com:3128"
 
 -- Setup download directory
 DOWNLOAD_DIR = (os.getenv("HOME") or ".") .. "/downloads"
@@ -151,6 +152,15 @@ commands = {
     bind.cmd({"close",   "c"},            function (w)    w:close_tab() end),
     bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
 }
+
+function set_http_options(w)
+    local proxy = HTTPPROXY or os.getenv("http_proxy")
+    if proxy then w:set('proxy-uri', proxy) end
+    w:set('user-agent', 'luakit')
+    -- Uncomment the following options if you want to enable SSL certs validation.
+    -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
+    -- w:set('ssl-strict', false)
+end
 
 -- Build and pack window widgets
 function build_window()
@@ -506,6 +516,7 @@ window_helpers = {
     new_tab = function(w, uri)
         local view = webview()
         w.tabs:append(view)
+        set_http_options(w)
         attach_webview_signals(w, view)
         if uri then view.uri = uri end
         view.show_scrollbars = false
