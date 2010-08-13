@@ -400,6 +400,14 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    view:add_signal("form-active", function ()
+        w:set_mode("insert")
+    end)
+
+    view:add_signal("root-active", function ()
+        w:set_mode()
+    end)
+
     view:add_signal("key-press", function ()
         -- Only allow key press events to hit the webview if the user is in
         -- "insert" mode.
