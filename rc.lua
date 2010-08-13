@@ -23,7 +23,7 @@ MAX_SRCH_HISTORY = 100
 --HTTPPROXY = "http://example.com:3128"
 
 -- Setup download directory
-DOWNLOAD_DIR = (os.getenv("HOME") or ".") .. "/downloads"
+DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
 
 -- Luakit theme
