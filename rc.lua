@@ -14,6 +14,9 @@ function webview()  return widget{type="webview"}  end
 function window()   return widget{type="window"}   end
 function entry()    return widget{type="entry"}    end
 
+-- Small util functions
+function debug(...) if luakit.verbose then print(string.format(...)) end end
+
 -- Variable definitions
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
@@ -25,8 +28,13 @@ MAX_SRCH_HISTORY = 100
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
--- Small util functions
-function debug(...) if luakit.verbose then print(string.format(...)) end end
+-- Plugins/scripts overrides, uncomment to disable plugins/scripts
+-- except for those specified
+
+-- plugins_sites = {}
+-- scripts_sites = {
+--  ["bugs.debian.org"] = true
+-- }
 
 -- Luakit theme
 theme = theme or {
@@ -456,6 +464,19 @@ function attach_webview_signals(w, view)
             if status == "provisional" then
                 w:set_mode()
             end
+        end
+    end)
+
+    view:add_signal("load-commit", function (v)
+	if plugins_sites then
+            local domain
+	    _, _, domain = string.find(v.uri, "%a+://([^/]*)/")
+	    view:set_prop("enable-plugins", plugins_sites[domain] == true)
+        end
+	if scripts_sites then
+            local domain
+	    _, _, domain = string.find(v.uri, "%a+://([^/]*)/")
+	    view:set_prop("enable-scripts", scripts_sites[domain] == true)
         end
     end)
 
