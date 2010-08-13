@@ -20,7 +20,6 @@
  */
 
 #include <gtk/gtk.h>
-#include <basedir_fs.h>
 #include <stdlib.h>
 #include "common/util.h"
 #include "common/lualib.h"
@@ -345,6 +344,35 @@ luaH_luakit_selection(lua_State *L)
     return 1;
 }
 
+static const struct special_dir_mapping_t {
+    const gchar *name;
+    GUserDirectory atom;
+} special_dirs[] = {
+  { "DESKTOP",      G_USER_DIRECTORY_DESKTOP,      },
+  { "DOCUMENTS",    G_USER_DIRECTORY_DOCUMENTS,    },
+  { "DOWNLOAD",     G_USER_DIRECTORY_DOWNLOAD,     },
+  { "MUSIC",        G_USER_DIRECTORY_MUSIC,        },
+  { "PICTURES",     G_USER_DIRECTORY_PICTURES,     },
+  { "PUBLIC_SHARE", G_USER_DIRECTORY_PUBLIC_SHARE, },
+  { "TEMPLATES",    G_USER_DIRECTORY_TEMPLATES,    },
+  { "VIDEOS",       G_USER_DIRECTORY_VIDEOS,       },
+  { NULL,           0,                             },
+};
+
+static gint
+luaH_luakit_get_special_dir(lua_State *L)
+{
+    const gchar *name = luaL_checkstring(L, 1);
+    for (guint i = 0; i < LENGTH(special_dirs); i++) {
+        if (g_strcmp0(special_dirs[i].name, name))
+            continue;
+        lua_pushstring(L, g_get_user_special_dir(special_dirs[i].atom));
+        return 1;
+    }
+    luaL_argerror(L, 1, "unknown special directory name");
+    return 0;
+}
+
 /* luakit global table.
  * \param L The Lua VM state.
  * \return The number of elements pushed on stack.
@@ -380,7 +408,27 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
       case L_TK_INSTALL_PATH:
-        lua_pushstring(L, LUAKIT_INSTALL_PATH);
+        lua_pushliteral(L, LUAKIT_INSTALL_PATH);
+        return 1;
+
+      case L_TK_CONFIG_DIR:
+        lua_pushstring(L, globalconf.config_dir);
+        return 1;
+
+      case L_TK_DATA_DIR:
+        lua_pushstring(L, globalconf.data_dir);
+        return 1;
+
+      case L_TK_CACHE_DIR:
+        lua_pushstring(L, globalconf.cache_dir);
+        return 1;
+
+      case L_TK_VERBOSE:
+        lua_pushboolean(L, globalconf.verbose);
+        return 1;
+
+      case L_TK_GET_SPECIAL_DIR:
+        lua_pushcfunction(L, luaH_luakit_get_special_dir);
         return 1;
 
       default:
@@ -491,7 +539,7 @@ luaH_dofunction_on_error(lua_State *L)
 }
 
 void
-luaH_init(xdgHandle *xdg)
+luaH_init(void)
 {
     lua_State *L;
 
@@ -539,42 +587,51 @@ luaH_init(xdgHandle *xdg)
         return;
     }
 
-    /* allows for testing luakit in the project directory
-     * (i.e. `./luakit -c rc.lua ...` */
-    lua_pushliteral(L, ";./lib/?.lua;");
-    lua_pushliteral(L, ";./lib/?/init.lua");
-    lua_concat(L, 2);
+    /* compile list of package search paths */
+    GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
 
-    /* add XDG_CONFIG_DIR as an include path */
-    const gchar * const *xdgconfigdirs = xdgSearchableConfigDirectories(xdg);
-    for(; *xdgconfigdirs; xdgconfigdirs++)
-    {
-        size_t len = l_strlen(*xdgconfigdirs);
+#if DEVELOPMENT_PATHS
+    /* allows for testing luakit in the project directory */
+    g_ptr_array_add(paths, g_strdup("./lib"));
+#endif
+
+    /* add users config dir (see: XDG_CONFIG_DIR) */
+    g_ptr_array_add(paths, g_build_filename(globalconf.config_dir, "lib", NULL));
+
+    /* add system config dirs (see: XDG_CONFIG_DIRS) */
+    const gchar* const *config_dirs = g_get_system_config_dirs();
+    for (; *config_dirs; config_dirs++)
+        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "lib", NULL));
+
+    /* add luakit install path */
+    g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
+
+    for (gpointer *path = paths->pdata; *path; path++) {
         lua_pushliteral(L, ";");
-        lua_pushlstring(L, *xdgconfigdirs, len);
-        lua_pushliteral(L, "/luakit/?.lua");
+        lua_pushstring(L, *path);
+        lua_pushliteral(L, "/?.lua");
         lua_concat(L, 3);
 
         lua_pushliteral(L, ";");
-        lua_pushlstring(L, *xdgconfigdirs, len);
-        lua_pushliteral(L, "/luakit/?/init.lua");
+        lua_pushstring(L, *path);
+        lua_pushliteral(L, "/?/init.lua");
         lua_concat(L, 3);
 
-        lua_concat(L, 3); /* concatenate with package.path */
+        /* concat with package.path */
+        lua_concat(L, 3);
     }
 
-    /* add Lua lib path (/usr/share/luakit/lib by default) */
-    lua_pushliteral(L, ";" LUAKIT_INSTALL_PATH "/lib/?.lua");
-    lua_pushliteral(L, ";" LUAKIT_INSTALL_PATH "/lib/?/init.lua");
-    lua_concat(L, 3); /* concatenate with package.path */
-    lua_setfield(L, 1, "path"); /* package.path = "concatenated string" */
+    g_ptr_array_free(paths, TRUE);
+
+    /* package.path = "concatenated string" */
+    lua_setfield(L, 1, "path");
 }
 
 gboolean
 luaH_loadrc(const gchar *confpath, gboolean run)
 {
+    debug("Loading rc: %s", confpath);
     lua_State *L = globalconf.L;
-
     if(!luaL_loadfile(L, confpath)) {
         if(run) {
             if(lua_pcall(L, 0, LUA_MULTRET, 0)) {
@@ -589,43 +646,50 @@ luaH_loadrc(const gchar *confpath, gboolean run)
     return FALSE;
 }
 
-/* Load a configuration file.
- *
- * param xdg An xdg handle to use to get XDG basedir.
- * param confpatharg The configuration file to load.
- * param run Run the configuration file.
- */
+/* Load a configuration file. */
 gboolean
-luaH_parserc(xdgHandle* xdg, const gchar *confpatharg, gboolean run)
+luaH_parserc(const gchar *confpath, gboolean run)
 {
-    gchar *confpath = NULL;
+    const gchar* const *config_dirs = NULL;
     gboolean ret = FALSE;
 
     /* try to load, return if it's ok */
-    if(confpatharg) {
-        debug("Attempting to load rc file: %s", confpatharg);
-        if(luaH_loadrc(confpatharg, run))
+    if(confpath) {
+        if(luaH_loadrc(confpath, run))
             ret = TRUE;
         goto bailout;
     }
-    confpath = xdgConfigFind("luakit/rc.lua", xdg);
-    gchar *tmp = confpath;
 
-    /* confpath is "string1\0string2\0string3\0\0" */
-    while(*tmp) {
-        debug("Loading rc file: %s", tmp);
-        if(luaH_loadrc(tmp, run)) {
-            globalconf.confpath = g_strdup(tmp);
-            ret = TRUE;
-            goto bailout;
-        } else if(!run)
-            goto bailout;
-        tmp += l_strlen(tmp) + 1;
+    /* compile list of config search paths */
+    GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
+
+#if DEVELOPMENT_PATHS
+    /* allows for testing luakit in the project directory */
+    g_ptr_array_add(paths, g_strdup("./rc.lua"));
+#endif
+
+    /* search users config dir (see: XDG_CONFIG_HOME) */
+    g_ptr_array_add(paths, g_build_filename(globalconf.config_dir, "rc.lua", NULL));
+
+    /* search system config dirs (see: XDG_CONFIG_DIRS) */
+    config_dirs = g_get_system_config_dirs();
+    for(; *config_dirs; config_dirs++)
+        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "rc.lua", NULL));
+
+    for (gpointer *path = paths->pdata; *path; path++) {
+        if (file_exists(*path)) {
+            if(luaH_loadrc(*path, run)) {
+                globalconf.confpath = g_strdup(*path);
+                ret = TRUE;
+                goto bailout;
+            } else if(!run)
+                goto bailout;
+        }
     }
 
 bailout:
 
-    if (confpath) g_free(confpath);
+    if (paths) g_ptr_array_free(paths, TRUE);
     return ret;
 }
 

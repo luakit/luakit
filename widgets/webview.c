@@ -850,7 +850,7 @@ widget_webview(widget_t *w)
     /* init soup session & cookies handling */
     if (!Soup.session) {
         Soup.session = webkit_get_default_session();
-        gchar *cookie_file = g_build_filename(globalconf.base_data_directory, "cookies.txt", NULL);
+        gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
         Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
         soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
         g_free(cookie_file);
