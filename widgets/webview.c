@@ -118,18 +118,6 @@ static const struct property_t {
   { NULL,                                        { 0,      0,           0     } },
 };
 
-static const struct {
-    WebKitLoadStatus atom;
-    const gchar *name;
-} load_status_names[] = {
-  { WEBKIT_LOAD_PROVISIONAL,                     "provisional"  },
-  { WEBKIT_LOAD_COMMITTED,                       "committed",   },
-  { WEBKIT_LOAD_FINISHED,                        "finished"     },
-  { WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT, "first-visual" },
-  { WEBKIT_LOAD_FAILED,                          "failed"       },
-  { 0,                                           NULL,          },
-};
-
 static void
 webview_init_properties() {
     properties = g_hash_table_new(g_str_hash, g_str_equal);
@@ -283,20 +271,30 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *s, widget_t *w)
     WebKitLoadStatus status;
     g_object_get(G_OBJECT(v), "load-status", &status, NULL);
 
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-
-    /* get status literal */
-    gboolean found = FALSE;
-    for (guint i = 0; i < LENGTH(load_status_names); i++) {
-        if (load_status_names[i].atom != status) continue;
-        lua_pushstring(L, load_status_names[i].name);
-        found = TRUE;
+    gchar *name = NULL;
+    switch(status) {
+      case WEBKIT_LOAD_PROVISIONAL:
+        name = "provisional";
+        break;
+      case WEBKIT_LOAD_COMMITTED:
+        name = "committed";
+        break;
+      case WEBKIT_LOAD_FINISHED:
+        name = "finished";
+        break;
+      case WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT:
+        name = "first-visual";
+        break;
+      case WEBKIT_LOAD_FAILED:
+        name = "failed";
+        break;
+      default:
         break;
     }
-    if (!found)
-        lua_pushstring(L, "unknown");
 
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, name);
     luaH_object_emit_signal(L, -2, "load-status", 1, 0);
     lua_pop(L, 1);
 }
