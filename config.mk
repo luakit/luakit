@@ -9,7 +9,7 @@ MANPREFIX  ?= ${DESTDIR}${PREFIX}/share/man
 DOCDIR     ?= ${DESTDIR}${PREFIX}/share/luakit/docs
 
 # Generate includes and libs
-PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 lua libxdg-basedir
+PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 lua
 INCS := $(shell pkg-config --cflags ${PKGS}) -I./
 LIBS := $(shell pkg-config --libs ${PKGS})
 
