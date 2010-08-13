@@ -469,7 +469,7 @@ function attach_webview_signals(w, view)
     -- return TRUE in order to prevent the signal to be handled any further
     view:add_signal("button-release", function (v, button, state)
         if w:is_current(v) then
-            print (string.format("Button release - button %d state %d", button, state))
+            print (string.format("Button release - button: %d state: %s", button, table.concat(state, "|")))
             if button == 8 then
                 w:back(1)
                 return true

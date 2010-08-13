@@ -62,7 +62,7 @@ button_release_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
 
     luaH_object_push(L, w->ref);
     lua_pushinteger(L, ev->button);
-    lua_pushinteger(L, ev->state);
+    luaH_modifier_table_push(L, ev->state);
     ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
 
     /* User responded with TRUE, so do not propagate event any further */
