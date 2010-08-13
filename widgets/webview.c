@@ -778,8 +778,10 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
     {
       case L_TK_URI:
         uri = (gchar*) luaL_checklstring(L, 3, &len);
-        uri = g_strrstr(uri, "://") ? g_strdup(uri) :
-            g_strdup_printf("http://%s", uri);
+        if (g_strrstr(uri, "://") || !g_strcmp0(uri, "about:blank"))
+            uri = g_strdup(uri);
+        else
+            uri = g_strdup_printf("http://%s", uri);
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), uri);
         g_object_set_data_full(G_OBJECT(view), "uri", uri, g_free);
         break;
