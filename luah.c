@@ -652,6 +652,7 @@ luaH_parserc(const gchar *confpath, gboolean run)
 {
     const gchar* const *config_dirs = NULL;
     gboolean ret = FALSE;
+    GPtrArray *paths = NULL;
 
     /* try to load, return if it's ok */
     if(confpath) {
@@ -661,7 +662,7 @@ luaH_parserc(const gchar *confpath, gboolean run)
     }
 
     /* compile list of config search paths */
-    GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
+    paths = g_ptr_array_new_with_free_func(g_free);
 
 #if DEVELOPMENT_PATHS
     /* allows for testing luakit in the project directory */
