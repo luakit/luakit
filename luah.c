@@ -344,6 +344,35 @@ luaH_luakit_selection(lua_State *L)
     return 1;
 }
 
+static const struct special_dir_mapping_t {
+    const gchar *name;
+    GUserDirectory atom;
+} special_dirs[] = {
+  { "DESKTOP",      G_USER_DIRECTORY_DESKTOP,      },
+  { "DOCUMENTS",    G_USER_DIRECTORY_DOCUMENTS,    },
+  { "DOWNLOAD",     G_USER_DIRECTORY_DOWNLOAD,     },
+  { "MUSIC",        G_USER_DIRECTORY_MUSIC,        },
+  { "PICTURES",     G_USER_DIRECTORY_PICTURES,     },
+  { "PUBLIC_SHARE", G_USER_DIRECTORY_PUBLIC_SHARE, },
+  { "TEMPLATES",    G_USER_DIRECTORY_TEMPLATES,    },
+  { "VIDEOS",       G_USER_DIRECTORY_VIDEOS,       },
+  { NULL,           0,                             },
+};
+
+static gint
+luaH_luakit_get_special_dir(lua_State *L)
+{
+    const gchar *name = luaL_checkstring(L, 1);
+    for (guint i = 0; i < LENGTH(special_dirs); i++) {
+        if (g_strcmp0(special_dirs[i].name, name))
+            continue;
+        lua_pushstring(L, g_get_user_special_dir(special_dirs[i].atom));
+        return 1;
+    }
+    luaL_argerror(L, 1, "unknown special directory name");
+    return 0;
+}
+
 /* luakit global table.
  * \param L The Lua VM state.
  * \return The number of elements pushed on stack.
@@ -396,6 +425,10 @@ luaH_luakit_index(lua_State *L)
 
       case L_TK_VERBOSE:
         lua_pushboolean(L, globalconf.verbose);
+        return 1;
+
+      case L_TK_GET_SPECIAL_DIR:
+        lua_pushcfunction(L, luaH_luakit_get_special_dir);
         return 1;
 
       default:
