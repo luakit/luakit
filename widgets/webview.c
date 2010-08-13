@@ -132,13 +132,9 @@ static const struct {
 
 static void
 webview_init_properties() {
-    const struct property_t *prop = properties_table;
     properties = g_hash_table_new(g_str_hash, g_str_equal);
-    while (prop->name) {
-        g_hash_table_insert(properties, (gpointer) prop->name,
-                (gpointer) &prop->v);
-        prop++;
-    }
+    for (const struct property_t *p = properties_table; p->name; p++)
+        g_hash_table_insert(properties, (gpointer) p->name, (gpointer) &p->v);
 }
 
 static const gchar*
