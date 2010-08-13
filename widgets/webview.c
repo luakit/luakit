@@ -42,74 +42,80 @@ typedef union {
     gint      i;
 } property_tmp_values;
 
-static const struct {
-    const gchar *name;
+typedef struct {
     property_value_type type;
     property_value_scope scope;
     gboolean writable;
-} properties[] = {
-  { "accept-language",                              CHAR,   SOUPSESSION, TRUE  },
-  { "accept-language-auto",                         BOOL,   SOUPSESSION, TRUE  },
-  { "auto-load-images",                             BOOL,   SETTINGS,    TRUE  },
-  { "auto-resize-window",                           BOOL,   SETTINGS,    TRUE  },
-  { "auto-shrink-images",                           BOOL,   SETTINGS,    TRUE  },
-  { "cursive-font-family",                          CHAR,   SETTINGS,    TRUE  },
-  { "custom-encoding",                              CHAR,   WEBKITVIEW,  TRUE  },
-  { "default-encoding",                             CHAR,   SETTINGS,    TRUE  },
-  { "default-font-family",                          CHAR,   SETTINGS,    TRUE  },
-  { "default-font-size",                            INT,    SETTINGS,    TRUE  },
-  { "default-monospace-font-size",                  INT,    SETTINGS,    TRUE  },
-  { "editable",                                     BOOL,   WEBKITVIEW,  TRUE  },
-  { "enable-caret-browsing",                        BOOL,   SETTINGS,    TRUE  },
-  { "enable-default-context-menu",                  BOOL,   SETTINGS,    TRUE  },
-  { "enable-developer-extras",                      BOOL,   SETTINGS,    TRUE  },
-  { "enable-dom-paste",                             BOOL,   SETTINGS,    TRUE  },
-  { "enable-file-access-from-file-uris",            BOOL,   SETTINGS,    TRUE  },
-  { "enable-html5-database",                        BOOL,   SETTINGS,    TRUE  },
-  { "enable-html5-local-storage",                   BOOL,   SETTINGS,    TRUE  },
-  { "enable-java-applet",                           BOOL,   SETTINGS,    TRUE  },
-  { "enable-offline-web-application-cache",         BOOL,   SETTINGS,    TRUE  },
-  { "enable-page-cache",                            BOOL,   SETTINGS,    TRUE  },
-  { "enable-plugins",                               BOOL,   SETTINGS,    TRUE  },
-  { "enable-private-browsing",                      BOOL,   SETTINGS,    TRUE  },
-  { "enable-scripts",                               BOOL,   SETTINGS,    TRUE  },
-  { "enable-site-specific-quirks",                  BOOL,   SETTINGS,    TRUE  },
-  { "enable-spatial-navigation",                    BOOL,   SETTINGS,    TRUE  },
-  { "enable-spell-checking",                        BOOL,   SETTINGS,    TRUE  },
-  { "enable-universal-access-from-file-uris",       BOOL,   SETTINGS,    TRUE  },
-  { "enable-xss-auditor",                           BOOL,   SETTINGS,    TRUE  },
-  { "encoding",                                     CHAR,   WEBKITVIEW,  FALSE },
-  { "enforce-96-dpi",                               BOOL,   SETTINGS,    TRUE  },
-  { "fantasy-font-family",                          CHAR,   SETTINGS,    TRUE  },
-  { "full-content-zoom",                            BOOL,   WEBKITVIEW,  TRUE  },
-  { "idle-timeout",                                 INT,    SOUPSESSION, TRUE  },
-  { "icon-uri",                                     CHAR,   WEBKITVIEW,  FALSE },
-  { "javascript-can-access-clipboard",              BOOL,   SETTINGS,    TRUE  },
-  { "javascript-can-open-windows-automatically",    BOOL,   SETTINGS,    TRUE  },
-  { "max-conns",                                    INT,    SOUPSESSION, TRUE  },
-  { "max-conns-per-host",                           INT,    SOUPSESSION, TRUE  },
-  { "minimum-font-size",                            INT,    SETTINGS,    TRUE  },
-  { "minimum-logical-font-size",                    INT,    SETTINGS,    TRUE  },
-  { "monospace-font-family",                        CHAR,   SETTINGS,    TRUE  },
-  { "print-backgrounds",                            BOOL,   SETTINGS,    TRUE  },
-  { "progress",                                     DOUBLE, WEBKITVIEW,  FALSE },
-  { "proxy-uri",                                    URI,    SOUPSESSION, TRUE  },
-  { "resizable-text-areas",                         BOOL,   SETTINGS,    TRUE  },
-  { "sans-serif-font-family",                       CHAR,   SETTINGS,    TRUE  },
-  { "serif-font-family",                            CHAR,   SETTINGS,    TRUE  },
-  { "spell-checking-languages",                     CHAR,   SETTINGS,    TRUE  },
-  { "ssl-ca-file",                                  CHAR,   SOUPSESSION, TRUE  },
-  { "ssl-strict",                                   BOOL,   SOUPSESSION, TRUE  },
-  { "tab-key-cycles-through-elements",              BOOL,   SETTINGS,    TRUE  },
-  { "timeout",                                      INT,    SOUPSESSION, TRUE  },
-  { "title",                                        CHAR,   WEBKITVIEW,  FALSE },
-  { "transparent",                                  BOOL,   WEBKITVIEW,  TRUE  },
-  { "use-ntlm",                                     BOOL,   SOUPSESSION, TRUE  },
-  { "user-agent",                                   CHAR,   SETTINGS,    TRUE  },
-  { "user-stylesheet-uri",                          CHAR,   SETTINGS,    TRUE  },
-  { "zoom-level",                                   FLOAT,  WEBKITVIEW,  TRUE  },
-  { "zoom-step",                                    FLOAT,  SETTINGS,    TRUE  },
-  { NULL,                                           0,      0,      0     },
+} property_value_t;
+
+GHashTable *properties = NULL;
+
+static const struct property_t {
+    const gchar *name;
+    property_value_t v;
+} properties_table[] = {
+  { "accept-language",                           { CHAR,   SOUPSESSION, TRUE  } },
+  { "accept-language-auto",                      { BOOL,   SOUPSESSION, TRUE  } },
+  { "auto-load-images",                          { BOOL,   SETTINGS,    TRUE  } },
+  { "auto-resize-window",                        { BOOL,   SETTINGS,    TRUE  } },
+  { "auto-shrink-images",                        { BOOL,   SETTINGS,    TRUE  } },
+  { "cursive-font-family",                       { CHAR,   SETTINGS,    TRUE  } },
+  { "custom-encoding",                           { CHAR,   WEBKITVIEW,  TRUE  } },
+  { "default-encoding",                          { CHAR,   SETTINGS,    TRUE  } },
+  { "default-font-family",                       { CHAR,   SETTINGS,    TRUE  } },
+  { "default-font-size",                         { INT,    SETTINGS,    TRUE  } },
+  { "default-monospace-font-size",               { INT,    SETTINGS,    TRUE  } },
+  { "editable",                                  { BOOL,   WEBKITVIEW,  TRUE  } },
+  { "enable-caret-browsing",                     { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-default-context-menu",               { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-developer-extras",                   { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-dom-paste",                          { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-file-access-from-file-uris",         { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-html5-database",                     { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-html5-local-storage",                { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-java-applet",                        { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-offline-web-application-cache",      { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-page-cache",                         { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-plugins",                            { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-private-browsing",                   { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-scripts",                            { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-site-specific-quirks",               { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-spatial-navigation",                 { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-spell-checking",                     { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-universal-access-from-file-uris",    { BOOL,   SETTINGS,    TRUE  } },
+  { "enable-xss-auditor",                        { BOOL,   SETTINGS,    TRUE  } },
+  { "encoding",                                  { CHAR,   WEBKITVIEW,  FALSE } },
+  { "enforce-96-dpi",                            { BOOL,   SETTINGS,    TRUE  } },
+  { "fantasy-font-family",                       { CHAR,   SETTINGS,    TRUE  } },
+  { "full-content-zoom",                         { BOOL,   WEBKITVIEW,  TRUE  } },
+  { "idle-timeout",                              { INT,    SOUPSESSION, TRUE  } },
+  { "icon-uri",                                  { CHAR,   WEBKITVIEW,  FALSE } },
+  { "javascript-can-access-clipboard",           { BOOL,   SETTINGS,    TRUE  } },
+  { "javascript-can-open-windows-automatically", { BOOL,   SETTINGS,    TRUE  } },
+  { "max-conns",                                 { INT,    SOUPSESSION, TRUE  } },
+  { "max-conns-per-host",                        { INT,    SOUPSESSION, TRUE  } },
+  { "minimum-font-size",                         { INT,    SETTINGS,    TRUE  } },
+  { "minimum-logical-font-size",                 { INT,    SETTINGS,    TRUE  } },
+  { "monospace-font-family",                     { CHAR,   SETTINGS,    TRUE  } },
+  { "print-backgrounds",                         { BOOL,   SETTINGS,    TRUE  } },
+  { "progress",                                  { DOUBLE, WEBKITVIEW,  FALSE } },
+  { "proxy-uri",                                 { URI,    SOUPSESSION, TRUE  } },
+  { "resizable-text-areas",                      { BOOL,   SETTINGS,    TRUE  } },
+  { "sans-serif-font-family",                    { CHAR,   SETTINGS,    TRUE  } },
+  { "serif-font-family",                         { CHAR,   SETTINGS,    TRUE  } },
+  { "spell-checking-languages",                  { CHAR,   SETTINGS,    TRUE  } },
+  { "ssl-ca-file",                               { CHAR,   SOUPSESSION, TRUE  } },
+  { "ssl-strict",                                { BOOL,   SOUPSESSION, TRUE  } },
+  { "tab-key-cycles-through-elements",           { BOOL,   SETTINGS,    TRUE  } },
+  { "timeout",                                   { INT,    SOUPSESSION, TRUE  } },
+  { "title",                                     { CHAR,   WEBKITVIEW,  FALSE } },
+  { "transparent",                               { BOOL,   WEBKITVIEW,  TRUE  } },
+  { "use-ntlm",                                  { BOOL,   SOUPSESSION, TRUE  } },
+  { "user-agent",                                { CHAR,   SETTINGS,    TRUE  } },
+  { "user-stylesheet-uri",                       { CHAR,   SETTINGS,    TRUE  } },
+  { "zoom-level",                                { FLOAT,  WEBKITVIEW,  TRUE  } },
+  { "zoom-step",                                 { FLOAT,  SETTINGS,    TRUE  } },
+  { NULL,                                        { 0,      0,           0     } },
 };
 
 static const struct {
@@ -123,6 +129,17 @@ static const struct {
   { WEBKIT_LOAD_FAILED,                          "failed"       },
   { 0,                                           NULL,          },
 };
+
+static void
+webview_init_properties() {
+    const struct property_t *prop = properties_table;
+    properties = g_hash_table_new(g_str_hash, g_str_equal);
+    while (prop->name) {
+        g_hash_table_insert(properties, (gpointer) prop->name,
+                (gpointer) &prop->v);
+        prop++;
+    }
+}
 
 static const gchar*
 webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
@@ -526,16 +543,15 @@ luaH_webview_get_prop(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     GObject *ws;
+    property_value_t *prop_v;
     property_tmp_values tmp;
     SoupURI *u;
 
-    for (guint i = 0; i < LENGTH(properties); i++) {
-        if (g_strcmp0(properties[i].name, prop))
-            continue;
+    if ((prop_v = g_hash_table_lookup(properties, prop))) {
 
-        ws = get_settings_object(view, properties[i].scope);
+        ws = get_settings_object(view, prop_v->scope);
 
-        switch(properties[i].type) {
+        switch(prop_v->type) {
           case BOOL:
             g_object_get(ws, prop, &tmp.b, NULL);
             lua_pushboolean(L, tmp.b);
@@ -571,7 +587,7 @@ luaH_webview_get_prop(lua_State *L)
             return 1;
 
           default:
-            warn("unknown property type for: %s", properties[i].name);
+            warn("unknown property type for: %s", prop);
             break;
         }
     }
@@ -587,21 +603,20 @@ luaH_webview_set_prop(lua_State *L)
     const gchar *prop = luaL_checklstring(L, 2, &len);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     GObject *ws;
+    property_value_t *prop_v;
     property_tmp_values tmp;
     SoupURI *u;
 
-    for (guint i = 0; i < LENGTH(properties); i++) {
-        if (g_strcmp0(properties[i].name, prop))
-            continue;
+    if ((prop_v = g_hash_table_lookup(properties, prop))) {
 
-        if (!properties[i].writable) {
+        if (!prop_v->writable) {
             warn("attempt to set read-only property: %s", prop);
             return 0;
         }
 
-        ws = get_settings_object(view, properties[i].scope);
+        ws = get_settings_object(view, prop_v->scope);
 
-        switch(properties[i].type) {
+        switch(prop_v->type) {
           case BOOL:
             tmp.b = luaH_checkboolean(L, 3);
             g_object_set(ws, prop, tmp.b, NULL);
@@ -638,7 +653,7 @@ luaH_webview_set_prop(lua_State *L)
             return 0;
 
           default:
-            warn("unknown property type for: %s", properties[i].name);
+            warn("unknown property type for: %s", prop);
             break;
         }
     }
@@ -857,6 +872,10 @@ widget_webview(widget_t *w)
     w->index = luaH_webview_index;
     w->newindex = luaH_webview_newindex;
     w->destructor = webview_destructor;
+
+    /* init properties hash table */
+    if (!properties)
+        webview_init_properties();
 
     /* init soup session & cookies handling */
     if (!Soup.session) {
