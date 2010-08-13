@@ -64,9 +64,9 @@ end)
 
 -- Search engines
 search_engines = {
-    google      =  "http://google.com/search?q={0}",
-    imdb        =  "http://imdb.com/find?s=all&q={0}",
-    sourceforge =  "http://sf.net/search/?words={0}"
+    google      = "http://google.com/search?q={0}",
+    imdb        = "http://imdb.com/find?s=all&q={0}",
+    sourceforge = "http://sf.net/search/?words={0}",
 }
 
 -- Add key bindings to be used across all windows
@@ -416,10 +416,12 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("load-start", function (v)
+    view:add_signal("load-status", function (v, status)
         if w:is_current(v) then
-            w:update_progress(v, 0)
-            w:set_mode()
+            w:update_progress(v)
+            if status == "provisional" then
+                w:set_mode()
+            end
         end
     end)
 
@@ -452,7 +454,7 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("progress-update", function (v)
+    view:add_signal("property::progress", function (v)
         if w:is_current(v) then
             w:update_progress(v)
         end

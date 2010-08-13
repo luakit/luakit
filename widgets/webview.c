@@ -42,7 +42,7 @@ typedef union {
     gint      i;
 } property_tmp_values;
 
-const struct property_t {
+static const struct {
     const gchar *name;
     property_value_type type;
     property_value_scope scope;
@@ -110,6 +110,18 @@ const struct property_t {
   { "zoom-level",                                   FLOAT,  WEBKITVIEW,  TRUE  },
   { "zoom-step",                                    FLOAT,  SETTINGS,    TRUE  },
   { NULL,                                           0,      0,      0     },
+};
+
+static const struct {
+    WebKitLoadStatus atom;
+    const gchar *name;
+} load_status_names[] = {
+  { WEBKIT_LOAD_PROVISIONAL,                     "provisional"  },
+  { WEBKIT_LOAD_COMMITTED,                       "committed",   },
+  { WEBKIT_LOAD_FINISHED,                        "finished"     },
+  { WEBKIT_LOAD_FIRST_VISUALLY_NON_EMPTY_LAYOUT, "first-visual" },
+  { WEBKIT_LOAD_FAILED,                          "failed"       },
+  { 0,                                           NULL,          },
 };
 
 static const gchar*
@@ -209,14 +221,14 @@ luaH_webview_eval_js(lua_State *L)
 }
 
 static void
-progress_cb(WebKitWebView *v, gint p, widget_t *w)
+notify_progress_cb(WebKitWebView *v, GParamSpec *s, widget_t *w)
 {
     (void) v;
-    (void) p;
+    (void) s;
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "progress-update", 0, 0);
+    luaH_object_emit_signal(L, -1, "property::progress", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -230,18 +242,6 @@ title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "title-changed", 0, 0);
-    lua_pop(L, 1);
-}
-
-static void
-load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
-{
-    (void) v;
-    (void) f;
-
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "load-start", 0, 0);
     lua_pop(L, 1);
 }
 
@@ -260,22 +260,31 @@ update_uri(GtkWidget *view, const gchar *uri, widget_t *w)
 }
 
 static void
-load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+notify_load_status_cb(WebKitWebView *v, GParamSpec *s, widget_t *w)
 {
-    update_uri(GTK_WIDGET(v), webkit_web_frame_get_uri(f), w);
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "load-commit", 0, 0);
-    lua_pop(L, 1);
-}
+    (void) s;
 
-static void
-load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
-{
-    update_uri(GTK_WIDGET(v), webkit_web_frame_get_uri(f), w);
+    update_uri(GTK_WIDGET(v), webkit_web_view_get_uri(v), w);
+
+    /* Get load status */
+    WebKitLoadStatus status;
+    g_object_get(G_OBJECT(v), "load-status", &status, NULL);
+
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "load-finish", 0, 0);
+
+    /* get status literal */
+    gboolean found = FALSE;
+    for (guint i = 0; i < LENGTH(load_status_names); i++) {
+        if (load_status_names[i].atom != status) continue;
+        lua_pushstring(L, load_status_names[i].name);
+        found = TRUE;
+        break;
+    }
+    if (!found)
+        lua_pushstring(L, "unknown");
+
+    luaH_object_emit_signal(L, -2, "load-status", 1, 0);
     lua_pop(L, 1);
 }
 
@@ -869,20 +878,18 @@ widget_webview(widget_t *w)
     /* connect webview signals */
     g_object_connect((GObject*)view,
       "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
+      "signal::download-requested",                   (GCallback)download_request_cb,    w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,
       "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
       "signal::key-press-event",                      (GCallback)key_press_cb,           w,
-      "signal::load-committed",                       (GCallback)load_commit_cb,         w,
-      "signal::load-finished",                        (GCallback)load_finish_cb,         w,
-      "signal::load-progress-changed",                (GCallback)progress_cb,            w,
-      "signal::load-started",                         (GCallback)load_start_cb,          w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
+      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
+      "signal::notify::progress",                     (GCallback)notify_progress_cb,     w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
       "signal::title-changed",                        (GCallback)title_changed_cb,       w,
-      "signal::download-requested",                   (GCallback)download_request_cb,    w,
-      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       NULL);
 
     /* setup */
