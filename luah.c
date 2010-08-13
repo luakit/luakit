@@ -379,7 +379,23 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
       case L_TK_INSTALL_PATH:
-        lua_pushstring(L, LUAKIT_INSTALL_PATH);
+        lua_pushliteral(L, LUAKIT_INSTALL_PATH);
+        return 1;
+
+      case L_TK_CONFIG_DIR:
+        lua_pushstring(L, globalconf.config_dir);
+        return 1;
+
+      case L_TK_DATA_DIR:
+        lua_pushstring(L, globalconf.data_dir);
+        return 1;
+
+      case L_TK_CACHE_DIR:
+        lua_pushstring(L, globalconf.cache_dir);
+        return 1;
+
+      case L_TK_VERBOSE:
+        lua_pushboolean(L, globalconf.verbose);
         return 1;
 
       default:

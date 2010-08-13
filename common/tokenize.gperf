@@ -1,9 +1,12 @@
 append
 atindex
 bg
+cache_dir
 clear_search
+config_dir
 count
 current
+data_dir
 destroy
 entry
 eval_js
@@ -59,6 +62,7 @@ title
 type
 uri
 vbox
+verbose
 webview
 window
 windows
