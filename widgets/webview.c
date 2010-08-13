@@ -412,32 +412,6 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     return TRUE;
 }
 
-static gboolean
-event_cb(GtkWidget *wd, GdkEvent *ev, widget_t *w)
-{
-    (void) wd;
-    gint ret = 0;
-    lua_State *L = globalconf.L;
-
-    if (ev->type == GDK_BUTTON_RELEASE) {
-        luaH_object_push(L, w->ref);
-        lua_pushinteger(L, ev->button.button);
-        lua_pushinteger(L, ev->button.state);
-        ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
-
-        /* User responded with TRUE, so do not propagate event any further */
-        if (ret && luaH_checkboolean(L, -1)) {
-            lua_pop(L, ret + 1);
-            return TRUE;
-        }
-
-        lua_pop(L, ret + 1);
-    }
-
-    /* propagate event further */
-    return FALSE;
-}
-
 inline static gint
 push_adjustment_values(lua_State *L, GtkAdjustment *adjustment)
 {
@@ -917,8 +891,8 @@ widget_webview(widget_t *w)
     /* connect webview signals */
     g_object_connect((GObject*)view,
       "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
+      "signal::button-release-event",                 (GCallback)button_release_cb,      w,
       "signal::download-requested",                   (GCallback)download_request_cb,    w,
-      "signal::event",                                (GCallback)event_cb,               w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,
