@@ -83,7 +83,7 @@ mode_binds = {
                                                 local uri = w:get_current().hovered_uri
                                                 if uri then w:new_tab(uri)
                                                 else -- Open selection in current tab
-                                                    uri = luakit.selection()
+                                                    uri = luakit.get_selection()
                                                     if uri then w:get_current().uri = uri end
                                                 end
                                             end),
@@ -108,8 +108,10 @@ mode_binds = {
         bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
         -- Clipboard
-        bind.key({},          "p",          function (w) w:navigate(luakit.selection()) end),
-        bind.key({},          "P",          function (w) w:new_tab(luakit.selection())  end),
+        bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
+        bind.key({},          "P",          function (w) w:new_tab(luakit.get_selection())  end),
+        bind.buf("^yy$",                    function (w) luakit.set_selection(w:get_current().uri) end),
+        bind.buf("^yt$",                    function (w) luakit.set_selection(w.win.title) end),
 
         -- Commands
         bind.buf("^o$",                     function (w, c) w:enter_cmd(":open ") end),
@@ -141,7 +143,7 @@ mode_binds = {
 
     },
     command = {
-        bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.selection()) end),
+        bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.get_selection()) end),
         bind.key({},          "Up",         function (w) w:cmd_hist_prev() end),
         bind.key({},          "Down",       function (w) w:cmd_hist_next() end),
         bind.key({},          "Tab",        function (w) w:cmd_completion() end),
