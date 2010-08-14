@@ -49,6 +49,7 @@ set_position
 set_prop
 set_scroll_horiz
 set_scroll_vert
+set_selection
 set_title
 show
 show_border

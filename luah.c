@@ -344,6 +344,43 @@ luaH_luakit_get_selection(lua_State *L)
     return 1;
 }
 
+/* Sets an X selection.
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on stack (0).
+ */
+static gint
+luaH_luakit_set_selection(lua_State *L)
+{
+    int n = lua_gettop(L);
+    GdkAtom atom = GDK_SELECTION_PRIMARY;
+
+    if (0 == n)
+        luaL_error(L, "missing argument, string expected");
+    const gchar *text = luaL_checkstring(L, 1);
+    if (1 < n)
+    {
+        const gchar *arg = luaL_checkstring(L, 2);
+        /* Follow xclip(1) behavior: check only the first character of argument */
+        switch (arg[0]) {
+          case 'p':
+            break;
+          case 's':
+            atom = GDK_SELECTION_SECONDARY;
+            break;
+          case 'c':
+            atom = GDK_SELECTION_CLIPBOARD;
+            break;
+          default:
+            luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
+            break;
+        }
+    }
+    GtkClipboard *selection = gtk_clipboard_get(atom);
+    glong len = g_utf8_strlen (text, -1);
+    gtk_clipboard_set_text(selection, text, len);
+    return 0;
+}
+
 static const struct special_dir_mapping_t {
     const gchar *name;
     GUserDirectory atom;
@@ -405,6 +442,10 @@ luaH_luakit_index(lua_State *L)
 
       case L_TK_GET_SELECTION:
         lua_pushcfunction(L, luaH_luakit_get_selection);
+        return 1;
+
+      case L_TK_SET_SELECTION:
+        lua_pushcfunction(L, luaH_luakit_set_selection);
         return 1;
 
       case L_TK_INSTALL_PATH:
