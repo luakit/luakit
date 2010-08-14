@@ -14,6 +14,7 @@ eventbox
 fg
 focus
 font
+func
 get_alignment
 get_child
 get_padding
@@ -32,6 +33,7 @@ icon
 indexof
 insert
 install_path
+interval
 label
 loading
 notebook
@@ -56,6 +58,7 @@ show_frame
 show_scrollbars
 show_tabs
 spacing
+started
 status
 suggested_filename
 switch

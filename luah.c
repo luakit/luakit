@@ -26,6 +26,7 @@
 #include "common/lualib.h"
 #include "luakit.h"
 #include "classes/widget.h"
+#include "classes/timer.h"
 #include "classes/download.h"
 #include "classes/dialog.h"
 #include "luah.h"
@@ -530,6 +531,9 @@ luaH_init(xdgHandle *xdg)
 
     /* Export download */
     download_class_setup(L);
+
+    /* Export timer */
+    timer_class_setup(L);
 
     /* Export dialog */
     dialog_lib_setup(L);
