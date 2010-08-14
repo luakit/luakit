@@ -562,8 +562,8 @@ window_helpers = {
     end,
 
     -- close the current tab
-    close_tab = function (w)
-        view = w:get_current()
+    close_tab = function (w, view)
+        if not view then view = w:get_current() end
         if not view then return end
         w.tabs:remove(view)
         view:destroy()
@@ -941,9 +941,12 @@ window_helpers = {
         t.layout:pack_start(t.label, true,  true, 0)
         t.layout:pack_start(t.sep,   false,  false, 0)
         t.ebox:set_child(t.layout)
-        t.ebox:add_signal("button-press", function (e, m, b)
+        t.ebox:add_signal("button-release", function (e, m, b)
             if b == 1 then
                 w.tabs:switch(pos)
+                return true
+            elseif b == 2 then
+                w:close_tab(w.tabs:atindex(pos))
                 return true
             end
         end)
