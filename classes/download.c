@@ -24,7 +24,7 @@
 
 #include "globalconf.h"
 #include "luah.h"
-#include "objects/download.h"
+#include "classes/download.h"
 #include "common/luaobject.h"
 
 typedef struct

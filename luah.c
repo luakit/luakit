@@ -25,9 +25,9 @@
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
-#include "widget.h"
-#include "objects/download.h"
-#include "objects/dialog.h"
+#include "classes/widget.h"
+#include "classes/download.h"
+#include "classes/dialog.h"
 #include "luah.h"
 
 void

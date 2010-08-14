@@ -21,7 +21,7 @@
 #ifndef LUAKIT_WIDGETS_COMMON_H
 #define LUAKIT_WIDGETS_COMMON_H
 
-#include "widget.h"
+#include "classes/widget.h"
 
 gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
 gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);

@@ -21,7 +21,7 @@
 
 #include "luah.h"
 #include "widgets/common.h"
-#include "objects/download.h"
+#include "classes/download.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>

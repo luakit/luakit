@@ -6,8 +6,8 @@ GPERF = common/tokenize.gperf
 GSRC  = common/tokenize.c
 GHEAD = common/tokenize.h
 
-SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard objects/*.c) $(wildcard widgets/*.c)) ${GSRC}
-HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard objects/*.h) $(wildcard widgets/*.h)) ${GHEAD}
+SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard classes/*.c) $(wildcard widgets/*.c)) ${GSRC}
+HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard classes/*.h) $(wildcard widgets/*.h)) ${GHEAD}
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
 all: options newline luakit

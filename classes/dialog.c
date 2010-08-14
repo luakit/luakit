@@ -23,8 +23,8 @@
 
 #include "globalconf.h"
 #include "luah.h"
-#include "widget.h"
-#include "objects/dialog.h"
+#include "classes/widget.h"
+#include "classes/dialog.h"
 #include "common/luaobject.h"
 
 /* Shows a Gtk save dialog.
