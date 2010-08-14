@@ -43,8 +43,7 @@ LUA_OBJECT_FUNCS(download_class, download_t, download)
 void
 luaH_pushdownload(lua_State *L, WebKitDownload* download)
 {
-    luaH_class_new(L, &download_class);
-    download_t *lua_download = luaH_checkudata(L, -1, &download_class);
+    download_t *lua_download = download_new(L);
     lua_download->webkit_download = download;
 }
 

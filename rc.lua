@@ -403,6 +403,7 @@ function attach_webview_signals(w, view)
     end)
 
     view:add_signal("download-requested", function(v, d)
+        print("rc")
         downloadbar.add_download(d)
     end)
 

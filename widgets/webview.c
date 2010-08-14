@@ -218,7 +218,7 @@ download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_pushdownload(L, WEBKIT_DOWNLOAD(download));
-    luaH_object_emit_signal(L, -1, "download-requested", 1, 0);
+    luaH_object_emit_signal(L, -2, "download-requested", 1, 0);
     lua_pop(L, 1);
 }
 
