@@ -24,7 +24,6 @@ MAX_SRCH_HISTORY = 100
 
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
-os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
 
 -- Luakit theme
 theme = theme or {
@@ -430,7 +429,7 @@ function attach_webview_signals(w, view)
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
         if w:is_current(v) then
-            print(string.format("Requested link: %s (%s)", link, mime))
+            if luakit.verbose then print(string.format("Requested link: %s (%s)", link, mime)) end
 
             -- i.e. block binary files like *.exe
             if string.match(mime, "application/octet-stream") then
@@ -443,13 +442,12 @@ function attach_webview_signals(w, view)
     -- 'filename' contains the suggested filename (from server or webkit)
     view:add_signal("download-request", function (v, link, filename)
         if w:is_current(v) and filename then
+            -- Make download dir
+            os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
+
             local dl = DOWNLOAD_DIR .. "/" .. filename
-
-            print ("Download request:", link)
-            print ("Suggested filename:", filename)
-
             local wget = string.format("wget -q %q -O %q &", link, dl)
-            print("Launching: " .. wget)
+            if luakit.verbose then print("Launching: " .. wget) end
             os.execute(wget)
         end
     end)
