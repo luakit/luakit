@@ -3,6 +3,7 @@
 require("math")
 require("mode")
 require("bind")
+require("downloadbar")
 
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
@@ -162,6 +163,8 @@ function build_window()
             ebox   = eventbox(),
             titles = { },
         },
+        -- Download bar widgets
+        dbar = downloadbar.bar,
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -199,11 +202,11 @@ function build_window()
 
     -- Pack tab bar
     local t = w.tbar
-    t.ebox:set_child(t.layout, false, false, 0)
-    w.layout:pack_start(t.ebox, false, false, 0)
+    t.ebox:set_child(t.layout,    false, false, 0)
+    w.layout:pack_start(t.ebox,   false, false, 0)
 
     -- Pack notebook
-    w.layout:pack_start(w.tabs, true, true, 0)
+    w.layout:pack_start(w.tabs,   true,  true,  0)
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -226,12 +229,16 @@ function build_window()
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
 
+    -- Pack download bar
+    local d = w.dbar
+    w.layout:pack_start(d.ebox,   false, false, 0)
+
     -- Pack input bar
     local i = w.ibar
     i.layout:pack_start(i.prompt, false, false, 0)
     i.layout:pack_start(i.input,  true,  true,  0)
     i.ebox:set_child(i.layout)
-    w.layout:pack_start(i.ebox,    false, false, 0)
+    w.layout:pack_start(i.ebox,   false, false, 0)
 
     -- Other settings
     i.input.show_frame = false
@@ -393,6 +400,10 @@ function attach_webview_signals(w, view)
         if w:is_current(v) then
             w:update_progress(v)
         end
+    end)
+
+    view:add_signal("download-requested", function(v, d)
+        downloadbar.add_download(d)
     end)
 
     view:add_signal("expose", function(v)
