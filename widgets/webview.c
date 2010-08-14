@@ -210,7 +210,7 @@ progress_cb(WebKitWebView *v, gint p, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
+static gboolean
 download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
 {
     (void) v;
@@ -220,6 +220,7 @@ download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
     luaH_pushdownload(L, WEBKIT_DOWNLOAD(download));
     luaH_object_emit_signal(L, -2, "download-requested", 1, 0);
     lua_pop(L, 1);
+    return false; // let the rc decide when to start the download
 }
 
 static void
