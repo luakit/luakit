@@ -3,7 +3,6 @@
 require("math")
 require("mode")
 require("bind")
-require("downloadbar")
 
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
@@ -30,6 +29,8 @@ theme = theme or {
     bg   = "#000",
 
     -- General settings
+    downloadbar_fg = "#fff",
+    downloadbar_bg = "#000",
     statusbar_fg = "#fff",
     statusbar_bg = "#000",
     inputbar_fg  = "#000",
@@ -164,7 +165,12 @@ function build_window()
             titles = { },
         },
         -- Download bar widgets
-        dbar = downloadbar.bar,
+        dbar = {
+            layout  = hbox(),
+            ebox    = eventbox(),
+            -- List of URI => widget
+            downloads = {}
+        },
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -208,6 +214,12 @@ function build_window()
     -- Pack notebook
     w.layout:pack_start(w.tabs,   true,  true,  0)
 
+    -- Pack download bar
+    local d = w.dbar
+    d.ebox:set_child(d.layout)
+    d.ebox:hide()
+    w.layout:pack_start(d.ebox,   false, false, 0)
+
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout:pack_start(l.uri,    false, false, 0)
@@ -228,10 +240,6 @@ function build_window()
     s.layout:pack_start(r.ebox,   false, false, 0)
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
-
-    -- Pack download bar
-    local d = w.dbar
-    w.layout:pack_start(d.ebox,   false, false, 0)
 
     -- Pack input bar
     local i = w.ibar
@@ -403,8 +411,7 @@ function attach_webview_signals(w, view)
     end)
 
     view:add_signal("download-requested", function(v, d)
-        print("rc")
-        downloadbar.add_download(d)
+        w:add_download(d)
     end)
 
     view:add_signal("expose", function(v)
@@ -904,6 +911,17 @@ window_helpers = {
         tb.ebox:show()
     end,
 
+    -- Adds a download to the download bar.
+    add_download = function(w, d)
+        local bar = w.dbar
+        local wi = label()
+        wi.text = d.uri
+        w:apply_download_theme(wi)
+        table.insert(bar.downloads, { download = d, widget = wi })
+        bar.layout:pack_start(wi, false, false, 0)
+        bar.ebox:show()
+    end,
+
     -- Theme functions
     apply_tablabel_theme = function (w, t, selected, atheme)
         local theme = atheme or theme
@@ -918,7 +936,7 @@ window_helpers = {
 
     apply_window_theme = function (w, atheme)
         local theme        = atheme or theme
-        local s, i, t      = w.sbar, w.ibar, w.tbar
+        local s, i, t, d   = w.sbar, w.ibar, w.tbar, w.dbar
         local fg, bg, font = theme.fg, theme.bg, theme.font
 
         -- Set foregrounds
@@ -934,11 +952,12 @@ window_helpers = {
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.statusbar_bg or bg,
-            [s.r.ebox]   = theme.statusbar_bg or bg,
-            [s.ebox]     = theme.statusbar_bg or bg,
-            [i.ebox]     = theme.inputbar_bg  or bg,
-            [i.input]    = theme.input_bg     or theme.inputbar_bg or bg,
+            [s.l.ebox]   = theme.statusbar_bg   or bg,
+            [s.r.ebox]   = theme.statusbar_bg   or bg,
+            [s.ebox]     = theme.statusbar_bg   or bg,
+            [d.ebox]     = theme.downloadbar_bg or bg,
+            [i.ebox]     = theme.inputbar_bg    or bg,
+            [i.input]    = theme.input_bg       or theme.inputbar_bg or bg,
         }) do wi.bg = v end
 
         -- Set fonts
@@ -951,6 +970,12 @@ window_helpers = {
             [i.prompt]   = theme.prompt_font or theme.inputbar_font or font,
             [i.input]    = theme.input_font  or theme.inputbar_font or font,
         }) do wi.font = v end
+    end,
+
+    apply_download_theme = function(w, d, atheme)
+        local theme = atheme or theme
+        d.fg   = theme.download_fg   or theme.downloadbar_fg   or theme.fg
+        d.font = theme.download_font or theme.downloadbar_font or theme.font
     end,
 }
 
