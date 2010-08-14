@@ -168,8 +168,8 @@ function build_window()
         dbar = {
             layout  = hbox(),
             ebox    = eventbox(),
-            -- List of URI => widget
-            downloads = {}
+            downloads = {},
+            timer   = timer{interval=1000},
         },
         -- Status bar widgets
         sbar = {
@@ -219,6 +219,7 @@ function build_window()
     d.ebox:set_child(d.layout)
     d.ebox:hide()
     w.layout:pack_start(d.ebox,   false, false, 0)
+    d.timer:add_signal("timeout", function() w:refresh_download_bar() end)
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -914,12 +915,35 @@ window_helpers = {
     -- Adds a download to the download bar.
     add_download = function(w, d)
         local bar = w.dbar
+        -- create widget
         local wi = label()
-        wi.text = d.uri
+        w:update_download_widget(wi, d)
         w:apply_download_theme(wi)
         table.insert(bar.downloads, { download = d, widget = wi })
         bar.layout:pack_start(wi, false, false, 0)
         bar.ebox:show()
+        -- start refresh timer
+        if not bar.timer.started then bar.timer:start() end
+    end,
+
+    update_download_widget = function(w, wi, d)
+        wi.text = d.uri .. "(" .. (d.progress * 100)  .. "%)"
+    end,
+
+    -- Updates the widgets in the download bar.
+    refresh_download_bar = function(w)
+        local bar = w.dbar
+        local all_finished = true
+        -- update
+        for _,p in pairs(bar.downloads) do
+            local d, wi = p.download, p.widget
+            w:update_download_widget(wi, d)
+            if d.status ~= "finished" then all_finished = false end
+        end
+        -- stop timer if everyone finished
+        if all_finished then
+            bar.timer:stop()
+        end
     end,
 
     -- Theme functions
