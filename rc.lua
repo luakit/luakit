@@ -933,7 +933,12 @@ window_helpers = {
         t.layout:pack_start(t.label, true,  true, 0)
         t.layout:pack_start(t.sep,   false,  false, 0)
         t.ebox:set_child(t.layout)
-        t.ebox:add_signal("clicked", function (e) w.tabs:switch(pos) end)
+        t.ebox:add_signal("button-press", function (e, m, b)
+            if b == 1 then
+                w.tabs:switch(pos)
+                return true
+            end
+        end)
         return t
     end,
 

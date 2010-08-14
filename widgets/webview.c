@@ -829,13 +829,13 @@ expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
 }
 
 static gboolean
-wv_button_press_cb(GtkWidget *view, GdkEventButton *event, widget_t *w)
+wv_button_press_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 {
-    if((event->type != GDK_BUTTON_PRESS) || (event->button != 1))
+    if((ev->type != GDK_BUTTON_PRESS) || (ev->button != 1))
         return FALSE;
 
     /* get webview hit context */
-    WebKitHitTestResult *ht = webkit_web_view_get_hit_test_result(WEBKIT_WEB_VIEW(view), event);
+    WebKitHitTestResult *ht = webkit_web_view_get_hit_test_result(WEBKIT_WEB_VIEW(view), ev);
     guint c;
     g_object_get(ht, "context", &c, NULL);
     gint context = (gint) c;
