@@ -70,16 +70,17 @@ luaH_download_new(lua_State *L)
 }
 
 static int
-luaH_download_set_destination_uri(lua_State *L, download_t *download)
+luaH_download_set_destination(lua_State *L, download_t *download)
 {
-    const char *destination_uri = luaL_checkstring(L, -1);
+    const char *destination = luaL_checkstring(L, -1);
+    const char *destination_uri = g_filename_to_uri(destination, NULL, NULL);
     webkit_download_set_destination_uri(download->webkit_download, destination_uri);
     luaH_object_emit_signal(L, -3, "property::destination_uri", 0, 0);
     return 0;
 }
 
 static int
-luaH_download_get_destination_uri(lua_State *L, download_t *download)
+luaH_download_get_destination(lua_State *L, download_t *download)
 {
     const char *destination_uri = webkit_download_get_destination_uri(download->webkit_download);
     lua_pushstring(L, destination_uri);
@@ -204,10 +205,10 @@ download_class_setup(lua_State *L)
                      (lua_class_allocator_t) download_new,
                      luaH_class_index_miss_property, luaH_class_newindex_miss_property,
                      download_methods, download_meta);
-    luaH_class_add_property(&download_class, L_TK_DESTINATION_URI,
-                            (lua_class_propfunc_t) luaH_download_set_destination_uri,
-                            (lua_class_propfunc_t) luaH_download_get_destination_uri,
-                            (lua_class_propfunc_t) luaH_download_set_destination_uri);
+    luaH_class_add_property(&download_class, L_TK_DESTINATION,
+                            (lua_class_propfunc_t) luaH_download_set_destination,
+                            (lua_class_propfunc_t) luaH_download_get_destination,
+                            (lua_class_propfunc_t) luaH_download_set_destination);
     luaH_class_add_property(&download_class, L_TK_PROGRESS,
                             NULL,
                             (lua_class_propfunc_t) luaH_download_get_progress,

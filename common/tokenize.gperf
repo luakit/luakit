@@ -5,7 +5,7 @@ clear_search
 count
 current
 current_size
-destination_uri
+destination
 destroy
 elapsed_time
 entry

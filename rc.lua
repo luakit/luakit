@@ -414,7 +414,7 @@ function attach_webview_signals(w, view)
     view:add_signal("download-requested", function(v, d)
         local file = dialog.save("Save file", w.window, "/home", d.suggested_filename)
         if file then
-            d.destination_uri = "file://" .. file
+            d.destination = file
             d:start()
             w:add_download(d)
         end
