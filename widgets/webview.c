@@ -21,6 +21,7 @@
 
 #include "luah.h"
 #include "widgets/common.h"
+#include "objects/download.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>
@@ -206,6 +207,18 @@ progress_cb(WebKitWebView *v, gint p, widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "progress-update", 0, 0);
+    lua_pop(L, 1);
+}
+
+static void
+download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
+{
+    (void) v;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_pushdownload(L, WEBKIT_DOWNLOAD(download));
+    luaH_object_emit_signal(L, -1, "download-requested", 1, 0);
     lua_pop(L, 1);
 }
 
@@ -795,6 +808,7 @@ widget_webview(widget_t *w)
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
       "signal::title-changed",                        (GCallback)title_changed_cb,       w,
+      "signal::download-requested",                   (GCallback)download_requested_cb,  w,
       NULL);
 
     /* setup */

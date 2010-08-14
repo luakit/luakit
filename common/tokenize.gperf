@@ -4,7 +4,10 @@ bg
 clear_search
 count
 current
+current_size
+destination_uri
 destroy
+elapsed_time
 entry
 eval_js
 eventbox
@@ -34,6 +37,7 @@ loading
 notebook
 pack_end
 pack_start
+progress
 remove
 search
 selectable
@@ -52,10 +56,13 @@ show_frame
 show_scrollbars
 show_tabs
 spacing
+status
+suggested_filename
 switch
 text
 textbutton
 title
+total_size
 type
 uri
 vbox
