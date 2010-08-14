@@ -21,6 +21,7 @@ get_position
 get_prop
 get_scroll_horiz
 get_scroll_vert
+get_selection
 get_special_dir
 get_title
 go_back
@@ -41,7 +42,6 @@ pack_start
 remove
 search
 selectable
-selection
 set_alignment
 set_child
 set_padding

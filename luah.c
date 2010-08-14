@@ -315,7 +315,7 @@ luaH_isloop(lua_State *L, gint idx)
  * \return The number of elements pushed on stack (1).
  */
 static gint
-luaH_luakit_selection(lua_State *L)
+luaH_luakit_get_selection(lua_State *L)
 {
     int n = lua_gettop(L);
     GdkAtom atom = GDK_SELECTION_PRIMARY;
@@ -403,8 +403,8 @@ luaH_luakit_index(lua_State *L)
         }
         return 1;
 
-      case L_TK_SELECTION:
-        lua_pushcfunction(L, luaH_luakit_selection);
+      case L_TK_GET_SELECTION:
+        lua_pushcfunction(L, luaH_luakit_get_selection);
         return 1;
 
       case L_TK_INSTALL_PATH:
