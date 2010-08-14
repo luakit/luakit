@@ -70,11 +70,25 @@ search_engines = {
 
 -- Add key bindings to be used across all windows
 mode_binds = {
-     -- bind.buf(Pattern, function (w, buffer, opts) .. end, opts),
-     -- bind.key({Modifiers}, Key name, function (w, opts) .. end, opts),
+     -- bind.buf(Pattern,                    function (w, buffer, opts) .. end, opts),
+     -- bind.key({Modifiers}, Key name,      function (w, opts)         .. end, opts),
+     -- bind.but({Modifiers}, Button Number, function (w, opts)         .. end, opts),
     all = {
         bind.key({},          "Escape",   function (w) w:set_mode() end),
         bind.key({"Control"}, "[",        function (w) w:set_mode() end),
+
+        -- Mouse bindings
+        bind.but({},          2,          function (w)
+                                              -- Open hovered uri in new tab
+                                              local uri = w:get_current().hovered_uri
+                                              if uri then w:new_tab(uri)
+                                              else -- Open selection in current tab
+                                                  uri = luakit.selection()
+                                                  if uri then w:get_current().uri = uri end
+                                              end
+                                          end),
+        bind.but({},          8,          function (w) w:back()    end),
+        bind.but({},          9,          function (w) w:forward() end),
     },
     normal = {
         bind.key({},          "i",        function (w) w:set_mode("insert")  end),
@@ -124,6 +138,7 @@ mode_binds = {
 
         -- Link following
         bind.key({},          "f",        function (w) w:set_mode("follow") end),
+
     },
     command = {
         bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
@@ -417,6 +432,12 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    view:add_signal("button-release", function (v, mods, button)
+        if w:hit(mods, button) then
+            return true
+        end
+    end)
+
     view:add_signal("load-status", function (v, status)
         if w:is_current(v) then
             w:update_progress(v)
@@ -464,21 +485,6 @@ function attach_webview_signals(w, view)
         if w:is_current(v) then
             w:update_scroll(v)
         end
-    end)
-
-    -- return TRUE in order to prevent the signal to be handled any further
-    view:add_signal("button-release", function (v, button, state)
-        if w:is_current(v) then
-            print (string.format("Button release - button: %d state: %s", button, table.concat(state, "|")))
-            if button == 8 then
-                w:back(1)
-                return true
-            elseif button == 9 then
-                w:forward(1)
-                return true
-            end
-        end
-        return false
     end)
 end
 

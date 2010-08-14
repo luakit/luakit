@@ -40,6 +40,12 @@ function key(mods, key, func, opts)
     return { mods = mods, key = key, func = func, opts = opts}
 end
 
+-- Create new button binding
+function but(mods, button, func, opts)
+    local mods = filter_mods(mods, false)
+    return { mods = mods, button = button, func = func, opts = opts}
+end
+
 -- Create new buffer binding
 function buf(pattern, func, opts)
     return { pattern = pattern, func = func, opts = opts}
@@ -51,7 +57,7 @@ function cmd(commands, func, opts)
 end
 
 -- Check if there exists a key binding in the `binds` table which matches the
--- pressed key and modifier mask and execute it.
+-- pressed key and modifier mask then execute it
 function match_key(binds, mods, key, arg)
     for _, b in ipairs(binds) do
         if b.key == key and util.table.isclone(b.mods, mods) then
@@ -61,8 +67,19 @@ function match_key(binds, mods, key, arg)
     end
 end
 
+-- Check if there exists a key binding in the `binds` table which matches the
+-- pressed key and modifier mask then execute it
+function match_button(binds, mods, button, arg)
+    for _, b in ipairs(binds) do
+        if b.button == button and util.table.isclone(b.mods, mods) then
+            b.func(arg, b.opts)
+            return true
+        end
+    end
+end
+
 -- Check if there exists a buffer binding in the `binds` table which matches
--- the given buffer and execute it.
+-- the given buffer then execute it.
 function match_buf(binds, buffer, arg)
     for _, b in ipairs(binds) do
         if b.pattern and string.match(buffer, b.pattern) then
@@ -73,7 +90,7 @@ function match_buf(binds, buffer, arg)
 end
 
 -- Check if there exists a buffer binding in the `binds` table which matches
--- the given buffer and execute it.
+-- the given buffer then execute it.
 function match_cmd(binds, buffer, arg)
     -- The command is the first word in the buffer string
     local command  = string.match(buffer, "^([^%s]+)")
@@ -97,17 +114,24 @@ end
 -- binds function with `arg` as the first argument.
 function hit(binds, mods, key, buffer, enable_buffer, arg)
     -- Filter modifers table
-    local mods = filter_mods(mods, #key == 1)
+    local mods = filter_mods(mods, type(key) == "string" and #key == 1)
 
-    if (not buffer or not enable_buffer) or #mods ~= 0 or #key ~= 1 then
+    -- Match button bindings
+    if type(key) == "number" then
+        return match_button(binds, mods, key, arg)
+
+    -- Match key bindings
+    elseif (not buffer or not enable_buffer) or #mods ~= 0 or #key ~= 1 then
         if match_key(binds, mods, key, arg) then
             return true
         end
     end
 
+    -- Clear buffer
     if not enable_buffer or #mods ~= 0 then
         return false
 
+    -- Match buffer
     elseif #key == 1 then
         buffer = (buffer or "") .. key
         if match_buf(binds, buffer, arg) then
@@ -115,6 +139,7 @@ function hit(binds, mods, key, buffer, enable_buffer, arg)
         end
     end
 
+    -- Return buffer if valid
     if buffer then
         return true, buffer:sub(1, 10)
     end
