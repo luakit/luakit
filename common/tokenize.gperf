@@ -38,6 +38,7 @@ loading
 notebook
 pack_end
 pack_start
+reload
 remove
 search
 selectable
