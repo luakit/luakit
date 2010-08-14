@@ -70,103 +70,103 @@ search_engines = {
 
 -- Add key bindings to be used across all windows
 mode_binds = {
-     -- bind.buf(Pattern,                    function (w, buffer, opts) .. end, opts),
-     -- bind.key({Modifiers}, Key name,      function (w, opts)         .. end, opts),
-     -- bind.but({Modifiers}, Button Number, function (w, opts)         .. end, opts),
+     -- bind.buf(Pattern,                   function (w, buffer, opts) .. end, opts),
+     -- bind.key({Modifiers}, Key name,     function (w, opts)         .. end, opts),
+     -- bind.but({Modifiers}, Button num,   function (w, opts)         .. end, opts),
     all = {
-        bind.key({},          "Escape",   function (w) w:set_mode() end),
-        bind.key({"Control"}, "[",        function (w) w:set_mode() end),
+        bind.key({},          "Escape",     function (w) w:set_mode() end),
+        bind.key({"Control"}, "[",          function (w) w:set_mode() end),
 
         -- Mouse bindings
-        bind.but({},          2,          function (w)
-                                              -- Open hovered uri in new tab
-                                              local uri = w:get_current().hovered_uri
-                                              if uri then w:new_tab(uri)
-                                              else -- Open selection in current tab
-                                                  uri = luakit.selection()
-                                                  if uri then w:get_current().uri = uri end
-                                              end
-                                          end),
-        bind.but({},          8,          function (w) w:back()    end),
-        bind.but({},          9,          function (w) w:forward() end),
+        bind.but({},          2,            function (w)
+                                                -- Open hovered uri in new tab
+                                                local uri = w:get_current().hovered_uri
+                                                if uri then w:new_tab(uri)
+                                                else -- Open selection in current tab
+                                                    uri = luakit.selection()
+                                                    if uri then w:get_current().uri = uri end
+                                                end
+                                            end),
+        bind.but({},          8,            function (w) w:back()    end),
+        bind.but({},          9,            function (w) w:forward() end),
     },
     normal = {
-        bind.key({},          "i",        function (w) w:set_mode("insert")  end),
-        bind.key({},          ":",        function (w) w:set_mode("command") end),
+        bind.key({},          "i",          function (w) w:set_mode("insert")  end),
+        bind.key({},          ":",          function (w) w:set_mode("command") end),
 
         -- Scrolling
-        bind.key({},          "h",        function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "j",        function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "k",        function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "l",        function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "Left",     function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "Down",     function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "Up",       function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "Right",    function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.buf("^gg$",                  function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
-        bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+        bind.key({},          "h",          function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "j",          function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
+        bind.key({},          "k",          function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "l",          function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({},          "Left",       function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
+        bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
+        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
+        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
         -- Clipboard
-        bind.key({},          "p",        function (w) w:navigate(luakit.selection()) end),
-        bind.key({},          "P",        function (w) w:new_tab(luakit.selection())  end),
+        bind.key({},          "p",          function (w) w:navigate(luakit.selection()) end),
+        bind.key({},          "P",          function (w) w:new_tab(luakit.selection())  end),
 
         -- Commands
-        bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
-        bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
-        bind.buf("^,g$",                  function (w, c) w:enter_cmd(":websearch google ") end),
+        bind.buf("^o$",                     function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^t$",                     function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^,g$",                    function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
-        bind.key({},          "/",        function (w) w:start_search(true)  end),
-        bind.key({},          "?",        function (w) w:start_search(false) end),
-        bind.key({},          "n",        function (w) w:search(nil, true) end),
-        bind.key({},          "N",        function (w) w:search(nil, false) end),
+        bind.key({},          "/",          function (w) w:start_search(true)  end),
+        bind.key({},          "?",          function (w) w:start_search(false) end),
+        bind.key({},          "n",          function (w) w:search(nil, true) end),
+        bind.key({},          "N",          function (w) w:search(nil, false) end),
 
         -- History
-        bind.buf("^[0-9]*H$",             function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
-        bind.buf("^[0-9]*L$",             function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
+        bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
 
         -- Tab
-        bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
-        bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
-        bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
-        bind.buf("^d$",                   function (w)    w:close_tab() end),
+        bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
+        bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
+        bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
+        bind.buf("^d$",                     function (w)    w:close_tab() end),
 
-        bind.key({},          "r",        function (w) w:reload() end),
-        bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
-        bind.buf("^ZZ$",                  function (w) luakit.quit() end),
+        bind.key({},          "r",          function (w) w:reload() end),
+        bind.buf("^gh$",                    function (w) w:navigate(HOMEPAGE) end),
+        bind.buf("^ZZ$",                    function (w) luakit.quit() end),
 
         -- Link following
-        bind.key({},          "f",        function (w) w:set_mode("follow") end),
+        bind.key({},          "f",          function (w) w:set_mode("follow") end),
 
     },
     command = {
-        bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
-        bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
-        bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
-        bind.key({},          "Tab",      function (w) w:cmd_completion() end),
-        bind.key({"Control"}, "w",        function (w) w:del_word() end),
-        bind.key({"Control"}, "u",        function (w) w:del_line() end),
+        bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.selection()) end),
+        bind.key({},          "Up",         function (w) w:cmd_hist_prev() end),
+        bind.key({},          "Down",       function (w) w:cmd_hist_next() end),
+        bind.key({},          "Tab",        function (w) w:cmd_completion() end),
+        bind.key({"Control"}, "w",          function (w) w:del_word() end),
+        bind.key({"Control"}, "u",          function (w) w:del_line() end),
     },
     search = {
-        bind.key({},          "Up",       function (w) w:srch_hist_prev() end),
-        bind.key({},          "Down",     function (w) w:srch_hist_next() end),
+        bind.key({},          "Up",         function (w) w:srch_hist_prev() end),
+        bind.key({},          "Down",       function (w) w:srch_hist_next() end),
     },
     insert = { },
 }
 
 -- Commands
 commands = {
- -- bind.cmd({Command, Alias1, ...},      function (w, arg, opts) .. end, opts),
-    bind.cmd({"open",      "o" },         function (w, a)    w:navigate(a) end),
-    bind.cmd({"tabopen",   "t" },         function (w, a)    w:new_tab(a) end),
-    bind.cmd({"back"           },         function (w, a)    w:back(tonumber(a) or 1) end),
-    bind.cmd({"forward",   "f" },         function (w, a)    w:forward(tonumber(a) or 1) end),
-    bind.cmd({"scroll"         },         function (w, a)    w:scroll_vert(a) end),
-    bind.cmd({"quit",      "q" },         function (w)       luakit.quit() end),
-    bind.cmd({"close",     "c" },         function (w)       w:close_tab() end),
-    bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
-    bind.cmd({"reload",        },         function (w)       w:reload() end),
+ -- bind.cmd({Command, Alias1, ...},        function (w, arg, opts) .. end, opts),
+    bind.cmd({"open",      "o" },           function (w, a)    w:navigate(a) end),
+    bind.cmd({"tabopen",   "t" },           function (w, a)    w:new_tab(a) end),
+    bind.cmd({"back"           },           function (w, a)    w:back(tonumber(a) or 1) end),
+    bind.cmd({"forward",   "f" },           function (w, a)    w:forward(tonumber(a) or 1) end),
+    bind.cmd({"scroll"         },           function (w, a)    w:scroll_vert(a) end),
+    bind.cmd({"quit",      "q" },           function (w)       luakit.quit() end),
+    bind.cmd({"close",     "c" },           function (w)       w:close_tab() end),
+    bind.cmd({"websearch", "ws"},           function (w, e, s) w:websearch(e, s) end),
+    bind.cmd({"reload",        },           function (w)       w:reload() end),
 }
 
 function set_http_options(w)
