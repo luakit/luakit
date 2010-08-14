@@ -581,6 +581,7 @@ luaH_webview_get_prop(lua_State *L)
 static gint
 luaH_webview_set_prop(lua_State *L)
 {
+    size_t len;
     GObject *so;
     SoupURI *u;
     property_t *p;
@@ -626,13 +627,18 @@ luaH_webview_set_prop(lua_State *L)
             return 0;
 
           case URI:
-            tmp.c = (gchar*) luaL_checkstring(L, 3);
+            tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
+            if (!len || g_strrstr(tmp.c, "://"))
+                tmp.c = g_strdup(tmp.c);
+            else
+                tmp.c = g_strdup_printf("http://%s", tmp.c);
             u = soup_uri_new(tmp.c);
-            if (SOUP_URI_VALID_FOR_HTTP(u))
+            if (!u || SOUP_URI_VALID_FOR_HTTP(u))
                 g_object_set(so, p->name, u, NULL);
             else
                 luaL_error(L, "cannot parse uri: %s", tmp.c);
-            soup_uri_free(u);
+            if (u) soup_uri_free(u);
+            g_free(tmp.c);
             return 0;
 
           default:
