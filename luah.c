@@ -27,6 +27,7 @@
 #include "luakit.h"
 #include "widget.h"
 #include "objects/download.h"
+#include "objects/dialog.h"
 #include "luah.h"
 
 void
@@ -529,6 +530,9 @@ luaH_init(xdgHandle *xdg)
 
     /* Export download */
     download_class_setup(L);
+
+    /* Export dialog */
+    dialog_lib_setup(L);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");
