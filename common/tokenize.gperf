@@ -14,7 +14,6 @@ eventbox
 fg
 focus
 font
-func
 get_alignment
 get_child
 get_padding

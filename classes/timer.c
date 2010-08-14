@@ -60,26 +60,12 @@ luaH_timer_destroy(lua_State *L, timer_t *timer) {
     timer->timer_id = TIMER_STOPPED;
 }
 
-/* Handles the timeout event of all timers.
- * Retrieves the Lua timer object and calls its associated
- * handler function with the timer as the only argument.
- * Sounds a warning and stops the timer if an error occurs.
- */
 static gboolean
 timer_handle_timeout(gpointer data)
 {
     timer_t *timer = (timer_t *) data;
     luaH_object_push(globalconf.L, timer->ref);
-    lua_getfield(globalconf.L, -1, TIMER_FUNC_FIELD);
-    lua_pushvalue(globalconf.L, -2);
-    int error = lua_pcall(globalconf.L, -1, 1, 0);
-    if (error != 0) {
-        const char *message = lua_tostring(globalconf.L, -1);
-        luaH_warn(globalconf.L, "error in timer function (disabled now): %s", message);
-        luaH_timer_destroy(globalconf.L, timer);
-        lua_pop(globalconf.L, 1);
-    }
-    lua_pop(globalconf.L, 1);
+    luaH_object_emit_signal(globalconf.L, -1, "timeout", 1, 0);
     return TRUE;
 }
 
@@ -122,20 +108,17 @@ luaH_timer_stop(lua_State *L)
 }
 
 static int
-luaH_timer_set_func(lua_State *L, timer_t *timer)
+luaH_timer_set_interval(lua_State *L, timer_t *timer)
 {
-    luaH_object_push(L, timer->ref);
-    lua_pushvalue(L, -2);
-    lua_setfield(L, -2, TIMER_FUNC_FIELD);
-    return 1;
+    int interval = luaL_checkinteger(L, -1);
+    timer->interval = interval;
+    return 0;
 }
 
 static int
-luaH_timer_get_func(lua_State *L, timer_t *timer)
+luaH_timer_get_interval(lua_State *L, timer_t *timer)
 {
-    luaH_object_push(L, timer->ref);
-    lua_getfield(L, -1, TIMER_FUNC_FIELD);
-    lua_remove(L, -2);
+    lua_pushinteger(L, timer->interval);
     return 1;
 }
 
@@ -146,8 +129,6 @@ luaH_timer_get_started(lua_State *L, timer_t *timer)
     lua_pushboolean(L, started);
     return 1;
 }
-
-LUA_OBJECT_EXPORT_PROPERTY(timer, timer_t, interval, lua_pushinteger)
 
 void
 timer_class_setup(lua_State *L)
@@ -172,14 +153,10 @@ timer_class_setup(lua_State *L)
                      (lua_class_allocator_t) timer_new,
                      luaH_class_index_miss_property, luaH_class_newindex_miss_property,
                      timer_methods, timer_meta);
-    luaH_class_add_property(&timer_class, L_TK_FUNC,
-                            (lua_class_propfunc_t) luaH_timer_set_func,
-                            (lua_class_propfunc_t) luaH_timer_get_func,
-                            (lua_class_propfunc_t) luaH_timer_set_func);
     luaH_class_add_property(&timer_class, L_TK_INTERVAL,
-                            NULL,
+                            (lua_class_propfunc_t) luaH_timer_set_interval,
                             (lua_class_propfunc_t) luaH_timer_get_interval,
-                            NULL);
+                            (lua_class_propfunc_t) luaH_timer_set_interval);
     luaH_class_add_property(&timer_class, L_TK_STARTED,
                             NULL,
                             (lua_class_propfunc_t) luaH_timer_get_started,
