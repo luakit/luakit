@@ -21,6 +21,7 @@
 
 #include <gtk/gtk.h>
 #include <stdlib.h>
+#include <sys/wait.h>
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
@@ -409,7 +410,7 @@ luaH_luakit_get_special_dir(lua_State *L)
 
 /* Spawns a command synchonously.
  * \param L The Lua VM state.
- * \return The number of elements pushed on stack (2).
+ * \return The number of elements pushed on stack (3).
  */
 static gint
 luaH_luakit_spawn_sync(lua_State *L)
@@ -417,19 +418,31 @@ luaH_luakit_spawn_sync(lua_State *L)
     GError *e = NULL;
     gchar *stdout = NULL;
     gchar *stderr = NULL;
+    gint rv;
+    __sighandler_t chldhandler;
+
     const gchar *command = luaL_checkstring(L, 1);
-    g_spawn_command_line_sync(command, &stdout, &stderr, NULL, &e);
+
+    /* Note: we have to temporarily clear the SIGCHLD handler. Otherwise
+     * g_spawn_sync wouldn't be able to read subprocess' return value. */
+    if (SIG_ERR == (chldhandler = signal(SIGCHLD, SIG_DFL)))
+        fatal("Can't clear SIGCHLD handler");
+    g_spawn_command_line_sync(command, &stdout, &stderr, &rv, &e);
+    if(signal(SIGCHLD, chldhandler) == SIG_ERR)
+        fatal("Can't restore SIGCHLD handler");
+
     if(e)
     {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
     }
+    lua_pushinteger(L, WEXITSTATUS(rv));
     lua_pushstring(L, stdout);
     lua_pushstring(L, stderr);
     g_free(stdout);
     g_free(stderr);
-    return 2;
+    return 3;
 }
 
 /* Spawns a command.
