@@ -344,33 +344,30 @@ luaH_luakit_selection(lua_State *L)
     return 1;
 }
 
-static const struct special_dir_mapping_t {
-    const gchar *name;
-    GUserDirectory atom;
-} special_dirs[] = {
-  { "DESKTOP",      G_USER_DIRECTORY_DESKTOP,      },
-  { "DOCUMENTS",    G_USER_DIRECTORY_DOCUMENTS,    },
-  { "DOWNLOAD",     G_USER_DIRECTORY_DOWNLOAD,     },
-  { "MUSIC",        G_USER_DIRECTORY_MUSIC,        },
-  { "PICTURES",     G_USER_DIRECTORY_PICTURES,     },
-  { "PUBLIC_SHARE", G_USER_DIRECTORY_PUBLIC_SHARE, },
-  { "TEMPLATES",    G_USER_DIRECTORY_TEMPLATES,    },
-  { "VIDEOS",       G_USER_DIRECTORY_VIDEOS,       },
-  { NULL,           0,                             },
-};
-
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
-    const gchar *name = luaL_checkstring(L, 1);
-    for (guint i = 0; i < LENGTH(special_dirs); i++) {
-        if (g_strcmp0(special_dirs[i].name, name))
-            continue;
-        lua_pushstring(L, g_get_user_special_dir(special_dirs[i].atom));
-        return 1;
+    size_t len;
+    const gchar *name = luaL_checklstring(L, 1, &len);
+    luakit_token_t token = l_tokenize(name, len);
+    GUserDirectory atom;
+    /* match token with G_USER_DIR_* atom */
+    switch(token) {
+      case L_TK_DESKTOP:      atom = G_USER_DIRECTORY_DESKTOP;      break;
+      case L_TK_DOCUMENTS:    atom = G_USER_DIRECTORY_DOCUMENTS;    break;
+      case L_TK_DOWNLOAD:     atom = G_USER_DIRECTORY_DOWNLOAD;     break;
+      case L_TK_MUSIC:        atom = G_USER_DIRECTORY_MUSIC;        break;
+      case L_TK_PICTURES:     atom = G_USER_DIRECTORY_PICTURES;     break;
+      case L_TK_PUBLIC_SHARE: atom = G_USER_DIRECTORY_PUBLIC_SHARE; break;
+      case L_TK_TEMPLATES:    atom = G_USER_DIRECTORY_TEMPLATES;    break;
+      case L_TK_VIDEOS:       atom = G_USER_DIRECTORY_VIDEOS;       break;
+      default:
+        warn("unknown atom G_USER_DIRECTORY_%s", name);
+        luaL_argerror(L, 1, "invalid G_USER_DIRECTORY_* atom");
+        return 0;
     }
-    luaL_argerror(L, 1, "unknown special directory name");
-    return 0;
+    lua_pushstring(L, g_get_user_special_dir(atom));
+    return 1;
 }
 
 /* luakit global table.
