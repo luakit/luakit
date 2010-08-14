@@ -46,7 +46,7 @@ luaH_pushdownload(lua_State *L, WebKitDownload* download)
 {
     download_t *lua_download = download_new(L);
     lua_download->webkit_download = download;
-    g_object_ref(download); // prevent garbage collection
+    g_object_ref(download); // prevent glib garbage collection
 }
 
 static int
@@ -54,7 +54,6 @@ luaH_download_gc(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
     g_object_unref(download->webkit_download);
-    luaH_object_unref(L, download->ref); // allow lua garbage collection of download
     return 0;
 }
 
@@ -66,7 +65,7 @@ luaH_download_new(lua_State *L)
     download_t *download = luaH_checkudata(L, -1, &download_class);
     WebKitNetworkRequest *request = webkit_network_request_new(uri);
     download->webkit_download = webkit_download_new(request);
-    g_object_ref(download->webkit_download); // prevent garbage collection
+    g_object_ref(download->webkit_download); // prevent glib garbage collection
     return 1;
 }
 
@@ -167,6 +166,7 @@ luaH_download_start(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
     download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
+    // TODO: unref when download finishes!
     webkit_download_start(download->webkit_download);
     return 0;
 }
