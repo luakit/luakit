@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef AWESOME_OBJECTS_DOWNLOAD_H
-#define AWESOME_OBJECTS_DOWNLOAD_H
+#ifndef LUAKIT_OBJECTS_DOWNLOAD_H
+#define LUAKIT_OBJECTS_DOWNLOAD_H
 
 #include <lua.h>
 #include <webkit/webkitdownload.h>
