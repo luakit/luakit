@@ -66,6 +66,7 @@ show_frame
 show_scrollbars
 show_tabs
 spacing
+spawn
 switch
 text
 textbutton

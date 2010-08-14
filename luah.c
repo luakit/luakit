@@ -407,6 +407,25 @@ luaH_luakit_get_special_dir(lua_State *L)
     return 1;
 }
 
+/* Spawns a command.
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on stack (0).
+ */
+static gint
+luaH_luakit_spawn(lua_State *L)
+{
+    GError *e = NULL;
+    const gchar *command = luaL_checkstring(L, 1);
+    g_spawn_command_line_async(command, &e);
+    if(e)
+    {
+        lua_pushstring(L, e->message);
+        g_clear_error(&e);
+        lua_error(L);
+    }
+    return 0;
+}
+
 /* luakit global table.
  * \param L The Lua VM state.
  * \return The number of elements pushed on stack.
@@ -467,6 +486,10 @@ luaH_luakit_index(lua_State *L)
 
       case L_TK_GET_SPECIAL_DIR:
         lua_pushcfunction(L, luaH_luakit_get_special_dir);
+        return 1;
+
+      case L_TK_SPAWN:
+        lua_pushcfunction(L, luaH_luakit_spawn);
         return 1;
 
       default:
