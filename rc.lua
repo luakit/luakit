@@ -390,7 +390,7 @@ end
 
 -- Attach signal handlers to a new tab's webview
 function attach_webview_signals(w, view)
-    view:add_signal("title-changed", function (v)
+    view:add_signal("property::title", function (v)
         w:update_tab_labels()
         if w:is_current(v) then
             w:update_win_title(v)
