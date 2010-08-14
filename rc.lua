@@ -481,6 +481,22 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- 'link' contains the download link
+    -- 'reason' contains the reason of the request (i.e. "link-clicked")
+    -- return TRUE to handle the request by yourself or FALSE to proceed
+    -- with default behaviour
+    view:add_signal("new-window-decision", function (v, link, reason)
+        if w:is_current(v) then
+            print ("new-window-decision", link, reason)
+            if reason == "link-clicked" then
+                new_window({ link })
+                return true
+            end
+            w:new_tab(link)
+        end
+        return false
+    end)
+
     view:add_signal("property::progress", function (v)
         if w:is_current(v) then
             w:update_progress(v)

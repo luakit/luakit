@@ -314,6 +314,65 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 }
 
 static gboolean
+new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, WebKitWebNavigationAction *na,
+        WebKitWebPolicyDecision *pd, widget_t *w)
+{
+    (void) v;
+    (void) f;
+    lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gchar *reason = NULL;
+    gint ret = 0;
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+
+    switch (webkit_web_navigation_action_get_reason(na)) {
+        case WEBKIT_WEB_NAVIGATION_REASON_LINK_CLICKED:
+            reason = "link-clicked";
+            break;
+        case WEBKIT_WEB_NAVIGATION_REASON_FORM_SUBMITTED:
+            reason = "form-submitted";
+            break;
+        case WEBKIT_WEB_NAVIGATION_REASON_BACK_FORWARD:
+            reason = "back-forward";
+            break;
+        case WEBKIT_WEB_NAVIGATION_REASON_RELOAD:
+            reason = "reload";
+            break;
+        case WEBKIT_WEB_NAVIGATION_REASON_FORM_RESUBMITTED:
+            reason = "form-resubmitted";
+            break;
+        case WEBKIT_WEB_NAVIGATION_REASON_OTHER:
+            reason = "other";
+            break;
+        default:
+            reason = "unknown";
+            break;
+    }
+
+    lua_pushstring(L, reason);
+
+    ret = luaH_object_emit_signal(L, -3, "new-window-decision", 2, 1);
+
+    /* User responded with true, meaning a decision was made
+     * and the signal was handled */
+    if (ret && luaH_checkboolean(L, -1))
+    {
+        webkit_web_policy_decision_ignore(pd);
+        lua_pop(L, ret + 1);
+
+        return TRUE;
+    }
+
+    lua_pop(L, ret + 1);
+
+    /* proceed with default behaviour */
+    return FALSE;
+}
+
+static gboolean
 download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
 {
     (void) v;
@@ -875,6 +934,7 @@ widget_webview(widget_t *w)
       "signal::key-press-event",                      (GCallback)key_press_cb,           w,
       "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
+      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb, w,
       "signal::notify",                               (GCallback)notify_cb,              w,
       "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
