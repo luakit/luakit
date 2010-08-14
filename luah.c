@@ -381,21 +381,6 @@ luaH_luakit_set_selection(lua_State *L)
     return 0;
 }
 
-static const struct special_dir_mapping_t {
-    const gchar *name;
-    GUserDirectory atom;
-} special_dirs[] = {
-  { "DESKTOP",      G_USER_DIRECTORY_DESKTOP,      },
-  { "DOCUMENTS",    G_USER_DIRECTORY_DOCUMENTS,    },
-  { "DOWNLOAD",     G_USER_DIRECTORY_DOWNLOAD,     },
-  { "MUSIC",        G_USER_DIRECTORY_MUSIC,        },
-  { "PICTURES",     G_USER_DIRECTORY_PICTURES,     },
-  { "PUBLIC_SHARE", G_USER_DIRECTORY_PUBLIC_SHARE, },
-  { "TEMPLATES",    G_USER_DIRECTORY_TEMPLATES,    },
-  { "VIDEOS",       G_USER_DIRECTORY_VIDEOS,       },
-  { NULL,           0,                             },
-};
-
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
