@@ -31,6 +31,7 @@ typedef struct
 {
     LUA_OBJECT_HEADER
     WebKitDownload* webkit_download;
+    gpointer ref;
 } download_t;
 
 static lua_class_t download_class;
@@ -49,6 +50,15 @@ luaH_pushdownload(lua_State *L, WebKitDownload* download)
 }
 
 static int
+luaH_download_gc(lua_State *L)
+{
+    download_t *download = luaH_checkudata(L, 1, &download_class);
+    g_object_unref(download->webkit_download);
+    luaH_object_unref(L, download->ref); // allow lua garbage collection of download
+    return 0;
+}
+
+static int
 luaH_download_new(lua_State *L)
 {
     const char *uri = luaL_checkstring(L, 1);
@@ -56,6 +66,7 @@ luaH_download_new(lua_State *L)
     download_t *download = luaH_checkudata(L, -1, &download_class);
     WebKitNetworkRequest *request = webkit_network_request_new(uri);
     download->webkit_download = webkit_download_new(request);
+    g_object_ref(download->webkit_download); // prevent garbage collection
     return 1;
 }
 
@@ -155,7 +166,7 @@ static int
 luaH_download_start(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    luaH_object_ref(L, 1); // TODO why? necessary?
+    download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
     webkit_download_start(download->webkit_download);
     return 0;
 }
@@ -164,7 +175,7 @@ static int
 luaH_download_cancel(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    luaH_object_ref(L, 1); // TODO why? necessary?
+    luaH_object_unref(L, download->ref); // allow Lua garbage collection of download
     webkit_download_cancel(download->webkit_download);
     return 0;
 }
@@ -176,6 +187,7 @@ download_class_setup(lua_State *L)
     {
         LUA_CLASS_METHODS(download)
         { "__call", luaH_download_new },
+        { "__gc", luaH_download_gc },
         { NULL, NULL }
     };
 
