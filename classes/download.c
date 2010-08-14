@@ -45,6 +45,7 @@ luaH_pushdownload(lua_State *L, WebKitDownload* download)
 {
     download_t *lua_download = download_new(L);
     lua_download->webkit_download = download;
+    g_object_ref(download); // prevent garbage collection
 }
 
 static int
