@@ -158,6 +158,7 @@ luaH_download_start(lua_State *L)
     webkit_download_start(download->webkit_download);
     return 0;
 }
+
 static int
 luaH_download_cancel(lua_State *L)
 {
