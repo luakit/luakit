@@ -85,7 +85,7 @@ init_lua(gchar **uris)
     lua_State *L;
 
     /* init globalconf structs */
-    globalconf.signals = signal_tree_new();
+    globalconf.signals = signal_new();
     globalconf.windows = g_ptr_array_new();
 
     /* init lua */

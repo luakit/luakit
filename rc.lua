@@ -25,6 +25,9 @@ MAX_SRCH_HISTORY = 100
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
+-- Small util functions
+function debug(...) if luakit.verbose then print(string.format(...)) end end
+
 -- Luakit theme
 theme = theme or {
     -- Default settings
@@ -103,6 +106,10 @@ mode_binds = {
         bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5) end),
+        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5) end),
+        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0) end),
+        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0) end),
         bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
         bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
@@ -455,28 +462,36 @@ function attach_webview_signals(w, view)
     -- 'mime' contains the mime type that is requested
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
-        if w:is_current(v) then
-            if luakit.verbose then print(string.format("Requested link: %s (%s)", link, mime)) end
-
-            -- i.e. block binary files like *.exe
-            if string.match(mime, "application/octet-stream") then
-                return false
-            end
-        end
+        debug("Requested link: %s (%s)", link, mime)
+        -- i.e. block binary files like *.exe
+        --if mime == "application/octet-stream" then
+        --    return false
+        --end
     end)
 
     -- 'link' contains the download link
     -- 'filename' contains the suggested filename (from server or webkit)
     view:add_signal("download-request", function (v, link, filename)
-        if w:is_current(v) and filename then
-            -- Make download dir
-            os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
+        if not filename then return end
+        -- Make download dir
+        os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
+        local dl = DOWNLOAD_DIR .. "/" .. filename
+        local wget = string.format("wget -q %q -O %q", link, dl)
+        debug("Launching: %s", wget)
+        luakit.spawn(wget)
+    end)
 
-            local dl = DOWNLOAD_DIR .. "/" .. filename
-            local wget = string.format("wget -q %q -O %q &", link, dl)
-            if luakit.verbose then print("Launching: " .. wget) end
-            os.execute(wget)
+    -- 'link' contains the download link
+    -- 'reason' contains the reason of the request (i.e. "link-clicked")
+    -- return TRUE to handle the request by yourself or FALSE to proceed
+    -- with default behaviour
+    view:add_signal("new-window-decision", function (v, link, reason)
+        debug("New window decision: %s (%s)", link, reason)
+        if reason == "link-clicked" then
+            new_window({ link })
+            return true
         end
+        w:new_tab(link)
     end)
 
     view:add_signal("property::progress", function (v)
@@ -840,7 +855,7 @@ window_helpers = {
     end,
 
     -- Webview scroll functions
-    scroll_vert = function(w, value, view)
+    scroll_vert = function (w, value, view)
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_vert()
         if type(value) == "string" then
@@ -849,13 +864,20 @@ window_helpers = {
         view:set_scroll_vert(value)
     end,
 
-    scroll_horiz = function(w, value)
+    scroll_horiz = function (w, value, view)
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_horiz()
         if type(value) == "string" then
             value = parse_scroll(cur, max, value)
         end
         view:set_scroll_horiz(value)
+    end,
+
+    -- vertical scroll of a multiple of the view_size
+    scroll_page = function (w, value, view)
+        if not view then view = w:get_current() end
+        local cur, max, size = view:get_scroll_vert()
+        view:set_scroll_vert(cur + size * value)
     end,
 
     -- Tab traversing functions
