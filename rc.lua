@@ -217,7 +217,6 @@ function build_window()
     -- Pack download bar
     local d = w.dbar
     d.ebox:set_child(d.layout)
-    d.ebox:hide()
     w.layout:pack_start(d.ebox,   false, false, 0)
     d.timer:add_signal("timeout", function() w:refresh_download_bar() end)
 
@@ -927,7 +926,21 @@ window_helpers = {
         w:update_download_widget(l, d)
         w:apply_download_theme(e, l)
         bar.layout:pack_start(e, false, false, 0)
-        e:add_signal("clicked", function(w) end)
+        e:add_signal("clicked", function(e, b)
+            if b == 1 then
+                -- TODO open file
+            elseif b == 3 then
+                -- remove download
+                e:hide() -- TODO actually remove the thing so it can be garbage collected
+                for i,t in pairs(bar.downloads) do
+                    if t.widget == e then
+                        table.remove(bar.downloads, i)
+                        if t.download.status == "started" then t.download:stop() end
+                        break
+                    end
+                end
+            end
+        end)
         return e
     end,
 

@@ -48,7 +48,8 @@ button_press_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
         return FALSE;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "clicked", 0, 0);
+    lua_pushinteger(L, ev->button);
+    luaH_object_emit_signal(L, -2, "clicked", 1, 0);
     lua_pop(L, 1);
     return FALSE;
 }
