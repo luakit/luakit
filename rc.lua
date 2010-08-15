@@ -39,9 +39,9 @@ domain_props = { --[[
         ["enable-plugins"] = true,
     },
     ["forums.archlinux.org"] = {
-        ["user-stylesheet-uri"]     = luakit.data_home .. "/styles/dark.css",
+        ["user-stylesheet-uri"]     = luakit.data_dir .. "/styles/dark.css",
         ["enable-private-browsing"] = true,
-    }, ]]--
+    }, ]]
 }
 
 -- Luakit theme
