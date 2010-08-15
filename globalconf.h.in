@@ -30,9 +30,9 @@
 
 typedef struct {
     /* XDG directories */
-    gchar *base_cache_directory;
-    gchar *base_config_directory;
-    gchar *base_data_directory;
+    gchar *cache_dir;
+    gchar *config_dir;
+    gchar *data_dir;
     /* Path to the current config file */
     gchar *confpath;
     /* Print verbose output */

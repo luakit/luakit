@@ -18,7 +18,7 @@ local print = print
 local error = error
 local capi = { luakit = luakit }
 
--- Utility module for awful
+-- Utility module for luakit
 module("util")
 
 table = {}
@@ -150,15 +150,8 @@ function os.exists(f)
     end
 end
 
--- Table of xdg home paths or their default locations
-xdg = {
-    config_home = (os.getenv("XDG_CONFIG_HOME") or (os.getenv("HOME") .. "/.config"))      .. "/luakit",
-    data_home   = (os.getenv("XDG_DATA_HOME")   or (os.getenv("HOME") .. "/.local/share")) .. "/luakit",
-    cache_home  = (os.getenv("XDG_CACHE_HOME")  or (os.getenv("HOME") .. "/.cache"))       .. "/luakit",
-}
-
 -- Search locally, xdg home path and then luakit install path for a given file
-function xdg_find(f, xdg_home_path)
+local function xdg_find(f, xdg_home_path)
     -- Ignore absolute paths
     if string.match(f, "^/") then
         if os.exists(f) then return f end
@@ -174,8 +167,8 @@ function xdg_find(f, xdg_home_path)
     error(string.format("xdg_find: No such file at:\n\t%s\n", rtable.concat(paths, ",\n\t")))
 end
 
-function find_config(f) return xdg_find(f, xdg.config_home) end
-function find_data(f)   return xdg_find(f, xdg.data_home)   end
-function find_cache(f)  return xdg_find(f, xdg.cache_home)  end
+function find_config(f) return xdg_find(f, capi.luakit.config_dir) end
+function find_data(f)   return xdg_find(f, capi.luakit.data_dir)   end
+function find_cache(f)  return xdg_find(f, capi.luakit.cache_dir)  end
 
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

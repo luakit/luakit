@@ -32,7 +32,20 @@ static struct {
     SoupCookieJar *cookiejar;
 } Soup = { NULL, NULL };
 
-typedef enum { BOOL, CHAR, INT, FLOAT, DOUBLE } property_value_type;
+typedef enum {
+    BOOL,
+    CHAR,
+    INT,
+    FLOAT,
+    DOUBLE,
+    URI,
+} property_value_t;
+
+typedef enum {
+    SETTINGS,
+    WEBKITVIEW,
+    SOUPSESSION,
+} property_scope;
 
 typedef union {
     gchar    *c;
@@ -40,67 +53,93 @@ typedef union {
     gdouble   d;
     gfloat    f;
     gint      i;
-} property_tmp_values;
+} temp_value_t;
 
-const struct property_t {
-    const gchar *name;
-    property_value_type type;
-    gboolean webkitview;
-    gboolean writable;
-} properties[] = {
-  { "auto-load-images",                             BOOL,   FALSE,  TRUE  },
-  { "auto-resize-window",                           BOOL,   FALSE,  TRUE  },
-  { "auto-shrink-images",                           BOOL,   FALSE,  TRUE  },
-  { "cursive-font-family",                          CHAR,   FALSE,  TRUE  },
-  { "custom-encoding",                              CHAR,   TRUE,   TRUE  },
-  { "default-encoding",                             CHAR,   FALSE,  TRUE  },
-  { "default-font-family",                          CHAR,   FALSE,  TRUE  },
-  { "default-font-size",                            INT,    FALSE,  TRUE  },
-  { "default-monospace-font-size",                  INT,    FALSE,  TRUE  },
-  { "editable",                                     BOOL,   TRUE,   TRUE  },
-  { "enable-caret-browsing",                        BOOL,   FALSE,  TRUE  },
-  { "enable-default-context-menu",                  BOOL,   FALSE,  TRUE  },
-  { "enable-developer-extras",                      BOOL,   FALSE,  TRUE  },
-  { "enable-dom-paste",                             BOOL,   FALSE,  TRUE  },
-  { "enable-file-access-from-file-uris",            BOOL,   FALSE,  TRUE  },
-  { "enable-html5-database",                        BOOL,   FALSE,  TRUE  },
-  { "enable-html5-local-storage",                   BOOL,   FALSE,  TRUE  },
-  { "enable-java-applet",                           BOOL,   FALSE,  TRUE  },
-  { "enable-offline-web-application-cache",         BOOL,   FALSE,  TRUE  },
-  { "enable-page-cache",                            BOOL,   FALSE,  TRUE  },
-  { "enable-plugins",                               BOOL,   FALSE,  TRUE  },
-  { "enable-private-browsing",                      BOOL,   FALSE,  TRUE  },
-  { "enable-scripts",                               BOOL,   FALSE,  TRUE  },
-  { "enable-site-specific-quirks",                  BOOL,   FALSE,  TRUE  },
-  { "enable-spatial-navigation",                    BOOL,   FALSE,  TRUE  },
-  { "enable-spell-checking",                        BOOL,   FALSE,  TRUE  },
-  { "enable-universal-access-from-file-uris",       BOOL,   FALSE,  TRUE  },
-  { "enable-xss-auditor",                           BOOL,   FALSE,  TRUE  },
-  { "encoding",                                     CHAR,   TRUE,   FALSE },
-  { "enforce-96-dpi",                               BOOL,   FALSE,  TRUE  },
-  { "fantasy-font-family",                          CHAR,   FALSE,  TRUE  },
-  { "full-content-zoom",                            BOOL,   TRUE,   TRUE  },
-  { "icon-uri",                                     CHAR,   TRUE,   FALSE },
-  { "javascript-can-access-clipboard",              BOOL,   FALSE,  TRUE  },
-  { "javascript-can-open-windows-automatically",    BOOL,   FALSE,  TRUE  },
-  { "minimum-font-size",                            INT,    FALSE,  TRUE  },
-  { "minimum-logical-font-size",                    INT,    FALSE,  TRUE  },
-  { "monospace-font-family",                        CHAR,   FALSE,  TRUE  },
-  { "print-backgrounds",                            BOOL,   FALSE,  TRUE  },
-  { "progress",                                     DOUBLE, TRUE,   FALSE },
-  { "resizable-text-areas",                         BOOL,   FALSE,  TRUE  },
-  { "sans-serif-font-family",                       CHAR,   FALSE,  TRUE  },
-  { "serif-font-family",                            CHAR,   FALSE,  TRUE  },
-  { "spell-checking-languages",                     CHAR,   FALSE,  TRUE  },
-  { "tab-key-cycles-through-elements",              BOOL,   FALSE,  TRUE  },
-  { "title",                                        CHAR,   TRUE,   FALSE },
-  { "transparent",                                  BOOL,   TRUE,   TRUE  },
-  { "user-agent",                                   CHAR,   FALSE,  TRUE  },
-  { "user-stylesheet-uri",                          CHAR,   FALSE,  TRUE  },
-  { "zoom-level",                                   FLOAT,  TRUE,   TRUE  },
-  { "zoom-step",                                    FLOAT,  FALSE,  TRUE  },
-  { NULL,                                           0,      0,      0     },
+GHashTable *properties = NULL;
+
+typedef struct {
+    const gchar      *name;
+    property_value_t type;
+    property_scope   scope;
+    gboolean         writable;
+    const gchar      *signame;
+} property_t;
+
+property_t properties_table[] = {
+  { "accept-language",                              CHAR,   SOUPSESSION, TRUE,  NULL },
+  { "accept-language-auto",                         BOOL,   SOUPSESSION, TRUE,  NULL },
+  { "auto-load-images",                             BOOL,   SETTINGS,    TRUE,  NULL },
+  { "auto-resize-window",                           BOOL,   SETTINGS,    TRUE,  NULL },
+  { "auto-shrink-images",                           BOOL,   SETTINGS,    TRUE,  NULL },
+  { "cursive-font-family",                          CHAR,   SETTINGS,    TRUE,  NULL },
+  { "custom-encoding",                              CHAR,   WEBKITVIEW,  TRUE,  NULL },
+  { "default-encoding",                             CHAR,   SETTINGS,    TRUE,  NULL },
+  { "default-font-family",                          CHAR,   SETTINGS,    TRUE,  NULL },
+  { "default-font-size",                            INT,    SETTINGS,    TRUE,  NULL },
+  { "default-monospace-font-size",                  INT,    SETTINGS,    TRUE,  NULL },
+  { "editable",                                     BOOL,   WEBKITVIEW,  TRUE,  NULL },
+  { "enable-caret-browsing",                        BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-default-context-menu",                  BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-developer-extras",                      BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-dom-paste",                             BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-file-access-from-file-uris",            BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-html5-database",                        BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-html5-local-storage",                   BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-java-applet",                           BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-offline-web-application-cache",         BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-page-cache",                            BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-plugins",                               BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-private-browsing",                      BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-scripts",                               BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-site-specific-quirks",                  BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-spatial-navigation",                    BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-spell-checking",                        BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-universal-access-from-file-uris",       BOOL,   SETTINGS,    TRUE,  NULL },
+  { "enable-xss-auditor",                           BOOL,   SETTINGS,    TRUE,  NULL },
+  { "encoding",                                     CHAR,   WEBKITVIEW,  FALSE, NULL },
+  { "enforce-96-dpi",                               BOOL,   SETTINGS,    TRUE,  NULL },
+  { "fantasy-font-family",                          CHAR,   SETTINGS,    TRUE,  NULL },
+  { "full-content-zoom",                            BOOL,   WEBKITVIEW,  TRUE,  NULL },
+  { "icon-uri",                                     CHAR,   WEBKITVIEW,  FALSE, NULL },
+  { "idle-timeout",                                 INT,    SOUPSESSION, TRUE,  NULL },
+  { "javascript-can-access-clipboard",              BOOL,   SETTINGS,    TRUE,  NULL },
+  { "javascript-can-open-windows-automatically",    BOOL,   SETTINGS,    TRUE,  NULL },
+  { "max-conns",                                    INT,    SOUPSESSION, TRUE,  NULL },
+  { "max-conns-per-host",                           INT,    SOUPSESSION, TRUE,  NULL },
+  { "minimum-font-size",                            INT,    SETTINGS,    TRUE,  NULL },
+  { "minimum-logical-font-size",                    INT,    SETTINGS,    TRUE,  NULL },
+  { "monospace-font-family",                        CHAR,   SETTINGS,    TRUE,  NULL },
+  { "print-backgrounds",                            BOOL,   SETTINGS,    TRUE,  NULL },
+  { "progress",                                     DOUBLE, WEBKITVIEW,  FALSE, NULL },
+  { "proxy-uri",                                    URI,    SOUPSESSION, TRUE,  NULL },
+  { "resizable-text-areas",                         BOOL,   SETTINGS,    TRUE,  NULL },
+  { "sans-serif-font-family",                       CHAR,   SETTINGS,    TRUE,  NULL },
+  { "serif-font-family",                            CHAR,   SETTINGS,    TRUE,  NULL },
+  { "spell-checking-languages",                     CHAR,   SETTINGS,    TRUE,  NULL },
+  { "ssl-ca-file",                                  CHAR,   SOUPSESSION, TRUE,  NULL },
+  { "ssl-strict",                                   BOOL,   SOUPSESSION, TRUE,  NULL },
+  { "tab-key-cycles-through-elements",              BOOL,   SETTINGS,    TRUE,  NULL },
+  { "timeout",                                      INT,    SOUPSESSION, TRUE,  NULL },
+  { "title",                                        CHAR,   WEBKITVIEW,  FALSE, NULL },
+  { "transparent",                                  BOOL,   WEBKITVIEW,  TRUE,  NULL },
+  { "uri",                                          CHAR,   WEBKITVIEW,  TRUE,  NULL },
+  { "use-ntlm",                                     BOOL,   SOUPSESSION, TRUE,  NULL },
+  { "user-agent",                                   CHAR,   SETTINGS,    TRUE,  NULL },
+  { "user-stylesheet-uri",                          CHAR,   SETTINGS,    TRUE,  NULL },
+  { "zoom-level",                                   FLOAT,  WEBKITVIEW,  TRUE,  NULL },
+  { "zoom-step",                                    FLOAT,  SETTINGS,    TRUE,  NULL },
+  { NULL,                                           0,      0,           0,     NULL },
 };
+
+static void
+webview_init_properties() {
+    properties = g_hash_table_new(g_str_hash, g_str_equal);
+    for (property_t *p = properties_table; p->name; p++) {
+        /* pre-compile "property::name" signals for each property */
+        if (!p->signame) p->signame = g_strdup_printf("property::%s", p->name);
+        g_hash_table_insert(properties, (gpointer) p->name, (gpointer) p);
+    }
+}
 
 static const gchar*
 webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
@@ -199,15 +238,17 @@ luaH_webview_eval_js(lua_State *L)
 }
 
 static void
-progress_cb(WebKitWebView *v, gint p, widget_t *w)
+notify_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 {
     (void) v;
-    (void) p;
-
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "progress-update", 0, 0);
-    lua_pop(L, 1);
+    property_t *p;
+    /* emit "property::name" signal if found in properties table */
+    if ((p = g_hash_table_lookup(properties, ps->name))) {
+        lua_State *L = globalconf.L;
+        luaH_object_push(L, w->ref);
+        luaH_object_emit_signal(L, -1, p->signame, 0, 0);
+        lua_pop(L, 1);
+    }
 }
 
 static gboolean
@@ -225,62 +266,131 @@ download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
 }
 
 static void
-title_changed_cb(WebKitWebView *v, WebKitWebFrame *f, const gchar *title, widget_t *w)
+notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 {
-    (void) f;
+    (void) ps;
+
+    /* Get load status */
+    WebKitLoadStatus status;
+    g_object_get(G_OBJECT(v), "load-status", &status, NULL);
+
+    /* get load status literal */
+    gchar *name = NULL;
+    switch (status) {
+
+#define LT_CASE(a, l) case WEBKIT_LOAD_##a: name = l; break;
+        LT_CASE(PROVISIONAL,                     "provisional")
+        LT_CASE(COMMITTED,                       "committed")
+        LT_CASE(FINISHED,                        "finished")
+        LT_CASE(FIRST_VISUALLY_NON_EMPTY_LAYOUT, "first-visual")
+        LT_CASE(FAILED,                          "failed")
+#undef  LT_CASE
+
+      default:
+        warn("programmer error, unable to get load status literal");
+        break;
+    }
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, name);
+    luaH_object_emit_signal(L, -2, "load-status", 1, 0);
+    lua_pop(L, 1);
+}
+
+static gboolean
+mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
+        widget_t *w)
+{
     (void) v;
-    (void) title;
-
+    (void) f;
     lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gint ret;
+
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "title-changed", 0, 0);
-    lua_pop(L, 1);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, mime);
+    ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
+
+    if (ret && !luaH_checkboolean(L, -1))
+        /* User responded with false, ignore request */
+        webkit_web_policy_decision_ignore(pd);
+    else if (!webkit_web_view_can_show_mime_type(v, mime))
+        webkit_web_policy_decision_download(pd);
+    else
+        webkit_web_policy_decision_use(pd);
+
+    lua_pop(L, ret + 1);
+    return TRUE;
 }
 
-static void
-load_start_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+static gboolean
+new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, WebKitWebNavigationAction *na,
+        WebKitWebPolicyDecision *pd, widget_t *w)
 {
     (void) v;
     (void) f;
-
     lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gchar *reason = NULL;
+    gint ret = 0;
+
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "load-start", 0, 0);
-    lua_pop(L, 1);
+    lua_pushstring(L, uri);
+
+    switch (webkit_web_navigation_action_get_reason(na)) {
+
+#define NR_CASE(a, l) case WEBKIT_WEB_NAVIGATION_REASON_##a: reason = l; break;
+        NR_CASE(LINK_CLICKED,     "link-clicked");
+        NR_CASE(FORM_SUBMITTED,   "form-submitted");
+        NR_CASE(BACK_FORWARD,     "back-forward");
+        NR_CASE(RELOAD,           "reload");
+        NR_CASE(FORM_RESUBMITTED, "form-resubmitted");
+        NR_CASE(OTHER,            "other");
+#undef  NR_CASE
+
+      default:
+        warn("programmer error, unable to get web navigation reason literal");
+        break;
+    }
+
+    lua_pushstring(L, reason);
+    ret = luaH_object_emit_signal(L, -3, "new-window-decision", 2, 1);
+
+    /* User responded with true, meaning a decision was made
+     * and the signal was handled */
+    if (ret && luaH_checkboolean(L, -1))
+    {
+        webkit_web_policy_decision_ignore(pd);
+        lua_pop(L, ret + 1);
+
+        return TRUE;
+    }
+
+    lua_pop(L, ret + 1);
+
+    /* proceed with default behaviour */
+    return FALSE;
 }
 
-inline static void
-update_uri(GtkWidget *view, const gchar *uri, widget_t *w)
+static gboolean
+download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
 {
-    /* return if uri has not changed */
-    if (!g_strcmp0(uri, g_object_get_data(G_OBJECT(view), "uri")))
-        return;
+    (void) v;
+    const gchar *uri = webkit_download_get_uri((WebKitDownload *) dl);
+    const gchar *filename = webkit_download_get_suggested_filename((WebKitDownload *) dl);
 
-    g_object_set_data_full(G_OBJECT(view), "uri", g_strdup(uri), g_free);
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, filename);
+    luaH_object_emit_signal(L, -3, "download-request", 2, 0);
     lua_pop(L, 1);
-}
 
-static void
-load_commit_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
-{
-    update_uri(GTK_WIDGET(v), webkit_web_frame_get_uri(f), w);
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "load-commit", 0, 0);
-    lua_pop(L, 1);
-}
-
-static void
-load_finish_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
-{
-    update_uri(GTK_WIDGET(v), webkit_web_frame_get_uri(f), w);
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "load-finish", 0, 0);
-    lua_pop(L, 1);
+    return FALSE;
 }
 
 static void
@@ -357,8 +467,6 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     const gchar *uri = webkit_network_request_get_uri(r);
     gint ret;
 
-    debug("Navigation requested: %s", uri);
-
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
@@ -369,16 +477,16 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     else
         webkit_web_policy_decision_use(p);
 
-    lua_pop(L, ret);
+    lua_pop(L, ret + 1);
     return TRUE;
 }
 
 inline static gint
-push_adjustment_values(lua_State *L, GtkAdjustment *adjustment)
+luaH_adjustment_push_values(lua_State *L, GtkAdjustment *a)
 {
-    gdouble view_size = gtk_adjustment_get_page_size(adjustment);
-    gdouble value = gtk_adjustment_get_value(adjustment);
-    gdouble max = gtk_adjustment_get_upper(adjustment) - view_size;
+    gdouble view_size = gtk_adjustment_get_page_size(a);
+    gdouble value = gtk_adjustment_get_value(a);
+    gdouble max = gtk_adjustment_get_upper(a) - view_size;
     lua_pushnumber(L, value);
     lua_pushnumber(L, (max < 0 ? 0 : max));
     lua_pushnumber(L, view_size);
@@ -389,24 +497,24 @@ static gint
 luaH_webview_get_vscroll(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
-    return push_adjustment_values(L, adjustment);
+    GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    return luaH_adjustment_push_values(L, a);
 }
 
 static gint
 luaH_webview_get_hscroll(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
-    return push_adjustment_values(L, adjustment);
+    GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    return luaH_adjustment_push_values(L, a);
 }
 
 inline static void
-set_adjustment(GtkAdjustment *adjustment, gdouble new)
+adjustment_set(GtkAdjustment *a, gdouble new)
 {
-    gdouble view_size = gtk_adjustment_get_page_size(adjustment);
-    gdouble max = gtk_adjustment_get_upper(adjustment) - view_size;
-    gtk_adjustment_set_value(adjustment, ((new < 0 ? 0 : new) > max ? max : new));
+    gdouble view_size = gtk_adjustment_get_page_size(a);
+    gdouble max = gtk_adjustment_get_upper(a) - view_size;
+    gtk_adjustment_set_value(a, ((new < 0 ? 0 : new) > max ? max : new));
 }
 
 static gint
@@ -414,8 +522,8 @@ luaH_webview_set_scroll_vert(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     gdouble value = (gdouble) luaL_checknumber(L, 2);
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
-    set_adjustment(adjustment, value);
+    GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    adjustment_set(a, value);
     return 0;
 }
 
@@ -424,8 +532,8 @@ luaH_webview_set_scroll_horiz(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     gdouble value = (gdouble) luaL_checknumber(L, 2);
-    GtkAdjustment *adjustment = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
-    set_adjustment(adjustment, value);
+    GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    adjustment_set(a, value);
     return 0;
 }
 
@@ -446,6 +554,15 @@ luaH_webview_go_forward(lua_State *L)
     gint steps = (gint) luaL_checknumber(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps);
+    return 0;
+}
+
+static gint
+luaH_webview_reload(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    webkit_web_view_reload(WEBKIT_WEB_VIEW(view));
     return 0;
 }
 
@@ -475,57 +592,81 @@ luaH_webview_clear_search(lua_State *L)
     return 0;
 }
 
+inline static GObject*
+get_settings_object(GtkWidget *view, property_t *p)
+{
+    switch (p->scope) {
+      case SETTINGS:
+        return G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
+      case WEBKITVIEW:
+        return G_OBJECT(view);
+      case SOUPSESSION:
+        return G_OBJECT(Soup.session);
+      default:
+        break;
+    }
+    warn("programmer error: unknown settings scope for property: %s", p->name);
+    return NULL;
+}
+
 static gint
 luaH_webview_get_prop(lua_State *L)
 {
+    GObject *so;
+    SoupURI *u;
+    property_t *p;
+    temp_value_t tmp;
+
+    /* get webview widget */
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    const gchar *prop = luaL_checkstring(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
-    GObject *ws;
-    property_tmp_values tmp;
 
-    for (guint i = 0; i < LENGTH(properties); i++) {
-        if (g_strcmp0(properties[i].name, prop))
-            continue;
+    /* get property struct */
+    const gchar *name = luaL_checkstring(L, 2);
+    if ((p = g_hash_table_lookup(properties, name))) {
+        so = get_settings_object(view, p);
 
-        if (properties[i].webkitview)
-            ws = G_OBJECT(view);
-        else
-            ws = G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
-
-        switch(properties[i].type) {
+        switch(p->type) {
           case BOOL:
-            g_object_get(ws, prop, &tmp.b, NULL);
+            g_object_get(so, p->name, &tmp.b, NULL);
             lua_pushboolean(L, tmp.b);
             return 1;
 
-          case CHAR:
-            g_object_get(ws, prop, &tmp.c, NULL);
-            lua_pushstring(L, tmp.c);
-            g_free(tmp.c);
-            return 1;
-
           case INT:
-            g_object_get(ws, prop, &tmp.i, NULL);
+            g_object_get(so, p->name, &tmp.i, NULL);
             lua_pushnumber(L, tmp.i);
             return 1;
 
           case FLOAT:
-            g_object_get(ws, prop, &tmp.f, NULL);
+            g_object_get(so, p->name, &tmp.f, NULL);
             lua_pushnumber(L, tmp.f);
             return 1;
 
           case DOUBLE:
-            g_object_get(ws, prop, &tmp.d, NULL);
+            g_object_get(so, p->name, &tmp.d, NULL);
             lua_pushnumber(L, tmp.d);
             return 1;
 
+          case CHAR:
+            g_object_get(so, p->name, &tmp.c, NULL);
+            lua_pushstring(L, tmp.c);
+            g_free(tmp.c);
+            return 1;
+
+          case URI:
+            g_object_get(so, p->name, &u, NULL);
+            tmp.c = soup_uri_to_string(u, 0);
+            lua_pushstring(L, tmp.c);
+            soup_uri_free(u);
+            g_free(tmp.c);
+            return 1;
+
           default:
-            warn("unknown property type for: %s", properties[i].name);
+            warn("programmer error: unknown property type for: %s", p->name);
             break;
         }
     }
-    warn("unknown property: %s", prop);
+    warn("unknown property: %s", name);
     return 0;
 }
 
@@ -533,58 +674,71 @@ static gint
 luaH_webview_set_prop(lua_State *L)
 {
     size_t len;
+    GObject *so;
+    SoupURI *u;
+    property_t *p;
+    temp_value_t tmp;
+
+    /* get webview widget */
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    const gchar *prop = luaL_checklstring(L, 2, &len);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
-    GObject *ws;
-    property_tmp_values tmp;
 
-    for (guint i = 0; i < LENGTH(properties); i++) {
-        if (g_strcmp0(properties[i].name, prop))
-            continue;
-
-        if (!properties[i].writable) {
-            warn("attempt to set read-only property: %s", prop);
+    /* get property struct */
+    const gchar *name = luaL_checkstring(L, 2);
+    if ((p = g_hash_table_lookup(properties, name))) {
+        if (!p->writable) {
+            warn("attempt to set read-only property: %s", p->name);
             return 0;
         }
 
-        if (properties[i].webkitview)
-            ws = G_OBJECT(view);
-        else
-            ws = G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(view)));
-
-        switch(properties[i].type) {
+        so = get_settings_object(view, p);
+        switch(p->type) {
           case BOOL:
             tmp.b = luaH_checkboolean(L, 3);
-            g_object_set(ws, prop, tmp.b, NULL);
-            return 0;
-
-          case CHAR:
-            tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
-            g_object_set(ws, prop, tmp.c, NULL);
+            g_object_set(so, p->name, tmp.b, NULL);
             return 0;
 
           case INT:
             tmp.i = (gint) luaL_checknumber(L, 3);
-            g_object_set(ws, prop, tmp.i, NULL);
+            g_object_set(so, p->name, tmp.i, NULL);
             return 0;
 
           case FLOAT:
             tmp.f = (gfloat) luaL_checknumber(L, 3);
-            g_object_set(ws, prop, tmp.f, NULL);
+            g_object_set(so, p->name, tmp.f, NULL);
             return 0;
 
           case DOUBLE:
             tmp.d = (gdouble) luaL_checknumber(L, 3);
-            g_object_set(ws, prop, tmp.d, NULL);
+            g_object_set(so, p->name, tmp.d, NULL);
+            return 0;
+
+          case CHAR:
+            tmp.c = (gchar*) luaL_checkstring(L, 3);
+            g_object_set(so, p->name, tmp.c, NULL);
+            return 0;
+
+          case URI:
+            tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
+            if (!len || g_strrstr(tmp.c, "://"))
+                tmp.c = g_strdup(tmp.c);
+            else
+                tmp.c = g_strdup_printf("http://%s", tmp.c);
+            u = soup_uri_new(tmp.c);
+            if (!u || SOUP_URI_VALID_FOR_HTTP(u))
+                g_object_set(so, p->name, u, NULL);
+            else
+                luaL_error(L, "cannot parse uri: %s", tmp.c);
+            if (u) soup_uri_free(u);
+            g_free(tmp.c);
             return 0;
 
           default:
-            warn("unknown property type for: %s", properties[i].name);
+            warn("programmer error: unknown property type for: %s", p->name);
             break;
         }
     }
-    warn("unknown property: %s", prop);
+    warn("unknown property: %s", name);
     return 0;
 }
 
@@ -633,79 +787,44 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    temp_value_t tmp;
 
-    switch(token)
-    {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+    switch(token) {
 
-      case L_TK_GET_SCROLL_VERT:
-        lua_pushcfunction(L, luaH_webview_get_vscroll);
-        return 1;
-
-      case L_TK_GET_SCROLL_HORIZ:
-        lua_pushcfunction(L, luaH_webview_get_hscroll);
-        return 1;
-
-      case L_TK_SET_SCROLL_VERT:
-        lua_pushcfunction(L, luaH_webview_set_scroll_vert);
-        return 1;
-
-      case L_TK_SET_SCROLL_HORIZ:
-        lua_pushcfunction(L, luaH_webview_set_scroll_horiz);
-        return 1;
-
-      case L_TK_EVAL_JS:
-        lua_pushcfunction(L, luaH_webview_eval_js);
-        return 1;
-
-      case L_TK_SEARCH:
-        lua_pushcfunction(L, luaH_webview_search);
-        return 1;
-
-      case L_TK_CLEAR_SEARCH:
-        lua_pushcfunction(L, luaH_webview_clear_search);
-        return 1;
-
-      case L_TK_SET_PROP:
-        lua_pushcfunction(L, luaH_webview_set_prop);
-        return 1;
-
-      case L_TK_GET_PROP:
-        lua_pushcfunction(L, luaH_webview_get_prop);
-        return 1;
+#define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction(L, f); return 1;
+        /* property methods */
+        PF_CASE(GET_PROP,           luaH_webview_get_prop)
+        PF_CASE(SET_PROP,           luaH_webview_set_prop)
+        /* scroll adjustment methods */
+        PF_CASE(GET_SCROLL_HORIZ,   luaH_webview_get_hscroll)
+        PF_CASE(GET_SCROLL_VERT,    luaH_webview_get_vscroll)
+        PF_CASE(SET_SCROLL_HORIZ,   luaH_webview_set_scroll_horiz)
+        PF_CASE(SET_SCROLL_VERT,    luaH_webview_set_scroll_vert)
+        /* search methods */
+        PF_CASE(CLEAR_SEARCH,       luaH_webview_clear_search)
+        PF_CASE(SEARCH,             luaH_webview_search)
+        /* history navigation methods */
+        PF_CASE(GO_BACK,            luaH_webview_go_back)
+        PF_CASE(GO_FORWARD,         luaH_webview_go_forward)
+        /* misc webview methods */
+        PF_CASE(EVAL_JS,            luaH_webview_eval_js)
+        PF_CASE(LOADING,            luaH_webview_loading)
+        PF_CASE(RELOAD,             luaH_webview_reload)
+        /* widget methods */
+        PF_CASE(DESTROY,            luaH_widget_destroy)
+        PF_CASE(FOCUS,              luaH_widget_focus)
+        PF_CASE(HIDE,               luaH_widget_hide)
+        PF_CASE(SHOW,               luaH_widget_show)
+#undef  PF_CASE
 
       case L_TK_HOVERED_URI:
         lua_pushstring(L, g_object_get_data(G_OBJECT(view), "hovered-uri"));
         return 1;
 
       case L_TK_URI:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(view), "uri"));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
-
-      case L_TK_FOCUS:
-        lua_pushcfunction(L, luaH_widget_focus);
-        return 1;
-
-      case L_TK_LOADING:
-        lua_pushcfunction(L, luaH_webview_loading);
-        return 1;
-
-      case L_TK_GO_BACK:
-        lua_pushcfunction(L, luaH_webview_go_back);
-        return 1;
-
-      case L_TK_GO_FORWARD:
-        lua_pushcfunction(L, luaH_webview_go_forward);
+        g_object_get(G_OBJECT(view), "uri", &tmp.c, NULL);
+        lua_pushstring(L, tmp.c);
+        g_free(tmp.c);
         return 1;
 
       default:
@@ -723,16 +842,18 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
     size_t len;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
-    gchar *uri;
+    temp_value_t tmp;
 
     switch(token)
     {
       case L_TK_URI:
-        uri = (gchar*) luaL_checklstring(L, 3, &len);
-        uri = g_strrstr(uri, "://") ? g_strdup(uri) :
-            g_strdup_printf("http://%s", uri);
-        webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), uri);
-        g_object_set_data_full(G_OBJECT(view), "uri", uri, g_free);
+        tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
+        if (g_strrstr(tmp.c, "://") || !g_strcmp0(tmp.c, "about:blank"))
+            tmp.c = g_strdup(tmp.c);
+        else
+            tmp.c = g_strdup_printf("http://%s", tmp.c);
+        webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
+        g_free(tmp.c);
         break;
 
       case L_TK_SHOW_SCROLLBARS:
@@ -760,13 +881,13 @@ expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
 }
 
 static gboolean
-wv_button_press_cb(GtkWidget *view, GdkEventButton *event, widget_t *w)
+wv_button_press_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 {
-    if((event->type != GDK_BUTTON_PRESS) || (event->button != 1))
+    if((ev->type != GDK_BUTTON_PRESS) || (ev->button != 1))
         return FALSE;
 
     /* get webview hit context */
-    WebKitHitTestResult *ht = webkit_web_view_get_hit_test_result(WEBKIT_WEB_VIEW(view), event);
+    WebKitHitTestResult *ht = webkit_web_view_get_hit_test_result(WEBKIT_WEB_VIEW(view), ev);
     guint c;
     g_object_get(ht, "context", &c, NULL);
     gint context = (gint) c;
@@ -786,9 +907,12 @@ wv_button_press_cb(GtkWidget *view, GdkEventButton *event, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
-    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
-    gtk_widget_destroy(GTK_WIDGET(view));
-    gtk_widget_destroy(GTK_WIDGET(w->widget));
+    if (w->widget) {
+        GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+        gtk_widget_destroy(GTK_WIDGET(view));
+        gtk_widget_destroy(GTK_WIDGET(w->widget));
+    } else
+        warn("webview widget already destroyed");
 }
 
 widget_t *
@@ -798,10 +922,14 @@ widget_webview(widget_t *w)
     w->newindex = luaH_webview_newindex;
     w->destructor = webview_destructor;
 
+    /* init properties hash table */
+    if (!properties)
+        webview_init_properties();
+
     /* init soup session & cookies handling */
     if (!Soup.session) {
         Soup.session = webkit_get_default_session();
-        gchar *cookie_file = g_build_filename(globalconf.base_data_directory, "cookies.txt", NULL);
+        gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
         Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
         soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
         g_free(cookie_file);
@@ -813,28 +941,30 @@ widget_webview(widget_t *w)
     g_object_set_data(G_OBJECT(w->widget), "webview", view);
     gtk_container_add(GTK_CONTAINER(w->widget), view);
 
+    /* set initial scrollbars state */
     show_scrollbars(w, TRUE);
 
     /* connect webview signals */
     g_object_connect((GObject*)view,
       "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
+      "signal::button-release-event",                 (GCallback)button_release_cb,      w,
+      "signal::download-requested",                   (GCallback)download_request_cb,    w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
       "signal::focus-out-event",                      (GCallback)focus_cb,               w,
       "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
       "signal::key-press-event",                      (GCallback)key_press_cb,           w,
-      "signal::load-committed",                       (GCallback)load_commit_cb,         w,
-      "signal::load-finished",                        (GCallback)load_finish_cb,         w,
-      "signal::load-progress-changed",                (GCallback)progress_cb,            w,
-      "signal::load-started",                         (GCallback)load_start_cb,          w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
+      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb, w,
+      "signal::notify",                               (GCallback)notify_cb,              w,
+      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
-      "signal::title-changed",                        (GCallback)title_changed_cb,       w,
       "signal::download-requested",                   (GCallback)download_requested_cb,  w,
       "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       NULL);
 
-    /* setup */
+    /* show widgets */
     gtk_widget_show(view);
     gtk_widget_show(w->widget);
 

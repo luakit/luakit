@@ -20,6 +20,13 @@ HOMEPAGE    = "http://luakit.org/"
 SCROLL_STEP      = 20
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
+--HTTPPROXY = "http://example.com:3128"
+
+-- Setup download directory
+DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
+
+-- Small util functions
+function debug(...) if luakit.verbose then print(string.format(...)) end end
 
 -- Luakit theme
 theme = theme or {
@@ -48,8 +55,8 @@ theme = theme or {
     tablabel_format      = "%-30s",
 }
 
-widget.add_signal("new", function(wi)
-    wi:add_signal("init", function(wi)
+widget.add_signal("new", function (wi)
+    wi:add_signal("init", function (wi)
         if wi.type == "window" then
             wi:add_signal("destroy", function ()
                 -- Call the quit function if this was the last window left
@@ -61,94 +68,126 @@ end)
 
 -- Search engines
 search_engines = {
-    google      =  "http://google.com/search?q={0}",
-    imdb        =  "http://imdb.com/find?s=all&q={0}",
-    sourceforge =  "http://sf.net/search/?words={0}"
+    google      = "http://google.com/search?q={0}",
+    imdb        = "http://imdb.com/find?s=all&q={0}",
+    sourceforge = "http://sf.net/search/?words={0}",
 }
 
 -- Add key bindings to be used across all windows
 mode_binds = {
-     -- bind.buf(Pattern, function (w, buffer, opts) .. end, opts),
-     -- bind.key({Modifiers}, Key name, function (w, opts) .. end, opts),
+     -- bind.buf(Pattern,                   function (w, buffer, opts) .. end, opts),
+     -- bind.key({Modifiers}, Key name,     function (w, opts)         .. end, opts),
+     -- bind.but({Modifiers}, Button num,   function (w, opts)         .. end, opts),
     all = {
-        bind.key({},          "Escape",   function (w) w:set_mode() end),
-        bind.key({"Control"}, "[",        function (w) w:set_mode() end),
+        bind.key({},          "Escape",     function (w) w:set_mode() end),
+        bind.key({"Control"}, "[",          function (w) w:set_mode() end),
+
+        -- Mouse bindings
+        bind.but({},          2,            function (w)
+                                                -- Open hovered uri in new tab
+                                                local uri = w:get_current().hovered_uri
+                                                if uri then w:new_tab(uri)
+                                                else -- Open selection in current tab
+                                                    uri = luakit.get_selection()
+                                                    if uri then w:get_current().uri = uri end
+                                                end
+                                            end),
+        bind.but({},          8,            function (w) w:back()    end),
+        bind.but({},          9,            function (w) w:forward() end),
     },
     normal = {
-        bind.key({},          "i",        function (w) w:set_mode("insert")  end),
-        bind.key({},          ":",        function (w) w:set_mode("command") end),
+        bind.key({},          "i",          function (w) w:set_mode("insert")  end),
+        bind.key({},          ":",          function (w) w:set_mode("command") end),
 
         -- Scrolling
-        bind.key({},          "h",        function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "j",        function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "k",        function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "l",        function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "Left",     function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "Down",     function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "Up",       function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "Right",    function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.buf("^gg$",                  function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                   function (w) w:scroll_vert("100%") end),
-        bind.buf("^[\-\+]?[0-9]+[%%G]$",  function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+        bind.key({},          "h",          function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "j",          function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
+        bind.key({},          "k",          function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "l",          function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({},          "Left",       function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
+        bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
+        bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5) end),
+        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5) end),
+        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0) end),
+        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0) end),
+        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
+        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
+        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
 
         -- Clipboard
-        bind.key({},          "p",        function (w) w:navigate(luakit.selection()) end),
-        bind.key({},          "P",        function (w) w:new_tab(luakit.selection())  end),
+        bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
+        bind.key({},          "P",          function (w) w:new_tab(luakit.get_selection())  end),
+        bind.buf("^yy$",                    function (w) luakit.set_selection(w:get_current().uri) end),
+        bind.buf("^yt$",                    function (w) luakit.set_selection(w.win.title) end),
 
         -- Commands
-        bind.buf("^o$",                   function (w, c) w:enter_cmd(":open ") end),
-        bind.buf("^t$",                   function (w, c) w:enter_cmd(":tabopen ") end),
-        bind.buf("^,g$",                  function (w, c) w:enter_cmd(":websearch google ") end),
+        bind.buf("^o$",                     function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^t$",                     function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^,g$",                    function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
-        bind.key({},          "/",        function (w) w:start_search(true)  end),
-        bind.key({},          "?",        function (w) w:start_search(false) end),
-        bind.key({},          "n",        function (w) w:search(nil, true) end),
-        bind.key({},          "N",        function (w) w:search(nil, false) end),
+        bind.key({},          "/",          function (w) w:start_search(true)  end),
+        bind.key({},          "?",          function (w) w:start_search(false) end),
+        bind.key({},          "n",          function (w) w:search(nil, true) end),
+        bind.key({},          "N",          function (w) w:search(nil, false) end),
 
         -- History
-        bind.buf("^[0-9]*H$",             function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
-        bind.buf("^[0-9]*L$",             function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
+        bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
 
         -- Tab
-        bind.buf("^[0-9]*gT$",            function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
-        bind.buf("^[0-9]*gt$",            function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
-        bind.buf("^gH$",                  function (w)    w:new_tab(HOMEPAGE) end),
-        bind.buf("^d$",                   function (w)    w:close_tab() end),
+        bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
+        bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
+        bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
+        bind.buf("^d$",                     function (w)    w:close_tab() end),
 
-        bind.buf("^gh$",                  function (w) w:navigate(HOMEPAGE) end),
-        bind.buf("^ZZ$",                  function (w) luakit.quit() end),
+        bind.key({},          "r",          function (w) w:reload() end),
+        bind.buf("^gh$",                    function (w) w:navigate(HOMEPAGE) end),
+        bind.buf("^ZZ$",                    function (w) luakit.quit() end),
 
         -- Link following
-        bind.key({},          "f",        function (w) w:set_mode("follow") end),
+        bind.key({},          "f",          function (w) w:set_mode("follow") end),
+
     },
     command = {
-        bind.key({"Shift"},   "Insert",   function (w) w:insert_cmd(luakit.selection()) end),
-        bind.key({},          "Up",       function (w) w:cmd_hist_prev() end),
-        bind.key({},          "Down",     function (w) w:cmd_hist_next() end),
-        bind.key({},          "Tab",      function (w) w:cmd_completion() end),
-        bind.key({"Control"}, "w",        function (w) w:del_word() end),
-        bind.key({"Control"}, "u",        function (w) w:del_line() end),
+        bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.get_selection()) end),
+        bind.key({},          "Up",         function (w) w:cmd_hist_prev() end),
+        bind.key({},          "Down",       function (w) w:cmd_hist_next() end),
+        bind.key({},          "Tab",        function (w) w:cmd_completion() end),
+        bind.key({"Control"}, "w",          function (w) w:del_word() end),
+        bind.key({"Control"}, "u",          function (w) w:del_line() end),
     },
     search = {
-        bind.key({},          "Up",       function (w) w:srch_hist_prev() end),
-        bind.key({},          "Down",     function (w) w:srch_hist_next() end),
+        bind.key({},          "Up",         function (w) w:srch_hist_prev() end),
+        bind.key({},          "Down",       function (w) w:srch_hist_next() end),
     },
     insert = { },
 }
 
 -- Commands
 commands = {
- -- bind.cmd({Command, Alias1, ...},      function (w, arg, opts) .. end, opts),
-    bind.cmd({"open",    "o"},            function (w, a) w:navigate(a) end),
-    bind.cmd({"tabopen", "t"},            function (w, a) w:new_tab(a) end),
-    bind.cmd({"back"        },            function (w, a) w:back(tonumber(a) or 1) end),
-    bind.cmd({"forward", "f"},            function (w, a) w:forward(tonumber(a) or 1) end),
-    bind.cmd({"scroll"      },            function (w, a) w:scroll_vert(a) end),
-    bind.cmd({"quit",    "q"},            function (w)    luakit.quit() end),
-    bind.cmd({"close",   "c"},            function (w)    w:close_tab() end),
-    bind.cmd({"websearch", "ws"},         function (w, e, s) w:websearch(e, s) end),
+ -- bind.cmd({Command, Alias1, ...},        function (w, arg, opts) .. end, opts),
+    bind.cmd({"open",      "o" },           function (w, a)    w:navigate(a) end),
+    bind.cmd({"tabopen",   "t" },           function (w, a)    w:new_tab(a) end),
+    bind.cmd({"back"           },           function (w, a)    w:back(tonumber(a) or 1) end),
+    bind.cmd({"forward",   "f" },           function (w, a)    w:forward(tonumber(a) or 1) end),
+    bind.cmd({"scroll"         },           function (w, a)    w:scroll_vert(a) end),
+    bind.cmd({"quit",      "q" },           function (w)       luakit.quit() end),
+    bind.cmd({"close",     "c" },           function (w)       w:close_tab() end),
+    bind.cmd({"websearch", "ws"},           function (w, e, s) w:websearch(e, s) end),
+    bind.cmd({"reload",        },           function (w)       w:reload() end),
 }
+
+function set_http_options(w)
+    local proxy = HTTPPROXY or os.getenv("http_proxy")
+    if proxy then w:set('proxy-uri', proxy) end
+    w:set('user-agent', 'luakit')
+    -- Uncomment the following options if you want to enable SSL certs validation.
+    -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
+    -- w:set('ssl-strict', true)
+end
 
 -- Build and pack window widgets
 function build_window()
@@ -259,12 +298,12 @@ end
 
 function attach_window_signals(w)
     -- Attach notebook widget signals
-    w.tabs:add_signal("page-added", function(nbook, view, idx)
+    w.tabs:add_signal("page-added", function (nbook, view, idx)
         w:update_tab_count(idx)
         w:update_tab_labels()
     end)
 
-    w.tabs:add_signal("switch-page", function(nbook, view, idx)
+    w.tabs:add_signal("switch-page", function (nbook, view, idx)
         w:update_tab_count(idx)
         w:update_win_title(view)
         w:update_uri(view)
@@ -273,7 +312,7 @@ function attach_window_signals(w)
     end)
 
     -- Attach window widget signals
-    w.win:add_signal("key-press", function(win, mods, key)
+    w.win:add_signal("key-press", function (win, mods, key)
         -- Reset command line completion
         if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
             w:update_uri()
@@ -285,7 +324,7 @@ function attach_window_signals(w)
         end
     end)
 
-    w.win:add_signal("mode-changed", function(win, mode)
+    w.win:add_signal("mode-changed", function (win, mode)
         local i, p = w.ibar.input, w.ibar.prompt
 
         w:update_binds(mode)
@@ -367,7 +406,7 @@ function attach_window_signals(w)
             -- User doesn't want to return to start position
             w.search_start_marker = nil
             w:set_mode()
-            w.ibar.prompt.text = text
+            w.ibar.prompt.text = util.escape(text)
             w.ibar.prompt:show()
         end
     end)
@@ -375,18 +414,38 @@ end
 
 -- Attach signal handlers to a new tab's webview
 function attach_webview_signals(w, view)
-    view:add_signal("title-changed", function (v)
+    view:add_signal("property::title", function (v)
         w:update_tab_labels()
         if w:is_current(v) then
             w:update_win_title(v)
         end
     end)
 
-    view:add_signal("property::uri", function(v)
+    view:add_signal("property::uri", function (v)
         w:update_tab_labels()
         if w:is_current(v) then
             w:update_uri(v)
         end
+    end)
+
+    view:add_signal("link-hover", function (v, link)
+        if w:is_current(v) and link then
+            w.sbar.l.uri.text = "Link: " .. util.escape(link)
+        end
+    end)
+
+    view:add_signal("link-unhover", function (v)
+        if w:is_current(v) then
+            w:update_uri(v)
+        end
+    end)
+
+    view:add_signal("form-active", function ()
+        w:set_mode("insert")
+    end)
+
+    view:add_signal("root-active", function ()
+        w:set_mode()
     end)
 
     view:add_signal("key-press", function ()
@@ -397,14 +456,58 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("load-start", function (v)
-        if w:is_current(v) then
-            w:update_progress(v, 0)
-            w:set_mode()
+    view:add_signal("button-release", function (v, mods, button)
+        if w:hit(mods, button) then
+            return true
         end
     end)
 
-    view:add_signal("progress-update", function (v)
+    view:add_signal("load-status", function (v, status)
+        if w:is_current(v) then
+            w:update_progress(v)
+            if status == "provisional" then
+                w:set_mode()
+            end
+        end
+    end)
+
+    -- 'link' contains the download link
+    -- 'mime' contains the mime type that is requested
+    -- return TRUE to accept or FALSE to reject
+    view:add_signal("mime-type-decision", function (v, link, mime)
+        debug("Requested link: %s (%s)", link, mime)
+        -- i.e. block binary files like *.exe
+        --if mime == "application/octet-stream" then
+        --    return false
+        --end
+    end)
+
+    -- 'link' contains the download link
+    -- 'filename' contains the suggested filename (from server or webkit)
+    view:add_signal("download-request", function (v, link, filename)
+        if not filename then return end
+        -- Make download dir
+        os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
+        local dl = DOWNLOAD_DIR .. "/" .. filename
+        local wget = string.format("wget -q %q -O %q", link, dl)
+        debug("Launching: %s", wget)
+        luakit.spawn(wget)
+    end)
+
+    -- 'link' contains the download link
+    -- 'reason' contains the reason of the request (i.e. "link-clicked")
+    -- return TRUE to handle the request by yourself or FALSE to proceed
+    -- with default behaviour
+    view:add_signal("new-window-decision", function (v, link, reason)
+        debug("New window decision: %s (%s)", link, reason)
+        if reason == "link-clicked" then
+            new_window({ link })
+            return true
+        end
+        w:new_tab(link)
+    end)
+
+    view:add_signal("property::progress", function (v)
         if w:is_current(v) then
             w:update_progress(v)
         end
@@ -448,15 +551,15 @@ end
 -- Helper functions which operate on a windows widget structure
 window_helpers = {
     -- Return the widget in the currently active tab
-    get_current = function(w)       return w.tabs:atindex(w.tabs:current())       end,
+    get_current = function (w)       return w.tabs:atindex(w.tabs:current())       end,
     -- Check if given widget is the widget in the currently active tab
-    is_current  = function(w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
+    is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
 
     -- Wrappers around the mode plugin
-    set_mode    = function(w, name)    mode.set(w.win, name)                              end,
-    get_mode    = function(w)          return mode.get(w.win)                             end,
-    is_mode     = function(w, name)    return name == w:get_mode()                        end,
-    is_any_mode = function(w, t, name) return util.table.hasitem(t, name or w:get_mode()) end,
+    set_mode    = function (w, name)    mode.set(w.win, name)                              end,
+    get_mode    = function (w)          return mode.get(w.win)                             end,
+    is_mode     = function (w, name)    return name == w:get_mode()                        end,
+    is_any_mode = function (w, t, name) return util.table.hasitem(t, name or w:get_mode()) end,
 
     -- Wrappers around the view:get_prop & view:set_prop methods
     get = function (w, prop, view)
@@ -474,7 +577,7 @@ window_helpers = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-    navigate = function(w, uri, view)
+    navigate = function (w, uri, view)
         local v = view or w:get_current()
         if v then
             v.uri = uri
@@ -483,9 +586,15 @@ window_helpers = {
         end
     end,
 
-    new_tab = function(w, uri)
+    reload = function (w, view)
+        if not view then view = w:get_current() end
+        view:reload()
+    end,
+
+    new_tab = function (w, uri)
         local view = webview()
         w.tabs:append(view)
+        set_http_options(w)
         attach_webview_signals(w, view)
         if uri then view.uri = uri end
         view.show_scrollbars = false
@@ -493,8 +602,8 @@ window_helpers = {
     end,
 
     -- close the current tab
-    close_tab = function(w)
-        view = w:get_current()
+    close_tab = function (w, view)
+        if not view then view = w:get_current() end
         if not view then return end
         w.tabs:remove(view)
         view:destroy()
@@ -502,13 +611,13 @@ window_helpers = {
     end,
 
     -- evaluate javascript code and return string result
-    eval_js = function(w, script, file, view)
+    eval_js = function (w, script, file, view)
         if not view then view = w:get_current() end
         return view:eval_js(script, file or "(buffer)")
     end,
 
     -- evaluate javascript code from file and return string result
-    eval_js_from_file = function(w, file, view)
+    eval_js_from_file = function (w, file, view)
         local fh, err = io.open(file)
         if not fh then return error(err) end
         local script = fh:read("*a")
@@ -530,7 +639,7 @@ window_helpers = {
     end,
 
     -- enter command or characters into command line
-    enter_cmd = function(w, cmd)
+    enter_cmd = function (w, cmd)
         local i = w.ibar.input
         w:set_mode("command")
         i.text = cmd
@@ -538,7 +647,7 @@ window_helpers = {
     end,
 
     -- insert a string into the command line at the current cursor position
-    insert_cmd = function(w, str)
+    insert_cmd = function (w, str)
         if not str then return nil end
         local i = w.ibar.input
         local text = i.text
@@ -549,7 +658,7 @@ window_helpers = {
     end,
 
     -- search engine wrapper
-    websearch = function(w, args)
+    websearch = function (w, args)
         local sep = string.find(args, " ")
         local engine = string.sub(args, 1, sep-1)
         local search = string.sub(args, sep+1)
@@ -562,7 +671,7 @@ window_helpers = {
     end,
 
     -- Command line completion of available commands
-    cmd_completion = function(w)
+    cmd_completion = function (w)
         local i = w.ibar.input
         local s = w.sbar.l.uri
         local cmpl = {}
@@ -603,11 +712,11 @@ window_helpers = {
             else
                 w.compl_index = w.compl_index + 1
             end
-            s.text = text
+            s.text = util.escape(text)
         end
     end,
 
-    del_word = function(w)
+    del_word = function (w)
         local i = w.ibar.input
         local text = i.text
         local pos = i:get_position()
@@ -625,7 +734,7 @@ window_helpers = {
         end
     end,
 
-    del_line = function(w)
+    del_line = function (w)
         local i = w.ibar.input
         if i.text ~= ":" then
             i.text = ":"
@@ -634,7 +743,7 @@ window_helpers = {
     end,
 
     -- Search history adding
-    srch_hist_add = function(w, srch)
+    srch_hist_add = function (w, srch)
         if not w.srch_hist then w.srch_hist = {} end
         -- Check overflow
         if #w.srch_hist > ((MAX_SRCH_HISTORY or 100) + 5) then
@@ -646,7 +755,7 @@ window_helpers = {
     end,
 
     -- Search history traversing
-    srch_hist_prev = function(w)
+    srch_hist_prev = function (w)
         if not w.srch_hist then w.srch_hist = {} end
         if not w.srch_hist_cursor then
             w.srch_hist_cursor = #w.srch_hist + 1
@@ -660,7 +769,7 @@ window_helpers = {
         end
     end,
 
-    srch_hist_next = function(w)
+    srch_hist_next = function (w)
         if not w.srch_hist then w.srch_hist = {} end
         local c = (w.srch_hist_cursor or #w.srch_hist) + 1
         if w.srch_hist[c] then
@@ -675,7 +784,7 @@ window_helpers = {
     end,
 
     -- Command history adding
-    cmd_hist_add = function(w, cmd)
+    cmd_hist_add = function (w, cmd)
         if not w.cmd_hist then w.cmd_hist = {} end
         -- Make sure history doesn't overflow
         if #w.cmd_hist > ((MAX_CMD_HISTORY or 100) + 5) then
@@ -687,7 +796,7 @@ window_helpers = {
     end,
 
     -- Command history traversing
-    cmd_hist_prev = function(w)
+    cmd_hist_prev = function (w)
         if not w.cmd_hist then w.cmd_hist = {} end
         if not w.cmd_hist_cursor then
             w.cmd_hist_cursor = #w.cmd_hist + 1
@@ -701,7 +810,7 @@ window_helpers = {
         end
     end,
 
-    cmd_hist_next = function(w)
+    cmd_hist_next = function (w)
         if not w.cmd_hist then w.cmd_hist = {} end
         local c = (w.cmd_hist_cursor or #w.cmd_hist) + 1
         if w.cmd_hist[c] then
@@ -716,7 +825,7 @@ window_helpers = {
     end,
 
     -- Searching functions
-    start_search = function(w, forward)
+    start_search = function (w, forward)
         -- Clear previous search results
         w:clear_search()
         w:set_mode("search")
@@ -730,7 +839,7 @@ window_helpers = {
         i:set_position(-1)
     end,
 
-    search = function(w, text, forward)
+    search = function (w, text, forward)
         local view = w:get_current()
         local text = text or w.last_search
         if forward == nil then forward = true end
@@ -763,7 +872,7 @@ window_helpers = {
     end,
 
     -- Webview scroll functions
-    scroll_vert = function(w, value, view)
+    scroll_vert = function (w, value, view)
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_vert()
         if type(value) == "string" then
@@ -772,7 +881,7 @@ window_helpers = {
         view:set_scroll_vert(value)
     end,
 
-    scroll_horiz = function(w, value)
+    scroll_horiz = function (w, value, view)
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_horiz()
         if type(value) == "string" then
@@ -781,22 +890,29 @@ window_helpers = {
         view:set_scroll_horiz(value)
     end,
 
+    -- vertical scroll of a multiple of the view_size
+    scroll_page = function (w, value, view)
+        if not view then view = w:get_current() end
+        local cur, max, size = view:get_scroll_vert()
+        view:set_scroll_vert(cur + size * value)
+    end,
+
     -- Tab traversing functions
-    next_tab = function(w, n)
+    next_tab = function (w, n)
         w.tabs:switch((((n or 1) + w.tabs:current() -1) % w.tabs:count()) + 1)
     end,
-    prev_tab = function(w, n)
+    prev_tab = function (w, n)
         w.tabs:switch(((w.tabs:current() - (n or 1) -1) % w.tabs:count()) + 1)
     end,
-    goto_tab = function(w, n)
+    goto_tab = function (w, n)
         w.tabs:switch(n)
     end,
 
     -- History traversing functions
-    back = function(w, n, view)
+    back = function (w, n, view)
         (view or w:get_current()):go_back(n or 1)
     end,
-    forward = function(w, n, view)
+    forward = function (w, n, view)
         (view or w:get_current()):go_forward(n or 1)
     end,
 
@@ -818,7 +934,7 @@ window_helpers = {
 
     update_uri = function (w, view, uri)
         if not view then view = w:get_current() end
-        w.sbar.l.uri.text = (uri or view.uri or "about:blank")
+        w.sbar.l.uri.text = util.escape((uri or (view and view.uri) or "about:blank"))
     end,
 
     update_progress = function (w, view, p)
@@ -845,7 +961,7 @@ window_helpers = {
 
     update_buf = function (w)
         if w.buffer then
-            w.sbar.r.buf.text = string.format(" %-3s", w.buffer)
+            w.sbar.r.buf.text = util.escape(string.format(" %-3s", w.buffer))
             w.sbar.r.buf:show()
         else
             w.sbar.r.buf:hide()
@@ -872,11 +988,19 @@ window_helpers = {
         t.layout:pack_start(t.label, true,  true, 0)
         t.layout:pack_start(t.sep,   false,  false, 0)
         t.ebox:set_child(t.layout)
-        t.ebox:add_signal("clicked", function(e) w.tabs:switch(pos) end)
+        t.ebox:add_signal("button-release", function (e, m, b)
+            if b == 1 then
+                w.tabs:switch(pos)
+                return true
+            elseif b == 2 then
+                w:close_tab(w.tabs:atindex(pos))
+                return true
+            end
+        end)
         return t
     end,
 
-    destroy_tab_label = function(w, t)
+    destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
         for _, wi in pairs(t) do
             wi:destroy()
@@ -910,7 +1034,7 @@ window_helpers = {
             for i = 1, count do
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(w.tabs:atindex(i))
-                t.label.text = string.format(theme.tablabel_format or "%s", title)
+                t.label.text = util.escape(string.format(theme.tablabel_format or "%s", title))
                 w:apply_tablabel_theme(t, i == current)
             end
         end

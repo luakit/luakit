@@ -41,16 +41,22 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 }
 
 gboolean
-button_press_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
+button_release_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
 {
     (void) win;
-    if (ev->type != GDK_BUTTON_PRESS)
-        return FALSE;
+    gint ret = 0;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
     lua_pushinteger(L, ev->button);
-    luaH_object_emit_signal(L, -2, "clicked", 1, 0);
-    lua_pop(L, 1);
+    ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
+    /* User responded with TRUE, so do not propagate event any further */
+    if (ret && luaH_checkboolean(L, -1)) {
+        lua_pop(L, ret + 1);
+        return TRUE;
+    }
+    lua_pop(L, ret + 1);
+    /* propagate event further */
     return FALSE;
 }
 
