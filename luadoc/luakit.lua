@@ -33,3 +33,9 @@ module("luakit")
 -- @return A string containig data printed on stderr.
 -- @name spawn_sync
 -- @class function
+
+--- Get xdg-userdir directory
+-- @param dir Type of directory ('DESKTOP', 'DOCUMENTS', 'DOWNLOAD', 'MUSIC', 'PITCURES', 'PUBLIC_SHARE', 'TEMPLATES', 'VIDEOS').
+-- @return A path of xdg special directory.
+-- @name get_special_dir
+-- @class function
