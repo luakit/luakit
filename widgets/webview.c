@@ -475,6 +475,23 @@ luaH_webview_go_forward(lua_State *L)
 }
 
 static gint
+luaH_webview_view_source(lua_State *L)
+{
+    const gchar *uri;
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gboolean toggle = (luaL_checknumber(L, 2)) ? TRUE : FALSE;
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+
+    if ((uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view))))
+    {
+        webkit_web_view_set_view_source_mode(WEBKIT_WEB_VIEW(view), toggle);
+        webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), uri);
+    }
+
+    return 0;
+}
+
+static gint
 luaH_webview_search(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -718,6 +735,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       /* misc webview methods */
       PF_CASE(EVAL_JS,            luaH_webview_eval_js)
       PF_CASE(LOADING,            luaH_webview_loading)
+      PF_CASE(VIEW_SOURCE,        luaH_webview_view_source)
       /* widget methods */
       PF_CASE(DESTROY,            luaH_widget_destroy)
       PF_CASE(FOCUS,              luaH_widget_focus)

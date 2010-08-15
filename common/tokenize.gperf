@@ -76,6 +76,7 @@ type
 uri
 vbox
 verbose
+view_source
 webview
 window
 windows
