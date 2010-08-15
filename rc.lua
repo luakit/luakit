@@ -26,7 +26,7 @@ MAX_SRCH_HISTORY = 100
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
 -- Small util functions
-function debug(...) if luakit.verbose then print(string.format(...)) end end
+function debug.print(...) if luakit.verbose then print(string.format(...)) end end
 
 -- Luakit theme
 theme = theme or {
@@ -478,7 +478,7 @@ function attach_webview_signals(w, view)
     -- 'mime' contains the mime type that is requested
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
-        debug("Requested link: %s (%s)", link, mime)
+        debug.print("Requested link: %s (%s)", link, mime)
         -- i.e. block binary files like *.exe
         --if mime == "application/octet-stream" then
         --    return false
@@ -493,7 +493,7 @@ function attach_webview_signals(w, view)
         os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
         local dl = DOWNLOAD_DIR .. "/" .. filename
         local wget = string.format("wget -q %q -O %q", link, dl)
-        debug("Launching: %s", wget)
+        debug.print("Launching: %s", wget)
         luakit.spawn(wget)
     end)
 
@@ -502,7 +502,7 @@ function attach_webview_signals(w, view)
     -- return TRUE to handle the request by yourself or FALSE to proceed
     -- with default behaviour
     view:add_signal("new-window-decision", function (v, link, reason)
-        debug("New window decision: %s (%s)", link, reason)
+        debug.print("New window decision: %s (%s)", link, reason)
         if reason == "link-clicked" then
             new_window({ link })
             return true
