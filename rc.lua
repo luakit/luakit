@@ -103,6 +103,10 @@ mode_binds = {
         bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5) end),
+        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5) end),
+        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0) end),
+        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0) end),
         bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
         bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
         bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
@@ -848,6 +852,13 @@ window_helpers = {
             value = parse_scroll(cur, max, value)
         end
         view:set_scroll_horiz(value)
+    end,
+
+    -- vertical scroll of a multiple of the view_size
+    scroll_page = function (w, value, view)
+        if not view then view = w:get_current() end
+        local cur, max, size = view:get_scroll_vert()
+        view:set_scroll_vert(cur + size * value)
     end,
 
     -- Tab traversing functions
