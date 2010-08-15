@@ -78,6 +78,7 @@ type
 uri
 vbox
 verbose
+version
 webview
 webkit_major_version
 webkit_minor_version

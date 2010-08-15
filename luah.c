@@ -507,6 +507,10 @@ luaH_luakit_index(lua_State *L)
         lua_pushliteral(L, LUAKIT_INSTALL_PATH);
         return 1;
 
+      case L_TK_VERSION:
+        lua_pushliteral(L, VERSION);
+        return 1;
+
       case L_TK_WEBKIT_MAJOR_VERSION:
         lua_pushinteger(L, webkit_major_version());
         return 1;
