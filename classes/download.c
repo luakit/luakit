@@ -103,6 +103,24 @@ luaH_download_get_progress(lua_State *L, download_t *download)
 }
 
 static int
+luaH_download_get_mime_type(lua_State *L, download_t *download)
+{
+    GError *error;
+    const char *destination = webkit_download_get_destination_uri(download->webkit_download);
+    GFile *file = g_file_new_for_uri(destination);
+    GFileInfo *file_info = g_file_query_info(file,
+            "standard::*", 0, NULL, &error);
+    const char *content_type = g_file_info_get_content_type(file_info);
+    const char *mime_type = g_content_type_get_mime_type(content_type);
+    if (mime_type == NULL) {
+        lua_pushnil(L);
+    } else {
+        lua_pushstring(L, mime_type);
+    }
+    return 1;
+}
+
+static int
 luaH_download_get_status(lua_State *L, download_t *download)
 {
     WebKitDownloadStatus status = webkit_download_get_status(download->webkit_download);
@@ -281,6 +299,10 @@ download_class_setup(lua_State *L)
     luaH_class_add_property(&download_class, L_TK_ELAPSED_TIME,
                             NULL,
                             (lua_class_propfunc_t) luaH_download_get_elapsed_time,
+                            NULL);
+    luaH_class_add_property(&download_class, L_TK_MIME_TYPE,
+                            NULL,
+                            (lua_class_propfunc_t) luaH_download_get_mime_type,
                             NULL);
     luaH_class_add_property(&download_class, L_TK_SUGGESTED_FILENAME,
                             NULL,

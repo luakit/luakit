@@ -43,6 +43,7 @@ install_path
 interval
 label
 loading
+mime_type
 MUSIC
 notebook
 pack_end
