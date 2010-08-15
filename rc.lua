@@ -548,6 +548,16 @@ function parse_scroll(current, max, value)
     end
 end
 
+-- Opens a file with the given mime-type
+function open_file(f, m)
+    local e = nil
+    if     string.find(f, "^text/")  then e = "gvim"
+    elseif string.find(f, "^video/") then e = "mplayer"
+    elseif string.find(f, "/pdf$")   then e = "evince"
+    end
+    if e then luakit.spawn(string.format("%s '%s'", e, f)) end
+end
+
 -- Helper functions which operate on a windows widget structure
 window_helpers = {
     -- Return the widget in the currently active tab
@@ -1057,7 +1067,7 @@ window_helpers = {
                 t:add_signal("timeout", function(t)
                     if d.status == "finished" then
                         t:stop()
-                        luakit.spawn("xdg-open '" .. d.destination .. "'")
+                        open_file(d.destination, d.mime_type)
                     end
                 end)
                 t:start()
