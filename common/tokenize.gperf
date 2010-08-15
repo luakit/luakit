@@ -79,5 +79,8 @@ uri
 vbox
 verbose
 webview
+webkit_major_version
+webkit_minor_version
+webkit_micro_version
 window
 windows

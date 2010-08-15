@@ -22,6 +22,7 @@
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <webkit/webkit.h>
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
@@ -504,6 +505,18 @@ luaH_luakit_index(lua_State *L)
 
       case L_TK_INSTALL_PATH:
         lua_pushliteral(L, LUAKIT_INSTALL_PATH);
+        return 1;
+
+      case L_TK_WEBKIT_MAJOR_VERSION:
+        lua_pushinteger(L, webkit_major_version());
+        return 1;
+
+      case L_TK_WEBKIT_MINOR_VERSION:
+        lua_pushinteger(L, webkit_minor_version());
+        return 1;
+
+      case L_TK_WEBKIT_MICRO_VERSION:
+        lua_pushinteger(L, webkit_micro_version());
         return 1;
 
       case L_TK_CONFIG_DIR:
