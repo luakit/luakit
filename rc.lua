@@ -932,7 +932,8 @@ window_helpers = {
     end,
 
     update_download_widget = function(w, wi, d)
-        wi.text = string.format("%s: %s (%s%%)", d.status, d.uri, d.progress * 100)
+        _,_,basename = string.find(d.destination, ".*/([^/]*)")
+        wi.text = string.format("%s: %s (%s%%)", d.status, basename, d.progress * 100)
     end,
 
     -- Updates the widgets in the download bar.
