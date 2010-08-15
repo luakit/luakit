@@ -31,12 +31,15 @@ function debug(...) if luakit.verbose then print(string.format(...)) end end
 -- Luakit theme
 theme = theme or {
     -- Default settings
-    font = "monospace normal 9",
-    fg   = "#fff",
-    bg   = "#000",
+    font       = "monospace normal 9",
+    fg         = "#fff",
+    bg         = "#000",
+    success_fg = "#0f0",
+    failure_fg = "#f00",
 
     -- General settings
     downloadbar_fg = "#fff",
+    downloadbar_bg = "#000",
     downloadbar_bg = "#000",
     statusbar_fg = "#fff",
     statusbar_bg = "#000",
@@ -1054,13 +1057,27 @@ window_helpers = {
     -- Adds a new label to the download bar and registers signals for it
     add_download_widget = function(w, d)
         local bar = w.dbar
-        local e = eventbox()
-        local l = label()
-        e:set_child(l)
-        w:update_download_widget(l, d)
-        w:apply_download_theme(e, l)
-        bar.layout:pack_start(e, false, false, 0)
-        e:add_signal("button-release", function(e, m, b)
+        local wi = {
+            e = eventbox(),
+            h = hbox(),
+            l = label(),
+            p = label(),
+            s = label(),
+            f = label(),
+        }
+        wi.f.text = "✗"
+        wi.f:hide()
+        wi.s.text = "✔"
+        wi.s:hide()
+        wi.h:pack_start(l, false, false, 0)
+        wi.h:pack_start(p, false, false, 0)
+        wi.h:pack_start(e, false, false, 0)
+        wi.h:pack_start(f, false, false, 0)
+        wi.e:set_child(h)
+        w:update_download_widget(wi, d)
+        w:apply_download_theme(wi)
+        bar.layout:pack_start(wi.e, false, false, 0)
+        wi.e:add_signal("button-release", function(e, m, b)
             if b == 1 then
                 -- open file
                 local t = timer{interval=1000}
@@ -1083,7 +1100,7 @@ window_helpers = {
                 end
             end
         end)
-        return e
+        return wi
     end,
 
     -- Adds a download to the download bar.
@@ -1091,16 +1108,19 @@ window_helpers = {
         local bar = w.dbar
         local wi = w:add_download_widget(d)
         table.insert(bar.downloads, {download=d, widget=wi})
-        bar.ebox:show()
         -- start refresh timer
         if not bar.timer.started then bar.timer:start() end
     end,
 
     -- Updates the text of the given download widget for the given download
     update_download_widget = function(w, wi, d)
-        _,_,basename = string.find(d.destination, ".*/([^/]*)")
-        local fg = theme.loaded_fg or theme.download_fg or theme.downloadbar_fg or theme.fg
-        wi.text = string.format('%s <span color="%s">(%s%%)</span>', basename, fg, d.progress * 100)
+        if     d.status == "finished"  then wi.p:hide() wi.s:show()
+        elseif d.status == "error"     then wi.p:hide() wi.e:show()
+        elseif d.status == "cancelled" then wi.p:hide()
+        else
+            wi.p.text = string.format('(%s%%)', d.progress * 100)
+            _,_,wi.l.text = string.find(d.destination, ".*/([^/]*)")
+        end
     end,
 
     -- Updates the widgets in the download bar.
@@ -1171,13 +1191,19 @@ window_helpers = {
         }) do wi.font = v end
     end,
 
-    apply_download_theme = function(w, e, l, atheme)
+    apply_download_theme = function(w, wi, atheme)
         local theme = atheme or theme
-        e.fg   = theme.download_fg   or theme.downloadbar_fg   or theme.fg
-        l.fg   = theme.download_fg   or theme.downloadbar_fg   or theme.fg
-        e.bg   = theme.download_bg   or theme.downloadbar_bg   or theme.bg
-        e.font = theme.download_font or theme.downloadbar_font or theme.font
-        l.font = theme.download_font or theme.downloadbar_font or theme.font
+        for wi in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
+            wi.font = theme.download_font or theme.downloadbar_font or theme.font
+        end
+        for wi in pairs({wi.e, wi.h, wi.l, wi.p}) do
+            wi.fg = theme.download_fg or theme.downloadbar_fg or theme.fg
+        end
+        wi.s.fg = theme.download_success_fg or theme.success_fg or theme.fg
+        wi.f.fg = theme.download_failure_fg or theme.failure_fg or theme.fg
+        for wi in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
+            wi.e.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
+        end
     end,
 }
 
