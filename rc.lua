@@ -918,15 +918,24 @@ window_helpers = {
         tb.ebox:show()
     end,
 
+    -- Adds a new label to the download bar
+    add_download_widget = function(w, d)
+        local bar = w.dbar
+        local e = eventbox()
+        local l = label()
+        e:set_child(l)
+        w:update_download_widget(l, d)
+        w:apply_download_theme(e, l)
+        bar.layout:pack_start(e, false, false, 0)
+        e:add_signal("clicked", function(w) end)
+        return e
+    end,
+
     -- Adds a download to the download bar.
     add_download = function(w, d)
         local bar = w.dbar
-        -- create widget
-        local wi = label()
-        w:update_download_widget(wi, d)
-        w:apply_download_theme(wi)
+        local wi = w:add_download_widget(d)
         table.insert(bar.downloads, { download = d, widget = wi })
-        bar.layout:pack_start(wi, false, false, 0)
         bar.ebox:show()
         -- start refresh timer
         if not bar.timer.started then bar.timer:start() end
@@ -1005,10 +1014,13 @@ window_helpers = {
         }) do wi.font = v end
     end,
 
-    apply_download_theme = function(w, d, atheme)
+    apply_download_theme = function(w, e, l, atheme)
         local theme = atheme or theme
-        d.fg   = theme.download_fg   or theme.downloadbar_fg   or theme.fg
-        d.font = theme.download_font or theme.downloadbar_font or theme.font
+        e.fg   = theme.download_fg   or theme.downloadbar_fg   or theme.fg
+        l.fg   = theme.download_fg   or theme.downloadbar_fg   or theme.fg
+        e.bg   = theme.download_bg   or theme.downloadbar_bg   or theme.bg
+        e.font = theme.download_font or theme.downloadbar_font or theme.font
+        l.font = theme.download_font or theme.downloadbar_font or theme.font
     end,
 }
 
