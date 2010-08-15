@@ -34,6 +34,7 @@ typedef struct
     WebKitDownload* webkit_download;
     gpointer ref;
     const char *uri;
+    bool error;
 } download_t;
 
 static lua_class_t download_class;
@@ -66,6 +67,7 @@ luaH_download_new(lua_State *L)
     luaH_class_new(L, &download_class);
     download_t *download = luaH_checkudata(L, -1, &download_class);
     download->ref = NULL;
+    download->error = false;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
     return 1;
@@ -108,6 +110,9 @@ static int
 luaH_download_get_status(lua_State *L, download_t *download)
 {
     WebKitDownloadStatus status = webkit_download_get_status(download->webkit_download);
+    if (download->error) {
+        status = WEBKIT_DOWNLOAD_STATUS_ERROR;
+    }
     switch (status) {
         case WEBKIT_DOWNLOAD_STATUS_FINISHED:
             luaH_download_unref(L, download); // allow Lua garbage collection of download
@@ -189,11 +194,28 @@ static int
 luaH_download_start(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
+    download->error = false;
     if (download_is_started(download)) {
         luaH_warn(L, "download already running. Cannot start twice");
     } else {
-        download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
-        webkit_download_start(download->webkit_download);
+        // check prerequesites for download
+        guint64 total_size = webkit_download_get_total_size(download->webkit_download);
+        const char *destination = webkit_download_get_destination_uri(download->webkit_download);
+        GFile *file = g_file_new_for_uri(destination);
+        GFile *folder = g_file_get_parent(file);
+        GFileInfo *info = g_file_query_filesystem_info (folder,
+            G_FILE_ATTRIBUTE_FILESYSTEM_FREE, NULL, NULL);
+        guint64 free_space = g_file_info_get_attribute_uint64 (info,
+            G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+        g_object_unref(file);
+        g_object_unref(folder);
+        if (free_space < total_size) {
+            download->error = true;
+        } else {
+            // everything OK, download
+            download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
+            webkit_download_start(download->webkit_download);
+        }
     }
     return 0;
 }
