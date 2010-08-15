@@ -931,7 +931,7 @@ window_helpers = {
                 -- TODO open file
             elseif b == 3 then
                 -- remove download
-                e:hide() -- TODO actually remove the thing so it can be garbage collected
+                bar.layout:remove(e)
                 for i,t in pairs(bar.downloads) do
                     if t.widget == e then
                         table.remove(bar.downloads, i)

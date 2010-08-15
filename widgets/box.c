@@ -58,6 +58,16 @@ luaH_box_pack_end(lua_State *L)
     return 0;
 }
 
+/* direct wrapper around gtk_container_remove */
+static gint
+luaH_container_remove(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    gtk_container_remove(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
+    return 0;
+}
+
 static gint
 luaH_box_index(lua_State *L, luakit_token_t token)
 {
@@ -75,6 +85,10 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 
       case L_TK_PACK_END:
         lua_pushcfunction(L, luaH_box_pack_end);
+        return 1;
+
+      case L_TK_REMOVE:
+        lua_pushcfunction(L, luaH_container_remove);
         return 1;
 
       case L_TK_HOMOGENEOUS:
