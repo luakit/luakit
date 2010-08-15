@@ -935,7 +935,7 @@ window_helpers = {
                 for i,t in pairs(bar.downloads) do
                     if t.widget == e then
                         table.remove(bar.downloads, i)
-                        if t.download.status == "started" then t.download:stop() end
+                        if t.download.status == "started" then t.download:cancel() end
                         break
                     end
                 end
