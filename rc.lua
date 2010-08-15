@@ -85,8 +85,10 @@ end)
 
 -- Search engines
 search_engines = {
-    debbugs     = "http://bugs.debian.org/{0}",
+    luakit      = "http://luakit.org/search/index/luakit?q={0}",
     google      = "http://google.com/search?q={0}",
+    wikipedia   = "http://en.wikipedia.org/wiki/Special:Search?search={0}",
+    debbugs     = "http://bugs.debian.org/{0}",
     imdb        = "http://imdb.com/find?s=all&q={0}",
     sourceforge = "http://sf.net/search/?words={0}",
 }
