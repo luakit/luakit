@@ -217,7 +217,8 @@ download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_pushdownload(L, WEBKIT_DOWNLOAD(download));
+    const char *uri = webkit_download_get_uri(WEBKIT_DOWNLOAD(download));
+    lua_pushstring(L, uri);
     luaH_object_emit_signal(L, -2, "download-requested", 1, 0);
     lua_pop(L, 1);
     return false; // let the rc decide when to start the download

@@ -32,22 +32,11 @@ typedef struct
     LUA_OBJECT_HEADER
     WebKitDownload* webkit_download;
     gpointer ref;
+    const char *uri;
 } download_t;
 
 static lua_class_t download_class;
 LUA_OBJECT_FUNCS(download_class, download_t, download)
-
-/* Wraps and pushes the given download onto the Lua stack.
- * \param L The Lua VM state.
- * \param download The WebKitDownload to push onto the stack.
- */
-void
-luaH_pushdownload(lua_State *L, WebKitDownload* download)
-{
-    download_t *lua_download = download_new(L);
-    lua_download->webkit_download = download;
-    g_object_ref(download); // prevent glib garbage collection
-}
 
 static int
 luaH_download_gc(lua_State *L)
@@ -60,10 +49,9 @@ luaH_download_gc(lua_State *L)
 static int
 luaH_download_new(lua_State *L)
 {
-    const char *uri = luaL_checkstring(L, 1);
     luaH_class_new(L, &download_class);
     download_t *download = luaH_checkudata(L, -1, &download_class);
-    WebKitNetworkRequest *request = webkit_network_request_new(uri);
+    WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
     g_object_ref(download->webkit_download); // prevent glib garbage collection
     return 1;
@@ -155,10 +143,17 @@ luaH_download_get_suggested_filename(lua_State *L, download_t *download)
 }
 
 static int
+luaH_download_set_uri(lua_State *L, download_t *download)
+{
+    const char *uri = luaL_checkstring(L, -1);
+    download->uri = uri;
+    return 0;
+}
+
+static int
 luaH_download_get_uri(lua_State *L, download_t *download)
 {
-    const char *uri = webkit_download_get_uri(download->webkit_download);
-    lua_pushstring(L, uri);
+    lua_pushstring(L, download->uri);
     return 1;
 }
 
@@ -234,9 +229,9 @@ download_class_setup(lua_State *L)
                             (lua_class_propfunc_t) luaH_download_get_suggested_filename,
                             NULL);
     luaH_class_add_property(&download_class, L_TK_URI,
-                            NULL,
+                            (lua_class_propfunc_t) luaH_download_set_uri,
                             (lua_class_propfunc_t) luaH_download_get_uri,
-                            NULL);
+                            (lua_class_propfunc_t) luaH_download_set_uri);
 }
 
 // vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
