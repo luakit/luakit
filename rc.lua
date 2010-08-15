@@ -176,7 +176,7 @@ commands = {
     bind.cmd({"close",       "c"  },         function (w)       w:close_tab() end),
     bind.cmd({"websearch",   "ws" },         function (w, e, s) w:websearch(e, s) end),
     bind.cmd({"reload",           },         function (w)       w:reload() end),
-    bind.cmd({"viewsource",  "vs" },         function (w)       w:get_current():set_view_source(true) end),
+    bind.cmd({"viewsource",  "vs" },         function (w)       w:toggle_source(true) end),
     bind.cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
 }
 
@@ -616,9 +616,10 @@ window_helpers = {
     end,
 
     -- Toggle source view
-    toggle_source = function (w, view)
+    toggle_source = function (w, show, view)
         if not view then view = w:get_current() end
-        view:set_view_source(not view:get_view_source())
+        if show == nil then show = not view:get_view_source() end
+        view:set_view_source(show)
     end,
 
     -- enter command or characters into command line
