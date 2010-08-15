@@ -956,7 +956,8 @@ window_helpers = {
 
     update_download_widget = function(w, wi, d)
         _,_,basename = string.find(d.destination, ".*/([^/]*)")
-        wi.text = string.format("%s: %s (%s%%)", d.status, basename, d.progress * 100)
+        local fg = theme.loaded_fg or theme.download_fg or theme.downloadbar_fg or theme.fg
+        wi.text = string.format('%s <span color="%s">(%s%%)</span>', basename, fg, d.progress * 100)
     end,
 
     -- Updates the widgets in the download bar.
