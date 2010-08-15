@@ -423,26 +423,6 @@ link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w
     lua_pop(L, 1);
 }
 
-/* Starts a download for all MIME types the WebView can't handle
- * itself.
- */
-static gboolean
-mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
-        WebKitNetworkRequest *r, gchar *mime_type,
-        WebKitWebPolicyDecision *p, widget_t *w)
-{
-    (void) f;
-    (void) r;
-    (void) w;
-
-    if(!webkit_web_view_can_show_mime_type(v, mime_type)) {
-        webkit_web_policy_decision_download(p);
-        return TRUE;
-    } else {
-        return FALSE;
-    }
-}
-
 /* Raises the "navigation-request" signal on a webkit navigation policy
  * decision request. The default action is to load the requested uri.
  *
