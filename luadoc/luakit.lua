@@ -3,3 +3,8 @@
 -- @author Paweł Zuzelski &lt;pawelz&lt;AT&gt;pld-linux.org&gt;
 -- @copryight 2010 Mason Larobina, Paweł Zuzelski
 module("luakit")
+
+--- Quit luakit
+-- @param -
+-- @name quit
+-- @class function
