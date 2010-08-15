@@ -527,7 +527,7 @@ luaH_webview_view_source(lua_State *L)
 {
     const gchar *uri;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    gboolean toggle = (luaL_checknumber(L, 2)) ? TRUE : FALSE;
+    gboolean toggle = luaH_checkboolean(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
 
     if ((uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view))))

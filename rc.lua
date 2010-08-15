@@ -176,8 +176,8 @@ commands = {
     bind.cmd({"close",     "c" },           function (w)       w:close_tab() end),
     bind.cmd({"websearch", "ws"},           function (w, e, s) w:websearch(e, s) end),
     bind.cmd({"reload",        },           function (w)       w:reload() end),
-    bind.cmd({"view",          },           function (w)       w:view_source(1) end),
-    bind.cmd({"view!",         },           function (w)       w:view_source(0) end),
+    bind.cmd({"view",          },           function (w)       w:view_source(true) end),
+    bind.cmd({"view!",         },           function (w)       w:view_source(false) end),
 }
 
 function set_http_options(w)
@@ -603,9 +603,9 @@ window_helpers = {
     end,
 
     -- toggle source view mode of current view
-    view_source = function (w, bang, view)
+    view_source = function (w, active, view)
         if not view then view = w:get_current() end
-        view:view_source(bang)
+        view:view_source(active)
     end,
 
     -- Wrapper around the bind plugin's hit method
