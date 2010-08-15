@@ -13,6 +13,10 @@ module("luakit")
 -- @class table
 -- @name luakit
 
+--- Windows table
+-- @class table
+-- @name windows
+
 --- Quit luakit
 -- @param -
 -- @name quit
