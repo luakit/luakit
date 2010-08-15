@@ -44,11 +44,11 @@ luakit: ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
 apidoc: luadoc/luakit.lua
-	mkdir -p apidoc
-	luadoc -d apidoc luadoc/luakit.lua
+	mkdir -p apidocs
+	luadoc -d apidocs luadoc/luakit.lua
 
 clean:
-	rm -rf apidoc luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
+	rm -rf apidocs luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
