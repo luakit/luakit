@@ -1054,6 +1054,7 @@ window_helpers = {
             if b == 1 then
                 -- open file
                 if d.status == "finished" then
+                    luakit.spawn("xdg-open '" .. d.destination .. "'")
                 end
             elseif b == 3 then
                 -- remove download
