@@ -917,7 +917,7 @@ window_helpers = {
         tb.ebox:show()
     end,
 
-    -- Adds a new label to the download bar
+    -- Adds a new label to the download bar and registers signals for it
     add_download_widget = function(w, d)
         local bar = w.dbar
         local e = eventbox()
@@ -928,7 +928,9 @@ window_helpers = {
         bar.layout:pack_start(e, false, false, 0)
         e:add_signal("clicked", function(e, b)
             if b == 1 then
-                -- TODO open file
+                -- open file
+                if d.status == "finished" then
+                end
             elseif b == 3 then
                 -- remove download
                 bar.layout:remove(e)
@@ -944,16 +946,20 @@ window_helpers = {
         return e
     end,
 
+    handle_download_click = function(e, b)
+    end
+
     -- Adds a download to the download bar.
     add_download = function(w, d)
         local bar = w.dbar
         local wi = w:add_download_widget(d)
-        table.insert(bar.downloads, { download = d, widget = wi })
+        table.insert(bar.downloads, {download=d, widget=wi})
         bar.ebox:show()
         -- start refresh timer
         if not bar.timer.started then bar.timer:start() end
     end,
 
+    -- Updates the text of the given download widget for the given download
     update_download_widget = function(w, wi, d)
         _,_,basename = string.find(d.destination, ".*/([^/]*)")
         local fg = theme.loaded_fg or theme.download_fg or theme.downloadbar_fg or theme.fg
