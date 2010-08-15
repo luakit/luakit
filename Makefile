@@ -10,7 +10,7 @@ SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard w
 HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${GHEAD}
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-all: options newline luakit
+all: options newline luakit apidoc
 
 options:
 	@echo luakit build options:
@@ -42,6 +42,10 @@ ${OBJS}: ${HEADS} config.mk globalconf.h
 luakit: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
+
+apidoc: luadoc/luakit.lua
+	mkdir -p apidoc
+	luadoc -d apidoc luadoc/luakit.lua
 
 clean:
 	rm -rf luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
