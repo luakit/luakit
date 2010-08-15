@@ -19,6 +19,7 @@
  *
  */
 
+#include <stdbool.h>
 #include <webkit/webkitdownload.h>
 #include <webkit/webkitnetworkrequest.h>
 
@@ -38,11 +39,24 @@ typedef struct
 static lua_class_t download_class;
 LUA_OBJECT_FUNCS(download_class, download_t, download)
 
+static void
+luaH_download_unref(lua_State *L, download_t *download)
+{
+    luaH_object_unref(L, download->ref);
+    download->ref = NULL;
+}
+
+static bool
+download_is_started(download_t *download)
+{
+    return download->ref != NULL;
+}
+
 static int
 luaH_download_gc(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    g_object_unref(download->webkit_download);
+    g_free(download->webkit_download);
     return 0;
 }
 
@@ -51,19 +65,23 @@ luaH_download_new(lua_State *L)
 {
     luaH_class_new(L, &download_class);
     download_t *download = luaH_checkudata(L, -1, &download_class);
+    download->ref = NULL;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
-    g_object_ref(download->webkit_download); // prevent glib garbage collection
     return 1;
 }
 
 static int
 luaH_download_set_destination(lua_State *L, download_t *download)
 {
-    const char *destination = luaL_checkstring(L, -1);
-    const char *destination_uri = g_filename_to_uri(destination, NULL, NULL);
-    webkit_download_set_destination_uri(download->webkit_download, destination_uri);
-    luaH_object_emit_signal(L, -3, "property::destination_uri", 0, 0);
+    if (download_is_started(download)) {
+        luaH_warn(L, "cannot change destination while download is running");
+    } else {
+        const char *destination = luaL_checkstring(L, -1);
+        const char *destination_uri = g_filename_to_uri(destination, NULL, NULL);
+        webkit_download_set_destination_uri(download->webkit_download, destination_uri);
+        luaH_object_emit_signal(L, -3, "property::destination_uri", 0, 0);
+    }
     return 0;
 }
 
@@ -79,6 +97,9 @@ static int
 luaH_download_get_progress(lua_State *L, download_t *download)
 {
     double progress = webkit_download_get_progress(download->webkit_download);
+    if (progress == 1) {
+        luaH_download_unref(L, download); // allow Lua garbage collection of download
+    }
     lua_pushnumber(L, progress);
     return 1;
 }
@@ -89,6 +110,7 @@ luaH_download_get_status(lua_State *L, download_t *download)
     WebKitDownloadStatus status = webkit_download_get_status(download->webkit_download);
     switch (status) {
         case WEBKIT_DOWNLOAD_STATUS_FINISHED:
+            luaH_download_unref(L, download); // allow Lua garbage collection of download
             lua_pushstring(L, "finished");
             break;
         case WEBKIT_DOWNLOAD_STATUS_CREATED:
@@ -98,9 +120,11 @@ luaH_download_get_status(lua_State *L, download_t *download)
             lua_pushstring(L, "started");
             break;
         case WEBKIT_DOWNLOAD_STATUS_CANCELLED:
+            luaH_download_unref(L, download); // allow Lua garbage collection of download
             lua_pushstring(L, "cancelled");
             break;
         case WEBKIT_DOWNLOAD_STATUS_ERROR:
+            luaH_download_unref(L, download); // allow Lua garbage collection of download
             lua_pushstring(L, "error");
             break;
         default:
@@ -145,8 +169,12 @@ luaH_download_get_suggested_filename(lua_State *L, download_t *download)
 static int
 luaH_download_set_uri(lua_State *L, download_t *download)
 {
-    const char *uri = luaL_checkstring(L, -1);
-    download->uri = uri;
+    if (download_is_started(download)) {
+        luaH_warn(L, "cannot change URI while download is running");
+    } else {
+        const char *uri = luaL_checkstring(L, -1);
+        download->uri = uri;
+    }
     return 0;
 }
 
@@ -161,9 +189,12 @@ static int
 luaH_download_start(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
-    // TODO: unref when download finishes!
-    webkit_download_start(download->webkit_download);
+    if (download_is_started(download)) {
+        luaH_warn(L, "download already running. Cannot start twice");
+    } else {
+        download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
+        webkit_download_start(download->webkit_download);
+    }
     return 0;
 }
 
@@ -171,7 +202,7 @@ static int
 luaH_download_cancel(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    luaH_object_unref(L, download->ref); // allow Lua garbage collection of download
+    luaH_download_unref(L, download); // allow Lua garbage collection of download
     webkit_download_cancel(download->webkit_download);
     return 0;
 }
