@@ -836,7 +836,7 @@ window_helpers = {
     end,
 
     -- Webview scroll functions
-    scroll_vert = function(w, value, view)
+    scroll_vert = function (w, value, view)
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_vert()
         if type(value) == "string" then
@@ -845,7 +845,7 @@ window_helpers = {
         view:set_scroll_vert(value)
     end,
 
-    scroll_horiz = function(w, value)
+    scroll_horiz = function (w, value, view)
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_horiz()
         if type(value) == "string" then
