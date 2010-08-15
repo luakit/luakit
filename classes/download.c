@@ -34,6 +34,7 @@ typedef struct
     WebKitDownload* webkit_download;
     gpointer ref;
     const char *uri;
+    const char *destination;
     bool error;
 } download_t;
 
@@ -80,6 +81,7 @@ luaH_download_set_destination(lua_State *L, download_t *download)
         luaH_warn(L, "cannot change destination while download is running");
     } else {
         const char *destination = luaL_checkstring(L, -1);
+        download->destination = destination;
         const char *destination_uri = g_filename_to_uri(destination, NULL, NULL);
         webkit_download_set_destination_uri(download->webkit_download, destination_uri);
         luaH_object_emit_signal(L, -3, "property::destination_uri", 0, 0);
@@ -87,13 +89,7 @@ luaH_download_set_destination(lua_State *L, download_t *download)
     return 0;
 }
 
-static int
-luaH_download_get_destination(lua_State *L, download_t *download)
-{
-    const char *destination_uri = webkit_download_get_destination_uri(download->webkit_download);
-    lua_pushstring(L, destination_uri);
-    return 1;
-}
+LUA_OBJECT_EXPORT_PROPERTY(download, download_t, destination, lua_pushstring)
 
 static int
 luaH_download_get_progress(lua_State *L, download_t *download)
@@ -183,12 +179,7 @@ luaH_download_set_uri(lua_State *L, download_t *download)
     return 0;
 }
 
-static int
-luaH_download_get_uri(lua_State *L, download_t *download)
-{
-    lua_pushstring(L, download->uri);
-    return 1;
-}
+LUA_OBJECT_EXPORT_PROPERTY(download, download_t, uri, lua_pushstring)
 
 static void
 download_check_prerequesites(download_t *download)
