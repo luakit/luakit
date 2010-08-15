@@ -190,35 +190,42 @@ luaH_download_get_uri(lua_State *L, download_t *download)
     return 1;
 }
 
+static void
+download_check_prerequesites(download_t *download)
+{
+    // check prerequesites for download
+    GError *error = NULL;
+    // check disk space
+    guint64 total_size = webkit_download_get_total_size(download->webkit_download);
+    const char *destination = webkit_download_get_destination_uri(download->webkit_download);
+    GFile *file = g_file_new_for_uri(destination);
+    GFile *folder = g_file_get_parent(file);
+    GFileInfo *info = g_file_query_filesystem_info (folder,
+        G_FILE_ATTRIBUTE_FILESYSTEM_FREE, NULL, &error);
+    guint64 free_space = g_file_info_get_attribute_uint64 (info,
+        G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
+    g_object_unref(folder);
+    // check permissions
+    // somewhat crude: we just open it for appending and see what happens
+    GFileOutputStream *stream = g_file_append_to(file, G_FILE_CREATE_NONE, NULL, &error);
+    g_object_unref(stream);
+    g_object_unref(file);
+    // check for errors
+    if (free_space < total_size || error != NULL) {
+        download->error = true;
+    }
+}
+
 static int
 luaH_download_start(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    download->error = false;
     if (download_is_started(download)) {
         luaH_warn(L, "download already running. Cannot start twice");
     } else {
-        // check prerequesites for download
-        GError *error = NULL;
-        // check disk space
-        guint64 total_size = webkit_download_get_total_size(download->webkit_download);
-        const char *destination = webkit_download_get_destination_uri(download->webkit_download);
-        GFile *file = g_file_new_for_uri(destination);
-        GFile *folder = g_file_get_parent(file);
-        GFileInfo *info = g_file_query_filesystem_info (folder,
-            G_FILE_ATTRIBUTE_FILESYSTEM_FREE, NULL, &error);
-        guint64 free_space = g_file_info_get_attribute_uint64 (info,
-            G_FILE_ATTRIBUTE_FILESYSTEM_FREE);
-        g_object_unref(folder);
-        // check permissions
-        // somewhat crude: we just open it for appending and see what happens
-        GFileOutputStream *stream = g_file_append_to(file, G_FILE_CREATE_NONE, NULL, &error);
-        g_object_unref(stream);
-        g_object_unref(file);
-        // check for errors
-        if (free_space < total_size || error != NULL) {
-            download->error = true;
-        } else {
+        download->error = false;
+        download_check_prerequesites(download);
+        if (!download->error) {
             // everything OK, download
             download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
             webkit_download_start(download->webkit_download);
