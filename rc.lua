@@ -26,13 +26,23 @@ MAX_SRCH_HISTORY = 100
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
--- Plugins/scripts overrides, uncomment to disable plugins/scripts
--- except for those specified
-
--- plugins_sites = {}
--- scripts_sites = {
---  ["bugs.debian.org"] = true
--- }
+-- Per-domain webview properties
+domain_props = { --[[
+    ["all"] = {
+        ["enable-scripts"]          = false,
+        ["enable-plugins"]          = false,
+        ["enable-private-browsing"] = false,
+        ["user-stylesheet-uri"]     = "",
+    },
+    ["youtube.com"] = {
+        ["enable-scripts"] = true,
+        ["enable-plugins"] = true,
+    },
+    ["forums.archlinux.org"] = {
+        ["user-stylesheet-uri"]     = luakit.data_home .. "/styles/dark.css",
+        ["enable-private-browsing"] = true,
+    }, ]]--
+}
 
 -- Luakit theme
 theme = theme or {
@@ -459,6 +469,7 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- Update progress widgets & set default mode on navigate
     view:add_signal("load-status", function (v, status)
         if w:is_current(v) then
             w:update_progress(v)
@@ -468,16 +479,16 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("load-commit", function (v)
-	if plugins_sites then
-            local domain
-	    _, _, domain = string.find(v.uri, "%a+://([^/]*)/")
-	    view:set_prop("enable-plugins", plugins_sites[domain] == true)
-        end
-	if scripts_sites then
-            local domain
-	    _, _, domain = string.find(v.uri, "%a+://([^/]*)/")
-	    view:set_prop("enable-scripts", scripts_sites[domain] == true)
+    -- Domain properties
+    view:add_signal("load-status", function (v, status)
+        if status == "committed" then
+            local domain = string.match(v.uri, "^%a+://([^/]*)/?")
+            if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
+            local props = util.table.join(domain_props.all or {}, domain_props[domain] or {})
+            for k, v in pairs(props) do
+                info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
+                view:set_prop(k, v)
+            end
         end
     end)
 
