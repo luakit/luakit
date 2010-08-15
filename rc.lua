@@ -944,7 +944,9 @@ window_helpers = {
         for _,p in pairs(bar.downloads) do
             local d, wi = p.download, p.widget
             w:update_download_widget(wi, d)
-            if d.status ~= "finished" then all_finished = false end
+            if d.status == "created" or d.status == "started" then
+                all_finished = false
+            end
         end
         -- stop timer if everyone finished
         if all_finished then
