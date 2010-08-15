@@ -1053,9 +1053,14 @@ window_helpers = {
         e:add_signal("button-release", function(e, m, b)
             if b == 1 then
                 -- open file
-                if d.status == "finished" then
-                    luakit.spawn("xdg-open '" .. d.destination .. "'")
-                end
+                local t = timer{interval=1000}
+                t:add_signal("timeout", function(t)
+                    if d.status == "finished" then
+                        t:stop()
+                        luakit.spawn("xdg-open '" .. d.destination .. "'")
+                    end
+                end)
+                t:start()
             elseif b == 3 then
                 -- remove download
                 bar.layout:remove(e)
