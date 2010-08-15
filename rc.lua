@@ -25,6 +25,9 @@ MAX_SRCH_HISTORY = 100
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
+-- Small util functions
+function debug(...) if luakit.verbose then print(string.format(...)) end end
+
 -- Luakit theme
 theme = theme or {
     -- Default settings
@@ -457,28 +460,23 @@ function attach_webview_signals(w, view)
     -- 'mime' contains the mime type that is requested
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
-        if w:is_current(v) then
-            if luakit.verbose then print(string.format("Requested link: %s (%s)", link, mime)) end
-
-            -- i.e. block binary files like *.exe
-            if string.match(mime, "application/octet-stream") then
-                return false
-            end
-        end
+        debug("Requested link: %s (%s)", link, mime)
+        -- i.e. block binary files like *.exe
+        --if mime == "application/octet-stream" then
+        --    return false
+        --end
     end)
 
     -- 'link' contains the download link
     -- 'filename' contains the suggested filename (from server or webkit)
     view:add_signal("download-request", function (v, link, filename)
-        if w:is_current(v) and filename then
-            -- Make download dir
-            os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
-
-            local dl = DOWNLOAD_DIR .. "/" .. filename
-            local wget = string.format("wget -q %q -O %q &", link, dl)
-            if luakit.verbose then print("Launching: " .. wget) end
-            os.execute(wget)
-        end
+        if not filename then return end
+        -- Make download dir
+        os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
+        local dl = DOWNLOAD_DIR .. "/" .. filename
+        local wget = string.format("wget -q %q -O %q", link, dl)
+        debug("Launching: %s", wget)
+        luakit.spawn(wget)
     end)
 
     -- 'link' contains the download link
@@ -486,15 +484,12 @@ function attach_webview_signals(w, view)
     -- return TRUE to handle the request by yourself or FALSE to proceed
     -- with default behaviour
     view:add_signal("new-window-decision", function (v, link, reason)
-        if w:is_current(v) then
-            print ("new-window-decision", link, reason)
-            if reason == "link-clicked" then
-                new_window({ link })
-                return true
-            end
-            w:new_tab(link)
+        debug("New window decision: %s (%s)", link, reason)
+        if reason == "link-clicked" then
+            new_window({ link })
+            return true
         end
-        return false
+        w:new_tab(link)
     end)
 
     view:add_signal("property::progress", function (v)
