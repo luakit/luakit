@@ -169,6 +169,8 @@ commands = {
     bind.cmd({"close",     "c" },           function (w)       w:close_tab() end),
     bind.cmd({"websearch", "ws"},           function (w, e, s) w:websearch(e, s) end),
     bind.cmd({"reload",        },           function (w)       w:reload() end),
+    bind.cmd({"view",          },           function (w)       w:view_source(1) end),
+    bind.cmd({"view!",         },           function (w)       w:view_source(0) end),
 }
 
 function set_http_options(w)
@@ -583,6 +585,12 @@ window_helpers = {
         local script = fh:read("*a")
         fh:close()
         return w:eval_js(script, file, view)
+    end,
+
+    -- view source of current uri
+    view_source = function (w, bang, view)
+        if not view then view = w:get_current() end
+        view:view_source(bang)
     end,
 
     -- Wrapper around the bind plugin's hit method
