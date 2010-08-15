@@ -475,6 +475,15 @@ luaH_webview_go_forward(lua_State *L)
 }
 
 static gint
+luaH_webview_reload(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    webkit_web_view_reload(WEBKIT_WEB_VIEW(view));
+    return 0;
+}
+
+static gint
 luaH_webview_search(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -718,6 +727,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       /* misc webview methods */
       PF_CASE(EVAL_JS,            luaH_webview_eval_js)
       PF_CASE(LOADING,            luaH_webview_loading)
+      PF_CASE(RELOAD,             luaH_webview_reload)
       /* widget methods */
       PF_CASE(DESTROY,            luaH_widget_destroy)
       PF_CASE(FOCUS,              luaH_widget_focus)
