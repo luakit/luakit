@@ -587,7 +587,7 @@ window_helpers = {
         return w:eval_js(script, file, view)
     end,
 
-    -- view source of current uri
+    -- toggle source view mode of current view
     view_source = function (w, bang, view)
         if not view then view = w:get_current() end
         view:view_source(bang)
