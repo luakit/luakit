@@ -1050,7 +1050,7 @@ window_helpers = {
         w:update_download_widget(l, d)
         w:apply_download_theme(e, l)
         bar.layout:pack_start(e, false, false, 0)
-        e:add_signal("clicked", function(e, b)
+        e:add_signal("button-release", function(e, m, b)
             if b == 1 then
                 -- open file
                 if d.status == "finished" then
@@ -1069,9 +1069,6 @@ window_helpers = {
         end)
         return e
     end,
-
-    handle_download_click = function(e, b)
-    end
 
     -- Adds a download to the download bar.
     add_download = function(w, d)
