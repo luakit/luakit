@@ -14,6 +14,7 @@ function webview()  return widget{type="webview"}  end
 function window()   return widget{type="window"}   end
 function entry()    return widget{type="entry"}    end
 
+
 -- Variable definitions
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
@@ -25,8 +26,23 @@ MAX_SRCH_HISTORY = 100
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
--- Small util functions
-function debug(...) if luakit.verbose then print(string.format(...)) end end
+-- Per-domain webview properties
+domain_props = { --[[
+    ["all"] = {
+        ["enable-scripts"]          = false,
+        ["enable-plugins"]          = false,
+        ["enable-private-browsing"] = false,
+        ["user-stylesheet-uri"]     = "",
+    },
+    ["youtube.com"] = {
+        ["enable-scripts"] = true,
+        ["enable-plugins"] = true,
+    },
+    ["forums.archlinux.org"] = {
+        ["user-stylesheet-uri"]     = luakit.data_home .. "/styles/dark.css",
+        ["enable-private-browsing"] = true,
+    }, ]]--
+}
 
 -- Luakit theme
 theme = theme or {
@@ -53,6 +69,9 @@ theme = theme or {
     tablabel_format      = "%-30s",
 }
 
+-- Small util functions
+function info(...) if luakit.verbose then print(string.format(...)) end end
+
 widget.add_signal("new", function (wi)
     wi:add_signal("init", function (wi)
         if wi.type == "window" then
@@ -66,6 +85,7 @@ end)
 
 -- Search engines
 search_engines = {
+    debbugs     = "http://bugs.debian.org/{0}",
     google      = "http://google.com/search?q={0}",
     imdb        = "http://imdb.com/find?s=all&q={0}",
     sourceforge = "http://sf.net/search/?words={0}",
@@ -449,6 +469,7 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- Update progress widgets & set default mode on navigate
     view:add_signal("load-status", function (v, status)
         if w:is_current(v) then
             w:update_progress(v)
@@ -458,11 +479,24 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- Domain properties
+    view:add_signal("load-status", function (v, status)
+        if status == "committed" then
+            local domain = string.match(v.uri, "^%a+://([^/]*)/?")
+            if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
+            local props = util.table.join(domain_props.all or {}, domain_props[domain] or {})
+            for k, v in pairs(props) do
+                info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
+                view:set_prop(k, v)
+            end
+        end
+    end)
+
     -- 'link' contains the download link
     -- 'mime' contains the mime type that is requested
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
-        debug("Requested link: %s (%s)", link, mime)
+        info("Requested link: %s (%s)", link, mime)
         -- i.e. block binary files like *.exe
         --if mime == "application/octet-stream" then
         --    return false
@@ -477,7 +511,7 @@ function attach_webview_signals(w, view)
         os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
         local dl = DOWNLOAD_DIR .. "/" .. filename
         local wget = string.format("wget -q %q -O %q", link, dl)
-        debug("Launching: %s", wget)
+        info("Launching: %s", wget)
         luakit.spawn(wget)
     end)
 
@@ -486,7 +520,7 @@ function attach_webview_signals(w, view)
     -- return TRUE to handle the request by yourself or FALSE to proceed
     -- with default behaviour
     view:add_signal("new-window-decision", function (v, link, reason)
-        debug("New window decision: %s (%s)", link, reason)
+        info("New window decision: %s (%s)", link, reason)
         if reason == "link-clicked" then
             new_window({ link })
             return true
