@@ -523,19 +523,24 @@ luaH_webview_go_forward(lua_State *L)
 }
 
 static gint
-luaH_webview_view_source(lua_State *L)
+luaH_webview_get_view_source(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    lua_pushboolean(L, webkit_web_view_get_view_source_mode(WEBKIT_WEB_VIEW(view)));
+    return 1;
+}
+
+static gint
+luaH_webview_set_view_source(lua_State *L)
 {
     const gchar *uri;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    gboolean toggle = luaH_checkboolean(L, 2);
+    gboolean show = luaH_checkboolean(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
-
+    webkit_web_view_set_view_source_mode(WEBKIT_WEB_VIEW(view), show);
     if ((uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view))))
-    {
-        webkit_web_view_set_view_source_mode(WEBKIT_WEB_VIEW(view), toggle);
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), uri);
-    }
-
     return 0;
 }
 
@@ -792,7 +797,9 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         PF_CASE(EVAL_JS,            luaH_webview_eval_js)
         PF_CASE(LOADING,            luaH_webview_loading)
         PF_CASE(RELOAD,             luaH_webview_reload)
-        PF_CASE(VIEW_SOURCE,        luaH_webview_view_source)
+        /* source viewing methods */
+        PF_CASE(GET_VIEW_SOURCE,    luaH_webview_get_view_source)
+        PF_CASE(SET_VIEW_SOURCE,    luaH_webview_set_view_source)
         /* widget methods */
         PF_CASE(DESTROY,            luaH_widget_destroy)
         PF_CASE(FOCUS,              luaH_widget_focus)

@@ -167,17 +167,17 @@ mode_binds = {
 -- Commands
 commands = {
  -- bind.cmd({Command, Alias1, ...},        function (w, arg, opts) .. end, opts),
-    bind.cmd({"open",      "o" },           function (w, a)    w:navigate(a) end),
-    bind.cmd({"tabopen",   "t" },           function (w, a)    w:new_tab(a) end),
-    bind.cmd({"back"           },           function (w, a)    w:back(tonumber(a) or 1) end),
-    bind.cmd({"forward",   "f" },           function (w, a)    w:forward(tonumber(a) or 1) end),
-    bind.cmd({"scroll"         },           function (w, a)    w:scroll_vert(a) end),
-    bind.cmd({"quit",      "q" },           function (w)       luakit.quit() end),
-    bind.cmd({"close",     "c" },           function (w)       w:close_tab() end),
-    bind.cmd({"websearch", "ws"},           function (w, e, s) w:websearch(e, s) end),
-    bind.cmd({"reload",        },           function (w)       w:reload() end),
-    bind.cmd({"view",          },           function (w)       w:view_source(true) end),
-    bind.cmd({"view!",         },           function (w)       w:view_source(false) end),
+    bind.cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
+    bind.cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
+    bind.cmd({"back"              },         function (w, a)    w:back(tonumber(a) or 1) end),
+    bind.cmd({"forward",     "f"  },         function (w, a)    w:forward(tonumber(a) or 1) end),
+    bind.cmd({"scroll"            },         function (w, a)    w:scroll_vert(a) end),
+    bind.cmd({"quit",        "q"  },         function (w)       luakit.quit() end),
+    bind.cmd({"close",       "c"  },         function (w)       w:close_tab() end),
+    bind.cmd({"websearch",   "ws" },         function (w, e, s) w:websearch(e, s) end),
+    bind.cmd({"reload",           },         function (w)       w:reload() end),
+    bind.cmd({"viewsource",  "vs" },         function (w)       w:get_current():set_view_source(true) end),
+    bind.cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
 }
 
 function set_http_options(w)
@@ -602,12 +602,6 @@ window_helpers = {
         return w:eval_js(script, file, view)
     end,
 
-    -- toggle source view mode of current view
-    view_source = function (w, active, view)
-        if not view then view = w:get_current() end
-        view:view_source(active)
-    end,
-
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
         local caught, newbuf = bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
@@ -619,6 +613,12 @@ window_helpers = {
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
         return bind.match_cmd(commands, buffer, w)
+    end,
+
+    -- Toggle source view
+    toggle_source = function (w, view)
+        if not view then view = w:get_current() end
+        view:set_view_source(not view:get_view_source())
     end,
 
     -- enter command or characters into command line
