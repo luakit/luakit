@@ -14,8 +14,6 @@ function webview()  return widget{type="webview"}  end
 function window()   return widget{type="window"}   end
 function entry()    return widget{type="entry"}    end
 
--- Small util functions
-function debug(...) if luakit.verbose then print(string.format(...)) end end
 
 -- Variable definitions
 HOMEPAGE    = "http://luakit.org/"
@@ -60,6 +58,9 @@ theme = theme or {
     -- titles overshadowing small tab titles when things get crowded.
     tablabel_format      = "%-30s",
 }
+
+-- Small util functions
+function info(...) if luakit.verbose then print(string.format(...)) end end
 
 widget.add_signal("new", function (wi)
     wi:add_signal("init", function (wi)
@@ -484,7 +485,7 @@ function attach_webview_signals(w, view)
     -- 'mime' contains the mime type that is requested
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
-        debug("Requested link: %s (%s)", link, mime)
+        info("Requested link: %s (%s)", link, mime)
         -- i.e. block binary files like *.exe
         --if mime == "application/octet-stream" then
         --    return false
@@ -499,7 +500,7 @@ function attach_webview_signals(w, view)
         os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
         local dl = DOWNLOAD_DIR .. "/" .. filename
         local wget = string.format("wget -q %q -O %q", link, dl)
-        debug("Launching: %s", wget)
+        info("Launching: %s", wget)
         luakit.spawn(wget)
     end)
 
@@ -508,7 +509,7 @@ function attach_webview_signals(w, view)
     -- return TRUE to handle the request by yourself or FALSE to proceed
     -- with default behaviour
     view:add_signal("new-window-decision", function (v, link, reason)
-        debug("New window decision: %s (%s)", link, reason)
+        info("New window decision: %s (%s)", link, reason)
         if reason == "link-clicked" then
             new_window({ link })
             return true
