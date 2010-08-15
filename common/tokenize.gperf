@@ -32,6 +32,7 @@ get_scroll_vert
 get_selection
 get_special_dir
 get_title
+get_view_source
 go_back
 go_forward
 hbox
@@ -60,6 +61,7 @@ set_scroll_horiz
 set_scroll_vert
 set_selection
 set_title
+set_view_source
 show
 show_border
 show_frame

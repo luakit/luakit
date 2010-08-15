@@ -263,14 +263,12 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
     gchar *name = NULL;
     switch (status) {
 
-#define LT_CASE(atom, literal) case WEBKIT_LOAD_##atom: name = literal; break;
-
-      LT_CASE(PROVISIONAL,                     "provisional")
-      LT_CASE(COMMITTED,                       "committed")
-      LT_CASE(FINISHED,                        "finished")
-      LT_CASE(FIRST_VISUALLY_NON_EMPTY_LAYOUT, "first-visual")
-      LT_CASE(FAILED,                          "failed")
-
+#define LT_CASE(a, l) case WEBKIT_LOAD_##a: name = l; break;
+        LT_CASE(PROVISIONAL,                     "provisional")
+        LT_CASE(COMMITTED,                       "committed")
+        LT_CASE(FINISHED,                        "finished")
+        LT_CASE(FIRST_VISUALLY_NON_EMPTY_LAYOUT, "first-visual")
+        LT_CASE(FAILED,                          "failed")
 #undef  LT_CASE
 
       default:
@@ -311,6 +309,56 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 
     lua_pop(L, ret + 1);
     return TRUE;
+}
+
+static gboolean
+new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitNetworkRequest *r, WebKitWebNavigationAction *na,
+        WebKitWebPolicyDecision *pd, widget_t *w)
+{
+    (void) v;
+    (void) f;
+    lua_State *L = globalconf.L;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    gchar *reason = NULL;
+    gint ret = 0;
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+
+    switch (webkit_web_navigation_action_get_reason(na)) {
+
+#define NR_CASE(a, l) case WEBKIT_WEB_NAVIGATION_REASON_##a: reason = l; break;
+        NR_CASE(LINK_CLICKED,     "link-clicked");
+        NR_CASE(FORM_SUBMITTED,   "form-submitted");
+        NR_CASE(BACK_FORWARD,     "back-forward");
+        NR_CASE(RELOAD,           "reload");
+        NR_CASE(FORM_RESUBMITTED, "form-resubmitted");
+        NR_CASE(OTHER,            "other");
+#undef  NR_CASE
+
+      default:
+        warn("programmer error, unable to get web navigation reason literal");
+        break;
+    }
+
+    lua_pushstring(L, reason);
+    ret = luaH_object_emit_signal(L, -3, "new-window-decision", 2, 1);
+
+    /* User responded with true, meaning a decision was made
+     * and the signal was handled */
+    if (ret && luaH_checkboolean(L, -1))
+    {
+        webkit_web_policy_decision_ignore(pd);
+        lua_pop(L, ret + 1);
+
+        return TRUE;
+    }
+
+    lua_pop(L, ret + 1);
+
+    /* proceed with default behaviour */
+    return FALSE;
 }
 
 static gboolean
@@ -471,6 +519,37 @@ luaH_webview_go_forward(lua_State *L)
     gint steps = (gint) luaL_checknumber(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps);
+    return 0;
+}
+
+static gint
+luaH_webview_get_view_source(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    lua_pushboolean(L, webkit_web_view_get_view_source_mode(WEBKIT_WEB_VIEW(view)));
+    return 1;
+}
+
+static gint
+luaH_webview_set_view_source(lua_State *L)
+{
+    const gchar *uri;
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gboolean show = luaH_checkboolean(L, 2);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    webkit_web_view_set_view_source_mode(WEBKIT_WEB_VIEW(view), show);
+    if ((uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view))))
+        webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), uri);
+    return 0;
+}
+
+static gint
+luaH_webview_reload(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    webkit_web_view_reload(WEBKIT_WEB_VIEW(view));
     return 0;
 }
 
@@ -699,31 +778,33 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
     switch(token) {
 
-#define PF_CASE(tok, func) case L_TK_##tok: lua_pushcfunction(L, func); return 1;
-
-      /* property methods */
-      PF_CASE(GET_PROP,           luaH_webview_get_prop)
-      PF_CASE(SET_PROP,           luaH_webview_set_prop)
-      /* scroll adjustment methods */
-      PF_CASE(GET_SCROLL_HORIZ,   luaH_webview_get_hscroll)
-      PF_CASE(GET_SCROLL_VERT,    luaH_webview_get_vscroll)
-      PF_CASE(SET_SCROLL_HORIZ,   luaH_webview_set_scroll_horiz)
-      PF_CASE(SET_SCROLL_VERT,    luaH_webview_set_scroll_vert)
-      /* search methods */
-      PF_CASE(CLEAR_SEARCH,       luaH_webview_clear_search)
-      PF_CASE(SEARCH,             luaH_webview_search)
-      /* history navigation methods */
-      PF_CASE(GO_BACK,            luaH_webview_go_back)
-      PF_CASE(GO_FORWARD,         luaH_webview_go_forward)
-      /* misc webview methods */
-      PF_CASE(EVAL_JS,            luaH_webview_eval_js)
-      PF_CASE(LOADING,            luaH_webview_loading)
-      /* widget methods */
-      PF_CASE(DESTROY,            luaH_widget_destroy)
-      PF_CASE(FOCUS,              luaH_widget_focus)
-      PF_CASE(HIDE,               luaH_widget_hide)
-      PF_CASE(SHOW,               luaH_widget_show)
-
+#define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction(L, f); return 1;
+        /* property methods */
+        PF_CASE(GET_PROP,           luaH_webview_get_prop)
+        PF_CASE(SET_PROP,           luaH_webview_set_prop)
+        /* scroll adjustment methods */
+        PF_CASE(GET_SCROLL_HORIZ,   luaH_webview_get_hscroll)
+        PF_CASE(GET_SCROLL_VERT,    luaH_webview_get_vscroll)
+        PF_CASE(SET_SCROLL_HORIZ,   luaH_webview_set_scroll_horiz)
+        PF_CASE(SET_SCROLL_VERT,    luaH_webview_set_scroll_vert)
+        /* search methods */
+        PF_CASE(CLEAR_SEARCH,       luaH_webview_clear_search)
+        PF_CASE(SEARCH,             luaH_webview_search)
+        /* history navigation methods */
+        PF_CASE(GO_BACK,            luaH_webview_go_back)
+        PF_CASE(GO_FORWARD,         luaH_webview_go_forward)
+        /* misc webview methods */
+        PF_CASE(EVAL_JS,            luaH_webview_eval_js)
+        PF_CASE(LOADING,            luaH_webview_loading)
+        PF_CASE(RELOAD,             luaH_webview_reload)
+        /* source viewing methods */
+        PF_CASE(GET_VIEW_SOURCE,    luaH_webview_get_view_source)
+        PF_CASE(SET_VIEW_SOURCE,    luaH_webview_set_view_source)
+        /* widget methods */
+        PF_CASE(DESTROY,            luaH_widget_destroy)
+        PF_CASE(FOCUS,              luaH_widget_focus)
+        PF_CASE(HIDE,               luaH_widget_hide)
+        PF_CASE(SHOW,               luaH_widget_show)
 #undef  PF_CASE
 
       case L_TK_HOVERED_URI:
@@ -865,6 +946,7 @@ widget_webview(widget_t *w)
       "signal::key-press-event",                      (GCallback)key_press_cb,           w,
       "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
+      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb, w,
       "signal::notify",                               (GCallback)notify_cb,              w,
       "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
