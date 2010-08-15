@@ -15,7 +15,7 @@ LIBS := $(shell pkg-config --libs ${PKGS})
 
 # Add flags
 CPPFLAGS := -DVERSION=\"${VERSION}\" ${CPPFLAGS} -DDEVELOPMENT_PATHS
-CFLAGS   := -std=c99 -ggdb -W -Wall -Wextra ${INCS} ${CFLAGS}
+CFLAGS   := -std=gnu99 -ggdb -W -Wall -Wextra ${INCS} ${CFLAGS}
 LDFLAGS  := ${LIBS} ${LDFLAGS}
 
 # Building on OSX

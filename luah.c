@@ -419,16 +419,19 @@ luaH_luakit_spawn_sync(lua_State *L)
     gchar *stdout = NULL;
     gchar *stderr = NULL;
     gint rv;
-    __sighandler_t chldhandler;
+    struct sigaction sigact;
+    struct sigaction oldact;
 
     const gchar *command = luaL_checkstring(L, 1);
 
     /* Note: we have to temporarily clear the SIGCHLD handler. Otherwise
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
-    if (SIG_ERR == (chldhandler = signal(SIGCHLD, SIG_DFL)))
+    sigact.sa_handler=SIG_DFL;
+    sigemptyset (&sigact.sa_mask);
+    if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
     g_spawn_command_line_sync(command, &stdout, &stderr, &rv, &e);
-    if(signal(SIGCHLD, chldhandler) == SIG_ERR)
+    if (sigaction(SIGCHLD, &oldact, NULL))
         fatal("Can't restore SIGCHLD handler");
 
     if(e)
