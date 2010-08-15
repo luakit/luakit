@@ -48,7 +48,7 @@ apidoc: luadoc/luakit.lua
 	luadoc -d apidoc luadoc/luakit.lua
 
 clean:
-	rm -rf luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
+	rm -rf apidoc luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
