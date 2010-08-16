@@ -11,7 +11,7 @@ local util = require("lousy.util")
 
 module("lousy.bind")
 
--- Weak table of argects and their buffers
+-- Weak table of objects and their buffers
 local buffers = {}
 setmetatable(buffers, { __mode = "k" })
 
