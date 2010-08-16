@@ -8,7 +8,7 @@ window_helpers["formfiller"] = function(w, action)
         local modeline = "> vim:ft=formfiller"
         local filename = ""
         local formsDir = luakit.data_dir .. "/forms/"
-        os.execute(string.format("mkdir -p %q", formsDir))
+        luakit.spawn(string.format("mkdir -p %q", formsDir))
         if action == "once" then
             filename = os.tmpname()
         else
@@ -32,16 +32,16 @@ window_helpers["formfiller"] = function(w, action)
                         while(input=xp_res.iterateNext()) {
                             var type=(input.type?input.type:text);
                             if(type == 'text' || type == 'password' || type == 'search') {
-                                rv += input.name + '(' + type + '):' + input.value + '\\n';
+                                rv += input.name + '(' + type + '):' + input.value + '\n';
                             }
                             else if(type == 'checkbox' || type == 'radio') {
-                                rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\\n';
+                                rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
                             }
                         }
                         xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
                         var input;
                         while(input=xp_res.iterateNext()) {
-                            rv += input.name + '(textarea):' + input.value + '\\n';
+                            rv += input.name + '(textarea):' + input.value + '\n';
                         }
                     }
                     catch(err) { }
@@ -55,9 +55,9 @@ window_helpers["formfiller"] = function(w, action)
             else
                 fd = io.open(filename, "w+")
             end
-            fd:write(string.format("%s\n!profile=NAME_THIS_PROFILE_%d\n%s", modeline, math.random(), w:get_current():eval_js(dumpFunction, "dump")))
+            fd:write(string.format("%s\n!profile=NAME_THIS_PROFILE_%d\n%s", modeline, math.random(1,9999), w:get_current():eval_js(dumpFunction, "dump")))
             fd:flush()
-            os.execute("xterm -e " .. editor .. filename .. " &")
+            luakit.spawn("xterm -e " .. editor .. filename)
             fd:close()
         elseif action == "load" then
             local insertFunction=[[function insert(fname, ftype, fvalue, fchecked) {
@@ -102,7 +102,8 @@ window_helpers["formfiller"] = function(w, action)
                 end
 
                 p = string.format("echo -e -n \"%s\" | dmenu -l 3 ", p)
-                profile = io.popen(p):read("*a")
+                local exit_status, err
+                exit_status, profile, err = luakit.span_sync(p)
             end
             fd:seek("set")
             for line in fd:lines() do
@@ -124,6 +125,6 @@ window_helpers["formfiller"] = function(w, action)
             end
             fd:close()
         elseif action == "edit" then
-            os.execute("xterm -e " .. editor .. filename .. " &")
+            luakit.spawn(string.format("xterm -e %s %s", editor, filename))
         end
     end
