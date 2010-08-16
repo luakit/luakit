@@ -30,7 +30,7 @@ window_helpers["formfiller"] = function(w, action)
                         var xp_res=allFrames[j].document.evaluate('//input', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
                         var input;
                         while(input=xp_res.iterateNext()) {
-                            //if(input.name.lenght) {
+                            if(input.name != "") {
                                 var type=(input.type?input.type:text);
                                 if(type == 'text' || type == 'password' || type == 'search') {
                                     rv += input.name + '(' + type + '):' + input.value + '\n';
@@ -38,12 +38,12 @@ window_helpers["formfiller"] = function(w, action)
                                 else if(type == 'checkbox' || type == 'radio') {
                                     rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
                                 }
-                            //}
+                            }
                         }
                         xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
                         var input;
                         while(input=xp_res.iterateNext()) {
-                            if(input.name.lenght) {
+                            if(input.name != "") {
                                 rv += input.name + '(textarea):' + input.value + '\n';
                             }
                         }
@@ -125,18 +125,35 @@ window_helpers["formfiller"] = function(w, action)
                     break
                 end
             end
+            local fname, fchecked, ftype, fvalue
+            local js = insertFunction
+            local pattern1 = "(.+)%((.+)%):% -(.*)"
+            local pattern2 = "%1{0}(%2):%3"
+            local pattern3 = "([^{]+){(.+)}%((.+)%):% -(.*)"
             for line in fd:lines() do
                 if not string.match(line, "^!profile=.*") then
-                    local fname, fchecked, ftype, fvalue
-                    fname, fchecked, ftype, fvalue = string.match(string.gsub(line, "(.+)%((.+)%):% -(.*)", "%1{0}(%2):%3"), "([^{]+){(.+)}%((.+)%):\ *([^ ]*)")
-                    if fname ~= nil then
-                        -- print(string.format("name: %s checked: %s type: %s value: %s", fname, fchecked, ftype, fvalue))
-                        w:get_current():eval_js(insertFunction .. string.format("insert('%s', '%s', '%s', '%s');", fname, ftype, fvalue, fchecked), "f")
+                    if ftype == "textarea" then
+                        if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
+                            js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+                            ftype = nil
+                        else
+                            fvalue = string.format("%s\\n%s", fvalue, line)
+                        end
+                    end
+                    if ftype ~= "textarea" then
+                        fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
+                        if fname ~= nil and ftype ~= "textarea" then
+                            js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+                        end
                     end
                 else
                     break
                 end
             end
+            if ftype == "textarea" then
+                js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+            end
+            w:get_current():eval_js(js, "f")
             fd:close()
         elseif action == "edit" then
             luakit.spawn(string.format("xterm -e %s %s", editor, filename))
