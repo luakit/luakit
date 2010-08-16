@@ -89,6 +89,9 @@ window_helpers["formfiller"] = function(w, action)
                     catch(err) { }
                 }
             };]]
+            if (luakit.spawn_sync(string.format("sh -c '[ -e %s ] || exit 1'", filename))) == 1 then
+                return nil
+            end
             local fd = io.open(filename, "r")
             local profile = ""
             fd:seek("set")
@@ -127,9 +130,9 @@ window_helpers["formfiller"] = function(w, action)
             end
             local fname, fchecked, ftype, fvalue
             local js = insertFunction
-            local pattern1 = "(.+)%((.+)%):% -(.*)"
+            local pattern1 = "(.+)%((.+)%):% *(.*)"
             local pattern2 = "%1{0}(%2):%3"
-            local pattern3 = "([^{]+){(.+)}%((.+)%):% -(.*)"
+            local pattern3 = "([^{]+){(.+)}%((.+)%):% *(.*)"
             for line in fd:lines() do
                 if not string.match(line, "^!profile=.*") then
                     if ftype == "textarea" then
