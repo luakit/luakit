@@ -1029,9 +1029,9 @@ window_helpers = {
 
     destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
-        for _, wi in pairs(t) do
-            wi:destroy()
-        end
+        -- Destroy widgets without their own windows first (I.e. labels)
+        for _, wi in ipairs{ t.label, t.sep}    do wi:destroy() end
+        for _, wi in ipairs{ t.ebox,  t.layout} do wi:destroy() end
     end,
 
     update_tab_labels = function (w, current)
