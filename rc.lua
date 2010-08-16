@@ -484,7 +484,7 @@ function attach_webview_signals(w, view)
     -- Domain properties
     view:add_signal("load-status", function (v, status)
         if status == "committed" then
-            local domain = string.match(v.uri, "^%a+://([^/]*)/?")
+            local domain = string.match(v.uri, "^%a+://([^/]*)/?") or "other"
             if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
             local props = util.table.join(domain_props.all or {}, domain_props[domain] or {})
             for k, v in pairs(props) do
