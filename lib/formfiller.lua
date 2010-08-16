@@ -30,18 +30,22 @@ window_helpers["formfiller"] = function(w, action)
                         var xp_res=allFrames[j].document.evaluate('//input', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
                         var input;
                         while(input=xp_res.iterateNext()) {
-                            var type=(input.type?input.type:text);
-                            if(type == 'text' || type == 'password' || type == 'search') {
-                                rv += input.name + '(' + type + '):' + input.value + '\n';
-                            }
-                            else if(type == 'checkbox' || type == 'radio') {
-                                rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
-                            }
+                            //if(input.name.lenght) {
+                                var type=(input.type?input.type:text);
+                                if(type == 'text' || type == 'password' || type == 'search') {
+                                    rv += input.name + '(' + type + '):' + input.value + '\n';
+                                }
+                                else if(type == 'checkbox' || type == 'radio') {
+                                    rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
+                                }
+                            //}
                         }
                         xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
                         var input;
                         while(input=xp_res.iterateNext()) {
-                            rv += input.name + '(textarea):' + input.value + '\n';
+                            if(input.name.lenght) {
+                                rv += input.name + '(textarea):' + input.value + '\n';
+                            }
                         }
                     }
                     catch(err) { }
@@ -86,24 +90,34 @@ window_helpers["formfiller"] = function(w, action)
                 }
             };]]
             local fd = io.open(filename, "r")
-            local profile = ".*"
+            local profile = ""
             fd:seek("set")
-            if fd:read("*a"):find("!profile=.*") > 1 then
-                fd:seek("set")
-                local p = ""
-                for l in fd:lines() do
-                    if string.match(l, "^!profile=.*$") then
-                        if p == "" then
-                            p = string.format("%s", string.match(l, "^!profile=([^$]*)$"))
-                        else
-                            p = string.format("%s\n%s", p, string.match(l, "^!profile=([^$]*)$"))
-                        end
+            for l in fd:lines() do
+                if string.match(l, "^!profile=.*$") then
+                    if profile == "" then
+                        profile = string.format("%s", string.match(l, "^!profile=([^$]*)$"))
+                    else
+                        profile = string.format("%s\n%s", profile, string.match(l, "^!profile=([^$]*)$"))
                     end
                 end
-
-                p = string.format("echo -e -n \"%s\" | dmenu -l 3 ", p)
-                local exit_status, err
-                exit_status, profile, err = luakit.span_sync(p)
+            end
+            if profile:find("\n") then
+                local exit_status, multiline, err = luakit.spawn_sync('sh -c \'if [ "`dmenu --help 2>&1| grep lines`x" != "x" ]; then echo -n "-l 3"; else echo -n ""; fi\'')
+                if exit_status ~= 0 then
+                    print(string.format("An error occured: ", err))
+                    return nil
+                end
+                -- color settings
+                local NB="#0f0f0f"
+                local NF="#4e7093"
+                local SB="#003d7c"
+                local SF="#3a9bff"
+                profile = string.format('sh -c \'echo -e -n "%s" | dmenu %s -nb "%s" -nf "%s" -sb "%s" -sf "%s" -p "Choose profile"\'', profile, multiline, NB, NF, SB, SF)
+                exit_status, profile, err = luakit.spawn_sync(profile)
+                if exit_status ~= 0 then
+                    print(string.format("An error occured: ", err))
+                    return nil
+                end
             end
             fd:seek("set")
             for line in fd:lines() do
