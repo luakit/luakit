@@ -530,6 +530,11 @@ function attach_webview_signals(w, view)
         w:new_tab(link)
     end)
 
+    view:add_signal("create-web-view", function (v)
+        w:new_tab(v.hovered_uri)
+        -- new_window({ w.hovered_url })
+    end)
+
     view:add_signal("property::progress", function (v)
         if w:is_current(v) then
             w:update_progress(v)

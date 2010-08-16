@@ -361,6 +361,20 @@ new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     return FALSE;
 }
 
+static WebKitWebView*
+create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+{
+    (void) v;
+    (void) f;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "create-web-view", 0, 0);
+    lua_pop(L, 1);
+
+    return NULL;
+}
+
 static gboolean
 download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
 {
@@ -938,6 +952,7 @@ widget_webview(widget_t *w)
     g_object_connect((GObject*)view,
       "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
       "signal::button-release-event",                 (GCallback)button_release_cb,      w,
+      "signal::create-web-view",                      (GCallback)create_web_view_cb,     w,
       "signal::download-requested",                   (GCallback)download_request_cb,    w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,
