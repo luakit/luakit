@@ -7,7 +7,7 @@ window_helpers["formfiller"] = function(w, action)
         local editor = (os.getenv("EDITOR") or "vim") .. " "
         local modeline = "> vim:ft=formfiller"
         local filename = ""
-        local formsDir = (os.getenv("XDG_DATA_HOME") or ((os.getenv("HOME") or ".") .. "/.local/share/")) .. "/luakit/forms/"
+        local formsDir = luakit.data_dir .. "/forms/"
         os.execute(string.format("mkdir -p %q", formsDir))
         if action == "once" then
             filename = os.tmpname()
@@ -19,35 +19,35 @@ window_helpers["formfiller"] = function(w, action)
             modeline = ""
         end
         if action == "new" or action == "once" or action == "add" then
-            local dumpFunction="(function dump() { \
-                var rv=''; \
-                var allFrames = new Array(window); \
-                for(f=0;f<window.frames.length;f=f+1) { \
-                    allFrames.push(window.frames[f]); \
-                } \
-                for(j=0;j<allFrames.length;j=j+1) { \
-                    try { \
-                        var xp_res=allFrames[j].document.evaluate('//input', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null); \
-                        var input; \
-                        while(input=xp_res.iterateNext()) { \
-                            var type=(input.type?input.type:text); \
-                            if(type == 'text' || type == 'password' || type == 'search') { \
-                                rv += input.name + '(' + type + '):' + input.value + '\\n'; \
-                            } \
-                            else if(type == 'checkbox' || type == 'radio') { \
-                                rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\\n'; \
-                            } \
-                        }  \
-                        xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null); \
-                        var input; \
-                        while(input=xp_res.iterateNext()) { \
-                            rv += input.name + '(textarea):' + input.value + '\\n'; \
-                        } \
-                    } \
-                    catch(err) { } \
-                } \
-                return rv; \
-            })()"
+            local dumpFunction=[[(function dump() {
+                var rv='';
+                var allFrames = new Array(window);
+                for(f=0;f<window.frames.length;f=f+1) {
+                    allFrames.push(window.frames[f]);
+                }
+                for(j=0;j<allFrames.length;j=j+1) {
+                    try {
+                        var xp_res=allFrames[j].document.evaluate('//input', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
+                        var input;
+                        while(input=xp_res.iterateNext()) {
+                            var type=(input.type?input.type:text);
+                            if(type == 'text' || type == 'password' || type == 'search') {
+                                rv += input.name + '(' + type + '):' + input.value + '\\n';
+                            }
+                            else if(type == 'checkbox' || type == 'radio') {
+                                rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\\n';
+                            }
+                        }
+                        xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
+                        var input;
+                        while(input=xp_res.iterateNext()) {
+                            rv += input.name + '(textarea):' + input.value + '\\n';
+                        }
+                    }
+                    catch(err) { }
+                }
+                return rv;
+            })()]]
             math.randomseed(os.time())
             local fd
             if action == "add" then
@@ -60,31 +60,31 @@ window_helpers["formfiller"] = function(w, action)
             os.execute("xterm -e " .. editor .. filename .. " &")
             fd:close()
         elseif action == "load" then
-            local insertFunction="function insert(fname, ftype, fvalue, fchecked) { \
-                var allFrames = new Array(window); \
-                for(f=0;f<window.frames.length;f=f+1) { \
-                    allFrames.push(window.frames[f]); \
-                }  \
-                for(j=0;j<allFrames.length;j=j+1) { \
-                    try { \
-                        if(ftype == 'text' || ftype == 'password' || ftype == 'search' || ftype == 'textarea') { \
-                            allFrames[j].document.getElementsByName(fname)[0].value = fvalue; \
-                        } \
-                        else if(ftype == 'checkbox') { \
-                            allFrames[j].document.getElementsByName(fname)[0].checked = fchecked;\
-                        } \
-                        else if(ftype == 'radio') { \
-                            var radios = allFrames[j].document.getElementsByName(fname); \
-                            for(r=0;r<radios.length;r+=1) { \
-                                if(radios[r].value == fvalue) { \
-                                    radios[r].checked = fchecked; \
-                                } \
-                            } \
-                        } \
-                    } \
-                    catch(err) { } \
-                } \
-            }; "
+            local insertFunction=[[function insert(fname, ftype, fvalue, fchecked) {
+                var allFrames = new Array(window);
+                for(f=0;f<window.frames.length;f=f+1) {
+                    allFrames.push(window.frames[f]);
+                }
+                for(j=0;j<allFrames.length;j=j+1) {
+                    try {
+                        if(ftype == 'text' || ftype == 'password' || ftype == 'search' || ftype == 'textarea') {
+                            allFrames[j].document.getElementsByName(fname)[0].value = fvalue;
+                        }
+                        else if(ftype == 'checkbox') {
+                            allFrames[j].document.getElementsByName(fname)[0].checked = fchecked
+                        }
+                        else if(ftype == 'radio') {
+                            var radios = allFrames[j].document.getElementsByName(fname);
+                            for(r=0;r<radios.length;r+=1) {
+                                if(radios[r].value == fvalue) {
+                                    radios[r].checked = fchecked;
+                                }
+                            }
+                        }
+                    }
+                    catch(err) { }
+                }
+            };]]
             local fd = io.open(filename, "r")
             local profile = ".*"
             fd:seek("set")
