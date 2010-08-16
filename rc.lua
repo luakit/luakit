@@ -14,6 +14,7 @@ function webview()  return widget{type="webview"}  end
 function window()   return widget{type="window"}   end
 function entry()    return widget{type="entry"}    end
 
+
 -- Variable definitions
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
@@ -25,8 +26,23 @@ MAX_SRCH_HISTORY = 100
 -- Setup download directory
 DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
--- Small util functions
-function debug(...) if luakit.verbose then print(string.format(...)) end end
+-- Per-domain webview properties
+domain_props = { --[[
+    ["all"] = {
+        ["enable-scripts"]          = false,
+        ["enable-plugins"]          = false,
+        ["enable-private-browsing"] = false,
+        ["user-stylesheet-uri"]     = "",
+    },
+    ["youtube.com"] = {
+        ["enable-scripts"] = true,
+        ["enable-plugins"] = true,
+    },
+    ["forums.archlinux.org"] = {
+        ["user-stylesheet-uri"]     = luakit.data_dir .. "/styles/dark.css",
+        ["enable-private-browsing"] = true,
+    }, ]]
+}
 
 -- Luakit theme
 theme = theme or {
@@ -53,6 +69,9 @@ theme = theme or {
     tablabel_format      = "%-30s",
 }
 
+-- Small util functions
+function info(...) if luakit.verbose then print(string.format(...)) end end
+
 widget.add_signal("new", function (wi)
     wi:add_signal("init", function (wi)
         if wi.type == "window" then
@@ -66,7 +85,10 @@ end)
 
 -- Search engines
 search_engines = {
+    luakit      = "http://luakit.org/search/index/luakit?q={0}",
     google      = "http://google.com/search?q={0}",
+    wikipedia   = "http://en.wikipedia.org/wiki/Special:Search?search={0}",
+    debbugs     = "http://bugs.debian.org/{0}",
     imdb        = "http://imdb.com/find?s=all&q={0}",
     sourceforge = "http://sf.net/search/?words={0}",
 }
@@ -147,10 +169,7 @@ mode_binds = {
 
         -- Link following
         bind.key({},          "f",          function (w) w:set_mode("follow") end),
-        
-        -- FormFiller
-        bind.buf("^zn",        function (w) w:formfiller("new") end),
-        bind.buf("^zl",        function (w) w:formfiller("load") end),
+
     },
     command = {
         bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.get_selection()) end),
@@ -452,6 +471,7 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- Update progress widgets & set default mode on navigate
     view:add_signal("load-status", function (v, status)
         if w:is_current(v) then
             w:update_progress(v)
@@ -461,11 +481,24 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- Domain properties
+    view:add_signal("load-status", function (v, status)
+        if status == "committed" then
+            local domain = string.match(v.uri, "^%a+://([^/]*)/?") or "other"
+            if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
+            local props = util.table.join(domain_props.all or {}, domain_props[domain] or {})
+            for k, v in pairs(props) do
+                info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
+                view:set_prop(k, v)
+            end
+        end
+    end)
+
     -- 'link' contains the download link
     -- 'mime' contains the mime type that is requested
     -- return TRUE to accept or FALSE to reject
     view:add_signal("mime-type-decision", function (v, link, mime)
-        debug("Requested link: %s (%s)", link, mime)
+        info("Requested link: %s (%s)", link, mime)
         -- i.e. block binary files like *.exe
         --if mime == "application/octet-stream" then
         --    return false
@@ -480,7 +513,7 @@ function attach_webview_signals(w, view)
         os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
         local dl = DOWNLOAD_DIR .. "/" .. filename
         local wget = string.format("wget -q %q -O %q", link, dl)
-        debug("Launching: %s", wget)
+        info("Launching: %s", wget)
         luakit.spawn(wget)
     end)
 
@@ -489,12 +522,16 @@ function attach_webview_signals(w, view)
     -- return TRUE to handle the request by yourself or FALSE to proceed
     -- with default behaviour
     view:add_signal("new-window-decision", function (v, link, reason)
-        debug("New window decision: %s (%s)", link, reason)
+        info("New window decision: %s (%s)", link, reason)
         if reason == "link-clicked" then
             new_window({ link })
             return true
         end
         w:new_tab(link)
+    end)
+
+    view:add_signal("create-web-view", function (v)
+        return w:new_tab()
     end)
 
     view:add_signal("property::progress", function (v)
@@ -579,6 +616,7 @@ window_helpers = {
         if uri then view.uri = uri end
         view.show_scrollbars = false
         w:update_tab_count()
+        return view
     end,
 
     -- close the current tab
@@ -586,8 +624,10 @@ window_helpers = {
         if not view then view = w:get_current() end
         if not view then return end
         w.tabs:remove(view)
+        view.uri = "about:blank"
         view:destroy()
         w:update_tab_count()
+        w:update_tab_labels()
     end,
 
     -- evaluate javascript code and return string result
@@ -989,9 +1029,9 @@ window_helpers = {
 
     destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
-        for _, wi in pairs(t) do
-            wi:destroy()
-        end
+        -- Destroy widgets without their own windows first (I.e. labels)
+        for _, wi in ipairs{ t.label, t.sep}    do wi:destroy() end
+        for _, wi in ipairs{ t.ebox,  t.layout} do wi:destroy() end
     end,
 
     update_tab_labels = function (w, current)
@@ -1076,100 +1116,6 @@ window_helpers = {
             [i.input]    = theme.input_font  or theme.inputbar_font or font,
         }) do wi.font = v end
     end,
-
-    formfiller = function(w, action)
-        local editor = "vim "
-        local modeline = "> vim:ft=formfiller"
-        local filename = ""
-        local formsDir = (os.getenv("XDG_DATA_HOME") or ((os.getenv("HOME") or ".") .. "/.local/share/")) .. "/luakit/forms/"
-        os.execute(string.format("mkdir -p %q", formsDir))
-        if action == "once" then
-            filename = os.tmpname()
-        else
-            local uri, match = string.gsub(string.gsub(w.sbar.l.uri.text, "%w+://", ""), "(.-)/.*", "%1")
-            filename = formsDir .. uri
-        end 
-        if action == "new" or action == "once" then
-            local dumpFunction="(function dump() { \
-                var rv=''; \
-                var allFrames = new Array(window); \
-                for(f=0;f<window.frames.length;f=f+1) { \
-                    allFrames.push(window.frames[f]); \
-                } \
-                for(j=0;j<allFrames.length;j=j+1) { \
-                    try { \
-                        var xp_res=allFrames[j].document.evaluate('//input', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null); \
-                        var input; \
-                        while(input=xp_res.iterateNext()) { \
-                            var type=(input.type?input.type:text); \
-                            if(type == 'text' || type == 'password' || type == 'search') { \
-                                rv += input.name + '(' + type + '):' + input.value + '\\n'; \
-                            } \
-                            else if(type == 'checkbox' || type == 'radio') { \
-                                rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\\n'; \
-                            } \
-                        }  \
-                        xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null); \
-                        var input; \
-                        while(input=xp_res.iterateNext()) { \
-                            rv += input.name + '(textarea):' + input.value + '\\n'; \
-                        } \
-                    } \
-                    catch(err) { } \
-                } \
-                return rv; \
-            })()"
-            math.randomseed(os.time())
-            local fd = io.open(filename, "w+")
-            fd:write(string.format("%s\n!profile=NAME_THIS_PROFILE_%d\n%s", modeline, math.random(), w:get_current():eval_js(dumpFunction, "dump")))
-            fd:flush()
-            os.execute("xterm -e " .. editor .. filename .. " &")
-            fd:close()
-        elseif action == "load" then
-            local insertFunction="function insert(fname, ftype, fvalue, fchecked) { \
-                var allFrames = new Array(window); \
-                for(f=0;f<window.frames.length;f=f+1) { \
-                    allFrames.push(window.frames[f]); \
-                }  \
-                for(j=0;j<allFrames.length;j=j+1) { \
-                    try { \
-                        if(ftype == 'text' || ftype == 'password' || ftype == 'search' || ftype == 'textarea') { \
-                            allFrames[j].document.getElementsByName(fname)[0].value = fvalue; \
-                        } \
-                        else if(ftype == 'checkbox') { \
-                            allFrames[j].document.getElementsByName(fname)[0].checked = fchecked;\
-                        } \
-                        else if(ftype == 'radio') { \
-                            var radios = allFrames[j].document.getElementsByName(fname); \
-                            for(r=0;r<radios.length;r+=1) { \
-                                if(radios[r].value == fvalue) { \
-                                    radios[r].checked = fchecked; \
-                                } \
-                            } \
-                        } \
-                    } \
-                    catch(err) { } \
-                } \
-            }; "
-            local fd = io.open(filename, "r")
-            local profile = "grodzik"
-            fd:seek("set")
-            for line in fd:lines() do
-                if string.match(line, "^!profile=" .. profile) then
-                    break
-                end
-            end
-            for line in fd:lines() do
-                if not string.match(line, "^!profile=") then
-                    local fname, fchecked, ftype, fvalue
-                    fname, fchecked, ftype, fvalue = string.match(string.gsub(line, "(.+)%((.+)%):% -(.*)", "%1{0}(%2):%3"), "(.+){(.+)}%((.+)%):\ -(.*)")
-                    print(string.format("name: %s checked: %s type: %s value: %s", fname, fchecked, ftype, fvalue))
-                    w:get_current():eval_js(insertFunction .. string.format("insert('%s', '%s', '%s', '%s');", fname, ftype, fvalue, fchecked), "f")
-                end
-            end
-            fd:close()
-        end
-    end,
 }
 
 -- Create new window
@@ -1199,6 +1145,8 @@ function new_window(uris)
 
     return w
 end
+
+require("formfiller")
 
 new_window(uris)
 
