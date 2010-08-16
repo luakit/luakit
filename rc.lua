@@ -531,8 +531,7 @@ function attach_webview_signals(w, view)
     end)
 
     view:add_signal("create-web-view", function (v)
-        w:new_tab(v.hovered_uri)
-        -- new_window({ w.hovered_url })
+        return w:new_tab()
     end)
 
     view:add_signal("property::progress", function (v)
@@ -617,6 +616,7 @@ window_helpers = {
         if uri then view.uri = uri end
         view.show_scrollbars = false
         w:update_tab_count()
+        return view
     end,
 
     -- close the current tab

@@ -366,13 +366,19 @@ create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 {
     (void) v;
     (void) f;
+    gint ret;
+    gint top;
+    WebKitWebView *view = NULL;
+    widget_t *new;
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "create-web-view", 0, 0);
-    lua_pop(L, 1);
-
-    return NULL;
+    top = lua_gettop(L);
+    ret = luaH_object_emit_signal(L, top, "create-web-view", 0, 1);
+    if (ret && (new = luaH_checkudata(L, top + 1, &widget_class)))
+        view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(new->widget), "webview"));
+    lua_pop(L, ret + 1);
+    return view;
 }
 
 static gboolean
