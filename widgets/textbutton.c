@@ -81,18 +81,12 @@ clicked_cb(GtkWidget *b, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
-textbutton_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_textbutton(widget_t *w)
 {
     w->index = luaH_textbutton_index;
     w->newindex = luaH_textbutton_newindex;
-    w->destructor = textbutton_destructor;
+    w->destructor = widget_destructor;
 
     w->widget = gtk_button_new();
     g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);

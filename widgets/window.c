@@ -102,18 +102,12 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-static void
-window_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_window(widget_t *w)
 {
     w->index = luaH_window_index;
     w->newindex = luaH_window_newindex;
-    w->destructor = window_destructor;
+    w->destructor = widget_destructor;
 
     /* create and setup window widget */
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);

@@ -168,18 +168,12 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-static void
-label_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_label(widget_t *w)
 {
     w->index = luaH_label_index;
     w->newindex = luaH_label_newindex;
-    w->destructor = label_destructor;
+    w->destructor = widget_destructor;
 
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);

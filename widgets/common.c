@@ -189,9 +189,17 @@ luaH_widget_destroy(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     if (w->destructor)
         w->destructor(w);
-    w->destructor = NULL;
+    debug("unreffing widget %p of type '%s'", w, w->info->name);
     luaH_object_unref(L, w->ref);
     return 0;
+}
+
+void
+widget_destructor(widget_t *w)
+{
+    debug("destroying widget %p of type '%s'", w, w->info->name);
+    gtk_widget_destroy(GTK_WIDGET(w->widget));
+    w->widget = NULL;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

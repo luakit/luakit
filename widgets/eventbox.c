@@ -84,18 +84,12 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-static void
-eventbox_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_eventbox(widget_t *w)
 {
     w->index = luaH_eventbox_index;
     w->newindex = luaH_eventbox_newindex;
-    w->destructor = eventbox_destructor;
+    w->destructor = widget_destructor;
 
     w->widget = gtk_event_box_new();
     g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);

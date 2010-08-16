@@ -310,18 +310,12 @@ switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint i, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
-notebook_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_notebook(widget_t *w)
 {
     w->index = luaH_notebook_index;
     w->newindex = luaH_notebook_newindex;
-    w->destructor = notebook_destructor;
+    w->destructor = widget_destructor;
 
     /* create and setup notebook widget */
     w->widget = gtk_notebook_new();

@@ -121,19 +121,13 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-void
-box_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 #define BOX_WIDGET_CONSTRUCTOR(type)                                         \
     widget_t *                                                               \
     widget_##type(widget_t *w)                                               \
     {                                                                        \
         w->index = luaH_box_index;                                           \
         w->newindex = luaH_box_newindex;                                     \
-        w->destructor = box_destructor;                                      \
+        w->destructor = widget_destructor;                                   \
         w->widget = gtk_##type##_new(FALSE, 0);                              \
         g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);      \
         gtk_widget_show(w->widget);                                          \

@@ -917,12 +917,9 @@ wv_button_press_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
-    if (w->widget) {
-        GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
-        gtk_widget_destroy(GTK_WIDGET(view));
-        gtk_widget_destroy(GTK_WIDGET(w->widget));
-    } else
-        warn("webview widget already destroyed");
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    gtk_widget_destroy(GTK_WIDGET(view));
+    gtk_widget_destroy(GTK_WIDGET(w->widget));
 }
 
 widget_t *

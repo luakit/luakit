@@ -207,18 +207,12 @@ changed_cb(GtkEditable *e, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
-entry_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_entry(widget_t *w)
 {
     w->index = luaH_entry_index;
     w->newindex = luaH_entry_newindex;
-    w->destructor = entry_destructor;
+    w->destructor = widget_destructor;
 
     /* create gtk label widget as main widget */
     w->widget = gtk_entry_new();
