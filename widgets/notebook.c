@@ -171,71 +171,22 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
 
-      case L_TK_COUNT:
-        lua_pushcfunction(L, luaH_notebook_count);
-        return 1;
-
-      case L_TK_INSERT:
-        lua_pushcfunction(L, luaH_notebook_insert);
-        return 1;
-
-      case L_TK_APPEND:
-        lua_pushcfunction(L, luaH_notebook_append);
-        return 1;
-
-      case L_TK_CURRENT:
-        lua_pushcfunction(L, luaH_notebook_current);
-        return 1;
-
-      case L_TK_REMOVE:
-        lua_pushcfunction(L, luaH_notebook_remove);
-        return 1;
-
-      case L_TK_INDEXOF:
-        lua_pushcfunction(L, luaH_notebook_indexof);
-        return 1;
-
-      case L_TK_ATINDEX:
-        lua_pushcfunction(L, luaH_notebook_atindex);
-        return 1;
-
-      case L_TK_SWITCH:
-        lua_pushcfunction(L, luaH_notebook_switch);
-        return 1;
-
-      case L_TK_SET_TITLE:
-        lua_pushcfunction(L, luaH_notebook_set_title);
-        return 1;
-
-      case L_TK_GET_TITLE:
-        lua_pushcfunction(L, luaH_notebook_get_title);
-        return 1;
-
-      case L_TK_SHOW_TABS:
-        lua_pushboolean(L, gtk_notebook_get_show_tabs(
-            GTK_NOTEBOOK(w->widget)));
-        return 1;
-
-      case L_TK_SHOW_BORDER:
-        lua_pushboolean(L, gtk_notebook_get_show_border(
-            GTK_NOTEBOOK(w->widget)));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
-
-      case L_TK_FOCUS:
-        lua_pushcfunction(L, luaH_widget_focus);
-        return 1;
+      /* push class methods */
+      PF_CASE(APPEND,       luaH_notebook_append)
+      PF_CASE(ATINDEX,      luaH_notebook_atindex)
+      PF_CASE(COUNT,        luaH_notebook_count)
+      PF_CASE(CURRENT,      luaH_notebook_current)
+      PF_CASE(GET_TITLE,    luaH_notebook_get_title)
+      PF_CASE(INDEXOF,      luaH_notebook_indexof)
+      PF_CASE(INSERT,       luaH_notebook_insert)
+      PF_CASE(REMOVE,       luaH_notebook_remove)
+      PF_CASE(SET_TITLE,    luaH_notebook_set_title)
+      PF_CASE(SWITCH,       luaH_notebook_switch)
+      /* push boolean properties */
+      PB_CASE(SHOW_TABS,    gtk_notebook_get_show_tabs(GTK_NOTEBOOK(w->widget)))
+      PB_CASE(SHOW_BORDER,  gtk_notebook_get_show_border(GTK_NOTEBOOK(w->widget)))
 
       default:
         break;
@@ -251,13 +202,11 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
     switch(token)
     {
       case L_TK_SHOW_TABS:
-        gtk_notebook_set_show_tabs(GTK_NOTEBOOK(w->widget),
-                luaH_checkboolean(L, 3));
+        gtk_notebook_set_show_tabs(GTK_NOTEBOOK(w->widget), luaH_checkboolean(L, 3));
         break;
 
       case L_TK_SHOW_BORDER:
-        gtk_notebook_set_show_border(GTK_NOTEBOOK(w->widget),
-                luaH_checkboolean(L, 3));
+        gtk_notebook_set_show_border(GTK_NOTEBOOK(w->widget), luaH_checkboolean(L, 3));
         break;
 
       default:
@@ -268,9 +217,9 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
 }
 
 static void
-page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
+page_added_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 {
-    (void) nbook;
+    (void) n;
 
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
@@ -282,10 +231,10 @@ page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 }
 
 static void
-page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
+page_removed_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 {
     (void) i;
-    (void) nbook;
+    (void) n;
 
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
@@ -296,10 +245,10 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 }
 
 static void
-switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint i, widget_t *w)
+switch_cb(GtkNotebook *n, GtkNotebookPage *p, guint i, widget_t *w)
 {
     (void) p;
-    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(nbook), i);
+    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(n), i);
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
 
     lua_State *L = globalconf.L;
@@ -310,18 +259,12 @@ switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint i, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
-notebook_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_notebook(widget_t *w)
 {
     w->index = luaH_notebook_index;
     w->newindex = luaH_notebook_newindex;
-    w->destructor = notebook_destructor;
+    w->destructor = widget_destructor;
 
     /* create and setup notebook widget */
     w->widget = gtk_notebook_new();

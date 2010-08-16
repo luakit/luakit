@@ -29,29 +29,11 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_BIN_INDEX_COMMON
 
-      case L_TK_SET_CHILD:
-        lua_pushcfunction(L, luaH_widget_set_child);
-        return 1;
-
-      case L_TK_GET_CHILD:
-        lua_pushcfunction(L, luaH_widget_get_child);
-        return 1;
-
-      case L_TK_BG:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "bg"));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
+      /* push string properties */
+      PS_CASE(BG, g_object_get_data(G_OBJECT(w->widget), "bg"))
 
       default:
         break;
@@ -71,11 +53,8 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
     {
       case L_TK_BG:
         tmp = luaL_checklstring(L, 3, &len);
-        if (!gdk_color_parse(tmp, &c)) {
-            warn("invalid color: %s", tmp);
-            return 0;
-        }
-
+        if (!gdk_color_parse(tmp, &c))
+            luaL_argerror(L, 3, "unable to parse colour");
         gtk_widget_modify_bg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
         g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
         break;
@@ -87,18 +66,12 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-static void
-eventbox_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_eventbox(widget_t *w)
 {
     w->index = luaH_eventbox_index;
     w->newindex = luaH_eventbox_newindex;
-    w->destructor = eventbox_destructor;
+    w->destructor = widget_destructor;
 
     w->widget = gtk_event_box_new();
     g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);

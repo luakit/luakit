@@ -31,6 +31,12 @@
 #define NONULL(x) (x ? x : "")
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
 
+/* stack pushing macros */
+#define PB_CASE(t, b) case L_TK_##t: lua_pushboolean   (L, b); return 1;
+#define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction (L, f); return 1;
+#define PN_CASE(t, n) case L_TK_##t: lua_pushnumber    (L, n); return 1;
+#define PS_CASE(t, s) case L_TK_##t: lua_pushstring    (L, s); return 1;
+
 #define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _fatal(int, const gchar *, const gchar *, ...);
 
