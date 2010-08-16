@@ -624,8 +624,10 @@ window_helpers = {
         if not view then view = w:get_current() end
         if not view then return end
         w.tabs:remove(view)
+        view.uri = "about:blank"
         view:destroy()
         w:update_tab_count()
+        w:update_tab_labels()
     end,
 
     -- evaluate javascript code and return string result
