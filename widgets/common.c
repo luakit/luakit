@@ -189,6 +189,7 @@ luaH_widget_destroy(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     if (w->destructor)
         w->destructor(w);
+    w->destructor = NULL;
     debug("unreffing widget %p of type '%s'", w, w->info->name);
     luaH_object_unref(L, w->ref);
     return 0;
