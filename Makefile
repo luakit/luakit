@@ -45,7 +45,7 @@ luakit: ${OBJS}
 
 apidoc: luadoc/luakit.lua
 	mkdir -p apidocs
-	luadoc -d apidocs luadoc/luakit.lua
+	luadoc --nofiles -d apidocs luadoc/* lib/*
 
 clean:
 	rm -rf apidocs luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
@@ -66,4 +66,4 @@ uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
 
 newline:;@echo
-.PHONY: all clean options install newline
+.PHONY: all clean options install newline apidoc
