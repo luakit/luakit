@@ -3,7 +3,7 @@ local type = type
 local io = io
 local debug = debug
 
-module("mode")
+module("lousy.mode")
 
 -- Internal mode to revert to if all else fails
 local default_mode = "normal"

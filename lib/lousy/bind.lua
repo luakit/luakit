@@ -1,15 +1,15 @@
-local table = table
-local setmetatable = setmetatable
-local print = print
-local pairs = pairs
-local ipairs = ipairs
 local assert = assert
-local type = type
-local util = require("util")
-local unpack = unpack
+local ipairs = ipairs
+local pairs = pairs
+local print = print
+local setmetatable = setmetatable
 local string = string
+local table = table
+local type = type
+local unpack = unpack
+local util = require("lousy.util")
 
-module("bind")
+module("lousy.bind")
 
 -- Weak table of argects and their buffers
 local buffers = {}

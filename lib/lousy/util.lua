@@ -19,7 +19,7 @@ local type = type
 local capi = { luakit = luakit }
 
 -- Utility module for luakit
-module("util")
+module("lousy.util")
 
 table = {}
 string = {}
