@@ -71,11 +71,8 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
     {
       case L_TK_BG:
         tmp = luaL_checklstring(L, 3, &len);
-        if (!gdk_color_parse(tmp, &c)) {
-            warn("invalid color: %s", tmp);
-            return 0;
-        }
-
+        if (!gdk_color_parse(tmp, &c))
+            luaL_argerror(L, 3, "unable to parse colour");
         gtk_widget_modify_bg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
         g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
         break;

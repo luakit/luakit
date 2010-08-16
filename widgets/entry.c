@@ -158,11 +158,8 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
       case L_TK_FG:
       case L_TK_BG:
         tmp = luaL_checklstring(L, 3, &len);
-        if (!gdk_color_parse(tmp, &c)) {
-            warn("invalid color: %s", tmp);
-            return 0;
-        }
-
+        if (!gdk_color_parse(tmp, &c))
+            luaL_argerror(L, 3, "unable to parse color");
         if (token == L_TK_FG) {
             gtk_widget_modify_text(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
             g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
@@ -187,7 +184,6 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
         warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
-
     return luaH_object_emit_property_signal(L, 1);
 }
 
