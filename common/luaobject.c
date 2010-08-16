@@ -247,9 +247,8 @@ luaH_object_emit_signal(lua_State *L, gint oud,
                         ret = nret;
                     }
                 }
-
                 /* Remove all signal functions and args from the stack */
-                for (gint i = bot; i < top; i++)
+                for (gint i = bot; i <= top; i++)
                     lua_remove(L, bot);
                 /* Return the number of returned arguments */
                 return ret;
