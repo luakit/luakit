@@ -29,21 +29,10 @@ luaH_textbutton_index(lua_State *L, luakit_token_t token)
 
     switch (token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
 
-      case L_TK_LABEL:
-        lua_pushstring(L, gtk_button_get_label(GTK_BUTTON(w->widget)));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
+      /* push string properties */
+      PS_CASE(LABEL, gtk_button_get_label(GTK_BUTTON(w->widget)))
 
       default:
         break;

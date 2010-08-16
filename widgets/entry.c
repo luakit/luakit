@@ -80,57 +80,20 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
 
-      case L_TK_TEXT:
-        lua_pushstring(L, gtk_entry_get_text(GTK_ENTRY(w->widget)));
-        return 1;
-
-      case L_TK_FG:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "fg"));
-        return 1;
-
-      case L_TK_BG:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "bg"));
-        return 1;
-
-      case L_TK_APPEND:
-        lua_pushcfunction(L, luaH_entry_append);
-        return 1;
-
-      case L_TK_INSERT:
-        lua_pushcfunction(L, luaH_entry_insert);
-        return 1;
-
-      case L_TK_GET_POSITION:
-        lua_pushcfunction(L, luaH_entry_get_position);
-        return 1;
-
-      case L_TK_SET_POSITION:
-        lua_pushcfunction(L, luaH_entry_set_position);
-        return 1;
-
-      case L_TK_SHOW_FRAME:
-        lua_pushboolean(L, gtk_entry_get_has_frame(GTK_ENTRY(w->widget)));
-        return 1;
-
-      case L_TK_FONT:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "font"));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
-
-      case L_TK_FOCUS:
-        lua_pushcfunction(L, luaH_widget_focus);
-        return 1;
+      /* push class methods */
+      PF_CASE(APPEND,       luaH_entry_append)
+      PF_CASE(INSERT,       luaH_entry_insert)
+      PF_CASE(GET_POSITION, luaH_entry_get_position)
+      PF_CASE(SET_POSITION, luaH_entry_set_position)
+      /* push string properties */
+      PS_CASE(TEXT,         gtk_entry_get_text(GTK_ENTRY(w->widget)))
+      PS_CASE(FG,           g_object_get_data(G_OBJECT(w->widget), "fg"))
+      PS_CASE(BG,           g_object_get_data(G_OBJECT(w->widget), "bg"))
+      PS_CASE(FONT,         g_object_get_data(G_OBJECT(w->widget), "font"))
+      /* push boolean properties */
+      PB_CASE(SHOW_FRAME,   gtk_entry_get_has_frame(GTK_ENTRY(w->widget)))
 
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));

@@ -65,33 +65,15 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
 
-      case L_TK_PACK_START:
-        lua_pushcfunction(L, luaH_box_pack_start);
-        return 1;
-
-      case L_TK_PACK_END:
-        lua_pushcfunction(L, luaH_box_pack_end);
-        return 1;
-
-      case L_TK_HOMOGENEOUS:
-        lua_pushboolean(L, gtk_box_get_homogeneous(GTK_BOX(w->widget)));
-        return 1;
-
-      case L_TK_SPACING:
-        lua_pushnumber(L, gtk_box_get_spacing(GTK_BOX(w->widget)));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
+      /* push class methods */
+      PF_CASE(PACK_START,   luaH_box_pack_start)
+      PF_CASE(PACK_END,     luaH_box_pack_end)
+      /* push boolean properties */
+      PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
+      /* push string properties */
+      PN_CASE(SPACING,      gtk_box_get_spacing(GTK_BOX(w->widget)))
 
       default:
         break;

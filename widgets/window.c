@@ -43,33 +43,11 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_BIN_INDEX_COMMON
 
-      case L_TK_TITLE:
-        lua_pushstring(L, gtk_window_get_title(GTK_WINDOW(w->widget)));
-        return 1;
-
-      case L_TK_SET_CHILD:
-        lua_pushcfunction(L, luaH_widget_set_child);
-        return 1;
-
-      case L_TK_GET_CHILD:
-        lua_pushcfunction(L, luaH_widget_get_child);
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
-
-      case L_TK_FOCUS:
-        lua_pushcfunction(L, luaH_widget_focus);
-        return 1;
+      /* push string methods */
+      PS_CASE(TITLE,    gtk_window_get_title(GTK_WINDOW(w->widget)))
 
       default:
         break;
