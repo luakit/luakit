@@ -251,13 +251,11 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
     switch(token)
     {
       case L_TK_SHOW_TABS:
-        gtk_notebook_set_show_tabs(GTK_NOTEBOOK(w->widget),
-                luaH_checkboolean(L, 3));
+        gtk_notebook_set_show_tabs(GTK_NOTEBOOK(w->widget), luaH_checkboolean(L, 3));
         break;
 
       case L_TK_SHOW_BORDER:
-        gtk_notebook_set_show_border(GTK_NOTEBOOK(w->widget),
-                luaH_checkboolean(L, 3));
+        gtk_notebook_set_show_border(GTK_NOTEBOOK(w->widget), luaH_checkboolean(L, 3));
         break;
 
       default:
@@ -268,9 +266,9 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
 }
 
 static void
-page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
+page_added_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 {
-    (void) nbook;
+    (void) n;
 
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
@@ -282,10 +280,10 @@ page_added_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 }
 
 static void
-page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
+page_removed_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 {
     (void) i;
-    (void) nbook;
+    (void) n;
 
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
     lua_State *L = globalconf.L;
@@ -296,10 +294,10 @@ page_removed_cb(GtkNotebook *nbook, GtkWidget *widget, guint i, widget_t *w)
 }
 
 static void
-switch_cb(GtkNotebook *nbook, GtkNotebookPage *p, guint i, widget_t *w)
+switch_cb(GtkNotebook *n, GtkNotebookPage *p, guint i, widget_t *w)
 {
     (void) p;
-    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(nbook), i);
+    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(n), i);
     widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
 
     lua_State *L = globalconf.L;
