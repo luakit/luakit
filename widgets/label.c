@@ -71,49 +71,19 @@ luaH_label_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
 
-      case L_TK_TEXT:
-        lua_pushstring(L, gtk_label_get_label(GTK_LABEL(w->widget)));
-        return 1;
-
-      case L_TK_SET_ALIGNMENT:
-        lua_pushcfunction(L, luaH_label_set_alignment);
-        return 1;
-
-      case L_TK_GET_ALIGNMENT:
-        lua_pushcfunction(L, luaH_label_get_alignment);
-        return 1;
-
-      case L_TK_SET_PADDING:
-        lua_pushcfunction(L, luaH_label_set_padding);
-        return 1;
-
-      case L_TK_GET_PADDING:
-        lua_pushcfunction(L, luaH_label_get_padding);
-        return 1;
-
-      case L_TK_FG:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "fg"));
-        return 1;
-
-      case L_TK_FONT:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(w->widget), "font"));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
-
-      case L_TK_SELECTABLE:
-        lua_pushboolean(L, gtk_label_get_selectable(GTK_LABEL(w->widget)));
-        return 1;
+      /* push class methods */
+      PF_CASE(GET_ALIGNMENT,    luaH_label_get_alignment);
+      PF_CASE(GET_PADDING,      luaH_label_get_padding);
+      PF_CASE(SET_ALIGNMENT,    luaH_label_set_alignment);
+      PF_CASE(SET_PADDING,      luaH_label_set_padding);
+      /* push string properties */
+      PS_CASE(FG,               g_object_get_data(G_OBJECT(w->widget), "fg"))
+      PS_CASE(FONT,             g_object_get_data(G_OBJECT(w->widget), "font"))
+      PS_CASE(TEXT,             gtk_label_get_label(GTK_LABEL(w->widget)))
+      /* push boolean properties */
+      PB_CASE(SELECTABLE,       gtk_label_get_selectable(GTK_LABEL(w->widget)))
 
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));
@@ -168,18 +138,12 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-static void
-label_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_label(widget_t *w)
 {
     w->index = luaH_label_index;
     w->newindex = luaH_label_newindex;
-    w->destructor = label_destructor;
+    w->destructor = widget_destructor;
 
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);

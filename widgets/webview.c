@@ -361,6 +361,26 @@ new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     return FALSE;
 }
 
+static WebKitWebView*
+create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+{
+    (void) v;
+    (void) f;
+    gint ret;
+    gint top;
+    WebKitWebView *view = NULL;
+    widget_t *new;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    top = lua_gettop(L);
+    ret = luaH_object_emit_signal(L, top, "create-web-view", 0, 1);
+    if (ret && (new = luaH_checkudata(L, top + 1, &widget_class)))
+        view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(new->widget), "webview"));
+    lua_pop(L, ret + 1);
+    return view;
+}
+
 static gboolean
 download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
 {
@@ -776,40 +796,34 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     temp_value_t tmp;
 
-    switch(token) {
+    switch(token)
+    {
+      LUAKIT_WIDGET_INDEX_COMMON
 
-#define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction(L, f); return 1;
-        /* property methods */
-        PF_CASE(GET_PROP,           luaH_webview_get_prop)
-        PF_CASE(SET_PROP,           luaH_webview_set_prop)
-        /* scroll adjustment methods */
-        PF_CASE(GET_SCROLL_HORIZ,   luaH_webview_get_hscroll)
-        PF_CASE(GET_SCROLL_VERT,    luaH_webview_get_vscroll)
-        PF_CASE(SET_SCROLL_HORIZ,   luaH_webview_set_scroll_horiz)
-        PF_CASE(SET_SCROLL_VERT,    luaH_webview_set_scroll_vert)
-        /* search methods */
-        PF_CASE(CLEAR_SEARCH,       luaH_webview_clear_search)
-        PF_CASE(SEARCH,             luaH_webview_search)
-        /* history navigation methods */
-        PF_CASE(GO_BACK,            luaH_webview_go_back)
-        PF_CASE(GO_FORWARD,         luaH_webview_go_forward)
-        /* misc webview methods */
-        PF_CASE(EVAL_JS,            luaH_webview_eval_js)
-        PF_CASE(LOADING,            luaH_webview_loading)
-        PF_CASE(RELOAD,             luaH_webview_reload)
-        /* source viewing methods */
-        PF_CASE(GET_VIEW_SOURCE,    luaH_webview_get_view_source)
-        PF_CASE(SET_VIEW_SOURCE,    luaH_webview_set_view_source)
-        /* widget methods */
-        PF_CASE(DESTROY,            luaH_widget_destroy)
-        PF_CASE(FOCUS,              luaH_widget_focus)
-        PF_CASE(HIDE,               luaH_widget_hide)
-        PF_CASE(SHOW,               luaH_widget_show)
-#undef  PF_CASE
+      /* push property methods */
+      PF_CASE(GET_PROP,         luaH_webview_get_prop)
+      PF_CASE(SET_PROP,         luaH_webview_set_prop)
+      /* push scroll adjustment methods */
+      PF_CASE(GET_SCROLL_HORIZ, luaH_webview_get_hscroll)
+      PF_CASE(GET_SCROLL_VERT,  luaH_webview_get_vscroll)
+      PF_CASE(SET_SCROLL_HORIZ, luaH_webview_set_scroll_horiz)
+      PF_CASE(SET_SCROLL_VERT,  luaH_webview_set_scroll_vert)
+      /* push search methods */
+      PF_CASE(CLEAR_SEARCH,     luaH_webview_clear_search)
+      PF_CASE(SEARCH,           luaH_webview_search)
+      /* push history navigation methods */
+      PF_CASE(GO_BACK,          luaH_webview_go_back)
+      PF_CASE(GO_FORWARD,       luaH_webview_go_forward)
+      /* push misc webview methods */
+      PF_CASE(EVAL_JS,          luaH_webview_eval_js)
+      PF_CASE(LOADING,          luaH_webview_loading)
+      PF_CASE(RELOAD,           luaH_webview_reload)
+      /* push source viewing methods */
+      PF_CASE(GET_VIEW_SOURCE,  luaH_webview_get_view_source)
+      PF_CASE(SET_VIEW_SOURCE,  luaH_webview_set_view_source)
 
-      case L_TK_HOVERED_URI:
-        lua_pushstring(L, g_object_get_data(G_OBJECT(view), "hovered-uri"));
-        return 1;
+      /* push string properties */
+      PS_CASE(HOVERED_URI, g_object_get_data(G_OBJECT(view), "hovered-uri"))
 
       case L_TK_URI:
         g_object_get(G_OBJECT(view), "uri", &tmp.c, NULL);
@@ -897,12 +911,9 @@ wv_button_press_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
-    if (w->widget) {
-        GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
-        gtk_widget_destroy(GTK_WIDGET(view));
-        gtk_widget_destroy(GTK_WIDGET(w->widget));
-    } else
-        warn("webview widget already destroyed");
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    gtk_widget_destroy(GTK_WIDGET(view));
+    gtk_widget_destroy(GTK_WIDGET(w->widget));
 }
 
 widget_t *
@@ -938,6 +949,7 @@ widget_webview(widget_t *w)
     g_object_connect((GObject*)view,
       "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
       "signal::button-release-event",                 (GCallback)button_release_cb,      w,
+      "signal::create-web-view",                      (GCallback)create_web_view_cb,     w,
       "signal::download-requested",                   (GCallback)download_request_cb,    w,
       "signal::expose-event",                         (GCallback)expose_cb,              w,
       "signal::focus-in-event",                       (GCallback)focus_cb,               w,

@@ -485,7 +485,7 @@ function attach_webview_signals(w, view)
     -- Domain properties
     view:add_signal("load-status", function (v, status)
         if status == "committed" then
-            local domain = string.match(v.uri, "^%a+://([^/]*)/?")
+            local domain = string.match(v.uri, "^%a+://([^/]*)/?") or "other"
             if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
             local props = util.table.join(domain_props.all or {}, domain_props[domain] or {})
             for k, v in pairs(props) do
@@ -529,6 +529,10 @@ function attach_webview_signals(w, view)
             return true
         end
         w:new_tab(link)
+    end)
+
+    view:add_signal("create-web-view", function (v)
+        return w:new_tab()
     end)
 
     view:add_signal("property::progress", function (v)
@@ -613,6 +617,7 @@ window_helpers = {
         if uri then view.uri = uri end
         view.show_scrollbars = false
         w:update_tab_count()
+        return view
     end,
 
     -- close the current tab
@@ -620,8 +625,10 @@ window_helpers = {
         if not view then view = w:get_current() end
         if not view then return end
         w.tabs:remove(view)
+        view.uri = "about:blank"
         view:destroy()
         w:update_tab_count()
+        w:update_tab_labels()
     end,
 
     -- evaluate javascript code and return string result
@@ -1023,9 +1030,9 @@ window_helpers = {
 
     destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
-        for _, wi in pairs(t) do
-            wi:destroy()
-        end
+        -- Destroy widgets without their own windows first (I.e. labels)
+        for _, wi in ipairs{ t.label, t.sep}    do wi:destroy() end
+        for _, wi in ipairs{ t.ebox,  t.layout} do wi:destroy() end
     end,
 
     update_tab_labels = function (w, current)

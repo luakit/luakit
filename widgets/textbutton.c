@@ -29,21 +29,10 @@ luaH_textbutton_index(lua_State *L, luakit_token_t token)
 
     switch (token)
     {
-      case L_TK_DESTROY:
-        lua_pushcfunction(L, luaH_widget_destroy);
-        return 1;
+      LUAKIT_WIDGET_INDEX_COMMON
 
-      case L_TK_LABEL:
-        lua_pushstring(L, gtk_button_get_label(GTK_BUTTON(w->widget)));
-        return 1;
-
-      case L_TK_SHOW:
-        lua_pushcfunction(L, luaH_widget_show);
-        return 1;
-
-      case L_TK_HIDE:
-        lua_pushcfunction(L, luaH_widget_hide);
-        return 1;
+      /* push string properties */
+      PS_CASE(LABEL, gtk_button_get_label(GTK_BUTTON(w->widget)))
 
       default:
         break;
@@ -81,18 +70,12 @@ clicked_cb(GtkWidget *b, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
-textbutton_destructor(widget_t *w)
-{
-    gtk_widget_destroy(w->widget);
-}
-
 widget_t *
 widget_textbutton(widget_t *w)
 {
     w->index = luaH_textbutton_index;
     w->newindex = luaH_textbutton_newindex;
-    w->destructor = textbutton_destructor;
+    w->destructor = widget_destructor;
 
     w->widget = gtk_button_new();
     g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);

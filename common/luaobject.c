@@ -206,11 +206,9 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     gint ret, top, bot = lua_gettop(L) - nargs + 1;
     gint oud_abs = luaH_absindex(L, oud);
     lua_object_t *obj = lua_touserdata(L, oud);
+    debug("emitting \"%s\" on %p with %d args and %d nret", name, obj, nargs, nret);
     if(!obj)
         luaL_error(L, "trying to emit signal on non-object");
-
-    debug("emitting \"%s\" on %p with %d args and %d nret", name, obj, nargs, nret);
-
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if(sigfuncs) {
         guint nbfunc = sigfuncs->len;
@@ -247,9 +245,8 @@ luaH_object_emit_signal(lua_State *L, gint oud,
                         ret = nret;
                     }
                 }
-
                 /* Remove all signal functions and args from the stack */
-                for (gint i = bot; i < top; i++)
+                for (gint i = bot; i <= top; i++)
                     lua_remove(L, bot);
                 /* Return the number of returned arguments */
                 return ret;
