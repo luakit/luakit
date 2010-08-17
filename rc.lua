@@ -1109,7 +1109,7 @@ window_helpers = {
 -- Helper function which operate on a download bar
 download_helpers = {
     -- Adds signals to a download widget
-    add_download_widget_signals = function(bar, t)
+    attach_download_widget_signals = function(bar, t)
         t.widget.e:add_signal("button-release", function(e, m, b)
             local d  = t.download
             if b == 1 then
@@ -1145,16 +1145,19 @@ download_helpers = {
             p = label(),
             s = label(),
             f = label(),
+            sep = label(),
         }
         local wi = t.widget
         wi.f.text = "✗"
         wi.f:hide()
         wi.s.text = "✔"
         wi.s:hide()
+        wi.sep.text = "|"
         wi.h:pack_start(wi.p, false, false, 0)
         wi.h:pack_start(wi.f, false, false, 0)
         wi.h:pack_start(wi.s, false, false, 0)
         wi.h:pack_start(wi.l, false, false, 0)
+        wi.h:pack_end(wi.sep, false, false, 0)
         wi.e:set_child(wi.h)
         bar:apply_download_theme(t)
         bar:update_download_widget(t)
@@ -1167,7 +1170,7 @@ download_helpers = {
         bar:assemble_download_widget(t)
         local wi = t.widget
         bar.layout:pack_start(wi.e, false, false, 0)
-        bar:add_download_widget_signals(t)
+        bar:attach_download_widget_signals(t)
         return t
     end,
 
@@ -1224,10 +1227,10 @@ download_helpers = {
     apply_download_theme = function(bar, t, atheme)
         local theme = atheme or theme
         local wi = t.widget
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
             w.font = theme.download_font or theme.downloadbar_font or theme.font
         end
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.p}) do
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.sep}) do
             w.fg = theme.download_fg or theme.downloadbar_fg or theme.fg
         end
         wi.s.fg = theme.download_success_fg or theme.success_fg or theme.fg
