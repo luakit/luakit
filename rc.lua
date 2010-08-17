@@ -147,6 +147,8 @@ mode_binds = {
         bind.buf("^zI$",                    function (w) w:zoom_in(ZOOM_STEP)  end),
         bind.buf("^zO$",                    function (w) w:zoom_out(ZOOM_STEP) end),
         bind.buf("^z0$",                    function (w) w:zoom_reset()   end),
+        bind.key({"Control"}, "+",          function (w) w:zoom_in(ZOOM_STEP)  end),
+        bind.key({"Control"}, "-",          function (w) w:zoom_out(ZOOM_STEP) end),
 
         -- Clipboard
         bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
