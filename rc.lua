@@ -1151,10 +1151,10 @@ download_helpers = {
         wi.f:hide()
         wi.s.text = "✔"
         wi.s:hide()
-        wi.h:pack_start(wi.l, false, false, 0)
         wi.h:pack_start(wi.p, false, false, 0)
         wi.h:pack_start(wi.f, false, false, 0)
         wi.h:pack_start(wi.s, false, false, 0)
+        wi.h:pack_start(wi.l, false, false, 0)
         wi.e:set_child(wi.h)
         bar:apply_download_theme(t)
         bar:update_download_widget(t)
@@ -1184,15 +1184,21 @@ download_helpers = {
         local wi = t.widget
         local dt = t.data
         local d  = t.download
-        if     d.status == "finished"  then wi.p:hide() wi.s:show()
-        elseif d.status == "error"     then wi.p:hide() wi.e:show()
-        elseif d.status == "cancelled" then wi.p:hide()
+        local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+        if d.status == "finished" then
+            wi.p:hide()
+            wi.s:show()
+            wi.l.text = basename
+        elseif d.status == "error" then
+            wi.p:hide()
+            wi.e:show()
+            wi.l.text = basename
+        elseif d.status == "cancelled" then
+            wi.p:hide()
+            wi.l.text = basename
         else
-            wi.p.text = string.format('(%s%%)', d.progress * 100)
-            local _,_,basename = string.find(d.destination, ".*/([^/]*)")
-            local speed
-            if d.last_size then speed = d.current_size - dt.last_size
-            else speed = 0 end
+            wi.p.text = string.format('%s%%', d.progress * 100)
+            local speed = d.current_size - (dt.last_size or 0)
             dt.last_size = d.current_size
             wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
         end
