@@ -615,11 +615,13 @@ window_helpers = {
     end,
 
     navigate = function (w, uri, view)
-        local v = view or w:get_current()
-        if v then
-            v.uri = uri
-        else
-            return w:new_tab(uri)
+        if uri then
+            local v = view or w:get_current()
+            if v then
+                v.uri = uri
+            else
+                return w:new_tab(uri)
+            end
         end
     end,
 
