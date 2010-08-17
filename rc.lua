@@ -1119,7 +1119,12 @@ window_helpers = {
         elseif d.status == "cancelled" then wi.p:hide()
         else
             wi.p.text = string.format('(%s%%)', d.progress * 100)
-            _,_,wi.l.text = string.find(d.destination, ".*/([^/]*)")
+            local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+            local speed
+            if d.last_size then speed = d.current_size - d.last_size
+            else speed = 0 end
+            d.last_size = d.current_size
+            wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
         end
     end,
 
