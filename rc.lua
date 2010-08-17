@@ -208,10 +208,14 @@ function build_window()
         },
         -- Download bar widgets
         dbar = {
-            layout  = hbox(),
-            ebox    = eventbox(),
+            layout    = hbox(),
+            ebox      = eventbox(),
+            clear     = {
+                ebox  = eventbox(),
+                label = label(),
+            },
             downloads = {},
-            timer   = timer{interval=1000},
+            timer     = timer{interval=1000},
         },
         -- Status bar widgets
         sbar = {
@@ -259,9 +263,16 @@ function build_window()
     -- Pack download bar
     local d = w.dbar
     for k,v in pairs(download_helpers) do d[k] = v end
+    d.ebox:hide()
+    w.layout:pack_start(d.ebox ,  false, false, 0)
     d.ebox:set_child(d.layout)
-    w.layout:pack_start(d.ebox,   false, false, 0)
     d.timer:add_signal("timeout", function() d:refresh_download_bar() end)
+
+    -- Pack download clear button
+    local c = d.clear
+    d.layout:pack_end(c.ebox,     false, false, 0)
+    c.ebox:set_child(c.label)
+    c.label.text = "clear"
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -1074,34 +1085,37 @@ window_helpers = {
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_fg    or theme.statusbar_fg or fg,
-            [s.l.loaded] = theme.loaded_fg or theme.statusbar_fg or fg,
-            [s.r.buf]    = theme.buf_fg    or theme.statusbar_fg or fg,
-            [s.r.tabi]   = theme.tabi_fg   or theme.statusbar_fg or fg,
-            [s.r.scroll] = theme.scroll_fg or theme.statusbar_fg or fg,
-            [i.prompt]   = theme.prompt_fg or theme.inputbar_fg  or fg,
-            [i.input]    = theme.input_fg  or theme.inputbar_fg  or fg,
+            [s.l.uri]       = theme.uri_fg    or theme.statusbar_fg   or fg,
+            [s.l.loaded]    = theme.loaded_fg or theme.statusbar_fg   or fg,
+            [s.r.buf]       = theme.buf_fg    or theme.statusbar_fg   or fg,
+            [s.r.tabi]      = theme.tabi_fg   or theme.statusbar_fg   or fg,
+            [s.r.scroll]    = theme.scroll_fg or theme.statusbar_fg   or fg,
+            [i.prompt]      = theme.prompt_fg or theme.inputbar_fg    or fg,
+            [i.input]       = theme.input_fg  or theme.inputbar_fg    or fg,
+            [d.clear.label] = theme.clear_fg  or theme.downloadbar_fg or fg,
         }) do wi.fg = v end
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.statusbar_bg   or bg,
-            [s.r.ebox]   = theme.statusbar_bg   or bg,
-            [s.ebox]     = theme.statusbar_bg   or bg,
-            [d.ebox]     = theme.downloadbar_bg or bg,
-            [i.ebox]     = theme.inputbar_bg    or bg,
-            [i.input]    = theme.input_bg       or theme.inputbar_bg or bg,
+            [s.l.ebox]     = theme.statusbar_bg   or bg,
+            [s.r.ebox]     = theme.statusbar_bg   or bg,
+            [s.ebox]       = theme.statusbar_bg   or bg,
+            [d.ebox]       = theme.downloadbar_bg or bg,
+            [d.clear.ebox] = theme.downloadbar_bg or bg,
+            [i.ebox]       = theme.inputbar_bg    or bg,
+            [i.input]      = theme.input_bg       or theme.inputbar_bg or bg,
         }) do wi.bg = v end
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_font    or theme.statusbar_font or font,
-            [s.l.loaded] = theme.loaded_font or theme.statusbar_font or font,
-            [s.r.buf]    = theme.buf_font    or theme.statusbar_font or font,
-            [s.r.tabi]   = theme.tabi_font   or theme.statusbar_font or font,
-            [s.r.scroll] = theme.scroll_font or theme.statusbar_font or font,
-            [i.prompt]   = theme.prompt_font or theme.inputbar_font or font,
-            [i.input]    = theme.input_font  or theme.inputbar_font or font,
+            [s.l.uri]       = theme.uri_font    or theme.statusbar_font   or font,
+            [s.l.loaded]    = theme.loaded_font or theme.statusbar_font   or font,
+            [s.r.buf]       = theme.buf_font    or theme.statusbar_font   or font,
+            [s.r.tabi]      = theme.tabi_font   or theme.statusbar_font   or font,
+            [s.r.scroll]    = theme.scroll_font or theme.statusbar_font   or font,
+            [i.prompt]      = theme.prompt_font or theme.inputbar_font    or font,
+            [i.input]       = theme.input_font  or theme.inputbar_font    or font,
+            [d.clear.label] = theme.clear_font  or theme.downloadbar_font or font,
         }) do wi.font = v end
     end,
 }
@@ -1126,12 +1140,13 @@ download_helpers = {
                 -- remove download
                 bar.layout:remove(e)
                 for i,t in pairs(bar.downloads) do
-                    if t.widget == e then
+                    if t.download == d then
                         table.remove(bar.downloads, i)
                         if t.download.status == "started" then t.download:cancel() end
                         break
                     end
                 end
+                if #bar.downloads == 0 then bar.ebox:hide() end
             end
         end)
     end,
@@ -1178,6 +1193,7 @@ download_helpers = {
     add_download = function(bar, d)
         local t = bar:add_download_widget(d)
         table.insert(bar.downloads, t)
+        bar.ebox:show()
         -- start refresh timer
         if not bar.timer.started then bar.timer:start() end
     end,
