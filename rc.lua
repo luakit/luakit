@@ -1226,7 +1226,7 @@ download_helpers = {
         end
         wi.s.fg = theme.download_success_fg or theme.success_fg or theme.fg
         wi.f.fg = theme.download_failure_fg or theme.failure_fg or theme.fg
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
+        for _,w in pairs({wi.e, wi.h}) do
             w.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
         end
     end,
