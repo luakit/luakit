@@ -519,11 +519,11 @@ function attach_webview_signals(w, view)
 
     view:add_signal("download-requested", function(v, uri)
         local d = download{uri=uri}
-        local file = dialog.save("Save file", w.window, "/home", d.suggested_filename)
+        local file = dialog.save("Save file", w.window, "/home/k/Downloads", d.suggested_filename)
         if file then
             d.destination = file
             d:start()
-            w:add_download(d)
+            w.dbar:add_download(d)
         end
     end)
 
@@ -1154,8 +1154,8 @@ download_helpers = {
         wi.s:hide()
         wi.h:pack_start(wi.l, false, false, 0)
         wi.h:pack_start(wi.p, false, false, 0)
-        wi.h:pack_start(wi.e, false, false, 0)
         wi.h:pack_start(wi.f, false, false, 0)
+        wi.h:pack_start(wi.s, false, false, 0)
         wi.e:set_child(wi.h)
         bar:apply_download_theme(t)
         bar:update_download_widget(t)
