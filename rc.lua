@@ -793,7 +793,8 @@ window_helpers = {
 
     zoom_out = function (w, step, view)
         if not view then view = w:get_current() end
-        view:set_prop("zoom-level", view:get_prop("zoom-level") - step)
+        local value = view:get_prop("zoom-level") - step
+        view:set_prop("zoom-level", (value > 0.1 and value) or 0.01)
     end,
 
     zoom_reset = function (w, view)
