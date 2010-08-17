@@ -466,6 +466,10 @@ function attach_webview_signals(w, view)
     end)
 
     view:add_signal("button-release", function (v, mods, button)
+        -- Prevent a click from causing the search to think you pressed
+        -- escape and return you to the start search marker.
+        w.search_start_marker = nil
+
         if w:hit(mods, button) then
             return true
         end
