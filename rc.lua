@@ -263,6 +263,7 @@ function build_window()
     -- Pack download bar
     local d = w.dbar
     for k,v in pairs(download_helpers) do d[k] = v end
+    d:attach_download_bar_signals()
     d.ebox:hide()
     w.layout:pack_start(d.ebox ,  false, false, 0)
     d.ebox:set_child(d.layout)
@@ -1122,6 +1123,35 @@ window_helpers = {
 
 -- Helper function which operate on a download bar
 download_helpers = {
+    -- Adds signals to the download bar
+    attach_download_bar_signals = function(bar)
+        bar.clear.ebox:add_signal("button-release", function(e, m, b)
+            if b == 1 then
+                -- clear stopped downloads
+                for i,t in pairs(util.table.clone(bar.downloads)) do
+                    local d = t.download
+                    if d.status ~= "created" and d.status ~= "started" then
+                        bar:remove_download(d)
+                    end
+                end
+            end
+        end)
+    end,
+
+    -- Removes the given download from the download bar and cancels it if
+    -- necessary.
+    remove_download = function(bar, d)
+        for i,t in pairs(bar.downloads) do
+            if t.download == d then
+                bar.layout:remove(t.widget.e)
+                table.remove(bar.downloads, i)
+                if d.status == "started" then d:cancel() end
+                break
+            end
+        end
+        if #bar.downloads == 0 then bar.ebox:hide() end
+    end,
+
     -- Adds signals to a download widget
     attach_download_widget_signals = function(bar, t)
         t.widget.e:add_signal("button-release", function(e, m, b)
@@ -1138,15 +1168,7 @@ download_helpers = {
                 t:start()
             elseif b == 3 then
                 -- remove download
-                bar.layout:remove(e)
-                for i,t in pairs(bar.downloads) do
-                    if t.download == d then
-                        table.remove(bar.downloads, i)
-                        if t.download.status == "started" then t.download:cancel() end
-                        break
-                    end
-                end
-                if #bar.downloads == 0 then bar.ebox:hide() end
+                bar:remove_download(d)
             end
         end)
     end,
