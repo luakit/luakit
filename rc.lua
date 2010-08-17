@@ -48,11 +48,9 @@ domain_props = { --[[
 -- Luakit theme
 theme = theme or {
     -- Default settings
-    font       = "monospace normal 9",
-    fg         = "#fff",
-    bg         = "#000",
-    success_fg = "#0f0",
-    failure_fg = "#f00",
+    font = "monospace normal 9",
+    fg   = "#fff",
+    bg   = "#000",
 
     -- General settings
     downloadbar_fg = "#fff",
@@ -65,6 +63,8 @@ theme = theme or {
 
     -- Specific settings
     loaded_fg            = "#33AADD",
+    success_fg           = "#0f0",
+    failure_fg           = "#f00",
     tablabel_fg          = "#999",
     tablabel_bg          = "#111",
     selected_tablabel_fg = "#fff",
@@ -1327,7 +1327,7 @@ download_helpers = {
             wi.p:hide()
             wi.l.text = basename
         else
-            wi.p.text = string.format('%s%%', d.progress * 100)
+            wi.p.text = string.format('%.2f%%', d.progress * 100)
             local speed = d.current_size - (dt.last_size or 0)
             dt.last_size = d.current_size
             wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
@@ -1357,11 +1357,13 @@ download_helpers = {
         for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
             w.font = theme.download_font or theme.downloadbar_font or theme.font
         end
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.sep}) do
-            w.fg = theme.download_fg or theme.downloadbar_fg or theme.fg
+        local fg = theme.download_fg or theme.downloadbar_fg or theme.fg
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
+            w.fg = fg
         end
-        wi.s.fg = theme.download_success_fg or theme.success_fg or theme.fg
-        wi.f.fg = theme.download_failure_fg or theme.failure_fg or theme.fg
+        wi.p.fg = theme.download_loaded_fg  or theme.loaded_fg  or fg
+        wi.s.fg = theme.download_success_fg or theme.success_fg or fg
+        wi.f.fg = theme.download_failure_fg or theme.failure_fg or fg
         for _,w in pairs({wi.e, wi.h}) do
             w.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
         end
