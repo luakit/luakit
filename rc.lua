@@ -261,7 +261,7 @@ function build_window()
     for k,v in pairs(download_helpers) do d[k] = v end
     d.ebox:set_child(d.layout)
     w.layout:pack_start(d.ebox,   false, false, 0)
-    d.timer:add_signal("timeout", function() w:refresh_download_bar() end)
+    d.timer:add_signal("timeout", function() d:refresh_download_bar() end)
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -1110,8 +1110,7 @@ window_helpers = {
 download_helpers = {
     -- Adds signals to a download widget
     add_download_widget_signals = function(bar, t)
-        wi.e:add_signal("button-release", function(e, m, b)
-            local wi = t.widget
+        t.widget.e:add_signal("button-release", function(e, m, b)
             local d  = t.download
             if b == 1 then
                 -- open file
@@ -1138,7 +1137,7 @@ download_helpers = {
     end,
 
     -- Creates and connects all widget components for a download widget
-    assemble_download_widget = function(w, t)
+    assemble_download_widget = function(bar, t)
         t.widget = {
             e = eventbox(),
             h = hbox(),
@@ -1184,6 +1183,7 @@ download_helpers = {
     update_download_widget = function(bar, t)
         local wi = t.widget
         local dt = t.data
+        local d  = t.download
         if     d.status == "finished"  then wi.p:hide() wi.s:show()
         elseif d.status == "error"     then wi.p:hide() wi.e:show()
         elseif d.status == "cancelled" then wi.p:hide()
@@ -1203,8 +1203,8 @@ download_helpers = {
         local all_finished = true
         -- update
         for _,t in pairs(bar.downloads) do
-            local d, wi, dt = t.download, t.widget, t.data
-            w:update_download_widget(wi, d, dt)
+            local d = t.download
+            bar:update_download_widget(t)
             if d.status == "created" or d.status == "started" then
                 all_finished = false
             end
@@ -1215,18 +1215,19 @@ download_helpers = {
         end
     end,
 
-    apply_download_theme = function(bar, wi, atheme)
+    apply_download_theme = function(bar, t, atheme)
         local theme = atheme or theme
-        for wi in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
-            wi.font = theme.download_font or theme.downloadbar_font or theme.font
+        local wi = t.widget
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
+            w.font = theme.download_font or theme.downloadbar_font or theme.font
         end
-        for wi in pairs({wi.e, wi.h, wi.l, wi.p}) do
-            wi.fg = theme.download_fg or theme.downloadbar_fg or theme.fg
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p}) do
+            w.fg = theme.download_fg or theme.downloadbar_fg or theme.fg
         end
         wi.s.fg = theme.download_success_fg or theme.success_fg or theme.fg
         wi.f.fg = theme.download_failure_fg or theme.failure_fg or theme.fg
-        for wi in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
-            wi.e.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
+            w.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
         end
     end,
 }
