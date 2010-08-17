@@ -19,6 +19,7 @@ function entry()    return widget{type="entry"}    end
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
 SCROLL_STEP      = 20
+ZOOM_STEP        = 0.1
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
 --HTTPPROXY = "http://example.com:3128"
@@ -124,17 +125,28 @@ mode_binds = {
         bind.key({},          "j",          function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "k",          function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "l",          function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5)    end),
+        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5)   end),
+        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0)    end),
+        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0)   end),
+        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
+        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
+        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+
+        -- Traditional scrolling commands
         bind.key({},          "Left",       function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5) end),
-        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5) end),
-        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0) end),
-        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0) end),
-        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
-        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+        bind.key({},          "Page_Down",  function (w) w:scroll_page(1.0)    end),
+        bind.key({},          "Page_Up",    function (w) w:scroll_page(-1.0)   end),
+        bind.key({},          "Home",       function (w) w:scroll_vert("0%")   end),
+        bind.key({},          "End",        function (w) w:scroll_vert("100%") end),
+
+        -- Zooming
+        bind.buf("^zI$",                    function (w) w:zoom_in(ZOOM_STEP)  end),
+        bind.buf("^zO$",                    function (w) w:zoom_out(ZOOM_STEP) end),
+        bind.buf("^z0$",                    function (w) w:zoom_reset()   end),
 
         -- Clipboard
         bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
@@ -771,6 +783,22 @@ window_helpers = {
             i.text = ":"
             i:set_position(-1)
         end
+    end,
+
+    -- Zoom functions
+    zoom_in = function (w, step, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
+    end,
+
+    zoom_out = function (w, step, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", view:get_prop("zoom-level") - step)
+    end,
+
+    zoom_reset = function (w, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", 1.0)
     end,
 
     -- Search history adding
