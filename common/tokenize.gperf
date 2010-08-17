@@ -49,6 +49,7 @@ pack_end
 pack_start
 reload
 remove
+reorder_child
 search
 selectable
 set_alignment
