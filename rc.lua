@@ -237,7 +237,7 @@ function build_window()
                 loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
-            filler = label(),
+            sep = eventbox(),
             -- Right aligned widgets
             r = {
                 layout = hbox(),
@@ -284,7 +284,7 @@ function build_window()
     -- Pack status bar elements
     local s = w.sbar
     s.layout:pack_start(l.ebox,   false, false, 0)
-    s.layout:pack_start(s.filler, true,  true,  0)
+    s.layout:pack_start(s.sep,    true,  true,  0)
     s.layout:pack_start(r.ebox,   false, false, 0)
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
@@ -1011,7 +1011,7 @@ window_helpers = {
     make_tab_label = function (w, pos)
         local t = {
             label  = label(),
-            sep    = label(),
+            sep    = eventbox(),
             ebox   = eventbox(),
             layout = hbox(),
         }
@@ -1034,8 +1034,7 @@ window_helpers = {
     destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
         -- Destroy widgets without their own windows first (I.e. labels)
-        for _, wi in ipairs{ t.label, t.sep}    do wi:destroy() end
-        for _, wi in ipairs{ t.ebox,  t.layout} do wi:destroy() end
+        for _, wi in ipairs{ t.label, t.sep, t.ebox, t.layout } do wi:destroy() end
     end,
 
     update_tab_labels = function (w, current)
@@ -1104,6 +1103,7 @@ window_helpers = {
         for wi, v in pairs({
             [s.l.ebox]   = theme.statusbar_bg or bg,
             [s.r.ebox]   = theme.statusbar_bg or bg,
+            [s.sep]      = theme.statusbar_bg or bg,
             [s.ebox]     = theme.statusbar_bg or bg,
             [i.ebox]     = theme.inputbar_bg  or bg,
             [i.input]    = theme.input_bg     or theme.inputbar_bg or bg,
