@@ -48,11 +48,16 @@ domain_props = { --[[
 -- Luakit theme
 theme = theme or {
     -- Default settings
-    font = "monospace normal 9",
-    fg   = "#fff",
-    bg   = "#000",
+    font       = "monospace normal 9",
+    fg         = "#fff",
+    bg         = "#000",
+    success_fg = "#0f0",
+    failure_fg = "#f00",
 
     -- General settings
+    downloadbar_fg = "#fff",
+    downloadbar_bg = "#000",
+    downloadbar_bg = "#000",
     statusbar_fg = "#fff",
     statusbar_bg = "#000",
     inputbar_fg  = "#000",
@@ -241,6 +246,17 @@ function build_window()
             ebox   = eventbox(),
             titles = { },
         },
+        -- Download bar widgets
+        dbar = {
+            layout    = hbox(),
+            ebox      = eventbox(),
+            clear     = {
+                ebox  = eventbox(),
+                label = label(),
+            },
+            downloads = {},
+            timer     = timer{interval=1000},
+        },
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -278,11 +294,26 @@ function build_window()
 
     -- Pack tab bar
     local t = w.tbar
-    t.ebox:set_child(t.layout, false, false, 0)
-    w.layout:pack_start(t.ebox, false, false, 0)
+    t.ebox:set_child(t.layout,    false, false, 0)
+    w.layout:pack_start(t.ebox,   false, false, 0)
 
     -- Pack notebook
-    w.layout:pack_start(w.tabs, true, true, 0)
+    w.layout:pack_start(w.tabs,   true,  true,  0)
+
+    -- Pack download bar
+    local d = w.dbar
+    for k,v in pairs(download_helpers) do d[k] = v end
+    d:attach_download_bar_signals()
+    d.ebox:hide()
+    w.layout:pack_start(d.ebox ,  false, false, 0)
+    d.ebox:set_child(d.layout)
+    d.timer:add_signal("timeout", function() d:refresh_download_bar() end)
+
+    -- Pack download clear button
+    local c = d.clear
+    d.layout:pack_end(c.ebox,     false, false, 0)
+    c.ebox:set_child(c.label)
+    c.label.text = "clear"
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -310,7 +341,7 @@ function build_window()
     i.layout:pack_start(i.prompt, false, false, 0)
     i.layout:pack_start(i.input,  true,  true,  0)
     i.ebox:set_child(i.layout)
-    w.layout:pack_start(i.ebox,    false, false, 0)
+    w.layout:pack_start(i.ebox,   false, false, 0)
 
     -- Other settings
     i.input.show_frame = false
@@ -560,7 +591,17 @@ function attach_webview_signals(w, view)
         end
     end)
 
-    view:add_signal("expose", function (v)
+    view:add_signal("download-requested", function(v, uri)
+        local d = download{uri=uri}
+        local file = dialog.save("Save file", w.window, "/home/k/Downloads", d.suggested_filename)
+        if file then
+            d.destination = file
+            d:start()
+            w.dbar:add_download(d)
+        end
+    end)
+
+    view:add_signal("expose", function(v)
         if w:is_current(v) then
             w:update_scroll(v)
         end
@@ -583,6 +624,16 @@ function parse_scroll(current, max, value)
     else
         print("E: unable to parse scroll amount:", value)
     end
+end
+
+-- Opens a file with the given mime-type
+function open_file(f, m)
+    local e = nil
+    if     string.find(f, "^text/")  then e = "gvim"
+    elseif string.find(f, "^video/") then e = "mplayer"
+    elseif string.find(f, "/pdf$")   then e = "evince"
+    end
+    if e then luakit.spawn(string.format("%s '%s'", e, f)) end
 end
 
 -- Helper functions which operate on a windows widget structure
@@ -1118,40 +1169,202 @@ window_helpers = {
 
     apply_window_theme = function (w, atheme)
         local theme        = atheme or theme
-        local s, i, t      = w.sbar, w.ibar, w.tbar
+        local s, i, t, d   = w.sbar, w.ibar, w.tbar, w.dbar
         local fg, bg, font = theme.fg, theme.bg, theme.font
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_fg    or theme.statusbar_fg or fg,
-            [s.l.loaded] = theme.loaded_fg or theme.statusbar_fg or fg,
-            [s.r.buf]    = theme.buf_fg    or theme.statusbar_fg or fg,
-            [s.r.tabi]   = theme.tabi_fg   or theme.statusbar_fg or fg,
-            [s.r.scroll] = theme.scroll_fg or theme.statusbar_fg or fg,
-            [i.prompt]   = theme.prompt_fg or theme.inputbar_fg  or fg,
-            [i.input]    = theme.input_fg  or theme.inputbar_fg  or fg,
+            [s.l.uri]       = theme.uri_fg    or theme.statusbar_fg   or fg,
+            [s.l.loaded]    = theme.loaded_fg or theme.statusbar_fg   or fg,
+            [s.r.buf]       = theme.buf_fg    or theme.statusbar_fg   or fg,
+            [s.r.tabi]      = theme.tabi_fg   or theme.statusbar_fg   or fg,
+            [s.r.scroll]    = theme.scroll_fg or theme.statusbar_fg   or fg,
+            [i.prompt]      = theme.prompt_fg or theme.inputbar_fg    or fg,
+            [i.input]       = theme.input_fg  or theme.inputbar_fg    or fg,
+            [d.clear.label] = theme.clear_fg  or theme.downloadbar_fg or fg,
         }) do wi.fg = v end
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.statusbar_bg or bg,
-            [s.r.ebox]   = theme.statusbar_bg or bg,
-            [s.sep]      = theme.statusbar_bg or bg,
-            [s.ebox]     = theme.statusbar_bg or bg,
-            [i.ebox]     = theme.inputbar_bg  or bg,
-            [i.input]    = theme.input_bg     or theme.inputbar_bg or bg,
+            [s.l.ebox]     = theme.statusbar_bg   or bg,
+            [s.r.ebox]     = theme.statusbar_bg   or bg,
+            [s.ebox]       = theme.statusbar_bg   or bg,
+            [s.sep]        = theme.statusbar_bg   or bg,
+            [d.ebox]       = theme.downloadbar_bg or bg,
+            [d.clear.ebox] = theme.downloadbar_bg or bg,
+            [i.ebox]       = theme.inputbar_bg    or bg,
+            [i.input]      = theme.input_bg       or theme.inputbar_bg or bg,
         }) do wi.bg = v end
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_font    or theme.statusbar_font or font,
-            [s.l.loaded] = theme.loaded_font or theme.statusbar_font or font,
-            [s.r.buf]    = theme.buf_font    or theme.statusbar_font or font,
-            [s.r.tabi]   = theme.tabi_font   or theme.statusbar_font or font,
-            [s.r.scroll] = theme.scroll_font or theme.statusbar_font or font,
-            [i.prompt]   = theme.prompt_font or theme.inputbar_font or font,
-            [i.input]    = theme.input_font  or theme.inputbar_font or font,
+            [s.l.uri]       = theme.uri_font    or theme.statusbar_font   or font,
+            [s.l.loaded]    = theme.loaded_font or theme.statusbar_font   or font,
+            [s.r.buf]       = theme.buf_font    or theme.statusbar_font   or font,
+            [s.r.tabi]      = theme.tabi_font   or theme.statusbar_font   or font,
+            [s.r.scroll]    = theme.scroll_font or theme.statusbar_font   or font,
+            [i.prompt]      = theme.prompt_font or theme.inputbar_font    or font,
+            [i.input]       = theme.input_font  or theme.inputbar_font    or font,
+            [d.clear.label] = theme.clear_font  or theme.downloadbar_font or font,
         }) do wi.font = v end
+    end,
+}
+
+-- Helper function which operate on a download bar
+download_helpers = {
+    -- Adds signals to the download bar
+    attach_download_bar_signals = function(bar)
+        bar.clear.ebox:add_signal("button-release", function(e, m, b)
+            if b == 1 then
+                -- clear stopped downloads
+                for i,t in pairs(util.table.clone(bar.downloads)) do
+                    local d = t.download
+                    if d.status ~= "created" and d.status ~= "started" then
+                        bar:remove_download(d)
+                    end
+                end
+            end
+        end)
+    end,
+
+    -- Removes the given download from the download bar and cancels it if
+    -- necessary.
+    remove_download = function(bar, d)
+        for i,t in pairs(bar.downloads) do
+            if t.download == d then
+                bar.layout:remove(t.widget.e)
+                table.remove(bar.downloads, i)
+                if d.status == "started" then d:cancel() end
+                break
+            end
+        end
+        if #bar.downloads == 0 then bar.ebox:hide() end
+    end,
+
+    -- Adds signals to a download widget
+    attach_download_widget_signals = function(bar, t)
+        t.widget.e:add_signal("button-release", function(e, m, b)
+            local d  = t.download
+            if b == 1 then
+                -- open file
+                local t = timer{interval=1000}
+                t:add_signal("timeout", function(t)
+                    if d.status == "finished" then
+                        t:stop()
+                        open_file(d.destination, d.mime_type)
+                    end
+                end)
+                t:start()
+            elseif b == 3 then
+                -- remove download
+                bar:remove_download(d)
+            end
+        end)
+    end,
+
+    -- Creates and connects all widget components for a download widget
+    assemble_download_widget = function(bar, t)
+        t.widget = {
+            e = eventbox(),
+            h = hbox(),
+            l = label(),
+            p = label(),
+            s = label(),
+            f = label(),
+            sep = label(),
+        }
+        local wi = t.widget
+        wi.f.text = "✗"
+        wi.f:hide()
+        wi.s.text = "✔"
+        wi.s:hide()
+        wi.sep.text = "|"
+        wi.h:pack_start(wi.p, false, false, 0)
+        wi.h:pack_start(wi.f, false, false, 0)
+        wi.h:pack_start(wi.s, false, false, 0)
+        wi.h:pack_start(wi.l, false, false, 0)
+        wi.h:pack_end(wi.sep, false, false, 0)
+        wi.e:set_child(wi.h)
+        bar:apply_download_theme(t)
+        bar:update_download_widget(t)
+    end,
+
+    -- Adds a new label to the download bar and registers signals for it
+    add_download_widget = function(bar, d)
+        local dt = {last_size=0}
+        local t  = {download=d, data=dt, widget=nil}
+        bar:assemble_download_widget(t)
+        local wi = t.widget
+        bar.layout:pack_start(wi.e, false, false, 0)
+        bar:attach_download_widget_signals(t)
+        return t
+    end,
+
+    -- Adds a download to the download bar.
+    add_download = function(bar, d)
+        local t = bar:add_download_widget(d)
+        table.insert(bar.downloads, t)
+        bar.ebox:show()
+        -- start refresh timer
+        if not bar.timer.started then bar.timer:start() end
+    end,
+
+    -- Updates the text of the given download widget for the given download
+    update_download_widget = function(bar, t)
+        local wi = t.widget
+        local dt = t.data
+        local d  = t.download
+        local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+        if d.status == "finished" then
+            wi.p:hide()
+            wi.s:show()
+            wi.l.text = basename
+        elseif d.status == "error" then
+            wi.p:hide()
+            wi.e:show()
+            wi.l.text = basename
+        elseif d.status == "cancelled" then
+            wi.p:hide()
+            wi.l.text = basename
+        else
+            wi.p.text = string.format('%s%%', d.progress * 100)
+            local speed = d.current_size - (dt.last_size or 0)
+            dt.last_size = d.current_size
+            wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
+        end
+    end,
+
+    -- Updates the widgets in the download bar.
+    refresh_download_bar = function(bar)
+        local all_finished = true
+        -- update
+        for _,t in pairs(bar.downloads) do
+            local d = t.download
+            bar:update_download_widget(t)
+            if d.status == "created" or d.status == "started" then
+                all_finished = false
+            end
+        end
+        -- stop timer if everyone finished
+        if all_finished then
+            bar.timer:stop()
+        end
+    end,
+
+    apply_download_theme = function(bar, t, atheme)
+        local theme = atheme or theme
+        local wi = t.widget
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
+            w.font = theme.download_font or theme.downloadbar_font or theme.font
+        end
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.sep}) do
+            w.fg = theme.download_fg or theme.downloadbar_fg or theme.fg
+        end
+        wi.s.fg = theme.download_success_fg or theme.success_fg or theme.fg
+        wi.f.fg = theme.download_failure_fg or theme.failure_fg or theme.fg
+        for _,w in pairs({wi.e, wi.h}) do
+            w.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
+        end
     end,
 }
 

@@ -20,7 +20,6 @@
  */
 
 /* TODO
- *  - Add `remove(child)` method to remove child widgets from the box
  *  - Add `reorder(child, index)` method to re-order child widgets
  *  - Add `get_children()` method to return a table of widgets in the box
  *  - In the box destructor function detach all child windows
@@ -58,6 +57,16 @@ luaH_box_pack_end(lua_State *L)
     return 0;
 }
 
+/* direct wrapper around gtk_container_remove */
+static gint
+luaH_container_remove(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    gtk_container_remove(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
+    return 0;
+}
+
 static gint
 luaH_box_index(lua_State *L, luakit_token_t token)
 {
@@ -70,6 +79,7 @@ luaH_box_index(lua_State *L, luakit_token_t token)
       /* push class methods */
       PF_CASE(PACK_START,   luaH_box_pack_start)
       PF_CASE(PACK_END,     luaH_box_pack_end)
+      PF_CASE(REMOVE,       luaH_container_remove)
       /* push boolean properties */
       PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
       /* push string properties */

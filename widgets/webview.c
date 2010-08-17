@@ -21,6 +21,7 @@
 
 #include "luah.h"
 #include "widgets/common.h"
+#include "classes/download.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>
@@ -248,6 +249,20 @@ notify_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
         luaH_object_emit_signal(L, -1, p->signame, 0, 0);
         lua_pop(L, 1);
     }
+}
+
+static gboolean
+download_requested_cb(WebKitWebView *v, GObject* download, widget_t *w)
+{
+    (void) v;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    const char *uri = webkit_download_get_uri(WEBKIT_DOWNLOAD(download));
+    lua_pushstring(L, uri);
+    luaH_object_emit_signal(L, -2, "download-requested", 1, 0);
+    lua_pop(L, 1);
+    return false; // let the rc decide when to start the download
 }
 
 static void
@@ -962,6 +977,8 @@ widget_webview(widget_t *w)
       "signal::notify",                               (GCallback)notify_cb,              w,
       "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
       "signal::parent-set",                           (GCallback)parent_set_cb,          w,
+      "signal::download-requested",                   (GCallback)download_requested_cb,  w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
       NULL);
 
     /* show widgets */
