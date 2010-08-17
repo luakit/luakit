@@ -258,6 +258,7 @@ function build_window()
 
     -- Pack download bar
     local d = w.dbar
+    for k,v in pairs(download_helpers) do d[k] = v end
     d.ebox:set_child(d.layout)
     w.layout:pack_start(d.ebox,   false, false, 0)
     d.timer:add_signal("timeout", function() w:refresh_download_bar() end)
@@ -1054,98 +1055,6 @@ window_helpers = {
         tb.ebox:show()
     end,
 
-    -- Adds a new label to the download bar and registers signals for it
-    add_download_widget = function(w, d)
-        local bar = w.dbar
-        local wi = {
-            e = eventbox(),
-            h = hbox(),
-            l = label(),
-            p = label(),
-            s = label(),
-            f = label(),
-        }
-        wi.f.text = "✗"
-        wi.f:hide()
-        wi.s.text = "✔"
-        wi.s:hide()
-        wi.h:pack_start(wi.l, false, false, 0)
-        wi.h:pack_start(wi.p, false, false, 0)
-        wi.h:pack_start(wi.e, false, false, 0)
-        wi.h:pack_start(wi.f, false, false, 0)
-        wi.e:set_child(wi.h)
-        w:update_download_widget(wi, d)
-        w:apply_download_theme(wi)
-        bar.layout:pack_start(wi.e, false, false, 0)
-        wi.e:add_signal("button-release", function(e, m, b)
-            if b == 1 then
-                -- open file
-                local t = timer{interval=1000}
-                t:add_signal("timeout", function(t)
-                    if d.status == "finished" then
-                        t:stop()
-                        open_file(d.destination, d.mime_type)
-                    end
-                end)
-                t:start()
-            elseif b == 3 then
-                -- remove download
-                bar.layout:remove(e)
-                for i,t in pairs(bar.downloads) do
-                    if t.widget == e then
-                        table.remove(bar.downloads, i)
-                        if t.download.status == "started" then t.download:cancel() end
-                        break
-                    end
-                end
-            end
-        end)
-        return wi
-    end,
-
-    -- Adds a download to the download bar.
-    add_download = function(w, d)
-        local bar = w.dbar
-        local wi = w:add_download_widget(d)
-        table.insert(bar.downloads, {download=d, widget=wi})
-        -- start refresh timer
-        if not bar.timer.started then bar.timer:start() end
-    end,
-
-    -- Updates the text of the given download widget for the given download
-    update_download_widget = function(w, wi, d)
-        if     d.status == "finished"  then wi.p:hide() wi.s:show()
-        elseif d.status == "error"     then wi.p:hide() wi.e:show()
-        elseif d.status == "cancelled" then wi.p:hide()
-        else
-            wi.p.text = string.format('(%s%%)', d.progress * 100)
-            local _,_,basename = string.find(d.destination, ".*/([^/]*)")
-            local speed
-            if d.last_size then speed = d.current_size - d.last_size
-            else speed = 0 end
-            d.last_size = d.current_size
-            wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
-        end
-    end,
-
-    -- Updates the widgets in the download bar.
-    refresh_download_bar = function(w)
-        local bar = w.dbar
-        local all_finished = true
-        -- update
-        for _,p in pairs(bar.downloads) do
-            local d, wi = p.download, p.widget
-            w:update_download_widget(wi, d)
-            if d.status == "created" or d.status == "started" then
-                all_finished = false
-            end
-        end
-        -- stop timer if everyone finished
-        if all_finished then
-            bar.timer:stop()
-        end
-    end,
-
     -- Theme functions
     apply_tablabel_theme = function (w, t, selected, atheme)
         local theme = atheme or theme
@@ -1195,8 +1104,118 @@ window_helpers = {
             [i.input]    = theme.input_font  or theme.inputbar_font or font,
         }) do wi.font = v end
     end,
+}
 
-    apply_download_theme = function(w, wi, atheme)
+-- Helper function which operate on a download bar
+download_helpers = {
+    -- Adds signals to a download widget
+    add_download_widget_signals = function(bar, t)
+        wi.e:add_signal("button-release", function(e, m, b)
+            local wi = t.widget
+            local d  = t.download
+            if b == 1 then
+                -- open file
+                local t = timer{interval=1000}
+                t:add_signal("timeout", function(t)
+                    if d.status == "finished" then
+                        t:stop()
+                        open_file(d.destination, d.mime_type)
+                    end
+                end)
+                t:start()
+            elseif b == 3 then
+                -- remove download
+                bar.layout:remove(e)
+                for i,t in pairs(bar.downloads) do
+                    if t.widget == e then
+                        table.remove(bar.downloads, i)
+                        if t.download.status == "started" then t.download:cancel() end
+                        break
+                    end
+                end
+            end
+        end)
+    end,
+
+    -- Creates and connects all widget components for a download widget
+    assemble_download_widget = function(w, t)
+        t.widget = {
+            e = eventbox(),
+            h = hbox(),
+            l = label(),
+            p = label(),
+            s = label(),
+            f = label(),
+        }
+        local wi = t.widget
+        wi.f.text = "✗"
+        wi.f:hide()
+        wi.s.text = "✔"
+        wi.s:hide()
+        wi.h:pack_start(wi.l, false, false, 0)
+        wi.h:pack_start(wi.p, false, false, 0)
+        wi.h:pack_start(wi.e, false, false, 0)
+        wi.h:pack_start(wi.f, false, false, 0)
+        wi.e:set_child(wi.h)
+        bar:apply_download_theme(t)
+        bar:update_download_widget(t)
+    end,
+
+    -- Adds a new label to the download bar and registers signals for it
+    add_download_widget = function(bar, d)
+        local dt = {last_size=0}
+        local t  = {download=d, data=dt, widget=nil}
+        bar:assemble_download_widget(t)
+        local wi = t.widget
+        bar.layout:pack_start(wi.e, false, false, 0)
+        bar:add_download_widget_signals(t)
+        return t
+    end,
+
+    -- Adds a download to the download bar.
+    add_download = function(bar, d)
+        local t = bar:add_download_widget(d)
+        table.insert(bar.downloads, t)
+        -- start refresh timer
+        if not bar.timer.started then bar.timer:start() end
+    end,
+
+    -- Updates the text of the given download widget for the given download
+    update_download_widget = function(bar, t)
+        local wi = t.widget
+        local dt = t.data
+        if     d.status == "finished"  then wi.p:hide() wi.s:show()
+        elseif d.status == "error"     then wi.p:hide() wi.e:show()
+        elseif d.status == "cancelled" then wi.p:hide()
+        else
+            wi.p.text = string.format('(%s%%)', d.progress * 100)
+            local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+            local speed
+            if d.last_size then speed = d.current_size - dt.last_size
+            else speed = 0 end
+            dt.last_size = d.current_size
+            wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
+        end
+    end,
+
+    -- Updates the widgets in the download bar.
+    refresh_download_bar = function(bar)
+        local all_finished = true
+        -- update
+        for _,t in pairs(bar.downloads) do
+            local d, wi, dt = t.download, t.widget, t.data
+            w:update_download_widget(wi, d, dt)
+            if d.status == "created" or d.status == "started" then
+                all_finished = false
+            end
+        end
+        -- stop timer if everyone finished
+        if all_finished then
+            bar.timer:stop()
+        end
+    end,
+
+    apply_download_theme = function(bar, wi, atheme)
         local theme = atheme or theme
         for wi in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s}) do
             wi.font = theme.download_font or theme.downloadbar_font or theme.font
