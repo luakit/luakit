@@ -4,6 +4,11 @@ require("math")
 require("mode")
 require("bind")
 
+-- Init bookmarks library
+require("bookmarks")
+bookmarks.load()
+bookmarks.dump_html()
+
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
 function hbox()     return widget{type="hbox"}     end
@@ -69,6 +74,7 @@ theme = theme or {
     -- titles overshadowing small tab titles when things get crowded.
     tablabel_format      = "%-30s",
 }
+
 
 -- Small util functions
 function info(...) if luakit.verbose then print(string.format(...)) end end
@@ -181,6 +187,11 @@ mode_binds = {
         -- Link following
         bind.key({},          "f",          function (w) w:set_mode("follow") end),
 
+        -- Bookmarking
+        bind.key({},          "b",          function (w) w:enter_cmd(":bookmark " .. w:get_current().uri .. " ") end),
+        bind.buf("^gb$",                    function (w) w:navigate(bookmarks.dump_html()) end),
+        bind.buf("^gB$",                    function (w) w:new_tab (bookmarks.dump_html()) end),
+
         -- Mouse bindings
         bind.but({},          2,            function (w)
                                                 -- Open hovered uri in new tab
@@ -191,7 +202,6 @@ mode_binds = {
                                                     if uri then w:get_current().uri = uri end
                                                 end
                                             end),
-
     },
     command = {
         bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.get_selection()) end),
@@ -211,17 +221,22 @@ mode_binds = {
 -- Commands
 commands = {
  -- bind.cmd({Command, Alias1, ...},        function (w, arg, opts) .. end, opts),
-    bind.cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
-    bind.cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
-    bind.cmd({"back"              },         function (w, a)    w:back(tonumber(a) or 1) end),
-    bind.cmd({"forward",     "f"  },         function (w, a)    w:forward(tonumber(a) or 1) end),
-    bind.cmd({"scroll"            },         function (w, a)    w:scroll_vert(a) end),
-    bind.cmd({"quit",        "q"  },         function (w)       luakit.quit() end),
-    bind.cmd({"close",       "c"  },         function (w)       w:close_tab() end),
-    bind.cmd({"websearch",   "ws" },         function (w, e, s) w:websearch(e, s) end),
-    bind.cmd({"reload",           },         function (w)       w:reload() end),
-    bind.cmd({"viewsource",  "vs" },         function (w)       w:toggle_source(true) end),
-    bind.cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
+    bind.cmd({"open",        "o"  },        function (w, a)    w:navigate(a) end),
+    bind.cmd({"tabopen",     "t"  },        function (w, a)    w:new_tab(a) end),
+    bind.cmd({"back"              },        function (w, a)    w:back(tonumber(a) or 1) end),
+    bind.cmd({"forward",     "f"  },        function (w, a)    w:forward(tonumber(a) or 1) end),
+    bind.cmd({"scroll"            },        function (w, a)    w:scroll_vert(a) end),
+    bind.cmd({"quit",        "q"  },        function (w)       luakit.quit() end),
+    bind.cmd({"close",       "c"  },        function (w)       w:close_tab() end),
+    bind.cmd({"websearch",   "ws" },        function (w, e, s) w:websearch(e, s) end),
+    bind.cmd({"reload",           },        function (w)       w:reload() end),
+    bind.cmd({"viewsource",  "vs" },        function (w)       w:toggle_source(true) end),
+    bind.cmd({"viewsource!", "vs!"},        function (w)       w:toggle_source() end),
+    bind.cmd({"bookmark",    "bm" },        function (w, a)
+                                                local args = util.string.split(a)
+                                                local uri = table.remove(args, 1)
+                                                bookmarks.add(uri, args)
+                                            end),
 }
 
 function set_http_options(w)
