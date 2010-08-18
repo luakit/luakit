@@ -177,6 +177,8 @@ mode_binds = {
         bind.key({},          "XF86Forward",function (w) w:forward() end),
 
         -- Tab
+        bind.key({"Control"}, "Page_Up",    function (w) w:prev_tab() end),
+        bind.key({"Control"}, "Page_Down",  function (w) w:next_tab() end),
         bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
