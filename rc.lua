@@ -172,6 +172,9 @@ mode_binds = {
         -- History
         bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
         bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        bind.key({},          "b",          function (w) w:back() end),
+        bind.key({},          "XF86Back",   function (w) w:back() end),
+        bind.key({},          "XF86Forward",function (w) w:forward() end),
 
         -- Tab
         bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
