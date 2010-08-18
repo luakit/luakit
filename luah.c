@@ -420,16 +420,19 @@ luaH_luakit_spawn_sync(lua_State *L)
     gchar *stdout = NULL;
     gchar *stderr = NULL;
     gint rv;
-    __sighandler_t chldhandler;
+    struct sigaction sigact;
+    struct sigaction oldact;
 
     const gchar *command = luaL_checkstring(L, 1);
 
     /* Note: we have to temporarily clear the SIGCHLD handler. Otherwise
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
-    if (SIG_ERR == (chldhandler = signal(SIGCHLD, SIG_DFL)))
+    sigact.sa_handler=SIG_DFL;
+    sigemptyset (&sigact.sa_mask);
+    if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
     g_spawn_command_line_sync(command, &stdout, &stderr, &rv, &e);
-    if(signal(SIGCHLD, chldhandler) == SIG_ERR)
+    if (sigaction(SIGCHLD, &oldact, NULL))
         fatal("Can't restore SIGCHLD handler");
 
     if(e)
@@ -484,8 +487,25 @@ luaH_luakit_index(lua_State *L)
     const gchar *prop = luaL_checklstring(L, 2, &len);
     luakit_token_t token = l_tokenize(prop, len);
 
-    switch(token)
-    {
+    switch(token) {
+
+      /* push class methods */
+      PF_CASE(GET_SPECIAL_DIR,  luaH_luakit_get_special_dir)
+      PF_CASE(SPAWN,            luaH_luakit_spawn)
+      PF_CASE(SPAWN_SYNC,       luaH_luakit_spawn_sync)
+      PF_CASE(GET_SELECTION,    luaH_luakit_get_selection)
+      PF_CASE(SET_SELECTION,    luaH_luakit_set_selection)
+      /* push string properties */
+      PS_CASE(CACHE_DIR,        globalconf.cache_dir)
+      PS_CASE(CONFIG_DIR,       globalconf.config_dir)
+      PS_CASE(DATA_DIR,         globalconf.data_dir)
+      /* push boolean properties */
+      PB_CASE(VERBOSE,          globalconf.verbose)
+      /* push integer properties */
+      PI_CASE(WEBKIT_MAJOR_VERSION, webkit_major_version())
+      PI_CASE(WEBKIT_MINOR_VERSION, webkit_minor_version())
+      PI_CASE(WEBKIT_MICRO_VERSION, webkit_micro_version())
+
       case L_TK_WINDOWS:
         lua_newtable(L);
         for (guint i = 0; i < globalconf.windows->len; i++) {
@@ -495,60 +515,12 @@ luaH_luakit_index(lua_State *L)
         }
         return 1;
 
-      case L_TK_GET_SELECTION:
-        lua_pushcfunction(L, luaH_luakit_get_selection);
-        return 1;
-
-      case L_TK_SET_SELECTION:
-        lua_pushcfunction(L, luaH_luakit_set_selection);
-        return 1;
-
       case L_TK_INSTALL_PATH:
         lua_pushliteral(L, LUAKIT_INSTALL_PATH);
         return 1;
 
       case L_TK_VERSION:
         lua_pushliteral(L, VERSION);
-        return 1;
-
-      case L_TK_WEBKIT_MAJOR_VERSION:
-        lua_pushinteger(L, webkit_major_version());
-        return 1;
-
-      case L_TK_WEBKIT_MINOR_VERSION:
-        lua_pushinteger(L, webkit_minor_version());
-        return 1;
-
-      case L_TK_WEBKIT_MICRO_VERSION:
-        lua_pushinteger(L, webkit_micro_version());
-        return 1;
-
-      case L_TK_CONFIG_DIR:
-        lua_pushstring(L, globalconf.config_dir);
-        return 1;
-
-      case L_TK_DATA_DIR:
-        lua_pushstring(L, globalconf.data_dir);
-        return 1;
-
-      case L_TK_CACHE_DIR:
-        lua_pushstring(L, globalconf.cache_dir);
-        return 1;
-
-      case L_TK_VERBOSE:
-        lua_pushboolean(L, globalconf.verbose);
-        return 1;
-
-      case L_TK_GET_SPECIAL_DIR:
-        lua_pushcfunction(L, luaH_luakit_get_special_dir);
-        return 1;
-
-      case L_TK_SPAWN:
-        lua_pushcfunction(L, luaH_luakit_spawn);
-        return 1;
-
-      case L_TK_SPAWN_SYNC:
-        lua_pushcfunction(L, luaH_luakit_spawn_sync);
         return 1;
 
       default:

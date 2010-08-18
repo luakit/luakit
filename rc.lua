@@ -19,6 +19,7 @@ function entry()    return widget{type="entry"}    end
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
 SCROLL_STEP      = 20
+ZOOM_STEP        = 0.1
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
 --HTTPPROXY = "http://example.com:3128"
@@ -124,17 +125,30 @@ mode_binds = {
         bind.key({},          "j",          function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "k",          function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "l",          function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5)    end),
+        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5)   end),
+        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0)    end),
+        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0)   end),
+        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
+        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
+        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+
+        -- Traditional scrolling commands
         bind.key({},          "Left",       function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5) end),
-        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5) end),
-        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0) end),
-        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0) end),
-        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
-        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+        bind.key({},          "Page_Down",  function (w) w:scroll_page(1.0)    end),
+        bind.key({},          "Page_Up",    function (w) w:scroll_page(-1.0)   end),
+        bind.key({},          "Home",       function (w) w:scroll_vert("0%")   end),
+        bind.key({},          "End",        function (w) w:scroll_vert("100%") end),
+
+        -- Zooming
+        bind.buf("^zI$",                    function (w) w:zoom_in(ZOOM_STEP)  end),
+        bind.buf("^zO$",                    function (w) w:zoom_out(ZOOM_STEP) end),
+        bind.buf("^z0$",                    function (w) w:zoom_reset()   end),
+        bind.key({"Control"}, "+",          function (w) w:zoom_in(ZOOM_STEP)  end),
+        bind.key({"Control"}, "-",          function (w) w:zoom_out(ZOOM_STEP) end),
 
         -- Clipboard
         bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
@@ -144,7 +158,9 @@ mode_binds = {
 
         -- Commands
         bind.buf("^o$",                     function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^O$",                     function (w, c) w:enter_cmd(":open " .. w:get_current().uri) end),
         bind.buf("^t$",                     function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^T$",                     function (w, c) w:enter_cmd(":tabopen " .. w:get_current().uri) end),
         bind.buf("^,g$",                    function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
@@ -238,7 +254,7 @@ function build_window()
                 loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
-            filler = label(),
+            sep = eventbox(),
             -- Right aligned widgets
             r = {
                 layout = hbox(),
@@ -285,7 +301,7 @@ function build_window()
     -- Pack status bar elements
     local s = w.sbar
     s.layout:pack_start(l.ebox,   false, false, 0)
-    s.layout:pack_start(s.filler, true,  true,  0)
+    s.layout:pack_start(s.sep,    true,  true,  0)
     s.layout:pack_start(r.ebox,   false, false, 0)
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
@@ -467,6 +483,10 @@ function attach_webview_signals(w, view)
     end)
 
     view:add_signal("button-release", function (v, mods, button)
+        -- Prevent a click from causing the search to think you pressed
+        -- escape and return you to the start search marker.
+        w.search_start_marker = nil
+
         if w:hit(mods, button) then
             return true
         end
@@ -770,6 +790,23 @@ window_helpers = {
         end
     end,
 
+    -- Zoom functions
+    zoom_in = function (w, step, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
+    end,
+
+    zoom_out = function (w, step, view)
+        if not view then view = w:get_current() end
+        local value = view:get_prop("zoom-level") - step
+        view:set_prop("zoom-level", (value > 0.1 and value) or 0.01)
+    end,
+
+    zoom_reset = function (w, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", 1.0)
+    end,
+
     -- Search history adding
     srch_hist_add = function (w, srch)
         if not w.srch_hist then w.srch_hist = {} end
@@ -1008,7 +1045,7 @@ window_helpers = {
     make_tab_label = function (w, pos)
         local t = {
             label  = label(),
-            sep    = label(),
+            sep    = eventbox(),
             ebox   = eventbox(),
             layout = hbox(),
         }
@@ -1031,8 +1068,7 @@ window_helpers = {
     destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
         -- Destroy widgets without their own windows first (I.e. labels)
-        for _, wi in ipairs{ t.label, t.sep}    do wi:destroy() end
-        for _, wi in ipairs{ t.ebox,  t.layout} do wi:destroy() end
+        for _, wi in ipairs{ t.label, t.sep, t.ebox, t.layout } do wi:destroy() end
     end,
 
     update_tab_labels = function (w, current)
@@ -1101,6 +1137,7 @@ window_helpers = {
         for wi, v in pairs({
             [s.l.ebox]   = theme.statusbar_bg or bg,
             [s.r.ebox]   = theme.statusbar_bg or bg,
+            [s.sep]      = theme.statusbar_bg or bg,
             [s.ebox]     = theme.statusbar_bg or bg,
             [i.ebox]     = theme.inputbar_bg  or bg,
             [i.input]    = theme.input_bg     or theme.inputbar_bg or bg,

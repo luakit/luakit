@@ -33,8 +33,6 @@ static void sigchld(int sigint);
 void
 sigchld(int signum) {
     (void) signum;
-    if (signal(SIGCHLD, sigchld) == SIG_ERR)
-        fatal("Can't install SIGCHLD handler");
     while(0 < waitpid(-1, NULL, WNOHANG));
 }
 
@@ -125,7 +123,12 @@ main(int argc, char *argv[]) {
     gchar **uris = NULL;
 
     /* clean up any zombies */
-    sigchld(0);
+    struct sigaction sigact;
+    sigact.sa_handler=sigchld;
+    sigemptyset (&sigact.sa_mask);
+    sigact.sa_flags = SA_NOCLDSTOP;
+    if (sigaction(SIGCHLD, &sigact, NULL))
+        fatal("Can't install SIGCHLD handler");
 
     gtk_init(&argc, &argv);
     if (!g_thread_supported())
