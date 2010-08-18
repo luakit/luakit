@@ -221,7 +221,8 @@ commands = {
 function set_http_options(w)
     local proxy = HTTPPROXY or os.getenv("http_proxy")
     if proxy then w:set('proxy-uri', proxy) end
-    w:set('user-agent', 'luakit')
+    local rv, out, err = luakit.spawn_sync("uname -sm")
+    w:set('user-agent', 'luakit/'..luakit.version..' WebKitGTK+/'..luakit.webkit_major_version..'.'..luakit.webkit_minor_version..'.'..luakit.webkit_micro_version..' '..out:sub(1, -2))
     -- Uncomment the following options if you want to enable SSL certs validation.
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
     -- w:set('ssl-strict', true)

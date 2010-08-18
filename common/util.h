@@ -34,6 +34,7 @@
 /* stack pushing macros */
 #define PB_CASE(t, b) case L_TK_##t: lua_pushboolean   (L, b); return 1;
 #define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction (L, f); return 1;
+#define PI_CASE(t, i) case L_TK_##t: lua_pushinteger   (L, i); return 1;
 #define PN_CASE(t, n) case L_TK_##t: lua_pushnumber    (L, n); return 1;
 #define PS_CASE(t, s) case L_TK_##t: lua_pushstring    (L, s); return 1;
 
