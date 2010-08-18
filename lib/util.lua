@@ -6,22 +6,23 @@
 -- Grab environment we need
 local assert = assert
 local debug = debug
+local error = error
 local io = io
 local ipairs = ipairs
 local os = os
 local pairs = pairs
 local pairs = pairs
-local rtable = table
-local string = string
-local type = type
 local print = print
-local error = error
+local rstring = string
+local rtable = table
+local type = type
 local capi = { luakit = luakit }
 
 -- Utility module for luakit
 module("util")
 
 table = {}
+string = {}
 
 local xml_entity_names = { ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;" };
 -- Escape a string from XML char.
@@ -150,12 +151,27 @@ function os.exists(f)
     end
 end
 
+-- Python like string split (source: lua wiki)
+function string.split(s, pattern, ret)
+    if not pattern then pattern = "%s+" end
+    if not ret then ret = {} end
+    local pos = 1
+    local fstart, fend = rstring.find(s, pattern, pos)
+    while fstart do
+        rtable.insert(ret, rstring.sub(s, pos, fstart - 1))
+        pos = fend + 1
+        fstart, fend = rstring.find(s, pattern, pos)
+    end
+    rtable.insert(ret, rstring.sub(s, pos))
+    return ret
+end
+
 -- Search locally, xdg home path and then luakit install path for a given file
 local function xdg_find(f, xdg_home_path)
     -- Ignore absolute paths
-    if string.match(f, "^/") then
+    if rstring.match(f, "^/") then
         if os.exists(f) then return f end
-        error(string.format("xdg_find: No such file: %s\n", f))
+        error(rstring.format("xdg_find: No such file: %s\n", f))
     end
 
     -- Check if file exists at the following locations & return first match
@@ -164,7 +180,7 @@ local function xdg_find(f, xdg_home_path)
         if os.exists(p) then return p end
     end
 
-    error(string.format("xdg_find: No such file at:\n\t%s\n", rtable.concat(paths, ",\n\t")))
+    error(rstring.format("xdg_find: No such file at:\n\t%s\n", rtable.concat(paths, ",\n\t")))
 end
 
 function find_config(f) return xdg_find(f, capi.luakit.config_dir) end
