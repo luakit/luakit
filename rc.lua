@@ -633,17 +633,40 @@ function parse_scroll(current, max, value)
 end
 
 -- Opens a file with the given mime-type
-function open_file(f, m)
+function open_file(f, m, wi)
     local mime_types = {
         ["^text/"        ] = "gvim",
         ["^video/"       ] = "mplayer",
         ["/pdf$"         ] = "evince",
     }
+    local extensions = {
+        ["mp3"           ] = "mplayer",
+    }
+
     for p,e in pairs(mime_types) do
-        if string.find(m, p) then
+        if string.match(m, p) then
             luakit.spawn(string.format('%s "%s"', e, f))
             return
         end
+    end
+
+    local _,_,ext = string.find(f, ".*%.([^.]*)")
+    for p,e in pairs(extensions) do
+        if string.match(ext, p) then
+            luakit.spawn(string.format('%s "%s"', e, f))
+            return
+        end
+    end
+
+    if wi then
+        local te = wi.text
+        wi.text = "Can't open"
+        local t = timer{interval=2000}
+        t:add_signal("timeout", function(t)
+            wi.text = te
+            t:stop()
+        end)
+        t:start()
     end
 end
 
@@ -1261,14 +1284,14 @@ download_helpers = {
             local d  = t.download
             if b == 1 then
                 -- open file
-                local t = timer{interval=1000}
-                t:add_signal("timeout", function(t)
+                local ti = timer{interval=1000}
+                ti:add_signal("timeout", function(ti)
                     if d.status == "finished" then
-                        t:stop()
-                        open_file(d.destination, d.mime_type)
+                        ti:stop()
+                        open_file(d.destination, d.mime_type, t.widget.l)
                     end
                 end)
-                t:start()
+                ti:start()
             elseif b == 3 then
                 -- remove download
                 bar:remove_download(d)
