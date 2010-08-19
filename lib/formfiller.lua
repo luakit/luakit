@@ -89,10 +89,10 @@ window_helpers["formfiller"] = function(w, action)
                     catch(err) { }
                 }
             };]]
-            if (luakit.spawn_sync(string.format("sh -c '[ -e %s ] || exit 1'", filename))) == 1 then
+            local fd, err = io.open(filename, "r")
+            if not fd then
                 return nil
             end
-            local fd = io.open(filename, "r")
             local profile = ""
             fd:seek("set")
             for l in fd:lines() do
