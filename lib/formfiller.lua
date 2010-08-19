@@ -107,7 +107,7 @@ window_helpers["formfiller"] = function(w, action)
             if profile:find("\n") then
                 local exit_status, multiline, err = luakit.spawn_sync('sh -c \'if [ "`dmenu --help 2>&1| grep lines`x" != "x" ]; then echo -n "-l 3"; else echo -n ""; fi\'')
                 if exit_status ~= 0 then
-                    print(string.format("An error occured: ", err))
+                    print(string.format("An error occured: %s", err))
                     return nil
                 end
                 -- color settings

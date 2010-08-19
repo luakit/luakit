@@ -19,6 +19,7 @@ function entry()    return widget{type="entry"}    end
 HOMEPAGE    = "http://luakit.org/"
 --HOMEPAGE  = "http://github.com/mason-larobina/luakit"
 SCROLL_STEP      = 20
+ZOOM_STEP        = 0.1
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
 --HTTPPROXY = "http://example.com:3128"
@@ -124,17 +125,30 @@ mode_binds = {
         bind.key({},          "j",          function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "k",          function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "l",          function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
+        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5)    end),
+        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5)   end),
+        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0)    end),
+        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0)   end),
+        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
+        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
+        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+
+        -- Traditional scrolling commands
         bind.key({},          "Left",       function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
         bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
         bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5) end),
-        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5) end),
-        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0) end),
-        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0) end),
-        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
-        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+        bind.key({},          "Page_Down",  function (w) w:scroll_page(1.0)    end),
+        bind.key({},          "Page_Up",    function (w) w:scroll_page(-1.0)   end),
+        bind.key({},          "Home",       function (w) w:scroll_vert("0%")   end),
+        bind.key({},          "End",        function (w) w:scroll_vert("100%") end),
+
+        -- Zooming
+        bind.buf("^zI$",                    function (w) w:zoom_in(ZOOM_STEP)  end),
+        bind.buf("^zO$",                    function (w) w:zoom_out(ZOOM_STEP) end),
+        bind.buf("^z0$",                    function (w) w:zoom_reset()   end),
+        bind.key({"Control"}, "+",          function (w) w:zoom_in(ZOOM_STEP)  end),
+        bind.key({"Control"}, "-",          function (w) w:zoom_out(ZOOM_STEP) end),
 
         -- Clipboard
         bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
@@ -144,7 +158,9 @@ mode_binds = {
 
         -- Commands
         bind.buf("^o$",                     function (w, c) w:enter_cmd(":open ") end),
+        bind.buf("^O$",                     function (w, c) w:enter_cmd(":open " .. w:get_current().uri) end),
         bind.buf("^t$",                     function (w, c) w:enter_cmd(":tabopen ") end),
+        bind.buf("^T$",                     function (w, c) w:enter_cmd(":tabopen " .. w:get_current().uri) end),
         bind.buf("^,g$",                    function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
@@ -156,8 +172,13 @@ mode_binds = {
         -- History
         bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
         bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        bind.key({},          "b",          function (w) w:back() end),
+        bind.key({},          "XF86Back",   function (w) w:back() end),
+        bind.key({},          "XF86Forward",function (w) w:forward() end),
 
         -- Tab
+        bind.key({"Control"}, "Page_Up",    function (w) w:prev_tab() end),
+        bind.key({"Control"}, "Page_Down",  function (w) w:next_tab() end),
         bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
@@ -205,7 +226,8 @@ commands = {
 function set_http_options(w)
     local proxy = HTTPPROXY or os.getenv("http_proxy")
     if proxy then w:set('proxy-uri', proxy) end
-    w:set('user-agent', 'luakit')
+    local rv, out, err = luakit.spawn_sync("uname -sm")
+    w:set('user-agent', 'luakit/'..luakit.version..' WebKitGTK+/'..luakit.webkit_major_version..'.'..luakit.webkit_minor_version..'.'..luakit.webkit_micro_version..' '..out:sub(1, -2))
     -- Uncomment the following options if you want to enable SSL certs validation.
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
     -- w:set('ssl-strict', true)
@@ -237,7 +259,7 @@ function build_window()
                 loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
-            filler = label(),
+            sep = eventbox(),
             -- Right aligned widgets
             r = {
                 layout = hbox(),
@@ -284,7 +306,7 @@ function build_window()
     -- Pack status bar elements
     local s = w.sbar
     s.layout:pack_start(l.ebox,   false, false, 0)
-    s.layout:pack_start(s.filler, true,  true,  0)
+    s.layout:pack_start(s.sep,    true,  true,  0)
     s.layout:pack_start(r.ebox,   false, false, 0)
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
@@ -466,6 +488,10 @@ function attach_webview_signals(w, view)
     end)
 
     view:add_signal("button-release", function (v, mods, button)
+        -- Prevent a click from causing the search to think you pressed
+        -- escape and return you to the start search marker.
+        w.search_start_marker = nil
+
         if w:hit(mods, button) then
             return true
         end
@@ -511,10 +537,18 @@ function attach_webview_signals(w, view)
         if not filename then return end
         -- Make download dir
         os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
-        local dl = DOWNLOAD_DIR .. "/" .. filename
-        local wget = string.format("wget -q %q -O %q", link, dl)
+        dir = DOWNLOAD_DIR .. "/"
+        if string.match(".*(\.jpg|\.jpeg|\.gif|\.png|\.tiff|\.bmp)$", filename) then
+            dir = os.getenv("HOME") .. "/OBRAZY/"
+        elseif string.match(".*\.torrent$", filename) then
+            dir = os.getenv("HOME") .. "/.torrents/"
+        elseif string.match(".*\.pdf$", filename) then
+            dir = os.getenv("HOME") .. "/PDFy/"
+        end
+        local wget = string.format("wget -q %q -O %q ; echo a > /tmp/asd", link, dir .. filename)
+        print(wget)
         info("Launching: %s", wget)
-        luakit.spawn(wget)
+        os.execute(wget)
     end)
 
     -- 'link' contains the download link
@@ -689,6 +723,7 @@ window_helpers = {
         local sep = string.find(args, " ")
         local engine = string.sub(args, 1, sep-1)
         local search = string.sub(args, sep+1)
+        search = string.gsub(search, "^%s*(.-)%s*$", "%1")
         if not search_engines[engine] then
             print("E: No matching search engine found:", engine)
             return 0
@@ -767,6 +802,23 @@ window_helpers = {
             i.text = ":"
             i:set_position(-1)
         end
+    end,
+
+    -- Zoom functions
+    zoom_in = function (w, step, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
+    end,
+
+    zoom_out = function (w, step, view)
+        if not view then view = w:get_current() end
+        local value = view:get_prop("zoom-level") - step
+        view:set_prop("zoom-level", (value > 0.1 and value) or 0.01)
+    end,
+
+    zoom_reset = function (w, view)
+        if not view then view = w:get_current() end
+        view:set_prop("zoom-level", 1.0)
     end,
 
     -- Search history adding
@@ -1007,7 +1059,7 @@ window_helpers = {
     make_tab_label = function (w, pos)
         local t = {
             label  = label(),
-            sep    = label(),
+            sep    = eventbox(),
             ebox   = eventbox(),
             layout = hbox(),
         }
@@ -1030,8 +1082,7 @@ window_helpers = {
     destroy_tab_label = function (w, t)
         if not t then t = table.remove(w.tbar.titles) end
         -- Destroy widgets without their own windows first (I.e. labels)
-        for _, wi in ipairs{ t.label, t.sep}    do wi:destroy() end
-        for _, wi in ipairs{ t.ebox,  t.layout} do wi:destroy() end
+        for _, wi in ipairs{ t.label, t.sep, t.ebox, t.layout } do wi:destroy() end
     end,
 
     update_tab_labels = function (w, current)
@@ -1100,6 +1151,7 @@ window_helpers = {
         for wi, v in pairs({
             [s.l.ebox]   = theme.statusbar_bg or bg,
             [s.r.ebox]   = theme.statusbar_bg or bg,
+            [s.sep]      = theme.statusbar_bg or bg,
             [s.ebox]     = theme.statusbar_bg or bg,
             [i.ebox]     = theme.inputbar_bg  or bg,
             [i.input]    = theme.input_bg     or theme.inputbar_bg or bg,
