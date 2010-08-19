@@ -715,6 +715,7 @@ window_helpers = {
         local sep = string.find(args, " ")
         local engine = string.sub(args, 1, sep-1)
         local search = string.sub(args, sep+1)
+        search = string.gsub(search, "^%s*(.-)%s*$", "%1")
         if not search_engines[engine] then
             print("E: No matching search engine found:", engine)
             return 0
