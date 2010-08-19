@@ -172,8 +172,13 @@ mode_binds = {
         -- History
         bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
         bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        bind.key({},          "b",          function (w) w:back() end),
+        bind.key({},          "XF86Back",   function (w) w:back() end),
+        bind.key({},          "XF86Forward",function (w) w:forward() end),
 
         -- Tab
+        bind.key({"Control"}, "Page_Up",    function (w) w:prev_tab() end),
+        bind.key({"Control"}, "Page_Down",  function (w) w:next_tab() end),
         bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
