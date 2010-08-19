@@ -188,7 +188,7 @@ mode_binds = {
         bind.key({},          "f",          function (w) w:set_mode("follow") end),
 
         -- Bookmarking
-        bind.key({},          "b",          function (w) w:enter_cmd(":bookmark " .. w:get_current().uri .. " ") end),
+        bind.key({},          "B",          function (w) w:enter_cmd(":bookmark " .. w:get_current().uri .. " ") end),
         bind.buf("^gb$",                    function (w) w:navigate(bookmarks.dump_html()) end),
         bind.buf("^gB$",                    function (w) w:new_tab (bookmarks.dump_html()) end),
 
