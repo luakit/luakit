@@ -1,5 +1,6 @@
 *.o
 *.swp
+*~
 luakit
 common/tokenize.h
 common/tokenize.c

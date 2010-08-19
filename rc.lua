@@ -172,8 +172,13 @@ mode_binds = {
         -- History
         bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
         bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        bind.key({},          "b",          function (w) w:back() end),
+        bind.key({},          "XF86Back",   function (w) w:back() end),
+        bind.key({},          "XF86Forward",function (w) w:forward() end),
 
         -- Tab
+        bind.key({"Control"}, "Page_Up",    function (w) w:prev_tab() end),
+        bind.key({"Control"}, "Page_Down",  function (w) w:next_tab() end),
         bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
         bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
@@ -221,7 +226,8 @@ commands = {
 function set_http_options(w)
     local proxy = HTTPPROXY or os.getenv("http_proxy")
     if proxy then w:set('proxy-uri', proxy) end
-    w:set('user-agent', 'luakit')
+    local rv, out, err = luakit.spawn_sync("uname -sm")
+    w:set('user-agent', 'luakit/'..luakit.version..' WebKitGTK+/'..luakit.webkit_major_version..'.'..luakit.webkit_minor_version..'.'..luakit.webkit_micro_version..' '..out:sub(1, -2))
     -- Uncomment the following options if you want to enable SSL certs validation.
     -- w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
     -- w:set('ssl-strict', true)
@@ -711,6 +717,7 @@ window_helpers = {
         local sep = string.find(args, " ")
         local engine = string.sub(args, 1, sep-1)
         local search = string.sub(args, sep+1)
+        search = string.gsub(search, "^%s*(.-)%s*$", "%1")
         if not search_engines[engine] then
             print("E: No matching search engine found:", engine)
             return 0
