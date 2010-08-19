@@ -634,12 +634,17 @@ end
 
 -- Opens a file with the given mime-type
 function open_file(f, m)
-    local e = nil
-    if     string.find(f, "^text/")  then e = "gvim"
-    elseif string.find(f, "^video/") then e = "mplayer"
-    elseif string.find(f, "/pdf$")   then e = "evince"
+    local mime_types = {
+        ["^text/"        ] = "gvim",
+        ["^video/"       ] = "mplayer",
+        ["/pdf$"         ] = "evince",
+    }
+    for p,e in pairs(mime_types) do
+        if string.find(m, p) then
+            luakit.spawn(string.format('%s "%s"', e, f))
+            return
+        end
     end
-    if e then luakit.spawn(string.format("%s '%s'", e, f)) end
 end
 
 -- Helper functions which operate on a windows widget structure
