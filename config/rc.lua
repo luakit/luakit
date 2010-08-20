@@ -1,11 +1,24 @@
 -- Luakit configuration file, more information at http://luakit.org/
 
-require("math")
+-- Load lua libraries
+require "math"
 
 -- Load library of useful functions for luakit
-require("lousy")
+require "lousy"
 
--- Init bookmarks library
+-- Load global variables
+-- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
+require "globals"
+
+-- Load theme
+-- ("$XDG_CONFIG_HOME/luakit/theme.lua" or "/etc/xdg/luakit/theme.lua")
+theme = require "theme"
+
+-- Load keybindings
+-- ("$XDG_CONFIG_HOME/luakit/binds.lua" or "/etc/xdg/luakit/binds.lua")
+binds = require "binds"
+
+-- Init bookmarks
 require("bookmarks")
 bookmarks.load()
 bookmarks.dump_html()
@@ -19,63 +32,6 @@ function vbox()     return widget{type="vbox"}     end
 function webview()  return widget{type="webview"}  end
 function window()   return widget{type="window"}   end
 function entry()    return widget{type="entry"}    end
-
-
--- Variable definitions
-HOMEPAGE    = "http://luakit.org/"
---HOMEPAGE  = "http://github.com/mason-larobina/luakit"
-SCROLL_STEP      = 20
-ZOOM_STEP        = 0.1
-MAX_CMD_HISTORY  = 100
-MAX_SRCH_HISTORY = 100
---HTTPPROXY = "http://example.com:3128"
-
--- Setup download directory
-DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
-
--- Per-domain webview properties
-domain_props = { --[[
-    ["all"] = {
-        ["enable-scripts"]          = false,
-        ["enable-plugins"]          = false,
-        ["enable-private-browsing"] = false,
-        ["user-stylesheet-uri"]     = "",
-    },
-    ["youtube.com"] = {
-        ["enable-scripts"] = true,
-        ["enable-plugins"] = true,
-    },
-    ["forums.archlinux.org"] = {
-        ["user-stylesheet-uri"]     = luakit.data_dir .. "/styles/dark.css",
-        ["enable-private-browsing"] = true,
-    }, ]]
-}
-
--- Luakit theme
-theme = theme or {
-    -- Default settings
-    font = "monospace normal 9",
-    fg   = "#fff",
-    bg   = "#000",
-
-    -- General settings
-    statusbar_fg = "#fff",
-    statusbar_bg = "#000",
-    inputbar_fg  = "#000",
-    inputbar_bg  = "#fff",
-
-    -- Specific settings
-    loaded_fg            = "#33AADD",
-    tablabel_fg          = "#999",
-    tablabel_bg          = "#111",
-    selected_tablabel_fg = "#fff",
-    selected_tablabel_bg = "#000",
-
-    -- Enforce a minimum tab width of 30 characters to prevent longer tab
-    -- titles overshadowing small tab titles when things get crowded.
-    tablabel_format      = "%-30s",
-}
-
 
 -- Small util functions
 function info(...) if luakit.verbose then print(string.format(...)) end end
@@ -91,160 +47,8 @@ widget.add_signal("new", function (wi)
     end)
 end)
 
--- Search engines
-search_engines = {
-    luakit      = "http://luakit.org/search/index/luakit?q={0}",
-    google      = "http://google.com/search?q={0}",
-    wikipedia   = "http://en.wikipedia.org/wiki/Special:Search?search={0}",
-    debbugs     = "http://bugs.debian.org/{0}",
-    imdb        = "http://imdb.com/find?s=all&q={0}",
-    sourceforge = "http://sf.net/search/?words={0}",
-}
-
--- Alias bind
-local bind = lousy.bind
-
--- Add key bindings to be used across all windows
-mode_binds = {
-     -- bind.buf(Pattern,                   function (w, buffer, opts) .. end, opts),
-     -- bind.key({Modifiers}, Key name,     function (w, opts)         .. end, opts),
-     -- bind.but({Modifiers}, Button num,   function (w, opts)         .. end, opts),
-    all = {
-        bind.key({},          "Escape",     function (w) w:set_mode() end),
-        bind.key({"Control"}, "[",          function (w) w:set_mode() end),
-
-        bind.but({},          8,            function (w) w:back()    end),
-        bind.but({},          9,            function (w) w:forward() end),
-    },
-    normal = {
-        bind.key({},          "i",          function (w) w:set_mode("insert")  end),
-        bind.key({},          ":",          function (w) w:set_mode("command") end),
-
-        -- Scrolling
-        bind.key({},          "h",          function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "j",          function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "k",          function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "l",          function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({"Control"}, "d",          function (w) w:scroll_page(0.5)    end),
-        bind.key({"Control"}, "u",          function (w) w:scroll_page(-0.5)   end),
-        bind.key({"Control"}, "f",          function (w) w:scroll_page(1.0)    end),
-        bind.key({"Control"}, "b",          function (w) w:scroll_page(-1.0)   end),
-        bind.buf("^gg$",                    function (w) w:scroll_vert("0%")   end),
-        bind.buf("^G$",                     function (w) w:scroll_vert("100%") end),
-        bind.buf("^[\-\+]?[0-9]+[%%G]$",    function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
-
-        -- Traditional scrolling commands
-        bind.key({},          "Left",       function (w) w:scroll_horiz("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "Down",       function (w) w:scroll_vert ("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "Up",         function (w) w:scroll_vert ("-"..SCROLL_STEP.."px") end),
-        bind.key({},          "Right",      function (w) w:scroll_horiz("+"..SCROLL_STEP.."px") end),
-        bind.key({},          "Page_Down",  function (w) w:scroll_page(1.0)    end),
-        bind.key({},          "Page_Up",    function (w) w:scroll_page(-1.0)   end),
-        bind.key({},          "Home",       function (w) w:scroll_vert("0%")   end),
-        bind.key({},          "End",        function (w) w:scroll_vert("100%") end),
-
-        -- Zooming
-        bind.buf("^zI$",                    function (w) w:zoom_in(ZOOM_STEP)  end),
-        bind.buf("^zO$",                    function (w) w:zoom_out(ZOOM_STEP) end),
-        bind.buf("^z0$",                    function (w) w:zoom_reset()   end),
-        bind.key({"Control"}, "+",          function (w) w:zoom_in(ZOOM_STEP)  end),
-        bind.key({"Control"}, "-",          function (w) w:zoom_out(ZOOM_STEP) end),
-
-        -- Clipboard
-        bind.key({},          "p",          function (w) w:navigate(luakit.get_selection()) end),
-        bind.key({},          "P",          function (w) w:new_tab(luakit.get_selection())  end),
-        bind.buf("^yy$",                    function (w) luakit.set_selection(w:get_current().uri) end),
-        bind.buf("^yt$",                    function (w) luakit.set_selection(w.win.title) end),
-
-        -- Commands
-        bind.buf("^o$",                     function (w, c) w:enter_cmd(":open ") end),
-        bind.buf("^O$",                     function (w, c) w:enter_cmd(":open " .. w:get_current().uri) end),
-        bind.buf("^t$",                     function (w, c) w:enter_cmd(":tabopen ") end),
-        bind.buf("^T$",                     function (w, c) w:enter_cmd(":tabopen " .. w:get_current().uri) end),
-        bind.buf("^,g$",                    function (w, c) w:enter_cmd(":websearch google ") end),
-
-        -- Searching
-        bind.key({},          "/",          function (w) w:start_search(true)  end),
-        bind.key({},          "?",          function (w) w:start_search(false) end),
-        bind.key({},          "n",          function (w) w:search(nil, true) end),
-        bind.key({},          "N",          function (w) w:search(nil, false) end),
-
-        -- History
-        bind.buf("^[0-9]*H$",               function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
-        bind.buf("^[0-9]*L$",               function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
-        bind.key({},          "b",          function (w) w:back() end),
-        bind.key({},          "XF86Back",   function (w) w:back() end),
-        bind.key({},          "XF86Forward",function (w) w:forward() end),
-
-        -- Tab
-        bind.key({"Control"}, "Page_Up",    function (w) w:prev_tab() end),
-        bind.key({"Control"}, "Page_Down",  function (w) w:next_tab() end),
-        bind.buf("^[0-9]*gT$",              function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
-        bind.buf("^[0-9]*gt$",              function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
-        bind.buf("^gH$",                    function (w)    w:new_tab(HOMEPAGE) end),
-        bind.buf("^d$",                     function (w)    w:close_tab() end),
-
-        bind.key({},          "r",          function (w) w:reload() end),
-        bind.buf("^gh$",                    function (w) w:navigate(HOMEPAGE) end),
-        bind.buf("^ZZ$",                    function (w) luakit.quit() end),
-
-        -- Link following
-        bind.key({},          "f",          function (w) w:set_mode("follow") end),
-
-        -- Bookmarking
-        bind.key({},          "B",          function (w) w:enter_cmd(":bookmark " .. w:get_current().uri .. " ") end),
-        bind.buf("^gb$",                    function (w) w:navigate(bookmarks.dump_html()) end),
-        bind.buf("^gB$",                    function (w) w:new_tab (bookmarks.dump_html()) end),
-
-        -- Mouse bindings
-        bind.but({},          2,            function (w)
-                                                -- Open hovered uri in new tab
-                                                local uri = w:get_current().hovered_uri
-                                                if uri then w:new_tab(uri)
-                                                else -- Open selection in current tab
-                                                    uri = luakit.get_selection()
-                                                    if uri then w:get_current().uri = uri end
-                                                end
-                                            end),
-    },
-    command = {
-        bind.key({"Shift"},   "Insert",     function (w) w:insert_cmd(luakit.get_selection()) end),
-        bind.key({},          "Up",         function (w) w:cmd_hist_prev() end),
-        bind.key({},          "Down",       function (w) w:cmd_hist_next() end),
-        bind.key({},          "Tab",        function (w) w:cmd_completion() end),
-        bind.key({"Control"}, "w",          function (w) w:del_word() end),
-        bind.key({"Control"}, "u",          function (w) w:del_line() end),
-    },
-    search = {
-        bind.key({},          "Up",         function (w) w:srch_hist_prev() end),
-        bind.key({},          "Down",       function (w) w:srch_hist_next() end),
-    },
-    insert = { },
-}
-
--- Commands
-commands = {
- -- bind.cmd({Command, Alias1, ...},        function (w, arg, opts) .. end, opts),
-    bind.cmd({"open",        "o"  },        function (w, a)    w:navigate(a) end),
-    bind.cmd({"tabopen",     "t"  },        function (w, a)    w:new_tab(a) end),
-    bind.cmd({"back"              },        function (w, a)    w:back(tonumber(a) or 1) end),
-    bind.cmd({"forward",     "f"  },        function (w, a)    w:forward(tonumber(a) or 1) end),
-    bind.cmd({"scroll"            },        function (w, a)    w:scroll_vert(a) end),
-    bind.cmd({"quit",        "q"  },        function (w)       luakit.quit() end),
-    bind.cmd({"close",       "c"  },        function (w)       w:close_tab() end),
-    bind.cmd({"websearch",   "ws" },        function (w, e, s) w:websearch(e, s) end),
-    bind.cmd({"reload",           },        function (w)       w:reload() end),
-    bind.cmd({"viewsource",  "vs" },        function (w)       w:toggle_source(true) end),
-    bind.cmd({"viewsource!", "vs!"},        function (w)       w:toggle_source() end),
-    bind.cmd({"bookmark",    "bm" },        function (w, a)
-                                                local args = lousy.util.string.split(a)
-                                                local uri = table.remove(args, 1)
-                                                bookmarks.add(uri, args)
-                                            end),
-}
-
 function set_http_options(w)
-    local proxy = HTTPPROXY or os.getenv("http_proxy")
+    local proxy = globals.http_proxy or os.getenv("http_proxy")
     if proxy then w:set('proxy-uri', proxy) end
     local rv, out, err = luakit.spawn_sync("uname -sm")
     w:set('user-agent', 'luakit/'..luakit.version..' WebKitGTK+/'..luakit.webkit_major_version..'.'..luakit.webkit_minor_version..'.'..luakit.webkit_micro_version..' '..out:sub(1, -2))
@@ -556,8 +360,8 @@ function attach_webview_signals(w, view)
     view:add_signal("download-request", function (v, link, filename)
         if not filename then return end
         -- Make download dir
-        os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
-        local dl = DOWNLOAD_DIR .. "/" .. filename
+        os.execute(string.format("mkdir -p %q", globals.download_dir))
+        local dl = globals.download_dir .. "/" .. filename
         local wget = string.format("wget -q %q -O %q", link, dl)
         info("Launching: %s", wget)
         luakit.spawn(wget)
@@ -696,7 +500,7 @@ window_helpers = {
 
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
-        local caught, newbuf = bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
+        local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
         w.buffer = newbuf
         w:update_buf()
         return caught
@@ -704,7 +508,7 @@ window_helpers = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return bind.match_cmd(commands, buffer, w)
+        return lousy.bind.match_cmd(binds.commands, buffer, w)
     end,
 
     -- Toggle source view
@@ -760,7 +564,7 @@ window_helpers = {
         end
 
         -- Get suitable commands
-        for _, b in ipairs(commands) do
+        for _, b in ipairs(binds.commands) do
             for _, c in pairs(b.commands) do
                 if c and string.match(c, w.compl_start) then
                     table.insert(cmpl, c)
@@ -840,8 +644,9 @@ window_helpers = {
     srch_hist_add = function (w, srch)
         if not w.srch_hist then w.srch_hist = {} end
         -- Check overflow
-        if #w.srch_hist > ((MAX_SRCH_HISTORY or 100) + 5) then
-            while #w.srch_hist > (MAX_SRCH_HISTORY or 100) do
+        local max_hist = globals.max_srch_history or 100
+        if #w.srch_hist > (max_hist + 5) then
+            while #w.srch_hist > max_hist do
                 table.remove(w.srch_hist, 1)
             end
         end
@@ -881,8 +686,9 @@ window_helpers = {
     cmd_hist_add = function (w, cmd)
         if not w.cmd_hist then w.cmd_hist = {} end
         -- Make sure history doesn't overflow
-        if #w.cmd_hist > ((MAX_CMD_HISTORY or 100) + 5) then
-            while #w.cmd_hist > (MAX_CMD_HISTORY or 100) do
+        local max_hist = globals.max_cmd_hist or 100
+        if #w.cmd_hist > (max_hist + 5) then
+            while #w.cmd_hist > max_hist do
                 table.remove(w.cmd_hist, 1)
             end
         end
@@ -1064,7 +870,7 @@ window_helpers = {
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
-        w.binds = lousy.util.table.join(mode_binds[mode], mode_binds.all)
+        w.binds = lousy.util.table.join(binds.mode_binds[mode], binds.mode_binds.all)
         -- Clear & hide buffer
         w.buffer = nil
         w:update_buf()
@@ -1214,7 +1020,7 @@ function new_window(uris)
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(HOMEPAGE)
+        w:new_tab(globals.homepage)
     end
 
     -- Set initial mode
