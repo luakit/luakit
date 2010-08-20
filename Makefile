@@ -10,7 +10,7 @@ SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard w
 HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${GHEAD}
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-all: options newline luakit apidoc
+all: options newline luakit
 
 options:
 	@echo luakit build options:
