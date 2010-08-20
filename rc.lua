@@ -1160,6 +1160,16 @@ window_helpers = {
             [i.input]    = theme.input_font  or theme.inputbar_font or font,
         }) do wi.font = v end
     end,
+
+    -- If argument is form-active or root-active, emits signal. Ignores all over
+    -- signals.
+    emit_form_root_active_signal = function (w, s)
+        if s == "form-active" then
+            w:get_current():emit_signal("form-active")
+        elseif s == "root-active" then
+            w:get_current():emit_signal("root-active")
+        end
+    end,
 }
 
 -- Create new window
