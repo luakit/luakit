@@ -150,10 +150,10 @@ function is_editable(element) {
   var e = element.element;
   var name = e.tagName.toLowerCase();
   var type = e.type.toLowerCase();
-  if (name == "textarea") {
+  if (name == "textarea" || name == "select") {
     return true;
   }
-  if (name == "input" || name == "select") {
+  if (name == "input") {
     if (type == 'text' || type == 'search' || type == 'password') {
       return true 
     }
