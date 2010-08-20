@@ -421,7 +421,7 @@ function attach_window_signals(w)
                 w:set_mode()
             end
         elseif w:is_mode("follow") then
-            w:eval_js(string.format("update(%q)", w.ibar.input.text))
+            w:emit_form_root_active_signal(w:eval_js(string.format("update(%q)", w.ibar.input.text)))
         end
     end)
 
