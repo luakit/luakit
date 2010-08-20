@@ -103,16 +103,6 @@ mode_binds = {
         bind.key({},          "Escape",     function (w) w:set_mode() end),
         bind.key({"Control"}, "[",          function (w) w:set_mode() end),
 
-        -- Mouse bindings
-        bind.but({},          2,            function (w)
-                                                -- Open hovered uri in new tab
-                                                local uri = w:get_current().hovered_uri
-                                                if uri then w:new_tab(uri)
-                                                else -- Open selection in current tab
-                                                    uri = luakit.get_selection()
-                                                    if uri then w:get_current().uri = uri end
-                                                end
-                                            end),
         bind.but({},          8,            function (w) w:back()    end),
         bind.but({},          9,            function (w) w:forward() end),
     },
@@ -190,6 +180,17 @@ mode_binds = {
 
         -- Link following
         bind.key({},          "f",          function (w) w:set_mode("follow") end),
+
+        -- Mouse bindings
+        bind.but({},          2,            function (w)
+                                                -- Open hovered uri in new tab
+                                                local uri = w:get_current().hovered_uri
+                                                if uri then w:new_tab(uri)
+                                                else -- Open selection in current tab
+                                                    uri = luakit.get_selection()
+                                                    if uri then w:get_current().uri = uri end
+                                                end
+                                            end),
 
     },
     command = {
