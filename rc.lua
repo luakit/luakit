@@ -557,18 +557,10 @@ function attach_webview_signals(w, view)
         if not filename then return end
         -- Make download dir
         os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
-        dir = DOWNLOAD_DIR .. "/"
-        if string.match(".*(\.jpg|\.jpeg|\.gif|\.png|\.tiff|\.bmp)$", filename) then
-            dir = os.getenv("HOME") .. "/OBRAZY/"
-        elseif string.match(".*\.torrent$", filename) then
-            dir = os.getenv("HOME") .. "/.torrents/"
-        elseif string.match(".*\.pdf$", filename) then
-            dir = os.getenv("HOME") .. "/PDFy/"
-        end
-        local wget = string.format("wget -q %q -O %q ; echo a > /tmp/asd", link, dir .. filename)
-        print(wget)
+        local dl = DOWNLOAD_DIR .. "/" .. filename
+        local wget = string.format("wget -q %q -O %q", link, dl)
         info("Launching: %s", wget)
-        os.execute(wget)
+        luakit.spawn(wget)
     end)
 
     -- 'link' contains the download link
@@ -1230,8 +1222,6 @@ function new_window(uris)
 
     return w
 end
-
-require("formfiller")
 
 new_window(uris)
 
