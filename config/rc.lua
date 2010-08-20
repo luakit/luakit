@@ -36,17 +36,6 @@ function entry()    return widget{type="entry"}    end
 -- Small util functions
 function info(...) if luakit.verbose then print(string.format(...)) end end
 
-widget.add_signal("new", function (wi)
-    wi:add_signal("init", function (wi)
-        if wi.type == "window" then
-            wi:add_signal("destroy", function ()
-                -- Call the quit function if this was the last window left
-                if #luakit.windows == 0 then luakit.quit() end
-            end)
-        end
-    end)
-end)
-
 function set_http_options(w)
     local proxy = globals.http_proxy or os.getenv("http_proxy")
     if proxy then w:set('proxy-uri', proxy) end
@@ -164,6 +153,11 @@ function attach_window_signals(w)
         w:update_uri(view)
         w:update_progress(view)
         w:update_tab_labels(idx)
+    end)
+
+    w.win:add_signal("destroy", function ()
+        -- Call the quit function if this was the last window left
+        if #luakit.windows == 0 then luakit.quit() end
     end)
 
     -- Attach window widget signals
