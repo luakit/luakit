@@ -15,9 +15,6 @@ window_helpers["formfiller"] = function(w, action)
             local uri, match = string.gsub(string.gsub(w.sbar.l.uri.text, "%w+://", ""), "(.-)/.*", "%1")
             filename = formsDir .. uri
         end 
-        if action == "add" then
-            modeline = ""
-        end
         if action == "new" or action == "once" or action == "add" then
             local dumpFunction=[[(function dump() {
                 var rv='';
@@ -53,6 +50,9 @@ window_helpers["formfiller"] = function(w, action)
                 return rv;
             })()]]
             math.randomseed(os.time())
+            if action == "add" and os.exists(filename) then
+                modeline = ""
+            end
             local fd
             if action == "add" then
                 fd = io.open(filename, "a+")
