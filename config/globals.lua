@@ -37,3 +37,5 @@ domain_props = { --[[
         ["enable-private-browsing"] = true,
     }, ]]
 }
+
+-- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

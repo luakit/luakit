@@ -22,3 +22,5 @@ return {
     -- titles overshadowing small tab titles when things get crowded.
     tablabel_format      = "%-30s",
 }
+
+-- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
