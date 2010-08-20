@@ -12,7 +12,7 @@ local unpack = unpack
 local type = type
 local pairs = pairs
 local ipairs = ipairs
-local util = require("util")
+local util = require("lousy.util")
 local capi = { luakit = luakit }
 
 -- Bookmark functions that operate on a flatfile and output to html

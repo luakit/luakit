@@ -1,8 +1,9 @@
 -- Luakit configuration file, more information at http://luakit.org/
 
 require("math")
-require("mode")
-require("bind")
+
+-- Load library of useful functions for luakit
+require("lousy")
 
 -- Init bookmarks library
 require("bookmarks")
@@ -99,6 +100,9 @@ search_engines = {
     imdb        = "http://imdb.com/find?s=all&q={0}",
     sourceforge = "http://sf.net/search/?words={0}",
 }
+
+-- Alias bind
+local bind = lousy.bind
 
 -- Add key bindings to be used across all windows
 mode_binds = {
@@ -233,7 +237,7 @@ commands = {
     bind.cmd({"viewsource",  "vs" },        function (w)       w:toggle_source(true) end),
     bind.cmd({"viewsource!", "vs!"},        function (w)       w:toggle_source() end),
     bind.cmd({"bookmark",    "bm" },        function (w, a)
-                                                local args = util.string.split(a)
+                                                local args = lousy.util.string.split(a)
                                                 local uri = table.remove(args, 1)
                                                 bookmarks.add(uri, args)
                                             end),
@@ -407,7 +411,7 @@ function attach_window_signals(w)
             p:hide()
             i:show()
         elseif mode == "follow" then
-            w:eval_js_from_file(util.find_data("scripts/follow.js"))
+            w:eval_js_from_file(lousy.util.find_data("scripts/follow.js"))
             w:eval_js("clear(); show_hints();")
             w.showing_hints = true
             p.text = "Follow:"
@@ -453,7 +457,7 @@ function attach_window_signals(w)
             -- User doesn't want to return to start position
             w.search_start_marker = nil
             w:set_mode()
-            w.ibar.prompt.text = util.escape(text)
+            w.ibar.prompt.text = lousy.util.escape(text)
             w.ibar.prompt:show()
         end
     end)
@@ -477,7 +481,7 @@ function attach_webview_signals(w, view)
 
     view:add_signal("link-hover", function (v, link)
         if w:is_current(v) and link then
-            w.sbar.l.uri.text = "Link: " .. util.escape(link)
+            w.sbar.l.uri.text = "Link: " .. lousy.util.escape(link)
         end
     end)
 
@@ -528,7 +532,7 @@ function attach_webview_signals(w, view)
         if status == "committed" then
             local domain = string.match(v.uri, "^%a+://([^/]*)/?") or "other"
             if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
-            local props = util.table.join(domain_props.all or {}, domain_props[domain] or {})
+            local props = lousy.util.table.join(domain_props.all or {}, domain_props[domain] or {})
             for k, v in pairs(props) do
                 info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
                 view:set_prop(k, v)
@@ -615,10 +619,13 @@ window_helpers = {
     is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
 
     -- Wrappers around the mode plugin
-    set_mode    = function (w, name)    mode.set(w.win, name)                              end,
-    get_mode    = function (w)          return mode.get(w.win)                             end,
-    is_mode     = function (w, name)    return name == w:get_mode()                        end,
-    is_any_mode = function (w, t, name) return util.table.hasitem(t, name or w:get_mode()) end,
+    set_mode    = function (w, name) lousy.mode.set(w.win, name)  end,
+    get_mode    = function (w)       return lousy.mode.get(w.win) end,
+    is_mode     = function (w, name) return name == w:get_mode()  end,
+
+    is_any_mode = function (w, t, name)
+        return lousy.util.table.hasitem(t, name or w:get_mode())
+    end,
 
     -- Wrappers around the view:get_prop & view:set_prop methods
     get = function (w, prop, view)
@@ -782,7 +789,7 @@ window_helpers = {
             else
                 w.compl_index = w.compl_index + 1
             end
-            s.text = util.escape(text)
+            s.text = lousy.util.escape(text)
         end
     end,
 
@@ -1021,7 +1028,7 @@ window_helpers = {
 
     update_uri = function (w, view, uri)
         if not view then view = w:get_current() end
-        w.sbar.l.uri.text = util.escape((uri or (view and view.uri) or "about:blank"))
+        w.sbar.l.uri.text = lousy.util.escape((uri or (view and view.uri) or "about:blank"))
     end,
 
     update_progress = function (w, view, p)
@@ -1048,7 +1055,7 @@ window_helpers = {
 
     update_buf = function (w)
         if w.buffer then
-            w.sbar.r.buf.text = util.escape(string.format(" %-3s", w.buffer))
+            w.sbar.r.buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
             w.sbar.r.buf:show()
         else
             w.sbar.r.buf:hide()
@@ -1057,7 +1064,7 @@ window_helpers = {
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
-        w.binds = util.table.join(mode_binds[mode], mode_binds.all)
+        w.binds = lousy.util.table.join(mode_binds[mode], mode_binds.all)
         -- Clear & hide buffer
         w.buffer = nil
         w:update_buf()
@@ -1120,7 +1127,7 @@ window_helpers = {
             for i = 1, count do
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(w.tabs:atindex(i))
-                t.label.text = util.escape(string.format(theme.tablabel_format or "%s", title))
+                t.label.text = lousy.util.escape(string.format(theme.tablabel_format or "%s", title))
                 w:apply_tablabel_theme(t, i == current)
             end
         end
