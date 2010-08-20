@@ -146,6 +146,20 @@ function is_input(element) {
   }
   return false;
 }
+function is_editable(element) {
+  var e = element.element;
+  var name = e.tagName.toLowerCase();
+  var type = e.type.toLowerCase();
+  if (name == "textarea" || name == "select") {
+    return true;
+  }
+  if (name == "input") {
+    if (type == 'text' || type == 'search' || type == 'password') {
+      return true 
+    }
+  }
+  return false;
+}
 function update_hints(input) {
   var array = [];
   var text_content;
@@ -173,14 +187,13 @@ function update_hints(input) {
   active_arr = array;
   if (array.length == 0) {
     clear();
-    return;
+    return false;
   }
   if (array.length == 1) {
-    if (evaluate(array[0])) {
-        return "__HINT_EVALUATED__"
-    }
+    return evaluate(array[0])
   }
   reload_hints(array, input, keep);
+  return false;
 }
 function clear() {
   if (overlays && overlays.parentNode) {
@@ -194,20 +207,17 @@ function clear() {
   active = undefined;
 }
 function evaluate(element) {
-  var ret = false;
   var e = element.element;
   if (!is_input(element) && e.href) {
-    if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button")) {
+    if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button"))
       click_element(element);
-      ret = true;
-    }
-    else {
+    else
       document.location = e.href;
-      ret = true;
-    }
   }
   clear();
-  return ret;
+  if (is_editable(element))
+    return "form-active";
+  return "root-active";
 }
 function get_active() {
   return evaluate(active);
@@ -228,6 +238,7 @@ function focus_prev() {
 }
 
 function update(input) {
+    var rv;
     input = input.replace(/(\d+)$/, " $1");
     strings = input.split(" ");
     if (input.length < last_input.length || strings.length < last_strings.length) {
@@ -235,12 +246,13 @@ function update(input) {
         clear();
         show_hints();
         for (var i = 0; i < strings.length; i += 1) {
-            update_hints(strings[i]);
+            rv = update_hints(strings[i]);
         }
     } else {
-        update_hints(strings[strings.length-1]);
+        rv = update_hints(strings[strings.length-1]);
     }
     last_input = input;
     last_strings = strings;
+    return rv;
 }
 
