@@ -237,7 +237,7 @@ commands = {
     bind.cmd({"viewsource",  "vs" },        function (w)       w:toggle_source(true) end),
     bind.cmd({"viewsource!", "vs!"},        function (w)       w:toggle_source() end),
     bind.cmd({"bookmark",    "bm" },        function (w, a)
-                                                local args = util.string.split(a)
+                                                local args = lousy.util.string.split(a)
                                                 local uri = table.remove(args, 1)
                                                 bookmarks.add(uri, args)
                                             end),
