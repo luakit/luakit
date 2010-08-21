@@ -10,6 +10,12 @@ require("bookmarks")
 bookmarks.load()
 bookmarks.dump_html()
 
+-- Load download library
+require("downloads")
+downloads.warn_file = downloads.open_file
+downloads.open_file = function(f, mt, wi) open_file(f, mt, wi) end
+downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
+
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
 function hbox()     return widget{type="hbox"}     end
@@ -29,9 +35,6 @@ ZOOM_STEP        = 0.1
 MAX_CMD_HISTORY  = 100
 MAX_SRCH_HISTORY = 100
 --HTTPPROXY = "http://example.com:3128"
-
--- Setup download directory
-DOWNLOAD_DIR = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
 -- Per-domain webview properties
 domain_props = { --[[
@@ -60,7 +63,6 @@ theme = theme or {
 
     -- General settings
     downloadbar_fg = "#fff",
-    downloadbar_bg = "#000",
     downloadbar_bg = "#000",
     statusbar_fg = "#fff",
     statusbar_bg = "#000",
@@ -273,16 +275,7 @@ function build_window()
             titles = { },
         },
         -- Download bar widgets
-        dbar = {
-            layout    = hbox(),
-            ebox      = eventbox(),
-            clear     = {
-                ebox  = eventbox(),
-                label = label(),
-            },
-            downloads = {},
-            timer     = timer{interval=1000},
-        },
+        dbar = downloads.create_bar(theme),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -328,18 +321,7 @@ function build_window()
 
     -- Pack download bar
     local d = w.dbar
-    for k,v in pairs(download_helpers) do d[k] = v end
-    d:attach_download_bar_signals()
-    d.ebox:hide()
-    w.layout:pack_start(d.ebox ,  false, false, 0)
-    d.ebox:set_child(d.layout)
-    d.timer:add_signal("timeout", function() d:refresh_download_bar() end)
-
-    -- Pack download clear button
-    local c = d.clear
-    d.layout:pack_end(c.ebox,     false, false, 0)
-    c.ebox:set_child(c.label)
-    c.label.text = "clear"
+    w.layout:pack_start(d.ebox,   false, false, 0)
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -583,18 +565,6 @@ function attach_webview_signals(w, view)
     end)
 
     -- 'link' contains the download link
-    -- 'filename' contains the suggested filename (from server or webkit)
-    view:add_signal("download-request", function (v, link, filename)
-        if not filename then return end
-        -- Make download dir
-        os.execute(string.format("mkdir -p %q", DOWNLOAD_DIR))
-        local dl = DOWNLOAD_DIR .. "/" .. filename
-        local wget = string.format("wget -q %q -O %q", link, dl)
-        info("Launching: %s", wget)
-        luakit.spawn(wget)
-    end)
-
-    -- 'link' contains the download link
     -- 'reason' contains the reason of the request (i.e. "link-clicked")
     -- return TRUE to handle the request by yourself or FALSE to proceed
     -- with default behaviour
@@ -617,9 +587,10 @@ function attach_webview_signals(w, view)
         end
     end)
 
+    -- 'uri' contains the download link
     view:add_signal("download-requested", function(v, uri)
         local d = download{uri=uri}
-        local file = dialog.save("Save file", w.window, "/home", d.suggested_filename)
+        local file = dialog.save("Save file", w.window, downloads.dir, d.suggested_filename)
         if file then
             d.destination = file
             d:start()
@@ -678,16 +649,7 @@ function open_file(f, m, wi)
         end
     end
 
-    if wi then
-        local te = wi.text
-        wi.text = "Can't open"
-        local t = timer{interval=2000}
-        t:add_signal("timeout", function(t)
-            wi.text = te
-            t:stop()
-        end)
-        t:start()
-    end
+    downloads.warn_file(f, m, wi)
 end
 
 -- Helper functions which operate on a windows widget structure
@@ -1276,166 +1238,6 @@ window_helpers = {
             w:get_current():emit_signal("form-active")
         elseif s == "root-active" then
             w:get_current():emit_signal("root-active")
-        end
-    end,
-}
-
--- Helper function which operate on a download bar
-download_helpers = {
-    -- Adds signals to the download bar
-    attach_download_bar_signals = function(bar)
-        bar.clear.ebox:add_signal("button-release", function(e, m, b)
-            if b == 1 then
-                -- clear stopped downloads
-                for i,t in pairs(util.table.clone(bar.downloads)) do
-                    local d = t.download
-                    if d.status ~= "created" and d.status ~= "started" then
-                        bar:remove_download(d)
-                    end
-                end
-            end
-        end)
-    end,
-
-    -- Removes the given download from the download bar and cancels it if
-    -- necessary.
-    remove_download = function(bar, d)
-        for i,t in pairs(bar.downloads) do
-            if t.download == d then
-                bar.layout:remove(t.widget.e)
-                table.remove(bar.downloads, i)
-                if d.status == "started" then d:cancel() end
-                break
-            end
-        end
-        if #bar.downloads == 0 then bar.ebox:hide() end
-    end,
-
-    -- Adds signals to a download widget
-    attach_download_widget_signals = function(bar, t)
-        t.widget.e:add_signal("button-release", function(e, m, b)
-            local d  = t.download
-            if b == 1 then
-                -- open file
-                local ti = timer{interval=1000}
-                ti:add_signal("timeout", function(ti)
-                    if d.status == "finished" then
-                        ti:stop()
-                        open_file(d.destination, d.mime_type, t.widget.l)
-                    end
-                end)
-                ti:start()
-            elseif b == 3 then
-                -- remove download
-                bar:remove_download(d)
-            end
-        end)
-    end,
-
-    -- Creates and connects all widget components for a download widget
-    assemble_download_widget = function(bar, t)
-        t.widget = {
-            e = eventbox(),
-            h = hbox(),
-            l = label(),
-            p = label(),
-            s = label(),
-            f = label(),
-            sep = label(),
-        }
-        local wi = t.widget
-        wi.f.text = "✗"
-        wi.f:hide()
-        wi.s.text = "✔"
-        wi.s:hide()
-        wi.sep.text = "|"
-        wi.h:pack_start(wi.p, false, false, 0)
-        wi.h:pack_start(wi.f, false, false, 0)
-        wi.h:pack_start(wi.s, false, false, 0)
-        wi.h:pack_start(wi.l, false, false, 0)
-        wi.h:pack_end(wi.sep, false, false, 0)
-        wi.e:set_child(wi.h)
-        bar:apply_download_theme(t)
-        bar:update_download_widget(t)
-    end,
-
-    -- Adds a new label to the download bar and registers signals for it
-    add_download_widget = function(bar, d)
-        local dt = {last_size=0}
-        local t  = {download=d, data=dt, widget=nil}
-        bar:assemble_download_widget(t)
-        local wi = t.widget
-        bar.layout:pack_start(wi.e, false, false, 0)
-        bar:attach_download_widget_signals(t)
-        return t
-    end,
-
-    -- Adds a download to the download bar.
-    add_download = function(bar, d)
-        local t = bar:add_download_widget(d)
-        table.insert(bar.downloads, t)
-        bar.ebox:show()
-        -- start refresh timer
-        if not bar.timer.started then bar.timer:start() end
-    end,
-
-    -- Updates the text of the given download widget for the given download
-    update_download_widget = function(bar, t)
-        local wi = t.widget
-        local dt = t.data
-        local d  = t.download
-        local _,_,basename = string.find(d.destination, ".*/([^/]*)")
-        if d.status == "finished" then
-            wi.p:hide()
-            wi.s:show()
-            wi.l.text = basename
-        elseif d.status == "error" then
-            wi.p:hide()
-            wi.e:show()
-            wi.l.text = basename
-        elseif d.status == "cancelled" then
-            wi.p:hide()
-            wi.l.text = basename
-        else
-            wi.p.text = string.format('%.2f%%', d.progress * 100)
-            local speed = d.current_size - (dt.last_size or 0)
-            dt.last_size = d.current_size
-            wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
-        end
-    end,
-
-    -- Updates the widgets in the download bar.
-    refresh_download_bar = function(bar)
-        local all_finished = true
-        -- update
-        for _,t in pairs(bar.downloads) do
-            local d = t.download
-            bar:update_download_widget(t)
-            if d.status == "created" or d.status == "started" then
-                all_finished = false
-            end
-        end
-        -- stop timer if everyone finished
-        if all_finished then
-            bar.timer:stop()
-        end
-    end,
-
-    apply_download_theme = function(bar, t, atheme)
-        local theme = atheme or theme
-        local wi = t.widget
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
-            w.font = theme.download_font or theme.downloadbar_font or theme.font
-        end
-        local fg = theme.download_fg or theme.downloadbar_fg or theme.fg
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
-            w.fg = fg
-        end
-        wi.p.fg = theme.download_loaded_fg  or theme.loaded_fg  or fg
-        wi.s.fg = theme.download_success_fg or theme.success_fg or fg
-        wi.f.fg = theme.download_failure_fg or theme.failure_fg or fg
-        for _,w in pairs({wi.e, wi.h}) do
-            w.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
         end
     end,
 }
