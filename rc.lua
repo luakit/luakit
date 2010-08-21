@@ -17,6 +17,8 @@ downloads.open_file = function(f, mt, wi) open_file(f, mt, wi) end
 downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 downloads.rules = {
     ["scholar\.google\."] = os.getenv("HOME") .. "/downloads/pdfs"
+ -- to download everything without asking:
+ -- [".*"               ] = downloads.dir
 }
 
 -- Widget construction aliases
