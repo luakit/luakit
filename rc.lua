@@ -15,6 +15,9 @@ require("downloads")
 downloads.warn_file = downloads.open_file
 downloads.open_file = function(f, mt, wi) open_file(f, mt, wi) end
 downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
+downloads.rules = {
+    ["scholar\.google\."] = os.getenv("HOME") .. "/downloads/pdfs"
+}
 
 -- Widget construction aliases
 function eventbox() return widget{type="eventbox"} end
@@ -589,13 +592,7 @@ function attach_webview_signals(w, view)
 
     -- 'uri' contains the download link
     view:add_signal("download-requested", function(v, uri)
-        local d = download{uri=uri}
-        local file = dialog.save("Save file", w.window, downloads.dir, d.suggested_filename)
-        if file then
-            d.destination = file
-            d:start()
-            w.dbar:add_download(d)
-        end
+        w.dbar:download(uri, w.window)
     end)
 
     view:add_signal("expose", function(v)

@@ -5,6 +5,8 @@ local util = lousy.util
 local string = string
 local pairs = pairs
 local timer = timer
+local download = download
+local dialog = dialog
 local setmetatable = setmetatable
 local eventbox = function() return widget{type="eventbox"} end
 local hbox     = function() return widget{type="hbox"}     end
@@ -12,6 +14,13 @@ local label    = function() return widget{type="label"}    end
 
 --- Provides internal support for downloads and a download bar.
 module("downloads")
+
+--- A table that contains rules for download locations.
+--    Each key in the table is a pattern, each value a directory
+--    in the local filesystem. If the pattern of a newly added
+--    download matches one of the rules, it will be automatically
+--    downloaded to that folder.
+rules = {}
 
 --- Used to open a download when clicked on.
 --    The default implementation just displays an error message.
@@ -36,6 +45,14 @@ dir = "/home"
 
 --- Prototype for a download bar.
 bar_mt = {
+    --- Shows the download bar.
+    --    @param bar The bar to show.
+    show = function(bar) bar.ebox:show() end,
+
+    --- Hides the download bar.
+    --    @param bar The bar to hide.
+    hide = function(bar) bar.ebox:hide() end,
+
     --- Removes the given download from the download bar and cancels it if
     --    necessary.
     --    Hides the bar if all downloads were removed.
@@ -66,14 +83,35 @@ bar_mt = {
     end,
 
     --- Adds a download to the download bar.
+    --    Tries to apply one of the <code>rules</code>. If that fails,
+    --    asks the user to choose a location with a save dialog.
     --    @param bar The bar to modify.
-    --    @param d The download to add.
-    add_download = function(bar, d)
-        local t = bar:add_download_widget(d, bar.theme)
-        table.insert(bar.downloads, t)
-        bar.ebox:show()
-        -- start refresh timer
-        if not bar.timer.started then bar.timer:start() end
+    --    @param uri The uri to add.
+    --    @param win The window to display the dialog over.
+    download = function(bar, uri, win)
+        local d = download{uri=uri}
+        local file
+
+        -- ask da rulez
+        for p,dir in pairs(rules) do
+            if string.match(uri, p) then
+                file = string.format("%s/%s", dir, d.suggested_filename)
+            end
+        end
+
+        -- if no rule matched, ask the user
+        file = file or dialog.save("Save file", win, dir, d.suggested_filename)
+
+        -- if the user didn't abort or a rule matched: download the file
+        if file then
+            d.destination = file
+            d:start()
+            local t = bar:add_download_widget(d, bar.theme)
+            table.insert(bar.downloads, t)
+            bar:show()
+            -- start refresh timer
+            if not bar.timer.started then bar.timer:start() end
+        end
     end,
 
     --- Updates the widgets in the download bar.
