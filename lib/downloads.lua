@@ -178,6 +178,7 @@ local download_helpers = {
         bar:assemble_download_widget(t, theme)
         local wi = t.widget
         bar.layout:pack_start(wi.e, false, false, 0)
+        bar.layout:reorder(wi.e, 0)
         bar:attach_download_widget_signals(t)
         return t
     end,

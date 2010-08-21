@@ -54,6 +54,7 @@ progress
 PUBLIC_SHARE
 reload
 remove
+reorder
 search
 selectable
 set_alignment

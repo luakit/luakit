@@ -20,7 +20,6 @@
  */
 
 /* TODO
- *  - Add `reorder(child, index)` method to re-order child widgets
  *  - Add `get_children()` method to return a table of widgets in the box
  *  - In the box destructor function detach all child windows
  */
@@ -28,6 +27,18 @@
 
 #include "luah.h"
 #include "widgets/common.h"
+
+/* direct wrapper around gtk_box_reorder_child */
+static gint
+luaH_box_reorder_child(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    gint position = luaL_checknumber(L, 3);
+    gtk_box_reorder_child(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+        position);
+    return 0;
+}
 
 /* direct wrapper around gtk_box_pack_start */
 static gint
@@ -80,6 +91,7 @@ luaH_box_index(lua_State *L, luakit_token_t token)
       PF_CASE(PACK_START,   luaH_box_pack_start)
       PF_CASE(PACK_END,     luaH_box_pack_end)
       PF_CASE(REMOVE,       luaH_container_remove)
+      PF_CASE(REORDER,      luaH_box_reorder_child)
       /* push boolean properties */
       PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
       /* push string properties */
