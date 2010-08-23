@@ -878,7 +878,7 @@ window_helpers = {
             ebox   = eventbox(),
             layout = hbox(),
         }
-        t.label.font = theme.tablabel_font or theme.font
+        t.label.font = theme.tab_font
         t.layout:pack_start(t.label, true,  true, 0)
         t.layout:pack_start(t.sep,   false,  false, 0)
         t.ebox:set_child(t.layout)
@@ -927,7 +927,7 @@ window_helpers = {
             for i = 1, count do
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(w.tabs:atindex(i))
-                t.label.text = lousy.util.escape(string.format(theme.tablabel_format or "%s", title))
+                t.label.text = lousy.util.escape(string.format("%-40s", title))
                 w:apply_tablabel_theme(t, i == current)
             end
         end
@@ -938,49 +938,48 @@ window_helpers = {
     apply_tablabel_theme = function (w, t, selected, atheme)
         local theme = atheme or theme
         if selected then
-            t.label.fg = theme.selected_tablabel_fg or theme.tablabel_fg or theme.fg
-            t.ebox.bg  = theme.selected_tablabel_bg or theme.tablabel_bg or theme.bg
+            t.label.fg = theme.selected_tab_fg
+            t.ebox.bg  = theme.selected_tab_bg
         else
-            t.label.fg = theme.tablabel_fg or theme.fg
-            t.ebox.bg  = theme.tablabel_bg or theme.bg
+            t.label.fg = theme.tab_fg
+            t.ebox.bg  = theme.tab_bg
         end
     end,
 
     apply_window_theme = function (w, atheme)
-        local theme        = atheme or theme
-        local s, i, t      = w.sbar, w.ibar, w.tbar
-        local fg, bg, font = theme.fg, theme.bg, theme.font
+        local theme = atheme or theme
+        local s, i  = w.sbar, w.ibar
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_fg    or theme.statusbar_fg or fg,
-            [s.l.loaded] = theme.loaded_fg or theme.statusbar_fg or fg,
-            [s.r.buf]    = theme.buf_fg    or theme.statusbar_fg or fg,
-            [s.r.tabi]   = theme.tabi_fg   or theme.statusbar_fg or fg,
-            [s.r.scroll] = theme.scroll_fg or theme.statusbar_fg or fg,
-            [i.prompt]   = theme.prompt_fg or theme.inputbar_fg  or fg,
-            [i.input]    = theme.input_fg  or theme.inputbar_fg  or fg,
+            [s.l.uri]    = theme.uri_sbar_fg,
+            [s.l.loaded] = theme.loaded_sbar_fg,
+            [s.r.buf]    = theme.buf_sbar_fg,
+            [s.r.tabi]   = theme.tabi_sbar_fg,
+            [s.r.scroll] = theme.scroll_sbar_fg,
+            [i.prompt]   = theme.prompt_ibar_fg,
+            [i.input]    = theme.input_ibar_fg,
         }) do wi.fg = v end
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.statusbar_bg or bg,
-            [s.r.ebox]   = theme.statusbar_bg or bg,
-            [s.sep]      = theme.statusbar_bg or bg,
-            [s.ebox]     = theme.statusbar_bg or bg,
-            [i.ebox]     = theme.inputbar_bg  or bg,
-            [i.input]    = theme.input_bg     or theme.inputbar_bg or bg,
+            [s.l.ebox]   = theme.sbar_bg,
+            [s.r.ebox]   = theme.sbar_bg,
+            [s.sep]      = theme.sbar_bg,
+            [s.ebox]     = theme.sbar_bg,
+            [i.ebox]     = theme.ibar_bg,
+            [i.input]    = theme.input_ibar_bg,
         }) do wi.bg = v end
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_font    or theme.statusbar_font or font,
-            [s.l.loaded] = theme.loaded_font or theme.statusbar_font or font,
-            [s.r.buf]    = theme.buf_font    or theme.statusbar_font or font,
-            [s.r.tabi]   = theme.tabi_font   or theme.statusbar_font or font,
-            [s.r.scroll] = theme.scroll_font or theme.statusbar_font or font,
-            [i.prompt]   = theme.prompt_font or theme.inputbar_font or font,
-            [i.input]    = theme.input_font  or theme.inputbar_font or font,
+            [s.l.uri]    = theme.uri_sbar_font,
+            [s.l.loaded] = theme.loaded_sbar_font,
+            [s.r.buf]    = theme.buf_sbar_font,
+            [s.r.tabi]   = theme.tabi_sbar_font,
+            [s.r.scroll] = theme.scroll_sbar_font,
+            [i.prompt]   = theme.prompt_ibar_font,
+            [i.input]    = theme.input_ibar_font,
         }) do wi.font = v end
     end,
 

@@ -1,26 +1,24 @@
 -- Default luakit theme
-return {
+return lousy.theme.from_table({
     -- Default settings
     font = "monospace normal 9",
     fg   = "#fff",
     bg   = "#000",
 
-    -- General settings
-    statusbar_fg = "#fff",
-    statusbar_bg = "#000",
-    inputbar_fg  = "#000",
-    inputbar_bg  = "#fff",
+    -- Statusbar specific
+    sbar_fg         = "#fff",
+    sbar_bg         = "#000",
+    loaded_sbar_fg  = "#33AADD",
 
-    -- Specific settings
-    loaded_fg            = "#33AADD",
-    tablabel_fg          = "#999",
-    tablabel_bg          = "#111",
-    selected_tablabel_fg = "#fff",
-    selected_tablabel_bg = "#000",
+    -- Input bar specific
+    ibar_fg         = "#000",
+    ibar_bg         = "#fff",
 
-    -- Enforce a minimum tab width of 30 characters to prevent longer tab
-    -- titles overshadowing small tab titles when things get crowded.
-    tablabel_format      = "%-30s",
-}
+    -- Tab label specific
+    tab_fg          = "#999",
+    tab_bg          = "#111",
+    selected_tab_fg = "#fff",
+    selected_tab_bg = "#000",
+})
 
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
