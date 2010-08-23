@@ -126,7 +126,7 @@ local mode_binds = {
 
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
-commands = {
+local commands = {
  -- cmd({Command, Alias1, ...},         function (w, arg, opts) .. end, opts),
     cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
     cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
