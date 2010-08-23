@@ -24,24 +24,34 @@ window_helpers["formfiller"] = function(w, action)
                 }
                 for(j=0;j<allFrames.length;j=j+1) {
                     try {
-                        var xp_res=allFrames[j].document.evaluate('//input', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
-                        var input;
-                        while(input=xp_res.iterateNext()) {
-                            if(input.name != "") {
-                                var type=(input.type?input.type:text);
-                                if(type == 'text' || type == 'password' || type == 'search') {
-                                    rv += input.name + '(' + type + '):' + input.value + '\n';
+                        for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
+                            var fn = allFrames[j].document.forms[f].name;
+                            var fi = allFrames[j].document.forms[f].id;
+                            var fm = allFrames[j].document.forms[f].method;
+                            var form = '!form[' + fn + '|' + fi + '|' + fm +']:autosubmit=0\n';
+                            var fb = '';
+                                var xp_res=allFrames[j].document.evaluate('.//input', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
+                                var input;
+                                while(input=xp_res.iterateNext()) {
+                                    if(input.name != "") {
+                                        var type=(input.type?input.type:text);
+                                        if(type == 'text' || type == 'password' || type == 'search') {
+                                            fb += input.name + '(' + type + '):' + input.value + '\n';
+                                        }
+                                        else if(type == 'checkbox' || type == 'radio') {
+                                            fb += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
+                                        }
+                                    }
                                 }
-                                else if(type == 'checkbox' || type == 'radio') {
-                                    rv += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
+                                xp_res=allFrames[j].document.evaluate('.//textarea', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
+                                var input;
+                                while(input=xp_res.iterateNext()) {
+                                    if(input.name != "") {
+                                        fb += input.name + '(textarea):' + input.value + '\n';
+                                    }
                                 }
-                            }
-                        }
-                        xp_res=allFrames[j].document.evaluate('//textarea', allFrames[j].document.documentElement, null, XPathResult.ANY_TYPE,null);
-                        var input;
-                        while(input=xp_res.iterateNext()) {
-                            if(input.name != "") {
-                                rv += input.name + '(textarea):' + input.value + '\n';
+                            if(fb.length) {
+                                rv += form + fb;
                             }
                         }
                     }
@@ -89,6 +99,21 @@ window_helpers["formfiller"] = function(w, action)
                     catch(err) { }
                 }
             };]]
+            local submitFunction=[[function submitForm(fname, fid, fmethod) {
+                var allFrames = new Array(window);
+                for(f=0;f<window.frames.length;f=f+1) {
+                    allFrames.push(window.frames[f]);
+                }
+                for(j=0;j<allFrames.length;j=j+1) {
+                    for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
+                        var myForm = allFrames[j].document.forms[f];
+                        if( ( (myForm.name != "" && myForm.name == fname) || myForm.id == fid) && myForm.method == fmethod) {
+                            myForm.submit();
+                            return;
+                        }
+                    }
+                }
+            };]]
             local fd, err = io.open(filename, "r")
             if not fd then
                 return nil
@@ -128,25 +153,34 @@ window_helpers["formfiller"] = function(w, action)
                     break
                 end
             end
-            local fname, fchecked, ftype, fvalue
-            local js = insertFunction
+            local fname, fchecked, ftype, fvalue, form
+            local autosubmit = 0
+            local js = string.format("%s %s", insertFunction, submitFunction)
             local pattern1 = "(.+)%((.+)%):% *(.*)"
             local pattern2 = "%1{0}(%2):%3"
             local pattern3 = "([^{]+){(.+)}%((.+)%):% *(.*)"
             for line in fd:lines() do
                 if not string.match(line, "^!profile=.*") then
-                    if ftype == "textarea" then
-                        if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
-                            js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
-                            ftype = nil
-                        else
-                            fvalue = string.format("%s\\n%s", fvalue, line)
-                        end
+                    if string.match(line, "^!form.*") and autosubmit == "1" then
+                        break
                     end
-                    if ftype ~= "textarea" then
-                        fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
-                        if fname ~= nil and ftype ~= "textarea" then
-                            js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+                    if string.match(line, "^!form.*") then
+                        form = line
+                        autosubmit = string.match(form, "^!form%[.-%]:autosubmit=(%d)")
+                    else
+                        if ftype == "textarea" then
+                            if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
+                                js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+                                ftype = nil
+                            else
+                                fvalue = string.format("%s\\n%s", fvalue, line)
+                            end
+                        end
+                        if ftype ~= "textarea" then
+                            fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
+                            if fname ~= nil and ftype ~= "textarea" then
+                                js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+                            end
                         end
                     end
                 else
@@ -155,6 +189,9 @@ window_helpers["formfiller"] = function(w, action)
             end
             if ftype == "textarea" then
                 js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
+            end
+            if autosubmit == "1" then
+                js = string.format("%s submitForm('%s', '%s', '%s');", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)%]"))
             end
             w:get_current():eval_js(js, "f")
             fd:close()
