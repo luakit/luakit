@@ -1,8 +1,5 @@
 -- Luakit configuration file, more information at http://luakit.org/
 
--- Load lua libraries
-require "math"
-
 -- Load library of useful functions for luakit
 require "lousy"
 
@@ -391,23 +388,6 @@ function attach_webview_signals(w, view)
     end)
 end
 
--- Parses scroll amounts of the form:
---   Relative: "+20%", "-20%", "+20px", "-20px"
---   Absolute: 20, "20%", "20px"
--- And returns an absolute value.
-function parse_scroll(current, max, value)
-    if string.match(value, "^%d+px$") then
-        return tonumber(string.match(value, "^(%d+)px$"))
-    elseif string.match(value, "^%d+%%$") then
-        return math.ceil(max * (tonumber(string.match(value, "^(%d+)%%$")) / 100))
-    elseif string.match(value, "^[\-\+]%d+px") then
-        return current + tonumber(string.match(value, "^([\-\+]%d+)px"))
-    elseif string.match(value, "^[\-\+]%d+%%$") then
-        return math.ceil(current + (max * (tonumber(string.match(value, "^([\-\+]%d+)%%$")) / 100)))
-    else
-        print("E: unable to parse scroll amount:", value)
-    end
-end
 
 -- Helper functions which operate on a windows widget structure
 window_helpers = {
@@ -770,7 +750,7 @@ window_helpers = {
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_vert()
         if type(value) == "string" then
-            value = parse_scroll(cur, max, value)
+            value = lousy.util.parse_scroll(cur, max, value)
         end
         view:set_scroll_vert(value)
     end,
@@ -779,7 +759,7 @@ window_helpers = {
         if not view then view = w:get_current() end
         local cur, max = view:get_scroll_horiz()
         if type(value) == "string" then
-            value = parse_scroll(cur, max, value)
+            value = lousy.util.parse_scroll(cur, max, value)
         end
         view:set_scroll_horiz(value)
     end,

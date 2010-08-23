@@ -16,7 +16,10 @@ local print = print
 local rstring = string
 local rtable = table
 local type = type
+local tonumber = tonumber
+local math = require "math"
 local capi = { luakit = luakit }
+
 
 --- Utility functions for lousy.
 module("lousy.util")
@@ -238,5 +241,24 @@ function find_data(f)   return xdg_find(f, capi.luakit.data_dir)   end
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
 function find_cache(f)  return xdg_find(f, capi.luakit.cache_dir)  end
+
+--- Parses scroll amounts.
+-- @param current The current scroll amount.
+-- @param max The maximum scroll amount.
+-- @param value A value of the form: "+20%", "-20%", "+20px", "-20px", 20, "20%", "20px"
+-- @return An absolute scroll amount.
+function parse_scroll(current, max, value)
+    if rstring.match(value, "^%d+px$") then
+        return tonumber(rstring.match(value, "^(%d+)px$"))
+    elseif rstring.match(value, "^%d+%%$") then
+        return math.ceil(max * (tonumber(rstring.match(value, "^(%d+)%%$")) / 100))
+    elseif rstring.match(value, "^[\-\+]%d+px") then
+        return current + tonumber(rstring.match(value, "^([\-\+]%d+)px"))
+    elseif rstring.match(value, "^[\-\+]%d+%%$") then
+        return math.ceil(current + (max * (tonumber(rstring.match(value, "^([\-\+]%d+)%%$")) / 100)))
+    else
+        return error(rstring.format("unable to parse scroll amount: %q", value))
+    end
+end
 
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
