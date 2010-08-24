@@ -10,6 +10,13 @@ globals = {
     download_dir     = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads"),
 }
 
+-- Make useragent
+local rv, out, err = luakit.spawn_sync("uname -sm")
+local webkit_version = string.format("WebKitGTK+/%d.%d.%d", luakit.webkit_major_version,
+    luakit.webkit_minor_version, luakit.webkit_micro_version)
+local luakit_version = string.format("luakit/%s", luakit.version)
+globals.useragent = string.format("Mozilla/5.0 (%s) %s %s", string.match(out, "([^\n]*)"), webkit_version, luakit_version)
+
 -- Search engines
 search_engines = {
     luakit      = "http://luakit.org/search/index/luakit?q={0}",

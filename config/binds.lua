@@ -1,3 +1,9 @@
+-----------------
+-- Keybindings --
+-----------------
+
+binds = {}
+
 -- Binding aliases
 local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy.bind.cmd
 
@@ -7,7 +13,7 @@ local zoom_step   = globals.zoom_step or 0.1
 local homepage    = globals.homepage or "http://luakit.org"
 
 -- Add key bindings to be used across all windows in the given modes.
-local mode_binds = {
+binds.mode_binds = {
      -- buf(Pattern,                    function (w, buffer, opts) .. end, opts),
      -- key({Modifiers}, Key name,      function (w, opts)         .. end, opts),
      -- but({Modifiers}, Button num,    function (w, opts)         .. end, opts),
@@ -126,7 +132,7 @@ local mode_binds = {
 
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
-local commands = {
+binds.commands = {
  -- cmd({Command, Alias1, ...},         function (w, arg, opts) .. end, opts),
     cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
     cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
@@ -146,10 +152,59 @@ local commands = {
                                         end),
 }
 
--- Return the `mode_binds` and `commands` tables to the main config.
-return {
-    mode_binds = mode_binds,
-    commands   = commands,
+-- Helper functions which are added to the window struct
+binds.helper_methods = {
+    -- Navigate current view or open new tab
+    navigate = function (w, uri, view)
+        if not view then view = w:get_current() end
+        if view then
+            view.uri = uri
+        else
+            return w:new_tab(uri)
+        end
+    end,
+
+    -- search engine wrapper
+    websearch = function (w, args)
+        local sep = string.find(args, " ")
+        local engine = string.sub(args, 1, sep-1)
+        local search = string.sub(args, sep+1)
+        search = string.gsub(search, "^%s*(.-)%s*$", "%1")
+        if not search_engines[engine] then
+            return error("No matching search engine found: " .. engine)
+        end
+        local uri = string.gsub(search_engines[engine], "{%d}", search)
+        return w:navigate(uri)
+    end,
+
+    -- Tab traversing functions
+    next_tab = function (w, n)
+        w.tabs:switch((((n or 1) + w.tabs:current() -1) % w.tabs:count()) + 1)
+    end,
+
+    prev_tab = function (w, n)
+        w.tabs:switch(((w.tabs:current() - (n or 1) -1) % w.tabs:count()) + 1)
+    end,
+
+    goto_tab = function (w, n)
+        w.tabs:switch(n)
+    end,
+
+    -- If argument is form-active or root-active, emits signal. Ignores all
+    -- other signals.
+    emit_form_root_active_signal = function (w, s)
+        if s == "form-active" then
+            w:get_current():emit_signal("form-active")
+        elseif s == "root-active" then
+            w:get_current():emit_signal("root-active")
+        end
+    end,
 }
+
+-- Insert webview method lookup on window structure
+table.insert(window.indexes, 1, function (w, k)
+    -- Lookup bind helper method
+    return binds.helper_methods[k]
+end)
 
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
