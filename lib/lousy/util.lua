@@ -210,37 +210,46 @@ function string.split(s, pattern, ret)
     return ret
 end
 
--- Search locally, xdg home path and then luakit install path for a given file
-local function xdg_find(f, xdg_home_path)
-    -- Ignore absolute paths
-    if rstring.match(f, "^/") then
-        if os.exists(f) then return f end
-        return error(rstring.format("No such file: %s\n", f))
-    end
-
-    -- Check if file exists at the following locations & return first match
-    local paths = { f, xdg_home_path .. "/" .. f, capi.luakit.install_path .. "/" .. f }
+local function find_file(paths)
     for _, p in ipairs(paths) do
         if os.exists(p) then return p end
     end
-
-    return error(rstring.format("No such file at:\n\t%s\n", rtable.concat(paths, ",\n\t")))
+    return error(rstring.format("No such file at: \n\t%s\n", rtable.concat(paths, ",\n\t")))
 end
 
---- Find a file in the users $XDG_CONFIG_HOME/luakit/ or the luakit install dir.
+--- Search and return the filepath of a file in the current working directory,
+-- or $XDG_CONFIG_HOME/luakit/ or /etc/xdg/luakit/.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
-function find_config(f) return xdg_find(f, capi.luakit.config_dir) end
+function find_config(f)
+    if rstring.match(f, "^/") then return f end
+    -- Search locations
+    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f, "/etc/xdg/luakit/"..f }
+    return find_file(paths)
+end
 
---- Find a file in the users $XDG_DATA_HOME/luakit/ or the luakit install dir.
+--- Search and return the filepath of a file in the current working directory,
+-- in the users $XDG_DATA_HOME/luakit/ or the luakit install dir.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
-function find_data(f)   return xdg_find(f, capi.luakit.data_dir)   end
+function find_data(f)
+    if rstring.match(f, "^/") then return f end
+    -- Search locations
+    local paths = { f, capi.luakit.config_dir.."/"..f, capi.luakit.install_path.."/"..f }
+    return find_file(paths)
+end
 
---- Find a file in the users $XDG_CACHE_HOME/luakit/ or the luakit install dir.
+--- Search and return the filepath of a file in the current working directory
+-- or in the users $XDG_CACHE_HOME/luakit/
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
-function find_cache(f)  return xdg_find(f, capi.luakit.cache_dir)  end
+function find_cache(f)
+    -- Ignore absolute paths
+    if rstring.match(f, "^/") then return f end
+    -- Search locations
+    local paths = { capi.luakit.cache_dir.."/"..f }
+    return find_file(paths)
+end
 
 --- Parses scroll amounts.
 -- @param current The current scroll amount.
