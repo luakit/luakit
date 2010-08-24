@@ -694,7 +694,7 @@ luaH_init(void)
     /* add system config dirs (see: XDG_CONFIG_DIRS) */
     const gchar* const *config_dirs = g_get_system_config_dirs();
     for (; *config_dirs; config_dirs++)
-        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "lib", NULL));
+        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", NULL));
 
     /* add luakit install path */
     g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
