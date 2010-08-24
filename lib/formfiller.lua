@@ -109,7 +109,18 @@ window_helpers["formfiller"] = function(w, action)
                     for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
                         var myForm = allFrames[j].document.forms[f];
                         if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid) || (myForm.action != "" && myForm.action == faction)) && myForm.method == fmethod) {
-                            myForm.submit();
+                            try {
+                                var xp_res=allFrames[j].document.evaluate(".//input[@type='submit']", myForm, null, XPathResult.ANY_TYPE,null);
+                            } catch (err) { }
+                            var input;
+                            try {
+                                while(input=xp_res.iterateNext()) {
+                                        input.type='text';
+                                }
+                            } catch (err) { }
+                            try {
+                                myForm.submit();
+                            } catch (err) { }
                             return;
                         }
                     }
