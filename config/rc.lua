@@ -7,13 +7,12 @@ require "lousy"
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
 require "globals"
 
--- Load theme
--- ("$XDG_CONFIG_HOME/luakit/theme.lua" or "/etc/xdg/luakit/theme.lua")
-theme = require "theme"
-
 -- Load keybindings
 -- ("$XDG_CONFIG_HOME/luakit/binds.lua" or "/etc/xdg/luakit/binds.lua")
 binds = require "binds"
+
+-- Load theme
+theme = lousy.theme.init(lousy.util.find_config("theme.lua"))
 
 -- Init bookmarks
 require("bookmarks")

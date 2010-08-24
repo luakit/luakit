@@ -1,24 +1,28 @@
--- Default luakit theme
-return lousy.theme.from_table({
-    -- Default settings
-    font = "monospace normal 9",
-    fg   = "#fff",
-    bg   = "#000",
+--------------------------
+-- Default luakit theme --
+--------------------------
 
-    -- Statusbar specific
-    sbar_fg         = "#fff",
-    sbar_bg         = "#000",
-    loaded_sbar_fg  = "#33AADD",
+theme = {}
 
-    -- Input bar specific
-    ibar_fg         = "#000",
-    ibar_bg         = "#fff",
+-- Default settings
+theme.font = "monospace normal 9"
+theme.fg   = "#fff"
+theme.bg   = "#000"
 
-    -- Tab label specific
-    tab_fg          = "#999",
-    tab_bg          = "#111",
-    selected_tab_fg = "#fff",
-    selected_tab_bg = "#000",
-})
+-- Statusbar specific
+theme.sbar_fg         = "#fff"
+theme.sbar_bg         = "#000"
+theme.loaded_sbar_fg  = "#33AADD"
 
+-- Input bar specific
+theme.ibar_fg         = "#000"
+theme.ibar_bg         = "#fff"
+
+-- Tab label specific
+theme.tab_fg          = "#999"
+theme.tab_bg          = "#111"
+theme.selected_tab_fg = "#fff"
+theme.selected_tab_bg = "#000"
+
+return theme
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
