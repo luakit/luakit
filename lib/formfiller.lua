@@ -28,7 +28,8 @@ window_helpers["formfiller"] = function(w, action)
                             var fn = allFrames[j].document.forms[f].name;
                             var fi = allFrames[j].document.forms[f].id;
                             var fm = allFrames[j].document.forms[f].method;
-                            var form = '!form[' + fn + '|' + fi + '|' + fm +']:autosubmit=0\n';
+                            var fa = allFrames[j].document.forms[f].action;
+                            var form = '!form[' + fn + '|' + fi + '|' + fm + '|' + fa + ']:autosubmit=0\n';
                             var fb = '';
                                 var xp_res=allFrames[j].document.evaluate('.//input', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
                                 var input;
@@ -99,7 +100,7 @@ window_helpers["formfiller"] = function(w, action)
                     catch(err) { }
                 }
             };]]
-            local submitFunction=[[function submitForm(fname, fid, fmethod) {
+            local submitFunction=[[function submitForm(fname, fid, fmethod, faction) {
                 var allFrames = new Array(window);
                 for(f=0;f<window.frames.length;f=f+1) {
                     allFrames.push(window.frames[f]);
@@ -107,7 +108,7 @@ window_helpers["formfiller"] = function(w, action)
                 for(j=0;j<allFrames.length;j=j+1) {
                     for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
                         var myForm = allFrames[j].document.forms[f];
-                        if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid)) && myForm.method == fmethod) {
+                        if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid) || (myForm.action != "" && myForm.action == faction)) && myForm.method == fmethod) {
                             myForm.submit();
                             return;
                         }
@@ -191,7 +192,7 @@ window_helpers["formfiller"] = function(w, action)
                 js = string.format("%s insert('%s', '%s', '%s', '%s');", js, fname, ftype, fvalue, fchecked)
             end
             if autosubmit == "1" then
-                js = string.format("%s submitForm('%s', '%s', '%s');", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)%]"))
+                js = string.format("%s submitForm('%s', '%s', '%s', '%s');", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]"))
             end
             w:get_current():eval_js(js, "f")
             fd:close()
