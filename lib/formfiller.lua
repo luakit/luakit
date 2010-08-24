@@ -85,7 +85,7 @@ window_helpers["formfiller"] = function(w, action)
                             allFrames[j].document.getElementsByName(fname)[0].value = fvalue;
                         }
                         else if(ftype == 'checkbox') {
-                            allFrames[j].document.getElementsByName(fname)[0].checked = fchecked
+                            allFrames[j].document.getElementsByName(fname)[0].checked = fchecked;
                         }
                         else if(ftype == 'radio') {
                             var radios = allFrames[j].document.getElementsByName(fname);
@@ -107,7 +107,7 @@ window_helpers["formfiller"] = function(w, action)
                 for(j=0;j<allFrames.length;j=j+1) {
                     for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
                         var myForm = allFrames[j].document.forms[f];
-                        if( ( (myForm.name != "" && myForm.name == fname) || myForm.id == fid) && myForm.method == fmethod) {
+                        if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid)) && myForm.method == fmethod) {
                             myForm.submit();
                             return;
                         }
