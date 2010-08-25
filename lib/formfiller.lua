@@ -1,9 +1,9 @@
-table.insert( mode_binds['normal'], lousy.bind.buf("^za",                     function (w) w:formfiller("add") end) )
-table.insert( mode_binds['normal'], lousy.bind.buf("^zn",                     function (w) w:formfiller("new") end) )
-table.insert( mode_binds['normal'], lousy.bind.buf("^ze",                     function (w) w:formfiller("edit") end) )
-table.insert( mode_binds['normal'], lousy.bind.buf("^zl",                     function (w) w:formfiller("load") end) )
+table.insert( binds.mode_binds['normal'], lousy.bind.buf("^za",                     function (w) w:formfiller("add") end) )
+table.insert( binds.mode_binds['normal'], lousy.bind.buf("^zn",                     function (w) w:formfiller("new") end) )
+table.insert( binds.mode_binds['normal'], lousy.bind.buf("^ze",                     function (w) w:formfiller("edit") end) )
+table.insert( binds.mode_binds['normal'], lousy.bind.buf("^zl",                     function (w) w:formfiller("load") end) )
 
-window_helpers["formfiller"] = function(w, action)
+webview.methods["formfiller"] = function(view, w, action)
         local editor = (os.getenv("EDITOR") or "vim") .. " "
         local modeline = "> vim:ft=formfiller"
         local filename = ""

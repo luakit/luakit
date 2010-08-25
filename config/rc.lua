@@ -23,6 +23,9 @@ require "webview"
 -- ("$XDG_CONFIG_HOME/luakit/binds.lua" or "/etc/xdg/luakit/binds.lua")
 require "binds"
 
+-- Init formfiller lib
+require "formfiller"
+
 -- Init bookmarks lib
 require "bookmarks"
 bookmarks.load()
