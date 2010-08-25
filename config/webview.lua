@@ -132,6 +132,18 @@ local function attach_webview_signals(view, w)
         return w:new_tab()
     end)
 
+    view:add_signal("populate-popup", function (v)
+        return {
+            true,
+            { "_Toggle Source", function () w:toggle_source() end },
+            { "_Zoom", {
+                { "Zoom _In",    function () w:zoom_in(globals.zoom_step) end },
+                { "Zoom _Out",   function () w:zoom_out(globals.zoom_step) end },
+                true,
+                { "Zoom _Reset", function () w:zoom_reset() end }, }, },
+        }
+    end)
+
     view:add_signal("property::progress", function (v)
         if w:is_current(v) then
             w:update_progress(v)
