@@ -192,7 +192,7 @@ webview.methods = {
         if not fh then return error(err) end
         local script = fh:read("*a")
         fh:close()
-        return w:eval_js(script, file, view)
+        return view:eval_js(script, file)
     end,
 
     -- close the current tab
