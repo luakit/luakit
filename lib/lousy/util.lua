@@ -235,7 +235,7 @@ end
 function find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { f, capi.luakit.config_dir.."/"..f, capi.luakit.install_path.."/"..f }
+    local paths = { f, capi.luakit.data_dir.."/"..f, capi.luakit.install_path.."/"..f }
     return find_file(paths)
 end
 
