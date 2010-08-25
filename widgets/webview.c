@@ -31,6 +31,11 @@ static struct {
     SoupCookieJar *cookiejar;
 } Soup = { NULL, NULL };
 
+static struct {
+    GSList *refs;
+    GSList *items;
+} last_popup = { NULL, NULL};
+
 typedef enum {
     BOOL,
     CHAR,
@@ -306,6 +311,32 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
         webkit_web_policy_decision_download(pd);
     else
         webkit_web_policy_decision_use(pd);
+
+    lua_pop(L, ret + 1);
+    return TRUE;
+}
+
+static gboolean
+resource_request_starting_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitWebResource *we, WebKitNetworkRequest *r, WebKitNetworkResponse *response,
+        widget_t *w)
+{
+    (void) v;
+    (void) f;
+    (void) we;
+    (void) f;
+    (void) response;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    lua_State *L = globalconf.L;
+    gint ret;
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    ret = luaH_object_emit_signal(L, -2, "resource-request-starting", 1, 1);
+
+    if (ret && !luaH_checkboolean(L, -1))
+        /* User responded with false, ignore request */
+        webkit_network_request_set_uri(r, "about:blank");
 
     lua_pop(L, ret + 1);
     return TRUE;
@@ -854,6 +885,8 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
         tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
         if (g_strrstr(tmp.c, "://") || !g_strcmp0(tmp.c, "about:blank"))
             tmp.c = g_strdup(tmp.c);
+        else if(file_exists(tmp.c))
+            tmp.c = g_strdup_printf("file://%s", tmp.c);
         else
             tmp.c = g_strdup_printf("http://%s", tmp.c);
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
@@ -909,6 +942,104 @@ wv_button_press_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 }
 
 static void
+menu_item_cb(GtkMenuItem *menuitem, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    gpointer ref = g_object_get_data(G_OBJECT(menuitem), "lua_callback");
+    luaH_object_push(L, w->ref);
+    luaH_object_push(L, ref);
+    luaH_dofunction(L, 1, 0);
+}
+
+static void
+populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
+{
+    GtkWidget *item, *submenu;
+    gpointer ref;
+    const char *label;
+    int i, len = lua_objlen(L, -1);
+
+    /* walk table and build context menu */
+    for(i = 1; i <= len; i++) {
+        lua_rawgeti(L, -1, i);
+        if((lua_type(L, -1) == LUA_TTABLE) && (lua_objlen(L, -1) >= 2)) {
+            lua_rawgeti(L, -1, 1);
+            label = lua_tostring(L, -1);
+            lua_pop(L, 1);
+            lua_rawgeti(L, -1, 2);
+
+            /* add new submenu */
+            if(lua_type(L, -1) == LUA_TTABLE) {
+                submenu = gtk_menu_new();
+                item = gtk_menu_item_new_with_mnemonic(label);
+                last_popup.items = g_slist_prepend(last_popup.items, item);
+                last_popup.items = g_slist_prepend(last_popup.items, submenu);
+                gtk_menu_item_set_submenu(GTK_MENU_ITEM(item), submenu);
+                gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+                gtk_widget_show(item);
+                populate_popup_from_table(L, GTK_MENU(submenu), w);
+                lua_pop(L, 1);
+
+            /* add context menu item */
+            } else if(lua_type(L, -1) == LUA_TFUNCTION) {
+                item = gtk_menu_item_new_with_mnemonic(label);
+                last_popup.items = g_slist_prepend(last_popup.items, item);
+                ref = luaH_object_ref(L, -1);
+                last_popup.refs = g_slist_prepend(last_popup.refs, ref);
+                g_object_set_data(G_OBJECT(item), "lua_callback", ref);
+                gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+                gtk_widget_show(item);
+                g_signal_connect(item, "activate", G_CALLBACK(menu_item_cb), (gpointer)w);
+            }
+
+        /* add separator if encounters `true` */
+        } else if(lua_type(L, -1) == LUA_TBOOLEAN && luaH_checkboolean(L, -1)) {
+            item = gtk_separator_menu_item_new();
+            last_popup.items = g_slist_prepend(last_popup.items, item);
+            gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
+            gtk_widget_show(item);
+        }
+        lua_pop(L, 1);
+    }
+}
+
+static void
+populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
+{
+    (void) v;
+    (void) menu;
+    gint top;
+    gint ret;
+
+    GSList *iter;
+    lua_State *L = globalconf.L;
+
+    /* dereference context menu items callback functions from the last
+       context menu */
+    if (last_popup.refs) {
+        for (iter = last_popup.refs; iter; iter = iter->next)
+            luaH_object_unref(L, iter->data);
+        g_slist_free(last_popup.refs);
+        last_popup.refs = NULL;
+    }
+
+    /* destroy context menu item widgets from the last context menu */
+    if (last_popup.items) {
+        for (iter = last_popup.items; iter; iter = iter->next)
+            gtk_widget_destroy(iter->data);
+        g_slist_free(last_popup.items);
+        last_popup.items = NULL;
+    }
+
+    luaH_object_push(L, w->ref);
+    top = lua_gettop(L);
+    ret = luaH_object_emit_signal(L, top, "populate-popup", 0, 1);
+    if(ret && (lua_type(L, -1) == LUA_TTABLE))
+        populate_popup_from_table(L, menu, w);
+    lua_pop(L, ret + 1);
+}
+
+static void
 webview_destructor(widget_t *w)
 {
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
@@ -947,21 +1078,23 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect((GObject*)view,
-      "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
-      "signal::button-release-event",                 (GCallback)button_release_cb,      w,
-      "signal::create-web-view",                      (GCallback)create_web_view_cb,     w,
-      "signal::download-requested",                   (GCallback)download_request_cb,    w,
-      "signal::expose-event",                         (GCallback)expose_cb,              w,
-      "signal::focus-in-event",                       (GCallback)focus_cb,               w,
-      "signal::focus-out-event",                      (GCallback)focus_cb,               w,
-      "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
-      "signal::key-press-event",                      (GCallback)key_press_cb,           w,
-      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
-      "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
-      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb, w,
-      "signal::notify",                               (GCallback)notify_cb,              w,
-      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
-      "signal::parent-set",                           (GCallback)parent_set_cb,          w,
+      "signal::button-press-event",                   (GCallback)wv_button_press_cb,           w,
+      "signal::button-release-event",                 (GCallback)button_release_cb,            w,
+      "signal::create-web-view",                      (GCallback)create_web_view_cb,           w,
+      "signal::download-requested",                   (GCallback)download_request_cb,          w,
+      "signal::expose-event",                         (GCallback)expose_cb,                    w,
+      "signal::focus-in-event",                       (GCallback)focus_cb,                     w,
+      "signal::focus-out-event",                      (GCallback)focus_cb,                     w,
+      "signal::hovering-over-link",                   (GCallback)link_hover_cb,                w,
+      "signal::key-press-event",                      (GCallback)key_press_cb,                 w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,        w,
+      "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb,       w,
+      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb,       w,
+      "signal::notify",                               (GCallback)notify_cb,                    w,
+      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,        w,
+      "signal::parent-set",                           (GCallback)parent_set_cb,                w,
+      "signal::populate-popup",                       (GCallback)populate_popup_cb,            w,
+      "signal::resource-request-starting",            (GCallback)resource_request_starting_cb, w,
       NULL);
 
     /* show widgets */

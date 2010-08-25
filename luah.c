@@ -685,15 +685,16 @@ luaH_init(void)
 #if DEVELOPMENT_PATHS
     /* allows for testing luakit in the project directory */
     g_ptr_array_add(paths, g_strdup("./lib"));
+    g_ptr_array_add(paths, g_strdup("./config"));
 #endif
 
     /* add users config dir (see: XDG_CONFIG_DIR) */
-    g_ptr_array_add(paths, g_build_filename(globalconf.config_dir, "lib", NULL));
+    g_ptr_array_add(paths, g_strdup(globalconf.config_dir));
 
     /* add system config dirs (see: XDG_CONFIG_DIRS) */
     const gchar* const *config_dirs = g_get_system_config_dirs();
     for (; *config_dirs; config_dirs++)
-        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "lib", NULL));
+        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", NULL));
 
     /* add luakit install path */
     g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
@@ -758,7 +759,7 @@ luaH_parserc(const gchar *confpath, gboolean run)
 
 #if DEVELOPMENT_PATHS
     /* allows for testing luakit in the project directory */
-    g_ptr_array_add(paths, g_strdup("./rc.lua"));
+    g_ptr_array_add(paths, g_strdup("./config/rc.lua"));
 #endif
 
     /* search users config dir (see: XDG_CONFIG_HOME) */
