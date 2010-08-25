@@ -880,6 +880,8 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
         tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
         if (g_strrstr(tmp.c, "://") || !g_strcmp0(tmp.c, "about:blank"))
             tmp.c = g_strdup(tmp.c);
+        else if(file_exists(tmp.c))
+            tmp.c = g_strdup_printf("file://%s", tmp.c);
         else
             tmp.c = g_strdup_printf("http://%s", tmp.c);
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
