@@ -312,6 +312,32 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 }
 
 static gboolean
+resource_request_starting_cb(WebKitWebView *v, WebKitWebFrame *f,
+        WebKitWebResource *we, WebKitNetworkRequest *r, WebKitNetworkResponse *response,
+        widget_t *w)
+{
+    (void) v;
+    (void) f;
+    (void) we;
+    (void) f;
+    (void) response;
+    const gchar *uri = webkit_network_request_get_uri(r);
+    lua_State *L = globalconf.L;
+    gint ret;
+
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    ret = luaH_object_emit_signal(L, -2, "resource-request-starting", 1, 1);
+
+    if (ret && !luaH_checkboolean(L, -1))
+        /* User responded with false, ignore request */
+        webkit_network_request_set_uri(r, "about:blank");
+
+    lua_pop(L, ret + 1);
+    return TRUE;
+}
+
+static gboolean
 new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
         WebKitNetworkRequest *r, WebKitWebNavigationAction *na,
         WebKitWebPolicyDecision *pd, widget_t *w)
@@ -947,21 +973,22 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect((GObject*)view,
-      "signal::button-press-event",                   (GCallback)wv_button_press_cb,     w,
-      "signal::button-release-event",                 (GCallback)button_release_cb,      w,
-      "signal::create-web-view",                      (GCallback)create_web_view_cb,     w,
-      "signal::download-requested",                   (GCallback)download_request_cb,    w,
-      "signal::expose-event",                         (GCallback)expose_cb,              w,
-      "signal::focus-in-event",                       (GCallback)focus_cb,               w,
-      "signal::focus-out-event",                      (GCallback)focus_cb,               w,
-      "signal::hovering-over-link",                   (GCallback)link_hover_cb,          w,
-      "signal::key-press-event",                      (GCallback)key_press_cb,           w,
-      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,  w,
-      "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb, w,
-      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb, w,
-      "signal::notify",                               (GCallback)notify_cb,              w,
-      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,  w,
-      "signal::parent-set",                           (GCallback)parent_set_cb,          w,
+      "signal::button-press-event",                   (GCallback)wv_button_press_cb,           w,
+      "signal::button-release-event",                 (GCallback)button_release_cb,            w,
+      "signal::create-web-view",                      (GCallback)create_web_view_cb,           w,
+      "signal::download-requested",                   (GCallback)download_request_cb,          w,
+      "signal::expose-event",                         (GCallback)expose_cb,                    w,
+      "signal::focus-in-event",                       (GCallback)focus_cb,                     w,
+      "signal::focus-out-event",                      (GCallback)focus_cb,                     w,
+      "signal::hovering-over-link",                   (GCallback)link_hover_cb,                w,
+      "signal::key-press-event",                      (GCallback)key_press_cb,                 w,
+      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,        w,
+      "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb,       w,
+      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb,       w,
+      "signal::notify",                               (GCallback)notify_cb,                    w,
+      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,        w,
+      "signal::parent-set",                           (GCallback)parent_set_cb,                w,
+      "signal::resource-request-starting",            (GCallback)resource_request_starting_cb, w,
       NULL);
 
     /* show widgets */

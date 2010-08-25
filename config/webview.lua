@@ -143,6 +143,11 @@ local function attach_webview_signals(view, w)
             w:update_scroll(v)
         end
     end)
+
+    view:add_signal("resource-request-starting", function(v, uri)
+        if luakit.verbose then print("Requesting: "..uri) end
+        -- Return false to cancel the request.
+    end)
 end
 
 -- These methods are present when you index a window instance and no window
