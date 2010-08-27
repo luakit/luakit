@@ -96,7 +96,6 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
       PB_CASE(SHOW_FRAME,   gtk_entry_get_has_frame(GTK_ENTRY(w->widget)))
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
     return 0;

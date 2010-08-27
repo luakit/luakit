@@ -863,7 +863,6 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         return 1;
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
 

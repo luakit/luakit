@@ -86,7 +86,6 @@ luaH_label_index(lua_State *L, luakit_token_t token)
       PB_CASE(SELECTABLE,       gtk_label_get_selectable(GTK_LABEL(w->widget)))
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
     return 0;
