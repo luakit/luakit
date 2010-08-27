@@ -49,6 +49,7 @@ typedef enum {
     SETTINGS,
     WEBKITVIEW,
     SOUPSESSION,
+    COOKIEJAR,
 } property_scope;
 
 typedef union {
@@ -72,6 +73,7 @@ typedef struct {
 property_t properties_table[] = {
   { "accept-language",                              CHAR,   SOUPSESSION, TRUE,  NULL },
   { "accept-language-auto",                         BOOL,   SOUPSESSION, TRUE,  NULL },
+  { "accept-policy",                                INT,    COOKIEJAR,   TRUE,  NULL },
   { "auto-load-images",                             BOOL,   SETTINGS,    TRUE,  NULL },
   { "auto-resize-window",                           BOOL,   SETTINGS,    TRUE,  NULL },
   { "auto-shrink-images",                           BOOL,   SETTINGS,    TRUE,  NULL },
@@ -640,6 +642,8 @@ get_settings_object(GtkWidget *view, property_t *p)
         return G_OBJECT(view);
       case SOUPSESSION:
         return G_OBJECT(Soup.session);
+      case COOKIEJAR:
+        return G_OBJECT(Soup.cookiejar);
       default:
         break;
     }
