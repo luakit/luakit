@@ -569,25 +569,23 @@ window.methods = {
 
         if count ~= 0 then
             for i = 1, count do
+                local view = w.tabs:atindex(i)
                 local t = tb.titles[i]
-                local title = " " ..i.. " "..w:get_tab_title(w.tabs:atindex(i))
+                local title = " " ..i.. " "..w:get_tab_title(view)
                 t.label.text = lousy.util.escape(string.format("%-40s", title))
-                w:apply_tablabel_theme(t, i == current)
+                w:apply_tablabel_theme(t, i == current, view:ssl_trusted())
             end
         end
         tb.ebox:show()
     end,
 
     -- Theme functions
-    apply_tablabel_theme = function (w, t, selected)
+    apply_tablabel_theme = function (w, t, selected, trust)
         local theme = lousy.theme.get()
-        if selected then
-            t.label.fg = theme.selected_tab_fg
-            t.ebox.bg  = theme.selected_tab_bg
-        else
-            t.label.fg = theme.tab_fg
-            t.ebox.bg  = theme.tab_bg
-        end
+        selected = (selected and "_selected") or ""
+        trust = (trust == true and "_trust") or (trust == false and "_notrust") or ""
+        t.label.fg = theme[string.format("tab%s%s_fg", selected, trust)]
+        t.ebox.bg = theme[string.format("tab%s%s_bg", selected, trust)]
     end,
 
     apply_window_theme = function (w)
