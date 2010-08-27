@@ -72,6 +72,7 @@ show_tabs
 spacing
 spawn
 spawn_sync
+ssl_trusted
 switch
 text
 textbutton

@@ -827,6 +827,26 @@ luaH_webview_loading(lua_State *L)
     return 1;
 }
 
+/* check for trusted ssl certificate */
+static gint
+luaH_webview_ssl_trusted(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view));
+    if (uri && !strncmp(uri, "https", 5)) {
+        WebKitWebFrame *frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+        WebKitWebDataSource *src = webkit_web_frame_get_data_source(frame);
+        WebKitNetworkRequest *req = webkit_web_data_source_get_request(src);
+        SoupMessage *soup_msg = webkit_network_request_get_message(req);
+        lua_pushboolean(L, (soup_msg && (soup_message_get_flags(soup_msg)
+            & SOUP_MESSAGE_CERTIFICATE_TRUSTED)) ? TRUE : FALSE);
+        return 1;
+    }
+    /* return nil if not viewing https uri */
+    return 0;
+}
+
 void
 show_scrollbars(widget_t *w, gboolean show)
 {
@@ -875,6 +895,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(EVAL_JS,          luaH_webview_eval_js)
       PF_CASE(LOADING,          luaH_webview_loading)
       PF_CASE(RELOAD,           luaH_webview_reload)
+      PF_CASE(SSL_TRUSTED,      luaH_webview_ssl_trusted)
       /* push source viewing methods */
       PF_CASE(GET_VIEW_SOURCE,  luaH_webview_get_view_source)
       PF_CASE(SET_VIEW_SOURCE,  luaH_webview_set_view_source)
