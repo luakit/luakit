@@ -12,16 +12,15 @@ theme.bg   = "#000"
 -- Genaral colors
 theme.success_fg = "#0f0"
 theme.failure_fg = "#f00"
+theme.loaded_fg  = "#33AADD"
 
 -- Statusbar specific
 theme.sbar_fg         = "#fff"
 theme.sbar_bg         = "#000"
-theme.loaded_sbar_fg  = "#33AADD"
 
 -- Downloadbar specific
-theme.dbar_fg        = "#fff"
-theme.dbar_bg        = "#000"
-theme.loaded_dbar_fg = "#33AADD"
+theme.dbar_fg         = "#fff"
+theme.dbar_bg         = "#000"
 
 -- Input bar specific
 theme.ibar_fg         = "#000"

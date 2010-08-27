@@ -176,7 +176,7 @@ local download_helpers = {
         for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
             w.fg = fg
         end
-        wi.p.fg = theme.loaded_dbar_fg
+        wi.p.fg = theme.dbar_loaded_fg
         wi.s.fg = theme.success_fg
         wi.f.fg = theme.failure_fg
         for _,w in pairs({wi.e, wi.h}) do

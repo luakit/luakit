@@ -602,7 +602,7 @@ window.methods = {
         -- Set foregrounds
         for wi, v in pairs({
             [s.l.uri]       = theme.uri_sbar_fg,
-            [s.l.loaded]    = theme.loaded_sbar_fg,
+            [s.l.loaded]    = theme.sbar_loaded_fg,
             [s.r.buf]       = theme.buf_sbar_fg,
             [s.r.tabi]      = theme.tabi_sbar_fg,
             [s.r.scroll]    = theme.scroll_sbar_fg,
@@ -626,7 +626,7 @@ window.methods = {
         -- Set fonts
         for wi, v in pairs({
             [s.l.uri]       = theme.uri_sbar_font,
-            [s.l.loaded]    = theme.loaded_sbar_font,
+            [s.l.loaded]    = theme.sbar_loaded_font,
             [s.r.buf]       = theme.buf_sbar_font,
             [s.r.tabi]      = theme.tabi_sbar_font,
             [s.r.scroll]    = theme.scroll_sbar_font,
