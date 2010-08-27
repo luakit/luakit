@@ -78,8 +78,8 @@ luaH_notebook_remove(lua_State *L)
     widget_t *child = luaH_checkudata(L, 2, &widget_class);
     gint i = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
 
-    if (i != -1)
-        return 0;
+    if (i == -1)
+        luaL_argerror(L, 2, "child not in notebook");
 
     GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
     g_object_ref(G_OBJECT(widget));
