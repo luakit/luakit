@@ -60,7 +60,7 @@ install:
 	chmod -R 755 $(INSTALLDIR)/share/luakit/scripts/
 	install -D luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
-	install -D rc.lua $(DESTDIR)/etc/xdg/luakit/rc.lua
+	install -D config/*.lua $(DESTDIR)/etc/xdg/luakit/
 
 uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
