@@ -170,14 +170,7 @@ end
 -- then use the input bar for whatever you are doing).
 function hit(binds, mods, key, buffer, enable_buffer, arg)
     -- Convert keys using map
-    for k,v in pairs(map) do
-        if key == k then
-            key = v
-            break
-        end
-    end
-
-    print(key)
+    key = map[key] or key
 
     -- Filter modifers table
     local mods = filter_mods(mods, type(key) == "string" and #key == 1)
