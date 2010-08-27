@@ -1069,7 +1069,7 @@ widget_webview(widget_t *w)
 
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
-    g_object_set_data(G_OBJECT(w->widget), "widget", w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", w);
     g_object_set_data(G_OBJECT(w->widget), "webview", view);
     gtk_container_add(GTK_CONTAINER(w->widget), view);
 

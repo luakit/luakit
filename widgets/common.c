@@ -79,7 +79,7 @@ void
 add_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
 {
     (void) c;
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
@@ -92,7 +92,7 @@ void
 remove_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
 {
     (void) c;
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
@@ -109,7 +109,7 @@ parent_set_cb(GtkWidget *widget, GtkObject *old, widget_t *w)
     GtkContainer *new;
     g_object_get(G_OBJECT(widget), "parent", &new, NULL);
     luaH_object_push(L, w->ref);
-    if (new && (parent = g_object_get_data(G_OBJECT(new), "widget")))
+    if (new && (parent = g_object_get_data(G_OBJECT(new), "lua_widget")))
         luaH_object_push(L, parent->ref);
     else
         lua_pushnil(L);

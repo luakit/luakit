@@ -111,7 +111,7 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
         w->newindex = luaH_box_newindex;                                     \
         w->destructor = widget_destructor;                                   \
         w->widget = gtk_##type##_new(FALSE, 0);                              \
-        g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);      \
+        g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);  \
         gtk_widget_show(w->widget);                                          \
         g_object_connect((GObject*)w->widget,                                \
           "signal::add",        add_cb,        w,                            \

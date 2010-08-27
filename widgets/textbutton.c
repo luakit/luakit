@@ -78,7 +78,7 @@ widget_textbutton(widget_t *w)
     w->destructor = widget_destructor;
 
     w->widget = gtk_button_new();
-    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_button_set_focus_on_click(GTK_BUTTON(w->widget), FALSE);
 
     g_object_connect((GObject*)w->widget,

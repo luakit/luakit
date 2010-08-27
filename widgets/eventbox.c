@@ -74,7 +74,7 @@ widget_eventbox(widget_t *w)
     w->destructor = widget_destructor;
 
     w->widget = gtk_event_box_new();
-    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_widget_show(w->widget);
 
     g_object_connect((GObject*)w->widget,
