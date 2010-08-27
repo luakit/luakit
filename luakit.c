@@ -63,7 +63,7 @@ parseopts(int argc, char *argv[]) {
 
     /* print version and exit */
     if(only_version) {
-        g_printf("Version: %s\n", VERSION);
+        g_printf("Luakit %s\n", VERSION);
         exit(EXIT_SUCCESS);
     }
 

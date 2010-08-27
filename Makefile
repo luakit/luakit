@@ -10,7 +10,7 @@ SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard w
 HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h)) ${GHEAD}
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-all: options newline luakit
+all: options newline luakit luakit.1
 
 options:
 	@echo luakit build options:
@@ -43,12 +43,15 @@ luakit: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
 	@${CC} -o $@ ${OBJS} ${LDFLAGS}
 
+luakit.1: luakit
+	help2man -N -o $@ ./$<
+
 apidoc: luadoc/luakit.lua
 	mkdir -p apidocs
 	luadoc --nofiles -d apidocs luadoc/* lib/*
 
 clean:
-	rm -rf apidocs luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h
+	rm -rf apidocs luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h luakit.1
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
@@ -61,9 +64,11 @@ install:
 	install -D luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
 	install -D config/*.lua $(DESTDIR)/etc/xdg/luakit/
+	install -d $(INSTALLDIR)/share/man/man1/
+	install -m644 luakit.1 $(INSTALLDIR)/share/man/man1/
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
+	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/share/man/man1/luakit.1
 
 newline:;@echo
 .PHONY: all clean options install newline apidoc
