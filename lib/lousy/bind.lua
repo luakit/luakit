@@ -21,6 +21,11 @@ module("lousy.bind")
 -- Modifiers to ignore
 ignore_modifiers = { "Mod2", "Lock" }
 
+--- A table that contains mappings for key conversion.
+map = {
+    ISO_Left_Tab = "Tab",
+}
+
 --- Return cloned, sorted & filtered modifier mask table.
 -- @param mods The table of modifiers
 -- @param remove_shift Remove Shift key from modifiers table (Normally done if
@@ -164,6 +169,9 @@ end
 -- @return The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing).
 function hit(binds, mods, key, buffer, enable_buffer, arg)
+    -- Convert keys using map
+    key = map[key] or key
+
     -- Filter modifers table
     local mods = filter_mods(mods, type(key) == "string" and #key == 1)
 
