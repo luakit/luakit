@@ -130,12 +130,12 @@ main(int argc, char *argv[]) {
     if (sigaction(SIGCHLD, &sigact, NULL))
         fatal("Can't install SIGCHLD handler");
 
+    /* parse command line opts and get uris to load */
+    uris = parseopts(argc, argv);
+
     gtk_init(&argc, &argv);
     if (!g_thread_supported())
         g_thread_init(NULL);
-
-    /* parse command line opts and get uris to load */
-    uris = parseopts(argc, argv);
 
     init_directories();
     init_lua(uris);
