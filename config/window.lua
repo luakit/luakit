@@ -627,6 +627,27 @@ window.methods = {
         }) do wi.font = v end
     end,
 
+    close_win = function (w)
+        -- Close all tabs
+        while w.tabs:count() ~= 0 do
+            w:close_tab()
+        end
+
+        -- Recursively remove widgets from window
+        local children = lousy.util.recursive_remove(w.win)
+        -- Destroy all widgets
+        for i, c in ipairs(lousy.util.table.join(children, {w.win})) do
+            if c.hide then c:hide() end
+            c:destroy()
+        end
+
+        -- Clear window struct
+        w = setmetatable(w, {})
+        for k, _ in pairs(w) do w[k] = nil end
+
+        -- Quit if closed last window
+        if #luakit.windows == 0 then luakit.quit() end
+    end,
 }
 
 -- Ordered list of class index functions. Other classes (E.g. webview) are able
