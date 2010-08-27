@@ -534,7 +534,7 @@ luaH_adjustment_push_values(lua_State *L, GtkAdjustment *a)
 }
 
 static gint
-luaH_webview_get_vscroll(lua_State *L)
+luaH_webview_get_scroll_vert(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
@@ -542,7 +542,7 @@ luaH_webview_get_vscroll(lua_State *L)
 }
 
 static gint
-luaH_webview_get_hscroll(lua_State *L)
+luaH_webview_get_scroll_horiz(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
@@ -861,8 +861,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(GET_PROP,         luaH_webview_get_prop)
       PF_CASE(SET_PROP,         luaH_webview_set_prop)
       /* push scroll adjustment methods */
-      PF_CASE(GET_SCROLL_HORIZ, luaH_webview_get_hscroll)
-      PF_CASE(GET_SCROLL_VERT,  luaH_webview_get_vscroll)
+      PF_CASE(GET_SCROLL_HORIZ, luaH_webview_get_scroll_horiz)
+      PF_CASE(GET_SCROLL_VERT,  luaH_webview_get_scroll_vert)
       PF_CASE(SET_SCROLL_HORIZ, luaH_webview_set_scroll_horiz)
       PF_CASE(SET_SCROLL_VERT,  luaH_webview_set_scroll_vert)
       /* push search methods */
