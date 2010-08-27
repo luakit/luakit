@@ -596,39 +596,43 @@ window.methods = {
     end,
 
     apply_window_theme = function (w)
-        local theme = lousy.theme.get()
-        local s, i  = w.sbar, w.ibar
+        local theme   = lousy.theme.get()
+        local s, i, d = w.sbar, w.ibar, w.dbar
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_sbar_fg,
-            [s.l.loaded] = theme.loaded_sbar_fg,
-            [s.r.buf]    = theme.buf_sbar_fg,
-            [s.r.tabi]   = theme.tabi_sbar_fg,
-            [s.r.scroll] = theme.scroll_sbar_fg,
-            [i.prompt]   = theme.prompt_ibar_fg,
-            [i.input]    = theme.input_ibar_fg,
+            [s.l.uri]       = theme.uri_sbar_fg,
+            [s.l.loaded]    = theme.loaded_sbar_fg,
+            [s.r.buf]       = theme.buf_sbar_fg,
+            [s.r.tabi]      = theme.tabi_sbar_fg,
+            [s.r.scroll]    = theme.scroll_sbar_fg,
+            [i.prompt]      = theme.prompt_ibar_fg,
+            [i.input]       = theme.input_ibar_fg,
+            [d.clear.label] = theme.clear_downloadbar_fg,
         }) do wi.fg = v end
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.sbar_bg,
-            [s.r.ebox]   = theme.sbar_bg,
-            [s.sep]      = theme.sbar_bg,
-            [s.ebox]     = theme.sbar_bg,
-            [i.ebox]     = theme.ibar_bg,
-            [i.input]    = theme.input_ibar_bg,
+            [s.l.ebox]     = theme.sbar_bg,
+            [s.r.ebox]     = theme.sbar_bg,
+            [s.sep]        = theme.sbar_bg,
+            [s.ebox]       = theme.sbar_bg,
+            [i.ebox]       = theme.ibar_bg,
+            [i.input]      = theme.input_ibar_bg,
+            [d.ebox]       = theme.downloadbar_bg,
+            [d.clear.ebox] = theme.downloadbar_bg,
         }) do wi.bg = v end
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_sbar_font,
-            [s.l.loaded] = theme.loaded_sbar_font,
-            [s.r.buf]    = theme.buf_sbar_font,
-            [s.r.tabi]   = theme.tabi_sbar_font,
-            [s.r.scroll] = theme.scroll_sbar_font,
-            [i.prompt]   = theme.prompt_ibar_font,
-            [i.input]    = theme.input_ibar_font,
+            [s.l.uri]       = theme.uri_sbar_font,
+            [s.l.loaded]    = theme.loaded_sbar_font,
+            [s.r.buf]       = theme.buf_sbar_font,
+            [s.r.tabi]      = theme.tabi_sbar_font,
+            [s.r.scroll]    = theme.scroll_sbar_font,
+            [i.prompt]      = theme.prompt_ibar_font,
+            [i.input]       = theme.input_ibar_font,
+            [d.clear.label] = theme.clear_downloadbar_font,
         }) do wi.font = v end
     end,
 
