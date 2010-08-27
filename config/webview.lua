@@ -44,10 +44,12 @@ local function attach_webview_signals(view, w)
     end)
 
     view:add_signal("form-active", function ()
+        w.search_start_marker = nil
         w:set_mode("insert")
     end)
 
     view:add_signal("root-active", function ()
+        w.search_start_marker = nil
         w:set_mode()
     end)
 
