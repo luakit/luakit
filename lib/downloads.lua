@@ -7,6 +7,7 @@ local pairs = pairs
 local timer = timer
 local download = download
 local dialog = dialog
+local theme = lousy.theme
 local setmetatable = setmetatable
 local eventbox = function() return widget{type="eventbox"} end
 local hbox     = function() return widget{type="hbox"}     end
@@ -106,7 +107,7 @@ bar_mt = {
         if file then
             d.destination = file
             d:start()
-            local t = bar:add_download_widget(d, bar.theme)
+            local t = bar:add_download_widget(d)
             table.insert(bar.downloads, t)
             bar:show()
             -- start refresh timer
@@ -164,26 +165,27 @@ local download_helpers = {
         end)
     end,
 
-    --- Applies a theme to a download bar widget.
-    apply_widget_theme = function(bar, t, theme)
+    --- Applies the theme to a download bar widget.
+    apply_widget_theme = function(bar, t)
         local wi = t.widget
+        local theme = theme.get()
         for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
-            w.font = theme.download_font or theme.downloadbar_font or theme.font
+            w.font = theme.downloadbar_font
         end
-        local fg = theme.download_fg or theme.downloadbar_fg or theme.fg
+        local fg = theme.downloadbar_fg
         for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
             w.fg = fg
         end
-        wi.p.fg = theme.download_loaded_fg  or theme.loaded_fg  or fg
-        wi.s.fg = theme.download_success_fg or theme.success_fg or fg
-        wi.f.fg = theme.download_failure_fg or theme.failure_fg or fg
+        wi.p.fg = theme.download_loaded_fg
+        wi.s.fg = theme.download_success_fg
+        wi.f.fg = theme.download_failure_fg
         for _,w in pairs({wi.e, wi.h}) do
-            w.bg = theme.download_bg or theme.downloadbar_bg or theme.bg
+            w.bg = theme.downloadbar_bg
         end
     end,
 
     -- Creates and connects all widget components for a download widget.
-    assemble_download_widget = function(bar, t, theme)
+    assemble_download_widget = function(bar, t)
         t.widget = {
             e = eventbox(),
             h = hbox(),
@@ -205,15 +207,15 @@ local download_helpers = {
         wi.h:pack_start(wi.l, false, false, 0)
         wi.h:pack_end(wi.sep, false, false, 0)
         wi.e:set_child(wi.h)
-        bar:apply_widget_theme(t, theme)
+        bar:apply_widget_theme(t)
         bar:update_download_widget(t)
     end,
 
     -- Adds a new label to the download bar and registers signals for it.
-    add_download_widget = function(bar, d, theme)
+    add_download_widget = function(bar, d)
         local dt = {last_size=0}
         local t  = {download=d, data=dt, widget=nil}
-        bar:assemble_download_widget(t, theme)
+        bar:assemble_download_widget(t)
         local wi = t.widget
         bar.layout:pack_start(wi.e, false, false, 0)
         bar.layout:reorder(wi.e, 0)
@@ -249,13 +251,12 @@ local download_helpers = {
 
 --- Creates a download bar widget.
 --    To add the bar to a window, pack <code>bar.ebox</code>.
---    @param theme A theme to apply to the bar.
 --    @return A download bar.
 --    @field ebox The main eventbox of the bar.
 --    @field clear The clear button of the bar.
 --    @field timer A timer used for checking the status of the downloads.
 --    @field downloads An array of all displayed downloads.
-function create_bar(theme)
+function create_bar()
     local bar = {
         layout    = hbox(),
         ebox      = eventbox(),
@@ -265,7 +266,6 @@ function create_bar(theme)
         },
         downloads = {},
         timer     = timer{interval=1000},
-        theme     = theme,
     }
     -- Set metatable
     local mt = { __index=bar_mt }
