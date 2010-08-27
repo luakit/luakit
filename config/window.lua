@@ -619,8 +619,8 @@ window.methods = {
             [s.ebox]       = theme.sbar_bg,
             [i.ebox]       = theme.ibar_bg,
             [i.input]      = theme.input_ibar_bg,
-            [d.ebox]       = theme.downloadbar_bg,
-            [d.clear.ebox] = theme.downloadbar_bg,
+            [d.ebox]       = theme.dbar_bg,
+            [d.clear.ebox] = theme.dbar_bg,
         }) do wi.bg = v end
 
         -- Set fonts

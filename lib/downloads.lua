@@ -170,17 +170,17 @@ local download_helpers = {
         local wi = t.widget
         local theme = theme.get()
         for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
-            w.font = theme.downloadbar_font
+            w.font = theme.dbar_font
         end
-        local fg = theme.downloadbar_fg
+        local fg = theme.dbar_fg
         for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
             w.fg = fg
         end
-        wi.p.fg = theme.download_loaded_fg
-        wi.s.fg = theme.download_success_fg
-        wi.f.fg = theme.download_failure_fg
+        wi.p.fg = theme.loaded_dbar_fg
+        wi.s.fg = theme.success_fg
+        wi.f.fg = theme.failure_fg
         for _,w in pairs({wi.e, wi.h}) do
-            w.bg = theme.downloadbar_bg
+            w.bg = theme.dbar_bg
         end
     end,
 
