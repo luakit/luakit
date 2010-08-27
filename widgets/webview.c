@@ -128,7 +128,6 @@ property_t properties_table[] = {
   { "timeout",                                      INT,    SOUPSESSION, TRUE,  NULL },
   { "title",                                        CHAR,   WEBKITVIEW,  FALSE, NULL },
   { "transparent",                                  BOOL,   WEBKITVIEW,  TRUE,  NULL },
-  { "uri",                                          CHAR,   WEBKITVIEW,  TRUE,  NULL },
   { "use-ntlm",                                     BOOL,   SOUPSESSION, TRUE,  NULL },
   { "user-agent",                                   CHAR,   SETTINGS,    TRUE,  NULL },
   { "user-stylesheet-uri",                          CHAR,   SETTINGS,    TRUE,  NULL },
@@ -258,6 +257,25 @@ notify_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 }
 
 static void
+update_uri(widget_t *w, const gchar *new)
+{
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    const gchar *old = (gchar*) g_object_get_data(G_OBJECT(view), "uri");
+
+    if (!new)
+        new = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view));
+
+    /* uris are the same, do nothing */
+    if (g_strcmp0(old, new)) {
+        g_object_set_data_full(G_OBJECT(view), "uri", g_strdup(new), g_free);
+        lua_State *L = globalconf.L;
+        luaH_object_push(L, w->ref);
+        luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
+        lua_pop(L, 1);
+    }
+}
+
+static void
 notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 {
     (void) ps;
@@ -282,6 +300,10 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
         warn("programmer error, unable to get load status literal");
         break;
     }
+
+    /* update uri after redirects, etc */
+    if ((status & WEBKIT_LOAD_COMMITTED) || (status & WEBKIT_LOAD_FINISHED))
+        update_uri(w, NULL);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -861,9 +883,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PS_CASE(HOVERED_URI, g_object_get_data(G_OBJECT(view), "hovered-uri"))
 
       case L_TK_URI:
-        g_object_get(G_OBJECT(view), "uri", &tmp.c, NULL);
+        tmp.c = g_object_get_data(G_OBJECT(view), "uri");
         lua_pushstring(L, tmp.c);
-        g_free(tmp.c);
         return 1;
 
       default:
@@ -910,12 +931,13 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
       case L_TK_URI:
         tmp.c = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
+        update_uri(w, tmp.c);
         g_free(tmp.c);
-        break;
+        return 0;
 
       case L_TK_SHOW_SCROLLBARS:
         show_scrollbars(w, luaH_checkboolean(L, 3));
-        return 0;
+        break;
 
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));
