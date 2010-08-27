@@ -259,8 +259,10 @@ window.methods = {
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
         local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
-        w.buffer = newbuf
-        w:update_buf()
+        if w.win then
+            w.buffer = newbuf
+            w:update_buf()
+        end
         return caught
     end,
 
