@@ -23,14 +23,14 @@ theme.dbar_fg         = "#fff"
 theme.dbar_bg         = "#000"
 
 -- Input bar specific
-theme.ibar_fg         = "#000"
-theme.ibar_bg         = "#fff"
+theme.ibar_fg           = "#000"
+theme.ibar_bg           = "#fff"
 
--- Tab label specific
-theme.tab_fg          = "#999"
-theme.tab_bg          = "#111"
-theme.selected_tab_fg = "#fff"
-theme.selected_tab_bg = "#000"
+-- Tab label
+theme.tab_fg            = "#999"
+theme.tab_bg            = "#111"
+theme.selected_fg       = "#fff"
+theme.selected_bg       = "#000"
 
 return theme
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

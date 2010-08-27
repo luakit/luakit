@@ -96,7 +96,6 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
       PB_CASE(SHOW_FRAME,   gtk_entry_get_has_frame(GTK_ENTRY(w->widget)))
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
     return 0;
@@ -179,7 +178,7 @@ widget_entry(widget_t *w)
 
     /* create gtk label widget as main widget */
     w->widget = gtk_entry_new();
-    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
 
     /* setup default settings */
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);

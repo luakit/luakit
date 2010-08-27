@@ -270,4 +270,40 @@ function parse_scroll(current, max, value)
     end
 end
 
+--- Recursively traverse widget tree and return all widgets.
+-- @param wi The widget.
+function recursive_remove(wi)
+    if not wi then return end
+    local children = {}
+
+    -- Remove pages from notebook widgets
+    if wi.type == "notebook" then
+        while wi:count() ~= 0 do
+            local child = wi:atindex(-1)
+            wi:remove(child)
+            rtable.insert(children, child)
+        end
+    end
+
+    -- Empty other container widgets
+    if wi.get_children then
+        for _, child in ipairs(wi:get_children()) do
+            wi:remove(child)
+            rtable.insert(children, child)
+        end
+    end
+
+    -- Empty bin widgets
+    if wi.get_child and wi:get_child() then
+        local child = wi:get_child()
+        wi:remove(child)
+        rtable.insert(children, child)
+    end
+
+    for _, child in ipairs(children) do
+        children = table.join(recursive_remove(child), children)
+    end
+    return children
+end
+
 -- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80

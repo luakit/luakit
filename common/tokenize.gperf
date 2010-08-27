@@ -22,6 +22,7 @@ focus
 font
 get_alignment
 get_child
+get_children
 get_padding
 get_position
 get_prop
@@ -75,6 +76,7 @@ show_tabs
 spacing
 spawn
 spawn_sync
+ssl_trusted
 started
 status
 suggested_filename
@@ -88,11 +90,11 @@ type
 uri
 vbox
 verbose
-VIDEOS
 version
-webview
+VIDEOS
 webkit_major_version
-webkit_minor_version
 webkit_micro_version
+webkit_minor_version
+webview
 window
 windows

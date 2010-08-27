@@ -31,6 +31,7 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
       LUAKIT_WIDGET_BIN_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push string properties */
       PS_CASE(BG, g_object_get_data(G_OBJECT(w->widget), "bg"))
@@ -74,7 +75,7 @@ widget_eventbox(widget_t *w)
     w->destructor = widget_destructor;
 
     w->widget = gtk_event_box_new();
-    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_widget_show(w->widget);
 
     g_object_connect((GObject*)w->widget,

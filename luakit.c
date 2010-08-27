@@ -55,7 +55,7 @@ parseopts(int argc, char *argv[]) {
     /* parse command line options */
     context = g_option_context_new("[URI...]");
     g_option_context_add_main_entries(context, entries, NULL);
-    g_option_context_add_group(context, gtk_get_option_group(TRUE));
+    g_option_context_add_group(context, gtk_get_option_group(FALSE));
     // TODO Passing gtk options (like --sync) to luakit causes a segfault right
     // here. I'm clueless.
     g_option_context_parse(context, &argc, &argv, NULL);
@@ -63,7 +63,7 @@ parseopts(int argc, char *argv[]) {
 
     /* print version and exit */
     if(only_version) {
-        g_printf("Version: %s\n", VERSION);
+        g_printf("Luakit %s\n", VERSION);
         exit(EXIT_SUCCESS);
     }
 
@@ -130,12 +130,12 @@ main(int argc, char *argv[]) {
     if (sigaction(SIGCHLD, &sigact, NULL))
         fatal("Can't install SIGCHLD handler");
 
+    /* parse command line opts and get uris to load */
+    uris = parseopts(argc, argv);
+
     gtk_init(&argc, &argv);
     if (!g_thread_supported())
         g_thread_init(NULL);
-
-    /* parse command line opts and get uris to load */
-    uris = parseopts(argc, argv);
 
     init_directories();
     init_lua(uris);

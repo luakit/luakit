@@ -69,6 +69,8 @@ binds.mode_binds = {
         buf("^O$",                      function (w, c) w:enter_cmd(":open " .. w:get_current().uri) end),
         buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
         buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. w:get_current().uri) end),
+        buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
+        buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. w:get_current().uri) end),
         buf("^,g$",                     function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
@@ -94,7 +96,10 @@ binds.mode_binds = {
 
         key({},          "r",           function (w) w:reload() end),
         buf("^gh$",                     function (w) w:navigate(homepage) end),
-        buf("^ZZ$",                     function (w) luakit.quit() end),
+
+        -- Window
+        buf("^ZZ$",                     function (w) w:close_win() end),
+        buf("^D$",                      function (w) w:close_win() end),
 
         -- Link following
         key({},          "f",           function (w) w:set_mode("follow") end),
@@ -136,6 +141,7 @@ binds.commands = {
  -- cmd({Command, Alias1, ...},         function (w, arg, opts) .. end, opts),
     cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
     cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
+    cmd({"winopen",     "w"  },         function (w, a)    window.new{a} end),
     cmd({"back"              },         function (w, a)    w:back(tonumber(a) or 1) end),
     cmd({"forward",     "f"  },         function (w, a)    w:forward(tonumber(a) or 1) end),
     cmd({"scroll"            },         function (w, a)    w:scroll_vert(a) end),

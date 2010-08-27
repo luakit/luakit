@@ -52,7 +52,7 @@ luaH_notebook_atindex(lua_State *L)
     if (!widget)
         return 0;
 
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     luaH_object_push(L, child->ref);
     return 1;
 }
@@ -78,8 +78,8 @@ luaH_notebook_remove(lua_State *L)
     widget_t *child = luaH_checkudata(L, 2, &widget_class);
     gint i = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
 
-    if (i != -1)
-        return 0;
+    if (i == -1)
+        luaL_argerror(L, 2, "child not in notebook");
 
     GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
     g_object_ref(G_OBJECT(widget));
@@ -221,7 +221,7 @@ page_added_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 {
     (void) n;
 
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
@@ -236,7 +236,7 @@ page_removed_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
     (void) i;
     (void) n;
 
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
@@ -249,7 +249,7 @@ switch_cb(GtkNotebook *n, GtkNotebookPage *p, guint i, widget_t *w)
 {
     (void) p;
     GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(n), i);
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "widget");
+    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -268,7 +268,7 @@ widget_notebook(widget_t *w)
 
     /* create and setup notebook widget */
     w->widget = gtk_notebook_new();
-    g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_notebook_set_show_border(GTK_NOTEBOOK(w->widget), FALSE);
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(w->widget), TRUE);
 

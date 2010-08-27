@@ -50,6 +50,7 @@ typedef enum {
     SETTINGS,
     WEBKITVIEW,
     SOUPSESSION,
+    COOKIEJAR,
 } property_scope;
 
 typedef union {
@@ -73,6 +74,7 @@ typedef struct {
 property_t properties_table[] = {
   { "accept-language",                              CHAR,   SOUPSESSION, TRUE,  NULL },
   { "accept-language-auto",                         BOOL,   SOUPSESSION, TRUE,  NULL },
+  { "accept-policy",                                INT,    COOKIEJAR,   TRUE,  NULL },
   { "auto-load-images",                             BOOL,   SETTINGS,    TRUE,  NULL },
   { "auto-resize-window",                           BOOL,   SETTINGS,    TRUE,  NULL },
   { "auto-shrink-images",                           BOOL,   SETTINGS,    TRUE,  NULL },
@@ -127,7 +129,6 @@ property_t properties_table[] = {
   { "timeout",                                      INT,    SOUPSESSION, TRUE,  NULL },
   { "title",                                        CHAR,   WEBKITVIEW,  FALSE, NULL },
   { "transparent",                                  BOOL,   WEBKITVIEW,  TRUE,  NULL },
-  { "uri",                                          CHAR,   WEBKITVIEW,  TRUE,  NULL },
   { "use-ntlm",                                     BOOL,   SOUPSESSION, TRUE,  NULL },
   { "user-agent",                                   CHAR,   SETTINGS,    TRUE,  NULL },
   { "user-stylesheet-uri",                          CHAR,   SETTINGS,    TRUE,  NULL },
@@ -257,6 +258,25 @@ notify_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 }
 
 static void
+update_uri(widget_t *w, const gchar *new)
+{
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    const gchar *old = (gchar*) g_object_get_data(G_OBJECT(view), "uri");
+
+    if (!new)
+        new = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view));
+
+    /* uris are the same, do nothing */
+    if (g_strcmp0(old, new)) {
+        g_object_set_data_full(G_OBJECT(view), "uri", g_strdup(new), g_free);
+        lua_State *L = globalconf.L;
+        luaH_object_push(L, w->ref);
+        luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
+        lua_pop(L, 1);
+    }
+}
+
+static void
 notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 {
     (void) ps;
@@ -281,6 +301,10 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
         warn("programmer error, unable to get load status literal");
         break;
     }
+
+    /* update uri after redirects, etc */
+    if ((status & WEBKIT_LOAD_COMMITTED) || (status & WEBKIT_LOAD_FINISHED))
+        update_uri(w, NULL);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -511,7 +535,7 @@ luaH_adjustment_push_values(lua_State *L, GtkAdjustment *a)
 }
 
 static gint
-luaH_webview_get_vscroll(lua_State *L)
+luaH_webview_get_scroll_vert(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
@@ -519,7 +543,7 @@ luaH_webview_get_vscroll(lua_State *L)
 }
 
 static gint
-luaH_webview_get_hscroll(lua_State *L)
+luaH_webview_get_scroll_horiz(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
@@ -641,6 +665,8 @@ get_settings_object(GtkWidget *view, property_t *p)
         return G_OBJECT(view);
       case SOUPSESSION:
         return G_OBJECT(Soup.session);
+      case COOKIEJAR:
+        return G_OBJECT(Soup.cookiejar);
       default:
         break;
     }
@@ -802,6 +828,26 @@ luaH_webview_loading(lua_State *L)
     return 1;
 }
 
+/* check for trusted ssl certificate */
+static gint
+luaH_webview_ssl_trusted(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view));
+    if (uri && !strncmp(uri, "https", 5)) {
+        WebKitWebFrame *frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+        WebKitWebDataSource *src = webkit_web_frame_get_data_source(frame);
+        WebKitNetworkRequest *req = webkit_web_data_source_get_request(src);
+        SoupMessage *soup_msg = webkit_network_request_get_message(req);
+        lua_pushboolean(L, (soup_msg && (soup_message_get_flags(soup_msg)
+            & SOUP_MESSAGE_CERTIFICATE_TRUSTED)) ? TRUE : FALSE);
+        return 1;
+    }
+    /* return nil if not viewing https uri */
+    return 0;
+}
+
 void
 show_scrollbars(widget_t *w, gboolean show)
 {
@@ -836,8 +882,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(GET_PROP,         luaH_webview_get_prop)
       PF_CASE(SET_PROP,         luaH_webview_set_prop)
       /* push scroll adjustment methods */
-      PF_CASE(GET_SCROLL_HORIZ, luaH_webview_get_hscroll)
-      PF_CASE(GET_SCROLL_VERT,  luaH_webview_get_vscroll)
+      PF_CASE(GET_SCROLL_HORIZ, luaH_webview_get_scroll_horiz)
+      PF_CASE(GET_SCROLL_VERT,  luaH_webview_get_scroll_vert)
       PF_CASE(SET_SCROLL_HORIZ, luaH_webview_set_scroll_horiz)
       PF_CASE(SET_SCROLL_VERT,  luaH_webview_set_scroll_vert)
       /* push search methods */
@@ -850,6 +896,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(EVAL_JS,          luaH_webview_eval_js)
       PF_CASE(LOADING,          luaH_webview_loading)
       PF_CASE(RELOAD,           luaH_webview_reload)
+      PF_CASE(SSL_TRUSTED,      luaH_webview_ssl_trusted)
       /* push source viewing methods */
       PF_CASE(GET_VIEW_SOURCE,  luaH_webview_get_view_source)
       PF_CASE(SET_VIEW_SOURCE,  luaH_webview_set_view_source)
@@ -858,17 +905,38 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PS_CASE(HOVERED_URI, g_object_get_data(G_OBJECT(view), "hovered-uri"))
 
       case L_TK_URI:
-        g_object_get(G_OBJECT(view), "uri", &tmp.c, NULL);
+        tmp.c = g_object_get_data(G_OBJECT(view), "uri");
         lua_pushstring(L, tmp.c);
-        g_free(tmp.c);
         return 1;
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
         break;
     }
 
     return 0;
+}
+
+static gchar*
+parse_uri(const gchar *uri) {
+    gchar *curdir, *filepath, *new;
+    /* check for scheme or "about:blank" */
+    if (g_strrstr(uri, "://") || !g_strcmp0(uri, "about:blank"))
+        new = g_strdup(uri);
+    /* check if uri points to a file */
+    else if (file_exists(uri)) {
+        if (g_path_is_absolute(uri))
+            new = g_strdup_printf("file://%s", uri);
+        else { /* make path absolute */
+            curdir = g_get_current_dir();
+            filepath = g_build_filename(curdir, uri, NULL);
+            new = g_strdup_printf("file://%s", filepath);
+            g_free(curdir);
+            g_free(filepath);
+        }
+    /* default to http:// scheme */
+    } else
+        new = g_strdup_printf("http://%s", uri);
+    return new;
 }
 
 /* The __newindex method for the webview object */
@@ -883,20 +951,15 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
     switch(token)
     {
       case L_TK_URI:
-        tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
-        if (g_strrstr(tmp.c, "://") || !g_strcmp0(tmp.c, "about:blank"))
-            tmp.c = g_strdup(tmp.c);
-        else if(file_exists(tmp.c))
-            tmp.c = g_strdup_printf("file://%s", tmp.c);
-        else
-            tmp.c = g_strdup_printf("http://%s", tmp.c);
+        tmp.c = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
+        update_uri(w, tmp.c);
         g_free(tmp.c);
-        break;
+        return 0;
 
       case L_TK_SHOW_SCROLLBARS:
         show_scrollbars(w, luaH_checkboolean(L, 3));
-        return 0;
+        break;
 
       default:
         warn("unknown property: %s", luaL_checkstring(L, 2));
@@ -1070,7 +1133,7 @@ widget_webview(widget_t *w)
 
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
-    g_object_set_data(G_OBJECT(w->widget), "widget", w);
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", w);
     g_object_set_data(G_OBJECT(w->widget), "webview", view);
     gtk_container_add(GTK_CONTAINER(w->widget), view);
 

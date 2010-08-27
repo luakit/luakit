@@ -19,12 +19,6 @@
  *
  */
 
-/* TODO
- *  - Add `get_children()` method to return a table of widgets in the box
- *  - In the box destructor function detach all child windows
- */
-
-
 #include "luah.h"
 #include "widgets/common.h"
 
@@ -68,16 +62,6 @@ luaH_box_pack_end(lua_State *L)
     return 0;
 }
 
-/* direct wrapper around gtk_container_remove */
-static gint
-luaH_container_remove(lua_State *L)
-{
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
-    gtk_container_remove(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
-    return 0;
-}
-
 static gint
 luaH_box_index(lua_State *L, luakit_token_t token)
 {
@@ -86,11 +70,11 @@ luaH_box_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(PACK_START,   luaH_box_pack_start)
       PF_CASE(PACK_END,     luaH_box_pack_end)
-      PF_CASE(REMOVE,       luaH_container_remove)
+      PF_CASE(PACK_START,   luaH_box_pack_start)
       PF_CASE(REORDER,      luaH_box_reorder_child)
       /* push boolean properties */
       PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
@@ -133,7 +117,7 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
         w->newindex = luaH_box_newindex;                                     \
         w->destructor = widget_destructor;                                   \
         w->widget = gtk_##type##_new(FALSE, 0);                              \
-        g_object_set_data(G_OBJECT(w->widget), "widget", (gpointer) w);      \
+        g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);  \
         gtk_widget_show(w->widget);                                          \
         g_object_connect((GObject*)w->widget,                                \
           "signal::add",        add_cb,        w,                            \
