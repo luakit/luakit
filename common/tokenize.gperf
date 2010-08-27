@@ -24,6 +24,7 @@ focus
 font
 get_alignment
 get_child
+get_children
 get_padding
 get_position
 get_prop
@@ -50,6 +51,7 @@ pack_end
 pack_start
 reload
 remove
+reorder
 search
 selectable
 set_alignment
@@ -79,9 +81,9 @@ uri
 vbox
 verbose
 version
-webview
 webkit_major_version
-webkit_minor_version
 webkit_micro_version
+webkit_minor_version
+webview
 window
 windows

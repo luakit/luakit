@@ -31,6 +31,7 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
       LUAKIT_WIDGET_BIN_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push string properties */
       PS_CASE(BG, g_object_get_data(G_OBJECT(w->widget), "bg"))

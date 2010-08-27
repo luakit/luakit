@@ -45,6 +45,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
       LUAKIT_WIDGET_BIN_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push string methods */
       PS_CASE(TITLE,    gtk_window_get_title(GTK_WINDOW(w->widget)))

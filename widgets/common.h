@@ -23,27 +23,35 @@
 
 #include "widget.h"
 
-#define LUAKIT_WIDGET_INDEX_COMMON                   \
-    case L_TK_SHOW:                                  \
-        lua_pushcfunction(L, luaH_widget_show);      \
-        return 1;                                    \
-    case L_TK_HIDE:                                  \
-        lua_pushcfunction(L, luaH_widget_hide);      \
-        return 1;                                    \
-    case L_TK_FOCUS:                                 \
-        lua_pushcfunction(L, luaH_widget_focus);     \
-        return 1;                                    \
-    case L_TK_DESTROY:                               \
-        lua_pushcfunction(L, luaH_widget_destroy);   \
-        return 1;
+#define LUAKIT_WIDGET_INDEX_COMMON                    \
+    case L_TK_SHOW:                                   \
+      lua_pushcfunction(L, luaH_widget_show);         \
+      return 1;                                       \
+    case L_TK_HIDE:                                   \
+      lua_pushcfunction(L, luaH_widget_hide);         \
+      return 1;                                       \
+    case L_TK_FOCUS:                                  \
+      lua_pushcfunction(L, luaH_widget_focus);        \
+      return 1;                                       \
+    case L_TK_DESTROY:                                \
+      lua_pushcfunction(L, luaH_widget_destroy);      \
+      return 1;
 
-#define LUAKIT_WIDGET_BIN_INDEX_COMMON               \
-    case L_TK_SET_CHILD:                             \
-        lua_pushcfunction(L, luaH_widget_set_child); \
-        return 1;                                    \
-    case L_TK_GET_CHILD:                             \
-        lua_pushcfunction(L, luaH_widget_get_child); \
-        return 1;
+#define LUAKIT_WIDGET_BIN_INDEX_COMMON                \
+    case L_TK_SET_CHILD:                              \
+      lua_pushcfunction(L, luaH_widget_set_child);    \
+      return 1;                                       \
+    case L_TK_GET_CHILD:                              \
+      lua_pushcfunction(L, luaH_widget_get_child);    \
+      return 1;                                       \
+
+#define LUAKIT_WIDGET_CONTAINER_INDEX_COMMON          \
+    case L_TK_REMOVE:                                 \
+      lua_pushcfunction(L, luaH_widget_remove);       \
+      return 1;                                       \
+    case L_TK_GET_CHILDREN:                           \
+      lua_pushcfunction(L, luaH_widget_get_children); \
+      return 1;
 
 gboolean button_release_cb(GtkWidget*, GdkEventButton*, widget_t*);
 gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
@@ -54,7 +62,9 @@ gboolean true_cb();
 gint luaH_widget_destroy(lua_State*);
 gint luaH_widget_focus(lua_State*);
 gint luaH_widget_get_child(lua_State*);
+gint luaH_widget_get_children(lua_State*);
 gint luaH_widget_hide(lua_State*);
+gint luaH_widget_remove(lua_State*);
 gint luaH_widget_set_child(lua_State*);
 gint luaH_widget_show(lua_State*);
 
