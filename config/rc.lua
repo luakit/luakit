@@ -36,4 +36,4 @@ function info(...) if luakit.verbose then print(string.format(...)) end end
 
 window.new(uris)
 
--- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
+-- vim: et:sw=4:ts=8:sts=4:tw=80

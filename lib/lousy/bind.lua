@@ -205,4 +205,4 @@ function hit(binds, mods, key, buffer, enable_buffer, arg)
     return true
 end
 
--- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
+-- vim: et:sw=4:ts=8:sts=4:tw=80
