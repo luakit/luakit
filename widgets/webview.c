@@ -873,6 +873,29 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
     return 0;
 }
 
+static gchar*
+parse_uri(const gchar *uri) {
+    gchar *curdir, *filepath, *new;
+    /* check for scheme or "about:blank" */
+    if (g_strrstr(uri, "://") || !g_strcmp0(uri, "about:blank"))
+        new = g_strdup(uri);
+    /* check if uri points to a file */
+    else if (file_exists(uri)) {
+        if (g_path_is_absolute(uri))
+            new = g_strdup_printf("file://%s", uri);
+        else { /* make path absolute */
+            curdir = g_get_current_dir();
+            filepath = g_build_filename(curdir, uri, NULL);
+            new = g_strdup_printf("file://%s", filepath);
+            g_free(curdir);
+            g_free(filepath);
+        }
+    /* default to http:// scheme */
+    } else
+        new = g_strdup_printf("http://%s", uri);
+    return new;
+}
+
 /* The __newindex method for the webview object */
 static gint
 luaH_webview_newindex(lua_State *L, luakit_token_t token)
@@ -885,13 +908,7 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
     switch(token)
     {
       case L_TK_URI:
-        tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
-        if (g_strrstr(tmp.c, "://") || !g_strcmp0(tmp.c, "about:blank"))
-            tmp.c = g_strdup(tmp.c);
-        else if(file_exists(tmp.c))
-            tmp.c = g_strdup_printf("file://%s", tmp.c);
-        else
-            tmp.c = g_strdup_printf("http://%s", tmp.c);
+        tmp.c = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
         g_free(tmp.c);
         break;
