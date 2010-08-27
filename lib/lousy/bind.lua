@@ -164,6 +164,14 @@ end
 -- @return The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing).
 function hit(binds, mods, key, buffer, enable_buffer, arg)
+    -- Convert ISO_Left_Tab to S-Tab
+    if key == "ISO_Left_Tab" then
+        key = "Tab"
+        if not util.table.hasitem(mods, "Shift") then
+            table.insert(mods, "Shift")
+        end
+    end
+
     -- Filter modifers table
     local mods = filter_mods(mods, type(key) == "string" and #key == 1)
 
