@@ -8,13 +8,26 @@ if exists('b:current_syntax')
 endif
 
 runtime! syntax/lua.vim
-unlet b:current_syntax
 
+" Javascript between [=[ & ]=] regions
+unlet b:current_syntax
 syntax include @JAVASCRIPT syntax/javascript.vim
 try | syntax include @JAVASCRIPT after/syntax/javascript.vim | catch | endtry
-
-syntax region jsBLOCK matchgroup=jsBLOCKMATCH start=/\[\[/ end=/\]\]/ contains=@JAVASCRIPT
-
+syntax region jsBLOCK matchgroup=jsBLOCKMATCH start=/\[=\[/ end=/\]=\]/ contains=@JAVASCRIPT
 hi link jsBLOCKMATCH SpecialComment
+
+" HTML between [==[ & ]==] regions
+unlet b:current_syntax
+syntax include @HTML syntax/html.vim
+try | syntax include @HTML after/syntax/html.vim | catch | endtry
+syntax region htmlBLOCK matchgroup=htmlBLOCKMATCH start=/\[==\[/ end=/\]==\]/ contains=@HTML
+hi link htmlBLOCKMATCH SpecialComment
+
+" CSS between [===[ & ]===] regions
+unlet b:current_syntax
+syntax include @CSS syntax/css.vim
+try | syntax include @CSS after/syntax/css.vim | catch | endtry
+syntax region cssBLOCK matchgroup=cssBLOCKMATCH start=/\[===\[/ end=/\]===\]/ contains=@CSS
+hi link cssBLOCKMATCH SpecialComment
 
 let b:current_syntax = 'luakit'
