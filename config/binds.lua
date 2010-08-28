@@ -61,21 +61,21 @@ binds.mode_binds = {
         -- Clipboard
         key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
         key({},          "P",           function (w) w:new_tab(luakit.get_selection())  end),
-        buf("^yy$",                     function (w) luakit.set_selection(w:get_current().uri) end),
+        buf("^yy$",                     function (w) luakit.set_selection((w:get_current() or {}).uri or "") end),
         buf("^yt$",                     function (w) luakit.set_selection(w.win.title) end),
 
         -- Commands
-        buf("^o$",                      function (w, c) w:enter_cmd(":open ") end),
-        buf("^O$",                      function (w, c) w:enter_cmd(":open " .. w:get_current().uri) end),
+        buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
         buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
-        buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. w:get_current().uri) end),
         buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
-        buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. w:get_current().uri) end),
+        buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. ((w:get_current() or {}).uri or "")) end),
+        buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. ((w:get_current() or {}).uri or "")) end),
+        buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
         buf("^,g$",                     function (w, c) w:enter_cmd(":websearch google ") end),
 
         -- Searching
-        key({},          "/",           function (w) w:start_search(true)  end),
-        key({},          "?",           function (w) w:start_search(false) end),
+        key({},          "/",           function (w) w:start_search("/")  end),
+        key({},          "?",           function (w) w:start_search("?") end),
         key({},          "n",           function (w) w:search(nil, true) end),
         key({},          "N",           function (w) w:search(nil, false) end),
 
@@ -105,7 +105,7 @@ binds.mode_binds = {
         key({},          "f",           function (w) w:set_mode("follow") end),
 
         -- Bookmarking
-        key({},          "B",           function (w) w:enter_cmd(":bookmark " .. w:get_current().uri .. " ") end),
+        key({},          "B",           function (w) w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
         buf("^gb$",                     function (w) w:navigate(bookmarks.dump_html()) end),
         buf("^gB$",                     function (w) w:new_tab (bookmarks.dump_html()) end),
 
