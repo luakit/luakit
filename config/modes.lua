@@ -68,6 +68,17 @@ new_mode("normal", {
     end,
 })
 
+-- Setup insert mode
+new_mode("insert", {
+    enter = function (w)
+        local i, p = w.ibar.input, w.ibar.prompt
+        i:hide()
+        i.text = ""
+        p.text = "-- INSERT --"
+        p:show()
+    end,
+})
+
 -- Setup command mode
 new_mode("command", {
     enter = function (w)
