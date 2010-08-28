@@ -26,67 +26,62 @@ bookmarks_file = capi.luakit.data_dir .. '/bookmarks'
 html_out       = capi.luakit.cache_dir  .. '/bookmarks.html'
 
 -- Templates
-block_template = [[<div class="tag"><h1>{tag}</h1><ul>
-{links}
-</ul></div>]]
+block_template = [==[<div class="tag"><h1>{tag}</h1><ul>{links}</ul></div>]==]
+link_template  = [==[<li><a href="{uri}">{name}</a></li>]==]
 
-link_template = [[<li><a href="{uri}">{name}</a></li>]]
-
-html_template = [[
+html_template = [==[
 <html>
 <head>
     <title>{title}</title>
+    <style type="text/css">
     {style}
+    </style>
 </head>
 <body>
-
 {tags}
-
 </body>
-</html>]]
+</html>
+]==]
 
 -- Template subs
 html_page_title = "Bookmarks"
 
-html_style = [[
-
-    <style type="text/css">
-        body {
-            font-family: monospace;
-            margin: 25px;
-            line-height: 1.5em;
-            font-size: 12pt;
-        }
-        div.tag {
-            width: 100%;
-            padding: 0px;
-            margin: 0 0 25px 0;
-        }
-        .tag ul {
-            padding: 0;
-            margin: 0;
-            list-style-type: none;
-        }
-        .tag h1 {
-            font-size: 12pt;
-            font-weight: bold;
-            font-style: normal;
-            font-variant: small-caps;
-            padding: 0 0 5px 0;
-            margin: 0;
-            color: #333333;
-            border-bottom: 1px solid #aaa;
-        }
-        .tag a:link {
-            color: #0077bb;
-            text-decoration: none;
-        }
-        .tag a:hover {
-            color: #0077bb;
-            text-decoration: underline;
-        }
-    </style>
-]]
+html_style = [===[
+    body {
+        font-family: monospace;
+        margin: 25px;
+        line-height: 1.5em;
+        font-size: 12pt;
+    }
+    div.tag {
+        width: 100%;
+        padding: 0px;
+        margin: 0 0 25px 0;
+    }
+    .tag ul {
+        padding: 0;
+        margin: 0;
+        list-style-type: none;
+    }
+    .tag h1 {
+        font-size: 12pt;
+        font-weight: bold;
+        font-style: normal;
+        font-variant: small-caps;
+        padding: 0 0 5px 0;
+        margin: 0;
+        color: #333333;
+        border-bottom: 1px solid #aaa;
+    }
+    .tag a:link {
+        color: #0077bb;
+        text-decoration: none;
+    }
+    .tag a:hover {
+        color: #0077bb;
+        text-decoration: underline;
+    }
+]===]
 
 --- Clear in-memory bookmarks
 function clear()
