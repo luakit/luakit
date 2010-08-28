@@ -53,7 +53,10 @@ webview.init_funcs = {
     progress_update = function (view, w)
         for _, sig in ipairs({"load-status", "property::progress"}) do
             view:add_signal(sig, function (v)
-                if w:is_current(v) then w:update_progress(v) end
+                if w:is_current(v) then
+                    w:update_progress(v)
+                    w:update_ssl(v)
+                end
             end)
         end
     end,

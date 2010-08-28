@@ -45,6 +45,7 @@ function window.build()
                 layout = hbox(),
                 ebox   = eventbox(),
                 buf    = label(),
+                ssl    = label(),
                 tabi   = label(),
                 scroll = label(),
             },
@@ -79,6 +80,7 @@ function window.build()
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout:pack_start(r.buf,    false, false, 0)
+    r.layout:pack_start(r.ssl,    false, false, 0)
     r.layout:pack_start(r.tabi,   false, false, 0)
     r.layout:pack_start(r.scroll, false, false, 0)
     r.ebox:set_child(r.layout)
@@ -103,6 +105,7 @@ function window.build()
     w.tabs.show_tabs = false
     l.loaded:hide()
     l.uri.selectable = true
+    r.ssl:hide()
 
     return w
 end
@@ -123,6 +126,8 @@ window.init_funcs = {
             w:update_uri(view)
             w:update_progress(view)
             w:update_tab_labels(idx)
+            w:update_buf()
+            w:update_ssl(view)
         end)
     end,
 
@@ -177,6 +182,7 @@ window.init_funcs = {
             [s.l.uri]    = theme.uri_sbar_font,
             [s.l.loaded] = theme.loaded_sbar_font,
             [s.r.buf]    = theme.buf_sbar_font,
+            [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
             [s.r.scroll] = theme.scroll_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
@@ -444,6 +450,24 @@ window.methods = {
         end
     end,
 
+    update_ssl = function (w, view)
+        if not view then view = w:get_current() end
+        local trusted = view:ssl_trusted()
+        local theme = lousy.theme.get()
+        local ssl = w.sbar.r.ssl
+        if trusted == true then
+            ssl.fg = theme.trust_fg
+            ssl.text = "(trust)"
+            ssl:show()
+        elseif trusted == false then
+            ssl.fg = theme.notrust_fg
+            ssl.text = "(notrust)"
+            ssl:show()
+        else
+            ssl:hide()
+        end
+    end,
+
     update_buf = function (w)
         local buf = w.sbar.r.buf
         if w.buffer then
@@ -524,19 +548,18 @@ window.methods = {
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(view)
                 t.label.text = lousy.util.escape(string.format("%-40s", title))
-                w:apply_tablabel_theme(t, i == current, view:ssl_trusted())
+                w:apply_tablabel_theme(t, i == current)
             end
         end
         tb.ebox:show()
     end,
 
     -- Theme functions
-    apply_tablabel_theme = function (w, t, selected, trust)
+    apply_tablabel_theme = function (w, t, selected)
         local theme = lousy.theme.get()
         selected = (selected and "_selected") or ""
-        trust = (trust == true and "_trust") or (trust == false and "_notrust") or ""
-        t.label.fg = theme[string.format("tab%s%s_fg", selected, trust)]
-        t.ebox.bg = theme[string.format("tab%s%s_bg", selected, trust)]
+        t.label.fg = theme[string.format("tab%s_fg", selected)]
+        t.ebox.bg = theme[string.format("tab%s_bg", selected)]
     end,
 
     close_win = function (w)
