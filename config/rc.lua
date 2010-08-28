@@ -3,6 +3,9 @@
 -- Load library of useful functions for luakit
 require "lousy"
 
+-- Small util function to print output only when luakit.verbose is true
+function info(...) if luakit.verbose then print(string.format(...)) end end
+
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
 require "globals"
@@ -14,6 +17,10 @@ lousy.theme.init(lousy.util.find_config("theme.lua"))
 -- Load users window class
 -- ("$XDG_CONFIG_HOME/luakit/window.lua" or "/etc/xdg/luakit/window.lua")
 require "window"
+
+-- Load users mode configuration
+-- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
+require "modes"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
@@ -30,9 +37,6 @@ require "formfiller"
 require "bookmarks"
 bookmarks.load()
 bookmarks.dump_html()
-
--- Small util functions
-function info(...) if luakit.verbose then print(string.format(...)) end end
 
 window.new(uris)
 
