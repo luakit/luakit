@@ -473,6 +473,7 @@ window.methods = {
             layout = hbox(),
         }
         t.label.font = theme.tab_font
+        t.label:set_width(1)
         t.layout:pack_start(t.label, true,  true, 0)
         t.layout:pack_start(t.sep,   false,  false, 0)
         t.ebox:set_child(t.layout)

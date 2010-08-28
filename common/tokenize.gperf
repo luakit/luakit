@@ -64,6 +64,7 @@ set_scroll_vert
 set_selection
 set_title
 set_view_source
+set_width
 show
 show_border
 show_frame
