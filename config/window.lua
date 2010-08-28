@@ -437,10 +437,10 @@ window.methods = {
             elseif val == max then val = "Bot"
             else val = string.format("%2d%%", (val/max) * 100)
             end
-            w.sbar.r.scroll.text = val
-            w.sbar.r.scroll:show()
+            if scroll.text ~= val then scroll.text = val end
+            scroll:show()
         else
-            w.sbar.r.scroll:hide()
+            scroll:hide()
         end
     end,
 
