@@ -19,10 +19,14 @@ theme.ibar_fg           = "#000"
 theme.ibar_bg           = "#fff"
 
 -- Tab label
-theme.tab_fg            = "#999"
-theme.tab_bg            = "#111"
+theme.tab_fg            = "#888"
+theme.tab_bg            = "#222"
 theme.selected_fg       = "#fff"
 theme.selected_bg       = "#000"
+
+-- Trusted/untrusted ssl colours
+theme.trust_fg          = "#0F0"
+theme.notrust_fg        = "#F00"
 
 return theme
 -- vim: et:sw=4:ts=8:sts=4:tw=80
