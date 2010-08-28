@@ -22,106 +22,106 @@ local formsdir   = ff.formsdir or luakit.data_dir .. "/forms/"
 local editor_cmd = string.format("%s -e %s", term, editor)
 
 -- Javascript functions
-local dump_function = [[
-(function dump() {
-    var rv='';
-    var allFrames = new Array(window);
-    for(f=0;f<window.frames.length;f=f+1) {
-        allFrames.push(window.frames[f]);
-    }
-    for(j=0;j<allFrames.length;j=j+1) {
-        try {
-            for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
-                var fn = allFrames[j].document.forms[f].name;
-                var fi = allFrames[j].document.forms[f].id;
-                var fm = allFrames[j].document.forms[f].method;
-                var fa = allFrames[j].document.forms[f].action;
-                var form = '!form[' + fn + '|' + fi + '|' + fm + '|' + fa + ']:autosubmit=0\n';
-                var fb = '';
-                var xp_res=allFrames[j].document.evaluate('.//input', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
-                var input;
-                while(input=xp_res.iterateNext()) {
-                    if(input.name != "") {
-                        var type=(input.type?input.type:text);
-                        if(type == 'text' || type == 'password' || type == 'search') {
-                            fb += input.name + '(' + type + '):' + input.value + '\n';
-                        }
-                        else if(type == 'checkbox' || type == 'radio') {
-                            fb += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
-                        }
-                    }
-                }
-                xp_res=allFrames[j].document.evaluate('.//textarea', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
-                var input;
-                while(input=xp_res.iterateNext()) {
-                    if(input.name != "") {
-                        fb += input.name + '(textarea):' + input.value + '\n';
-                    }
-                }
-                if(fb.length) {
-                    rv += form + fb;
-                }
-            }
+local dump_function = [=[
+    (function dump() {
+        var rv='';
+        var allFrames = new Array(window);
+        for(f=0;f<window.frames.length;f=f+1) {
+            allFrames.push(window.frames[f]);
         }
-        catch(err) { }
-    }
-    return rv;
-})()]]
-
-local insert_function = [[
-function insert(fname, ftype, fvalue, fchecked) {
-    var allFrames = new Array(window);
-    for(f=0;f<window.frames.length;f=f+1) {
-        allFrames.push(window.frames[f]);
-    }
-    for(j=0;j<allFrames.length;j=j+1) {
-        try {
-            if(ftype == 'text' || ftype == 'password' || ftype == 'search' || ftype == 'textarea') {
-                allFrames[j].document.getElementsByName(fname)[0].value = fvalue;
-            }
-            else if(ftype == 'checkbox') {
-                allFrames[j].document.getElementsByName(fname)[0].checked = fchecked;
-            }
-            else if(ftype == 'radio') {
-                var radios = allFrames[j].document.getElementsByName(fname);
-                for(r=0;r<radios.length;r+=1) {
-                    if(radios[r].value == fvalue) {
-                        radios[r].checked = fchecked;
-                    }
-                }
-            }
-        }
-        catch(err) { }
-    }
-};]]
-
-local submit_function = [[
-function submitForm(fname, fid, fmethod, faction) {
-    var allFrames = new Array(window);
-    for(f=0;f<window.frames.length;f=f+1) {
-        allFrames.push(window.frames[f]);
-    }
-    for(j=0;j<allFrames.length;j=j+1) {
-        for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
-            var myForm = allFrames[j].document.forms[f];
-            if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid) || (myForm.action != "" && myForm.action == faction)) && myForm.method == fmethod) {
-                try {
-                    var xp_res=allFrames[j].document.evaluate(".//input[@type='submit']", myForm, null, XPathResult.ANY_TYPE,null);
-                } catch (err) { }
-                var input;
-                try {
+        for(j=0;j<allFrames.length;j=j+1) {
+            try {
+                for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
+                    var fn = allFrames[j].document.forms[f].name;
+                    var fi = allFrames[j].document.forms[f].id;
+                    var fm = allFrames[j].document.forms[f].method;
+                    var fa = allFrames[j].document.forms[f].action;
+                    var form = '!form[' + fn + '|' + fi + '|' + fm + '|' + fa + ']:autosubmit=0\n';
+                    var fb = '';
+                    var xp_res=allFrames[j].document.evaluate('.//input', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
+                    var input;
                     while(input=xp_res.iterateNext()) {
-                            input.type='text';
+                        if(input.name != "") {
+                            var type=(input.type?input.type:text);
+                            if(type == 'text' || type == 'password' || type == 'search') {
+                                fb += input.name + '(' + type + '):' + input.value + '\n';
+                            }
+                            else if(type == 'checkbox' || type == 'radio') {
+                                fb += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
+                            }
+                        }
                     }
-                } catch (err) { }
-                try {
-                    myForm.submit();
-                } catch (err) { }
-                return;
+                    xp_res=allFrames[j].document.evaluate('.//textarea', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
+                    var input;
+                    while(input=xp_res.iterateNext()) {
+                        if(input.name != "") {
+                            fb += input.name + '(textarea):' + input.value + '\n';
+                        }
+                    }
+                    if(fb.length) {
+                        rv += form + fb;
+                    }
+                }
+            }
+            catch(err) { }
+        }
+        return rv;
+    })()]=]
+
+local insert_function = [=[
+    function insert(fname, ftype, fvalue, fchecked) {
+        var allFrames = new Array(window);
+        for(f=0;f<window.frames.length;f=f+1) {
+            allFrames.push(window.frames[f]);
+        }
+        for(j=0;j<allFrames.length;j=j+1) {
+            try {
+                if(ftype == 'text' || ftype == 'password' || ftype == 'search' || ftype == 'textarea') {
+                    allFrames[j].document.getElementsByName(fname)[0].value = fvalue;
+                }
+                else if(ftype == 'checkbox') {
+                    allFrames[j].document.getElementsByName(fname)[0].checked = fchecked;
+                }
+                else if(ftype == 'radio') {
+                    var radios = allFrames[j].document.getElementsByName(fname);
+                    for(r=0;r<radios.length;r+=1) {
+                        if(radios[r].value == fvalue) {
+                            radios[r].checked = fchecked;
+                        }
+                    }
+                }
+            }
+            catch(err) { }
+        }
+    };]=]
+
+local submit_function = [=[
+    function submitForm(fname, fid, fmethod, faction) {
+        var allFrames = new Array(window);
+        for(f=0;f<window.frames.length;f=f+1) {
+            allFrames.push(window.frames[f]);
+        }
+        for(j=0;j<allFrames.length;j=j+1) {
+            for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
+                var myForm = allFrames[j].document.forms[f];
+                if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid) || (myForm.action != "" && myForm.action == faction)) && myForm.method == fmethod) {
+                    try {
+                        var xp_res=allFrames[j].document.evaluate(".//input[@type='submit']", myForm, null, XPathResult.ANY_TYPE,null);
+                    } catch (err) { }
+                    var input;
+                    try {
+                        while(input=xp_res.iterateNext()) {
+                                input.type='text';
+                        }
+                    } catch (err) { }
+                    try {
+                        myForm.submit();
+                    } catch (err) { }
+                    return;
+                }
             }
         }
-    }
-};]]
+    };]=]
 
 -- Add `w:formfiller(action)` method when a webview is active.
 -- TODO: This could easily be split up into several smaller functions.

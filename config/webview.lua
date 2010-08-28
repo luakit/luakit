@@ -320,4 +320,4 @@ table.insert(window.indexes, 1, function (w, k)
     return function (_, ...) return func(view, w, ...) end
 end)
 
--- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
+-- vim: et:sw=4:ts=8:sts=4:tw=80

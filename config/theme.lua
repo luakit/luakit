@@ -33,4 +33,4 @@ theme.selected_fg       = "#fff"
 theme.selected_bg       = "#000"
 
 return theme
--- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
+-- vim: et:sw=4:ts=8:sts=4:tw=80

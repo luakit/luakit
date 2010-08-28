@@ -68,4 +68,4 @@ function set_default(object, mode)
 end
 
 setmetatable(_M, { __call = function(_, ...) return set(...) end })
--- vim: ft=lua:et:sw=4:ts=8:sts=4:tw=80
+-- vim: et:sw=4:ts=8:sts=4:tw=80
