@@ -17,6 +17,18 @@ local webkit_version = string.format("WebKitGTK+/%d.%d.%d", luakit.webkit_major_
 local luakit_version = string.format("luakit/%s", luakit.version)
 globals.useragent = string.format("Mozilla/5.0 (%s) %s %s", string.match(out, "([^\n]*)"), webkit_version, luakit_version)
 
+-- Search common locations for a ca file which is used for ssl connection validation.
+local ca_files = {"/etc/certs/ca-certificates.crt", "/etc/ssl/certs/ca-certificates.crt"}
+for _, ca_file in ipairs(ca_files) do
+    if os.exists(ca_file) then
+        globals.ca_file = ca_file
+        break
+    end
+end
+
+-- Change to stop navigation sites with invalid or expired ssl certificates
+globals.ssl_strict = false
+
 -- Search engines
 search_engines = {
     luakit      = "http://luakit.org/search/index/luakit?q={0}",

@@ -9,16 +9,22 @@ webview = {}
 webview.init_funcs = {
     -- Set global properties
     set_global_props = function (view, w)
+        -- Set proxy options
         local proxy = globals.http_proxy or os.getenv("http_proxy")
         if proxy then view:set_prop('proxy-uri', proxy) end
         view:set_prop('user-agent', globals.useragent)
-    end,
 
-    -- Uncomment the following function if you want to enable SSL certs validation.
-    --strict_ssl = function (view, w)
-    --    w:set('ssl-ca-file', '/etc/certs/ca-certificates.crt')
-    --    w:set('ssl-strict', true)
-    --end,
+        -- Set ssl options
+        if globals.ssl_strict ~= nil then
+            view:set_prop('ssl-strict', globals.ssl_strict)
+        end
+        if globals.ca_file and os.exists(globals.ca_file) then
+            view:set_prop('ssl-ca-file', globals.ca_file)
+            -- Warning: update the following variable if 'ssl-ca-file' is
+            -- changed anywhere else.
+            w.checking_ssl = true
+        end
+    end,
 
     -- Update window and tab titles
     title_update = function (view, w)
