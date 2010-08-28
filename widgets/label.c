@@ -65,6 +65,15 @@ luaH_label_get_padding(lua_State *L)
 }
 
 static gint
+luaH_label_set_width(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint len = luaL_checknumber(L, 2);
+    gtk_label_set_width_chars(GTK_LABEL(w->widget), len);
+    return 0;
+}
+
+static gint
 luaH_label_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -78,6 +87,7 @@ luaH_label_index(lua_State *L, luakit_token_t token)
       PF_CASE(GET_PADDING,      luaH_label_get_padding);
       PF_CASE(SET_ALIGNMENT,    luaH_label_set_alignment);
       PF_CASE(SET_PADDING,      luaH_label_set_padding);
+      PF_CASE(SET_WIDTH,        luaH_label_set_width);
       /* push string properties */
       PS_CASE(FG,               g_object_get_data(G_OBJECT(w->widget), "fg"))
       PS_CASE(FONT,             g_object_get_data(G_OBJECT(w->widget), "font"))

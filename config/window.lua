@@ -16,7 +16,7 @@ local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
 
 -- Build and pack window widgets
-local function build_window()
+function window.build()
     -- Create a table for widgets and state variables for a window
     local w = {
         win    = widget{type="window"},
@@ -48,6 +48,7 @@ local function build_window()
                 layout = hbox(),
                 ebox   = eventbox(),
                 buf    = label(),
+                ssl    = label(),
                 tabi   = label(),
                 scroll = label(),
             },
@@ -86,6 +87,7 @@ local function build_window()
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout:pack_start(r.buf,    false, false, 0)
+    r.layout:pack_start(r.ssl,    false, false, 0)
     r.layout:pack_start(r.tabi,   false, false, 0)
     r.layout:pack_start(r.scroll, false, false, 0)
     r.ebox:set_child(r.layout)
@@ -110,130 +112,95 @@ local function build_window()
     w.tabs.show_tabs = false
     l.loaded:hide()
     l.uri.selectable = true
+    r.ssl:hide()
 
     return w
 end
 
-local function attach_window_signals(w)
+-- Table of functions to call on window creation. Normally used to add signal
+-- handlers to the new windows widgets.
+window.init_funcs = {
     -- Attach notebook widget signals
-    w.tabs:add_signal("page-added", function (nbook, view, idx)
-        w:update_tab_count(idx)
-        w:update_tab_labels()
-    end)
-
-    w.tabs:add_signal("switch-page", function (nbook, view, idx)
-        w:update_tab_count(idx)
-        w:update_win_title(view)
-        w:update_uri(view)
-        w:update_progress(view)
-        w:update_tab_labels(idx)
-    end)
-
-    w.win:add_signal("destroy", function ()
-        -- Call the quit function if this was the last window left
-        if #luakit.windows == 0 then luakit.quit() end
-    end)
-
-    -- Attach window widget signals
-    w.win:add_signal("key-press", function (win, mods, key)
-        -- Reset command line completion
-        if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
-            w:update_uri()
-            w.compl_index = 0
-        end
-
-        if w:hit(mods, key) then
-            return true
-        end
-    end)
-
-    w.win:add_signal("mode-changed", function (win, mode)
-        local i, p = w.ibar.input, w.ibar.prompt
-
-        w:update_binds(mode)
-        w.cmd_hist_cursor = nil
-
-        -- Clear following hints if the user exits follow mode
-        if w.showing_hints then
-            w:eval_js("clear();");
-            w.showing_hints = false
-        end
-
-        -- If a user aborts a search return to the original position
-        if w.search_start_marker then
-            w:get_current():set_scroll_vert(w.search_start_marker)
-            w.search_start_marker = nil
-        end
-
-        if mode == "normal" then
-            p:hide()
-            i:hide()
-        elseif mode == "insert" then
-            i:hide()
-            i.text = ""
-            p.text = "-- INSERT --"
-            p:show()
-        elseif mode == "command" then
-            p:hide()
-            i.text = ":"
-            i:show()
-            i:focus()
-            i:set_position(-1)
-        elseif mode == "search" then
-            p:hide()
-            i:show()
-        elseif mode == "follow" then
-            w:eval_js_from_file(lousy.util.find_data("scripts/follow.js"))
-            w:eval_js("clear(); show_hints();")
-            w.showing_hints = true
-            p.text = "Follow:"
-            p:show()
-            i.text = ""
-            i:show()
-            i:focus()
-            i:set_position(-1)
-        else
-            w.ibar.prompt.text = ""
-            w.ibar.input.text = ""
-        end
-    end)
-
-    -- Attach inputbar widget signals
-    w.ibar.input:add_signal("changed", function()
-        local text = w.ibar.input.text
-        -- Auto-exit "command" mode if you backspace or delete the ":"
-        -- character at the start of the input box when in "command" mode.
-        if w:is_mode("command") and not string.match(text, "^:") then
+    notebook_signals = function (w)
+        w.tabs:add_signal("page-added", function (nbook, view, idx)
+            w:update_tab_count(idx)
+            w:update_tab_labels()
+        end)
+        w.tabs:add_signal("switch-page", function (nbook, view, idx)
             w:set_mode()
-        elseif w:is_mode("search") then
-            if string.match(text, "^[\?\/]") then
-                w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
-            else
-                w:clear_search()
-                w:set_mode()
+            w:update_tab_count(idx)
+            w:update_win_title(view)
+            w:update_uri(view)
+            w:update_progress(view)
+            w:update_tab_labels(idx)
+            w:update_buf()
+            w:update_ssl(view)
+        end)
+    end,
+
+    last_win_check = function (w)
+        w.win:add_signal("destroy", function ()
+            -- call the quit function if this was the last window left
+            if #luakit.windows == 0 then luakit.quit() end
+        end)
+    end,
+
+    key_press_match = function (w)
+        w.win:add_signal("key-press", function (_, mods, key)
+            -- Reset command line completion
+            if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
+                w:update_uri()
+                w.compl_index = 0
             end
-        elseif w:is_mode("follow") then
-            w:emit_form_root_active_signal(w:eval_js(string.format("update(%q)", w.ibar.input.text)))
-        end
-    end)
 
-    w.ibar.input:add_signal("activate", function()
-        local text = w.ibar.input.text
-        if w:is_mode("command") then
-            w:cmd_hist_add(text)
-            w:match_cmd(string.sub(text, 2))
-            w:set_mode()
-        elseif w:is_mode("search") then
-            w:srch_hist_add(text)
-            w:search(string.sub(text, 2), string.sub(text, 1, 1) == "/")
-            -- User doesn't want to return to start position
-            w.search_start_marker = nil
-            w:set_mode()
-            w.ibar.prompt.text = lousy.util.escape(text)
-            w.ibar.prompt:show()
-        end
-    end)
-end
+            if w:hit(mods, key) then
+                return true
+            end
+        end)
+    end,
+
+    apply_window_theme = function (w)
+        local theme = lousy.theme.get()
+        local s, i, d = w.sbar, w.ibar, w.dbar
+
+        -- Set foregrounds
+        for wi, v in pairs({
+            [s.l.uri]    = theme.uri_sbar_fg,
+            [s.l.loaded] = theme.loaded_sbar_fg,
+            [s.r.buf]    = theme.buf_sbar_fg,
+            [s.r.tabi]   = theme.tabi_sbar_fg,
+            [s.r.scroll] = theme.scroll_sbar_fg,
+            [i.prompt]   = theme.prompt_ibar_fg,
+            [i.input]    = theme.input_ibar_fg,
+            [d.clear.label] = theme.clear_downloadbar_fg,
+        }) do wi.fg = v end
+
+        -- Set backgrounds
+        for wi, v in pairs({
+            [s.l.ebox]   = theme.sbar_bg,
+            [s.r.ebox]   = theme.sbar_bg,
+            [s.sep]      = theme.sbar_bg,
+            [s.ebox]     = theme.sbar_bg,
+            [i.ebox]     = theme.ibar_bg,
+            [i.input]    = theme.input_ibar_bg,
+            [d.ebox]       = theme.dbar_bg,
+            [d.clear.ebox] = theme.dbar_bg,
+        }) do wi.bg = v end
+
+        -- Set fonts
+        for wi, v in pairs({
+            [s.l.uri]    = theme.uri_sbar_font,
+            [s.l.loaded] = theme.loaded_sbar_font,
+            [s.r.buf]    = theme.buf_sbar_font,
+            [s.r.ssl]    = theme.ssl_sbar_font,
+            [s.r.tabi]   = theme.tabi_sbar_font,
+            [s.r.scroll] = theme.scroll_sbar_font,
+            [i.prompt]   = theme.prompt_ibar_font,
+            [i.input]    = theme.input_ibar_font,
+            [d.clear.label] = theme.clear_downloadbar_font,
+        }) do wi.font = v end
+    end,
+}
 
 -- Helper functions which operate on the window widgets or structure.
 window.methods = {
@@ -241,15 +208,6 @@ window.methods = {
     get_current = function (w)       return w.tabs:atindex(w.tabs:current())       end,
     -- Check if given widget is the widget in the currently active tab
     is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
-
-    -- Wrappers around the mode plugin
-    set_mode    = function (w, name) lousy.mode.set(w.win, name)  end,
-    get_mode    = function (w)       return lousy.mode.get(w.win) end,
-    is_mode     = function (w, name) return name == w:get_mode()  end,
-
-    is_any_mode = function (w, t, name)
-        return lousy.util.table.hasitem(t, name or w:get_mode())
-    end,
 
     get_tab_title = function (w, view)
         if not view then view = w:get_current() end
@@ -288,7 +246,7 @@ window.methods = {
 
     -- insert a string into the command line at the current cursor position
     insert_cmd = function (w, str)
-        if not str then return nil end
+        if not str then return end
         local i = w.ibar.input
         local text = i.text
         local pos = i:get_position()
@@ -477,11 +435,12 @@ window.methods = {
     update_progress = function (w, view, p)
         if not view then view = w:get_current() end
         if not p then p = view:get_prop("progress") end
+        local loaded = w.sbar.l.loaded
         if not view:loading() or p == 1 then
-            w.sbar.l.loaded:hide()
+            loaded:hide()
         else
-            w.sbar.l.loaded:show()
-            w.sbar.l.loaded.text = string.format("(%d%%)", p * 100)
+            loaded:show()
+            loaded.text = string.format("(%d%%)", p * 100)
         end
     end,
 
@@ -495,19 +454,42 @@ window.methods = {
             elseif val == max then val = "Bot"
             else val = string.format("%2d%%", (val/max) * 100)
             end
-            w.sbar.r.scroll.text = val
-            w.sbar.r.scroll:show()
+            if scroll.text ~= val then scroll.text = val end
+            scroll:show()
         else
-            w.sbar.r.scroll:hide()
+            scroll:hide()
+        end
+    end,
+
+    update_ssl = function (w, view)
+        if not view then view = w:get_current() end
+        local trusted = view:ssl_trusted()
+        local theme = lousy.theme.get()
+        local ssl = w.sbar.r.ssl
+        if trusted ~= nil and not w.checking_ssl then
+            ssl.fg = theme.notrust_fg
+            ssl.text = "(nocheck)"
+            ssl:show()
+        elseif trusted == true then
+            ssl.fg = theme.trust_fg
+            ssl.text = "(trust)"
+            ssl:show()
+        elseif trusted == false then
+            ssl.fg = theme.notrust_fg
+            ssl.text = "(notrust)"
+            ssl:show()
+        else
+            ssl:hide()
         end
     end,
 
     update_buf = function (w)
+        local buf = w.sbar.r.buf
         if w.buffer then
-            w.sbar.r.buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
-            w.sbar.r.buf:show()
+            buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
+            buf:show()
         else
-            w.sbar.r.buf:hide()
+            buf:hide()
         end
     end,
 
@@ -530,6 +512,7 @@ window.methods = {
             layout = hbox(),
         }
         t.label.font = theme.tab_font
+        t.label:set_width(1)
         t.layout:pack_start(t.label, true,  true, 0)
         t.layout:pack_start(t.sep,   false,  false, 0)
         t.ebox:set_child(t.layout)
@@ -580,60 +563,18 @@ window.methods = {
                 local t = tb.titles[i]
                 local title = " " ..i.. " "..w:get_tab_title(view)
                 t.label.text = lousy.util.escape(string.format("%-40s", title))
-                w:apply_tablabel_theme(t, i == current, view:ssl_trusted())
+                w:apply_tablabel_theme(t, i == current)
             end
         end
         tb.ebox:show()
     end,
 
     -- Theme functions
-    apply_tablabel_theme = function (w, t, selected, trust)
+    apply_tablabel_theme = function (w, t, selected)
         local theme = lousy.theme.get()
         selected = (selected and "_selected") or ""
-        trust = (trust == true and "_trust") or (trust == false and "_notrust") or ""
-        t.label.fg = theme[string.format("tab%s%s_fg", selected, trust)]
-        t.ebox.bg = theme[string.format("tab%s%s_bg", selected, trust)]
-    end,
-
-    apply_window_theme = function (w)
-        local theme   = lousy.theme.get()
-        local s, i, d = w.sbar, w.ibar, w.dbar
-
-        -- Set foregrounds
-        for wi, v in pairs({
-            [s.l.uri]       = theme.uri_sbar_fg,
-            [s.l.loaded]    = theme.sbar_loaded_fg,
-            [s.r.buf]       = theme.buf_sbar_fg,
-            [s.r.tabi]      = theme.tabi_sbar_fg,
-            [s.r.scroll]    = theme.scroll_sbar_fg,
-            [i.prompt]      = theme.prompt_ibar_fg,
-            [i.input]       = theme.input_ibar_fg,
-            [d.clear.label] = theme.clear_downloadbar_fg,
-        }) do wi.fg = v end
-
-        -- Set backgrounds
-        for wi, v in pairs({
-            [s.l.ebox]     = theme.sbar_bg,
-            [s.r.ebox]     = theme.sbar_bg,
-            [s.sep]        = theme.sbar_bg,
-            [s.ebox]       = theme.sbar_bg,
-            [i.ebox]       = theme.ibar_bg,
-            [i.input]      = theme.input_ibar_bg,
-            [d.ebox]       = theme.dbar_bg,
-            [d.clear.ebox] = theme.dbar_bg,
-        }) do wi.bg = v end
-
-        -- Set fonts
-        for wi, v in pairs({
-            [s.l.uri]       = theme.uri_sbar_font,
-            [s.l.loaded]    = theme.sbar_loaded_font,
-            [s.r.buf]       = theme.buf_sbar_font,
-            [s.r.tabi]      = theme.tabi_sbar_font,
-            [s.r.scroll]    = theme.scroll_sbar_font,
-            [i.prompt]      = theme.prompt_ibar_font,
-            [i.input]       = theme.input_ibar_font,
-            [d.clear.label] = theme.clear_downloadbar_font,
-        }) do wi.font = v end
+        t.label.fg = theme[string.format("tab%s_fg", selected)]
+        t.ebox.bg = theme[string.format("tab%s_bg", selected)]
     end,
 
     close_win = function (w)
@@ -662,16 +603,13 @@ window.methods = {
 -- Ordered list of class index functions. Other classes (E.g. webview) are able
 -- to add their own index functions to this list.
 window.indexes = {
-    -- Find function in window.methods
-    function (w, k)
-        local func = window.methods[k]
-        if func then return func end
-    end
+    -- Find function in window.methods first
+    function (w, k) return window.methods[k] end
 }
 
 -- Create new window
 function window.new(uris)
-    local w = build_window()
+    local w = window.build()
 
     -- Set window metatable
     setmetatable(w, {
@@ -687,10 +625,10 @@ function window.new(uris)
         end,
     })
 
-    attach_window_signals(w)
-
-    -- Apply window theme
-    w:apply_window_theme()
+    -- Call window init functions
+    for _, func in pairs(window.init_funcs) do
+        func(w)
+    end
 
     -- Populate notebook with tabs
     for _, uri in ipairs(uris or {}) do
