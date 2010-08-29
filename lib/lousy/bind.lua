@@ -91,8 +91,7 @@ end
 function match_key(binds, mods, key, arg)
     for _, b in ipairs(binds) do
         if b.key == key and util.table.isclone(b.mods, mods) then
-            b.func(arg, b.opts)
-            return true
+            if b.func(arg, b.opts) ~= false then return true end
         end
     end
 end
@@ -107,8 +106,7 @@ end
 function match_button(binds, mods, button, arg)
     for _, b in ipairs(binds) do
         if b.button == button and util.table.isclone(b.mods, mods) then
-            b.func(arg, b.opts)
-            return true
+            if b.func(arg, b.opts) ~= false then return true end
         end
     end
 end
@@ -122,8 +120,7 @@ end
 function match_buf(binds, buffer, arg)
     for _, b in ipairs(binds) do
         if b.pattern and string.match(buffer, b.pattern) then
-            b.func(arg, buffer, b.opts)
-            return true
+            if b.func(arg, buffer, b.opts) ~= false then return true end
         end
     end
 end
@@ -143,16 +140,13 @@ function match_cmd(binds, buffer, arg)
     for _, b in ipairs(binds) do
         -- Command matching
         if b.commands and util.table.hasitem(b.commands, command) then
-            b.func(arg, argument, b.opts)
-            return true
+            if b.func(arg, argument, b.opts) ~= false then return true end
         -- Buffer matching
         elseif b.pattern and string.match(buffer, b.pattern) then
-            b.func(arg, buffer, b.opts)
-            return true
+            if b.func(arg, buffer, b.opts) ~= false then return true end
         end
     end
 end
-
 
 --- Attempt to match either a key or buffer binding and execute it. This
 -- function is also responsible for performing operations on the buffer when
