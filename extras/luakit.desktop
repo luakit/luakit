@@ -1,0 +1,9 @@
+[Desktop Entry]
+Name=Luakit
+Comment=Fast, small, webkit based micro-browser extensible by Lua
+Exec=luakit %u
+Icon=luakit
+Terminal=false
+Type=Application
+Categories=Network;WebBrowser;
+MimeType=text/html;text/xml;application/xhtml+xml;

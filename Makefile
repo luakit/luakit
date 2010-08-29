@@ -64,11 +64,16 @@ install:
 	install -D luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
 	install -D config/*.lua $(DESTDIR)/etc/xdg/luakit/
+	install -d $(DESTDIR)/usr/share/pixmaps/
+	install -D extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
+	install -d $(DESTDIR)/usr/share/applications/
+	install -D extras/luakit.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(INSTALLDIR)/share/man/man1/
 	install -m644 luakit.1 $(INSTALLDIR)/share/man/man1/
 
 uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/share/man/man1/luakit.1
+	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
 newline:;@echo
 .PHONY: all clean options install newline apidoc
