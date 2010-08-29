@@ -429,7 +429,8 @@ window.methods = {
             loaded:hide()
         else
             loaded:show()
-            loaded.text = string.format("(%d%%)", p * 100)
+            local text = string.format("(%d%%)", p * 100)
+            if loaded.text ~= text then loaded.text = text end
         end
     end,
 
