@@ -1,6 +1,6 @@
 -------------------------------------------------------------
--- luakit go_input                                         --
--- (C) 2009 Aldrik Dunbar  (n30)                           --
+-- Go to the first input on a page and enter insert mode   --
+-- (C) 2009 Aldrik Dunbar  (n30n)                          --
 -- (C) 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
 -------------------------------------------------------------
 
