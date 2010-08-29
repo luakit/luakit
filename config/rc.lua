@@ -34,7 +34,7 @@ require "binds"
 require "formfiller"
 require "go_input"
 require "follow_selected"
-require "go_next"
+require "go_next_prev"
 
 -- Init bookmarks lib
 require "bookmarks"
