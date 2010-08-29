@@ -64,6 +64,7 @@ install:
 	install -D luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
 	install -D config/*.lua $(DESTDIR)/etc/xdg/luakit/
+	install -d $(DESTDIR)/usr/share/pixmaps/
 	install -D extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
 	install -d $(DESTDIR)/usr/share/applications/
 	install -D extras/luakit.desktop $(DESTDIR)/usr/share/applications/
