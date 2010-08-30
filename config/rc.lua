@@ -33,6 +33,7 @@ require "binds"
 -- Init scripts
 require "formfiller"
 require "go_input"
+require "follow_selected"
 
 -- Init bookmarks lib
 require "bookmarks"
