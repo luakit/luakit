@@ -131,6 +131,8 @@ binds.mode_binds = {
     search = {
         key({},          "Up",          function (w) w:srch_hist_prev() end),
         key({},          "Down",        function (w) w:srch_hist_next() end),
+        key({"Control"}, "j",           function (w) w:search(nil, true) end),
+        key({"Control"}, "k",           function (w) w:search(nil, false) end),
     },
     insert = { },
 }
