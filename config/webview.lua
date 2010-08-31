@@ -84,11 +84,11 @@ webview.init_funcs = {
     -- Clicking a form field automatically enters insert mode
     form_insert_mode = function (view, w)
         view:add_signal("form-active", function ()
-            w.search_start_marker = nil
+            (w.search_state or {}).marker = nil
             w:set_mode("insert")
         end)
         view:add_signal("root-active", function ()
-            w.search_start_marker = nil
+            (w.search_state or {}).marker = nil
             w:set_mode()
         end)
     end,
@@ -105,7 +105,7 @@ webview.init_funcs = {
     button_bind_match = function (view, w)
         -- Match button press
         view:add_signal("button-release", function (v, mods, button)
-            w.search_start_marker = nil
+            (w.search_state or {}).marker = nil
             if w:hit(mods, button) then return true end
         end)
     end,
