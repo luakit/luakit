@@ -145,7 +145,7 @@ new_mode("follow", {
         local i, p = w.ibar.input, w.ibar.prompt
         w.follow_mode_function = fun
         w:eval_js_from_file(lousy.util.find_data("scripts/follow.js"))
-        w:eval_js(string.format("%s_mode(); clear(); show_hints();", mode or "follow"))
+        w:eval_js(string.format("%s_mode(); clear(); show_hints();", mode))
         p.text = "Follow:"
         p:show()
         i.text = ""
@@ -159,7 +159,7 @@ new_mode("follow", {
     changed = function (w, text)
         local ret = w:eval_js(string.format("update(%q);", text))
         local fun = w.follow_mode_function
-        if fun then fun(ret) end
+        if fun and ret then fun(ret) end
     end,
 })
 
