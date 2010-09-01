@@ -6,7 +6,8 @@ var active;
 var lastpos = 0;
 var last_input = "";
 var last_strings = [];
-var url_mode = false;
+var selector = 'a';
+var eval_fun = function() {};
 
 focus_color = "#00ff00";
 normal_color = "#ffff99";
@@ -107,12 +108,7 @@ function click_element(e) {
 function show_hints() {
   document.activeElement.blur();
   if ( elements ) {
-    var res
-    if (url_mode) {
-        res = document.body.querySelectorAll('a, area, textarea, select, link, input:not([type=hidden]), button,  frame, iframe');
-    } else {
-        res = document.body.querySelectorAll('a, area, link, frame, iframe');
-    }
+    var res = document.body.querySelectorAll(selector);
     hints = document.createElement("div");
     overlays  = document.createElement("div");
     for (var i=0; i<res.length; i++) {
@@ -161,7 +157,7 @@ function is_editable(element) {
   }
   if (name == "input") {
     if (type == 'text' || type == 'search' || type == 'password') {
-      return true
+      return true;
     }
   }
   return false;
@@ -213,21 +209,9 @@ function clear() {
   active = undefined;
 }
 function evaluate(element) {
-  var e = element.element;
-  if (!is_input(element) && e.href) {
-    if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button")) {
-      click_element(element);
-    } else {
-      if (url_mode) {
-          return e.href;
-      } else {
-        document.location = e.href;
-      }
-  }
-  clear();
-  if (is_editable(element))
-    return "form-active";
-  return "root-active";
+    var rv = eval_fun(element);
+    clear();
+    return rv;
 }
 function get_active() {
   return evaluate(active);
@@ -266,7 +250,86 @@ function update(input) {
     return rv;
 }
 
-function url_mode() {
-    url_mode = true;
+var followable_selector = 'a, area, textarea, select, link, input:not([type=hidden]), button,  frame, iframe';
+var href_selector = 'a, area, link, frame, iframe';
+var image_selector = 'img';
+
+function evaluate_follow(element) {
+  var e = element.element;
+  if (!is_input(element) && e.href) {
+    if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button"))
+      click_element(element);
+    else
+      document.location = e.href;
+  }
+  if (is_editable(element))
+    return "form-active";
+  return "root-active";
+}
+function evaluate_href(element) {
+  var e = element.element;
+  if (!e.href.match(/javascript:/)) {
+    return e.href;
+  }
+}
+function evaluate_src(element) {
+  var e = element.element;
+  return e.src;
+}
+function evaluate_focus(element) {
+  var e = element.element;
+  return e.focus();
 }
 
+function follow_mode() {
+    selector = followable_selector;
+    eval_fun = evaluate_follow;
+}
+function yank_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function yankdesc_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function tab_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function open_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function win_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function tabprompt_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function openprompt_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function winprompt_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function save_mode() {
+    selector = href_selector;
+    eval_fun = evaluate_href;
+}
+function focus_mode() {
+    selector = followable_selector;
+    eval_fun = evaluate_focus;
+}
+function context_mode() {
+    selector = followable_selector;
+    // TODO
+}
+function image_mode() {
+    selector = img_selector;
+    eval_fun = evaluate_src;
+}

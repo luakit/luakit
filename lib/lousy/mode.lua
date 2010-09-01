@@ -45,15 +45,16 @@ end
 --- Set the mode for a given object.
 -- @param object A mode-able object.
 -- @param mode A mode name (I.e. "insert", "command", ...)
+-- @param ... Optional arguments to pass to the invoked mode.
 -- @return The newly set mode.
-function set(object, mode)
+function set(object, mode, ...)
     if not is_modeable(object) then
         return error("attempt to set mode on non-modeable object")
     end
     local mode = mode or default_modes[object] or default_mode
     current_modes[object] = mode
     -- Raises a mode change signal on the object.
-    object:emit_signal("mode-changed", mode)
+    object:emit_signal("mode-changed", mode, ...)
     return mode
 end
 

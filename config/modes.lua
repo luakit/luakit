@@ -16,7 +16,7 @@ end
 -- Attach window & input bar signals for mode hooks
 window.init_funcs.modes_setup = function (w)
     -- Calls the `enter` and `leave` mode hooks.
-    w.win:add_signal("mode-changed", function (_, mode)
+    w.win:add_signal("mode-changed", function (_, mode, ...)
         -- Call the last modes `leave` hook.
         if current and current.leave then
             current.leave(w)
@@ -32,7 +32,7 @@ window.init_funcs.modes_setup = function (w)
         end
 
         -- Call new modes `enter` hook.
-        if current.enter then current.enter(w) end
+        if current.enter then current.enter(w, ...) end
     end)
 
     -- Calls the `changed` hook on input widget changed.
@@ -54,9 +54,9 @@ end
 
 -- Add mode related window methods
 for name, func in pairs({
-    set_mode = function (w, name) lousy.mode.set(w.win, name)  end,
-    get_mode = function (w)       return lousy.mode.get(w.win) end,
-    is_mode  = function (w, name) return name == w:get_mode()  end,
+    set_mode = function (w, name, ...) lousy.mode.set(w.win, name, ...)  end,
+    get_mode = function (w)            return lousy.mode.get(w.win) end,
+    is_mode  = function (w, name)      return name == w:get_mode()  end,
 }) do window.methods[name] = func end
 
 -- Setup normal mode
@@ -141,10 +141,11 @@ new_mode("search", {
 
 -- Setup follow mode
 new_mode("follow", {
-    enter = function (w)
+    enter = function (w, mode, fun)
         local i, p = w.ibar.input, w.ibar.prompt
+        w.follow_mode_function = fun
         w:eval_js_from_file(lousy.util.find_data("scripts/follow.js"))
-        w:eval_js("clear(); show_hints();")
+        w:eval_js(string.format("%s_mode(); clear(); show_hints();", mode or "follow"))
         p.text = "Follow:"
         p:show()
         i.text = ""
@@ -157,6 +158,8 @@ new_mode("follow", {
     end,
     changed = function (w, text)
         local ret = w:eval_js(string.format("update(%q);", text))
-        w:emit_form_root_active_signal(ret)
+        local fun = w.follow_mode_function
+        if fun then fun(ret) end
     end,
 })
+
