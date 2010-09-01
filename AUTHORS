@@ -13,6 +13,12 @@ Authors in the luakit project:
 Author of `scripts/follow.js`:
   Fabian Streitel               <karottenreibe@gmail.com>   2010
 
+Author of `scripts/go_input.js`:
+  Aldrik Dunbar     (n30n)                                  2009
+
+Author of `scripts/followselected.js`:
+  israellevin                                               2009
+
 Inherited authors from the awesomewm project:
   Julien Danjou                 <julien@danjou.info>        2007-2009
   Pierre Habouzit               <madcoder@debian.org>       2008
