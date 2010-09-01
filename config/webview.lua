@@ -254,16 +254,18 @@ webview.methods = {
     end,
 
     -- Zoom functions
-    zoom_in = function (view, w, step)
+    zoom_in = function (view, w, step, text_zoom)
+        view:set_prop("full-content-zoom", not text_zoom)
         view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
     end,
 
-    zoom_out = function (view, w, step)
-        local value = view:get_prop("zoom-level") - step
-        view:set_prop("zoom-level", ((value > 0.01) and value) or 0.01)
+    zoom_out = function (view, w, step, text_zoom)
+        view:set_prop("full-content-zoom", not text_zoom)
+        view:set_prop("zoom-level", math.max(0.01, view:get_prop("zoom-level") - step))
     end,
 
     zoom_reset = function (view, w)
+        view:set_prop("full-content-zoom", false)
         view:set_prop("zoom-level", 1.0)
     end,
 

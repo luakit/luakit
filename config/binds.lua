@@ -51,12 +51,17 @@ binds.mode_binds = {
         key({},          "Home",        function (w) w:scroll_vert("0%")   end),
         key({},          "End",         function (w) w:scroll_vert("100%") end),
 
-        -- Zooming
-        buf("^z0$",                     function (w) w:zoom_reset()        end),
+        -- Full content zooming
         buf("^zI$",                     function (w) w:zoom_in(zoom_step)  end),
         buf("^zO$",                     function (w) w:zoom_out(zoom_step) end),
-        key({"Control"}, "+",           function (w) w:zoom_in(zoom_step)  end),
-        key({"Control"}, "-",           function (w) w:zoom_out(zoom_step) end),
+        buf("^zZ$",                     function (w) w:zoom_reset()        end),
+
+        -- Text zooming
+        key({"Control"}, "+",           function (w) w:zoom_in(zoom_step,  true) end),
+        key({"Control"}, "-",           function (w) w:zoom_out(zoom_step, true) end),
+        buf("^zi$",                     function (w) w:zoom_in(zoom_step,  true) end),
+        buf("^zo$",                     function (w) w:zoom_out(zoom_step, true) end),
+        buf("^zz$",                     function (w) w:zoom_reset()              end),
 
         -- Clipboard
         key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
