@@ -6,6 +6,7 @@ var active;
 var lastpos = 0;
 var last_input = "";
 var last_strings = [];
+var url_mode = false;
 
 focus_color = "#00ff00";
 normal_color = "#ffff99";
@@ -106,7 +107,12 @@ function click_element(e) {
 function show_hints() {
   document.activeElement.blur();
   if ( elements ) {
-    var res = document.body.querySelectorAll('a, area, textarea, select, link, input:not([type=hidden]), button,  frame, iframe');
+    var res
+    if (url_mode) {
+        res = document.body.querySelectorAll('a, area, textarea, select, link, input:not([type=hidden]), button,  frame, iframe');
+    } else {
+        res = document.body.querySelectorAll('a, area, link, frame, iframe');
+    }
     hints = document.createElement("div");
     overlays  = document.createElement("div");
     for (var i=0; i<res.length; i++) {
@@ -155,7 +161,7 @@ function is_editable(element) {
   }
   if (name == "input") {
     if (type == 'text' || type == 'search' || type == 'password') {
-      return true 
+      return true
     }
   }
   return false;
@@ -209,10 +215,14 @@ function clear() {
 function evaluate(element) {
   var e = element.element;
   if (!is_input(element) && e.href) {
-    if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button"))
+    if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button")) {
       click_element(element);
-    else
-      document.location = e.href;
+    } else {
+      if (url_mode) {
+          return e.href;
+      } else {
+        document.location = e.href;
+      }
   }
   clear();
   if (is_editable(element))
@@ -254,5 +264,9 @@ function update(input) {
     last_input = input;
     last_strings = strings;
     return rv;
+}
+
+function url_mode() {
+    url_mode = true;
 }
 
