@@ -97,6 +97,9 @@ binds.mode_binds = {
         key({},          "r",           function (w) w:reload() end),
         buf("^gh$",                     function (w) w:navigate(homepage) end),
 
+        key({},          "<",           function (w) w.tabs:reorder(w:get_current(), w.tabs:current() -1) end),
+        key({},          ">",           function (w) w.tabs:reorder(w:get_current(), (w.tabs:current() + 1) % w.tabs:count()) end),
+
         -- Window
         buf("^ZZ$",                     function (w) w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),

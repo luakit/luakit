@@ -129,6 +129,10 @@ window.init_funcs = {
             w:update_buf()
             w:update_ssl(view)
         end)
+        w.tabs:add_signal("page-reordered", function (nbook, view, idx)
+            w:update_tab_count()
+            w:update_tab_labels()
+        end)
     end,
 
     last_win_check = function (w)
