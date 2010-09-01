@@ -120,7 +120,7 @@ webview.init_funcs = {
     -- Domain properties
     domain_properties = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if status ~= "provisional" then return end
+            if status ~= "committed" then return end
             local domain = (v.uri and string.match(v.uri, "^%a+://([^/]*)/?")) or "about:blank"
             if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
             local props = lousy.util.table.join(domain_props.all or {}, domain_props[domain] or {})
