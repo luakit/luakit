@@ -53,6 +53,7 @@ reload
 remove
 reorder
 search
+select_region
 selectable
 set_alignment
 set_child

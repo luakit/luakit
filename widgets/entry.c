@@ -49,6 +49,19 @@ luaH_entry_insert(lua_State *L)
 }
 
 static gint
+luaH_entry_select_region(lua_State* L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    gint startpos = luaL_checknumber(L, 2);
+    gint endpos = -1;
+    if(lua_gettop(L) > 2)
+        endpos = luaL_checknumber(L, 3);
+
+    gtk_editable_select_region(GTK_EDITABLE(w->widget), startpos, endpos);
+    return 0;
+}
+
+static gint
 luaH_entry_set_position(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -76,10 +89,11 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(APPEND,       luaH_entry_append)
-      PF_CASE(INSERT,       luaH_entry_insert)
-      PF_CASE(GET_POSITION, luaH_entry_get_position)
-      PF_CASE(SET_POSITION, luaH_entry_set_position)
+      PF_CASE(APPEND,           luaH_entry_append)
+      PF_CASE(INSERT,           luaH_entry_insert)
+      PF_CASE(GET_POSITION,     luaH_entry_get_position)
+      PF_CASE(SET_POSITION,     luaH_entry_set_position)
+      PF_CASE(SELECT_REGION,    luaH_entry_select_region)
       /* push string properties */
       PS_CASE(TEXT,         gtk_entry_get_text(GTK_ENTRY(w->widget)))
       PS_CASE(FG,           g_object_get_data(G_OBJECT(w->widget), "fg"))
