@@ -29,11 +29,10 @@ luaH_entry_append(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     const gchar *text = luaL_checklstring(L, 2, &len);
     gint pos = -1;
-
     gtk_editable_insert_text(GTK_EDITABLE(w->widget),
         text, g_utf8_strlen(text, len), &pos);
-
-    return pos + 1;
+    lua_pushnumber(L, pos);
+    return 1;
 }
 
 static gint
@@ -42,14 +41,11 @@ luaH_entry_insert(lua_State *L)
     size_t len;
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     gint pos = luaL_checknumber(L, 2);
-    /* lua table indexes start at 1 */
-    if (pos > 0) pos--;
     const gchar *text = luaL_checklstring(L, 3, &len);
-
     gtk_editable_insert_text(GTK_EDITABLE(w->widget),
         text, g_utf8_strlen(text, len), &pos);
-
-    return pos + 1;
+    lua_pushnumber(L, pos);
+    return 1;
 }
 
 static gint
@@ -57,9 +53,6 @@ luaH_entry_set_position(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     gint pos = luaL_checknumber(L, 2);
-    /* lua table indexes start at 1 */
-    if (pos > 0) pos--;
-
     gtk_editable_set_position(GTK_EDITABLE(w->widget), pos);
     lua_pushnumber(L, gtk_editable_get_position(GTK_EDITABLE(w->widget)));
     return 1;

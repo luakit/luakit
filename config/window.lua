@@ -245,7 +245,7 @@ window.methods = {
         local pos = i:get_position()
         local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
         i.text = left .. str .. right
-        i:set_position(pos + #str + 1)
+        i:set_position(pos + #str)
     end,
 
     -- Command line completion of available commands
@@ -308,7 +308,7 @@ window.methods = {
                 left = string.sub(left, 0, string.find(left, "%W+%s*$") - 1)
             end
             i.text =  string.sub(text, 1, 1) .. left .. right
-            i:set_position(#left + 2)
+            i:set_position(#left + 1)
         end
     end,
 
