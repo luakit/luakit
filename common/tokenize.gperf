@@ -75,6 +75,7 @@ spacing
 spawn
 spawn_sync
 ssl_trusted
+stop
 switch
 text
 textbutton

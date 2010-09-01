@@ -827,6 +827,15 @@ luaH_webview_loading(lua_State *L)
     return 1;
 }
 
+static gint
+luaH_webview_stop(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    webkit_web_view_stop_loading(WEBKIT_WEB_VIEW(view));
+    return 0;
+}
+
 /* check for trusted ssl certificate */
 static gint
 luaH_webview_ssl_trusted(lua_State *L)
@@ -896,6 +905,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(LOADING,          luaH_webview_loading)
       PF_CASE(RELOAD,           luaH_webview_reload)
       PF_CASE(SSL_TRUSTED,      luaH_webview_ssl_trusted)
+      PF_CASE(STOP,             luaH_webview_stop)
       /* push source viewing methods */
       PF_CASE(GET_VIEW_SOURCE,  luaH_webview_get_view_source)
       PF_CASE(SET_VIEW_SOURCE,  luaH_webview_set_view_source)
