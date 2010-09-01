@@ -250,10 +250,12 @@ function update(input) {
     return rv;
 }
 
+// selectors for the different modes
 var followable_selector = 'a, area, textarea, select, link, input:not([type=hidden]), button,  frame, iframe';
 var href_selector = 'a, area, link, frame, iframe';
 var image_selector = 'img';
 
+// evaluators for the different modes
 function evaluate_follow(element) {
   var e = element.element;
   if (!is_input(element) && e.href) {
@@ -278,9 +280,10 @@ function evaluate_src(element) {
 }
 function evaluate_focus(element) {
   var e = element.element;
-  return e.focus();
+  e.focus();
 }
 
+// activators for the different modes
 function follow_mode() {
     selector = followable_selector;
     eval_fun = evaluate_follow;
@@ -333,3 +336,4 @@ function image_mode() {
     selector = img_selector;
     eval_fun = evaluate_src;
 }
+
