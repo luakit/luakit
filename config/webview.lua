@@ -170,15 +170,7 @@ webview.init_funcs = {
     download_request = function (view, w)
         -- 'link' contains the download link
         -- 'filename' contains the suggested filename (from server or webkit)
-        view:add_signal("download-request", function (v, link, filename)
-            if not filename then return end
-            -- Make download dir
-            os.execute(string.format("mkdir -p %q", globals.download_dir))
-            local dl = globals.download_dir .. "/" .. filename
-            local wget = string.format("wget -q %q -O %q", link, dl)
-            info("Launching: %s", wget)
-            luakit.spawn(wget)
-        end)
+        view:add_signal("download-request", function (v, link, filename) w:download(link, filename) end)
     end,
 
     -- Creates context menu popup from table (and nested tables).

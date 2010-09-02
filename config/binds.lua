@@ -111,7 +111,7 @@ binds.mode_binds = {
         buf("^FT$",                     function (w) w:set_mode("follow", "tab prompt",       function (uri) w:enter_cmd(":tabopen ".. uri) end) end),
         buf("^FO$",                     function (w) w:set_mode("follow", "open prompt",      function (uri) w:enter_cmd(":open ".. uri) end) end),
         buf("^FW$",                     function (w) w:set_mode("follow", "window prompt",    function (uri) w:enter_cmd(":winopen ".. uri) end) end),
-        buf("^Fs$",                     function (w) w:set_mode("follow", "save",             function (uri) return "root-active" end) end),
+        buf("^Fs$",                     function (w) w:set_mode("follow", "save",             function (uri) w:download(uri) return "root-active" end) end),
         buf("^Ff$",                     function (w) w:set_mode("follow", "focus",            function (uri) return "root-active" end) end),
         buf("Fi",                       function (w) w:set_mode("follow", "open image",       function (uri) w:get_current().uri = uri return "root-active" end) end),
 

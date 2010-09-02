@@ -491,6 +491,19 @@ window.methods = {
         w:update_buf()
     end,
 
+    download = function (w, link, filename)
+        if not filename then
+            -- just take the last part of the link
+            filename = string.gsub(string.match(link, "/[^/]*/?$"), "/", "")
+        end
+        -- Make download dir
+        os.execute(string.format("mkdir -p %q", globals.download_dir))
+        local dl = globals.download_dir .. "/" .. filename
+        local wget = string.format("wget -q %q -O %q", link, dl)
+        info("Launching: %s", wget)
+        luakit.spawn(wget)
+    end,
+
     -- Tab label functions
     -- TODO: Move these functions into a module (I.e. lousy.widget.tablist)
     make_tab_label = function (w, pos)
