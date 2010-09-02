@@ -106,6 +106,10 @@ function click_element(e) {
   clear();
 }
 function show_hints() {
+  // check if page has finished loading
+  if (!document.activeElement) {
+      return;
+  }
   document.activeElement.blur();
   if ( elements ) {
     var res = document.body.querySelectorAll(selector);
@@ -292,7 +296,7 @@ function yank_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
-function yankdesc_mode() {
+function yank_description_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
@@ -304,19 +308,19 @@ function open_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
-function win_mode() {
+function window_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
-function tabprompt_mode() {
+function tab_prompt_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
-function openprompt_mode() {
+function open_prompt_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
-function winprompt_mode() {
+function window_prompt_mode() {
     selector = href_selector;
     eval_fun = evaluate_href;
 }
@@ -328,12 +332,12 @@ function focus_mode() {
     selector = followable_selector;
     eval_fun = evaluate_focus;
 }
-function context_mode() {
+function context_menu_mode() {
     selector = followable_selector;
     // TODO
 }
-function image_mode() {
-    selector = img_selector;
+function open_image_mode() {
+    selector = image_selector;
     eval_fun = evaluate_src;
 }
 
