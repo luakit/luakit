@@ -332,10 +332,6 @@ function focus_mode() {
     selector = followable_selector;
     eval_fun = evaluate_focus;
 }
-function context_menu_mode() {
-    selector = followable_selector;
-    // TODO
-}
 function open_image_mode() {
     selector = image_selector;
     eval_fun = evaluate_src;
