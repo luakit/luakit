@@ -32,6 +32,7 @@ map = {
 -- the key pressed is a single character)
 -- @return Filtered modifiers table
 function filter_mods(mods, remove_shift)
+    assert(type(mods) == "table", "invalid modifiers table type")
     -- Clone & sort new modifiers table
     local mods = util.table.clone(mods)
     table.sort(mods)
@@ -48,6 +49,9 @@ end
 -- @param opts Optional binding and callback options.
 -- @return A key binding struct.
 function key(mods, key, func, opts)
+    assert(type(key)  == "string",   "invalid key type")
+    assert(#key > 0,                 "empty key string")
+    assert(type(func) == "function", "invalid function type")
     local mods = filter_mods(mods, #key == 1)
     return { mods = mods, key = key, func = func, opts = opts}
 end
@@ -59,6 +63,8 @@ end
 -- @param opts Optional binding and callback options.
 -- @return A button binding struct.
 function but(mods, button, func, opts)
+    assert(type(button) == "number",   "invalid button type")
+    assert(type(func)   == "function", "invalid function type")
     local mods = filter_mods(mods, false)
     return { mods = mods, button = button, func = func, opts = opts}
 end
@@ -69,6 +75,9 @@ end
 -- @param opts Optional binding and callback options.
 -- @return A buffer binding struct.
 function buf(pattern, func, opts)
+    assert(type(pattern) == "string",   "invalid pattern type")
+    assert(#pattern > 0,                "empty pattern string")
+    assert(type(func)    == "function", "invalid function type")
     return { pattern = pattern, func = func, opts = opts}
 end
 
@@ -78,6 +87,9 @@ end
 -- @param opts Optional binding and callback options.
 -- @return A command binding struct.
 function cmd(commands, func, opts)
+    assert(type(commands) == "table", "invalid commands table type")
+    assert(#commands > 0,             "empty commands table")
+    assert(type(func) == "function",  "invalid function type")
     return { commands = commands, func = func, opts = opts}
 end
 
