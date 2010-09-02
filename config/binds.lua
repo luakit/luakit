@@ -193,7 +193,7 @@ binds.helper_methods = {
 
     -- parse uri command line
     -- inject search engine uri if necessary
-    get_uri = function (w, args, view)
+    get_uri = function (w, args)
         if not string.match(args, "%.") then
             local sep = string.find(args, " ")
             local engine = string.sub(args, 1, sep-1)
