@@ -159,7 +159,13 @@ new_mode("follow", {
     changed = function (w, text)
         local ret = w:eval_js(string.format("update(%q);", text))
         local fun = w.follow_mode_function
-        if fun and ret then fun(ret) end
+        print(ret)
+        if ret ~= "false" then
+            print(ret)
+            if fun then fun(ret) end
+            if ret ~= "form-active" then ret = "root-active" end
+            w:emit_form_root_active_signal(ret)
+        end
     end,
 })
 
