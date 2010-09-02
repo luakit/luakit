@@ -79,7 +79,7 @@ binds.mode_binds = {
         buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. ((w:get_current() or {}).uri or "")) end),
         buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. ((w:get_current() or {}).uri or "")) end),
         buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
-        buf("^,g$",                     function (w, c) w:enter_cmd(":websearch google ") end),
+        buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
         -- Searching
         key({},          "/",           function (w) w:start_search("/")  end),
@@ -170,7 +170,6 @@ binds.commands = {
     cmd("q[uit]",                       function (w)       luakit.quit() end),
     cmd("c[lose]",                      function (w)       w:close_tab() end),
     cmd("reload",                       function (w)       w:reload() end),
-    cmd({"websearch",   "ws" },         function (w, e, s) w:websearch(e, s) end),
     cmd({"viewsource",  "vs" },         function (w)       w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
     cmd({"bookmark",    "bm" },         function (w, a)
@@ -192,17 +191,19 @@ binds.helper_methods = {
         end
     end,
 
-    -- search engine wrapper
-    websearch = function (w, args)
+    -- parse uri command line
+    -- inject search engine uri if necessary
+    get_uri = function (w, args, view)
         local sep = string.find(args, " ")
-        local engine = string.sub(args, 1, sep-1)
-        local search = string.sub(args, sep+1)
-        search = string.gsub(search, "^%s*(.-)%s*$", "%1")
-        if not search_engines[engine] then
-            return error("No matching search engine found: " .. engine)
+        if sep then
+            local engine = string.sub(args, 1, sep-1)
+            if search_engines[engine] then
+                local search = string.sub(args, sep+1)
+                local uri = string.gsub(search_engines[engine], "{%d}", search)
+                return uri
+            end
         end
-        local uri = string.gsub(search_engines[engine], "{%d}", search)
-        return w:navigate(uri)
+        return args
     end,
 
     -- Tab traversing functions
