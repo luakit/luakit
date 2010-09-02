@@ -255,9 +255,11 @@ function update(input) {
 }
 
 // selectors for the different modes
-var followable_selector = 'a, area, textarea, select, link, input:not([type=hidden]), button,  frame, iframe';
-var href_selector = 'a, area, link, frame, iframe';
-var image_selector = 'img';
+var followable_selector = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe';
+var focusable_selector = followable_selector + ', applet, object';
+var uri_selector = 'a, area, frame, iframe';
+var desc_selector = '*[title], img[alt], applet[alt], area[alt], input[alt]';
+var image_selector = 'img, input[type=image]';
 
 // evaluators for the different modes
 function evaluate_follow(element) {
@@ -272,10 +274,11 @@ function evaluate_follow(element) {
     return "form-active";
   return "root-active";
 }
-function evaluate_href(element) {
+function evaluate_uri(element) {
   var e = element.element;
-  if (!e.href.match(/javascript:/)) {
-    return e.href;
+  var uri = e.src || e.href;
+  if (!uri.match(/javascript:/)) {
+    return uri;
   }
 }
 function evaluate_src(element) {
@@ -298,43 +301,43 @@ function follow_mode() {
     eval_fun = evaluate_follow;
 }
 function yank_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function yank_description_mode() {
-    selector = href_selector;
+    selector = desc_selector;
     eval_fun = evaluate_desc;
 }
 function tab_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function open_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function window_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function tab_prompt_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function open_prompt_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function window_prompt_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function save_mode() {
-    selector = href_selector;
-    eval_fun = evaluate_href;
+    selector = uri_selector;
+    eval_fun = evaluate_uri;
 }
 function focus_mode() {
-    selector = followable_selector;
+    selector = focusable_selector;
     eval_fun = evaluate_focus;
 }
 function open_image_mode() {
