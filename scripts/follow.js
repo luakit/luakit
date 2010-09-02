@@ -282,6 +282,11 @@ function evaluate_src(element) {
   var e = element.element;
   return e.src;
 }
+function evaluate_desc(element) {
+  var e = element.element;
+  var desc = e.title || e.alt || "";
+  return desc;
+}
 function evaluate_focus(element) {
   var e = element.element;
   e.focus();
@@ -298,7 +303,7 @@ function yank_mode() {
 }
 function yank_description_mode() {
     selector = href_selector;
-    eval_fun = evaluate_href;
+    eval_fun = evaluate_desc;
 }
 function tab_mode() {
     selector = href_selector;
