@@ -162,7 +162,7 @@ new_mode("follow", {
         if ret ~= "false" then
             local sig
             if fun then sig = fun(ret) end
-            if sig then print(sig) w:emit_form_root_active_signal(sig) end
+            if sig then w:emit_form_root_active_signal(sig) end
         end
     end,
 })
