@@ -113,7 +113,7 @@ binds.mode_binds = {
         buf("^FW$",                     function (w) w:set_mode("follow", "window prompt",    function (uri) w:enter_cmd(":winopen ".. uri) end) end),
         buf("^Fs$",                     function (w) w:set_mode("follow", "save",             function (uri) w:download(uri) return "root-active" end) end),
         buf("^Ff$",                     function (w) w:set_mode("follow", "focus",            function (uri) return "root-active" end) end),
-        buf("Fi",                       function (w) w:set_mode("follow", "open image",       function (uri) w:get_current().uri = uri return "root-active" end) end),
+        buf("^Fi$",                     function (w) w:set_mode("follow", "open image",       function (uri) w:get_current().uri = uri return "root-active" end) end),
 
         -- Bookmarking
         key({},          "B",           function (w) w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
