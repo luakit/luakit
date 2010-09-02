@@ -60,6 +60,7 @@ function window.build()
             prompt  = label(),
             input   = entry(),
         },
+        closed_tabs = {}
     }
 
     -- Assemble window
@@ -135,6 +136,10 @@ window.init_funcs = {
             w:update_tab_labels(idx)
             w:update_buf()
             w:update_ssl(view)
+        end)
+        w.tabs:add_signal("page-reordered", function (nbook, view, idx)
+            w:update_tab_count()
+            w:update_tab_labels()
         end)
     end,
 
@@ -214,11 +219,24 @@ window.methods = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-    new_tab = function (w, uri)
-        local view = webview.new(w, uri)
+    new_tab = function (w, arg)
+        local view = webview.new(w, (type(arg) == "string" and arg) or nil)
         w.tabs:append(view)
         w:update_tab_count()
+        if type(arg) == "table" then view.history = arg end
         return view
+    end,
+
+    undo_close_tab = function (w)
+        if #(w.closed_tabs) == 0 then return end
+        local tab = table.remove(w.closed_tabs)
+        local view = w:new_tab(tab.hist)
+        if tab.after then
+            w.tabs:reorder(view, w.tabs:indexof(tab.after)+1)
+        else
+            w.tabs:reorder(view, 1)
+        end
+        w.tabs:switch(w.tabs:indexof(view))
     end,
 
     -- Wrapper around the bind plugin's hit method
@@ -252,7 +270,7 @@ window.methods = {
         local pos = i:get_position()
         local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
         i.text = left .. str .. right
-        i:set_position(pos + #str + 1)
+        i:set_position(pos + #str)
     end,
 
     -- Command line completion of available commands
@@ -315,7 +333,7 @@ window.methods = {
                 left = string.sub(left, 0, string.find(left, "%W+%s*$") - 1)
             end
             i.text =  string.sub(text, 1, 1) .. left .. right
-            i:set_position(#left + 2)
+            i:set_position(#left + 1)
         end
     end,
 

@@ -120,7 +120,7 @@ webview.init_funcs = {
     -- Domain properties
     domain_properties = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if status ~= "provisional" then return end
+            if status ~= "committed" then return end
             local domain = (v.uri and string.match(v.uri, "^%a+://([^/]*)/?")) or "about:blank"
             if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
             local props = lousy.util.table.join(domain_props.all or {}, domain_props[domain] or {})
@@ -206,9 +206,8 @@ webview.init_funcs = {
 -- as the first argument. All methods must take `view` & `w` as the first two
 -- arguments.
 webview.methods = {
-    reload = function (view, w)
-        view:reload()
-    end,
+    reload = function (view) view:reload() end,
+    stop   = function (view) view:stop()   end,
 
     -- Property functions
     get = function (view, w, k)
@@ -235,6 +234,13 @@ webview.methods = {
 
     -- close the current tab
     close_tab = function (view, w)
+        -- Save tab history
+        local tab = {hist = view.history,}
+        -- And relative location
+        local index = w.tabs:indexof(view)
+        if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
+        table.insert(w.closed_tabs, tab)
+        -- Remove & destroy
         w.tabs:remove(view)
         view.uri = "about:blank"
         view:destroy()
@@ -249,16 +255,18 @@ webview.methods = {
     end,
 
     -- Zoom functions
-    zoom_in = function (view, w, step)
+    zoom_in = function (view, w, step, text_zoom)
+        view:set_prop("full-content-zoom", not text_zoom)
         view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
     end,
 
-    zoom_out = function (view, w, step)
-        local value = view:get_prop("zoom-level") - step
-        view:set_prop("zoom-level", ((value > 0.01) and value) or 0.01)
+    zoom_out = function (view, w, step, text_zoom)
+        view:set_prop("full-content-zoom", not text_zoom)
+        view:set_prop("zoom-level", math.max(0.01, view:get_prop("zoom-level") - step))
     end,
 
     zoom_reset = function (view, w)
+        view:set_prop("full-content-zoom", false)
         view:set_prop("zoom-level", 1.0)
     end,
 

@@ -36,6 +36,7 @@ go_back
 go_forward
 hbox
 hide
+history
 homogeneous
 hovered_uri
 icon
@@ -57,6 +58,7 @@ reload
 remove
 reorder
 search
+select_region
 selectable
 set_alignment
 set_child
@@ -81,6 +83,7 @@ ssl_trusted
 started
 status
 suggested_filename
+stop
 switch
 TEMPLATES
 text

@@ -35,7 +35,7 @@ static struct {
 static struct {
     GSList *refs;
     GSList *items;
-} last_popup = { NULL, NULL};
+} last_popup = { NULL, NULL };
 
 typedef enum {
     BOOL,
@@ -828,6 +828,15 @@ luaH_webview_loading(lua_State *L)
     return 1;
 }
 
+static gint
+luaH_webview_stop(lua_State *L)
+{
+    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    webkit_web_view_stop_loading(WEBKIT_WEB_VIEW(view));
+    return 0;
+}
+
 /* check for trusted ssl certificate */
 static gint
 luaH_webview_ssl_trusted(lua_State *L)
@@ -868,6 +877,106 @@ show_scrollbars(widget_t *w, gboolean show)
 }
 
 static gint
+luaH_webview_push_history(lua_State *L, WebKitWebView *view)
+{
+    /* obtain the history list of the tab and get information about it */
+    WebKitWebBackForwardList *bflist = webkit_web_back_forward_list_new_with_web_view(view);
+    WebKitWebHistoryItem *item;
+    gint backlen = webkit_web_back_forward_list_get_back_length(bflist);
+    gint forwardlen = webkit_web_back_forward_list_get_forward_length(bflist);
+
+    /* compose an overall table with the history list and the position thereof */
+    lua_createtable(L, 0, 2);
+    /* Set hist[index] = pos */
+    lua_pushliteral(L, "index");
+    lua_pushnumber(L, backlen + 1);
+    lua_rawset(L, -3);
+
+    /* create a table with the history items */
+    lua_createtable(L, backlen + forwardlen + 1, 0);
+    for(gint i = -backlen; i <= forwardlen; i++) {
+        /* each individual history item is composed of a URL and a page title */
+        item = webkit_web_back_forward_list_get_nth_item(bflist, i);
+        lua_createtable(L, 0, 2);
+        /* Set hist_item[uri] = uri */
+        lua_pushliteral(L, "uri");
+        lua_pushstring(L, webkit_web_history_item_get_uri(item));
+        lua_rawset(L, -3);
+        /* Set hist_item[title] = title */
+        lua_pushliteral(L, "title");
+        lua_pushstring(L, webkit_web_history_item_get_title(item));
+        lua_rawset(L, -3);
+        lua_rawseti(L, -2, backlen + i + 1);
+    }
+
+    /* Set hist[items] = hist_items_table */
+    lua_pushliteral(L, "items");
+    lua_insert(L, lua_gettop(L) - 1);
+    lua_rawset(L, -3);
+    return 1;
+}
+
+static void
+webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
+{
+    gint pos, bflen;
+    WebKitWebBackForwardList *bflist;
+    WebKitWebHistoryItem *item = NULL;
+    gchar *uri = NULL;
+
+    if(!lua_istable(L, idx))
+        luaL_error(L, "invalid history table");
+
+    /* get history items table */
+    lua_pushliteral(L, "items");
+    lua_rawget(L, idx);
+    bflen = lua_objlen(L, -1);
+
+    /* create new back-forward history list */
+    bflist = webkit_web_back_forward_list_new_with_web_view(view);
+    webkit_web_back_forward_list_clear(bflist);
+
+    /* get position of current history item */
+    lua_pushliteral(L, "index");
+    lua_rawget(L, idx);
+    pos = (gint)lua_tonumber(L, -1);
+    /* load last item if out of range */
+    pos = (pos < 1 || pos > bflen) ? 0 : pos - bflen;
+    lua_pop(L, 1);
+
+    /* now we actually set the history to the content of the list */
+    for (gint i = 1; i <= bflen; i++) {
+        lua_rawgeti(L, -1, i);
+        lua_pushliteral(L, "title");
+        lua_rawget(L, -2);
+        lua_pushliteral(L, "uri");
+        lua_rawget(L, -3);
+        luaH_dumpstack(L);
+        if (pos || i < bflen) {
+            item = webkit_web_history_item_new_with_data(lua_tostring(L, -1), NONULL(lua_tostring(L, -2)));
+            webkit_web_back_forward_list_add_item(bflist, item);
+        } else
+            uri = g_strdup(lua_tostring(L, -1));
+        lua_pop(L, 3);
+    }
+
+    /* load last item */
+    if (uri) {
+        webkit_web_view_load_uri(view, uri);
+        g_free(uri);
+
+    /* load item in history */
+    } else if (bflen && webkit_web_view_can_go_back_or_forward(view, pos)) {
+        webkit_web_view_go_back_or_forward(view, pos);
+
+    /* load "about:blank" on empty history list */
+    } else
+        webkit_web_view_load_uri(view, "about:blank");
+
+    lua_pop(L, 1);
+}
+
+static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -897,6 +1006,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(LOADING,          luaH_webview_loading)
       PF_CASE(RELOAD,           luaH_webview_reload)
       PF_CASE(SSL_TRUSTED,      luaH_webview_ssl_trusted)
+      PF_CASE(STOP,             luaH_webview_stop)
       /* push source viewing methods */
       PF_CASE(GET_VIEW_SOURCE,  luaH_webview_get_view_source)
       PF_CASE(SET_VIEW_SOURCE,  luaH_webview_set_view_source)
@@ -908,6 +1018,9 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         tmp.c = g_object_get_data(G_OBJECT(view), "uri");
         lua_pushstring(L, tmp.c);
         return 1;
+
+      case L_TK_HISTORY:
+        return luaH_webview_push_history(L, WEBKIT_WEB_VIEW(view));
 
       default:
         break;
@@ -959,6 +1072,10 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
       case L_TK_SHOW_SCROLLBARS:
         show_scrollbars(w, luaH_checkboolean(L, 3));
+        break;
+
+      case L_TK_HISTORY:
+        webview_set_history(L, WEBKIT_WEB_VIEW(view), 3);
         break;
 
       default:
