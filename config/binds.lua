@@ -194,14 +194,17 @@ binds.helper_methods = {
     -- parse uri command line
     -- inject search engine uri if necessary
     get_uri = function (w, args, view)
-        local sep = string.find(args, " ")
-        if sep then
+        if not string.match(args, "%.") then
+            local sep = string.find(args, " ")
             local engine = string.sub(args, 1, sep-1)
+            local uri
             if search_engines[engine] then
                 local search = string.sub(args, sep+1)
-                local uri = string.gsub(search_engines[engine], "{%d}", search)
-                return uri
+                uri = string.gsub(search_engines[engine], "{%d}", search)
+            else
+                uri = string.gsub(search_engines["google"], "{%d}", args)
             end
+            return uri
         end
         return args
     end,
