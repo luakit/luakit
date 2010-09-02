@@ -38,6 +38,7 @@ go_back
 go_forward
 hbox
 hide
+history
 homogeneous
 hovered_uri
 icon
