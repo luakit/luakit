@@ -96,7 +96,10 @@ binds.mode_binds = {
         key({"Control"}, "Page_Down",   function (w) w:next_tab() end),
         buf("^[0-9]*gT$",               function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         buf("^[0-9]*gt$",               function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
-        buf("^d$",                      function (w)    w:close_tab() end),
+
+        key({},          "d",           function (w) w:close_tab()      end),
+        key({},          "u",           function (w) w:undo_close_tab() end),
+
         key({},          "<",           function (w) w.tabs:reorder(w:get_current(), w.tabs:current() -1) end),
         key({},          ">",           function (w) w.tabs:reorder(w:get_current(), (w.tabs:current() + 1) % w.tabs:count()) end),
 

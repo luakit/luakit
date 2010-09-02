@@ -57,6 +57,7 @@ function window.build()
             prompt  = label(),
             input   = entry(),
         },
+        closed_tabs = {}
     }
 
     -- Assemble window
@@ -207,11 +208,24 @@ window.methods = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-    new_tab = function (w, uri)
-        local view = webview.new(w, uri)
+    new_tab = function (w, arg)
+        local view = webview.new(w, (type(arg) == "string" and arg) or nil)
         w.tabs:append(view)
         w:update_tab_count()
+        if type(arg) == "table" then view.history = arg end
         return view
+    end,
+
+    undo_close_tab = function (w)
+        if #(w.closed_tabs) == 0 then return end
+        local tab = table.remove(w.closed_tabs)
+        local view = w:new_tab(tab.hist)
+        if tab.after then
+            w.tabs:reorder(view, w.tabs:indexof(tab.after)+1)
+        else
+            w.tabs:reorder(view, 1)
+        end
+        w.tabs:switch(w.tabs:indexof(view))
     end,
 
     -- Wrapper around the bind plugin's hit method
