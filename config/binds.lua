@@ -161,9 +161,9 @@ binds.mode_binds = {
 binds.commands = {
  -- cmd({command, alias1, ...},         function (w, arg, opts) .. end, opts),
  -- cmd("co[mmand]",                    function (w, arg, opts) .. end, opts),
-    cmd("o[pen]",                       function (w, a)    w:navigate(a) end),
-    cmd("t[abopen]",                    function (w, a)    w:new_tab(a) end),
-    cmd("w[inopen]",                    function (w, a)    window.new{a} end),
+    cmd("o[pen]",                       function (w, a)    w:navigate(w:search_open(a)) end),
+    cmd("t[abopen]",                    function (w, a)    w:new_tab (w:search_open(a)) end),
+    cmd("w[inopen]",                    function (w, a)    window.new{w:search_open(a)} end),
     cmd("back",                         function (w, a)    w:back(tonumber(a) or 1) end),
     cmd("f[orward]",                    function (w, a)    w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a)    w:scroll_vert(a) end),
@@ -191,22 +191,30 @@ binds.helper_methods = {
         end
     end,
 
-    -- parse uri command line
-    -- inject search engine uri if necessary
-    get_uri = function (w, args)
-        if not string.match(args, "%.") then
-            local sep = string.find(args, " ")
-            local engine = string.sub(args, 1, sep-1)
-            local uri
-            if search_engines[engine] then
-                local search = string.sub(args, sep+1)
-                uri = string.gsub(search_engines[engine], "{%d}", search)
-            else
-                uri = string.gsub(search_engines["google"], "{%d}", args)
-            end
-            return uri
+    -- Intelligent open command which can detect a uri or search argument.
+    search_open = function (w, arg)
+        local str = lousy.util.string
+        args = str.split(str.strip(arg))
+        -- Detect scheme:// or "." in string
+        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
+            return args[1]
         end
-        return args
+        -- Find search engine
+        if #args >= 1 and string.match(args[1], "^%w+$") then
+            -- Find exact match
+            if search_engines[args[1]] then
+                return ({string.gsub(search_engines[args[1]], "{%d}", table.concat(args, " ", 2))})[1]
+            end
+            -- Find partial match
+            local part, len = args[1], #(args[1])
+            for engine, uri in pairs(search_engines) do
+                if string.sub(engine, 1, len) == part then
+                    return ({string.gsub(uri, "{%d}", table.concat(args, " ", 2))})[1]
+                end
+            end
+        end
+        -- Fallback on google search
+        return ({string.gsub(search_engines["google"], "{%d}", table.concat(args, " "))})[1]
     end,
 
     -- Tab traversing functions
