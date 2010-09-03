@@ -190,15 +190,16 @@ widget_entry(widget_t *w)
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
 
     g_object_connect((GObject*)w->widget,
-      "signal::activate",                   (GCallback)activate_cb,    w,
-      "signal::focus-in-event",             (GCallback)focus_cb,       w,
-      "signal::focus-out-event",            (GCallback)focus_cb,       w,
-      "signal::key-press-event",            (GCallback)key_press_cb,   w,
-      "signal::parent-set",                 (GCallback)parent_set_cb,  w,
-      "swapped-signal-after::backspace",  (GCallback)changed_cb,     w,
+      "signal::activate",                          (GCallback)activate_cb,    w,
+      "signal::focus-in-event",                    (GCallback)focus_cb,       w,
+      "signal::focus-out-event",                   (GCallback)focus_cb,       w,
+      "signal::key-press-event",                   (GCallback)key_press_cb,   w,
+      "signal::parent-set",                        (GCallback)parent_set_cb,  w,
+      "swapped-signal-after::backspace",           (GCallback)changed_cb,     w,
       "swapped-signal-after::delete-from-cursor",  (GCallback)changed_cb,     w,
-      "swapped-signal-after::insert-at-cursor",  (GCallback)changed_cb,     w,
-      "swapped-signal-after::paste-clipboard",  (GCallback)changed_cb,     w,
+      "swapped-signal-after::insert-at-cursor",    (GCallback)changed_cb,     w,
+      "swapped-signal-after::paste-clipboard",     (GCallback)changed_cb,     w,
+      "swapped-signal::button-release-event",      (GCallback)changed_cb,     w,
       NULL);
 
     GtkEntry* entry = GTK_ENTRY(w->widget);
