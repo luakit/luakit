@@ -208,11 +208,13 @@ window.methods = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-    new_tab = function (w, arg)
+    new_tab = function (w, arg, switch)
         local view = webview.new(w, (type(arg) == "string" and arg) or nil)
-        w.tabs:append(view)
-        w:update_tab_count()
         if type(arg) == "table" then view.history = arg end
+        local i = w.tabs:append(view)
+        if switch ~= false then w.tabs:switch(i) end
+        w:update_tab_count()
+        w:update_tab_labels()
         return view
     end,
 
@@ -225,7 +227,6 @@ window.methods = {
         else
             w.tabs:reorder(view, 1)
         end
-        w.tabs:switch(w.tabs:indexof(view))
     end,
 
     -- Wrapper around the bind plugin's hit method
@@ -640,12 +641,12 @@ function window.new(uris)
 
     -- Populate notebook with tabs
     for _, uri in ipairs(uris or {}) do
-        w:new_tab(uri)
+        w:new_tab(uri, false)
     end
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(globals.homepage)
+        w:new_tab(globals.homepage, false)
     end
 
     -- Set initial mode

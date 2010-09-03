@@ -125,7 +125,7 @@ binds.mode_binds = {
         but({},          2,             function (w)
                                             -- Open hovered uri in new tab
                                             local uri = w:get_current().hovered_uri
-                                            if uri then w:new_tab(uri)
+                                            if uri then w:new_tab(uri, false)
                                             else -- Open selection in current tab
                                                 uri = luakit.get_selection()
                                                 if uri then w:get_current().uri = uri end
