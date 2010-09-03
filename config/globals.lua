@@ -34,6 +34,7 @@ globals.ssl_strict = false
 search_engines = {
     luakit      = "http://luakit.org/search/index/luakit?q={0}",
     google      = "http://google.com/search?q={0}",
+    duckduckgo  = "http://duckduckgo.com/?q={0}",
     wikipedia   = "http://en.wikipedia.org/wiki/Special:Search?search={0}",
     debbugs     = "http://bugs.debian.org/{0}",
     imdb        = "http://imdb.com/find?s=all&q={0}",
