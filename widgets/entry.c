@@ -196,9 +196,10 @@ widget_entry(widget_t *w)
       "signal::key-press-event",   (GCallback)key_press_cb,   w,
       "signal::parent-set",        (GCallback)parent_set_cb,  w,
       NULL);
+
     GtkEntry* entry = GTK_ENTRY(w->widget);
     g_object_connect((GObject*)entry->im_context,
-      "swapped-signal::commit",           (GCallback)changed_cb,     w,
+      "swapped-signal::commit",    (GCallback)changed_cb,     w,
       NULL);
 
     gtk_widget_show(w->widget);
