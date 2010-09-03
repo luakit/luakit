@@ -195,6 +195,8 @@ widget_entry(widget_t *w)
       "signal::focus-out-event",                   (GCallback)focus_cb,       w,
       "signal::key-press-event",                   (GCallback)key_press_cb,   w,
       "signal::parent-set",                        (GCallback)parent_set_cb,  w,
+      // The following signals replace the old "signal::changed", since that
+      // does not allow for the selection to be changed in it's callback.
       "swapped-signal-after::backspace",           (GCallback)changed_cb,     w,
       "swapped-signal-after::delete-from-cursor",  (GCallback)changed_cb,     w,
       "swapped-signal-after::insert-at-cursor",    (GCallback)changed_cb,     w,
@@ -202,6 +204,7 @@ widget_entry(widget_t *w)
       "swapped-signal::button-release-event",      (GCallback)changed_cb,     w,
       NULL);
 
+    // Further signal to replace "signal::changed"
     GtkEntry* entry = GTK_ENTRY(w->widget);
     g_object_connect((GObject*)entry->im_context,
       "swapped-signal::commit",    (GCallback)changed_cb,     w,
