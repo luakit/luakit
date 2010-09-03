@@ -71,7 +71,7 @@ webview.init_funcs = {
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)
             if w:is_current(v) and link then
-                w.sbar.l.uri.text = "Link: " .. lousy.util.escape(link)
+                w:update_uri(v, nil, link)
             end
         end)
         view:add_signal("link-unhover", function (v)
