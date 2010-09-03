@@ -82,15 +82,25 @@ function buf(pattern, func, opts)
 end
 
 --- Create new command binding.
--- @param commands A table of command names to match.
+-- @param cmds A table of command names to match or "co[mmand]" string to parse.
 -- @param func The callback function.
 -- @param opts Optional binding and callback options.
 -- @return A command binding struct.
-function cmd(commands, func, opts)
-    assert(type(commands) == "table", "invalid commands table type")
-    assert(#commands > 0,             "empty commands table")
+function cmd(cmds, func, opts)
+    -- Parse "co[mmand]" or literal.
+    if type(cmds) == "string" then
+        if string.match(cmds, "^(%w+)%[(%w+)%]") then
+            local l, r = string.match(cmds, "^(%w+)%[(%w+)%]")
+            cmds = {l..r, l}
+        else
+            cmds = {cmds,}
+        end
+    end
+
+    assert(type(cmds) == "table", "invalid commands table type")
+    assert(#cmds > 0,             "empty commands table")
     assert(type(func) == "function",  "invalid function type")
-    return { commands = commands, func = func, opts = opts}
+    return { cmds = cmds, func = func, opts = opts}
 end
 
 --- Try and match a key binding in a given table of bindings and call that
@@ -151,7 +161,7 @@ function match_cmd(binds, buffer, arg)
 
     for _, b in ipairs(binds) do
         -- Command matching
-        if b.commands and util.table.hasitem(b.commands, command) then
+        if b.cmds and util.table.hasitem(b.cmds, command) then
             if b.func(arg, argument, b.opts) ~= false then return true end
         -- Buffer matching
         elseif b.pattern and string.match(buffer, b.pattern) then

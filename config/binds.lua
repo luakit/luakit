@@ -153,17 +153,18 @@ binds.mode_binds = {
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 binds.commands = {
- -- cmd({Command, Alias1, ...},         function (w, arg, opts) .. end, opts),
-    cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
-    cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
-    cmd({"winopen",     "w"  },         function (w, a)    window.new{a} end),
-    cmd({"back"              },         function (w, a)    w:back(tonumber(a) or 1) end),
-    cmd({"forward",     "f"  },         function (w, a)    w:forward(tonumber(a) or 1) end),
-    cmd({"scroll"            },         function (w, a)    w:scroll_vert(a) end),
-    cmd({"quit",        "q"  },         function (w)       luakit.quit() end),
-    cmd({"close",       "c"  },         function (w)       w:close_tab() end),
+ -- cmd({command, alias1, ...},         function (w, arg, opts) .. end, opts),
+ -- cmd("co[mmand]",                    function (w, arg, opts) .. end, opts),
+    cmd("o[pen]",                       function (w, a)    w:navigate(a) end),
+    cmd("t[abopen]",                    function (w, a)    w:new_tab(a) end),
+    cmd("w[inopen]",                    function (w, a)    window.new{a} end),
+    cmd("back",                         function (w, a)    w:back(tonumber(a) or 1) end),
+    cmd("f[orward]",                    function (w, a)    w:forward(tonumber(a) or 1) end),
+    cmd("scroll",                       function (w, a)    w:scroll_vert(a) end),
+    cmd("q[uit]",                       function (w)       luakit.quit() end),
+    cmd("c[lose]",                      function (w)       w:close_tab() end),
+    cmd("reload",                       function (w)       w:reload() end),
     cmd({"websearch",   "ws" },         function (w, e, s) w:websearch(e, s) end),
-    cmd({"reload",           },         function (w)       w:reload() end),
     cmd({"viewsource",  "vs" },         function (w)       w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
     cmd({"bookmark",    "bm" },         function (w, a)
