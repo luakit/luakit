@@ -322,11 +322,12 @@ follow.modes = {}
 
 -- Build mode table
 for _, t in ipairs({
-    {"follow", "followable", "follow"},
-    {"uri",    "uri",        "uri"   },
-    {"desc",   "desc",       "desc"  },
-    {"focus",  "focusable",  "focus" },
-    {"image",  "image",      "src"   },
+  -- Follow mode,  Selector name,  Evaluator name
+    {"follow",     "followable",   "follow"      },
+    {"uri",        "uri",          "uri"         },
+    {"desc",       "desc",         "desc"        },
+    {"focus",      "focusable",    "focus"       },
+    {"image",      "image",        "src"         },
 }) do
     follow.modes[t[1]] = { selector = t[2], evaluator = t[3] }
 end
@@ -342,17 +343,17 @@ local buf = lousy.bind.buf
 for _, b in ipairs({
     --                       w:start_follow(mode,     prompt,             callback)
     buf("^f$",  function (w) w:start_follow("follow", nil,                function (sig)                                return sig           end) end),
+    buf("^Ff$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
     buf("^Fy$", function (w) w:start_follow("uri",    "yank",             function (uri)  luakit.set_selection(uri)     return "root-active" end) end),
     buf("^FY$", function (w) w:start_follow("desc",   "yank description", function (desc) luakit.set_selection(desc)    return "root-active" end) end),
+    buf("^Fs$", function (w) w:start_follow("uri",    "download",         function (uri)  w:download(uri)               return "root-active" end) end),
+    buf("^Fi$", function (w) w:start_follow("image",  "open image",       function (src)  w:navigate(src)               return "root-active" end) end),
     buf("^Fo$", function (w) w:start_follow("uri",    "open",             function (uri)  w:navigate(uri)               return "root-active" end) end),
     buf("^Ft$", function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri)                return "root-active" end) end),
     buf("^Fw$", function (w) w:start_follow("uri",    "new window",       function (uri)  window.new{uri}               return "root-active" end) end),
     buf("^FO$", function (w) w:start_follow("uri",    "open cmd",         function (uri)  w:enter_cmd(":open "..uri)                         end) end),
     buf("^FT$", function (w) w:start_follow("uri",    "tabopen cmd",      function (uri)  w:enter_cmd(":tabopen "..uri)                      end) end),
     buf("^FW$", function (w) w:start_follow("uri",    "winopen cmd",      function (uri)  w:enter_cmd(":winopen "..uri)                      end) end),
-    buf("^Fs$", function (w) w:start_follow("uri",    "download",         function (uri)  w:download(uri)               return "root-active" end) end),
-    buf("^Ff$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
-    buf("^Fi$", function (w) w:start_follow("image",  "open image",       function (src)  w:navigate(src)               return "root-active" end) end),
 }) do
     table.insert(binds.mode_binds.normal, b)
 end
