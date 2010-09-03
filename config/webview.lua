@@ -189,10 +189,10 @@ webview.init_funcs = {
                 true,
                 { "_Toggle Source", function () w:toggle_source() end },
                 { "_Zoom", {
-                    { "Zoom _In",    function () w:zoom_in(globals.zoom_step) end },
-                    { "Zoom _Out",   function () w:zoom_out(globals.zoom_step) end },
+                    { "Zoom _In",    function () w:zoom_in()  end },
+                    { "Zoom _Out",   function () w:zoom_out() end },
                     true,
-                    { "Zoom _Reset", function () w:zoom_reset() end }, }, },
+                    { "Zoom _Reset", function () w:zoom_set() end }, }, },
             }
         end)
     end,
@@ -261,19 +261,21 @@ webview.methods = {
     end,
 
     -- Zoom functions
-    zoom_in = function (view, w, step, text_zoom)
-        view:set_prop("full-content-zoom", not text_zoom)
+    zoom_in = function (view, w, step, full_zoom)
+        view:set_prop("full-content-zoom", not not full_zoom)
+        step = step or globals.zoom_step or 0.1
         view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
     end,
 
-    zoom_out = function (view, w, step, text_zoom)
-        view:set_prop("full-content-zoom", not text_zoom)
+    zoom_out = function (view, w, step, full_zoom)
+        view:set_prop("full-content-zoom", not not full_zoom)
+        step = step or globals.zoom_step or 0.1
         view:set_prop("zoom-level", math.max(0.01, view:get_prop("zoom-level") - step))
     end,
 
-    zoom_reset = function (view, w)
-        view:set_prop("full-content-zoom", false)
-        view:set_prop("zoom-level", 1.0)
+    zoom_set = function (view, w, level, full_zoom)
+        view:set_prop("full-content-zoom", not not full_zoom)
+        view:set_prop("zoom-level", level or 1.0)
     end,
 
     -- Searching functions

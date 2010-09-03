@@ -9,7 +9,6 @@ local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
-local zoom_step   = globals.zoom_step or 0.1
 local homepage    = globals.homepage or "http://luakit.org"
 
 -- Add key bindings to be used across all windows in the given modes.
@@ -51,17 +50,15 @@ binds.mode_binds = {
         key({},          "Home",        function (w) w:scroll_vert("0%")   end),
         key({},          "End",         function (w) w:scroll_vert("100%") end),
 
-        -- Full content zooming
-        buf("^zI$",                     function (w) w:zoom_in(zoom_step)  end),
-        buf("^zO$",                     function (w) w:zoom_out(zoom_step) end),
-        buf("^zZ$",                     function (w) w:zoom_reset()        end),
-
-        -- Text zooming
-        key({"Control"}, "+",           function (w) w:zoom_in(zoom_step,  true) end),
-        key({"Control"}, "-",           function (w) w:zoom_out(zoom_step, true) end),
-        buf("^zi$",                     function (w) w:zoom_in(zoom_step,  true) end),
-        buf("^zo$",                     function (w) w:zoom_out(zoom_step, true) end),
-        buf("^zz$",                     function (w) w:zoom_reset()              end),
+        -- Zooming
+        key({},          "+",           function (w) w:zoom_in()  end),
+        key({},          "-",           function (w) w:zoom_out() end),
+        key({},          "=",           function (w) w:zoom_set() end),
+        buf("^zz$",                     function (w) w:zoom_set() end),
+        buf("^zi$",                     function (w) w:zoom_in()  end),
+        buf("^zo$",                     function (w) w:zoom_out() end),
+        buf("^zI$",                     function (w) w:zoom_in(nil, true)  end),
+        buf("^zO$",                     function (w) w:zoom_out(nil, true) end),
 
         -- Clipboard
         key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
