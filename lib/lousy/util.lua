@@ -210,6 +210,16 @@ function string.split(s, pattern, ret)
     return ret
 end
 
+-- Python like string strip.
+-- @param s The string to strip.
+-- @param pattern The pattern to strip from the left-most and right-most of the
+-- string.
+-- @return The inner string segment.
+function string.strip(s, pattern)
+    local p = pattern or "%s*"
+    return ({rstring.match(s, rstring.format("^%s(.*)%s$", p, p))})[1]
+end
+
 local function find_file(paths)
     for _, p in ipairs(paths) do
         if os.exists(p) then return p end
