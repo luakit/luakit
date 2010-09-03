@@ -151,6 +151,12 @@ window.init_funcs = {
                 w.compl_index = 0
             end
 
+            -- Hide the notification if visible
+            if w.sbar.notification then
+                w.sbar.notification = false
+                w:update_uri()
+            end
+
             if w:hit(mods, key) then
                 return true
             end

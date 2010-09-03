@@ -37,6 +37,7 @@ require "go_input"
 require "follow_selected"
 require "go_next_prev"
 require "go_up"
+require "notify"
 
 -- Init bookmarks lib
 require "bookmarks"

@@ -69,8 +69,8 @@ binds.mode_binds = {
         -- Clipboard
         key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
         key({},          "P",           function (w) w:new_tab(luakit.get_selection())  end),
-        buf("^yy$",                     function (w) luakit.set_selection((w:get_current() or {}).uri or "") end),
-        buf("^yt$",                     function (w) luakit.set_selection(w.win.title) end),
+        buf("^yy$",                     function (w) w:set_selection((w:get_current() or {}).uri or "") end),
+        buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
         -- Commands
         buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
