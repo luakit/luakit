@@ -31,6 +31,7 @@ require "webview"
 require "binds"
 
 -- Init scripts
+require "follow"
 require "formfiller"
 require "go_input"
 require "follow_selected"

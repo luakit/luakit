@@ -59,8 +59,6 @@ install:
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
 	cp -r lib/ $(INSTALLDIR)/share/luakit/
 	chmod -R 755 $(INSTALLDIR)/share/luakit/lib/
-	cp -r scripts/ $(INSTALLDIR)/share/luakit/
-	chmod -R 755 $(INSTALLDIR)/share/luakit/scripts/
 	install -D luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
 	install -D config/*.lua $(DESTDIR)/etc/xdg/luakit/

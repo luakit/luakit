@@ -167,9 +167,8 @@ activate_cb(GtkEntry *e, widget_t *w)
 }
 
 static void
-changed_cb(GtkEditable *e, widget_t *w)
+changed_cb(widget_t *w)
 {
-    (void) e;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "changed", 0, 0);
@@ -192,11 +191,15 @@ widget_entry(widget_t *w)
 
     g_object_connect((GObject*)w->widget,
       "signal::activate",          (GCallback)activate_cb,    w,
-      "signal::changed",           (GCallback)changed_cb,     w,
       "signal::focus-in-event",    (GCallback)focus_cb,       w,
       "signal::focus-out-event",   (GCallback)focus_cb,       w,
       "signal::key-press-event",   (GCallback)key_press_cb,   w,
       "signal::parent-set",        (GCallback)parent_set_cb,  w,
+      NULL);
+
+    GtkEntry* entry = GTK_ENTRY(w->widget);
+    g_object_connect((GObject*)entry->im_context,
+      "swapped-signal::commit",    (GCallback)changed_cb,     w,
       NULL);
 
     gtk_widget_show(w->widget);

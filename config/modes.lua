@@ -17,19 +17,21 @@ end
 window.init_funcs.modes_setup = function (w)
     -- Calls the `enter` and `leave` mode hooks.
     w.win:add_signal("mode-changed", function (_, mode)
+        local leave = (current or {}).leave
+
+        -- Get new modes functions
+        current = modes[mode]
+
         -- Call the last modes `leave` hook.
-        if current and current.leave then
-            current.leave(w)
+        if leave then leave(w) end
+
+        -- Check new mode
+        if not current then
+            error("changed to un-handled mode: " .. mode)
         end
 
         -- Update window binds
         w:update_binds(mode)
-
-        -- Get new modes functions
-        current = modes[mode]
-        if not current then
-            error("changed to un-handled mode: " .. mode)
-        end
 
         -- Call new modes `enter` hook.
         if current.enter then current.enter(w) end
@@ -136,27 +138,5 @@ new_mode("search", {
         local p = w.ibar.prompt
         p.text = lousy.util.escape(text)
         p:show()
-    end,
-})
-
--- Setup follow mode
-new_mode("follow", {
-    enter = function (w)
-        local i, p = w.ibar.input, w.ibar.prompt
-        w:eval_js_from_file(lousy.util.find_data("scripts/follow.js"))
-        w:eval_js("clear(); show_hints();")
-        p.text = "Follow:"
-        p:show()
-        i.text = ""
-        i:show()
-        i:focus()
-        i:set_position(-1)
-    end,
-    leave = function (w)
-        if w.eval_js then w:eval_js("clear();") end
-    end,
-    changed = function (w, text)
-        local ret = w:eval_js(string.format("update(%q);", text))
-        w:emit_form_root_active_signal(ret)
     end,
 })

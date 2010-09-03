@@ -526,6 +526,9 @@ window.methods = {
         w:update_buf()
     end,
 
+    -- Small wrapper to ease the use of the download bar
+    download = function (w, link) w.dbar:download(link) end,
+
     -- Tab label functions
     -- TODO: Move these functions into a module (I.e. lousy.widget.tablist)
     make_tab_label = function (w, pos)

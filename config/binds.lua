@@ -120,9 +120,6 @@ binds.mode_binds = {
         buf("^ZZ$",                     function (w) w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
 
-        -- Link following
-        key({},          "f",           function (w) w:set_mode("follow") end),
-
         -- Bookmarking
         key({},          "B",           function (w) w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
         buf("^gb$",                     function (w) w:navigate(bookmarks.dump_html()) end),

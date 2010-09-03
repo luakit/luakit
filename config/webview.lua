@@ -171,7 +171,7 @@ webview.init_funcs = {
         -- 'link' contains the download link
         -- 'filename' contains the suggested filename (from server or webkit)
         view:add_signal("download-request", function (v, link, filename)
-            w.dbar:download(link, w.window)
+            w:download(link, w.window)
         end)
     end,
 
