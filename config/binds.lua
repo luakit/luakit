@@ -9,7 +9,6 @@ local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
-local zoom_step   = globals.zoom_step or 0.1
 local homepage    = globals.homepage or "http://luakit.org"
 
 -- Add key bindings to be used across all windows in the given modes.
@@ -37,6 +36,8 @@ binds.mode_binds = {
         key({"Control"}, "u",           function (w) w:scroll_page(-0.5)   end),
         key({"Control"}, "f",           function (w) w:scroll_page(1.0)    end),
         key({"Control"}, "b",           function (w) w:scroll_page(-1.0)   end),
+        key({},          "space",       function (w) w:scroll_page(1.0) end),
+        key({},          "BackSpace",   function (w) w:scroll_page(-1.0) end),
         buf("^gg$",                     function (w) w:scroll_vert("0%")   end),
         buf("^G$",                      function (w) w:scroll_vert("100%") end),
         buf("^[\-\+]?[0-9]+[%%G]$",     function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
@@ -51,17 +52,19 @@ binds.mode_binds = {
         key({},          "Home",        function (w) w:scroll_vert("0%")   end),
         key({},          "End",         function (w) w:scroll_vert("100%") end),
 
-        -- Full content zooming
-        buf("^zI$",                     function (w) w:zoom_in(zoom_step)  end),
-        buf("^zO$",                     function (w) w:zoom_out(zoom_step) end),
-        buf("^zZ$",                     function (w) w:zoom_reset()        end),
+        -- Zooming
+        key({},          "+",           function (w) w:zoom_in()  end),
+        key({},          "-",           function (w) w:zoom_out() end),
+        key({},          "=",           function (w) w:zoom_set() end),
+        buf("^zz$",                     function (w) w:zoom_set() end),
+        buf("^zi$",                     function (w) w:zoom_in()  end),
+        buf("^zo$",                     function (w) w:zoom_out() end),
+        buf("^zI$",                     function (w) w:zoom_in(nil, true)  end),
+        buf("^zO$",                     function (w) w:zoom_out(nil, true) end),
 
-        -- Text zooming
-        key({"Control"}, "+",           function (w) w:zoom_in(zoom_step,  true) end),
-        key({"Control"}, "-",           function (w) w:zoom_out(zoom_step, true) end),
-        buf("^zi$",                     function (w) w:zoom_in(zoom_step,  true) end),
-        buf("^zo$",                     function (w) w:zoom_out(zoom_step, true) end),
-        buf("^zz$",                     function (w) w:zoom_reset()              end),
+        -- Specific zoom
+        buf("^%d+z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)z$"))/100)       end),
+        buf("^%d+Z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)Z$"))/100, true) end),
 
         -- Clipboard
         key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
@@ -76,7 +79,7 @@ binds.mode_binds = {
         buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. ((w:get_current() or {}).uri or "")) end),
         buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. ((w:get_current() or {}).uri or "")) end),
         buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
-        buf("^,g$",                     function (w, c) w:enter_cmd(":websearch google ") end),
+        buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
         -- Searching
         key({},          "/",           function (w) w:start_search("/")  end),
@@ -94,11 +97,15 @@ binds.mode_binds = {
         -- Tab
         key({"Control"}, "Page_Up",     function (w) w:prev_tab() end),
         key({"Control"}, "Page_Down",   function (w) w:next_tab() end),
+        key({"Control"}, "Tab",         function (w, b) w:next_tab() end),
+        key({"Shift","Control"}, "Tab", function (w, b) w:prev_tab() end),
         buf("^[0-9]*gT$",               function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         buf("^[0-9]*gt$",               function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
 
-        key({},          "d",           function (w) w:close_tab()      end),
-        key({},          "u",           function (w) w:undo_close_tab() end),
+        key({"Control"}, "t",           function (w) w:new_tab(homepage) end),
+        key({"Control"}, "w",           function (w) w:close_tab()       end),
+        key({},          "d",           function (w) w:close_tab()       end),
+        key({},          "u",           function (w) w:undo_close_tab()  end),
 
         key({},          "<",           function (w) w.tabs:reorder(w:get_current(), w.tabs:current() -1) end),
         key({},          ">",           function (w) w.tabs:reorder(w:get_current(), (w.tabs:current() + 1) % w.tabs:count()) end),
@@ -125,7 +132,7 @@ binds.mode_binds = {
         but({},          2,             function (w)
                                             -- Open hovered uri in new tab
                                             local uri = w:get_current().hovered_uri
-                                            if uri then w:new_tab(uri)
+                                            if uri then w:new_tab(uri, false)
                                             else -- Open selection in current tab
                                                 uri = luakit.get_selection()
                                                 if uri then w:get_current().uri = uri end
@@ -152,17 +159,17 @@ binds.mode_binds = {
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 binds.commands = {
- -- cmd({Command, Alias1, ...},         function (w, arg, opts) .. end, opts),
-    cmd({"open",        "o"  },         function (w, a)    w:navigate(a) end),
-    cmd({"tabopen",     "t"  },         function (w, a)    w:new_tab(a) end),
-    cmd({"winopen",     "w"  },         function (w, a)    window.new{a} end),
-    cmd({"back"              },         function (w, a)    w:back(tonumber(a) or 1) end),
-    cmd({"forward",     "f"  },         function (w, a)    w:forward(tonumber(a) or 1) end),
-    cmd({"scroll"            },         function (w, a)    w:scroll_vert(a) end),
-    cmd({"quit",        "q"  },         function (w)       luakit.quit() end),
-    cmd({"close",       "c"  },         function (w)       w:close_tab() end),
-    cmd({"websearch",   "ws" },         function (w, e, s) w:websearch(e, s) end),
-    cmd({"reload",           },         function (w)       w:reload() end),
+ -- cmd({command, alias1, ...},         function (w, arg, opts) .. end, opts),
+ -- cmd("co[mmand]",                    function (w, arg, opts) .. end, opts),
+    cmd("o[pen]",                       function (w, a)    w:navigate(w:search_open(a)) end),
+    cmd("t[abopen]",                    function (w, a)    w:new_tab (w:search_open(a)) end),
+    cmd("w[inopen]",                    function (w, a)    window.new{w:search_open(a)} end),
+    cmd("back",                         function (w, a)    w:back(tonumber(a) or 1) end),
+    cmd("f[orward]",                    function (w, a)    w:forward(tonumber(a) or 1) end),
+    cmd("scroll",                       function (w, a)    w:scroll_vert(a) end),
+    cmd("q[uit]",                       function (w)       luakit.quit() end),
+    cmd("c[lose]",                      function (w)       w:close_tab() end),
+    cmd("reload",                       function (w)       w:reload() end),
     cmd({"viewsource",  "vs" },         function (w)       w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
     cmd({"bookmark",    "bm" },         function (w, a)
@@ -184,17 +191,30 @@ binds.helper_methods = {
         end
     end,
 
-    -- search engine wrapper
-    websearch = function (w, args)
-        local sep = string.find(args, " ")
-        local engine = string.sub(args, 1, sep-1)
-        local search = string.sub(args, sep+1)
-        search = string.gsub(search, "^%s*(.-)%s*$", "%1")
-        if not search_engines[engine] then
-            return error("No matching search engine found: " .. engine)
+    -- Intelligent open command which can detect a uri or search argument.
+    search_open = function (w, arg)
+        local str = lousy.util.string
+        args = str.split(str.strip(arg))
+        -- Detect scheme:// or "." in string
+        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
+            return args[1]
         end
-        local uri = string.gsub(search_engines[engine], "{%d}", search)
-        return w:navigate(uri)
+        -- Find search engine
+        if #args >= 1 and string.match(args[1], "^%w+$") then
+            -- Find exact match
+            if search_engines[args[1]] then
+                return ({string.gsub(search_engines[args[1]], "{%d}", table.concat(args, " ", 2))})[1]
+            end
+            -- Find partial match
+            local part, len = args[1], #(args[1])
+            for engine, uri in pairs(search_engines) do
+                if string.sub(engine, 1, len) == part then
+                    return ({string.gsub(uri, "{%d}", table.concat(args, " ", 2))})[1]
+                end
+            end
+        end
+        -- Fallback on google search
+        return ({string.gsub(search_engines["google"], "{%d}", table.concat(args, " "))})[1]
     end,
 
     -- Tab traversing functions

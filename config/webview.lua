@@ -71,7 +71,7 @@ webview.init_funcs = {
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)
             if w:is_current(v) and link then
-                w.sbar.l.uri.text = "Link: " .. lousy.util.escape(link)
+                w:update_uri(v, nil, link)
             end
         end)
         view:add_signal("link-unhover", function (v)
@@ -183,10 +183,10 @@ webview.init_funcs = {
                 true,
                 { "_Toggle Source", function () w:toggle_source() end },
                 { "_Zoom", {
-                    { "Zoom _In",    function () w:zoom_in(globals.zoom_step) end },
-                    { "Zoom _Out",   function () w:zoom_out(globals.zoom_step) end },
+                    { "Zoom _In",    function () w:zoom_in()  end },
+                    { "Zoom _Out",   function () w:zoom_out() end },
                     true,
-                    { "Zoom _Reset", function () w:zoom_reset() end }, }, },
+                    { "Zoom _Reset", function () w:zoom_set() end }, }, },
             }
         end)
     end,
@@ -194,7 +194,7 @@ webview.init_funcs = {
     -- Action to take on resource request.
     resource_request_decision = function (view, w)
         view:add_signal("resource-request-starting", function(v, uri)
-            if luakit.verbose then print("Requesting: "..uri) end
+            info("Requesting: %s", uri)
             -- Return false to cancel the request.
         end)
     end,
@@ -255,19 +255,21 @@ webview.methods = {
     end,
 
     -- Zoom functions
-    zoom_in = function (view, w, step, text_zoom)
-        view:set_prop("full-content-zoom", not text_zoom)
+    zoom_in = function (view, w, step, full_zoom)
+        view:set_prop("full-content-zoom", not not full_zoom)
+        step = step or globals.zoom_step or 0.1
         view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
     end,
 
-    zoom_out = function (view, w, step, text_zoom)
-        view:set_prop("full-content-zoom", not text_zoom)
+    zoom_out = function (view, w, step, full_zoom)
+        view:set_prop("full-content-zoom", not not full_zoom)
+        step = step or globals.zoom_step or 0.1
         view:set_prop("zoom-level", math.max(0.01, view:get_prop("zoom-level") - step))
     end,
 
-    zoom_reset = function (view, w)
-        view:set_prop("full-content-zoom", false)
-        view:set_prop("zoom-level", 1.0)
+    zoom_set = function (view, w, level, full_zoom)
+        view:set_prop("full-content-zoom", not not full_zoom)
+        view:set_prop("zoom-level", level or 1.0)
     end,
 
     -- Searching functions
