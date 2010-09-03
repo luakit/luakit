@@ -200,7 +200,7 @@ webview.init_funcs = {
     -- Action to take on resource request.
     resource_request_decision = function (view, w)
         view:add_signal("resource-request-starting", function(v, uri)
-            if luakit.verbose then print("Requesting: "..uri) end
+            info("Requesting: %s", uri)
             -- Return false to cancel the request.
         end)
     end,
