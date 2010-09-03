@@ -36,6 +36,8 @@ binds.mode_binds = {
         key({"Control"}, "u",           function (w) w:scroll_page(-0.5)   end),
         key({"Control"}, "f",           function (w) w:scroll_page(1.0)    end),
         key({"Control"}, "b",           function (w) w:scroll_page(-1.0)   end),
+        key({},          "space",       function (w) w:scroll_page(1.0) end),
+        key({},          "BackSpace",   function (w) w:scroll_page(-1.0) end),
         buf("^gg$",                     function (w) w:scroll_vert("0%")   end),
         buf("^G$",                      function (w) w:scroll_vert("100%") end),
         buf("^[\-\+]?[0-9]+[%%G]$",     function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
@@ -95,11 +97,15 @@ binds.mode_binds = {
         -- Tab
         key({"Control"}, "Page_Up",     function (w) w:prev_tab() end),
         key({"Control"}, "Page_Down",   function (w) w:next_tab() end),
+        key({"Control"}, "Tab",         function (w, b) w:next_tab() end),
+        key({"Shift","Control"}, "Tab", function (w, b) w:prev_tab() end),
         buf("^[0-9]*gT$",               function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
         buf("^[0-9]*gt$",               function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
 
-        key({},          "d",           function (w) w:close_tab()      end),
-        key({},          "u",           function (w) w:undo_close_tab() end),
+        key({"Control"}, "t",           function (w) w:new_tab(homepage) end),
+        key({"Control"}, "w",           function (w) w:close_tab()       end),
+        key({},          "d",           function (w) w:close_tab()       end),
+        key({},          "u",           function (w) w:undo_close_tab()  end),
 
         key({},          "<",           function (w) w.tabs:reorder(w:get_current(), w.tabs:current() -1) end),
         key({},          ">",           function (w) w.tabs:reorder(w:get_current(), (w.tabs:current() + 1) % w.tabs:count()) end),
