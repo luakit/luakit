@@ -16,23 +16,25 @@ end
 -- Attach window & input bar signals for mode hooks
 window.init_funcs.modes_setup = function (w)
     -- Calls the `enter` and `leave` mode hooks.
-    w.win:add_signal("mode-changed", function (_, mode, ...)
+    w.win:add_signal("mode-changed", function (_, mode)
+        local leave = (current or {}).leave
+
+        -- Get new modes functions
+        current = modes[mode]
+
         -- Call the last modes `leave` hook.
-        if current and current.leave then
-            current.leave(w)
+        if leave then leave(w) end
+
+        -- Check new mode
+        if not current then
+            error("changed to un-handled mode: " .. mode)
         end
 
         -- Update window binds
         w:update_binds(mode)
 
-        -- Get new modes functions
-        current = modes[mode]
-        if not current then
-            error("changed to un-handled mode: " .. mode)
-        end
-
         -- Call new modes `enter` hook.
-        if current.enter then current.enter(w, ...) end
+        if current.enter then current.enter(w) end
     end)
 
     -- Calls the `changed` hook on input widget changed.
@@ -54,9 +56,9 @@ end
 
 -- Add mode related window methods
 for name, func in pairs({
-    set_mode = function (w, name, ...) lousy.mode.set(w.win, name, ...)  end,
-    get_mode = function (w)            return lousy.mode.get(w.win) end,
-    is_mode  = function (w, name)      return name == w:get_mode()  end,
+    set_mode = function (w, name) lousy.mode.set(w.win, name)  end,
+    get_mode = function (w)       return lousy.mode.get(w.win) end,
+    is_mode  = function (w, name) return name == w:get_mode()  end,
 }) do window.methods[name] = func end
 
 -- Setup normal mode
@@ -138,32 +140,3 @@ new_mode("search", {
         p:show()
     end,
 })
-
--- Setup follow mode
-new_mode("follow", {
-    enter = function (w, mode, fun)
-        local i, p = w.ibar.input, w.ibar.prompt
-        w.follow_mode_function = fun
-        p.text = mode and string.format("Follow (%s):", mode) or "Follow:"
-        p:show()
-        i.text = ""
-        i:show()
-        i:focus()
-        i:set_position(-1)
-        w:eval_js_from_file(lousy.util.find_data("scripts/follow.js"))
-        w:eval_js(string.format("%s_mode(); clear(); show_hints();", string.gsub(mode or "follow", "%s", "_")))
-    end,
-    leave = function (w)
-        if w.eval_js then w:eval_js("clear();") end
-    end,
-    changed = function (w, text)
-        local ret = w:eval_js(string.format("update(%q);", text))
-        local fun = w.follow_mode_function
-        if ret ~= "false" then
-            local sig
-            if fun then sig = fun(ret) end
-            if sig then w:emit_form_root_active_signal(sig) end
-        end
-    end,
-})
-

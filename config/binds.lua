@@ -120,20 +120,6 @@ binds.mode_binds = {
         buf("^ZZ$",                     function (w) w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
 
-        -- Link following
-        key({},          "f",           function (w) w:set_mode("follow", nil,                function (sig) return sig end) end),
-        buf("^Fy$",                     function (w) w:set_mode("follow", "yank",             function (uri) luakit.set_selection(uri) return "root-active" end) end),
-        buf("^FY$",                     function (w) w:set_mode("follow", "yank description", function (uri) luakit.set_selection(uri) return "root-active" end) end),
-        buf("^Ft$",                     function (w) w:set_mode("follow", "tab",              function (uri) w:new_tab(uri) return "root-active" end) end),
-        buf("^Fo$",                     function (w) w:set_mode("follow", "open",             function (uri) w:get_current().uri = uri return "root-active" end) end),
-        buf("^Fw$",                     function (w) w:set_mode("follow", "window",           function (uri) window.new{uri} return "root-active" end) end),
-        buf("^FT$",                     function (w) w:set_mode("follow", "tab prompt",       function (uri) w:enter_cmd(":tabopen ".. uri) end) end),
-        buf("^FO$",                     function (w) w:set_mode("follow", "open prompt",      function (uri) w:enter_cmd(":open ".. uri) end) end),
-        buf("^FW$",                     function (w) w:set_mode("follow", "window prompt",    function (uri) w:enter_cmd(":winopen ".. uri) end) end),
-        buf("^Fs$",                     function (w) w:set_mode("follow", "save",             function (uri) w:download(uri) return "root-active" end) end),
-        buf("^Ff$",                     function (w) w:set_mode("follow", "focus",            function (uri) return "root-active" end) end),
-        buf("^Fi$",                     function (w) w:set_mode("follow", "open image",       function (uri) w:get_current().uri = uri return "root-active" end) end),
-
         -- Bookmarking
         key({},          "B",           function (w) w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
         buf("^gb$",                     function (w) w:navigate(bookmarks.dump_html()) end),
