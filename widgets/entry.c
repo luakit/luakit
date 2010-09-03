@@ -195,8 +195,10 @@ widget_entry(widget_t *w)
       "signal::focus-out-event",            (GCallback)focus_cb,       w,
       "signal::key-press-event",            (GCallback)key_press_cb,   w,
       "signal::parent-set",                 (GCallback)parent_set_cb,  w,
-      "swapped-signal-after::insert-text",  (GCallback)changed_cb,     w,
-      "swapped-signal-after::delete-text",  (GCallback)changed_cb,     w,
+      "swapped-signal-after::backspace",  (GCallback)changed_cb,     w,
+      "swapped-signal-after::delete-from-cursor",  (GCallback)changed_cb,     w,
+      "swapped-signal-after::insert-at-cursor",  (GCallback)changed_cb,     w,
+      "swapped-signal-after::paste-clipboard",  (GCallback)changed_cb,     w,
       NULL);
 
     GtkEntry* entry = GTK_ENTRY(w->widget);
