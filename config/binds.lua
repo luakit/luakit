@@ -61,8 +61,8 @@ binds.mode_binds = {
         buf("^zO$",                     function (w) w:zoom_out(nil, true) end),
 
         -- Specific zoom
-        buf("^%d*%.?%d+z$",             function (w, z) w:zoom_set(tonumber(string.match(z, "^(.+)z$")))       end),
-        buf("^%d*%.?%d+Z$",             function (w, z) w:zoom_set(tonumber(string.match(z, "^(.+)Z$")), true) end),
+        buf("^%d+z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)z$"))/100)       end),
+        buf("^%d+Z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)Z$"))/100, true) end),
 
         -- Clipboard
         key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
