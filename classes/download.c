@@ -22,6 +22,7 @@
 #include <stdbool.h>
 #include <webkit/webkitdownload.h>
 #include <webkit/webkitnetworkrequest.h>
+#include <glib/gstdio.h>
 
 #include "globalconf.h"
 #include "luah.h"
@@ -44,8 +45,14 @@ LUA_OBJECT_FUNCS(download_class, download_t, download)
 static void
 luaH_download_unref(lua_State *L, download_t *download)
 {
+    // unref the object
     luaH_object_unref(L, download->ref);
     download->ref = NULL;
+    // delete the annoying backup file generated while downloading
+    int len = strlen(download->destination);
+    char backup[len + 2];
+    snprintf(backup, len + 2, "%s~", download->destination);
+    g_unlink(backup);
 }
 
 static bool
@@ -247,8 +254,8 @@ static int
 luaH_download_cancel(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    luaH_download_unref(L, download); // allow Lua garbage collection of download
     webkit_download_cancel(download->webkit_download);
+    luaH_download_unref(L, download); // allow Lua garbage collection of download
     return 0;
 }
 
