@@ -341,6 +341,20 @@ window.methods = {
         end
     end,
 
+    -- Wrapper around luakit.set_selection that shows a notification
+    set_selection = function (w, text)
+        luakit.set_selection(text)
+        w:notify("yanked " .. text)
+    end,
+
+    -- Shows a notification until the next keypress of the user.
+    notify = function (w, text)
+        local s = w.sbar.l.uri
+        s.text = text
+        s:show()
+        w.sbar.notification = true
+    end,
+
     -- Search history adding
     srch_hist_add = function (w, srch)
         if not w.srch_hist then w.srch_hist = {} end
