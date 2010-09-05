@@ -210,26 +210,6 @@ window.methods = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-    new_tab = function (w, arg, switch)
-        local view = webview.new(w, (type(arg) == "string" and arg) or nil)
-        if type(arg) == "table" then view.history = arg end
-        local i = w.tabs:append(view)
-        if switch ~= false then w.tabs:switch(i) end
-        w:update_tab_count()
-        w:update_tab_labels()
-        return view
-    end,
-
-    undo_close_tab = function (w)
-        if #(w.closed_tabs) == 0 then return end
-        local tab = table.remove(w.closed_tabs)
-        local view = w:new_tab(tab.hist)
-        if tab.after then
-            w.tabs:reorder(view, w.tabs:indexof(tab.after)+1)
-        else
-            w.tabs:reorder(view, 1)
-        end
-    end,
 
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
@@ -651,10 +631,67 @@ window.methods = {
         t.ebox.bg = theme[string.format("tab%s_bg", selected)]
     end,
 
+    new_tab = function (w, arg, switch)
+        local view
+        -- Use blank tab first
+        if w.has_blank and w.tabs:count() == 1 and w.tabs:atindex(1).uri == "about:blank" then
+            view = w.tabs:atindex(1)
+        end
+        w.has_blank = nil
+        -- Make new webview widget
+        if not view then
+            view = webview.new(w)
+            local i = w.tabs:append(view)
+            if switch ~= false then w.tabs:switch(i) end
+        end
+        -- Load uri or webview history table
+        if type(arg) == "string" then view.uri = arg
+        elseif type(arg) == "table" then view.history = arg end
+        -- Update statusbar widgets
+        w:update_tab_count()
+        w:update_tab_labels()
+        return view
+    end,
+
+    undo_close_tab = function (w)
+        if #(w.closed_tabs) == 0 then return end
+        local tab = table.remove(w.closed_tabs)
+        local view = w:new_tab(tab.hist)
+        if tab.after then
+            local i = w.tabs:indexof(tab.after)
+            w.tabs:reorder(view, (i and i+1) or -1)
+        else
+            w.tabs:reorder(view, 1)
+        end
+    end,
+
+    -- close the current tab
+    close_tab = function (w, view, blank_last)
+        view = view or w:get_current()
+        -- Treat a blank last tab as an empty notebook (if blank_last=true)
+        if blank_last ~= false and w.tabs:count() == 1 then
+            if not view:loading() and view.uri == "about:blank" then return end
+            w:new_tab("about:blank", false)
+            w.has_blank = true
+        end
+        -- Save tab history
+        local tab = {hist = view.history,}
+        -- And relative location
+        local index = w.tabs:indexof(view)
+        if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
+        table.insert(w.closed_tabs, tab)
+        -- Remove & destroy
+        w.tabs:remove(view)
+        view.uri = "about:blank"
+        view:destroy()
+        w:update_tab_count()
+        w:update_tab_labels()
+    end,
+
     close_win = function (w)
         -- Close all tabs
         while w.tabs:count() ~= 0 do
-            w:close_tab()
+            w:close_tab(nil, false)
         end
 
         -- Recursively remove widgets from window

@@ -230,22 +230,6 @@ webview.methods = {
         return view:eval_js(script, file)
     end,
 
-    -- close the current tab
-    close_tab = function (view, w)
-        -- Save tab history
-        local tab = {hist = view.history,}
-        -- And relative location
-        local index = w.tabs:indexof(view)
-        if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
-        table.insert(w.closed_tabs, tab)
-        -- Remove & destroy
-        w.tabs:remove(view)
-        view.uri = "about:blank"
-        view:destroy()
-        w:update_tab_count()
-        w:update_tab_labels()
-    end,
-
     -- Toggle source view
     toggle_source = function (view, w, show)
         if show == nil then show = not view:get_view_source() end
@@ -344,7 +328,7 @@ webview.methods = {
     end,
 }
 
-function webview.new(w, uri)
+function webview.new(w)
     local view = widget{type = "webview"}
 
     -- Call webview init functions
@@ -352,7 +336,6 @@ function webview.new(w, uri)
         func(view, w)
     end
 
-    if uri then view.uri = uri end
     view.show_scrollbars = false
     return view
 end
