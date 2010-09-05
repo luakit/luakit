@@ -18,7 +18,7 @@ local type = type
 --                      which the script should be loaded.
 --      *   exclude     An array of patterns that match URI's, for
 --                      which the script should not be loaded.
---      *   fun         The script itself. It will get the current window
+--      *   script      The script itself. It will get the current window
 --                      and webview as it's parameters.
 --      Lua userscripts must end in <code>.user.lua</code>
 -- b)   A traditional userscript.
@@ -68,7 +68,7 @@ local function load_js(file)
         local include = all_matches(header, "include")
         local exclude = all_matches(header, "exclude")
         local fun = function(w, v) v:eval_js(js, string.format("(userscript:%s)", file)) end
-        script = {name=name,include=include,exclude=exclude,fun=fun,file=file}
+        script = {name=name,include=include,exclude=exclude,script=fun,file=file}
         table.insert(scripts, script)
     end
 end
@@ -111,7 +111,7 @@ end
 local function invoke(w, v, uri)
     for _,s in pairs(scripts) do
         if included(s, uri) then
-            local fun = s.fun and type(s.fun) == "function" and s.fun
+            local fun = s.script and type(s.script) == "function" and s.script
             if fun then fun(w, v) end
         end
     end
