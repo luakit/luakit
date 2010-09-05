@@ -158,17 +158,17 @@ binds.mode_binds = {
 binds.commands = {
  -- cmd({command, alias1, ...},         function (w, arg, opts) .. end, opts),
  -- cmd("co[mmand]",                    function (w, arg, opts) .. end, opts),
-    cmd("o[pen]",                       function (w, a)    w:navigate(w:search_open(a)) end),
-    cmd("t[abopen]",                    function (w, a)    w:new_tab (w:search_open(a)) end),
-    cmd("w[inopen]",                    function (w, a)    window.new{w:search_open(a)} end),
-    cmd("back",                         function (w, a)    w:back(tonumber(a) or 1) end),
-    cmd("f[orward]",                    function (w, a)    w:forward(tonumber(a) or 1) end),
-    cmd("scroll",                       function (w, a)    w:scroll_vert(a) end),
-    cmd("q[uit]",                       function (w)       luakit.quit() end),
-    cmd("c[lose]",                      function (w)       w:close_tab() end),
-    cmd("reload",                       function (w)       w:reload() end),
-    cmd({"viewsource",  "vs" },         function (w)       w:toggle_source(true) end),
-    cmd({"viewsource!", "vs!"},         function (w)       w:toggle_source() end),
+    cmd("o[pen]",                       function (w, a) w:navigate(w:search_open(a)) end),
+    cmd("t[abopen]",                    function (w, a) w:new_tab(w:search_open(a)) end),
+    cmd("w[inopen]",                    function (w, a) window.new{w:search_open(a)} end),
+    cmd("back",                         function (w, a) w:back(tonumber(a) or 1) end),
+    cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
+    cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
+    cmd("q[uit]",                       function (w)    luakit.quit() end),
+    cmd("c[lose]",                      function (w)    w:close_tab() end),
+    cmd("reload",                       function (w)    w:reload() end),
+    cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
+    cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = lousy.util.string.split(a)
                                             local uri = table.remove(args, 1)
@@ -190,6 +190,7 @@ binds.helper_methods = {
 
     -- Intelligent open command which can detect a uri or search argument.
     search_open = function (w, arg)
+        if not arg then return "about:blank" end
         local str = lousy.util.string
         args = str.split(str.strip(arg))
         -- Detect scheme:// or "." in string
