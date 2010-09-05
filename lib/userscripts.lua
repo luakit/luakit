@@ -1,11 +1,14 @@
 local setfenv = setfenv
 local string = string
-local print = print
+local webview = webview
 local util = require("lousy.util")
 local env = getfenv(getfenv)
 local lfs = require("lfs")
 local loadfile = loadfile
 local table = table
+local pairs = pairs
+local io = io
+local type = type
 
 --- Evaluates and manages userscripts.
 -- A userscript is either
@@ -17,14 +20,16 @@ local table = table
 --                      which the script should not be loaded.
 --      *   fun         The script itself. It will get the current window
 --                      and webview as it's parameters.
+--      Lua userscripts must end in <code>.user.lua</code>
 -- b)   A traditional userscript.
+--      JavaScript userscripts must end in <code>.user.js</code>
 module("userscripts")
 
 --- Stores all the scripts.
 local scripts = {}
 
 --- The directory, in which to search for userscripts.
-dir = util.find_data("/scripts")
+dir = util.find_data("scripts")
 
 --- Loads a lua userscript.
 local function load_lua(file)
@@ -32,19 +37,21 @@ local function load_lua(file)
     if fun then
         -- get metadata
         script = fun()
+        script.file = file
         table.insert(scripts, script)
     else
         io.stderr:write(msg .. "\n")
     end
 end
 
---- Extracts and converts all URI patterns of the given type (include, exclude).
+--- Extracts and converts all URI patterns of the given type (include, exclude)
+-- from the userscript pattern syntax to lua patterns.
 local function all_matches(str, typ)
-    local pat = "//%s*@" .. typ .. "%s*(.*)"
+    local pat = "//%s*@" .. typ .. "%s*([^\n]*)"
     local arr = {}
     for p in string.gmatch(str, pat) do
-        -- escape % and . and convert * into .*
-        p = string.gsub(string.gsub(p, "[%%.]", "%%%1"), "*", ".*")
+        -- escape [%.$^] and convert * into .*
+        p = "^" .. string.gsub(string.gsub(p, "[%%.$^]", "%%%1"), "*", ".*") .. "$"
         table.insert(arr, p)
     end
     return arr
@@ -61,7 +68,7 @@ local function load_js(file)
         local include = all_matches(header, "include")
         local exclude = all_matches(header, "exclude")
         local fun = function(w, v) v:eval_js(js, string.format("(userscript:%s)", file)) end
-        script = {name=name,include=include,exclude=exclude,fun=fun}
+        script = {name=name,include=include,exclude=exclude,fun=fun,file=file}
         table.insert(scripts, script)
     end
 end
@@ -69,7 +76,7 @@ end
 --- Loads all userscripts from the <code>userscripts.dir</code>.
 local function init()
     for f in lfs.dir(dir) do
-        if string.match(f, "%.lua$") then
+        if string.match(f, "%.user%.lua$") then
             load_lua(dir .. "/" .. f)
         elseif string.match(f, "%.user%.js$") then
             load_js(dir .. "/" .. f)
@@ -81,7 +88,7 @@ end
 local function included(s, uri)
     local included = false
     if s.include and type(s.include) == "table" then
-        for _,i in s.include do
+        for _,i in pairs(s.include) do
             if i and string.match(uri, i) then
                 included = true
                 break
@@ -89,7 +96,7 @@ local function included(s, uri)
         end
     end
     if s.exclude and type(s.exclude) == "table" then
-        for _,i in s.exclude do
+        for _,i in pairs(s.exclude) do
             if i and string.match(uri, i) then
                 included = false
                 break
@@ -104,7 +111,7 @@ end
 local function invoke(w, v, uri)
     for _,s in pairs(scripts) do
         if included(s, uri) then
-            local fun = s.fun and type(s.fun) == "table" and s.fun
+            local fun = s.fun and type(s.fun) == "function" and s.fun
             if fun then fun(w, v) end
         end
     end
@@ -113,7 +120,7 @@ end
 --- Hook on the webview's load-status signal to invoke the userscripts.
 webview.init_funcs.userscripts = function (view, w)
     view:add_signal("load-status", function (v, status)
-        if status ~= "committed" then return end
+        if status ~= "finished" then return end
         local uri = v.uri or "about:blank"
         invoke(w, v, uri)
     end)
