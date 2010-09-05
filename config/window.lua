@@ -150,14 +150,11 @@ window.init_funcs = {
                 w:update_uri()
                 w.compl_index = 0
             end
-
-            -- Hide the notification if visible
-            if w.sbar.notification then
-                w.sbar.notification = false
-                w:update_uri()
-            end
-
-            if w:hit(mods, key) then
+            -- Match & exec a bind
+            local success, match = pcall(w.hit, w, mods, key)
+            if not success then
+                w:error("In bind call: " .. match)
+            elseif match then
                 return true
             end
         end)
@@ -253,8 +250,7 @@ window.methods = {
     enter_cmd = function (w, cmd)
         local i = w.ibar.input
         w:set_mode("command")
-        i.text = cmd
-        i:set_position(-1)
+        w:set_input(cmd)
     end,
 
     -- insert a string into the command line at the current cursor position
@@ -341,17 +337,52 @@ window.methods = {
     end,
 
     -- Wrapper around luakit.set_selection that shows a notification
-    set_selection = function (w, text)
-        luakit.set_selection(text)
-        w:notify("yanked " .. text)
+    set_selection = function (w, text, selection)
+        luakit.set_selection(text, selection or "primary")
+        w:notify("Yanked: " .. text)
     end,
 
     -- Shows a notification until the next keypress of the user.
-    notify = function (w, text)
-        local s = w.sbar.l.uri
-        s.text = text
-        s:show()
-        w.sbar.notification = true
+    notify = function (w, msg)
+        w:set_mode()
+        w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
+    end,
+
+    error = function (w, msg)
+        w:set_mode()
+        w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
+    end,
+
+    -- Set and display the prompt
+    set_prompt = function (w, text, fg, bg)
+        local prompt, ebox = w.ibar.prompt, w.ibar.ebox
+        prompt:hide()
+        -- Set theme
+        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        if prompt.fg ~= fg then prompt.fg = fg end
+        if ebox.bg ~= bg then ebox.bg = bg end
+        -- Set text or remain hidden
+        if text then
+            prompt.text = lousy.util.escape(text)
+            prompt:show()
+        end
+    end,
+
+    -- Set display and focus the input bar
+    set_input = function (w, text, fg, bg)
+        local input = w.ibar.input
+        input:hide()
+        -- Set theme
+        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        if input.fg ~= fg then input.fg = fg end
+        if input.bg ~= bg then input.bg = bg end
+        -- Set text or remain hidden
+        if text then
+            input.text = text
+            input:show()
+            input:focus()
+            input:set_position(pos or -1)
+        end
     end,
 
     -- Search history adding

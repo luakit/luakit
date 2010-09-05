@@ -272,12 +272,9 @@ webview.methods = {
 
     -- Searching functions
     start_search = function (view, w, text)
-        if string.match(text, "^[\?\/]") then
+        if string.match(text, "^[?/]") then
             w:set_mode("search")
-            local i = w.ibar.input
-            i.text = text
-            i:focus()
-            i:set_position(-1)
+            w:set_input(text)
         else
             return error("invalid search term, must start with '?' or '/'")
         end
