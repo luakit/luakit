@@ -236,7 +236,28 @@ local follow_js = [=[
      last_strings = strings;
      return rv;
   }
-  ]=]
+
+  function get_active() {
+    return evaluate(active);
+  }
+
+  function focus(newpos) {
+    active_arr[lastpos].overlay.style.backgroundColor = normal_color;
+    active_arr[newpos].overlay.style.backgroundColor = focus_color;
+    active = active_arr[newpos];
+    lastpos = newpos;
+  }
+
+  function focus_next() {
+    var newpos = lastpos == active_arr.length-1 ? 0 : lastpos + 1;
+    focus(newpos);
+  }
+
+  function focus_prev() {
+    var newpos = lastpos == 0 ? active_arr.length-1 : lastpos - 1;
+    focus(newpos);
+  }
+]=]
 
 local mode_settings_format = [=[
   selector = "{selector}";
@@ -339,8 +360,8 @@ webview.methods.start_follow = function (view, w, mode, prompt, func)
 end
 
 -- Add link following binds
-local buf = lousy.bind.buf
-for _, b in ipairs({
+local mode_binds, join, buf, key = binds.mode_binds, lousy.util.table.join, lousy.bind.buf, lousy.bind.key
+mode_binds.normal = join(mode_binds.normal or {}, {
     --                       w:start_follow(mode,     prompt,             callback)
     buf("^f$",  function (w) w:start_follow("follow", nil,                function (sig)                                return sig           end) end),
     buf("^Ff$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
@@ -354,9 +375,13 @@ for _, b in ipairs({
     buf("^FO$", function (w) w:start_follow("uri",    "open cmd",         function (uri)  w:enter_cmd(":open "..uri)                         end) end),
     buf("^FT$", function (w) w:start_follow("uri",    "tabopen cmd",      function (uri)  w:enter_cmd(":tabopen "..uri)                      end) end),
     buf("^FW$", function (w) w:start_follow("uri",    "winopen cmd",      function (uri)  w:enter_cmd(":winopen "..uri)                      end) end),
-}) do
-    table.insert(binds.mode_binds.normal, b)
-end
+})
+-- Add follow mode binds
+mode_binds.follow = join(mode_binds.follow or {}, {
+    key({},        "Tab",    function (w) w:eval_js("focus_next();") end),
+    key({"Shift"}, "Tab",    function (w) w:eval_js("focus_prev();") end),
+    key({},        "Return", function (w) w:emit_form_root_active_signal(w.follow_opts.func(w:eval_js("get_active();"))) end),
+})
 
 -- Setup follow mode
 new_mode("follow", {
