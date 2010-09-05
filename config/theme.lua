@@ -2,7 +2,7 @@
 -- Default luakit theme --
 --------------------------
 
-theme = {}
+local theme = {}
 
 -- Default settings
 theme.font = "monospace normal 9"

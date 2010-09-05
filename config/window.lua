@@ -164,7 +164,6 @@ window.init_funcs = {
     end,
 
     apply_window_theme = function (w)
-        local theme = lousy.theme.get()
         local s, i  = w.sbar, w.ibar
 
         -- Set foregrounds
@@ -498,7 +497,6 @@ window.methods = {
     update_ssl = function (w, view)
         if not view then view = w:get_current() end
         local trusted = view:ssl_trusted()
-        local theme = lousy.theme.get()
         local ssl = w.sbar.r.ssl
         if trusted ~= nil and not w.checking_ssl then
             ssl.fg = theme.notrust_fg
@@ -551,7 +549,6 @@ window.methods = {
     -- Tab label functions
     -- TODO: Move these functions into a module (I.e. lousy.widget.tablist)
     make_tab_label = function (w, pos)
-        local theme = lousy.theme.get()
         local t = {
             label  = label(),
             sep    = eventbox(),
@@ -618,7 +615,6 @@ window.methods = {
 
     -- Theme functions
     apply_tablabel_theme = function (w, t, selected)
-        local theme = lousy.theme.get()
         selected = (selected and "_selected") or ""
         t.label.fg = theme[string.format("tab%s_fg", selected)]
         t.ebox.bg = theme[string.format("tab%s_bg", selected)]
