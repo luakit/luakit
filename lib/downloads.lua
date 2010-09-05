@@ -177,8 +177,8 @@ local download_helpers = {
             w.fg = fg
         end
         wi.p.fg = theme.dbar_loaded_fg
-        wi.s.fg = theme.success_fg
-        wi.f.fg = theme.failure_fg
+        wi.s.fg = theme.dbar_success_fg
+        wi.f.fg = theme.dbar_error_fg
         for _,w in pairs({wi.e, wi.h}) do
             w.bg = theme.dbar_bg
         end
@@ -223,6 +223,18 @@ local download_helpers = {
         return t
     end,
 
+    -- Changes colors and widgets to indicate a download success.
+    indicate_success = function(bar, wi)
+        wi.p:hide()
+        wi.s:show()
+    end,
+
+    -- Changes colors and widgets to indicate a download failure.
+    indicate_failure = function(bar, wi)
+        wi.p:hide()
+        wi.f:show()
+    end,
+
     -- Updates the text of the given download widget for the given download.
     update_download_widget = function(bar, t)
         local wi = t.widget
@@ -230,12 +242,10 @@ local download_helpers = {
         local d  = t.download
         local _,_,basename = string.find(d.destination, ".*/([^/]*)")
         if d.status == "finished" then
-            wi.p:hide()
-            wi.s:show()
+            bar:indicate_success(wi)
             wi.l.text = basename
         elseif d.status == "error" then
-            wi.p:hide()
-            wi.e:show()
+            bar:indicate_failure(wi)
             wi.l.text = basename
         elseif d.status == "cancelled" then
             wi.p:hide()

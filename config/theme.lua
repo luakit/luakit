@@ -26,6 +26,7 @@ theme.sbar_bg         = "#000"
 -- Downloadbar specific
 theme.dbar_fg         = "#fff"
 theme.dbar_bg         = "#000"
+theme.dbar_error_fg   = "#F00"
 
 -- Input bar specific
 theme.ibar_fg           = "#000"
