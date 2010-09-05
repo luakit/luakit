@@ -365,8 +365,8 @@ mode_binds.normal = join(mode_binds.normal or {}, {
     --                       w:start_follow(mode,     prompt,             callback)
     buf("^f$",  function (w) w:start_follow("follow", nil,                function (sig)                                return sig           end) end),
     buf("^Ff$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
-    buf("^Fy$", function (w) w:start_follow("uri",    "yank",             function (uri)  luakit.set_selection(uri)     return "root-active" end) end),
-    buf("^FY$", function (w) w:start_follow("desc",   "yank description", function (desc) luakit.set_selection(desc)    return "root-active" end) end),
+    buf("^Fy$", function (w) w:start_follow("uri",    "yank",             function (uri)  w:set_selection(uri)     return "root-active" end) end),
+    buf("^FY$", function (w) w:start_follow("desc",   "yank description", function (desc) w:set_selection(desc)    return "root-active" end) end),
     buf("^Fs$", function (w) w:start_follow("uri",    "download",         function (uri)  w:download(uri)               return "root-active" end) end),
     buf("^Fi$", function (w) w:start_follow("image",  "open image",       function (src)  w:navigate(src)               return "root-active" end) end),
     buf("^Fo$", function (w) w:start_follow("uri",    "open",             function (uri)  w:navigate(uri)               return "root-active" end) end),

@@ -64,32 +64,24 @@ for name, func in pairs({
 -- Setup normal mode
 new_mode("normal", {
     enter = function (w)
-        local i, p = w.ibar.input, w.ibar.prompt
-        i:hide()
-        p:hide()
+        w:set_prompt()
+        w:set_input()
     end,
 })
 
 -- Setup insert mode
 new_mode("insert", {
     enter = function (w)
-        local i, p = w.ibar.input, w.ibar.prompt
-        i:hide()
-        i.text = ""
-        p.text = "-- INSERT --"
-        p:show()
+        w:set_prompt("-- INSERT --")
+        w:set_input()
     end,
 })
 
 -- Setup command mode
 new_mode("command", {
     enter = function (w)
-        local i, p = w.ibar.input, w.ibar.prompt
-        p:hide()
-        i.text = ":"
-        i:show()
-        i:focus()
-        i:set_position(-1)
+        w:set_prompt()
+        w:set_input(":")
     end,
     changed = function (w, text)
         -- Auto-exit command mode if user backspaces ":" in the input bar.
@@ -97,8 +89,14 @@ new_mode("command", {
     end,
     activate = function (w, text)
         w:cmd_hist_add(text)
-        w:match_cmd(string.sub(text, 2))
         w:set_mode()
+        local cmd = string.sub(text, 2)
+        local success, match = pcall(w.match_cmd, w, cmd)
+        if not success then
+            w:error("In command call: " .. match)
+        elseif not match then
+            w:error(string.format("Not a browser command: %q", cmd))
+        end
     end,
 })
 
@@ -107,11 +105,8 @@ new_mode("search", {
     enter = function (w)
         -- Clear old search state
         w.search_state = {}
-        local i, p = w.ibar.input, w.ibar.prompt
-        p:hide()
-        p.text = ""
-        i.text = "/"
-        i:show()
+        w:set_prompt()
+        w:set_input("/")
     end,
     leave = function (w)
         -- Check if search was aborted and return to original position
@@ -135,8 +130,6 @@ new_mode("search", {
         w:srch_hist_add(text)
         w:set_mode()
         -- Ghost the search term in the prompt
-        local p = w.ibar.prompt
-        p.text = lousy.util.escape(text)
-        p:show()
+        w:set_prompt(text)
     end,
 })

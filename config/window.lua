@@ -157,15 +157,17 @@ window.init_funcs = {
                 w:update_uri()
                 w.compl_index = 0
             end
-
-            if w:hit(mods, key) then
+            -- Match & exec a bind
+            local success, match = pcall(w.hit, w, mods, key)
+            if not success then
+                w:error("In bind call: " .. match)
+            elseif match then
                 return true
             end
         end)
     end,
 
     apply_window_theme = function (w)
-        local theme = lousy.theme.get()
         local s, i, d = w.sbar, w.ibar, w.dbar
 
         -- Set foregrounds
@@ -219,26 +221,6 @@ window.methods = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-    new_tab = function (w, arg, switch)
-        local view = webview.new(w, (type(arg) == "string" and arg) or nil)
-        if type(arg) == "table" then view.history = arg end
-        local i = w.tabs:append(view)
-        if switch ~= false then w.tabs:switch(i) end
-        w:update_tab_count()
-        w:update_tab_labels()
-        return view
-    end,
-
-    undo_close_tab = function (w)
-        if #(w.closed_tabs) == 0 then return end
-        local tab = table.remove(w.closed_tabs)
-        local view = w:new_tab(tab.hist)
-        if tab.after then
-            w.tabs:reorder(view, w.tabs:indexof(tab.after)+1)
-        else
-            w.tabs:reorder(view, 1)
-        end
-    end,
 
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
@@ -259,8 +241,7 @@ window.methods = {
     enter_cmd = function (w, cmd)
         local i = w.ibar.input
         w:set_mode("command")
-        i.text = cmd
-        i:set_position(-1)
+        w:set_input(cmd)
     end,
 
     -- insert a string into the command line at the current cursor position
@@ -343,6 +324,55 @@ window.methods = {
         if i.text ~= ":" then
             i.text = ":"
             i:set_position(-1)
+        end
+    end,
+
+    -- Wrapper around luakit.set_selection that shows a notification
+    set_selection = function (w, text, selection)
+        luakit.set_selection(text, selection or "primary")
+        w:notify("Yanked: " .. text)
+    end,
+
+    -- Shows a notification until the next keypress of the user.
+    notify = function (w, msg)
+        w:set_mode()
+        w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
+    end,
+
+    error = function (w, msg)
+        w:set_mode()
+        w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
+    end,
+
+    -- Set and display the prompt
+    set_prompt = function (w, text, fg, bg)
+        local prompt, ebox = w.ibar.prompt, w.ibar.ebox
+        prompt:hide()
+        -- Set theme
+        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        if prompt.fg ~= fg then prompt.fg = fg end
+        if ebox.bg ~= bg then ebox.bg = bg end
+        -- Set text or remain hidden
+        if text then
+            prompt.text = lousy.util.escape(text)
+            prompt:show()
+        end
+    end,
+
+    -- Set display and focus the input bar
+    set_input = function (w, text, fg, bg)
+        local input = w.ibar.input
+        input:hide()
+        -- Set theme
+        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        if input.fg ~= fg then input.fg = fg end
+        if input.bg ~= bg then input.bg = bg end
+        -- Set text or remain hidden
+        if text then
+            input.text = text
+            input:show()
+            input:focus()
+            input:set_position(pos or -1)
         end
     end,
 
@@ -489,7 +519,6 @@ window.methods = {
     update_ssl = function (w, view)
         if not view then view = w:get_current() end
         local trusted = view:ssl_trusted()
-        local theme = lousy.theme.get()
         local ssl = w.sbar.r.ssl
         if trusted ~= nil and not w.checking_ssl then
             ssl.fg = theme.notrust_fg
@@ -532,7 +561,6 @@ window.methods = {
     -- Tab label functions
     -- TODO: Move these functions into a module (I.e. lousy.widget.tablist)
     make_tab_label = function (w, pos)
-        local theme = lousy.theme.get()
         local t = {
             label  = label(),
             sep    = eventbox(),
@@ -599,16 +627,72 @@ window.methods = {
 
     -- Theme functions
     apply_tablabel_theme = function (w, t, selected)
-        local theme = lousy.theme.get()
         selected = (selected and "_selected") or ""
         t.label.fg = theme[string.format("tab%s_fg", selected)]
         t.ebox.bg = theme[string.format("tab%s_bg", selected)]
     end,
 
+    new_tab = function (w, arg, switch)
+        local view
+        -- Use blank tab first
+        if w.has_blank and w.tabs:count() == 1 and w.tabs:atindex(1).uri == "about:blank" then
+            view = w.tabs:atindex(1)
+        end
+        w.has_blank = nil
+        -- Make new webview widget
+        if not view then
+            view = webview.new(w)
+            local i = w.tabs:append(view)
+            if switch ~= false then w.tabs:switch(i) end
+        end
+        -- Load uri or webview history table
+        if type(arg) == "string" then view.uri = arg
+        elseif type(arg) == "table" then view.history = arg end
+        -- Update statusbar widgets
+        w:update_tab_count()
+        w:update_tab_labels()
+        return view
+    end,
+
+    undo_close_tab = function (w)
+        if #(w.closed_tabs) == 0 then return end
+        local tab = table.remove(w.closed_tabs)
+        local view = w:new_tab(tab.hist)
+        if tab.after then
+            local i = w.tabs:indexof(tab.after)
+            w.tabs:reorder(view, (i and i+1) or -1)
+        else
+            w.tabs:reorder(view, 1)
+        end
+    end,
+
+    -- close the current tab
+    close_tab = function (w, view, blank_last)
+        view = view or w:get_current()
+        -- Treat a blank last tab as an empty notebook (if blank_last=true)
+        if blank_last ~= false and w.tabs:count() == 1 then
+            if not view:loading() and view.uri == "about:blank" then return end
+            w:new_tab("about:blank", false)
+            w.has_blank = true
+        end
+        -- Save tab history
+        local tab = {hist = view.history,}
+        -- And relative location
+        local index = w.tabs:indexof(view)
+        if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
+        table.insert(w.closed_tabs, tab)
+        -- Remove & destroy
+        w.tabs:remove(view)
+        view.uri = "about:blank"
+        view:destroy()
+        w:update_tab_count()
+        w:update_tab_labels()
+    end,
+
     close_win = function (w)
         -- Close all tabs
         while w.tabs:count() ~= 0 do
-            w:close_tab()
+            w:close_tab(nil, false)
         end
 
         -- Recursively remove widgets from window
