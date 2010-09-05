@@ -7,7 +7,9 @@ local loadfile = loadfile
 local table = table
 local pairs = pairs
 local io = io
+local os = os
 local type = type
+local luakit = luakit
 
 --- Evaluates and manages userscripts.
 -- A userscript is either
@@ -28,7 +30,8 @@ module("userscripts")
 local scripts = {}
 
 --- The directory, in which to search for userscripts.
-dir = util.find_data("scripts")
+-- By default, this is $XDG_DATA_HOME/scripts
+dir = luakit.data_dir .. "/scripts"
 
 --- Loads a lua userscript.
 local function load_lua(file)
@@ -75,11 +78,13 @@ end
 
 --- Loads all userscripts from the <code>userscripts.dir</code>.
 local function init()
-    for f in lfs.dir(dir) do
-        if string.match(f, "%.user%.lua$") then
-            load_lua(dir .. "/" .. f)
-        elseif string.match(f, "%.user%.js$") then
-            load_js(dir .. "/" .. f)
+    if os.exists(dir) then
+        for f in lfs.dir(dir) do
+            if string.match(f, "%.user%.lua$") then
+                load_lua(dir .. "/" .. f)
+            elseif string.match(f, "%.user%.js$") then
+                load_js(dir .. "/" .. f)
+            end
         end
     end
 end
