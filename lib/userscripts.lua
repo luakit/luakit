@@ -1,4 +1,3 @@
-local setfenv = setfenv
 local string = string
 local webview = webview
 local util = require("lousy.util")
@@ -47,11 +46,12 @@ end
 --- Extracts and converts all URI patterns of the given type (include, exclude)
 -- from the userscript pattern syntax to lua patterns.
 local function all_matches(str, typ)
-    local pat = "//%s*@" .. typ .. "%s*([^\n]*)"
+    local pat = "//%s*@" .. typ .. "%s*([^\r\n]*)"
     local arr = {}
     for p in string.gmatch(str, pat) do
-        -- escape [%.$^] and convert * into .*
-        p = "^" .. string.gsub(string.gsub(p, "[%%.$^]", "%%%1"), "*", ".*") .. "$"
+        -- escape [%.$?^] and convert * into .*
+        p = string.gsub(string.gsub(p, "[%%.?$^]", "%%%1"), "*", ".*")
+        --p = string.format("^%s$", p)
         table.insert(arr, p)
     end
     return arr
