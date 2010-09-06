@@ -206,7 +206,7 @@ local download_helpers = {
         wi.h:pack_start(wi.p, false, false, 0)
         wi.h:pack_start(wi.f, false, false, 0)
         wi.h:pack_start(wi.s, false, false, 0)
-        wi.h:pack_start(wi.l, false, false, 0)
+        wi.h:pack_start(wi.l, true,  true,  0)
         wi.h:pack_end(wi.sep, false, false, 0)
         wi.e:set_child(wi.h)
         bar:apply_widget_theme(t)
