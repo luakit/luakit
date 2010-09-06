@@ -63,6 +63,8 @@ bar_mt = {
         for i,t in pairs(bar.downloads) do
             if t.download == d then
                 bar.layout:remove(t.widget.e)
+                local wi = t.widget
+                for _,w in ipairs{ wi.sep, wi.l, wi.s, wi.f, wi.p, wi.h, wi.e } do w:destroy() end
                 table.remove(bar.downloads, i)
                 if d.status == "started" then d:cancel() end
                 break
