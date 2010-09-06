@@ -173,13 +173,13 @@ window.init_funcs = {
         -- Set foregrounds
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_fg,
-            [s.l.loaded] = theme.loaded_sbar_fg,
+            [s.l.loaded] = theme.sbar_loaded_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [s.r.scroll] = theme.scroll_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
             [i.input]    = theme.input_ibar_fg,
-            [d.clear.label] = theme.clear_downloadbar_fg,
+            [d.clear.label] = theme.clear_dbar_fg,
         }) do wi.fg = v end
 
         -- Set backgrounds
@@ -197,14 +197,14 @@ window.init_funcs = {
         -- Set fonts
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_font,
-            [s.l.loaded] = theme.loaded_sbar_font,
+            [s.l.loaded] = theme.sbar_loaded_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
             [s.r.scroll] = theme.scroll_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
-            [d.clear.label] = theme.clear_downloadbar_font,
+            [d.clear.label] = theme.clear_dbar_font,
         }) do wi.font = v end
     end,
 }
