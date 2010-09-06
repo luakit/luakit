@@ -217,8 +217,7 @@ local download_helpers = {
         local t  = {download=d, data=dt, widget=nil}
         bar:assemble_download_widget(t)
         local wi = t.widget
-        bar.layout:pack_start(wi.e, false, false, 0)
-        bar.layout:reorder(wi.e, 0)
+        bar.layout:pack_start(wi.e, true, true, 0)
         bar:attach_download_widget_signals(t)
         return t
     end,
