@@ -140,6 +140,7 @@ window.init_funcs = {
         w.win:add_signal("destroy", function ()
             -- call the quit function if this was the last window left
             if #luakit.windows == 0 then luakit.quit() end
+            w:close_win()
         end)
     end,
 

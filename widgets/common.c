@@ -228,7 +228,8 @@ void
 widget_destructor(widget_t *w)
 {
     debug("destroying widget %p of type '%s'", w, w->info->name);
-    gtk_widget_destroy(GTK_WIDGET(w->widget));
+    if (w->widget)
+        gtk_widget_destroy(GTK_WIDGET(w->widget));
     w->widget = NULL;
 }
 
