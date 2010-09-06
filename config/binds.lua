@@ -163,6 +163,7 @@ binds.commands = {
     cmd("q[uit]",                       function (w)    w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
+    cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
     cmd({"bookmark",    "bm" },         function (w, a)
