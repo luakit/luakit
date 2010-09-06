@@ -4,6 +4,7 @@ local table = table
 local util = lousy.util
 local string = string
 local pairs = pairs
+local ipairs = ipairs
 local timer = timer
 local download = download
 local dialog = dialog
