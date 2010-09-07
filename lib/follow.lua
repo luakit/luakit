@@ -355,7 +355,7 @@ end
 
 -- Add webview methods
 webview.methods.start_follow = function (view, w, mode, prompt, func)
-    w.follow_opts = { mode = mode, prompt = prompt, func = func }
+    w.follow_state = { mode = mode, prompt = prompt, func = func }
     w:set_mode("follow")
 end
 
@@ -380,7 +380,7 @@ mode_binds.normal = join(mode_binds.normal or {}, {
 mode_binds.follow = join(mode_binds.follow or {}, {
     key({},        "Tab",    function (w) w:eval_js("focus_next();") end),
     key({"Shift"}, "Tab",    function (w) w:eval_js("focus_prev();") end),
-    key({},        "Return", function (w) w:emit_form_root_active_signal(w.follow_opts.func(w:eval_js("get_active();"))) end),
+    key({},        "Return", function (w) w:emit_form_root_active_signal(w.follow_state.func(w:eval_js("get_active();"))) end),
 })
 
 -- Setup follow mode
@@ -389,8 +389,9 @@ new_mode("follow", {
     enter = function (w)
         local i, p = w.ibar.input, w.ibar.prompt
         -- Get following state & options
-        local opts = w.follow_opts or {}
-        local mode = follow.modes[opts.mode or "follow"]
+        if not w.follow_state then w.follow_state = {} end
+        local state = w.follow_state
+        local mode = follow.modes[state.mode or "follow"]
         -- Get follow mode table
         if not mode then w:set_mode() return error("unknown follow mode") end
 
@@ -423,14 +424,9 @@ new_mode("follow", {
         local js = table.concat(js_blocks, "\n")
         w:eval_js(js, "(follow.lua)")
 
-        -- Set prompt text
-        p.text = opts.prompt and string.format("Follow (%s):", opts.prompt) or "Follow:"
-        p:show()
-        -- Setup input
-        i.text = ""
-        i:show()
-        i:focus()
-        i:set_position(-1)
+        -- Set prompt & input text
+        w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
+        w:set_input("")
     end,
 
     -- Leave follow mode hook
@@ -441,10 +437,10 @@ new_mode("follow", {
     -- Input bar changed hook
     changed = function (w, text)
         local ret = w:eval_js(string.format("update(%q);", text), "(follow.lua)")
-        local opts = w.follow_opts or {}
+        local state = w.follow_state or {}
         if ret ~= "false" then
             local sig
-            if opts.func then sig = opts.func(ret) end
+            if state.func then sig = state.func(ret) end
             if sig then w:emit_form_root_active_signal(sig) end
         end
     end,
