@@ -238,10 +238,10 @@ window.methods = {
         if not str then return end
         local i = w.ibar.input
         local text = i.text
-        local pos = i:get_position()
+        local pos = i.position
         local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
         i.text = left .. str .. right
-        i:set_position(pos + #str)
+        i.position = pos + #str
     end,
 
     -- Command line completion of available commands
@@ -272,7 +272,7 @@ window.methods = {
             for index, comp in pairs(cmpl) do
                 if index == w.compl_index then
                     i.text = ":" .. comp .. " "
-                    i:set_position(-1)
+                    i.position = -1
                 end
                 if text ~= "" then
                     text = text .. " | "
@@ -293,7 +293,7 @@ window.methods = {
     del_word = function (w)
         local i = w.ibar.input
         local text = i.text
-        local pos = i:get_position()
+        local pos = i.position
         if text and #text > 1 and pos > 1 then
             local left, right = string.sub(text, 2, pos), string.sub(text, pos+1)
             if not string.find(left, "%s") then
@@ -304,7 +304,7 @@ window.methods = {
                 left = string.sub(left, 0, string.find(left, "%W+%s*$") - 1)
             end
             i.text =  string.sub(text, 1, 1) .. left .. right
-            i:set_position(#left + 1)
+            i.position = #left + 1
         end
     end,
 
@@ -312,7 +312,7 @@ window.methods = {
         local i = w.ibar.input
         if i.text ~= ":" then
             i.text = ":"
-            i:set_position(-1)
+            i.position = -1
         end
     end,
 
@@ -362,7 +362,7 @@ window.methods = {
             input.text = text
             input:show()
             input:focus()
-            input:set_position(pos or -1)
+            input.position = pos or -1
         end
     end,
 
