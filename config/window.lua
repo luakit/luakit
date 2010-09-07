@@ -211,7 +211,6 @@ window.methods = {
         return view:get_prop("title") or view.uri or "(Untitled)"
     end,
 
-
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key)
         local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
@@ -349,6 +348,7 @@ window.methods = {
         end
     end,
 
+
     -- Set display and focus the input bar
     set_input = function (w, text, fg, bg)
         local input = w.ibar.input
@@ -363,90 +363,6 @@ window.methods = {
             input:show()
             input:focus()
             input:set_position(pos or -1)
-        end
-    end,
-
-    -- Search history adding
-    srch_hist_add = function (w, srch)
-        if not w.srch_hist then w.srch_hist = {} end
-        -- Check overflow
-        local max_hist = globals.max_srch_history or 100
-        if #w.srch_hist > (max_hist + 5) then
-            while #w.srch_hist > max_hist do
-                table.remove(w.srch_hist, 1)
-            end
-        end
-        table.insert(w.srch_hist, srch)
-    end,
-
-    -- Search history traversing
-    srch_hist_prev = function (w)
-        if not w.srch_hist then w.srch_hist = {} end
-        if not w.srch_hist_cursor then
-            w.srch_hist_cursor = #w.srch_hist + 1
-            w.srch_hist_current = w.ibar.input.text
-        end
-        local c = w.srch_hist_cursor - 1
-        if w.srch_hist[c] then
-            w.srch_hist_cursor = c
-            w.ibar.input.text = w.srch_hist[c]
-            w.ibar.input:set_position(-1)
-        end
-    end,
-
-    srch_hist_next = function (w)
-        if not w.srch_hist then w.srch_hist = {} end
-        local c = (w.srch_hist_cursor or #w.srch_hist) + 1
-        if w.srch_hist[c] then
-            w.srch_hist_cursor = c
-            w.ibar.input.text = w.srch_hist[c]
-            w.ibar.input:set_position(-1)
-        elseif w.srch_hist_current then
-            w.srch_hist_cursor = nil
-            w.ibar.input.text = w.srch_hist_current
-            w.ibar.input:set_position(-1)
-        end
-    end,
-
-    -- Command history adding
-    cmd_hist_add = function (w, cmd)
-        if not w.cmd_hist then w.cmd_hist = {} end
-        -- Make sure history doesn't overflow
-        local max_hist = globals.max_cmd_hist or 100
-        if #w.cmd_hist > (max_hist + 5) then
-            while #w.cmd_hist > max_hist do
-                table.remove(w.cmd_hist, 1)
-            end
-        end
-        table.insert(w.cmd_hist, cmd)
-    end,
-
-    -- Command history traversing
-    cmd_hist_prev = function (w)
-        if not w.cmd_hist then w.cmd_hist = {} end
-        if not w.cmd_hist_cursor then
-            w.cmd_hist_cursor = #w.cmd_hist + 1
-            w.cmd_hist_current = w.ibar.input.text
-        end
-        local c = w.cmd_hist_cursor - 1
-        if w.cmd_hist[c] then
-            w.cmd_hist_cursor = c
-            w.ibar.input.text = w.cmd_hist[c]
-            w.ibar.input:set_position(-1)
-        end
-    end,
-
-    cmd_hist_next = function (w)
-        if not w.cmd_hist then w.cmd_hist = {} end
-        local c = (w.cmd_hist_cursor or #w.cmd_hist) + 1
-        if w.cmd_hist[c] then
-            w.cmd_hist_cursor = c
-            w.ibar.input.text = w.cmd_hist[c]
-            w.ibar.input:set_position(-1)
-        elseif w.cmd_hist_current then
-            w.cmd_hist_cursor = nil
-            w.ibar.input.text = w.cmd_hist_current
-            w.ibar.input:set_position(-1)
         end
     end,
 
