@@ -140,7 +140,7 @@ window.init_funcs = {
         w.win:add_signal("destroy", function ()
             -- call the quit function if this was the last window left
             if #luakit.windows == 0 then luakit.quit() end
-            w:close_win()
+            if w.close_win then w:close_win() end
         end)
     end,
 
@@ -611,6 +611,9 @@ window.methods = {
             w:close_tab(nil, false)
         end
 
+        -- Clear window struct
+        w = setmetatable(w, {})
+
         -- Recursively remove widgets from window
         local children = lousy.util.recursive_remove(w.win)
         -- Destroy all widgets
@@ -619,8 +622,7 @@ window.methods = {
             c:destroy()
         end
 
-        -- Clear window struct
-        w = setmetatable(w, {})
+        -- Remove all window table vars
         for k, _ in pairs(w) do w[k] = nil end
 
         -- Quit if closed last window
