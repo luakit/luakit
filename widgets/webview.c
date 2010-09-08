@@ -231,7 +231,7 @@ webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
 static gint
 luaH_webview_eval_js(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
     const gchar *script = luaL_checkstring(L, 2);
     const gchar *filename = luaL_checkstring(L, 3);
@@ -430,7 +430,7 @@ create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
     luaH_object_push(L, w->ref);
     top = lua_gettop(L);
     ret = luaH_object_emit_signal(L, top, "create-web-view", 0, 1);
-    if (ret && (new = luaH_checkudata(L, top + 1, &widget_class)))
+    if (ret && (new = luaH_checkwidget(L, top + 1)))
         view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(new->widget), "webview"));
     lua_pop(L, ret + 1);
     return view;
@@ -536,7 +536,7 @@ luaH_adjustment_push_values(lua_State *L, GtkAdjustment *a)
 static gint
 luaH_webview_get_scroll_vert(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
     return luaH_adjustment_push_values(L, a);
 }
@@ -544,7 +544,7 @@ luaH_webview_get_scroll_vert(lua_State *L)
 static gint
 luaH_webview_get_scroll_horiz(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
     return luaH_adjustment_push_values(L, a);
 }
@@ -560,7 +560,7 @@ adjustment_set(GtkAdjustment *a, gdouble new)
 static gint
 luaH_webview_set_scroll_vert(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gdouble value = (gdouble) luaL_checknumber(L, 2);
     GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
     adjustment_set(a, value);
@@ -570,7 +570,7 @@ luaH_webview_set_scroll_vert(lua_State *L)
 static gint
 luaH_webview_set_scroll_horiz(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gdouble value = (gdouble) luaL_checknumber(L, 2);
     GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
     adjustment_set(a, value);
@@ -580,7 +580,7 @@ luaH_webview_set_scroll_horiz(lua_State *L)
 static gint
 luaH_webview_go_back(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint steps = (gint) luaL_checknumber(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps * -1);
@@ -590,7 +590,7 @@ luaH_webview_go_back(lua_State *L)
 static gint
 luaH_webview_go_forward(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint steps = (gint) luaL_checknumber(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps);
@@ -600,7 +600,7 @@ luaH_webview_go_forward(lua_State *L)
 static gint
 luaH_webview_get_view_source(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     lua_pushboolean(L, webkit_web_view_get_view_source_mode(WEBKIT_WEB_VIEW(view)));
     return 1;
@@ -610,7 +610,7 @@ static gint
 luaH_webview_set_view_source(lua_State *L)
 {
     const gchar *uri;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gboolean show = luaH_checkboolean(L, 2);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_set_view_source_mode(WEBKIT_WEB_VIEW(view), show);
@@ -622,7 +622,7 @@ luaH_webview_set_view_source(lua_State *L)
 static gint
 luaH_webview_reload(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_reload(WEBKIT_WEB_VIEW(view));
     return 0;
@@ -631,7 +631,7 @@ luaH_webview_reload(lua_State *L)
 static gint
 luaH_webview_search(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview")));
     const gchar *text = luaL_checkstring(L, 2);
     gboolean case_sensitive = luaH_checkboolean(L, 3);
@@ -648,7 +648,7 @@ luaH_webview_search(lua_State *L)
 static gint
 luaH_webview_clear_search(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview")));
     webkit_web_view_unmark_text_matches(view);
     return 0;
@@ -682,7 +682,7 @@ luaH_webview_get_prop(lua_State *L)
     temp_value_t tmp;
 
     /* get webview widget */
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
 
     /* get property struct */
@@ -744,7 +744,7 @@ luaH_webview_set_prop(lua_State *L)
     temp_value_t tmp;
 
     /* get webview widget */
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
 
     /* get property struct */
@@ -809,7 +809,7 @@ luaH_webview_set_prop(lua_State *L)
 static gint
 luaH_webview_loading(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     WebKitLoadStatus s;
     g_object_get(G_OBJECT(view), "load-status", &s, NULL);
@@ -830,7 +830,7 @@ luaH_webview_loading(lua_State *L)
 static gint
 luaH_webview_stop(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     webkit_web_view_stop_loading(WEBKIT_WEB_VIEW(view));
     return 0;
@@ -840,7 +840,7 @@ luaH_webview_stop(lua_State *L)
 static gint
 luaH_webview_ssl_trusted(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(view));
     if (uri && !strncmp(uri, "https", 5)) {
@@ -978,7 +978,7 @@ webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
 static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     temp_value_t tmp;
 
@@ -1056,7 +1056,7 @@ static gint
 luaH_webview_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     temp_value_t tmp;
 
