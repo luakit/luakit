@@ -78,7 +78,6 @@ ssl_trusted
 stop
 switch
 text
-textbutton
 title
 type
 uri
