@@ -258,7 +258,7 @@ window.methods = {
 
         -- Get suitable commands
         for _, b in ipairs(binds.commands) do
-            for _, c in pairs(b.commands) do
+            for _, c in pairs(b.cmds) do
                 if c and string.match(c, w.compl_start) then
                     table.insert(cmpl, c)
                 end
