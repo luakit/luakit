@@ -13,6 +13,37 @@ function new_mode(mode, hooks)
     modes[mode] = lousy.util.table.join(modes[mode] or {}, hooks)
 end
 
+-- Input bar history binds, these are only present in modes with a history
+-- table so we can make some assumptions.
+local key = lousy.bind.key
+hist_binds = {
+    key({}, "Up", function (w)
+        local h = current.history
+        local lc = h.cursor
+        if not h.cursor and h.len > 0 then
+            h.cursor = h.len
+        elseif (h.cursor or 0) > 1 then
+            h.cursor = h.cursor - 1
+        end
+        if h.cursor and h.cursor ~= lc then
+            if not h.orig then h.orig = w.ibar.input.text end
+            w:set_input(h.items[h.cursor])
+        end
+    end),
+    key({}, "Down", function (w)
+        local h = current.history
+        if not h.cursor then return end
+        if (h.cursor + 1) >= h.len then
+            w:set_input(h.orig)
+            h.cursor = nil
+            h.orig = nil
+        else
+            h.cursor = h.cursor + 1
+            w:set_input(h.items[h.cursor])
+        end
+    end),
+}
+
 -- Attach window & input bar signals for mode hooks
 window.init_funcs.modes_setup = function (w)
     -- Calls the `enter` and `leave` mode hooks.
@@ -33,25 +64,47 @@ window.init_funcs.modes_setup = function (w)
         -- Update window binds
         w:update_binds(mode)
 
+        -- Setup history state
+        if current.history then
+            local h = current.history
+            if not h.items then h.items = {} end
+            h.len = #(h.items)
+            h.cursor = nil
+            h.orig = nil
+            -- Add Up & Down history bindings
+            w.binds = lousy.util.table.join(hist_binds, w.binds)
+            -- Trim history
+            if h.maxlen and h.len > (h.maxlen * 1.5) then
+                local items = {}
+                for i = (h.len - h.maxlen), h.len do
+                    table.insert(items, h.items[i])
+                end
+                h.items = items
+                h.len = #items
+            end
+        end
+
         -- Call new modes `enter` hook.
         if current.enter then current.enter(w) end
     end)
 
     -- Calls the `changed` hook on input widget changed.
     w.ibar.input:add_signal("changed", function()
-        local text = w.ibar.input.text
         if current and current.changed then
-            current.changed(w, text)
+            current.changed(w, w.ibar.input.text)
         end
     end)
 
     -- Calls the `activate` hook on input widget activate.
     w.ibar.input:add_signal("activate", function()
-        local text = w.ibar.input.text
         if current and current.activate then
-            current.activate(w, text)
+            local text, items = w.ibar.input.text, current.history.items
+            if current.activate(w, text) == false or not items then return end
+            -- Check if last history item is identical
+            if items[#items] ~= text then table.insert(items, text) end
         end
     end)
+
 end
 
 -- Add mode related window methods
@@ -88,7 +141,6 @@ new_mode("command", {
         if not string.match(text, "^:") then w:set_mode() end
     end,
     activate = function (w, text)
-        w:cmd_hist_add(text)
         w:set_mode()
         local cmd = string.sub(text, 2)
         local success, match = pcall(w.match_cmd, w, cmd)
@@ -98,6 +150,7 @@ new_mode("command", {
             w:error(string.format("Not a browser command: %q", cmd))
         end
     end,
+    history = {maxlen = 50},
 })
 
 -- Setup search mode
@@ -127,9 +180,9 @@ new_mode("search", {
     end,
     activate = function (w, text)
         w.search_state.marker = nil
-        w:srch_hist_add(text)
+        -- Ghost the last search term
         w:set_mode()
-        -- Ghost the search term in the prompt
         w:set_prompt(text)
     end,
+    history = {maxlen = 50},
 })

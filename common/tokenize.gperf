@@ -24,7 +24,6 @@ get_alignment
 get_child
 get_children
 get_padding
-get_position
 get_prop
 get_scroll_horiz
 get_scroll_vert
@@ -54,16 +53,16 @@ pack_start
 PICTURES
 progress
 PUBLIC_SHARE
+position
 reload
 remove
 reorder
 search
-select_region
 selectable
+select_region
 set_alignment
 set_child
 set_padding
-set_position
 set_prop
 set_scroll_horiz
 set_scroll_vert

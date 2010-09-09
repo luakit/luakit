@@ -138,15 +138,11 @@ binds.mode_binds = {
     },
     command = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
-        key({},          "Up",          function (w) w:cmd_hist_prev() end),
-        key({},          "Down",        function (w) w:cmd_hist_next() end),
         key({},          "Tab",         function (w) w:cmd_completion() end),
         key({"Control"}, "w",           function (w) w:del_word() end),
         key({"Control"}, "u",           function (w) w:del_line() end),
     },
     search = {
-        key({},          "Up",          function (w) w:srch_hist_prev() end),
-        key({},          "Down",        function (w) w:srch_hist_next() end),
         key({"Control"}, "j",           function (w) w:search(nil, true) end),
         key({"Control"}, "k",           function (w) w:search(nil, false) end),
     },
@@ -167,6 +163,7 @@ binds.commands = {
     cmd("q[uit]",                       function (w)    w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
+    cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
     cmd({"bookmark",    "bm" },         function (w, a)

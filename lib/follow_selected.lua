@@ -18,7 +18,6 @@ local follow_selected = [=[
         for (idx in elements) {
             if (elements[idx].href) {
                 document.location.href = elements[idx].href;
-                return "found";
             }
         }
         // Check for links which contain the selection
@@ -26,7 +25,6 @@ local follow_selected = [=[
         while (container != document) {
             if (container.href) {
                 document.location.href = container.href;
-                return "found";
             }
             container = container.parentNode;
         }
@@ -35,7 +33,8 @@ local follow_selected = [=[
 ]=]
 
 local follow_bind = lousy.bind.key({}, "Return", function (w)
-    return (w:eval_js(follow_selected) == "found")
+    w:eval_js(follow_selected)
+    return false
 end)
 
 -- Add binding to search & normal modes
