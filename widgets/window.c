@@ -107,7 +107,7 @@ widget_window(widget_t *w)
       NULL);
 
     gtk_widget_show(w->widget);
-    gdk_window_set_events(GTK_WIDGET(w->widget)->window, GDK_ALL_EVENTS_MASK);
+    gdk_window_set_events(gtk_widget_get_window(w->widget), GDK_ALL_EVENTS_MASK);
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);
