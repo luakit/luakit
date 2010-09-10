@@ -74,6 +74,15 @@ bar_mt = {
         if #bar.downloads == 0 then bar.ebox:hide() end
     end,
 
+    --- Removes the download at the given index.
+    --    Hides the bar if all downloads were removed.
+    --    @param bar The bar to modify.
+    --    @param i The index of the download to remove.
+    remove = function(bar, i)
+        local d = bar.downloads[i]
+        if d then bar:remove_download(d) end
+    end,
+
     --- Removes all finished, cancelled or aborted downloads from a downlod bar.
     --    Hides the bar if all downloads were removed.
     --    @param bar The bar to modify.
@@ -84,6 +93,29 @@ bar_mt = {
                 bar:remove_download(d)
             end
         end
+    end,
+
+    --- Opens the given download after completion.
+    --    @param bar The download bar
+    --    @param t The table of the download to open
+    open_download = function(bar, t)
+        local ti = timer{interval=1000}
+        ti:add_signal("timeout", function(ti)
+            local d  = t.download
+            if d.status == "finished" then
+                ti:stop()
+                open_file(d.destination, d.mime_type, t.widget.l)
+            end
+        end)
+        ti:start()
+    end,
+
+    --- Opens the download at the given index after completion.
+    --    @param bar The download bar
+    --    @param i The index of the download to open
+    open = function(bar, i)
+        local t = bar.downloads[i]
+        if t then bar:open_download(t) end
     end,
 
     --- Adds a download to the download bar.
@@ -150,19 +182,12 @@ local download_helpers = {
     -- Adds signals to a download widget.
     attach_download_widget_signals = function(bar, t)
         t.widget.e:add_signal("button-release", function(e, m, b)
-            local d  = t.download
             if b == 1 then
                 -- open file
-                local ti = timer{interval=1000}
-                ti:add_signal("timeout", function(ti)
-                    if d.status == "finished" then
-                        ti:stop()
-                        open_file(d.destination, d.mime_type, t.widget.l)
-                    end
-                end)
-                ti:start()
+                bar:open_download(t)
             elseif b == 3 then
                 -- remove download
+                local d  = t.download
                 bar:remove_download(d)
             end
         end)

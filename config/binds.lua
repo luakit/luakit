@@ -171,6 +171,10 @@ binds.commands = {
                                             local uri = table.remove(args, 1)
                                             bookmarks.add(uri, args)
                                         end),
+    cmd("down[load]",                   function (w, a) w:download(a) end),
+    cmd("dd[elete]",                    function (w, a) w.dbar:remove(tonumber(a) or 1) end),
+    cmd("dc[lear]",                     function (w)    w.dbar:clear_done() end),
+    cmd("do[pen]",                      function (w, a) w.dbar:open(tonumber(a) or 1) end),
 }
 
 -- Helper functions which are added to the window struct
