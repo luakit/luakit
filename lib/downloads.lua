@@ -124,9 +124,9 @@ bar_mt = {
     refresh = function(bar)
         local all_finished = true
         -- update
-        for _,t in pairs(bar.downloads) do
+        for i,t in ipairs(bar.downloads) do
             local d = t.download
-            bar:update_download_widget(t)
+            bar:update_download_widget(t, i)
             if d.status == "created" or d.status == "started" then
                 all_finished = false
             end
@@ -211,7 +211,7 @@ local download_helpers = {
         wi.h:pack_end(wi.sep, false, false, 0)
         wi.e:set_child(wi.h)
         bar:apply_widget_theme(t)
-        bar:update_download_widget(t)
+        bar:update_download_widget(t, #bar.downloads + 1)
     end,
 
     -- Adds a new label to the download bar and registers signals for it.
@@ -238,25 +238,23 @@ local download_helpers = {
     end,
 
     -- Updates the text of the given download widget for the given download.
-    update_download_widget = function(bar, t)
+    update_download_widget = function(bar, t, i)
         local wi = t.widget
         local dt = t.data
         local d  = t.download
         local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+        wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
             bar:indicate_success(wi)
-            wi.l.text = basename
         elseif d.status == "error" then
             bar:indicate_failure(wi)
-            wi.l.text = basename
         elseif d.status == "cancelled" then
             wi.p:hide()
-            wi.l.text = basename
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
             local speed = d.current_size - (dt.last_size or 0)
             dt.last_size = d.current_size
-            wi.l.text = string.format("%s (%.1f Kb/s)", basename, speed/1024)
+            wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
     end,
 }
