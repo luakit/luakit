@@ -348,7 +348,7 @@ follow.theme = {
 
 -- Selectors for the different modes
 follow.selectors = {
-    followable  = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe';
+    followable  = 'a, area, textarea, select, input:not([type=hidden]), button';
     focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object';
     uri         = 'a, area, frame, iframe';
     desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]';
