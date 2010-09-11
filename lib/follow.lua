@@ -18,8 +18,12 @@ local follow_js = [=[
   var last_input = "";
   var last_strings = [];
 
+  function isFrame(element) {
+    return (element.tagName == "FRAME" || element.tagName == "IFRAME");
+  }
+
   function get_document(element) {
-    if (element.tagName == "FRAME" || element.tagName == "IFRAME") {
+    if (isFrame(element)) {
       return element.contentDocument;
     } else {
       var doc = element;
@@ -67,8 +71,14 @@ local follow_js = [=[
     function create_span(element, h, v) {
       var document = get_document(element.element);
       var span = document.createElement("span");
-      var leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
-      var toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
+      var leftpos, toppos;
+      if (isFrame(element.element)) {
+        leftpos = 0;
+        toppos = 0;
+      } else {
+        leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
+        toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
+      }
       span.style.position = "absolute";
       span.style.left = leftpos + "px";
       span.style.top = toppos + "px";
