@@ -40,7 +40,7 @@ local follow_js = [=[
     for (var i = 0; i < frames.length; ++i) {
       var doc = frames[i].document;
       if (doc) {
-        docs.push(frames[i].document);
+        docs.push(doc);
       }
     }
     return docs;
@@ -169,17 +169,15 @@ local follow_js = [=[
     }
     document.activeElement.blur();
     if ( elements ) {
-      var docs = documents();
       // create hints and overlay divs for all frames
-      for (var i = 0; i < docs.length; ++i) {
-        var doc = docs[i];
+      documents().forEach(function (doc) {
         var hints = doc.createElement("div");
         var overlays = doc.createElement("div");
         doc.body.appendChild(hints);
         doc.body.appendChild(overlays);
         doc.hints = hints;
         doc.overlays = overlays;
-      }
+      });
       var res = query(selector);
       for (var i=0; i<res.length; i++) {
         var e = new Hint(res[i]);
@@ -364,7 +362,7 @@ follow.evaluators = {
     follow = [=[
         function(element) {
           var e = element.element;
-          if (!is_input(element) && e.href)
+          if (!is_input(element))
             click_element(element);
           if (is_editable(element))
             return "form-active";
