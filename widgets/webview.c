@@ -905,11 +905,11 @@ luaH_webview_push_history(lua_State *L, WebKitWebView *view)
         lua_createtable(L, 0, 2);
         /* Set hist_item[uri] = uri */
         lua_pushliteral(L, "uri");
-        lua_pushstring(L, webkit_web_history_item_get_uri(item));
+        lua_pushstring(L, item ? webkit_web_history_item_get_uri(item) : "about:blank");
         lua_rawset(L, -3);
         /* Set hist_item[title] = title */
         lua_pushliteral(L, "title");
-        lua_pushstring(L, webkit_web_history_item_get_title(item));
+        lua_pushstring(L, item ? webkit_web_history_item_get_title(item) : "");
         lua_rawset(L, -3);
         lua_rawseti(L, -2, backlen + i + 1);
     }
@@ -956,7 +956,6 @@ webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
         lua_rawget(L, -2);
         lua_pushliteral(L, "uri");
         lua_rawget(L, -3);
-        luaH_dumpstack(L);
         if (pos || i < bflen) {
             item = webkit_web_history_item_new_with_data(lua_tostring(L, -1), NONULL(lua_tostring(L, -2)));
             webkit_web_back_forward_list_add_item(bflist, item);
