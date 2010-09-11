@@ -217,17 +217,17 @@ webview.methods = {
     end,
 
     -- evaluate javascript code and return string result
-    eval_js = function (view, w, script, file)
-        return view:eval_js(script, file or "(inline)")
+    eval_js = function (view, w, script, file, on_focused)
+        return view:eval_js(script, file or "(inline)", not not on_focused)
     end,
 
     -- evaluate javascript code from file and return string result
-    eval_js_from_file = function (view, w, file)
+    eval_js_from_file = function (view, w, file, on_focused)
         local fh, err = io.open(file)
         if not fh then return error(err) end
         local script = fh:read("*a")
         fh:close()
-        return view:eval_js(script, file)
+        return view:eval_js(script, file, not not on_focused)
     end,
 
     -- Toggle source view

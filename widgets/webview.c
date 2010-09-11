@@ -147,8 +147,7 @@ webview_init_properties() {
 }
 
 static const gchar*
-webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
-    WebKitWebFrame *frame;
+webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
     JSGlobalContextRef context;
     JSObjectRef globalobject;
     JSStringRef js_file;
@@ -159,7 +158,6 @@ webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
     GString *result = g_string_new(NULL);
     size_t js_result_size;
 
-    frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
     context = webkit_web_frame_get_global_context(frame);
     globalobject = JSContextGetGlobalObject(context);
 
@@ -231,13 +229,21 @@ webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
 static gint
 luaH_webview_eval_js(lua_State *L)
 {
+    WebKitWebFrame *frame = NULL;
     widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
     const gchar *script = luaL_checkstring(L, 2);
     const gchar *filename = luaL_checkstring(L, 3);
 
+    /* Check if js should be run on currently focused frame */
+    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
+        frame = webkit_web_view_get_focused_frame(view);
+    /* Fall back on main frame */
+    if (!frame)
+        frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+
     /* evaluate javascript script and push return result onto lua stack */
-    const gchar *result = webview_eval_js(view, script, filename);
+    const gchar *result = webview_eval_js(frame, script, filename);
     lua_pushstring(L, result);
     return 1;
 }
@@ -899,11 +905,11 @@ luaH_webview_push_history(lua_State *L, WebKitWebView *view)
         lua_createtable(L, 0, 2);
         /* Set hist_item[uri] = uri */
         lua_pushliteral(L, "uri");
-        lua_pushstring(L, webkit_web_history_item_get_uri(item));
+        lua_pushstring(L, item ? webkit_web_history_item_get_uri(item) : "about:blank");
         lua_rawset(L, -3);
         /* Set hist_item[title] = title */
         lua_pushliteral(L, "title");
-        lua_pushstring(L, webkit_web_history_item_get_title(item));
+        lua_pushstring(L, item ? webkit_web_history_item_get_title(item) : "");
         lua_rawset(L, -3);
         lua_rawseti(L, -2, backlen + i + 1);
     }
@@ -950,7 +956,6 @@ webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
         lua_rawget(L, -2);
         lua_pushliteral(L, "uri");
         lua_rawget(L, -3);
-        luaH_dumpstack(L);
         if (pos || i < bflen) {
             item = webkit_web_history_item_new_with_data(lua_tostring(L, -1), NONULL(lua_tostring(L, -2)));
             webkit_web_back_forward_list_add_item(bflist, item);
