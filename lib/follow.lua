@@ -362,14 +362,13 @@ follow.evaluators = {
         function(element) {
           var e = element.element;
           if (!is_input(element) && e.href) {
-            if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button"))
-              click_element(element);
-            else
-              document.location = e.href;
+            click_element(element);
           }
-          if (is_editable(element))
+          if (is_editable(element)) {
             return "form-active";
-          return "root-active";
+          } else {
+              return "root-active";
+          }
         }]=],
     -- Return the uri.
     uri = [=[
