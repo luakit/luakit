@@ -38,7 +38,10 @@ local follow_js = [=[
     var docs = [top.document];
     var frames = window.frames;
     for (var i = 0; i < frames.length; ++i) {
-      docs.push(frames[i].document);
+      var doc = frames[i].document;
+      if (doc) {
+        docs.push(frames[i].document);
+      }
     }
     return docs;
   }
