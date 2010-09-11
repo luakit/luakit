@@ -13,21 +13,72 @@ local follow_js = [=[
 
   var elements = [];
   var active_arr = [];
-  var hints;
-  var overlays;
   var active;
   var lastpos = 0;
   var last_input = "";
   var last_strings = [];
+
+  function isFrame(element) {
+    return (element.tagName == "FRAME" || element.tagName == "IFRAME");
+  }
+
+  function get_document(element) {
+    if (isFrame(element)) {
+      return element.contentDocument;
+    } else {
+      var doc = element;
+      while (doc.parentNode !== null) {
+        doc = doc.parentNode;
+      }
+      return doc;
+    }
+  }
+
+  function documents() {
+    var docs = [top.document];
+    var frames = window.frames;
+    for (var i = 0; i < frames.length; ++i) {
+      docs.push(frames[i].document);
+    }
+    return docs;
+  }
+
+  function query(selector) {
+    var res = [];
+    documents().forEach(function (doc) {
+      var set = doc.body.querySelectorAll(selector);
+      for (var i = 0; i < set.length; ++i) {
+        res.push(set[i]);
+      }
+    });
+    return res;
+  }
+
+  function getHints(element) {
+    var document = get_document(element);
+    return document.hints;
+  }
+
+  function getOverlays(element) {
+    var document = get_document(element);
+    return document.overlays;
+  }
 
   function Hint(element) {
     this.element = element;
     this.rect = element.getBoundingClientRect();
 
     function create_span(element, h, v) {
+      var document = get_document(element.element);
       var span = document.createElement("span");
-      var leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
-      var toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
+      var leftpos, toppos;
+      if (isFrame(element.element)) {
+        leftpos = document.defaultView.scrollX + h;
+        toppos = document.defaultView.scrollY + v;
+      } else {
+        leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
+        toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
+      }
       span.style.position = "absolute";
       span.style.left = leftpos + "px";
       span.style.top = toppos + "px";
@@ -74,13 +125,13 @@ local follow_js = [=[
       if (!e.hint.parentNode  && !e.hint.firstchild) {
         var content = document.createTextNode(start + i);
         e.hint.appendChild(content);
-        hints.appendChild(e.hint);
+        getHints(e.element).appendChild(e.hint);
       }
       else if (!keep) {
         e.hint.textContent = start + i;
       }
       if (!e.overlay.parentNode && !e.overlay.firstchild) {
-        overlays.appendChild(e.overlay);
+        getOverlays(e.element).appendChild(e.overlay);
       }
       if (input && bestposition != 0) {
         // match word beginnings
@@ -115,9 +166,18 @@ local follow_js = [=[
     }
     document.activeElement.blur();
     if ( elements ) {
-      var res = document.body.querySelectorAll(selector);
-      hints = document.createElement("div");
-      overlays  = document.createElement("div");
+      var docs = documents();
+      // create hints and overlay divs for all frames
+      for (var i = 0; i < docs.length; ++i) {
+        var doc = docs[i];
+        var hints = doc.createElement("div");
+        var overlays = doc.createElement("div");
+        doc.body.appendChild(hints);
+        doc.body.appendChild(overlays);
+        doc.hints = hints;
+        doc.overlays = overlays;
+      }
+      var res = query(selector);
       for (var i=0; i<res.length; i++) {
         var e = new Hint(res[i]);
         var rects = e.element.getClientRects()[0];
@@ -134,15 +194,13 @@ local follow_js = [=[
       elements.sort( function(a,b) { return a.rect.top - b.rect.top; });
       active_arr = elements;
       reload_hints(elements);
-      document.body.appendChild(hints);
-      document.body.appendChild(overlays);
     }
   }
 
   function is_input(element) {
     var e = element.element;
-    var type = e.type.toLowerCase();
     if (e.tagName == "INPUT" || e.tagName == "TEXTAREA" ) {
+      var type = e.type.toLowerCase();
       if (type == "radio" || type == "checkbox") {
         e.checked = !e.checked;
       }
@@ -160,11 +218,11 @@ local follow_js = [=[
   function is_editable(element) {
     var e = element.element;
     var name = e.tagName.toLowerCase();
-    var type = e.type.toLowerCase();
     if (name == "textarea" || name == "select") {
       return true;
     }
     if (name == "input") {
+      var type = e.type.toLowerCase();
       if (type == 'text' || type == 'search' || type == 'password') {
         return true;
       }
@@ -209,12 +267,16 @@ local follow_js = [=[
   }
 
   function clear() {
-    if (overlays && overlays.parentNode) {
+    documents().forEach(function (doc) {
+      var hints = doc.hints;
+      var overlays = doc.overlays;
+      if (overlays && overlays.parentNode) {
         overlays.parentNode.removeChild(overlays);
-    }
-    if (hints && hints.parentNode) {
+      }
+      if (hints && hints.parentNode) {
         hints.parentNode.removeChild(hints);
-    }
+      }
+    });
     elements = [];
     active_arr = [];
     active = undefined;
@@ -286,7 +348,7 @@ follow.theme = {
 
 -- Selectors for the different modes
 follow.selectors = {
-    followable  = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe';
+    followable  = 'a, area, textarea, select, input:not([type=hidden]), button';
     focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object';
     uri         = 'a, area, frame, iframe';
     desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]';
@@ -300,14 +362,13 @@ follow.evaluators = {
         function(element) {
           var e = element.element;
           if (!is_input(element) && e.href) {
-            if (e.href.match(/javascript:/) || (e.type.toLowerCase() == "button"))
-              click_element(element);
-            else
-              document.location = e.href;
+            click_element(element);
           }
-          if (is_editable(element))
+          if (is_editable(element)) {
             return "form-active";
-          return "root-active";
+          } else {
+              return "root-active";
+          }
         }]=],
     -- Return the uri.
     uri = [=[
