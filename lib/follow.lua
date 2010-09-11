@@ -19,11 +19,15 @@ local follow_js = [=[
   var last_strings = [];
 
   function get_document(element) {
-    var doc = element;
-    while (doc.parentNode !== null) {
-      doc = doc.parentNode;
+    if (element.tagName == "FRAME" || element.tagName == "IFRAME") {
+      return element.contentDocument;
+    } else {
+      var doc = element;
+      while (doc.parentNode !== null) {
+        doc = doc.parentNode;
+      }
+      return doc;
     }
-    return doc;
   }
 
   function documents() {
