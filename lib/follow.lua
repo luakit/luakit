@@ -199,8 +199,8 @@ local follow_js = [=[
 
   function is_input(element) {
     var e = element.element;
-    var type = e.type.toLowerCase();
     if (e.tagName == "INPUT" || e.tagName == "TEXTAREA" ) {
+      var type = e.type.toLowerCase();
       if (type == "radio" || type == "checkbox") {
         e.checked = !e.checked;
       }
@@ -218,11 +218,11 @@ local follow_js = [=[
   function is_editable(element) {
     var e = element.element;
     var name = e.tagName.toLowerCase();
-    var type = e.type.toLowerCase();
     if (name == "textarea" || name == "select") {
       return true;
     }
     if (name == "input") {
+      var type = e.type.toLowerCase();
       if (type == 'text' || type == 'search' || type == 'password') {
         return true;
       }
