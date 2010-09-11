@@ -147,8 +147,7 @@ webview_init_properties() {
 }
 
 static const gchar*
-webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
-    WebKitWebFrame *frame;
+webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
     JSGlobalContextRef context;
     JSObjectRef globalobject;
     JSStringRef js_file;
@@ -159,7 +158,6 @@ webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
     GString *result = g_string_new(NULL);
     size_t js_result_size;
 
-    frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
     context = webkit_web_frame_get_global_context(frame);
     globalobject = JSContextGetGlobalObject(context);
 
@@ -231,13 +229,21 @@ webview_eval_js(WebKitWebView *view, const gchar *script, const gchar *file) {
 static gint
 luaH_webview_eval_js(lua_State *L)
 {
+    WebKitWebFrame *frame = NULL;
     widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
     const gchar *script = luaL_checkstring(L, 2);
     const gchar *filename = luaL_checkstring(L, 3);
 
+    /* Check if js should be run on currently focused frame */
+    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
+        frame = webkit_web_view_get_focused_frame(view);
+    /* Fall back on main frame */
+    if (!frame)
+        frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+
     /* evaluate javascript script and push return result onto lua stack */
-    const gchar *result = webview_eval_js(view, script, filename);
+    const gchar *result = webview_eval_js(frame, script, filename);
     lua_pushstring(L, result);
     return 1;
 }
