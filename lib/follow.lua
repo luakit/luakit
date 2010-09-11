@@ -361,14 +361,11 @@ follow.evaluators = {
     follow = [=[
         function(element) {
           var e = element.element;
-          if (!is_input(element) && e.href) {
+          if (!is_input(element) && e.href)
             click_element(element);
-          }
-          if (is_editable(element)) {
+          if (is_editable(element))
             return "form-active";
-          } else {
-              return "root-active";
-          }
+          return "root-active";
         }]=],
     -- Return the uri.
     uri = [=[
