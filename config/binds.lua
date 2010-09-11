@@ -172,9 +172,19 @@ binds.commands = {
                                             bookmarks.add(uri, args)
                                         end),
     cmd("down[load]",                   function (w, a) w:download(a) end),
-    cmd("dd[elete]",                    function (w, a) w.dbar:remove(tonumber(a) or 1) end),
+    cmd("dd[elete]",                    function (w, a)
+                                            local n = tonumber(a)
+                                            if n then
+                                                w.dbar:remove(n)
+                                            end
+                                        end),
     cmd("dc[lear]",                     function (w)    w.dbar:clear_done() end),
-    cmd("do[pen]",                      function (w, a) w.dbar:open(tonumber(a) or 1) end),
+    cmd("do[pen]",                      function (w, a)
+                                            local n = tonumber(a)
+                                            if n then
+                                                w.dbar:open(n)
+                                            end
+                                        end),
 }
 
 -- Helper functions which are added to the window struct

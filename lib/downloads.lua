@@ -1,5 +1,6 @@
 require("lousy")
 
+local print = print
 local table = table
 local util = lousy.util
 local string = string
@@ -61,7 +62,7 @@ bar_mt = {
     --    @param bar The bar to modify.
     --    @param d The download to remove.
     remove_download = function(bar, d)
-        for i,t in pairs(bar.downloads) do
+        for i,t in ipairs(bar.downloads) do
             if t.download == d then
                 bar.layout:remove(t.widget.e)
                 local wi = t.widget
@@ -79,8 +80,8 @@ bar_mt = {
     --    @param bar The bar to modify.
     --    @param i The index of the download to remove.
     remove = function(bar, i)
-        local d = bar.downloads[i]
-        if d then bar:remove_download(d) end
+        local t = bar.downloads[i]
+        if t then bar:remove_download(t.download) end
     end,
 
     --- Removes all finished, cancelled or aborted downloads from a downlod bar.
