@@ -86,7 +86,6 @@ stop
 switch
 TEMPLATES
 text
-textbutton
 title
 total_size
 type

@@ -39,7 +39,6 @@ widget_constructor_t widget_eventbox;
 widget_constructor_t widget_hbox;
 widget_constructor_t widget_label;
 widget_constructor_t widget_notebook;
-widget_constructor_t widget_textbutton;
 widget_constructor_t widget_vbox;
 widget_constructor_t widget_webview;
 widget_constructor_t widget_window;
@@ -72,6 +71,28 @@ struct widget_t
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
+
+static inline widget_t*
+luaH_checkwidget(lua_State *L, gint udx)
+{
+    static gchar *emsg = NULL;
+    if (emsg) { g_free(emsg); emsg = NULL; }
+
+    widget_t *w = luaH_checkudata(L, udx, &widget_class);
+    if (!w->widget) {
+        emsg = g_strdup_printf("given/using destroyed widget (of type: %s)", w->info->name);
+        luaL_argerror(L, udx, emsg);
+    }
+    return w;
+}
+
+static inline widget_t*
+luaH_checkwidgetornil(lua_State *L, gint udx)
+{
+    if (lua_isnil(L, udx))
+        return NULL;
+    return luaH_checkwidget(L, udx);
+}
 
 #endif
 

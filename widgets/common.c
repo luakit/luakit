@@ -127,8 +127,8 @@ true_cb()
 gint
 luaH_widget_set_child(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    widget_t *child = luaH_checkudataornil(L, 2, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
+    widget_t *child = luaH_checkwidgetornil(L, 2);
 
     /* remove old child */
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
@@ -147,7 +147,7 @@ luaH_widget_set_child(lua_State *L)
 gint
 luaH_widget_get_child(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
     widget_t *child = NULL;
 
@@ -162,8 +162,8 @@ luaH_widget_get_child(lua_State *L)
 gint
 luaH_widget_remove(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
+    widget_t *child = luaH_checkwidget(L, 2);
     g_object_ref(G_OBJECT(child->widget));
     gtk_container_remove(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
     return 0;
@@ -172,7 +172,7 @@ luaH_widget_remove(lua_State *L)
 gint
 luaH_widget_get_children(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child;
     GList *children = gtk_container_get_children(GTK_CONTAINER(w->widget));
     GList *iter = children;
@@ -191,7 +191,7 @@ luaH_widget_get_children(lua_State *L)
 gint
 luaH_widget_show(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gtk_widget_show(w->widget);
     return 0;
 }
@@ -199,7 +199,7 @@ luaH_widget_show(lua_State *L)
 gint
 luaH_widget_hide(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gtk_widget_hide(w->widget);
     return 0;
 }
@@ -207,7 +207,7 @@ luaH_widget_hide(lua_State *L)
 gint
 luaH_widget_focus(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gtk_widget_grab_focus(w->widget);
     return 0;
 }
@@ -215,7 +215,7 @@ luaH_widget_focus(lua_State *L)
 gint
 luaH_widget_destroy(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     if (w->destructor)
         w->destructor(w);
     w->destructor = NULL;

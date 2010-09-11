@@ -19,7 +19,7 @@ local util = require("lousy.util")
 module("lousy.bind")
 
 -- Modifiers to ignore
-ignore_modifiers = { "Mod2", "Lock" }
+ignore_modifiers = { "Mod2", "Mod3", "Mod5", "Lock" }
 
 --- A table that contains mappings for key conversion.
 map = {

@@ -26,7 +26,7 @@ static gint
 luaH_entry_append(lua_State *L)
 {
     size_t len;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *text = luaL_checklstring(L, 2, &len);
     gint pos = -1;
     gtk_editable_insert_text(GTK_EDITABLE(w->widget),
@@ -39,7 +39,7 @@ static gint
 luaH_entry_insert(lua_State *L)
 {
     size_t len;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint pos = luaL_checknumber(L, 2);
     const gchar *text = luaL_checklstring(L, 3, &len);
     gtk_editable_insert_text(GTK_EDITABLE(w->widget),
@@ -51,7 +51,7 @@ luaH_entry_insert(lua_State *L)
 static gint
 luaH_entry_select_region(lua_State* L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint startpos = luaL_checknumber(L, 2);
     gint endpos = -1;
     if(lua_gettop(L) > 2)
@@ -64,7 +64,7 @@ luaH_entry_select_region(lua_State* L)
 static gint
 luaH_entry_index(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
@@ -94,7 +94,7 @@ static gint
 luaH_entry_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *tmp;
     GdkColor c;
     PangoFontDescription *font;

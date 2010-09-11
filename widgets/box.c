@@ -38,8 +38,8 @@ luaH_box_reorder_child(lua_State *L)
 static gint
 luaH_box_pack_start(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
+    widget_t *child = luaH_checkwidget(L, 2);
     gboolean expand = luaH_checkboolean(L, 3);
     gboolean fill = luaH_checkboolean(L, 4);
     guint padding = luaL_checknumber(L, 5);
@@ -52,8 +52,8 @@ luaH_box_pack_start(lua_State *L)
 static gint
 luaH_box_pack_end(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
+    widget_t *child = luaH_checkwidget(L, 2);
     gboolean expand = luaH_checkboolean(L, 3);
     gboolean fill = luaH_checkboolean(L, 4);
     guint padding = luaL_checknumber(L, 5);
@@ -65,7 +65,7 @@ luaH_box_pack_end(lua_State *L)
 static gint
 luaH_box_index(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
@@ -90,7 +90,7 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_box_newindex(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {

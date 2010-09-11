@@ -25,7 +25,7 @@
 static gint
 luaH_eventbox_index(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
@@ -46,7 +46,7 @@ static gint
 luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *tmp;
     GdkColor c;
 

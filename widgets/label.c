@@ -25,7 +25,7 @@
 static gint
 luaH_label_set_alignment(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gfloat xalign = luaL_checknumber(L, 2);
     gfloat yalign = luaL_checknumber(L, 3);
     gtk_misc_set_alignment(GTK_MISC(w->widget), xalign, yalign);
@@ -35,7 +35,7 @@ luaH_label_set_alignment(lua_State *L)
 static gint
 luaH_label_get_alignment(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gfloat xalign, yalign;
     gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
     lua_pushnumber(L, xalign);
@@ -46,7 +46,7 @@ luaH_label_get_alignment(lua_State *L)
 static gint
 luaH_label_set_padding(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint xpad = luaL_checknumber(L, 2);
     gint ypad = luaL_checknumber(L, 3);
     gtk_misc_set_padding(GTK_MISC(w->widget), xpad, ypad);
@@ -56,7 +56,7 @@ luaH_label_set_padding(lua_State *L)
 static gint
 luaH_label_get_padding(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint xpad, ypad;
     gtk_misc_get_padding(GTK_MISC(w->widget), &xpad, &ypad);
     lua_pushnumber(L, xpad);
@@ -67,7 +67,7 @@ luaH_label_get_padding(lua_State *L)
 static gint
 luaH_label_set_width(lua_State *L)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     gint len = luaL_checknumber(L, 2);
     gtk_label_set_width_chars(GTK_LABEL(w->widget), len);
     return 0;
@@ -76,7 +76,7 @@ luaH_label_set_width(lua_State *L)
 static gint
 luaH_label_index(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
@@ -105,7 +105,7 @@ static gint
 luaH_label_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
+    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *tmp;
     GdkColor c;
     PangoFontDescription *font;
