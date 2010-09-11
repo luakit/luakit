@@ -204,7 +204,6 @@ binds.helper_methods = {
         local args = {string.gsub(luakit.execpath, " ", "\\ "), string.format("-c %q", luakit.confpath)}
         if luakit.verbose then table.insert(args, "-v") end
         local cmd = table.concat(args, " ")
-        print(cmd)
         luakit.exec(cmd)
     end,
 
