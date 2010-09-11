@@ -73,8 +73,8 @@ local follow_js = [=[
       var span = document.createElement("span");
       var leftpos, toppos;
       if (isFrame(element.element)) {
-        leftpos = 0;
-        toppos = 0;
+        leftpos = document.defaultView.scrollX + h;
+        toppos = document.defaultView.scrollY + v;
       } else {
         leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
         toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
