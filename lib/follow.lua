@@ -456,6 +456,7 @@ mode_binds.normal = join(mode_binds.normal or {}, {
     -- Open, open in new tab or open in new window
     buf("^;o$", function (w,b,m) w:start_follow("uri",    "open",       function (uri)  w:navigate(uri)       return "root-active" end) end),
     buf("^;t$", function (w,b,m) w:start_follow("uri",    "open tab",   function (uri)  w:new_tab(uri)        return "root-active" end) end),
+    buf("^;b$", function (w,b,m) w:start_follow("uri",    "open bg tab",function (uri)  w:new_tab(uri, false) return "root-active" end) end),
     buf("^;w$", function (w,b,m) w:start_follow("uri",    "open window",function (uri)  window.new{uri}       return "root-active" end) end),
 
     -- Set command `:open <uri>`, `:tabopen <uri>` or `:winopen <uri>`
