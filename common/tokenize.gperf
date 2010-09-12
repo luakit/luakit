@@ -51,11 +51,12 @@ pack_end
 pack_start
 position
 reload
+reload_bypass_cache
 remove
 reorder
 search
-selectable
 select_region
+selectable
 set_alignment
 set_child
 set_padding

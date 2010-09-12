@@ -120,6 +120,7 @@ binds.mode_binds = {
         buf("^gh$",                     function (w) w:navigate(homepage) end),
 
         key({},          "r",           function (w) w:reload() end),
+        key({},          "R",           function (w) w:reload(true) end),
         key({"Control"}, "c",           function (w) w:stop() end),
 
         -- Window

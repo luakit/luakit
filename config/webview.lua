@@ -204,8 +204,16 @@ webview.init_funcs = {
 -- as the first argument. All methods must take `view` & `w` as the first two
 -- arguments.
 webview.methods = {
-    reload = function (view) view:reload() end,
-    stop   = function (view) view:stop()   end,
+    stop   = function (view) view:stop() end,
+
+    -- Reload with or without ignoring cache
+    reload = function (view, w, bypass_cache)
+        if bypass_cache then
+            view:reload_bypass_cache()
+        else
+            view:reload()
+        end
+    end,
 
     -- Property functions
     get = function (view, w, k)
