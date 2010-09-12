@@ -67,8 +67,14 @@ binds.mode_binds = {
         buf("^%d+Z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)Z$"))/100, true) end),
 
         -- Clipboard
-        key({},          "p",           function (w) w:navigate(luakit.get_selection()) end),
-        key({},          "P",           function (w) w:new_tab(luakit.get_selection())  end),
+        key({},          "p",           function (w)
+                                            local uri = luakit.get_selection()
+                                            if uri then w:navigate(w:search_open(uri)) else w:error("Empty selection.") end
+                                        end),
+        key({},          "P",           function (w)
+                                            local uri = luakit.get_selection()
+                                            if uri then w:new_tab(w:search_open(uri)) else w:error("Empty selection.") end
+                                        end),
         buf("^yy$",                     function (w) w:set_selection((w:get_current() or {}).uri or "") end),
         buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
@@ -129,10 +135,11 @@ binds.mode_binds = {
         but({},          2,             function (w)
                                             -- Open hovered uri in new tab
                                             local uri = w:get_current().hovered_uri
-                                            if uri then w:new_tab(uri, false)
+                                            if uri then
+                                                w:new_tab(w:search_open(uri), false)
                                             else -- Open selection in current tab
                                                 uri = luakit.get_selection()
-                                                if uri then w:get_current().uri = uri end
+                                                if uri then w:navigate(w:search_open(uri)) end
                                             end
                                         end),
     },
