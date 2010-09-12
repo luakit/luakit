@@ -439,8 +439,8 @@ mode_binds.normal = join(mode_binds.normal or {}, {
                         return "root-active"
                     end, (m.count > 0 and m.count) or nil) end),
 
-    -- Open in new tab and re-enter follow mode for another selection
-    buf("^;m$", function (w,b,m) w:start_follow("uri",    "multi tab",  function (uri, s) w:new_tab(uri, false) w:set_mode("follow") end) end),
+    -- Follow a sequence of <CR> delimited hints in background tabs.
+    buf("^;F$", function (w,b,m) w:start_follow("uri",    "multi tab",  function (uri, s) w:new_tab(uri, false) w:set_mode("follow") end) end),
 
     -- Yank uri or desc into primary selection
     buf("^;y$", function (w,b,m) w:start_follow("uri",    "yank",       function (uri)  w:set_selection(uri)  return "root-active" end) end),
