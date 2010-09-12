@@ -437,7 +437,7 @@ mode_binds.normal = join(mode_binds.normal or {}, {
                     function (uri, s)
                         for i=1,(s.count or 1) do w:new_tab(uri, false) end
                         return "root-active"
-                    end, (m.count > 0 and m.count) or nil) end),
+                    end, m.count) end),
 
     -- Follow a sequence of <CR> delimited hints in background tabs.
     buf("^;F$", function (w,b,m) w:start_follow("uri",    "multi tab",  function (uri, s) w:new_tab(uri, false) w:set_mode("follow") end) end),
