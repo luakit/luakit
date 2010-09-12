@@ -451,6 +451,7 @@ mode_binds.normal = join(mode_binds.normal or {}, {
 
     -- Open image src
     buf("^;i$", function (w,b,m) w:start_follow("image",  "open image", function (src)  w:navigate(src)       return "root-active" end) end),
+    buf("^;I$", function (w,b,m) w:start_follow("image",  "tab image",  function (src)  w:new_tab(src)        return "root-active" end) end),
 
     -- Open, open in new tab or open in new window
     buf("^;o$", function (w,b,m) w:start_follow("uri",    "open",       function (uri)  w:navigate(uri)       return "root-active" end) end),
