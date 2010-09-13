@@ -123,6 +123,9 @@ binds.mode_binds = {
         key({},          "R",           function (w) w:reload(true) end),
         key({"Control"}, "c",           function (w) w:stop() end),
 
+        -- Config reloading
+        key({"Control", "Shift"}, "R",  function (w) w:reload_config() end),
+
         -- Window
         buf("^ZZ$",                     function (w) w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
@@ -172,6 +175,7 @@ binds.commands = {
     cmd({"wq", "writequit"},            function (w)    session.save() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
+    cmd("reloadconf",                   function (w)    w:reload_config() end),
     cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
@@ -192,6 +196,16 @@ binds.helper_methods = {
         else
             return w:new_tab(uri)
         end
+    end,
+
+    -- Reload config
+    reload_config = function (w)
+        session.save()
+        local args = {string.gsub(luakit.execpath, " ", "\\ "), string.format("-c %q", luakit.confpath)}
+        if luakit.verbose then table.insert(args, "-v") end
+        local cmd = table.concat(args, " ")
+        print(cmd)
+        luakit.exec(cmd)
     end,
 
     -- Intelligent open command which can detect a uri or search argument.
