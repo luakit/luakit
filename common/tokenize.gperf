@@ -12,6 +12,7 @@ bg
 cache_dir
 clear_search
 config_dir
+confpath
 count
 current
 data_dir
@@ -20,6 +21,7 @@ entry
 eval_js
 eventbox
 exec
+execpath
 fg
 focus
 font

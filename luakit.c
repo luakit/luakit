@@ -43,6 +43,9 @@ parseopts(int argc, char *argv[]) {
     gboolean *only_version = NULL;
     gchar **uris = NULL;
 
+    /* save luakit exec path */
+    globalconf.execpath = g_strdup(argv[0]);
+
     /* define command line options */
     const GOptionEntry entries[] = {
       { "uri",     'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                 "uri(s) to load at startup", "URI"  },
