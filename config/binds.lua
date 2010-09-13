@@ -169,6 +169,7 @@ binds.commands = {
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
     cmd("q[uit]",                       function (w)    w:close_win() end),
+    cmd({"wq", "writequit"},            function (w)    session.save() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
     cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),

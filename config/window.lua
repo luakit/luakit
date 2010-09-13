@@ -5,6 +5,9 @@
 -- Window class table
 window = {}
 
+-- List of active windows by window widget
+window.bywidget = setmetatable({}, { __mode = "k" })
+
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
 local function eventbox() return widget{type="eventbox"} end
@@ -107,6 +110,9 @@ function window.build()
     l.loaded:hide()
     l.uri.selectable = true
     r.ssl:hide()
+
+    -- Allows indexing of window struct by window widget
+    window.bywidget[w.win] = w
 
     return w
 end
@@ -610,6 +616,9 @@ window.methods = {
         while w.tabs:count() ~= 0 do
             w:close_tab(nil, false)
         end
+
+        -- Remove from window index
+        window.bywidget[w.win] = nil
 
         -- Clear window struct
         w = setmetatable(w, {})

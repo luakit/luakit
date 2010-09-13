@@ -38,12 +38,39 @@ require "go_input"
 require "follow_selected"
 require "go_next_prev"
 require "go_up"
+require "session"
 
 -- Init bookmarks lib
 require "bookmarks"
 bookmarks.load()
 bookmarks.dump_html()
 
-window.new(uris)
+-- Load session
+local wins = session.load()
+if wins then
+    local w
+    for _, win in ipairs(wins) do
+        w = nil
+        for _, item in ipairs(win) do
+            if not w then
+                w = window.new({item.uri})
+            else
+                w:new_tab(item.uri, item.current)
+            end
+        end
+    end
+    -- Load cli uris
+    if #uris > 0 then
+        if not w then
+            window.new(uris)
+        else
+            for i, uri in ipairs(uris) do
+                w:new_tab(uri, true)
+            end
+        end
+    end
+else
+    window.new(uris)
+end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
