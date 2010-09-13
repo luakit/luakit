@@ -56,6 +56,7 @@ static inline ssize_t l_strlen(const gchar *s) {
 #define p_clear(p, count)       ((void)memset((p), 0, sizeof(*(p)) * (count)))
 
 gboolean file_exists(const gchar*);
+void l_exec(const gchar*);
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

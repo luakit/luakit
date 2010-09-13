@@ -19,6 +19,7 @@ destroy
 entry
 eval_js
 eventbox
+exec
 fg
 focus
 font

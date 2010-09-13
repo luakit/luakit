@@ -23,6 +23,7 @@
 #include <glib/gprintf.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 #include "globalconf.h"
 #include "common/util.h"
@@ -67,4 +68,16 @@ gboolean
 file_exists(const gchar *filename)
 {
     return (access(filename, F_OK) == 0);
+}
+
+/* Execute a command and replace the current process. */
+void
+l_exec(const gchar *cmd)
+{
+    static const gchar *shell = NULL;
+
+    if(!shell && !(shell = getenv("SHELL")))
+        shell = "/bin/sh";
+
+    execl(shell, shell, "-c", cmd, NULL);
 }
