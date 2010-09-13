@@ -361,7 +361,6 @@ follow.evaluators = {
     -- Click the element & return form/root active signals
     follow = [=[
         function(element) {
-          var e = element.element;
           if (!is_input(element))
             click_element(element);
           if (is_editable(element))
