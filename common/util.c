@@ -23,7 +23,6 @@
 #include <glib/gprintf.h>
 #include <stdarg.h>
 #include <stdlib.h>
-#include <unistd.h>
 
 #include "globalconf.h"
 #include "common/util.h"
@@ -76,7 +75,7 @@ l_exec(const gchar *cmd)
 {
     static const gchar *shell = NULL;
 
-    if(!shell && !(shell = getenv("SHELL")))
+    if(!shell && !(shell = g_getenv("SHELL")))
         shell = "/bin/sh";
 
     execl(shell, shell, "-c", cmd, NULL);
