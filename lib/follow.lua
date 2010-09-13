@@ -105,7 +105,7 @@ local follow_js = [=[
       overlay.style.width = element.rect.width + "px";
       overlay.style.height = element.rect.height + "px";
       overlay.style.opacity = opacity;
-      overlay.style.backgroundColor = normal_color;
+      overlay.style.backgroundColor = normal_bg;
       overlay.style.border = border;
       overlay.style.zIndex = 10000;
       overlay.style.visibility = 'visible';
@@ -124,7 +124,7 @@ local follow_js = [=[
 
     for (var i=0; i<length; i++) {
       var e = array[i];
-      e.overlay.style.backgroundColor = normal_color;
+      e.overlay.style.backgroundColor = normal_bg;
       if (!e.hint.parentNode  && !e.hint.firstchild) {
         var content = document.createTextNode(start + i);
         e.hint.appendChild(content);
@@ -152,7 +152,7 @@ local follow_js = [=[
     }
     active = array[lastpos];
     if (active)
-      active.overlay.style.backgroundColor = focus_color;
+      active.overlay.style.backgroundColor = focus_bg;
   }
 
   function click_element(e) {
@@ -305,8 +305,8 @@ local follow_js = [=[
   }
 
   function focus(newpos) {
-    active_arr[lastpos].overlay.style.backgroundColor = normal_color;
-    active_arr[newpos].overlay.style.backgroundColor = focus_color;
+    active_arr[lastpos].overlay.style.backgroundColor = normal_bg;
+    active_arr[newpos].overlay.style.backgroundColor = focus_bg;
     active = active_arr[newpos];
     lastpos = newpos;
   }
@@ -333,19 +333,24 @@ local mode_settings_format = [=[
 -- Table of following options & modes
 follow = {}
 
-follow.theme = {
-    focus_color     = "#00ff00";
-    normal_color    = "#ffff99";
-    opacity         = 0.3;
-    border          = "1px dotted #000000";
-    hint_fg         = "#ffffff";
-    hint_bg         = "#000088";
-    hint_border     = "2px dashed #000000";
-    hint_opacity    = 0.4;
-    hint_font       = "11px monospace bold";
-    vert_offset     = 0;
-    horiz_offset    = -10;
+follow.default_theme = {
+    focus_bg     = "#00ff00";
+    normal_bg    = "#ffff99";
+    opacity      = 0.3;
+    border       = "1px dotted #000000";
+    hint_fg      = "#ffffff";
+    hint_bg      = "#000088";
+    hint_border  = "2px dashed #000000";
+    hint_opacity = 0.4;
+    hint_font    = "11px monospace bold";
+    vert_offset  = 0;
+    horiz_offset = -10;
 }
+
+-- Merge `theme.follow` table with `follow.default_theme`
+function follow.get_theme()
+    return lousy.util.table.join(follow.default_theme, theme.follow or {})
+end
 
 -- Selectors for the different modes
 follow.selectors = {
@@ -455,7 +460,7 @@ new_mode("follow", {
 
         -- Make theme js
         local js_blocks = {}
-        for k, v in pairs(follow.theme) do
+        for k, v in pairs(follow.get_theme()) do
             if type(v) == "number" then
                 table.insert(js_blocks, string.format("%s = %f;", k, v))
             else
