@@ -182,7 +182,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         JSStringRef prop, val;
         JSObjectRef exc = JSValueToObject(context, js_exc, NULL);
 
-        printf("Exception occured while executing script:\n");
+        g_printf("Exception occured while executing script:\n");
 
         /* Print file */
         prop = JSStringCreateWithUTF8CString("sourceURL");
@@ -191,7 +191,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         if(size) {
             char cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
-            printf("At %s", cstr);
+            g_printf("At %s", cstr);
         }
         JSStringRelease(prop);
         JSStringRelease(val);
@@ -203,7 +203,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         if(size) {
             char cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
-            printf(":%s: ", cstr);
+            g_printf(":%s: ", cstr);
         }
         JSStringRelease(prop);
         JSStringRelease(val);
@@ -214,7 +214,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         if(size) {
             char cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
-            printf("%s\n", cstr);
+            g_printf("%s\n", cstr);
         }
         JSStringRelease(val);
     }
