@@ -160,6 +160,12 @@ binds.mode_binds = {
     insert = { },
 }
 
+-- Switching tabs with Mod1+{1,2,3,...}
+for i=1,10 do
+    table.insert(binds.mode_binds.normal,
+        key({"Mod1"}, tostring(i % 10), function (w) w.tabs:switch(i) end))
+end
+
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 binds.commands = {
