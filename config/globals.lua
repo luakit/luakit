@@ -15,7 +15,9 @@ local rv, out, err = luakit.spawn_sync("uname -sm")
 local webkit_version = string.format("WebKitGTK+/%d.%d.%d", luakit.webkit_major_version,
     luakit.webkit_minor_version, luakit.webkit_micro_version)
 local luakit_version = string.format("luakit/%s", luakit.version)
-globals.useragent = string.format("Mozilla/5.0 (%s) %s %s", string.match(out, "([^\n]*)"), webkit_version, luakit_version)
+local webkit_ua_major_version = luakit.webkit_user_agent_major_version
+local webkit_ua_minor_version = luakit.webkit_user_agent_minor_version
+globals.useragent = string.format("Mozilla/5.0 (%s) AppleWebKit/%s.%s+ %s %s", string.match(out, "([^\n]*)"), webkit_ua_major_version, webkit_ua_minor_version, webkit_version, luakit_version)
 
 -- Search common locations for a ca file which is used for ssl connection validation.
 local ca_files = {luakit.data_dir .. "/ca-certificates.crt",

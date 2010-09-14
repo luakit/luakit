@@ -91,6 +91,8 @@ version
 webkit_major_version
 webkit_micro_version
 webkit_minor_version
+webkit_user_agent_major_version
+webkit_user_agent_minor_version
 webview
 window
 windows

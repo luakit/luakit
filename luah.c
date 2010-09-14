@@ -516,6 +516,8 @@ luaH_luakit_index(lua_State *L)
       PI_CASE(WEBKIT_MAJOR_VERSION, webkit_major_version())
       PI_CASE(WEBKIT_MINOR_VERSION, webkit_minor_version())
       PI_CASE(WEBKIT_MICRO_VERSION, webkit_micro_version())
+      PI_CASE(WEBKIT_USER_AGENT_MAJOR_VERSION, WEBKIT_USER_AGENT_MAJOR_VERSION)
+      PI_CASE(WEBKIT_USER_AGENT_MINOR_VERSION, WEBKIT_USER_AGENT_MINOR_VERSION)
 
       case L_TK_WINDOWS:
         lua_newtable(L);
