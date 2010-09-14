@@ -3,17 +3,18 @@
 -- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
 --------------------------------------------------------
 
+local function rm(file)
+    luakit.spawn(string.format("rm %q", file))
+end
+
 -- Session functions
 session = {
     file = luakit.cache_dir .. "/session",
 
-    -- Save current window & tab state to file.
-    save = function ()
+    -- Save all given windows uris to file.
+    save = function (wins)
         local lines = {}
-        -- Get list of window structs
-        local wins = {}
-        for _, w in pairs(window.bywidget) do table.insert(wins, w) end
-        -- Save uris from all tabs in all windows
+        -- Save tabs from all the given windows
         for wi, w in pairs(wins) do
             local current = w.tabs:current()
             for ti = 1, w.tabs:count() do
@@ -28,7 +29,7 @@ session = {
             fh:write(table.concat(lines, "\n"))
             io.close(fh)
         else
-            luakit.spawn(string.format("rm %q", session.file))
+            rm(session.file)
         end
     end,
 
@@ -36,24 +37,26 @@ session = {
     load = function ()
         if not os.exists(session.file) then return end
         local ret = {}
+
+        -- Read file
+        local lines = {}
+        local fh = io.open(session.file, "r")
+        for line in fh:lines() do table.insert(lines, line) end
+        io.close(fh)
+        -- Delete file
+        rm(session.file)
+
+        -- Parse session file
         local split = lousy.util.string.split
-        local fh = io.lines(session.file, "r")
-        for line in fh do
+        for _, line in ipairs(lines) do
             local wi, ti, current, uri = unpack(split(line, "\t"))
             wi = tonumber(wi)
             current = (current == "true")
             if not ret[wi] then ret[wi] = {} end
-            table.insert(ret[wi], { uri = uri, current = current })
+            table.insert(ret[wi], {uri = uri, current = current})
         end
 
-        -- Delete session
-        luakit.spawn(string.format("rm %q", session.file))
-
-        if #ret > 0 and #(ret[1]) > 0 then
-            return ret
-        else
-            return nil
-        end
+        return (#ret > 0 and ret) or nil
     end,
 
     -- Spawn windows from saved session and return the last window
@@ -77,3 +80,8 @@ session = {
         return w
     end,
 }
+
+-- Save current window session helper
+window.methods.save_session = function (w)
+    session.save{w}
+end

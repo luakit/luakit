@@ -127,7 +127,7 @@ binds.mode_binds = {
         key({"Control", "Shift"}, "R",  function (w) w:restart() end),
 
         -- Window
-        buf("^ZZ$",                     function (w) session.save() w:close_win() end),
+        buf("^ZZ$",                     function (w) w:save_session() w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
 
         -- Bookmarking
@@ -172,7 +172,7 @@ binds.commands = {
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
     cmd("q[uit]",                       function (w)    w:close_win() end),
-    cmd({"wq", "writequit"},            function (w)    session.save() w:close_win() end),
+    cmd({"wq", "writequit"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
     cmd("reloadconf",                   function (w)    w:reload_config() end),
@@ -200,7 +200,9 @@ binds.helper_methods = {
 
     -- Save, restart luakit and reload session.
     restart = function (w)
-        session.save()
+        local wins = {}
+        for _, w in pairs(window.bywidget) do table.insert(wins, w) end
+        session.save(wins)
         local args = {string.gsub(luakit.execpath, " ", "\\ "), string.format("-c %q", luakit.confpath)}
         if luakit.verbose then table.insert(args, "-v") end
         local cmd = table.concat(args, " ")
