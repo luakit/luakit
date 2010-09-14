@@ -1,7 +1,12 @@
 " Vim filetype plugin
 " Language:     luakit configuration
 " Maintainer:   Gregor Uhlenheuer &lt;kongo2002@googlemail.com&gt;
-" Last Change:  Tue 14 Sep 2010 12:23:44 PM CEST
+" Last Change:  Tue 14 Sep 2010 12:27:45 PM CEST
+
+if exists('b:did_luakit')
+    finish
+endif
+let b:did_luakit = 1
 
 function! s:GetFile()
     let fcomponents = []
