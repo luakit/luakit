@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:     luakit configuration
 " Maintainer:   Gregor Uhlenheuer &lt;kongo2002@googlemail.com&gt;
-" Last Change:  Tue 14 Sep 2010 12:37:49 PM CEST
+" Last Change:  Tue 14 Sep 2010 12:49:09 PM CEST
 
 " Custom configuration:
 "
@@ -52,8 +52,8 @@ if !exists('*CompareLuakitFile')
             endif
         else
             echohl WarningMsg
-            echom 'Could not find system-wide luakit '.expand('%:t').' file'
-            echom 'Define g:luakit_prefix'
+            echom 'Could not find system-wide luakit '''.expand('%:t').''' file'
+            echom 'Please define ''g:luakit_prefix'''
             echohl None
         endif
     endfunction
