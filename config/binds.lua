@@ -124,7 +124,7 @@ binds.mode_binds = {
         key({"Control"}, "c",           function (w) w:stop() end),
 
         -- Config reloading
-        key({"Control", "Shift"}, "R",  function (w) w:reload_config() end),
+        key({"Control", "Shift"}, "R",  function (w) w:restart() end),
 
         -- Window
         buf("^ZZ$",                     function (w) w:close_win() end),
@@ -198,8 +198,8 @@ binds.helper_methods = {
         end
     end,
 
-    -- Reload config
-    reload_config = function (w)
+    -- Save, restart luakit and reload session.
+    restart = function (w)
         session.save()
         local args = {string.gsub(luakit.execpath, " ", "\\ "), string.format("-c %q", luakit.confpath)}
         if luakit.verbose then table.insert(args, "-v") end
