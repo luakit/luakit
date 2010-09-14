@@ -200,12 +200,29 @@ binds.helper_methods = {
 
     -- Save, restart luakit and reload session.
     restart = function (w)
+        -- Generate luakit launch command.
+        local args = {({string.gsub(luakit.execpath, " ", "\\ ")})[1]}
+        if luakit.verbose then table.insert(args, "-v") end
+
+        -- Get new config path
+        local conf
+        if luakit.confpath ~= "/etc/xdg/luakit/rc.lua" and os.exists(luakit.confpath) then
+            conf = luakit.confpath
+            table.insert(args, string.format("-c %q", conf))
+        end
+
+        -- Check config has valid syntax
+        local cmd = table.concat(args, " ")
+        if luakit.spawn_sync(cmd .. " -k") ~= 0 then
+            return w:error("Cannot restart, syntax error in configuration file"..((conf and ": "..conf) or "."))
+        end
+
+        -- Save session.
         local wins = {}
         for _, w in pairs(window.bywidget) do table.insert(wins, w) end
         session.save(wins)
-        local args = {string.gsub(luakit.execpath, " ", "\\ "), string.format("-c %q", luakit.confpath)}
-        if luakit.verbose then table.insert(args, "-v") end
-        local cmd = table.concat(args, " ")
+
+        -- Replace current process with new luakit instance.
         luakit.exec(cmd)
     end,
 
