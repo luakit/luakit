@@ -427,17 +427,18 @@ local mode_binds, join, buf, key = binds.mode_binds, lousy.util.table.join, lous
 mode_binds.normal = join(mode_binds.normal or {}, {
     --                       w:start_follow(mode,     prompt,             callback)
     buf("^f$",  function (w) w:start_follow("follow", nil,                function (sig)                                return sig           end) end),
-    buf("^Ff$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
-    buf("^Fy$", function (w) w:start_follow("uri",    "yank",             function (uri)  w:set_selection(uri)     return "root-active" end) end),
-    buf("^FY$", function (w) w:start_follow("desc",   "yank description", function (desc) w:set_selection(desc)    return "root-active" end) end),
-    buf("^Fs$", function (w) w:start_follow("uri",    "download",         function (uri)  w:download(uri)               return "root-active" end) end),
-    buf("^Fi$", function (w) w:start_follow("image",  "open image",       function (src)  w:navigate(src)               return "root-active" end) end),
-    buf("^Fo$", function (w) w:start_follow("uri",    "open",             function (uri)  w:navigate(uri)               return "root-active" end) end),
-    buf("^Ft$", function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri)                return "root-active" end) end),
-    buf("^Fw$", function (w) w:start_follow("uri",    "new window",       function (uri)  window.new{uri}               return "root-active" end) end),
-    buf("^FO$", function (w) w:start_follow("uri",    "open cmd",         function (uri)  w:enter_cmd(":open "..uri)                         end) end),
-    buf("^FT$", function (w) w:start_follow("uri",    "tabopen cmd",      function (uri)  w:enter_cmd(":tabopen "..uri)                      end) end),
-    buf("^FW$", function (w) w:start_follow("uri",    "winopen cmd",      function (uri)  w:enter_cmd(":winopen "..uri)                      end) end),
+    buf("^F$",  function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri)                return "root-active" end) end),
+    buf("^;;$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
+    buf("^;y$", function (w) w:start_follow("uri",    "yank",             function (uri)  w:set_selection(uri)          return "root-active" end) end),
+    buf("^;Y$", function (w) w:start_follow("desc",   "yank description", function (desc) w:set_selection(desc)         return "root-active" end) end),
+    buf("^;s$", function (w) w:start_follow("uri",    "download",         function (uri)  w:download(uri)               return "root-active" end) end),
+    buf("^;i$", function (w) w:start_follow("image",  "open image",       function (src)  w:navigate(src)               return "root-active" end) end),
+    buf("^;o$", function (w) w:start_follow("uri",    "open",             function (uri)  w:navigate(uri)               return "root-active" end) end),
+    buf("^;t$", function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri)                return "root-active" end) end),
+    buf("^;w$", function (w) w:start_follow("uri",    "new window",       function (uri)  window.new{uri}               return "root-active" end) end),
+    buf("^;O$", function (w) w:start_follow("uri",    "open cmd",         function (uri)  w:enter_cmd(":open "..uri)                         end) end),
+    buf("^;T$", function (w) w:start_follow("uri",    "tabopen cmd",      function (uri)  w:enter_cmd(":tabopen "..uri)                      end) end),
+    buf("^;W$", function (w) w:start_follow("uri",    "winopen cmd",      function (uri)  w:enter_cmd(":winopen "..uri)                      end) end),
 })
 -- Add follow mode binds
 mode_binds.follow = join(mode_binds.follow or {}, {
