@@ -1,7 +1,7 @@
 " Vim filetype plugin
 " Language:     luakit configuration
 " Maintainer:   Gregor Uhlenheuer &lt;kongo2002@googlemail.com&gt;
-" Last Change:  Tue 14 Sep 2010 12:49:09 PM CEST
+" Last Change:  Tue 14 Sep 2010 01:18:20 PM CEST
 
 " Custom configuration:
 "
@@ -22,9 +22,13 @@ if exists('b:did_luakit')
 endif
 let b:did_luakit = 1
 
+if !exists('g:luakit_prefix')
+    let g:luakit_prefix = '/etc/xdg'
+endif
+
 function! s:GetFile()
     let fcomponents = []
-    if !exists('g:luakit_prefix')
+    if $XDG_CONFIG_DIRS != ''
         call add(fcomponents, $XDG_CONFIG_DIRS)
     else
         call add(fcomponents, g:luakit_prefix)
