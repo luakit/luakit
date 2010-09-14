@@ -7,6 +7,7 @@
 session = {
     file = luakit.cache_dir .. "/session",
 
+    -- Save current window & tab state to file.
     save = function ()
         local lines = {}
         -- Get list of window structs
@@ -31,6 +32,7 @@ session = {
         end
     end,
 
+    -- Load window and tab state from file
     load = function ()
         if not os.exists(session.file) then return end
         local ret = {}
@@ -52,5 +54,26 @@ session = {
         else
             return nil
         end
+    end,
+
+    -- Spawn windows from saved session and return the last window
+    restore = function ()
+        wins = session.load()
+        if not wins or #wins == 0 then return end
+
+        -- Spawn windows
+        local w
+        for _, win in ipairs(wins) do
+            w = nil
+            for _, item in ipairs(win) do
+                if not w then
+                    w = window.new({item.uri})
+                else
+                    w:new_tab(item.uri, item.current)
+                end
+            end
+        end
+
+        return w
     end,
 }

@@ -49,29 +49,11 @@ require "bookmarks"
 bookmarks.load()
 bookmarks.dump_html()
 
--- Load session
-local wins = session.load()
-if wins then
-    local w
-    for _, win in ipairs(wins) do
-        w = nil
-        for _, item in ipairs(win) do
-            if not w then
-                w = window.new({item.uri})
-            else
-                w:new_tab(item.uri, item.current)
-            end
-        end
-    end
-    -- Load cli uris
-    if #uris > 0 then
-        if not w then
-            window.new(uris)
-        else
-            for i, uri in ipairs(uris) do
-                w:new_tab(uri, true)
-            end
-        end
+-- Restore last saved session
+local w = (session and session.restore())
+if w then
+    for _, uri in ipairs(uris) do
+        w:new_tab(uri, true)
     end
 else
     window.new(uris)
