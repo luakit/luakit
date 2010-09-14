@@ -1,7 +1,21 @@
 " Vim filetype plugin
 " Language:     luakit configuration
 " Maintainer:   Gregor Uhlenheuer &lt;kongo2002@googlemail.com&gt;
-" Last Change:  Tue 14 Sep 2010 12:27:45 PM CEST
+" Last Change:  Tue 14 Sep 2010 12:37:49 PM CEST
+
+" Custom configuration:
+"
+"   Set 'g:luakit_prefix' to the path prefix where the system-wide
+"   luakit configuration files are installed to. The default is set to
+"   something like '/etc/xdg' or '/usr/share/xdg'.
+"   If this variable is not defined the path is tried to determine via the
+"   environment variable $XDG_CONFIG_DIRS
+"
+"       let g:luakit_prefix = '/etc/xdg'
+"
+"   Defined mappings (buffer-local):
+"
+"       <Leader>ld  Diff current config file with its system-wide counterpart
 
 if exists('b:did_luakit')
     finish
