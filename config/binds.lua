@@ -127,7 +127,7 @@ binds.mode_binds = {
         key({"Control", "Shift"}, "R",  function (w) w:restart() end),
 
         -- Window
-        buf("^ZZ$",                     function (w) w:close_win() end),
+        buf("^ZZ$",                     function (w) session.save() w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
 
         -- Bookmarking
