@@ -450,7 +450,6 @@ mode_binds.follow = join(mode_binds.follow or {}, {
 new_mode("follow", {
     -- Enter follow mode hook
     enter = function (w)
-        local i, p = w.ibar.input, w.ibar.prompt
         -- Get following state & options
         if not w.follow_state then w.follow_state = {} end
         local state = w.follow_state
