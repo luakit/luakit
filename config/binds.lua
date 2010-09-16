@@ -39,8 +39,7 @@ binds.mode_binds = {
         key({},          "space",       function (w) w:scroll_page(1.0) end),
         key({},          "BackSpace",   function (w) w:scroll_page(-1.0) end),
         buf("^gg$",                     function (w) w:scroll_vert("0%")   end),
-        buf("^G$",                      function (w) w:scroll_vert("100%") end),
-        buf("^[\-\+]?[0-9]+[%%G]$",     function (w, b) w:scroll_vert(string.match(b, "^([\-\+]?%d+)[%%G]$") .. "%") end),
+        buf("^%d*[%%G]$",               function (w, b) w:scroll_vert((string.match(b, "^(%d+)") or "100").."%") end),
 
         -- Traditional scrolling commands
         key({},          "Down",        function (w) w:scroll_vert("+"..scroll_step.."px") end),
@@ -63,8 +62,8 @@ binds.mode_binds = {
         buf("^zO$",                     function (w) w:zoom_out(nil, true) end),
 
         -- Specific zoom
-        buf("^%d+z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)z$"))/100)       end),
-        buf("^%d+Z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(.+)Z$"))/100, true) end),
+        buf("^%d+z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(%d+)"))/100)       end),
+        buf("^%d+Z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(%d+)"))/100, true) end),
 
         -- Clipboard
         key({},          "p",           function (w)
@@ -94,8 +93,8 @@ binds.mode_binds = {
         key({},          "N",           function (w) w:search(nil, false) end),
 
         -- History
-        buf("^[0-9]*H$",                function (w, b) w:back   (tonumber(string.match(b, "^(%d*)H$") or 1)) end),
-        buf("^[0-9]*L$",                function (w, b) w:forward(tonumber(string.match(b, "^(%d*)L$") or 1)) end),
+        buf("^%d*H$",                   function (w, b) w:back   (tonumber(string.match(b, "^(%d*)") or 1)) end),
+        buf("^%d*L$",                   function (w, b) w:forward(tonumber(string.match(b, "^(%d*)") or 1)) end),
         key({},          "b",           function (w) w:back() end),
         key({},          "XF86Back",    function (w) w:back() end),
         key({},          "XF86Forward", function (w) w:forward() end),
