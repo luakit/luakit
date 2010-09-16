@@ -104,8 +104,8 @@ binds.mode_binds = {
         key({"Control"}, "Page_Down",   function (w) w:next_tab() end),
         key({"Control"}, "Tab",         function (w, b) w:next_tab() end),
         key({"Shift","Control"}, "Tab", function (w, b) w:prev_tab() end),
-        buf("^[0-9]*gT$",               function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)gT$") or 1)) end),
-        buf("^[0-9]*gt$",               function (w, b) w:next_tab(tonumber(string.match(b, "^(%d*)gt$") or 1)) end),
+        buf("^%d*gT$",                  function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)") or 1)) end),
+        buf("^%d*gt$",                  function (w, b) if not w:goto_tab(tonumber(string.match(b, "^(%d*)"))) then w:next_tab() end end),
 
         key({"Control"}, "t",           function (w) w:new_tab(homepage) end),
         key({"Control"}, "w",           function (w) w:close_tab()       end),
@@ -268,7 +268,9 @@ binds.helper_methods = {
     end,
 
     goto_tab = function (w, n)
-        w.tabs:switch(n)
+        if n and n == -1 or (n > 0 and n <= w.tabs:count()) then
+            return w.tabs:switch(n)
+        end
     end,
 
     -- If argument is form-active or root-active, emits signal. Ignores all
