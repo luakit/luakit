@@ -427,7 +427,7 @@ local mode_binds, join, buf, key = binds.mode_binds, lousy.util.table.join, lous
 mode_binds.normal = join(mode_binds.normal or {}, {
     --                       w:start_follow(mode,     prompt,             callback)
     buf("^f$",  function (w) w:start_follow("follow", nil,                function (sig)                                return sig           end) end),
-    buf("^F$",  function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri)                return "root-active" end) end),
+    buf("^F$",  function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri, false)         return "root-active" end) end),
     buf("^;;$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
     buf("^;y$", function (w) w:start_follow("uri",    "yank",             function (uri)  w:set_selection(uri)          return "root-active" end) end),
     buf("^;Y$", function (w) w:start_follow("desc",   "yank description", function (desc) w:set_selection(desc)         return "root-active" end) end),
