@@ -379,13 +379,11 @@ window.methods = {
 
     update_win_title = function (w, view)
         if not view then view = w:get_current() end
-        local title = view:get_prop("title")
-        local uri = view.uri
-        if not title and not uri then
-            w.win.title = "luakit"
-        else
-            w.win.title = (title or "luakit") .. " - " .. (uri or "about:blank")
-        end
+        local uri, title = view.uri, view:get_prop("title")
+        title = (title or "luakit") .. ((uri and " - " .. uri) or "")
+        local max = globals.max_title_len or 80
+        if #title > max then title = string.sub(title, 1, max) .. "..." end
+        w.win.title = title
     end,
 
     update_uri = function (w, view, uri, link)
