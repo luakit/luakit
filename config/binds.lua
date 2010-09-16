@@ -268,8 +268,8 @@ binds.helper_methods = {
     end,
 
     goto_tab = function (w, n)
-        if n and n == -1 or (n > 0 and n <= w.tabs:count()) then
-            return w.tabs:switch(n)
+        if n and (n == -1 or n > 0) then
+            return w.tabs:switch((n <= w.tabs:count() and n) or -1)
         end
     end,
 
