@@ -6,17 +6,19 @@ binds = {}
 
 -- Binding aliases
 local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy.bind.cmd
+local match, join = string.match, lousy.util.table.join
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
 local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
-local homepage    = globals.homepage or "http://luakit.org"
+local zoom_step = globals.zoom_step or 0.1
+local homepage = globals.homepage or "http://luakit.org"
 
 -- Add key bindings to be used across all windows in the given modes.
 binds.mode_binds = {
-     -- buf(Pattern,                    function (w, buffer, opts) .. end, opts),
-     -- key({Modifiers}, Key name,      function (w, opts)         .. end, opts),
-     -- but({Modifiers}, Button num,    function (w, opts)         .. end, opts),
+     -- buf(Pattern,                    function (w, buffer, metadata) .. end, opts),
+     -- key({Modifiers}, Key name,      function (w, metadata)         .. end, opts),
+     -- but({Modifiers}, Button num,    function (w, metadata)         .. end, opts),
     all = {
         key({},          "Escape",      function (w) w:set_mode() end),
         key({"Control"}, "[",           function (w) w:set_mode() end),
@@ -25,6 +27,18 @@ binds.mode_binds = {
         but({},          9,             function (w) w:forward() end),
     },
     normal = {
+        -- Autoparse the "[count]" before a buffer binding and re-call the
+        -- hit function with the count removed and added to the metatable.
+        buf("^%d+[^%d]",                function (w, buf, meta)
+                                            local count, buf = match(buf, "^(%d+)([^%d].*)$")
+                                            meta = join(meta, {count = tonumber(count)})
+                                            if (#buf == 1 and lousy.bind.match_key(meta.binds, {}, buf, w, meta))
+                                              or lousy.bind.match_buf(meta.binds, buf, w, meta) then
+                                                return true
+                                            end
+                                            return false
+                                        end),
+
         key({},          "i",           function (w) w:set_mode("insert")  end),
         key({},          ":",           function (w) w:set_mode("command") end),
 
@@ -43,41 +57,41 @@ binds.mode_binds = {
         key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)  end),
         key({},          "BackSpace",   function (w) w:scroll_page(-1.0)  end),
         buf("^gg$",                     function (w) w:scroll_vert("0%")  end),
-        buf("^%d*[%%G]$",               function (w, b) w:scroll_vert((string.match(b, "^(%d+)") or "100").."%") end),
+
+        -- Specific scroll
+        buf("^[%%G]$",                  function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
 
         -- Traditional scrolling commands
-        key({},          "Down",        function (w) w:scroll_vert("+"..scroll_step.."px") end),
-        key({},          "Up",          function (w) w:scroll_vert("-"..scroll_step.."px") end),
-        key({},          "Left",        function (w) w:scroll_horiz("-"..scroll_step.."px") end),
-        key({},          "Right",       function (w) w:scroll_horiz("+"..scroll_step.."px") end),
+        key({},          "Down",        function (w) w:scroll_vert(more)   end),
+        key({},          "Up",          function (w) w:scroll_vert(less)   end),
+        key({},          "Left",        function (w) w:scroll_horiz(less)  end),
+        key({},          "Right",       function (w) w:scroll_horiz(more)  end),
         key({},          "Page_Down",   function (w) w:scroll_page(1.0)    end),
         key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end),
         key({},          "Home",        function (w) w:scroll_vert("0%")   end),
         key({},          "End",         function (w) w:scroll_vert("100%") end),
 
         -- Zooming
-        key({},          "+",           function (w) w:zoom_in()  end),
-        key({},          "-",           function (w) w:zoom_out() end),
-        key({},          "=",           function (w) w:zoom_set() end),
-        buf("^zz$",                     function (w) w:zoom_set() end),
-        buf("^zi$",                     function (w) w:zoom_in()  end),
-        buf("^zo$",                     function (w) w:zoom_out() end),
-        buf("^zI$",                     function (w) w:zoom_in(nil, true)  end),
-        buf("^zO$",                     function (w) w:zoom_out(nil, true) end),
+        key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
+        key({},          "-",           function (w, m)    w:zoom_out(zoom_step * m.count)       end, {count=1}),
+        key({},          "=",           function (w, m)    w:zoom_set() end),
+        buf("^zz$",                     function (w, b, m) w:zoom_set() end),
+        buf("^z[iI]$",                  function (w, b, m) w:zoom_in(zoom_step  * m.count, b == "zI") end, {count=1}),
+        buf("^z[oO]$",                  function (w, b, m) w:zoom_out(zoom_step * m.count, b == "zO") end, {count=1}),
 
         -- Specific zoom
-        buf("^%d+z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(%d+)"))/100)       end),
-        buf("^%d+Z$",                   function (w, b) w:zoom_set(tonumber(string.match(b, "^(%d+)"))/100, true) end),
+        buf("^zZ$",                     function (w, b, m) w:zoom_set(m.count/100, true) end, {count=100}),
 
         -- Clipboard
         key({},          "p",           function (w)
                                             local uri = luakit.get_selection()
                                             if uri then w:navigate(w:search_open(uri)) else w:error("Empty selection.") end
                                         end),
-        key({},          "P",           function (w)
+        key({},          "P",           function (w, m)
                                             local uri = luakit.get_selection()
-                                            if uri then w:new_tab(w:search_open(uri)) else w:error("Empty selection.") end
-                                        end),
+                                            if not uri then w:error("Empty selection.") return end
+                                            for i = 1, m.count do w:new_tab(w:search_open(uri)) end
+                                        end, {count = 1}),
         buf("^yy$",                     function (w) w:set_selection((w:get_current() or {}).uri or "") end),
         buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
@@ -91,36 +105,36 @@ binds.mode_binds = {
         buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
         -- Searching
-        key({},          "/",           function (w) w:start_search("/")  end),
-        key({},          "?",           function (w) w:start_search("?") end),
-        key({},          "n",           function (w) w:search(nil, true) end),
-        key({},          "N",           function (w) w:search(nil, false) end),
+        key({},          "/",           function (w)    w:start_search("/")  end),
+        key({},          "?",           function (w)    w:start_search("?") end),
+        key({},          "n",           function (w, m) for i=1,m.count do w:search(nil, true)  end end, {count=1}),
+        key({},          "N",           function (w, m) for i=1,m.count do w:search(nil, false) end end, {count=1}),
 
         -- History
-        buf("^%d*H$",                   function (w, b) w:back   (tonumber(string.match(b, "^(%d*)") or 1)) end),
-        buf("^%d*L$",                   function (w, b) w:forward(tonumber(string.match(b, "^(%d*)") or 1)) end),
-        key({},          "b",           function (w) w:back() end),
-        key({},          "XF86Back",    function (w) w:back() end),
-        key({},          "XF86Forward", function (w) w:forward() end),
+        key({},          "H",           function (w, m) w:back(m.count)    end, {count=1}),
+        key({},          "L",           function (w, m) w:forward(m.count) end, {count=1}),
+        key({},          "b",           function (w, m) w:back(m.count)    end, {count=1}),
+        key({},          "XF86Back",    function (w, m) w:back(m.count)    end, {count=1}),
+        key({},          "XF86Forward", function (w, m) w:forward(m.count) end, {count=1}),
 
         -- Tab
-        key({"Control"}, "Page_Up",     function (w) w:prev_tab() end),
-        key({"Control"}, "Page_Down",   function (w) w:next_tab() end),
-        key({"Control"}, "Tab",         function (w, b) w:next_tab() end),
-        key({"Shift","Control"}, "Tab", function (w, b) w:prev_tab() end),
-        buf("^%d*gT$",                  function (w, b) w:prev_tab(tonumber(string.match(b, "^(%d*)") or 1)) end),
-        buf("^%d*gt$",                  function (w, b) if not w:goto_tab(tonumber(string.match(b, "^(%d*)"))) then w:next_tab() end end),
+        key({"Control"}, "Page_Up",     function (w)       w:prev_tab() end),
+        key({"Control"}, "Page_Down",   function (w)       w:next_tab() end),
+        key({"Control"}, "Tab",         function (w)       w:next_tab() end),
+        key({"Shift","Control"}, "Tab", function (w)       w:prev_tab() end),
+        buf("^gT$",                     function (w, b, m) w:prev_tab(m.count) end, {count=1}),
+        buf("^gt$",                     function (w, b, m) if not w:goto_tab(m.count) then w:next_tab() end end, {count=0}),
 
-        key({"Control"}, "t",           function (w) w:new_tab(homepage) end),
-        key({"Control"}, "w",           function (w) w:close_tab()       end),
-        key({},          "d",           function (w) w:close_tab()       end),
-        key({},          "u",           function (w) w:undo_close_tab()  end),
+        key({"Control"}, "t",           function (w)    w:new_tab(homepage) end),
+        key({"Control"}, "w",           function (w)    w:close_tab()       end),
+        key({},          "d",           function (w, m) for i=1,m.count do w:close_tab()      end end, {count=1}),
+        key({},          "u",           function (w, m) for i=1,m.count do w:undo_close_tab() end end, {count=1}),
 
-        key({},          "<",           function (w) w.tabs:reorder(w:get_current(), w.tabs:current() -1) end),
-        key({},          ">",           function (w) w.tabs:reorder(w:get_current(), (w.tabs:current() + 1) % w.tabs:count()) end),
+        key({},          "<",           function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
+        key({},          ">",           function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
 
-        buf("^gH$",                     function (w) w:new_tab(homepage) end),
-        buf("^gh$",                     function (w) w:navigate(homepage) end),
+        buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(homepage) end end, {count=1}),
+        buf("^gh$",                     function (w)       w:navigate(homepage) end),
 
         key({},          "r",           function (w) w:reload() end),
         key({},          "R",           function (w) w:reload(true) end),
@@ -134,9 +148,9 @@ binds.mode_binds = {
         buf("^D$",                      function (w) w:close_win() end),
 
         -- Bookmarking
-        key({},          "B",           function (w) w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-        buf("^gb$",                     function (w) w:navigate(bookmarks.dump_html()) end),
-        buf("^gB$",                     function (w) w:new_tab (bookmarks.dump_html()) end),
+        key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
+        buf("^gb$",                     function (w)       w:navigate(bookmarks.dump_html()) end),
+        buf("^gB$",                     function (w, b, m) local u = bookmarks.dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
 
         -- Mouse bindings
         but({},          2,             function (w)
