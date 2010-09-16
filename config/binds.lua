@@ -9,6 +9,7 @@ local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
+local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
 local homepage    = globals.homepage or "http://luakit.org"
 
 -- Add key bindings to be used across all windows in the given modes.
@@ -28,20 +29,20 @@ binds.mode_binds = {
         key({},          ":",           function (w) w:set_mode("command") end),
 
         -- Scrolling
-        key({},          "j",           function (w) w:scroll_vert("+"..scroll_step.."px") end),
-        key({},          "k",           function (w) w:scroll_vert("-"..scroll_step.."px") end),
-        key({},          "h",           function (w) w:scroll_horiz("-"..scroll_step.."px") end),
-        key({},          "l",           function (w) w:scroll_horiz("+"..scroll_step.."px") end),
-        key({"Control"}, "e",           function (w) w:scroll_vert("+"..scroll_step.."px") end),
-        key({"Control"}, "y",           function (w) w:scroll_vert("-"..scroll_step.."px") end),
-        key({"Control"}, "d",           function (w) w:scroll_page(0.5)    end),
-        key({"Control"}, "u",           function (w) w:scroll_page(-0.5)   end),
-        key({"Control"}, "f",           function (w) w:scroll_page(1.0)    end),
-        key({"Control"}, "b",           function (w) w:scroll_page(-1.0)   end),
-        key({},          "space",       function (w) w:scroll_page(1.0) end),
-        key({"Shift"},   "space",       function (w) w:scroll_page(-1.0) end),
-        key({},          "BackSpace",   function (w) w:scroll_page(-1.0) end),
-        buf("^gg$",                     function (w) w:scroll_vert("0%")   end),
+        key({},          "j",           function (w) w:scroll_vert(more)  end),
+        key({},          "k",           function (w) w:scroll_vert(less)  end),
+        key({},          "h",           function (w) w:scroll_horiz(less) end),
+        key({},          "l",           function (w) w:scroll_horiz(more) end),
+        key({"Control"}, "e",           function (w) w:scroll_vert(more)  end),
+        key({"Control"}, "y",           function (w) w:scroll_vert(less)  end),
+        key({"Control"}, "d",           function (w) w:scroll_page(0.5)   end),
+        key({"Control"}, "u",           function (w) w:scroll_page(-0.5)  end),
+        key({"Control"}, "f",           function (w) w:scroll_page(1.0)   end),
+        key({"Control"}, "b",           function (w) w:scroll_page(-1.0)  end),
+        key({},          "space",       function (w) w:scroll_page(1.0)   end),
+        key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)  end),
+        key({},          "BackSpace",   function (w) w:scroll_page(-1.0)  end),
+        buf("^gg$",                     function (w) w:scroll_vert("0%")  end),
         buf("^%d*[%%G]$",               function (w, b) w:scroll_vert((string.match(b, "^(%d+)") or "100").."%") end),
 
         -- Traditional scrolling commands
