@@ -264,8 +264,10 @@ binds.helper_methods = {
             print(engine)
             table.remove(args, 1)
         end
-        -- Return search uri
-        return ({string.gsub(search_engines[engine], "{%d}", table.concat(args, " "))})[1]
+        -- Use javascripts UTF-8 aware uri encoding function
+        local terms = w:eval_js(string.format("encodeURIComponent(%q)", table.concat(args, " ")))
+        -- Return search terms sub'd into search string
+        return ({string.gsub(search_engines[engine], "{%d}", string.gsub(terms, "%%", "%%%%"))})[1]
     end,
 
     -- Tab traversing functions
