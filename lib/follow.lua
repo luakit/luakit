@@ -417,34 +417,60 @@ for _, t in ipairs({
 end
 
 -- Add webview methods
-webview.methods.start_follow = function (view, w, mode, prompt, func)
-    w.follow_state = { mode = mode, prompt = prompt, func = func }
+webview.methods.start_follow = function (view, w, mode, prompt, func, count)
+    w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
     w:set_mode("follow")
 end
 
 -- Add link following binds
 local mode_binds, join, buf, key = binds.mode_binds, lousy.util.table.join, lousy.bind.buf, lousy.bind.key
 mode_binds.normal = join(mode_binds.normal or {}, {
-    --                       w:start_follow(mode,     prompt,             callback)
-    buf("^f$",  function (w) w:start_follow("follow", nil,                function (sig)                                return sig           end) end),
-    buf("^F$",  function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri, false)         return "root-active" end) end),
-    buf("^;;$", function (w) w:start_follow("focus",  "focus",            function (sig)                                return sig           end) end),
-    buf("^;y$", function (w) w:start_follow("uri",    "yank",             function (uri)  w:set_selection(uri)          return "root-active" end) end),
-    buf("^;Y$", function (w) w:start_follow("desc",   "yank description", function (desc) w:set_selection(desc)         return "root-active" end) end),
-    buf("^;s$", function (w) w:start_follow("uri",    "download",         function (uri)  w:download(uri)               return "root-active" end) end),
-    buf("^;i$", function (w) w:start_follow("image",  "open image",       function (src)  w:navigate(src)               return "root-active" end) end),
-    buf("^;o$", function (w) w:start_follow("uri",    "open",             function (uri)  w:navigate(uri)               return "root-active" end) end),
-    buf("^;t$", function (w) w:start_follow("uri",    "new tab",          function (uri)  w:new_tab(uri)                return "root-active" end) end),
-    buf("^;w$", function (w) w:start_follow("uri",    "new window",       function (uri)  window.new{uri}               return "root-active" end) end),
-    buf("^;O$", function (w) w:start_follow("uri",    "open cmd",         function (uri)  w:enter_cmd(":open "..uri)                         end) end),
-    buf("^;T$", function (w) w:start_follow("uri",    "tabopen cmd",      function (uri)  w:enter_cmd(":tabopen "..uri)                      end) end),
-    buf("^;W$", function (w) w:start_follow("uri",    "winopen cmd",      function (uri)  w:enter_cmd(":winopen "..uri)                      end) end),
+    --                           w:start_follow(mode,     prompt,       callback, count)
+    -- Follow link
+    buf("^f$",  function (w,b,m) w:start_follow("follow", nil,          function (sig) return sig end) end),
+
+    -- Focus element
+    buf("^;;$", function (w,b,m) w:start_follow("focus",  "focus",      function (sig) return sig end) end),
+
+    -- Open new tab (optionally [count] times)
+    buf("^F$",  function (w,b,m) w:start_follow("uri", (m.count and "open "..m.count.." tab(s)") or "open tab",
+                    function (uri, s)
+                        for i=1,(s.count or 1) do w:new_tab(uri, false) end
+                        return "root-active"
+                    end, (m.count > 0 and m.count) or nil) end),
+
+    -- Open in new tab and re-enter follow mode for another selection
+    buf("^;m$", function (w,b,m) w:start_follow("uri",    "multi tab",  function (uri, s) w:new_tab(uri, false) w:set_mode("follow") end) end),
+
+    -- Yank uri or desc into primary selection
+    buf("^;y$", function (w,b,m) w:start_follow("uri",    "yank",       function (uri)  w:set_selection(uri)  return "root-active" end) end),
+    buf("^;Y$", function (w,b,m) w:start_follow("desc",   "yank desc",  function (desc) w:set_selection(desc) return "root-active" end) end),
+
+    -- Download uri
+    buf("^;s$", function (w,b,m) w:start_follow("uri",    "download",   function (uri)  w:download(uri)       return "root-active" end) end),
+
+    -- Open image src
+    buf("^;i$", function (w,b,m) w:start_follow("image",  "open image", function (src)  w:navigate(src)       return "root-active" end) end),
+
+    -- Open, open in new tab or open in new window
+    buf("^;o$", function (w,b,m) w:start_follow("uri",    "open",       function (uri)  w:navigate(uri)       return "root-active" end) end),
+    buf("^;t$", function (w,b,m) w:start_follow("uri",    "open tab",   function (uri)  w:new_tab(uri)        return "root-active" end) end),
+    buf("^;w$", function (w,b,m) w:start_follow("uri",    "open window",function (uri)  window.new{uri}       return "root-active" end) end),
+
+    -- Set command `:open <uri>`, `:tabopen <uri>` or `:winopen <uri>`
+    buf("^;O$", function (w,b,m) w:start_follow("uri",    ":open",      function (uri)  w:enter_cmd(":open "   ..uri) end) end),
+    buf("^;T$", function (w,b,m) w:start_follow("uri",    ":tabopen",   function (uri)  w:enter_cmd(":tabopen "..uri) end) end),
+    buf("^;W$", function (w,b,m) w:start_follow("uri",    ":winopen",   function (uri)  w:enter_cmd(":winopen "..uri) end) end),
 })
 -- Add follow mode binds
 mode_binds.follow = join(mode_binds.follow or {}, {
-    key({},        "Tab",    function (w) w:eval_js("focus_next();") end),
-    key({"Shift"}, "Tab",    function (w) w:eval_js("focus_prev();") end),
-    key({},        "Return", function (w) w:emit_form_root_active_signal(w.follow_state.func(w:eval_js("get_active();"))) end),
+    key({},        "Tab",       function (w) w:eval_js("focus_next();") end),
+    key({"Shift"}, "Tab",       function (w) w:eval_js("focus_prev();") end),
+    key({},        "Return",    function (w)
+                                    local s = (w.follow_state or {})
+                                    local sig = s.func(w:eval_js("get_active();"), s)
+                                    if sig then w:emit_form_root_active_signal(sig) end
+                                end),
 })
 
 -- Setup follow mode
@@ -503,7 +529,7 @@ new_mode("follow", {
         local state = w.follow_state or {}
         if ret ~= "false" then
             local sig
-            if state.func then sig = state.func(ret) end
+            if state.func then sig = state.func(ret, state) end
             if sig then w:emit_form_root_active_signal(sig) end
         end
     end,
