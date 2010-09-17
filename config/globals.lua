@@ -41,6 +41,9 @@ search_engines = {
     sourceforge = "http://sf.net/search/?words={0}",
 }
 
+-- Set google as fallback search engine
+search_engines.default = search_engines.google
+
 -- Fake the cookie policy enum here
 cookie_policy = { always = 0, never = 1, no_third_party = 2 }
 

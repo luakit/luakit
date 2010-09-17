@@ -252,28 +252,20 @@ binds.helper_methods = {
     -- Intelligent open command which can detect a uri or search argument.
     search_open = function (w, arg)
         if not arg then return "about:blank" end
-        local str = lousy.util.string
-        args = str.split(str.strip(arg))
+        args = lousy.util.string.split(lousy.util.string.strip(arg))
         -- Detect scheme:// or "." in string
         if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
             return args[1]
         end
         -- Find search engine
-        if #args >= 1 and string.match(args[1], "^%w+$") then
-            -- Find exact match
-            if search_engines[args[1]] then
-                return ({string.gsub(search_engines[args[1]], "{%d}", table.concat(args, " ", 2))})[1]
-            end
-            -- Find partial match
-            local part, len = args[1], #(args[1])
-            for engine, uri in pairs(search_engines) do
-                if string.sub(engine, 1, len) == part then
-                    return ({string.gsub(uri, "{%d}", table.concat(args, " ", 2))})[1]
-                end
-            end
+        local engine = "default"
+        if #args >= 1 and search_engines[args[1]] then
+            engine = args[1]
+            print(engine)
+            table.remove(args, 1)
         end
-        -- Fallback on google search
-        return ({string.gsub(search_engines["google"], "{%d}", table.concat(args, " "))})[1]
+        -- Return search uri
+        return ({string.gsub(search_engines[engine], "{%d}", table.concat(args, " "))})[1]
     end,
 
     -- Tab traversing functions
