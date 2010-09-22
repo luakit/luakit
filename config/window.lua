@@ -332,6 +332,19 @@ window.methods = {
         i.position = -1
     end,
 
+    forward_char = function (w)
+        local i = w.ibar.input
+        i.position = i.position + 1
+    end,
+
+    backward_char = function (w)
+        local i = w.ibar.input
+        local pos = i.position
+        if pos > 1 then
+            i.position = pos - 1
+        end
+    end,
+
     -- Wrapper around luakit.set_selection that shows a notification
     set_selection = function (w, text, selection)
         luakit.set_selection(text, selection or "primary")
