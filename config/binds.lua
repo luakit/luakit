@@ -169,6 +169,8 @@ binds.mode_binds = {
         key({},          "Tab",         function (w) w:cmd_completion() end),
         key({"Control"}, "w",           function (w) w:del_word() end),
         key({"Control"}, "u",           function (w) w:del_line() end),
+        key({"Control"}, "a",           function (w) w:beg_line() end),
+        key({"Control"}, "e",           function (w) w:end_line() end),
     },
     search = {
         key({"Control"}, "j",           function (w) w:search(nil, true) end),

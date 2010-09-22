@@ -322,6 +322,16 @@ window.methods = {
         end
     end,
 
+    beg_line = function (w)
+        local i = w.ibar.input
+        i.position = 1
+    end,
+
+    end_line = function (w)
+        local i = w.ibar.input
+        i.position = -1
+    end,
+
     -- Wrapper around luakit.set_selection that shows a notification
     set_selection = function (w, text, selection)
         luakit.set_selection(text, selection or "primary")
