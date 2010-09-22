@@ -173,6 +173,8 @@ binds.mode_binds = {
         key({"Control"}, "e",           function (w) w:end_line() end),
         key({"Control"}, "f",           function (w) w:forward_char() end),
         key({"Control"}, "b",           function (w) w:backward_char() end),
+        key({"Mod1"},    "f",           function (w) w:forward_word() end),
+        key({"Mod1"},    "b",           function (w) w:backward_word() end),
     },
     search = {
         key({"Control"}, "j",           function (w) w:search(nil, true) end),
