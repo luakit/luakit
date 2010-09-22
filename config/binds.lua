@@ -136,6 +136,8 @@ binds.mode_binds = {
         buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(homepage) end end, {count=1}),
         buf("^gh$",                     function (w)       w:navigate(homepage) end),
 
+        buf("^gy$",                     function (w) w:new_tab((w:get_current() or {}).history or "") end),
+
         key({},          "r",           function (w) w:reload() end),
         key({},          "R",           function (w) w:reload(true) end),
         key({"Control"}, "c",           function (w) w:stop() end),
