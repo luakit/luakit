@@ -386,9 +386,8 @@ luaH_luakit_set_selection(lua_State *L)
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
-    size_t len;
-    const gchar *name = luaL_checklstring(L, 1, &len);
-    luakit_token_t token = l_tokenize(name, len);
+    const gchar *name = luaL_checkstring(L, 1);
+    luakit_token_t token = l_tokenize(name);
     GUserDirectory atom;
     /* match token with G_USER_DIR_* atom */
     switch(token) {
@@ -490,10 +489,9 @@ luaH_luakit_index(lua_State *L)
     if(luaH_usemetatable(L, 1, 2))
         return 1;
 
-    size_t len;
     widget_t *w;
-    const gchar *prop = luaL_checklstring(L, 2, &len);
-    luakit_token_t token = l_tokenize(prop, len);
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
 
     switch(token) {
 
