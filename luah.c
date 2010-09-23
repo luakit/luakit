@@ -416,8 +416,8 @@ static gint
 luaH_luakit_spawn_sync(lua_State *L)
 {
     GError *e = NULL;
-    gchar *stdout = NULL;
-    gchar *stderr = NULL;
+    gchar *_stdout = NULL;
+    gchar *_stderr = NULL;
     gint rv;
     struct sigaction sigact;
     struct sigaction oldact;
@@ -430,7 +430,7 @@ luaH_luakit_spawn_sync(lua_State *L)
     sigemptyset (&sigact.sa_mask);
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
-    g_spawn_command_line_sync(command, &stdout, &stderr, &rv, &e);
+    g_spawn_command_line_sync(command, &_stdout, &_stderr, &rv, &e);
     if (sigaction(SIGCHLD, &oldact, NULL))
         fatal("Can't restore SIGCHLD handler");
 
@@ -441,10 +441,10 @@ luaH_luakit_spawn_sync(lua_State *L)
         lua_error(L);
     }
     lua_pushinteger(L, WEXITSTATUS(rv));
-    lua_pushstring(L, stdout);
-    lua_pushstring(L, stderr);
-    g_free(stdout);
-    g_free(stderr);
+    lua_pushstring(L, _stdout);
+    lua_pushstring(L, _stderr);
+    g_free(_stdout);
+    g_free(_stderr);
     return 3;
 }
 
