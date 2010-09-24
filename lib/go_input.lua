@@ -38,3 +38,5 @@ end
 -- Add `gi` binding to normal mode
 table.insert(binds.mode_binds.normal,
     lousy.bind.buf("^gi$", function (w) w:go_input() end))
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

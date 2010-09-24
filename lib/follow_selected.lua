@@ -40,3 +40,5 @@ end)
 -- Add binding to search & normal modes
 table.insert(binds.mode_binds.search, follow_bind)
 table.insert(binds.mode_binds.normal, follow_bind)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

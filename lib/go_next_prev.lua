@@ -47,3 +47,5 @@ for _, b in ipairs({
     lousy.bind.buf("^%]%]$", function (w) w:eval_js(go_next) end),
     lousy.bind.buf("^%[%[$", function (w) w:eval_js(go_prev) end),
 }) do table.insert(binds.mode_binds.normal, b) end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -31,3 +31,5 @@ for _, b in ipairs({
     lousy.bind.buf("^gu$", function (w) w:eval_js(go_up)     end),
     lousy.bind.buf("^gU$", function (w) w:eval_js(go_upmost) end),
 }) do table.insert(binds.mode_binds.normal, b) end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -237,3 +237,5 @@ webview.methods.formfiller = function(view, w, action)
         luakit.spawn(string.format("%s %q", editor_cmd, filename))
     end
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

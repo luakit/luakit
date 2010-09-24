@@ -85,3 +85,5 @@ session = {
 window.methods.save_session = function (w)
     session.save{w}
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
