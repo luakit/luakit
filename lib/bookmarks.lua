@@ -138,7 +138,7 @@ end
 
 -- Remove a bookmark from the in-memory bookmarks table by index
 -- @param index Index of the bookmark to delete
--- @param Option whether to save the bookmarks to file or not
+-- @param save_bookmarks Option whether to save the bookmarks to file or not
 function del(index, save_bookmarks)
     assert(index ~= nil, "bookdel: Index has to be a number")
     assert(index > 0, "bookdel: Index has to be > 0")
