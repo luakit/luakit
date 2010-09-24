@@ -64,7 +64,6 @@ html_style = [===[
         font-size: small;
         color: #333333;
         float: right;
-        padding-right: 50px;
     }
     .tag ul {
         padding: 0;
