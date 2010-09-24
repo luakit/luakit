@@ -141,16 +141,16 @@ end
 -- @param index Index of the bookmark to delete
 -- @param Option whether to save the bookmarks to file or not
 function del(index, save_bookmarks)
-    if not index then return print("index has to be a number") end
-    if index <= 0 then return print(("index has to be > 0")) end
+    if not index then return print("bookdel: Index has to be a number") end
+    if index <= 0 then return print("bookdel: Index has to be > 0") end
 
     -- Remove entry from data table
     local id = 0
     for _, bm in pairs(data) do
         id = id + 1
-        print(_, bm)
         if id == index then
             data[_] = nil
+            break
         end
     end
 
