@@ -216,6 +216,7 @@ binds.commands = {
                                             local uri = table.remove(args, 1)
                                             bookmarks.add(uri, args)
                                         end),
+    cmd("bookdel",                      function (w, a) bookmarks.del(tonumber(a)) end),
 }
 
 -- Helper functions which are added to the window struct
