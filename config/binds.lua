@@ -147,6 +147,7 @@ binds.mode_binds = {
 
         -- Window
         buf("^ZZ$",                     function (w) w:save_session() w:close_win() end),
+        buf("^ZQ$",                     function (w) w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
 
         -- Bookmarking
