@@ -12,7 +12,7 @@ local unpack = unpack
 local type = type
 local pairs = pairs
 local ipairs = ipairs
-local print = print
+local assert = assert
 local util = require("lousy.util")
 local capi = { luakit = luakit }
 
@@ -141,8 +141,8 @@ end
 -- @param index Index of the bookmark to delete
 -- @param Option whether to save the bookmarks to file or not
 function del(index, save_bookmarks)
-    if not index then return print("bookdel: Index has to be a number") end
-    if index <= 0 then return print("bookdel: Index has to be > 0") end
+    assert(index ~= nil, "bookdel: Index has to be a number")
+    assert(index > 0, "bookdel: Index has to be > 0")
 
     -- Remove entry from data table
     local id = 0
