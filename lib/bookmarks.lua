@@ -116,7 +116,7 @@ end
 
 --- Add a bookmark to the in-memory bookmarks table
 function add(uri, tags, replace, save_bookmarks)
-    if not uri then return error("must supply uri") end
+    assert(uri ~= nil, "bookmark add: no URI given")
     if not tags then tags = {} end
 
     -- Create tags table from string
