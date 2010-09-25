@@ -49,6 +49,10 @@ require "bookmarks"
 bookmarks.load()
 bookmarks.dump_html()
 
+-- Init quick bookmarks lib
+require "quickbookmarks"
+quickbookmarks.load()
+
 -- Restore last saved session
 local w = (session and session.restore())
 if w then

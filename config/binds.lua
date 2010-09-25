@@ -155,6 +155,26 @@ binds.mode_binds = {
         buf("^gb$",                     function (w)       w:navigate(bookmarks.dump_html()) end),
         buf("^gB$",                     function (w, b, m) local u = bookmarks.dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
 
+        -- Quick bookmaks
+        buf("^go[%w]$",                 function (w, b)
+                                            -- cut off 'go' prefix
+                                            local quick_token = string.sub(b, 3)
+                                            local url = quickbookmarks.get_url(quick_token)
+                                            if url ~= nil then w:navigate(w:search_open(url)) end
+                                        end),
+        buf("^gn[%w]$",                 function (w, b)
+                                            -- cut off 'gn' prefix
+                                            local quick_token = string.sub(b, 3)
+                                            local url = quickbookmarks.get_url(quick_token)
+                                            if url ~= nil then w:tab_new(w:search_open(url)) end
+                                        end),
+        buf("^M[%w]$",                  function (w, b)
+                                            -- cut off 'M' prefix
+                                            local quick_token = string.sub(b, 2)
+                                            local url = w:get_current().uri
+                                            quickbookmarks.set_url(quick_token, url)
+                                        end),
+
         -- Mouse bindings
         but({},          2,             function (w)
                                             -- Open hovered uri in new tab
