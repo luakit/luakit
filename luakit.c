@@ -23,6 +23,8 @@
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/wait.h>
+#include <unistd.h>
+#include <errno.h>
 #include "globalconf.h"
 #include "common/util.h"
 #include "luah.h"
@@ -61,7 +63,7 @@ init_lua(gchar **uris)
 
 /* load command line options into luakit and return uris to load */
 gchar**
-parseopts(int argc, char *argv[]) {
+parseopts(int argc, char *argv[], gboolean **nonblock) {
     GOptionContext *context;
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
@@ -77,6 +79,7 @@ parseopts(int argc, char *argv[]) {
       { "verbose", 'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,   "print debugging output",    NULL   },
       { "version", 'V', 0, G_OPTION_ARG_NONE,         &version_only,         "print version and exit",    NULL   },
       { "check",   'k', 0, G_OPTION_ARG_NONE,         &check_only,           "check config and exit",     NULL   },
+      { "nonblock",'n', 0, G_OPTION_ARG_NONE,         nonblock,              "run in background",         NULL   },
       { NULL,      0,   0, 0,                         NULL,                  NULL,                        NULL   },
     };
 
@@ -130,7 +133,9 @@ init_directories(void)
 
 int
 main(int argc, char *argv[]) {
+    gboolean *nonblock = NULL;
     gchar **uris = NULL;
+    pid_t pid, sid;
 
     /* clean up any zombies */
     struct sigaction sigact;
@@ -141,7 +146,21 @@ main(int argc, char *argv[]) {
         fatal("Can't install SIGCHLD handler");
 
     /* parse command line opts and get uris to load */
-    uris = parseopts(argc, argv);
+    uris = parseopts(argc, argv, &nonblock);
+
+    /* if non block mode - respawn, detach and continue in child */
+    if (nonblock) {
+        pid = fork();
+        if (pid < 0) {
+            fatal("Cannot fork: %d", errno);
+        } else if (pid > 0) {
+            exit(EXIT_SUCCESS);
+        }
+        sid = setsid();
+        if (sid < 0) {
+            fatal("New SID creation failure: %d", errno);
+        }
+    }
 
     gtk_init(&argc, &argv);
     if (!g_thread_supported())
