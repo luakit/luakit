@@ -43,6 +43,7 @@ require "follow_selected"
 require "go_next_prev"
 require "go_up"
 require "session"
+require "quickmarks"
 
 -- Init bookmarks lib
 require "bookmarks"

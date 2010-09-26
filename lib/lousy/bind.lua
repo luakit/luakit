@@ -166,7 +166,7 @@ function match_cmd(binds, buffer, arg, meta)
     -- The command is the first word in the buffer string
     local command  = string.match(buffer, "^([^%s]+)")
     -- And the argument is the entire string thereafter
-    local argument = string.match(buffer, "^[^%s]+%s+(.+)")
+    local argument = string.match(string.sub(buffer, #command + 1), "^%s+([^%s].*)$")
 
     for _, b in ipairs(binds) do
         -- Command matching
