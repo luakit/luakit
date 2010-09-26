@@ -43,15 +43,12 @@ require "follow_selected"
 require "go_next_prev"
 require "go_up"
 require "session"
+require "quickmarks"
 
 -- Init bookmarks lib
 require "bookmarks"
 bookmarks.load()
 bookmarks.dump_html()
-
--- Init quick bookmarks lib
-require "quickbookmarks"
-quickbookmarks.load()
 
 -- Restore last saved session
 local w = (session and session.restore())
