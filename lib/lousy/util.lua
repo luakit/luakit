@@ -217,7 +217,17 @@ end
 -- @return The inner string segment.
 function string.strip(s, pattern)
     local p = pattern or "%s*"
-    return ({rstring.match(s, rstring.format("^%s(.*)%s$", p, p))})[1]
+    local sub_start, sub_end
+
+    -- Find start point
+    local _, f_end = rstring.find(s, "^"..p)
+    if f_end then sub_start = f_end + 1 end
+
+    -- Find end point
+    local f_start = rstring.find(s, p.."$")
+    if f_start then sub_end = f_start - 1 end
+
+    return rstring.sub(s, sub_start or 1, sub_end or #s)
 end
 
 local function find_file(paths)
