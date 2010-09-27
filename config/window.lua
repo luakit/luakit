@@ -24,12 +24,8 @@ function window.build()
         ebox   = eventbox(),
         layout = vbox(),
         tabs   = notebook(),
-        -- Tab bar widgets
-        tbar = {
-            layout = hbox(),
-            ebox   = eventbox(),
-            titles = { },
-        },
+        -- Tablist widget
+        tablist = lousy.widget.tablist(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -67,10 +63,8 @@ function window.build()
     w.ebox:set_child(w.layout)
     w.win:set_child(w.ebox)
 
-    -- Pack tab bar
-    local t = w.tbar
-    t.ebox:set_child(t.layout, false, false, 0)
-    w.layout:pack_start(t.ebox, false, false, 0)
+    -- Pack tablist
+    w.layout:pack_start(w.tablist.widget, false, false, 0)
 
     -- Pack notebook
     w.layout:pack_start(w.tabs, true, true, 0)
@@ -124,7 +118,7 @@ window.init_funcs = {
     notebook_signals = function (w)
         w.tabs:add_signal("page-added", function (nbook, view, idx)
             w:update_tab_count(idx)
-            w:update_tab_labels()
+            w:update_tablist()
         end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
             w:set_mode()
@@ -132,13 +126,13 @@ window.init_funcs = {
             w:update_win_title(view)
             w:update_uri(view)
             w:update_progress(view)
-            w:update_tab_labels(idx)
+            w:update_tablist(idx)
             w:update_buf()
             w:update_ssl(view)
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
             w:update_tab_count()
-            w:update_tab_labels()
+            w:update_tablist()
         end)
     end,
 
@@ -162,6 +156,18 @@ window.init_funcs = {
             if not success then
                 w:error("In bind call: " .. match)
             elseif match then
+                return true
+            end
+        end)
+    end,
+
+    tablist_tab_click = function (w)
+        w.tablist:add_signal("tab-clicked", function (_, index, mods, button)
+            if button == 1 then
+                w.tabs:switch(index)
+                return true
+            elseif button == 2 then
+                w:close_tab(w.tabs:atindex(index))
                 return true
             end
         end)
@@ -527,78 +533,21 @@ window.methods = {
         luakit.spawn(wget)
     end,
 
-    -- Tab label functions
-    -- TODO: Move these functions into a module (I.e. lousy.widget.tablist)
-    make_tab_label = function (w, pos)
-        local t = {
-            label  = label(),
-            sep    = eventbox(),
-            ebox   = eventbox(),
-            layout = hbox(),
-        }
-        t.label.font = theme.tab_font
-        t.label:set_width(1)
-        t.layout:pack_start(t.label, true,  true, 0)
-        t.layout:pack_start(t.sep,   false,  false, 0)
-        t.ebox:set_child(t.layout)
-        t.ebox:add_signal("button-release", function (e, m, b)
-            if b == 1 then
-                w.tabs:switch(pos)
-                return true
-            elseif b == 2 then
-                w:close_tab(w.tabs:atindex(pos))
-                return true
-            end
-        end)
-        return t
-    end,
+    update_tablist = function (w, current)
+        local current = current or w.tabs:current()
+        local fg, bg = theme.tab_fg, theme.tab_bg
+        local tabs = {}
 
-    destroy_tab_label = function (w, t)
-        if not t then t = table.remove(w.tbar.titles) end
-        -- Destroy widgets without their own windows first (I.e. labels)
-        for _, wi in ipairs{ t.label, t.sep, t.ebox, t.layout } do wi:destroy() end
-    end,
-
-    update_tab_labels = function (w, current)
-        local tb = w.tbar
-        local count, current = w.tabs:count(), current or w.tabs:current()
-        tb.ebox:hide()
-
-        -- Leave the tablist hidden if there is only one tab open
-        if count <= 1 then
-            return nil
+        for i, view in ipairs(w.tabs:get_children()) do
+            tabs[i] = {
+                title = string.format(" %d %s", i, w:get_tab_title(view)),
+                fg = (current == i and theme.tab_selected_fg) or fg,
+                bg = (current == i and theme.tab_selected_bg) or bg,
+            }
         end
 
-        if count ~= #tb.titles then
-            -- Grow the number of labels
-            while count > #tb.titles do
-                local t = w:make_tab_label(#tb.titles + 1)
-                tb.layout:pack_start(t.ebox, true, true,  0)
-                table.insert(tb.titles, t)
-            end
-            -- Prune number of labels
-            while count < #tb.titles do
-                w:destroy_tab_label()
-            end
-        end
-
-        if count ~= 0 then
-            for i = 1, count do
-                local view = w.tabs:atindex(i)
-                local t = tb.titles[i]
-                local title = " " ..i.. " "..w:get_tab_title(view)
-                t.label.text = lousy.util.escape(string.format("%-40s", title))
-                w:apply_tablabel_theme(t, i == current)
-            end
-        end
-        tb.ebox:show()
-    end,
-
-    -- Theme functions
-    apply_tablabel_theme = function (w, t, selected)
-        selected = (selected and "_selected") or ""
-        t.label.fg = theme[string.format("tab%s_fg", selected)]
-        t.ebox.bg = theme[string.format("tab%s_bg", selected)]
+        if #tabs < 2 then tabs, current = {}, 0 end
+        w.tablist:update(tabs, current)
     end,
 
     new_tab = function (w, arg, switch)
@@ -619,7 +568,7 @@ window.methods = {
         elseif type(arg) == "table" then view.history = arg end
         -- Update statusbar widgets
         w:update_tab_count()
-        w:update_tab_labels()
+        w:update_tablist()
         return view
     end,
 
@@ -655,7 +604,7 @@ window.methods = {
         view.uri = "about:blank"
         view:destroy()
         w:update_tab_count()
-        w:update_tab_labels()
+        w:update_tablist()
     end,
 
     close_win = function (w)
@@ -663,6 +612,9 @@ window.methods = {
         while w.tabs:count() ~= 0 do
             w:close_tab(nil, false)
         end
+
+        -- Destroy tablist
+        w.tablist:destroy()
 
         -- Remove from window index
         window.bywidget[w.win] = nil

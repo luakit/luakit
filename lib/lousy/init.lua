@@ -8,6 +8,7 @@ require("lousy.bind")
 require("lousy.mode")
 require("lousy.theme")
 require("lousy.signal")
+require("lousy.widget")
 
 --- Useful functions for luakit.
 module("lousy")
