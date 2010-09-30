@@ -4,6 +4,7 @@
 -------------------------------------------------------------
 
 require "lousy.widget.tablist"
+require "lousy.widget.dmenu"
 
 --- Widget module for luakit
 module "lousy.widget"
