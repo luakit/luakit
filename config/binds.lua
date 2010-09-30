@@ -213,6 +213,9 @@ binds.mode_binds = {
     },
 
     qmarks = {
+        -- Close dmenu widget
+        key({},          "q",           function (w) w:set_mode() end),
+        -- Navigate items
         key({},          "j",           function (w) w.dmenu:move_cursor(1) end),
         key({},          "k",           function (w) w.dmenu:move_cursor(-1) end),
         key({},          "Down",        function (w) w.dmenu:move_cursor(1) end),
