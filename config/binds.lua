@@ -277,6 +277,7 @@ binds.commands = {
     cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
+    cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
                                             local uri = table.remove(args, 1)
@@ -391,6 +392,17 @@ binds.helper_methods = {
         local terms = w:eval_js(string.format("encodeURIComponent(%q)", table.concat(args, " ")))
         -- Return search terms sub'd into search string
         return ({string.gsub(search_engines[engine], "{%d}", ({string.gsub(terms, "%%", "%%%%")})[1])})[1]
+    end,
+
+    -- Increase (or decrease) the last found number in the current uri
+    inc_uri = function (w, arg)
+        local uri = w:get_current().uri
+        local inc = arg or 1
+        local _, _, num = string.find(uri, "(%d+)[^0-9]*$")
+        if num then
+            uri = string.gsub(uri, "%d+([^0-9]*)$", string.format("%0"..string.len(num).."d", tonumber(num)+inc).."%1")
+        end
+        return uri
     end,
 
     -- Tab traversing functions
