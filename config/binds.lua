@@ -122,8 +122,8 @@ binds.mode_binds = {
         key({},          "b",           function (w, m) w:back(m.count)    end, {count=1}),
         key({},          "XF86Back",    function (w, m) w:back(m.count)    end, {count=1}),
         key({},          "XF86Forward", function (w, m) w:forward(m.count) end, {count=1}),
-        key({"Control"}, "i",           function (w)    w:back()           end),
-        key({"Control"}, "o",           function (w)    w:forward()        end),
+        key({"Control"}, "o",           function (w)    w:back()           end),
+        key({"Control"}, "i",           function (w)    w:forward()        end),
 
         -- Tab
         key({"Control"}, "Page_Up",     function (w)       w:prev_tab() end),
