@@ -20,7 +20,7 @@ local data = setmetatable({}, { __mode = "k" })
 
 function update(tlist, tabs, current)
     -- Check function arguments
-    assert(data[tlist], "invalid tablist widget")
+    assert(data[tlist] and type(tlist.widget) == "widget", "invalid tablist widget")
     assert(type(tabs) == "table", "invalid tabs table")
     assert(current >= 0 and current <= #tabs, "current index out of range")
 
