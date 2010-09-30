@@ -100,6 +100,8 @@ binds.mode_binds = {
         buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
         -- Commands
+        key({"Control"}, "a",           function (w)    w:navigate(w:inc_uri(1)) end),
+        key({"Control"}, "x",           function (w)    w:navigate(w:inc_uri(-1)) end),
         buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
         buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
         buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
