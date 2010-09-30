@@ -49,6 +49,10 @@ function window.build()
                 scroll = label(),
             },
         },
+
+        -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
+        dmenu = lousy.widget.dmenu(),
+
         -- Input bar widgets
         ibar = {
             layout  = hbox(),
@@ -90,6 +94,10 @@ function window.build()
     s.layout:pack_start(r.ebox,   false, false, 0)
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
+
+    -- Pack dmenu widget
+    w.layout:pack_start(w.dmenu.widget, false, false, 0)
+    w.dmenu:hide()
 
     -- Pack input bar
     local i = w.ibar
