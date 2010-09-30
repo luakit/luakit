@@ -384,13 +384,13 @@ window.methods = {
     end,
 
     -- Shows a notification until the next keypress of the user.
-    notify = function (w, msg)
-        w:set_mode()
+    notify = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
         w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
     end,
 
-    error = function (w, msg)
-        w:set_mode()
+    error = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
         w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
     end,
 
