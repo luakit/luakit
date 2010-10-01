@@ -403,8 +403,8 @@ binds.helper_methods = {
         local _, _, num = string.find(uri, "(%d+)[^0-9]*$")
         if num then
             uri = string.gsub(uri, "(%d+)([^0-9]*)$", function (num, rest)
-                return string.format("%0"..#num.."d", tonumber(num)+inc)..rest
-            end)
+                    return string.format("%0"..#num.."d", tonumber(num)+inc)..rest
+                end)
         end
         return uri
     end,
