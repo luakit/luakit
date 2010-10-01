@@ -17,6 +17,7 @@ local rstring = string
 local rtable = table
 local type = type
 local tonumber = tonumber
+local tostring = tostring
 local math = require "math"
 local capi = { luakit = luakit }
 
@@ -324,6 +325,16 @@ function recursive_remove(wi)
         children = table.join(recursive_remove(child), children)
     end
     return children
+end
+
+--- Convert a number to string independent from locale.
+-- @param num A number.
+-- @param sigs Signifigant figures (if float).
+-- @return The string representation of the number.
+function ntos(num, sigs)
+    local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
+    num = tostring(math.floor(num))
+    return (#dec == 0 and num) or (num .. "." .. dec)
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
