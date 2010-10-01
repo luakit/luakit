@@ -196,3 +196,9 @@ new_mode("qmarks", {
         w.menu:hide()
     end,
 })
+
+new_mode("undolist", {
+    leave = function (w)
+        w.menu:hide()
+    end,
+})

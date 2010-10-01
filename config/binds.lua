@@ -269,6 +269,23 @@ binds.mode_binds = {
                                         end),
     },
 
+    undolist = {
+        -- Close menu widget
+        key({},          "q",           function (w) w:set_mode() end),
+        -- Navigate items
+        key({},          "j",           function (w) w.menu:move_down() end),
+        key({},          "k",           function (w) w.menu:move_up()   end),
+        key({},          "Down",        function (w) w.menu:move_down() end),
+        key({},          "Up",          function (w) w.menu:move_up()   end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:mode_up()   end),
+        -- Restore closed tab
+        key({},          "Return",      function (w)
+                                            local row = w.menu:get()
+                                            if row and row.i then w:undo_close_tab(row.i) end
+                                        end),
+    },
+
     insert = { },
 }
 
@@ -350,6 +367,21 @@ binds.commands = {
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, e edit, w winopen, t tabopen.", false)
+                                        end),
+
+    -- View all closed tabs in an interactive menu
+    cmd("undolist",                     function (w, a)
+                                            if #(w.closed_tabs) == 0 then w:notify("No closed tabs to display") return end
+                                            w:set_mode("undolist")
+                                            local rows = {{"<span foreground='#f00'>Title</span>",
+                                                "<span foreground='#666'>URI</span>", title = true},}
+                                            for i, tab in ipairs(w.closed_tabs) do
+                                                local hi = tab.hist.items[tab.hist.index]
+                                                local title, uri = lousy.util.escape(hi.title), lousy.util.escape(hi.uri)
+                                                table.insert(rows, 2, { "  " .. title, uri, i = i})
+                                            end
+                                            w.menu:build(rows)
+                                            w:notify("Use j/k to move, d delete, w winopen.", false)
                                         end),
 }
 
