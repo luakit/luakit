@@ -29,6 +29,7 @@ binds.mode_binds = {
         but({},          8,             function (w) w:back()    end),
         but({},          9,             function (w) w:forward() end),
     },
+
     normal = {
         -- Autoparse the "[count]" before a buffer binding and re-call the
         -- hit function with the count removed and added to the metatable.
@@ -192,6 +193,7 @@ binds.mode_binds = {
                                             end
                                         end),
     },
+
     command = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
         key({},          "Tab",         function (w) w:cmd_completion() end),
@@ -204,10 +206,49 @@ binds.mode_binds = {
         key({"Mod1"},    "f",           function (w) w:forward_word() end),
         key({"Mod1"},    "b",           function (w) w:backward_word() end),
     },
+
     search = {
         key({"Control"}, "j",           function (w) w:search(nil, true) end),
         key({"Control"}, "k",           function (w) w:search(nil, false) end),
     },
+
+    qmarks = {
+        -- Close menu widget
+        key({},          "q",           function (w) w:set_mode() end),
+        -- Navigate items
+        key({},          "j",           function (w) w.menu:move_cursor(1) end),
+        key({},          "k",           function (w) w.menu:move_cursor(-1) end),
+        key({},          "Down",        function (w) w.menu:move_cursor(1) end),
+        key({},          "Up",          function (w) w.menu:move_cursor(-1) end),
+        -- Delete quickmark
+        key({},          "d",           function (w)
+                                            local row = w.menu:get_current()
+                                            if row and row.qmark then
+                                                quickmarks.del(row.qmark)
+                                                w.menu:del_current()
+                                            end
+                                        end),
+        -- Edit quickmark
+        key({},          "e",           function (w)
+                                            local row = w.menu:get_current()
+                                            if row and row.qmark then
+                                                local uris = quickmarks.get(row.qmark)
+                                                w:enter_cmd(string.format(":qmark %s %s", row.qmark, table.concat(uris or {}, ", ")))
+                                            end
+                                        end),
+        -- Open quickmark
+        key({},          "Return",      function (w)
+                                            local row = w.menu:get_current()
+                                            if row and row.qmark then
+                                                for i, uri in ipairs(quickmarks.get(row.qmark) or {}) do
+                                                    uri = w:search_open(uri)
+                                                    if i == 1 then w:navigate(uri) else w:new_tab(uri) end
+                                                end
+                                            end
+                                        end),
+
+    },
+
     insert = { },
 }
 
@@ -276,6 +317,19 @@ binds.commands = {
 
     -- Quickmark delete all
     cmd({"delqm!", "delqmarks!"},       function (w) quickmarks.delall() end),
+
+    -- View all qmarks in an interactive menu
+    cmd("qmarks",                      function (w, a)
+                                            w:set_mode("qmarks")
+                                            local rows = {{"<span foreground='#f00'>Quickmarks</span>",
+                                                "<span foreground='#666'>URI(s)</span>", selectable = false},}
+                                            for _, qmark in ipairs(quickmarks.get_tokens()) do
+                                                local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
+                                                table.insert(rows, { "  " .. qmark, uris, qmark = qmark})
+                                            end
+                                            w.menu:build(rows)
+                                            w:notify("Use j/k to move, d to delete, e to edit.", false)
+                                        end),
 }
 
 -- Helper functions which are added to the window struct

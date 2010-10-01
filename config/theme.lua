@@ -17,6 +17,12 @@ theme.error_bg = "#F00"
 theme.notif_fg = "#444"
 theme.notif_bg = "#FFF"
 
+-- Dmenu colours
+theme.menu_fg = "#000"
+theme.menu_bg = "#fff"
+theme.menu_selected_fg = "#000"
+theme.menu_selected_bg = "#FF0"
+
 -- Statusbar specific
 theme.sbar_fg           = "#fff"
 theme.sbar_bg           = "#000"

@@ -49,6 +49,10 @@ function window.build()
                 scroll = label(),
             },
         },
+
+        -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
+        menu = lousy.widget.menu(),
+
         -- Input bar widgets
         ibar = {
             layout  = hbox(),
@@ -90,6 +94,10 @@ function window.build()
     s.layout:pack_start(r.ebox,   false, false, 0)
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
+
+    -- Pack menu widget
+    w.layout:pack_start(w.menu.widget, false, false, 0)
+    w.menu:hide()
 
     -- Pack input bar
     local i = w.ibar
@@ -384,13 +392,13 @@ window.methods = {
     end,
 
     -- Shows a notification until the next keypress of the user.
-    notify = function (w, msg)
-        w:set_mode()
+    notify = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
         w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
     end,
 
-    error = function (w, msg)
-        w:set_mode()
+    error = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
         w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
     end,
 

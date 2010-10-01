@@ -186,3 +186,9 @@ new_mode("search", {
     end,
     history = {maxlen = 50},
 })
+
+new_mode("qmarks", {
+    leave = function (w)
+        w.menu:hide()
+    end,
+})
