@@ -580,9 +580,13 @@ window.methods = {
         return view
     end,
 
-    undo_close_tab = function (w)
-        if #(w.closed_tabs) == 0 then return end
-        local tab = table.remove(w.closed_tabs)
+    undo_close_tab = function (w, index)
+        -- Convert negative indexes
+        if index and index < 0 then
+            index = #(w.closed_tabs) + index + 1
+        end
+        local tab = table.remove(w.closed_tabs, index)
+        if not tab then return end
         local view = w:new_tab(tab.hist)
         if tab.after then
             local i = w.tabs:indexof(tab.after)
