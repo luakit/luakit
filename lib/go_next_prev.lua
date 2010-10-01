@@ -14,7 +14,7 @@ local go_next = [=[
         var els = document.getElementsByTagName("a");
         var i = els.length;
         while ((el = els[--i])) {
-            if (el.text.search(/\bnext/i) > -1) {
+            if (el.text.search(/(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)/i) > -1) {
                 location = el.href;
                 break;
             }
@@ -33,7 +33,7 @@ local go_prev = [=[
         var els = document.getElementsByTagName("a");
         var i = els.length;
         while ((el = els[--i])) {
-            if (el.text.search(/\bprev/i) > -1) {
+            if (el.text.search(/(\b(prev|previous)\b|^<$|^(<<|«)$|^(<|«)|(<|«)$)/i) > -1) {
                 location = el.href;
                 break;
             }
