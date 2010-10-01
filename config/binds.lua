@@ -402,7 +402,9 @@ binds.helper_methods = {
         local inc = arg or 1
         local _, _, num = string.find(uri, "(%d+)[^0-9]*$")
         if num then
-            uri = string.gsub(uri, "%d+([^0-9]*)$", string.format("%0"..string.len(num).."d", tonumber(num)+inc).."%1")
+            uri = string.gsub(uri, "(%d+)([^0-9]*)$", function (num, rest)
+                return string.format("%0"..#num.."d", tonumber(num)+inc)..rest
+            end)
         end
         return uri
     end,
