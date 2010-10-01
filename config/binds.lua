@@ -136,7 +136,7 @@ binds.mode_binds = {
         key({"Control"}, "t",           function (w)    w:new_tab(homepage) end),
         key({"Control"}, "w",           function (w)    w:close_tab()       end),
         key({},          "d",           function (w, m) for i=1,m.count do w:close_tab()      end end, {count=1}),
-        key({},          "u",           function (w, m) for i=1,m.count do w:undo_close_tab() end end, {count=1}),
+        key({},          "u",           function (w, m) w:undo_close_tab(-m.count) end, {count=1}),
 
         key({},          "<",           function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
         key({},          ">",           function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
