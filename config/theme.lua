@@ -18,10 +18,10 @@ theme.notif_fg = "#444"
 theme.notif_bg = "#FFF"
 
 -- Dmenu colours
-theme.dmenu_fg = "#000"
-theme.dmenu_bg = "#fff"
-theme.dmenu_selected_fg = "#000"
-theme.dmenu_selected_bg = "#FF0"
+theme.menu_fg = "#000"
+theme.menu_bg = "#fff"
+theme.menu_selected_fg = "#000"
+theme.menu_selected_bg = "#FF0"
 
 -- Statusbar specific
 theme.sbar_fg           = "#fff"

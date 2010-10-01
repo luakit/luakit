@@ -189,6 +189,6 @@ new_mode("search", {
 
 new_mode("qmarks", {
     leave = function (w)
-        w.dmenu:hide()
+        w.menu:hide()
     end,
 })

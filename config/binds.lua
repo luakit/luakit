@@ -213,24 +213,24 @@ binds.mode_binds = {
     },
 
     qmarks = {
-        -- Close dmenu widget
+        -- Close menu widget
         key({},          "q",           function (w) w:set_mode() end),
         -- Navigate items
-        key({},          "j",           function (w) w.dmenu:move_cursor(1) end),
-        key({},          "k",           function (w) w.dmenu:move_cursor(-1) end),
-        key({},          "Down",        function (w) w.dmenu:move_cursor(1) end),
-        key({},          "Up",          function (w) w.dmenu:move_cursor(-1) end),
+        key({},          "j",           function (w) w.menu:move_cursor(1) end),
+        key({},          "k",           function (w) w.menu:move_cursor(-1) end),
+        key({},          "Down",        function (w) w.menu:move_cursor(1) end),
+        key({},          "Up",          function (w) w.menu:move_cursor(-1) end),
         -- Delete quickmark
         key({},          "d",           function (w)
-                                            local row = w.dmenu:get_current()
+                                            local row = w.menu:get_current()
                                             if row and row.qmark then
                                                 quickmarks.del(row.qmark)
-                                                w.dmenu:del_current()
+                                                w.menu:del_current()
                                             end
                                         end),
         -- Edit quickmark
         key({},          "e",           function (w)
-                                            local row = w.dmenu:get_current()
+                                            local row = w.menu:get_current()
                                             if row and row.qmark then
                                                 local uris = quickmarks.get(row.qmark)
                                                 w:enter_cmd(string.format(":qmark %s %s", row.qmark, table.concat(uris or {}, ", ")))
@@ -238,7 +238,7 @@ binds.mode_binds = {
                                         end),
         -- Open quickmark
         key({},          "Return",      function (w)
-                                            local row = w.dmenu:get_current()
+                                            local row = w.menu:get_current()
                                             if row and row.qmark then
                                                 for i, uri in ipairs(quickmarks.get(row.qmark) or {}) do
                                                     uri = w:search_open(uri)
@@ -327,7 +327,7 @@ binds.commands = {
                                                 local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
                                                 table.insert(rows, { "  " .. qmark, uris, qmark = qmark})
                                             end
-                                            w.dmenu:build(rows)
+                                            w.menu:build(rows)
                                             w:notify("Use j/k to move, d to delete, e to edit.", false)
                                         end),
 }

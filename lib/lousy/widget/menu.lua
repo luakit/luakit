@@ -16,23 +16,23 @@ local table = table
 local util = require "lousy.util"
 local get_theme = require("lousy.theme").get
 
-module "lousy.widget.dmenu"
+module "lousy.widget.menu"
 
 local data = setmetatable({}, { __mode = "k" })
 
-function update(dmenu)
-    assert(data[dmenu] and type(dmenu.widget) == "widget", "invalid dmenu widget")
+function update(menu)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
-    -- Get private dmenu widget data
-    local d = data[dmenu]
+    -- Get private menu widget data
+    local d = data[menu]
 
     -- Get theme table
     local theme = get_theme()
-    local fg, bg = theme.dmenu_fg, theme.dmenu_bg
-    local sfg, sbg = theme.dmenu_selected_fg, theme.dmenu_selected_bg
+    local fg, bg = theme.menu_fg, theme.menu_bg
+    local sfg, sbg = theme.menu_selected_fg, theme.menu_selected_bg
 
     -- Hide widget while re-drawing
-    dmenu.widget:hide()
+    menu.widget:hide()
 
     -- Build & populate rows
     for i = 1, math.max(d.max_rows, #d.rows) do
@@ -52,7 +52,7 @@ function update(dmenu)
             rw.ebox:set_child(rw.hbox)
             d.rows[i] = rw
             -- Add to main vbox
-            dmenu.widget:pack_start(rw.ebox, false, false, 0)
+            menu.widget:pack_start(rw.ebox, false, false, 0)
 
         -- Remove row
         elseif not row and rw then
@@ -64,7 +64,7 @@ function update(dmenu)
             end
             rw.ebox:remove(rw.hbox)
             rw.hbox:destroy()
-            dmenu.widget:remove(rw.ebox)
+            menu.widget:remove(rw.ebox)
             rw.ebox:destroy()
             d.rows[i] = nil
         end
@@ -92,7 +92,7 @@ function update(dmenu)
                     cell = capi.widget{type = "label"}
                     rw.hbox:pack_start(cell, true, true, 0)
                     rw.cols[c] = cell
-                    cell.font = theme.dmenu_font
+                    cell.font = theme.menu_font
                     cell:set_width(1)
 
                 -- Remove row column widget
@@ -112,14 +112,14 @@ function update(dmenu)
         end
     end
     -- Show widget
-    dmenu.widget:show()
+    menu.widget:show()
 end
 
-function build(dmenu, rows)
-    assert(data[dmenu] and type(dmenu.widget) == "widget", "invalid dmenu widget")
+function build(menu, rows)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
-    -- Get private dmenu widget data
-    local d = data[dmenu]
+    -- Get private menu widget data
+    local d = data[menu]
 
     -- Clone row tables
     local all_rows = {}
@@ -136,15 +136,15 @@ function build(dmenu, rows)
     d.cursor = 1
     d.offset = 1
 
-    update(dmenu)
+    update(menu)
 end
 
-function move_cursor(dmenu, p)
-    assert(data[dmenu] and type(dmenu.widget) == "widget", "invalid dmenu widget")
+function move_cursor(menu, p)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
     assert(p, "invalid position")
 
-    -- Get private dmenu widget data
-    local d = data[dmenu]
+    -- Get private menu widget data
+    local d = data[menu]
     local c = d.cursor
 
     -- If the cursor was never set then nothing is selectable
@@ -164,23 +164,23 @@ function move_cursor(dmenu, p)
         d.offset = math.max(d.cursor - d.max_rows + 1, 1)
     end
 
-    update(dmenu)
+    update(menu)
 end
 
-function get_current(dmenu)
-    assert(data[dmenu] and type(dmenu.widget) == "widget", "invalid dmenu widget")
+function get_current(menu)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
-    -- Get private dmenu widget data
-    local d = data[dmenu]
+    -- Get private menu widget data
+    local d = data[menu]
 
     return d.all_rows[d.cursor or 1]
 end
 
-function del_current(dmenu)
-    assert(data[dmenu] and type(dmenu.widget) == "widget", "invalid dmenu widget")
+function del_current(menu)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
-    -- Get private dmenu widget data
-    local d = data[dmenu]
+    -- Get private menu widget data
+    local d = data[menu]
 
     -- Unable to delete this index, return
     if d.cursor < 1 then return end
@@ -194,13 +194,13 @@ function del_current(dmenu)
     d.cursor = math.min(d.cursor, #d.all_rows)
     d.offset = math.max(d.offset - 1, 1)
 
-    update(dmenu)
+    update(menu)
 end
 
 function new(args)
     args = args or {}
 
-    local dmenu = {
+    local menu = {
         widget = capi.widget{type = "vbox"},
         -- Add widget methods
         build  = build,
@@ -208,20 +208,20 @@ function new(args)
         get_current = get_current,
         del_current = del_current,
         move_cursor = move_cursor,
-        hide   = function(dmenu) dmenu.widget:hide() end,
-        show   = function(dmenu) dmenu.widget:show() end,
+        hide   = function(menu) menu.widget:hide() end,
+        show   = function(menu) menu.widget:show() end,
     }
 
     -- Save private widget data
-    data[dmenu] = {
+    data[menu] = {
         rows = {},
         max_rows = args.max_rows or 10,
     }
 
     -- Setup class signals
-    signal.setup(dmenu)
+    signal.setup(menu)
 
-    return dmenu
+    return menu
 end
 
 setmetatable(_M, { __call = function(_, ...) return new(...) end })

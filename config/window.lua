@@ -51,7 +51,7 @@ function window.build()
         },
 
         -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
-        dmenu = lousy.widget.dmenu(),
+        menu = lousy.widget.menu(),
 
         -- Input bar widgets
         ibar = {
@@ -95,9 +95,9 @@ function window.build()
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
 
-    -- Pack dmenu widget
-    w.layout:pack_start(w.dmenu.widget, false, false, 0)
-    w.dmenu:hide()
+    -- Pack menu widget
+    w.layout:pack_start(w.menu.widget, false, false, 0)
+    w.menu:hide()
 
     -- Pack input bar
     local i = w.ibar
