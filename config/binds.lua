@@ -244,11 +244,27 @@ binds.mode_binds = {
                                             if row and row.qmark then
                                                 for i, uri in ipairs(quickmarks.get(row.qmark) or {}) do
                                                     uri = w:search_open(uri)
-                                                    if i == 1 then w:navigate(uri) else w:new_tab(uri) end
+                                                    if i == 1 then w:navigate(uri) else w:new_tab(uri, false) end
                                                 end
                                             end
                                         end),
-
+        -- Open quickmark in new tab
+        key({},          "t",           function (w)
+                                            local row = w.menu:get_current()
+                                            if row and row.qmark then
+                                                for _, uri in ipairs(quickmarks.get(row.qmark) or {}) do
+                                                    w:new_tab(w:search_open(uri), false)
+                                                end
+                                            end
+                                        end),
+        -- Open quickmark in new window
+        key({},          "w",           function (w)
+                                            local row = w.menu:get_current()
+                                            w:set_mode()
+                                            if row and row.qmark then
+                                                window.new(quickmarks.get(row.qmark) or {})
+                                            end
+                                        end),
     },
 
     insert = { },
@@ -318,10 +334,10 @@ binds.commands = {
                                             quickmarks.save()
                                         end),
 
-    -- Quickmark delete all
+    -- Delete all quickmarks
     cmd({"delqm!", "delqmarks!"},       function (w) quickmarks.delall() end),
 
-    -- View all qmarks in an interactive menu
+    -- View all quickmarks in an interactive menu
     cmd("qmarks",                      function (w, a)
                                             w:set_mode("qmarks")
                                             local rows = {{"<span foreground='#f00'>Quickmarks</span>",
@@ -331,7 +347,7 @@ binds.commands = {
                                                 table.insert(rows, { "  " .. qmark, uris, qmark = qmark})
                                             end
                                             w.menu:build(rows)
-                                            w:notify("Use j/k to move, d to delete, e to edit.", false)
+                                            w:notify("Use j/k to move, d delete, e edit, w winopen, t tabopen.", false)
                                         end),
 }
 
