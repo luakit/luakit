@@ -172,7 +172,11 @@ new_mode("search", {
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
         if string.match(text, "^[\?\/]") then
-            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            if #text > 3 then
+                w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            else
+                w:clear_search(false)
+            end
         else
             w:clear_search()
             w:set_mode()
