@@ -398,14 +398,9 @@ binds.helper_methods = {
 
     -- Increase (or decrease) the last found number in the current uri
     inc_uri = function (w, arg)
-        local uri = w:get_current().uri
-        local inc = arg or 1
-        local _, _, num = string.find(uri, "(%d+)[^0-9]*$")
-        if num then
-            uri = string.gsub(uri, "(%d+)([^0-9]*)$", function (num, rest)
-                    return string.format("%0"..#num.."d", tonumber(num)+inc)..rest
-                end)
-        end
+        local uri = string.gsub(w:get_current().uri, "(%d+)([^0-9]*)$", function (num, rest)
+            return string.format("%0"..#num.."d", tonumber(num) + (arg or 1)) .. rest
+        end)
         return uri
     end,
 
