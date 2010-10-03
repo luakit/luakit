@@ -279,10 +279,38 @@ binds.mode_binds = {
         key({},          "Up",          function (w) w.menu:move_up()   end),
         key({},          "Tab",         function (w) w.menu:move_down() end),
         key({"Shift"},   "Tab",         function (w) w.menu:mode_up()   end),
-        -- Restore closed tab
+        -- Delete closed tab
+        key({},          "d",           function (w)
+                                            local row = w.menu:get()
+                                            if row and row.uid then
+                                                for i, tab in ipairs(w.closed_tabs) do
+                                                    if tab.uid == row.uid then table.remove(w.closed_tabs, i) end
+                                                end
+                                                w.menu:del()
+                                            end
+                                        end),
+        -- Undo closed tab (in new window)
+        key({},          "w",           function (w)
+                                            local row = w.menu:get()
+                                            w:set_mode()
+                                            if row and row.uid then
+                                                for i, tab in ipairs(w.closed_tabs) do
+                                                    if tab.uid == row.uid then
+                                                        window.new(table.remove(w.closed_tabs, i).hist)
+                                                        return
+                                                    end
+                                                end
+                                            end
+                                        end),
+        -- Undo closed tab
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
-                                            if row and row.i then w:undo_close_tab(row.i) end
+                                            w:set_mode()
+                                            if row and row.uid then
+                                                for i, tab in ipairs(w.closed_tabs) do
+                                                    if tab.uid == row.uid then w:undo_close_tab(i) end
+                                                end
+                                            end
                                         end),
     },
 
@@ -375,10 +403,11 @@ binds.commands = {
                                             w:set_mode("undolist")
                                             local rows = {{"<span foreground='#f00'>Title</span>",
                                                 "<span foreground='#666'>URI</span>", title = true},}
-                                            for i, tab in ipairs(w.closed_tabs) do
+                                            for uid, tab in ipairs(w.closed_tabs) do
+                                                tab.uid = uid
                                                 local hi = tab.hist.items[tab.hist.index]
                                                 local title, uri = lousy.util.escape(hi.title), lousy.util.escape(hi.uri)
-                                                table.insert(rows, 2, { "  " .. title, uri, i = i})
+                                                table.insert(rows, 2, { "  " .. title, uri, uid = uid})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, w winopen.", false)
