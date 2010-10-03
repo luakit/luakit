@@ -113,7 +113,9 @@ webview.init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if w:is_current(v) and status == "provisional" then w:set_mode() end
+            if w:is_current(v) and status == "provisional" then
+                if w:is_mode("insert") or w:is_mode("command") then w:set_mode() end
+            end
         end)
     end,
 
