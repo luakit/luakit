@@ -289,6 +289,18 @@ binds.mode_binds = {
                                                 w.menu:del()
                                             end
                                         end),
+        -- Undo multiple closed tabs
+        key({},          "u",           function (w)
+                                            local row = w.menu:get()
+                                            if row and row.uid then
+                                                for i, tab in ipairs(w.closed_tabs) do
+                                                    if tab.uid == row.uid then
+                                                        w:new_tab(table.remove(w.closed_tabs, i).hist, false)
+                                                    end
+                                                end
+                                                w.menu:del()
+                                            end
+                                        end),
         -- Undo closed tab (in new window)
         key({},          "w",           function (w)
                                             local row = w.menu:get()
