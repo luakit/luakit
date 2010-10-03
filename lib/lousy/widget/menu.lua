@@ -179,7 +179,7 @@ function move_up(menu)
     end
 
     -- Get next non-title row (you can't select titles)
-    while d.cursor > 0 and d.rows[d.cursor].title do
+    while d.cursor > 0 and d.cursor <= d.nrows and d.rows[d.cursor].title do
         d.cursor = d.cursor - 1
     end
 
@@ -201,7 +201,7 @@ function move_down(menu)
     end
 
     -- Get next non-title row (you can't select titles)
-    while d.cursor > 0 and d.rows[d.cursor].title do
+    while d.cursor > 0 and d.cursor <= d.nrows and d.rows[d.cursor].title do
         d.cursor = d.cursor + 1
     end
 
