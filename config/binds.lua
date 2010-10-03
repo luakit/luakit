@@ -218,21 +218,23 @@ binds.mode_binds = {
         -- Close menu widget
         key({},          "q",           function (w) w:set_mode() end),
         -- Navigate items
-        key({},          "j",           function (w) w.menu:move_cursor(1) end),
-        key({},          "k",           function (w) w.menu:move_cursor(-1) end),
-        key({},          "Down",        function (w) w.menu:move_cursor(1) end),
-        key({},          "Up",          function (w) w.menu:move_cursor(-1) end),
+        key({},          "j",           function (w) w.menu:move_down() end),
+        key({},          "k",           function (w) w.menu:move_up()   end),
+        key({},          "Down",        function (w) w.menu:move_down() end),
+        key({},          "Up",          function (w) w.menu:move_up()   end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:mode_up()   end),
         -- Delete quickmark
         key({},          "d",           function (w)
-                                            local row = w.menu:get_current()
+                                            local row = w.menu:get()
                                             if row and row.qmark then
                                                 quickmarks.del(row.qmark)
-                                                w.menu:del_current()
+                                                w.menu:del()
                                             end
                                         end),
         -- Edit quickmark
         key({},          "e",           function (w)
-                                            local row = w.menu:get_current()
+                                            local row = w.menu:get()
                                             if row and row.qmark then
                                                 local uris = quickmarks.get(row.qmark)
                                                 w:enter_cmd(string.format(":qmark %s %s", row.qmark, table.concat(uris or {}, ", ")))
@@ -240,7 +242,7 @@ binds.mode_binds = {
                                         end),
         -- Open quickmark
         key({},          "Return",      function (w)
-                                            local row = w.menu:get_current()
+                                            local row = w.menu:get()
                                             if row and row.qmark then
                                                 for i, uri in ipairs(quickmarks.get(row.qmark) or {}) do
                                                     uri = w:search_open(uri)
@@ -250,7 +252,7 @@ binds.mode_binds = {
                                         end),
         -- Open quickmark in new tab
         key({},          "t",           function (w)
-                                            local row = w.menu:get_current()
+                                            local row = w.menu:get()
                                             if row and row.qmark then
                                                 for _, uri in ipairs(quickmarks.get(row.qmark) or {}) do
                                                     w:new_tab(w:search_open(uri), false)
@@ -259,7 +261,7 @@ binds.mode_binds = {
                                         end),
         -- Open quickmark in new window
         key({},          "w",           function (w)
-                                            local row = w.menu:get_current()
+                                            local row = w.menu:get()
                                             w:set_mode()
                                             if row and row.qmark then
                                                 window.new(quickmarks.get(row.qmark) or {})
@@ -341,7 +343,7 @@ binds.commands = {
     cmd("qmarks",                      function (w, a)
                                             w:set_mode("qmarks")
                                             local rows = {{"<span foreground='#f00'>Quickmarks</span>",
-                                                "<span foreground='#666'>URI(s)</span>", selectable = false},}
+                                                "<span foreground='#666'>URI(s)</span>", title = true},}
                                             for _, qmark in ipairs(quickmarks.get_tokens()) do
                                                 local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
                                                 table.insert(rows, { "  " .. qmark, uris, qmark = qmark})
