@@ -170,7 +170,7 @@ binds.mode_binds = {
                                             for c=1,m.count do
                                                 for i, uri in ipairs(uris or {}) do
                                                     uri = w:search_open(uri)
-                                                    if mode == "o" and c == 1 and i == 1 then w:navigate(uri) else w:new_tab(uri) end
+                                                    if mode == "o" and c == 1 and i == 1 then w:navigate(uri) else w:new_tab(uri, i == 1) end
                                                 end
                                             end
                                         end, {count=1}),
