@@ -94,12 +94,18 @@ function update(menu)
             selected = not row.title and index == d.cursor
 
             -- Set row bg
-            local bg = (selected and (row.selected_bg or sbg)) or row.bg or bg
-            if rw.ebox.bg ~= bg then rw.ebox.bg = bg end
+            local rbg
+            if row.title then
+                rbg = (row.bg or theme.menu_title_bg) or bg
+            else
+                rbg = (selected and (row.selected_bg or sbg)) or row.bg or bg
+            end
+            if rw.ebox.bg ~= rbg then rw.ebox.bg = rbg end
 
             for c = 1, math.max(row.ncols, #(rw.cols)) do
                 -- Get column text
                 local text = row[c]
+                text = (type(text) == "function" and text(row)) or text
                 -- Get table cell
                 local cell = rw.cols[c]
 
@@ -119,8 +125,12 @@ function update(menu)
                 end
 
                 -- Set cell props
-                if text and cell then
-                    cell.text = type(text) == "function" and text(row) or text
+                if text and cell and row.title then
+                    cell.text = (c == 1 and text) or (" " .. text)
+                    local fg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
+                    if cell.fg ~= fg then cell.fg = fg end
+                elseif text and cell then
+                    cell.text = (c == 1 and "  " or " ") .. text
                     local fg = (selected and (row.selected_fg or sfg)) or row.fg or fg
                     if cell.fg ~= fg then cell.fg = fg end
                 end

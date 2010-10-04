@@ -399,11 +399,10 @@ binds.commands = {
     -- View all quickmarks in an interactive menu
     cmd("qmarks",                      function (w, a)
                                             w:set_mode("qmarks")
-                                            local rows = {{"<span foreground='#f00'>Quickmarks</span>",
-                                                "<span foreground='#666'>URI(s)</span>", title = true},}
+                                            local rows = {{"Quickmarks", "URI(s)", title = true},}
                                             for _, qmark in ipairs(quickmarks.get_tokens()) do
                                                 local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
-                                                table.insert(rows, { "  " .. qmark, uris, qmark = qmark})
+                                                table.insert(rows, { qmark, uris, qmark = qmark})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, e edit, w winopen, t tabopen.", false)
@@ -413,13 +412,12 @@ binds.commands = {
     cmd("undolist",                     function (w, a)
                                             if #(w.closed_tabs) == 0 then w:notify("No closed tabs to display") return end
                                             w:set_mode("undolist")
-                                            local rows = {{"<span foreground='#f00'>Title</span>",
-                                                "<span foreground='#666'>URI</span>", title = true},}
+                                            local rows = {{"Title", "URI", title = true},}
                                             for uid, tab in ipairs(w.closed_tabs) do
                                                 tab.uid = uid
                                                 local hi = tab.hist.items[tab.hist.index]
                                                 local title, uri = lousy.util.escape(hi.title), lousy.util.escape(hi.uri)
-                                                table.insert(rows, 2, { "  " .. title, uri, uid = uid})
+                                                table.insert(rows, 2, { title, uri, uid = uid})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, w winopen.", false)
