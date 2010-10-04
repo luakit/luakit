@@ -297,12 +297,17 @@ webview.methods = {
             forward = (s.forward == forward)
         end
 
+        s.searched = true
         view:search(text, false, forward, true);
     end,
 
     clear_search = function (view, w, clear_state)
         view:clear_search()
-        if clear_state ~= false then w.search_state = {} end
+        if clear_state ~= false then
+            w.search_state = {}
+        else
+            w.search_state.searched = false
+        end
     end,
 
     -- Webview scroll functions

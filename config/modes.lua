@@ -172,6 +172,7 @@ new_mode("search", {
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
         if string.match(text, "^[\?\/]") then
+            w.search_state.last_search = string.sub(text, 2)
             if #text > 3 then
                 w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
             else
@@ -184,6 +185,10 @@ new_mode("search", {
     end,
     activate = function (w, text)
         w.search_state.marker = nil
+        -- Search if haven't already (won't have for short strings)
+        if not w.search_state.searched then
+            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+        end
         -- Ghost the last search term
         w:set_mode()
         w:set_prompt(text)

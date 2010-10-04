@@ -214,8 +214,8 @@ binds.mode_binds = {
     },
 
     search = {
-        key({"Control"}, "j",           function (w) w:search(nil, true) end),
-        key({"Control"}, "k",           function (w) w:search(nil, false) end),
+        key({"Control"}, "j",           function (w) w:search(w.search_state.last_search, true) end),
+        key({"Control"}, "k",           function (w) w:search(w.search_state.last_search, false) end),
     },
 
     qmarks = {
