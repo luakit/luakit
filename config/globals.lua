@@ -2,7 +2,7 @@
 globals = {
     homepage         = "http://luakit.org/",
  -- homepage         = "http://github.com/mason-larobina/luakit",
-    scroll_step      = 20,
+    scroll_step      = 40,
     zoom_step        = 0.1,
     max_cmd_history  = 100,
     max_srch_history = 100,
