@@ -223,7 +223,7 @@ binds.mode_binds = {
         key({},          "Down",        function (w) w.menu:move_down() end),
         key({},          "Up",          function (w) w.menu:move_up()   end),
         key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:mode_up()   end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
         -- Delete quickmark
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -278,7 +278,7 @@ binds.mode_binds = {
         key({},          "Down",        function (w) w.menu:move_down() end),
         key({},          "Up",          function (w) w.menu:move_up()   end),
         key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:mode_up()   end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
         -- Delete closed tab
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -308,7 +308,7 @@ binds.mode_binds = {
                                             if row and row.uid then
                                                 for i, tab in ipairs(w.closed_tabs) do
                                                     if tab.uid == row.uid then
-                                                        window.new(table.remove(w.closed_tabs, i).hist)
+                                                        window.new({table.remove(w.closed_tabs, i).hist})
                                                         return
                                                     end
                                                 end
