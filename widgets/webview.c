@@ -1274,7 +1274,7 @@ widget_webview(widget_t *w)
     /* connect webview signals */
     g_object_connect((GObject*)view,
       "signal::button-press-event",                   (GCallback)wv_button_press_cb,           w,
-      "signal::button-release-event",                 (GCallback)button_release_cb,            w,
+      "signal::button-release-event",                 (GCallback)button_cb,                    w,
       "signal::create-web-view",                      (GCallback)create_web_view_cb,           w,
       "signal::download-requested",                   (GCallback)download_request_cb,          w,
       "signal::expose-event",                         (GCallback)expose_cb,                    w,
