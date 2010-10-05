@@ -16,9 +16,10 @@ local capi = {luakit=luakit}
 
 module("proxy")
 
-local proxies
+--- Module global variables
 local proxies_file = capi.luakit.data_dir .. '/proxy'
-local noproxy = {name="NoProxy"}
+local proxies
+local noproxy = {name="NoProxy", address=''}
 local active = noproxy
 
 
@@ -31,7 +32,11 @@ end
 -- @param fd_name custom proxy storage of nil to use default
 function load(fd_name)
     local fd_name = fd_name or proxies_file
-    proxies = proxies or noproxy
+
+    if not proxies then
+        proxies = {}
+        proxies[noproxy.name] = noproxy.address
+    end
 
     if not os.exists(fd_name) then
         return
