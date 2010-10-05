@@ -480,7 +480,7 @@ binds.commands = {
                                                 local rows = {{"Name", "Server address", title = true}}
                                                 local active = proxy.get_active()
                                                 for name, address in pairs(proxy.get_list()) do
-                                                    local fg = active.address == address and theme.proxy_active or theme.proxy_inactive
+                                                    local fg = active.address == address and theme.proxy_active_fg or theme.proxy_inactive_fg
                                                     table.insert(rows,
                                                         {name, address, fg=fg, name=name, address=address, proxy=true})
                                                 end
