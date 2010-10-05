@@ -35,6 +35,10 @@ theme.loaded_sbar_fg    = "#33AADD"
 theme.ibar_fg           = "#000"
 theme.ibar_bg           = "#fff"
 
+-- Proxy manager
+theme.proxy_active      = '#000'
+theme.proxy_inactive    = '#888'
+
 -- Tab label
 theme.tab_fg            = "#888"
 theme.tab_bg            = "#222"

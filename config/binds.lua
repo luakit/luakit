@@ -477,12 +477,12 @@ binds.commands = {
 
                                             if not a then
                                                 w:set_mode("proxy")
-                                                local rows = {{"Status", "Name", "Server address", title = true}}
+                                                local rows = {{"Name", "Server address", title = true}}
                                                 local active = proxy.get_active()
                                                 for name, address in pairs(proxy.get_list()) do
-                                                    local status = (active.address == address and 'active') or ''
+                                                    local fg = active.address == address and theme.proxy_active or theme.proxy_inactive
                                                     table.insert(rows,
-                                                        {status, name, address, name=name, address=address, proxy=true})
+                                                        {name, address, fg=fg, name=name, address=address, proxy=true})
                                                 end
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
