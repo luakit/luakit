@@ -231,6 +231,8 @@ binds.mode_binds = {
         key({},          "k",           function (w) w.menu:move_up()   end),
         key({},          "Down",        function (w) w.menu:move_down() end),
         key({},          "Up",          function (w) w.menu:move_up()   end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
         key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
