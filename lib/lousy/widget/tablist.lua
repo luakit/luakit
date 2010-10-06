@@ -9,7 +9,6 @@ local print = print
 local setmetatable = setmetatable
 local table = table
 local type = type
-local util = require "lousy.util"
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 local capi = { widget = widget }
@@ -64,7 +63,7 @@ function update(tlist, tabs, current)
     local fg, bg = theme.tab_fg, theme.tab_bg
     for i = 1, tcount do
         local tab, l, e = tabs[i], labels[i].label, labels[i].ebox
-        local title = util.escape(tab.title or "(Untitled)")
+        local title = tab.title or "(Untitled)"
         local fg, bg = tab.fg or fg, tab.bg or bg
         if l.text ~= title then l.text = title end
         if l.fg ~= fg then l.fg = fg end
