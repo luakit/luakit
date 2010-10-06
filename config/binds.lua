@@ -113,8 +113,14 @@ binds.mode_binds = {
         -- Searching
         key({},          "/",           function (w)    w:start_search("/")  end),
         key({},          "?",           function (w)    w:start_search("?") end),
-        key({},          "n",           function (w, m) for i=1,m.count do w:search(nil, true)  end end, {count=1}),
-        key({},          "N",           function (w, m) for i=1,m.count do w:search(nil, false) end end, {count=1}),
+        key({},          "n",           function (w, m)
+                                            for i=1,m.count do w:search(nil, true)  end
+                                            if w.search_state.ret == false then w:error("Pattern not found: " .. w.search_state.last_search) end
+                                        end, {count=1}),
+        key({},          "N",           function (w, m)
+                                            for i=1,m.count do w:search(nil, false) end
+                                            if w.search_state.ret == false then w:error("Pattern not found: " .. w.search_state.last_search) end
+                                        end, {count=1}),
 
         -- History
         key({},          "H",           function (w, m) w:back(m.count)    end, {count=1}),
