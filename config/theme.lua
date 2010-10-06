@@ -40,6 +40,8 @@ theme.tab_fg            = "#888"
 theme.tab_bg            = "#222"
 theme.selected_fg       = "#fff"
 theme.selected_bg       = "#000"
+theme.loading_fg        = "#33AADD"
+theme.loading_bg        = "#000"
 
 -- Trusted/untrusted ssl colours
 theme.trust_fg          = "#0F0"

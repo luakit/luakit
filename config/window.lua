@@ -549,8 +549,8 @@ window.methods = {
         for i, view in ipairs(w.tabs:get_children()) do
             tabs[i] = {
                 title = string.format(" %d %s", i, w:get_tab_title(view)),
-                fg = (current == i and theme.tab_selected_fg) or fg,
-                bg = (current == i and theme.tab_selected_bg) or bg,
+                fg = (current == i and theme.tab_selected_fg) or (view:loading() and theme.tab_loading_fg) or fg,
+                bg = (current == i and theme.tab_selected_bg) or (view:loading() and theme.tab_loading_bg) or bg,
             }
         end
 

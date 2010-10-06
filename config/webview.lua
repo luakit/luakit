@@ -46,6 +46,15 @@ webview.init_funcs = {
         end)
     end,
 
+    -- Update tab titles
+    tablist_update = function (view, w)
+        view:add_signal("load-status", function (v, status)
+            if status == "provisional" or status == "finished" or status == "failed" then
+                w:update_tablist()
+            end
+        end)
+    end,
+
     -- Update scroll widget
     scroll_update = function (view, w)
         view:add_signal("expose", function (v)
