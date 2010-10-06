@@ -654,10 +654,13 @@ luaH_webview_search(lua_State *L)
     gboolean wrap = luaH_checkboolean(L, 5);
 
     webkit_web_view_unmark_text_matches(view);
-    webkit_web_view_search_text(view, text, case_sensitive, forward, wrap);
-    webkit_web_view_mark_text_matches(view, text, case_sensitive, 0);
-    webkit_web_view_set_highlight_text_matches(view, TRUE);
-    return 0;
+    gboolean ret = webkit_web_view_search_text(view, text, case_sensitive, forward, wrap);
+    if (ret) {
+        webkit_web_view_mark_text_matches(view, text, case_sensitive, 0);
+        webkit_web_view_set_highlight_text_matches(view, TRUE);
+    }
+    lua_pushboolean(L, ret);
+    return 1;
 }
 
 static gint
