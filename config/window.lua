@@ -544,13 +544,29 @@ window.methods = {
     update_tablist = function (w, current)
         local current = current or w.tabs:current()
         local fg, bg = theme.tab_fg, theme.tab_bg
-        local tabs = {}
+        local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
+        local escape, get_title = lousy.util.escape, w.get_tab_title
+        local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
 
         for i, view in ipairs(w.tabs:get_children()) do
+            -- Get tab number theme
+            local ntheme
+            if current == i then -- Show ssl trusted/untrusted on current tab
+                local trusted = view:ssl_trusted()
+                if trusted == false or (trusted ~= nil and not w.checking_ssl) then
+                    ntheme = bfg
+                elseif trusted then
+                    ntheme = gfg
+                end
+            end
+            if not ntheme and view:loading() then -- Show loading on all tabs
+                ntheme = lfg
+            end
+
             tabs[i] = {
-                title = string.format(" %d %s", i, w:get_tab_title(view)),
-                fg = (current == i and theme.tab_selected_fg) or (view:loading() and theme.tab_loading_fg) or fg,
-                bg = (current == i and theme.tab_selected_bg) or (view:loading() and theme.tab_loading_bg) or bg,
+                title = string.format(tfmt, ntheme or fg, i, escape(get_title(w, view))),
+                fg = (current == i and theme.tab_selected_fg) or fg,
+                bg = (current == i and theme.tab_selected_bg) or bg,
             }
         end
 
