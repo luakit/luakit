@@ -298,7 +298,7 @@ webview.methods = {
         end
 
         s.searched = true
-        view:search(text, false, forward, true);
+        view:search(text, text ~= string.lower(text), forward, true);
     end,
 
     clear_search = function (view, w, clear_state)
