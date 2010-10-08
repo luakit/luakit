@@ -38,6 +38,8 @@ require "go_input"
 require "follow_selected"
 require "go_next_prev"
 require "go_up"
+require "session"
+require "quickmarks"
 
 -- Init bookmarks lib
 require "bookmarks"
@@ -81,6 +83,14 @@ downloads.open_file = function (f, m, wi)
     downloads.warn_file(f, m, wi)
 end
 
-window.new(uris)
+-- Restore last saved session
+local w = (session and session.restore())
+if w then
+    for _, uri in ipairs(uris) do
+        w:new_tab(uri, true)
+    end
+else
+    window.new(uris)
+end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

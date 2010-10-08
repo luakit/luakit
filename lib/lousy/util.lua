@@ -17,6 +17,7 @@ local rstring = string
 local rtable = table
 local type = type
 local tonumber = tonumber
+local tostring = tostring
 local math = require "math"
 local capi = { luakit = luakit }
 
@@ -217,7 +218,17 @@ end
 -- @return The inner string segment.
 function string.strip(s, pattern)
     local p = pattern or "%s*"
-    return ({rstring.match(s, rstring.format("^%s(.*)%s$", p, p))})[1]
+    local sub_start, sub_end
+
+    -- Find start point
+    local _, f_end = rstring.find(s, "^"..p)
+    if f_end then sub_start = f_end + 1 end
+
+    -- Find end point
+    local f_start = rstring.find(s, p.."$")
+    if f_start then sub_end = f_start - 1 end
+
+    return rstring.sub(s, sub_start or 1, sub_end or #s)
 end
 
 local function find_file(paths)
@@ -314,6 +325,16 @@ function recursive_remove(wi)
         children = table.join(recursive_remove(child), children)
     end
     return children
+end
+
+--- Convert a number to string independent from locale.
+-- @param num A number.
+-- @param sigs Signifigant figures (if float).
+-- @return The string representation of the number.
+function ntos(num, sigs)
+    local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
+    num = tostring(math.floor(num))
+    return (#dec == 0 and num) or (num .. "." .. dec)
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

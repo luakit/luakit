@@ -28,7 +28,10 @@ local function index(t, k)
     if v then return v end
     -- Knock a "level_" from the key name
     if string.find(k, "_") then
-        return index(t, string.sub(k, string.find(k, "_") + 1, -1))
+        local ret = index(t, string.sub(k, string.find(k, "_") + 1, -1))
+        -- Cache result
+        if ret then t[k] = ret end
+        return ret
     end
 end
 

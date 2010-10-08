@@ -79,10 +79,11 @@ widget_eventbox(widget_t *w)
     gtk_widget_show(w->widget);
 
     g_object_connect((GObject*)w->widget,
-      "signal::add",                  (GCallback)add_cb,            w,
-      "signal::button-release-event", (GCallback)button_release_cb, w,
-      "signal::parent-set",           (GCallback)parent_set_cb,     w,
-      "signal::remove",               (GCallback)remove_cb,         w,
+      "signal::add",                  (GCallback)add_cb,        w,
+      "signal::button-press-event",   (GCallback)button_cb,     w,
+      "signal::button-release-event", (GCallback)button_cb,     w,
+      "signal::parent-set",           (GCallback)parent_set_cb, w,
+      "signal::remove",               (GCallback)remove_cb,     w,
       NULL);
 
     return w;

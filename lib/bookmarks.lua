@@ -12,6 +12,7 @@ local unpack = unpack
 local type = type
 local pairs = pairs
 local ipairs = ipairs
+local assert = assert
 local util = require("lousy.util")
 local capi = { luakit = luakit }
 
@@ -27,7 +28,7 @@ html_out       = capi.luakit.cache_dir  .. '/bookmarks.html'
 
 -- Templates
 block_template = [==[<div class="tag"><h1>{tag}</h1><ul>{links}</ul></div>]==]
-link_template  = [==[<li><a href="{uri}">{name}</a></li>]==]
+link_template  = [==[<li><a href="{uri}">{name}</a> <span class="id">{id}</span></li>]==]
 
 html_template = [==[
 <html>
@@ -57,6 +58,12 @@ html_style = [===[
         width: 100%;
         padding: 0px;
         margin: 0 0 25px 0;
+        clear: both;
+    }
+    span.id {
+        font-size: small;
+        color: #333333;
+        float: right;
     }
     .tag ul {
         padding: 0;
@@ -108,7 +115,7 @@ end
 
 --- Add a bookmark to the in-memory bookmarks table
 function add(uri, tags, replace, save_bookmarks)
-    if not uri then return error("must supply uri") end
+    assert(uri ~= nil, "bookmark add: no URI given")
     if not tags then tags = {} end
 
     -- Create tags table from string
@@ -129,6 +136,26 @@ function add(uri, tags, replace, save_bookmarks)
     if save_bookmarks ~= false then save() end
 end
 
+-- Remove a bookmark from the in-memory bookmarks table by index
+-- @param index Index of the bookmark to delete
+-- @param save_bookmarks Option whether to save the bookmarks to file or not
+function del(index, save_bookmarks)
+    assert(index ~= nil, "bookdel: Index has to be a number")
+    assert(index > 0, "bookdel: Index has to be > 0")
+
+    -- Remove entry from data table
+    local id = 0
+    for _, bm in pairs(data) do
+        id = id + 1
+        if id == index then
+            data[_] = nil
+            break
+        end
+    end
+
+    -- Save by default
+    if save_bookmarks ~= false then save() end
+end
 
 --- Load bookmarks from a flatfile to memory.
 -- @param file The bookmarks file or the default bookmarks location if nil.
@@ -154,7 +181,10 @@ function dump_html(file)
     -- Get a list of all the unique tags in all the bookmarks and build a
     -- relation between a given tag and a list of bookmarks with that tag.
     local tags = {}
+    local id = 0
     for _, bm in pairs(data) do
+        id = id + 1
+        bm['id'] = id
         for _, t in ipairs(bm.tags) do
             if not tags[t] then tags[t] = {} end
             tags[t][bm.uri] = bm
@@ -169,6 +199,7 @@ function dump_html(file)
             local bm = tags[tag][uri]
             local link_subs = {
                 uri = bm.uri,
+                id = bm.id,
                 name = util.escape(bm.uri),
             }
             local link = string.gsub(link_template, "{(%w+)}", link_subs)
@@ -196,3 +227,5 @@ function dump_html(file)
     -- Return path to file
     return "file://"..file
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,23 +1,25 @@
-Authors in the luakit project:
-  Clint Adams       (Clint)     <schizo@debian.org>         2010
-  Gregor Uhlenheuer (kongo2002) <kongo2002@googlemail.com>  2010
-  Henning Hasemann              <hhasemann@web.de>          2010
-  Kumar Appaiah     (akumar)    <akumar@debian.org>         2010
+Author of luakit:
   Mason Larobina    (mason-l)   <mason.larobina@gmail.com>  2010
+
+Contributors to luakit (A to Z):
+  Chris van Dijk    (quigybo)   <quigybo@hotmail.com>       2010
+  Clint Adams       (Clint)     <schizo@debian.org>         2010
+  Fabian Streitel               <karottenreibe@gmail.com>   2010
+  Gregor Uhlenheuer (kongo)     <kongo2002@googlemail.com>  2010
+  Henning Hasemann              <hhasemann@web.de>          2010
+  Kumar Appaiah     (kmap)      <a.kumar@alumni.iitm.ac.in> 2010
   Matthew Wild      (MattJ)     <mwild1@gmail.com>          2010
   Michael Dietrich  (emdete)    <mdt@emdete.de>             2010
   Pawel Tomak       (grodzik)   <pawel.tomak@gmail.com>     2010
   Pawel Zuzelski    (pawelz)    <pawelz@pld-linux.org>      2010
+  Piotr Husiatyński (husio)     <phusiatynski@gmail.com>    2010
   Richard Gay                   <richard.gay@t-online.de>   2010
   Vasuvi                        <vasuvi@inbox.com>          2010
 
-Author of `scripts/follow.js`:
-  Fabian Streitel               <karottenreibe@gmail.com>   2010
-
-Author of `scripts/go_input.js`:
+Author of the `lib/go_input.lua` javascript:
   Aldrik Dunbar     (n30n)                                  2009
 
-Author of `scripts/followselected.js`:
+Author of the `lib/follow_selected.lua` javascript:
   israellevin                                               2009
 
 Inherited authors from the awesomewm project:

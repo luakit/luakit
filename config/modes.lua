@@ -172,7 +172,14 @@ new_mode("search", {
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
         if string.match(text, "^[\?\/]") then
-            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+            s = w.search_state
+            s.last_search = string.sub(text, 2)
+            if #text > 3 then
+                w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+                if s.ret == false and s.marker then w:get_current():set_scroll_vert(s.marker) end
+            else
+                w:clear_search(false)
+            end
         else
             w:clear_search()
             w:set_mode()
@@ -180,9 +187,29 @@ new_mode("search", {
     end,
     activate = function (w, text)
         w.search_state.marker = nil
+        -- Search if haven't already (won't have for short strings)
+        if not w.search_state.searched then
+            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+        end
         -- Ghost the last search term
-        w:set_mode()
-        w:set_prompt(text)
+        if w.search_state.ret then
+            w:set_mode()
+            w:set_prompt(text)
+        else
+            w:error("Pattern not found: " .. string.sub(text, 2))
+        end
     end,
     history = {maxlen = 50},
+})
+
+new_mode("qmarks", {
+    leave = function (w)
+        w.menu:hide()
+    end,
+})
+
+new_mode("undolist", {
+    leave = function (w)
+        w.menu:hide()
+    end,
 })

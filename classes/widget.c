@@ -80,9 +80,8 @@ luaH_widget_new(lua_State *L)
 static gint
 luaH_widget_index(lua_State *L)
 {
-    size_t len;
-    const char *prop = luaL_checklstring(L, 2, &len);
-    luakit_token_t token = l_tokenize(prop, len);
+    const char *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
 
     /* Try standard method */
     if(luaH_class_index(L))
@@ -100,9 +99,8 @@ luaH_widget_index(lua_State *L)
 static gint
 luaH_widget_newindex(lua_State *L)
 {
-    size_t len;
-    const char *prop = luaL_checklstring(L, 2, &len);
-    luakit_token_t token = l_tokenize(prop, len);
+    const char *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
 
     /* Try standard method */
     luaH_class_newindex(L);
@@ -118,9 +116,8 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
     if (w->info)
         luaL_error(L, "widget is already of type: %s", w->info->name);
 
-    size_t len;
-    const gchar *type = luaL_checklstring(L, -1, &len);
-    luakit_token_t tok = l_tokenize(type, len);
+    const gchar *type = luaL_checkstring(L, -1);
+    luakit_token_t tok = l_tokenize(type);
     widget_info_t *winfo;
 
     for (guint i = 0; i < LENGTH(widgets_list); i++)

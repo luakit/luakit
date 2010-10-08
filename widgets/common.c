@@ -41,7 +41,7 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 }
 
 gboolean
-button_release_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
+button_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
 {
     (void) win;
     gint ret;
@@ -49,7 +49,19 @@ button_release_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     lua_pushinteger(L, ev->button);
-    ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
+
+    switch (ev->type) {
+      case GDK_2BUTTON_PRESS:
+        ret = luaH_object_emit_signal(L, -3, "button-double-click", 2, 1);
+        break;
+      case GDK_BUTTON_RELEASE:
+        ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
+        break;
+      default:
+        ret = luaH_object_emit_signal(L, -3, "button-press", 2, 1);
+        break;
+    }
+
     /* User responded with TRUE, so do not propagate event any further */
     if (ret && luaH_checkboolean(L, -1)) {
         lua_pop(L, ret + 1);

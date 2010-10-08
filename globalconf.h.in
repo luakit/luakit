@@ -35,6 +35,8 @@ typedef struct {
     gchar *data_dir;
     /* Path to the current config file */
     gchar *confpath;
+    /* luakit executable path */
+    gchar *execpath;
     /* Print verbose output */
     gboolean verbose;
     /* Lua VM state */

@@ -2,12 +2,12 @@
 include config.mk
 
 # Token lib generation
-GPERF = common/tokenize.gperf
-GSRC  = common/tokenize.c
-GHEAD = common/tokenize.h
+TLIST = common/tokenize.list
+THEAD = common/tokenize.h
+TSRC  = common/tokenize.c
 
-SRCS  = $(filter-out ${GSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard classes/*.c) $(wildcard widgets/*.c)) ${GSRC}
-HEADS = $(filter-out ${GHEAD},$(wildcard *.h) $(wildcard common/*.h) $(wildcard classes/*.h) $(wildcard widgets/*.h)) ${GHEAD}
+SRCS  = $(filter-out ${TSRC},$(wildcard *.c) $(wildcard common/*.c) $(wildcard classes/*.c) $(wildcard widgets/*.c)) ${TSRC}
+HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h) $(wildcard classes/*.h) ${THEAD} globalconf.h
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
 all: options newline luakit luakit.1
@@ -27,17 +27,17 @@ options:
 	@echo "HEADS      = ${HEADS}"
 	@echo "OBJS       = ${OBJS}"
 
-${GSRC} ${GHEAD}: ${GPERF}
-	./build-utils/gperf.sh $< $@
+${THEAD} ${TSRC}: options newline ${TLIST}
+	./build-utils/gentokens.lua ${TLIST} $@
+
+globalconf.h: options newline globalconf.h.in
+	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' globalconf.h.in > globalconf.h
+
+${OBJS}: ${HEADS} config.mk
 
 .c.o:
 	@echo ${CC} -c $< -o $@
 	@${CC} -c ${CFLAGS} ${CPPFLAGS} $< -o $@
-
-globalconf.h: globalconf.h.in
-	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' globalconf.h.in > globalconf.h
-
-${OBJS}: ${HEADS} config.mk globalconf.h
 
 luakit: ${OBJS}
 	@echo ${CC} -o $@ ${OBJS}
@@ -51,7 +51,7 @@ apidoc: luadoc/luakit.lua
 	luadoc --nofiles -d apidocs luadoc/* lib/*
 
 clean:
-	rm -rf apidocs luakit ${OBJS} ${GSRC} ${GHEAD} globalconf.h luakit.1
+	rm -rf apidocs luakit ${OBJS} ${TSRC} ${THEAD} globalconf.h luakit.1
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
@@ -73,5 +73,5 @@ uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/share/man/man1/luakit.1
 	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
-newline:;@echo
+newline: options;@echo
 .PHONY: all clean options install newline apidoc

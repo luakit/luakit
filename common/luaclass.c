@@ -224,9 +224,8 @@ luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
  * Return is the object property if found, NULL otherwise. */
 static lua_class_property_t *
 luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
-    size_t len;
-    const gchar *attr = luaL_checklstring(L, fieldidx, &len);
-    luakit_token_t token = l_tokenize(attr, len);
+    const gchar *attr = luaL_checkstring(L, fieldidx);
+    luakit_token_t token = l_tokenize(attr);
 
     return g_hash_table_lookup((GHashTable*) lua_class->properties,
             (gpointer) token);
@@ -299,11 +298,10 @@ luaH_class_new(lua_State *L, lua_class_t *lua_class) {
          * number TO A STRING, confusing lua_next() */
         if(lua_isstring(L, -2)) {
             /* Lookup the property */
-            size_t len;
-            const char *attr = lua_tolstring(L, -2, &len);
+            const char *attr = lua_tostring(L, -2);
             lua_class_property_t *prop = g_hash_table_lookup(
                     (GHashTable*) lua_class->properties,
-                    (gpointer) l_tokenize(attr, len));
+                    (gpointer) l_tokenize(attr));
 
             if(prop && prop->new)
                 prop->new(L, object);

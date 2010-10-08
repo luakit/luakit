@@ -32,11 +32,10 @@ local follow_selected = [=[
 })();
 ]=]
 
-local follow_bind = lousy.bind.key({}, "Return", function (w)
+-- Add binding to normal mode to follow selected link
+table.insert(binds.mode_binds.normal, lousy.bind.key({}, "Return", function (w)
     w:eval_js(follow_selected)
     return false
-end)
+end))
 
--- Add binding to search & normal modes
-table.insert(binds.mode_binds.search, follow_bind)
-table.insert(binds.mode_binds.normal, follow_bind)
+-- vim: et:sw=4:ts=8:sts=4:tw=80

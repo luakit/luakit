@@ -53,7 +53,7 @@
       lua_pushcfunction(L, luaH_widget_get_children); \
       return 1;
 
-gboolean button_release_cb(GtkWidget*, GdkEventButton*, widget_t*);
+gboolean button_cb(GtkWidget*, GdkEventButton*, widget_t*);
 gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
 gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);
 gboolean key_release_cb(GtkWidget*, GdkEventKey*, widget_t*);

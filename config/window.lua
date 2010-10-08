@@ -7,6 +7,9 @@ require "downloads"
 -- Window class table
 window = {}
 
+-- List of active windows by window widget
+window.bywidget = setmetatable({}, { __mode = "k" })
+
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
 local function eventbox() return widget{type="eventbox"} end
@@ -23,13 +26,9 @@ function window.build()
         ebox   = eventbox(),
         layout = vbox(),
         tabs   = notebook(),
-        -- Tab bar widgets
-        tbar = {
-            layout = hbox(),
-            ebox   = eventbox(),
-            titles = { },
-        },
         dbar = downloads.create_bar(theme),
+        -- Tablist widget
+        tablist = lousy.widget.tablist(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -53,6 +52,10 @@ function window.build()
                 scroll = label(),
             },
         },
+
+        -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
+        menu = lousy.widget.menu(),
+
         -- Input bar widgets
         ibar = {
             layout  = hbox(),
@@ -67,10 +70,8 @@ function window.build()
     w.ebox:set_child(w.layout)
     w.win:set_child(w.ebox)
 
-    -- Pack tab bar
-    local t = w.tbar
-    t.ebox:set_child(t.layout, false, false, 0)
-    w.layout:pack_start(t.ebox, false, false, 0)
+    -- Pack tablist
+    w.layout:pack_start(w.tablist.widget, false, false, 0)
 
     -- Pack notebook
     w.layout:pack_start(w.tabs, true, true, 0)
@@ -101,6 +102,10 @@ function window.build()
     s.ebox:set_child(s.layout)
     w.layout:pack_start(s.ebox,   false, false, 0)
 
+    -- Pack menu widget
+    w.layout:pack_start(w.menu.widget, false, false, 0)
+    w.menu:hide()
+
     -- Pack input bar
     local i = w.ibar
     i.layout:pack_start(i.prompt, false, false, 0)
@@ -115,6 +120,9 @@ function window.build()
     l.uri.selectable = true
     r.ssl:hide()
 
+    -- Allows indexing of window struct by window widget
+    window.bywidget[w.win] = w
+
     return w
 end
 
@@ -125,7 +133,7 @@ window.init_funcs = {
     notebook_signals = function (w)
         w.tabs:add_signal("page-added", function (nbook, view, idx)
             w:update_tab_count(idx)
-            w:update_tab_labels()
+            w:update_tablist()
         end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
             w:set_mode()
@@ -133,13 +141,13 @@ window.init_funcs = {
             w:update_win_title(view)
             w:update_uri(view)
             w:update_progress(view)
-            w:update_tab_labels(idx)
+            w:update_tablist(idx)
             w:update_buf()
             w:update_ssl(view)
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
             w:update_tab_count()
-            w:update_tab_labels()
+            w:update_tablist()
         end)
     end,
 
@@ -163,6 +171,18 @@ window.init_funcs = {
             if not success then
                 w:error("In bind call: " .. match)
             elseif match then
+                return true
+            end
+        end)
+    end,
+
+    tablist_tab_click = function (w)
+        w.tablist:add_signal("tab-clicked", function (_, index, mods, button)
+            if button == 1 then
+                w.tabs:switch(index)
+                return true
+            elseif button == 2 then
+                w:close_tab(w.tabs:atindex(index))
                 return true
             end
         end)
@@ -223,8 +243,8 @@ window.methods = {
     end,
 
     -- Wrapper around the bind plugin's hit method
-    hit = function (w, mods, key)
-        local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w)
+    hit = function (w, mods, key, opts)
+        local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w, opts)
         if w.win then
             w.buffer = newbuf
             w:update_buf()
@@ -327,6 +347,55 @@ window.methods = {
         end
     end,
 
+    beg_line = function (w)
+        local i = w.ibar.input
+        i.position = 1
+    end,
+
+    end_line = function (w)
+        local i = w.ibar.input
+        i.position = -1
+    end,
+
+    forward_char = function (w)
+        local i = w.ibar.input
+        i.position = i.position + 1
+    end,
+
+    backward_char = function (w)
+        local i = w.ibar.input
+        local pos = i.position
+        if pos > 1 then
+            i.position = pos - 1
+        end
+    end,
+
+    forward_word = function (w)
+        local i = w.ibar.input
+        local text = i.text
+        local pos = i.position
+        if text and #text > 1 then
+            local right = string.sub(text, pos+1)
+            if string.find(right, "%w+") then
+                local crud, move = string.find(right, "%w+")
+                i.position = pos + move
+            end
+        end
+    end,
+
+    backward_word = function (w)
+        local i = w.ibar.input
+        local text = i.text
+        local pos = i.position
+        if text and #text > 1 and pos > 1 then
+            local left = string.reverse(string.sub(text, 2, pos))
+            if string.find(left, "%w+") then
+                local crud, move = string.find(left, "%w+")
+                i.position = pos - move
+            end
+        end
+    end,
+
     -- Wrapper around luakit.set_selection that shows a notification
     set_selection = function (w, text, selection)
         luakit.set_selection(text, selection or "primary")
@@ -334,13 +403,13 @@ window.methods = {
     end,
 
     -- Shows a notification until the next keypress of the user.
-    notify = function (w, msg)
-        w:set_mode()
+    notify = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
         w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
     end,
 
-    error = function (w, msg)
-        w:set_mode()
+    error = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
         w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
     end,
 
@@ -384,13 +453,11 @@ window.methods = {
 
     update_win_title = function (w, view)
         if not view then view = w:get_current() end
-        local title = view:get_prop("title")
-        local uri = view.uri
-        if not title and not uri then
-            w.win.title = "luakit"
-        else
-            w.win.title = (title or "luakit") .. " - " .. (uri or "about:blank")
-        end
+        local uri, title = view.uri, view:get_prop("title")
+        title = (title or "luakit") .. ((uri and " - " .. uri) or "")
+        local max = globals.max_title_len or 80
+        if #title > max then title = string.sub(title, 1, max) .. "..." end
+        w.win.title = title
     end,
 
     update_uri = function (w, view, uri, link)
@@ -475,78 +542,37 @@ window.methods = {
     -- Small wrapper to ease the use of the download bar
     download = function (w, link) w.dbar:download(link) end,
 
-    -- Tab label functions
-    -- TODO: Move these functions into a module (I.e. lousy.widget.tablist)
-    make_tab_label = function (w, pos)
-        local t = {
-            label  = label(),
-            sep    = eventbox(),
-            ebox   = eventbox(),
-            layout = hbox(),
-        }
-        t.label.font = theme.tab_font
-        t.label:set_width(1)
-        t.layout:pack_start(t.label, true,  true, 0)
-        t.layout:pack_start(t.sep,   false,  false, 0)
-        t.ebox:set_child(t.layout)
-        t.ebox:add_signal("button-release", function (e, m, b)
-            if b == 1 then
-                w.tabs:switch(pos)
-                return true
-            elseif b == 2 then
-                w:close_tab(w.tabs:atindex(pos))
-                return true
+    update_tablist = function (w, current)
+        local current = current or w.tabs:current()
+        local fg, bg = theme.tab_fg, theme.tab_bg
+        local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
+        local escape, get_title = lousy.util.escape, w.get_tab_title
+        local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
+
+        for i, view in ipairs(w.tabs:get_children()) do
+            -- Get tab number theme
+            local ntheme
+            if current == i then -- Show ssl trusted/untrusted on current tab
+                local trusted = view:ssl_trusted()
+                if trusted == false or (trusted ~= nil and not w.checking_ssl) then
+                    ntheme = bfg
+                elseif trusted then
+                    ntheme = gfg
+                end
             end
-        end)
-        return t
-    end,
+            if not ntheme and view:loading() then -- Show loading on all tabs
+                ntheme = lfg
+            end
 
-    destroy_tab_label = function (w, t)
-        if not t then t = table.remove(w.tbar.titles) end
-        -- Destroy widgets without their own windows first (I.e. labels)
-        for _, wi in ipairs{ t.label, t.sep, t.ebox, t.layout } do wi:destroy() end
-    end,
-
-    update_tab_labels = function (w, current)
-        local tb = w.tbar
-        local count, current = w.tabs:count(), current or w.tabs:current()
-        tb.ebox:hide()
-
-        -- Leave the tablist hidden if there is only one tab open
-        if count <= 1 then
-            return nil
+            tabs[i] = {
+                title = string.format(tfmt, ntheme or fg, i, escape(get_title(w, view))),
+                fg = (current == i and theme.tab_selected_fg) or fg,
+                bg = (current == i and theme.tab_selected_bg) or bg,
+            }
         end
 
-        if count ~= #tb.titles then
-            -- Grow the number of labels
-            while count > #tb.titles do
-                local t = w:make_tab_label(#tb.titles + 1)
-                tb.layout:pack_start(t.ebox, true, true,  0)
-                table.insert(tb.titles, t)
-            end
-            -- Prune number of labels
-            while count < #tb.titles do
-                w:destroy_tab_label()
-            end
-        end
-
-        if count ~= 0 then
-            for i = 1, count do
-                local view = w.tabs:atindex(i)
-                local t = tb.titles[i]
-                local title = " " ..i.. " "..w:get_tab_title(view)
-                t.label.text = lousy.util.escape(string.format("%-40s", title))
-                w:apply_tablabel_theme(t, i == current)
-            end
-        end
-        tb.ebox:show()
-    end,
-
-    -- Theme functions
-    apply_tablabel_theme = function (w, t, selected)
-        selected = (selected and "_selected") or ""
-        t.label.fg = theme[string.format("tab%s_fg", selected)]
-        t.ebox.bg = theme[string.format("tab%s_bg", selected)]
+        if #tabs < 2 then tabs, current = {}, 0 end
+        w.tablist:update(tabs, current)
     end,
 
     new_tab = function (w, arg, switch)
@@ -567,13 +593,17 @@ window.methods = {
         elseif type(arg) == "table" then view.history = arg end
         -- Update statusbar widgets
         w:update_tab_count()
-        w:update_tab_labels()
+        w:update_tablist()
         return view
     end,
 
-    undo_close_tab = function (w)
-        if #(w.closed_tabs) == 0 then return end
-        local tab = table.remove(w.closed_tabs)
+    undo_close_tab = function (w, index)
+        -- Convert negative indexes
+        if index and index < 0 then
+            index = #(w.closed_tabs) + index + 1
+        end
+        local tab = table.remove(w.closed_tabs, index)
+        if not tab then return end
         local view = w:new_tab(tab.hist)
         if tab.after then
             local i = w.tabs:indexof(tab.after)
@@ -603,7 +633,7 @@ window.methods = {
         view.uri = "about:blank"
         view:destroy()
         w:update_tab_count()
-        w:update_tab_labels()
+        w:update_tablist()
     end,
 
     close_win = function (w)
@@ -611,6 +641,12 @@ window.methods = {
         while w.tabs:count() ~= 0 do
             w:close_tab(nil, false)
         end
+
+        -- Destroy tablist
+        w.tablist:destroy()
+
+        -- Remove from window index
+        window.bywidget[w.win] = nil
 
         -- Clear window struct
         w = setmetatable(w, {})

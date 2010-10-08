@@ -4,6 +4,7 @@ bg
 cache_dir
 clear_search
 config_dir
+confpath
 count
 current
 current_size
@@ -17,6 +18,8 @@ elapsed_time
 entry
 eval_js
 eventbox
+exec
+execpath
 fg
 focus
 font
@@ -55,11 +58,12 @@ progress
 PUBLIC_SHARE
 position
 reload
+reload_bypass_cache
 remove
 reorder
 search
-selectable
 select_region
+selectable
 set_alignment
 set_child
 set_padding
@@ -97,6 +101,9 @@ VIDEOS
 webkit_major_version
 webkit_micro_version
 webkit_minor_version
+webkit_user_agent_major_version
+webkit_user_agent_minor_version
 webview
 window
 windows
+xid

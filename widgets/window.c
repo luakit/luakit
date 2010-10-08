@@ -19,6 +19,7 @@
  *
  */
 
+#include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
 
@@ -49,6 +50,10 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 
       /* push string methods */
       PS_CASE(TITLE,    gtk_window_get_title(GTK_WINDOW(w->widget)))
+
+      case L_TK_XID:
+        lua_pushnumber(L, GDK_WINDOW_XID(GTK_WIDGET(w->widget)->window));
+        return 1;
 
       default:
         break;

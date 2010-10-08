@@ -19,11 +19,6 @@
  *
  */
 
-/* TODO
- *  - In the notebook destructor function detach all child widgets
- *  - Add `get_children()` method which returns a table of the child widgets
- */
-
 #include "luah.h"
 #include "widgets/common.h"
 
@@ -196,6 +191,10 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
       PF_CASE(SET_TITLE,    luaH_notebook_set_title)
       PF_CASE(SWITCH,       luaH_notebook_switch)
       PF_CASE(REORDER,      luaH_notebook_reorder)
+
+      /* push container class methods */
+      PF_CASE(GET_CHILDREN, luaH_widget_get_children)
+
       /* push boolean properties */
       PB_CASE(SHOW_TABS,    gtk_notebook_get_show_tabs(GTK_NOTEBOOK(w->widget)))
       PB_CASE(SHOW_BORDER,  gtk_notebook_get_show_border(GTK_NOTEBOOK(w->widget)))
