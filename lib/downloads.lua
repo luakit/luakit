@@ -14,9 +14,82 @@ local setmetatable = setmetatable
 local eventbox = function() return widget{type="eventbox"} end
 local hbox     = function() return widget{type="hbox"}     end
 local label    = function() return widget{type="label"}    end
+local luakit = luakit
 
 --- Provides internal support for downloads and a download bar.
 module("downloads")
+
+--- Output file for the generated HTML page.
+html_out       = luakit.cache_dir  .. '/downloads.html'
+
+--- Template for a download.
+download_template = [==[
+<div class="download"><h1>{id} {name}</h1>
+<span>{complete}/{total} at {speed}</span>&nbsp;&nbsp;
+<a href="javascript:cancel_{id}()">Cancel</a>
+<a href="javascript:open_{id}()">Open</a>
+</div>
+]==]
+--- Template for the HTML page.
+html_template = [==[
+<html>
+<head>
+    <title>Downloads</title>
+    <style type="text/css">
+    {style}
+    </style>
+</head>
+<body>
+<div class="header">
+<a href="javascript:clear()">Clear all stopped downloads</a>
+</div>
+{downloads}
+</body>
+</html>
+]==]
+--- CSS styles for the HTML page.
+html_style = [===[
+    body {
+        font-family: monospace;
+        margin: 25px;
+        line-height: 1.5em;
+        font-size: 12pt;
+    }
+    div.download {
+        width: 100%;
+        padding: 0px;
+        margin: 0 0 25px 0;
+        clear: both;
+    }
+    span.id {
+        font-size: small;
+        color: #333333;
+        float: right;
+    }
+    .download ul {
+        padding: 0;
+        margin: 0;
+        list-style-type: none;
+    }
+    .download h1 {
+        font-size: 12pt;
+        font-weight: bold;
+        font-style: normal;
+        font-variant: small-caps;
+        padding: 0 0 5px 0;
+        margin: 0;
+        color: #333333;
+        border-bottom: 1px solid #aaa;
+    }
+    .download a:link {
+        color: #0077bb;
+        text-decoration: none;
+    }
+    .download a:hover {
+        color: #0077bb;
+        text-decoration: underline;
+    }
+]===]
 
 --- A table that contains rules for download locations.
 --    Each key in the table is a pattern, each value a directory
@@ -169,6 +242,19 @@ bar_mt = {
             bar.timer:stop()
         end
     end,
+
+    --- Dumps the HTML for the download page to the given file or
+    -- <code>html_out</code> if no file is given.
+    -- @param bar The bar to use as the source of the dump.
+    -- @param file Optional. The file to dump to.
+    -- @return The path to the file that was dumped.
+    dump_html = function(bar, file)
+        if not file then file = html_out end
+        local downloads = bar.downloads
+        local rows = {}
+        for _,t in ipairs(downloads) do
+        end
+    end
 }
 
 -- Internal helper functions, which operate on a download bar.
