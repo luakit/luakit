@@ -30,6 +30,11 @@ end
 -- Change to stop navigation sites with invalid or expired ssl certificates
 globals.ssl_strict = false
 
+window_size = {
+    width=800,
+    height=600,
+}
+
 -- Search engines
 search_engines = {
     luakit      = "http://luakit.org/search/index/luakit?q={0}",

@@ -89,6 +89,9 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
 widget_t *
 widget_window(widget_t *w)
 {
+    lua_State *L = globalconf.L;
+    int win_height, win_width;
+
     w->index = luaH_window_index;
     w->newindex = luaH_window_newindex;
     w->destructor = widget_destructor;
@@ -97,7 +100,28 @@ widget_window(widget_t *w)
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_window_set_wmclass(GTK_WINDOW(w->widget), "luakit", "luakit");
-    gtk_window_set_default_size(GTK_WINDOW(w->widget), 800, 600);
+
+    win_height = win_width = 0;
+    lua_getglobal(L, "window_size");
+    if (lua_istable(L, -1)) {
+        lua_getfield(L, -1, "width");
+        win_width = lua_tointeger(L, -1);
+        lua_getfield(L, -2, "height");
+        win_height = lua_tointeger(L, -1);
+        lua_pop(L, 2);
+    } else if (!lua_isnil(L, -1)) {
+        luaL_error(L, "Bad value: window_size should be a table");
+    }
+    lua_pop(globalconf.L, 1);
+
+    if (win_height == 0) {
+        win_height = 600;
+    }
+    if (win_width == 0) {
+        win_width = 800;
+    }
+
+    gtk_window_set_default_size(GTK_WINDOW(w->widget), win_width, win_height);
     gtk_window_set_title(GTK_WINDOW(w->widget), "luakit");
     GdkGeometry hints;
     hints.min_width = 1;
