@@ -19,6 +19,17 @@ local luakit = luakit
 --- Provides internal support for downloads and a download bar.
 module("downloads")
 
+-- Calculates a fancy name for a download to show to the user.
+local function download_basename(d)
+    local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+    return basename
+end
+
+-- Calculates the speed of a download
+local function download_speed(t)
+    return t.download.current_size - (t.data.last_size or 0)
+end
+
 --- Output file for the generated HTML page.
 html_out       = luakit.cache_dir  .. '/downloads.html'
 
@@ -248,8 +259,8 @@ methods = {
             local d = t.download
             local subs = {
                 id       = i
-                name     = bar:basename(d)
-                speed    = bar:speed(t)
+                name     = download_basename(d)
+                speed    = download_speed(t)
                 complete = d.current_size
                 total    = d.total_size
                 percent  = d.progress * 100
@@ -367,7 +378,7 @@ local download_helpers = {
         local wi = t.widget
         local dt = t.data
         local d  = t.download
-        local _,_,basename = bar:basename(d)
+        local _,_,basename = download_basename(d)
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
             bar:indicate_success(wi)
@@ -377,22 +388,11 @@ local download_helpers = {
             wi.p:hide()
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
-            local speed = bar:speed(t)
+            local speed = download_speed(t)
             dt.last_size = d.current_size
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
     end,
-
-    -- Calculates a fancy name for a download to show to the user.
-    basename = function(bar, d)
-        local _,_,basename = string.find(d.destination, ".*/([^/]*)")
-        return basename
-    end
-
-    -- Calculates the speed of a download
-    speed = function(bar, t)
-        return t.download.current_size - (t.data.last_size or 0)
-    end
 }
 
 --- Creates a download bar widget.
