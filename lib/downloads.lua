@@ -24,12 +24,13 @@ html_out       = luakit.cache_dir  .. '/downloads.html'
 
 --- Template for a download.
 download_template = [==[
-<div class="download"><h1>{id} {name}</h1>
+<div class="download {status}"><h1>{id} {name}</h1>
 <span>{complete}/{total} at {speed}</span>&nbsp;&nbsp;
 <a href="javascript:cancel_{id}()">Cancel</a>
 <a href="javascript:open_{id}()">Open</a>
 </div>
 ]==]
+
 --- Template for the HTML page.
 html_template = [==[
 <html>
@@ -47,6 +48,7 @@ html_template = [==[
 </body>
 </html>
 ]==]
+
 --- CSS styles for the HTML page.
 html_style = [===[
     body {
@@ -60,16 +62,6 @@ html_style = [===[
         padding: 0px;
         margin: 0 0 25px 0;
         clear: both;
-    }
-    span.id {
-        font-size: small;
-        color: #333333;
-        float: right;
-    }
-    .download ul {
-        padding: 0;
-        margin: 0;
-        list-style-type: none;
     }
     .download h1 {
         font-size: 12pt;
@@ -119,8 +111,8 @@ end
 --- The default directory for a new download.
 dir = "/home"
 
---- Prototype for a download bar.
-bar_mt = {
+--- Public methods
+methods = {
     --- Shows the download bar.
     --    @param bar The bar to show.
     show = function(bar) bar.ebox:show() end,
@@ -252,8 +244,29 @@ bar_mt = {
         if not file then file = html_out end
         local downloads = bar.downloads
         local rows = {}
-        for _,t in ipairs(downloads) do
+        for i,t in ipairs(downloads) do
+            local d = t.download
+            local subs = {
+                id       = i
+                name     = bar:basename(d)
+                speed    = bar:speed(t)
+                complete = d.current_size
+                total    = d.total_size
+                percent  = d.progress * 100
+                status   = d.status
+            }
+            local row = string.gsub(download_template, "{(%w+)}", subs)
+            table.insert(rows, row)
         end
+        local html_subs = {
+            style = html_style
+            downloads = table.concat(downloads, "\n")
+        }
+        local html = string.gsub(html_template, "{(%w+)}", html_subs)
+        local fh = io.open(file, "w")
+        fh:write(html)
+        io.close(fh)
+        return "file://" .. file
     end
 }
 
@@ -354,7 +367,7 @@ local download_helpers = {
         local wi = t.widget
         local dt = t.data
         local d  = t.download
-        local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+        local _,_,basename = bar:basename(d)
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
             bar:indicate_success(wi)
@@ -364,11 +377,22 @@ local download_helpers = {
             wi.p:hide()
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
-            local speed = d.current_size - (dt.last_size or 0)
+            local speed = bar:speed(t)
             dt.last_size = d.current_size
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
     end,
+
+    -- Calculates a fancy name for a download to show to the user.
+    basename = function(bar, d)
+        local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+        return basename
+    end
+
+    -- Calculates the speed of a download
+    speed = function(bar, t)
+        return t.download.current_size - (t.data.last_size or 0)
+    end
 }
 
 --- Creates a download bar widget.
@@ -390,7 +414,7 @@ function create_bar()
         timer     = timer{interval=1000},
     }
     -- Set metatable
-    local mt = { __index=bar_mt }
+    local mt = { __index=methods }
     setmetatable(bar, mt)
     -- Add internal helper functions to bar
     for k,v in pairs(download_helpers) do bar[k] = v end
