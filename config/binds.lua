@@ -386,6 +386,7 @@ binds.commands = {
                                             if n then
                                                 w.dbar:open(n)
                                             end
+                                        end),
 
     -- Quickmark add (`:qmark f http://forum1.com, forum2.com, imdb some artist`)
     cmd("qma[rk]",                      function (w, a)

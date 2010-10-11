@@ -15,13 +15,14 @@ local eventbox = function() return widget{type="eventbox"} end
 local hbox     = function() return widget{type="hbox"}     end
 local label    = function() return widget{type="label"}    end
 local luakit = luakit
+local io = io
 
 --- Provides internal support for downloads and a download bar.
 module("downloads")
 
 -- Calculates a fancy name for a download to show to the user.
 local function download_basename(d)
-    local _,_,basename = string.find(d.destination, ".*/([^/]*)")
+    local _,_,basename = string.find(d.destination, ".*/([^/]*)$")
     return basename
 end
 
@@ -278,17 +279,17 @@ methods = {
                 modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
             end
             local subs = {
-                id       = i
-                name     = download_basename(d)
-                status   = d.status
-                modeline = modeline
+                id       = i,
+                name     = download_basename(d),
+                status   = d.status,
+                modeline = modeline,
             }
             local row = string.gsub(download_template, "{(%w+)}", subs)
             table.insert(rows, row)
         end
         local html_subs = {
-            style = html_style
-            downloads = table.concat(downloads, "\n")
+            style = html_style,
+            downloads = table.concat(rows, "\n"),
         }
         local html = string.gsub(html_template, "{(%w+)}", html_subs)
 
@@ -397,7 +398,7 @@ local download_helpers = {
         local wi = t.widget
         local dt = t.data
         local d  = t.download
-        local _,_,basename = download_basename(d)
+        local basename = download_basename(d)
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
             bar:indicate_success(wi)
