@@ -76,19 +76,19 @@ html_style = [===[
         clear: both;
     }
     .download.cancelled {
-        background-color: red;
+        background-color: #ffa07a;
     }
     .download.error {
-        background-color: red;
+        background-color: #ffa07a;
     }
     .download.created {
-        background-color: white;
+        background-color: #ffffff;
     }
     .download.started {
-        background-color: white;
+        background-color: #ffffff;
     }
     .download.finished {
-        background-color: green;
+        background-color: #90ee90;
     }
     .download h1 {
         font-size: 12pt;
