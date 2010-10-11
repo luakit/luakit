@@ -164,6 +164,11 @@ binds.mode_binds = {
         buf("^ZQ$",                     function (w) w:close_win() end),
         buf("^D$",                      function (w) w:close_win() end),
 
+        -- Downloads
+        key({},          "D",           function (w)       w:enter_cmd(":download " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
+        buf("^gd$",                     function (w)       w:navigate(w.dbar:dump_html()) end),
+        buf("^gD$",                     function (w, b, m) local u = w.dbar:dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
+
         -- Bookmarking
         key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
         buf("^gb$",                     function (w)       w:navigate(bookmarks.dump_html()) end),
