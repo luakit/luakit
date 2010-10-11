@@ -36,7 +36,7 @@ html_out       = luakit.cache_dir  .. '/downloads.html'
 --- Template for a download.
 download_template = [==[
 <div class="download {status}"><h1>{id} {name}</h1>
-<span>{complete}/{total} at {speed}</span>&nbsp;&nbsp;
+<span>{modeline}</span>&nbsp;&nbsp;
 <a href="javascript:cancel_{id}()">Cancel</a>
 <a href="javascript:open_{id}()">Open</a>
 </div>
@@ -73,6 +73,21 @@ html_style = [===[
         padding: 0px;
         margin: 0 0 25px 0;
         clear: both;
+    }
+    .download.cancelled {
+        background-color: red;
+    }
+    .download.error {
+        background-color: red;
+    }
+    .download.created {
+        background-color: white;
+    }
+    .download.started {
+        background-color: white;
+    }
+    .download.finished {
+        background-color: green;
     }
     .download h1 {
         font-size: 12pt;
@@ -252,19 +267,21 @@ methods = {
     -- @param file Optional. The file to dump to.
     -- @return The path to the file that was dumped.
     dump_html = function(bar, file)
-        if not file then file = html_out end
         local downloads = bar.downloads
         local rows = {}
         for i,t in ipairs(downloads) do
             local d = t.download
+            local modeline
+            if d.status == "started" then
+                modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), download_speed(t))
+            else
+                modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
+            end
             local subs = {
                 id       = i
                 name     = download_basename(d)
-                speed    = download_speed(t)
-                complete = d.current_size
-                total    = d.total_size
-                percent  = d.progress * 100
                 status   = d.status
+                modeline = modeline
             }
             local row = string.gsub(download_template, "{(%w+)}", subs)
             table.insert(rows, row)
@@ -274,6 +291,8 @@ methods = {
             downloads = table.concat(downloads, "\n")
         }
         local html = string.gsub(html_template, "{(%w+)}", html_subs)
+
+        if not file then file = html_out end
         local fh = io.open(file, "w")
         fh:write(html)
         io.close(fh)
