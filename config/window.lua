@@ -375,7 +375,7 @@ window.methods = {
         if text and #text > 1 then
             local right = string.sub(text, pos+1)
             if string.find(right, "%w+") then
-                local crud, move = string.find(right, "%w+")
+                local _, move = string.find(right, "%w+")
                 i.position = pos + move
             end
         end
@@ -388,7 +388,7 @@ window.methods = {
         if text and #text > 1 and pos > 1 then
             local left = string.reverse(string.sub(text, 2, pos))
             if string.find(left, "%w+") then
-                local crud, move = string.find(left, "%w+")
+                local _, move = string.find(left, "%w+")
                 i.position = pos - move
             end
         end
