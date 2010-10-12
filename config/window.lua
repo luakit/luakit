@@ -560,16 +560,15 @@ window.methods = {
         for i, view in ipairs(w.tabs:get_children()) do
             -- Get tab number theme
             local ntheme
-            if current == i then -- Show ssl trusted/untrusted on current tab
+            if view:loading() then -- Show loading on all tabs
+                ntheme = lfg
+            elseif current == i then -- Show ssl trusted/untrusted on current tab
                 local trusted = view:ssl_trusted()
                 if trusted == false or (trusted ~= nil and not w.checking_ssl) then
                     ntheme = bfg
                 elseif trusted then
                     ntheme = gfg
                 end
-            end
-            if not ntheme and view:loading() then -- Show loading on all tabs
-                ntheme = lfg
             end
 
             tabs[i] = {
