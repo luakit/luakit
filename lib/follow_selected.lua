@@ -5,7 +5,7 @@
 -- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
 ------------------------------------------------------------------
 
-local follow_selected = [=[
+local return_selected = [=[
 (function() {
     var selection = window.getSelection().getRangeAt(0);
     var container = document.createElement('div');
@@ -17,14 +17,14 @@ local follow_selected = [=[
         elements = container.getElementsByTagName('a');
         for (idx in elements) {
             if (elements[idx].href) {
-                document.location.href = elements[idx].href;
+                return elements[idx].href;
             }
         }
         // Check for links which contain the selection
         container = selection.startContainer;
         while (container != document) {
             if (container.href) {
-                document.location.href = container.href;
+                return container.href;
             }
             container = container.parentNode;
         }
@@ -33,9 +33,26 @@ local follow_selected = [=[
 ]=]
 
 -- Add binding to normal mode to follow selected link
-table.insert(binds.mode_binds.normal, lousy.bind.key({}, "Return", function (w)
-    w:eval_js(follow_selected)
-    return false
-end))
-
+for _, b in ipairs({
+    lousy.bind.key({},          "Return", function (w)
+                                              uri = w:eval_js(return_selected)
+                                              if uri == "" then return end
+                                              w:navigate(uri)
+                                          end),
+    lousy.bind.key({"Control"}, "Return", function (w)
+                                              uri = w:eval_js(return_selected)
+                                              if uri == "" then return end
+                                              w:new_tab(uri, false)
+                                          end),
+    lousy.bind.key({"Shift"},   "Return", function (w)
+                                              uri = w:eval_js(return_selected)
+                                              if uri == "" then return end
+                                              window.new({uri})
+                                          end),
+    lousy.bind.key({"Mod1"},    "Return", function (w)
+                                              uri = w:eval_js(return_selected)
+                                              if uri == "" then return end
+                                              w:download(uri)
+                                          end),
+}) do table.insert(binds.mode_binds.normal, b) end
 -- vim: et:sw=4:ts=8:sts=4:tw=80
