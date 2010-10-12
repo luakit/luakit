@@ -51,6 +51,8 @@ binds.mode_binds = {
         key({},          "k",           function (w) w:scroll_vert(less)  end),
         key({},          "h",           function (w) w:scroll_horiz(less) end),
         key({},          "l",           function (w) w:scroll_horiz(more) end),
+        key({},          "^",           function (w) w:scroll_horiz("0%") end),
+        key({},          "$",           function (w) w:scroll_horiz("100%") end),
         key({"Control"}, "e",           function (w) w:scroll_vert(more)  end),
         key({"Control"}, "y",           function (w) w:scroll_vert(less)  end),
         key({"Control"}, "d",           function (w) w:scroll_page(0.5)   end),
@@ -60,10 +62,10 @@ binds.mode_binds = {
         key({},          "space",       function (w) w:scroll_page(1.0)   end),
         key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)  end),
         key({},          "BackSpace",   function (w) w:scroll_page(-1.0)  end),
-        buf("^gg$",                     function (w) w:scroll_vert("0%")  end),
 
         -- Specific scroll
-        buf("^[%%G]$",                  function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
+        buf("^gg$",                     function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 0}),
+        buf("^G$",                      function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
 
         -- Traditional scrolling commands
         key({},          "Down",        function (w) w:scroll_vert(more)   end),
