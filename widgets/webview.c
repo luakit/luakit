@@ -181,8 +181,11 @@ webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref
     JSStringRef js_name = JSStringCreateWithUTF8CString(name);
     JSValueRef js_name_val = JSValueMakeString(ctx, js_name);
     // prepare callback function
-    JSObjectRef fun = JSObjectMakeFunctionWithCallback(ctx, js_name, webview_registered_function_callback);
-    JSObjectSetPrivate(fun, ref);
+    JSClassDefinition def = kJSClassDefinitionEmpty;
+    def.callAsFunction = webview_registered_function_callback;
+    def.className = g_strdup(name);
+    JSClassRef class = JSClassCreate(&def);
+    JSObjectRef fun = JSObjectMake(ctx, class, ref);
     // prepare registration function
     JSStringRef register_script = JSStringCreateWithUTF8CString("window[arguments[0]] = arguments[1];");
     JSObjectRef register_fun = JSObjectMakeFunction(ctx, NULL, 0, NULL, register_script, NULL, 1, NULL);
