@@ -38,18 +38,45 @@ destroy_cb(GtkObject *win, widget_t *w)
 }
 
 static gint
+luaH_window_set_default_size(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gint width = (gint) luaL_checknumber(L, 2);
+    gint height = (gint) luaL_checknumber(L, 3);
+    gtk_window_set_default_size(GTK_WINDOW(w->widget), width, height);
+    return 0;
+}
+
+static gint
+luaH_window_show(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_widget_show(w->widget);
+    gdk_window_set_events(gtk_widget_get_window(w->widget), GDK_ALL_EVENTS_MASK);
+    return 0;
+}
+
+static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
       LUAKIT_WIDGET_BIN_INDEX_COMMON
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
+      /* push widget class methods */
+      PF_CASE(DESTROY, luaH_widget_destroy)
+      PF_CASE(FOCUS,   luaH_widget_focus)
+      PF_CASE(HIDE,    luaH_widget_hide)
+
+      /* push window class methods */
+      PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
+      PF_CASE(SHOW,             luaH_window_show)
+
       /* push string methods */
-      PS_CASE(TITLE,    gtk_window_get_title(GTK_WINDOW(w->widget)))
+      PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))
 
       case L_TK_XID:
         lua_pushnumber(L, GDK_WINDOW_XID(GTK_WIDGET(w->widget)->window));
@@ -89,9 +116,6 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
 widget_t *
 widget_window(widget_t *w)
 {
-    lua_State *L = globalconf.L;
-    int win_height, win_width;
-
     w->index = luaH_window_index;
     w->newindex = luaH_window_newindex;
     w->destructor = widget_destructor;
@@ -100,28 +124,7 @@ widget_window(widget_t *w)
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_window_set_wmclass(GTK_WINDOW(w->widget), "luakit", "luakit");
-
-    win_height = win_width = 0;
-    lua_getglobal(L, "window_size");
-    if (lua_istable(L, -1)) {
-        lua_getfield(L, -1, "width");
-        win_width = lua_tointeger(L, -1);
-        lua_getfield(L, -2, "height");
-        win_height = lua_tointeger(L, -1);
-        lua_pop(L, 2);
-    } else if (!lua_isnil(L, -1)) {
-        luaL_error(L, "Bad value: window_size should be a table");
-    }
-    lua_pop(globalconf.L, 1);
-
-    if (win_height == 0) {
-        win_height = 600;
-    }
-    if (win_width == 0) {
-        win_width = 800;
-    }
-
-    gtk_window_set_default_size(GTK_WINDOW(w->widget), win_width, win_height);
+    gtk_window_set_default_size(GTK_WINDOW(w->widget), 800, 600);
     gtk_window_set_title(GTK_WINDOW(w->widget), "luakit");
     GdkGeometry hints;
     hints.min_width = 1;
@@ -134,9 +137,6 @@ widget_window(widget_t *w)
       "signal::key-press-event", (GCallback)key_press_cb, w,
       "signal::remove",          (GCallback)remove_cb,    w,
       NULL);
-
-    gtk_widget_show(w->widget);
-    gdk_window_set_events(gtk_widget_get_window(w->widget), GDK_ALL_EVENTS_MASK);
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);

@@ -1,13 +1,14 @@
 -- Global variables for luakit
 globals = {
-    homepage         = "http://luakit.org/",
- -- homepage         = "http://github.com/mason-larobina/luakit",
-    scroll_step      = 40,
-    zoom_step        = 0.1,
-    max_cmd_history  = 100,
-    max_srch_history = 100,
- -- http_proxy       = "http://example.com:3128",
-    download_dir     = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads"),
+    homepage            = "http://luakit.org/",
+ -- homepage            = "http://github.com/mason-larobina/luakit",
+    scroll_step         = 40,
+    zoom_step           = 0.1,
+    max_cmd_history     = 100,
+    max_srch_history    = 100,
+ -- http_proxy          = "http://example.com:3128",
+    download_dir        = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads"),
+    default_window_size = "800x600",
 }
 
 -- Make useragent
@@ -29,11 +30,6 @@ end
 
 -- Change to stop navigation sites with invalid or expired ssl certificates
 globals.ssl_strict = false
-
-window_size = {
-    width=800,
-    height=600,
-}
 
 -- Search engines
 search_engines = {

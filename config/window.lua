@@ -217,6 +217,15 @@ window.init_funcs = {
             [i.input]    = theme.input_ibar_font,
         }) do wi.font = v end
     end,
+
+    set_default_size = function (w)
+        local size = globals.default_window_size or "800x600"
+        if string.match(size, "^%d+x%d+$") then
+            w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
+        else
+            print(string.format("E: window.lua: invalid window size: %q", size))
+        end
+    end,
 }
 
 -- Helper functions which operate on the window widgets or structure.
@@ -708,6 +717,9 @@ function window.new(uris)
 
     -- Set initial mode
     w:set_mode()
+
+    -- Show window
+    w.win:show()
 
     return w
 end
