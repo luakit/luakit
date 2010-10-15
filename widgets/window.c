@@ -38,18 +38,45 @@ destroy_cb(GtkObject *win, widget_t *w)
 }
 
 static gint
+luaH_window_set_default_size(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gint width = (gint) luaL_checknumber(L, 2);
+    gint height = (gint) luaL_checknumber(L, 3);
+    gtk_window_set_default_size(GTK_WINDOW(w->widget), width, height);
+    return 0;
+}
+
+static gint
+luaH_window_show(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_widget_show(w->widget);
+    gdk_window_set_events(gtk_widget_get_window(w->widget), GDK_ALL_EVENTS_MASK);
+    return 0;
+}
+
+static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
       LUAKIT_WIDGET_BIN_INDEX_COMMON
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
+      /* push widget class methods */
+      PF_CASE(DESTROY, luaH_widget_destroy)
+      PF_CASE(FOCUS,   luaH_widget_focus)
+      PF_CASE(HIDE,    luaH_widget_hide)
+
+      /* push window class methods */
+      PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
+      PF_CASE(SHOW,             luaH_window_show)
+
       /* push string methods */
-      PS_CASE(TITLE,    gtk_window_get_title(GTK_WINDOW(w->widget)))
+      PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))
 
       case L_TK_XID:
         lua_pushnumber(L, GDK_WINDOW_XID(GTK_WIDGET(w->widget)->window));
@@ -110,9 +137,6 @@ widget_window(widget_t *w)
       "signal::key-press-event", (GCallback)key_press_cb, w,
       "signal::remove",          (GCallback)remove_cb,    w,
       NULL);
-
-    gtk_widget_show(w->widget);
-    gdk_window_set_events(gtk_widget_get_window(w->widget), GDK_ALL_EVENTS_MASK);
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);
