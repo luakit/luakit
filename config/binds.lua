@@ -166,7 +166,11 @@ binds.mode_binds = {
 
         -- Downloads
         key({},          "D",           function (w)       w:enter_cmd(":download " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-        buf("^gd$",                     function (w)       w:navigate(w.dbar:dump_html()) end),
+        buf("^gd$",                     function (w)
+                                            local uri = w.dbar:dump_html()
+                                            local view = w:navigate(uri)
+                                            w.dbar:register_functions(view, uri)
+                                        end),
         buf("^gD$",                     function (w, b, m) local u = w.dbar:dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
 
         -- Bookmarking
@@ -462,6 +466,7 @@ binds.helper_methods = {
         if not view then view = w:get_current() end
         if view then
             view.uri = uri
+            return view
         else
             return w:new_tab(uri)
         end

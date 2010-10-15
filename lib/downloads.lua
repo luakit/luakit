@@ -54,7 +54,7 @@ html_template = [==[
 </head>
 <body>
 <div class="header">
-<a href="javascript:clear()">Clear all stopped downloads</a>
+<a href="javascript:clear();refresh()">Clear all stopped downloads</a>
 </div>
 {downloads}
 </body>
@@ -298,7 +298,32 @@ methods = {
         fh:write(html)
         io.close(fh)
         return "file://" .. file
-    end
+    end,
+
+    --- Registers JS functions with the webview as soon as it's finished loading
+    -- in order to provide some interactivity.
+    -- @param bar The bar to use as the target of the functions' actions.
+    -- @param view The view to register the functions in.
+    -- @param uri The URI of the download page (so functions only get registered
+    --            on that page).
+    register_functions = function(bar, view, uri)
+        -- small hack to achieve a one time signal
+        local sig = {}
+        sig.fun = function (v, status)
+            view:remove_signal("load-status", sig.fun)
+            if status ~= "committed" or view.uri ~= uri then return end
+            view:register_function("clear", function()
+                bar:clear_done()
+            end)
+            view:register_function("refresh", function()
+                local uri = bar:dump_html()
+                view.uri = uri
+                bar:register_functions(view, uri)
+            end)
+            view:eval_js("setTimeout(refresh, 1000)", "(downloadbar)")
+        end
+        view:add_signal("load-status", sig.fun)
+    end,
 }
 
 -- Internal helper functions, which operate on a download bar.
