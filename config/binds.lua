@@ -166,8 +166,8 @@ binds.mode_binds = {
 
         -- Downloads
         key({},          "D",           function (w)       w:enter_cmd(":download " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-        buf("^gd$",                     function (w)       w:navigate("chrome://downloads") end),
-        buf("^gD$",                     function (w, b, m) for i=1,m.count do w:new_tab("chrome://downloads") end end, {count=1}),
+        buf("^gd$",                     function (w)       w:navigate(downloads.chrome_page) end),
+        buf("^gD$",                     function (w, b, m) for i=1,m.count do w:new_tab(downloads.chrome_page) end end, {count=1}),
 
         -- Bookmarking
         key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),

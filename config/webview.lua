@@ -29,9 +29,9 @@ webview.init_funcs = {
     -- Intercept chrome:// pages
     chrome = function(view, w)
         view:add_signal("navigation-request", function(view, uri)
-            local chrome = string.match(uri, "^chrome://(.*)/?")
+            local chrome = string.match(uri, "^chrome://([^/]*)/?$")
             if chrome == "downloads" then
-                w.dbar:chrome(view)
+                w.dbar:show_chrome(view)
                 return false
             else
                 return true

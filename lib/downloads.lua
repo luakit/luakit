@@ -31,8 +31,8 @@ local function download_speed(t)
     return t.download.current_size - (t.data.last_size or 0)
 end
 
---- Output file for the generated HTML page.
-html_out       = luakit.cache_dir  .. '/downloads.html'
+--- The URI of the chrome page
+chrome_page = "chrome://downloads/"
 
 --- Template for a download.
 download_template = [==[
@@ -297,9 +297,9 @@ methods = {
     --- Shows the chrome page in the given view
     -- @param bar The bar to use as data for the page.
     -- @param view The view to show the page in.
-    chrome = function(bar, view)
+    show_chrome = function(bar, view)
         local html = bar:dump_html()
-        local uri = "chrome://downloads/"
+        local uri = chrome_page
         view:load_string(html, uri)
         bar:register_functions(view, uri)
     end,
