@@ -291,21 +291,16 @@ methods = {
             style = html_style,
             downloads = table.concat(rows, "\n"),
         }
-        local html = string.gsub(html_template, "{(%w+)}", html_subs)
-
-        if not file then file = html_out end
-        local fh = io.open(file, "w")
-        fh:write(html)
-        io.close(fh)
-        return "file://" .. file
+        return string.gsub(html_template, "{(%w+)}", html_subs)
     end,
 
     --- Shows the chrome page in the given view
     -- @param bar The bar to use as data for the page.
     -- @param view The view to show the page in.
     chrome = function(bar, view)
-        local uri = bar:dump_html()
-        view.uri = uri
+        local html = bar:dump_html()
+        local uri = "chrome://downloads/"
+        view:load_string(html, uri)
         bar:register_functions(view, uri)
     end,
 
