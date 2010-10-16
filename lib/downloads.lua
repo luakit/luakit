@@ -300,6 +300,15 @@ methods = {
         return "file://" .. file
     end,
 
+    --- Shows the chrome page in the given view
+    -- @param bar The bar to use as data for the page.
+    -- @param view The view to show the page in.
+    chrome = function(bar, view)
+        local uri = bar:dump_html()
+        view.uri = uri
+        bar:register_functions(view, uri)
+    end,
+
     --- Registers JS functions with the webview as soon as it's finished loading
     -- in order to provide some interactivity.
     -- @param bar The bar to use as the target of the functions' actions.
@@ -312,14 +321,8 @@ methods = {
         sig.fun = function (v, status)
             view:remove_signal("load-status", sig.fun)
             if status ~= "committed" or view.uri ~= uri then return end
-            view:register_function("clear", function()
-                bar:clear_done()
-            end)
-            view:register_function("refresh", function()
-                local uri = bar:dump_html()
-                view.uri = uri
-                bar:register_functions(view, uri)
-            end)
+            view:register_function("clear", function() bar:clear_done() end)
+            view:register_function("refresh", function() bar:chrome(view) end)
             view:eval_js("setTimeout(refresh, 1000)", "(downloadbar)")
         end
         view:add_signal("load-status", sig.fun)
