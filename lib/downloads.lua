@@ -317,7 +317,7 @@ methods = {
             view:remove_signal("load-status", sig.fun)
             if status ~= "committed" or view.uri ~= uri then return end
             view:register_function("clear", function() bar:clear_done() end)
-            view:register_function("refresh", function() bar:chrome(view) end)
+            view:register_function("refresh", function() bar:show_chrome(view) end)
             view:eval_js("setTimeout(refresh, 1000)", "(downloadbar)")
         end
         view:add_signal("load-status", sig.fun)
