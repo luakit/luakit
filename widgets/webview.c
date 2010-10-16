@@ -277,6 +277,17 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
 }
 
 static gint
+luaH_webview_load_string(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    const char *string = luaL_checkstring(L, 2);
+    const char *base_uri = luaL_checkstring(L, 3);
+    webkit_web_view_load_string(view, string, "text/html", "utf8", base_uri);
+    return 0;
+}
+
+static gint
 luaH_webview_register_function(lua_State *L)
 {
     WebKitWebFrame *frame = NULL;
@@ -1091,6 +1102,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       /* push misc webview methods */
       PF_CASE(EVAL_JS,              luaH_webview_eval_js)
       PF_CASE(REGISTER_FUNCTION,    luaH_webview_register_function)
+      PF_CASE(LOAD_STRING,          luaH_webview_load_string)
       PF_CASE(LOADING,              luaH_webview_loading)
       PF_CASE(RELOAD,               luaH_webview_reload)
       PF_CASE(RELOAD_BYPASS_CACHE,  luaH_webview_reload_bypass_cache)
