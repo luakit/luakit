@@ -37,6 +37,7 @@ typedef struct
     const char *uri;
     const char *destination;
     bool error;
+    int last_size;
 } download_t;
 
 static lua_class_t download_class;
@@ -76,6 +77,7 @@ luaH_download_new(lua_State *L)
     download_t *download = luaH_checkudata(L, -1, &download_class);
     download->ref = NULL;
     download->error = false;
+    download->last_size = 0;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
     return 1;
@@ -206,6 +208,16 @@ luaH_download_set_uri(lua_State *L, download_t *download)
 
 LUA_OBJECT_EXPORT_PROPERTY(download, download_t, uri, lua_pushstring)
 
+static int
+luaH_download_set_last_size(lua_State *L, download_t *download)
+{
+    int last_size = luaL_checkinteger(L, -1);
+    download->last_size = last_size;
+    return 0;
+}
+
+LUA_OBJECT_EXPORT_PROPERTY(download, download_t, last_size, lua_pushinteger)
+
 static void
 download_check_prerequesites(download_t *download)
 {
@@ -319,6 +331,10 @@ download_class_setup(lua_State *L)
                             (lua_class_propfunc_t) luaH_download_set_uri,
                             (lua_class_propfunc_t) luaH_download_get_uri,
                             (lua_class_propfunc_t) luaH_download_set_uri);
+    luaH_class_add_property(&download_class, L_TK_LAST_SIZE,
+                            (lua_class_propfunc_t) luaH_download_set_last_size,
+                            (lua_class_propfunc_t) luaH_download_get_last_size,
+                            (lua_class_propfunc_t) luaH_download_set_last_size);
 }
 
 // vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80

@@ -11,6 +11,7 @@ local download = download
 local dialog = dialog
 local theme = lousy.theme
 local setmetatable = setmetatable
+local getmetatable = getmetatable
 local eventbox = function() return widget{type="eventbox"} end
 local hbox     = function() return widget{type="hbox"}     end
 local label    = function() return widget{type="label"}    end
@@ -21,14 +22,14 @@ local io = io
 module("downloads")
 
 -- Calculates a fancy name for a download to show to the user.
-local function download_basename(d)
+getmetatable(downloads).basename = function (d)
     local _,_,basename = string.find(d.destination, ".*/([^/]*)$")
     return basename or d.destination or "no fileame"
 end
 
 -- Calculates the speed of a download.
-local function download_speed(d)
-    return d.current_size - (d.last_size or 0)
+getmetatable(downloads).speed = function (d)
+    return d.current_size - d.last_size
 end
 
 --- The URI of the chrome page
@@ -223,13 +224,13 @@ function html()
     for i,d in ipairs(downloads) do
         local modeline
         if d.status == "started" then
-            modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), download_speed(d))
+            modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), d:speed())
         else
             modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
         end
         local subs = {
             id       = i,
-            name     = download_basename(d),
+            name     = d:basename(),
             status   = d.status,
             modeline = modeline,
         }
@@ -337,7 +338,6 @@ bar_methods = {
             f = label(),
             sep = label(),
             index = i,
-            last_size = 0,
         }
         wi.f.text = "✗"
         wi.f:hide()
@@ -379,7 +379,7 @@ bar_methods = {
     update_download_widget = function(bar, wi)
         local i = wi.index
         local d = get(i)
-        local basename = download_basename(d)
+        local basename = d:basename()
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
             bar:indicate_success(wi)
@@ -389,8 +389,8 @@ bar_methods = {
             wi.p:hide()
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
-            local speed = download_speed(d)
-            dt.last_size = d.current_size
+            local speed = d:speed()
+            d.last_size = d.current_size
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
     end,
