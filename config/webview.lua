@@ -29,7 +29,7 @@ webview.init_funcs = {
     -- Intercept chrome:// pages
     chrome = function(view, w)
         -- prevents endless loop, since show_chrome calls load_string with the
-        -- same URI as base URI
+        -- same URI as its base URI
         view.loading_chrome = false
         view:add_signal("navigation-request", function(view, uri)
             if view.loading_chrome then return true end
