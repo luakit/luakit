@@ -22,13 +22,13 @@ local io = io
 module("downloads")
 
 -- Calculates a fancy name for a download to show to the user.
-getmetatable(downloads).basename = function (d)
+getmetatable(download).basename = function (d)
     local _,_,basename = string.find(d.destination, ".*/([^/]*)$")
     return basename or d.destination or "no fileame"
 end
 
 -- Calculates the speed of a download.
-getmetatable(downloads).speed = function (d)
+getmetatable(download).speed = function (d)
     return d.current_size - d.last_size
 end
 
