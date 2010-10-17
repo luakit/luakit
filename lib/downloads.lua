@@ -26,9 +26,9 @@ local function download_basename(d)
     return basename or d.destination or "no fileame"
 end
 
--- Calculates the speed of a download
-local function download_speed(t)
-    return t.download.current_size - (t.data.last_size or 0)
+-- Calculates the speed of a download.
+local function download_speed(d)
+    return d.current_size - (d.last_size or 0)
 end
 
 --- The URI of the chrome page
@@ -111,245 +111,205 @@ html_style = [===[
 ]===]
 
 --- A table that contains rules for download locations.
---    Each key in the table is a pattern, each value a directory
---    in the local filesystem. If the pattern of a newly added
---    download matches one of the rules, it will be automatically
---    downloaded to that folder.
+-- Each key in the table is a pattern, each value a directory
+-- in the local filesystem. If the pattern of a newly added
+-- download matches one of the rules, it will be automatically
+-- downloaded to that folder.
 rules = {}
 
 --- Used to open a download when clicked on.
---    The default implementation just displays an error message.
---    @param f The path to the file to open.
---    @param mt The inferred mime type of the file.
---    @param wi The download widget associated with the file.
-open_file = function(f, mt, wi)
-    if wi then
-        local te = wi.text
-        wi.text = "Can't open"
-        local t = timer{interval=2000}
-        t:add_signal("timeout", function(t)
-            wi.text = te
-            t:stop()
-        end)
-        t:start()
-    end
+-- The default implementation just displays an error message.
+-- @param f The path to the file to open.
+-- @param mt The inferred mime type of the file.
+-- @param w A window in which to show notifications, if necessary.
+open_file = function(f, mt, w)
+    w:error(string.format("Can't open " .. f)
 end
 
 --- The default directory for a new download.
 dir = "/home"
 
---- Public methods
-methods = {
+-- The list of active downloads.
+local downloads = {}
+
+-- The list of all download bars.
+local bars = {}
+
+-- Refreshes all download bars.
+local function refresh_all()
+    for _,bar in ipairs(bars) do
+        bar:refresh()
+        if #downloads == 0 then bar:hide() end
+    end
+    if #downloads == 0 then timer:stop() end
+end
+
+-- The global refresh timer.
+local refresh_timer = timer{interval=1000}
+refresh_timer:add_signal("timeout", refresh_all)
+
+--- Adds a download to the download bar.
+-- Tries to apply one of the <code>rules</code>. If that fails,
+-- asks the user to choose a location with a save dialog.
+-- @param bar The bar to modify.
+-- @param uri The uri to add.
+-- @param win The window to display the dialog over.
+function add(uri)
+    local d = download{uri=uri}
+    local file
+
+    -- ask da rulez
+    for p,dir in pairs(rules) do
+        if string.match(uri, p) then
+            file = string.format("%s/%s", dir, d.suggested_filename)
+        end
+    end
+
+    -- if no rule matched, ask the user
+    file = file or dialog.save("Save file", win, dir, d.suggested_filename)
+
+    -- if the user didn't abort or a rule matched: download the file
+    if file then
+        d.destination = file
+        d:start()
+        table.insert(downloads, d)
+        if not refresh_timer.started then refresh_timer:start() end
+        refresh_all()
+    end
+end
+
+--- Removes the given download from all download bars and cancels it if necessary.
+-- Hides the bars if all downloads were removed.
+-- @param i The index of the download to remove.
+function delete(i)
+    local d = table.remove(downloads, i)
+    if d.status == "started" then d:cancel() end
+    refresh_all()
+end
+
+--- Removes all finished, cancelled or aborted downloads from all downlod bars.
+-- Hides the bars if all downloads were removed.
+function clear()
+    local function iter()
+        for i,d in ipairs(downloads) do
+            if d.status ~= "created" and d.status ~= "started" then
+                return i
+            end
+        end
+    end
+    for i in iter() do table.remove(downloads, i) end
+    refresh_all()
+end
+
+--- Opens the download at the given index after completion.
+-- @param i The index of the download to open.
+-- @param w A window to show notifications in, if necessary.
+function open(i, w)
+    local d = downloads[i]
+    local t = timer{interval=1000}
+    t:add_signal("timeout", function(t)
+        if d.status == "finished" then
+            t:stop()
+            open_file(d.destination, d.mime_type, w)
+        end
+    end)
+    ti:start()
+end
+
+--- Compiles the HTML for the download page.
+-- @return The HTML to render.
+function html()
+    local rows = {}
+    for i,d in ipairs(downloads) do
+        local modeline
+        if d.status == "started" then
+            modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), download_speed(d))
+        else
+            modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
+        end
+        local subs = {
+            id       = i,
+            name     = download_basename(d),
+            status   = d.status,
+            modeline = modeline,
+        }
+        local row = string.gsub(download_template, "{(%w+)}", subs)
+        table.insert(rows, row)
+    end
+    local html_subs = {
+        style = html_style,
+        downloads = table.concat(rows, "\n"),
+    }
+    return string.gsub(html_template, "{(%w+)}", html_subs)
+end
+
+--- Shows the chrome page in the given view.
+-- @param view The view to show the page in.
+function show_chrome(view)
+    view:load_string(html(), chrome_page)
+    register_functions(view)
+end
+
+--- Registers JS functions with the webview as soon as it's finished loading
+-- in order to provide some interactivity.
+-- @param view The view to register the functions in.
+function register_functions(view)
+    -- small hack to achieve a one time signal
+    local sig = {}
+    sig.fun = function (v, status)
+        view:remove_signal("load-status", sig.fun)
+        if status ~= "committed" or view.uri ~= chrome_page then return end
+        view:register_function("clear", clear)
+        view:register_function("refresh", function() show_chrome(view) end)
+        view:eval_js("setTimeout(refresh, 1000)", "downloads.lua")
+    end
+    view:add_signal("load-status", sig.fun)
+end
+
+--- Methods for download bars.
+bar_methods = {
     --- Shows the download bar.
-    --    @param bar The bar to show.
+    -- @param bar The bar to show.
     show = function(bar) bar.ebox:show() end,
 
     --- Hides the download bar.
-    --    @param bar The bar to hide.
+    -- @param bar The bar to hide.
     hide = function(bar) bar.ebox:hide() end,
 
-    --- Removes the given download from the download bar and cancels it if
-    --    necessary.
-    --    Hides the bar if all downloads were removed.
-    --    @param bar The bar to modify.
-    --    @param d The download to remove.
-    remove_download = function(bar, d)
-        for i,t in ipairs(bar.downloads) do
-            if t.download == d then
-                bar.layout:remove(t.widget.e)
-                local wi = t.widget
-                for _,w in ipairs{ wi.sep, wi.l, wi.s, wi.f, wi.p, wi.h, wi.e } do w:destroy() end
-                table.remove(bar.downloads, i)
-                if d.status == "started" then d:cancel() end
-                break
-            end
-        end
-        if #bar.downloads == 0 then bar.ebox:hide() end
-    end,
-
-    --- Removes the download at the given index.
-    --    Hides the bar if all downloads were removed.
-    --    @param bar The bar to modify.
-    --    @param i The index of the download to remove.
-    remove = function(bar, i)
-        local t = bar.downloads[i]
-        if t then bar:remove_download(t.download) end
-    end,
-
-    --- Removes all finished, cancelled or aborted downloads from a downlod bar.
-    --    Hides the bar if all downloads were removed.
-    --    @param bar The bar to modify.
-    clear_done = function(bar)
-        for i,t in pairs(util.table.clone(bar.downloads)) do
-            local d = t.download
-            if d.status ~= "created" and d.status ~= "started" then
-                bar:remove_download(d)
-            end
-        end
-    end,
-
-    --- Opens the given download after completion.
-    --    @param bar The download bar
-    --    @param t The table of the download to open
-    open_download = function(bar, t)
-        local ti = timer{interval=1000}
-        ti:add_signal("timeout", function(ti)
-            local d  = t.download
-            if d.status == "finished" then
-                ti:stop()
-                open_file(d.destination, d.mime_type, t.widget.l)
-            end
-        end)
-        ti:start()
-    end,
-
-    --- Opens the download at the given index after completion.
-    --    @param bar The download bar
-    --    @param i The index of the download to open
-    open = function(bar, i)
-        local t = bar.downloads[i]
-        if t then bar:open_download(t) end
-    end,
-
-    --- Adds a download to the download bar.
-    --    Tries to apply one of the <code>rules</code>. If that fails,
-    --    asks the user to choose a location with a save dialog.
-    --    @param bar The bar to modify.
-    --    @param uri The uri to add.
-    --    @param win The window to display the dialog over.
-    download = function(bar, uri, win)
-        local d = download{uri=uri}
-        local file
-
-        -- ask da rulez
-        for p,dir in pairs(rules) do
-            if string.match(uri, p) then
-                file = string.format("%s/%s", dir, d.suggested_filename)
-            end
-        end
-
-        -- if no rule matched, ask the user
-        file = file or dialog.save("Save file", win, dir, d.suggested_filename)
-
-        -- if the user didn't abort or a rule matched: download the file
-        if file then
-            d.destination = file
-            d:start()
-            local t = bar:add_download_widget(d)
-            table.insert(bar.downloads, t)
-            bar:show()
-            -- start refresh timer
-            if not bar.timer.started then bar.timer:start() end
-        end
-    end,
-
     --- Updates the widgets in the download bar.
-    --    Stops the refresh timer when all downloads are stopped.
-    --    @param bar The bar to refresh.
+    -- Stops the refresh timer when all downloads are stopped.
+    -- @param bar The bar to refresh.
     refresh = function(bar)
-        local all_finished = true
+        bar:clear()
         -- update
-        for i,t in ipairs(bar.downloads) do
-            local d = t.download
-            bar:update_download_widget(t, i)
-            if d.status == "created" or d.status == "started" then
-                all_finished = false
-            end
-        end
-        -- stop timer if everyone finished
-        if all_finished then
-            bar.timer:stop()
+        for i,d in ipairs(bar.downloads) do
+            bar:add_download_widget(i, d)
         end
     end,
 
-    --- Dumps the HTML for the download page to the given file or
-    -- <code>html_out</code> if no file is given.
-    -- @param bar The bar to use as the source of the dump.
-    -- @param file Optional. The file to dump to.
-    -- @return The path to the file that was dumped.
-    dump_html = function(bar, file)
-        local downloads = bar.downloads
-        local rows = {}
-        for i,t in ipairs(downloads) do
-            local d = t.download
-            local modeline
-            if d.status == "started" then
-                modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), download_speed(t))
-            else
-                modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
-            end
-            local subs = {
-                id       = i,
-                name     = download_basename(d),
-                status   = d.status,
-                modeline = modeline,
-            }
-            local row = string.gsub(download_template, "{(%w+)}", subs)
-            table.insert(rows, row)
-        end
-        local html_subs = {
-            style = html_style,
-            downloads = table.concat(rows, "\n"),
-        }
-        return string.gsub(html_template, "{(%w+)}", html_subs)
-    end,
-
-    --- Shows the chrome page in the given view
-    -- @param bar The bar to use as data for the page.
-    -- @param view The view to show the page in.
-    show_chrome = function(bar, view)
-        local html = bar:dump_html()
-        local uri = chrome_page
-        view:load_string(html, uri)
-        bar:register_functions(view, uri)
-    end,
-
-    --- Registers JS functions with the webview as soon as it's finished loading
-    -- in order to provide some interactivity.
-    -- @param bar The bar to use as the target of the functions' actions.
-    -- @param view The view to register the functions in.
-    -- @param uri The URI of the download page (so functions only get registered
-    --            on that page).
-    register_functions = function(bar, view, uri)
-        -- small hack to achieve a one time signal
-        local sig = {}
-        sig.fun = function (v, status)
-            view:remove_signal("load-status", sig.fun)
-            if status ~= "committed" or view.uri ~= uri then return end
-            view:register_function("clear", function() bar:clear_done() end)
-            view:register_function("refresh", function() bar:show_chrome(view) end)
-            view:eval_js("setTimeout(refresh, 1000)", "(downloadbar)")
-        end
-        view:add_signal("load-status", sig.fun)
-    end,
-}
-
--- Internal helper functions, which operate on a download bar.
-local download_helpers = {
     -- Adds signals to the download bar.
     attach_signals = function(bar)
         bar.clear.ebox:add_signal("button-release", function(e, m, b)
-            if b == 1 then bar:clear_done() end
+            if b == 1 then clear() end
         end)
     end,
 
     -- Adds signals to a download widget.
-    attach_download_widget_signals = function(bar, t)
-        t.widget.e:add_signal("button-release", function(e, m, b)
+    attach_download_widget_signals = function(bar, wi)
+        wi.e:add_signal("button-release", function(e, m, b)
+            local i  = wi.index
             if b == 1 then
                 -- open file
-                bar:open_download(t)
+                open(i, bar.win)
             elseif b == 3 then
                 -- remove download
-                local d  = t.download
-                bar:remove_download(d)
+                delete(i)
             end
         end)
     end,
 
     --- Applies the theme to a download bar widget.
-    apply_widget_theme = function(bar, t)
-        local wi = t.widget
+    apply_widget_theme = function(bar, wi)
         local theme = theme.get()
         for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
             w.font = theme.dbar_font
@@ -367,8 +327,8 @@ local download_helpers = {
     end,
 
     -- Creates and connects all widget components for a download widget.
-    assemble_download_widget = function(bar, t)
-        t.widget = {
+    assemble_download_widget = function(bar, i)
+        local wi = {
             e = eventbox(),
             h = hbox(),
             l = label(),
@@ -376,8 +336,9 @@ local download_helpers = {
             s = label(),
             f = label(),
             sep = label(),
+            index = i,
+            last_size = 0,
         }
-        local wi = t.widget
         wi.f.text = "✗"
         wi.f:hide()
         wi.s.text = "✔"
@@ -389,19 +350,17 @@ local download_helpers = {
         wi.h:pack_start(wi.l, true,  true,  0)
         wi.h:pack_end(wi.sep, false, false, 0)
         wi.e:set_child(wi.h)
-        bar:apply_widget_theme(t)
-        bar:update_download_widget(t, #bar.downloads + 1)
+        bar:apply_widget_theme(wi)
+        bar:update_download_widget(wi)
+        return wi
     end,
 
     -- Adds a new label to the download bar and registers signals for it.
-    add_download_widget = function(bar, d)
-        local dt = {last_size=0}
-        local t  = {download=d, data=dt, widget=nil}
-        bar:assemble_download_widget(t)
-        local wi = t.widget
+    add_download_widget = function(bar, i)
+        local wi = bar:assemble_download_widget(i)
         bar.layout:pack_start(wi.e, true, true, 0)
-        bar:attach_download_widget_signals(t)
-        return t
+        bar:attach_download_widget_signals(wi)
+        return wi
     end,
 
     -- Changes colors and widgets to indicate a download success.
@@ -417,10 +376,9 @@ local download_helpers = {
     end,
 
     -- Updates the text of the given download widget for the given download.
-    update_download_widget = function(bar, t, i)
-        local wi = t.widget
-        local dt = t.data
-        local d  = t.download
+    update_download_widget = function(bar, wi)
+        local i = wi.index
+        local d = get(i)
         local basename = download_basename(d)
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
@@ -431,7 +389,7 @@ local download_helpers = {
             wi.p:hide()
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
-            local speed = download_speed(t)
+            local speed = download_speed(d)
             dt.last_size = d.current_size
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
@@ -439,12 +397,12 @@ local download_helpers = {
 }
 
 --- Creates a download bar widget.
---    To add the bar to a window, pack <code>bar.ebox</code>.
---    @return A download bar.
---    @field ebox The main eventbox of the bar.
---    @field clear The clear button of the bar.
---    @field timer A timer used for checking the status of the downloads.
---    @field downloads An array of all displayed downloads.
+-- To add the bar to a window, pack <code>bar.ebox</code>.
+-- @return A download bar.
+-- @field ebox The main eventbox of the bar.
+-- @field clear The clear button of the bar.
+-- @field timer A timer used for checking the status of the downloads.
+-- @field downloads An array of all displayed downloads.
 function create_bar()
     local bar = {
         layout    = hbox(),
@@ -453,14 +411,11 @@ function create_bar()
             ebox  = eventbox(),
             label = label(),
         },
-        downloads = {},
-        timer     = timer{interval=1000},
+        widgets   = {},
     }
     -- Set metatable
-    local mt = { __index=methods }
+    local mt = { __index=bar_methods }
     setmetatable(bar, mt)
-    -- Add internal helper functions to bar
-    for k,v in pairs(download_helpers) do bar[k] = v end
     -- Setup signals
     bar:attach_signals()
     -- Pack bar
@@ -471,8 +426,6 @@ function create_bar()
     bar.layout:pack_end(c.ebox, false, false, 0)
     c.ebox:set_child(c.label)
     c.label.text = "clear"
-    -- Setup timer
-    bar.timer:add_signal("timeout", function() bar:refresh() end)
     return bar
 end
 
