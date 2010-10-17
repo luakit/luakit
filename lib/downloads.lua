@@ -134,6 +134,9 @@ dir = "/home"
 --- The list of active downloads.
 downloads = {}
 
+-- The global refresh timer.
+local refresh_timer = timer{interval=1000}
+
 -- Refreshes all download bars.
 local function refresh_all()
     for _,w in pairs(window.bywidget) do
@@ -141,11 +144,9 @@ local function refresh_all()
         bar:refresh()
         if #downloads == 0 then bar:hide() end
     end
-    if #downloads == 0 then timer:stop() end
+    if #downloads == 0 then refresh_timer:stop() end
 end
 
--- The global refresh timer.
-local refresh_timer = timer{interval=1000}
 refresh_timer:add_signal("timeout", refresh_all)
 
 --- Adds a download to the download bar.
@@ -299,7 +300,8 @@ bar_methods = {
         local wi = bar:assemble_download_widget(i)
         bar.layout:pack_start(wi.e, true, true, 0)
         bar:attach_download_widget_signals(wi)
-        return wi
+        table.insert(bar.widgets, wi)
+        bar:show()
     end,
 
     -- Creates and connects all widget components for a download widget.
