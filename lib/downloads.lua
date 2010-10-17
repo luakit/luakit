@@ -33,6 +33,11 @@ download.speed = function (d)
     return d.current_size - d.last_size
 end
 
+-- Checks whether the download is in created or started state.
+download.is_running = function (d)
+    return d.status == "created" or d.status == "started"
+end
+
 --- The URI of the chrome page
 chrome_page = "chrome://downloads/"
 
@@ -184,7 +189,7 @@ end
 -- @param i The index of the download to remove.
 function delete(i)
     local d = table.remove(downloads, i)
-    if d.status == "started" then d:cancel() end
+    if download.is_running(d) then d:cancel() end
     refresh_all()
 end
 
@@ -193,9 +198,7 @@ end
 function clear()
     local function iter()
         for i,d in ipairs(downloads) do
-            if d.status ~= "created" and d.status ~= "started" then
-                return i
-            end
+            if not download.is_running(d) then return i end
         end
     end
     for i in iter do table.remove(downloads, i) end
@@ -336,12 +339,20 @@ bar_methods = {
     attach_download_widget_signals = function (bar, wi)
         wi.e:add_signal("button-release", function (e, m, b)
             local i  = wi.index
+            local d = downloads[i]
             if b == 1 then
-                -- open file
-                open(i, bar.win)
+                if download.is_running(d) or d.status == "finished" then
+                    open(i, bar.win)
+                else
+                    delete(i)
+                    add(d.uri)
+                end
             elseif b == 3 then
-                -- remove download
-                delete(i)
+                if download.is_running(d) then
+                    d:cancel()
+                else
+                    delete(i)
+                end
             end
         end)
     end,
