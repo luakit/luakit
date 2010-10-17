@@ -83,7 +83,7 @@ html_style = [===[
         clear: both;
     }
     .download.cancelled {
-        background-color: #ffa07a;
+        background-color: #ffffff;
     }
     .download.error {
         background-color: #ffa07a;
