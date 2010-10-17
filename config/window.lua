@@ -2,10 +2,10 @@
 -- Window class --
 ------------------
 
-require "downloads"
-
 -- Window class table
 window = {}
+
+require "downloads"
 
 -- List of active windows by window widget
 window.bywidget = setmetatable({}, { __mode = "k" })

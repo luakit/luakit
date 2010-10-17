@@ -2,21 +2,22 @@ require("lousy")
 
 local print = print
 local table = table
-local util = lousy.util
 local string = string
+local io = io
 local pairs = pairs
 local ipairs = ipairs
+local setmetatable = setmetatable
+local getmetatable = getmetatable
+local eventbox = function () return widget{type="eventbox"} end
+local hbox     = function () return widget{type="hbox"}     end
+local label    = function () return widget{type="label"}    end
+local luakit = luakit
+local window = window
 local timer = timer
 local download = download
 local dialog = dialog
+local util = lousy.util
 local theme = lousy.theme
-local setmetatable = setmetatable
-local getmetatable = getmetatable
-local eventbox = function() return widget{type="eventbox"} end
-local hbox     = function() return widget{type="hbox"}     end
-local label    = function() return widget{type="label"}    end
-local luakit = luakit
-local io = io
 
 --- Provides internal support for downloads and a download bar.
 module("downloads")
@@ -123,15 +124,15 @@ rules = {}
 -- @param f The path to the file to open.
 -- @param mt The inferred mime type of the file.
 -- @param w A window in which to show notifications, if necessary.
-open_file = function(f, mt, w)
+open_file = function (f, mt, w)
     w:error(string.format("Can't open " .. f))
 end
 
 --- The default directory for a new download.
 dir = "/home"
 
--- The list of active downloads.
-local downloads = {}
+--- The list of active downloads.
+downloads = {}
 
 -- Refreshes all download bars.
 local function refresh_all()
@@ -196,7 +197,7 @@ function clear()
             end
         end
     end
-    for i in iter() do table.remove(downloads, i) end
+    for i in iter do table.remove(downloads, i) end
     refresh_all()
 end
 
@@ -206,7 +207,7 @@ end
 function open(i, w)
     local d = downloads[i]
     local t = timer{interval=1000}
-    t:add_signal("timeout", function(t)
+    t:add_signal("timeout", function (t)
         if d.status == "finished" then
             t:stop()
             open_file(d.destination, d.mime_type, w)
@@ -246,20 +247,13 @@ end
 -- @param view The view to show the page in.
 function show_chrome(view)
     view:load_string(html(), chrome_page)
-    register_functions(view)
-end
-
---- Registers JS functions with the webview as soon as it's finished loading
--- in order to provide some interactivity.
--- @param view The view to register the functions in.
-function register_functions(view)
     -- small hack to achieve a one time signal
     local sig = {}
     sig.fun = function (v, status)
         view:remove_signal("load-status", sig.fun)
         if status ~= "committed" or view.uri ~= chrome_page then return end
         view:register_function("clear", clear)
-        view:register_function("refresh", function() show_chrome(view) end)
+        view:register_function("refresh", function () show_chrome(view) end)
         view:eval_js("setTimeout(refresh, 1000)", "downloads.lua")
     end
     view:add_signal("load-status", sig.fun)
@@ -269,64 +263,47 @@ end
 bar_methods = {
     --- Shows the download bar.
     -- @param bar The bar to show.
-    show = function(bar) bar.ebox:show() end,
+    show = function (bar) bar.ebox:show() end,
 
     --- Hides the download bar.
     -- @param bar The bar to hide.
-    hide = function(bar) bar.ebox:hide() end,
+    hide = function (bar) bar.ebox:hide() end,
 
     --- Updates the widgets in the download bar.
-    -- Stops the refresh timer when all downloads are stopped.
     -- @param bar The bar to refresh.
-    refresh = function(bar)
-        bar:clear()
-        -- update
-        for i,d in ipairs(bar.downloads) do
-            bar:add_download_widget(i, d)
+    refresh = function (bar)
+        for _,wi in ipairs(bar.widgets) do
+            bar:destroy_download_widget(wi)
+        end
+        bar.widgets = {}
+        for i,_ in ipairs(downloads) do
+            bar:add_download_widget(i)
         end
     end,
 
     -- Adds signals to the download bar.
-    attach_signals = function(bar)
-        bar.clear.ebox:add_signal("button-release", function(e, m, b)
+    attach_signals = function (bar)
+        bar.clear.ebox:add_signal("button-release", function (e, m, b)
             if b == 1 then clear() end
         end)
     end,
 
-    -- Adds signals to a download widget.
-    attach_download_widget_signals = function(bar, wi)
-        wi.e:add_signal("button-release", function(e, m, b)
-            local i  = wi.index
-            if b == 1 then
-                -- open file
-                open(i, bar.win)
-            elseif b == 3 then
-                -- remove download
-                delete(i)
-            end
-        end)
+    -- Removes and destroys a download widget.
+    destroy_download_widget = function (bar, wi)
+        bar.layout:remove(wi.e)
+        wi.e:destroy()
     end,
 
-    --- Applies the theme to a download bar widget.
-    apply_widget_theme = function(bar, wi)
-        local theme = theme.get()
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
-            w.font = theme.dbar_font
-        end
-        local fg = theme.dbar_fg
-        for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
-            w.fg = fg
-        end
-        wi.p.fg = theme.dbar_loaded_fg
-        wi.s.fg = theme.dbar_success_fg
-        wi.f.fg = theme.dbar_error_fg
-        for _,w in pairs({wi.e, wi.h}) do
-            w.bg = theme.dbar_bg
-        end
+    -- Adds a new label to the download bar and registers signals for it.
+    add_download_widget = function (bar, i)
+        local wi = bar:assemble_download_widget(i)
+        bar.layout:pack_start(wi.e, true, true, 0)
+        bar:attach_download_widget_signals(wi)
+        return wi
     end,
 
     -- Creates and connects all widget components for a download widget.
-    assemble_download_widget = function(bar, i)
+    assemble_download_widget = function (bar, i)
         local wi = {
             e = eventbox(),
             h = hbox(),
@@ -353,28 +330,40 @@ bar_methods = {
         return wi
     end,
 
-    -- Adds a new label to the download bar and registers signals for it.
-    add_download_widget = function(bar, i)
-        local wi = bar:assemble_download_widget(i)
-        bar.layout:pack_start(wi.e, true, true, 0)
-        bar:attach_download_widget_signals(wi)
-        return wi
+    -- Adds signals to a download widget.
+    attach_download_widget_signals = function (bar, wi)
+        wi.e:add_signal("button-release", function (e, m, b)
+            local i  = wi.index
+            if b == 1 then
+                -- open file
+                open(i, bar.win)
+            elseif b == 3 then
+                -- remove download
+                delete(i)
+            end
+        end)
     end,
 
-    -- Changes colors and widgets to indicate a download success.
-    indicate_success = function(bar, wi)
-        wi.p:hide()
-        wi.s:show()
-    end,
-
-    -- Changes colors and widgets to indicate a download failure.
-    indicate_failure = function(bar, wi)
-        wi.p:hide()
-        wi.f:show()
+    --- Applies the theme to a download bar widget.
+    apply_widget_theme = function (bar, wi)
+        local theme = theme.get()
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.p, wi.f, wi.s, wi.sep}) do
+            w.font = theme.dbar_font
+        end
+        local fg = theme.dbar_fg
+        for _,w in pairs({wi.e, wi.h, wi.l, wi.sep}) do
+            w.fg = fg
+        end
+        wi.p.fg = theme.dbar_loaded_fg
+        wi.s.fg = theme.dbar_success_fg
+        wi.f.fg = theme.dbar_error_fg
+        for _,w in pairs({wi.e, wi.h}) do
+            w.bg = theme.dbar_bg
+        end
     end,
 
     -- Updates the text of the given download widget for the given download.
-    update_download_widget = function(bar, wi)
+    update_download_widget = function (bar, wi)
         local i = wi.index
         local d = get(i)
         local basename = d:basename()
@@ -392,6 +381,18 @@ bar_methods = {
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
     end,
+
+    -- Changes colors and widgets to indicate a download success.
+    indicate_success = function (bar, wi)
+        wi.p:hide()
+        wi.s:show()
+    end,
+
+    -- Changes colors and widgets to indicate a download failure.
+    indicate_failure = function (bar, wi)
+        wi.p:hide()
+        wi.f:show()
+    end,
 }
 
 --- Creates a download bar widget.
@@ -399,8 +400,6 @@ bar_methods = {
 -- @return A download bar.
 -- @field ebox The main eventbox of the bar.
 -- @field clear The clear button of the bar.
--- @field timer A timer used for checking the status of the downloads.
--- @field downloads An array of all displayed downloads.
 function create_bar()
     local bar = {
         layout    = hbox(),
