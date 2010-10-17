@@ -365,7 +365,7 @@ bar_methods = {
     -- Updates the text of the given download widget for the given download.
     update_download_widget = function (bar, wi)
         local i = wi.index
-        local d = get(i)
+        local d = downloads[i]
         local basename = d:basename()
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
