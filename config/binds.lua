@@ -378,7 +378,7 @@ binds.commands = {
     cmd("bookdel",                      function (w, a) bookmarks.del(tonumber(a)) end),
 
     -- Download commands
-    cmd("down[load]",                   function (w, a) w:download(a) end),
+    cmd("down[load]",                   function (w, a) downloads.add(a) end),
     cmd("dd[elete]",                    function (w, a)
                                             local n = tonumber(a)
                                             if n then

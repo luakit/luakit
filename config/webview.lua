@@ -31,7 +31,7 @@ webview.init_funcs = {
         view:add_signal("navigation-request", function(view, uri)
             local chrome = string.match(uri, "^chrome://([^/]*)/?$")
             if chrome == "downloads" then
-                w.dbar:show_chrome(view)
+                downloads.show_chrome(view)
                 return false
             else
                 return true
@@ -195,7 +195,7 @@ webview.init_funcs = {
         -- 'link' contains the download link
         -- 'filename' contains the suggested filename (from server or webkit)
         view:add_signal("download-request", function (v, link, filename)
-            w:download(link, w.window)
+            downloads.add(link)
         end)
     end,
 

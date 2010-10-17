@@ -447,7 +447,7 @@ mode_binds.normal = join(mode_binds.normal or {}, {
     buf("^;Y$", function (w,b,m) w:start_follow("desc",   "yank desc",  function (desc) w:set_selection(desc) return "root-active" end) end),
 
     -- Download uri
-    buf("^;s$", function (w,b,m) w:start_follow("uri",    "download",   function (uri)  w:download(uri)       return "root-active" end) end),
+    buf("^;s$", function (w,b,m) w:start_follow("uri",    "download",   function (uri)  downloads.add(uri)    return "root-active" end) end),
 
     -- Open image src
     buf("^;i$", function (w,b,m) w:start_follow("image",  "open image", function (src)  w:navigate(src)       return "root-active" end) end),

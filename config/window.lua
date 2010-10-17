@@ -26,7 +26,7 @@ function window.build()
         ebox   = eventbox(),
         layout = vbox(),
         tabs   = notebook(),
-        dbar = downloads.create_bar(theme),
+        dbar   = downloads.create_bar(),
         -- Tablist widget
         tablist = lousy.widget.tablist(),
         -- Status bar widgets
@@ -212,7 +212,7 @@ window.init_funcs = {
             [i.ebox]     = theme.ibar_bg,
             [i.input]    = theme.input_ibar_bg,
             [d.ebox]       = theme.dbar_bg,
-            [d.clear.ebox] = theme.dbar_bg,
+            [d.clear.ebox] = theme.clear_dbar_bg,
         }) do wi.bg = v end
 
         -- Set fonts
@@ -547,9 +547,6 @@ window.methods = {
         w.buffer = nil
         w:update_buf()
     end,
-
-    -- Small wrapper to ease the use of the download bar
-    download = function (w, link) w.dbar:download(link) end,
 
     update_tablist = function (w, current)
         local current = current or w.tabs:current()

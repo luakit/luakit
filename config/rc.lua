@@ -54,7 +54,7 @@ downloads.rules = {
  -- to download everything without asking:
  -- [".*"               ] = downloads.dir
 }
-downloads.warn_file = downloads.open_file
+local old_open_file = downloads.open_file
 downloads.open_file = function (f, m, wi)
     local mime_types = {
         ["^text/"        ] = "gvim",
@@ -80,7 +80,7 @@ downloads.open_file = function (f, m, wi)
         end
     end
 
-    downloads.warn_file(f, m, wi)
+    old_open_file(f, m, wi)
 end
 
 -- Restore last saved session
