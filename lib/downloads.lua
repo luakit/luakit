@@ -124,7 +124,7 @@ rules = {}
 -- @param mt The inferred mime type of the file.
 -- @param w A window in which to show notifications, if necessary.
 open_file = function(f, mt, w)
-    w:error(string.format("Can't open " .. f)
+    w:error(string.format("Can't open " .. f))
 end
 
 --- The default directory for a new download.
