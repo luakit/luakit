@@ -133,12 +133,10 @@ dir = "/home"
 -- The list of active downloads.
 local downloads = {}
 
--- The list of all download bars.
-local bars = {}
-
 -- Refreshes all download bars.
 local function refresh_all()
-    for _,bar in ipairs(bars) do
+    for _,w in pairs(window.bywidget) do
+        local bar = w.dbar
         bar:refresh()
         if #downloads == 0 then bar:hide() end
     end
