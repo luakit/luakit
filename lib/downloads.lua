@@ -23,13 +23,13 @@ local theme = lousy.theme
 module("downloads")
 
 -- Calculates a fancy name for a download to show to the user.
-getmetatable(download).basename = function (d)
+download.basename = function (d)
     local _,_,basename = string.find(d.destination, ".*/([^/]*)$")
     return basename or d.destination or "no fileame"
 end
 
 -- Calculates the speed of a download.
-getmetatable(download).speed = function (d)
+download.speed = function (d)
     return d.current_size - d.last_size
 end
 
@@ -223,13 +223,13 @@ function html()
     for i,d in ipairs(downloads) do
         local modeline
         if d.status == "started" then
-            modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), d:speed())
+            modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), download.speed(d))
         else
             modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
         end
         local subs = {
             id       = i,
-            name     = d:basename(),
+            name     = download.basename(d),
             status   = d.status,
             modeline = modeline,
         }
@@ -366,7 +366,7 @@ bar_methods = {
     update_download_widget = function (bar, wi)
         local i = wi.index
         local d = downloads[i]
-        local basename = d:basename()
+        local basename = download.basename(d)
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
             bar:indicate_success(wi)
@@ -376,7 +376,7 @@ bar_methods = {
             wi.p:hide()
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
-            local speed = d:speed()
+            local speed = download.speed(d)
             d.last_size = d.current_size
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
