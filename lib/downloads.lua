@@ -254,10 +254,12 @@ function show_chrome(view)
     -- small hack to achieve a one time signal
     local sig = {}
     sig.fun = function (v, status)
+        if true then return end
         view:remove_signal("load-status", sig.fun)
         if status ~= "committed" or view.uri ~= chrome_page then return end
         view:register_function("clear", clear)
-        view:register_function("refresh", function () show_chrome(view) end)
+        --view:register_function("refresh", function () show_chrome(view) end)
+        view:register_function("refresh", function () view:eval_js(string.format('document.write("%q")', html())) end)
         view:eval_js("setTimeout(refresh, 1000)", "downloads.lua")
     end
     view:add_signal("load-status", sig.fun)

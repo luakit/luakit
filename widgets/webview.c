@@ -1114,6 +1114,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       /* push string properties */
       PS_CASE(HOVERED_URI, g_object_get_data(G_OBJECT(view), "hovered-uri"))
+      /* push bool properties */
+      PB_CASE(LOADING_CHROME, GPOINTER_TO_INT(g_object_get_data(G_OBJECT(view), "loading-chrome")))
 
       case L_TK_URI:
         tmp.c = g_object_get_data(G_OBJECT(view), "uri");
@@ -1164,6 +1166,11 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_LOADING_CHROME:
+        tmp.b = lua_toboolean(L, 3);
+        g_object_set_data(G_OBJECT(view), "loading-chrome", GINT_TO_POINTER(tmp.b));
+        return 0;
+
       case L_TK_URI:
         tmp.c = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(WEBKIT_WEB_VIEW(view), tmp.c);
