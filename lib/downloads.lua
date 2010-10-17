@@ -45,8 +45,9 @@ chrome_page = "chrome://downloads/"
 download_template = [==[
 <div class="download {status}"><h1>{id} {name}</h1>
 <span>{modeline}</span>&nbsp;&nbsp;
-<a href="javascript:cancel_{id}()">Cancel</a>
-<a href="javascript:open_{id}()">Open</a>
+<a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
+<a class="restart" href="javascript:restart_{id}()">Restart</a>
+<a class="open" href="javascript:open_{id}()">Open</a>
 </div>
 ]==]
 
@@ -114,6 +115,14 @@ html_style = [===[
     .download a:hover {
         color: #0077bb;
         text-decoration: underline;
+    }
+    .download.finished  a.restart,
+    .download.finished  a.cancel,
+    .download.error     a.cancel,
+    .download.cancelled a.cancel,
+    .download.cancelled a.open,
+    .download.error     a.open {
+        display:none
     }
 ]===]
 
