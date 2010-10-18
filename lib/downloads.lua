@@ -45,10 +45,10 @@ chrome_page = "chrome://downloads/"
 download_template = [==[
 <div class="download {status}"><h1>{id} {name}</h1>
 <span>{modeline}</span>&nbsp;&nbsp;
-<a class="cancel" href="javascript:cancel_{id}();refresh()">Cancel</a>
-<a class="delete" href="javascript:delete_{id}();refresh()">Delete</a>
-<a class="restart" href="javascript:restart_{id}();refresh()">Restart</a>
-<a class="open" href="javascript:open_{id}();refresh()">Open</a>
+<a class="cancel" href="javascript:cancel_{id}();location.reload()">Cancel</a>
+<a class="delete" href="javascript:delete_{id}();location.reload()">Delete</a>
+<a class="restart" href="javascript:restart_{id}();location.reload()">Restart</a>
+<a class="open" href="javascript:open_{id}();location.reload()">Open</a>
 </div>
 ]==]
 
@@ -63,7 +63,7 @@ html_template = [==[
 </head>
 <body>
 <div class="header">
-<a href="javascript:clear();refresh()">Clear all stopped downloads</a>
+<a href="javascript:clear();location.reload()">Clear all stopped downloads</a>
 </div>
 {downloads}
 </body>
@@ -278,14 +278,13 @@ function show_chrome(view)
         view:remove_signal("load-status", sig.fun)
         if status ~= "committed" or view.uri ~= chrome_page then return end
         view:register_function("clear", clear)
-        view:register_function("refresh", function() show_chrome(view) end)
         for i,_ in ipairs(downloads) do
             view:register_function(string.format("cancel_%i",  i), function() downloads[i]:cancel() end)
             view:register_function(string.format("open_%i",    i), function() open(i) end)
             view:register_function(string.format("restart_%i", i), function() restart(i) end)
             view:register_function(string.format("delete_%i",  i), function() delete(i) end)
         end
-        view:eval_js("setTimeout(refresh, 1000)", "downloads.lua")
+        view:eval_js("setTimeout('location.reload()', 1000)", "downloads.lua")
     end
     view:add_signal("load-status", sig.fun)
 end
