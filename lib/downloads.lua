@@ -24,8 +24,8 @@ module("downloads")
 
 -- Calculates a fancy name for a download to show to the user.
 download.basename = function (d)
-    local _,_,basename = string.find(d.destination, ".*/([^/]*)$")
-    return basename or d.destination or "no fileame"
+    local _,_,basename = string.find(d.destination or "", ".*/([^/]*)$")
+    return basename or "no filename"
 end
 
 -- Calculates the speed of a download.
