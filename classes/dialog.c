@@ -94,4 +94,4 @@ dialog_lib_setup(lua_State *L)
     luaH_openlib(L, "dialog", dialog_methods, dialog_meta);
 }
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:encoding=utf-8:textwidth=80
+// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
