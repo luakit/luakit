@@ -39,16 +39,18 @@ download.is_running = function (d)
 end
 
 --- The URI of the chrome page
-chrome_page = "chrome://downloads/"
+chrome_page          = "chrome://downloads/"
+-- The pattern which identifies the chrome page
+local chrome_pattern = "chrome://downloads/?"
 
 --- Template for a download.
 download_template = [==[
 <div class="download {status}"><h1>{id} {name}</h1>
 <span>{modeline}</span>&nbsp;&nbsp;
-<a class="cancel" href="javascript:cancel_{id}();location.reload()">Cancel</a>
-<a class="delete" href="javascript:delete_{id}();location.reload()">Delete</a>
-<a class="restart" href="javascript:restart_{id}();location.reload()">Restart</a>
-<a class="open" href="javascript:open_{id}();location.reload()">Open</a>
+<a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
+<a class="delete" href="javascript:delete_{id}()">Delete</a>
+<a class="restart" href="javascript:restart_{id}()">Restart</a>
+<a class="open" href="javascript:open_{id}()">Open</a>
 </div>
 ]==]
 
@@ -63,9 +65,11 @@ html_template = [==[
 </head>
 <body>
 <div class="header">
-<a href="javascript:clear();location.reload()">Clear all stopped downloads</a>
+<a href="javascript:clear()">Clear all stopped downloads</a>
 </div>
+<div id="downloads">
 {downloads}
+</div>
 </body>
 </html>
 ]==]
@@ -109,6 +113,9 @@ html_style = [===[
         color: #333333;
         border-bottom: 1px solid #aaa;
     }
+    .download a {
+        margin-left: 10px;
+    }
     .download a:link {
         color: #0077bb;
         text-decoration: none;
@@ -128,6 +135,39 @@ html_style = [===[
         display:none
     }
 ]===]
+
+-- Compiles the HTML for the downlods, but not the HTML structure around them.
+-- Used to refresh the page
+local function inner_html()
+    local rows = {}
+    for i,d in ipairs(downloads) do
+        local modeline
+        if d.status == "started" then
+            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
+        else
+            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
+        end
+        local subs = {
+            id       = i,
+            name     = download.basename(d),
+            status   = d.status,
+            modeline = modeline,
+        }
+        local row = string.gsub(download_template, "{(%w+)}", subs)
+        table.insert(rows, row)
+    end
+    return table.concat(rows, "\n")
+end
+
+--- Compiles the HTML for the download page.
+-- @return The HTML to render.
+function html()
+    local html_subs = {
+        style = html_style,
+        downloads = inner_html(),
+    }
+    return string.gsub(html_template, "{(%w+)}", html_subs)
+end
 
 --- A table that contains rules for download locations.
 -- Each key in the table is a pattern, each value a directory
@@ -157,10 +197,21 @@ local refresh_timer = timer{interval=1000}
 -- Refreshes all download bars.
 local function refresh_all()
     for _,w in pairs(window.bywidget) do
+        -- refresh bars
         local bar = w.dbar
         bar:refresh()
         if #downloads == 0 then bar:hide() end
+        -- refresh views
+        local view = w:get_current()
+        if string.match(view.uri, chrome_pattern) then
+            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
+        end
+        -- reset download speeds
+        for _,d in ipairs(downloads) do
+            d.last_size = d.current_size
+        end
     end
+    -- stop timer if necessary
     if #downloads == 0 then refresh_timer:stop() end
 end
 
@@ -242,33 +293,6 @@ function open(i, w)
     ti:start()
 end
 
---- Compiles the HTML for the download page.
--- @return The HTML to render.
-function html()
-    local rows = {}
-    for i,d in ipairs(downloads) do
-        local modeline
-        if d.status == "started" then
-            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.2f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
-        else
-            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
-        end
-        local subs = {
-            id       = i,
-            name     = download.basename(d),
-            status   = d.status,
-            modeline = modeline,
-        }
-        local row = string.gsub(download_template, "{(%w+)}", subs)
-        table.insert(rows, row)
-    end
-    local html_subs = {
-        style = html_style,
-        downloads = table.concat(rows, "\n"),
-    }
-    return string.gsub(html_template, "{(%w+)}", html_subs)
-end
-
 --- Shows the chrome page in the given view.
 -- @param view The view to show the page in.
 function show_chrome(view)
@@ -277,7 +301,7 @@ function show_chrome(view)
     local sig = {}
     sig.fun = function (v, status)
         view:remove_signal("load-status", sig.fun)
-        if status ~= "committed" or view.uri ~= chrome_page then return end
+        if status ~= "committed" or not string.match(view.uri, chrome_pattern) then return end
         view:register_function("clear", clear)
         for i,_ in ipairs(downloads) do
             view:register_function(string.format("cancel_%i",  i), function() downloads[i]:cancel() end)
@@ -285,7 +309,6 @@ function show_chrome(view)
             view:register_function(string.format("restart_%i", i), function() restart(i) end)
             view:register_function(string.format("delete_%i",  i), function() delete(i) end)
         end
-        view:eval_js("setTimeout('location.reload()', 1000)", "downloads.lua")
     end
     view:add_signal("load-status", sig.fun)
 end
@@ -416,7 +439,6 @@ bar_methods = {
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
             local speed = download.speed(d)
-            d.last_size = d.current_size
             wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
         end
     end,
