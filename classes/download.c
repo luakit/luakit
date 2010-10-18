@@ -66,7 +66,7 @@ static int
 luaH_download_gc(lua_State *L)
 {
     download_t *download = luaH_checkudata(L, 1, &download_class);
-    g_free(download->webkit_download);
+    g_object_unref(G_OBJECT(download->webkit_download));
     return 0;
 }
 
@@ -80,6 +80,7 @@ luaH_download_new(lua_State *L)
     download->last_size = 0;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
+    g_object_ref(G_OBJECT(download->webkit_download));
     return 1;
 }
 
@@ -278,7 +279,6 @@ download_class_setup(lua_State *L)
     {
         LUA_CLASS_METHODS(download)
         { "__call", luaH_download_new },
-        { "__gc", luaH_download_gc },
         { NULL, NULL }
     };
 
@@ -288,6 +288,7 @@ download_class_setup(lua_State *L)
             LUA_CLASS_META
             { "start", luaH_download_start },
             { "cancel", luaH_download_cancel },
+            { "__gc", luaH_download_gc },
             { NULL, NULL },
     };
 
