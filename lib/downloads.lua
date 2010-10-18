@@ -172,6 +172,7 @@ refresh_timer:add_signal("timeout", refresh_all)
 -- @param bar The bar to modify.
 -- @param uri The uri to add.
 -- @param win The window to display the dialog over.
+-- @return <code>true</code> if a download was started
 function add(uri)
     local d = download{uri=uri}
     local file
@@ -193,6 +194,7 @@ function add(uri)
         table.insert(downloads, d)
         if not refresh_timer.started then refresh_timer:start() end
         refresh_all()
+        return true
     end
 end
 
@@ -210,8 +212,7 @@ end
 function restart(i)
     local d = downloads[i]
     if not d then return end
-    delete(i)
-    add(d.uri)
+    if add(d.uri) then delete(i) end
 end
 
 --- Removes all finished, cancelled or aborted downloads from all downlod bars.
