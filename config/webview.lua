@@ -30,16 +30,12 @@ webview.init_funcs = {
     chrome = function(view, w)
         -- prevents endless loop, since show_chrome calls load_string with the
         -- same URI as its base URI
-        view.loading_chrome = false
         view:add_signal("navigation-request", function(view, uri)
-            if view.loading_chrome then return true end
             local chrome = string.match(uri, "^chrome://([^/]*)/?$")
             if chrome then
-                view.loading_chrome = true
                 if chrome == "downloads" then
                     downloads.show_chrome(view)
                 end
-                view.loading_chrome = false
                 return false
             else
                 return true
