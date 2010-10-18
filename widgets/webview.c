@@ -149,13 +149,11 @@ webview_init_properties() {
 }
 
 static JSValueRef
-webview_registered_function_callback(JSContextRef ctx, JSObjectRef fun, JSObjectRef thisObject,
+webview_registered_function_callback(JSContextRef context, JSObjectRef fun, JSObjectRef thisObject,
         size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
-    (void) ctx;
     (void) thisObject;
     (void) argumentCount;
     (void) arguments;
-    (void) exception;
 
     lua_State *L = globalconf.L;
     gpointer ref = JSObjectGetPrivate(fun);
@@ -168,32 +166,29 @@ webview_registered_function_callback(JSContextRef ctx, JSObjectRef fun, JSObject
         const char *exn_cstring = luaL_checkstring(L, -1);
         lua_pop(L, 1);
         JSStringRef exn_js_string = JSStringCreateWithUTF8CString(exn_cstring);
-        JSValueRef exn_js_value = JSValueMakeString(ctx, exn_js_string);
-        *exception = JSValueToObject(ctx, exn_js_value, NULL);
+        JSValueRef exn_js_value = JSValueMakeString(context, exn_js_string);
+        *exception = JSValueToObject(context, exn_js_value, NULL);
         JSStringRelease(exn_js_string);
     }
-    return JSValueMakeUndefined(ctx);
+    return JSValueMakeUndefined(context);
 }
 
 static void
 webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref) {
-    JSGlobalContextRef ctx = webkit_web_frame_get_global_context(frame);
+    JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
     JSStringRef js_name = JSStringCreateWithUTF8CString(name);
-    JSValueRef js_name_val = JSValueMakeString(ctx, js_name);
     // prepare callback function
     JSClassDefinition def = kJSClassDefinitionEmpty;
     def.callAsFunction = webview_registered_function_callback;
     def.className = g_strdup(name);
     JSClassRef class = JSClassCreate(&def);
-    JSObjectRef fun = JSObjectMake(ctx, class, ref);
-    // prepare registration function
-    JSStringRef register_script = JSStringCreateWithUTF8CString("window[arguments[0]] = arguments[1];");
-    JSObjectRef register_fun = JSObjectMakeFunction(ctx, NULL, 0, NULL, register_script, NULL, 1, NULL);
-    // call registration function
-    JSValueRef args[] = { js_name_val, fun };
-    JSObjectCallAsFunction(ctx, register_fun, NULL, 2, args, NULL);
+    JSObjectRef fun = JSObjectMake(context, class, ref);
+    // register with global object
+    JSObjectRef global = JSContextGetGlobalObject(context);
+    JSObjectSetProperty(context, global, js_name, fun, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly, NULL);
+    // release strings
     JSStringRelease(js_name);
-    JSStringRelease(register_script);
+    JSClassRelease(class);
 }
 
 static const gchar*
