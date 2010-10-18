@@ -142,7 +142,7 @@ rules = {}
 -- @param mt The inferred mime type of the file.
 -- @param w A window in which to show notifications, if necessary.
 open_file = function (f, mt, w)
-    w:error(string.format("Can't open " .. f))
+    w:error("Can't open " .. f)
 end
 
 --- The default directory for a new download.
@@ -248,9 +248,9 @@ function html()
     for i,d in ipairs(downloads) do
         local modeline
         if d.status == "started" then
-            modeline = string.format("%i/%i (%i%%) at %.2f", d.current_size, d.total_size, (d.progress * 100), download.speed(d))
+            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.2f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
         else
-            modeline = string.format("%i/%i (%i%%)", d.current_size, d.total_size, (d.progress * 100))
+            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
         end
         local subs = {
             id       = i,
