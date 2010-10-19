@@ -361,8 +361,25 @@ binds.commands = {
     cmd("back",                         function (w, a) w:back(tonumber(a) or 1) end),
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
-    cmd("q[uit]",                       function (w)    w:close_win() end),
-    cmd({"wq", "writequit"},            function (w)    w:save_session() w:close_win() end),
+    cmd("q[uit]",                       function (w)
+                                            if #downloads.downloads ~= 0 and #luakit.windows == 1 then
+                                                w:error("Can't close last window since downloads are still running. " ..
+                                                        "Use :q! to quit anyway.")
+                                            else
+                                                w:close_win()
+                                            end
+                                        end),
+    cmd({"quit!", "q!"},                function (w)    w:close_win() end),
+    cmd({"wq", "writequit"},            function (w)
+                                            if #downloads.downloads ~= 0 and #luakit.windows == 1 then
+                                                w:error("Can't close last window since downloads are still running. " ..
+                                                        "Use :wq! to quit anyway.")
+                                            else
+                                                w:save_session()
+                                                w:close_win()
+                                            end
+                                        end),
+    cmd({"wq!", "writequit!"},          function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
     cmd("reloadconf",                   function (w)    w:reload_config() end),
