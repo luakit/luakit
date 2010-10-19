@@ -227,9 +227,11 @@ binds.mode_binds = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
         key({},          "Tab",         function (w)
                                             local i = w.ibar.input
+                                            local text = i.text
                                             -- Only complete commands, not args
-                                            if string.match(i.text, "%s") then return end
-                                            local prefix = "^" .. string.sub(i.text, 2)
+                                            if string.match(text, "%s") then return end
+                                            w.comp_text = text
+                                            local prefix = "^" .. string.sub(text, 2)
                                             local cmpl = {{"Commands", title=true}}
                                             -- Get suitable commands
                                             for _, b in ipairs(binds.commands) do
@@ -243,7 +245,6 @@ binds.mode_binds = {
                                             if #cmpl > 1 then
                                                 w:set_mode("cmdcomp")
                                                 w.menu:build(cmpl)
-                                                w:notify("Use j/k to move.", false)
                                             end
                                         end),
         key({"Control"}, "w",           function (w) w:del_word() end),
@@ -387,14 +388,22 @@ binds.mode_binds = {
     }),
 
     cmdcomp = menu_mode({
+        -- Navigate items
+        key({},          "Down",        function (w) w.menu:move_down() end),
+        key({},          "Up",          function (w) w.menu:move_up()   end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
         -- Complete command
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
                                             if row and row.cmd then
                                                 w:enter_cmd(":" .. row.cmd .. " ")
                                             else
-                                                w:set_mode("command")
+                                                w:enter_cmd(w.ibar.input.text)
                                             end
+                                        end),
+        key({},          "Escape",      function (w)
+                                            w:enter_cmd(w.ibar.input.text)
                                         end),
     }),
 
