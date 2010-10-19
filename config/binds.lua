@@ -225,7 +225,16 @@ binds.mode_binds = {
 
     command = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
-        key({},          "Tab",         function (w) w:cmd_completion() end),
+        key({},          "Tab",         function (w)
+                                            w:set_mode("cmdcomp")
+                                            local cmpl = {{"Commands", title=true}}
+                                            -- Get suitable commands
+                                            for _, b in ipairs(binds.commands) do
+                                                table.insert(cmpl, {table.concat(b.cmds, ", "), cmd = b.cmds[1]})
+                                            end
+                                            w.menu:build(cmpl)
+                                            w:notify("Use j/k to move.", false)
+                                        end),
         key({"Control"}, "w",           function (w) w:del_word() end),
         key({"Control"}, "u",           function (w) w:del_line() end),
         key({"Control"}, "a",           function (w) w:beg_line() end),
@@ -369,11 +378,11 @@ binds.mode_binds = {
     cmdcomp = menu_mode({
         -- Complete command
         key({},          "Return",      function (w)
-                                            local cmd = w.menu:get()
-                                            if cmd then
-                                                w:enter_cmd(cmd .. " ")
+                                            local row = w.menu:get()
+                                            if row and row.cmd then
+                                                w:enter_cmd(":" .. row.cmd .. " ")
                                             else
-                                                w:set_mode()
+                                                w:set_mode("command")
                                             end
                                         end),
     }),

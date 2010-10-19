@@ -219,3 +219,9 @@ new_mode("undolist", {
         w.menu:hide()
     end,
 })
+
+new_mode("cmdcomp", {
+    leave = function (w)
+        w.menu:hide()
+    end,
+})
