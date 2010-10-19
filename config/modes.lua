@@ -221,6 +221,28 @@ new_mode("undolist", {
 })
 
 new_mode("cmdcomp", {
+    enter = function (w)
+        local i = w.ibar.input
+        local text = i.text
+        w.comp_text = text
+        local prefix = "^" .. string.sub(text, 2)
+        local cmpl = {{"Commands", title=true}}
+        -- Get suitable commands
+        for _, b in ipairs(binds.commands) do
+            for _, c in ipairs(b.cmds) do
+                if string.match(c, prefix) then
+                    table.insert(cmpl, {c, cmd = c})
+                end
+            end
+        end
+        -- Show completion if commands were found or return to command mode
+        if #cmpl > 1 then
+            w.menu:build(cmpl)
+        else
+            w:enter_cmd(text)
+        end
+    end,
+
     leave = function (w)
         w.menu:hide()
     end,

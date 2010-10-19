@@ -227,25 +227,9 @@ binds.mode_binds = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
         key({},          "Tab",         function (w)
                                             local i = w.ibar.input
-                                            local text = i.text
                                             -- Only complete commands, not args
-                                            if string.match(text, "%s") then return end
-                                            w.comp_text = text
-                                            local prefix = "^" .. string.sub(text, 2)
-                                            local cmpl = {{"Commands", title=true}}
-                                            -- Get suitable commands
-                                            for _, b in ipairs(binds.commands) do
-                                                for _, c in ipairs(b.cmds) do
-                                                    if string.match(c, prefix) then
-                                                        table.insert(cmpl, {c, cmd = c})
-                                                    end
-                                                end
-                                            end
-                                            -- Show completion if commands were found
-                                            if #cmpl > 1 then
-                                                w:set_mode("cmdcomp")
-                                                w.menu:build(cmpl)
-                                            end
+                                            if string.match(i.text, "%s") then return end
+                                            w:set_mode("cmdcomp")
                                         end),
         key({"Control"}, "w",           function (w) w:del_word() end),
         key({"Control"}, "u",           function (w) w:del_line() end),
@@ -387,11 +371,17 @@ binds.mode_binds = {
                                         end),
     }),
 
-    cmdcomp = menu_mode({
+    cmdcomp = {
         -- Navigate items
         key({},          "Down",        function (w) w.menu:move_down() end),
         key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({},          "Tab",         function (w)
+                                            if w.comp_text == w.ibar.input.text then
+                                                w.menu:move_down()
+                                            else
+                                                w:set_mode("cmdcomp")
+                                            end
+                                        end),
         key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
         -- Complete command
         key({},          "Return",      function (w)
@@ -405,7 +395,7 @@ binds.mode_binds = {
         key({},          "Escape",      function (w)
                                             w:enter_cmd(w.ibar.input.text)
                                         end),
-    }),
+    },
 
     insert = { },
 }
