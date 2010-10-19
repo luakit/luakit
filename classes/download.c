@@ -34,8 +34,8 @@ typedef struct
     LUA_OBJECT_HEADER
     WebKitDownload* webkit_download;
     gpointer ref;
-    const char *uri;
-    const char *destination;
+    char *uri;
+    char *destination;
     bool error;
     int last_size;
 } download_t;
@@ -68,6 +68,7 @@ luaH_download_gc(lua_State *L)
     download_t *download = luaH_checkudata(L, 1, &download_class);
     g_object_unref(G_OBJECT(download->webkit_download));
     g_free(download->destination);
+    g_free(download->uri);
     return 0;
 }
 
@@ -203,7 +204,7 @@ luaH_download_set_uri(lua_State *L, download_t *download)
         luaH_warn(L, "cannot change URI while download is running");
     } else {
         const char *uri = luaL_checkstring(L, -1);
-        download->uri = uri;
+        download->uri = g_strdup(uri);
     }
     return 0;
 }
