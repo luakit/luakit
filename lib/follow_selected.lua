@@ -7,13 +7,15 @@
 
 local return_selected = [=[
 (function() {
-    var selection = window.getSelection().getRangeAt(0);
+    var selection = window.getSelection();
     var container = document.createElement('div');
+    var range;
     var elements;
     var idx;
     if ('' + selection) {
+        range = selection.getRangeAt(0);
         // Check for links contained within the selection
-        container.appendChild(selection.cloneContents());
+        container.appendChild(range.cloneContents());
         elements = container.getElementsByTagName('a');
         for (idx in elements) {
             if (elements[idx].href) {
@@ -21,7 +23,7 @@ local return_selected = [=[
             }
         }
         // Check for links which contain the selection
-        container = selection.startContainer;
+        container = range.startContainer;
         while (container != document) {
             if (container.href) {
                 return container.href;
