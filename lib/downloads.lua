@@ -1,6 +1,5 @@
 require("lousy")
 
-local print = print
 local table = table
 local string = string
 local io = io
@@ -25,7 +24,6 @@ module("downloads")
 -- Calculates a fancy name for a download to show to the user.
 download.basename = function (d)
     local _,_,basename = string.find(d.destination or "", ".*/([^/]*)$")
-    print(d.destination)
     return basename or "no filename"
 end
 
