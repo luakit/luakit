@@ -226,11 +226,19 @@ binds.mode_binds = {
     command = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
         key({},          "Tab",         function (w)
+                                            local i = w.ibar.input
+                                            -- Only complete commands, not args
+                                            if string.match(i.text, "%s") then return end
+                                            local prefix = "^" .. string.sub(i.text, 2)
                                             w:set_mode("cmdcomp")
                                             local cmpl = {{"Commands", title=true}}
                                             -- Get suitable commands
                                             for _, b in ipairs(binds.commands) do
-                                                table.insert(cmpl, {table.concat(b.cmds, ", "), cmd = b.cmds[1]})
+                                                for _, c in ipairs(b.cmds) do
+                                                    if string.match(c, prefix) then
+                                                        table.insert(cmpl, {c, cmd = c})
+                                                    end
+                                                end
                                             end
                                             w.menu:build(cmpl)
                                             w:notify("Use j/k to move.", false)
