@@ -10,6 +10,7 @@ local debug = debug
 local error = error
 local io = io
 local ipairs = ipairs
+local loadstring = loadstring
 local os = os
 local pairs = pairs
 local print = print
@@ -20,7 +21,6 @@ local tonumber = tonumber
 local tostring = tostring
 local math = require "math"
 local capi = { luakit = luakit }
-
 
 --- Utility functions for lousy.
 module("lousy.util")
