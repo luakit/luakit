@@ -230,7 +230,6 @@ binds.mode_binds = {
                                             -- Only complete commands, not args
                                             if string.match(i.text, "%s") then return end
                                             local prefix = "^" .. string.sub(i.text, 2)
-                                            w:set_mode("cmdcomp")
                                             local cmpl = {{"Commands", title=true}}
                                             -- Get suitable commands
                                             for _, b in ipairs(binds.commands) do
@@ -240,8 +239,12 @@ binds.mode_binds = {
                                                     end
                                                 end
                                             end
-                                            w.menu:build(cmpl)
-                                            w:notify("Use j/k to move.", false)
+                                            -- Show completion if commands were found
+                                            if #cmpl > 1 then
+                                                w:set_mode("cmdcomp")
+                                                w.menu:build(cmpl)
+                                                w:notify("Use j/k to move.", false)
+                                            end
                                         end),
         key({"Control"}, "w",           function (w) w:del_word() end),
         key({"Control"}, "u",           function (w) w:del_line() end),
