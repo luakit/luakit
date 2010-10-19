@@ -31,6 +31,12 @@ local return_selected = [=[
             container = container.parentNode;
         }
     }
+    // Check for active links
+    var element = document.activeElement;
+    var uri = element.src || element.href;
+    if (uri && !uri.match(/javascript:/)) {
+        return uri;
+    }
 })();
 ]=]
 
