@@ -19,7 +19,7 @@ local homepage = globals.homepage or "http://luakit.org"
 
 -- Adds the default menu widget bindings to a mode
 local menu_mode = function(mode)
-    return join(mode, {
+    return join({
         -- Close menu widget
         key({},          "q",           function (w) w:set_mode() end),
         -- Navigate items
@@ -29,7 +29,7 @@ local menu_mode = function(mode)
         key({},          "Up",          function (w) w.menu:move_up()   end),
         key({},          "Tab",         function (w) w.menu:move_down() end),
         key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
-    })
+    }, mode or {})
 end
 
 -- Add key bindings to be used across all windows in the given modes.
