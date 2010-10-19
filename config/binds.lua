@@ -17,6 +17,21 @@ local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
 local zoom_step = globals.zoom_step or 0.1
 local homepage = globals.homepage or "http://luakit.org"
 
+-- Adds the default menu widget bindings to a mode
+local menu_mode = function(mode)
+    return join(mode, {
+        -- Close menu widget
+        key({},          "q",           function (w) w:set_mode() end),
+        -- Navigate items
+        key({},          "j",           function (w) w.menu:move_down() end),
+        key({},          "k",           function (w) w.menu:move_up()   end),
+        key({},          "Down",        function (w) w.menu:move_down() end),
+        key({},          "Up",          function (w) w.menu:move_up()   end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    })
+end
+
 -- Add key bindings to be used across all windows in the given modes.
 binds.mode_binds = {
      -- buf(Pattern,                    function (w, buffer, metadata) .. end, opts),
@@ -226,15 +241,7 @@ binds.mode_binds = {
         key({"Control"}, "k",           function (w) w:search(w.search_state.last_search, false) end),
     },
 
-    proxy = {
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    proxy = menu_mode({
         key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
@@ -263,18 +270,9 @@ binds.mode_binds = {
                                                 w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
                                             end
                                         end),
-    },
+    }),
 
-    qmarks = {
-        -- Close menu widget
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    qmarks = menu_mode({
         -- Delete quickmark
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -318,18 +316,9 @@ binds.mode_binds = {
                                                 window.new(quickmarks.get(row.qmark) or {})
                                             end
                                         end),
-    },
+    }),
 
-    undolist = {
-        -- Close menu widget
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    undolist = menu_mode({
         -- Delete closed tab
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -375,7 +364,7 @@ binds.mode_binds = {
                                                 end
                                             end
                                         end),
-    },
+    }),
 
     insert = { },
 }
