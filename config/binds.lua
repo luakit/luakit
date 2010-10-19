@@ -366,6 +366,18 @@ binds.mode_binds = {
                                         end),
     }),
 
+    cmdcomp = menu_mode({
+        -- Complete command
+        key({},          "Return",      function (w)
+                                            local cmd = w.menu:get()
+                                            if cmd then
+                                                w:enter_cmd(cmd .. " ")
+                                            else
+                                                w:set_mode()
+                                            end
+                                        end),
+    }),
+
     insert = { },
 }
 
