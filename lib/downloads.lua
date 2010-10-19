@@ -127,7 +127,6 @@ html_style = [===[
     }
     .download.created   a.delete,
     .download.started   a.delete,
-    .download.finished  a.restart,
     .download.finished  a.cancel,
     .download.error     a.cancel,
     .download.cancelled a.cancel,
