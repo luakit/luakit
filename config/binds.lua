@@ -236,28 +236,30 @@ binds.mode_binds = {
         key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
-                                            local view = w.get_view_source
-                                            if row and row.proxy then
+                                            if row and row.address then
                                                 proxy.set_active(row.name)
                                                 w:set_mode()
                                                 -- change proxy for on every tab
                                                 for _, view in ipairs(w.tabs:get_children()) do
-                                                    view:set_prop('proxy-uri', strip(row.address))
+                                                    view:set_prop('proxy-uri', row.address)
                                                 end
-                                                w:notify(string.format(
-                                                    "Proxy set to: %s (%s)", row.name, row.address))
+                                                if row.name then
+                                                    w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
+                                                else
+                                                    w:notify("Unset proxy.")
+                                                end
                                             end
                                         end),
         key({},          "d",           function (w)
                                             local row = w.menu:get()
-                                            if row and row.proxy then
+                                            if row and row.name then
                                                 proxy.del(row.name)
                                                 w.menu:del()
                                             end
                                         end),
         key({},          "e",           function (w)
                                             local row = w.menu:get()
-                                            if row and row.proxy then
+                                            if row and row.name then
                                                 w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
                                             end
                                         end),
@@ -474,15 +476,15 @@ binds.commands = {
 
     cmd("proxy",                       function (w, a)
                                             local params = split(a or '')
-
                                             if not a then
                                                 w:set_mode("proxy")
-                                                local rows = {{"Name", "Server address", title = true}}
+                                                local afg, ifg = theme.proxy_active_fg, theme.proxy_inactive_fg
                                                 local active = proxy.get_active()
+                                                local rows = {{"Proxy Name", "Server address", title = true},
+                                                    {"None", "", address = '', fg = (active.address == '' and afg) or ifg},}
                                                 for name, address in pairs(proxy.get_list()) do
-                                                    local fg = active.address == address and theme.proxy_active_fg or theme.proxy_inactive_fg
-                                                    table.insert(rows,
-                                                        {name, address, fg=fg, name=name, address=address, proxy=true})
+                                                    local fg = active.address == address and afg or ifg
+                                                    table.insert(rows, { name, address, fg=fg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
