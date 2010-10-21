@@ -224,6 +224,47 @@ binds.mode_binds = {
         key({"Control"}, "k",           function (w) w:search(w.search_state.last_search, false) end),
     },
 
+    proxy = {
+        key({},          "q",           function (w) w:set_mode() end),
+        -- Navigate items
+        key({},          "j",           function (w) w.menu:move_down() end),
+        key({},          "k",           function (w) w.menu:move_up()   end),
+        key({},          "Down",        function (w) w.menu:move_down() end),
+        key({},          "Up",          function (w) w.menu:move_up()   end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+        key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
+        key({},          "Return",      function (w)
+                                            local row = w.menu:get()
+                                            if row and row.address then
+                                                proxy.set_active(row.name)
+                                                w:set_mode()
+                                                -- change proxy for on every tab
+                                                for _, view in ipairs(w.tabs:get_children()) do
+                                                    view:set_prop('proxy-uri', row.address)
+                                                end
+                                                if row.name then
+                                                    w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
+                                                else
+                                                    w:notify("Unset proxy.")
+                                                end
+                                            end
+                                        end),
+        key({},          "d",           function (w)
+                                            local row = w.menu:get()
+                                            if row and row.name then
+                                                proxy.del(row.name)
+                                                w.menu:del()
+                                            end
+                                        end),
+        key({},          "e",           function (w)
+                                            local row = w.menu:get()
+                                            if row and row.name then
+                                                w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
+                                            end
+                                        end),
+    },
+
     qmarks = {
         -- Close menu widget
         key({},          "q",           function (w) w:set_mode() end),
@@ -431,6 +472,28 @@ binds.commands = {
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, w winopen.", false)
+                                        end),
+
+    cmd("proxy",                       function (w, a)
+                                            local params = split(a or '')
+                                            if not a then
+                                                w:set_mode("proxy")
+                                                local afg, ifg = theme.proxy_active_fg, theme.proxy_inactive_fg
+                                                local active = proxy.get_active()
+                                                local rows = {{"Proxy Name", "Server address", title = true},
+                                                    {"None", "", address = '', fg = (active.address == '' and afg) or ifg},}
+                                                for name, address in pairs(proxy.get_list()) do
+                                                    local fg = active.address == address and afg or ifg
+                                                    table.insert(rows, { name, address, fg=fg, name=name, address=address })
+                                                end
+                                                w.menu:build(rows)
+                                                w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
+                                            elseif #params == 2 then
+                                                -- add new proxy address: {name, url}
+                                                proxy.add(unpack(params))
+                                            else
+                                                w:error("Bad usage. Correct format  :proxy <name> <address>")
+                                            end
                                         end),
 }
 

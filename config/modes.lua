@@ -208,6 +208,12 @@ new_mode("qmarks", {
     end,
 })
 
+new_mode("proxy", {
+    leave = function (w)
+        w.menu:hide()
+    end,
+})
+
 new_mode("undolist", {
     leave = function (w)
         w.menu:hide()
