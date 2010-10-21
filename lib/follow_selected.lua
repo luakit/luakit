@@ -1,10 +1,12 @@
-------------------------------------------------------------------
--- luakit follow selected link (or link in selection)           --
--- (C) 2009 israellevin                                         --
--- (C) 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>     --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
-------------------------------------------------------------------
+------------------------------------------------------------------------------
+-- Add {A,C,S,}-Return binds to follow selected link (or link in selection) --
+-- (C) 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>                  --
+-- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>             --
+-- (C) 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>                 --
+-- (C) 2009 israellevin                                                     --
+------------------------------------------------------------------------------
 
+-- Return selected uri or first uri in selection
 local return_selected = [=[
 (function() {
     var selection = window.getSelection();
