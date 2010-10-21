@@ -478,7 +478,7 @@ binds.commands = {
                                             local params = split(a or '')
                                             if not a then
                                                 w:set_mode("proxy")
-                                                local afg, ifg = theme.proxy_active_fg, theme.proxy_inactive_fg
+                                                local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
                                                 local active = proxy.get_active()
                                                 local rows = {{"Proxy Name", "Server address", title = true},
                                                     {"None", "", address = '', fg = (active.address == '' and afg) or ifg},}
