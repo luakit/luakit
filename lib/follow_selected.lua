@@ -43,26 +43,27 @@ local return_selected = [=[
 ]=]
 
 -- Add binding to normal mode to follow selected link
+local key = lousy.bind.key
 for _, b in ipairs({
-    lousy.bind.key({},          "Return", function (w)
-                                              uri = w:eval_js(return_selected)
-                                              if uri == "" then return end
-                                              w:navigate(uri)
-                                          end),
-    lousy.bind.key({"Control"}, "Return", function (w)
-                                              uri = w:eval_js(return_selected)
-                                              if uri == "" then return end
-                                              w:new_tab(uri, false)
-                                          end),
-    lousy.bind.key({"Shift"},   "Return", function (w)
-                                              uri = w:eval_js(return_selected)
-                                              if uri == "" then return end
-                                              window.new({uri})
-                                          end),
-    lousy.bind.key({"Mod1"},    "Return", function (w)
-                                              uri = w:eval_js(return_selected)
-                                              if uri == "" then return end
-                                              w:download(uri)
-                                          end),
+    key({},          "Return",  function (w)
+                                    uri = w:eval_js(return_selected)
+                                    if uri == "" then return false end
+                                    w:navigate(uri)
+                                end),
+    key({"Control"}, "Return",  function (w)
+                                    uri = w:eval_js(return_selected)
+                                    if uri == "" then return false end
+                                    w:new_tab(uri, false)
+                                end),
+    key({"Shift"},   "Return",  function (w)
+                                    uri = w:eval_js(return_selected)
+                                    if uri == "" then return false end
+                                    window.new({uri})
+                                end),
+    key({"Mod1"},    "Return",  function (w)
+                                    uri = w:eval_js(return_selected)
+                                    if uri == "" then return false end
+                                    w:download(uri)
+                                end),
 }) do table.insert(binds.mode_binds.normal, b) end
 -- vim: et:sw=4:ts=8:sts=4:tw=80
