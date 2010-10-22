@@ -21,9 +21,14 @@ local proxies = {}
 local noproxy = { address = '' }
 local active = noproxy
 
---- Return list of defined proxy servers
-function get_list()
-    return proxies
+-- Return ordered list of proxy names
+function get_names()
+    return util.table.keys(proxies)
+end
+
+-- Return address of proxy given by name
+function get(name)
+    return proxies[name]
 end
 
 --- Get active proxy configuration: { name = "name", address = "address" }

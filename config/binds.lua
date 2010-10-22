@@ -482,12 +482,13 @@ binds.commands = {
                                                 local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
                                                 local active = proxy.get_active()
                                                 local rows = {{"Proxy Name", "Server address", title = true},
-                                                    {"None", "", address = '', 
+                                                    {"None", "", address = '',
                                                         fg = (active.address == '' and afg) or ifg,
                                                         bg = (active.address == '' and abg) or ibg},}
-                                                for name, address in pairs(proxy.get_list()) do
+                                                for _, name in ipairs(proxy.get_names()) do
                                                     local fg = active.name == name and afg or ifg
                                                     local bg = active.name == name and abg or ibg
+                                                    local address = lousy.util.escape(proxy.get(name))
                                                     table.insert(rows, { name, address, fg=fg, bg=bg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
