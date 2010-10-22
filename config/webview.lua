@@ -10,8 +10,16 @@ webview.init_funcs = {
     -- Set global properties
     set_global_props = function (view, w)
         -- Set proxy options
-        local proxy = globals.http_proxy or os.getenv("http_proxy")
-        if proxy then view:set_prop('proxy-uri', proxy) end
+        local proxy_address
+        local active_proxy = proxy.get_active()
+        if active_proxy then
+            proxy_address = active_proxy.address
+        else
+            proxy_address = globals.http_proxy or os.getenv("http_proxy")
+        end
+        if proxy_address then
+            view:set_prop('proxy-uri', proxy_address)
+        end
         view:set_prop('user-agent', globals.useragent)
 
         -- Set ssl options

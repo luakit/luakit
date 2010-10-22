@@ -28,6 +28,10 @@ theme.menu_title_bg             = "#fff"
 theme.menu_primary_title_fg     = "#f00"
 theme.menu_secondary_title_fg   = "#666"
 
+-- Proxy manager
+theme.proxy_active_menu_fg      = '#000'
+theme.proxy_inactive_menu_fg    = '#888'
+
 -- Statusbar specific
 theme.sbar_fg         = "#fff"
 theme.sbar_bg         = "#000"
