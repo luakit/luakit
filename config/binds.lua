@@ -479,12 +479,16 @@ binds.commands = {
                                             if not a then
                                                 w:set_mode("proxy")
                                                 local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
+                                                local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
                                                 local active = proxy.get_active()
                                                 local rows = {{"Proxy Name", "Server address", title = true},
-                                                    {"None", "", address = '', fg = (active.address == '' and afg) or ifg},}
+                                                    {"None", "", address = '', 
+                                                        fg = (active.address == '' and afg) or ifg,
+                                                        bg = (active.address == '' and abg) or ibg},}
                                                 for name, address in pairs(proxy.get_list()) do
                                                     local fg = active.name == name and afg or ifg
-                                                    table.insert(rows, { name, address, fg=fg, name=name, address=address })
+                                                    local bg = active.name == name and abg or ibg
+                                                    table.insert(rows, { name, address, fg=fg, bg=bg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
