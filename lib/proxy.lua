@@ -69,7 +69,7 @@ end
 -- @param save_file do not save configuration if false
 function add(name, address, save_file)
     local name = util.string.strip(name)
-    if not string.match(name, "^(%w+)$") then
+    if not string.match(name, "^([%w%p]+)$") then
         error("Invalid proxy name: " .. name)
     end
     proxies[name] = util.string.strip(address)
