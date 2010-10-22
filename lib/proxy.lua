@@ -56,7 +56,7 @@ function save(fd_name)
     local fd = io.open(fd_name or proxies_file, "w")
     for name, address in pairs(proxies) do
         if address ~= "" then
-            local status = (active.address == address and '*') or ' '
+            local status = (active.name == name and '*') or ' '
             fd:write(string.format("%s %s %s\n", status, name, address))
         end
     end

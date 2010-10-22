@@ -483,7 +483,7 @@ binds.commands = {
                                                 local rows = {{"Proxy Name", "Server address", title = true},
                                                     {"None", "", address = '', fg = (active.address == '' and afg) or ifg},}
                                                 for name, address in pairs(proxy.get_list()) do
-                                                    local fg = active.address == address and afg or ifg
+                                                    local fg = active.name == name and afg or ifg
                                                     table.insert(rows, { name, address, fg=fg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
