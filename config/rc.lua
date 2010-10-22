@@ -51,12 +51,11 @@ bookmarks.dump_html()
 require "downloads"
 downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 downloads.rules = {
-    ["scholar\.google\."] = os.getenv("HOME") .. "/downloads/pdfs"
+    ["scholar\.google\."] = os.getenv("HOME") .. "/downloads/pdfs",
  -- to download everything without asking:
- -- [".*"               ] = downloads.dir
+ -- [".*"               ] = downloads.dir,
 }
-local old_open_file = downloads.open_file
-downloads.open_file = function (f, m, wi)
+downloads.open_file = function (f, m, w)
     local mime_types = {
         ["^text/"        ] = "gvim",
         ["^video/"       ] = "mplayer",
@@ -81,7 +80,7 @@ downloads.open_file = function (f, m, wi)
         end
     end
 
-    old_open_file(f, m, wi)
+    w:error("Can't open " .. f)
 end
 
 -- Restore last saved session
