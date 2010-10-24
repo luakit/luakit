@@ -184,6 +184,7 @@ function do_load(w, profile)
     end
     view:eval_js(js, "(formfiller:load)")
     fd:close()
+    w:set_mode()
 end
 
 -- Add `w:formfiller(action)` method when a webview is active.
@@ -209,11 +210,11 @@ webview.methods.formfiller = function(view, w, action)
         else
             fd = io.open(filename, "w+")
         end
+        fd:close()
         local ret = view:eval_js(dump_function, "(formfiller:dump)")
         fd:write(string.format("%s\n!profile=NAME_THIS_PROFILE_%d\n%s", modeline, math.random(1,9999), ret))
         fd:flush()
         luakit.spawn(string.format("%s %q", editor_cmd, filename))
-        fd:close()
 
     elseif action == "load" then
         local fd, err = io.open(filename, "r")
@@ -252,6 +253,7 @@ for _, b in ipairs({
                                         local profile = w.menu:get()[1]
                                         do_load(w, profile)
                                         w.menu:hide()
+                                        w:set_mode()
                                     end),
 }) do table.insert(binds.mode_binds["formfiller"], b) end
 
