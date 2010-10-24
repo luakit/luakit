@@ -223,7 +223,7 @@ webview.methods.formfiller = function(view, w, action)
         fd:seek("set")
         for l in fd:lines() do
             if string.match(l, "^!profile=.*$") then
-                table.insert(profile, 2, {string.match(l, "^!profile=(.*)$")})
+                table.insert(profile, {string.match(l, "^!profile=(.*)$")})
             end
         end
         fd:close()
