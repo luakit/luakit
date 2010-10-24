@@ -130,6 +130,62 @@ local submit_function = [=[
         }
     };]=]
 
+-- Misc funs
+function do_load(w, profile)
+    local view = w:get_current()
+    local filename = formsdir .. string.match(string.gsub(view.uri, "%w+://", ""), "(.-)/.*")
+    local fd, err = io.open(filename, "r")
+    if not fd then return end
+    fd:seek("set")
+    for line in fd:lines() do
+        if string.match(line, "^!profile=" .. profile .. "\ *$") then
+            break
+        end
+    end
+    local fname, fchecked, ftype, fvalue, form
+    local autosubmit = 0
+    local js = string.format("%s\n%s", insert_function, submit_function)
+    local pattern1 = "(.+)%((.+)%):% *(.*)"
+    local pattern2 = "%1{0}(%2):%3"
+    local pattern3 = "([^{]+){(.+)}%((.+)%):% *(.*)"
+    for line in fd:lines() do
+        if not string.match(line, "^!profile=.*") then
+            if string.match(line, "^!form.*") and autosubmit == "1" then
+                break
+            end
+            if string.match(line, "^!form.*") then
+                form = line
+                autosubmit = string.match(form, "^!form%[.-%]:autosubmit=(%d)")
+            else
+                if ftype == "textarea" then
+                    if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
+                        js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                        ftype = nil
+                    else
+                        fvalue = string.format("%s\\n%s", fvalue, line)
+                    end
+                end
+                if ftype ~= "textarea" then
+                    fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
+                    if fname ~= nil and ftype ~= "textarea" then
+                        js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                    end
+                end
+            end
+        else
+            break
+        end
+    end
+    if ftype == "textarea" then
+        js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+    end
+    if autosubmit == "1" then
+        js = string.format("%s\nsubmitForm(%q, %q, %q, %q);", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]"))
+    end
+    view:eval_js(js, "(formfiller:load)")
+    fd:close()
+end
+
 -- Add `w:formfiller(action)` method when a webview is active.
 -- TODO: This could easily be split up into several smaller functions.
 webview.methods.formfiller = function(view, w, action)
@@ -170,8 +226,12 @@ webview.methods.formfiller = function(view, w, action)
                 table.insert(profile, 2, {string.match(l, "^!profile=(.*)$")})
             end
         end
-        w.menu:build(profile)
         fd:close()
+        if #profile > 2 then
+            w.menu:build(profile)
+        else
+            do_load(w, profile[2][1])
+        end
     elseif action == "edit" then
         luakit.spawn(string.format("%s %q", editor_cmd, filename))
     end
@@ -190,58 +250,7 @@ for _, b in ipairs({
     key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
     key({},          "Return",      function (w)
                                         local profile = w.menu:get()[1]
-                                        local view = w:get_current()
-                                        local filename = formsdir .. string.match(string.gsub(view.uri, "%w+://", ""), "(.-)/.*")
-                                        local fd, err = io.open(filename, "r")
-                                        if not fd then return end
-                                        fd:seek("set")
-                                        for line in fd:lines() do
-                                            if string.match(line, "^!profile=" .. profile .. "\ *$") then
-                                                break
-                                            end
-                                        end
-                                        local fname, fchecked, ftype, fvalue, form
-                                        local autosubmit = 0
-                                        local js = string.format("%s\n%s", insert_function, submit_function)
-                                        local pattern1 = "(.+)%((.+)%):% *(.*)"
-                                        local pattern2 = "%1{0}(%2):%3"
-                                        local pattern3 = "([^{]+){(.+)}%((.+)%):% *(.*)"
-                                        for line in fd:lines() do
-                                            if not string.match(line, "^!profile=.*") then
-                                                if string.match(line, "^!form.*") and autosubmit == "1" then
-                                                    break
-                                                end
-                                                if string.match(line, "^!form.*") then
-                                                    form = line
-                                                    autosubmit = string.match(form, "^!form%[.-%]:autosubmit=(%d)")
-                                                else
-                                                    if ftype == "textarea" then
-                                                        if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
-                                                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
-                                                            ftype = nil
-                                                        else
-                                                            fvalue = string.format("%s\\n%s", fvalue, line)
-                                                        end
-                                                    end
-                                                    if ftype ~= "textarea" then
-                                                        fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
-                                                        if fname ~= nil and ftype ~= "textarea" then
-                                                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
-                                                        end
-                                                    end
-                                                end
-                                            else
-                                                break
-                                            end
-                                        end
-                                        if ftype == "textarea" then
-                                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
-                                        end
-                                        if autosubmit == "1" then
-                                            js = string.format("%s\nsubmitForm(%q, %q, %q, %q);", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]"))
-                                        end
-                                        view:eval_js(js, "(formfiller:load)")
-                                        fd:close()
+                                        do_load(w, profile)
                                         w.menu:hide()
                                     end),
 }) do table.insert(binds.mode_binds["formfiller"], b) end
