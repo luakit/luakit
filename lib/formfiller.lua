@@ -4,6 +4,21 @@
 -- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
 ------------------------------------------------------------------
 
+-- Load formfiller settings
+local ff = globals.formfiller or {}
+local term       = ff.term     or globals.term   or "xterm"
+local editor     = ff.editor   or globals.editor or (os.getenv("EDITOR") or "vim")
+local modeline   = ff.modeline or "> vim:ft=formfiller"
+local formsdir   = ff.formsdir or luakit.data_dir .. "/forms/"
+local editor_cmd = string.format("%s -e %s", term, editor)
+
+-- Add formfiller mode
+modes["formfiller"] = lousy.util.table.join(modes["formfiller"] or {}, {
+    leave = function (w)
+        w.menu:hide()
+    end,
+})
+
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
@@ -12,14 +27,6 @@ add_binds("normal", {
     buf("^ze", function (w) w:formfiller("edit") end),
     buf("^zl", function (w) w:formfiller("load") end),
 })
-
--- Load formfiller settings
-local ff = globals.formfiller or {}
-local term       = ff.term     or globals.term   or "xterm"
-local editor     = ff.editor   or globals.editor or (os.getenv("EDITOR") or "vim")
-local modeline   = ff.modeline or "> vim:ft=formfiller"
-local formsdir   = ff.formsdir or luakit.data_dir .. "/forms/"
-local editor_cmd = string.format("%s -e %s", term, editor)
 
 -- Javascript functions
 local dump_function = [=[
@@ -155,87 +162,89 @@ webview.methods.formfiller = function(view, w, action)
     elseif action == "load" then
         local fd, err = io.open(filename, "r")
         if not fd then return end
-        local profile = ""
+        local profile = {{"Proifle", title = true},}
+        w:set_mode("formfiller")
         fd:seek("set")
         for l in fd:lines() do
             if string.match(l, "^!profile=.*$") then
-                if profile == "" then
-                    profile = string.format("%s", string.match(l, "^!profile=([^$]*)$"))
-                else
-                    profile = string.format("%s\n%s", profile, string.match(l, "^!profile=([^$]*)$"))
-                end
+                table.insert(profile, 2, {string.match(l, "^!profile=(.*)$")})
             end
         end
-        if profile:find("\n") then
-            local exit_status, multiline, err = luakit.spawn_sync('sh -c \'if [ "`dmenu --help 2>&1| grep lines`x" != "x" ]; then echo -n "-l 3"; else echo -n ""; fi\'')
-            if exit_status ~= 0 then
-                print(string.format("An error occured: %s", err))
-                return nil
-            end
-            -- color settings
-            local NB="#0f0f0f"
-            local NF="#4e7093"
-            local SB="#003d7c"
-            local SF="#3a9bff"
-            profile = string.format('sh -c \'echo -e -n "%s" | dmenu %s -nb "%s" -nf "%s" -sb "%s" -sf "%s" -p "Choose profile"\'', profile, multiline, NB, NF, SB, SF)
-            exit_status, profile, err = luakit.spawn_sync(profile)
-            if exit_status ~= 0 then
-                print(string.format("An error occured: ", err))
-                return nil
-            end
-        end
-        fd:seek("set")
-        for line in fd:lines() do
-            if string.match(line, "^!profile=" .. profile .. "\ *$") then
-                break
-            end
-        end
-        local fname, fchecked, ftype, fvalue, form
-        local autosubmit = 0
-        local js = string.format("%s\n%s", insert_function, submit_function)
-        local pattern1 = "(.+)%((.+)%):% *(.*)"
-        local pattern2 = "%1{0}(%2):%3"
-        local pattern3 = "([^{]+){(.+)}%((.+)%):% *(.*)"
-        for line in fd:lines() do
-            if not string.match(line, "^!profile=.*") then
-                if string.match(line, "^!form.*") and autosubmit == "1" then
-                    break
-                end
-                if string.match(line, "^!form.*") then
-                    form = line
-                    autosubmit = string.match(form, "^!form%[.-%]:autosubmit=(%d)")
-                else
-                    if ftype == "textarea" then
-                        if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
-                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
-                            ftype = nil
-                        else
-                            fvalue = string.format("%s\\n%s", fvalue, line)
-                        end
-                    end
-                    if ftype ~= "textarea" then
-                        fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
-                        if fname ~= nil and ftype ~= "textarea" then
-                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
-                        end
-                    end
-                end
-            else
-                break
-            end
-        end
-        if ftype == "textarea" then
-            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
-        end
-        if autosubmit == "1" then
-            js = string.format("%s\nsubmitForm(%q, %q, %q, %q);", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]"))
-        end
-        view:eval_js(js, "(formfiller:load)")
+        w.menu:build(profile)
         fd:close()
-
     elseif action == "edit" then
         luakit.spawn(string.format("%s %q", editor_cmd, filename))
     end
 end
+
+local key = lousy.bind.key
+binds.mode_binds["formfiller"] = {}
+for _, b in ipairs({
+    key({},          "q",           function (w) w:set_mode() end),
+    -- Navigate items
+    key({},          "j",           function (w) w.menu:move_down() end),
+    key({},          "k",           function (w) w.menu:move_up()   end),
+    key({},          "Down",        function (w) w.menu:move_down() end),
+    key({},          "Up",          function (w) w.menu:move_up()   end),
+    key({},          "Tab",         function (w) w.menu:move_down() end),
+    key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    key({},          "Return",      function (w)
+                                        local profile = w.menu:get()[1]
+                                        local view = w:get_current()
+                                        local filename = formsdir .. string.match(string.gsub(view.uri, "%w+://", ""), "(.-)/.*")
+                                        local fd, err = io.open(filename, "r")
+                                        if not fd then return end
+                                        fd:seek("set")
+                                        for line in fd:lines() do
+                                            if string.match(line, "^!profile=" .. profile .. "\ *$") then
+                                                break
+                                            end
+                                        end
+                                        local fname, fchecked, ftype, fvalue, form
+                                        local autosubmit = 0
+                                        local js = string.format("%s\n%s", insert_function, submit_function)
+                                        local pattern1 = "(.+)%((.+)%):% *(.*)"
+                                        local pattern2 = "%1{0}(%2):%3"
+                                        local pattern3 = "([^{]+){(.+)}%((.+)%):% *(.*)"
+                                        for line in fd:lines() do
+                                            if not string.match(line, "^!profile=.*") then
+                                                if string.match(line, "^!form.*") and autosubmit == "1" then
+                                                    break
+                                                end
+                                                if string.match(line, "^!form.*") then
+                                                    form = line
+                                                    autosubmit = string.match(form, "^!form%[.-%]:autosubmit=(%d)")
+                                                else
+                                                    if ftype == "textarea" then
+                                                        if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
+                                                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                                                            ftype = nil
+                                                        else
+                                                            fvalue = string.format("%s\\n%s", fvalue, line)
+                                                        end
+                                                    end
+                                                    if ftype ~= "textarea" then
+                                                        fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
+                                                        if fname ~= nil and ftype ~= "textarea" then
+                                                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                                                        end
+                                                    end
+                                                end
+                                            else
+                                                break
+                                            end
+                                        end
+                                        if ftype == "textarea" then
+                                            js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                                        end
+                                        if autosubmit == "1" then
+                                            js = string.format("%s\nsubmitForm(%q, %q, %q, %q);", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]"))
+                                        end
+                                        view:eval_js(js, "(formfiller:load)")
+                                        fd:close()
+                                        w.menu:hide()
+                                    end),
+}) do table.insert(binds.mode_binds["formfiller"], b) end
+
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
