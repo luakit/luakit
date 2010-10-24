@@ -72,7 +72,7 @@ end
 -- @param name proxy configuration name
 -- @param address proxy server address
 -- @param save_file do not save configuration if false
-function add(name, address, save_file)
+function set(name, address, save_file)
     local name = util.string.strip(name)
     if not string.match(name, "^([%w%p]+)$") then
         error("Invalid proxy name: " .. name)

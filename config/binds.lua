@@ -496,8 +496,8 @@ binds.commands = {
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
                                             elseif #params == 2 then
-                                                -- add new proxy address: {name, url}
-                                                proxy.add(unpack(params))
+                                                local name, address = unpack(params)
+                                                proxy.set(name, address)
                                             else
                                                 w:error("Bad usage. Correct format  :proxy <name> <address>")
                                             end
