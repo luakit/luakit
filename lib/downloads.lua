@@ -287,7 +287,7 @@ function open(i, w)
             open_file(d.destination, d.mime_type, w)
         end
     end)
-    ti:start()
+    t:start()
 end
 
 --- Shows the chrome page in the given view.
