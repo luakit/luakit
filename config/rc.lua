@@ -45,7 +45,6 @@ require "proxy"
 -- Init bookmarks lib
 require "bookmarks"
 bookmarks.load()
-bookmarks.dump_html()
 
 -- Init downloads lib
 require "downloads"

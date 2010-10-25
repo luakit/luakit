@@ -24,7 +24,10 @@ local data = {}
 
 -- Some default settings
 bookmarks_file = capi.luakit.data_dir .. '/bookmarks'
-html_out       = capi.luakit.cache_dir  .. '/bookmarks.html'
+
+-- URI of the chrome page
+chrome_page    = "chrome://bookmarks/"
+chrome_pattern = "chrome://bookmarks/?"
 
 -- Templates
 block_template = [==[<div class="tag"><h1>{tag}</h1><ul>{links}</ul></div>]==]
@@ -175,9 +178,7 @@ function load(file, clear_first)
     end
 end
 
-function dump_html(file)
-    if not file then file = html_out end
-
+function html(file)
     -- Get a list of all the unique tags in all the bookmarks and build a
     -- relation between a given tag and a list of bookmarks with that tag.
     local tags = {}
@@ -219,13 +220,13 @@ function dump_html(file)
         title = html_page_title,
         style = html_style
     }
-    local html = string.gsub(html_template, "{(%w+)}", html_subs)
-    local fh = io.open(file, "w")
-    fh:write(html)
-    io.close(fh)
+    return string.gsub(html_template, "{(%w+)}", html_subs)
+end
 
-    -- Return path to file
-    return "file://"..file
+--- Shows the chrome page in the given view.
+-- @param view The view to show the page in.
+function show_chrome(view)
+    view:load_string(html(), chrome_page)
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

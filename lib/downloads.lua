@@ -37,9 +37,9 @@ download.is_running = function (d)
 end
 
 --- The URI of the chrome page
-chrome_page          = "chrome://downloads/"
+chrome_page    = "chrome://downloads/"
 -- The pattern which identifies the chrome page
-local chrome_pattern = "chrome://downloads/?"
+chrome_pattern = "chrome://downloads/?"
 
 --- Template for a download.
 download_template = [==[

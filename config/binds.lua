@@ -171,8 +171,8 @@ binds.mode_binds = {
 
         -- Bookmarking
         key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-        buf("^gb$",                     function (w)       w:navigate(bookmarks.dump_html()) end),
-        buf("^gB$",                     function (w, b, m) local u = bookmarks.dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
+        buf("^gb$",                     function (w)       w:navigate(bookmarks.chrome_page) end),
+        buf("^gB$",                     function (w, b, m) for i=1,m.count do w:new_tab(bookmarks.chrome_page) end end, {count=1}),
 
         -- Quickmark open in current tab, new tabs or new window (I.e. `[count]g{onw}{a-zA-Z0-9}`)
         buf("^g[onw]%w$",               function (w, b, m)

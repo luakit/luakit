@@ -36,18 +36,14 @@ webview.init_funcs = {
 
     -- Intercept chrome:// pages
     chrome = function(view, w)
-        -- prevents endless loop, since show_chrome calls load_string with the
-        -- same URI as its base URI
         view:add_signal("navigation-request", function(view, uri)
-            local chrome = string.match(uri, "^chrome://([^/]*)/?$")
-            if chrome then
-                if chrome == "downloads" then
-                    downloads.show_chrome(view)
+            for _,lib in ipairs({downloads,bookmarks}) do
+                if string.match(uri, lib.chrome_pattern) then
+                    lib.show_chrome(view)
+                    return false
                 end
-                return false
-            else
-                return true
             end
+            return true
         end)
     end,
 
