@@ -14,7 +14,6 @@ local luakit = luakit
 local window = window
 local timer = timer
 local download = download
-local dialog = dialog
 local util = lousy.util
 local theme = lousy.theme
 
@@ -234,7 +233,7 @@ function add(uri)
     end
 
     -- if no rule matched, ask the user
-    file = file or dialog.save("Save file", win, dir, d.suggested_filename)
+    file = file or luakit.save_file("Save file", win, dir, d.suggested_filename)
 
     -- if the user didn't abort or a rule matched: download the file
     if file then
