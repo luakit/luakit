@@ -737,9 +737,9 @@ luaH_webview_get_prop(lua_State *L)
 
           case URI:
             g_object_get(so, p->name, &u, NULL);
-            tmp.c = soup_uri_to_string(u, 0);
+            tmp.c = u ? soup_uri_to_string(u, 0) : NULL;
             lua_pushstring(L, tmp.c);
-            soup_uri_free(u);
+            if (u) soup_uri_free(u);
             g_free(tmp.c);
             return 1;
 
