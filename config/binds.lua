@@ -51,6 +51,8 @@ binds.mode_binds = {
         key({},          "k",           function (w) w:scroll_vert(less)  end),
         key({},          "h",           function (w) w:scroll_horiz(less) end),
         key({},          "l",           function (w) w:scroll_horiz(more) end),
+        key({},          "^",           function (w) w:scroll_horiz("0%") end),
+        key({},          "$",           function (w) w:scroll_horiz("100%") end),
         key({"Control"}, "e",           function (w) w:scroll_vert(more)  end),
         key({"Control"}, "y",           function (w) w:scroll_vert(less)  end),
         key({"Control"}, "d",           function (w) w:scroll_page(0.5)   end),
@@ -60,10 +62,10 @@ binds.mode_binds = {
         key({},          "space",       function (w) w:scroll_page(1.0)   end),
         key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)  end),
         key({},          "BackSpace",   function (w) w:scroll_page(-1.0)  end),
-        buf("^gg$",                     function (w) w:scroll_vert("0%")  end),
 
         -- Specific scroll
-        buf("^[%%G]$",                  function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
+        buf("^gg$",                     function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 0}),
+        buf("^G$",                      function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
 
         -- Traditional scrolling commands
         key({},          "Down",        function (w) w:scroll_vert(more)   end),
@@ -523,18 +525,23 @@ binds.commands = {
                                             if not a then
                                                 w:set_mode("proxy")
                                                 local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
+                                                local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
                                                 local active = proxy.get_active()
                                                 local rows = {{"Proxy Name", "Server address", title = true},
-                                                    {"None", "", address = '', fg = (active.address == '' and afg) or ifg},}
-                                                for name, address in pairs(proxy.get_list()) do
-                                                    local fg = active.address == address and afg or ifg
-                                                    table.insert(rows, { name, address, fg=fg, name=name, address=address })
+                                                    {"None", "", address = '',
+                                                        fg = (active.address == '' and afg) or ifg,
+                                                        bg = (active.address == '' and abg) or ibg},}
+                                                for _, name in ipairs(proxy.get_names()) do
+                                                    local fg = active.name == name and afg or ifg
+                                                    local bg = active.name == name and abg or ibg
+                                                    local address = lousy.util.escape(proxy.get(name))
+                                                    table.insert(rows, { name, address, fg=fg, bg=bg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
                                             elseif #params == 2 then
-                                                -- add new proxy address: {name, url}
-                                                proxy.add(unpack(params))
+                                                local name, address = unpack(params)
+                                                proxy.set(name, address)
                                             else
                                                 w:error("Bad usage. Correct format  :proxy <name> <address>")
                                             end
