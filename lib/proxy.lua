@@ -21,9 +21,14 @@ local proxies = {}
 local noproxy = { address = '' }
 local active = noproxy
 
---- Return list of defined proxy servers
-function get_list()
-    return proxies
+-- Return ordered list of proxy names
+function get_names()
+    return util.table.keys(proxies)
+end
+
+-- Return address of proxy given by name
+function get(name)
+    return proxies[name]
 end
 
 --- Get active proxy configuration: { name = "name", address = "address" }
@@ -56,7 +61,7 @@ function save(fd_name)
     local fd = io.open(fd_name or proxies_file, "w")
     for name, address in pairs(proxies) do
         if address ~= "" then
-            local status = (active.address == address and '*') or ' '
+            local status = (active.name == name and '*') or ' '
             fd:write(string.format("%s %s %s\n", status, name, address))
         end
     end
@@ -67,9 +72,9 @@ end
 -- @param name proxy configuration name
 -- @param address proxy server address
 -- @param save_file do not save configuration if false
-function add(name, address, save_file)
+function set(name, address, save_file)
     local name = util.string.strip(name)
-    if not string.match(name, "^(%w+)$") then
+    if not string.match(name, "^([%w%p]+)$") then
         error("Invalid proxy name: " .. name)
     end
     proxies[name] = util.string.strip(address)
