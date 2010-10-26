@@ -241,10 +241,8 @@ binds.mode_binds = {
                                             if row and row.address then
                                                 proxy.set_active(row.name)
                                                 w:set_mode()
-                                                -- change proxy for on every tab
-                                                for _, view in ipairs(w.tabs:get_children()) do
-                                                    view:set_prop('proxy-uri', row.address)
-                                                end
+                                                -- Change proxy for every tab
+                                                w:get_current():set_prop('proxy-uri', row.address)
                                                 if row.name then
                                                     w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
                                                 else
