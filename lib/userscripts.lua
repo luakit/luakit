@@ -114,8 +114,9 @@ local function load_all()
     end
 end
 
--- Invoke all userscripts for the current uri
-local function invoke(view, uri, on_start)
+-- Invoke all userscripts for a given webviews current uri
+local function invoke(view, on_start)
+    local uri = view.uri or "about:blank"
     for _, script in pairs(scripts) do
         if on_start == script.on_start then
             if script:match(uri) then
@@ -128,11 +129,10 @@ end
 --- Hook on the webview's load-status signal to invoke the userscripts.
 webview.init_funcs.userscripts = function (view, w)
     view:add_signal("load-status", function (v, status)
-        local uri = v.uri or "about:blank"
         if status == "first-visual" then
-            invoke(view, uri, true)
+            invoke(v, true)
         elseif status == "finished" then
-            invoke(view, uri)
+            invoke(v)
         end
     end)
 end
