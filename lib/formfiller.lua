@@ -36,102 +36,131 @@ local dump_function = [=[
         for(f=0;f<window.frames.length;f=f+1) {
             allFrames.push(window.frames[f]);
         }
-        for(j=0;j<allFrames.length;j=j+1) {
-            try {
-                for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
-                    var fn = allFrames[j].document.forms[f].name;
-                    var fi = allFrames[j].document.forms[f].id;
-                    var fm = allFrames[j].document.forms[f].method;
-                    var fa = allFrames[j].document.forms[f].action;
-                    var form = '!form[' + fn + '|' + fi + '|' + fm + '|' + fa + ']:autosubmit=0\n';
-                    var fb = '';
-                    var xp_res=allFrames[j].document.evaluate('.//input', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
+        try {
+            for(j=0;j<allFrames.length;j=j+1) {
+                var xp;
+                try {
+                    xp = allFrames[j].document.evaluate("//form", allFrames[j].document, null, XPathResult.ANY_TYPE,null);
+                }
+                catch(err) { }
+                var form;
+                while(form=xp.iterateNext()) {
+                    var formstr = '!form[' + form.name + '|' + form.id + '|' + form.method + '|' + form.action + ']:autosubmit=0\n';
+                    var xp_res=allFrames[j].document.evaluate('.//input', form, null, XPathResult.ANY_TYPE,null);
                     var input;
                     while(input=xp_res.iterateNext()) {
                         if(input.name != "") {
                             var type=(input.type?input.type:text);
                             if(type == 'text' || type == 'password' || type == 'search') {
-                                fb += input.name + '(' + type + '):' + input.value + '\n';
+                                formstr += input.name + '(' + type + '):' + input.value + '\n';
                             }
                             else if(type == 'checkbox' || type == 'radio') {
-                                fb += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
+                                formstr += input.name + '{' + input.value + '}(' + type + '):' + (input.checked?'ON':'OFF') + '\n';
                             }
                         }
                     }
-                    xp_res=allFrames[j].document.evaluate('.//textarea', allFrames[j].document.forms[f], null, XPathResult.ANY_TYPE,null);
+                    xp_res=allFrames[j].document.evaluate('.//textarea', form, null, XPathResult.ANY_TYPE,null);
                     var input;
                     while(input=xp_res.iterateNext()) {
                         if(input.name != "") {
-                            fb += input.name + '(textarea):' + input.value + '\n';
+                            formstr += input.name + '(textarea):' + input.value + '\n';
                         }
                     }
-                    if(fb.length) {
-                        rv += form + fb;
+                    if(formstr.length) {
+                        rv += formstr;
                     }
                 }
             }
-            catch(err) { }
         }
+        catch(err) { }
+
         return rv;
     })()]=]
 
 local insert_function = [=[
-    function insert(fname, ftype, fvalue, fchecked) {
+    function insert(fname, ftype, fvalue, fchecked, foName, foId, foMethod, foAction) {
         var allFrames = new Array(window);
         for(f=0;f<window.frames.length;f=f+1) {
             allFrames.push(window.frames[f]);
         }
-        for(j=0;j<allFrames.length;j=j+1) {
-            try {
-                if(ftype == 'text' || ftype == 'password' || ftype == 'search' || ftype == 'textarea') {
-                    allFrames[j].document.getElementsByName(fname)[0].value = fvalue;
+        var form_string = "@method='"+foMethod+"'";
+        try {
+            for(j=0;j<allFrames.length;j=j+1) {
+                var xp;
+                try {
+                    xp = allFrames[j].document.evaluate("//form["+form_string+"]", allFrames[j].document, null, XPathResult.ANY_TYPE,null);
                 }
-                else if(ftype == 'checkbox') {
-                    allFrames[j].document.getElementsByName(fname)[0].checked = fchecked;
-                }
-                else if(ftype == 'radio') {
-                    var radios = allFrames[j].document.getElementsByName(fname);
-                    for(r=0;r<radios.length;r+=1) {
-                        if(radios[r].value == fvalue) {
-                            radios[r].checked = fchecked;
+                catch(err) { }
+                var form;
+                while(form=xp.iterateNext()) {
+                    var re = new RegExp(foAction);
+                    if(form.action.search(re) != -1 && form.id == foId && foName == form.name) {
+                        var xp_inp;
+                        try {
+                            xp_inp = allFrames[j].document.evaluate(".//input[@name='"+fname+"']|.//textarea[@name='"+fname+"']", form, null, XPathResult.ANY_TYPE, null);
+                        }
+                        catch(err) { }
+                        var input;
+                        while(input=xp_inp.iterateNext()) {
+                            if(input.type == "text" || input.type == "password" || input.type == "search" || input.type == "textarea") {
+                                input.value = fvalue;
+                            }
+                            else if(input.type == "checkbox") {
+                                input.checked = fchecked;
+                            }
+                            else if(input.type == "radiobox") {
+                                if(input.value == fvalue) {
+                                    input.checked = fchecked;
+                                }
+                            }
                         }
                     }
                 }
             }
-            catch(err) { }
         }
+        catch(err) { }
     };]=]
 
 local submit_function = [=[
-    function submitForm(fname, fid, fmethod, faction) {
+    function submitForm(foName, foId, foMethod, foAction) {
         var allFrames = new Array(window);
         for(f=0;f<window.frames.length;f=f+1) {
             allFrames.push(window.frames[f]);
         }
-        for(j=0;j<allFrames.length;j=j+1) {
-            for(f=0;f<allFrames[j].document.forms.length;f=f+1) {
-                var myForm = allFrames[j].document.forms[f];
-                if( ( (myForm.name != "" && myForm.name == fname) || (myForm.id != "" && myForm.id == fid) || (myForm.action != "" && myForm.action == faction)) && myForm.method == fmethod) {
-                    try {
-                        var xp_res=allFrames[j].document.evaluate(".//input[@type='submit']", myForm, null, XPathResult.ANY_TYPE,null);
-                    } catch (err) { }
-                    var input;
-                    try {
-                        while(input=xp_res.iterateNext()) {
+        var form_string = "@method='"+foMethod+"'";
+        try {
+            for(j=0;j<allFrames.length;j=j+1) {
+                var xp;
+                try {
+                    xp = allFrames[j].document.evaluate("//form["+form_string+"]", allFrames[j].document, null, XPathResult.ANY_TYPE,null);
+                }
+                catch(err) { }
+                var form;
+                while(form=xp.iterateNext()) {
+                    var re = new RegExp(foAction);
+                    if(form.action.search(re) != -1 && form.id == foId && foName == form.name) {
+                        try {
+                            var xp_res=allFrames[j].document.evaluate(".//input[@type='submit']", form, null, XPathResult.ANY_TYPE,null);
+                        } catch (err) { }
+                        var input;
+                        try {
+                            while(input=xp_res.iterateNext()) {
                                 input.type='text';
-                        }
-                    } catch (err) { }
-                    try {
-                        myForm.submit();
-                    } catch (err) { }
-                    return;
+                            }
+                        } catch (err) { }
+                        try {
+                            form.submit();
+                        } catch (err) { }
+                        return;
+                    }
                 }
             }
         }
+        catch(err) { }
     };]=]
 
 -- Misc funs
-function do_load(w, profile)
+function do_load(w, profile, filename)
     local view = w:get_current()
     local filename = formsdir .. string.match(string.gsub(view.uri, "%w+://", ""), "(.-)/.*")
     local fd, err = io.open(filename, "r")
@@ -142,7 +171,8 @@ function do_load(w, profile)
             break
         end
     end
-    local fname, fchecked, ftype, fvalue, form
+    local fname, fchecked, ftype, fvalue
+    local form = {}
     local autosubmit = 0
     local js = string.format("%s\n%s", insert_function, submit_function)
     local pattern1 = "(.+)%((.+)%):% *(.*)"
@@ -154,12 +184,12 @@ function do_load(w, profile)
                 break
             end
             if string.match(line, "^!form.*") then
-                form = line
-                autosubmit = string.match(form, "^!form%[.-%]:autosubmit=(%d)")
+                form[1], form[2], form[3], form[4] = string.match(line, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]")
+                autosubmit = string.match(line, "^!form%[.-%]:autosubmit=(%d)")
             else
                 if ftype == "textarea" then
                     if string.match(string.gsub(line, pattern1, pattern2), pattern3) then
-                        js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                        js = string.format("%s\ninsert(%q, %q, %q, %q, %q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked, form[1] or "", form[2] or "", form[3] or "", form[4] or "")
                         ftype = nil
                     else
                         fvalue = string.format("%s\\n%s", fvalue, line)
@@ -168,7 +198,7 @@ function do_load(w, profile)
                 if ftype ~= "textarea" then
                     fname, fchecked, ftype, fvalue = string.match(string.gsub(line, pattern1, pattern2), pattern3)
                     if fname ~= nil and ftype ~= "textarea" then
-                        js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+                        js = string.format("%s\ninsert(%q, %q, %q, %q, %q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked, form[1] or "", form[2] or "", form[3] or "", form[4] or "")
                     end
                 end
             end
@@ -177,10 +207,10 @@ function do_load(w, profile)
         end
     end
     if ftype == "textarea" then
-        js = string.format("%s\ninsert(%q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked)
+        js = string.format("%s\ninsert(%q, %q, %q, %q, %q, %q, %q, %q);", js, fname, ftype, fvalue, fchecked, form[1] or "", form[2] or "", form[3] or "", form[4] or "")
     end
     if autosubmit == "1" then
-        js = string.format("%s\nsubmitForm(%q, %q, %q, %q);", js, string.match(form, "^!form%[([^|]-)|([^|]-)|([^|]-)|([^|]-)%]"))
+        js = string.format("%s\nsubmitForm(%q, %q, %q, %q);", js, form[1] or "", form[2] or "", form[3] or "", form[4] or "")
     end
     view:eval_js(js, "(formfiller:load)")
     fd:close()
@@ -210,10 +240,10 @@ webview.methods.formfiller = function(view, w, action)
         else
             fd = io.open(filename, "w+")
         end
-        fd:close()
         local ret = view:eval_js(dump_function, "(formfiller:dump)")
         fd:write(string.format("%s\n!profile=NAME_THIS_PROFILE_%d\n%s", modeline, math.random(1,9999), ret))
         fd:flush()
+        fd:close()
         luakit.spawn(string.format("%s %q", editor_cmd, filename))
 
     elseif action == "load" then
