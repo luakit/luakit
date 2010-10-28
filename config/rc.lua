@@ -41,6 +41,7 @@ require "go_up"
 require "session"
 require "quickmarks"
 require "proxy"
+require "userscripts"
 
 -- Init bookmarks lib
 require "bookmarks"
