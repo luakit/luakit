@@ -10,13 +10,13 @@ local error = error
 local string = string
 local util = require "lousy.util"
 local capi = { luakit = luakit }
+local webview = webview
 
 module("proxy")
 
 --- Module global variables
 local proxies_file = capi.luakit.data_dir .. '/proxylist'
 
--- Init proxies list
 local proxies = {}
 local noproxy = { address = '' }
 local active = noproxy
@@ -111,6 +111,15 @@ function set_active(name)
     return true
 end
 
+-- Load the initial proxy address
+webview.init_funcs.set_proxy = function (view, w)
+    local active = get_active()
+    if active and active.address ~= '' then
+        view:set_prop('proxy-uri', active.address)
+    end
+    -- The proxy property is a global setting so no need to call this again.
+    webview.init_funcs.set_proxy = nil
+end
 
 -- Initialize module
 load()

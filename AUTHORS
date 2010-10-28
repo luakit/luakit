@@ -16,6 +16,9 @@ Contributors to luakit (A to Z):
   Richard Gay                   <richard.gay@t-online.de>   2010
   Vasuvi                        <vasuvi@inbox.com>          2010
 
+Author of the JavaScript greasemonkey methods in `lib/userscripts.lua`:
+  Jim Tuttle                                                2009
+
 Author of the `lib/go_input.lua` javascript:
   Aldrik Dunbar     (n30n)                                  2009
 
