@@ -18,19 +18,17 @@ local zoom_step = globals.zoom_step or 0.1
 local homepage = globals.homepage or "http://luakit.org"
 
 -- Adds the default menu widget bindings to a mode
-local menu_mode = function(mode)
-    return join({
-        -- Close menu widget
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
-    }, mode or {})
-end
+local menu_binds = {
+    -- Close menu widget
+    key({},          "q",           function (w) w:set_mode() end),
+    -- Navigate items
+    key({},          "j",           function (w) w.menu:move_down() end),
+    key({},          "k",           function (w) w.menu:move_up()   end),
+    key({},          "Down",        function (w) w.menu:move_down() end),
+    key({},          "Up",          function (w) w.menu:move_up()   end),
+    key({},          "Tab",         function (w) w.menu:move_down() end),
+    key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+}
 
 -- Add key bindings to be used across all windows in the given modes.
 binds.mode_binds = {
@@ -246,7 +244,7 @@ binds.mode_binds = {
         key({"Control"}, "k",           function (w) w:search(w.search_state.last_search, false) end),
     },
 
-    proxy = menu_mode({
+    proxy = join(menu_binds, {
         key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
@@ -277,7 +275,7 @@ binds.mode_binds = {
                                         end),
     }),
 
-    qmarks = menu_mode({
+    qmarks = join(menu_binds, {
         -- Delete quickmark
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -323,7 +321,7 @@ binds.mode_binds = {
                                         end),
     }),
 
-    undolist = menu_mode({
+    undolist = join(menu_binds, {
         -- Delete closed tab
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -372,7 +370,6 @@ binds.mode_binds = {
     }),
 
     cmdcomp = {
-        -- Navigate items
         key({},          "Tab",         function (w) w.menu:move_down() end),
         key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
         key({},          "Escape",      function (w)
