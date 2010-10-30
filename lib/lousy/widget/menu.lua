@@ -195,6 +195,9 @@ function move_up(menu)
 
     calc_offset(menu)
     update(menu)
+
+    -- Emit changed signals
+    menu:emit_signal("changed", menu:get())
 end
 
 function move_down(menu)
@@ -217,6 +220,9 @@ function move_down(menu)
 
     calc_offset(menu)
     update(menu)
+
+    -- Emit changed signals
+    menu:emit_signal("changed", menu:get())
 end
 
 function get(menu, index)
@@ -248,6 +254,9 @@ function del(menu, index)
     d.offset = math.min(d.offset, math.max(d.nrows - d.max_rows + 1, 1))
 
     update(menu)
+
+    -- Emit changed signals
+    menu:emit_signal("changed", menu:get())
 end
 
 function new(args)
