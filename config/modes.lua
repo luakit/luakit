@@ -5,7 +5,7 @@
 -- Table of modes and their callback hooks
 modes = {}
 
--- Currently active mode hooks
+-- Currently active mode hooks and state data
 local current
 
 -- Update a modes hook table with new hooks
@@ -14,7 +14,8 @@ function new_mode(mode, hooks)
 end
 
 -- Input bar history binds, these are only present in modes with a history
--- table so we can make some assumptions.
+-- table so we can make some assumptions. This auto-magic is present when
+-- a mode contains a `history` table item (with history settings therein).
 local key = lousy.bind.key
 hist_binds = {
     key({}, "Up", function (w)
