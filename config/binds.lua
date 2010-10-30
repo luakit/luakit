@@ -574,7 +574,6 @@ binds.helper_methods = {
         local engine = "default"
         if #args >= 1 and search_engines[args[1]] then
             engine = args[1]
-            print(engine)
             table.remove(args, 1)
         end
         -- Use javascripts UTF-8 aware uri encoding function
