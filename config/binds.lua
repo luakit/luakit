@@ -418,7 +418,7 @@ binds.commands = {
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
     cmd("q[uit]",                       function (w)    w:close_win() end),
-    cmd({"wq", "writequit"},            function (w)    w:save_session() w:close_win() end),
+    cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
     cmd("reloadconf",                   function (w)    w:reload_config() end),
@@ -443,7 +443,7 @@ binds.commands = {
                                         end),
 
     -- Quickmark edit (`:qmarkedit f` -> `:qmark f furi1, furi2, ..`)
-    cmd({"qme", "qmarkedit"},           function (w, a)
+    cmd({"qmarkedit", "qme"},           function (w, a)
                                             token = strip(a)
                                             assert(#token == 1, "invalid token length: " .. token)
                                             local uris = quickmarks.get(token)
@@ -465,7 +465,7 @@ binds.commands = {
                                         end),
 
     -- Delete all quickmarks
-    cmd({"delqm!", "delqmarks!"},       function (w) quickmarks.delall() end),
+    cmd({"delqmarks!", "delqm!"},       function (w) quickmarks.delall() end),
 
     -- View all quickmarks in an interactive menu
     cmd("qmarks",                      function (w, a)
