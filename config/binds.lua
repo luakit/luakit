@@ -373,27 +373,10 @@ binds.mode_binds = {
 
     cmdcomp = {
         -- Navigate items
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w)
-                                            if w.comp_text == w.ibar.input.text then
-                                                w.menu:move_down()
-                                            else
-                                                w:set_mode("cmdcomp")
-                                            end
-                                        end),
+        key({},          "Tab",         function (w) w.menu:move_down() end),
         key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
-        -- Complete command
-        key({},          "Return",      function (w)
-                                            local row = w.menu:get()
-                                            if row and row.cmd then
-                                                w:enter_cmd(":" .. row.cmd .. " ")
-                                            else
-                                                w:enter_cmd(w.ibar.input.text)
-                                            end
-                                        end),
         key({},          "Escape",      function (w)
-                                            w:enter_cmd(w.ibar.input.text)
+                                            w:enter_cmd(":" .. w.comp_state.orig)
                                         end),
     },
 
