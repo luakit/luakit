@@ -99,10 +99,10 @@ window.init_funcs.modes_setup = function (w)
     -- Calls the `activate` hook on input widget activate.
     w.ibar.input:add_signal("activate", function()
         if current and current.activate then
-            local text, items = w.ibar.input.text, current.history.items
-            if current.activate(w, text) == false or not items then return end
+            local text, hist = w.ibar.input.text, current.history
+            if current.activate(w, text) == false or not hist then return end
             -- Check if last history item is identical
-            if items[#items] ~= text then table.insert(items, text) end
+            if hist.items[hist.len] ~= text then table.insert(hist.items, text) end
         end
     end)
 
