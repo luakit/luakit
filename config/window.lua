@@ -251,10 +251,9 @@ window.methods = {
     end,
 
     -- enter command or characters into command line
-    enter_cmd = function (w, cmd)
-        local i = w.ibar.input
+    enter_cmd = function (w, cmd, opts)
         w:set_mode("command")
-        w:set_input(cmd)
+        w:set_input(cmd, opts)
     end,
 
     -- insert a string into the command line at the current cursor position
@@ -352,20 +351,20 @@ window.methods = {
     -- Shows a notification until the next keypress of the user.
     notify = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end
-        w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
+        w:set_prompt(msg, { fg = theme.notif_fg, bg = theme.notif_bg })
     end,
 
     error = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end
-        w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
+        w:set_prompt("Error: "..msg, { fg = theme.error_fg, bg = theme.error_bg })
     end,
 
     -- Set and display the prompt
-    set_prompt = function (w, text, fg, bg)
-        local prompt, ebox = w.ibar.prompt, w.ibar.ebox
+    set_prompt = function (w, text, opts)
+        local prompt, ebox, opts = w.ibar.prompt, w.ibar.ebox, opts or {}
         prompt:hide()
         -- Set theme
-        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
         if prompt.fg ~= fg then prompt.fg = fg end
         if ebox.bg ~= bg then ebox.bg = bg end
         -- Set text or remain hidden
@@ -375,13 +374,12 @@ window.methods = {
         end
     end,
 
-
     -- Set display and focus the input bar
-    set_input = function (w, text, fg, bg)
-        local input = w.ibar.input
+    set_input = function (w, text, opts)
+        local input, opts = w.ibar.input, opts or {}
         input:hide()
         -- Set theme
-        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
         if input.fg ~= fg then input.fg = fg end
         if input.bg ~= bg then input.bg = bg end
         -- Set text or remain hidden
@@ -389,7 +387,7 @@ window.methods = {
             input.text = text
             input:show()
             input:focus()
-            input.position = pos or -1
+            input.position = opts.pos or -1
         end
     end,
 
