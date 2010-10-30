@@ -470,10 +470,10 @@ binds.commands = {
     -- View all quickmarks in an interactive menu
     cmd("qmarks",                      function (w, a)
                                             w:set_mode("qmarks")
-                                            local rows = {{"Quickmarks", "URI(s)", title = true},}
+                                            local rows = {{"Quickmarks", " URI(s)", title = true},}
                                             for _, qmark in ipairs(quickmarks.get_tokens()) do
                                                 local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
-                                                table.insert(rows, { qmark, uris, qmark = qmark})
+                                                table.insert(rows, { "  " .. qmark, " " .. uris, qmark = qmark})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, e edit, w winopen, t tabopen.", false)
@@ -483,12 +483,12 @@ binds.commands = {
     cmd("undolist",                     function (w, a)
                                             if #(w.closed_tabs) == 0 then w:notify("No closed tabs to display") return end
                                             w:set_mode("undolist")
-                                            local rows = {{"Title", "URI", title = true},}
+                                            local rows = {{"Title", " URI", title = true},}
                                             for uid, tab in ipairs(w.closed_tabs) do
                                                 tab.uid = uid
                                                 local hi = tab.hist.items[tab.hist.index]
                                                 local title, uri = lousy.util.escape(hi.title), lousy.util.escape(hi.uri)
-                                                table.insert(rows, 2, { title, uri, uid = uid})
+                                                table.insert(rows, 2, { "  " .. title, " " .. uri, uid = uid})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, w winopen.", false)
@@ -501,15 +501,15 @@ binds.commands = {
                                                 local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
                                                 local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
                                                 local active = proxy.get_active()
-                                                local rows = {{"Proxy Name", "Server address", title = true},
-                                                    {"None", "", address = '',
+                                                local rows = {{"Proxy Name", " Server address", title = true},
+                                                    {"  None", "", address = '',
                                                         fg = (active.address == '' and afg) or ifg,
                                                         bg = (active.address == '' and abg) or ibg},}
                                                 for _, name in ipairs(proxy.get_names()) do
                                                     local fg = active.name == name and afg or ifg
                                                     local bg = active.name == name and abg or ibg
                                                     local address = lousy.util.escape(proxy.get(name))
-                                                    table.insert(rows, { name, address, fg=fg, bg=bg, name=name, address=address })
+                                                    table.insert(rows, { "  " .. name, " " .. address, fg=fg, bg=bg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
