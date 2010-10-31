@@ -17,6 +17,19 @@ local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
 local zoom_step = globals.zoom_step or 0.1
 local homepage = globals.homepage or "http://luakit.org"
 
+-- Adds the default menu widget bindings to a mode
+local menu_binds = {
+    -- Close menu widget
+    key({},          "q",           function (w) w:set_mode() end),
+    -- Navigate items
+    key({},          "j",           function (w) w.menu:move_down() end),
+    key({},          "k",           function (w) w.menu:move_up()   end),
+    key({},          "Down",        function (w) w.menu:move_down() end),
+    key({},          "Up",          function (w) w.menu:move_up()   end),
+    key({},          "Tab",         function (w) w.menu:move_down() end),
+    key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+}
+
 -- Add key bindings to be used across all windows in the given modes.
 binds.mode_binds = {
      -- buf(Pattern,                    function (w, buffer, metadata) .. end, opts),
@@ -210,7 +223,12 @@ binds.mode_binds = {
 
     command = {
         key({"Shift"},   "Insert",      function (w) w:insert_cmd(luakit.get_selection()) end),
-        key({},          "Tab",         function (w) w:cmd_completion() end),
+        key({},          "Tab",         function (w)
+                                            local i = w.ibar.input
+                                            -- Only complete commands, not args
+                                            if string.match(i.text, "%s") then return end
+                                            w:set_mode("cmdcomp")
+                                        end),
         key({"Control"}, "w",           function (w) w:del_word() end),
         key({"Control"}, "u",           function (w) w:del_line() end),
         key({"Control"}, "a",           function (w) w:beg_line() end),
@@ -226,15 +244,7 @@ binds.mode_binds = {
         key({"Control"}, "k",           function (w) w:search(w.search_state.last_search, false) end),
     },
 
-    proxy = {
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    proxy = join({
         key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
@@ -263,18 +273,9 @@ binds.mode_binds = {
                                                 w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
                                             end
                                         end),
-    },
+    }, menu_binds),
 
-    qmarks = {
-        -- Close menu widget
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    qmarks = join({
         -- Delete quickmark
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -318,18 +319,9 @@ binds.mode_binds = {
                                                 window.new(quickmarks.get(row.qmark) or {})
                                             end
                                         end),
-    },
+    }, menu_binds),
 
-    undolist = {
-        -- Close menu widget
-        key({},          "q",           function (w) w:set_mode() end),
-        -- Navigate items
-        key({},          "j",           function (w) w.menu:move_down() end),
-        key({},          "k",           function (w) w.menu:move_up()   end),
-        key({},          "Down",        function (w) w.menu:move_down() end),
-        key({},          "Up",          function (w) w.menu:move_up()   end),
-        key({},          "Tab",         function (w) w.menu:move_down() end),
-        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+    undolist = join({
         -- Delete closed tab
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -375,6 +367,14 @@ binds.mode_binds = {
                                                 end
                                             end
                                         end),
+    }, menu_binds),
+
+    cmdcomp = {
+        key({},          "Tab",         function (w) w.menu:move_down() end),
+        key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
+        key({},          "Escape",      function (w)
+                                            w:enter_cmd(":" .. w.comp_state.orig)
+                                        end),
     },
 
     insert = { },
@@ -398,7 +398,7 @@ binds.commands = {
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
     cmd("q[uit]",                       function (w)    w:close_win() end),
-    cmd({"wq", "writequit"},            function (w)    w:save_session() w:close_win() end),
+    cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
     cmd("reloadconf",                   function (w)    w:reload_config() end),
@@ -423,7 +423,7 @@ binds.commands = {
                                         end),
 
     -- Quickmark edit (`:qmarkedit f` -> `:qmark f furi1, furi2, ..`)
-    cmd({"qme", "qmarkedit"},           function (w, a)
+    cmd({"qmarkedit", "qme"},           function (w, a)
                                             token = strip(a)
                                             assert(#token == 1, "invalid token length: " .. token)
                                             local uris = quickmarks.get(token)
@@ -445,15 +445,15 @@ binds.commands = {
                                         end),
 
     -- Delete all quickmarks
-    cmd({"delqm!", "delqmarks!"},       function (w) quickmarks.delall() end),
+    cmd({"delqmarks!", "delqm!"},       function (w) quickmarks.delall() end),
 
     -- View all quickmarks in an interactive menu
     cmd("qmarks",                      function (w, a)
                                             w:set_mode("qmarks")
-                                            local rows = {{"Quickmarks", "URI(s)", title = true},}
+                                            local rows = {{"Quickmarks", " URI(s)", title = true},}
                                             for _, qmark in ipairs(quickmarks.get_tokens()) do
                                                 local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
-                                                table.insert(rows, { qmark, uris, qmark = qmark})
+                                                table.insert(rows, { "  " .. qmark, " " .. uris, qmark = qmark})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, e edit, w winopen, t tabopen.", false)
@@ -463,12 +463,12 @@ binds.commands = {
     cmd("undolist",                     function (w, a)
                                             if #(w.closed_tabs) == 0 then w:notify("No closed tabs to display") return end
                                             w:set_mode("undolist")
-                                            local rows = {{"Title", "URI", title = true},}
+                                            local rows = {{"Title", " URI", title = true},}
                                             for uid, tab in ipairs(w.closed_tabs) do
                                                 tab.uid = uid
                                                 local hi = tab.hist.items[tab.hist.index]
                                                 local title, uri = lousy.util.escape(hi.title), lousy.util.escape(hi.uri)
-                                                table.insert(rows, 2, { title, uri, uid = uid})
+                                                table.insert(rows, 2, { "  " .. title, " " .. uri, uid = uid})
                                             end
                                             w.menu:build(rows)
                                             w:notify("Use j/k to move, d delete, w winopen.", false)
@@ -481,15 +481,15 @@ binds.commands = {
                                                 local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
                                                 local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
                                                 local active = proxy.get_active()
-                                                local rows = {{"Proxy Name", "Server address", title = true},
-                                                    {"None", "", address = '',
+                                                local rows = {{"Proxy Name", " Server address", title = true},
+                                                    {"  None", "", address = '',
                                                         fg = (active.address == '' and afg) or ifg,
                                                         bg = (active.address == '' and abg) or ibg},}
                                                 for _, name in ipairs(proxy.get_names()) do
                                                     local fg = active.name == name and afg or ifg
                                                     local bg = active.name == name and abg or ibg
                                                     local address = lousy.util.escape(proxy.get(name))
-                                                    table.insert(rows, { name, address, fg=fg, bg=bg, name=name, address=address })
+                                                    table.insert(rows, { "  " .. name, " " .. address, fg=fg, bg=bg, name=name, address=address })
                                                 end
                                                 w.menu:build(rows)
                                                 w:notify("Use j/k to move, d delete, e edit, a add, Return activate", false)
@@ -554,7 +554,6 @@ binds.helper_methods = {
         local engine = "default"
         if #args >= 1 and search_engines[args[1]] then
             engine = args[1]
-            print(engine)
             table.remove(args, 1)
         end
         -- Use javascripts UTF-8 aware uri encoding function
