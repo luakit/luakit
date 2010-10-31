@@ -244,7 +244,7 @@ binds.mode_binds = {
         key({"Control"}, "k",           function (w) w:search(w.search_state.last_search, false) end),
     },
 
-    proxy = join(menu_binds, {
+    proxy = join({
         key({},          "a",           function (w) w:enter_cmd(":proxy ") end),
         key({},          "Return",      function (w)
                                             local row = w.menu:get()
@@ -273,9 +273,9 @@ binds.mode_binds = {
                                                 w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
                                             end
                                         end),
-    }),
+    }, menu_binds),
 
-    qmarks = join(menu_binds, {
+    qmarks = join({
         -- Delete quickmark
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -319,9 +319,9 @@ binds.mode_binds = {
                                                 window.new(quickmarks.get(row.qmark) or {})
                                             end
                                         end),
-    }),
+    }, menu_binds),
 
-    undolist = join(menu_binds, {
+    undolist = join({
         -- Delete closed tab
         key({},          "d",           function (w)
                                             local row = w.menu:get()
@@ -367,7 +367,7 @@ binds.mode_binds = {
                                                 end
                                             end
                                         end),
-    }),
+    }, menu_binds),
 
     cmdcomp = {
         key({},          "Tab",         function (w) w.menu:move_down() end),
