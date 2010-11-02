@@ -1,6 +1,7 @@
 --------------------------------------------------------
 -- View and undo closed tabs in an interactive menu   --
--- 2010 (C) Mason Larobina <mason.larobina@gmail.com> --
+-- (C) 2010 Chris van Dijk <quigybo@hotmail.com>      --
+-- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
 --------------------------------------------------------
 
 -- Undo a closed tab (with complete tab history)
