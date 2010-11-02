@@ -15,10 +15,7 @@ local theme = theme
 local unpack = unpack
 local table = table
 local capi = { luakit = luakit }
-
--- Check config/webview.lua has been loaded
-local webview = assert(webview)
-
+local webview = webview
 -- Check for mode/bind functions
 local add_binds, add_cmds = add_binds, add_cmds
 local new_mode, menu_binds = new_mode, menu_binds
