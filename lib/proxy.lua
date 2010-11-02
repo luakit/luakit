@@ -20,9 +20,8 @@ local capi = { luakit = luakit }
 local webview = assert(webview)
 
 -- Check for mode/bind functions
-local add_binds, add_cmds = assert(add_binds), assert(add_cmds)
-local new_mode = assert(new_mode)
-local menu_binds = assert(menu_binds)
+local add_binds, add_cmds = add_binds, add_cmds
+local new_mode, menu_binds = new_mode, menu_binds
 
 module("proxy")
 
