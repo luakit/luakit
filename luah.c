@@ -428,6 +428,7 @@ luaH_luakit_spawn_sync(lua_State *L)
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
     sigact.sa_handler=SIG_DFL;
     sigemptyset (&sigact.sa_mask);
+    sigact.sa_flags=0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
     g_spawn_command_line_sync(command, &_stdout, &_stderr, &rv, &e);
