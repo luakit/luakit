@@ -711,6 +711,9 @@ luaH_init(void)
     /* add luakit install path */
     g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
 
+    /* terminate path list */
+    g_ptr_array_add(paths, NULL);
+
     for (gpointer *path = paths->pdata; *path; path++) {
         lua_pushliteral(L, ";");
         lua_pushstring(L, *path);
