@@ -215,6 +215,9 @@ add_binds("proxymenu", lousy.util.table.join({
     -- New proxy
     key({}, "a", function (w) w:enter_cmd(":proxy ") end),
 
+    -- Exit menu
+    key({}, "q", function (w) w:set_mode() end),
+
 }, menu_binds))
 
 -- Initialize module

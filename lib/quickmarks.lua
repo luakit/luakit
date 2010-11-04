@@ -266,4 +266,7 @@ add_binds("qmarklist", lousy.util.table.join({
             end
         end),
 
+    -- Exit menu
+    key({}, "q", function (w) w:set_mode() end),
+
 }, menu_binds))
