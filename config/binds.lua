@@ -415,8 +415,8 @@ binds.commands = {
                                                 file = string.sub(out, 0, -2)                                      -- strip trailing \n
                                             end
                                             local title = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
-                                            local fd = io.open(file, "w")
-                                                fd:write(w:eval_js("document.documentElement.outerHTML", "dump"))
+                                            local fd = assert(io.open(file, "w"))
+                                                assert(fd:write(w:eval_js("document.documentElement.outerHTML", "dump")))
                                             io.close(fd)
                                             if not a then
                                                 luakit.spawn('sh -c "mv '..file..' $(zenity --file-selection --confirm-overwrite --save --filename '..title..')"')
