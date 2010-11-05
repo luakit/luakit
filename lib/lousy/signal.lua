@@ -23,7 +23,12 @@ module("lousy.signal")
 -- Private signal data for objects
 local data = setmetatable({}, { __mode = "k" })
 
-local methods = {"add_signal", "emit_signal", "remove_signal"}
+local methods = {
+    "add_signal",
+    "emit_signal",
+    "remove_signal",
+    "remove_signals",
+}
 
 local function get_signals(object)
     -- Check table supports signals
@@ -65,6 +70,7 @@ function emit_signal(object, signame, ...)
     end
 end
 
+-- Remove a signame & function pair.
 function remove_signal(object, signame, func)
     local sigfuncs = get_signals(object)[signame] or {}
 
@@ -73,6 +79,12 @@ function remove_signal(object, signame, func)
             return table.remove(sigfuncs, i)
         end
     end
+end
+
+-- Remove all signal handlers with the given signame.
+function remove_signals(object, signame)
+    local signals = get_signals(object) or {}
+    signals[signame] = nil
 end
 
 function setup(object)
