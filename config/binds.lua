@@ -408,14 +408,19 @@ binds.commands = {
     cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
     cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
     cmd("lua",                          function (w, a) assert(loadstring("return function(w) "..a.." end"))()(w) end),
-    cmd("dump",                         function (w)
-                                            local rv, out, err = luakit.spawn_sync("mktemp")                             -- create temp file
-                                            local tempfile = string.sub(out, 0, -2)                                      -- strip trailing \n
-                                            local sanetitle = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html'   -- sanitize filename
-                                            local fd = io.open(tempfile, "w")
+    cmd("dump",                         function (w, a)
+                                            local file
+                                            if a then file = a else
+                                                local rv, out, err = luakit.spawn_sync("mktemp")                   -- create temp file
+                                                file = string.sub(out, 0, -2)                                      -- strip trailing \n
+                                            end
+                                            local title = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+                                            local fd = io.open(file, "w")
                                                 fd:write(w:eval_js("document.documentElement.outerHTML", "dump"))
                                             io.close(fd)
-                                            luakit.spawn('sh -c "mv '..tempfile..' $(zenity --file-selection --confirm-overwrite --save --filename '..sanetitle..')"')
+                                            if not a then
+                                                luakit.spawn('sh -c "mv '..file..' $(zenity --file-selection --confirm-overwrite --save --filename '..title..')"')
+                                            end
                                         end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
