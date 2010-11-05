@@ -164,11 +164,11 @@ widget_label(widget_t *w)
     gtk_misc_set_alignment(GTK_MISC(w->widget), 0, 0);
     gtk_misc_set_padding(GTK_MISC(w->widget), 2, 2);
 
-    g_object_connect((GObject*)w->widget,
-      "signal::focus-in-event",    (GCallback)focus_cb,       w,
-      "signal::focus-out-event",   (GCallback)focus_cb,       w,
-      "signal::key-press-event",   (GCallback)key_press_cb,   w,
-      "signal::parent-set",        (GCallback)parent_set_cb,  w,
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::focus-in-event",    G_CALLBACK(focus_cb),      w,
+      "signal::focus-out-event",   G_CALLBACK(focus_cb),      w,
+      "signal::key-press-event",   G_CALLBACK(key_press_cb),  w,
+      "signal::parent-set",        G_CALLBACK(parent_set_cb), w,
       NULL);
 
     gtk_widget_show(w->widget);

@@ -78,12 +78,12 @@ widget_eventbox(widget_t *w)
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_widget_show(w->widget);
 
-    g_object_connect((GObject*)w->widget,
-      "signal::add",                  (GCallback)add_cb,        w,
-      "signal::button-press-event",   (GCallback)button_cb,     w,
-      "signal::button-release-event", (GCallback)button_cb,     w,
-      "signal::parent-set",           (GCallback)parent_set_cb, w,
-      "signal::remove",               (GCallback)remove_cb,     w,
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::add",                  G_CALLBACK(add_cb),        w,
+      "signal::button-press-event",   G_CALLBACK(button_cb),     w,
+      "signal::button-release-event", G_CALLBACK(button_cb),     w,
+      "signal::parent-set",           G_CALLBACK(parent_set_cb), w,
+      "signal::remove",               G_CALLBACK(remove_cb),     w,
       NULL);
 
     return w;

@@ -131,11 +131,11 @@ widget_window(widget_t *w)
     hints.min_height = 1;
     gtk_window_set_geometry_hints(GTK_WINDOW(w->widget), NULL, &hints, GDK_HINT_MIN_SIZE);
 
-    g_object_connect((GObject*)w->widget,
-      "signal::add",             (GCallback)add_cb,       w,
-      "signal::destroy",         (GCallback)destroy_cb,   w,
-      "signal::key-press-event", (GCallback)key_press_cb, w,
-      "signal::remove",          (GCallback)remove_cb,    w,
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::add",             G_CALLBACK(add_cb),       w,
+      "signal::destroy",         G_CALLBACK(destroy_cb),   w,
+      "signal::key-press-event", G_CALLBACK(key_press_cb), w,
+      "signal::remove",          G_CALLBACK(remove_cb),    w,
       NULL);
 
     /* add to global windows list */

@@ -117,10 +117,10 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
         w->widget = gtk_##type##_new(FALSE, 0);                              \
         g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);  \
         gtk_widget_show(w->widget);                                          \
-        g_object_connect((GObject*)w->widget,                                \
-          "signal::add",        add_cb,        w,                            \
-          "signal::parent-set", parent_set_cb, w,                            \
-          "signal::remove",     remove_cb,     w,                            \
+        g_object_connect(G_OBJECT(w->widget),                                \
+          "signal::add",        G_CALLBACK(add_cb),        w,                \
+          "signal::parent-set", G_CALLBACK(parent_set_cb), w,                \
+          "signal::remove",     G_CALLBACK(remove_cb),     w,                \
           NULL);                                                             \
         return w;                                                            \
     }

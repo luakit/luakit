@@ -175,25 +175,25 @@ widget_entry(widget_t *w)
     /* setup default settings */
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
 
-    g_object_connect((GObject*)w->widget,
-      "signal::activate",                          (GCallback)activate_cb,    w,
-      "signal::focus-in-event",                    (GCallback)focus_cb,       w,
-      "signal::focus-out-event",                   (GCallback)focus_cb,       w,
-      "signal::key-press-event",                   (GCallback)key_press_cb,   w,
-      "signal::parent-set",                        (GCallback)parent_set_cb,  w,
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::activate",                          G_CALLBACK(activate_cb),   w,
+      "signal::focus-in-event",                    G_CALLBACK(focus_cb),      w,
+      "signal::focus-out-event",                   G_CALLBACK(focus_cb),      w,
+      "signal::key-press-event",                   G_CALLBACK(key_press_cb),  w,
+      "signal::parent-set",                        G_CALLBACK(parent_set_cb), w,
       // The following signals replace the old "signal::changed", since that
       // does not allow for the selection to be changed in it's callback.
-      "swapped-signal-after::backspace",           (GCallback)changed_cb,     w,
-      "swapped-signal-after::delete-from-cursor",  (GCallback)changed_cb,     w,
-      "swapped-signal-after::insert-at-cursor",    (GCallback)changed_cb,     w,
-      "swapped-signal-after::paste-clipboard",     (GCallback)changed_cb,     w,
-      "swapped-signal::button-release-event",      (GCallback)changed_cb,     w,
+      "swapped-signal-after::backspace",           G_CALLBACK(changed_cb),    w,
+      "swapped-signal-after::delete-from-cursor",  G_CALLBACK(changed_cb),    w,
+      "swapped-signal-after::insert-at-cursor",    G_CALLBACK(changed_cb),    w,
+      "swapped-signal-after::paste-clipboard",     G_CALLBACK(changed_cb),    w,
+      "swapped-signal::button-release-event",      G_CALLBACK(changed_cb),    w,
       NULL);
 
     // Further signal to replace "signal::changed"
     GtkEntry* entry = GTK_ENTRY(w->widget);
-    g_object_connect((GObject*)entry->im_context,
-      "swapped-signal::commit",    (GCallback)changed_cb,     w,
+    g_object_connect(G_OBJECT(entry->im_context),
+      "swapped-signal::commit", G_CALLBACK(changed_cb), w,
       NULL);
 
     gtk_widget_show(w->widget);
