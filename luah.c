@@ -711,20 +711,19 @@ luaH_init(void)
     /* add luakit install path */
     g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
 
-    /* terminate path list */
-    g_ptr_array_add(paths, NULL);
-
-    for (gpointer *path = paths->pdata; *path; path++) {
+    const gchar *path;
+    for (guint i = 0; i < paths->len; i++) {
+        path = paths->pdata[i];
+        /* Search for file */
         lua_pushliteral(L, ";");
-        lua_pushstring(L, *path);
+        lua_pushstring(L, path);
         lua_pushliteral(L, "/?.lua");
         lua_concat(L, 3);
-
+        /* Search for lib */
         lua_pushliteral(L, ";");
-        lua_pushstring(L, *path);
+        lua_pushstring(L, path);
         lua_pushliteral(L, "/?/init.lua");
         lua_concat(L, 3);
-
         /* concat with package.path */
         lua_concat(L, 3);
     }
@@ -785,10 +784,12 @@ luaH_parserc(const gchar *confpath, gboolean run)
     for(; *config_dirs; config_dirs++)
         g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "rc.lua", NULL));
 
-    for (gpointer *path = paths->pdata; *path; path++) {
-        if (file_exists(*path)) {
-            if(luaH_loadrc(*path, run)) {
-                globalconf.confpath = g_strdup(*path);
+    const gchar *path;
+    for (guint i = 0; i < paths->len; i++) {
+        path = paths->pdata[i];
+        if (file_exists(path)) {
+            if(luaH_loadrc(path, run)) {
+                globalconf.confpath = g_strdup(path);
                 ret = TRUE;
                 goto bailout;
             } else if(!run)
