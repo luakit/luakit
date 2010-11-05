@@ -161,11 +161,6 @@ window.init_funcs = {
 
     key_press_match = function (w)
         w.win:add_signal("key-press", function (_, mods, key)
-            -- Reset command line completion
-            if w:get_mode() == "command" and key ~= "Tab" and w.compl_start then
-                w:update_uri()
-                w.compl_index = 0
-            end
             -- Match & exec a bind
             local success, match = pcall(w.hit, w, mods, key)
             if not success then
@@ -267,10 +262,9 @@ window.methods = {
     end,
 
     -- enter command or characters into command line
-    enter_cmd = function (w, cmd)
-        local i = w.ibar.input
+    enter_cmd = function (w, cmd, opts)
         w:set_mode("command")
-        w:set_input(cmd)
+        w:set_input(cmd, opts)
     end,
 
     -- insert a string into the command line at the current cursor position
@@ -282,52 +276,6 @@ window.methods = {
         local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
         i.text = left .. str .. right
         i.position = pos + #str
-    end,
-
-    -- Command line completion of available commands
-    cmd_completion = function (w)
-        local i = w.ibar.input
-        local s = w.sbar.l.uri
-        local cmpl = {}
-
-        -- Get last completion (is reset on key press other than <Tab>)
-        if not w.compl_start or w.compl_index == 0 then
-            w.compl_start = "^" .. string.sub(i.text, 2)
-            w.compl_index = 1
-        end
-
-        -- Get suitable commands
-        for _, b in ipairs(binds.commands) do
-            for _, c in pairs(b.cmds) do
-                if c and string.match(c, w.compl_start) then
-                    table.insert(cmpl, c)
-                end
-            end
-        end
-
-        table.sort(cmpl)
-
-        if #cmpl > 0 then
-            local text = ""
-            for index, comp in pairs(cmpl) do
-                if index == w.compl_index then
-                    i.text = ":" .. comp .. " "
-                    i.position = -1
-                end
-                if text ~= "" then
-                    text = text .. " | "
-                end
-                text = text .. comp
-            end
-
-            -- cycle through all possible completions
-            if w.compl_index == #cmpl then
-                w.compl_index = 1
-            else
-                w.compl_index = w.compl_index + 1
-            end
-            s.text = lousy.util.escape(text)
-        end
     end,
 
     del_word = function (w)
@@ -414,20 +362,20 @@ window.methods = {
     -- Shows a notification until the next keypress of the user.
     notify = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end
-        w:set_prompt(msg, theme.notif_fg, theme.notif_bg)
+        w:set_prompt(msg, { fg = theme.notif_fg, bg = theme.notif_bg })
     end,
 
     error = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end
-        w:set_prompt("Error: "..msg, theme.error_fg, theme.error_bg)
+        w:set_prompt("Error: "..msg, { fg = theme.error_fg, bg = theme.error_bg })
     end,
 
     -- Set and display the prompt
-    set_prompt = function (w, text, fg, bg)
-        local prompt, ebox = w.ibar.prompt, w.ibar.ebox
+    set_prompt = function (w, text, opts)
+        local prompt, ebox, opts = w.ibar.prompt, w.ibar.ebox, opts or {}
         prompt:hide()
         -- Set theme
-        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
         if prompt.fg ~= fg then prompt.fg = fg end
         if ebox.bg ~= bg then ebox.bg = bg end
         -- Set text or remain hidden
@@ -437,13 +385,12 @@ window.methods = {
         end
     end,
 
-
     -- Set display and focus the input bar
-    set_input = function (w, text, fg, bg)
-        local input = w.ibar.input
+    set_input = function (w, text, opts)
+        local input, opts = w.ibar.input, opts or {}
         input:hide()
         -- Set theme
-        fg, bg = fg or theme.ibar_fg, bg or theme.ibar_bg
+        fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
         if input.fg ~= fg then input.fg = fg end
         if input.bg ~= bg then input.bg = bg end
         -- Set text or remain hidden
@@ -451,7 +398,7 @@ window.methods = {
             input.text = text
             input:show()
             input:focus()
-            input.position = pos or -1
+            input.position = opts.pos or -1
         end
     end,
 

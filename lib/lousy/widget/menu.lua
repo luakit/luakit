@@ -126,11 +126,11 @@ function update(menu)
 
                 -- Set cell props
                 if text and cell and row.title then
-                    cell.text = (c == 1 and text) or (" " .. text)
+                    cell.text = text
                     local fg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
                     if cell.fg ~= fg then cell.fg = fg end
                 elseif text and cell then
-                    cell.text = (c == 1 and "  " or " ") .. text
+                    cell.text = text
                     local fg = (selected and (row.selected_fg or sfg)) or row.fg or fg
                     if cell.fg ~= fg then cell.fg = fg end
                 end
@@ -195,6 +195,9 @@ function move_up(menu)
 
     calc_offset(menu)
     update(menu)
+
+    -- Emit changed signals
+    menu:emit_signal("changed", menu:get())
 end
 
 function move_down(menu)
@@ -217,6 +220,9 @@ function move_down(menu)
 
     calc_offset(menu)
     update(menu)
+
+    -- Emit changed signals
+    menu:emit_signal("changed", menu:get())
 end
 
 function get(menu, index)
@@ -248,6 +254,9 @@ function del(menu, index)
     d.offset = math.min(d.offset, math.max(d.nrows - d.max_rows + 1, 1))
 
     update(menu)
+
+    -- Emit changed signals
+    menu:emit_signal("changed", menu:get())
 end
 
 function new(args)

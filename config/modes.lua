@@ -5,7 +5,7 @@
 -- Table of modes and their callback hooks
 modes = {}
 
--- Currently active mode hooks
+-- Currently active mode hooks and state data
 local current
 
 -- Update a modes hook table with new hooks
@@ -14,7 +14,8 @@ function new_mode(mode, hooks)
 end
 
 -- Input bar history binds, these are only present in modes with a history
--- table so we can make some assumptions.
+-- table so we can make some assumptions. This auto-magic is present when
+-- a mode contains a `history` table item (with history settings therein).
 local key = lousy.bind.key
 hist_binds = {
     key({}, "Up", function (w)
@@ -98,10 +99,10 @@ window.init_funcs.modes_setup = function (w)
     -- Calls the `activate` hook on input widget activate.
     w.ibar.input:add_signal("activate", function()
         if current and current.activate then
-            local text, items = w.ibar.input.text, current.history.items
-            if current.activate(w, text) == false or not items then return end
+            local text, hist = w.ibar.input.text, current.history
+            if current.activate(w, text) == false or not hist then return end
             -- Check if last history item is identical
-            if items[#items] ~= text then table.insert(items, text) end
+            if hist.items[hist.len] ~= text then table.insert(hist.items, text) end
         end
     end)
 
@@ -217,5 +218,75 @@ new_mode("proxy", {
 new_mode("undolist", {
     leave = function (w)
         w.menu:hide()
+    end,
+})
+
+new_mode("cmdcomp", {
+    enter = function (w)
+        local i = w.ibar.input
+        local text = i.text
+        -- Clean state
+        w.comp_state = {}
+        local s = w.comp_state
+        -- Get completion text
+        s.orig = string.sub(text, 2)
+        s.left = string.sub(text, 2, i.position)
+        -- Make pattern
+        local pat = "^" .. s.left
+        -- Build completion table
+        local cmpl = {{"Commands", title=true}}
+        -- Get suitable commands
+        for _, b in ipairs(binds.commands) do
+            for i, c in ipairs(b.cmds) do
+                if string.match(c, pat) and not string.match(c, "!$") then
+                    if i == 1 then
+                        c = ":" .. c
+                    else
+                        c = string.format(":%s (:%s)", c, b.cmds[1])
+                    end
+                    table.insert(cmpl, { c, cmd = b.cmds[1] })
+                    break
+                end
+            end
+        end
+        -- Exit mode if no suitable commands found
+        if #cmpl <= 1 then
+            w:enter_cmd(text)
+            return
+        end
+        -- Build menu
+        w.menu:build(cmpl)
+        w.menu:add_signal("changed", function(m, row)
+            local pos
+            if row then
+                s.text = ":" .. row.cmd
+                pos = #(row.cmd) + 1
+            else
+                s.text = ":" .. s.orig
+                pos = #(s.left) + 1
+            end
+            -- Update input bar
+            i.text = s.text
+            i.position = pos
+        end)
+        -- Set initial position
+        w.menu:move_down()
+    end,
+
+    leave = function (w)
+        w.menu:hide()
+        -- Remove all changed signal callbacks
+        w.menu:remove_signals("changed")
+    end,
+
+    changed = function (w, text)
+        -- Return if change was made by cycling through completion options.
+        if text ~= w.comp_state.text then
+            w:enter_cmd(text, { pos = w.ibar.input.position })
+        end
+    end,
+
+    activate = function (w, text)
+        w:enter_cmd(text .. " ")
     end,
 })
