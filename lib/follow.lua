@@ -24,7 +24,10 @@ local follow_js = [=[
 
   function get_document(element) {
     if (isFrame(element)) {
-      return element.contentDocument;
+      if (element.contentDocument)
+          return element.contentDocument;
+      else
+          return document;
     } else {
       var doc = element;
       while (doc.parentNode !== null) {
