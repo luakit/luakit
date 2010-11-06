@@ -1,4 +1,6 @@
--- Luakit configuration file, more information at http://luakit.org/
+-----------------------------------------------------------------------
+-- luakit configuration file, more information at http://luakit.org/ --
+-----------------------------------------------------------------------
 
 -- Load library of useful functions for luakit
 require "lousy"
@@ -19,42 +21,72 @@ theme = assert(lousy.theme.get(), "failed to load theme")
 -- ("$XDG_CONFIG_HOME/luakit/window.lua" or "/etc/xdg/luakit/window.lua")
 require "window"
 
--- Load users mode configuration
--- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
-require "modes"
-
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
 require "webview"
+
+-- Load users mode configuration
+-- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
+require "modes"
 
 -- Load users keybindings
 -- ("$XDG_CONFIG_HOME/luakit/binds.lua" or "/etc/xdg/luakit/binds.lua")
 require "binds"
 
--- Init scripts
+----------------------------------
+-- Optional user script loading --
+----------------------------------
+
+-- Add vimperator-like link hinting & following
 require "follow"
+
+-- Add uzbl-like form filling
 require "formfiller"
-require "go_input"
-require "follow_selected"
-require "go_next_prev"
-require "go_up"
-require "session"
-require "quickmarks"
+
+-- Add proxy support & manager
 require "proxy"
+
+-- Add quickmarks support & manager
+require "quickmarks"
+
+-- Add session saving/loading support
+require "session"
+
+-- Add command to list closed tabs & bind to open closed tabs
+require "undoclose"
+
+-- Add greasemonkey-like javascript userscript support
 require "userscripts"
 
--- Init bookmarks lib
+-- Add bookmarks support
 require "bookmarks"
-bookmarks.load()
-bookmarks.dump_html()
+
+-- Add command completion
+require "completion"
+
+-- Add command history
+require "cmdhist"
+
+-- Add search mode & binds
+require "search"
+
+require "follow_selected"
+require "go_input"
+require "go_next_prev"
+require "go_up"
+
+-----------------------------
+-- End user script loading --
+-----------------------------
 
 -- Restore last saved session
 local w = (session and session.restore())
 if w then
-    for _, uri in ipairs(uris) do
-        w:new_tab(uri, true)
+    for i, uri in ipairs(uris) do
+        w:new_tab(uri, i == 1)
     end
 else
+    -- Or open new window
     window.new(uris)
 end
 

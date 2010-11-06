@@ -269,52 +269,6 @@ webview.methods = {
         view:set_prop("zoom-level", level or 1.0)
     end,
 
-    -- Searching functions
-    start_search = function (view, w, text)
-        if string.match(text, "^[?/]") then
-            w:set_mode("search")
-            w:set_input(text)
-        else
-            return error("invalid search term, must start with '?' or '/'")
-        end
-    end,
-
-    search = function (view, w, text, forward)
-        if forward == nil then forward = true end
-
-        -- Get search state (or new state)
-        if not w.search_state then w.search_state = {} end
-        local s = w.search_state
-
-        -- Get search term
-        text = text or s.last_search
-        if not text or #text == 0 then
-            return w:clear_search()
-        end
-        s.last_search = text
-
-        if s.forward == nil then
-            -- Haven't searched before, save some state.
-            s.forward = forward
-            s.marker = view:get_scroll_vert()
-        else
-            -- Invert direction if originally searching in reverse
-            forward = (s.forward == forward)
-        end
-
-        s.searched = true
-        s.ret = view:search(text, text ~= string.lower(text), forward, true);
-    end,
-
-    clear_search = function (view, w, clear_state)
-        view:clear_search()
-        if clear_state ~= false then
-            w.search_state = {}
-        else
-            w.search_state.searched = false
-        end
-    end,
-
     -- Webview scroll functions
     scroll_vert = function (view, w, value)
         local cur, max = view:get_scroll_vert()

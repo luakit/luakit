@@ -357,11 +357,11 @@ end
 
 -- Selectors for the different modes
 follow.selectors = {
-    followable  = 'a, area, textarea, select, input:not([type=hidden]), button';
-    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object';
-    uri         = 'a, area, frame, iframe';
-    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]';
-    image       = 'img, input[type=image]';
+    followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
+    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object',
+    uri         = 'a, area, frame, iframe',
+    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
+    image       = 'img, input[type=image]',
 }
 
 -- Evaluators for the different modes
@@ -426,8 +426,9 @@ webview.methods.start_follow = function (view, w, mode, prompt, func, count)
 end
 
 -- Add link following binds
-local mode_binds, join, buf, key = binds.mode_binds, lousy.util.table.join, lousy.bind.buf, lousy.bind.key
-mode_binds.normal = join(mode_binds.normal or {}, {
+local buf, key = lousy.bind.buf, lousy.bind.key
+
+add_binds("normal", {
     --                           w:start_follow(mode,     prompt,       callback, count)
     -- Follow link
     buf("^f$",  function (w,b,m) w:start_follow("follow", nil,          function (sig) return sig end) end),
@@ -467,8 +468,9 @@ mode_binds.normal = join(mode_binds.normal or {}, {
     buf("^;T$", function (w,b,m) w:start_follow("uri",    ":tabopen",   function (uri)  w:enter_cmd(":tabopen "..uri) end) end),
     buf("^;W$", function (w,b,m) w:start_follow("uri",    ":winopen",   function (uri)  w:enter_cmd(":winopen "..uri) end) end),
 })
+
 -- Add follow mode binds
-mode_binds.follow = join(mode_binds.follow or {}, {
+add_binds("follow", {
     key({},        "Tab",       function (w) w:eval_js("focus_next();") end),
     key({"Shift"}, "Tab",       function (w) w:eval_js("focus_prev();") end),
     key({},        "Return",    function (w)

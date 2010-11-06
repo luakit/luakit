@@ -6,12 +6,12 @@
 
 -- Setup formfiller binds
 local buf = lousy.bind.buf
-for _, b in ipairs({
+add_binds("normal", {
     buf("^za", function (w) w:formfiller("add")  end),
     buf("^zn", function (w) w:formfiller("new")  end),
     buf("^ze", function (w) w:formfiller("edit") end),
     buf("^zl", function (w) w:formfiller("load") end),
-}) do table.insert(binds.mode_binds.normal, b) end
+})
 
 -- Load formfiller settings
 local ff = globals.formfiller or {}
