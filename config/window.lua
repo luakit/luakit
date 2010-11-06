@@ -656,8 +656,10 @@ window.methods = {
             engine = args[1]
             table.remove(args, 1)
         end
-        -- Use javascripts UTF-8 aware uri encoding function
-        local terms = w:eval_js(string.format("encodeURIComponent(%q)", table.concat(args, " ")))
+
+        -- Percent-encode arguments
+        local terms = luakit.uri_encode(table.concat(args, " "))
+
         -- Return search terms sub'd into search string
         return ({string.gsub(search_engines[engine], "{%d}", ({string.gsub(terms, "%%", "%%%%")})[1])})[1]
     end,
