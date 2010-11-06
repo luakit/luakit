@@ -409,18 +409,11 @@ binds.commands = {
     cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
     cmd("lua",                          function (w, a) assert(loadstring("return function(w) "..a.." end"))()(w) end),
     cmd("dump",                         function (w, a)
-                                            local file
-                                            if a then file = a else
-                                                local rv, out, err = luakit.spawn_sync("mktemp")                   -- create temp file
-                                                file = string.sub(out, 0, -2)                                      -- strip trailing \n
-                                            end
-                                            local title = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+                                            local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+                                            local file = a or luakit.save_file("Save file", w.win, luakit.get_special_dir("DOWNLOAD"), fname)
                                             local fd = assert(io.open(file, "w"))
                                                 assert(fd:write(w:eval_js("document.documentElement.outerHTML", "dump")))
                                             io.close(fd)
-                                            if not a then
-                                                luakit.spawn('sh -c "mv '..file..' $(zenity --file-selection --confirm-overwrite --save --filename '..title..')"')
-                                            end
                                         end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
