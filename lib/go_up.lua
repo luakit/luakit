@@ -27,9 +27,10 @@ local go_upmost = [=[
 ]=]
 
 -- Add `gu` & `gU` binds to the normal mode.
-for _, b in ipairs({
-    lousy.bind.buf("^gu$", function (w) w:eval_js(go_up)     end),
-    lousy.bind.buf("^gU$", function (w) w:eval_js(go_upmost) end),
-}) do table.insert(binds.mode_binds.normal, b) end
+local buf = lousy.bind.buf
+add_binds("normal", {
+    buf("^gu$", function (w) w:eval_js(go_up, "(go_up.lua)")     end),
+    buf("^gU$", function (w) w:eval_js(go_upmost, "(go_up.lua)") end),
+})
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

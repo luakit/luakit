@@ -5,7 +5,7 @@
 -------------------------------------------------------------
 
 local js = [=[
-function go_input(count) {
+(function (count) {
     var elements = document.querySelectorAll("textarea, input" + [
         ":not([type='button'])", ":not([type='checkbox'])",
         ":not([type='hidden'])", ":not([type='image'])",
@@ -29,17 +29,17 @@ function go_input(count) {
         }
     }
     return "root-active";
-};
-]=]
+})]=]
 
 -- Add `w:go_input()` webview method
 webview.methods.go_input = function(view, w, count)
-    local ret = w:eval_js(string.format("%s go_input(%d);", js, count or 1), "(go_input.lua)")
+    local ret = w:eval_js(string.format("%s(%d);", js, count or 1), "(go_input.lua)")
     w:emit_form_root_active_signal(ret)
 end
 
 -- Add `gi` binding to normal mode
-table.insert(binds.mode_binds.normal,
-    lousy.bind.buf("^gi$", function (w, b, m) w:go_input(m.count) end, {count=1}))
+add_binds("normal", {
+    lousy.bind.buf("^gi$", function (w, b, m) w:go_input(m.count) end, {count=1})
+})
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
