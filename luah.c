@@ -397,6 +397,20 @@ luaH_luakit_uri_encode(lua_State *L)
     return 1;
 }
 
+/* Unescapes a whole escaped string.
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on stack (1).
+ */
+static gint
+luaH_luakit_uri_decode(lua_State *L)
+{
+    const gchar *string = luaL_checkstring(L, 1);
+    gchar *res = g_uri_unescape_string(string, NULL);
+    lua_pushstring(L, res);
+    g_free(res);
+    return 1;
+}
+
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
@@ -518,6 +532,7 @@ luaH_luakit_index(lua_State *L)
       PF_CASE(SET_SELECTION,    luaH_luakit_set_selection)
       PF_CASE(EXEC,             luaH_exec)
       PF_CASE(URI_ENCODE,       luaH_luakit_uri_encode)
+      PF_CASE(URI_DECODE,       luaH_luakit_uri_decode)
       /* push string properties */
       PS_CASE(CACHE_DIR,        globalconf.cache_dir)
       PS_CASE(CONFIG_DIR,       globalconf.config_dir)

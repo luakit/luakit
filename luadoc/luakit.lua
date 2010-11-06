@@ -62,3 +62,9 @@ module("luakit")
 -- @return A percent-encoded string.
 -- @name uri-encode
 -- @class function
+
+--- Unescape a whole escaped string.
+-- @param string A percent-encoded string.
+-- @return An unescaped string.
+-- @name uri-decode
+-- @class function
