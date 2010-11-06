@@ -57,6 +57,7 @@ reload
 reload_bypass_cache
 remove
 reorder
+save_file
 search
 select_region
 selectable
