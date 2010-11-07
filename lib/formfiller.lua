@@ -13,7 +13,7 @@ local formsdir   = ff.formsdir or luakit.data_dir .. "/forms/"
 local editor_cmd = string.format("%s -e %s", term, editor)
 
 -- Add formfiller mode
-modes["formfiller"] = lousy.util.table.join(modes["formfiller"] or {}, {
+new_mode("formfiller", {
     leave = function (w)
         w.menu:hide()
     end,
@@ -269,23 +269,18 @@ webview.methods.formfiller = function(view, w, action)
 end
 
 local key = lousy.bind.key
-binds.mode_binds["formfiller"] = {}
-for _, b in ipairs({
-    key({},          "q",           function (w) w:set_mode() end),
-    -- Navigate items
-    key({},          "j",           function (w) w.menu:move_down() end),
-    key({},          "k",           function (w) w.menu:move_up()   end),
-    key({},          "Down",        function (w) w.menu:move_down() end),
-    key({},          "Up",          function (w) w.menu:move_up()   end),
-    key({},          "Tab",         function (w) w.menu:move_down() end),
-    key({"Shift"},   "Tab",         function (w) w.menu:move_up()   end),
-    key({},          "Return",      function (w)
-                                        local profile = w.menu:get()[1]
-                                        do_load(w, profile)
-                                        w.menu:hide()
-                                        w:set_mode()
-                                    end),
-}) do table.insert(binds.mode_binds["formfiller"], b) end
+add_binds("formfiller", lousy.util.table.join({
+    -- Exit profile menu
+    key({}, "q", function (w) w:set_mode() end),
 
+    -- Select profile
+    key({}, "Return",
+        function (w)
+            local profile = w.menu:get()[1]
+            do_load(w, profile)
+            w.menu:hide()
+            w:set_mode()
+        end),
+}, menu_binds))
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
