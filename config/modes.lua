@@ -91,6 +91,13 @@ new_mode("insert", {
     end,
 })
 
+new_mode("passthrough", {
+    enter = function (w)
+        w:set_prompt("-- PASS THROUGH --")
+        w:set_input()
+    end,
+})
+
 -- Setup command mode
 new_mode("command", {
     enter = function (w)

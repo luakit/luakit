@@ -89,19 +89,24 @@ webview.init_funcs = {
     -- Clicking a form field automatically enters insert mode
     form_insert_mode = function (view, w)
         view:add_signal("form-active", function ()
-            (w.search_state or {}).marker = nil
-            w:set_mode("insert")
+            if w:get_mode() ~= "passthrough" then
+                (w.search_state or {}).marker = nil
+                w:set_mode("insert")
+            end
         end)
         view:add_signal("root-active", function ()
-            (w.search_state or {}).marker = nil
-            w:set_mode()
+            if w:get_mode() ~= "passthrough" then
+                (w.search_state or {}).marker = nil
+                w:set_mode()
+            end
         end)
     end,
 
     -- Stop key events hitting the webview if the user isn't in insert mode
     mode_key_filter = function (view, w)
         view:add_signal("key-press", function ()
-            if not w:is_mode("insert") then return true end
+            local mode = w:get_mode()
+            if mode ~= "insert" and mode ~= "passthrough" then return true end
         end)
     end,
 

@@ -202,8 +202,14 @@ add_binds("normal", {
                                             if uri then w:navigate(w:search_open(uri)) end
                                         end
                                     end),
+
+    -- Enter passthrough mode
+    key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
 })
 
+add_binds("insert", {
+    key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
+})
 
 add_binds("command", {
     key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.get_selection()) end),
