@@ -6,7 +6,7 @@
 require "lousy"
 
 -- Small util function to print output only when luakit.verbose is true
-function info(...) if luakit.verbose then print(string.format(...)) end end
+function info(...) if luakit.verbose then io.stderr:write(string.format(...) .. "\n") end end
 
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")

@@ -13,7 +13,6 @@ local ipairs = ipairs
 local loadstring = loadstring
 local os = os
 local pairs = pairs
-local print = print
 local rstring = string
 local rtable = table
 local type = type
