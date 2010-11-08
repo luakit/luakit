@@ -287,8 +287,8 @@ window.methods = {
 
     del_line = function (w)
         local i = w.ibar.input
-        if i.text ~= ":" then
-            i.text = ":"
+        if not string.match(i.text, "^[:/?]$") then
+            i.text = string.sub(i.text, 1, 1)
             i.position = -1
         end
     end,

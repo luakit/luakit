@@ -216,7 +216,7 @@ add_binds("insert", {
     key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
 })
 
-add_binds("command", {
+add_binds({"command", "search"}, {
     key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.get_selection()) end),
     key({"Control"}, "w",       function (w) w:del_word() end),
     key({"Control"}, "u",       function (w) w:del_line() end),
