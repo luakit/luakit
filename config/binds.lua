@@ -250,6 +250,7 @@ add_cmds({
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
     cmd("q[uit]",                       function (w)    w:close_win() end),
+    cmd("write",                        function (w)    w:save_session() end),
     cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
