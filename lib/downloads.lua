@@ -1,5 +1,4 @@
-require("lousy")
-
+local lousy = require("lousy")
 local table = table
 local string = string
 local io = io
@@ -483,4 +482,61 @@ function create_bar()
     c.label.text = "clear"
     return bar
 end
+
+-- Download normal mode binds.
+local key, buf = lousy.bind.key, lousy.bind.buf
+add_binds("normal", {
+    key({},          "D",
+        function (w)
+            w:enter_cmd(":download " .. ((w:get_current() or {}).uri or "http://") .. " ")
+        end),
+
+    buf("^gd$",
+        function (w)
+            w:navigate(downloads.chrome_page)
+        end),
+
+    buf("^gD$",
+        function (w, b, m)
+            for i=1,m.count do w:new_tab(downloads.chrome_page) end
+        end, {count=1}),
+})
+
+-- Download commands.
+local cmd = lousy.bind.cmd
+add_cmds({
+    cmd("down[load]",
+        function (w, a)
+            downloads.add(a)
+        end),
+
+    cmd("dd[elete]",
+        function (w, a)
+            local n = tonumber(a)
+            if n then downloads.delete(n) end
+        end),
+
+    cmd("dc[ancel]",
+        function (w, a)
+            local n = tonumber(a)
+            if n then downloads[n]:cancel() end
+        end),
+
+    cmd("dr[estart]",
+        function (w, a)
+            local n = tonumber(a)
+            if n then downloads.restart() end
+        end),
+
+    cmd("dcl[ear]",
+        function (w)
+            downloads.clear()
+        end),
+
+    cmd("do[pen]",
+        function (w, a)
+            local n = tonumber(a)
+            if n then downloads.open(n) end
+        end),
+})
 
