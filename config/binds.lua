@@ -228,11 +228,6 @@ add_binds({"command", "search"}, {
     key({"Mod1"},    "b",       function (w) w:backward_word() end),
 })
 
-add_binds("search", {
-    key({"Control"}, "j",       function (w) w:search(w.search_state.last_search, true)  end),
-    key({"Control"}, "k",       function (w) w:search(w.search_state.last_search, false) end),
-})
-
 -- Switching tabs with Mod1+{1,2,3,...}
 mod1binds = {}
 for i=1,10 do

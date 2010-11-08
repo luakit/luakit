@@ -77,6 +77,12 @@ new_mode("search", {
     history = {maxlen = 50},
 })
 
+-- Add binds to search mode
+add_binds("search", {
+    key({"Control"}, "j",       function (w) w:search(w.search_state.last_search, true)  end),
+    key({"Control"}, "k",       function (w) w:search(w.search_state.last_search, false) end),
+})
+
 -- Add search functions to webview
 for k, m in pairs({
     start_search = function (view, w, text)
