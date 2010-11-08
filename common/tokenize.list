@@ -100,6 +100,8 @@ title
 total_size
 type
 uri
+uri_decode
+uri_encode
 vbox
 verbose
 version

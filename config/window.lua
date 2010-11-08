@@ -229,7 +229,7 @@ window.init_funcs = {
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
-            print(string.format("E: window.lua: invalid window size: %q", size))
+            info("E: window.lua: invalid window size: %q", size)
         end
     end,
 }
@@ -258,7 +258,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return lousy.bind.match_cmd(binds.commands, buffer, w)
+        return lousy.bind.match_cmd(get_mode("command").commands, buffer, w)
     end,
 
     -- enter command or characters into command line
@@ -489,7 +489,7 @@ window.methods = {
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
-        w.binds = lousy.util.table.join(binds.mode_binds[mode], binds.mode_binds.all)
+        w.binds = lousy.util.table.join((get_mode(mode) or {}).binds or {}, get_mode('all').binds or {})
         -- Clear & hide buffer
         w.buffer = nil
         w:update_buf()
@@ -549,22 +549,6 @@ window.methods = {
         return view
     end,
 
-    undo_close_tab = function (w, index)
-        -- Convert negative indexes
-        if index and index < 0 then
-            index = #(w.closed_tabs) + index + 1
-        end
-        local tab = table.remove(w.closed_tabs, index)
-        if not tab then return end
-        local view = w:new_tab(tab.hist)
-        if tab.after then
-            local i = w.tabs:indexof(tab.after)
-            w.tabs:reorder(view, (i and i+1) or -1)
-        else
-            w.tabs:reorder(view, 1)
-        end
-    end,
-
     -- close the current tab
     close_tab = function (w, view, blank_last)
         view = view or w:get_current()
@@ -617,6 +601,101 @@ window.methods = {
         -- Quit if closed last window
         if #luakit.windows == 0 then luakit.quit() end
     end,
+
+    -- Navigate current view or open new tab
+    navigate = function (w, uri, view)
+        if not view then view = w:get_current() end
+        if view then
+            view.uri = uri
+        else
+            return w:new_tab(uri)
+        end
+    end,
+
+    -- Save, restart luakit and reload session.
+    restart = function (w)
+        -- Generate luakit launch command.
+        local args = {({string.gsub(luakit.execpath, " ", "\\ ")})[1]}
+        if luakit.verbose then table.insert(args, "-v") end
+
+        -- Get new config path
+        local conf
+        if luakit.confpath ~= "/etc/xdg/luakit/rc.lua" and os.exists(luakit.confpath) then
+            conf = luakit.confpath
+            table.insert(args, string.format("-c %q", conf))
+        end
+
+        -- Check config has valid syntax
+        local cmd = table.concat(args, " ")
+        if luakit.spawn_sync(cmd .. " -k") ~= 0 then
+            return w:error("Cannot restart, syntax error in configuration file"..((conf and ": "..conf) or "."))
+        end
+
+        -- Save session.
+        local wins = {}
+        for _, w in pairs(window.bywidget) do table.insert(wins, w) end
+        session.save(wins)
+
+        -- Replace current process with new luakit instance.
+        luakit.exec(cmd)
+    end,
+
+    -- Intelligent open command which can detect a uri or search argument.
+    search_open = function (w, arg)
+        if not arg then return "about:blank" end
+        args = lousy.util.string.split(lousy.util.string.strip(arg))
+        -- Detect scheme:// or "." in string
+        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
+            return args[1]
+        end
+        -- Find search engine
+        local engine = "default"
+        if #args >= 1 and search_engines[args[1]] then
+            engine = args[1]
+            table.remove(args, 1)
+        end
+
+        -- Percent-encode arguments
+        local terms = luakit.uri_encode(table.concat(args, " "))
+
+        -- Return search terms sub'd into search string
+        return ({string.gsub(search_engines[engine], "{%d}", ({string.gsub(terms, "%%", "%%%%")})[1])})[1]
+    end,
+
+    -- Increase (or decrease) the last found number in the current uri
+    inc_uri = function (w, arg)
+        local uri = string.gsub(w:get_current().uri, "(%d+)([^0-9]*)$", function (num, rest)
+            return string.format("%0"..#num.."d", tonumber(num) + (arg or 1)) .. rest
+        end)
+        return uri
+    end,
+
+    -- Tab traversing functions
+    next_tab = function (w, n)
+        w.tabs:switch((((n or 1) + w.tabs:current() -1) % w.tabs:count()) + 1)
+    end,
+
+    prev_tab = function (w, n)
+        w.tabs:switch(((w.tabs:current() - (n or 1) -1) % w.tabs:count()) + 1)
+    end,
+
+    goto_tab = function (w, n)
+        if n and (n == -1 or n > 0) then
+            return w.tabs:switch((n <= w.tabs:count() and n) or -1)
+        end
+    end,
+
+    -- If argument is form-active or root-active, emits signal. Ignores all
+    -- other signals.
+    emit_form_root_active_signal = function (w, s)
+        if w:get_mode() ~= "passthrough" then
+            if s == "form-active" then
+                w:get_current():emit_signal("form-active")
+            elseif s == "root-active" then
+                w:get_current():emit_signal("root-active")
+            end
+        end
+    end,
 }
 
 -- Ordered list of class index functions. Other classes (E.g. webview) are able
@@ -643,6 +722,9 @@ function window.new(uris)
             end
         end,
     })
+
+    -- Setup window widget for signals
+    lousy.signal.setup(w)
 
     -- Call window init functions
     for _, func in pairs(window.init_funcs) do

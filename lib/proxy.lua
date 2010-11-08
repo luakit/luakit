@@ -3,19 +3,27 @@
 -- @author Piotr Husiatyński &lt;phusiatynski@gmail.com&gt; --
 --------------------------------------------------------------
 
+-- Grab environment we need
 local io = io
 local os = os
 local pairs = pairs
+local ipairs = ipairs
 local error = error
 local string = string
-local util = require "lousy.util"
+local lousy = require "lousy"
+local theme = theme
+local unpack = unpack
+local table = table
 local capi = { luakit = luakit }
 local webview = webview
+-- Check for mode/bind functions
+local add_binds, add_cmds = add_binds, add_cmds
+local new_mode, menu_binds = new_mode, menu_binds
 
 module("proxy")
 
 --- Module global variables
-local proxies_file = capi.luakit.data_dir .. '/proxylist'
+local proxies_file = capi.luakit.data_dir .. '/proxymenu'
 
 local proxies = {}
 local noproxy = { address = '' }
@@ -23,7 +31,7 @@ local active = noproxy
 
 -- Return ordered list of proxy names
 function get_names()
-    return util.table.keys(proxies)
+    return lousy.util.table.keys(proxies)
 end
 
 -- Return address of proxy given by name
@@ -41,7 +49,7 @@ end
 function load(fd_name)
     local fd_name = fd_name or proxies_file
     if not os.exists(fd_name) then return end
-    local strip = util.string.strip
+    local strip = lousy.util.string.strip
 
     for line in io.lines(fd_name) do
         local status, name, address = string.match(line, "^(.)%s(.+)%s(.+)$")
@@ -73,18 +81,18 @@ end
 -- @param address proxy server address
 -- @param save_file do not save configuration if false
 function set(name, address, save_file)
-    local name = util.string.strip(name)
+    local name = lousy.util.string.strip(name)
     if not string.match(name, "^([%w%p]+)$") then
         error("Invalid proxy name: " .. name)
     end
-    proxies[name] = util.string.strip(address)
+    proxies[name] = lousy.util.string.strip(address)
     if save_file ~= false then save() end
 end
 
 --- Delete selected proxy from list
 -- @param name proxy server name
 function del(name)
-    local name = util.string.strip(name)
+    local name = lousy.util.string.strip(name)
     if proxies[name] then
         -- if deleted proxy was the active one, turn proxy off
         if name == active.name then
@@ -99,7 +107,7 @@ end
 -- @param name proxy configuration name or nil to unset proxy.
 function set_active(name)
     if name then
-        local name = util.string.strip(name)
+        local name = lousy.util.string.strip(name)
         if not proxies[name] then
             error("Unknown proxy: " .. name)
         end
@@ -117,9 +125,100 @@ webview.init_funcs.set_proxy = function (view, w)
     if active and active.address ~= '' then
         view:set_prop('proxy-uri', active.address)
     end
-    -- The proxy property is a global setting so no need to call this again.
+    -- The proxy property is set globablly so this function only needs to be
+    -- called once. Other proxy changes take place from the interactive
+    -- `:proxy` menu.
     webview.init_funcs.set_proxy = nil
 end
+
+new_mode("proxymenu", {
+    enter = function (w)
+        local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
+        local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
+        local a = get_active()
+        local rows = {{ "Proxy Name", " Server address", title = true },
+            {"  None", "", address = '',
+                fg = (a.address == '' and afg) or ifg,
+                bg = (a.address == '' and abg) or ibg},}
+        for _, name in ipairs(get_names()) do
+            local address = get(name)
+            table.insert(rows, {
+                "  " .. name, " " .. address,
+                name = name, address = lousy.util.escape(address),
+                fg = (a.name == name and afg) or ifg,
+                bg = (a.name == name and abg) or ibg,
+            })
+        end
+        w.menu:build(rows)
+        w:notify("Use j/k to move, d delete, e edit, a add, Return activate.", false)
+    end,
+
+    leave = function (w)
+        w.menu:hide()
+    end,
+})
+
+local cmd = lousy.bind.cmd
+add_cmds({
+    cmd("proxy",
+        function (w, a)
+            local params = lousy.util.string.split(a or '')
+            if not a then
+                w:set_mode("proxymenu")
+            elseif #params == 2 then
+                local name, address = unpack(params)
+                set(name, address)
+            else
+                w:error("Bad usage. Correct format :proxy <name> <address>")
+            end
+        end),
+})
+
+local key = lousy.bind.key
+add_binds("proxymenu", lousy.util.table.join({
+    -- Select proxy
+    key({}, "Return",
+        function (w)
+            local row = w.menu:get()
+            if row and row.address then
+                set_active(row.name)
+                w:set_mode()
+                -- Change proxy for every tab
+                w:get_current():set_prop('proxy-uri', row.address)
+                if row.name then
+                    w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
+                else
+                    w:notify("Unset proxy.")
+                end
+            end
+        end),
+
+    -- Delete proxy
+    key({}, "d",
+        function (w)
+            local row = w.menu:get()
+            if row and row.name then
+                del(row.name)
+                w.menu:del()
+            end
+        end),
+
+    -- Edit proxy
+    key({}, "e",
+        function (w)
+            local row = w.menu:get()
+            if row and row.name then
+                w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
+            end
+        end),
+
+    -- New proxy
+    key({}, "a", function (w) w:enter_cmd(":proxy ") end),
+
+    -- Exit menu
+    key({}, "q", function (w) w:set_mode() end),
+
+}, menu_binds))
 
 -- Initialize module
 load()

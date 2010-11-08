@@ -228,4 +228,7 @@ function dump_html(file)
     return "file://"..file
 end
 
+load()
+dump_html()
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

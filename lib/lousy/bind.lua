@@ -7,7 +7,6 @@
 local assert = assert
 local ipairs = ipairs
 local pairs = pairs
-local print = print
 local setmetatable = setmetatable
 local string = string
 local table = table

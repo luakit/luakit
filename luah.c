@@ -435,6 +435,34 @@ luaH_luakit_save_file(lua_State *L)
     return 1;
 }
 
+/* Escapes a string for use in a URI.
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on stack (1).
+ */
+static gint
+luaH_luakit_uri_encode(lua_State *L)
+{
+    const gchar *string = luaL_checkstring(L, 1);
+    gchar *res = g_uri_escape_string(string, NULL, false);
+    lua_pushstring(L, res);
+    g_free(res);
+    return 1;
+}
+
+/* Unescapes a whole escaped string.
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on stack (1).
+ */
+static gint
+luaH_luakit_uri_decode(lua_State *L)
+{
+    const gchar *string = luaL_checkstring(L, 1);
+    gchar *res = g_uri_unescape_string(string, NULL);
+    lua_pushstring(L, res);
+    g_free(res);
+    return 1;
+}
+
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
@@ -480,6 +508,7 @@ luaH_luakit_spawn_sync(lua_State *L)
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
     sigact.sa_handler=SIG_DFL;
     sigemptyset (&sigact.sa_mask);
+    sigact.sa_flags=0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
     g_spawn_command_line_sync(command, &_stdout, &_stderr, &rv, &e);
@@ -555,6 +584,8 @@ luaH_luakit_index(lua_State *L)
       PF_CASE(GET_SELECTION,    luaH_luakit_get_selection)
       PF_CASE(SET_SELECTION,    luaH_luakit_set_selection)
       PF_CASE(EXEC,             luaH_exec)
+      PF_CASE(URI_ENCODE,       luaH_luakit_uri_encode)
+      PF_CASE(URI_DECODE,       luaH_luakit_uri_decode)
       /* push string properties */
       PS_CASE(CACHE_DIR,        globalconf.cache_dir)
       PS_CASE(CONFIG_DIR,       globalconf.config_dir)
@@ -769,17 +800,19 @@ luaH_init(void)
     /* add luakit install path */
     g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
 
-    for (gpointer *path = paths->pdata; *path; path++) {
+    const gchar *path;
+    for (guint i = 0; i < paths->len; i++) {
+        path = paths->pdata[i];
+        /* Search for file */
         lua_pushliteral(L, ";");
-        lua_pushstring(L, *path);
+        lua_pushstring(L, path);
         lua_pushliteral(L, "/?.lua");
         lua_concat(L, 3);
-
+        /* Search for lib */
         lua_pushliteral(L, ";");
-        lua_pushstring(L, *path);
+        lua_pushstring(L, path);
         lua_pushliteral(L, "/?/init.lua");
         lua_concat(L, 3);
-
         /* concat with package.path */
         lua_concat(L, 3);
     }
@@ -840,10 +873,12 @@ luaH_parserc(const gchar *confpath, gboolean run)
     for(; *config_dirs; config_dirs++)
         g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "rc.lua", NULL));
 
-    for (gpointer *path = paths->pdata; *path; path++) {
-        if (file_exists(*path)) {
-            if(luaH_loadrc(*path, run)) {
-                globalconf.confpath = g_strdup(*path);
+    const gchar *path;
+    for (guint i = 0; i < paths->len; i++) {
+        path = paths->pdata[i];
+        if (file_exists(path)) {
+            if(luaH_loadrc(path, run)) {
+                globalconf.confpath = g_strdup(path);
                 ret = TRUE;
                 goto bailout;
             } else if(!run)

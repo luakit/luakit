@@ -28,6 +28,8 @@
 #include <libsoup/soup.h>
 #include "math.h"
 
+GPtrArray *all_views = NULL;
+
 static struct {
     SoupSession   *session;
     SoupCookieJar *cookiejar;
@@ -331,12 +333,32 @@ notify_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 {
     (void) v;
     property_t *p;
-    /* emit "property::name" signal if found in properties table */
+    /* emit webview property signal if found in properties table */
     if ((p = g_hash_table_lookup(properties, ps->name))) {
         lua_State *L = globalconf.L;
         luaH_object_push(L, w->ref);
         luaH_object_emit_signal(L, -1, p->signame, 0, 0);
         lua_pop(L, 1);
+    }
+}
+
+static void
+soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
+{
+    (void) s;
+    (void) d;
+    property_t *p;
+    /* emit soup property signal on all webview widgets if found
+       in properties table */
+    if ((p = g_hash_table_lookup(properties, ps->name))) {
+        lua_State *L = globalconf.L;
+        widget_t *w;
+        for (guint i = 0; i < all_views->len; i++) {
+            w = all_views->pdata[i];
+            luaH_object_push(L, w->ref);
+            luaH_object_emit_signal(L, -1, p->signame, 0, 0);
+            lua_pop(L, 1);
+        }
     }
 }
 
@@ -1320,9 +1342,26 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
+    g_ptr_array_remove(all_views, w);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     gtk_widget_destroy(GTK_WIDGET(view));
     gtk_widget_destroy(GTK_WIDGET(w->widget));
+}
+
+static void
+init_soup(void)
+{
+    /* create soup session */
+    Soup.session = webkit_get_default_session();
+
+    /* load cookie jar */
+    gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
+    Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
+    g_free(cookie_file);
+
+    /* watch for property changes */
+    g_signal_connect(G_OBJECT(Soup.session), "notify", G_CALLBACK(soup_notify_cb), NULL);
 }
 
 widget_t *
@@ -1336,14 +1375,13 @@ widget_webview(widget_t *w)
     if (!properties)
         webview_init_properties();
 
-    /* init soup session & cookies handling */
-    if (!Soup.session) {
-        Soup.session = webkit_get_default_session();
-        gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
-        Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
-        soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
-        g_free(cookie_file);
-    }
+    /* keep a list of all webview widgets */
+    if (!all_views)
+        all_views = g_ptr_array_new();
+
+    /* init soup session & cookies */
+    if (!Soup.session)
+        init_soup();
 
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
@@ -1355,29 +1393,31 @@ widget_webview(widget_t *w)
     show_scrollbars(w, TRUE);
 
     /* connect webview signals */
-    g_object_connect((GObject*)view,
-      "signal::button-press-event",                   (GCallback)wv_button_press_cb,           w,
-      "signal::button-release-event",                 (GCallback)button_cb,                    w,
-      "signal::create-web-view",                      (GCallback)create_web_view_cb,           w,
-      "signal::download-requested",                   (GCallback)download_request_cb,          w,
-      "signal::expose-event",                         (GCallback)expose_cb,                    w,
-      "signal::focus-in-event",                       (GCallback)focus_cb,                     w,
-      "signal::focus-out-event",                      (GCallback)focus_cb,                     w,
-      "signal::hovering-over-link",                   (GCallback)link_hover_cb,                w,
-      "signal::key-press-event",                      (GCallback)key_press_cb,                 w,
-      "signal::mime-type-policy-decision-requested",  (GCallback)mime_type_decision_cb,        w,
-      "signal::navigation-policy-decision-requested", (GCallback)navigation_decision_cb,       w,
-      "signal::new-window-policy-decision-requested", (GCallback)new_window_decision_cb,       w,
-      "signal::notify",                               (GCallback)notify_cb,                    w,
-      "signal::notify::load-status",                  (GCallback)notify_load_status_cb,        w,
-      "signal::parent-set",                           (GCallback)parent_set_cb,                w,
-      "signal::populate-popup",                       (GCallback)populate_popup_cb,            w,
-      "signal::resource-request-starting",            (GCallback)resource_request_starting_cb, w,
+    g_object_connect(G_OBJECT(view),
+      "signal::button-press-event",                   G_CALLBACK(wv_button_press_cb),           w,
+      "signal::button-release-event",                 G_CALLBACK(button_cb),                    w,
+      "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
+      "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
+      "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
+      "signal::focus-in-event",                       G_CALLBACK(focus_cb),                     w,
+      "signal::focus-out-event",                      G_CALLBACK(focus_cb),                     w,
+      "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
+      "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
+      "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,
+      "signal::navigation-policy-decision-requested", G_CALLBACK(navigation_decision_cb),       w,
+      "signal::new-window-policy-decision-requested", G_CALLBACK(new_window_decision_cb),       w,
+      "signal::notify",                               G_CALLBACK(notify_cb),                    w,
+      "signal::notify::load-status",                  G_CALLBACK(notify_load_status_cb),        w,
+      "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
+      "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
+      "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       NULL);
 
     /* show widgets */
     gtk_widget_show(view);
     gtk_widget_show(w->widget);
+
+    g_ptr_array_add(all_views, w);
 
     return w;
 }
