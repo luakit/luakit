@@ -540,3 +540,42 @@ add_cmds({
         end),
 })
 
+-- Overwrite quit commands to check if downloads are finished
+add_cmds({
+    cmd("q[uit]",
+        function (w)
+            for _,d in ipairs(downloads.downloads) do
+                if download.is_running(d) then
+                    w:error("Can't close last window since downloads are still running. " ..
+                            "Use :q! to quit anyway.")
+                    return
+                end
+            end
+            w:close_win()
+        end),
+
+    cmd({"quit!", "q!"},
+        function (w)
+            w:close_win()
+        end),
+
+    cmd({"writequit", "wq"},
+        function (w)
+            if #downloads.downloads ~= 0 and #luakit.windows == 1 then
+                w:error("Can't close last window since downloads are still running. " ..
+                        "Use :wq! to quit anyway.")
+            else
+                w:save_session()
+                w:close_win()
+            end
+        end),
+
+    cmd({"writequit!", "wq!"},
+        function (w)
+            w:save_session()
+            w:close_win()
+        end),
+
+}, true)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
