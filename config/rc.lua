@@ -61,25 +61,7 @@ require "userscripts"
 -- Add bookmarks support
 require "bookmarks"
 
--- Add command completion
-require "completion"
-
--- Add command history
-require "cmdhist"
-
--- Add search mode & binds
-require "search"
-
-require "follow_selected"
-require "go_input"
-require "go_next_prev"
-require "go_up"
-
------------------------------
--- End user script loading --
------------------------------
-
--- Init downloads lib
+-- Add download support
 require "downloads"
 downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 downloads.rules = {
@@ -114,6 +96,25 @@ downloads.open_file = function (f, m, w)
 
     w:error("Can't open " .. f)
 end
+
+
+-- Add command completion
+require "completion"
+
+-- Add command history
+require "cmdhist"
+
+-- Add search mode & binds
+require "search"
+
+require "follow_selected"
+require "go_input"
+require "go_next_prev"
+require "go_up"
+
+-----------------------------
+-- End user script loading --
+-----------------------------
 
 -- Restore last saved session
 local w = (session and session.restore())
