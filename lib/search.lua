@@ -13,6 +13,8 @@ add_binds("normal", {
         for i=1,m.count do w:search(nil, true)  end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
+        elseif w.search_state.wrap then
+            w:warning("Search hit BOTTOM, continuing at TOP")
         end
     end, {count=1}),
 
@@ -20,6 +22,8 @@ add_binds("normal", {
         for i=1,m.count do w:search(nil, false) end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
+        elseif w.search_state.wrap then
+            w:warning("Search hit TOP, continuing at BOTTOM")
         end
     end, {count=1}),
 })
@@ -118,7 +122,12 @@ for k, m in pairs({
         end
 
         s.searched = true
-        s.ret = view:search(text, text ~= string.lower(text), forward, true);
+        s.wrap = false
+        s.ret = view:search(text, text ~= string.lower(text), forward, s.wrap);
+        if not s.ret then
+            s.wrap = true
+            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrap);
+        end
     end,
 
     clear_search = function (view, w, clear_state)
