@@ -18,14 +18,17 @@ local homepage = globals.homepage or "http://luakit.org"
 -- Add binds to a mode
 function add_binds(mode, binds, before)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
-    local mdata = get_mode(mode)
-    if mdata and before then
-        mdata.binds = join(binds, mdata.binds or {})
-    elseif mdata then
-        mdata.binds = mdata.binds or {}
-        for _, b in ipairs(binds) do table.insert(mdata.binds, b) end
-    else
-        new_mode(mode, { binds = binds })
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, m in ipairs(mode) do
+        local mdata = get_mode(m)
+        if mdata and before then
+            mdata.binds = join(binds, mdata.binds or {})
+        elseif mdata then
+            mdata.binds = mdata.binds or {}
+            for _, b in ipairs(binds) do table.insert(mdata.binds, b) end
+        else
+            new_mode(m, { binds = binds })
+        end
     end
 end
 
