@@ -13,6 +13,10 @@ theme.bg   = "#000"
 theme.error_fg = "#FFF"
 theme.error_bg = "#F00"
 
+-- Warning colours
+theme.warning_fg = "#F00"
+theme.warning_bg = "#FFF"
+
 -- Notification colours
 theme.notif_fg = "#444"
 theme.notif_bg = "#FFF"

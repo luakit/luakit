@@ -218,7 +218,7 @@ window.init_funcs = {
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
-            info("E: window.lua: invalid window size: %q", size)
+            warn("E: window.lua: invalid window size: %q", size)
         end
     end,
 }
@@ -352,6 +352,11 @@ window.methods = {
     notify = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end
         w:set_prompt(msg, { fg = theme.notif_fg, bg = theme.notif_bg })
+    end,
+
+    warning = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
+        w:set_prompt(msg, { fg = theme.warning_fg, bg = theme.warning_bg })
     end,
 
     error = function (w, msg, set_mode)

@@ -5,7 +5,8 @@
 -- Load library of useful functions for luakit
 require "lousy"
 
--- Small util function to print output only when luakit.verbose is true
+-- Small util functions to print output (info prints only when luakit.verbose is true)
+function warn(...) io.stderr:write(string.format(...) .. "\n") end
 function info(...) if luakit.verbose then io.stderr:write(string.format(...) .. "\n") end end
 
 -- Load users global config
