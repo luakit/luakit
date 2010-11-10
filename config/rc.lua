@@ -71,6 +71,9 @@ require "cmdhist"
 -- Add search mode & binds
 require "search"
 
+-- Add ordering of new tabs
+require "taborder"
+
 require "follow_selected"
 require "go_input"
 require "go_next_prev"

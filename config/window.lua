@@ -1,4 +1,4 @@
-------------------
+-----------------
 -- Window class --
 ------------------
 
@@ -535,7 +535,7 @@ window.methods = {
         w.tablist:update(tabs, current)
     end,
 
-    new_tab = function (w, arg, switch)
+    new_tab = function (w, arg, switch, order)
         local view
         -- Use blank tab first
         if w.has_blank and w.tabs:count() == 1 and w.tabs:atindex(1).uri == "about:blank" then
@@ -545,8 +545,21 @@ window.methods = {
         -- Make new webview widget
         if not view then
             view = webview.new(w)
-            local i = w.tabs:append(view)
-            if switch ~= false then w.tabs:switch(i) end
+
+            if not order and taborder then
+                order = (switch == false and taborder.default_bg) or
+                                             taborder.default
+            end
+
+            if not order then
+                -- No taborder, or no taborder defaults. Put new tab last.
+                order = function(w) return w.tabs:count() + 1 end
+            end
+
+            local newindex = order(w, view)
+            newindex = w.tabs:insert(view, newindex)
+
+            if switch ~= false then w.tabs:switch(newindex) end
         end
         -- Load uri or webview history table
         if type(arg) == "string" then view.uri = arg
