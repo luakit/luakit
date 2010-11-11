@@ -13,7 +13,7 @@ add_binds("normal", {
         for i=1,m.count do w:search(nil, true)  end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
-        elseif w.search_state.wrap then
+        elseif w.search_state.wrapped then
             if w.search_state.forward then
                 w:warning("Search hit BOTTOM, continuing at TOP")
             else
@@ -26,7 +26,7 @@ add_binds("normal", {
         for i=1,m.count do w:search(nil, false) end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
-        elseif w.search_state.wrap then
+        elseif w.search_state.wrapped then
             if w.search_state.forward then
                 w:warning("Search hit TOP, continuing at BOTTOM")
             else
@@ -106,12 +106,17 @@ for k, m in pairs({
         end
     end,
 
-    search = function (view, w, text, forward)
+    search = function (view, w, text, forward, wrap)
         if forward == nil then forward = true end
 
         -- Get search state (or new state)
         if not w.search_state then w.search_state = {} end
         local s = w.search_state
+
+        -- Check if wrapping should be performed
+        if wrap == nil then
+            if s.wrap ~= nil then wrap = s.wrap else wrap = true end
+        end
 
         -- Get search term
         text = text or s.last_search
@@ -123,6 +128,7 @@ for k, m in pairs({
         if s.forward == nil then
             -- Haven't searched before, save some state.
             s.forward = forward
+            s.wrap = wrap
             s.marker = view:get_scroll_vert()
         else
             -- Invert direction if originally searching in reverse
@@ -130,11 +136,11 @@ for k, m in pairs({
         end
 
         s.searched = true
-        s.wrap = false
-        s.ret = view:search(text, text ~= string.lower(text), forward, s.wrap);
-        if not s.ret then
-            s.wrap = true
-            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrap);
+        s.wrapped = false
+        s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+        if not s.ret and wrap then
+            s.wrapped = true
+            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
         end
     end,
 
