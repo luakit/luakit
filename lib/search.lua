@@ -82,7 +82,7 @@ for k, m in pairs({
     start_search = function (view, w, text)
         if string.match(text, "^[?/]") then
             w:set_mode("search")
-            w:set_input(text)
+            if not string.match(text, "^/$") then w:set_input(text) end
         else
             return error("invalid search term, must start with '?' or '/'")
         end
