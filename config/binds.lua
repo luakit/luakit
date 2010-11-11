@@ -261,10 +261,15 @@ add_cmds({
     cmd("lua",                          function (w, a) assert(loadstring("return function(w) "..a.." end"))()(w) end),
     cmd("dump",                         function (w, a)
                                             local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
-                                            local file = a or luakit.save_file("Save file", w.win, luakit.get_special_dir("DOWNLOAD"), fname)
-                                            local fd = assert(io.open(file, "w"))
-                                                assert(fd:write(w:eval_js("document.documentElement.outerHTML", "dump")))
-                                            io.close(fd)
+                                            local downdir = luakit.get_special_dir("DOWNLOAD") or "."
+                                            local file = a or luakit.save_file("Save file", w.win, downdir, fname)
+                                            if file then
+                                                local fd = assert(io.open(file, "w"), "failed to open: " .. file)
+                                                local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")
+                                                assert(fd:write(html), "unable to save html")
+                                                io.close(fd)
+                                                w:notify("Dumped HTML to: " .. file)
+                                            end
                                         end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
