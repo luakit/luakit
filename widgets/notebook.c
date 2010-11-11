@@ -86,7 +86,7 @@ luaH_notebook_insert(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
-    gint i = luaL_checknumber(L, 2);
+    gint i = luaL_checknumber(L, 3);
     /* correct index */
     if (i != -1) i--;
 
