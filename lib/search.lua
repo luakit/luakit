@@ -14,7 +14,11 @@ add_binds("normal", {
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
         elseif w.search_state.wrap then
-            w:warning("Search hit BOTTOM, continuing at TOP")
+            if w.search_state.forward then
+                w:warning("Search hit BOTTOM, continuing at TOP")
+            else
+                w:warning("Search hit TOP, continuing at BOTTOM")
+            end
         end
     end, {count=1}),
 
@@ -23,7 +27,11 @@ add_binds("normal", {
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
         elseif w.search_state.wrap then
-            w:warning("Search hit TOP, continuing at BOTTOM")
+            if w.search_state.forward then
+                w:warning("Search hit TOP, continuing at BOTTOM")
+            else
+                w:warning("Search hit BOTTOM, continuing at TOP")
+            end
         end
     end, {count=1}),
 })
