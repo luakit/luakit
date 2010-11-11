@@ -257,6 +257,15 @@ add_cmds({
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
     cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
+    cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
+    cmd("lua",                          function (w, a) assert(loadstring("return function(w) "..a.." end"))()(w) end),
+    cmd("dump",                         function (w, a)
+                                            local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+                                            local file = a or luakit.save_file("Save file", w.win, luakit.get_special_dir("DOWNLOAD"), fname)
+                                            local fd = assert(io.open(file, "w"))
+                                                assert(fd:write(w:eval_js("document.documentElement.outerHTML", "dump")))
+                                            io.close(fd)
+                                        end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
                                             local uri = table.remove(args, 1)

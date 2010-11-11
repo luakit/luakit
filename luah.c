@@ -411,6 +411,55 @@ luaH_luakit_uri_decode(lua_State *L)
     return 1;
 }
 
+/* Shows a Gtk save dialog.
+ * \param L The Lua VM state.
+ * \return The number of objects pushed onto the stack.
+ * \luastack
+ * \lparam title The title of the dialog.
+ * \lparam parent The parent window of the dialog or nil.
+ * \lparam default_folder The folder to initially display in the dialog.
+ * \lparam default_name The filename to preselect in the dialog.
+ * \lreturn The name of the selected file or nil if the dialog was cancelled.
+ */
+static int
+luaH_luakit_save_file(lua_State *L)
+{
+    const char *title = luaL_checkstring(L, 1);
+    // decipher the parent
+    GtkWindow *parent_window;
+    if (lua_isnil(L, 2)) {
+        parent_window = NULL;
+    } else {
+        widget_t *parent = luaH_checkudata(L, 2, &widget_class);
+        if (GTK_IS_WINDOW(parent->widget)) {
+            parent_window = GTK_WINDOW(parent->widget);
+        } else {
+            luaH_warn(L, "dialog expects a window as parent, but some other widget was given");
+            parent_window = NULL;
+        }
+    }
+    const char *default_folder = luaL_checkstring(L, 3);
+    const char *default_name = luaL_checkstring(L, 4);
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
+            parent_window,
+            GTK_FILE_CHOOSER_ACTION_SAVE,
+            GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
+            GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
+            NULL);
+    // set default folder, name and overwrite confirmation policy
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), default_folder);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), default_name);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
+        gchar *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
+        lua_pushstring(L, filename);
+        g_free(filename);
+    } else
+        lua_pushnil(L);
+    gtk_widget_destroy(dialog);
+    return 1;
+}
+
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
@@ -526,6 +575,7 @@ luaH_luakit_index(lua_State *L)
 
       /* push class methods */
       PF_CASE(GET_SPECIAL_DIR,  luaH_luakit_get_special_dir)
+      PF_CASE(SAVE_FILE,        luaH_luakit_save_file)
       PF_CASE(SPAWN,            luaH_luakit_spawn)
       PF_CASE(SPAWN_SYNC,       luaH_luakit_spawn_sync)
       PF_CASE(GET_SELECTION,    luaH_luakit_get_selection)
