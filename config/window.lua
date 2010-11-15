@@ -594,6 +594,8 @@ window.methods = {
     end,
 
     close_win = function (w)
+        w:emit_signal("close")
+
         -- Close all tabs
         while w.tabs:count() ~= 0 do
             w:close_tab(nil, false)
