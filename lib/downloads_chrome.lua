@@ -3,7 +3,10 @@ local lousy = require("lousy")
 local table = table
 local add_binds = add_binds
 local ipairs = ipairs
+local pairs = pairs
 local string = string
+local window = window
+local download = download
 
 module("downloads.chrome")
 
@@ -146,7 +149,6 @@ local function refresh()
             view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
         end
     end
-    downloads.refresh_all()
 end
 
 table.insert(downloads.refresh_functions, refresh)
