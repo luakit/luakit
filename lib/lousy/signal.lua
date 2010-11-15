@@ -59,7 +59,7 @@ function emit_signal(object, signame, ...)
     local sigfuncs = get_signals(object)[signame] or {}
 
     if verbose then
-        io.stderr:write(string.format("D: lousy.signal: emit_signal: %q on %s", signame, tostring(object)))
+        io.stderr:write(string.format("D: lousy.signal: emit_signal: %q on %s\n", signame, tostring(object)))
     end
 
     for _, sigfunc in ipairs(sigfuncs) do
