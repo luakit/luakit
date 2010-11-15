@@ -487,7 +487,7 @@ end
 -- Download normal mode binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({},          "D",
+    key({"Control", "Shift"}, "D",
         function (w)
             w:enter_cmd(":download " .. ((w:get_current() or {}).uri or "http://") .. " ")
         end),
