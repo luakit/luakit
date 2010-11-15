@@ -2,6 +2,8 @@ local downloads = require("downloads")
 local lousy = require("lousy")
 local table = table
 local add_binds = add_binds
+local ipairs = ipairs
+local string = string
 
 module("downloads.chrome")
 
@@ -173,12 +175,12 @@ local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^gd$",
         function (w)
-            w:navigate(downloads.page)
+            w:navigate(page)
         end),
 
     buf("^gD$",
         function (w, b, m)
-            for i=1,m.count do w:new_tab(downloads.page) end
+            for i=1,m.count do w:new_tab(page) end
         end, {count=1}),
 })
 
