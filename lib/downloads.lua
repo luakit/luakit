@@ -36,136 +36,6 @@ download.is_running = function (d)
     return d.status == "created" or d.status == "started"
 end
 
---- The URI of the chrome page
-chrome_page          = "chrome://downloads/"
--- The pattern which identifies the chrome page
-local chrome_pattern = "chrome://downloads/?"
-
---- Template for a download.
-download_template = [==[
-<div class="download {status}"><h1>{id} {name}</h1>
-<span>{modeline}</span>&nbsp;&nbsp;
-<a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
-<a class="delete" href="javascript:delete_{id}()">Delete</a>
-<a class="restart" href="javascript:restart_{id}()">Restart</a>
-<a class="open" href="javascript:open_{id}()">Open</a>
-</div>
-]==]
-
---- Template for the HTML page.
-html_template = [==[
-<html>
-<head>
-    <title>Downloads</title>
-    <style type="text/css">
-    {style}
-    </style>
-</head>
-<body>
-<div class="header">
-<a href="javascript:clear()">Clear all stopped downloads</a>
-</div>
-<div id="downloads">
-{downloads}
-</div>
-</body>
-</html>
-]==]
-
---- CSS styles for the HTML page.
-html_style = [===[
-    body {
-        font-family: monospace;
-        margin: 25px;
-        line-height: 1.5em;
-        font-size: 12pt;
-    }
-    div.download {
-        width: 100%;
-        padding: 0px;
-        margin: 0 0 25px 0;
-        clear: both;
-    }
-    .download.cancelled {
-        background-color: #ffffff;
-    }
-    .download.error {
-        background-color: #ffa07a;
-    }
-    .download.created {
-        background-color: #ffffff;
-    }
-    .download.started {
-        background-color: #ffffff;
-    }
-    .download.finished {
-        background-color: #90ee90;
-    }
-    .download h1 {
-        font-size: 12pt;
-        font-weight: bold;
-        font-style: normal;
-        font-variant: small-caps;
-        padding: 0 0 5px 0;
-        margin: 0;
-        color: #333333;
-        border-bottom: 1px solid #aaa;
-    }
-    .download a {
-        margin-left: 10px;
-    }
-    .download a:link {
-        color: #0077bb;
-        text-decoration: none;
-    }
-    .download a:hover {
-        color: #0077bb;
-        text-decoration: underline;
-    }
-    .download.created   a.delete,
-    .download.started   a.delete,
-    .download.finished  a.cancel,
-    .download.error     a.cancel,
-    .download.cancelled a.cancel,
-    .download.cancelled a.open,
-    .download.error     a.open {
-        display:none
-    }
-]===]
-
--- Compiles the HTML for the downlods, but not the HTML structure around them.
--- Used to refresh the page
-local function inner_html()
-    local rows = {}
-    for i,d in ipairs(downloads) do
-        local modeline
-        if d.status == "started" then
-            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
-        else
-            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
-        end
-        local subs = {
-            id       = i,
-            name     = download.basename(d),
-            status   = d.status,
-            modeline = modeline,
-        }
-        local row = string.gsub(download_template, "{(%w+)}", subs)
-        table.insert(rows, row)
-    end
-    return table.concat(rows, "\n")
-end
-
---- Compiles the HTML for the download page.
--- @return The HTML to render.
-function html()
-    local html_subs = {
-        style = html_style,
-        downloads = inner_html(),
-    }
-    return string.gsub(html_template, "{(%w+)}", html_subs)
-end
-
 --- A table that contains rules for download locations.
 -- Each key in the table is a pattern, each value a directory
 -- in the local filesystem. If the pattern of a newly added
@@ -191,18 +61,18 @@ downloads = {}
 -- The global refresh timer.
 local refresh_timer = timer{interval=1000}
 
--- Refreshes all download bars.
-local function refresh_all()
+--- A list of functions to call on each refresh.
+refresh_functions = {}
+
+--- Refreshes all download bars and resets the downloads speeds.
+function refresh_all()
+    -- call refresh functions
+    for _,fun in ipairs(refresh_functions) do fun() end
     for _,w in pairs(window.bywidget) do
         -- refresh bars
         local bar = w.dbar
         bar:refresh()
         if #downloads == 0 then bar:hide() end
-        -- refresh views
-        local view = w:get_current()
-        if string.match(view.uri, chrome_pattern) then
-            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
-        end
         -- reset download speeds
         for _,d in ipairs(downloads) do
             d.last_size = d.current_size
@@ -288,26 +158,6 @@ function open(i, w)
         end
     end)
     t:start()
-end
-
---- Shows the chrome page in the given view.
--- @param view The view to show the page in.
-function show_chrome(view)
-    view:load_string(html(), chrome_page)
-    -- small hack to achieve a one time signal
-    local sig = {}
-    sig.fun = function (v, status)
-        view:remove_signal("load-status", sig.fun)
-        if status ~= "committed" or not string.match(view.uri, chrome_pattern) then return end
-        view:register_function("clear", clear)
-        for i,_ in ipairs(downloads) do
-            view:register_function(string.format("cancel_%i",  i), function() downloads[i]:cancel() end)
-            view:register_function(string.format("open_%i",    i), function() open(i) end)
-            view:register_function(string.format("restart_%i", i), function() restart(i) end)
-            view:register_function(string.format("delete_%i",  i), function() delete(i) end)
-        end
-    end
-    view:add_signal("load-status", sig.fun)
 end
 
 --- Methods for download bars.
@@ -485,22 +335,12 @@ function create_bar()
 end
 
 -- Download normal mode binds.
-local key, buf = lousy.bind.key, lousy.bind.buf
+local key = lousy.bind.key
 add_binds("normal", {
     key({"Control", "Shift"}, "D",
         function (w)
             w:enter_cmd(":download " .. ((w:get_current() or {}).uri or "http://") .. " ")
         end),
-
-    buf("^gd$",
-        function (w)
-            w:navigate(downloads.chrome_page)
-        end),
-
-    buf("^gD$",
-        function (w, b, m)
-            for i=1,m.count do w:new_tab(downloads.chrome_page) end
-        end, {count=1}),
 })
 
 -- Download commands.
@@ -545,7 +385,7 @@ add_cmds({
 add_cmds({
     cmd("q[uit]",
         function (w)
-            for _,d in ipairs(downloads.downloads) do
+            for _,d in ipairs(downloads) do
                 if download.is_running(d) then
                     w:error("Can't close last window since downloads are still running. " ..
                             "Use :q! to quit anyway.")
@@ -562,7 +402,7 @@ add_cmds({
 
     cmd({"writequit", "wq"},
         function (w)
-            if #downloads.downloads ~= 0 and #luakit.windows == 1 then
+            if #downloads ~= 0 and #luakit.windows == 1 then
                 w:error("Can't close last window since downloads are still running. " ..
                         "Use :wq! to quit anyway.")
             else

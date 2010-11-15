@@ -1,0 +1,185 @@
+local downloads = require("downloads")
+local lousy = require("lousy")
+local table = table
+local add_binds = add_binds
+
+module("downloads.chrome")
+
+--- The URI of the chrome page
+page    = "chrome://downloads/"
+-- The pattern which identifies the chrome page
+pattern = "chrome://downloads/?"
+
+--- Template for a download.
+download_template = [==[
+<div class="download {status}"><h1>{id} {name}</h1>
+<span>{modeline}</span>&nbsp;&nbsp;
+<a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
+<a class="delete" href="javascript:delete_{id}()">Delete</a>
+<a class="restart" href="javascript:restart_{id}()">Restart</a>
+<a class="open" href="javascript:open_{id}()">Open</a>
+</div>
+]==]
+
+--- Template for the HTML page.
+html_template = [==[
+<html>
+<head>
+    <title>Downloads</title>
+    <style type="text/css">
+    {style}
+    </style>
+</head>
+<body>
+<div class="header">
+<a href="javascript:clear()">Clear all stopped downloads</a>
+</div>
+<div id="downloads">
+{downloads}
+</div>
+</body>
+</html>
+]==]
+
+--- CSS styles for the HTML page.
+html_style = [===[
+    body {
+        font-family: monospace;
+        margin: 25px;
+        line-height: 1.5em;
+        font-size: 12pt;
+    }
+    div.download {
+        width: 100%;
+        padding: 0px;
+        margin: 0 0 25px 0;
+        clear: both;
+    }
+    .download.cancelled {
+        background-color: #ffffff;
+    }
+    .download.error {
+        background-color: #ffa07a;
+    }
+    .download.created {
+        background-color: #ffffff;
+    }
+    .download.started {
+        background-color: #ffffff;
+    }
+    .download.finished {
+        background-color: #90ee90;
+    }
+    .download h1 {
+        font-size: 12pt;
+        font-weight: bold;
+        font-style: normal;
+        font-variant: small-caps;
+        padding: 0 0 5px 0;
+        margin: 0;
+        color: #333333;
+        border-bottom: 1px solid #aaa;
+    }
+    .download a {
+        margin-left: 10px;
+    }
+    .download a:link {
+        color: #0077bb;
+        text-decoration: none;
+    }
+    .download a:hover {
+        color: #0077bb;
+        text-decoration: underline;
+    }
+    .download.created   a.delete,
+    .download.started   a.delete,
+    .download.finished  a.cancel,
+    .download.error     a.cancel,
+    .download.cancelled a.cancel,
+    .download.cancelled a.open,
+    .download.error     a.open {
+        display:none
+    }
+]===]
+
+-- Compiles the HTML for the downlods, but not the HTML structure around them.
+-- Used to refresh the page
+local function inner_html()
+    local rows = {}
+    for i,d in ipairs(downloads.downloads) do
+        local modeline
+        if d.status == "started" then
+            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
+        else
+            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
+        end
+        local subs = {
+            id       = i,
+            name     = download.basename(d),
+            status   = d.status,
+            modeline = modeline,
+        }
+        local row = string.gsub(download_template, "{(%w+)}", subs)
+        table.insert(rows, row)
+    end
+    return table.concat(rows, "\n")
+end
+
+--- Compiles the HTML for the download page.
+-- @return The HTML to render.
+function html()
+    local html_subs = {
+        style = html_style,
+        downloads = inner_html(),
+    }
+    return string.gsub(html_template, "{(%w+)}", html_subs)
+end
+
+-- Refreshes all download views.
+local function refresh()
+    for _,w in pairs(window.bywidget) do
+        -- refresh views
+        local view = w:get_current()
+        if string.match(view.uri, pattern) then
+            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
+        end
+    end
+    downloads.refresh_all()
+end
+
+table.insert(downloads.refresh_functions, refresh)
+
+--- Shows the chrome page in the given view.
+-- @param view The view to show the page in.
+function show(view)
+    view:load_string(html(), page)
+    -- small hack to achieve a one time signal
+    local sig = {}
+    sig.fun = function (v, status)
+        view:remove_signal("load-status", sig.fun)
+        if status ~= "committed" or not string.match(view.uri, pattern) then return end
+        view:register_function("clear", clear)
+        for i,_ in ipairs(downloads) do
+            view:register_function(string.format("cancel_%i",  i), function() downloads[i]:cancel() end)
+            view:register_function(string.format("open_%i",    i), function() open(i) end)
+            view:register_function(string.format("restart_%i", i), function() restart(i) end)
+            view:register_function(string.format("delete_%i",  i), function() delete(i) end)
+        end
+    end
+    view:add_signal("load-status", sig.fun)
+end
+
+local buf = lousy.bind.buf
+add_binds("normal", {
+    buf("^gd$",
+        function (w)
+            w:navigate(downloads.page)
+        end),
+
+    buf("^gD$",
+        function (w, b, m)
+            for i=1,m.count do w:new_tab(downloads.page) end
+        end, {count=1}),
+})
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
