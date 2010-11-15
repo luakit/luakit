@@ -176,6 +176,13 @@ webview_registered_function_callback(JSContextRef context, JSObjectRef fun, JSOb
 }
 
 static void
+webview_collect_registered_function(JSObjectRef obj) {
+    lua_State *L = globalconf.L;
+    gpointer ref = JSObjectGetPrivate(obj);
+    luaH_object_unref(L, ref);
+}
+
+static void
 webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref) {
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
     JSStringRef js_name = JSStringCreateWithUTF8CString(name);
@@ -183,6 +190,7 @@ webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref
     JSClassDefinition def = kJSClassDefinitionEmpty;
     def.callAsFunction = webview_registered_function_callback;
     def.className = g_strdup(name);
+    def.finalize = webview_collect_registered_function;
     JSClassRef class = JSClassCreate(&def);
     JSObjectRef fun = JSObjectMake(context, class, ref);
     // register with global object
