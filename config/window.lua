@@ -5,8 +5,6 @@
 -- Window class table
 window = {}
 
-require "downloads"
-
 -- List of active windows by window widget
 window.bywidget = setmetatable({}, { __mode = "k" })
 
@@ -26,7 +24,6 @@ function window.build()
         ebox   = eventbox(),
         layout = vbox(),
         tabs   = notebook(),
-        dbar   = downloads.create_bar(),
         -- Tablist widget
         tablist = lousy.widget.tablist(),
         -- Status bar widgets
@@ -75,10 +72,6 @@ function window.build()
 
     -- Pack notebook
     w.layout:pack_start(w.tabs, true, true, 0)
-
-    -- Pack download bar
-    local d = w.dbar
-    w.layout:pack_start(d.ebox,   false, false, 0)
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -184,7 +177,7 @@ window.init_funcs = {
     end,
 
     apply_window_theme = function (w)
-        local s, i, d = w.sbar, w.ibar, w.dbar
+        local s, i = w.sbar, w.ibar
 
         -- Set foregrounds
         for wi, v in pairs({
@@ -195,7 +188,6 @@ window.init_funcs = {
             [s.r.scroll] = theme.scroll_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
             [i.input]    = theme.input_ibar_fg,
-            [d.clear.label] = theme.clear_dbar_fg,
         }) do wi.fg = v end
 
         -- Set backgrounds
@@ -206,8 +198,6 @@ window.init_funcs = {
             [s.ebox]     = theme.sbar_bg,
             [i.ebox]     = theme.ibar_bg,
             [i.input]    = theme.input_ibar_bg,
-            [d.ebox]       = theme.dbar_bg,
-            [d.clear.ebox] = theme.clear_dbar_bg,
         }) do wi.bg = v end
 
         -- Set fonts
@@ -220,7 +210,6 @@ window.init_funcs = {
             [s.r.scroll] = theme.scroll_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
-            [d.clear.label] = theme.clear_dbar_font,
         }) do wi.font = v end
     end,
 

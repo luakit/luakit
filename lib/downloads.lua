@@ -15,6 +15,7 @@ local timer = timer
 local download = download
 local util = lousy.util
 local theme = lousy.theme
+local add_binds, add_cmds = add_binds, add_cmds
 
 --- Provides internal support for downloads and a download bar.
 module("downloads")
