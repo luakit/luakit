@@ -22,18 +22,6 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-/* direct wrapper around gtk_box_reorder_child */
-static gint
-luaH_box_reorder_child(lua_State *L)
-{
-    widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    widget_t *child = luaH_checkudata(L, 2, &widget_class);
-    gint position = luaL_checknumber(L, 3);
-    gtk_box_reorder_child(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-        position);
-    return 0;
-}
-
 /* direct wrapper around gtk_box_pack_start */
 static gint
 luaH_box_pack_start(lua_State *L)
@@ -59,6 +47,17 @@ luaH_box_pack_end(lua_State *L)
     guint padding = luaL_checknumber(L, 5);
     gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
         expand, fill, padding);
+    return 0;
+}
+
+/* direct wrapper around gtk_box_reorder_child */
+static gint
+luaH_box_reorder_child(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    widget_t *child = luaH_checkwidget(L, 2);
+    gint pos = luaL_checknumber(L, 3);
+    gtk_box_reorder_child(GTK_BOX(w->widget), GTK_WIDGET(child->widget), pos);
     return 0;
 }
 
