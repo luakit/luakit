@@ -1,6 +1,6 @@
-local print = print
 local downloads = require("downloads")
 local lousy = require("lousy")
+local theme = lousy.theme
 local table = table
 local add_binds = add_binds
 local ipairs = ipairs
@@ -33,7 +33,7 @@ methods = {
             bar:destroy_download_widget(wi)
         end
         bar.widgets = {}
-        for i,_ in ipairs(downloads) do
+        for i,_ in ipairs(downloads.downloads) do
             bar:add_download_widget(i)
         end
     end,
@@ -41,7 +41,7 @@ methods = {
     -- Adds signals to the download bar.
     attach_signals = function (bar)
         bar.clear.ebox:add_signal("button-release", function (e, m, b)
-            if b == 1 then clear() end
+            if b == 1 then downloads.clear() end
         end)
     end,
 
@@ -92,18 +92,18 @@ methods = {
     attach_download_widget_signals = function (bar, wi)
         wi.e:add_signal("button-release", function (e, m, b)
             local i  = wi.index
-            local d = downloads[i]
+            local d = downloads.downloads[i]
             if b == 1 then
                 if download.is_running(d) or d.status == "finished" then
-                    open(i, bar.win)
+                    downloads.open(i, bar.win)
                 else
-                    restart(i)
+                    downloads.restart(i)
                 end
             elseif b == 3 then
                 if download.is_running(d) then
                     d:cancel()
                 else
-                    delete(i)
+                    downloads.delete(i)
                 end
             end
         end)
@@ -130,7 +130,7 @@ methods = {
     -- Updates the text of the given download widget for the given download.
     update_download_widget = function (bar, wi)
         local i = wi.index
-        local d = downloads[i]
+        local d = downloads.downloads[i]
         local basename = download.basename(d)
         wi.l.text = string.format("%i %s", i, basename)
         if d.status == "finished" then
@@ -196,7 +196,7 @@ local function refresh()
         -- refresh bars
         local bar = w.dbar
         bar:refresh()
-        if #downloads == 0 then bar:hide() end
+        if #downloads.downloads == 0 then bar:hide() end
     end
 end
 

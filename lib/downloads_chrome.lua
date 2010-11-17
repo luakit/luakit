@@ -165,9 +165,9 @@ function show(view)
         view:register_function("clear", clear)
         for i,_ in ipairs(downloads) do
             view:register_function(string.format("cancel_%i",  i), function() downloads[i]:cancel() end)
-            view:register_function(string.format("open_%i",    i), function() open(i) end)
-            view:register_function(string.format("restart_%i", i), function() restart(i) end)
-            view:register_function(string.format("delete_%i",  i), function() delete(i) end)
+            view:register_function(string.format("open_%i",    i), function() downloads.open(i) end)
+            view:register_function(string.format("restart_%i", i), function() downloads.restart(i) end)
+            view:register_function(string.format("delete_%i",  i), function() downloads.delete(i) end)
         end
     end
     view:add_signal("load-status", sig.fun)
