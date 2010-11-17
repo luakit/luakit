@@ -1,3 +1,4 @@
+local print = print
 local downloads = require("downloads")
 local lousy = require("lousy")
 local table = table
@@ -7,6 +8,11 @@ local pairs = pairs
 local string = string
 local window = window
 local download = download
+local eventbox = function () return widget{type="eventbox"} end
+local hbox     = function () return widget{type="hbox"}     end
+local label    = function () return widget{type="label"}    end
+local setmetatable = setmetatable
+local getmetatable = getmetatable
 
 module("downloads.bar")
 
@@ -160,8 +166,8 @@ methods = {
 -- @field clear The clear button of the bar.
 function create()
     local bar = {
-        layout    = hbox(),
         ebox      = eventbox(),
+        layout    = hbox(),
         clear     = {
             ebox  = eventbox(),
             label = label(),
@@ -169,7 +175,7 @@ function create()
         widgets   = {},
     }
     -- Set metatable
-    local mt = { __index=bar_methods }
+    local mt = { __index=methods }
     setmetatable(bar, mt)
     -- Setup signals
     bar:attach_signals()
@@ -199,7 +205,7 @@ table.insert(downloads.refresh_functions, refresh)
 window.init_funcs.download_bar = function (w)
     w.dbar = create()
     w.layout:pack_start(w.dbar.ebox, false, false, 0)
-    w.layout:reorder_child(w.dbar.ebox, 2)
+    w.layout:reorder(w.dbar.ebox, 2)
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
