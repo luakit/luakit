@@ -17,7 +17,7 @@ local util = lousy.util
 local theme = lousy.theme
 local add_binds, add_cmds = add_binds, add_cmds
 
---- Provides internal support for downloads and a download bar.
+--- Provides internal support for downloads.
 module("downloads")
 
 -- Calculates a fancy name for a download to show to the user.
@@ -64,15 +64,11 @@ local refresh_timer = timer{interval=1000}
 --- A list of functions to call on each refresh.
 refresh_functions = {}
 
---- Refreshes all download bars and resets the downloads speeds.
+--- Refreshes all download related widgets and resets the downloads speeds.
 function refresh_all()
     -- call refresh functions
     for _,fun in ipairs(refresh_functions) do fun() end
     for _,w in pairs(window.bywidget) do
-        -- refresh bars
-        local bar = w.dbar
-        bar:refresh()
-        if #downloads == 0 then bar:hide() end
         -- reset download speeds
         for _,d in ipairs(downloads) do
             d.last_size = d.current_size
@@ -84,12 +80,10 @@ end
 
 refresh_timer:add_signal("timeout", refresh_all)
 
---- Adds a download to the download bar.
+--- Adds a download.
 -- Tries to apply one of the <code>rules</code>. If that fails,
 -- asks the user to choose a location with a save dialog.
--- @param bar The bar to modify.
 -- @param uri The uri to add.
--- @param win The window to display the dialog over.
 -- @return <code>true</code> if a download was started
 function add(uri)
     local d = download{uri=uri}
@@ -116,8 +110,7 @@ function add(uri)
     end
 end
 
---- Deletes the given download from all download bars and cancels it if necessary.
--- Hides the bars if all downloads were deleted.
+--- Deletes the given download and cancels it if necessary.
 -- @param i The index of the download to delete.
 function delete(i)
     local d = table.remove(downloads, i)

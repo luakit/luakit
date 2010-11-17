@@ -64,6 +64,7 @@ require "bookmarks"
 -- Add download support
 require "downloads"
 require "downloads_chrome"
+require "downloads_bar"
 downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 downloads.rules = {
     ["scholar\.google\."] = os.getenv("HOME") .. "/downloads/pdfs",
