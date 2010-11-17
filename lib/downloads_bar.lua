@@ -206,6 +206,14 @@ window.init_funcs.download_bar = function (w)
     w.dbar = create()
     w.layout:pack_start(w.dbar.ebox, false, false, 0)
     w.layout:reorder(w.dbar.ebox, 2)
+    -- apply theme
+    local theme = theme.get()
+    w.dbar.clear.label.fg = theme.clear_dbar_fg
+    w.dbar.clear.label.font = theme.clear_dbar_font
+    for wi, v in pairs({
+        [w.dbar.ebox]       = theme.dbar_bg,
+        [w.dbar.clear.ebox] = theme.clear_dbar_bg,
+    }) do wi.bg = v end
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
