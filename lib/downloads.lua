@@ -10,6 +10,7 @@ local timer = timer
 local download = download
 local util = lousy.util
 local add_binds, add_cmds = add_binds, add_cmds
+local tonumber = tonumber
 
 --- Provides internal support for downloads.
 module("downloads")
@@ -146,8 +147,36 @@ function open(i, w)
     t:start()
 end
 
+-- Tests if any downloads are running.
+-- @return true if the window can be closed.
+local function can_close()
+    if #luakit.windows > 1 then return true end
+    for _,d in ipairs(downloads) do
+        if download.is_running(d) then
+            return false
+        end
+    end
+    return true
+end
+
+-- Tries to close the window, but will issue an error if any downloads are still
+-- running.
+-- @param w The window to close.
+-- @param save true, if the session should be saved.
+-- @param command The command to overwrite the check. Defaults to ":q!"
+local function try_close(w, save, command)
+    command = command or ":q!"
+    if can_close() then
+        if save then w:save_session() end
+        w:close_win()
+    else
+        w:error("Can't close last window since downloads are still running. " ..
+                "Use "..command.." to quit anyway.")
+    end
+end
+
 -- Download normal mode binds.
-local key = lousy.bind.key
+local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({"Control", "Shift"}, "D",
         function (w)
@@ -155,13 +184,24 @@ add_binds("normal", {
         end),
 })
 
+-- Overwrite quit binds to check if downloads are finished
+add_binds("normal", {
+    buf("^D$",
+        function (w) try_close(w)      end),
+
+    buf("^ZZ$",
+        function (w) try_close(w,true) end),
+
+    buf("^ZQ$",
+        function (w) try_close(w)      end),
+
+}, true)
+
 -- Download commands.
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("down[load]",
-        function (w, a)
-            add(a)
-        end),
+        function (w, a) add(a) end),
 
     cmd("dd[elete]",
         function (w, a)
@@ -178,7 +218,7 @@ add_cmds({
     cmd("dr[estart]",
         function (w, a)
             local n = tonumber(a)
-            if n then restart() end
+            if n then restart(n) end
         end),
 
     cmd("dcl[ear]", clear),
@@ -193,38 +233,16 @@ add_cmds({
 -- Overwrite quit commands to check if downloads are finished
 add_cmds({
     cmd("q[uit]",
-        function (w)
-            for _,d in ipairs(downloads) do
-                if download.is_running(d) then
-                    w:error("Can't close last window since downloads are still running. " ..
-                            "Use :q! to quit anyway.")
-                    return
-                end
-            end
-            w:close_win()
-        end),
+        function (w) try_close(w)                   end),
 
     cmd({"quit!", "q!"},
-        function (w)
-            w:close_win()
-        end),
+        function (w) w:close_win()                  end),
 
     cmd({"writequit", "wq"},
-        function (w)
-            if #downloads ~= 0 and #luakit.windows == 1 then
-                w:error("Can't close last window since downloads are still running. " ..
-                        "Use :wq! to quit anyway.")
-            else
-                w:save_session()
-                w:close_win()
-            end
-        end),
+        function (w) try_close(w, true, ":wq!")     end),
 
     cmd({"writequit!", "wq!"},
-        function (w)
-            w:save_session()
-            w:close_win()
-        end),
+        function (w) w:save_session() w:close_win() end),
 
 }, true)
 
