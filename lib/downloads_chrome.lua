@@ -7,6 +7,7 @@ local pairs = pairs
 local string = string
 local window = window
 local download = download
+local add_interceptor = add_interceptor
 
 module("downloads.chrome")
 
@@ -173,6 +174,7 @@ function show(view)
     view:add_signal("load-status", sig.fun)
 end
 
+-- Chrome buffer binds.
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^gd$",
@@ -185,5 +187,8 @@ add_binds("normal", {
             for i=1,m.count do w:new_tab(page) end
         end, {count=1}),
 })
+
+-- Add the chrome page interceptor
+add_interceptor(pattern, show)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

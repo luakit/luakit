@@ -3,7 +3,14 @@
 --------------------------
 
 -- Webview class table
-webview = {}
+webview = {
+    interceptors = {},
+}
+
+--- Installs a page interceptor for the given pattern.
+function add_interceptor(pattern, fun)
+    webview.interceptors[pattern] = fun
+end
 
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
@@ -24,15 +31,14 @@ webview.init_funcs = {
 
     -- Intercept chrome:// pages
     chrome = function(view, w)
-        -- prevents endless loop, since show_chrome calls load_string with the
-        -- same URI as its base URI
         view:add_signal("navigation-request", function(view, uri)
-            if string.match(downloads.chrome.pattern, uri) then
-                downloads.chrome.show(view)
-                return false
-            else
-                return true
+            for pat, fun in pairs(webview.interceptors) do
+                if string.match(pat, uri) then
+                    fun(view)
+                    return false
+                end
             end
+            return true
         end)
     end,
 
