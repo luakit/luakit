@@ -218,7 +218,7 @@ window.init_funcs = {
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
-            info("E: window.lua: invalid window size: %q", size)
+            warn("E: window.lua: invalid window size: %q", size)
         end
     end,
 }
@@ -287,8 +287,8 @@ window.methods = {
 
     del_line = function (w)
         local i = w.ibar.input
-        if i.text ~= ":" then
-            i.text = ":"
+        if not string.match(i.text, "^[:/?]$") then
+            i.text = string.sub(i.text, 1, 1)
             i.position = -1
         end
     end,
@@ -354,6 +354,11 @@ window.methods = {
         w:set_prompt(msg, { fg = theme.notif_fg, bg = theme.notif_bg })
     end,
 
+    warning = function (w, msg, set_mode)
+        if set_mode ~= false then w:set_mode() end
+        w:set_prompt(msg, { fg = theme.warning_fg, bg = theme.warning_bg })
+    end,
+
     error = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end
         w:set_prompt("Error: "..msg, { fg = theme.error_fg, bg = theme.error_bg })
@@ -384,9 +389,10 @@ window.methods = {
         if input.bg ~= bg then input.bg = bg end
         -- Set text or remain hidden
         if text then
-            input.text = text
+            input.text = ""
             input:show()
             input:focus()
+            input.text = text
             input.position = opts.pos or -1
         end
     end,
@@ -516,7 +522,7 @@ window.methods = {
         w.tablist:update(tabs, current)
     end,
 
-    new_tab = function (w, arg, switch)
+    new_tab = function (w, arg, switch, order)
         local view
         -- Use blank tab first
         if w.has_blank and w.tabs:count() == 1 and w.tabs:atindex(1).uri == "about:blank" then
@@ -526,8 +532,21 @@ window.methods = {
         -- Make new webview widget
         if not view then
             view = webview.new(w)
-            local i = w.tabs:append(view)
-            if switch ~= false then w.tabs:switch(i) end
+
+            if not order and taborder then
+                order = (switch == false and taborder.default_bg) or
+                                             taborder.default
+            end
+
+            if not order then
+                -- No taborder, or no taborder defaults. Put new tab last.
+                order = function(w) return w.tabs:count() + 1 end
+            end
+
+            local newindex = order(w, view)
+            newindex = w.tabs:insert(view, newindex)
+
+            if switch ~= false then w.tabs:switch(newindex) end
         end
         -- Load uri or webview history table
         if type(arg) == "string" then view.uri = arg
@@ -562,6 +581,8 @@ window.methods = {
     end,
 
     close_win = function (w)
+        w:emit_signal("close")
+
         -- Close all tabs
         while w.tabs:count() ~= 0 do
             w:close_tab(nil, false)

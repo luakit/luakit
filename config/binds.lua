@@ -18,14 +18,17 @@ local homepage = globals.homepage or "http://luakit.org"
 -- Add binds to a mode
 function add_binds(mode, binds, before)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
-    local mdata = get_mode(mode)
-    if mdata and before then
-        mdata.binds = join(binds, mdata.binds or {})
-    elseif mdata then
-        mdata.binds = mdata.binds or {}
-        for _, b in ipairs(binds) do table.insert(mdata.binds, b) end
-    else
-        new_mode(mode, { binds = binds })
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, m in ipairs(mode) do
+        local mdata = get_mode(m)
+        if mdata and before then
+            mdata.binds = join(binds, mdata.binds or {})
+        elseif mdata then
+            mdata.binds = mdata.binds or {}
+            for _, b in ipairs(binds) do table.insert(mdata.binds, b) end
+        else
+            new_mode(m, { binds = binds })
+        end
     end
 end
 
@@ -165,6 +168,8 @@ add_binds("normal", {
 
     key({},          "<",           function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
     key({},          ">",           function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
+    key({"Mod1"},    "Page_Up",     function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
+    key({"Mod1"},    "Page_Down",   function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
 
     buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(homepage) end end, {count=1}),
     buf("^gh$",                     function (w)       w:navigate(homepage) end),
@@ -211,7 +216,7 @@ add_binds("insert", {
     key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
 })
 
-add_binds("command", {
+add_binds({"command", "search"}, {
     key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.get_selection()) end),
     key({"Control"}, "w",       function (w) w:del_word() end),
     key({"Control"}, "u",       function (w) w:del_line() end),
@@ -221,11 +226,6 @@ add_binds("command", {
     key({"Control"}, "b",       function (w) w:backward_char() end),
     key({"Mod1"},    "f",       function (w) w:forward_word() end),
     key({"Mod1"},    "b",       function (w) w:backward_word() end),
-})
-
-add_binds("search", {
-    key({"Control"}, "j",       function (w) w:search(w.search_state.last_search, true)  end),
-    key({"Control"}, "k",       function (w) w:search(w.search_state.last_search, false) end),
 })
 
 -- Switching tabs with Mod1+{1,2,3,...}
@@ -248,6 +248,7 @@ add_cmds({
     cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
     cmd("q[uit]",                       function (w)    w:close_win() end),
+    cmd("write",                        function (w)    w:save_session() end),
     cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
@@ -256,6 +257,20 @@ add_cmds({
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
     cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
+    cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
+    cmd("lua",                          function (w, a) assert(loadstring("return function(w) "..a.." end"))()(w) end),
+    cmd("dump",                         function (w, a)
+                                            local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+                                            local downdir = luakit.get_special_dir("DOWNLOAD") or "."
+                                            local file = a or luakit.save_file("Save file", w.win, downdir, fname)
+                                            if file then
+                                                local fd = assert(io.open(file, "w"), "failed to open: " .. file)
+                                                local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")
+                                                assert(fd:write(html), "unable to save html")
+                                                io.close(fd)
+                                                w:notify("Dumped HTML to: " .. file)
+                                            end
+                                        end),
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
                                             local uri = table.remove(args, 1)

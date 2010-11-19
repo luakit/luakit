@@ -13,6 +13,12 @@ add_binds("normal", {
         for i=1,m.count do w:search(nil, true)  end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
+        elseif w.search_state.wrapped then
+            if w.search_state.forward then
+                w:warning("Search hit BOTTOM, continuing at TOP")
+            else
+                w:warning("Search hit TOP, continuing at BOTTOM")
+            end
         end
     end, {count=1}),
 
@@ -20,6 +26,12 @@ add_binds("normal", {
         for i=1,m.count do w:search(nil, false) end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
+        elseif w.search_state.wrapped then
+            if w.search_state.forward then
+                w:warning("Search hit TOP, continuing at BOTTOM")
+            else
+                w:warning("Search hit BOTTOM, continuing at TOP")
+            end
         end
     end, {count=1}),
 })
@@ -77,23 +89,34 @@ new_mode("search", {
     history = {maxlen = 50},
 })
 
+-- Add binds to search mode
+add_binds("search", {
+    key({"Control"}, "j",       function (w) w:search(w.search_state.last_search, true)  end),
+    key({"Control"}, "k",       function (w) w:search(w.search_state.last_search, false) end),
+})
+
 -- Add search functions to webview
 for k, m in pairs({
     start_search = function (view, w, text)
         if string.match(text, "^[?/]") then
             w:set_mode("search")
-            w:set_input(text)
+            if not string.match(text, "^/$") then w:set_input(text) end
         else
             return error("invalid search term, must start with '?' or '/'")
         end
     end,
 
-    search = function (view, w, text, forward)
+    search = function (view, w, text, forward, wrap)
         if forward == nil then forward = true end
 
         -- Get search state (or new state)
         if not w.search_state then w.search_state = {} end
         local s = w.search_state
+
+        -- Check if wrapping should be performed
+        if wrap == nil then
+            if s.wrap ~= nil then wrap = s.wrap else wrap = true end
+        end
 
         -- Get search term
         text = text or s.last_search
@@ -105,6 +128,7 @@ for k, m in pairs({
         if s.forward == nil then
             -- Haven't searched before, save some state.
             s.forward = forward
+            s.wrap = wrap
             s.marker = view:get_scroll_vert()
         else
             -- Invert direction if originally searching in reverse
@@ -112,7 +136,12 @@ for k, m in pairs({
         end
 
         s.searched = true
-        s.ret = view:search(text, text ~= string.lower(text), forward, true);
+        s.wrapped = false
+        s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+        if not s.ret and wrap then
+            s.wrapped = true
+            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+        end
     end,
 
     clear_search = function (view, w, clear_state)
