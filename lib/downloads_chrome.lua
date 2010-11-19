@@ -7,7 +7,7 @@ local pairs = pairs
 local string = string
 local window = window
 local download = download
-local add_interceptor = add_interceptor
+local chrome = require("chrome")
 
 module("downloads.chrome")
 
@@ -189,6 +189,6 @@ add_binds("normal", {
 })
 
 -- Add the chrome page interceptor
-add_interceptor(pattern, show)
+chrome.add(pattern, show)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
