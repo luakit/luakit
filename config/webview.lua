@@ -3,14 +3,7 @@
 --------------------------
 
 -- Webview class table
-webview = {
-    interceptors = {},
-}
-
---- Installs a page interceptor for the given pattern.
-function add_interceptor(pattern, fun)
-    webview.interceptors[pattern] = fun
-end
+webview = {}
 
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
@@ -27,19 +20,6 @@ webview.init_funcs = {
             -- changed anywhere else.
             w.checking_ssl = true
         end
-    end,
-
-    -- Intercept chrome:// pages
-    chrome = function(view, w)
-        view:add_signal("navigation-request", function(view, uri)
-            for pat, fun in pairs(webview.interceptors) do
-                if string.match(pat, uri) then
-                    fun(view)
-                    return false
-                end
-            end
-            return true
-        end)
     end,
 
     -- Update window and tab titles
