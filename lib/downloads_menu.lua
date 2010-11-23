@@ -29,7 +29,7 @@ add_cmds({
 -- Add mode to display all downloads in an interactive menu.
 new_mode("dllist", {
     enter = function (w)
-        local rows = {{ "    Download", "Status", title = true }}
+        local rows = {{ "Download", "Status", title = true }}
         for _, d in ipairs(downloads.downloads) do
             local function name()
                 local i = lousy.util.table.hasitem(downloads.downloads, d) or 0
@@ -37,15 +37,20 @@ new_mode("dllist", {
             end
             local function status()
                 if download.is_running(d) then
-                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d))
+                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576,
+                        d.total_size/1048576, (d.progress * 100), download.speed(d))
                 else
                     return d.status
                 end
             end
             table.insert(rows, { name, status, dl = d })
         end
-        w.menu:build(rows)
-        w:notify("Use j/k to move, d delete, c cancel, r restart, o open.", false)
+        if #rows > 1 then
+            w.menu:build(rows)
+            w:notify("Use j/k to move, d delete, c cancel, r restart, o open.", false)
+        else
+            w:notify("No downloads to list")
+        end
     end,
 
     leave = function (w)
