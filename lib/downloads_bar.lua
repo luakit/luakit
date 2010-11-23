@@ -101,7 +101,7 @@ methods = {
                 end
             elseif b == 3 then
                 if download.is_running(d) then
-                    d:cancel()
+                    downloads.cancel(i)
                 else
                     downloads.delete(i)
                 end
@@ -142,7 +142,7 @@ methods = {
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
             local speed = download.speed(d)
-            wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
+            wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed)
         end
     end,
 
@@ -190,14 +190,12 @@ function create()
     return bar
 end
 
--- Refreshes all download views.
-local function refresh()
-    for _,w in pairs(window.bywidget) do
-        -- refresh bars
-        local bar = w.dbar
-        bar:refresh()
-        if #downloads.downloads == 0 then bar:hide() end
-    end
+-- Refreshes all download bars.
+local function refresh(w)
+    -- refresh bar
+    local bar = w.dbar
+    bar:refresh()
+    if #downloads.downloads == 0 then bar:hide() end
 end
 
 table.insert(downloads.refresh_functions, refresh)

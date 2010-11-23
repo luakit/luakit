@@ -21,9 +21,9 @@ download.basename = function (d)
     return basename or "no filename"
 end
 
--- Calculates the speed of a download.
+-- Calculates the speed of a download in Kb/s.
 download.speed = function (d)
-    return d.current_size - d.last_size
+    return (d.current_size - d.last_size) / 1024
 end
 
 -- Checks whether the download is in created or started state.
@@ -62,8 +62,8 @@ refresh_functions = {}
 --- Refreshes all download related widgets and resets the downloads speeds.
 function refresh_all()
     -- call refresh functions
-    for _,fun in ipairs(refresh_functions) do fun() end
     for _,w in pairs(window.bywidget) do
+        for _,fun in ipairs(refresh_functions) do fun(w) end
         -- reset download speeds
         for _,d in ipairs(downloads) do
             d.last_size = d.current_size
@@ -103,6 +103,14 @@ function add(uri)
         refresh_all()
         return true
     end
+end
+
+--- Cancels the given download.
+-- @param i The index of the download to cancel.
+function cancel(i)
+    local d = downloads[i]
+    if d then d:cancel() end
+    refresh_all()
 end
 
 --- Deletes the given download and cancels it if necessary.

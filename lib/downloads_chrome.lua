@@ -115,7 +115,7 @@ local function inner_html()
     for i,d in ipairs(downloads.downloads) do
         local modeline
         if d.status == "started" then
-            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
+            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d))
         else
             modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
         end
@@ -142,13 +142,11 @@ function html()
 end
 
 -- Refreshes all download views.
-local function refresh()
-    for _,w in pairs(window.bywidget) do
-        -- refresh views
-        local view = w:get_current()
-        if string.match(view.uri, pattern) then
-            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
-        end
+local function refresh(w)
+    -- refresh views
+    local view = w:get_current()
+    if string.match(view.uri, pattern) then
+        view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
     end
 end
 
@@ -165,7 +163,7 @@ function show(view)
         if status ~= "committed" or not string.match(view.uri, pattern) then return end
         view:register_function("clear", clear)
         for i,_ in ipairs(downloads) do
-            view:register_function(string.format("cancel_%i",  i), function() downloads[i]:cancel() end)
+            view:register_function(string.format("cancel_%i",  i), function() downloads.cancel(i) end)
             view:register_function(string.format("open_%i",    i), function() downloads.open(i) end)
             view:register_function(string.format("restart_%i", i), function() downloads.restart(i) end)
             view:register_function(string.format("delete_%i",  i), function() downloads.delete(i) end)
