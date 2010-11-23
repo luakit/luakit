@@ -62,8 +62,8 @@ refresh_functions = {}
 --- Refreshes all download related widgets and resets the downloads speeds.
 function refresh_all()
     -- call refresh functions
-    for _,fun in ipairs(refresh_functions) do fun() end
     for _,w in pairs(window.bywidget) do
+        for _,fun in ipairs(refresh_functions) do fun(w) end
         -- reset download speeds
         for _,d in ipairs(downloads) do
             d.last_size = d.current_size

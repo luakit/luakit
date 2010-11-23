@@ -142,13 +142,11 @@ function html()
 end
 
 -- Refreshes all download views.
-local function refresh()
-    for _,w in pairs(window.bywidget) do
-        -- refresh views
-        local view = w:get_current()
-        if string.match(view.uri, pattern) then
-            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
-        end
+local function refresh(w)
+    -- refresh views
+    local view = w:get_current()
+    if string.match(view.uri, pattern) then
+        view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
     end
 end
 

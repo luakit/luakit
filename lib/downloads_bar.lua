@@ -190,14 +190,12 @@ function create()
     return bar
 end
 
--- Refreshes all download views.
-local function refresh()
-    for _,w in pairs(window.bywidget) do
-        -- refresh bars
-        local bar = w.dbar
-        bar:refresh()
-        if #downloads.downloads == 0 then bar:hide() end
-    end
+-- Refreshes all download bars.
+local function refresh(w)
+    -- refresh bar
+    local bar = w.dbar
+    bar:refresh()
+    if #downloads.downloads == 0 then bar:hide() end
 end
 
 table.insert(downloads.refresh_functions, refresh)
