@@ -21,9 +21,9 @@ download.basename = function (d)
     return basename or "no filename"
 end
 
--- Calculates the speed of a download.
+-- Calculates the speed of a download in Kb/s.
 download.speed = function (d)
-    return d.current_size - d.last_size
+    return (d.current_size - d.last_size) / 1024
 end
 
 -- Checks whether the download is in created or started state.

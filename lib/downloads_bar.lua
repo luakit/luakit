@@ -142,7 +142,7 @@ methods = {
         else
             wi.p.text = string.format('%.2f%%', d.progress * 100)
             local speed = download.speed(d)
-            wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed/1024)
+            wi.l.text = string.format("%i %s (%.1f Kb/s)", i, basename, speed)
         end
     end,
 

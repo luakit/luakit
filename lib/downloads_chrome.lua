@@ -115,7 +115,7 @@ local function inner_html()
     for i,d in ipairs(downloads.downloads) do
         local modeline
         if d.status == "started" then
-            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d)/1024)
+            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d))
         else
             modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
         end
