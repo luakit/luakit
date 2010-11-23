@@ -92,7 +92,7 @@ add_binds("dllist", lousy.util.table.join({
             end
         end),
 
-    -- Open download in new tab
+    -- Restart download
     key({}, "r",
         function (w)
             local row = w.menu:get()
@@ -106,4 +106,3 @@ add_binds("dllist", lousy.util.table.join({
     key({}, "q", function (w) w:set_mode() end),
 
 }, menu_binds))
-
