@@ -105,6 +105,14 @@ function add(uri)
     end
 end
 
+--- Cancels the given download.
+-- @param i The index of the download to cancel.
+function cancel(i)
+    local d = downloads[i]
+    if d then d:cancel() end
+    refresh_all()
+end
+
 --- Deletes the given download and cancels it if necessary.
 -- @param i The index of the download to delete.
 function delete(i)

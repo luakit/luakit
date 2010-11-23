@@ -101,7 +101,7 @@ methods = {
                 end
             elseif b == 3 then
                 if download.is_running(d) then
-                    d:cancel()
+                    downloads.cancel(i)
                 else
                     downloads.delete(i)
                 end

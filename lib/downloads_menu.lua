@@ -73,7 +73,7 @@ add_binds("dllist", lousy.util.table.join({
             local row = w.menu:get()
             if row and row.dl then
                 local i = lousy.util.table.hasitem(downloads.downloads, row.dl)
-                downloads.downloads[i]:cancel()
+                downloads.cancel(i)
             end
         end),
 
