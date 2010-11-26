@@ -157,7 +157,7 @@ function open(i, w)
     t:start()
 end
 
--- Add indicator to status bar
+-- Add indicator to status bar.
 window.init_funcs.downloads_status = function (w)
     local r = w.sbar.r
     r.downloads = label()
@@ -168,6 +168,20 @@ window.init_funcs.downloads_status = function (w)
     r.downloads.fg = theme.downloads_sbar_fg
     r.downloads.font = theme.downloads_sbar_font
 end
+
+-- Refresh indicator regularly.
+table.insert(refresh_functions, function (w)
+    local running = 0
+    for _, d in ipairs(downloads) do
+        if download.is_running(d) then running = running + 1 end
+    end
+    local i = w.sbar.r.downloads
+    if running == 0 then
+        i.text = ""
+    else
+        i.text = running .. "↓"
+    end
+end)
 
 -- Tests if any downloads are running.
 -- @return true if the window can be closed.
