@@ -44,11 +44,14 @@ search_engines = {
 
 -- Set google as fallback search engine
 search_engines.default = search_engines.google
+-- Use this instead to disable auto-searching
+--search_engines.default = "{0}"
 
 -- Fake the cookie policy enum here
 cookie_policy = { always = 0, never = 1, no_third_party = 2 }
 
 -- Per-domain webview properties
+-- See http://webkitgtk.org/reference/webkitgtk-WebKitWebSettings.html
 domain_props = { --[[
     ["all"] = {
         ["enable-scripts"]          = false,

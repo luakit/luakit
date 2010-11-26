@@ -8,7 +8,6 @@ local capi = { widget = widget }
 local setmetatable = setmetatable
 local math = require "math"
 local signal = require "lousy.signal"
-local print = print
 local type = type
 local assert = assert
 local ipairs = ipairs

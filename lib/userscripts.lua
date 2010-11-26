@@ -12,14 +12,11 @@ local pairs = pairs
 local setmetatable = setmetatable
 local string = string
 local table = table
+local warn = warn
 local webview = webview
 local util = require("lousy.util")
 local lfs = require("lfs")
 local capi = { luakit = luakit }
-
-local warn = function (fmt, ...)
-    io.stderr:write(string.format("(userscripts.lua): "..fmt.."\n", ...))
-end
 
 --- Evaluates and manages userscripts.
 -- JavaScript userscripts must end in <code>.user.js</code>
@@ -192,7 +189,7 @@ local function parse_header(header, file)
                 ret.on_start = true
             end
         else
-            warn("Invalid line in header: %s:%d:%s", file, i, line)
+            warn("(userscripts.lua): Invalid line in header: %s:%d:%s", file, i, line)
         end
     end
     return ret
@@ -212,7 +209,7 @@ local function load_js(file)
         script.js = js
         scripts[file] = setmetatable(script, { __index = prototype })
     else
-        warn("Invalid userscript header in file: %s", file)
+        warn("(userscripts.lua): Invalid userscript header in file: %s", file)
     end
 end
 

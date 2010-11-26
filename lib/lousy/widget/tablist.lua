@@ -5,7 +5,6 @@
 
 -- Grab environment we need
 local assert = assert
-local print = print
 local setmetatable = setmetatable
 local table = table
 local type = type

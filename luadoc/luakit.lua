@@ -56,3 +56,15 @@ module("luakit")
 -- @return A path of xdg special directory.
 -- @name get_special_dir
 -- @class function
+
+--- Escape a string for use in a URI.
+-- @param string A string to encode.
+-- @return A percent-encoded string.
+-- @name uri-encode
+-- @class function
+
+--- Unescape a whole escaped string.
+-- @param string A percent-encoded string.
+-- @return An unescaped string.
+-- @name uri-decode
+-- @class function

@@ -15,6 +15,7 @@ local ipairs = ipairs
 local assert = assert
 local util = require("lousy.util")
 local capi = { luakit = luakit }
+local chrome = require("chrome")
 
 -- Bookmark functions that operate on a flatfile and output to html
 module("bookmarks")
@@ -225,8 +226,16 @@ end
 
 --- Shows the chrome page in the given view.
 -- @param view The view to show the page in.
-function show_chrome(view)
+function show(view)
     view:load_string(html(), chrome_page)
 end
+
+chrome_pattern = "chrome://bookmarks/?"
+chrome_page    = "chrome://bookmarks"
+
+-- Add chrome interceptor
+chrome.add(chrome_pattern, show)
+
+load()
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
