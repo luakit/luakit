@@ -16,6 +16,7 @@ local assert = assert
 local util = require("lousy.util")
 local capi = { luakit = luakit }
 local chrome = require("chrome")
+local add_binds = add_binds
 
 -- Bookmark functions that operate on a flatfile and output to html
 module("bookmarks")
@@ -233,8 +234,25 @@ end
 chrome_pattern = "chrome://bookmarks/?"
 chrome_page    = "chrome://bookmarks"
 
--- Add chrome interceptor
+-- Add chrome interceptor.
 chrome.add(chrome_pattern, show)
+
+-- Add normal binds.
+add_binds("normal", {
+    key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
+    buf("^gb$",                     function (w)       w:navigate(bookmarks.chrome_page) end),
+    buf("^gB$",                     function (w, b, m) for i=1,m.count do w:new_tab(bookmarks.chrome_page) end end, {count=1}),
+})
+
+-- Add commands.
+add_cmds({
+    cmd({"bookmark",    "bm" },         function (w, a)
+                                            local args = split(a)
+                                            local uri = table.remove(args, 1)
+                                            bookmarks.add(uri, args)
+                                        end),
+    cmd("bookdel",                      function (w, a) bookmarks.del(tonumber(a)) end),
+})
 
 load()
 

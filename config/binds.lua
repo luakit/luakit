@@ -188,12 +188,6 @@ add_binds("normal", {
     buf("^ZQ$",                     function (w) w:close_win() end),
     buf("^D$",                      function (w) w:close_win() end),
 
-    -- Bookmarking
-    key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-    buf("^gb$",                     function (w)       w:navigate(bookmarks.chrome_page) end),
-    buf("^gB$",                     function (w, b, m) for i=1,m.count do w:new_tab(bookmarks.chrome_page) end end, {count=1}),
-
-
     -- Mouse bindings
     but({},          8,             function (w) w:back()     end),
     but({},          9,             function (w) w:forward()  end),
@@ -272,12 +266,6 @@ add_cmds({
                                                 w:notify("Dumped HTML to: " .. file)
                                             end
                                         end),
-    cmd({"bookmark",    "bm" },         function (w, a)
-                                            local args = split(a)
-                                            local uri = table.remove(args, 1)
-                                            bookmarks.add(uri, args)
-                                        end),
-    cmd("bookdel",                      function (w, a) bookmarks.del(tonumber(a)) end),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
