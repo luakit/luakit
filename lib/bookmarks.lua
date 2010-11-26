@@ -13,10 +13,11 @@ local type = type
 local pairs = pairs
 local ipairs = ipairs
 local assert = assert
-local util = require("lousy.util")
 local capi = { luakit = luakit }
 local chrome = require("chrome")
-local add_binds = add_binds
+local lousy = require("lousy")
+local util = lousy.util
+local add_binds, add_cmds = add_binds, add_cmds
 
 -- Bookmark functions that operate on a flatfile and output to html
 module("bookmarks")
@@ -238,20 +239,22 @@ chrome_page    = "chrome://bookmarks"
 chrome.add(chrome_pattern, show)
 
 -- Add normal binds.
+local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-    buf("^gb$",                     function (w)       w:navigate(bookmarks.chrome_page) end),
-    buf("^gB$",                     function (w, b, m) for i=1,m.count do w:new_tab(bookmarks.chrome_page) end end, {count=1}),
+    buf("^gb$",                     function (w)       w:navigate(chrome_page) end),
+    buf("^gB$",                     function (w, b, m) for i=1,m.count do w:new_tab(chrome_page) end end, {count=1}),
 })
 
 -- Add commands.
+local cmd = lousy.bind.cmd
 add_cmds({
     cmd({"bookmark",    "bm" },         function (w, a)
                                             local args = split(a)
                                             local uri = table.remove(args, 1)
-                                            bookmarks.add(uri, args)
+                                            add(uri, args)
                                         end),
-    cmd("bookdel",                      function (w, a) bookmarks.del(tonumber(a)) end),
+    cmd("bookdel",                      function (w, a) del(tonumber(a)) end),
 })
 
 load()

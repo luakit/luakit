@@ -221,7 +221,6 @@ add_binds({"command", "search"}, {
     key({"Mod1"},    "f",       function (w) w:forward_word() end),
     key({"Mod1"},    "b",       function (w) w:backward_word() end),
 })
->>>>>>> downloads
 
 -- Switching tabs with Mod1+{1,2,3,...}
 mod1binds = {}
