@@ -94,6 +94,8 @@ add_binds("dllist", lousy.util.table.join({
             if row and row.dl then
                 local i = lousy.util.table.hasitem(downloads.downloads, row.dl)
                 downloads.restart(i)
+                -- ensure a proper refresh
+                w:set_mode("dllist")
             end
         end),
 
