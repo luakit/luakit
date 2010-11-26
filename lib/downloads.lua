@@ -11,6 +11,8 @@ local download = download
 local util = lousy.util
 local add_binds, add_cmds = add_binds, add_cmds
 local tonumber = tonumber
+local function label() return widget{type="label"} end
+local theme = lousy.theme
 
 --- Provides internal support for downloads.
 module("downloads")
@@ -153,6 +155,18 @@ function open(i, w)
         end
     end)
     t:start()
+end
+
+-- Add indicator to status bar
+window.init_funcs.downloads_status = function (w)
+    local r = w.sbar.r
+    r.downloads = label()
+    r.layout:pack_start(r.downloads, false, false, 0)
+    r.layout:reorder(r.downloads, 0)
+    -- Apply theme
+    local theme = theme.get()
+    r.downloads.fg = theme.downloads_sbar_fg
+    r.downloads.font = theme.downloads_sbar_font
 end
 
 -- Tests if any downloads are running.
