@@ -72,7 +72,7 @@ function refresh_all()
         end
     end
     -- stop timer if necessary
-    if #downloads == 0 then refresh_timer:stop() end
+    if #downloads == 0 and refresh_timer.started then refresh_timer:stop() end
 end
 
 refresh_timer:add_signal("timeout", refresh_all)

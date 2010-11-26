@@ -161,8 +161,8 @@ function show(view)
     sig.fun = function (v, status)
         view:remove_signal("load-status", sig.fun)
         if status ~= "committed" or not string.match(view.uri, pattern) then return end
-        view:register_function("clear", clear)
-        for i,_ in ipairs(downloads) do
+        view:register_function("clear", downloads.clear)
+        for i,_ in ipairs(downloads.downloads) do
             view:register_function(string.format("cancel_%i",  i), function() downloads.cancel(i) end)
             view:register_function(string.format("open_%i",    i), function() downloads.open(i) end)
             view:register_function(string.format("restart_%i", i), function() downloads.restart(i) end)
