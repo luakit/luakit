@@ -1,166 +1,188 @@
-local lousy = require("lousy")
-local table = table
-local string = string
-local io = io
-local pairs = pairs
+---------------------------------------------------------
+-- Downloads for luakit                                --
+-- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
+-- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
+---------------------------------------------------------
+
+-- Grab environment we need from the standard lib
+local assert = assert
 local ipairs = ipairs
-local luakit = luakit
-local window = window
-local timer = timer
-local download = download
-local util = lousy.util
-local add_binds, add_cmds = add_binds, add_cmds
+local os = os
+local pairs = pairs
+local print = print
+local setmetatable = setmetatable
+local string = string
+local table = table
 local tonumber = tonumber
+local type = type
+
+-- Grab environment from luakit libs
+local lousy = require("lousy")
+local add_binds = add_binds
+local add_cmds = add_cmds
+local menu_binds = menu_binds
+local new_mode = new_mode
+local window = window
+
+-- Grab environment from C API
+local capi = {
+    download = download,
+    timer = timer,
+    luakit = luakit,
+}
 
 --- Provides internal support for downloads.
 module("downloads")
 
--- Calculates a fancy name for a download to show to the user.
-download.basename = function (d)
-    local _,_,basename = string.find(d.destination or "", ".*/([^/]*)$")
-    return basename or "no filename"
-end
+-- Track speed data for downloads by weak table
+local speeds = setmetatable({}, { __mode = "k" })
 
--- Calculates the speed of a download in Kb/s.
-download.speed = function (d)
-    return (d.current_size - d.last_size) / 1024
+--- The list of active download objects.
+downloads = {}
+
+-- Setup signals on downloads module
+lousy.signal.setup(_M)
+
+-- Calculates a fancy name for a download to show to the user.
+function get_basename(d)
+    return string.match(d.destination or "", ".*/([^/]*)$") or "no filename"
 end
 
 -- Checks whether the download is in created or started state.
-download.is_running = function (d)
+function is_running(d)
     return d.status == "created" or d.status == "started"
 end
 
---- A table that contains rules for download locations.
--- Each key in the table is a pattern, each value a directory
--- in the local filesystem. If the pattern of a newly added
--- download matches one of the rules, it will be automatically
--- downloaded to that folder.
-rules = {}
-
---- Used to open a download when clicked on.
--- The default implementation just displays an error message.
--- @param f The path to the file to open.
--- @param mt The inferred mime type of the file.
--- @param w A window in which to show notifications, if necessary.
-open_file = function (f, mt, w)
-    w:error("Can't open " .. f)
+-- Calculates the speed of a download in b/s.
+function get_speed(d)
+    local s = speeds[d] or {}
+    if s.current_size then
+        return (s.current_size - (s.last_size or 0))
+    end
+    return 0
 end
+
+-- Track downloading speeds
+local speed_timer = capi.timer{interval=1000}
+speed_timer:add_signal("timeout", function ()
+    for _, d in ipairs(downloads) do
+        -- Get speed table
+        if not speeds[d] then speeds[d] = {} end
+        local s = speeds[d]
+
+        -- Save download progress
+        s.last_size = s.current_size or 0
+        s.current_size = d.current_size
+    end
+    -- Only start timer again if there are active downloads
+    if #downloads == 0 then
+        speed_timer:stop()
+    end
+end)
 
 --- The default directory for a new download.
-dir = "/home"
-
---- The list of active downloads.
-downloads = {}
-
--- The global refresh timer.
-local refresh_timer = timer{interval=1000}
-
---- A list of functions to call on each refresh.
-refresh_functions = {}
-
---- Refreshes all download related widgets and resets the downloads speeds.
-function refresh_all()
-    -- call refresh functions
-    for _,w in pairs(window.bywidget) do
-        for _,fun in ipairs(refresh_functions) do fun(w) end
-        -- reset download speeds
-        for _,d in ipairs(downloads) do
-            d.last_size = d.current_size
-        end
-    end
-    -- stop timer if necessary
-    if #downloads == 0 then refresh_timer:stop() end
-end
-
-refresh_timer:add_signal("timeout", refresh_all)
+default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
 --- Adds a download.
 -- Tries to apply one of the <code>rules</code>. If that fails,
 -- asks the user to choose a location with a save dialog.
 -- @param uri The uri to add.
 -- @return <code>true</code> if a download was started
-function add(uri)
-    local d = download{uri=uri}
-    local file
+function add(uri, w)
+    local d = capi.download{uri=uri}
 
-    -- ask da rulez
-    for p,dir in pairs(rules) do
-        if string.match(uri, p) then
-            file = string.format("%s/%s", dir, d.suggested_filename)
-        end
+    -- Emit signal to determine the download location.
+    local file = _M:emit_signal("download-location", uri, d.suggested_filename)
+
+    -- Check return type
+    assert(file == nil or type(file) == "string" and #file > 1,
+        string.format("invalid filename: %q", file or "nil"))
+
+    -- If no download location returned ask the user
+    if not file then
+        file = capi.luakit.save_file("Save file", w, default_dir, d.suggested_filename)
     end
 
-    -- if no rule matched, ask the user
-    file = file or luakit.save_file("Save file", win, dir, d.suggested_filename)
-
-    -- if the user didn't abort or a rule matched: download the file
+    -- If a suitable filename was given proceed with the download
     if file then
         d.destination = file
         d:start()
         table.insert(downloads, d)
-        if not refresh_timer.started then refresh_timer:start() end
-        refresh_all()
+        if not speed_timer.started then speed_timer:start() end
         return true
     end
 end
 
---- Cancels the given download.
--- @param i The index of the download to cancel.
-function cancel(i)
-    local d = downloads[i]
-    if d then d:cancel() end
-    refresh_all()
-end
-
---- Deletes the given download and cancels it if necessary.
--- @param i The index of the download to delete.
-function delete(i)
-    local d = table.remove(downloads, i)
-    if download.is_running(d) then d:cancel() end
-    refresh_all()
-end
-
---- Removes and re-adds the download at the given index.
--- @param i The index of the download to restart.
-function restart(i)
-    local d = downloads[i]
-    if not d then return end
-    if add(d.uri) then delete(i) end
+-- Add download window method
+window.methods.download = function (w, uri)
+    add(uri, w)
 end
 
 --- Removes all finished, cancelled or aborted downloads.
 function clear()
-    local function iter()
-        for i,d in ipairs(downloads) do
-            if not download.is_running(d) then return i end
+    local tmp = {}
+    for _, d in ipairs(downloads) do
+        if is_running(d) then
+            table.insert(tmp, d)
         end
     end
-    for i in iter do table.remove(downloads, i) end
-    refresh_all()
+    downloads = tmp
 end
 
 --- Opens the download at the given index after completion.
 -- @param i The index of the download to open.
 -- @param w A window to show notifications in, if necessary.
-function open(i, w)
-    local d = downloads[i]
-    local t = timer{interval=1000}
+function open(d, w)
+    assert(type(d) == "download", "invalid download object")
+    local t = capi.timer{interval=1000}
     t:add_signal("timeout", function (t)
         if d.status == "finished" then
             t:stop()
-            open_file(d.destination, d.mime_type, w)
+            if _M:emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
+                if w then
+                    w:error(string.format("Can't open: %q (%s)", d.desination, d.mime_type))
+                end
+            end
         end
     end)
     t:start()
 end
 
+-- Wrapper around download class cancel method.
+function cancel(d)
+    assert(type(d) == "download", "invalid download object")
+    d:cancel()
+end
+
+-- Remove the given download object from the downloads table and cancel it if
+-- necessary.
+function delete(d)
+    assert(type(d) == "download", "invalid download object")
+    -- Remove download object from downloads table
+    for i, v in ipairs(downloads) do
+        if v == d then
+            table.remove(downloads, i)
+            break
+        end
+    end
+    -- Stop download
+    if is_running(d) then cancel(d) end
+end
+
+-- Removes and re-adds the given download.
+function restart(d)
+    assert(type(d) == "download", "invalid download object")
+    local new_d = add(d.uri)
+    if new_d then delete(d) end
+    return new_d
+end
+
 -- Tests if any downloads are running.
 -- @return true if the window can be closed.
 local function can_close()
-    if #luakit.windows > 1 then return true end
+    if #(capi.luakit.windows) > 1 then return true end
     for _,d in ipairs(downloads) do
-        if download.is_running(d) then
+        if is_running(d) then
             return false
         end
     end
@@ -205,36 +227,45 @@ add_binds("normal", {
 
 }, true)
 
+
 -- Download commands.
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("down[load]",
-        function (w, a) add(a) end),
+        function (w, a)
+            add(a)
+        end),
+
+    -- View all downloads in an interactive menu
+    cmd("downloads",
+        function (w)
+            w:set_mode("downloadlist")
+        end),
 
     cmd("dd[elete]",
         function (w, a)
-            local n = tonumber(a)
-            if n then delete(n) end
+            local d = downloads[assert(tonumber(a), "invalid index")]
+            if d then delete(d) end
         end),
 
     cmd("dc[ancel]",
         function (w, a)
-            local n = tonumber(a)
-            if n then downloads[n]:cancel() end
+            local d = downloads[assert(tonumber(a), "invalid index")]
+            if d then cancel(d) end
         end),
 
     cmd("dr[estart]",
         function (w, a)
-            local n = tonumber(a)
-            if n then restart(n) end
+            local d = downloads[assert(tonumber(a), "invalid index")]
+            if d then restart(d) end
         end),
 
     cmd("dcl[ear]", clear),
 
     cmd("do[pen]",
         function (w, a)
-            local n = tonumber(a)
-            if n then open(n) end
+            local d = downloads[assert(tonumber(a), "invalid index")]
+            if d then open(d, w) end
         end),
 })
 
@@ -253,5 +284,100 @@ add_cmds({
         function (w) w:save_session() w:close_win() end),
 
 }, true)
+
+-- Add mode to display all downloads in an interactive menu.
+new_mode("downloadlist", {
+    enter = function (w)
+        -- Check if there are downloads
+        if #downloads == 0 then
+            w:notify("No downloads to list")
+            return
+        end
+
+        -- Build downloads list
+        local rows = {{ "Download", "Status", title = true }}
+        for _, d in ipairs(downloads) do
+            local function name()
+                local i = lousy.util.table.hasitem(downloads, d) or 0
+                return string.format("%3s %s", i, get_basename(d))
+            end
+            local function status()
+                if is_running(d) then
+                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576,
+                        d.total_size/1048576, (d.progress * 100), get_speed(d) / 1024)
+                else
+                    return d.status
+                end
+            end
+            table.insert(rows, { name, status, dl = d })
+        end
+        w.menu:build(rows)
+        w:notify("Use j/k to move, d delete, c cancel, r restart, o open.", false)
+
+        -- Update menu every second
+        local update_timer = capi.timer{interval=1000}
+        update_timer:add_signal("timeout", function ()
+            w.menu:update()
+        end)
+        w.download_menu_state = { update_timer = update_timer }
+        update_timer:start()
+    end,
+
+    leave = function (w)
+        local ds = w.download_menu_state
+        if ds and ds.update_timer.started then
+            ds.update_timer:stop()
+        end
+        w.menu:hide()
+    end,
+})
+
+-- Add additional binds to downloads menu mode.
+local key = lousy.bind.key
+add_binds("downloadlist", lousy.util.table.join({
+    -- Delete download
+    key({}, "d",
+        function (w)
+            local row = w.menu:get()
+            if row and row.dl then
+                delete(row.dl)
+                w.menu:del()
+            end
+        end),
+
+    -- Cancel download
+    key({}, "c",
+        function (w)
+            local row = w.menu:get()
+            if row and row.dl then
+                cancel(row.dl)
+            end
+        end),
+
+    -- Open download
+    key({}, "o",
+        function (w)
+            local row = w.menu:get()
+            if row and row.dl then
+                open(row.dl, w)
+            end
+        end),
+
+    -- Restart download
+    key({}, "r",
+        function (w)
+            local row = w.menu:get()
+            if row and row.dl then
+                restart(row.dl)
+            end
+            -- HACK: Bad way of refreshing download list to show new items
+            -- (I.e. the new download object from the restart)
+            w:set_mode("downloadlist")
+        end),
+
+    -- Exit menu
+    key({}, "q", function (w) w:set_mode() end),
+
+}, menu_binds))
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
