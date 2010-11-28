@@ -201,8 +201,13 @@ luaH_download_set_uri(lua_State *L, download_t *download)
     if (download_is_started(download)) {
         luaH_warn(L, "cannot change URI while download is running");
     } else {
-        const char *uri = luaL_checkstring(L, -1);
-        download->uri = g_strdup(uri);
+        char *uri = (char*) luaL_checkstring(L, -1);
+        /* use http protocol if none specified */
+        if (g_strrstr(uri, "://"))
+            uri = g_strdup(uri);
+        else
+            uri = g_strdup_printf("http://%s", uri);
+        download->uri = uri;
     }
     return 0;
 }
