@@ -28,8 +28,8 @@ function del(pat)
 end
 
 webview.init_funcs.chrome = function (view, w)
-    view:add_signal("navigation-request", function (v, uri) 
-        for _, r in ipairs(rules) do 
+    view:add_signal("navigation-request", function (v, uri)
+        for _, r in ipairs(rules) do
             if string.match(uri, r.pat) then
                 info("Matched chrome rule %q for uri %q", r.pat, uri)
                 -- Catch if function returns anything other than false

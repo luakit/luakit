@@ -910,6 +910,7 @@ luaH_webview_set_prop(lua_State *L)
 
           case URI:
             tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
+            /* use http protocol if none specified */
             if (!len || g_strrstr(tmp.c, "://"))
                 tmp.c = g_strdup(tmp.c);
             else

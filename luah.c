@@ -197,7 +197,6 @@ luaHe_type(lua_State *L)
     return 1;
 }
 
-
 /* Fix up and add handy standard lib functions */
 static void
 luaH_fixups(lua_State *L)
