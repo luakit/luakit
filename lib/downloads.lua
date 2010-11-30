@@ -23,7 +23,6 @@ local add_cmds = add_cmds
 local menu_binds = menu_binds
 local new_mode = new_mode
 local window = window
-local label = label
 local theme = lousy.theme
 
 -- Grab environment from C API
@@ -31,6 +30,7 @@ local capi = {
     download = download,
     timer = timer,
     luakit = luakit,
+    widget = widget,
 }
 
 --- Provides internal support for downloads.
@@ -82,6 +82,36 @@ speed_timer:add_signal("timeout", function ()
     end
 end)
 
+-- Add indicator to status bar.
+window.init_funcs.downloads_status = function (w)
+    local r = w.sbar.r
+    r.downloads = capi.widget{type="label"}
+    r.layout:pack_start(r.downloads, false, false, 0)
+    r.layout:reorder(r.downloads, 0)
+    -- Apply theme
+    local theme = theme.get()
+    r.downloads.fg = theme.downloads_sbar_fg
+    r.downloads.font = theme.downloads_sbar_font
+end
+
+-- Refresh indicator
+local status_timer = capi.timer{interval=1000}
+status_timer:add_signal("timeout", function ()
+    for _, d in ipairs(downloads) do
+        local running = 0
+        for _, d in ipairs(downloads) do
+            if is_running(d) then running = running + 1 end
+        end
+        for _, w in pairs(window.bywidget) do
+            w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
+        end
+    end
+    -- Only start timer again if there are active downloads
+    if #downloads == 0 then
+        status_timer:stop()
+    end
+end)
+
 --- The default directory for a new download.
 default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
@@ -111,6 +141,7 @@ function add(uri, w)
         d:start()
         table.insert(downloads, d)
         if not speed_timer.started then speed_timer:start() end
+        if not status_timer.started then status_timer:start() end
         return true
     end
 end
@@ -178,35 +209,6 @@ function restart(d)
     if new_d then delete(d) end
     return new_d
 end
-
--- Add indicator to status bar.
-window.init_funcs.downloads_status = function (w)
-    local r = w.sbar.r
-    r.downloads = label()
-    r.layout:pack_start(r.downloads, false, false, 0)
-    r.layout:reorder(r.downloads, 0)
-    -- Apply theme
-    local theme = theme.get()
-    r.downloads.fg = theme.downloads_sbar_fg
-    r.downloads.font = theme.downloads_sbar_font
-end
-
-local status_timer = capi.timer{interval=1000}
-status_timer:add_signal("timeout", function ()
-    for _, d in ipairs(downloads) do
-        local running = 0
-        for _, d in ipairs(downloads) do
-            if is_running(d) then running = running + 1 end
-        end
-        for _, w in pairs(window.bywidget) do
-            w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
-        end
-    end
-    -- Only start timer again if there are active downloads
-    if #downloads == 0 then
-        status_timer:stop()
-    end
-end)
 
 -- Tests if any downloads are running.
 -- @return true if the window can be closed.
