@@ -142,15 +142,20 @@ function html()
 end
 
 -- Refreshes all download views.
-local function refresh(w)
+local refresh_timer = capi.timer{interval=1000}
+refresh_timer:add_signal("timeout", function ()
+    local continue = false
     -- refresh views
-    local view = w:get_current()
-    if string.match(view.uri, pattern) then
-        view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
+    for _, w in pairs(window.bywidget) do
+        local view = w:get_current()
+        if string.match(view.uri, pattern) then
+            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
+            continue = true
+        end
     end
-end
-
-table.insert(downloads.refresh_functions, refresh)
+    -- stop timer if no view was refreshed
+    if not continue then refresh_timer:stop() end
+end)
 
 --- Shows the chrome page in the given view.
 -- @param view The view to show the page in.
@@ -170,6 +175,7 @@ function show(view)
         end
     end
     view:add_signal("load-status", sig.fun)
+    if not refresh_timer.started then refresh_timer:start() end
 end
 
 -- Chrome buffer binds.
