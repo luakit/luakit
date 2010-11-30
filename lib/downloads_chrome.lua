@@ -6,8 +6,11 @@ local ipairs = ipairs
 local pairs = pairs
 local string = string
 local window = window
-local download = download
 local chrome = require("chrome")
+
+local capi = {
+    timer = timer,
+}
 
 module("downloads.chrome")
 
@@ -115,13 +118,15 @@ local function inner_html()
     for i,d in ipairs(downloads.downloads) do
         local modeline
         if d.status == "started" then
-            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576, d.total_size/1048576, (d.progress * 100), download.speed(d))
+            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576,
+                d.total_size/1048576, (d.progress * 100), downloads.get_speed(d) / 1024)
         else
-            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576, d.total_size/1048576, (d.progress * 100))
+            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576,
+                d.total_size/1048576, (d.progress * 100))
         end
         local subs = {
             id       = i,
-            name     = download.basename(d),
+            name     = downloads.get_basename(d),
             status   = d.status,
             modeline = modeline,
         }
