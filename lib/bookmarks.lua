@@ -250,7 +250,7 @@ add_binds("normal", {
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd({"bookmark",    "bm" },         function (w, a)
-                                            local args = split(a)
+                                            local args = util.string.split(a)
                                             local uri = table.remove(args, 1)
                                             add(uri, args)
                                         end),
