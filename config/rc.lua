@@ -64,43 +64,7 @@ require "bookmarks"
 
 -- Add download support
 require "downloads"
-require "downloads_chrome"
-require "downloads_bar"
-require "downloads_menu"
-downloads.dir = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
-downloads.rules = {
-    ["scholar\.google\."] = os.getenv("HOME") .. "/downloads/pdfs",
- -- to download everything without asking:
- -- [".*"               ] = downloads.dir,
-}
-downloads.open_file = function (f, m, w)
-    local mime_types = {
-        ["^text/"        ] = "gvim",
-        ["^video/"       ] = "mplayer",
-        ["/pdf$"         ] = "evince",
-    }
-    local extensions = {
-        ["mp3"           ] = "mplayer",
-    }
-
-    for p,e in pairs(mime_types) do
-        if string.match(m, p) then
-            luakit.spawn(string.format('%s "%s"', e, f))
-            return
-        end
-    end
-
-    local _,_,ext = string.find(f, ".*%.([^.]*)")
-    for p,e in pairs(extensions) do
-        if string.match(ext, p) then
-            luakit.spawn(string.format('%s "%s"', e, f))
-            return
-        end
-    end
-
-    w:error("Can't open " .. f)
-end
-
+--require "downloads_chrome"
 
 -- Add command completion
 require "completion"
