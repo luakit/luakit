@@ -19,8 +19,10 @@
  *
  */
 
+#include "globalconf.h"
 #include "luah.h"
 #include "widgets/common.h"
+#include "classes/download.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>
@@ -148,6 +150,57 @@ webview_init_properties() {
     }
 }
 
+static JSValueRef
+webview_registered_function_callback(JSContextRef context, JSObjectRef fun, JSObjectRef thisObject,
+        size_t argumentCount, const JSValueRef *arguments, JSValueRef *exception) {
+    (void) thisObject;
+    (void) argumentCount;
+    (void) arguments;
+
+    lua_State *L = globalconf.L;
+    gpointer ref = JSObjectGetPrivate(fun);
+    // get function
+    luaH_object_push(L, ref);
+    // call function
+    int ret = lua_pcall(L, 0, 0, 0);
+    // handle errors
+    if (ret != 0) {
+        const char *exn_cstring = luaL_checkstring(L, -1);
+        lua_pop(L, 1);
+        JSStringRef exn_js_string = JSStringCreateWithUTF8CString(exn_cstring);
+        JSValueRef exn_js_value = JSValueMakeString(context, exn_js_string);
+        *exception = JSValueToObject(context, exn_js_value, NULL);
+        JSStringRelease(exn_js_string);
+    }
+    return JSValueMakeUndefined(context);
+}
+
+static void
+webview_collect_registered_function(JSObjectRef obj) {
+    lua_State *L = globalconf.L;
+    gpointer ref = JSObjectGetPrivate(obj);
+    luaH_object_unref(L, ref);
+}
+
+static void
+webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref) {
+    JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
+    JSStringRef js_name = JSStringCreateWithUTF8CString(name);
+    // prepare callback function
+    JSClassDefinition def = kJSClassDefinitionEmpty;
+    def.callAsFunction = webview_registered_function_callback;
+    def.className = g_strdup(name);
+    def.finalize = webview_collect_registered_function;
+    JSClassRef class = JSClassCreate(&def);
+    JSObjectRef fun = JSObjectMake(context, class, ref);
+    // register with global object
+    JSObjectRef global = JSContextGetGlobalObject(context);
+    JSObjectSetProperty(context, global, js_name, fun, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly, NULL);
+    // release strings
+    JSStringRelease(js_name);
+    JSClassRelease(class);
+}
+
 static const gchar*
 webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
     JSGlobalContextRef context;
@@ -226,6 +279,39 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
     JSStringRelease(js_file);
 
     return g_string_free(result, FALSE);
+}
+
+static gint
+luaH_webview_load_string(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    const char *string = luaL_checkstring(L, 2);
+    const char *base_uri = luaL_checkstring(L, 3);
+    WebKitWebFrame *frame = webkit_web_view_get_main_frame(view);
+    webkit_web_frame_load_alternate_string(frame, string, base_uri, base_uri);
+    return 0;
+}
+
+static gint
+luaH_webview_register_function(lua_State *L)
+{
+    WebKitWebFrame *frame = NULL;
+    widget_t *w = luaH_checkwidget(L, 1);
+    WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
+    const gchar *name = luaL_checkstring(L, 2);
+    gpointer ref = luaH_object_ref(L, 3);
+
+    /* Check if function should be registered on currently focused frame */
+    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
+        frame = webkit_web_view_get_focused_frame(view);
+    /* Fall back on main frame */
+    if (!frame)
+        frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
+
+    /* register function */
+    webview_register_function(frame, name, ref);
+    return 0;
 }
 
 static gint
@@ -824,6 +910,7 @@ luaH_webview_set_prop(lua_State *L)
 
           case URI:
             tmp.c = (gchar*) luaL_checklstring(L, 3, &len);
+            /* use http protocol if none specified */
             if (!len || g_strrstr(tmp.c, "://"))
                 tmp.c = g_strdup(tmp.c);
             else
@@ -1041,6 +1128,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(GO_FORWARD,           luaH_webview_go_forward)
       /* push misc webview methods */
       PF_CASE(EVAL_JS,              luaH_webview_eval_js)
+      PF_CASE(REGISTER_FUNCTION,    luaH_webview_register_function)
+      PF_CASE(LOAD_STRING,          luaH_webview_load_string)
       PF_CASE(LOADING,              luaH_webview_loading)
       PF_CASE(RELOAD,               luaH_webview_reload)
       PF_CASE(RELOAD_BYPASS_CACHE,  luaH_webview_reload_bypass_cache)

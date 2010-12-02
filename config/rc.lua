@@ -62,6 +62,10 @@ require "userscripts"
 -- Add bookmarks support
 require "bookmarks"
 
+-- Add download support
+require "downloads"
+require "downloads_chrome"
+
 -- Add command completion
 require "completion"
 

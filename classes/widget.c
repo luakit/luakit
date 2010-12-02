@@ -19,7 +19,7 @@
  *
  */
 
-#include "widget.h"
+#include "classes/widget.h"
 
 widget_info_t widgets_list[] = {
   { L_TK_ENTRY,      "entry",      widget_entry      },

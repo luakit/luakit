@@ -177,12 +177,12 @@ window.init_funcs = {
     end,
 
     apply_window_theme = function (w)
-        local s, i  = w.sbar, w.ibar
+        local s, i = w.sbar, w.ibar
 
         -- Set foregrounds
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_fg,
-            [s.l.loaded] = theme.loaded_sbar_fg,
+            [s.l.loaded] = theme.sbar_loaded_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [s.r.scroll] = theme.scroll_sbar_fg,
@@ -203,7 +203,7 @@ window.init_funcs = {
         -- Set fonts
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_font,
-            [s.l.loaded] = theme.loaded_sbar_font,
+            [s.l.loaded] = theme.sbar_loaded_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
@@ -488,19 +488,6 @@ window.methods = {
         -- Clear & hide buffer
         w.buffer = nil
         w:update_buf()
-    end,
-
-    download = function (w, link, filename)
-        if not filename then
-            -- just take the last part of the link
-            filename = string.gsub(string.match(link, "/[^/]*/?$"), "/", "")
-        end
-        -- Make download dir
-        os.execute(string.format("mkdir -p %q", globals.download_dir))
-        local dl = globals.download_dir .. "/" .. filename
-        local wget = string.format("wget -q %q -O %q", link, dl)
-        info("Launching: %s", wget)
-        luakit.spawn(wget)
     end,
 
     update_tablist = function (w, current)

@@ -9,7 +9,9 @@ theme.font = "monospace normal 9"
 theme.fg   = "#fff"
 theme.bg   = "#000"
 
--- Error colours
+-- Genaral colours
+theme.success_fg = "#0f0"
+theme.loaded_fg  = "#33AADD"
 theme.error_fg = "#FFF"
 theme.error_bg = "#F00"
 
@@ -37,9 +39,13 @@ theme.proxy_inactive_menu_fg    = '#888'
 theme.proxy_inactive_menu_bg    = '#FFF'
 
 -- Statusbar specific
-theme.sbar_fg           = "#fff"
-theme.sbar_bg           = "#000"
-theme.loaded_sbar_fg    = "#33AADD"
+theme.sbar_fg         = "#fff"
+theme.sbar_bg         = "#000"
+
+-- Downloadbar specific
+theme.dbar_fg         = "#fff"
+theme.dbar_bg         = "#000"
+theme.dbar_error_fg   = "#F00"
 
 -- Input bar specific
 theme.ibar_fg           = "#000"

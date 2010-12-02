@@ -50,8 +50,9 @@ luaH_box_pack_end(lua_State *L)
     return 0;
 }
 
+/* direct wrapper around gtk_box_reorder_child */
 static gint
-luaH_box_reorder(lua_State *L)
+luaH_box_reorder_child(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
@@ -73,7 +74,7 @@ luaH_box_index(lua_State *L, luakit_token_t token)
       /* push class methods */
       PF_CASE(PACK_END,     luaH_box_pack_end)
       PF_CASE(PACK_START,   luaH_box_pack_start)
-      PF_CASE(REORDER,      luaH_box_reorder)
+      PF_CASE(REORDER,      luaH_box_reorder_child)
       /* push boolean properties */
       PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
       /* push string properties */

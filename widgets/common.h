@@ -21,7 +21,7 @@
 #ifndef LUAKIT_WIDGETS_COMMON_H
 #define LUAKIT_WIDGETS_COMMON_H
 
-#include "widget.h"
+#include "classes/widget.h"
 
 #define LUAKIT_WIDGET_INDEX_COMMON                    \
     case L_TK_SHOW:                                   \

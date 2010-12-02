@@ -182,7 +182,9 @@ webview.init_funcs = {
     download_request = function (view, w)
         -- 'link' contains the download link
         -- 'filename' contains the suggested filename (from server or webkit)
-        view:add_signal("download-request", function (v, link, filename) w:download(link, filename) end)
+        view:add_signal("download-request", function (v, link, filename)
+            downloads.add(link)
+        end)
     end,
 
     -- Creates context menu popup from table (and nested tables).

@@ -26,7 +26,9 @@
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
-#include "widget.h"
+#include "classes/widget.h"
+#include "classes/timer.h"
+#include "classes/download.h"
 #include "luah.h"
 
 void
@@ -194,7 +196,6 @@ luaHe_type(lua_State *L)
     lua_pushstring(L, luaH_typename(L, 1));
     return 1;
 }
-
 
 /* Fix up and add handy standard lib functions */
 static void
@@ -757,6 +758,12 @@ luaH_init(void)
 
     /* Export widget */
     widget_class_setup(L);
+
+    /* Export download */
+    download_class_setup(L);
+
+    /* Export timer */
+    timer_class_setup(L);
 
     /* add Lua search paths */
     lua_getglobal(L, "package");
