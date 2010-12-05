@@ -162,11 +162,19 @@ function clear()
     downloads = tmp
 end
 
+local function get_download(d)
+    if type(d) == "number" then
+        d = assert(downloads[d], "invalid index")
+    end
+    assert(type(d) == "download", "invalid download object")
+    return d
+end
+
 --- Opens the download at the given index after completion.
 -- @param i The index of the download to open.
 -- @param w A window to show notifications in, if necessary.
 function open(d, w)
-    assert(type(d) == "download", "invalid download object")
+    d = get_download(d)
     local t = capi.timer{interval=1000}
     t:add_signal("timeout", function (t)
         if d.status == "finished" then
@@ -183,14 +191,14 @@ end
 
 -- Wrapper around download class cancel method.
 function cancel(d)
-    assert(type(d) == "download", "invalid download object")
+    d = get_download(d)
     d:cancel()
 end
 
 -- Remove the given download object from the downloads table and cancel it if
 -- necessary.
 function delete(d)
-    assert(type(d) == "download", "invalid download object")
+    d = get_download(d)
     -- Remove download object from downloads table
     for i, v in ipairs(downloads) do
         if v == d then
@@ -204,7 +212,7 @@ end
 
 -- Removes and re-adds the given download.
 function restart(d)
-    assert(type(d) == "download", "invalid download object")
+    d = get_download(d)
     local new_d = add(d.uri)
     if new_d then delete(d) end
     return new_d
