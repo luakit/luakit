@@ -654,8 +654,8 @@ window.methods = {
     search_open = function (w, arg)
         if not arg then return "about:blank" end
         args = lousy.util.string.split(lousy.util.string.strip(arg))
-        -- Detect scheme:// or "." in string
-        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
+        -- Detect localhost, scheme:// or "." in string
+        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://") or string.match(args[1], "^localhost[:/]")) then
             return args[1]
         end
         -- Find search engine
