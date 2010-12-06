@@ -61,6 +61,18 @@ init_lua(gchar **uris)
     lua_setglobal(L, "uris");
 }
 
+void
+init_directories(void)
+{
+    /* create luakit directory */
+    globalconf.cache_dir  = g_build_filename(g_get_user_cache_dir(),  "luakit", NULL);
+    globalconf.config_dir = g_build_filename(g_get_user_config_dir(), "luakit", NULL);
+    globalconf.data_dir   = g_build_filename(g_get_user_data_dir(),   "luakit", NULL);
+    g_mkdir_with_parents(globalconf.cache_dir,  0771);
+    g_mkdir_with_parents(globalconf.config_dir, 0771);
+    g_mkdir_with_parents(globalconf.data_dir,   0771);
+}
+
 /* load command line options into luakit and return uris to load */
 gchar**
 parseopts(int argc, char *argv[], gboolean **nonblock) {
@@ -100,6 +112,7 @@ parseopts(int argc, char *argv[], gboolean **nonblock) {
 
     /* check config syntax and exit */
     if (check_only) {
+        init_directories();
         init_lua(NULL);
         if (!luaH_parserc(globalconf.confpath, FALSE)) {
             g_fprintf(stderr, "Confiuration file syntax error.\n");
@@ -117,18 +130,6 @@ parseopts(int argc, char *argv[], gboolean **nonblock) {
         return uris;
     else
         return argv+1;
-}
-
-void
-init_directories(void)
-{
-    /* create luakit directory */
-    globalconf.cache_dir  = g_build_filename(g_get_user_cache_dir(),  "luakit", NULL);
-    globalconf.config_dir = g_build_filename(g_get_user_config_dir(), "luakit", NULL);
-    globalconf.data_dir   = g_build_filename(g_get_user_data_dir(),   "luakit", NULL);
-    g_mkdir_with_parents(globalconf.cache_dir,  0771);
-    g_mkdir_with_parents(globalconf.config_dir, 0771);
-    g_mkdir_with_parents(globalconf.data_dir,   0771);
 }
 
 int
