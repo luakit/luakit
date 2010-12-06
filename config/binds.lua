@@ -252,7 +252,7 @@ add_cmds({
     cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
-    cmd("reloadconf",                   function (w)    w:reload_config() end),
+    cmd("restart",                      function (w)    w:restart() end),
     cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
