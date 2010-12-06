@@ -654,9 +654,19 @@ window.methods = {
     search_open = function (w, arg)
         if not arg then return "about:blank" end
         args = lousy.util.string.split(lousy.util.string.strip(arg))
-        -- Detect scheme:// or "." in string
-        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
-            return args[1]
+        -- Detect localhost, scheme:// or domain-like beginning in string
+        if #args == 1  then
+            local uri = args[1]
+            local scheme = string.match(uri, "^%w+://")
+            local localhost = string.match(uri, "^localhost[:/]%S*") or string.match(uri, "^localhost$")
+            -- Extract domain from before the first colon or slash
+            local domain = string.match(uri, "^([%w%-_%.]+)[:/]%S*") or string.match(uri, "^([%w%-_%.]+)$")
+            -- A valid domain consists of [%w%-_%.] and has at least one dot
+            -- with at least one [%w%-_] on the left and a TLD on the right
+            -- with at least two letters
+            if scheme or localhost or (domain and string.match(domain, "^[%w%-_%.]*[%w%-_]%.%a%a[%a%.]*$")) then
+                return uri
+            end
         end
         -- Find search engine
         local engine = "default"
