@@ -443,12 +443,21 @@ add_binds("normal", {
                         return "root-active"
                     end, m.count) end),
 
+    -- Yank uri or desc into primary selection
+    buf("^;y$", function (w,b,m) w:start_follow("uri",    "yank",
+                    function (uri)
+                        w:set_selection(uri)
+                        w:notify("Yanked: " .. uri)
+                    end) end),
+
+    buf("^;Y$", function (w,b,m) w:start_follow("desc",   "yank desc",
+                    function (desc)
+                        w:set_selection(desc)
+                        w:notify("Yanked: " .. desc)
+                    end) end),
+
     -- Follow a sequence of <CR> delimited hints in background tabs.
     buf("^;F$", function (w,b,m) w:start_follow("uri",    "multi tab",  function (uri, s) w:new_tab(uri, false) w:set_mode("follow") end) end),
-
-    -- Yank uri or desc into primary selection
-    buf("^;y$", function (w,b,m) w:start_follow("uri",    "yank",       function (uri)  w:set_selection(uri)  return "root-active" end) end),
-    buf("^;Y$", function (w,b,m) w:start_follow("desc",   "yank desc",  function (desc) w:set_selection(desc) return "root-active" end) end),
 
     -- Download uri
     buf("^;s$", function (w,b,m) w:start_follow("uri",    "download",   function (uri)  downloads.add(uri)    return "root-active" end) end),
