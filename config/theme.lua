@@ -54,8 +54,10 @@ theme.ibar_bg           = "#fff"
 -- Tab label
 theme.tab_fg            = "#888"
 theme.tab_bg            = "#222"
+theme.tab_ntheme        = "#900"
 theme.selected_fg       = "#fff"
 theme.selected_bg       = "#000"
+theme.selected_ntheme   = "#F00"
 theme.loading_fg        = "#33AADD"
 theme.loading_bg        = "#000"
 
