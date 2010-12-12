@@ -44,7 +44,7 @@ session = {
         for line in fh:lines() do table.insert(lines, line) end
         io.close(fh)
         -- Delete file
-        if delete then rm(session.file) end
+        if delete ~= false then rm(session.file) end
 
         -- Parse session file
         local split = lousy.util.string.split
