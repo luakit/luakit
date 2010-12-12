@@ -78,12 +78,15 @@ focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
     (void) win;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    if (ev->in)
+    if (ev->in){
         luaH_object_emit_signal(L, -1, "focus", 0, 0);
-    else
+        luaH_object_emit_signal(L, -1, "form-active", 0, 0);
+    }else{
         luaH_object_emit_signal(L, -1, "unfocus", 0, 0);
+        luaH_object_emit_signal(L, -1, "root-active", 0, 0);
+    }
     lua_pop(L, 1);
-    return FALSE;
+    return TRUE;
 }
 
 /* gtk container add callback */
