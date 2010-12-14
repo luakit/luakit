@@ -3,10 +3,10 @@
 VERSION   ?= $(shell ./build-utils/getversion.sh)
 
 # Paths
-PREFIX     ?= /usr/local
-INSTALLDIR ?= ${DESTDIR}${PREFIX}
-MANPREFIX  ?= ${DESTDIR}${PREFIX}/share/man
-DOCDIR     ?= ${DESTDIR}${PREFIX}/share/luakit/docs
+DESTDIR    ?= ${HOME}
+INSTALLDIR ?= ${DESTDIR}
+MANPREFIX  ?= ${DESTDIR}/share/man
+DOCDIR     ?= ${DESTDIR}/share/luakit/docs
 
 # Generate includes and libs
 PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 lua
