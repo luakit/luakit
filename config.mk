@@ -3,7 +3,7 @@
 VERSION   ?= $(shell ./build-utils/getversion.sh)
 
 # Paths
-DESTDIR    ?= ${HOME}
+DESTDIR    ?= /usr/local
 INSTALLDIR ?= ${DESTDIR}
 MANPREFIX  ?= ${DESTDIR}/share/man
 DOCDIR     ?= ${DESTDIR}/share/luakit/docs
