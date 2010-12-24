@@ -153,15 +153,14 @@ add_binds("normal", {
     buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
     buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
-
     -- History
-    key({},          "H",           function (w, m) w:back(m.count)    end, {count=1}),
-    key({},          "L",           function (w, m) w:forward(m.count) end, {count=1}),
-    key({},          "b",           function (w, m) w:back(m.count)    end, {count=1}),
-    key({},          "XF86Back",    function (w, m) w:back(m.count)    end, {count=1}),
-    key({},          "XF86Forward", function (w, m) w:forward(m.count) end, {count=1}),
-    key({"Control"}, "o",           function (w)    w:back()           end),
-    key({"Control"}, "i",           function (w)    w:forward()        end),
+    key({},          "H",           function (w, m) w:back(m.count)    end),
+    key({},          "L",           function (w, m) w:forward(m.count) end),
+    key({},          "b",           function (w, m) w:back(m.count)    end),
+    key({},          "XF86Back",    function (w, m) w:back(m.count)    end),
+    key({},          "XF86Forward", function (w, m) w:forward(m.count) end),
+    key({"Control"}, "o",           function (w, m) w:back(m.count)    end),
+    key({"Control"}, "i",           function (w, m) w:forward(m.count) end),
 
     -- Tab
     key({"Control"}, "Page_Up",     function (w)       w:prev_tab() end),
@@ -201,7 +200,6 @@ add_binds("normal", {
     key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
     buf("^gb$",                     function (w)       w:navigate(bookmarks.dump_html()) end),
     buf("^gB$",                     function (w, b, m) local u = bookmarks.dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
-
 
     -- Mouse bindings
     but({},          8,             function (w) w:back()     end),
