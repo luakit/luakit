@@ -237,8 +237,13 @@ window.methods = {
 
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
-        local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w, opts)
-        if w.win then
+        local opts = lousy.util.table.join(opts or {}, {
+            enable_buffer = w:is_mode("normal"),
+            buffer = w.buffer,
+        })
+
+        local caught, newbuf = lousy.bind.hit(w, w.binds, mods, key, opts)
+        if w.win then -- Check binding didn't cause window to exit
             w.buffer = newbuf
             w:update_buf()
         end
@@ -247,7 +252,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return lousy.bind.match_cmd(get_mode("command").commands, buffer, w)
+        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer, w)
     end,
 
     -- enter command or characters into command line

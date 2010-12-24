@@ -3,7 +3,8 @@
 -----------------
 
 -- Binding aliases
-local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy.bind.cmd
+local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
+local cmd, any = lousy.bind.cmd, lousy.bind.any
 
 -- Util aliases
 local match, join = string.match, lousy.util.table.join
@@ -63,17 +64,25 @@ add_binds("all", {
 })
 
 add_binds("normal", {
-    -- Autoparse the "[count]" before a buffer binding and re-call the
-    -- hit function with the count removed and added to the metatable.
-    buf("^%d+[^%d]",                function (w, buf, meta)
-                                        local count, buf = match(buf, "^(%d+)([^%d].*)$")
-                                        meta = join(meta, {count = tonumber(count)})
-                                        if (#buf == 1 and lousy.bind.match_key(meta.binds, {}, buf, w, meta))
-                                          or lousy.bind.match_buf(meta.binds, buf, w, meta) then
-                                            return true
-                                        end
-                                        return false
-                                    end),
+    -- Autoparse the `[count]` before a binding and re-call the hit function
+    -- with the count removed and added to the opts table.
+    any(function (w, m)
+        local count, buf
+        if m.buffer and (#m.key > 1 or #m.mods > 0) then
+            count = string.match(m.buffer, "^(%d+)$")
+        elseif m.buffer then
+            count, buf = string.match(m.buffer, "^(%d+)([^%d].*)$")
+        end
+        if count then
+            local opts = join(m, {count = tostring(count)})
+            if buf then buf = string.sub(buf, 1, -2) end
+            opts.buffer = (buf and #buf > 0 and buf) or nil
+            if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
+                return true
+            end
+        end
+        return false
+    end),
 
     key({},          "i",           function (w) w:set_mode("insert")  end),
     key({},          ":",           function (w) w:set_mode("command") end),
