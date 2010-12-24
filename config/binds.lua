@@ -68,15 +68,13 @@ add_binds("normal", {
     -- with the count removed and added to the opts table.
     any(function (w, m)
         local count, buf
-        if m.buffer and (#m.key > 1 or #m.mods > 0) then
-            count = string.match(m.buffer, "^(%d+)$")
-        elseif m.buffer then
-            count, buf = string.match(m.buffer, "^(%d+)([^%d].*)$")
+        if m.buffer then
+            count = string.match(m.buffer, "^(%d+)")
         end
         if count then
+            buf = string.sub(count, #count + 1, (m.updated_buf and -2) or -1)
             local opts = join(m, {count = tostring(count)})
-            if buf then buf = string.sub(buf, 1, -2) end
-            opts.buffer = (buf and #buf > 0 and buf) or nil
+            opts.buffer = (#buf > 0 and buf) or nil
             if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
                 return true
             end

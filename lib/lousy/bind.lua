@@ -279,10 +279,10 @@ function hit(object, binds, mods, key, args)
         key    = key,
     })
 
-    -- Match button bindings
     if match_any(object, binds, args) then
         return true
 
+    -- Match button bindings
     elseif type(key) == "number" then
         if match_but(object, binds, mods, key, args) then
             return true
@@ -304,7 +304,10 @@ function hit(object, binds, mods, key, args)
 
     -- Else match buffer
     elseif #key == 1 then
-        args.buffer = (args.buffer or "") .. key
+        if not args.updated_buf then
+            args.buffer = (args.buffer or "") .. key
+            args.updated_buf = true
+        end
         if match_buf(object, binds, args.buffer, args) then
             return true
         end
