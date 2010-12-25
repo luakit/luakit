@@ -581,6 +581,8 @@ window.methods = {
         -- Remove & destroy
         w.tabs:remove(view)
         view.uri = "about:blank"
+        -- Try to prevent flash segfaulting luakit on webview widget destroy.
+        view:set_prop("enable-plugins", false)
         view:destroy()
         w:update_tab_count()
         w:update_tablist()
