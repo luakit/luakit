@@ -34,7 +34,7 @@ session = {
     end,
 
     -- Load window and tab state from file
-    load = function ()
+    load = function (delete)
         if not os.exists(session.file) then return end
         local ret = {}
 
@@ -44,7 +44,7 @@ session = {
         for line in fh:lines() do table.insert(lines, line) end
         io.close(fh)
         -- Delete file
-        rm(session.file)
+        if delete ~= false then rm(session.file) end
 
         -- Parse session file
         local split = lousy.util.string.split
@@ -60,8 +60,8 @@ session = {
     end,
 
     -- Spawn windows from saved session and return the last window
-    restore = function ()
-        wins = session.load()
+    restore = function (delete)
+        wins = session.load(delete)
         if not wins or #wins == 0 then return end
 
         -- Spawn windows
@@ -83,7 +83,7 @@ session = {
 
 -- Save current window session helper
 window.methods.save_session = function (w)
-    session.save{w}
+    session.save({w,})
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

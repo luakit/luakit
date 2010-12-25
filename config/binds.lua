@@ -3,7 +3,8 @@
 -----------------
 
 -- Binding aliases
-local key, buf, but, cmd = lousy.bind.key, lousy.bind.buf, lousy.bind.but, lousy.bind.cmd
+local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
+local cmd, any = lousy.bind.cmd, lousy.bind.any
 
 -- Util aliases
 local match, join = string.match, lousy.util.table.join
@@ -63,17 +64,23 @@ add_binds("all", {
 })
 
 add_binds("normal", {
-    -- Autoparse the "[count]" before a buffer binding and re-call the
-    -- hit function with the count removed and added to the metatable.
-    buf("^%d+[^%d]",                function (w, buf, meta)
-                                        local count, buf = match(buf, "^(%d+)([^%d].*)$")
-                                        meta = join(meta, {count = tonumber(count)})
-                                        if (#buf == 1 and lousy.bind.match_key(meta.binds, {}, buf, w, meta))
-                                          or lousy.bind.match_buf(meta.binds, buf, w, meta) then
-                                            return true
-                                        end
-                                        return false
-                                    end),
+    -- Autoparse the `[count]` before a binding and re-call the hit function
+    -- with the count removed and added to the opts table.
+    any(function (w, m)
+        local count, buf
+        if m.buffer then
+            count = string.match(m.buffer, "^(%d+)")
+        end
+        if count then
+            buf = string.sub(count, #count + 1, (m.updated_buf and -2) or -1)
+            local opts = join(m, {count = tostring(count)})
+            opts.buffer = (#buf > 0 and buf) or nil
+            if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
+                return true
+            end
+        end
+        return false
+    end),
 
     key({},          "i",           function (w) w:set_mode("insert")  end),
     key({},          ":",           function (w) w:set_mode("command") end),
@@ -144,15 +151,14 @@ add_binds("normal", {
     buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
     buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
-
     -- History
-    key({},          "H",           function (w, m) w:back(m.count)    end, {count=1}),
-    key({},          "L",           function (w, m) w:forward(m.count) end, {count=1}),
-    key({},          "b",           function (w, m) w:back(m.count)    end, {count=1}),
-    key({},          "XF86Back",    function (w, m) w:back(m.count)    end, {count=1}),
-    key({},          "XF86Forward", function (w, m) w:forward(m.count) end, {count=1}),
-    key({"Control"}, "o",           function (w)    w:back()           end),
-    key({"Control"}, "i",           function (w)    w:forward()        end),
+    key({},          "H",           function (w, m) w:back(m.count)    end),
+    key({},          "L",           function (w, m) w:forward(m.count) end),
+    key({},          "b",           function (w, m) w:back(m.count)    end),
+    key({},          "XF86Back",    function (w, m) w:back(m.count)    end),
+    key({},          "XF86Forward", function (w, m) w:forward(m.count) end),
+    key({"Control"}, "o",           function (w, m) w:back(m.count)    end),
+    key({"Control"}, "i",           function (w, m) w:forward(m.count) end),
 
     -- Tab
     key({"Control"}, "Page_Up",     function (w)       w:prev_tab() end),
@@ -246,7 +252,7 @@ add_cmds({
     cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
     cmd("c[lose]",                      function (w)    w:close_tab() end),
     cmd("reload",                       function (w)    w:reload() end),
-    cmd("reloadconf",                   function (w)    w:reload_config() end),
+    cmd("restart",                      function (w)    w:restart() end),
     cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
     cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),

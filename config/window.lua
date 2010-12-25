@@ -237,8 +237,13 @@ window.methods = {
 
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
-        local caught, newbuf = lousy.bind.hit(w.binds or {}, mods, key, w.buffer, w:is_mode("normal"), w, opts)
-        if w.win then
+        local opts = lousy.util.table.join(opts or {}, {
+            enable_buffer = w:is_mode("normal"),
+            buffer = w.buffer,
+        })
+
+        local caught, newbuf = lousy.bind.hit(w, w.binds, mods, key, opts)
+        if w.win then -- Check binding didn't cause window to exit
             w.buffer = newbuf
             w:update_buf()
         end
@@ -247,7 +252,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return lousy.bind.match_cmd(get_mode("command").commands, buffer, w)
+        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer, w)
     end,
 
     -- enter command or characters into command line
@@ -492,18 +497,19 @@ window.methods = {
 
     update_tablist = function (w, current)
         local current = current or w.tabs:current()
-        local fg, bg = theme.tab_fg, theme.tab_bg
+        local fg, bg, nfg, snfg = theme.tab_fg, theme.tab_bg, theme.tab_ntheme, theme.selected_ntheme
         local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
         local escape, get_title = lousy.util.escape, w.get_tab_title
         local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
 
         for i, view in ipairs(w.tabs:get_children()) do
             -- Get tab number theme
-            local ntheme
+            local ntheme = nfg
             if view:loading() then -- Show loading on all tabs
                 ntheme = lfg
             elseif current == i then -- Show ssl trusted/untrusted on current tab
                 local trusted = view:ssl_trusted()
+                ntheme = snfg
                 if trusted == false or (trusted ~= nil and not w.checking_ssl) then
                     ntheme = bfg
                 elseif trusted then
@@ -575,6 +581,8 @@ window.methods = {
         -- Remove & destroy
         w.tabs:remove(view)
         view.uri = "about:blank"
+        -- Try to prevent flash segfaulting luakit on webview widget destroy.
+        view:set_prop("enable-plugins", false)
         view:destroy()
         w:update_tab_count()
         w:update_tablist()
@@ -654,9 +662,19 @@ window.methods = {
     search_open = function (w, arg)
         if not arg then return "about:blank" end
         args = lousy.util.string.split(lousy.util.string.strip(arg))
-        -- Detect scheme:// or "." in string
-        if #args == 1 and (string.match(args[1], "%.") or string.match(args[1], "^%w+://")) then
-            return args[1]
+        -- Detect localhost, scheme:// or domain-like beginning in string
+        if #args == 1  then
+            local uri = args[1]
+            local scheme = string.match(uri, "^%w+://")
+            local localhost = string.match(uri, "^localhost[:/]%S*") or string.match(uri, "^localhost$")
+            -- Extract domain from before the first colon or slash
+            local domain = string.match(uri, "^([%w%-_%.]+)[:/]%S*") or string.match(uri, "^([%w%-_%.]+)$")
+            -- A valid domain consists of [%w%-_%.] and has at least one dot
+            -- with at least one [%w%-_] on the left and a TLD on the right
+            -- with at least two letters
+            if scheme or localhost or (domain and string.match(domain, "^[%w%-_%.]*[%w%-_]%.%a%a[%a%.]*$")) then
+                return uri
+            end
         end
         -- Find search engine
         local engine = "default"
