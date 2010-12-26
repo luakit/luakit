@@ -1405,11 +1405,12 @@ init_soup(widget_t *w)
     /* load cookie jar */
     gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
     Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
-    LuakitSoupAuth *soup_auth = luakit_soup_auth_new();
-    soup_auth->w = w;
     soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
-    soup_session_add_feature(Soup.session, (SoupSessionFeature*) soup_auth);
     g_free(cookie_file);
+
+    /* remove old auth dialog and add luakit's auth feature instead */
+    soup_session_remove_feature_by_type(Soup.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) soup_auth_feature_new(w));
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(Soup.session), "notify", G_CALLBACK(soup_notify_cb), NULL);

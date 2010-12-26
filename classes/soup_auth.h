@@ -27,27 +27,25 @@
 #ifndef LUAKIT_SOUP_AUTH_H
 #define LUAKIT_SOUP_AUTH_H
 
-G_BEGIN_DECLS
-
-#define TYPE_LUAKIT_SOUP_AUTH            (luakit_soup_auth_get_type ())
-#define LUAKIT_SOUP_AUTH(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), TYPE_LUAKIT_SOUP_AUTH, LuakitSoupAuth))
-#define LUAKIT_SOUP_AUTH_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_LUAKIT_SOUP_AUTH, LuakitSoupAuth))
-#define IS_LUAKIT_SOUP_AUTH(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), TYPE_LUAKIT_SOUP_AUTH))
-#define IS_LUAKIT_SOUP_AUTH_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_LUAKIT_SOUP_AUTH))
-#define LUAKIT_SOUP_AUTH_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_LUAKIT_SOUP_AUTH, LuakitSoupAuth))
+#define TYPE_SOUP_AUTH_FEATURE            (soup_auth_feature_get_type ())
+#define SOUP_AUTH_FEATURE(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), TYPE_SOUP_AUTH_FEATURE, SoupAuthFeature))
+#define SOUP_AUTH_FEATURE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_SOUP_AUTH_FEATURE, SoupAuthFeature))
+#define IS_SOUP_AUTH_FEATURE(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), TYPE_SOUP_AUTH_FEATURE))
+#define IS_SOUP_AUTH_FEATURE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_SOUP_AUTH_FEATURE))
+#define SOUP_AUTH_FEATURE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_SOUP_AUTH_FEATURE, SoupAuthFeature))
 
 typedef struct {
     GObject parent_instance;
     widget_t *w;
-} LuakitSoupAuth;
+} SoupAuthFeature;
 
 typedef struct {
     GObjectClass parent_class;
-} LuakitSoupAuthClass;
+} SoupAuthFeatureClass;
 
-GType luakit_soup_auth_get_type (void);
+GType soup_auth_feature_get_type(void);
 
-G_END_DECLS
+SoupAuthFeature* soup_auth_feature_new(widget_t *w);
 
 #endif
 

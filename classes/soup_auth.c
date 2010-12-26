@@ -21,17 +21,18 @@
 #include "classes/soup_auth.h"
 
 static void
-soup_auth_session_feature_init(SoupSessionFeatureInterface *, gpointer);
+soup_auth_feature_interface_init(SoupSessionFeatureInterface *, gpointer);
 
-G_DEFINE_TYPE_WITH_CODE(LuakitSoupAuth, soup_auth, G_TYPE_OBJECT,
-        G_IMPLEMENT_INTERFACE(SOUP_TYPE_SESSION_FEATURE, soup_auth_session_feature_init))
+G_DEFINE_TYPE_WITH_CODE(SoupAuthFeature, soup_auth_feature, G_TYPE_OBJECT,
+        G_IMPLEMENT_INTERFACE(SOUP_TYPE_SESSION_FEATURE, soup_auth_feature_interface_init))
 
-static void session_authenticate(SoupSession *session, SoupMessage *msg,
+static void
+session_authenticate(SoupSession *session, SoupMessage *msg,
         SoupAuth *auth, gboolean retrying, gpointer user_data)
 {
     (void) retrying;
 
-    LuakitSoupAuth *manager = (LuakitSoupAuth*) user_data;
+    SoupAuthFeature *manager = (SoupAuthFeature*) user_data;
     lua_State *L = globalconf.L;
     widget_t *w = manager->w;
 
@@ -63,18 +64,20 @@ static void session_authenticate(SoupSession *session, SoupMessage *msg,
     g_object_unref(msg);
 }
 
-static void attach(SoupSessionFeature *manager, SoupSession *session)
+static void
+attach(SoupSessionFeature *manager, SoupSession *session)
 {
     g_signal_connect(session, "authenticate", G_CALLBACK(session_authenticate), manager);
 }
 
-static void detach(SoupSessionFeature *manager, SoupSession *session)
+static void
+detach(SoupSessionFeature *manager, SoupSession *session)
 {
     g_signal_handlers_disconnect_by_func(session, session_authenticate, manager);
 }
 
 static void
-soup_auth_session_feature_init(SoupSessionFeatureInterface *feature_interface,
+soup_auth_feature_interface_init(SoupSessionFeatureInterface *feature_interface,
         gpointer interface_data)
 {
     (void) interface_data;
@@ -84,14 +87,22 @@ soup_auth_session_feature_init(SoupSessionFeatureInterface *feature_interface,
 }
 
 static void
-soup_auth_class_init(LuakitSoupAuthClass *klass)
+soup_auth_feature_class_init(SoupAuthFeatureClass *klass)
 {
     (void) klass;
 }
 
 static void
-soup_auth_init(LuakitSoupAuth *instance)
+soup_auth_feature_init(SoupAuthFeature *instance)
 {
     (void) instance;
+}
+
+SoupAuthFeature *
+soup_auth_feature_new(widget_t *w)
+{
+    SoupAuthFeature *feature = g_object_new(TYPE_SOUP_AUTH_FEATURE, NULL);
+    feature->w = w;
+    return feature;
 }
 
