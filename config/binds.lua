@@ -61,6 +61,25 @@ menu_binds = {
 add_binds("all", {
     key({},          "Escape",  function (w) w:set_mode() end),
     key({"Control"}, "[",       function (w) w:set_mode() end),
+
+    -- Mouse bindings
+    but({},     8,  function (w) w:back()     end),
+    but({},     9,  function (w) w:forward()  end),
+
+    -- Open link in new tab or navigate to selection
+    but({},     2,  function (w, m)
+                        -- Ignore button 2 clicks in form fields
+                        if not m.context.editable then
+                            -- Open hovered uri in new tab
+                            local uri = w:get_current().hovered_uri
+                            if uri then
+                                w:new_tab(w:search_open(uri), false)
+                            else -- Open selection in current tab
+                                uri = luakit.get_selection()
+                                if uri then w:navigate(w:search_open(uri)) end
+                            end
+                        end
+                    end),
 })
 
 add_binds("normal", {
@@ -198,20 +217,6 @@ add_binds("normal", {
     key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
     buf("^gb$",                     function (w)       w:navigate(bookmarks.dump_html()) end),
     buf("^gB$",                     function (w, b, m) local u = bookmarks.dump_html() for i=1,m.count do w:new_tab(u) end end, {count=1}),
-
-    -- Mouse bindings
-    but({},          8,             function (w) w:back()     end),
-    but({},          9,             function (w) w:forward()  end),
-    but({},          2,             function (w)
-                                        -- Open hovered uri in new tab
-                                        local uri = w:get_current().hovered_uri
-                                        if uri then
-                                            w:new_tab(w:search_open(uri), false)
-                                        else -- Open selection in current tab
-                                            uri = luakit.get_selection()
-                                            if uri then w:navigate(w:search_open(uri)) end
-                                        end
-                                    end),
 
     -- Enter passthrough mode
     key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
