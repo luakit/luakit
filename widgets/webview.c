@@ -1226,27 +1226,70 @@ expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
     return FALSE;
 }
 
-static gboolean
-wv_button_press_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
+static gint
+luaH_push_hit_test(lua_State *L, WebKitWebView *v, GdkEventButton *ev)
 {
-    if((ev->type != GDK_BUTTON_PRESS) || (ev->button != 1))
-        return FALSE;
-
-    /* get webview hit context */
-    WebKitHitTestResult *ht = webkit_web_view_get_hit_test_result(WEBKIT_WEB_VIEW(view), ev);
+    /* get hit test */
+    WebKitHitTestResult *h = webkit_web_view_get_hit_test_result(v, ev);
     guint c;
-    g_object_get(ht, "context", &c, NULL);
-    gint context = (gint) c;
+    g_object_get(h, "context", &c, NULL);
 
+    /* create new table to store hit test context data */
+    lua_newtable(L);
+    const gchar *name;
+
+#define HTR_CHECK(a, l)                             \
+    if ((c & WEBKIT_HIT_TEST_RESULT_CONTEXT_##a)) { \
+        name = l;                                   \
+        lua_pushstring(L, name);                    \
+        lua_pushboolean(L, TRUE);                   \
+        lua_rawset(L, -3);                          \
+    }
+
+    /* add context items to table */
+    HTR_CHECK(DOCUMENT,  "document")
+    HTR_CHECK(LINK,      "link")
+    HTR_CHECK(IMAGE,     "image")
+    HTR_CHECK(MEDIA,     "media")
+    HTR_CHECK(SELECTION, "selection")
+    HTR_CHECK(EDITABLE,  "editable")
+
+#undef HTR_CHECK
+
+    return 1;
+}
+
+
+static gboolean
+webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
+{
+    gint ret;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    /* raise "form-active" when a user clicks on a form field and raise
-     * "root-active" when a user clicks elsewhere */
-    if (context & WEBKIT_HIT_TEST_RESULT_CONTEXT_EDITABLE)
-        luaH_object_emit_signal(L, -1, "form-active", 0, 0);
-    else if (context & WEBKIT_HIT_TEST_RESULT_CONTEXT_DOCUMENT)
-        luaH_object_emit_signal(L, -1, "root-active", 0, 0);
-    lua_pop(L, 1);
+    luaH_modifier_table_push(L, ev->state);
+    lua_pushinteger(L, ev->button);
+    /* push webview hit test context */
+    luaH_push_hit_test(L, WEBKIT_WEB_VIEW(view), ev);
+
+    switch (ev->type) {
+      case GDK_2BUTTON_PRESS:
+        ret = luaH_object_emit_signal(L, -4, "button-double-click", 3, 1);
+        break;
+      case GDK_BUTTON_RELEASE:
+        ret = luaH_object_emit_signal(L, -4, "button-release", 3, 1);
+        break;
+      default:
+        ret = luaH_object_emit_signal(L, -4, "button-press", 3, 1);
+        break;
+    }
+
+    /* User responded with TRUE, so do not propagate event any further */
+    if (ret && luaH_checkboolean(L, -1)) {
+        lua_pop(L, ret + 1);
+        return TRUE;
+    }
+    lua_pop(L, ret + 1);
+    /* propagate event further */
     return FALSE;
 }
 
@@ -1403,8 +1446,8 @@ widget_webview(widget_t *w)
 
     /* connect webview signals */
     g_object_connect(G_OBJECT(view),
-      "signal::button-press-event",                   G_CALLBACK(wv_button_press_cb),           w,
-      "signal::button-release-event",                 G_CALLBACK(button_cb),                    w,
+      "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
+      "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
       "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
