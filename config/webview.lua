@@ -124,10 +124,11 @@ webview.init_funcs = {
     -- Try to match a button event to a users button binding else let the
     -- press hit the webview.
     button_bind_match = function (view, w)
-        -- Match button press
-        view:add_signal("button-release", function (v, mods, button)
+        view:add_signal("button-release", function (v, mods, button, context)
             (w.search_state or {}).marker = nil
-            if w:hit(mods, button) then return true end
+            if w:hit(mods, button, { context = context }) then
+                return true
+            end
         end)
     end,
 
