@@ -86,17 +86,28 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Clicking a form field automatically enters insert mode
+    -- Clicking a form field automatically enters insert mode.
     form_insert_mode = function (view, w)
+        view:add_signal("button-press", function (v, mods, button, context)
+            -- Clear start search marker
+            (w.search_state or {}).marker = nil
+
+            if button == 1 then
+                if context.editable then
+                    view:emit_signal("form-active")
+                else
+                    view:emit_signal("root-active")
+                end
+            end
+        end)
+
         view:add_signal("form-active", function ()
             if w:get_mode() ~= "passthrough" then
-                (w.search_state or {}).marker = nil
                 w:set_mode("insert")
             end
         end)
         view:add_signal("root-active", function ()
             if w:get_mode() ~= "passthrough" then
-                (w.search_state or {}).marker = nil
                 w:set_mode()
             end
         end)
