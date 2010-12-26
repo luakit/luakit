@@ -23,6 +23,7 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include "classes/download.h"
+#include "classes/soup_auth.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>
@@ -1396,7 +1397,7 @@ webview_destructor(widget_t *w)
 }
 
 static void
-init_soup(void)
+init_soup(widget_t *w)
 {
     /* create soup session */
     Soup.session = webkit_get_default_session();
@@ -1404,7 +1405,10 @@ init_soup(void)
     /* load cookie jar */
     gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
     Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
+    LuakitSoupAuth *soup_auth = luakit_soup_auth_new();
+    soup_auth->w = w;
     soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) soup_auth);
     g_free(cookie_file);
 
     /* watch for property changes */
@@ -1428,7 +1432,7 @@ widget_webview(widget_t *w)
 
     /* init soup session & cookies */
     if (!Soup.session)
-        init_soup();
+        init_soup(w);
 
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
