@@ -1,6 +1,5 @@
 local print = print
 local lousy = require "lousy"
-local webview = webview
 
 local new_mode, add_binds, add_cmds, menu_binds = new_mode, add_binds, add_cmds, menu_binds
 
@@ -37,10 +36,9 @@ new_mode("authenticate", {
 })
 
 -- register authentication function
-webview.init_funcs.auth_dialog = function (view, w)
-    view:add_signal("authenticate", function ()
-        w:set_mode("authenticate")
-        return true
-    end)
-end
+luakit.add_signal("authenticate", function (uri)
+    -- TODO: find window
+    w:set_mode("authenticate")
+    return true
+end)
 

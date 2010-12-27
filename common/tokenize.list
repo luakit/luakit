@@ -1,5 +1,6 @@
 append
 atindex
+authenticate
 bg
 cache_dir
 clear_search

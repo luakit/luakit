@@ -19,6 +19,13 @@
  */
 
 #include "classes/soup_auth.h"
+#include "luah.h"
+
+static struct {
+    SoupSession *session;
+    SoupMessage *msg;
+    SoupAuth *auth;
+} CurrentAuth = { NULL, NULL, NULL };
 
 static void
 soup_auth_feature_interface_init(SoupSessionFeatureInterface *, gpointer);
@@ -31,10 +38,9 @@ session_authenticate(SoupSession *session, SoupMessage *msg,
         SoupAuth *auth, gboolean retrying, gpointer user_data)
 {
     (void) retrying;
+    (void) user_data;
 
-    SoupAuthFeature *manager = (SoupAuthFeature*) user_data;
     lua_State *L = globalconf.L;
-    widget_t *w = manager->w;
 
     /*
      * Workaround for http://bugzilla.gnome.org/show_bug.cgi?id=583462
@@ -43,25 +49,33 @@ session_authenticate(SoupSession *session, SoupMessage *msg,
     if (msg->status_code == 0)
         return;
 
+    SoupURI *soup_uri = soup_message_get_uri(msg);
+    const char *uri = soup_uri_to_string(soup_uri, FALSE);
+
     soup_session_pause_message(session, msg);
     // We need to make sure the message sticks around when pausing it
     g_object_ref(msg);
 
-    luaH_object_push(L, w->ref);
-    int ret = luaH_object_emit_signal(L, -1, "authenticate", 0, 0);
+    lua_pushstring(L, uri);
+    signal_object_emit(L, globalconf.signals, "authenticate", 1);
 
-    if (ret >= 2) {
-        const char *login = luaL_checkstring(L, -1);
-        const char *password = luaL_checkstring(L, -2);
-        if (login && password) {
-            soup_auth_authenticate(auth, login, password);
-        }
+    if (lua_gettop(L) && luaH_checkboolean(L, -1)) {
+        CurrentAuth.session = session;
+        CurrentAuth.msg = msg;
+        CurrentAuth.auth = auth;
+    } else {
+        // resume without authentication if the signal isn't handled
+        soup_session_unpause_message(session, msg);
+        g_object_unref(msg);
     }
+}
 
-    lua_pop(L, ret + 1);
-
-    soup_session_unpause_message(session, msg);
-    g_object_unref(msg);
+void
+soup_auth_feature_resume_authentication(const char *username, const char *password)
+{
+    soup_auth_authenticate(CurrentAuth.auth, username, password);
+    soup_session_unpause_message(CurrentAuth.session, CurrentAuth.msg);
+    g_object_unref(CurrentAuth.msg);
 }
 
 static void
@@ -99,10 +113,9 @@ soup_auth_feature_init(SoupAuthFeature *instance)
 }
 
 SoupAuthFeature *
-soup_auth_feature_new(widget_t *w)
+soup_auth_feature_new()
 {
     SoupAuthFeature *feature = g_object_new(TYPE_SOUP_AUTH_FEATURE, NULL);
-    feature->w = w;
     return feature;
 }
 

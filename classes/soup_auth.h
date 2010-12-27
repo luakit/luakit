@@ -22,7 +22,6 @@
 #include <libsoup/soup.h>
 
 #include "luakit.h"
-#include "classes/widget.h"
 
 #ifndef LUAKIT_SOUP_AUTH_H
 #define LUAKIT_SOUP_AUTH_H
@@ -36,16 +35,16 @@
 
 typedef struct {
     GObject parent_instance;
-    widget_t *w;
 } SoupAuthFeature;
 
 typedef struct {
     GObjectClass parent_class;
 } SoupAuthFeatureClass;
 
-GType soup_auth_feature_get_type(void);
+GType soup_auth_feature_get_type();
 
-SoupAuthFeature* soup_auth_feature_new(widget_t *w);
+SoupAuthFeature* soup_auth_feature_new();
+void soup_auth_feature_resume_authentication(const char *username, const char *password);
 
 #endif
 

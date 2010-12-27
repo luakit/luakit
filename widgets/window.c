@@ -22,6 +22,7 @@
 #include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
+#include "classes/soup_auth.h"
 
 static void
 destroy_cb(GtkObject *win, widget_t *w)
@@ -57,6 +58,15 @@ luaH_window_show(lua_State *L)
 }
 
 static gint
+luaH_window_authenticate(lua_State *L)
+{
+    const char *user = luaL_checkstring(L, -1);
+    const char *password = luaL_checkstring(L, -2);
+    soup_auth_feature_resume_authentication(user, password);
+    return 0;
+}
+
+static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -74,6 +84,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
       PF_CASE(SHOW,             luaH_window_show)
+      PF_CASE(AUTHENTICATE,     luaH_window_authenticate)
 
       /* push string methods */
       PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))

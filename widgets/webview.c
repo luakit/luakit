@@ -1397,7 +1397,7 @@ webview_destructor(widget_t *w)
 }
 
 static void
-init_soup(widget_t *w)
+init_soup()
 {
     /* create soup session */
     Soup.session = webkit_get_default_session();
@@ -1410,7 +1410,7 @@ init_soup(widget_t *w)
 
     /* remove old auth dialog and add luakit's auth feature instead */
     soup_session_remove_feature_by_type(Soup.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
-    soup_session_add_feature(Soup.session, (SoupSessionFeature*) soup_auth_feature_new(w));
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) soup_auth_feature_new());
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(Soup.session), "notify", G_CALLBACK(soup_notify_cb), NULL);
@@ -1433,7 +1433,7 @@ widget_webview(widget_t *w)
 
     /* init soup session & cookies */
     if (!Soup.session)
-        init_soup(w);
+        init_soup();
 
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
