@@ -72,8 +72,8 @@ add_binds("normal", {
             count = string.match(m.buffer, "^(%d+)")
         end
         if count then
-            buf = string.sub(count, #count + 1, (m.updated_buf and -2) or -1)
-            local opts = join(m, {count = tostring(count)})
+            buf = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
+            local opts = join(m, {count = tonumber(count)})
             opts.buffer = (#buf > 0 and buf) or nil
             if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
                 return true
