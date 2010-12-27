@@ -284,6 +284,13 @@ add_binds("formfiller", lousy.util.table.join({
 }, menu_binds))
 
 -- Enhance the authentication procedure for automatic insertion of credentials
+local dat = {
+    uri = nil,
+    user = nil,
+    pass = nil,
+    auto = false,
+}
+
 local function auto_authentication(w, uri)
     local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
     local fd, err = io.open(filename, "r")
@@ -308,8 +315,41 @@ end
 local manual_authentication = auth.start_authentication
 
 auth.start_authentication = function (w, uri)
+    dat.uri = uri
+    dat.auto = true
     if not auto_authentication(w, uri) then
+        dat.auto = false
         manual_authentication(w, uri)
+    end
+end
+
+local do_authenticate = auth.do_authenticate
+
+new_mode("authconfirm", {
+    enter = function (w)
+        w:set_prompt("Save? (Y,n)")
+        w:set_input("")
+    end,
+
+    activate = function (w)
+        if not string.match(w.ibar.input.text, "^[nN]") then
+            local filename = formsdir .. string.match(string.gsub(dat.uri, "%w+://", ""), "(.-)/.*")
+            local fd = io.open(filename, "a+")
+            fd:write(string.format("!httpuser %s\n!httppass %s\n", dat.user, dat.pass))
+            fd:flush()
+            fd:close()
+        end
+        w:set_mode()
+        do_authenticate(w, dat.user, dat.pass)
+    end,
+})
+
+auth.do_authenticate = function (w, user, pass)
+    dat.user = user
+    dat.pass = pass
+    do_authenticate(w, dat.user, dat.pass)
+    if not dat.auto then
+        w:set_mode("authconfirm")
     end
 end
 

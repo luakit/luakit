@@ -1,4 +1,3 @@
-local print = print
 local pairs = pairs
 local ipairs = ipairs
 local window = window
@@ -31,11 +30,6 @@ new_mode("authenticate", {
         else
             dat.password = w.ibar.input.text
             w:set_mode()
-        end
-    end,
-
-    leave = function (w)
-        if dat.username ~= nil and dat.password ~= nil then
             do_authenticate(w, dat.username, dat.password)
         end
     end,
@@ -57,7 +51,7 @@ function authenticate(uri)
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs:get_children()) do
             if v.uri == uri then
-                do_authenticate(w, uri)
+                start_authentication(w, uri)
             end
         end
     end
