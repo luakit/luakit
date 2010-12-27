@@ -36,7 +36,7 @@ new_mode("authenticate", {
 
     leave = function (w)
         if dat.username ~= nil and dat.password ~= nil then
-            w:authenticate(dat.username, dat.password)
+            w.win:authenticate(dat.username, dat.password)
         end
     end,
 })

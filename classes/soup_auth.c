@@ -59,15 +59,9 @@ session_authenticate(SoupSession *session, SoupMessage *msg,
     lua_pushstring(L, uri);
     signal_object_emit(L, globalconf.signals, "authenticate", 1);
 
-    if (lua_gettop(L) && luaH_checkboolean(L, -1)) {
-        CurrentAuth.session = session;
-        CurrentAuth.msg = msg;
-        CurrentAuth.auth = auth;
-    } else {
-        // resume without authentication if the signal isn't handled
-        soup_session_unpause_message(session, msg);
-        g_object_unref(msg);
-    }
+    CurrentAuth.session = session;
+    CurrentAuth.msg = msg;
+    CurrentAuth.auth = auth;
 }
 
 void
