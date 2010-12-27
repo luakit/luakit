@@ -56,12 +56,12 @@ session_authenticate(SoupSession *session, SoupMessage *msg,
     // We need to make sure the message sticks around when pausing it
     g_object_ref(msg);
 
-    lua_pushstring(L, uri);
-    signal_object_emit(L, globalconf.signals, "authenticate", 1);
-
     CurrentAuth.session = session;
     CurrentAuth.msg = msg;
     CurrentAuth.auth = auth;
+
+    lua_pushstring(L, uri);
+    signal_object_emit(L, globalconf.signals, "authenticate", 1);
 }
 
 void

@@ -60,8 +60,8 @@ luaH_window_show(lua_State *L)
 static gint
 luaH_window_authenticate(lua_State *L)
 {
-    const char *user = luaL_checkstring(L, -1);
-    const char *password = luaL_checkstring(L, -2);
+    const char *password = luaL_checkstring(L, -1);
+    const char *user = luaL_checkstring(L, -2);
     soup_auth_feature_resume_authentication(user, password);
     return 0;
 }

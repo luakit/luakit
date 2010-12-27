@@ -48,10 +48,8 @@ luakit.add_signal("authenticate", function (uri)
             if v.uri == uri then
                 dat.uri = uri
                 w:set_mode("authenticate")
-                return true
             end
         end
     end
-    return false
 end)
 
