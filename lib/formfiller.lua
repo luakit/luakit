@@ -249,7 +249,7 @@ webview.methods.formfiller = function(view, w, action)
     elseif action == "load" then
         local fd, err = io.open(filename, "r")
         if not fd then return end
-        local profile = {{"Proifle", title = true},}
+        local profile = {{"Profile", title = true},}
         w:set_mode("formfiller")
         fd:seek("set")
         for l in fd:lines() do
@@ -282,5 +282,35 @@ add_binds("formfiller", lousy.util.table.join({
             w:set_mode()
         end),
 }, menu_binds))
+
+-- Enhance the authentication procedure for automatic insertion of credentials
+local function auto_authentication(w, uri)
+    local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
+    local fd, err = io.open(filename, "r")
+    if not fd then return end
+    fd:seek("set")
+    local user = nil
+    local pass = nil
+    for line in fd:lines() do
+        if string.match(line, "^!httpuser") then
+            user = string.match(line, "^!httpuser (.*)$")
+        elseif string.match(line, "^!httppass") then
+            pass = string.match(line, "^!httppass (.*)$")
+        end
+        if user and pass then
+            w.win:authenticate(user, pass)
+            return true
+        end
+    end
+    return false
+end
+
+local manual_authentication = auth.start_authentication
+
+auth.start_authentication = function (w, uri)
+    if not auto_authentication(w, uri) then
+        manual_authentication(w, uri)
+    end
+end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

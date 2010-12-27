@@ -36,20 +36,33 @@ new_mode("authenticate", {
 
     leave = function (w)
         if dat.username ~= nil and dat.password ~= nil then
-            w.win:authenticate(dat.username, dat.password)
+            do_authenticate(w, dat.username, dat.password)
         end
     end,
 })
 
--- register authentication function
-luakit.add_signal("authenticate", function (uri)
+--- Performs the actual task of authenticating a window against a URI.
+function do_authenticate(w, username, password)
+    w.win:authenticate(username, password)
+end
+
+--- Prompts the user for authentication credentials.
+function start_authentication(w, uri)
+    dat.uri = uri
+    w:set_mode("authenticate")
+end
+
+--- Starts the authentication procedure for the given URI.
+function authenticate(uri)
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs:get_children()) do
             if v.uri == uri then
-                dat.uri = uri
-                w:set_mode("authenticate")
+                do_authenticate(w, uri)
             end
         end
     end
-end)
+end
+
+-- register authentication function
+luakit.add_signal("authenticate", authenticate)
 
