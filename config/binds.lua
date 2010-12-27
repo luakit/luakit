@@ -61,6 +61,25 @@ menu_binds = {
 add_binds("all", {
     key({},          "Escape",  function (w) w:set_mode() end),
     key({"Control"}, "[",       function (w) w:set_mode() end),
+
+    -- Mouse bindings
+    but({},     8,  function (w) w:back()     end),
+    but({},     9,  function (w) w:forward()  end),
+
+    -- Open link in new tab or navigate to selection
+    but({},     2,  function (w, m)
+                        -- Ignore button 2 clicks in form fields
+                        if not m.context.editable then
+                            -- Open hovered uri in new tab
+                            local uri = w:get_current().hovered_uri
+                            if uri then
+                                w:new_tab(w:search_open(uri), false)
+                            else -- Open selection in current tab
+                                uri = luakit.get_selection()
+                                if uri then w:navigate(w:search_open(uri)) end
+                            end
+                        end
+                    end),
 })
 
 add_binds("normal", {
@@ -72,8 +91,8 @@ add_binds("normal", {
             count = string.match(m.buffer, "^(%d+)")
         end
         if count then
-            buf = string.sub(count, #count + 1, (m.updated_buf and -2) or -1)
-            local opts = join(m, {count = tostring(count)})
+            buf = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
+            local opts = join(m, {count = tonumber(count)})
             opts.buffer = (#buf > 0 and buf) or nil
             if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
                 return true
@@ -193,20 +212,6 @@ add_binds("normal", {
     buf("^ZZ$",                     function (w) w:save_session() w:close_win() end),
     buf("^ZQ$",                     function (w) w:close_win() end),
     buf("^D$",                      function (w) w:close_win() end),
-
-    -- Mouse bindings
-    but({},          8,             function (w) w:back()     end),
-    but({},          9,             function (w) w:forward()  end),
-    but({},          2,             function (w)
-                                        -- Open hovered uri in new tab
-                                        local uri = w:get_current().hovered_uri
-                                        if uri then
-                                            w:new_tab(w:search_open(uri), false)
-                                        else -- Open selection in current tab
-                                            uri = luakit.get_selection()
-                                            if uri then w:navigate(w:search_open(uri)) end
-                                        end
-                                    end),
 
     -- Enter passthrough mode
     key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
