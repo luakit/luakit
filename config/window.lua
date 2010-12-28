@@ -660,6 +660,7 @@ window.methods = {
         -- Detect localhost, scheme:// or domain-like beginning in string
         if #args == 1  then
             local uri = args[1]
+            local ip = string.match(uri, "^(%d+.%d+.%d+.%d+)$")
             local scheme = string.match(uri, "^%w+://")
             local localhost = string.match(uri, "^localhost[:/]%S*") or string.match(uri, "^localhost$")
             -- Extract domain from before the first colon or slash
@@ -667,7 +668,7 @@ window.methods = {
             -- A valid domain consists of [%w%-_%.] and has at least one dot
             -- with at least one [%w%-_] on the left and a TLD on the right
             -- with at least two letters
-            if scheme or localhost or (domain and string.match(domain, "^[%w%-_%.]*[%w%-_]%.%a%a[%a%.]*$")) then
+            if ip or scheme or localhost or (domain and string.match(domain, "^[%w%-_%.]*[%w%-_]%.%a%a[%a%.]*$")) then
                 return uri
             end
         end
