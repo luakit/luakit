@@ -578,11 +578,6 @@ window.methods = {
         local index = w.tabs:indexof(view)
         if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
         table.insert(w.closed_tabs, tab)
-        -- Remove & destroy
-        w.tabs:remove(view)
-        view.uri = "about:blank"
-        -- Try to prevent flash segfaulting luakit on webview widget destroy.
-        view:set_prop("enable-plugins", false)
         view:destroy()
         w:update_tab_count()
         w:update_tablist()
