@@ -18,6 +18,8 @@ local chrome = require("chrome")
 local lousy = require("lousy")
 local util = lousy.util
 local add_binds, add_cmds = add_binds, add_cmds
+local tonumber = tonumber
+local window = window
 
 -- Bookmark functions that operate on a flatfile and output to html
 module("bookmarks")
@@ -161,6 +163,16 @@ function del(index, save_bookmarks)
 
     -- Save by default
     if save_bookmarks ~= false then save() end
+
+
+    -- Refresh open bookmarks views
+    for _, w in pairs(window.bywidget) do
+        for _, v in ipairs(w.tabs:get_children()) do
+            if string.match(v.uri, chrome_pattern) then
+                v:reload()
+            end
+        end
+    end
 end
 
 --- Load bookmarks from a flatfile to memory.
@@ -231,9 +243,6 @@ end
 function show(view)
     view:load_string(html(), chrome_page)
 end
-
-chrome_pattern = "chrome://bookmarks/?"
-chrome_page    = "chrome://bookmarks"
 
 -- Add chrome interceptor.
 chrome.add(chrome_pattern, show)
