@@ -78,6 +78,9 @@ require "search"
 -- Add ordering of new tabs
 require "taborder"
 
+-- Save web history
+require "history"
+
 require "follow_selected"
 require "go_input"
 require "go_next_prev"
