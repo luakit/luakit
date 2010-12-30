@@ -17,6 +17,7 @@ local add_binds = add_binds
 local menu_binds = menu_binds
 local webview = webview
 local lousy = require "lousy"
+local escape = lousy.util.escape
 local capi = { luakit = luakit }
 
 module("history")
@@ -85,7 +86,7 @@ new_mode("historylist", {
                 table.insert(rows, { h, title = true })
                 last = h
             end
-            table.insert(rows, { "  " .. item.uri, uri = item.uri })
+            table.insert(rows, { escape(" " .. item.uri), uri = item.uri })
         end
         w.menu:build(rows)
         w:notify("Use j/k to move, o open, t tabopen, w winopen.", false)
