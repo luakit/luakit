@@ -145,3 +145,5 @@ add_binds("historylist", lousy.util.table.join({
         function (w) w:set_mode() end),
 
 }, menu_binds))
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
