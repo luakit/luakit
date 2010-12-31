@@ -170,7 +170,7 @@ function show(view)
     local sig = {}
     sig.fun = function (v, status)
         view:remove_signal("load-status", sig.fun)
-        if status ~= "committed" or not string.match(view.uri, pattern) then return end
+        if status ~= "finished" or not string.match(view.uri, pattern) then return end
         view:register_function("clear", downloads.clear)
         for i = 1, #(downloads.downloads) do
             for k, v in pairs({
