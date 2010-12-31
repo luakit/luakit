@@ -324,12 +324,12 @@ webview.methods = {
 function webview.new(w)
     local view = widget{type = "webview"}
 
+    view.show_scrollbars = false
+
     -- Call webview init functions
     for k, func in pairs(webview.init_funcs) do
         func(view, w)
     end
-
-    view.show_scrollbars = false
     return view
 end
 
