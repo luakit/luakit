@@ -41,6 +41,9 @@ Inherited authors from the uzbl project:
 Inherited authors from the surf project:
   Enno Boland       (tox)       <tox@s01.de>                2009-2010
 
+For volumetric graphs on specific contributers "impact" checkout:
+  https://github.com/mason-larobina/luakit/graphs/impact
+
 If you believe you should be in this file or notice that I have missed an
 attribution to somebody else please contact me (Mason) or email me a patch
 for his file with your/his/her name or names inserted.
