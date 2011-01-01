@@ -252,7 +252,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer, w)
+        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer)
     end,
 
     -- enter command or characters into command line
