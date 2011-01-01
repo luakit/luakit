@@ -272,6 +272,11 @@ window.methods = {
         i.position = pos + #str
     end,
 
+    -- Emulates pressing the Return key in input field
+    activate = function (w)
+        w.ibar.input:emit_signal("activate")
+    end,
+
     del_word = function (w)
         local i = w.ibar.input
         local text = i.text
