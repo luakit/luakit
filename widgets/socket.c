@@ -23,28 +23,34 @@
 #include "widgets/common.h"
 
 static void
-plug_added_cb(GtkSocket *socket, gpointer userdata)
+plug_added_cb(GtkSocket *socket, widget_t *w)
 {
+    (void) socket;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "plug-added", 1, 0);
+    lua_pop(L, 1);
 }
 
 static void
-plug_removed_cb(GtkSocket *socket, gpointer userdata)
+plug_removed_cb(GtkSocket *socket, widget_t *w)
 {
-}
+    (void) socket;
 
-static gint
-luaH_socket_get_id(lua_State *L)
-{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "plug-removed", 1, 0);
+    lua_pop(L, 1);
 }
 
 static gint
 luaH_socket_add_id(lua_State *L)
 {
-}
-
-static gint
-luaH_socket_is_plugged(lua_State *L)
-{
+    widget_t *w = luaH_checkwidget(L, 1);
+    lua_Number id = luaL_checknumber(L, 2);
+    gtk_socket_add_id(GTK_SOCKET(w->widget), id);
+    return 0;
 }
 
 static gint
@@ -57,9 +63,11 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(ID,         luaH_socket_get_id)
-      PF_CASE(IS_PLUGGED, luaH_socket_is_plugged)
       PF_CASE(ADD_ID,     luaH_socket_add_id)
+      /* push boolean methods */
+      PB_CASE(IS_PLUGGED, gtk_socket_get_plug_window(GTK_SOCKET(w->widget)) != NULL)
+      /* push number methods */
+      PN_CASE(ID,         gtk_socket_get_id(GTK_SOCKET(w->widget)))
 
       default:
         break;
