@@ -14,6 +14,7 @@ Contributors to luakit (A to Z):
   Michael Dietrich  (emdete)    <mdt@emdete.de>             2010
   Pawel Tomak       (grodzik)   <pawel.tomak@gmail.com>     2010
   Pawel Zuzelski    (pawelz)    <pawelz@pld-linux.org>      2010
+  Pete Elmore                   <pete@debu.gs>              2010
   Piotr Husiatyński (husio)     <phusiatynski@gmail.com>    2010
   Richard Gay                   <richard.gay@t-online.de>   2010
   Vasuvi                        <vasuvi@inbox.com>          2010
@@ -39,6 +40,9 @@ Inherited authors from the uzbl project:
 
 Inherited authors from the surf project:
   Enno Boland       (tox)       <tox@s01.de>                2009-2010
+
+For volumetric graphs on specific contributers "impact" checkout:
+  https://github.com/mason-larobina/luakit/graphs/impact
 
 If you believe you should be in this file or notice that I have missed an
 attribution to somebody else please contact me (Mason) or email me a patch
