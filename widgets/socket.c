@@ -21,6 +21,7 @@
 
 #include "luah.h"
 #include "widgets/common.h"
+#include <stdlib.h>
 
 static void
 plug_added_cb(GtkSocket *socket, widget_t *w)
@@ -48,9 +49,21 @@ static gint
 luaH_socket_add_id(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    lua_Number id = luaL_checknumber(L, 2);
-    gtk_socket_add_id(GTK_SOCKET(w->widget), id);
+    const char *id_str = luaL_checkstring(L, 2);
+    long id = strtol(id_str, NULL, 16);
+    gtk_socket_add_id(GTK_SOCKET(w->widget), (GdkNativeWindow) id);
     return 0;
+}
+
+static gint
+luaH_socket_get_id(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(w->widget));
+    char id_str[256];
+    snprintf(id_str, 256, "0x%x", id);
+    lua_pushstring(L, id_str);
+    return 1;
 }
 
 static gint
@@ -64,10 +77,9 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
 
       /* push class methods */
       PF_CASE(ADD_ID,     luaH_socket_add_id)
+      PF_CASE(ID,         luaH_socket_get_id)
       /* push boolean methods */
       PB_CASE(IS_PLUGGED, gtk_socket_get_plug_window(GTK_SOCKET(w->widget)) != NULL)
-      /* push number methods */
-      PN_CASE(ID,         gtk_socket_get_id(GTK_SOCKET(w->widget)))
 
       default:
         break;
