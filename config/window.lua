@@ -252,7 +252,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer, w)
+        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer)
     end,
 
     -- enter command or characters into command line
@@ -270,6 +270,11 @@ window.methods = {
         local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
         i.text = left .. str .. right
         i.position = pos + #str
+    end,
+
+    -- Emulates pressing the Return key in input field
+    activate = function (w)
+        w.ibar.input:emit_signal("activate")
     end,
 
     del_word = function (w)

@@ -67,8 +67,8 @@ domain_props = { --[[
     ["lwn.net"] = {
        ["accept-policy"] = cookie_policy.no_third_party,
     },
-    ["forums.archlinux.org"] = {
-        ["user-stylesheet-uri"]     = luakit.data_dir .. "/styles/dark.css",
+    ["bbs.archlinux.org"] = {
+        ["user-stylesheet-uri"]     = "file://" .. luakit.data_dir .. "/styles/dark.css",
         ["enable-private-browsing"] = true,
     }, ]]
 }
