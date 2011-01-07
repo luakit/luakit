@@ -34,7 +34,7 @@ plug_added_cb(GtkSocket *socket, widget_t *w)
     lua_pop(L, 1);
 }
 
-static void
+static gboolean
 plug_removed_cb(GtkSocket *socket, widget_t *w)
 {
     (void) socket;
@@ -43,6 +43,7 @@ plug_removed_cb(GtkSocket *socket, widget_t *w)
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "plug-removed", 1, 0);
     lua_pop(L, 1);
+    return FALSE;
 }
 
 static gint
