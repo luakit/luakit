@@ -250,20 +250,43 @@ chrome.add(chrome_pattern, show)
 -- Add normal binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({},          "B",           function (w)       w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ") end),
-    buf("^gb$",                     function (w)       w:navigate(chrome_page) end),
-    buf("^gB$",                     function (w, b, m) for i=1,m.count do w:new_tab(chrome_page) end end, {count=1}),
+    key({}, "B",
+        function (w)
+            w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ")
+        end),
+
+    buf("^gb$",
+        function (w)
+            w:navigate(chrome_page)
+        end),
+
+    buf("^gB$",
+        function (w, b, m)
+            for i=1, m.count do
+                w:new_tab(chrome_page)
+            end
+        end, {count=1}),
 })
 
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"bookmark",    "bm" },         function (w, a)
-                                            local args = util.string.split(a)
-                                            local uri = table.remove(args, 1)
-                                            add(uri, args)
-                                        end),
-    cmd("bookdel",                      function (w, a) del(tonumber(a)) end),
+    cmd({"bookmark", "bm"},
+        function (w, a)
+            local args = util.string.split(a)
+            local uri = table.remove(args, 1)
+            add(uri, args)
+        end),
+
+    cmd("bookdel",
+        function (w, a)
+            del(tonumber(a))
+        end),
+
+    cmd("bookmarks",
+        function (w)
+            w:navigate(chrome_page)
+        end),
 })
 
 load()
