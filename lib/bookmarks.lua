@@ -13,8 +13,13 @@ local type = type
 local pairs = pairs
 local ipairs = ipairs
 local assert = assert
-local util = require("lousy.util")
 local capi = { luakit = luakit }
+local chrome = require("chrome")
+local lousy = require("lousy")
+local util = lousy.util
+local add_binds, add_cmds = add_binds, add_cmds
+local tonumber = tonumber
+local window = window
 
 -- Bookmark functions that operate on a flatfile and output to html
 module("bookmarks")
@@ -24,7 +29,10 @@ local data = {}
 
 -- Some default settings
 bookmarks_file = capi.luakit.data_dir .. '/bookmarks'
-html_out       = capi.luakit.cache_dir  .. '/bookmarks.html'
+
+-- URI of the chrome page
+chrome_page    = "chrome://bookmarks/"
+chrome_pattern = "chrome://bookmarks/?"
 
 -- Templates
 block_template = [==[<div class="tag"><h1>{tag}</h1><ul>{links}</ul></div>]==]
@@ -155,6 +163,16 @@ function del(index, save_bookmarks)
 
     -- Save by default
     if save_bookmarks ~= false then save() end
+
+
+    -- Refresh open bookmarks views
+    for _, w in pairs(window.bywidget) do
+        for _, v in ipairs(w.tabs:get_children()) do
+            if string.match(v.uri, chrome_pattern) then
+                v:reload()
+            end
+        end
+    end
 end
 
 --- Load bookmarks from a flatfile to memory.
@@ -175,9 +193,7 @@ function load(file, clear_first)
     end
 end
 
-function dump_html(file)
-    if not file then file = html_out end
-
+function html(file)
     -- Get a list of all the unique tags in all the bookmarks and build a
     -- relation between a given tag and a list of bookmarks with that tag.
     local tags = {}
@@ -219,16 +235,60 @@ function dump_html(file)
         title = html_page_title,
         style = html_style
     }
-    local html = string.gsub(html_template, "{(%w+)}", html_subs)
-    local fh = io.open(file, "w")
-    fh:write(html)
-    io.close(fh)
-
-    -- Return path to file
-    return "file://"..file
+    return string.gsub(html_template, "{(%w+)}", html_subs)
 end
 
+--- Shows the chrome page in the given view.
+-- @param view The view to show the page in.
+function show(view)
+    view:load_string(html(), chrome_page)
+end
+
+-- Add chrome interceptor.
+chrome.add(chrome_pattern, show)
+
+-- Add normal binds.
+local key, buf = lousy.bind.key, lousy.bind.buf
+add_binds("normal", {
+    key({}, "B",
+        function (w)
+            w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ")
+        end),
+
+    buf("^gb$",
+        function (w)
+            w:navigate(chrome_page)
+        end),
+
+    buf("^gB$",
+        function (w, b, m)
+            for i=1, m.count do
+                w:new_tab(chrome_page)
+            end
+        end, {count=1}),
+})
+
+-- Add commands.
+local cmd = lousy.bind.cmd
+add_cmds({
+    cmd({"bookmark", "bm"},
+        function (w, a)
+            local args = util.string.split(a)
+            local uri = table.remove(args, 1)
+            add(uri, args)
+        end),
+
+    cmd("bookdel",
+        function (w, a)
+            del(tonumber(a))
+        end),
+
+    cmd("bookmarks",
+        function (w)
+            w:navigate(chrome_page)
+        end),
+})
+
 load()
-dump_html()
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
