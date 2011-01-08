@@ -50,8 +50,7 @@ static gint
 luaH_socket_add_id(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    const char *id_str = luaL_checkstring(L, 2);
-    long id = strtol(id_str, NULL, 16);
+    int id = luaL_checkint(L, 2);
     gtk_socket_add_id(GTK_SOCKET(w->widget), (GdkNativeWindow) id);
     return 0;
 }
@@ -61,9 +60,7 @@ luaH_socket_get_id(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(w->widget));
-    char id_str[256];
-    snprintf(id_str, 256, "0x%x", id);
-    lua_pushstring(L, id_str);
+    lua_pushnumber(L, (int) id);
     return 1;
 }
 
