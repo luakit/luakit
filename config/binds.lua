@@ -221,6 +221,21 @@ add_binds("insert", {
     key({"Control"}, "z",           function (w) w:set_mode("passthrough") end),
 })
 
+-- History bindings
+add_binds("history", {
+    key({},          "Down",    
+        function (w)
+            history.index = math.min(history.index + 1,#history.table)
+            w:set_prompt(history.table[history.index])
+        end),
+    key({},          "Up",    
+        function (w)
+            history.index = math.max(history.index - 1,1)
+            w:set_prompt(history.table[history.index])
+        end),
+
+})
+
 add_binds({"command", "search"}, {
     key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.get_selection()) end),
     key({"Control"}, "w",       function (w) w:del_word() end),

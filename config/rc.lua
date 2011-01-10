@@ -101,4 +101,7 @@ else
     window.new(uris)
 end
 
+-- We add the history management
+require "history"
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80
