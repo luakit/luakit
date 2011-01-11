@@ -140,7 +140,7 @@ end
 new_mode("history", {
     enter = function (w)
         show_history(w, "%")
-        switch("command", w)
+        switch("insert", w)
     end,
     
     changed = function (w, text)
