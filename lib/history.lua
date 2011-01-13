@@ -15,8 +15,7 @@ webview.init_funcs.save_hist = function (view)
 
         if status == "first-visual" then
             -- We remove extra parameters from the request
-            local url = string.gsub(v.uri, "?.*", "")
-            pcall(database.insert_url, url, v:get_prop("title"))
+            pcall(database.insert_url, v.uri, v:get_prop("title"))
         end
 
     end)
