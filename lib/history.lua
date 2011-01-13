@@ -1,6 +1,3 @@
--- We need sqlite to register our history
-require "luasql.sqlite3"
-
 -- Get environment we need from luakit libs
 local new_mode = new_mode
 local add_cmds = add_cmds
@@ -12,76 +9,6 @@ local lousy = require "lousy"
 history = {}
 history.mode = "command"
 
-function create_db()
-    assert(conn:execute("BEGIN TRANSACTION"))
-
-    assert(conn:execute[[
-    CREATE TABLE IF not EXISTS urls(
-        id INTEGER PRIMARY KEY NOT NULL,
-        url TEXT NOT NULL UNIQUE
-    );
-    ]])
-
-    assert(conn:execute[[
-    CREATE TABLE IF NOT EXISTS visits(
-        id INTEGER PRIMARY KEY NOT NULL,
-        url_id INTEGER NOT NULL,
-        counter INTEGER NOT NULL,
-        last_acces DATETIME NOT NULL
-    );
-    ]])
-
-    assert(conn:execute[[
-    CREATE VIEW IF NOT EXISTS history AS
-        select url from urls, visits
-        where urls.id = visits.url_id
-        order by visits.counter desc;
-    ]])
-
-    assert(conn:execute[[
-    CREATE TRIGGER  IF NOT EXISTS delete_url BEFORE DELETE ON urls
-    BEGIN
-        DELETE FROM visits WHERE visits.url_id = old.id;
-    END;
-    ]])
-
-    assert(conn:execute[[
-    CREATE TRIGGER IF NOT EXISTS insert_url AFTER INSERT ON urls
-    BEGIN
-        insert into visits ("url_id", "counter", "last_acces") values (new.id, 1, date('now'));
-    END
-    ]])
-
-    assert(conn:execute[[
-    CREATE TRIGGER IF NOT EXISTS update_visit AFTER UPDATE ON visits BEGIN
-        update visits set counter=new.counter+1 where id=new.id;
-    END
-    ]])
-
-    assert(conn:execute[[
-    CREATE INDEX IF NOT EXISTS visits_index ON visits ("url_id" ASC, "counter" DESC)
-    ]])
-
-    assert(conn:execute("END TRANSACTION"))
-end
-
-env = assert(luasql.sqlite3() )
-conn = env:connect(luakit.data_dir .. "/history.sqlite")
-create_db()
-
--- Insert the new page in the database or update the last visited time
-function insert (url)
-    local cur = conn:execute(string.format("select id from urls where url='%s'", url))
-    local treatment = ""
-    if cur:fetch() == nil then
-        treatment = string.format('insert into urls ("url") values ("%s")', url)
-    else
-        treatment = string.format("update visits set last_acces=date('now') where url_id = (select urls.id from urls where url='%s')", url)
-    end
-    conn:execute(treatment)
-    cur:close()
-end
-
 -- We register each visited page
 webview.init_funcs.save_hist = function (view)
     view:add_signal("load-status", function (v, status)
@@ -89,7 +16,7 @@ webview.init_funcs.save_hist = function (view)
         if status == "first-visual" then
             -- We remove extra parameters from the request
             local url = string.gsub(v.uri, "?.*", "")
-            pcall(insert, url)
+            pcall(database.insert_url, url, v:get_prop("title"))
         end
 
     end)
@@ -98,20 +25,17 @@ end
 -- Request the database for getting the history
 -- The urls are returned by popularity ( frequency )
 function show_history(w, text)
+    if text then
         local cmd = string.sub(text, 2)
-        cur = conn:execute(string.format("select url from history where url like '%%%s%%' limit 50", cmd))
-
-        -- Create the table with the results
-        local rows = {}
-        repeat
-            local row=cur:fetch()
-            if row then
-                table.insert(rows, { row, uri = row })
-            end
-        until row==nil
-
-        cur:close()
-        w.menu:build(rows)
+        text = "%"..cmd.."%"
+    end
+    rows = database.get_urls(text)
+    local urls = {}
+    for result = 1, #rows do
+        local url = rows[result].url
+        table.insert(urls, {url, uri = url })
+    end
+    w.menu:build(urls)
 end
 
 -- Go to the requested url
@@ -139,7 +63,7 @@ end
 -- Set the mode
 new_mode("history", {
     enter = function (w)
-        show_history(w, "%")
+        show_history(w)
         switch("insert", w)
     end,
     
