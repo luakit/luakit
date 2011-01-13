@@ -73,14 +73,13 @@ end
 
 -- Request the database for getting the history
 -- text is a pattern for filtering the urls
--- order : The urls are returned by popularity by default, but history can be specified
+-- The urls are returned by popularity by default, but history can be specified
 -- if order is "last_access"
--- return a table containing a table for each row
 function get_urls(text, order)
     order = order or "popularity"
     local pattern = ""
     if text then
-        pattern = string.format("and url like '%%%s%%'", text)
+        pattern = string.format("and url glob '*%s*'", text)
     end
     local request = [[
         select url, title from urls, visits 

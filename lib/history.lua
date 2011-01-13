@@ -27,7 +27,7 @@ end
 function show_history(w, text)
     if text then
         local cmd = string.sub(text, 2)
-        text = "%"..cmd.."%"
+        text = cmd
     end
     rows = database.get_urls(text)
     local urls = {}
