@@ -20,6 +20,7 @@
  */
 
 #include <gtk/gtk.h>
+#include <glib.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <webkit/webkit.h>
@@ -535,14 +536,28 @@ static gint
 luaH_luakit_spawn(lua_State *L)
 {
     GError *e = NULL;
+    GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
-    g_spawn_command_line_async(command, &e);
+    gint argc = 0;
+    gchar **argv = NULL;
+    g_shell_parse_argv(command, &argc, &argv, &e);
+    if (e) {
+        lua_pushstring(L, e->message);
+        g_clear_error(&e);
+        g_strfreev(argv);
+        lua_error(L);
+    }
+    g_spawn_async(NULL, argv, NULL,
+            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
+            &e);
     if(e)
     {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
+        g_strfreev(argv);
         lua_error(L);
     }
+    g_strfreev(argv);
     return 0;
 }
 
