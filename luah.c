@@ -21,19 +21,20 @@
 
 #include "common/util.h"
 #include "common/lualib.h"
-#include "luakit.h"
 #include "classes/download.h"
 #include "classes/soup/soup.h"
 #include "classes/sqlite3.h"
 #include "classes/timer.h"
 #include "classes/widget.h"
+#include "luakit.h"
 #include "luah.h"
 
+#include <glib.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include <webkit/webkit.h>
 #include <time.h>
+#include <webkit/webkit.h>
 
 void
 luaH_modifier_table_push(lua_State *L, guint state) {
@@ -539,14 +540,28 @@ static gint
 luaH_luakit_spawn(lua_State *L)
 {
     GError *e = NULL;
+    GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
-    g_spawn_command_line_async(command, &e);
+    gint argc = 0;
+    gchar **argv = NULL;
+    g_shell_parse_argv(command, &argc, &argv, &e);
+    if (e) {
+        lua_pushstring(L, e->message);
+        g_clear_error(&e);
+        g_strfreev(argv);
+        lua_error(L);
+    }
+    g_spawn_async(NULL, argv, NULL,
+            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
+            &e);
     if(e)
     {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
+        g_strfreev(argv);
         lua_error(L);
     }
+    g_strfreev(argv);
     return 0;
 }
 
