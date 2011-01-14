@@ -25,7 +25,8 @@
 #include "classes/download.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
-#include <libsoup/soup.h>
+#include <libsoup/soup-gnome.h>
+
 #include "math.h"
 
 GPtrArray *all_views = NULL;
@@ -1407,8 +1408,9 @@ init_soup(void)
     Soup.session = webkit_get_default_session();
 
     /* load cookie jar */
-    gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.txt", NULL);
-    Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
+    gchar *cookie_file = g_build_filename(globalconf.data_dir, "cookies.db", NULL);
+    Soup.cookiejar = soup_cookie_jar_sqlite_new(cookie_file, FALSE);
+
     soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
     g_free(cookie_file);
 
