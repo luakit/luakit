@@ -78,6 +78,9 @@ require "search"
 -- Add ordering of new tabs
 require "taborder"
 
+-- Add the database dependancy
+require "database"
+
 -- Save web history
 require "history"
 
