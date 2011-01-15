@@ -23,9 +23,13 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include "classes/download.h"
+
+#include "libsoup/soup-cookie-jar-sqlite.h"
+
 #include <JavaScriptCore/JavaScript.h>
+
 #include <webkit/webkit.h>
-#include <libsoup/soup-gnome.h>
+
 
 #include "math.h"
 
