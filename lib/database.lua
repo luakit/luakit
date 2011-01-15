@@ -92,14 +92,16 @@ function get_urls(text, order)
 
     -- Create the table with the results
     local rows = {}
-    repeat
-        local row=cur:fetch({}, "a")
-        if row then
-            table.insert(rows, row )
-        end
-    until row==nil
+    if cur then
+        repeat
+            local row=cur:fetch({}, "a")
+            if row then
+                table.insert(rows, row )
+            end
+        until row==nil
 
-    cur:close()
+        cur:close()
+    end
     return rows
 end
 
