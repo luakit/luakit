@@ -26,11 +26,6 @@ static void luakit_soup_auth_dialog_session_feature_init(SoupSessionFeatureInter
 static void attach(SoupSessionFeature* manager, SoupSession* session);
 static void detach(SoupSessionFeature* manager, SoupSession* session);
 
-enum {
-    CURRENT_TOPLEVEL,
-    LAST_SIGNAL
-};
-
 static guint signals[LAST_SIGNAL] = { 0 };
 
 G_DEFINE_TYPE_WITH_CODE(LuaKitSoupAuthDialog, luakit_soup_auth_dialog, G_TYPE_OBJECT,
@@ -41,16 +36,6 @@ static void
 luakit_soup_auth_dialog_class_init(LuaKitSoupAuthDialogClass* klass)
 {
     GObjectClass* object_class = G_OBJECT_CLASS(klass);
-
-    signals[CURRENT_TOPLEVEL] =
-      g_signal_new("current-toplevel",
-                   G_OBJECT_CLASS_TYPE(object_class),
-                   G_SIGNAL_RUN_LAST,
-                   G_STRUCT_OFFSET(LuaKitSoupAuthDialogClass, current_toplevel),
-                   NULL, NULL,
-                   luakit_marshal_OBJECT__OBJECT,
-                   GTK_TYPE_WIDGET, 1,
-                   SOUP_TYPE_MESSAGE);
 }
 
 static void
@@ -154,7 +139,6 @@ table_add_entry (GtkWidget*  table,
 static void
 show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* password)
 {
-    GtkWidget* toplevel;
     GtkWidget* widget;
     GtkDialog* dialog;
     GtkWindow* window;
@@ -193,12 +177,6 @@ show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* passwo
     gtk_window_set_icon_name(window, GTK_STOCK_DIALOG_AUTHENTICATION);
 
     gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
-
-    /* Get the current toplevel */
-    g_signal_emit(authData->manager, signals[CURRENT_TOPLEVEL], 0, authData->msg, &toplevel);
-
-    if (toplevel)
-        gtk_window_set_transient_for(window, GTK_WINDOW(toplevel));
 
     /* Build contents */
     hbox = gtk_hbox_new(FALSE, 12);
