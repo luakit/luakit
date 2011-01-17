@@ -19,6 +19,7 @@
  *
  */
 
+#include <glib/gprintf.h>
 #include <gtk/gtk.h>
 #include <glib.h>
 #include <stdlib.h>
@@ -528,6 +529,12 @@ luaH_luakit_spawn_sync(lua_State *L)
     return 3;
 }
 
+void async_callback_handler(GPid pid, gint status, gpointer data) {
+    // fetch lua function from *somewhere*
+    g_fprintf(stderr, "callback: %d, pid %d\n", gtk_main_level(), pid);
+    g_spawn_close_pid(pid);
+}
+
 /* Spawns a command.
  * \param L The Lua VM state.
  * \return The number of elements pushed on stack (0).
@@ -535,6 +542,7 @@ luaH_luakit_spawn_sync(lua_State *L)
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
+    g_fprintf(stderr, "hola\n");
     GError *e = NULL;
     GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
@@ -557,6 +565,7 @@ luaH_luakit_spawn(lua_State *L)
         g_strfreev(argv);
         lua_error(L);
     }
+    g_child_watch_add(pid, async_callback_handler, NULL);
     g_strfreev(argv);
     return 0;
 }
