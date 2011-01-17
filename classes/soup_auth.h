@@ -1,6 +1,7 @@
 /*
  * soup_auth.h - authentication management header
  *
+ * Copyright (C) 2009 Igalia S.L.
  * Copyright (C) 2010 Fabian Streitel <karottenreibe@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
@@ -21,30 +22,27 @@
 #include <gtk/gtk.h>
 #include <libsoup/soup.h>
 
-#include "luakit.h"
+#ifndef LUAKIT_CLASSES_SOUP_AUTH_H
+#define LUAKIT_CLASSES_SOUP_AUTH_H
 
-#ifndef LUAKIT_SOUP_AUTH_H
-#define LUAKIT_SOUP_AUTH_H
-
-#define TYPE_SOUP_AUTH_FEATURE            (soup_auth_feature_get_type ())
-#define SOUP_AUTH_FEATURE(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), TYPE_SOUP_AUTH_FEATURE, SoupAuthFeature))
-#define SOUP_AUTH_FEATURE_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), TYPE_SOUP_AUTH_FEATURE, SoupAuthFeature))
-#define IS_SOUP_AUTH_FEATURE(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), TYPE_SOUP_AUTH_FEATURE))
-#define IS_SOUP_AUTH_FEATURE_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), TYPE_SOUP_AUTH_FEATURE))
-#define SOUP_AUTH_FEATURE_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), TYPE_SOUP_AUTH_FEATURE, SoupAuthFeature))
+#define LUAKIT_TYPE_SOUP_AUTH_DIALOG            (luakit_soup_auth_dialog_get_type ())
+#define LUAKIT_SOUP_AUTH_DIALOG(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))
+#define LUAKIT_SOUP_AUTH_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))
+#define LUAKIT_IS_SOUP_AUTH_DIALOG(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), LUAKIT_TYPE_SOUP_AUTH_DIALOG))
+#define LUAKIT_IS_SOUP_AUTH_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LUAKIT_TYPE_SOUP_AUTH_DIALOG))
+#define LUAKIT_SOUP_AUTH_DIALOG_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))
 
 typedef struct {
     GObject parent_instance;
-} SoupAuthFeature;
+} LuaKitSoupAuthDialog;
 
 typedef struct {
     GObjectClass parent_class;
-} SoupAuthFeatureClass;
 
-GType soup_auth_feature_get_type();
+    GtkWidget* (*current_toplevel) (LuaKitSoupAuthDialog* feature, SoupMessage* message);
+} LuaKitSoupAuthDialogClass;
 
-SoupAuthFeature* soup_auth_feature_new();
-void soup_auth_feature_resume_authentication(const char *username, const char *password);
+GType luakit_soup_auth_dialog_get_type (void);
 
 #endif
 
