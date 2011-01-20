@@ -534,8 +534,12 @@ luaH_luakit_spawn_sync(lua_State *L)
 }
 
 void async_callback_handler(GPid pid, gint status, gpointer data) {
-    // fetch lua function from *somewhere*
-    g_fprintf(stderr, "callback: %d, pid %d\n", gtk_main_level(), pid);
+    // fetch lua function from the registry, using data (the lua state), and the pid as
+    // a key in the table storing the pending callbacks
+    //
+    // call the function
+    //
+    // discard the entry (set it to null)
     g_spawn_close_pid(pid);
 }
 
@@ -546,7 +550,6 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
-    g_fprintf(stderr, "hola\n");
     GError *e = NULL;
     GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
@@ -569,6 +572,12 @@ luaH_luakit_spawn(lua_State *L)
         g_strfreev(argv);
         lua_error(L);
     }
+    // TODO define a name for the callback table in the registry
+    // TODO create a table in the registry to store all the pending callbacks, in 
+    // luakit's initialization
+    //
+    // TODO add entry in the pending callbacks table, (pid_number, function)
+    // TODO pass the Lua state as pointer data.
     g_child_watch_add(pid, async_callback_handler, NULL);
     g_strfreev(argv);
     return 0;
