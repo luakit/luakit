@@ -233,8 +233,7 @@ signal_object_emit_ret(lua_State *L, signal_t *signals,
             /* remove this first function */
             lua_remove(L, - nargs - nbfunc - 1 + i);
             luaH_dofunction(L, nargs, LUA_MULTRET);
-            int nret = stacksize - lua_gettop(L) - 1;
-            printf("nret: %i\n", nret);
+            int nret = lua_gettop(L) - stacksize + 1;
             if (nret > 0) {
                 /* remove all args and functions */
                 for (gint j = 0; j < nargs + nbfunc - i; j++) {

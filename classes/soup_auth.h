@@ -38,11 +38,10 @@ typedef struct {
 
 typedef struct {
     GObjectClass parent_class;
-
-    GtkWidget* (*current_toplevel) (LuaKitSoupAuthDialog* feature, SoupMessage* message);
 } LuaKitSoupAuthDialogClass;
 
-GType luakit_soup_auth_dialog_get_type (void);
+GType luakit_soup_auth_dialog_get_type();
+LuaKitSoupAuthDialog * luakit_soup_auth_dialog_new();
 
 #endif
 

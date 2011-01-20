@@ -89,8 +89,8 @@ luakit_find_password(SoupURI *soup_uri, const char **login, const char **passwor
     int ret = signal_object_emit_ret(L, globalconf.signals, "authenticate", 1);
     g_free(uri);
     if (ret >= 2) {
-        *login = luaL_checkstring(L, -1);
-        *password = luaL_checkstring(L, -2);
+        *password = luaL_checkstring(L, -1);
+        *login = luaL_checkstring(L, -2);
     }
 }
 
@@ -261,4 +261,9 @@ detach(SoupSessionFeature* manager, SoupSession* session)
     g_signal_handlers_disconnect_by_func(session, session_authenticate, manager);
 }
 
+LuaKitSoupAuthDialog *
+luakit_soup_auth_dialog_new()
+{
+    return g_object_new(LUAKIT_TYPE_SOUP_AUTH_DIALOG, NULL);
+}
 
