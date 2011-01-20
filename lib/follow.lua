@@ -4,336 +4,189 @@
 -- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
 ---------------------------------------------------------
 
+-- TODO: wrap helper funcs in closure!
+
 -- Main link following javascript.
 local follow_js = [=[
+    // Global wrapper in order to not disturb main site JS.
+    follow = (function () {
+        // Private members.
 
-  // Placeholders for the mode specific selectors & evaluators.
-  var selector;
-  var evaluator;
+        // Sends a mouse click to the given element.
+        function clickElement(element) {
+            var mouseEvent = document.createEvent("MouseEvent");
+            mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            e.element.dispatchEvent(mouseEvent);
+            clear();
+        }
 
-  var elements = [];
-  var active_arr = [];
-  var active;
-  var lastpos = 0;
-  var last_input = "";
-  var last_strings = [];
+        // Returns all elements within the viewport.
+        function getVisibleElements() {
+        }
 
-  function isFrame(element) {
-    return (element.tagName == "FRAME" || element.tagName == "IFRAME");
-  }
+        // Hint class. Wraps data and functions related to hint manipulation.
+        function Hint(element) {
+            this.element = element;
+            this.rect = element.getBoundingClientRect();
 
-  function get_document(element) {
-    if (isFrame(element)) {
-      if (element.contentDocument)
-          return element.contentDocument;
-      else
-          return document;
-    } else {
-      var doc = element;
-      while (doc.parentNode !== null) {
-        doc = doc.parentNode;
-      }
-      return doc;
-    }
-  }
-
-  function documents() {
-    var docs = [top.document];
-    var frames = window.frames;
-    for (var i = 0; i < frames.length; ++i) {
-      var doc = frames[i].document;
-      if (doc) {
-        docs.push(doc);
-      }
-    }
-    return docs;
-  }
-
-  function query(selector) {
-    var res = [];
-    documents().forEach(function (doc) {
-      var set = doc.body.querySelectorAll(selector);
-      for (var i = 0; i < set.length; ++i) {
-        res.push(set[i]);
-      }
-    });
-    return res;
-  }
-
-  function getHints(element) {
-    var document = get_document(element);
-    return document.hints;
-  }
-
-  function getOverlays(element) {
-    var document = get_document(element);
-    return document.overlays;
-  }
-
-  function Hint(element) {
-    this.element = element;
-    this.rect = element.getBoundingClientRect();
-
-    function create_span(element, h, v) {
-      var document = get_document(element.element);
-      var span = document.createElement("span");
-      var leftpos, toppos;
-      if (isFrame(element.element)) {
-        leftpos = document.defaultView.scrollX + h;
-        toppos = document.defaultView.scrollY + v;
-      } else {
-        leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
-        toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
-      }
-      leftpos = Math.max(leftpos, 0);
-      toppos = Math.max(toppos, 0);
-      span.style.position = "absolute";
-      span.style.left = leftpos + "px";
-      span.style.top = toppos + "px";
-      return span;
-    }
-
-    function create_hint(element) {
-      var hint = create_span(element, horiz_offset, vert_offset - element.rect.height/2);
-      hint.style.font = hint_font;
-      hint.style.color = hint_fg;
-      hint.style.background = hint_bg;
-      hint.style.opacity = hint_opacity;
-      hint.style.border = hint_border;
-      hint.style.zIndex = 10001;
-      hint.style.visibility = 'visible';
-      return hint;
-    }
-
-    function create_overlay(element) {
-      var overlay = create_span(element, 0, 0);
-      overlay.style.width = element.rect.width + "px";
-      overlay.style.height = element.rect.height + "px";
-      overlay.style.opacity = opacity;
-      overlay.style.backgroundColor = normal_bg;
-      overlay.style.border = border;
-      overlay.style.zIndex = 10000;
-      overlay.style.visibility = 'visible';
-      overlay.addEventListener( 'click', function() { click_element(element); }, false );
-      return overlay;
-    }
-
-    this.hint = create_hint(this);
-    this.overlay = create_overlay(this);
-  }
-
-  function reload_hints(array, input, keep) {
-    var length = array.length;
-    var start = length < 10 ? 1 : length < 100 ? 10 : 100;
-    var bestposition = 37;
-
-    for (var i=0; i<length; i++) {
-      var e = array[i];
-      e.overlay.style.backgroundColor = normal_bg;
-      if (!e.hint.parentNode  && !e.hint.firstchild) {
-        var content = document.createTextNode(start + i);
-        e.hint.appendChild(content);
-        getHints(e.element).appendChild(e.hint);
-      }
-      else if (!keep) {
-        e.hint.textContent = start + i;
-      }
-      if (!e.overlay.parentNode && !e.overlay.firstchild) {
-        getOverlays(e.element).appendChild(e.overlay);
-      }
-      if (input && bestposition != 0) {
-        // match word beginnings
-        var content = e.element.textContent.toLowerCase().split(" ");
-        for (var cl=0; cl<content.length; cl++) {
-          if (content[cl].toLowerCase().indexOf(input) == 0) {
-            if (cl < bestposition) {
-              lastpos = i;
-              bestposition = cl;
-              break;
+            // Hint creation helper functions.
+            function create_span(element, h, v) {
+                var document = get_document(element.element);
+                var span = document.createElement("span");
+                var leftpos, toppos;
+                if (isFrame(element.element)) {
+                    leftpos = document.defaultView.scrollX + h;
+                    toppos = document.defaultView.scrollY + v;
+                } else {
+                    leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
+                    toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
+                }
+                leftpos = Math.max(leftpos, 0);
+                toppos = Math.max(toppos, 0);
+                span.style.position = "absolute";
+                span.style.left = leftpos + "px";
+                span.style.top = toppos + "px";
+                return span;
             }
-          }
+
+            function create_hint(element) {
+                var hint = create_span(element, horiz_offset, vert_offset - element.rect.height/2);
+                hint.style.font = hint_font;
+                hint.style.color = hint_fg;
+                hint.style.background = hint_bg;
+                hint.style.opacity = hint_opacity;
+                hint.style.border = hint_border;
+                hint.style.zIndex = 10001;
+                hint.style.visibility = 'visible';
+                return hint;
+            }
+
+            function create_overlay(element) {
+                var overlay = create_span(element, 0, 0);
+                overlay.style.width = element.rect.width + "px";
+                overlay.style.height = element.rect.height + "px";
+                overlay.style.opacity = opacity;
+                overlay.style.backgroundColor = normal_bg;
+                overlay.style.border = border;
+                overlay.style.zIndex = 10000;
+                overlay.style.visibility = 'visible';
+                overlay.addEventListener( 'click', function() { clickElement(element); }, false );
+                return overlay;
+            }
+
+            this.hint = create_hint(this);
+            this.overlay = create_overlay(this);
+            this.id = null;
+
+            // Shows the hint
+            this.show = function () {
+            };
+
+            // Sets the ID of the hint (the thing in the top right corner)
+            this.setId = function (id) {
+                this.id = id;
+                this.hint.textContent = id;
+            };
+
+            // Changes the appearance of the hint to indicate it is active.
+            this.activate = function () {
+                this.overlay.style.backgroundColor = follow.theme.normal_bg;
+            };
+
+            // Changes the appearance of the hint to indicate it is not active.
+            this.deactivate = function () {
+                this.overlay.style.backgroundColor = follow.theme.focus_bg;
+            };
         }
-      }
-    }
-    active = array[lastpos];
-    if (active)
-      active.overlay.style.backgroundColor = focus_bg;
-  }
 
-  function click_element(e) {
-    var mouseEvent = document.createEvent("MouseEvent");
-    mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-    e.element.dispatchEvent(mouseEvent);
-    clear();
-  }
+        // Public structure.
+        return {
+            selector = null,
+            evaluator = null,
 
-  function show_hints() {
-    // check if page has finished loading
-    if (!document.activeElement) {
-        return;
-    }
-    document.activeElement.blur();
-    if ( elements ) {
-      // create hints and overlay divs for all frames
-      documents().forEach(function (doc) {
-        var hints = doc.createElement("div");
-        var overlays = doc.createElement("div");
-        doc.body.appendChild(hints);
-        doc.body.appendChild(overlays);
-        doc.hints = hints;
-        doc.overlays = overlays;
-      });
-      var res = query(selector);
-      for (var i=0; i<res.length; i++) {
-        var e = new Hint(res[i]);
-        var rects = e.element.getClientRects()[0];
-        var r = e.rect;
-        if (!r || r.top > window.innerHeight || r.bottom < 0 || r.left > window.innerWidth ||  r < 0 || !rects ) {
-          continue;
+            theme = {},
+            hints = [],
+            overlayParent = null,
+            hintParent = null,
+            activeHint = null,
+
+            // Ensures the system is initialized.
+            init = function () {
+                follow.hints = [];
+                follow.active = null;
+                if (!follow.hintParent) {
+                    var hints = document.createElement("div");
+                    document.body.appendChild(hints);
+                    follow.hintParent = hints;
+                }
+                if (!follow.overlayParent) {
+                    var overlays = document.createElement("div");
+                    document.body.appendChild(overlays);
+                    follow.overlayParent = overlays;
+                }
+            }
+
+            // Removes all hints and resets the system to default.
+            clear = function() {
+                follow.hintParent.parentNode.removeChild(follow.hintParent);
+                follow.overlayParent.parentNode.removeChild(follow.overlayParent);
+                init();
+            }
+
+            // Gets all visible elements using the selector and builds
+            // hints for them. Returns the number of hints generated.
+            match = function () {
+                var elements = getVisibleElements();
+                elements.forEach(function (element) {
+                    var hint = new Hint(element);
+                    follow.hints.push(hint);
+                });
+                return elements.length;
+            }
+
+            // Shows all hints and assigns them the given IDs.
+            show = function (ids) {
+                for (var i = 0; i < ids.length; ++i) {
+                    var hint = follow.hints[i];
+                    hint.setId(ids[i]);
+                    hint.show();
+                }
+            }
+
+            // Deselects all hints and selects the hint with the given ID, if it exists.
+            select = function (id) {
+                follow.active = null;
+                follow.hints.forEach(function (hint) {
+                    if (hint.id === id) {
+                        hint.activate();
+                        follow.active = hint;
+                    } else {
+                        hint.deactivate();
+                    }
+                });
+            }
+
+            // Filters the hints according to the given array of substrings
+            filter = function (substrings) {
+            }
+
+            // Evaluates the given element or the active element, if none is given.
+            evaluate = function (element) {
+                var hint = element || follow.active;
+                if (hint) {
+                    var ret = evaluator(hint);
+                    clear();
+                    return ret;
+                }
+            }
         }
-        var style = document.defaultView.getComputedStyle(e.element, null);
-        if (style.getPropertyValue("visibility") != "visible" || style.getPropertyValue("display") == "none") {
-          continue;
-        }
-        elements.push(e);
-      };
-      elements.sort( function(a,b) { return a.rect.top - b.rect.top; });
-      active_arr = elements;
-      reload_hints(elements);
-    }
-  }
-
-  function is_input(element) {
-    var e = element.element;
-    if (e.tagName == "INPUT" || e.tagName == "TEXTAREA" ) {
-      var type = e.type.toLowerCase();
-      if (type == "radio" || type == "checkbox") {
-        e.checked = !e.checked;
-      }
-      else if (type == "submit" || type == "reset" || type  == "button") {
-        click_element(element);
-      }
-      else {
-        e.focus();
-      }
-      return true;
-    }
-    return false;
-  }
-
-  function is_editable(element) {
-    var e = element.element;
-    var name = e.tagName.toLowerCase();
-    if (name == "textarea" || name == "select") {
-      return true;
-    }
-    if (name == "input") {
-      var type = e.type.toLowerCase();
-      if (type == 'text' || type == 'search' || type == 'password') {
-        return true;
-      }
-    }
-    return false;
-  }
-
-  function update_hints(input) {
-    var array = [];
-    var text_content;
-    var keep = false;
-    if (input) {
-      input = input.toLowerCase();
-    }
-    for (var i=0; i<active_arr.length; i++) {
-      var e = active_arr[i];
-      if (parseInt(input) == input) {
-        text_content = e.hint.textContent;
-        keep = true;
-      }
-      else {
-        text_content = e.element.textContent.toLowerCase();
-      }
-      if (text_content.match(input)) {
-        array.push(e);
-      }
-      else {
-        e.hint.style.visibility = 'hidden';
-        e.overlay.style.visibility = 'hidden';
-      }
-    }
-    active_arr = array;
-    if (array.length == 0) {
-      clear();
-      return false;
-    }
-    if (array.length == 1) {
-      return evaluate(array[0])
-    }
-    reload_hints(array, input, keep);
-    return false;
-  }
-
-  function clear() {
-    documents().forEach(function (doc) {
-      var hints = doc.hints;
-      var overlays = doc.overlays;
-      if (overlays && overlays.parentNode) {
-        overlays.parentNode.removeChild(overlays);
-      }
-      if (hints && hints.parentNode) {
-        hints.parentNode.removeChild(hints);
-      }
-    });
-    elements = [];
-    active_arr = [];
-    active = undefined;
-  }
-
-  function update(input) {
-     var rv;
-     input = input.replace(/(\d+)$/, " $1");
-     strings = input.split(" ");
-     if (input.length < last_input.length || strings.length < last_strings.length) {
-        // user removed a char
-        clear();
-        show_hints();
-        for (var i = 0; i < strings.length; i += 1)
-          rv = update_hints(strings[i]);
-     } else
-       rv = update_hints(strings[strings.length-1]);
-     last_input = input;
-     last_strings = strings;
-     return rv;
-  }
-
-  function get_active() {
-    return evaluate(active);
-  }
-
-  function focus(newpos) {
-    active_arr[lastpos].overlay.style.backgroundColor = normal_bg;
-    active_arr[newpos].overlay.style.backgroundColor = focus_bg;
-    active = active_arr[newpos];
-    lastpos = newpos;
-  }
-
-  function focus_next() {
-    var newpos = lastpos == active_arr.length-1 ? 0 : lastpos + 1;
-    focus(newpos);
-  }
-
-  function focus_prev() {
-    var newpos = lastpos == 0 ? active_arr.length-1 : lastpos - 1;
-    focus(newpos);
-  }
+    })();
 ]=]
 
 local mode_settings_format = [=[
-  selector = "{selector}";
-  function evaluate(element) {
-    var rv = ({evaluator})(element);
-    clear();
-    return rv;
-  }]=]
+    follow.selector = "{selector}";
+    follow.evaluator = ({evaluator});
+]=]
 
 -- Table of following options & modes
 follow = {}
@@ -372,7 +225,7 @@ follow.evaluators = {
     follow = [=[
         function(element) {
           if (!is_input(element))
-            click_element(element);
+            clickElement(element);
           if (is_editable(element))
             return "form-active";
           return "root-active";
@@ -506,9 +359,9 @@ new_mode("follow", {
         local js_blocks = {}
         for k, v in pairs(follow.get_theme()) do
             if type(v) == "number" then
-                table.insert(js_blocks, string.format("%s = %s;", k, lousy.util.ntos(v)))
+                table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
             else
-                table.insert(js_blocks, string.format("%s = %q;", k, v))
+                table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
             end
         end
 
