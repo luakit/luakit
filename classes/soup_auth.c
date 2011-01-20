@@ -51,7 +51,7 @@ luakit_soup_auth_dialog_session_feature_init(SoupSessionFeatureInterface *featur
     feature_interface->detach = detach;
 }
 
-typedef struct _LuaKitAuthData {
+typedef struct {
     SoupMessage* msg;
     SoupAuth* auth;
     SoupSession* session;
@@ -76,7 +76,7 @@ luakit_store_password(SoupURI *soup_uri, const char *login, const char *password
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
-    signal_object_emit(L, globalconf.signals, "store-password", 1);
+    signal_object_emit(L, globalconf.signals, "store-password", 3);
     g_free(uri);
 }
 
@@ -212,10 +212,7 @@ show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* passwo
     gtk_box_pack_start(GTK_BOX(vbox), rememberBox,
                         FALSE, FALSE, 0);
 
-    GtkWidget* checkButton = gtk_check_button_new_with_label("Remember password");
-    if (login && password) {
-        gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkButton), TRUE);
-    }
+    GtkWidget* checkButton = gtk_check_button_new_with_label("Store password");
     gtk_label_set_line_wrap(GTK_LABEL(gtk_bin_get_child(GTK_BIN(checkButton))), TRUE);
     gtk_box_pack_start(GTK_BOX(rememberBox), checkButton, FALSE, FALSE, 0);
     authData->checkButton = checkButton;

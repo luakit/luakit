@@ -283,15 +283,8 @@ add_binds("formfiller", lousy.util.table.join({
         end),
 }, menu_binds))
 
--- Enhance the authentication procedure for automatic insertion of credentials
-local dat = {
-    uri = nil,
-    user = nil,
-    pass = nil,
-    auto = false,
-}
-
-local function auto_authentication(w, uri)
+-- Enable (re)storing of HTTP auth credentials
+luakit.add_signal("authenticate", function (uri)
     local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
     local fd, err = io.open(filename, "r")
     if not fd then return end
@@ -304,53 +297,18 @@ local function auto_authentication(w, uri)
         elseif string.match(line, "^!httppass") then
             pass = string.match(line, "^!httppass (.*)$")
         end
-        if user and pass then
-            w.win:authenticate(user, pass)
-            return true
-        end
     end
-    return false
-end
-
-local manual_authentication = auth.start_authentication
-
-auth.start_authentication = function (w, uri)
-    dat.uri = uri
-    dat.auto = true
-    if not auto_authentication(w, uri) then
-        dat.auto = false
-        manual_authentication(w, uri)
+    if user and pass then
+        return user, pass
     end
-end
+end)
 
-local do_authenticate = auth.do_authenticate
-
-new_mode("authconfirm", {
-    enter = function (w)
-        w:set_prompt("Save? (Y,n)")
-        w:set_input("")
-    end,
-
-    activate = function (w)
-        if not string.match(w.ibar.input.text, "^[nN]") then
-            local filename = formsdir .. string.match(string.gsub(dat.uri, "%w+://", ""), "(.-)/.*")
-            local fd = io.open(filename, "a+")
-            fd:write(string.format("!httpuser %s\n!httppass %s\n", dat.user, dat.pass))
-            fd:flush()
-            fd:close()
-        end
-        w:set_mode()
-        do_authenticate(w, dat.user, dat.pass)
-    end,
-})
-
-auth.do_authenticate = function (w, user, pass)
-    dat.user = user
-    dat.pass = pass
-    do_authenticate(w, dat.user, dat.pass)
-    if not dat.auto then
-        w:set_mode("authconfirm")
-    end
-end
+luakit.add_signal("store-password", function (uri, login, password)
+    local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
+    local fd = io.open(filename, "a+")
+    fd:write(string.format("!httpuser %s\n!httppass %s\n", login, password))
+    fd:flush()
+    fd:close()
+end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
