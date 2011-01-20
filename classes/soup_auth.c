@@ -70,13 +70,27 @@ free_authData(LuaKitAuthData* authData)
 static void
 luakit_store_password(SoupUri *soup_uri, const char *login, const char *password)
 {
-    // TODO
+    lua_State *L = globalconf.L;
+    const char *uri = soup_uri_to_string(soup_uri, FALSE);
+    lua_pushstring(L, uri);
+    lua_pushstring(L, login);
+    lua_pushstring(L, password);
+    signal_object_emit(L, globalconf.signals, "store-password", 1);
+    g_free(uri);
 }
 
 static void
 luakit_find_password(SoupUri *soup_uri, char **login, char **password)
 {
-    // TODO
+    lua_State *L = globalconf.L;
+    const char *uri = soup_uri_to_string(soup_uri, FALSE);
+    lua_pushstring(L, uri);
+    signal_object_emit(L, globalconf.signals, "authenticate", 1);
+    g_free(uri);
+    if (lua_gettop(L) >= 2) {
+        *login = luaL_checkstring(L, -1);
+        *password = luaL_checkstring(L, -2);
+    }
 }
 
 static void
