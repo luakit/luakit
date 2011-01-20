@@ -85,9 +85,9 @@ luakit_find_password(SoupUri *soup_uri, char **login, char **password)
     lua_State *L = globalconf.L;
     const char *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
-    signal_object_emit(L, globalconf.signals, "authenticate", 1);
+    int ret = signal_object_emit_ret(L, globalconf.signals, "authenticate", 1);
     g_free(uri);
-    if (lua_gettop(L) >= 2) {
+    if (ret >= 2) {
         *login = luaL_checkstring(L, -1);
         *password = luaL_checkstring(L, -2);
     }
