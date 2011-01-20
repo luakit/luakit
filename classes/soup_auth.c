@@ -68,6 +68,18 @@ free_authData(LuaKitAuthData* authData)
 }
 
 static void
+luakit_store_password(SoupUri *soup_uri, const char *login, const char *password)
+{
+    // TODO
+}
+
+static void
+luakit_find_password(SoupUri *soup_uri, char **login, char **password)
+{
+    // TODO
+}
+
+static void
 response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
 {
     const char* login;
@@ -81,24 +93,11 @@ response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
         password = gtk_entry_get_text(GTK_ENTRY(authData->passwordEntry));
         soup_auth_authenticate(authData->auth, login, password);
 
-#if USE(GNOMEKEYRING)
         storePassword = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(authData->checkButton));
         if (storePassword) {
             uri = soup_message_get_uri(authData->msg);
-            gnome_keyring_set_network_password(NULL,
-                                               login,
-                                               soup_auth_get_realm(authData->auth),
-                                               uri->host,
-                                               NULL,
-                                               uri->scheme,
-                                               soup_auth_get_scheme_name(authData->auth),
-                                               uri->port,
-                                               password,
-                                               (GnomeKeyringOperationGetIntCallback)set_password_callback,
-                                               NULL,
-                                               NULL);
+            luakit_store_password(uri, login, password);
         }
-#endif
     default:
         break;
     }
@@ -109,29 +108,20 @@ response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
 }
 
 static GtkWidget *
-table_add_entry (GtkWidget*  table,
-                 int         row,
-                 const char* label_text,
-                 const char* value,
-                 gpointer    user_data)
+table_add_entry(GtkWidget* table, int row, const char* label_text, const char* value, gpointer user_data)
 {
-    GtkWidget* entry;
-    GtkWidget* label;
-
-    label = gtk_label_new(label_text);
+    GtkWidget* label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 
-    entry = gtk_entry_new();
+    GtkWidget* entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
-    if (value)
+    if (value) {
         gtk_entry_set_text(GTK_ENTRY(entry), value);
+    }
 
-    gtk_table_attach(GTK_TABLE(table), label,
-                     0, 1, row, row + 1,
-                     GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
-    gtk_table_attach_defaults(GTK_TABLE(table), entry,
-                              1, 2, row, row + 1);
+    gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1, GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
+    gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, row, row + 1);
 
     return entry;
 }
@@ -139,104 +129,79 @@ table_add_entry (GtkWidget*  table,
 static void
 show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* password)
 {
-    GtkWidget* widget;
-    GtkDialog* dialog;
-    GtkWindow* window;
-    GtkWidget* entryContainer;
-    GtkWidget* hbox;
-    GtkWidget* mainVBox;
-    GtkWidget* vbox;
-    GtkWidget* icon;
-    GtkWidget* table;
-    GtkWidget* messageLabel;
-    char* message;
-    SoupURI* uri;
-    GtkWidget* rememberBox;
-    GtkWidget* checkButton;
-
-    /* From GTK+ gtkmountoperation.c, modified and simplified. LGPL 2 license */
-
-    widget = gtk_dialog_new();
-    window = GTK_WINDOW(widget);
-    dialog = GTK_DIALOG(widget);
+    GtkWidget* widget = gtk_dialog_new();
+    GtkWindow* window = GTK_WINDOW(widget);
+    GtkDialog* dialog = GTK_DIALOG(widget);
 
     gtk_dialog_add_buttons(dialog,
                            GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
                            GTK_STOCK_OK, GTK_RESPONSE_OK,
                            NULL);
 
-    /* Set the dialog up with HIG properties */
+    /* set dialog properties */
     gtk_dialog_set_has_separator(dialog, FALSE);
-    gtk_container_set_border_width(GTK_CONTAINER (dialog), 5);
-    gtk_box_set_spacing(GTK_BOX(dialog->vbox), 2); /* 2 * 5 + 2 = 12 */
-    gtk_container_set_border_width(GTK_CONTAINER (dialog->action_area), 5);
+    gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
+    gtk_box_set_spacing(GTK_BOX(dialog->vbox), 2);
+    gtk_container_set_border_width(GTK_CONTAINER(dialog->action_area), 5);
     gtk_box_set_spacing(GTK_BOX(dialog->action_area), 6);
-
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
     gtk_window_set_icon_name(window, GTK_STOCK_DIALOG_AUTHENTICATION);
 
     gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
 
-    /* Build contents */
-    hbox = gtk_hbox_new(FALSE, 12);
+    /* build contents */
+    GtkWidget* hbox = gtk_hbox_new(FALSE, 12);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
     gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, TRUE, TRUE, 0);
 
-    icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION,
-                                    GTK_ICON_SIZE_DIALOG);
+    GtkWidget* icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
 
     gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
     gtk_box_pack_start(GTK_BOX(hbox), icon, FALSE, FALSE, 0);
 
-    mainVBox = gtk_vbox_new(FALSE, 18);
+    GtkWidget* mainVBox = gtk_vbox_new(FALSE, 18);
     gtk_box_pack_start(GTK_BOX(hbox), mainVBox, TRUE, TRUE, 0);
 
-    uri = soup_message_get_uri(authData->msg);
-    message = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
-    messageLabel = gtk_label_new(message);
+    SoupURI* uri = soup_message_get_uri(authData->msg);
+    char* message = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
+    GtkWidget* messageLabel = gtk_label_new(message);
     g_free(message);
     gtk_misc_set_alignment(GTK_MISC(messageLabel), 0.0, 0.5);
     gtk_label_set_line_wrap(GTK_LABEL(messageLabel), TRUE);
-    gtk_box_pack_start(GTK_BOX(mainVBox), GTK_WIDGET(messageLabel),
-                       FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(mainVBox), GTK_WIDGET(messageLabel), FALSE, FALSE, 0);
 
-    vbox = gtk_vbox_new(FALSE, 6);
-    gtk_box_pack_start(GTK_BOX (mainVBox), vbox, FALSE, FALSE, 0);
+    GtkWidget* vbox = gtk_vbox_new(FALSE, 6);
+    gtk_box_pack_start(GTK_BOX(mainVBox), vbox, FALSE, FALSE, 0);
 
-    /* The table that holds the entries */
-    entryContainer = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
+    /* the table that holds the entries */
+    GtkWidget* entryContainer = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
 
-    gtk_alignment_set_padding(GTK_ALIGNMENT(entryContainer),
-                              0, 0, 0, 0);
+    gtk_alignment_set_padding(GTK_ALIGNMENT(entryContainer), 0, 0, 0, 0);
 
-    gtk_box_pack_start(GTK_BOX(vbox), entryContainer,
-                       FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(vbox), entryContainer, FALSE, FALSE, 0);
 
-    table = gtk_table_new(2, 2, FALSE);
-    gtk_table_set_col_spacings(GTK_TABLE (table), 12);
-    gtk_table_set_row_spacings(GTK_TABLE (table), 6);
+    GtkWidget* table = gtk_table_new(2, 2, FALSE);
+    gtk_table_set_col_spacings(GTK_TABLE(table), 12);
+    gtk_table_set_row_spacings(GTK_TABLE(table), 6);
     gtk_container_add(GTK_CONTAINER(entryContainer), table);
 
-    authData->loginEntry = table_add_entry(table, 0, "Username:",
-                                           login, NULL);
-    authData->passwordEntry = table_add_entry(table, 1, "Password:",
-                                              password, NULL);
+    authData->loginEntry = table_add_entry(table, 0, "Username:", login, NULL);
+    authData->passwordEntry = table_add_entry(table, 1, "Password:", password, NULL);
 
     gtk_entry_set_visibility(GTK_ENTRY(authData->passwordEntry), FALSE);
 
-#if USE(GNOMEKEYRING)
-    rememberBox = gtk_vbox_new (FALSE, 6);
-    gtk_box_pack_start (GTK_BOX (vbox), rememberBox,
+    GtkWidget* rememberBox = gtk_vbox_new(FALSE, 6);
+    gtk_box_pack_start(GTK_BOX(vbox), rememberBox,
                         FALSE, FALSE, 0);
 
-    checkButton = gtk_check_button_new_with_label("Remember password");
-    if (login && password)
+    GtkWidget* checkButton = gtk_check_button_new_with_label("Remember password");
+    if (login && password) {
         gtk_toggle_button_set_active(GTK_TOGGLE_BUTTON(checkButton), TRUE);
+    }
     gtk_label_set_line_wrap(GTK_LABEL(gtk_bin_get_child(GTK_BIN(checkButton))), TRUE);
-    gtk_box_pack_start (GTK_BOX (rememberBox), checkButton, FALSE, FALSE, 0);
+    gtk_box_pack_start(GTK_BOX(rememberBox), checkButton, FALSE, FALSE, 0);
     authData->checkButton = checkButton;
-#endif
 
     g_signal_connect(dialog, "response", G_CALLBACK(response_callback), authData);
     gtk_widget_show_all(widget);
@@ -245,39 +210,24 @@ show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* passwo
 static void
 session_authenticate(SoupSession* session, SoupMessage* msg, SoupAuth* auth, gboolean retrying, gpointer user_data)
 {
-    SoupURI* uri;
-    LuaKitAuthData* authData;
     SoupSessionFeature* manager = (SoupSessionFeature*)user_data;
 
     soup_session_pause_message(session, msg);
     /* We need to make sure the message sticks around when pausing it */
     g_object_ref(msg);
 
-    uri = soup_message_get_uri(msg);
-    authData = g_slice_new(LuaKitAuthData);
+    SoupURI* uri = soup_message_get_uri(msg);
+    LuaKitAuthData* authData = g_slice_new(LuaKitAuthData);
     authData->msg = msg;
     authData->auth = auth;
     authData->session = session;
     authData->manager = manager;
 
-    /*
-     * If we have gnome-keyring let's try to find the password first in the ring.
-     * Otherwise just show the dialog straight away
-     */
-#if USE(GNOMEKEYRING)
-    gnome_keyring_find_network_password(NULL,
-                                        soup_auth_get_realm(auth),
-                                        uri->host,
-                                        NULL,
-                                        uri->scheme,
-                                        soup_auth_get_scheme_name(auth),
-                                        uri->port,
-                                        (GnomeKeyringOperationGetListCallback)find_password_callback,
-                                        authData,
-                                        NULL);
-#else
-    show_auth_dialog(authData, NULL, NULL);
-#endif
+    char *login = NULL;
+    char *password = NULL;
+    luakit_find_password(uri, &login, &password);
+    show_auth_dialog(authData, login, password);
+    // TODO: g_free login and password?
 }
 
 static void
