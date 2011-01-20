@@ -1408,7 +1408,7 @@ init_soup()
 
     /* remove old auth dialog and add luakit's auth feature instead */
     soup_session_remove_feature_by_type(Soup.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
-    soup_session_add_feature(Soup.session, (SoupSessionFeature*) soup_auth_feature_new());
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) luakit_soup_auth_dialog_new());
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(Soup.session), "notify", G_CALLBACK(soup_notify_cb), NULL);

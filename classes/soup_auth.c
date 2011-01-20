@@ -26,8 +26,6 @@ static void luakit_soup_auth_dialog_session_feature_init(SoupSessionFeatureInter
 static void attach(SoupSessionFeature* manager, SoupSession* session);
 static void detach(SoupSessionFeature* manager, SoupSession* session);
 
-static guint signals[LAST_SIGNAL] = { 0 };
-
 G_DEFINE_TYPE_WITH_CODE(LuaKitSoupAuthDialog, luakit_soup_auth_dialog, G_TYPE_OBJECT,
                         G_IMPLEMENT_INTERFACE(SOUP_TYPE_SESSION_FEATURE,
                                               luakit_soup_auth_dialog_session_feature_init))
@@ -35,17 +33,20 @@ G_DEFINE_TYPE_WITH_CODE(LuaKitSoupAuthDialog, luakit_soup_auth_dialog, G_TYPE_OB
 static void
 luakit_soup_auth_dialog_class_init(LuaKitSoupAuthDialogClass* klass)
 {
-    GObjectClass* object_class = G_OBJECT_CLASS(klass);
+    (void) klass;
 }
 
 static void
 luakit_soup_auth_dialog_init(LuaKitSoupAuthDialog* instance)
 {
+    (void) instance;
 }
 
 static void
 luakit_soup_auth_dialog_session_feature_init(SoupSessionFeatureInterface *feature_interface, gpointer interface_data)
 {
+    (void) interface_data;
+
     feature_interface->attach = attach;
     feature_interface->detach = detach;
 }
@@ -68,10 +69,10 @@ free_authData(LuaKitAuthData* authData)
 }
 
 static void
-luakit_store_password(SoupUri *soup_uri, const char *login, const char *password)
+luakit_store_password(SoupURI *soup_uri, const char *login, const char *password)
 {
     lua_State *L = globalconf.L;
-    const char *uri = soup_uri_to_string(soup_uri, FALSE);
+    char *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
@@ -80,10 +81,10 @@ luakit_store_password(SoupUri *soup_uri, const char *login, const char *password
 }
 
 static void
-luakit_find_password(SoupUri *soup_uri, char **login, char **password)
+luakit_find_password(SoupURI *soup_uri, const char **login, const char **password)
 {
     lua_State *L = globalconf.L;
-    const char *uri = soup_uri_to_string(soup_uri, FALSE);
+    char *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
     int ret = signal_object_emit_ret(L, globalconf.signals, "authenticate", 1);
     g_free(uri);
@@ -124,6 +125,8 @@ response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
 static GtkWidget *
 table_add_entry(GtkWidget* table, int row, const char* label_text, const char* value, gpointer user_data)
 {
+    (void) user_data;
+
     GtkWidget* label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 
@@ -224,6 +227,8 @@ show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* passwo
 static void
 session_authenticate(SoupSession* session, SoupMessage* msg, SoupAuth* auth, gboolean retrying, gpointer user_data)
 {
+    (void) retrying;
+
     SoupSessionFeature* manager = (SoupSessionFeature*)user_data;
 
     soup_session_pause_message(session, msg);
@@ -237,8 +242,8 @@ session_authenticate(SoupSession* session, SoupMessage* msg, SoupAuth* auth, gbo
     authData->session = session;
     authData->manager = manager;
 
-    char *login = NULL;
-    char *password = NULL;
+    const char *login = NULL;
+    const char *password = NULL;
     luakit_find_password(uri, &login, &password);
     show_auth_dialog(authData, login, password);
     // TODO: g_free login and password?
