@@ -530,6 +530,7 @@ luaH_luakit_spawn_sync(lua_State *L)
 }
 
 void async_callback_handler(GPid pid, gint status, gpointer data) {
+    lua_State *L = (lua_State *)data;
     // fetch lua function from the registry, using data (the lua state), and the pid as
     // a key in the table storing the pending callbacks
     //
@@ -540,7 +541,8 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 }
 
 /* Spawns a command.
- * \param L The Lua VM state.
+ * \param L The Lua VM state. Contains a Lua function, the callback handler to use
+ * when the command finishes.
  * \return The number of elements pushed on stack (0).
  */
 static gint
@@ -568,13 +570,14 @@ luaH_luakit_spawn(lua_State *L)
         g_strfreev(argv);
         lua_error(L);
     }
-    // TODO define a name for the callback table in the registry
-    // TODO create a table in the registry to store all the pending callbacks, in 
-    // luakit's initialization
-    //
-    // TODO add entry in the pending callbacks table, (pid_number, function)
-    // TODO pass the Lua state as pointer data.
-    g_child_watch_add(pid, async_callback_handler, NULL);
+    int CB_FUNC_IDX = 2;
+
+    lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_pushlightuserdata(L, (void *)pid);
+    lua_pushvalue(L, CB_FUNC_IDX);
+    lua_rawset(L, -3);
+    g_child_watch_add(pid, async_callback_handler, L);
     g_strfreev(argv);
     return 0;
 }
@@ -756,6 +759,18 @@ luaH_dofunction_on_error(lua_State *L)
     return 1;
 }
 
+/* creates a table (with an empty metatable) in the Lua registry to store the
+ * Lua callback functions associtated to processes spawned via
+ * luaH_luakit_spawn */
+void
+luaH_processcallbacks_setup(lua_State *L) {
+    lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
+    lua_newtable(L);
+    lua_newtable(L);
+    lua_setmetatable(L, -2);
+    lua_rawset(L, LUA_REGISTRYINDEX);
+}
+
 void
 luaH_init(void)
 {
@@ -785,6 +800,7 @@ luaH_init(void)
     luaH_fixups(L);
 
     luaH_object_setup(L);
+    luaH_processcallbacks_setup(L);
 
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
