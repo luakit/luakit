@@ -8,6 +8,10 @@
 --      focus next/prev
 --      use all frames
 --      test with frames
+--      different label generators
+--      different matching algorithms
+--      contenteditable?
+--      prevent tab opening of javascript: uris
 
 -- Main link following javascript.
 local follow_js = [=[
@@ -15,20 +19,17 @@ local follow_js = [=[
     window.follow = (function () {
         // Private members.
 
-        // Sends a mouse click to the given element.
-        function click(element) {
-            var mouseEvent = document.createEvent("MouseEvent");
-            mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-            element.dispatchEvent(mouseEvent);
-            follow.clear();
+        function unlink(element) {
+            if (element && element.parentNode) {
+                element.parentNode.removeChild(element);
+            }
         }
 
-        // Tests if the element is a frame of some sort.
         function isFrame(element) {
             return (element.tagName == "FRAME" || element.tagName == "IFRAME");
         }
 
-        // Returns the text of the element based on its class.
+        // Returns the visible text of the element based on its class.
         function getText(element) {
             var tag = element.tagName.toLowerCase()
             if ("input" === tag && /text|search|radio|file|button|submit|reset/i.test(element.type)) {
@@ -194,8 +195,8 @@ local follow_js = [=[
 
             // Removes all hints and resets the system to default.
             clear: function() {
-                follow.hintParent.parentNode.removeChild(follow.hintParent);
-                follow.overlayParent.parentNode.removeChild(follow.overlayParent);
+                unlink(follow.hintParent);
+                unlink(follow.overlayParent);
                 follow.init();
             },
 
@@ -265,7 +266,7 @@ local follow_js = [=[
                     }
                 });
                 if (num == 1) {
-                    follow.evaluate(lastHint);
+                    return follow.evaluate(lastHint);
                 }
             },
 
@@ -277,6 +278,28 @@ local follow_js = [=[
                     follow.clear();
                     return ret;
                 }
+            },
+
+            // Sends a mouse click to the given element.
+            click: function (element) {
+                var mouseEvent = document.createEvent("MouseEvent");
+                mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+                element.dispatchEvent(mouseEvent);
+                follow.clear();
+            },
+
+            isEditable: function (element) {
+                var name = element.tagName.toLowerCase();
+                if (name === "textarea" || name === "select") {
+                    return true;
+                }
+                if (name === "input") {
+                    var type = element.type.toLowerCase();
+                    if (type === 'text' || type === 'search' || type === 'password') {
+                        return true;
+                    }
+                }
+                return false;
             },
         }
     })();
@@ -318,38 +341,49 @@ follow.evaluators = {
     -- Click the element & return form/root active signals
     follow = [=[
         function(element) {
-          if (!is_input(element))
-            clickElement(element);
-          if (is_editable(element))
-            return "form-active";
-          return "root-active";
+            var tag = element.tagName.toLowerCase();
+            if (tag === "input" || tag === "textarea" ) {
+                var type = element.type.toLowerCase();
+                if (type === "radio" || type === "checkbox") {
+                    element.checked = !element.checked;
+                } else if (type === "submit" || type === "reset" || type  === "button") {
+                    follow.click(element);
+                } else {
+                    element.focus();
+                }
+            } else {
+                follow.click(element);
+            }
+            if (follow.isEditable(element)) {
+                return "form-active";
+            } else {
+                return "root-active";
+            }
         }]=],
     -- Return the uri.
     uri = [=[
         function (element) {
-          var e = element.element;
-          var uri = e.src || e.href;
-          if (!uri.match(/javascript:/))
-            return uri;
+            return element.src || element.href;
         }]=],
     -- Return image location.
     src = [=[
         function (element) {
-          return element.element.src;
+            return element.src;
         }]=],
     -- Return title or alt tag text.
     desc = [=[
         function (element) {
-          var e = element.element;
-          return e.title || e.alt || "";
+            return element.title || element.alt || "";
         }]=],
     -- Focus the element.
     focus = [=[
         function (element) {
-          element.element.focus();
-          if (is_editable(element))
-            return "form-active";
-          return "root-active";
+            element.focus();
+            if (follow.isEditable(element)) {
+                return "form-active";
+            } else {
+                return "root-active";
+            }
         }]=],
 }
 
