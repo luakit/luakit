@@ -94,7 +94,7 @@ local follow_js = [=[
                 return span;
             }
 
-            function createHint(hint) {
+            function createTick(hint) {
                 var tick = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect.height/2);
                 tick.style.font = follow.theme.tick_font;
                 tick.style.color = follow.theme.tick_fg;
@@ -127,26 +127,30 @@ local follow_js = [=[
                 return overlay;
             }
 
-            this.hint = createHint(this);
+            this.tick = createTick(this);
             this.overlay = createOverlay(this);
+
+            follow.tickParent.appendChild(this.tick);
+            follow.overlayParent.appendChild(this.overlay);
+
             this.id = null;
 
             // Shows the hint.
             this.show = function () {
-                this.hint.style.visibility = 'visible';
+                this.tick.style.visibility = 'visible';
                 this.overlay.style.visibility = 'visible';
             };
 
             // Hides the hint.
             this.hide = function () {
-                this.hint.style.visibility = 'hidden';
+                this.tick.style.visibility = 'hidden';
                 this.overlay.style.visibility = 'hidden';
             };
 
-            // Sets the ID of the hint (the thing in the top right corner).
+            // Sets the ID of the hint (the content of the tick label).
             this.setId = function (id) {
                 this.id = id;
-                this.hint.textContent = id;
+                this.tick.textContent = id;
             };
 
             // Changes the appearance of the hint to indicate it is active.
@@ -175,7 +179,7 @@ local follow_js = [=[
             theme: {},
             hints: [],
             overlayParent: null,
-            hintParent: null,
+            tickParent: null,
             activeHint: null,
 
             // Ensures the system is initialized.
@@ -187,10 +191,10 @@ local follow_js = [=[
                 }
                 follow.hints = [];
                 follow.activeHint = null;
-                if (!follow.hintParent) {
-                    var hints = document.createElement("div");
-                    document.body.appendChild(hints);
-                    follow.hintParent = hints;
+                if (!follow.tickParent) {
+                    var tickParent = document.createElement("div");
+                    document.body.appendChild(tickParent);
+                    follow.tickParent = tickParent;
                 }
                 if (!follow.overlayParent) {
                     var overlays = document.createElement("div");
@@ -202,7 +206,7 @@ local follow_js = [=[
 
             // Removes all hints and resets the system to default.
             clear: function() {
-                unlink(follow.hintParent);
+                unlink(follow.tickParent);
                 unlink(follow.overlayParent);
                 follow.init();
             },
@@ -212,10 +216,7 @@ local follow_js = [=[
             match: function (selector) {
                 var elements = getVisibleElements(selector);
                 follow.hints = elements.map(function (element) {
-                    var hint = new Hint(element);
-                    follow.hintParent.appendChild(hint.hint);
-                    follow.overlayParent.appendChild(hint.overlay);
-                    return hint;
+                    return new Hint(element);
                 });
                 return elements.length;
             },
