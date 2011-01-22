@@ -95,16 +95,20 @@ local follow_js = [=[
             }
 
             function createHint(hint) {
-                var hint = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect.height/2);
-                hint.style.font = follow.theme.hint_font;
-                hint.style.color = follow.theme.hint_fg;
-                hint.style.background = follow.theme.hint_bg;
-                hint.style.opacity = follow.theme.hint_opacity;
-                hint.style.border = follow.theme.hint_border;
-                hint.style.zIndex = 10001;
-                hint.style.visibility = 'visible';
-                hint.addEventListener('click', function() { click(hint.element); }, false );
-                return hint;
+                var tick = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect.height/2);
+                tick.style.font = follow.theme.tick_font;
+                tick.style.color = follow.theme.tick_fg;
+                if (isFrame(hint.element) {
+                    tick.style.backgroundColor = follow.theme.tick_frame_bg;
+                } else {
+                    tick.style.backgroundColor = follow.theme.tick_bg;
+                }
+                tick.style.opacity = follow.theme.tick_opacity;
+                tick.style.border = follow.theme.tick_border;
+                tick.style.zIndex = 10001;
+                tick.style.visibility = 'visible';
+                tick.addEventListener('click', function() { click(tick.element); }, false );
+                return tick;
             }
 
             function createOverlay(hint) {
@@ -112,10 +116,13 @@ local follow_js = [=[
                 overlay.style.width = hint.rect.width + "px";
                 overlay.style.height = hint.rect.height + "px";
                 overlay.style.opacity = follow.theme.opacity;
-                overlay.style.backgroundColor = follow.theme.normal_bg;
                 overlay.style.border = follow.theme.border;
+                overlay.style.backgroundColor = follow.theme.normal_bg;
                 overlay.style.zIndex = 10000;
                 overlay.style.visibility = 'visible';
+                if (isFrame(hint.element) {
+                    overlay.style.display = 'none';
+                }
                 overlay.addEventListener('click', function() { click(hint.element); }, false );
                 return overlay;
             }
@@ -309,17 +316,18 @@ local follow_js = [=[
 follow = {}
 
 follow.default_theme = {
-    focus_bg     = "#00ff00";
-    normal_bg    = "#ffff99";
-    opacity      = 0.3;
-    border       = "1px dotted #000000";
-    hint_fg      = "#ffffff";
-    hint_bg      = "#000088";
-    hint_border  = "2px dashed #000000";
-    hint_opacity = 0.4;
-    hint_font    = "11px monospace bold";
-    vert_offset  = 0;
-    horiz_offset = -10;
+    focus_bg      = "#00ff00";
+    normal_bg     = "#ffff99";
+    opacity       = 0.3;
+    border        = "1px dotted #000000";
+    hint_frame_bg = "#552222";
+    hint_fg       = "#ffffff";
+    hint_bg       = "#000088";
+    hint_border   = "2px dashed #000000";
+    hint_opacity  = 0.4;
+    hint_font     = "11px monospace bold";
+    vert_offset   = 0;
+    horiz_offset  = -10;
 }
 
 -- Merge `theme.follow` table with `follow.default_theme`
