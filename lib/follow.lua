@@ -20,8 +20,46 @@ local follow_js = [=[
             clear();
         }
 
+        // Tests if the element is a frame of some sort.
+        function isFrame(element) {
+            return (element.tagName == "FRAME" || element.tagName == "IFRAME");
+        }
+
+        // Returns the text of the element based on its class.
+        function getText(element) {
+            var tag = element.tagName.toLowerCase()
+            if ("input" === tag && /text|search|radio|file|button|submit|reset/i.matches(element.type)) {
+                return element.value;
+            } else if ("select" === tag) {
+                return element.value;
+            } else {
+                return element.textContent;
+            }
+        }
+
         // Returns all elements within the viewport.
-        function getVisibleElements() {
+        function getVisibleElements(selector) {
+            var elements = [];
+            var set = document.body.querySelectorAll(selector);
+            for (var i = 0; i < set.length; i++) {
+                var e = new Hint(set[i]);
+                var rects = e.element.getClientRects()[0];
+                var r = e.rect;
+                // test if in viewport
+                if (!r || r.top > window.innerHeight || r.bottom < 0 || r.left > window.innerWidth ||  r < 0 || !rects ) {
+                    continue;
+                }
+                // test if hidden
+                var style = document.defaultView.getComputedStyle(e.element, null);
+                if (style.getPropertyValue("visibility") != "visible" || style.getPropertyValue("display") == "none") {
+                    continue;
+                }
+                elements.push(e);
+            };
+            elements.sort(function (a,b) {
+                return a.rect.top - b.rect.top;
+            });
+            return elements;
         }
 
         // Hint class. Wraps data and functions related to hint manipulation.
@@ -58,6 +96,7 @@ local follow_js = [=[
                 hint.style.border = hint_border;
                 hint.style.zIndex = 10001;
                 hint.style.visibility = 'visible';
+                hint.addEventListener('click', function() { clickElement(element); }, false );
                 return hint;
             }
 
@@ -70,7 +109,7 @@ local follow_js = [=[
                 overlay.style.border = border;
                 overlay.style.zIndex = 10000;
                 overlay.style.visibility = 'visible';
-                overlay.addEventListener( 'click', function() { clickElement(element); }, false );
+                overlay.addEventListener('click', function() { clickElement(element); }, false );
                 return overlay;
             }
 
@@ -78,11 +117,19 @@ local follow_js = [=[
             this.overlay = create_overlay(this);
             this.id = null;
 
-            // Shows the hint
+            // Shows the hint.
             this.show = function () {
+                this.hint.visiblity = 'visible';
+                this.overlay.visiblity = 'visible';
             };
 
-            // Sets the ID of the hint (the thing in the top right corner)
+            // Hides the hint.
+            this.hide = function () {
+                this.hint.visiblity = 'hidden';
+                this.overlay.visiblity = 'hidden';
+            };
+
+            // Sets the ID of the hint (the thing in the top right corner).
             this.setId = function (id) {
                 this.id = id;
                 this.hint.textContent = id;
@@ -97,11 +144,16 @@ local follow_js = [=[
             this.deactivate = function () {
                 this.overlay.style.backgroundColor = follow.theme.focus_bg;
             };
+
+            // Tests if the hint's text matches the given string.
+            this.matches = function (str) {
+                var text = getText(this.element);
+                return text.indexOf(str) !== -1;
+            };
         }
 
         // Public structure.
         return {
-            selector = null,
             evaluator = null,
 
             theme = {},
@@ -124,25 +176,25 @@ local follow_js = [=[
                     document.body.appendChild(overlays);
                     follow.overlayParent = overlays;
                 }
-            }
+            },
 
             // Removes all hints and resets the system to default.
             clear = function() {
                 follow.hintParent.parentNode.removeChild(follow.hintParent);
                 follow.overlayParent.parentNode.removeChild(follow.overlayParent);
                 init();
-            }
+            },
 
             // Gets all visible elements using the selector and builds
             // hints for them. Returns the number of hints generated.
-            match = function () {
-                var elements = getVisibleElements();
+            match = function (selector) {
+                var elements = getVisibleElements(selector);
                 elements.forEach(function (element) {
                     var hint = new Hint(element);
                     follow.hints.push(hint);
                 });
                 return elements.length;
-            }
+            },
 
             // Shows all hints and assigns them the given IDs.
             show = function (ids) {
@@ -151,7 +203,7 @@ local follow_js = [=[
                     hint.setId(ids[i]);
                     hint.show();
                 }
-            }
+            },
 
             // Deselects all hints and selects the hint with the given ID, if it exists.
             select = function (id) {
@@ -164,11 +216,38 @@ local follow_js = [=[
                         hint.deactivate();
                     }
                 });
-            }
+            },
 
-            // Filters the hints according to the given array of substrings
-            filter = function (substrings) {
-            }
+            // Filters the hints according to the given string
+            filter = function (str) {
+                var matches = /^(.*?)(\d*)$/.exec(str)
+                var strings = matches[1].split("\s+").filter(function (str) {
+                    return str !== "";
+                });
+                var id = matches[2];
+                follow.hints.forEach(function (hint) {
+                    var matches = true;
+                    // check text match
+                    strings.some(function (str) {
+                        if (!hint.matches(str)) {
+                            matches = false;
+                            return false;
+                        } else {
+                            return true;
+                        }
+                    });
+                    // check ID
+                    if (hint.id.substr(0, id.length) !== id) {
+                        matches = false;
+                    }
+                    // update visibility
+                    if (matches) {
+                        hint.show();
+                    } else {
+                        hint.hide();
+                    }
+                });
+            },
 
             // Evaluates the given element or the active element, if none is given.
             evaluate = function (element) {
@@ -178,7 +257,7 @@ local follow_js = [=[
                     clear();
                     return ret;
                 }
-            }
+            },
         }
     })();
 ]=]
