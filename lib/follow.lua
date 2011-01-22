@@ -98,7 +98,7 @@ local follow_js = [=[
                 var tick = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect.height/2);
                 tick.style.font = follow.theme.tick_font;
                 tick.style.color = follow.theme.tick_fg;
-                if (isFrame(hint.element) {
+                if (isFrame(hint.element)) {
                     tick.style.backgroundColor = follow.theme.tick_frame_bg;
                 } else {
                     tick.style.backgroundColor = follow.theme.tick_bg;
@@ -120,7 +120,7 @@ local follow_js = [=[
                 overlay.style.backgroundColor = follow.theme.normal_bg;
                 overlay.style.zIndex = 10000;
                 overlay.style.visibility = 'visible';
-                if (isFrame(hint.element) {
+                if (isFrame(hint.element)) {
                     overlay.style.display = 'none';
                 }
                 overlay.addEventListener('click', function() { click(hint.element); }, false );
@@ -155,14 +155,14 @@ local follow_js = [=[
 
             // Changes the appearance of the hint to indicate it is active.
             this.activate = function () {
-                this.overlay.style.backgroundColor = follow.theme.normal_bg;
+                this.overlay.style.backgroundColor = follow.theme.focus_bg;
                 this.overlay.focus();
                 follow.activeHint = this;
             };
 
             // Changes the appearance of the hint to indicate it is not active.
             this.deactivate = function () {
-                this.overlay.style.backgroundColor = follow.theme.focus_bg;
+                this.overlay.style.backgroundColor = follow.theme.normal_bg;
             };
 
             // Tests if the hint's text matches the given string.
@@ -218,6 +218,9 @@ local follow_js = [=[
                 follow.hints = elements.map(function (element) {
                     return new Hint(element);
                 });
+                if (elements.length > 0) {
+                    follow.hints[0].activate();
+                }
                 return elements.length;
             },
 
@@ -250,8 +253,8 @@ local follow_js = [=[
                     return str !== "";
                 });
                 var id = matches[2];
-                var num = 0;
-                var lastHint = null;
+                var visibleHints = [];
+                var reselect = (follow.activeHint === null);
                 follow.hints.forEach(function (hint) {
                     var matches = true;
                     // check text match
@@ -267,14 +270,21 @@ local follow_js = [=[
                     // update visibility
                     if (matches) {
                         hint.show();
-                        lastHint = hint;
-                        num += 1;
+                        visibleHints.push(hint);
                     } else {
+                        if (follow.activeHint == hint) {
+                            reselect = true;
+                        }
                         hint.hide();
                     }
                 });
-                if (num == 1) {
-                    return follow.evaluate(lastHint);
+                if (visibleHints.length === 1) {
+                    return follow.evaluate(visibleHints[0]);
+                } else {
+                    // update selection
+                    if (reselect && visibleHints.length > 0) {
+                        visibleHints[0].activate();
+                    }
                 }
             },
 
@@ -321,12 +331,12 @@ follow.default_theme = {
     normal_bg     = "#ffff99";
     opacity       = 0.3;
     border        = "1px dotted #000000";
-    hint_frame_bg = "#552222";
-    hint_fg       = "#ffffff";
-    hint_bg       = "#000088";
-    hint_border   = "2px dashed #000000";
-    hint_opacity  = 0.4;
-    hint_font     = "11px monospace bold";
+    tick_frame_bg = "#552222";
+    tick_fg       = "#ffffff";
+    tick_bg       = "#000088";
+    tick_border   = "2px dashed #000000";
+    tick_opacity  = 0.4;
+    tick_font     = "11px monospace bold";
     vert_offset   = 0;
     horiz_offset  = -10;
 }
