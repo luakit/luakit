@@ -134,17 +134,21 @@ local follow_js = [=[
             follow.overlayParent.appendChild(this.overlay);
 
             this.id = null;
+            this.visible = true;
 
             // Shows the hint.
             this.show = function () {
                 this.tick.style.visibility = 'visible';
                 this.overlay.style.visibility = 'visible';
+                this.visible = true;
             };
 
             // Hides the hint.
             this.hide = function () {
                 this.tick.style.visibility = 'hidden';
                 this.overlay.style.visibility = 'hidden';
+                this.deactivate();
+                this.visible = false;
             };
 
             // Sets the ID of the hint (the content of the tick label).
@@ -234,18 +238,6 @@ local follow_js = [=[
                 }
             },
 
-            // Deselects all hints and selects the hint with the given ID, if it exists.
-            select: function (id) {
-                follow.activeHint = null;
-                follow.hints.forEach(function (hint) {
-                    if (hint.id === id) {
-                        hint.activate();
-                    } else {
-                        hint.deactivate();
-                    }
-                });
-            },
-
             // Filters the hints according to the given string
             filter: function (str) {
                 var matches = /^(.*?)(\d*)$/.exec(str.toLowerCase())
@@ -318,6 +310,36 @@ local follow_js = [=[
                     }
                 }
                 return false;
+            },
+
+            // Selects a visible hint according to the given offset.
+            focus: function (offset) {
+                var currentIdx = null;
+                for (var i = 0; i < follow.hints.length; ++i) {
+                    var hint = follow.hints[i];
+                    if (hint == follow.activeHint) {
+                        hint.deactivate();
+                        currentIdx = i;
+                        break;
+                    }
+                }
+                // work around javascript modulo bug
+                var inc = function (v) {
+                    var val = v + offset;
+                    if (val < 0) {
+                        val = follow.hints.length - 1;
+                    } else if (val >= follow.hints.length) {
+                        val = 0;
+                    }
+                    return val;
+                }
+                if (currentIdx !== null) {
+                    currentIdx = inc(currentIdx);
+                    while (!follow.hints[currentIdx].visible) {
+                        currentIdx = inc(currentIdx);
+                    }
+                    follow.hints[currentIdx].activate();
+                }
             },
         }
     })();
@@ -480,24 +502,24 @@ add_binds("normal", {
     buf("^;W$", function (w,b,m) w:start_follow("uri",    ":winopen",   function (uri)  w:enter_cmd(":winopen "..uri) end) end),
 })
 
+local function make_labels(num)
+    local labels = {}
+    for i=1,num,1 do
+        table.insert(labels, tostring(i))
+    end
+    return labels
+end
+
 -- Add follow mode binds
 add_binds("follow", {
-    key({},        "Tab",       function (w) w:eval_js("focus_next();") end),
-    key({"Shift"}, "Tab",       function (w) w:eval_js("focus_prev();") end),
+    key({},        "Tab",       function (w) w:eval_js("follow.focus(+1);") end ),
+    key({"Shift"}, "Tab",       function (w) w:eval_js("follow.focus(-1);") end ),
     key({},        "Return",    function (w)
                                     local s = (w.follow_state or {})
                                     local sig = s.func(w:eval_js("follow.evaluate();"), s)
                                     if sig then w:emit_form_root_active_signal(sig) end
                                 end),
 })
-
-local function make_labels(num)
-    local arr = {}
-    for i=1,num,1 do
-        table.insert(arr, string.format("%q", i))
-    end
-    return arr
-end
 
 -- Setup follow mode
 new_mode("follow", {
@@ -535,8 +557,12 @@ new_mode("follow", {
 
         -- Generate labels
         local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)"))
-        local labels = table.concat(make_labels(num), ",")
-        w:eval_js(string.format("follow.show([%s]);", labels), "(follow.lua)")
+        local labels = make_labels(num)
+        state.labels = lousy.util.table.clone(labels)
+        state.current = 1
+        for i, l in ipairs(labels) do labels[i] = string.format("%q", l) end
+        local array = table.concat(labels, ",")
+        w:eval_js(string.format("follow.show([%s]);", array), "(follow.lua)")
 
         -- Set prompt & input text
         w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
