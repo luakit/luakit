@@ -4,20 +4,23 @@
 -- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
 ---------------------------------------------------------
 
--- TODO: wrap helper funcs in closure!
+-- TODO set active element when changing filter
+--      focus next/prev
+--      use all frames
+--      test with frames
 
 -- Main link following javascript.
 local follow_js = [=[
     // Global wrapper in order to not disturb main site JS.
-    follow = (function () {
+    window.follow = (function () {
         // Private members.
 
         // Sends a mouse click to the given element.
-        function clickElement(element) {
+        function click(element) {
             var mouseEvent = document.createEvent("MouseEvent");
             mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-            e.element.dispatchEvent(mouseEvent);
-            clear();
+            element.dispatchEvent(mouseEvent);
+            follow.clear();
         }
 
         // Tests if the element is a frame of some sort.
@@ -42,22 +45,25 @@ local follow_js = [=[
             var elements = [];
             var set = document.body.querySelectorAll(selector);
             for (var i = 0; i < set.length; i++) {
-                var e = new Hint(set[i]);
-                var rects = e.element.getClientRects()[0];
-                var r = e.rect;
+                var e = set[i];
+                var rects = e.getClientRects()[0];
+                var r = e.getBoundingClientRect();
                 // test if in viewport
                 if (!r || r.top > window.innerHeight || r.bottom < 0 || r.left > window.innerWidth ||  r < 0 || !rects ) {
                     continue;
                 }
                 // test if hidden
-                var style = document.defaultView.getComputedStyle(e.element, null);
+                var style = document.defaultView.getComputedStyle(e, null);
                 if (style.getPropertyValue("visibility") != "visible" || style.getPropertyValue("display") == "none") {
                     continue;
                 }
                 elements.push(e);
             };
             elements.sort(function (a,b) {
-                return a.rect.top - b.rect.top;
+                return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
+            });
+            elements.sort(function (a,b) {
+                return a.getBoundingClientRect().top - b.getBoundingClientRect().top;
             });
             return elements;
         }
@@ -68,17 +74,17 @@ local follow_js = [=[
             this.rect = element.getBoundingClientRect();
 
             // Hint creation helper functions.
-            function create_span(element, h, v) {
-                var document = get_document(element.element);
+            function createSpan(hint, h, v) {
                 var span = document.createElement("span");
                 var leftpos, toppos;
-                if (isFrame(element.element)) {
+                if (isFrame(hint.element)) {
                     leftpos = document.defaultView.scrollX + h;
                     toppos = document.defaultView.scrollY + v;
                 } else {
-                    leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
-                    toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
+                    leftpos = Math.max((hint.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
+                    toppos = Math.max((hint.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
                 }
+                // ensure all hints are visible
                 leftpos = Math.max(leftpos, 0);
                 toppos = Math.max(toppos, 0);
                 span.style.position = "absolute";
@@ -87,46 +93,46 @@ local follow_js = [=[
                 return span;
             }
 
-            function create_hint(element) {
-                var hint = create_span(element, horiz_offset, vert_offset - element.rect.height/2);
-                hint.style.font = hint_font;
-                hint.style.color = hint_fg;
-                hint.style.background = hint_bg;
-                hint.style.opacity = hint_opacity;
-                hint.style.border = hint_border;
+            function createHint(hint) {
+                var hint = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect.height/2);
+                hint.style.font = follow.theme.hint_font;
+                hint.style.color = follow.theme.hint_fg;
+                hint.style.background = follow.theme.hint_bg;
+                hint.style.opacity = follow.theme.hint_opacity;
+                hint.style.border = follow.theme.hint_border;
                 hint.style.zIndex = 10001;
                 hint.style.visibility = 'visible';
-                hint.addEventListener('click', function() { clickElement(element); }, false );
+                hint.addEventListener('click', function() { click(hint.element); }, false );
                 return hint;
             }
 
-            function create_overlay(element) {
-                var overlay = create_span(element, 0, 0);
-                overlay.style.width = element.rect.width + "px";
-                overlay.style.height = element.rect.height + "px";
-                overlay.style.opacity = opacity;
-                overlay.style.backgroundColor = normal_bg;
-                overlay.style.border = border;
+            function createOverlay(hint) {
+                var overlay = createSpan(hint, 0, 0);
+                overlay.style.width = hint.rect.width + "px";
+                overlay.style.height = hint.rect.height + "px";
+                overlay.style.opacity = follow.theme.opacity;
+                overlay.style.backgroundColor = follow.theme.normal_bg;
+                overlay.style.border = follow.theme.border;
                 overlay.style.zIndex = 10000;
                 overlay.style.visibility = 'visible';
-                overlay.addEventListener('click', function() { clickElement(element); }, false );
+                overlay.addEventListener('click', function() { click(hint.element); }, false );
                 return overlay;
             }
 
-            this.hint = create_hint(this);
-            this.overlay = create_overlay(this);
+            this.hint = createHint(this);
+            this.overlay = createOverlay(this);
             this.id = null;
 
             // Shows the hint.
             this.show = function () {
-                this.hint.visiblity = 'visible';
-                this.overlay.visiblity = 'visible';
+                this.hint.style.visibility = 'visible';
+                this.overlay.style.visibility = 'visible';
             };
 
             // Hides the hint.
             this.hide = function () {
-                this.hint.visiblity = 'hidden';
-                this.overlay.visiblity = 'hidden';
+                this.hint.style.visibility = 'hidden';
+                this.overlay.style.visibility = 'hidden';
             };
 
             // Sets the ID of the hint (the thing in the top right corner).
@@ -138,6 +144,8 @@ local follow_js = [=[
             // Changes the appearance of the hint to indicate it is active.
             this.activate = function () {
                 this.overlay.style.backgroundColor = follow.theme.normal_bg;
+                this.overlay.focus();
+                follow.activeHint = this;
             };
 
             // Changes the appearance of the hint to indicate it is not active.
@@ -154,18 +162,23 @@ local follow_js = [=[
 
         // Public structure.
         return {
-            evaluator = null,
+            evaluator: null,
 
-            theme = {},
-            hints = [],
-            overlayParent = null,
-            hintParent = null,
-            activeHint = null,
+            theme: {},
+            hints: [],
+            overlayParent: null,
+            hintParent: null,
+            activeHint: null,
 
             // Ensures the system is initialized.
-            init = function () {
+            // Returns true on success. If false is returned, the other hinting functions
+            // cannot be used safely.
+            init: function () {
+                if (!document.activeElement) {
+                    return false;
+                }
                 follow.hints = [];
-                follow.active = null;
+                follow.activeHint = null;
                 if (!follow.hintParent) {
                     var hints = document.createElement("div");
                     document.body.appendChild(hints);
@@ -176,10 +189,11 @@ local follow_js = [=[
                     document.body.appendChild(overlays);
                     follow.overlayParent = overlays;
                 }
+                return true;
             },
 
             // Removes all hints and resets the system to default.
-            clear = function() {
+            clear: function() {
                 follow.hintParent.parentNode.removeChild(follow.hintParent);
                 follow.overlayParent.parentNode.removeChild(follow.overlayParent);
                 init();
@@ -187,17 +201,20 @@ local follow_js = [=[
 
             // Gets all visible elements using the selector and builds
             // hints for them. Returns the number of hints generated.
-            match = function (selector) {
+            match: function (selector) {
                 var elements = getVisibleElements(selector);
-                elements.forEach(function (element) {
+                follow.hints = elements.map(function (element) {
                     var hint = new Hint(element);
-                    follow.hints.push(hint);
+                    follow.hintParent.appendChild(hint.hint);
+                    follow.overlayParent.appendChild(hint.overlay);
+                    return hint;
                 });
                 return elements.length;
             },
 
             // Shows all hints and assigns them the given IDs.
-            show = function (ids) {
+            show: function (ids) {
+                document.activeElement.blur();
                 for (var i = 0; i < ids.length; ++i) {
                     var hint = follow.hints[i];
                     hint.setId(ids[i]);
@@ -206,12 +223,11 @@ local follow_js = [=[
             },
 
             // Deselects all hints and selects the hint with the given ID, if it exists.
-            select = function (id) {
-                follow.active = null;
+            select: function (id) {
+                follow.activeHint = null;
                 follow.hints.forEach(function (hint) {
                     if (hint.id === id) {
                         hint.activate();
-                        follow.active = hint;
                     } else {
                         hint.deactivate();
                     }
@@ -219,21 +235,20 @@ local follow_js = [=[
             },
 
             // Filters the hints according to the given string
-            filter = function (str) {
+            filter: function (str) {
                 var matches = /^(.*?)(\d*)$/.exec(str)
-                var strings = matches[1].split("\s+").filter(function (str) {
+                var strings = matches[1].split(" ").filter(function (str) {
                     return str !== "";
                 });
                 var id = matches[2];
+                var num = 0;
+                var lastHint = null;
                 follow.hints.forEach(function (hint) {
                     var matches = true;
                     // check text match
-                    strings.some(function (str) {
+                    strings.forEach(function (str) {
                         if (!hint.matches(str)) {
                             matches = false;
-                            return false;
-                        } else {
-                            return true;
                         }
                     });
                     // check ID
@@ -243,28 +258,28 @@ local follow_js = [=[
                     // update visibility
                     if (matches) {
                         hint.show();
+                        lastHint = hint;
+                        num += 1;
                     } else {
                         hint.hide();
                     }
                 });
+                if (num == 1) {
+                    follow.evaluate(lastHint);
+                }
             },
 
             // Evaluates the given element or the active element, if none is given.
-            evaluate = function (element) {
-                var hint = element || follow.active;
+            evaluate: function (element) {
+                var hint = element || follow.activeHint;
                 if (hint) {
-                    var ret = evaluator(hint);
-                    clear();
+                    var ret = follow.evaluator(hint.element);
+                    follow.clear();
                     return ret;
                 }
             },
         }
     })();
-]=]
-
-local mode_settings_format = [=[
-    follow.selector = "{selector}";
-    follow.evaluator = ({evaluator});
 ]=]
 
 -- Table of following options & modes
@@ -418,7 +433,7 @@ add_binds("follow", {
     key({"Shift"}, "Tab",       function (w) w:eval_js("focus_prev();") end),
     key({},        "Return",    function (w)
                                     local s = (w.follow_state or {})
-                                    local sig = s.func(w:eval_js("get_active();"), s)
+                                    local sig = s.func(w:eval_js("follow.evaluate();"), s)
                                     if sig then w:emit_form_root_active_signal(sig) end
                                 end),
 })
@@ -448,16 +463,11 @@ new_mode("follow", {
         table.insert(js_blocks, follow_js)
 
         -- Load mode specific js
-        local subs = {
-            selector  = follow.selectors[mode.selector],
-            evaluator = lousy.util.string.strip(follow.evaluators[mode.evaluator]),
-        }
-        local js, count = string.gsub(mode_settings_format, "{(%w+)}", subs)
-        if count ~= 2 then return error("invalid number of substitutions") end
-        table.insert(js_blocks, js);
-
-        -- Clear & show hints
-        table.insert(js_blocks, "clear();\nshow_hints();")
+        local evaluator = lousy.util.string.strip(follow.evaluators[mode.evaluator]),
+        local selector  = follow.selectors[mode.selector],
+        table.insert(js_blocks, string.printf("follow.evaluator = (%s);", evaluator))
+        table.insert(js_blocks, "follow.init();")
+        table.insert(js_blocks, string.printf("follow.match(%q);", selector))
 
         -- Evaluate js code
         local js = table.concat(js_blocks, "\n")
@@ -470,12 +480,12 @@ new_mode("follow", {
 
     -- Leave follow mode hook
     leave = function (w)
-        if w.eval_js then w:eval_js("clear();", "(follow.lua)") end
+        if w.eval_js then w:eval_js("follow.clear();", "(follow.lua)") end
     end,
 
     -- Input bar changed hook
     changed = function (w, text)
-        local ret = w:eval_js(string.format("update(%q);", text), "(follow.lua)")
+        local ret = w:eval_js(string.format("follow.filter(%q);", text), "(follow.lua)")
         local state = w.follow_state or {}
         if ret ~= "false" then
             local sig
