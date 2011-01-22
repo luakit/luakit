@@ -31,7 +31,7 @@ local follow_js = [=[
         // Returns the text of the element based on its class.
         function getText(element) {
             var tag = element.tagName.toLowerCase()
-            if ("input" === tag && /text|search|radio|file|button|submit|reset/i.matches(element.type)) {
+            if ("input" === tag && /text|search|radio|file|button|submit|reset/i.test(element.type)) {
                 return element.value;
             } else if ("select" === tag) {
                 return element.value;
@@ -155,7 +155,7 @@ local follow_js = [=[
 
             // Tests if the hint's text matches the given string.
             this.matches = function (str) {
-                var text = getText(this.element);
+                var text = getText(this.element).toLowerCase();
                 return text.indexOf(str) !== -1;
             };
         }
@@ -196,7 +196,7 @@ local follow_js = [=[
             clear: function() {
                 follow.hintParent.parentNode.removeChild(follow.hintParent);
                 follow.overlayParent.parentNode.removeChild(follow.overlayParent);
-                init();
+                follow.init();
             },
 
             // Gets all visible elements using the selector and builds
@@ -236,7 +236,7 @@ local follow_js = [=[
 
             // Filters the hints according to the given string
             filter: function (str) {
-                var matches = /^(.*?)(\d*)$/.exec(str)
+                var matches = /^(.*?)(\d*)$/.exec(str.toLowerCase())
                 var strings = matches[1].split(" ").filter(function (str) {
                     return str !== "";
                 });
@@ -438,6 +438,14 @@ add_binds("follow", {
                                 end),
 })
 
+local function make_labels(num)
+    local arr = {}
+    for i=1,num,1 do
+        table.insert(arr, string.format("%q", i))
+    end
+    return arr
+end
+
 -- Setup follow mode
 new_mode("follow", {
     -- Enter follow mode hook
@@ -449,8 +457,11 @@ new_mode("follow", {
         -- Get follow mode table
         if not mode then w:set_mode() return error("unknown follow mode") end
 
-        -- Make theme js
+        -- Load main following js
         local js_blocks = {}
+        table.insert(js_blocks, follow_js)
+
+        -- Make theme js
         for k, v in pairs(follow.get_theme()) do
             if type(v) == "number" then
                 table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
@@ -459,19 +470,20 @@ new_mode("follow", {
             end
         end
 
-        -- Load main following js
-        table.insert(js_blocks, follow_js)
-
         -- Load mode specific js
-        local evaluator = lousy.util.string.strip(follow.evaluators[mode.evaluator]),
+        local evaluator = lousy.util.string.strip(follow.evaluators[mode.evaluator])
         local selector  = follow.selectors[mode.selector],
-        table.insert(js_blocks, string.printf("follow.evaluator = (%s);", evaluator))
+        table.insert(js_blocks, string.format("follow.evaluator = (%s);", evaluator))
         table.insert(js_blocks, "follow.init();")
-        table.insert(js_blocks, string.printf("follow.match(%q);", selector))
 
         -- Evaluate js code
         local js = table.concat(js_blocks, "\n")
         w:eval_js(js, "(follow.lua)")
+
+        -- Generate labels
+        local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)"))
+        local labels = table.concat(make_labels(num), ",")
+        w:eval_js(string.format("follow.show([%s]);", labels), "(follow.lua)")
 
         -- Set prompt & input text
         w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
