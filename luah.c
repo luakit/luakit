@@ -529,14 +529,33 @@ luaH_luakit_spawn_sync(lua_State *L)
     return 3;
 }
 
+/* Calls the Lua function defined as callback for a (async) spawned process
+ *
+ * \param pid The PID of the process that has just finished
+ * \param status TODO
+ * \param data pointer to the Lua VM state
+ */
 void async_callback_handler(GPid pid, gint status, gpointer data) {
     lua_State *L = (lua_State *)data;
-    // fetch lua function from the registry, using data (the lua state), and the pid as
-    // a key in the table storing the pending callbacks
-    //
-    // call the function
-    //
-    // discard the entry (set it to null)
+
+    // fetch callbacks table
+    lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+
+    // get callback function for the given PID (callbacks[pid])
+    lua_pushlightuserdata(L, (void *)pid);
+    lua_rawget(L, -2);
+
+    lua_call(L, 0, 0);
+
+    // free callbacks[pid]
+    lua_pushlightuserdata(L, (void *)pid);
+    lua_pushnil(L);
+    lua_rawset(L, -3);
+
+    // stack cleanup - remove callbacks table from it
+    lua_remove(L, -1);
+
     g_spawn_close_pid(pid);
 }
 
