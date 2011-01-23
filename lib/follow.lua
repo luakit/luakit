@@ -6,9 +6,22 @@
 
 -- TODO use all frames
 -- TODO test with frames
--- TODO different label generators
--- TODO different matching algorithms
 -- TODO contenteditable?
+
+local ipairs = ipairs
+local pairs = pairs
+local table = table
+local string = string
+local lousy = require("lousy")
+local theme = theme
+local math = math
+local downloads = downloads
+local tonumber, tostring = tonumber, tostring
+local webview = webview
+local add_binds, new_mode = add_binds, new_mode
+local type = type
+
+module("follow")
 
 -- Main link following javascript.
 local follow_js = [=[
@@ -235,13 +248,11 @@ local follow_js = [=[
                 }
             },
 
-            // Filters the hints according to the given string
-            filter: function (str) {
-                var matches = /^(.*?)(\d*)$/.exec(str.toLowerCase())
-                var strings = matches[1].split(" ").filter(function (str) {
+            // Filters the hints according to the given string and ID.
+            filter: function (str, id) {
+                var strings = str.toLowerCase().split(" ").filter(function (str) {
                     return str !== "";
                 });
-                var id = matches[2];
                 var visibleHints = [];
                 var reselect = (follow.activeHint === null);
                 follow.hints.forEach(function (hint) {
@@ -342,10 +353,7 @@ local follow_js = [=[
     })();
 ]=]
 
--- Table of following options & modes
-follow = {}
-
-follow.default_theme = {
+local default_theme = {
     focus_bg      = "#00ff00";
     normal_bg     = "#ffff99";
     opacity       = 0.3;
@@ -361,12 +369,12 @@ follow.default_theme = {
 }
 
 -- Merge `theme.follow` table with `follow.default_theme`
-function follow.get_theme()
-    return lousy.util.table.join(follow.default_theme, theme.follow or {})
+local function get_theme()
+    return lousy.util.table.join(default_theme, theme.follow or {})
 end
 
--- Selectors for the different modes
-follow.selectors = {
+--- Selectors for the different modes
+selectors = {
     followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
     focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object',
     uri         = 'a, area, frame, iframe',
@@ -374,8 +382,8 @@ follow.selectors = {
     image       = 'img, input[type=image]',
 }
 
--- Evaluators for the different modes
-follow.evaluators = {
+--- Evaluators for the different modes
+evaluators = {
     -- Click the element & return form/root active signals
     follow = [=[
         function(element) {
@@ -425,8 +433,8 @@ follow.evaluators = {
         }]=],
 }
 
--- Table of modes and their selectors & evaulator functions.
-follow.modes = {}
+--- Table of modes and their selectors & evaulator functions.
+modes = {}
 
 -- Build mode table
 for _, t in ipairs({
@@ -437,7 +445,7 @@ for _, t in ipairs({
     {"focus",      "focusable",    "focus"       },
     {"image",      "image",        "src"         },
 }) do
-    follow.modes[t[1]] = { selector = t[2], evaluator = t[3] }
+    modes[t[1]] = { selector = t[2], evaluator = t[3] }
 end
 
 -- Add webview methods
@@ -521,6 +529,11 @@ function make_labels(size)
     return labels
 end
 
+--- Parses the user's input into a match string and an ID.
+function parse_input(text)
+    return string.match(text, "^(.-)(%d*)$")
+end
+
 -- Add follow mode binds
 add_binds("follow", {
     key({},        "Tab",       function (w) w:eval_js("follow.focus(+1);") end ),
@@ -539,7 +552,7 @@ new_mode("follow", {
         -- Get following state & options
         if not w.follow_state then w.follow_state = {} end
         local state = w.follow_state
-        local mode = follow.modes[state.mode or "follow"]
+        local mode = modes[state.mode or "follow"]
         -- Get follow mode table
         if not mode then w:set_mode() return error("unknown follow mode") end
 
@@ -548,7 +561,7 @@ new_mode("follow", {
         table.insert(js_blocks, follow_js)
 
         -- Make theme js
-        for k, v in pairs(follow.get_theme()) do
+        for k, v in pairs(get_theme()) do
             if type(v) == "number" then
                 table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
             else
@@ -557,8 +570,8 @@ new_mode("follow", {
         end
 
         -- Load mode specific js
-        local evaluator = lousy.util.string.strip(follow.evaluators[mode.evaluator])
-        local selector  = follow.selectors[mode.selector],
+        local evaluator = lousy.util.string.strip(evaluators[mode.evaluator])
+        local selector  = selectors[mode.selector],
         table.insert(js_blocks, string.format("follow.evaluator = (%s);", evaluator))
         table.insert(js_blocks, "follow.init();")
 
@@ -587,7 +600,8 @@ new_mode("follow", {
 
     -- Input bar changed hook
     changed = function (w, text)
-        local ret = w:eval_js(string.format("follow.filter(%q);", text), "(follow.lua)")
+        local filter, id = parse_input(text)
+        local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)")
         local state = w.follow_state or {}
         if ret ~= "false" then
             local sig
