@@ -4,14 +4,11 @@
 -- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
 ---------------------------------------------------------
 
--- TODO set active element when changing filter
---      focus next/prev
---      use all frames
---      test with frames
---      different label generators
---      different matching algorithms
---      contenteditable?
---      prevent tab opening of javascript: uris
+-- TODO use all frames
+-- TODO test with frames
+-- TODO different label generators
+-- TODO different matching algorithms
+-- TODO contenteditable?
 
 -- Main link following javascript.
 local follow_js = [=[
@@ -502,10 +499,24 @@ add_binds("normal", {
     buf("^;W$", function (w,b,m) w:start_follow("uri",    ":winopen",   function (uri)  w:enter_cmd(":winopen "..uri) end) end),
 })
 
-local function make_labels(num)
+--- Generates the labels for the hints. Must return an array of strings with the
+-- given size.
+function make_labels(size)
+    local digits = 1
+    while true do
+        local max = 10 ^ digits - 10 ^ (digits - 1)
+        if max == 9 then max = 10 end
+        if max >= size then
+            break
+        else
+            digits = digits + 1
+        end
+    end
+    local start = 10 ^ (digits - 1)
+    if start == 1 then start = 0 end
     local labels = {}
-    for i=1,num,1 do
-        table.insert(labels, tostring(i))
+    for i=start,size+start-1,1 do
+        table.insert(labels, string.reverse(tostring(i)))
     end
     return labels
 end
