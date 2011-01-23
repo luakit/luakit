@@ -571,6 +571,9 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
+    // TODO allow callback definition to be optional, instead of mandatory
+    // TODO pass to the callback function the exit status of the command
+    // TODO check possibility of passing the command output to the callback function
     GError *e = NULL;
     GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
