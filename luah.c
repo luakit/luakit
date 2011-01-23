@@ -567,7 +567,6 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
-    // TODO allow callback definition to be optional, instead of mandatory
     // TODO pass to the callback function the exit status of the command
     // TODO check possibility of passing the command output to the callback function
     GError *e = NULL;
@@ -594,13 +593,20 @@ luaH_luakit_spawn(lua_State *L)
     }
     int CB_FUNC_IDX = 2;
 
+    g_strfreev(argv);
+
+    int cb_type = lua_type(L, CB_FUNC_IDX);
+    if (cb_type == LUA_TNONE) return 0;
+
+    if (cb_type != LUA_TFUNCTION)
+        luaL_typerror(L, CB_FUNC_IDX, lua_typename(L, LUA_TFUNCTION));
+
     lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
     lua_pushlightuserdata(L, (void *)pid);
     lua_pushvalue(L, CB_FUNC_IDX);
     lua_rawset(L, -3);
     g_child_watch_add(pid, async_callback_handler, L);
-    g_strfreev(argv);
     return 0;
 }
 
