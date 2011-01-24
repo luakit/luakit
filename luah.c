@@ -532,7 +532,7 @@ luaH_luakit_spawn_sync(lua_State *L)
 /* Calls the Lua function defined as callback for a (async) spawned process
  *
  * \param pid The PID of the process that has just finished
- * \param status TODO
+ * \param status status information about the spawned process. See waitpid(2)
  * \param data pointer to the Lua VM state
  */
 void async_callback_handler(GPid pid, gint status, gpointer data) {
@@ -546,7 +546,21 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
     lua_pushlightuserdata(L, (void *)pid);
     lua_rawget(L, -2);
 
-    lua_call(L, 0, 0);
+    proc_exit_status_t exit_type;
+    int exit_num = 0;
+    if (WIFEXITED(status)) {
+        exit_type = TERM_EXIT;
+        exit_num = WEXITSTATUS(status);
+    } else if (WIFSIGNALED(status)) {
+        exit_type = TERM_SIGNAL;
+        exit_num = WTERMSIG(status);
+    } else {
+        exit_type = TERM_UNKNOWN;
+        exit_num = -1;
+    }
+    lua_pushinteger(L, exit_type);
+    lua_pushinteger(L, exit_num);
+    lua_call(L, 2, 0);
 
     // free callbacks[pid]
     lua_pushlightuserdata(L, (void *)pid);
@@ -567,7 +581,6 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
-    // TODO pass to the callback function the exit status of the command
     // TODO check possibility of passing the command output to the callback function
     GError *e = NULL;
     GPid pid = 0;
