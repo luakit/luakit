@@ -616,17 +616,15 @@ luaH_luakit_spawn(lua_State *L)
     g_spawn_async_with_pipes(NULL, argv, NULL, 
             G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
             NULL, &(cb->stdout_fd), &(cb->stderr_fd), &e);
+    g_strfreev(argv);
     if(e)
     {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
-        g_strfreev(argv);
         g_free(cb);
         lua_error(L);
     }
     int CB_FUNC_IDX = 2;
-
-    g_strfreev(argv);
 
     int cb_type = lua_type(L, CB_FUNC_IDX);
     if (cb_type == LUA_TNONE) {
