@@ -676,6 +676,10 @@ luaH_luakit_index(lua_State *L)
       PI_CASE(WEBKIT_USER_AGENT_MAJOR_VERSION, WEBKIT_USER_AGENT_MAJOR_VERSION)
       PI_CASE(WEBKIT_USER_AGENT_MINOR_VERSION, WEBKIT_USER_AGENT_MINOR_VERSION)
 
+      PI_CASE(PROC_TERM_EXIT, TERM_EXIT)
+      PI_CASE(PROC_TERM_SIGNAL, TERM_SIGNAL)
+      PI_CASE(PROC_TERM_UNKNOWN, TERM_UNKNOWN)
+
       case L_TK_WINDOWS:
         lua_newtable(L);
         for (guint i = 0; i < globalconf.windows->len; i++) {

@@ -114,3 +114,6 @@ webview
 window
 windows
 xid
+PROC_TERM_EXIT
+PROC_TERM_SIGNAL
+PROC_TERM_UNKNOWN

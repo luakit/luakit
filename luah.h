@@ -27,7 +27,6 @@
 #include "common/luaobject.h"
 #include "common/lualib.h"
 
-// TODO expose these to the luakit side
 typedef enum {
     TERM_EXIT = 1,
     TERM_SIGNAL,
