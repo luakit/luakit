@@ -537,10 +537,23 @@ luaH_luakit_spawn_sync(lua_State *L)
  *
  * \param pid The PID of the process that has just finished
  * \param status status information about the spawned process. See waitpid(2)
- * \param data pointer to the Lua VM state
+ * \param data pointer to a proc_callback_data_t structure
+ *
+ * The called Lua function receives 4 arguments:
+ *
+ * Exit type: one of: TERM_EXIT (normal exit), TERM_SIGNAL (terminated by
+ *            signal), TERM_UNKNOWN (another reason)
+ * Exit number: When normal exit happened, the exit code of the process. When
+ *              finished by a signal, the signal number. -1 otherwise.
  */
 void async_callback_handler(GPid pid, gint status, gpointer data) {
-    lua_State *L = (lua_State *)data;
+
+    proc_callback_data_t * cb = (proc_callback_data_t *)data;
+    lua_State *L = cb->L;
+    int stdout_fd = cb->stdout_fd;
+    int stderr_fd = cb->stderr_fd;
+    g_free(cb);
+    // TODO read stdout and stderr using GIOChannel objects
 
     // fetch callbacks table
     lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
@@ -564,6 +577,7 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
     }
     lua_pushinteger(L, exit_type);
     lua_pushinteger(L, exit_num);
+    // TODO pass stdout and stderr strings to the lua function
     lua_call(L, 2, 0);
 
     // free callbacks[pid]
@@ -585,7 +599,6 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
-    // TODO check possibility of passing the command output to the callback function
     GError *e = NULL;
     GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
@@ -598,14 +611,17 @@ luaH_luakit_spawn(lua_State *L)
         g_strfreev(argv);
         lua_error(L);
     }
-    g_spawn_async(NULL, argv, NULL,
+    proc_callback_data_t *cb = g_new0(proc_callback_data_t, 1);
+    cb->L = L;
+    g_spawn_async_with_pipes(NULL, argv, NULL, 
             G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
-            &e);
+            NULL, &(cb->stdout_fd), &(cb->stderr_fd), &e);
     if(e)
     {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         g_strfreev(argv);
+        g_free(cb);
         lua_error(L);
     }
     int CB_FUNC_IDX = 2;
@@ -623,7 +639,7 @@ luaH_luakit_spawn(lua_State *L)
     lua_pushlightuserdata(L, (void *)pid);
     lua_pushvalue(L, CB_FUNC_IDX);
     lua_rawset(L, -3);
-    g_child_watch_add(pid, async_callback_handler, L);
+    g_child_watch_add(pid, async_callback_handler, cb);
     return 0;
 }
 
