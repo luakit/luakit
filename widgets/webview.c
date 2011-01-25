@@ -325,8 +325,13 @@ luaH_webview_eval_js(lua_State *L)
     const gchar *filename = luaL_checkstring(L, 3);
 
     /* Check if js should be run on currently focused frame */
-    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
-        frame = webkit_web_view_get_focused_frame(view);
+    if (lua_gettop(L) >= 4) {
+        if (lua_islightuserdata(L, 4)) {
+            frame = lua_touserdata(L, 4);
+        } else if (luaH_checkboolean(L, 4)) {
+            frame = webkit_web_view_get_focused_frame(view);
+        }
+    }
     /* Fall back on main frame */
     if (!frame)
         frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
