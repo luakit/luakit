@@ -6,6 +6,8 @@
 
 -- TODO contenteditable?
 -- Test with R project
+-- Fix strange focus problems when filtered
+-- Refocus after filter
 
 local print = print
 local ipairs = ipairs
@@ -251,7 +253,7 @@ local follow_js = [=[
                     return str !== "";
                 });
                 var visibleHints = [];
-                var reselect = (follow.activeHint === null);
+                var reselect = false;
                 follow.hints.forEach(function (hint) {
                     var matches = true;
                     // check text match
