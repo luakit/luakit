@@ -4,9 +4,6 @@
 -- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
 ---------------------------------------------------------
 
--- TODO contenteditable?
--- Test with R project
-
 local print = print
 local ipairs = ipairs
 local pairs = pairs
@@ -246,9 +243,8 @@ local follow_js = [=[
             },
 
             // Filters the hints according to the given string and ID.
-            // Returns the number of Hints that is still visible afterwards.
-            // If the returned number is negative or 0, a the active element has
-            // been hidden and the focus must be refreshed.
+            // Returns the number of Hints that is still visible afterwards and a
+            // boolean that indicates wheter or not the active element was hidden.
             filter: function (str, id) {
                 var strings = str.toLowerCase().split(" ").filter(function (str) {
                     return str !== "";
@@ -279,11 +275,7 @@ local follow_js = [=[
                     }
                 });
                 var len = visibleHints.length;
-                // update selection
-                if (reselect) {
-                    len = -len;
-                }
-                return len;
+                return "" + len + " " + reselect;
             },
 
             // Evaluates the given element or the active element, if none is given.
@@ -675,8 +667,10 @@ new_mode("follow", {
         local eval_frame
         for _, f in ipairs(w:get_current().frames) do
             local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)", f)
-            local num = tonumber(ret)
-            if num <= 0 then
+            ret = lousy.util.string.split(ret)
+            local num = tonumber(ret[1])
+            local reselect = (ret[2] == "true")
+            if reselect then
                 focus(w, 1)
                 num = -num
             end
