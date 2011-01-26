@@ -283,7 +283,7 @@ local follow_js = [=[
                 if (hint) {
                     var ret = follow.evaluator(hint.element);
                     follow.clear();
-                    return ret;
+                    return ret || "done";
                 }
             },
 
@@ -576,7 +576,8 @@ add_binds("follow", {
                                     local s = (w.follow_state or {})
                                     for _, f in ipairs(w:get_current().frames) do
                                         local sig = s.func(w:eval_js("follow.evaluate();", "(follow.lua)", f), s)
-                                        if sig then return w:emit_form_root_active_signal(sig) end
+                                        if sig == "done" then return end
+                                        if sig then w:emit_form_root_active_signal(sig) end
                                     end
                                 end),
 })
