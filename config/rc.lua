@@ -38,9 +38,6 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
--- Add HTTP basic authentication
-require "auth"
-
 -- Add vimperator-like link hinting & following
 require "follow"
 
