@@ -232,9 +232,6 @@ local follow_js = [=[
                 follow.hints = elements.map(function (element) {
                     return new Hint(element);
                 });
-                if (elements.length > 0) {
-                    follow.hints[0].activate();
-                }
                 return elements.length;
             },
 
@@ -317,33 +314,54 @@ local follow_js = [=[
                 return false;
             },
 
+            focused: function () {
+                return follow.activeHint !== null;
+            },
+
             // Selects a visible hint according to the given offset.
+            // Returns true if a link was selected and false if the selection
+            // should be tried in another frame.
             focus: function (offset) {
-                var currentIdx = null;
-                for (var i = 0; i < follow.hints.length; ++i) {
-                    var hint = follow.hints[i];
-                    if (hint == follow.activeHint) {
-                        hint.deactivate();
-                        currentIdx = i;
-                        break;
+                var activeHint = follow.activeHint;
+                // deactivate all and find current
+                follow.hints.forEach(function (h) { h.deactivate() });
+                // activate the correct hint
+                var visibleHints = follow.hints.filter(function (h) { return h.visible });
+                if (visibleHints.length === 0) {
+                    follow.activeHint = null;
+                    return false;
+                } else {
+                    // find currently selected hint
+                    var currentIdx = null;
+                    for (var i = 0; i < visibleHints.length; ++i) {
+                        if (visibleHints[i] === activeHint) {
+                            currentIdx = i;
+                            break;
+                        }
                     }
-                }
-                // work around javascript modulo bug
-                var inc = function (v) {
-                    var val = v + offset;
-                    if (val < 0) {
-                        val = follow.hints.length - 1;
-                    } else if (val >= follow.hints.length) {
-                        val = 0;
+                    // if none: select the first/last hint
+                    if (currentIdx === null) {
+                        currentIdx = offset < 0 ? visibleHints.length + offset : offset - 1;
+                        visibleHints[currentIdx].activate();
+                        return true;
+                    } else {
+                        // calculate new position
+                        currentIdx += offset;
+                        var focusNextFrame = currentIdx === -1 || currentIdx === visibleHints.length;
+                        if (focusNextFrame) {
+                            follow.activeHint = null;
+                            return false;
+                        } else {
+                            // norm position to array
+                            if (currentIdx < 0) {
+                                currentIdx += visibleHints.length;
+                            } else if (currentIdx >= visibleHints.length) {
+                                currentIdx -= visibleHints.length;
+                            }
+                            visibleHints[currentIdx].activate();
+                            return true;
+                        }
                     }
-                    return val;
-                }
-                if (currentIdx !== null) {
-                    currentIdx = inc(currentIdx);
-                    while (!follow.hints[currentIdx].visible) {
-                        currentIdx = inc(currentIdx);
-                    }
-                    follow.hints[currentIdx].activate();
                 }
             },
         }
@@ -531,10 +549,33 @@ function parse_input(text)
     return string.match(text, "^(.-)(%d*)$")
 end
 
+-- Focus the next element in the correct frame
+local function focus(w, offset)
+    -- sort frames with currently active one first
+    local function is_focused(f)
+        local ret = w:eval_js("follow.focused();", "(follow.lua)", f)
+        return ret == "true"
+    end
+    local frames = w:get_current().frames
+    if #frames == 0 then return end
+    for i=1,#frames,1 do
+        if is_focused(frames[1]) then break end
+        local f = table.remove(frames, 1)
+        table.insert(frames, f)
+    end
+    -- ask all frames to jump to the next hint until one responds
+    for _, f in ipairs(frames) do
+        local ret = w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", f)
+        if ret == "true" then return end
+    end
+    -- this happens, if only one frame has visible hints
+    w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", frames[0])
+end
+
 -- Add follow mode binds
 add_binds("follow", {
-    key({},        "Tab",       function (w) w:eval_js("follow.focus(+1);") end ),
-    key({"Shift"}, "Tab",       function (w) w:eval_js("follow.focus(-1);") end ),
+    key({},        "Tab",       function (w) focus(w, 1)  end ),
+    key({"Shift"}, "Tab",       function (w) focus(w, -1) end ),
     key({},        "Return",    function (w)
                                     local s = (w.follow_state or {})
                                     local sig = s.func(w:eval_js("follow.evaluate();"), s)
@@ -603,6 +644,9 @@ new_mode("follow", {
             local array = table.concat(t.labels, ",")
             w:eval_js(string.format("follow.show([%s]);", array), "(follow.lua)", t.frame)
         end
+
+        -- Foucs a hint
+        focus(w, 1)
 
         -- Set prompt & input text
         w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
