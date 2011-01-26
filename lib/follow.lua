@@ -556,37 +556,56 @@ new_mode("follow", {
         -- Get follow mode table
         if not mode then w:set_mode() return error("unknown follow mode") end
 
-        -- Load main following js
-        local js_blocks = {}
-        table.insert(js_blocks, follow_js)
+        -- Init all frames and gather label data
+        local frames = {}
+        local sum = 0
+        for _, f in ipairs(w:get_current().frames) do
+            -- Load main following js
+            local js_blocks = {}
+            table.insert(js_blocks, follow_js)
 
-        -- Make theme js
-        for k, v in pairs(get_theme()) do
-            if type(v) == "number" then
-                table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
-            else
-                table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
+            -- Make theme js
+            for k, v in pairs(get_theme()) do
+                if type(v) == "number" then
+                    table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
+                else
+                    table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
+                end
             end
+
+            -- Load mode specific js
+            local evaluator = lousy.util.string.strip(evaluators[mode.evaluator])
+            local selector  = selectors[mode.selector],
+            table.insert(js_blocks, string.format("follow.evaluator = (%s);", evaluator))
+            table.insert(js_blocks, "follow.init();")
+
+            -- Evaluate js code
+            local js = table.concat(js_blocks, "\n")
+            w:eval_js(js, "(follow.lua)", f)
+
+            local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)", f))
+            table.insert(frames, {num = num, frame = f})
+            sum = sum + num
         end
 
-        -- Load mode specific js
-        local evaluator = lousy.util.string.strip(evaluators[mode.evaluator])
-        local selector  = selectors[mode.selector],
-        table.insert(js_blocks, string.format("follow.evaluator = (%s);", evaluator))
-        table.insert(js_blocks, "follow.init();")
-
-        -- Evaluate js code
-        local js = table.concat(js_blocks, "\n")
-        w:eval_js(js, "(follow.lua)")
-
         -- Generate labels
-        local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)"))
-        local labels = make_labels(num)
+        state.frames = frames
+        local labels = make_labels(sum)
         state.labels = lousy.util.table.clone(labels)
         state.current = 1
         for i, l in ipairs(labels) do labels[i] = string.format("%q", l) end
-        local array = table.concat(labels, ",")
-        w:eval_js(string.format("follow.show([%s]);", array), "(follow.lua)")
+
+        -- Apply labels
+        local last = 0
+        for _,t in ipairs(frames) do
+            t.labels = {}
+            for i=1,t.num,1 do
+                t.labels[i] = labels[last+i]
+            end
+            last = last + t.num
+            local array = table.concat(t.labels, ",")
+            w:eval_js(string.format("follow.show([%s]);", array), "(follow.lua)", t.frame)
+        end
 
         -- Set prompt & input text
         w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
@@ -595,7 +614,11 @@ new_mode("follow", {
 
     -- Leave follow mode hook
     leave = function (w)
-        if w.eval_js then w:eval_js("follow.clear();", "(follow.lua)") end
+        if w.eval_js then
+            for _,f in ipairs(w:get_current().frames) do
+                w:eval_js("follow.clear();", "(follow.lua)", f)
+            end
+        end
     end,
 
     -- Input bar changed hook
