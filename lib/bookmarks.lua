@@ -273,6 +273,10 @@ local cmd = lousy.bind.cmd
 add_cmds({
     cmd({"bookmark", "bm"},
         function (w, a)
+            if not a then
+                w:error("Missing bookmark arguments (use `:bookmark <uri> <tags>`)")
+                return
+            end
             local args = util.string.split(a)
             local uri = table.remove(args, 1)
             add(uri, args)
