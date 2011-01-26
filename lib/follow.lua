@@ -278,14 +278,11 @@ local follow_js = [=[
                         hint.hide();
                     }
                 });
-                if (visibleHints.length === 1) {
-                    return follow.evaluate(visibleHints[0]);
-                } else {
-                    // update selection
-                    if (reselect && visibleHints.length > 0) {
-                        visibleHints[0].activate();
-                    }
+                // update selection
+                if (reselect && visibleHints.length > 0) {
+                    visibleHints[0].activate();
                 }
+                return visibleHints.length;
             },
 
             // Evaluates the given element or the active element, if none is given.
@@ -624,12 +621,20 @@ new_mode("follow", {
     -- Input bar changed hook
     changed = function (w, text)
         local filter, id = parse_input(text)
-        local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)")
+        local active_hints = 0
+        local eval_frame
+        for _, f in ipairs(w:get_current().frames) do
+            local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)", f)
+            if ret == "1" then eval_frame = f end
+            active_hints = active_hints + ret
+        end
         local state = w.follow_state or {}
-        if ret ~= "false" then
+        if active_hints == 1 then
+            w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
             local sig
             if state.func then sig = state.func(ret, state) end
             if sig then w:emit_form_root_active_signal(sig) end
+            w:set_mode()
         end
     end,
 })
