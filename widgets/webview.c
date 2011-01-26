@@ -741,7 +741,9 @@ static void
 luaH_push_frame(gpointer f, gpointer v, gpointer L)
 {
     (void) v;
-    lua_pushlightuserdata((lua_State *)L, f);
+    if (WEBKIT_IS_WEB_FRAME(f)) {
+        lua_pushlightuserdata((lua_State *)L, f);
+    }
 }
 
 static gint
@@ -753,6 +755,9 @@ luaH_webview_push_frames(lua_State *L, WebKitWebView *v)
     gint top = lua_gettop(L);
     g_hash_table_foreach(hash, luaH_push_frame, L);
     for (int i = 1; i <= size; ++i) {
+        if (!lua_islightuserdata(L, -1)) {
+            break;
+        }
         lua_rawseti(L, top, i);
     }
     return 1;
