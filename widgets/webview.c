@@ -328,7 +328,7 @@ luaH_webview_eval_js(lua_State *L)
     if (lua_gettop(L) >= 4) {
         if (lua_islightuserdata(L, 4)) {
             frame = lua_touserdata(L, 4);
-        } else if (luaH_checkboolean(L, 4)) {
+        } else if (lua_toboolean(L, 4)) {
             frame = webkit_web_view_get_focused_frame(view);
         }
     }
