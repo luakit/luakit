@@ -26,6 +26,7 @@ local follow_js = [=[
     window.follow = (function () {
         // Private members.
 
+        // Remove an element from its parentNode.
         function unlink(element) {
             if (element && element.parentNode) {
                 element.parentNode.removeChild(element);
@@ -48,7 +49,7 @@ local follow_js = [=[
             }
         }
 
-        // Returns all elements within the viewport.
+        // Returns all visible elements within the viewport.
         function getVisibleElements(selector) {
             var elements = [];
             var set = document.body.querySelectorAll(selector);
@@ -67,6 +68,7 @@ local follow_js = [=[
                 }
                 elements.push(e);
             };
+            // sort top to bottom and left to right
             elements.sort(function (a,b) {
                 return a.getBoundingClientRect().left - b.getBoundingClientRect().left;
             });
@@ -136,21 +138,18 @@ local follow_js = [=[
 
             this.tick = createTick(this);
             this.overlay = createOverlay(this);
-
             follow.tickParent.appendChild(this.tick);
             follow.overlayParent.appendChild(this.overlay);
 
             this.id = null;
             this.visible = true;
 
-            // Shows the hint.
             this.show = function () {
                 this.tick.style.visibility = 'visible';
                 this.overlay.style.visibility = 'visible';
                 this.visible = true;
             };
 
-            // Hides the hint.
             this.hide = function () {
                 this.tick.style.visibility = 'hidden';
                 this.overlay.style.visibility = 'hidden';
@@ -164,14 +163,14 @@ local follow_js = [=[
                 this.tick.textContent = id;
             };
 
-            // Changes the appearance of the hint to indicate it is active.
+            // Changes the appearance of the hint to indicate it is focused.
             this.activate = function () {
                 this.overlay.style.backgroundColor = follow.theme.focus_bg;
                 this.overlay.focus();
                 follow.activeHint = this;
             };
 
-            // Changes the appearance of the hint to indicate it is not active.
+            // Changes the appearance of the hint to indicate it is not focused.
             this.deactivate = function () {
                 this.overlay.style.backgroundColor = follow.theme.normal_bg;
             };
@@ -183,7 +182,7 @@ local follow_js = [=[
             };
         }
 
-        // Public structure.
+        // Public follow structure.
         return {
             evaluator: null,
 
@@ -244,7 +243,7 @@ local follow_js = [=[
 
             // Filters the hints according to the given string and ID.
             // Returns the number of Hints that is still visible afterwards and a
-            // boolean that indicates wheter or not the active element was hidden.
+            // boolean that indicates whether or not the active element was hidden.
             filter: function (str, id) {
                 var strings = str.toLowerCase().split(" ").filter(function (str) {
                     return str !== "";
@@ -314,14 +313,14 @@ local follow_js = [=[
                 return follow.activeHint !== null;
             },
 
-            // Selects a visible hint according to the given offset.
+            // Selects a visible hint according to the given offset (+1/-1).
             // Returns true if a link was selected and false if the selection
             // should be tried in another frame.
             focus: function (offset) {
                 var activeHint = follow.activeHint;
-                // deactivate all and find current
+                // deactivate all
                 follow.hints.forEach(function (h) { h.deactivate() });
-                // activate the correct hint
+                // get all visible hints
                 var visibleHints = follow.hints.filter(function (h) { return h.visible });
                 if (visibleHints.length === 0) {
                     follow.activeHint = null;
@@ -335,8 +334,8 @@ local follow_js = [=[
                             break;
                         }
                     }
-                    // if none: select the first/last hint
                     if (currentIdx === null) {
+                        // if none: select the first/last hint
                         currentIdx = offset < 0 ? visibleHints.length + offset : offset - 1;
                         visibleHints[currentIdx].activate();
                         return true;
@@ -547,11 +546,11 @@ end
 
 -- Focus the next element in the correct frame
 local function focus(w, offset)
-    -- sort frames with currently active one first
     local function is_focused(f)
         local ret = w:eval_js("follow.focused();", "(follow.lua)", f)
         return ret == "true"
     end
+    -- sort frames with currently active one first
     local frames = w:get_current().frames
     if #frames == 0 then return end
     for i=1,#frames,1 do
@@ -564,7 +563,8 @@ local function focus(w, offset)
         local ret = w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", f)
         if ret == "true" then return end
     end
-    -- this happens, if only one frame has visible hints
+    -- we get here, if only one frame has visible hints and it reached its limit
+    -- in the preciding loop. Thus, we ask it to refocus again
     w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", frames[1])
 end
 
@@ -617,7 +617,9 @@ new_mode("follow", {
 
             -- Evaluate js code
             local js = table.concat(js_blocks, "\n")
-            w:eval_js(js, "(follow.lua)", f)
+            local ret = w:eval_js(js, "(follow.lua)", f)
+            -- abort if initialization failed
+            if ret ~= "true" then return w:set_mode() end
 
             local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)", f))
             table.insert(frames, {num = num, frame = f})
