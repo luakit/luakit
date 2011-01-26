@@ -5,7 +5,9 @@
 ---------------------------------------------------------
 
 -- TODO contenteditable?
+-- Test with R project
 
+local print = print
 local ipairs = ipairs
 local pairs = pairs
 local table = table
@@ -567,7 +569,7 @@ local function focus(w, offset)
         if ret == "true" then return end
     end
     -- this happens, if only one frame has visible hints
-    w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", frames[0])
+    w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", frames[1])
 end
 
 -- Add follow mode binds
