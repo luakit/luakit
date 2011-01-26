@@ -85,6 +85,8 @@ local follow_js = [=[
         leftpos = Math.max((element.rect.left + document.defaultView.scrollX), document.defaultView.scrollX) + h;
         toppos = Math.max((element.rect.top + document.defaultView.scrollY), document.defaultView.scrollY) + v;
       }
+      leftpos = Math.max(leftpos, 0);
+      toppos = Math.max(toppos, 0);
       span.style.position = "absolute";
       span.style.left = leftpos + "px";
       span.style.top = toppos + "px";
