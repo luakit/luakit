@@ -6,8 +6,6 @@
 
 -- TODO contenteditable?
 -- Test with R project
--- Fix strange focus problems when filtered
--- Refocus after filter
 
 local print = print
 local ipairs = ipairs
@@ -248,6 +246,9 @@ local follow_js = [=[
             },
 
             // Filters the hints according to the given string and ID.
+            // Returns the number of Hints that is still visible afterwards.
+            // If the returned number is negative or 0, a the active element has
+            // been hidden and the focus must be refreshed.
             filter: function (str, id) {
                 var strings = str.toLowerCase().split(" ").filter(function (str) {
                     return str !== "";
@@ -277,11 +278,12 @@ local follow_js = [=[
                         hint.hide();
                     }
                 });
+                var len = visibleHints.length;
                 // update selection
-                if (reselect && visibleHints.length > 0) {
-                    visibleHints[0].activate();
+                if (reselect) {
+                    len = -len;
                 }
-                return visibleHints.length;
+                return len;
             },
 
             // Evaluates the given element or the active element, if none is given.
@@ -673,8 +675,13 @@ new_mode("follow", {
         local eval_frame
         for _, f in ipairs(w:get_current().frames) do
             local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)", f)
-            if ret == "1" then eval_frame = f end
-            active_hints = active_hints + ret
+            local num = tonumber(ret)
+            if num <= 0 then
+                focus(w, 1)
+                num = -num
+            end
+            if num == 1 then eval_frame = f end
+            active_hints = active_hints + num
         end
         local state = w.follow_state or {}
         if active_hints == 1 then
