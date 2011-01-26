@@ -423,10 +423,8 @@ luaH_webview_push_frames(lua_State *L, WebKitWebView *v)
     lua_createtable(L, size, 0);
     gint top = lua_gettop(L);
     g_hash_table_foreach_remove(hash, luaH_push_or_remove_frame, L);
+    size = g_hash_table_size(hash);
     for (int i = 1; i <= size; ++i) {
-        if (!lua_islightuserdata(L, -1)) {
-            break;
-        }
         lua_rawseti(L, top, i);
     }
     return 1;
@@ -498,17 +496,6 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 
     lua_pop(L, ret + 1);
     return TRUE;
-}
-
-static void
-window_object_cleared_cb(WebKitWebView *v, WebKitWebFrame *f, gpointer ctx, gpointer wo, widget_t *w)
-{
-    (void) w;
-    (void) ctx;
-    (void) wo;
-
-    gpointer hash = g_hash_table_lookup(frames_by_view, v);
-    g_hash_table_remove(hash, f);
 }
 
 static void
@@ -1542,7 +1529,6 @@ widget_webview(widget_t *w)
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
-      "signal::window-object-cleared",                G_CALLBACK(window_object_cleared_cb),     w,
       NULL);
 
     /* show widgets */
