@@ -395,6 +395,43 @@ update_uri(widget_t *w, const gchar *new)
     }
 }
 
+static gboolean
+luaH_push_or_remove_frame(gpointer f, gpointer v, gpointer L)
+{
+    (void) v;
+    if (WEBKIT_IS_WEB_FRAME(f)) {
+        if (L) {
+            lua_pushlightuserdata((lua_State *)L, f);
+        }
+        return FALSE;
+    } else {
+        return TRUE;
+    }
+}
+
+static void
+webview_cleanup_frames(WebKitWebView *v) {
+    gpointer hash = g_hash_table_lookup(frames_by_view, v);
+    g_hash_table_foreach_remove(hash, luaH_push_or_remove_frame, NULL);
+}
+
+static gint
+luaH_webview_push_frames(lua_State *L, WebKitWebView *v)
+{
+    gpointer hash = g_hash_table_lookup(frames_by_view, v);
+    gint size = g_hash_table_size(hash);
+    lua_createtable(L, size, 0);
+    gint top = lua_gettop(L);
+    g_hash_table_foreach_remove(hash, luaH_push_or_remove_frame, L);
+    for (int i = 1; i <= size; ++i) {
+        if (!lua_islightuserdata(L, -1)) {
+            break;
+        }
+        lua_rawseti(L, top, i);
+    }
+    return 1;
+}
+
 static void
 notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 {
@@ -424,6 +461,9 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
     /* update uri after redirects, etc */
     if ((status & WEBKIT_LOAD_COMMITTED) || (status & WEBKIT_LOAD_FINISHED))
         update_uri(w, NULL);
+
+    /* remove leftover frame references */
+    webview_cleanup_frames(v);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -735,32 +775,6 @@ luaH_webview_go_forward(lua_State *L)
     GtkWidget *view = GTK_WIDGET(g_object_get_data(G_OBJECT(w->widget), "webview"));
     webkit_web_view_go_back_or_forward(WEBKIT_WEB_VIEW(view), steps);
     return 0;
-}
-
-static void
-luaH_push_frame(gpointer f, gpointer v, gpointer L)
-{
-    (void) v;
-    if (WEBKIT_IS_WEB_FRAME(f)) {
-        lua_pushlightuserdata((lua_State *)L, f);
-    }
-}
-
-static gint
-luaH_webview_push_frames(lua_State *L, WebKitWebView *v)
-{
-    gpointer hash = g_hash_table_lookup(frames_by_view, v);
-    gint size = g_hash_table_size(hash);
-    lua_createtable(L, size, 0);
-    gint top = lua_gettop(L);
-    g_hash_table_foreach(hash, luaH_push_frame, L);
-    for (int i = 1; i <= size; ++i) {
-        if (!lua_islightuserdata(L, -1)) {
-            break;
-        }
-        lua_rawseti(L, top, i);
-    }
-    return 1;
 }
 
 static gint
