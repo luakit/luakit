@@ -4,8 +4,6 @@
 -- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
 ---------------------------------------------------------
 
--- TODO use all frames
--- TODO test with frames
 -- TODO contenteditable?
 
 local ipairs = ipairs
@@ -578,8 +576,10 @@ add_binds("follow", {
     key({"Shift"}, "Tab",       function (w) focus(w, -1) end ),
     key({},        "Return",    function (w)
                                     local s = (w.follow_state or {})
-                                    local sig = s.func(w:eval_js("follow.evaluate();"), s)
-                                    if sig then w:emit_form_root_active_signal(sig) end
+                                    for _, f in ipairs(w:get_current().frames) do
+                                        local sig = s.func(w:eval_js("follow.evaluate();", "(follow.lua)", f), s)
+                                        if sig then return w:emit_form_root_active_signal(sig) end
+                                    end
                                 end),
 })
 
