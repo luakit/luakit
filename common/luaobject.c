@@ -199,13 +199,29 @@ signal_object_emit(lua_State *L, signal_t *signals,
             lua_pushvalue(L, - nargs - nbfunc + i);
             /* remove this first function */
             lua_remove(L, - nargs - nbfunc - 1 + i);
-            luaH_dofunction(L, nargs, nret);
+            luaH_dofunction(L, nargs, LUA_MULTRET);
             int ret = lua_gettop(L) - stacksize + 1;
-            if (ret > 0) {
+
+            /* Note that only if nret && ret will the signal execution stop */
+            if (nret && ret) {
                 /* remove all args and functions */
                 for (gint j = 0; j < nargs + nbfunc - i; j++) {
                     lua_remove(L, - ret - 1);
                 }
+
+                /* Adjust the number of results to match nret (including 0) */
+                if (nret != LUA_MULTRET && ret != nret) {
+                    /* Pad with nils */
+                    for (; ret < nret; ret++)
+                        lua_pushnil(L);
+                    /* Or truncate stack */
+                    if (ret > nret) {
+                        lua_pop(L, ret - nret);
+                        ret = nret;
+                    }
+                }
+
+                /* Return the number of returned arguments */
                 return ret;
             }
         }
