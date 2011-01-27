@@ -404,7 +404,10 @@ static void
 frame_destroyed_cb(frame_destroy_callback_t *d)
 {
     gpointer hash = g_hash_table_lookup(frames_by_view, d->v);
-    g_hash_table_remove(hash, d->f);
+    /* the view might be destroyed before the frames */
+    if (hash) {
+        g_hash_table_remove(hash, d->f);
+    }
     g_free(d);
 }
 
