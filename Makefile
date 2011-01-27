@@ -27,10 +27,10 @@ options:
 	@echo "HEADS      = ${HEADS}"
 	@echo "OBJS       = ${OBJS}"
 
-${THEAD} ${TSRC}: options newline ${TLIST}
+${THEAD} ${TSRC}: ${TLIST}
 	./build-utils/gentokens.lua ${TLIST} $@
 
-globalconf.h: options newline globalconf.h.in
+globalconf.h: globalconf.h.in
 	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' globalconf.h.in > globalconf.h
 
 ${OBJS}: ${HEADS} config.mk

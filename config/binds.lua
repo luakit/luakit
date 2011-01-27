@@ -73,7 +73,7 @@ add_binds("all", {
                             -- Open hovered uri in new tab
                             local uri = w:get_current().hovered_uri
                             if uri then
-                                w:new_tab(w:search_open(uri), false)
+                                w:new_tab(uri, false)
                             else -- Open selection in current tab
                                 uri = luakit.get_selection()
                                 if uri then w:navigate(w:search_open(uri)) end
@@ -134,6 +134,8 @@ add_binds("normal", {
     key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end),
     key({},          "Home",        function (w) w:scroll_vert("0%")   end),
     key({},          "End",         function (w) w:scroll_vert("100%") end),
+    key({},          "0",           function (w) w:scroll_horiz("0%")   end),
+    key({},          "$",           function (w) w:scroll_horiz("100%") end),
 
     -- Zooming
     key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
