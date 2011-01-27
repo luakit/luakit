@@ -33,6 +33,8 @@ local follow_js = [=[
             }
         }
 
+        // Tests if the given element is a "frame".
+        // We select body tags instead of frames to prevent cross-domain javascript requests.
         function isFrame(element) {
             return element.tagName.toLowerCase() == "body"
         }
@@ -288,6 +290,10 @@ local follow_js = [=[
             evaluate: function (element) {
                 var hint = element || follow.activeHint;
                 if (hint) {
+                    // Fix frames which have been selected by the "body" trick
+                    if (isFrame(hint.element)) {
+                        hint.element = window.parentFrame || window;
+                    }
                     var ret = follow.evaluator(hint.element);
                     follow.clear();
                     return ret || "done";
@@ -428,7 +434,7 @@ evaluators = {
     -- Return the uri.
     uri = [=[
         function (element) {
-            return element.src || element.href;
+            return element.src || element.href || element.location;
         }]=],
     -- Return image location.
     src = [=[
