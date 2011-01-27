@@ -169,11 +169,16 @@ luaH_object_remove_signal(lua_State *L, gint oud,
 
 /* Emit a signal from a signals array and return the results of the first
  * handler that returns something.
- * If nret is 0, executes all handlers instead.
  * `signals` is the signals array.
  * `name` is the name of the signal.
  * `nargs` is the number of arguments to pass to the called functions.
- * `nret` is the maximum number of return values allowed.
+ * `nret` is the number of return values this function pushes onto the stack.
+ * A positive number means that any missing values will be padded with nil
+ * and any superfluous values will be removed.
+ * LUA_MULTRET means that any number of values is returned without any
+ * adjustment.
+ * 0 means that all return values are removed and that ALL handler functions are
+ * executed.
  * Returns the number of return values pushed onto the stack. */
 int
 signal_object_emit(lua_State *L, signal_t *signals,
@@ -209,7 +214,7 @@ signal_object_emit(lua_State *L, signal_t *signals,
                     lua_remove(L, - ret - 1);
                 }
 
-                /* Adjust the number of results to match nret (including 0) */
+                /* Adjust the number of results to match nret */
                 if (nret != LUA_MULTRET && ret != nret) {
                     /* Pad with nils */
                     for (; ret < nret; ret++)
@@ -223,6 +228,9 @@ signal_object_emit(lua_State *L, signal_t *signals,
 
                 /* Return the number of returned arguments */
                 return ret;
+            } else if (nret == 0) {
+                /* ignore all return values */
+                lua_pop(L, ret);
             }
         }
     }
@@ -234,7 +242,15 @@ signal_object_emit(lua_State *L, signal_t *signals,
 /* Emit a signal to an object.
  * `oud` is the object index on the stack.
  * `name` is the name of the signal.
- * `nargs` is the number of arguments to pass to the called functions. */
+ * `nargs` is the number of arguments to pass to the called functions.
+ * `nret` is the number of return values this function pushes onto the stack.
+ * A positive number means that any missing values will be padded with nil
+ * and any superfluous values will be removed.
+ * LUA_MULTRET means that any number of values is returned without any
+ * adjustment.
+ * 0 means that all return values are removed and that ALL handler functions are
+ * executed.
+ * Returns the number of return values pushed onto the stack. */
 gint
 luaH_object_emit_signal(lua_State *L, gint oud,
         const gchar *name, gint nargs, gint nret) {
@@ -268,7 +284,7 @@ luaH_object_emit_signal(lua_State *L, gint oud,
             ret = lua_gettop(L) - top;
 
             /* Note that only if nret && ret will the signal execution stop */
-            if (ret) {
+            if (nret && ret) {
                 /* Adjust the number of results to match nret (including 0) */
                 if (nret != LUA_MULTRET && ret != nret) {
                     /* Pad with nils */
@@ -285,6 +301,9 @@ luaH_object_emit_signal(lua_State *L, gint oud,
                     lua_remove(L, bot);
                 /* Return the number of returned arguments */
                 return ret;
+            } else if (nret == 0) {
+                /* ignore all return values */
+                lua_pop(L, ret);
             }
         }
     }
