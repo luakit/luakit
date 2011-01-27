@@ -167,50 +167,17 @@ luaH_object_remove_signal(lua_State *L, gint oud,
     lua_remove(L, ud);
 }
 
-/* Emit a signal from a signals array, executing ALL handlers of that signal.
- * Return values from the handlers are ignored.
- * `signals` is the signals array.
- * `name` is the name of the signal.
- * `nargs` is the number of arguments to pass to the called functions. */
-void
-signal_object_emit(lua_State *L, signal_t *signals,
-        const gchar *name, gint nargs) {
-
-    signal_array_t *sigfuncs = signal_lookup(signals, name);
-    if(sigfuncs) {
-        gint nbfunc = sigfuncs->len;
-        luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 1,
-                "too much signal");
-        /* Push all functions and then execute, because this list can change
-         * while executing funcs. */
-        for(gint i = 0; i < nbfunc; i++) {
-            luaH_object_push(L, sigfuncs->pdata[i]);
-        }
-
-        for(gint i = 0; i < nbfunc; i++) {
-            /* push all args */
-            for(gint j = 0; j < nargs; j++)
-                lua_pushvalue(L, - nargs - nbfunc + i);
-            /* push first function */
-            lua_pushvalue(L, - nargs - nbfunc + i);
-            /* remove this first function */
-            lua_remove(L, - nargs - nbfunc - 1 + i);
-            luaH_dofunction(L, nargs, 0);
-        }
-    }
-    /* remove args */
-    lua_pop(L, nargs);
-}
-
 /* Emit a signal from a signals array and return the results of the first
  * handler that returns something.
+ * If nret is 0, executes all handlers instead.
  * `signals` is the signals array.
  * `name` is the name of the signal.
  * `nargs` is the number of arguments to pass to the called functions.
+ * `nret` is the maximum number of return values allowed.
  * Returns the number of return values pushed onto the stack. */
 int
-signal_object_emit_ret(lua_State *L, signal_t *signals,
-        const gchar *name, gint nargs) {
+signal_object_emit(lua_State *L, signal_t *signals,
+        const gchar *name, gint nargs, int nret) {
 
     signal_array_t *sigfuncs = signal_lookup(signals, name);
     if(sigfuncs) {
@@ -232,14 +199,14 @@ signal_object_emit_ret(lua_State *L, signal_t *signals,
             lua_pushvalue(L, - nargs - nbfunc + i);
             /* remove this first function */
             lua_remove(L, - nargs - nbfunc - 1 + i);
-            luaH_dofunction(L, nargs, LUA_MULTRET);
-            int nret = lua_gettop(L) - stacksize + 1;
-            if (nret > 0) {
+            luaH_dofunction(L, nargs, nret);
+            int ret = lua_gettop(L) - stacksize + 1;
+            if (ret > 0) {
                 /* remove all args and functions */
                 for (gint j = 0; j < nargs + nbfunc - i; j++) {
-                    lua_remove(L, - nret - 1);
+                    lua_remove(L, - ret - 1);
                 }
-                return nret;
+                return ret;
             }
         }
     }

@@ -76,7 +76,7 @@ luakit_store_password(SoupURI *soup_uri, const char *login, const char *password
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
-    signal_object_emit(L, globalconf.signals, "store-password", 3);
+    signal_object_emit(L, globalconf.signals, "store-password", 3, LUA_MULTRET);
     g_free(uri);
 }
 
@@ -86,7 +86,7 @@ luakit_find_password(SoupURI *soup_uri, const char **login, const char **passwor
     lua_State *L = globalconf.L;
     char *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
-    int ret = signal_object_emit_ret(L, globalconf.signals, "authenticate", 1);
+    int ret = signal_object_emit(L, globalconf.signals, "authenticate", 1, LUA_MULTRET);
     g_free(uri);
     if (ret >= 2) {
         *password = luaL_checkstring(L, -1);
