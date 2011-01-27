@@ -65,6 +65,11 @@ typedef union {
     gint      i;
 } temp_value_t;
 
+typedef struct {
+    WebKitWebView *v;
+    WebKitWebFrame *f;
+} frame_destroy_callback_t;
+
 GHashTable *properties = NULL;
 
 typedef struct {
@@ -395,24 +400,19 @@ update_uri(widget_t *w, const gchar *new)
     }
 }
 
-static gboolean
-luaH_push_or_remove_frame(gpointer f, gpointer v, gpointer L)
+static void
+frame_destroyed_cb(frame_destroy_callback_t *d)
 {
-    (void) v;
-    if (WEBKIT_IS_WEB_FRAME(f)) {
-        if (L) {
-            lua_pushlightuserdata((lua_State *)L, f);
-        }
-        return FALSE;
-    } else {
-        return TRUE;
-    }
+    gpointer hash = g_hash_table_lookup(frames_by_view, d->v);
+    g_hash_table_remove(hash, d->f);
+    g_free(d);
 }
 
 static void
-webview_cleanup_frames(WebKitWebView *v) {
-    gpointer hash = g_hash_table_lookup(frames_by_view, v);
-    g_hash_table_foreach_remove(hash, luaH_push_or_remove_frame, NULL);
+luaH_push_frame(gpointer f, gpointer v, gpointer L)
+{
+    (void) v;
+    lua_pushlightuserdata((lua_State *)L, f);
 }
 
 static gint
@@ -422,8 +422,7 @@ luaH_webview_push_frames(lua_State *L, WebKitWebView *v)
     gint size = g_hash_table_size(hash);
     lua_createtable(L, size, 0);
     gint top = lua_gettop(L);
-    g_hash_table_foreach_remove(hash, luaH_push_or_remove_frame, L);
-    size = g_hash_table_size(hash);
+    g_hash_table_foreach(hash, luaH_push_frame, L);
     for (int i = 1; i <= size; ++i) {
         lua_rawseti(L, top, i);
     }
@@ -459,9 +458,6 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
     /* update uri after redirects, etc */
     if ((status & WEBKIT_LOAD_COMMITTED) || (status & WEBKIT_LOAD_FINISHED))
         update_uri(w, NULL);
-
-    /* remove leftover frame references */
-    webview_cleanup_frames(v);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -502,6 +498,12 @@ static void
 document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 {
     (void) w;
+
+    /* add a bogus property to the frame so we get notified when it's destroyed */
+    frame_destroy_callback_t *d = g_new(frame_destroy_callback_t, 1);
+    d->v = v;
+    d->f = f;
+    g_object_set_data_full(G_OBJECT(f), "dummy-destroy-notify", d, (GDestroyNotify)frame_destroyed_cb);
 
     gpointer hash = g_hash_table_lookup(frames_by_view, v);
     g_hash_table_insert(hash, f, NULL);
