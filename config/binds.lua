@@ -73,7 +73,7 @@ add_binds("all", {
                             -- Open hovered uri in new tab
                             local uri = w:get_current().hovered_uri
                             if uri then
-                                w:new_tab(uri)
+                                w:new_tab(uri, false)
                             else -- Open selection in current tab
                                 uri = luakit.get_selection()
                                 if uri then w:navigate(w:search_open(uri)) end
