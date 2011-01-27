@@ -34,7 +34,7 @@ local follow_js = [=[
         }
 
         function isFrame(element) {
-            return (element.tagName == "FRAME" || element.tagName == "IFRAME");
+            return element.tagName.toLowerCase() == "body"
         }
 
         // Returns the visible text of the element based on its class.
@@ -52,7 +52,7 @@ local follow_js = [=[
         // Returns all visible elements within the viewport.
         function getVisibleElements(selector) {
             var elements = [];
-            var set = document.body.querySelectorAll(selector);
+            var set = document.querySelectorAll(selector);
             for (var i = 0; i < set.length; i++) {
                 var e = set[i];
                 var rects = e.getClientRects()[0];
@@ -126,11 +126,14 @@ local follow_js = [=[
                 overlay.style.height = hint.rect.height + "px";
                 overlay.style.opacity = follow.theme.opacity;
                 overlay.style.border = follow.theme.border;
-                overlay.style.backgroundColor = follow.theme.normal_bg;
                 overlay.style.zIndex = 10000;
                 overlay.style.visibility = 'visible';
                 if (isFrame(hint.element)) {
-                    overlay.style.display = 'none';
+                    overlay.style.border = follow.theme.frame_border;
+                    overlay.style.backgroundColor = "transparent";
+                } else {
+                    overlay.style.border = follow.theme.border;
+                    overlay.style.backgroundColor = follow.theme.normal_bg;
                 }
                 overlay.addEventListener('click', function() { click(hint.element); }, false );
                 return overlay;
@@ -172,7 +175,11 @@ local follow_js = [=[
 
             // Changes the appearance of the hint to indicate it is not focused.
             this.deactivate = function () {
-                this.overlay.style.backgroundColor = follow.theme.normal_bg;
+                if (isFrame(this.element)) {
+                    this.overlay.style.backgroundColor = "transparent";
+                } else {
+                    this.overlay.style.backgroundColor = follow.theme.normal_bg;
+                }
             };
 
             // Tests if the hint's text matches the given string.
@@ -368,7 +375,8 @@ local default_theme = {
     normal_bg     = "#ffff99";
     opacity       = 0.3;
     border        = "1px dotted #000000";
-    tick_frame_bg = "#552222";
+    frame_border  = "2px solid #880000";
+    tick_frame_bg = "#880000";
     tick_fg       = "#ffffff";
     tick_bg       = "#000088";
     tick_border   = "2px dashed #000000";
@@ -384,10 +392,11 @@ local function get_theme()
 end
 
 --- Selectors for the different modes
+-- body selects frames (this is special magic to avoid cross-domain problems)
 selectors = {
     followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
-    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object',
-    uri         = 'a, area, frame, iframe',
+    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
+    uri         = 'a, area, body',
     desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
     image       = 'img, input[type=image]',
 }
