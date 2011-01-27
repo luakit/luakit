@@ -4,7 +4,6 @@
 -- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
 ---------------------------------------------------------
 
-local print = print
 local ipairs = ipairs
 local pairs = pairs
 local table = table
@@ -287,6 +286,8 @@ local follow_js = [=[
             },
 
             // Evaluates the given element or the active element, if none is given.
+            // If this function returns "continue", the next frame must be tried.
+            // Otherwise, it returns "done <val>", where <val> is the return value.
             evaluate: function (element) {
                 var hint = element || follow.activeHint;
                 if (hint) {
@@ -296,7 +297,9 @@ local follow_js = [=[
                     }
                     var ret = follow.evaluator(hint.element);
                     follow.clear();
-                    return ret || "done";
+                    return "done " + ret;
+                } else {
+                    return "continue";
                 }
             },
 
@@ -594,9 +597,14 @@ add_binds("follow", {
     key({},        "Return",    function (w)
                                     local s = (w.follow_state or {})
                                     for _, f in ipairs(w:get_current().frames) do
-                                        local sig = s.func(w:eval_js("follow.evaluate();", "(follow.lua)", f), s)
-                                        if sig == "done" then return end
-                                        if sig then w:emit_form_root_active_signal(sig) end
+                                        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+                                        local done = string.match(ret, "^done")
+                                        if done then
+                                            local val = string.match(ret, "done (.*)")
+                                            local sig = s.func(val, s)
+                                            if sig then w:emit_form_root_active_signal(sig) end
+                                            return
+                                        end
                                     end
                                 end),
 })
