@@ -134,6 +134,8 @@ add_binds("normal", {
     key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end),
     key({},          "Home",        function (w) w:scroll_vert("0%")   end),
     key({},          "End",         function (w) w:scroll_vert("100%") end),
+    key({},          "0",           function (w) w:scroll_horiz("0%")   end),
+    key({},          "$",           function (w) w:scroll_horiz("100%") end),
 
     -- Zooming
     key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
