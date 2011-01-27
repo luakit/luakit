@@ -292,7 +292,7 @@ local follow_js = [=[
                 if (hint) {
                     // Fix frames which have been selected by the "body" trick
                     if (isFrame(hint.element)) {
-                        hint.element = window.parentFrame || window;
+                        hint.element = window.frameElement || window;
                     }
                     var ret = follow.evaluator(hint.element);
                     follow.clear();
@@ -309,6 +309,10 @@ local follow_js = [=[
             },
 
             isEditable: function (element) {
+                // we might get a window object if the main frame was focused
+                if (!element.tagName) {
+                    return false;
+                }
                 var name = element.tagName.toLowerCase();
                 if (name === "textarea" || name === "select") {
                     return true;
