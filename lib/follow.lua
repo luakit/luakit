@@ -700,10 +700,7 @@ new_mode("follow", {
             ret = lousy.util.string.split(ret)
             local num = tonumber(ret[1])
             local reselect = (ret[2] == "true")
-            if reselect then
-                focus(w, 1)
-                num = -num
-            end
+            if reselect then focus(w, 1) end
             if num == 1 then eval_frame = f end
             active_hints = active_hints + num
         end
