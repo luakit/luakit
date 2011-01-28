@@ -204,9 +204,6 @@ local follow_js = [=[
             // Returns true on success. If false is returned, the other hinting functions
             // cannot be used safely.
             init: function () {
-                if (!document.activeElement) {
-                    return false;
-                }
                 follow.hints = [];
                 follow.activeHint = null;
                 if (!follow.tickParent) {
@@ -219,7 +216,6 @@ local follow_js = [=[
                     document.body.appendChild(overlays);
                     follow.overlayParent = overlays;
                 }
-                return true;
             },
 
             // Removes all hints and resets the system to default.
@@ -539,6 +535,15 @@ add_binds("normal", {
     buf("^;W$", function (w,b,m) w:start_follow("uri",    ":winopen",   function (uri)  w:enter_cmd(":winopen "..uri) end) end),
 })
 
+-- Check if following is possible safely
+local function is_ready(w)
+    for _, f in ipairs(w:get_current().frames) do
+        local ret = w:eval_js("!!(document.activeElement && window.follow)", "(follow.lua)", f)
+        if ret ~= "true" then return false end
+    end
+    return true
+end
+
 --- Generates the labels for the hints. Must return an array of strings with the
 -- given size.
 function make_labels(size)
@@ -568,6 +573,7 @@ end
 
 -- Focus the next element in the correct frame
 local function focus(w, offset)
+    if not is_ready(w) then return w:set_mode() end
     local function is_focused(f)
         local ret = w:eval_js("follow.focused();", "(follow.lua)", f)
         return ret == "true"
@@ -592,9 +598,16 @@ end
 
 -- Add follow mode binds
 add_binds("follow", {
-    key({},        "Tab",       function (w) focus(w, 1)  end ),
-    key({"Shift"}, "Tab",       function (w) focus(w, -1) end ),
+    key({},        "Tab",       function (w)
+                                    if not is_ready(w) then return w:set_mode() end
+                                    focus(w, 1)
+                                end ),
+    key({"Shift"}, "Tab",       function (w)
+                                    if not is_ready(w) then return w:set_mode() end
+                                    focus(w, -1)
+                                end ),
     key({},        "Return",    function (w)
+                                    if not is_ready(w) then return w:set_mode() end
                                     local s = (w.follow_state or {})
                                     for _, f in ipairs(w:get_current().frames) do
                                         local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
@@ -645,14 +658,14 @@ new_mode("follow", {
 
             -- Evaluate js code
             local js = table.concat(js_blocks, "\n")
-            local ret = w:eval_js(js, "(follow.lua)", f)
-            -- abort if initialization failed
-            if ret ~= "true" then return w:set_mode() end
+            w:eval_js(js, "(follow.lua)", f)
 
             local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)", f))
             table.insert(frames, {num = num, frame = f})
             sum = sum + num
         end
+        -- abort if initialization failed
+        if not is_ready(w) then return w:set_mode() end
 
         -- Generate labels
         state.frames = frames
@@ -684,6 +697,7 @@ new_mode("follow", {
     -- Leave follow mode hook
     leave = function (w)
         if w.eval_js then
+            if not is_ready(w) then return end
             for _,f in ipairs(w:get_current().frames) do
                 w:eval_js("follow.clear();", "(follow.lua)", f)
             end
@@ -692,6 +706,7 @@ new_mode("follow", {
 
     -- Input bar changed hook
     changed = function (w, text)
+        if not is_ready(w) then return w:set_mode() end
         local filter, id = parse_input(text)
         local active_hints = 0
         local eval_frame
