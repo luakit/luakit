@@ -204,6 +204,9 @@ local follow_js = [=[
             // Returns true on success. If false is returned, the other hinting functions
             // cannot be used safely.
             init: function () {
+                if (!document.body || !document.activeElement) {
+                    return;
+                }
                 follow.hints = [];
                 follow.activeHint = null;
                 if (!follow.tickParent) {
