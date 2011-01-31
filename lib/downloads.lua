@@ -9,12 +9,12 @@ local assert = assert
 local ipairs = ipairs
 local os = os
 local pairs = pairs
-local print = print
 local setmetatable = setmetatable
 local string = string
 local table = table
 local tonumber = tonumber
 local type = type
+local webview = webview
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
@@ -118,10 +118,11 @@ default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "
 --- Adds a download.
 -- Tries to apply one of the <code>rules</code>. If that fails,
 -- asks the user to choose a location with a save dialog.
--- @param o The uri or downloadto add.
+-- @param o The uri or download to add.
+-- @param do_start Whether or not to start the download. Default is true.
 -- @return <code>true</code> if a download was started
-function add(o, w)
-    local d = type(o) == "string" and capi.download{uri=uri} or o
+function add(o, do_start)
+    local d = type(o) == "string" and capi.download{uri=o} or o
     assert(type(d) == "download", string.format("expected string or download, got: %s", type(o) or "nil"))
 
     -- Emit signal to determine the download location.
@@ -139,7 +140,7 @@ function add(o, w)
     -- If a suitable filename was given proceed with the download
     if file then
         d.destination = file
-        d:start()
+        if do_start or do_start == nil then d:start() end
         table.insert(downloads, d)
         if not speed_timer.started then speed_timer:start() end
         if not status_timer.started then status_timer:start() end
@@ -149,7 +150,7 @@ end
 
 -- Add download window method
 window.methods.download = function (w, uri)
-    add(uri, w)
+    add(uri)
 end
 
 --- Removes all finished, cancelled or aborted downloads.
@@ -217,6 +218,14 @@ function restart(d)
     local new_d = add(d.uri)
     if new_d then delete(d) end
     return new_d
+end
+
+-- Register signal handler with webview
+webview.init_funcs.download_request = function (view, w)
+    view:add_signal("download-request", function (v, d)
+        add(d, false)
+        return true
+    end)
 end
 
 -- Tests if any downloads are running.

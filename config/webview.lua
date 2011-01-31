@@ -190,13 +190,6 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Action to take on download request.
-    download_request = function (view, w)
-        view:add_signal("download-request", function (v, d)
-            downloads.add(d)
-        end)
-    end,
-
     -- Creates context menu popup from table (and nested tables).
     -- Use `true` for menu separators.
     populate_popup = function (view, w)
