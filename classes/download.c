@@ -84,6 +84,17 @@ luaH_download_new(lua_State *L)
     return 1;
 }
 
+void
+luaH_download_push(lua_State *L, WebKitDownload* d)
+{
+    download_class.allocator(L);
+    download_t *download = luaH_checkudata(L, -1, &download_class);
+    download->ref = NULL;
+    download->error = false;
+    download->webkit_download = d;
+    g_object_ref(G_OBJECT(download->webkit_download));
+}
+
 static int
 luaH_download_set_destination(lua_State *L, download_t *download)
 {

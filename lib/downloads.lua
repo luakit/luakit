@@ -118,13 +118,14 @@ default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "
 --- Adds a download.
 -- Tries to apply one of the <code>rules</code>. If that fails,
 -- asks the user to choose a location with a save dialog.
--- @param uri The uri to add.
+-- @param o The uri or downloadto add.
 -- @return <code>true</code> if a download was started
-function add(uri, w)
-    local d = capi.download{uri=uri}
+function add(o, w)
+    local d = type(o) == "string" and capi.download{uri=uri} or o
+    assert(type(d) == "download", string.format("expected string or download, got: %s", type(o) or "nil"))
 
     -- Emit signal to determine the download location.
-    local file = _M:emit_signal("download-location", uri, d.suggested_filename)
+    local file = _M:emit_signal("download-location", d.uri, d.suggested_filename)
 
     -- Check return type
     assert(file == nil or type(file) == "string" and #file > 1,

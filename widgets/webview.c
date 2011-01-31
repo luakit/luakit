@@ -551,17 +551,14 @@ create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 }
 
 static gboolean
-download_request_cb(WebKitWebView *v, GObject *dl, widget_t *w)
+download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
 {
     (void) v;
-    const gchar *uri = webkit_download_get_uri((WebKitDownload *) dl);
-    const gchar *filename = webkit_download_get_suggested_filename((WebKitDownload *) dl);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    lua_pushstring(L, uri);
-    lua_pushstring(L, filename);
-    luaH_object_emit_signal(L, -3, "download-request", 2, 0);
+    luaH_download_push(L, dl);
+    luaH_object_emit_signal(L, -2, "download-request", 1, 0);
     lua_pop(L, 1);
 
     return FALSE;
