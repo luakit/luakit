@@ -332,9 +332,9 @@ download_class_setup(lua_State *L)
                             (lua_class_propfunc_t) luaH_download_get_suggested_filename,
                             NULL);
     luaH_class_add_property(&download_class, L_TK_URI,
-                            (lua_class_propfunc_t) NULL,
+                            (lua_class_propfunc_t) luaH_download_set_uri,
                             (lua_class_propfunc_t) luaH_download_get_uri,
-                            (lua_class_propfunc_t) luaH_download_set_uri);
+                            (lua_class_propfunc_t) NULL);
 }
 
 // vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
