@@ -20,6 +20,7 @@ local util = lousy.util
 local add_binds, add_cmds = add_binds, add_cmds
 local tonumber = tonumber
 local window = window
+local database = database
 
 -- Bookmark functions that operate on a flatfile and output to html
 module("bookmarks")
@@ -128,6 +129,8 @@ function add(uri, tags, replace, save_bookmarks)
 
     -- Create tags table from string
     if type(tags) == "string" then tags = util.string.split(tags) end
+
+    database.add_bookmark(uri, tags)
 
     if not replace and data[uri] then
         local bm = data[uri]
