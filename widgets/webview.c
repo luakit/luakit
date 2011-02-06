@@ -535,18 +535,16 @@ create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 {
     (void) v;
     (void) f;
-    gint ret;
-    gint top;
     WebKitWebView *view = NULL;
     widget_t *new;
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    top = lua_gettop(L);
-    ret = luaH_object_emit_signal(L, top, "create-web-view", 0, 1);
+    gint top = lua_gettop(L);
+    gint ret = luaH_object_emit_signal(L, top, "create-web-view", 0, 1);
     if (ret && (new = luaH_checkwidget(L, top + 1)))
         view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(new->widget), "webview"));
-    lua_pop(L, ret + 1);
+    lua_pop(L, 1 + ret);
     return view;
 }
 
@@ -554,15 +552,15 @@ static gboolean
 download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
 {
     (void) v;
-
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
+    /* HERE BE DRAGONS: There is an unknown table (index 1) on the stack which
+     * disappears after the luaH_download_push call, what's with this? */
     luaH_download_push(L, dl);
-    luaH_object_emit_signal(L, -2, "download-request", 1, 1);
-    gboolean ret = lua_toboolean(L, -1);
-    lua_pop(L, 2);
-
-    return ret;
+    gint ret = luaH_object_emit_signal(L, -2, "download-request", 1, 1);
+    gboolean handled = (ret && lua_toboolean(L, lua_gettop(L) - ret + 1));
+    lua_pop(L, 1 + ret);
+    return handled;
 }
 
 static void
