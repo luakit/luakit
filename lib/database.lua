@@ -110,6 +110,7 @@ function create_db()
         SELECT url_id FROM visits 
         WHERE last_access < date('now' , '-1 month') 
     )
+    AND id not IN (SELECT url_id FROM bookmarks )
     ]])
 
     assert(database.conn:execute("END TRANSACTION"))
