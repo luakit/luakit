@@ -68,18 +68,26 @@ add_binds("all", {
 
     -- Open link in new tab or navigate to selection
     but({},     2,  function (w, m)
-                        -- Ignore button 2 clicks in form fields
-                        if not m.context.editable then
-                            -- Open hovered uri in new tab
-                            local uri = w:get_current().hovered_uri
-                            if uri then
-                                w:new_tab(uri, false)
-                            else -- Open selection in current tab
-                                uri = luakit.get_selection()
-                                if uri then w:navigate(w:search_open(uri)) end
-                            end
-                        end
-                    end),
+        -- Ignore button 2 clicks in form fields
+        if not m.context.editable then
+            -- Open hovered uri in new tab
+            local uri = w:get_current().hovered_uri
+            if uri then
+                w:new_tab(uri, false)
+            else -- Open selection in current tab
+                uri = luakit.get_selection()
+                if uri then w:navigate(w:search_open(uri)) end
+            end
+        end
+    end),
+
+    -- Open link in new tab when Ctrl-clicked.
+    but({"Control"}, 1, function (w, m)
+        local uri = w:get_current().hovered_uri
+        if uri then
+            w:new_tab(uri, false)
+        end
+    end),
 })
 
 add_binds("normal", {
