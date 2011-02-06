@@ -9,12 +9,12 @@ local assert = assert
 local ipairs = ipairs
 local os = os
 local pairs = pairs
-local print = print
 local setmetatable = setmetatable
 local string = string
 local table = table
 local tonumber = tonumber
 local type = type
+local webview = webview
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
@@ -118,13 +118,17 @@ default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "
 --- Adds a download.
 -- Tries to apply one of the <code>rules</code>. If that fails,
 -- asks the user to choose a location with a save dialog.
--- @param uri The uri to add.
+-- @param arg The uri or download or webkit download object.
+-- @param opts Download options.
 -- @return <code>true</code> if a download was started
-function add(uri, w)
-    local d = capi.download{uri=uri}
+function add(arg, opts)
+    opts = opts or {}
+    local d = (type(arg) == "string" and capi.download{uri=arg}) or arg
+    assert(type(d) == "download",
+        string.format("expected uri or download object, got: %s", type(d) or "nil"))
 
     -- Emit signal to determine the download location.
-    local file = _M:emit_signal("download-location", uri, d.suggested_filename)
+    local file = _M:emit_signal("download-location", d.uri, d.suggested_filename)
 
     -- Check return type
     assert(file == nil or type(file) == "string" and #file > 1,
@@ -132,13 +136,13 @@ function add(uri, w)
 
     -- If no download location returned ask the user
     if not file then
-        file = capi.luakit.save_file("Save file", w, default_dir, d.suggested_filename)
+        file = capi.luakit.save_file("Save file", opts.window, default_dir, d.suggested_filename)
     end
 
     -- If a suitable filename was given proceed with the download
     if file then
         d.destination = file
-        d:start()
+        if opts.autostart ~= false then d:start() end
         table.insert(downloads, d)
         if not speed_timer.started then speed_timer:start() end
         if not status_timer.started then status_timer:start() end
@@ -148,7 +152,7 @@ end
 
 -- Add download window method
 window.methods.download = function (w, uri)
-    add(uri, w)
+    add(uri, { window = w.win })
 end
 
 --- Removes all finished, cancelled or aborted downloads.
@@ -216,6 +220,14 @@ function restart(d)
     local new_d = add(d.uri)
     if new_d then delete(d) end
     return new_d
+end
+
+-- Register signal handler with webview
+webview.init_funcs.download_request = function (view, w)
+    view:add_signal("download-request", function (v, dl)
+        add(dl, { autostart = false, window = w.win })
+        return true
+    end)
 end
 
 -- Tests if any downloads are running.
