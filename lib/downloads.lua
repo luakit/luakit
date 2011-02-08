@@ -64,26 +64,6 @@ function get_speed(d)
     return 0
 end
 
--- Track downloading speeds
-local speed_timer = capi.timer{interval=1000}
-speed_timer:add_signal("timeout", function ()
-    local active = false
-    for _, d in ipairs(downloads) do
-        if is_running(d) then active = true end
-        -- Get speed table
-        if not speeds[d] then speeds[d] = {} end
-        local s = speeds[d]
-
-        -- Save download progress
-        s.last_size = s.current_size or 0
-        s.current_size = d.current_size
-    end
-    -- Only start timer again if there are active downloads
-    if #downloads == 0 or not active then
-        speed_timer:stop()
-    end
-end)
-
 -- Add indicator to status bar.
 window.init_funcs.downloads_status = function (w)
     local r = w.sbar.r
@@ -99,19 +79,25 @@ end
 -- Refresh indicator
 local status_timer = capi.timer{interval=1000}
 status_timer:add_signal("timeout", function ()
-    local active = false
+    -- Track how many downloads are active
+    local running = 0
     for _, d in ipairs(downloads) do
-        if is_running(d) then active = true end
-        local running = 0
-        for _, d in ipairs(downloads) do
-            if is_running(d) then running = running + 1 end
-        end
+        if is_running(d) then running = running + 1 end
+    end
+    for _, d in ipairs(downloads) do
+        -- Update download indicator widget
         for _, w in pairs(window.bywidget) do
             w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
         end
+        -- Get speed table
+        if not speeds[d] then speeds[d] = {} end
+        local s = speeds[d]
+        -- Save download progress
+        s.last_size = s.current_size or 0
+        s.current_size = d.current_size
     end
-    -- Only start timer again if there are active downloads
-    if #downloads == 0 or not active then
+    -- Stop after downloads finish
+    if #downloads == 0 or running == 0 then
         status_timer:stop()
     end
 end)
@@ -148,7 +134,6 @@ function add(arg, opts)
         d.destination = file
         if opts.autostart ~= false then d:start() end
         table.insert(downloads, d)
-        if not speed_timer.started then speed_timer:start() end
         if not status_timer.started then status_timer:start() end
         return true
     end
