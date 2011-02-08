@@ -46,6 +46,8 @@ new_mode("search", {
     end,
 
     leave = function (w)
+        w.ibar.input.fg = theme.ibar_fg
+        w.ibar.input.bg = theme.ibar_bg
         -- Check if search was aborted and return to original position
         local s = w.search_state
         if s.marker then
@@ -61,7 +63,14 @@ new_mode("search", {
             s.last_search = string.sub(text, 2)
             if #text > 3 then
                 w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
-                if s.ret == false and s.marker then w:get_current():set_scroll_vert(s.marker) end
+                if s.ret == false then
+                    if s.marker then w:get_current():set_scroll_vert(s.marker) end
+                    w.ibar.input.fg = theme.ibar_error_fg
+                    w.ibar.input.bg = theme.ibar_error_bg
+                else
+                    w.ibar.input.fg = theme.ibar_fg
+                    w.ibar.input.bg = theme.ibar_bg
+                end
             else
                 w:clear_search(false)
             end
@@ -145,6 +154,8 @@ for k, m in pairs({
     end,
 
     clear_search = function (view, w, clear_state)
+        w.ibar.input.fg = theme.ibar_fg
+        w.ibar.input.bg = theme.ibar_bg
         view:clear_search()
         if clear_state ~= false then
             w.search_state = {}
