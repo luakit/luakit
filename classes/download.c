@@ -77,6 +77,7 @@ luaH_download_new(lua_State *L)
 {
     luaH_class_new(L, &download_class);
     download_t *download = luaH_checkudata(L, -1, &download_class);
+    lua_pushvalue(L, -1);
     download->ref = luaH_object_ref(L, -1); // prevent Lua garbage collection of download while running
     download->error = false;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
@@ -90,6 +91,7 @@ luaH_download_push(lua_State *L, WebKitDownload* d)
 {
     download_class.allocator(L);
     download_t *download = luaH_checkudata(L, -1, &download_class);
+    lua_pushvalue(L, -1);
     download->ref = luaH_object_ref(L, -1); // prevent Lua garbage collection of download while running
     download->error = false;
     download->uri = g_strdup(webkit_download_get_uri(d));

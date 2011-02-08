@@ -554,8 +554,6 @@ download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
     (void) v;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    /* HERE BE DRAGONS: There is an unknown table (index 1) on the stack which
-     * disappears after the luaH_download_push call, what's with this? */
     luaH_download_push(L, dl);
     gint ret = luaH_object_emit_signal(L, -2, "download-request", 1, 1);
     gboolean handled = (ret && lua_toboolean(L, lua_gettop(L) - ret + 1));
