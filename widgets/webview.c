@@ -556,8 +556,8 @@ download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_download_push(L, dl);
-    gint ret = luaH_object_emit_signal(L, -2, "download-request", 1, 1);
-    gboolean handled = (ret && lua_toboolean(L, lua_gettop(L) - ret + 1));
+    gint ret = luaH_object_emit_signal(L, 1, "download-request", 1, 1);
+    gboolean handled = (ret && lua_toboolean(L, 2));
     lua_pop(L, 1 + ret);
     return handled;
 }
