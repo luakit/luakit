@@ -300,7 +300,8 @@ luaH_webview_register_function(lua_State *L)
     widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
     const gchar *name = luaL_checkstring(L, 2);
-    gpointer ref = luaH_object_ref(L, 3);
+    lua_pushvalue(L, 3);
+    gpointer ref = luaH_object_ref(L, -1);
 
     /* Check if function should be registered on currently focused frame */
     if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
