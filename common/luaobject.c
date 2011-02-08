@@ -38,6 +38,7 @@ luaH_object_setup(lua_State *L) {
 }
 
 /* Increment a object reference in its store table.
+ * Removes the referenced object from the stack.
  * `tud` is the table index on the stack.
  * `oud` is the object index on the stack.
  * Returns a pointer to the object. */
