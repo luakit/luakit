@@ -67,7 +67,9 @@ end
 -- Track downloading speeds
 local speed_timer = capi.timer{interval=1000}
 speed_timer:add_signal("timeout", function ()
+    local active = false
     for _, d in ipairs(downloads) do
+        if is_running(d) then active = true end
         -- Get speed table
         if not speeds[d] then speeds[d] = {} end
         local s = speeds[d]
@@ -77,7 +79,7 @@ speed_timer:add_signal("timeout", function ()
         s.current_size = d.current_size
     end
     -- Only start timer again if there are active downloads
-    if #downloads == 0 then
+    if #downloads == 0 or not active then
         speed_timer:stop()
     end
 end)
@@ -97,7 +99,9 @@ end
 -- Refresh indicator
 local status_timer = capi.timer{interval=1000}
 status_timer:add_signal("timeout", function ()
+    local active = false
     for _, d in ipairs(downloads) do
+        if is_running(d) then active = true end
         local running = 0
         for _, d in ipairs(downloads) do
             if is_running(d) then running = running + 1 end
@@ -107,7 +111,7 @@ status_timer:add_signal("timeout", function ()
         end
     end
     -- Only start timer again if there are active downloads
-    if #downloads == 0 then
+    if #downloads == 0 or not active then
         status_timer:stop()
     end
 end)
