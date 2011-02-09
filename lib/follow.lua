@@ -19,18 +19,30 @@ local type = type
 
 module("follow")
 
+local clear_js = [=[
+    // Remove an element from its parentNode.
+    var unlink = function (element) {
+        if (element && element.parentNode) {
+            element.parentNode.removeChild(element);
+        }
+    }
+    var tickParent;
+    var overlayParent;
+    if (window.follow) {
+        overlayParent = window.follow.overlayParent;
+        tickParent = window.follow.tickParent;
+    }
+    overlayParent = overlayParent || document.getElementById("luakit_follow_overlayParent");
+    tickParent = tickParent || document.getElementById("luakit_follow_tickParent");
+    unlink(tickParent);
+    unlink(overlayParent);
+]=]
+
 -- Main link following javascript.
 local follow_js = [=[
     // Global wrapper in order to not disturb main site JS.
     window.follow = (function () {
         // Private members.
-
-        // Remove an element from its parentNode.
-        function unlink(element) {
-            if (element && element.parentNode) {
-                element.parentNode.removeChild(element);
-            }
-        }
 
         // Tests if the given element is a "frame".
         // We select body tags instead of frames to prevent cross-domain javascript requests.
@@ -211,20 +223,21 @@ local follow_js = [=[
                 follow.activeHint = null;
                 if (!follow.tickParent) {
                     var tickParent = document.createElement("div");
+                    tickParent.id = "luakit_follow_tickParent";
                     document.body.appendChild(tickParent);
                     follow.tickParent = tickParent;
                 }
                 if (!follow.overlayParent) {
-                    var overlays = document.createElement("div");
-                    document.body.appendChild(overlays);
-                    follow.overlayParent = overlays;
+                    var overlayParent = document.createElement("div");
+                    overlayParent.id = "luakit_follow_overlayParent";
+                    document.body.appendChild(overlayParent);
+                    follow.overlayParent = overlayParent;
                 }
             },
 
             // Removes all hints and resets the system to default.
             clear: function() {
-                unlink(follow.tickParent);
-                unlink(follow.overlayParent);
+                {clear}
                 follow.init();
             },
 
@@ -643,7 +656,12 @@ new_mode("follow", {
         for _, f in ipairs(w:get_current().frames) do
             -- Load main following js
             local js_blocks = {}
-            table.insert(js_blocks, follow_js)
+            local subs = {
+                clear  = clear_js,
+            }
+            local js, count = string.gsub(follow_js, "{(%w+)}", subs)
+            if count ~= 1 then return error("invalid number of substitutions") end
+            table.insert(js_blocks, js);
 
             -- Make theme js
             for k, v in pairs(get_theme()) do
@@ -701,9 +719,8 @@ new_mode("follow", {
     -- Leave follow mode hook
     leave = function (w)
         if w.eval_js then
-            if not is_ready(w) then return end
             for _,f in ipairs(w:get_current().frames) do
-                w:eval_js("follow.clear();", "(follow.lua)", f)
+                w:eval_js(clear_js, "(follow.lua)", f)
             end
         end
     end,
