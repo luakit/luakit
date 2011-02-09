@@ -210,7 +210,7 @@ signal_object_emit(lua_State *L, signal_t *signals,
             /* Note that only if nret && ret will the signal execution stop */
             if (nret && ret) {
                 /* remove all args and functions */
-                for (gint j = 0; j < nargs + nbfunc - i; j++) {
+                for (gint j = 0; j < nargs + nbfunc - i - 1; j++) {
                     lua_remove(L, - ret - 1);
                 }
 
