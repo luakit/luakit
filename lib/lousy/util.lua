@@ -98,14 +98,12 @@ end
 -- @return A new table containing all keys from the arguments.
 function table.join(...)
     local ret = {}
-    for i = 1, arg.n do
-        if arg[i] then
-            for k, v in pairs(arg[i]) do
-                if type(k) == "number" then
-                    rtable.insert(ret, v)
-                else
-                    ret[k] = v
-                end
+    for _, t in pairs({...}) do
+        for k, v in pairs(t) do
+            if type(k) == "number" then
+                rtable.insert(ret, v)
+            else
+                ret[k] = v
             end
         end
     end
