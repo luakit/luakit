@@ -92,6 +92,7 @@ luakit_find_password(SoupURI *soup_uri, const char **login, const char **passwor
         *password = luaL_checkstring(L, -1);
         *login = luaL_checkstring(L, -2);
     }
+    lua_pop(L, ret);
 }
 
 static void
