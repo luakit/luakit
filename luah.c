@@ -819,6 +819,9 @@ luaH_init(void)
 
     /* package.path = "concatenated string" */
     lua_setfield(L, 1, "path");
+
+    /* remove package module from stack */
+    lua_pop(L, 1);
 }
 
 gboolean

@@ -58,7 +58,8 @@ luaH_download_unref(lua_State *L, download_t *download)
 static bool
 download_is_started(download_t *download)
 {
-    return download->ref != NULL;
+    WebKitDownloadStatus status = webkit_download_get_status(download->webkit_download);
+    return status == WEBKIT_DOWNLOAD_STATUS_STARTED;
 }
 
 static int
@@ -76,12 +77,26 @@ luaH_download_new(lua_State *L)
 {
     luaH_class_new(L, &download_class);
     download_t *download = luaH_checkudata(L, -1, &download_class);
-    download->ref = NULL;
+    lua_pushvalue(L, -1);
+    download->ref = luaH_object_ref(L, -1); // prevent Lua garbage collection of download while running
     download->error = false;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
     g_object_ref(G_OBJECT(download->webkit_download));
     return 1;
+}
+
+void
+luaH_download_push(lua_State *L, WebKitDownload* d)
+{
+    download_class.allocator(L);
+    download_t *download = luaH_checkudata(L, -1, &download_class);
+    lua_pushvalue(L, -1);
+    download->ref = luaH_object_ref(L, -1); // prevent Lua garbage collection of download while running
+    download->error = false;
+    download->uri = g_strdup(webkit_download_get_uri(d));
+    download->webkit_download = d;
+    g_object_ref(G_OBJECT(download->webkit_download));
 }
 
 static int
@@ -198,17 +213,13 @@ luaH_download_get_suggested_filename(lua_State *L, download_t *download)
 static int
 luaH_download_set_uri(lua_State *L, download_t *download)
 {
-    if (download_is_started(download)) {
-        luaH_warn(L, "cannot change URI while download is running");
-    } else {
-        char *uri = (char*) luaL_checkstring(L, -1);
-        /* use http protocol if none specified */
-        if (g_strrstr(uri, "://"))
-            uri = g_strdup(uri);
-        else
-            uri = g_strdup_printf("http://%s", uri);
-        download->uri = uri;
-    }
+    char *uri = (char*) luaL_checkstring(L, -1);
+    /* use http protocol if none specified */
+    if (g_strrstr(uri, "://"))
+        uri = g_strdup(uri);
+    else
+        uri = g_strdup_printf("http://%s", uri);
+    download->uri = uri;
     return 0;
 }
 
@@ -251,7 +262,6 @@ luaH_download_start(lua_State *L)
         download_check_prerequesites(download);
         if (!download->error) {
             // everything OK, download
-            download->ref = luaH_object_ref(L, 1); // prevent Lua garbage collection of download while running
             webkit_download_start(download->webkit_download);
         }
     }
@@ -326,7 +336,7 @@ download_class_setup(lua_State *L)
     luaH_class_add_property(&download_class, L_TK_URI,
                             (lua_class_propfunc_t) luaH_download_set_uri,
                             (lua_class_propfunc_t) luaH_download_get_uri,
-                            (lua_class_propfunc_t) luaH_download_set_uri);
+                            (lua_class_propfunc_t) NULL);
 }
 
 // vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80

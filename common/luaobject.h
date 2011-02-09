@@ -33,6 +33,7 @@ gpointer luaH_object_incref(lua_State *L, gint tud, gint oud);
 void luaH_object_decref(lua_State *L, gint tud, gpointer oud);
 
 /* Store an item in the environment table of an object.
+ * Removes the stored object from the stack.
  * `ud` is the index of the object on the stack.
  * `iud` is the index of the item on the stack.
  * Return the item reference. */
@@ -84,6 +85,7 @@ luaH_object_registry_push(lua_State *L) {
 
 /* Reference an object and return a pointer to it. That only works with
  * userdata, table, thread or function.
+ * Removes the referenced object from the stack.
  * `oud` is the object index on the stack.
  * Returns the object reference, or NULL if not referenceable. */
 static inline gpointer

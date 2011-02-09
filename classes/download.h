@@ -26,6 +26,7 @@
 #include <webkit/webkitdownload.h>
 
 void download_class_setup(lua_State *);
+void luaH_download_push(lua_State *, WebKitDownload*);
 
 #endif
 

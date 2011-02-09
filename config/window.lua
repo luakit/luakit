@@ -762,12 +762,12 @@ function window.new(uris)
 
     -- Populate notebook with tabs
     for _, uri in ipairs(uris or {}) do
-        w:new_tab(uri, false)
+        w:new_tab(w:search_open(uri), false)
     end
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(globals.homepage, false)
+        w:new_tab(w:search_open(globals.homepage), false)
     end
 
     -- Set initial mode
