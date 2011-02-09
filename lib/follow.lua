@@ -597,6 +597,7 @@ local function focus(w, offset)
     -- we get here, if only one frame has visible hints and it reached its limit
     -- in the preciding loop. Thus, we ask it to refocus again
     w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", frames[1])
+    w.follow_state.refocus = false
 end
 
 -- Add follow mode binds
@@ -710,6 +711,7 @@ new_mode("follow", {
     -- Input bar changed hook
     changed = function (w, text)
         if not is_ready(w) then return w:set_mode() end
+        local state = w.follow_state or {}
         local filter, id = parse_input(text)
         local active_hints = 0
         local eval_frame
@@ -722,13 +724,15 @@ new_mode("follow", {
             if num == 1 then eval_frame = f end
             active_hints = active_hints + num
         end
-        local state = w.follow_state or {}
+        if state.reselect then focus(w, 1) end
         if active_hints == 1 then
             w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
             local sig
             if state.func then sig = state.func(ret, state) end
             if sig then w:emit_form_root_active_signal(sig) end
             w:set_mode()
+        elseif active_hints == 0 then
+            state.reselect = true
         end
     end,
 })
