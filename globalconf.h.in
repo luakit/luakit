@@ -45,6 +45,8 @@ typedef struct {
     signal_t *signals;
     /* Array of windows */
     GPtrArray *windows;
+    /* Array of webviews */
+    GPtrArray *webviews;
 } luakit_t;
 
 luakit_t globalconf;

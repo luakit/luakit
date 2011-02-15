@@ -23,12 +23,11 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include "classes/download.h"
+#include "classes/soup_auth.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>
 #include "math.h"
-
-GPtrArray *all_views = NULL;
 
 static struct {
     SoupSession   *session;
@@ -362,8 +361,8 @@ soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
     if ((p = g_hash_table_lookup(properties, ps->name))) {
         lua_State *L = globalconf.L;
         widget_t *w;
-        for (guint i = 0; i < all_views->len; i++) {
-            w = all_views->pdata[i];
+        for (guint i = 0; i < globalconf.webviews->len; i++) {
+            w = globalconf.webviews->pdata[i];
             luaH_object_push(L, w->ref);
             luaH_object_emit_signal(L, -1, p->signame, 0, 0);
             lua_pop(L, 1);
@@ -1389,14 +1388,14 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
-    g_ptr_array_remove(all_views, w);
+    g_ptr_array_remove(globalconf.webviews, w);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     gtk_widget_destroy(GTK_WIDGET(view));
     gtk_widget_destroy(GTK_WIDGET(w->widget));
 }
 
 static void
-init_soup(void)
+init_soup()
 {
     /* create soup session */
     Soup.session = webkit_get_default_session();
@@ -1406,6 +1405,10 @@ init_soup(void)
     Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
     soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
     g_free(cookie_file);
+
+    /* remove old auth dialog and add luakit's auth feature instead */
+    soup_session_remove_feature_by_type(Soup.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) luakit_soup_auth_dialog_new());
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(Soup.session), "notify", G_CALLBACK(soup_notify_cb), NULL);
@@ -1423,8 +1426,8 @@ widget_webview(widget_t *w)
         webview_init_properties();
 
     /* keep a list of all webview widgets */
-    if (!all_views)
-        all_views = g_ptr_array_new();
+    if (!globalconf.webviews)
+        globalconf.webviews = g_ptr_array_new();
 
     /* init soup session & cookies */
     if (!Soup.session)
@@ -1464,7 +1467,7 @@ widget_webview(widget_t *w)
     gtk_widget_show(view);
     gtk_widget_show(w->widget);
 
-    g_ptr_array_add(all_views, w);
+    g_ptr_array_add(globalconf.webviews, w);
 
     return w;
 }
