@@ -180,9 +180,9 @@ luaH_object_remove_signal(lua_State *L, gint oud,
  * 0 means that all return values are removed and that ALL handler functions are
  * executed.
  * Returns the number of return values pushed onto the stack. */
-int
+gint
 signal_object_emit(lua_State *L, signal_t *signals,
-        const gchar *name, gint nargs, int nret) {
+        const gchar *name, gint nargs, gint nret) {
 
     signal_array_t *sigfuncs = signal_lookup(signals, name);
     if(sigfuncs) {
@@ -196,7 +196,7 @@ signal_object_emit(lua_State *L, signal_t *signals,
         }
 
         for(gint i = 0; i < nbfunc; i++) {
-            int stacksize = lua_gettop(L);
+            gint stacksize = lua_gettop(L);
             /* push all args */
             for(gint j = 0; j < nargs; j++)
                 lua_pushvalue(L, - nargs - nbfunc + i);
@@ -205,7 +205,7 @@ signal_object_emit(lua_State *L, signal_t *signals,
             /* remove this first function */
             lua_remove(L, - nargs - nbfunc - 1 + i);
             luaH_dofunction(L, nargs, LUA_MULTRET);
-            int ret = lua_gettop(L) - stacksize + 1;
+            gint ret = lua_gettop(L) - stacksize + 1;
 
             /* Note that only if nret && ret will the signal execution stop */
             if (nret && ret) {

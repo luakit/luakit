@@ -69,10 +69,10 @@ free_authData(LuaKitAuthData* authData)
 }
 
 static void
-luakit_store_password(SoupURI *soup_uri, const char *login, const char *password)
+luakit_store_password(SoupURI *soup_uri, const gchar *login, const gchar *password)
 {
     lua_State *L = globalconf.L;
-    char *uri = soup_uri_to_string(soup_uri, FALSE);
+    gchar *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
@@ -81,12 +81,12 @@ luakit_store_password(SoupURI *soup_uri, const char *login, const char *password
 }
 
 static void
-luakit_find_password(SoupURI *soup_uri, const char **login, const char **password)
+luakit_find_password(SoupURI *soup_uri, const gchar **login, const gchar **password)
 {
     lua_State *L = globalconf.L;
-    char *uri = soup_uri_to_string(soup_uri, FALSE);
+    gchar *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
-    int ret = signal_object_emit(L, globalconf.signals, "authenticate", 1, LUA_MULTRET);
+    gint ret = signal_object_emit(L, globalconf.signals, "authenticate", 1, LUA_MULTRET);
     g_free(uri);
     if (ret >= 2) {
         *password = luaL_checkstring(L, -1);
@@ -98,13 +98,13 @@ luakit_find_password(SoupURI *soup_uri, const char **login, const char **passwor
 static void
 response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
 {
-    const char* login;
-    const char* password;
+    const gchar* login;
+    const gchar* password;
     SoupURI* uri;
     gboolean storePassword;
 
     switch(response_id) {
-    case GTK_RESPONSE_OK:
+      case GTK_RESPONSE_OK:
         login = gtk_entry_get_text(GTK_ENTRY(authData->loginEntry));
         password = gtk_entry_get_text(GTK_ENTRY(authData->passwordEntry));
         soup_auth_authenticate(authData->auth, login, password);
@@ -114,7 +114,7 @@ response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
             uri = soup_message_get_uri(authData->msg);
             luakit_store_password(uri, login, password);
         }
-    default:
+      default:
         break;
     }
 
@@ -124,7 +124,7 @@ response_callback(GtkDialog* dialog, gint response_id, LuaKitAuthData* authData)
 }
 
 static GtkWidget *
-table_add_entry(GtkWidget* table, int row, const char* label_text, const char* value, gpointer user_data)
+table_add_entry(GtkWidget* table, gint row, const gchar* label_text, const gchar* value, gpointer user_data)
 {
     (void) user_data;
 
@@ -182,7 +182,7 @@ show_auth_dialog(LuaKitAuthData* authData, const char* login, const char* passwo
     gtk_box_pack_start(GTK_BOX(hbox), mainVBox, TRUE, TRUE, 0);
 
     SoupURI* uri = soup_message_get_uri(authData->msg);
-    char* message = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
+    gchar* message = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
     GtkWidget* messageLabel = gtk_label_new(message);
     g_free(message);
     gtk_misc_set_alignment(GTK_MISC(messageLabel), 0.0, 0.5);
@@ -240,8 +240,8 @@ session_authenticate(SoupSession* session, SoupMessage* msg, SoupAuth* auth, gbo
     authData->session = session;
     authData->manager = manager;
 
-    const char *login = NULL;
-    const char *password = NULL;
+    const gchar *login = NULL;
+    const gchar *password = NULL;
     luakit_find_password(uri, &login, &password);
     show_auth_dialog(authData, login, password);
     // TODO: g_free login and password?

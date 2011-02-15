@@ -75,7 +75,7 @@ init_directories(void)
 
 /* load command line options into luakit and return uris to load */
 gchar**
-parseopts(int argc, char *argv[], gboolean **nonblock) {
+parseopts(int argc, gchar *argv[], gboolean **nonblock) {
     GOptionContext *context;
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
@@ -132,8 +132,8 @@ parseopts(int argc, char *argv[], gboolean **nonblock) {
         return argv+1;
 }
 
-int
-main(int argc, char *argv[]) {
+gint
+main(gint argc, gchar *argv[]) {
     gboolean *nonblock = NULL;
     gchar **uris = NULL;
     pid_t pid, sid;

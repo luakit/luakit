@@ -119,7 +119,7 @@ LUA_OBJECT_EXPORT_PROPERTY(download, download_t, destination, lua_pushstring)
 static int
 luaH_download_get_progress(lua_State *L, download_t *download)
 {
-    double progress = webkit_download_get_progress(download->webkit_download);
+    gdouble progress = webkit_download_get_progress(download->webkit_download);
     if (progress == 1) {
         luaH_download_unref(L, download); // allow Lua garbage collection of download
     }
@@ -181,7 +181,7 @@ luaH_download_get_status(lua_State *L, download_t *download)
 static int
 luaH_download_get_total_size(lua_State *L, download_t *download)
 {
-    double total_size = webkit_download_get_total_size(download->webkit_download);
+    gdouble total_size = webkit_download_get_total_size(download->webkit_download);
     lua_pushnumber(L, total_size);
     return 1;
 }
@@ -189,7 +189,7 @@ luaH_download_get_total_size(lua_State *L, download_t *download)
 static int
 luaH_download_get_current_size(lua_State *L, download_t *download)
 {
-    double current_size = webkit_download_get_current_size(download->webkit_download);
+    gdouble current_size = webkit_download_get_current_size(download->webkit_download);
     lua_pushnumber(L, current_size);
     return 1;
 }
@@ -197,7 +197,7 @@ luaH_download_get_current_size(lua_State *L, download_t *download)
 static int
 luaH_download_get_elapsed_time(lua_State *L, download_t *download)
 {
-    double elapsed_time = webkit_download_get_elapsed_time(download->webkit_download);
+    gdouble elapsed_time = webkit_download_get_elapsed_time(download->webkit_download);
     lua_pushnumber(L, elapsed_time);
     return 1;
 }

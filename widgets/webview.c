@@ -161,10 +161,10 @@ webview_registered_function_callback(JSContextRef context, JSObjectRef fun, JSOb
     // get function
     luaH_object_push(L, ref);
     // call function
-    int ret = lua_pcall(L, 0, 0, 0);
+    gint ret = lua_pcall(L, 0, 0, 0);
     // handle errors
     if (ret != 0) {
-        const char *exn_cstring = luaL_checkstring(L, -1);
+        const gchar *exn_cstring = luaL_checkstring(L, -1);
         lua_pop(L, 1);
         JSStringRef exn_js_string = JSStringCreateWithUTF8CString(exn_cstring);
         JSValueRef exn_js_value = JSValueMakeString(context, exn_js_string);
@@ -224,7 +224,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         js_result_size = JSStringGetMaximumUTF8CStringSize(js_result_string);
 
         if (js_result_size) {
-            char js_result_utf8[js_result_size];
+            gchar js_result_utf8[js_result_size];
             JSStringGetUTF8CString(js_result_string, js_result_utf8, js_result_size);
             g_string_assign(result, js_result_utf8);
         }
@@ -243,7 +243,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
         if(size) {
-            char cstr[size];
+            gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf("At %s", cstr);
         }
@@ -255,7 +255,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
         if(size) {
-            char cstr[size];
+            gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf(":%s: ", cstr);
         }
@@ -266,7 +266,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         val = JSValueToStringCopy(context, exc, NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
         if(size) {
-            char cstr[size];
+            gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf("%s\n", cstr);
         }
@@ -285,8 +285,8 @@ luaH_webview_load_string(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
-    const char *string = luaL_checkstring(L, 2);
-    const char *base_uri = luaL_checkstring(L, 3);
+    const gchar *string = luaL_checkstring(L, 2);
+    const gchar *base_uri = luaL_checkstring(L, 3);
     WebKitWebFrame *frame = webkit_web_view_get_main_frame(view);
     webkit_web_frame_load_alternate_string(frame, string, base_uri, base_uri);
     return 0;
@@ -562,7 +562,7 @@ download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
 }
 
 static void
-link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w)
+link_hover_cb(WebKitWebView *view, const gchar *t, const gchar *link, widget_t *w)
 {
     (void) t;
     lua_State *L = globalconf.L;
@@ -1302,8 +1302,8 @@ populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
 {
     GtkWidget *item, *submenu;
     gpointer ref;
-    const char *label;
-    int i, len = lua_objlen(L, -1);
+    const gchar *label;
+    gint i, len = lua_objlen(L, -1);
 
     /* walk table and build context menu */
     for(i = 1; i <= len; i++) {
