@@ -663,8 +663,9 @@ window.methods = {
         if not arg then return "about:blank" end
         args = lousy.util.string.split(lousy.util.string.strip(arg))
         -- Detect localhost, scheme:// or domain-like beginning in string
-        if #args == 1  then
+        if #args == 1 then
             local uri = args[1]
+            if uri == "about:blank" then return uri end
             local ip = string.match(uri, "^(%d+.%d+.%d+.%d+)$")
             local scheme = string.match(uri, "^%w+://")
             local localhost = string.match(uri, "^localhost[:/]%S*") or string.match(uri, "^localhost$")
