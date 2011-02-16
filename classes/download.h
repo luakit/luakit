@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_OBJECTS_DOWNLOAD_H
-#define LUAKIT_OBJECTS_DOWNLOAD_H
+#ifndef LUAKIT_CLASSES_DOWNLOAD_H
+#define LUAKIT_CLASSES_DOWNLOAD_H
 
 #include <lua.h>
 #include <webkit/webkitdownload.h>
