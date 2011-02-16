@@ -284,7 +284,7 @@ add_binds("formfiller", lousy.util.table.join({
 }, menu_binds))
 
 -- Enable (re)storing of HTTP auth credentials
-luakit.add_signal("authenticate", function (uri)
+soup.add_signal("authenticate", function (uri)
     local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
     local fd, err = io.open(filename, "r")
     if not fd then return end
@@ -303,7 +303,7 @@ luakit.add_signal("authenticate", function (uri)
     end
 end)
 
-luakit.add_signal("store-password", function (uri, login, password)
+soup.add_signal("store-password", function (uri, login, password)
     local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
     local fd = io.open(filename, "a+")
     fd:write(string.format("!httpuser %s\n!httppass %s\n", login, password))

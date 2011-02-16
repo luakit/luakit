@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/soup/auth.h"
+#include "classes/soup/soup.h"
 #include "luah.h"
 
 static void luakit_soup_auth_dialog_session_feature_init(SoupSessionFeatureInterface* feature_interface, gpointer interface_data);
@@ -76,7 +76,8 @@ luakit_store_password(SoupURI *soup_uri, const gchar *login, const gchar *passwo
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
-    signal_object_emit(L, globalconf.signals, "store-password", 3, LUA_MULTRET);
+    gint ret = signal_object_emit(L, soupconf.signals, "store-password", 3, LUA_MULTRET);
+    lua_pop(L, ret);
     g_free(uri);
 }
 
@@ -86,7 +87,7 @@ luakit_find_password(SoupURI *soup_uri, const gchar **login, const gchar **passw
     lua_State *L = globalconf.L;
     gchar *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
-    gint ret = signal_object_emit(L, globalconf.signals, "authenticate", 1, LUA_MULTRET);
+    gint ret = signal_object_emit(L, soupconf.signals, "authenticate", 1, LUA_MULTRET);
     g_free(uri);
     if (ret >= 2) {
         *password = luaL_checkstring(L, -1);
