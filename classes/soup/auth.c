@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/soup_auth.h"
+#include "classes/soup/auth.h"
 #include "luah.h"
 
 static void luakit_soup_auth_dialog_session_feature_init(SoupSessionFeatureInterface* feature_interface, gpointer interface_data);
@@ -265,3 +265,4 @@ luakit_soup_auth_dialog_new()
     return g_object_new(LUAKIT_TYPE_SOUP_AUTH_DIALOG, NULL);
 }
 
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

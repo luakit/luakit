@@ -29,6 +29,7 @@
 #include "classes/widget.h"
 #include "classes/timer.h"
 #include "classes/download.h"
+#include "classes/soup/soup.h"
 #include "luah.h"
 
 void
@@ -669,7 +670,7 @@ luaH_luakit_remove_signal(lua_State *L)
     luaH_checkfunction(L, 2);
     gpointer func = (gpointer) lua_topointer(L, 2);
     signal_remove(globalconf.signals, name, func);
-    luaH_object_unref(L, (void *) func);
+    luaH_object_unref(L, (gpointer) func);
     return 0;
 }
 
@@ -755,6 +756,9 @@ luaH_init(void)
 
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
+
+    /* Export soup lib */
+    soup_lib_setup(L);
 
     /* Export widget */
     widget_class_setup(L);

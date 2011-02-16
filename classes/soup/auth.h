@@ -19,11 +19,11 @@
  *
  */
 
-#include <gtk/gtk.h>
-#include <libsoup/soup.h>
-
 #ifndef LUAKIT_CLASSES_SOUP_AUTH_H
 #define LUAKIT_CLASSES_SOUP_AUTH_H
+
+#include <gtk/gtk.h>
+#include <libsoup/soup.h>
 
 #define LUAKIT_TYPE_SOUP_AUTH_DIALOG            (luakit_soup_auth_dialog_get_type ())
 #define LUAKIT_SOUP_AUTH_DIALOG(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))

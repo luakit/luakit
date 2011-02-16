@@ -27,7 +27,7 @@ get_alignment
 get_child
 get_children
 get_padding
-get_prop
+get_property
 get_scroll_horiz
 get_scroll_vert
 get_selection
@@ -72,7 +72,7 @@ set_alignment
 set_child
 set_default_size
 set_padding
-set_prop
+set_property
 set_scroll_horiz
 set_scroll_vert
 set_selection
