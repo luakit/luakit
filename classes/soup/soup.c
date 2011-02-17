@@ -94,8 +94,8 @@ luaH_soup_remove_signal(lua_State *L)
 static gint
 luaH_soup_emit_signal(lua_State *L)
 {
-    signal_object_emit(L, soupconf.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1, 0);
-    return 0;
+    return signal_object_emit(L, soupconf.signals, luaL_checkstring(L, 1),
+        lua_gettop(L) - 1, LUA_MULTRET);
 }
 
 static void
@@ -141,6 +141,9 @@ soup_lib_setup(lua_State *L)
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
+
+    /* setup cookie class */
+    cookie_class_setup(L);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

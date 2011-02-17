@@ -13,6 +13,7 @@ DESKTOP
 destination
 destroy
 DOCUMENTS
+domain
 DOWNLOAD
 elapsed_time
 entry
@@ -20,6 +21,7 @@ eval_js
 eventbox
 exec
 execpath
+expires
 fg
 focus
 font
@@ -41,6 +43,7 @@ hide
 history
 homogeneous
 hovered_uri
+http_only
 icon
 indexof
 insert
@@ -52,9 +55,11 @@ loading_chrome
 load_string
 mime_type
 MUSIC
+name
 notebook
 pack_end
 pack_start
+path
 PICTURES
 position
 progress
@@ -66,6 +71,7 @@ remove
 reorder
 save_file
 search
+secure
 selectable
 select_region
 set_alignment
@@ -101,6 +107,7 @@ type
 uri
 uri_decode
 uri_encode
+value
 vbox
 verbose
 version

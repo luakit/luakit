@@ -1,5 +1,5 @@
 /*
- * classes/soup/soup.h - soup library
+ * classes/soup/cookie.h - cookie class
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,28 +18,19 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_SOUP_H
-#define LUAKIT_CLASSES_SOUP_H
+#ifndef LUAKIT_CLASSES_SOUP_COOKIE_H
+#define LUAKIT_CLASSES_SOUP_COOKIE_H
 
-#include <libsoup/soup.h>
-
+#include <libsoup/soup-cookie.h>
 #include "luah.h"
-#include "classes/soup/auth.h"
-#include "classes/soup/cookiejar.h"
-#include "classes/soup/cookie.h"
 
 typedef struct {
-    /* shared libsoup session */
-    SoupSession *session;
-    /* shared custom cookie jar */
-    LuakitCookieJar *cookiejar;
-    /* soup signals table */
-    signal_t *signals;
-} soup_t;
+    SoupCookie *cookie;
+} cookie_t;
 
-soup_t soupconf;
-
-void soup_lib_setup(lua_State *L);
+lua_class_t cookie_class;
+void cookie_class_setup(lua_State *L);
+gint luaH_cookie_push(lua_State *L, SoupCookie*);
 
 #endif
 

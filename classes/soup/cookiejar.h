@@ -19,14 +19,14 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_SOUP_COOKIE_H
-#define LUAKIT_CLASSES_SOUP_COOKIE_H
+#ifndef LUAKIT_CLASSES_SOUP_COOKIEJAR_H
+#define LUAKIT_CLASSES_SOUP_COOKIEJAR_H
 
 #include <libsoup/soup-cookie-jar.h>
 
 #include "luah.h"
 
-#define LUAKIT_TYPE_COOKIE_JAR         (soup_cookie_jar_luakit_get_type ())
+#define LUAKIT_TYPE_COOKIE_JAR         (luakit_cookie_jar_get_type ())
 #define LUAKIT_COOKIE_JAR(obj)         (G_TYPE_CHECK_INSTANCE_CAST ((obj),   LUAKIT_TYPE_COOKIE_JAR, LuakitCookieJar))
 #define LUAKIT_COOKIE_JAR_CLASS(klass) (G_TYPE_CHECK_CLASS_CAST    ((klass), LUAKIT_TYPE_COOKIE_JAR, LuakitCookieJarClass))
 
