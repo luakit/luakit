@@ -86,7 +86,7 @@ luaH_download_new(lua_State *L)
     return 1;
 }
 
-void
+gint
 luaH_download_push(lua_State *L, WebKitDownload* d)
 {
     download_class.allocator(L);
@@ -97,6 +97,7 @@ luaH_download_push(lua_State *L, WebKitDownload* d)
     download->uri = g_strdup(webkit_download_get_uri(d));
     download->webkit_download = d;
     g_object_ref(G_OBJECT(download->webkit_download));
+    return 1;
 }
 
 static int
