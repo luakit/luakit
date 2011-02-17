@@ -684,8 +684,8 @@ luaH_luakit_remove_signal(lua_State *L)
 static gint
 luaH_luakit_emit_signal(lua_State *L)
 {
-    signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1, 0);
-    return 0;
+    return signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1),
+        lua_gettop(L) - 1, LUA_MULTRET);
 }
 
 static gint
