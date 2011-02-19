@@ -135,11 +135,29 @@ request_started(SoupSessionFeature *feature, SoupSession *session, SoupMessage *
     lua_pop(L, ret);
 }
 
+/* soup_cookie_equal wasn't good enough */
+inline static gboolean
+soup_cookie_truly_equal(SoupCookie *c1, SoupCookie *c2)
+{
+    return (!g_strcmp0(c1->name, c2->name) &&
+        !g_strcmp0(c1->value, c2->value)   &&
+        !g_strcmp0(c1->path,  c2->path)    &&
+        (c1->secure    == c2->secure)      &&
+        (c1->http_only == c2->http_only)   &&
+        (c1->expires && c2->expires        &&
+        (soup_date_to_time_t(c1->expires) == soup_date_to_time_t(c2->expires))));
+}
+
 static void
 changed(SoupCookieJar *jar, SoupCookie *old, SoupCookie *new)
 {
     (void) jar;
     lua_State *L = globalconf.L;
+
+    /* do nothing if cookies are equal */
+    if (old && new && soup_cookie_truly_equal(old, new)) {
+        return;
+    }
 
     if (old) {
         luaH_cookie_push(L, old);
