@@ -16,7 +16,7 @@ local pattern = "^luakit://downloads/?"
 
 --- Template for a download.
 download_template = [==[
-<div class="download {status}"><h1>{id} {name}</h1>
+<div class="download {status}"><h1>{id} <a href="{uri}">{name}</a></h1>
 <span>{modeline}</span>&nbsp;&nbsp;
 <a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
 <a class="delete" href="javascript:delete_{id}()">Delete</a>
@@ -126,6 +126,7 @@ local function inner_html()
             id       = i,
             name     = downloads.get_basename(d),
             status   = d.status,
+            uri      = d.uri,
             modeline = modeline,
         }
         local row = string.gsub(download_template, "{(%w+)}", subs)
