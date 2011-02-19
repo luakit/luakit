@@ -137,7 +137,7 @@ soup_lib_setup(lua_State *L)
 
     /* remove old auth dialog and add luakit's auth feature instead */
     soup_session_remove_feature_by_type(soupconf.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
-    soup_session_add_feature(soupconf.session, (SoupSessionFeature*) luakit_soup_auth_dialog_new());
+    soup_session_add_feature(soupconf.session, (SoupSessionFeature*) luakit_auth_dialog_new());
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);

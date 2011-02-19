@@ -1,5 +1,5 @@
 /*
- * soup_auth.h - authentication management header
+ * classes/soup/auth.h - authentication management header
  *
  * Copyright (C) 2009 Igalia S.L.
  * Copyright (C) 2010 Fabian Streitel <karottenreibe@gmail.com>
@@ -25,23 +25,23 @@
 #include <gtk/gtk.h>
 #include <libsoup/soup.h>
 
-#define LUAKIT_TYPE_SOUP_AUTH_DIALOG            (luakit_soup_auth_dialog_get_type ())
-#define LUAKIT_SOUP_AUTH_DIALOG(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))
-#define LUAKIT_SOUP_AUTH_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))
-#define LUAKIT_IS_SOUP_AUTH_DIALOG(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), LUAKIT_TYPE_SOUP_AUTH_DIALOG))
-#define LUAKIT_IS_SOUP_AUTH_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass), LUAKIT_TYPE_SOUP_AUTH_DIALOG))
-#define LUAKIT_SOUP_AUTH_DIALOG_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj), LUAKIT_TYPE_SOUP_AUTH_DIALOG, LuaKitSoupAuthDialog))
+#define LUAKIT_TYPE_AUTH_DIALOG            (luakit_auth_dialog_get_type ())
+#define LUAKIT_AUTH_DIALOG(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), LUAKIT_TYPE_AUTH_DIALOG, LuakitAuthDialog))
+#define LUAKIT_AUTH_DIALOG_CLASS(klass)    (G_TYPE_CHECK_CLASS_CAST ((klass),     LUAKIT_TYPE_AUTH_DIALOG, LuakitAuthDialog))
+#define LUAKIT_IS_AUTH_DIALOG(object)      (G_TYPE_CHECK_INSTANCE_TYPE ((object), LUAKIT_TYPE_AUTH_DIALOG))
+#define LUAKIT_IS_AUTH_DIALOG_CLASS(klass) (G_TYPE_CHECK_CLASS_TYPE ((klass),     LUAKIT_TYPE_AUTH_DIALOG))
+#define LUAKIT_AUTH_DIALOG_GET_CLASS(obj)  (G_TYPE_INSTANCE_GET_CLASS ((obj),     LUAKIT_TYPE_AUTH_DIALOG, LuakitAuthDialog))
 
 typedef struct {
     GObject parent_instance;
-} LuaKitSoupAuthDialog;
+} LuakitAuthDialog;
 
 typedef struct {
     GObjectClass parent_class;
-} LuaKitSoupAuthDialogClass;
+} LuakitAuthDialogClass;
 
-GType luakit_soup_auth_dialog_get_type();
-LuaKitSoupAuthDialog * luakit_soup_auth_dialog_new();
+GType luakit_auth_dialog_get_type();
+LuakitAuthDialog *luakit_auth_dialog_new();
 
 #endif
 
