@@ -103,4 +103,35 @@ webview.init_funcs.save_hist = function (view)
     end)
 end
 
+function reltime(time)
+    local d = math.max(os.time() - time, 0)
+
+    if d < 60*60*24 then
+        return "Today"
+    elseif d < 60*60*24*2 then
+        return "Yesterday"
+    elseif d < 60*60*24*7 then
+        return "Last 7 days"
+    elseif d < 60*60*24*30 then
+        return "Last Month"
+    elseif d < 60*60*24*30*3 then
+        return "Last 3 Months"
+    elseif d < 60*60*24*365 then
+        return "Last Year"
+    else
+        return "Ages ago"
+    end
+end
+
+function hist_list()
+    local results = db:exec([[SELECT * FROM history ORDER BY last_visit;]])
+
+    local items = {}
+    for line in ipairs(results) do
+        table.insert(items, { line.title, time = reltime(line.last_visit), uri = line.uri })
+    end
+
+    return #items == 0 and nil or items
+end
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80
