@@ -95,7 +95,7 @@ luaH_cookie_get_expires(lua_State *L, cookie_t *c)
 static gint
 luaH_cookie_set_expires(lua_State *L, cookie_t *c)
 {
-    SoupDate *date = soup_date_new_from_time_t((time_t) luaL_checklong(L, 3));
+    SoupDate *date = soup_date_new_from_time_t((time_t) luaL_checklong(L, -1));
     soup_cookie_set_expires(get_cookie(c), date);
     soup_date_free(date);
     return 0;
