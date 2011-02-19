@@ -68,7 +68,7 @@ request_started(SoupSessionFeature *feature, SoupSession *session, SoupMessage *
     /* get pertinent cookies from lua */
     lua_State *L = globalconf.L;
     luaH_push_message_uri(L, soup_message_get_uri(msg));
-    g_printf("Current: %s\n", soup_cookie_jar_get_cookies(SOUP_COOKIE_JAR(jar), soup_message_get_uri(msg), TRUE));
+    //g_printf("Current: %s\n", soup_cookie_jar_get_cookies(SOUP_COOKIE_JAR(jar), soup_message_get_uri(msg), TRUE));
     //gint ret = signal_object_emit(L, soupconf.signals, "request-cookies", 1, 1);
 }
 

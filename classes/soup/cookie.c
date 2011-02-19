@@ -22,69 +22,73 @@
 #include "classes/soup/soup.h"
 #include "common/util.h"
 
-#define simple_get_str(prop)                                         \
-    static gint                                                      \
-    luaH_cookie_get_##prop(lua_State *L, cookie_t *c)                \
-    {                                                                \
-        lua_pushstring(L, c->cookie->prop);                          \
-        return 1;                                                    \
+inline static SoupCookie*
+get_cookie(cookie_t *c)
+{
+    if (!c->cookie)
+        c->cookie = soup_cookie_new("", "", "", "", -1);
+    return c->cookie;
+}
+
+#define simple_get_str(prop)                                             \
+    static gint                                                          \
+    luaH_cookie_get_##prop(lua_State *L, cookie_t *c)                    \
+    {                                                                    \
+        lua_pushstring(L, get_cookie(c)->prop);                          \
+        return 1;                                                        \
     }
 
-#define simple_set_str(prop)                                         \
-    static gint                                                      \
-    luaH_cookie_set_##prop(lua_State *L, cookie_t *c)                \
-    {                                                                \
-        soup_cookie_set_##prop(c->cookie, luaL_checkstring(L, -1));  \
-        return 0;                                                    \
-    }
-
-#define simple_get_bool(prop)                                        \
-    static gint                                                      \
-    luaH_cookie_get_##prop(lua_State *L, cookie_t *c)                \
-    {                                                                \
-        lua_pushboolean(L, c->cookie->prop);                         \
-        return 1;                                                    \
-    }
-
-#define simple_set_bool(prop)                                        \
-    static gint                                                      \
-    luaH_cookie_set_##prop(lua_State *L, cookie_t *c)                \
-    {                                                                \
-        soup_cookie_set_##prop(c->cookie, luaH_checkboolean(L, -1)); \
-        return 0;                                                    \
+#define simple_set_str(prop)                                             \
+    static gint                                                          \
+    luaH_cookie_set_##prop(lua_State *L, cookie_t *c)                    \
+    {                                                                    \
+        soup_cookie_set_##prop(get_cookie(c), luaL_checkstring(L, -1));  \
+        return 0;                                                        \
     }
 
 simple_get_str(name)
 simple_set_str(name)
-
 simple_get_str(value)
 simple_set_str(value)
-
 simple_get_str(domain)
 simple_set_str(domain)
-
 simple_get_str(path)
 simple_set_str(path)
 
+#undef simple_get_str
+#undef simple_set_str
+
+#define simple_get_bool(prop)                                            \
+    static gint                                                          \
+    luaH_cookie_get_##prop(lua_State *L, cookie_t *c)                    \
+    {                                                                    \
+        lua_pushboolean(L, get_cookie(c)->prop);                         \
+        return 1;                                                        \
+    }
+
+#define simple_set_bool(prop)                                            \
+    static gint                                                          \
+    luaH_cookie_set_##prop(lua_State *L, cookie_t *c)                    \
+    {                                                                    \
+        soup_cookie_set_##prop(get_cookie(c), luaH_checkboolean(L, -1)); \
+        return 0;                                                        \
+    }
+
 simple_get_bool(secure)
 simple_set_bool(secure)
-
 simple_get_bool(http_only)
 simple_set_bool(http_only)
 
-#undef simple_get_str
-#undef simple_set_str
 #undef simple_get_bool
 #undef simple_set_bool
 
 static gint
 luaH_cookie_get_expires(lua_State *L, cookie_t *c)
 {
-    if (!c->cookie->expires)
+    SoupCookie *cookie = get_cookie(c);
+    if (!cookie->expires)
         return 0;
-    gchar *expires = g_strdup_printf("%ld", soup_date_to_time_t(c->cookie->expires));
-    lua_pushstring(L, expires);
-    g_free(expires);
+    lua_pushnumber(L, soup_date_to_time_t(cookie->expires));
     return 1;
 }
 
@@ -92,7 +96,7 @@ static gint
 luaH_cookie_set_expires(lua_State *L, cookie_t *c)
 {
     SoupDate *date = soup_date_new_from_time_t((time_t) luaL_checklong(L, 3));
-    soup_cookie_set_expires(c->cookie, date);
+    soup_cookie_set_expires(get_cookie(c), date);
     soup_date_free(date);
     return 0;
 }
@@ -102,7 +106,6 @@ luaH_cookie_push(lua_State *L, SoupCookie *cookie)
 {
     cookie_class.allocator(L);
     cookie_t *c = luaH_checkudata(L, -1, &cookie_class);
-    soup_cookie_free(c->cookie);
     c->cookie = soup_cookie_copy(cookie);
     return 1;
 }
@@ -111,7 +114,6 @@ static inline cookie_t *
 cookie_new(lua_State *L) {
     cookie_t *c = lua_newuserdata(L, sizeof(cookie_t));
     p_clear(c, 1);
-    c->cookie = soup_cookie_new("", "", "", "", -1);
     luaH_settype(L, &(cookie_class));
     lua_newtable(L);
     lua_newtable(L);
@@ -132,7 +134,8 @@ static gint
 luaH_cookie_gc(lua_State *L)
 {
     cookie_t *c = luaH_checkudata(L, 1, &cookie_class);
-    soup_cookie_free(c->cookie);
+    if (c->cookie)
+        soup_cookie_free(c->cookie);
     return 0;
 }
 
