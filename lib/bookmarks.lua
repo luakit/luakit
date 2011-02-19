@@ -237,6 +237,10 @@ chrome.add("bookmarks/", function (view, uri)
     view:load_string(html, tostring(uri))
 end)
 
+function get_data()
+    return data
+end
+
 -- URI of the chrome page
 chrome_page    = "luakit://bookmarks/"
 
