@@ -25,6 +25,7 @@
 #include "luah.h"
 
 typedef struct {
+    LUA_OBJECT_HEADER
     SoupCookie *cookie;
 } cookie_t;
 
