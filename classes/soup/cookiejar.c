@@ -58,18 +58,81 @@ luaH_push_message_uri(lua_State *L, SoupURI *uri)
     return 1;
 }
 
+static GSList*
+cookies_from_table(lua_State *L)
+{
+    GSList *cookies = NULL;
+
+    /* iterate over cookies table */
+    lua_pushnil(L);
+    while(luaH_next(L, -2)) {
+        /* get cookie */
+        cookie_t *c = luaH_toudata(L, -1, &cookie_class);
+
+        /* check type, print error if item invalid */
+        if (!c) {
+            luaL_error(L, "invalid item in cookies table, got %s",
+                lua_typename(L, lua_type(L, -1)));
+
+        /* add cookie's SoupCookie to cookies list */
+        } else if (c->cookie)
+            /* TODO: check cookie fields */
+            cookies = g_slist_prepend(cookies, c->cookie);
+
+        /* remove item */
+        lua_pop(L, 1);
+    }
+    return cookies;
+}
+
 static void
 request_started(SoupSessionFeature *feature, SoupSession *session, SoupMessage *msg, SoupSocket *socket)
 {
     (void) session;
     (void) socket;
-    LuakitCookieJar *jar = LUAKIT_COOKIE_JAR(feature);
-
-    /* get pertinent cookies from lua */
+    GSList *cookies = NULL;
     lua_State *L = globalconf.L;
+    SoupCookieJar *jar = SOUP_COOKIE_JAR(feature);
+
+    /* remove any existing cookie header */
+    soup_message_headers_remove(msg->request_headers, "Cookie");
+
+    /* get cookies list from user */
     luaH_push_message_uri(L, soup_message_get_uri(msg));
-    //g_printf("Current: %s\n", soup_cookie_jar_get_cookies(SOUP_COOKIE_JAR(jar), soup_message_get_uri(msg), TRUE));
-    //gint ret = signal_object_emit(L, soupconf.signals, "request-cookies", 1, 1);
+    gint ret = signal_object_emit(L, soupconf.signals, "request-cookies", 1, 1);
+
+    /* nothing returned */
+    if (!ret)
+        return;
+
+    /* check return argument is table */
+    if (!lua_istable(L, -1)) {
+        luaL_error(L, "invalid return value, cookie table expected, got %s",
+            lua_typename(L, lua_type(L, -1)));
+        lua_pop(L, ret);
+        return;
+    }
+
+    /* get cookies from table */
+    cookies = cookies_from_table(L);
+
+    /* add cookies to the jar (so that javascript has access to them) */
+    for (GSList *p = cookies; p; p = g_slist_next(p))
+        soup_cookie_jar_add_cookie(jar, soup_cookie_copy(p->data));
+
+    if (cookies) {
+        /* build & set cookie header from cookie list */
+        gchar *header = soup_cookies_to_cookie_header(cookies);
+        g_printf("Cookie: %s\n", header);
+        soup_message_headers_append(msg->request_headers, "Cookie", header);
+        g_free(header);
+
+        /* free cookies list */
+        g_slist_free(cookies);
+    }
+
+    /* pop the cookies table */
+    lua_pop(L, ret);
 }
 
 static void
