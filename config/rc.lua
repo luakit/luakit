@@ -38,9 +38,6 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
--- Add vimperator-like link hinting & following
-require "follow"
-
 -- Add uzbl-like form filling
 require "formfiller"
 
@@ -68,6 +65,10 @@ require "bookmarks"
 -- Add download support
 require "downloads"
 require "downloads_chrome"
+
+-- Add vimperator-like link hinting & following
+-- (depends on downloads)
+require "follow"
 
 -- Add command completion
 require "completion"

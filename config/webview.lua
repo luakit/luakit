@@ -241,18 +241,26 @@ webview.methods = {
         view:set_prop(k, v)
     end,
 
-    -- evaluate javascript code and return string result
-    eval_js = function (view, w, script, file, on_focused)
-        return view:eval_js(script, file or "(inline)", not not on_focused)
+    -- Evaluate javascript code and return string result
+    -- The frame argument can be any of the following:
+    -- * true to evaluate on the focused frame
+    -- * false or nothing to evaluate on the main frame
+    -- * a frame object to evaluate on the given frame
+    eval_js = function (view, w, script, file, frame)
+        return view:eval_js(script, file or "(inline)", frame)
     end,
 
-    -- evaluate javascript code from file and return string result
-    eval_js_from_file = function (view, w, file, on_focused)
+    -- Evaluate javascript code from file and return string result
+    -- The frame argument can be any of the following:
+    -- * true to evaluate on the focused frame
+    -- * false or nothing to evaluate on the main frame
+    -- * a frame object to evaluate on the given frame
+    eval_js_from_file = function (view, w, file, frame)
         local fh, err = io.open(file)
         if not fh then return error(err) end
         local script = fh:read("*a")
         fh:close()
-        return view:eval_js(script, file, not not on_focused)
+        return view:eval_js(script, file, frame)
     end,
 
     -- Toggle source view

@@ -24,6 +24,7 @@ execpath
 fg
 focus
 font
+frames
 get_alignment
 get_child
 get_children
