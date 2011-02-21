@@ -529,6 +529,35 @@ luaH_luakit_spawn_sync(lua_State *L)
     return 3;
 }
 
+/*
+ * Reads all the text of the file associated with fd, and stores both the text
+ * read (in *ptr_out) and the amount of read text (*len_out)
+ *
+ * It reports back errors to the Lua State
+ *
+ * NOTES:
+ *   - Caller must release the contents of *ptr_out using g_free
+ *   - fd is closed as part of this function, since it reads all the text of
+ *     the file
+ * */
+void read_proc_output(int fd, lua_State *L, gchar **ptr_out, gsize *len_out) {
+    GIOChannel* g_out = g_io_channel_unix_new(fd);
+    GError *e = NULL;
+    g_io_channel_read_to_end(g_out, ptr_out, len_out, &e);
+    if (e) {
+        lua_pushstring(L, e->message);
+        g_clear_error(&e);
+        g_free(*ptr_out);
+        g_io_channel_unref(g_out);
+        g_io_channel_shutdown(g_out, 1, NULL);
+        close(fd);
+        lua_error(L);
+    }
+    g_io_channel_unref(g_out);
+    g_io_channel_shutdown(g_out, 1, NULL);
+    close(fd);
+}
+
 /* Calls the Lua function defined as callback for a (async) spawned process
  *
  * \param pid The PID of the process that has just finished
@@ -549,7 +578,13 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
     int stdout_fd = cb->stdout_fd;
     int stderr_fd = cb->stderr_fd;
     g_free(cb);
-    // TODO read stdout and stderr using GIOChannel objects
+
+    gchar *str_stdout = NULL;
+    gsize len_stdout;
+    read_proc_output(stdout_fd, L, &str_stdout, &len_stdout);
+    gchar *str_stderr = NULL;
+    gsize len_stderr;
+    read_proc_output(stderr_fd, L, &str_stderr, &len_stderr);
 
     // fetch callbacks table
     lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
@@ -573,8 +608,11 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
     }
     lua_pushinteger(L, exit_type);
     lua_pushinteger(L, exit_num);
-    // TODO pass stdout and stderr strings to the lua function
-    lua_call(L, 2, 0);
+    lua_pushlstring(L, str_stdout, len_stdout);
+    lua_pushlstring(L, str_stderr, len_stderr);
+    g_free(str_stdout);
+    g_free(str_stderr);
+    lua_call(L, 4, 0);
 
     // free callbacks[pid]
     lua_pushlightuserdata(L, (void *)pid);
