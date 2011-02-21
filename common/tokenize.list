@@ -1,3 +1,4 @@
+add_id
 append
 atindex
 bg
@@ -42,10 +43,12 @@ history
 homogeneous
 hovered_uri
 icon
+get_id
 indexof
 insert
 install_path
 interval
+is_plugged
 label
 loading
 loading_chrome
@@ -84,6 +87,7 @@ show_border
 show_frame
 show_scrollbars
 show_tabs
+socket
 spacing
 spawn
 spawn_sync
