@@ -120,6 +120,7 @@ soup_lib_setup(lua_State *L)
         { "emit_signal",   luaH_soup_emit_signal },
         { "set_property",  luaH_soup_set_property },
         { "get_property",  luaH_soup_get_property },
+        { "add_cookies",   luaH_cookiejar_add_cookies },
         { NULL, NULL },
     };
 

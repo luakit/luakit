@@ -40,6 +40,8 @@ typedef struct {
 
 LuakitCookieJar *luakit_cookie_jar_new(void);
 
+gint luaH_cookiejar_add_cookies(lua_State *L);
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
