@@ -273,19 +273,28 @@ add_cmds({
     cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
     cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
     cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
-    cmd("lua",                          function (w, a) assert(loadstring("return function(w) "..a.." end"))()(w) end),
-    cmd("dump",                         function (w, a)
-                                            local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
-                                            local downdir = luakit.get_special_dir("DOWNLOAD") or "."
-                                            local file = a or luakit.save_file("Save file", w.win, downdir, fname)
-                                            if file then
-                                                local fd = assert(io.open(file, "w"), "failed to open: " .. file)
-                                                local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")
-                                                assert(fd:write(html), "unable to save html")
-                                                io.close(fd)
-                                                w:notify("Dumped HTML to: " .. file)
-                                            end
-                                        end),
+
+    cmd("lua", function (w, a)
+        if a then
+            local ret = assert(loadstring("return function(w) return "..a.." end"))()(w)
+            if ret then print(ret) end
+        else
+            w:set_mode("lua")
+        end
+    end),
+
+    cmd("dump", function (w, a)
+        local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+        local downdir = luakit.get_special_dir("DOWNLOAD") or "."
+        local file = a or luakit.save_file("Save file", w.win, downdir, fname)
+        if file then
+            local fd = assert(io.open(file, "w"), "failed to open: " .. file)
+            local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")
+            assert(fd:write(html), "unable to save html")
+            io.close(fd)
+            w:notify("Dumped HTML to: " .. file)
+        end
+    end),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

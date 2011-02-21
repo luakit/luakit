@@ -320,7 +320,7 @@ luaH_isloop(lua_State *L, gint idx)
 static gint
 luaH_luakit_get_selection(lua_State *L)
 {
-    int n = lua_gettop(L);
+    gint n = lua_gettop(L);
     GdkAtom atom = GDK_SELECTION_PRIMARY;
 
     if (n) {
@@ -354,7 +354,7 @@ luaH_luakit_get_selection(lua_State *L)
 static gint
 luaH_luakit_set_selection(lua_State *L)
 {
-    int n = lua_gettop(L);
+    gint n = lua_gettop(L);
     GdkAtom atom = GDK_SELECTION_PRIMARY;
 
     if (0 == n)
@@ -422,10 +422,10 @@ luaH_luakit_uri_decode(lua_State *L)
  * \lparam default_name The filename to preselect in the dialog.
  * \lreturn The name of the selected file or nil if the dialog was cancelled.
  */
-static int
+static gint
 luaH_luakit_save_file(lua_State *L)
 {
-    const char *title = luaL_checkstring(L, 1);
+    const gchar *title = luaL_checkstring(L, 1);
     // decipher the parent
     GtkWindow *parent_window;
     if (lua_isnil(L, 2)) {
@@ -439,8 +439,8 @@ luaH_luakit_save_file(lua_State *L)
             parent_window = NULL;
         }
     }
-    const char *default_folder = luaL_checkstring(L, 3);
-    const char *default_name = luaL_checkstring(L, 4);
+    const gchar *default_folder = luaL_checkstring(L, 3);
+    const gchar *default_name = luaL_checkstring(L, 4);
     GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
             parent_window,
             GTK_FILE_CHOOSER_ACTION_SAVE,
@@ -683,7 +683,7 @@ luaH_luakit_remove_signal(lua_State *L)
 static gint
 luaH_luakit_emit_signal(lua_State *L)
 {
-    signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1);
+    signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1, 0);
     return 0;
 }
 
@@ -708,7 +708,7 @@ luaH_dofunction_on_error(lua_State *L)
     /* duplicate string error */
     lua_pushvalue(L, -1);
     /* emit error signal */
-    signal_object_emit(L, globalconf.signals, "debug::error", 1);
+    signal_object_emit(L, globalconf.signals, "debug::error", 1, 0);
 
     if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
     {
@@ -897,7 +897,7 @@ gint
 luaH_class_index_miss_property(lua_State *L, lua_object_t *obj)
 {
     (void) obj;
-    signal_object_emit(L, globalconf.signals, "debug::index::miss", 2);
+    signal_object_emit(L, globalconf.signals, "debug::index::miss", 2, 0);
     return 0;
 }
 
@@ -905,7 +905,7 @@ gint
 luaH_class_newindex_miss_property(lua_State *L, lua_object_t *obj)
 {
     (void) obj;
-    signal_object_emit(L, globalconf.signals, "debug::newindex::miss", 3);
+    signal_object_emit(L, globalconf.signals, "debug::newindex::miss", 3, 0);
     return 0;
 }
 

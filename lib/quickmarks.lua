@@ -17,8 +17,7 @@ local table = table
 local lousy = require "lousy"
 local capi = { luakit = luakit }
 
-local new_mode, add_binds, add_cmds = new_mode, add_binds, add_cmds
-local new_mode, menu_binds = new_mode, menu_binds
+local new_mode, add_binds, add_cmds, menu_binds = new_mode, add_binds, add_cmds, menu_binds
 
 module("quickmarks")
 

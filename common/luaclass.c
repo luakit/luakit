@@ -192,7 +192,7 @@ luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
 void
 luaH_class_emit_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint nargs) {
-    signal_object_emit(L, lua_class->signals, name, nargs);
+    signal_object_emit(L, lua_class->signals, name, nargs, 0);
 }
 
 /* Try to use the metatable of an object.

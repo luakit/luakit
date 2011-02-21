@@ -23,12 +23,12 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include "classes/download.h"
+#include "classes/soup_auth.h"
 #include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup.h>
 #include "math.h"
 
-GPtrArray *all_views = NULL;
 GHashTable *frames_by_view = NULL;
 
 static struct {
@@ -168,10 +168,10 @@ webview_registered_function_callback(JSContextRef context, JSObjectRef fun, JSOb
     // get function
     luaH_object_push(L, ref);
     // call function
-    int ret = lua_pcall(L, 0, 0, 0);
+    gint ret = lua_pcall(L, 0, 0, 0);
     // handle errors
     if (ret != 0) {
-        const char *exn_cstring = luaL_checkstring(L, -1);
+        const gchar *exn_cstring = luaL_checkstring(L, -1);
         lua_pop(L, 1);
         JSStringRef exn_js_string = JSStringCreateWithUTF8CString(exn_cstring);
         JSValueRef exn_js_value = JSValueMakeString(context, exn_js_string);
@@ -231,7 +231,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         js_result_size = JSStringGetMaximumUTF8CStringSize(js_result_string);
 
         if (js_result_size) {
-            char js_result_utf8[js_result_size];
+            gchar js_result_utf8[js_result_size];
             JSStringGetUTF8CString(js_result_string, js_result_utf8, js_result_size);
             g_string_assign(result, js_result_utf8);
         }
@@ -250,7 +250,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
         if(size) {
-            char cstr[size];
+            gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf("At %s", cstr);
         }
@@ -262,7 +262,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
         if(size) {
-            char cstr[size];
+            gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf(":%s: ", cstr);
         }
@@ -273,7 +273,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file) {
         val = JSValueToStringCopy(context, exc, NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
         if(size) {
-            char cstr[size];
+            gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf("%s\n", cstr);
         }
@@ -292,8 +292,8 @@ luaH_webview_load_string(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     WebKitWebView *view = WEBKIT_WEB_VIEW(g_object_get_data(G_OBJECT(w->widget), "webview"));
-    const char *string = luaL_checkstring(L, 2);
-    const char *base_uri = luaL_checkstring(L, 3);
+    const gchar *string = luaL_checkstring(L, 2);
+    const gchar *base_uri = luaL_checkstring(L, 3);
     WebKitWebFrame *frame = webkit_web_view_get_main_frame(view);
     webkit_web_frame_load_alternate_string(frame, string, base_uri, base_uri);
     return 0;
@@ -373,8 +373,8 @@ soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
     if ((p = g_hash_table_lookup(properties, ps->name))) {
         lua_State *L = globalconf.L;
         widget_t *w;
-        for (guint i = 0; i < all_views->len; i++) {
-            w = all_views->pdata[i];
+        for (guint i = 0; i < globalconf.webviews->len; i++) {
+            w = globalconf.webviews->pdata[i];
             luaH_object_push(L, w->ref);
             luaH_object_emit_signal(L, -1, p->signame, 0, 0);
             lua_pop(L, 1);
@@ -621,7 +621,7 @@ download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
 }
 
 static void
-link_hover_cb(WebKitWebView *view, const char *t, const gchar *link, widget_t *w)
+link_hover_cb(WebKitWebView *view, const gchar *t, const gchar *link, widget_t *w)
 {
     (void) t;
     lua_State *L = globalconf.L;
@@ -1364,8 +1364,8 @@ populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
 {
     GtkWidget *item, *submenu;
     gpointer ref;
-    const char *label;
-    int i, len = lua_objlen(L, -1);
+    const gchar *label;
+    gint i, len = lua_objlen(L, -1);
 
     /* walk table and build context menu */
     for(i = 1; i <= len; i++) {
@@ -1450,7 +1450,7 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
-    g_ptr_array_remove(all_views, w);
+    g_ptr_array_remove(globalconf.webviews, w);
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     gtk_widget_destroy(GTK_WIDGET(view));
     gtk_widget_destroy(GTK_WIDGET(w->widget));
@@ -1458,7 +1458,7 @@ webview_destructor(widget_t *w)
 }
 
 static void
-init_soup(void)
+init_soup()
 {
     /* create soup session */
     Soup.session = webkit_get_default_session();
@@ -1468,6 +1468,10 @@ init_soup(void)
     Soup.cookiejar = soup_cookie_jar_text_new(cookie_file, FALSE);
     soup_session_add_feature(Soup.session, (SoupSessionFeature*) Soup.cookiejar);
     g_free(cookie_file);
+
+    /* remove old auth dialog and add luakit's auth feature instead */
+    soup_session_remove_feature_by_type(Soup.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
+    soup_session_add_feature(Soup.session, (SoupSessionFeature*) luakit_soup_auth_dialog_new());
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(Soup.session), "notify", G_CALLBACK(soup_notify_cb), NULL);
@@ -1485,8 +1489,8 @@ widget_webview(widget_t *w)
         webview_init_properties();
 
     /* keep a list of all webview widgets */
-    if (!all_views)
-        all_views = g_ptr_array_new();
+    if (!globalconf.webviews)
+        globalconf.webviews = g_ptr_array_new();
 
     /* keep a hash of all views and their frames */
     if (!frames_by_view)
@@ -1506,7 +1510,7 @@ widget_webview(widget_t *w)
     show_scrollbars(w, TRUE);
 
     /* insert data into global tables and arrays */
-    g_ptr_array_add(all_views, w);
+    g_ptr_array_add(globalconf.webviews, w);
     g_hash_table_insert(frames_by_view, view, g_hash_table_new(g_direct_hash, g_direct_equal));
 
     /* connect webview signals */

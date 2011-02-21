@@ -249,7 +249,7 @@ webview.methods.formfiller = function(view, w, action)
     elseif action == "load" then
         local fd, err = io.open(filename, "r")
         if not fd then return end
-        local profile = {{"Proifle", title = true},}
+        local profile = {{"Profile", title = true},}
         w:set_mode("formfiller")
         fd:seek("set")
         for l in fd:lines() do
@@ -282,5 +282,33 @@ add_binds("formfiller", lousy.util.table.join({
             w:set_mode()
         end),
 }, menu_binds))
+
+-- Enable (re)storing of HTTP auth credentials
+luakit.add_signal("authenticate", function (uri)
+    local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
+    local fd, err = io.open(filename, "r")
+    if not fd then return end
+    fd:seek("set")
+    local user = nil
+    local pass = nil
+    for line in fd:lines() do
+        if string.match(line, "^!httpuser") then
+            user = string.match(line, "^!httpuser (.*)$")
+        elseif string.match(line, "^!httppass") then
+            pass = string.match(line, "^!httppass (.*)$")
+        end
+    end
+    if user and pass then
+        return user, pass
+    end
+end)
+
+luakit.add_signal("store-password", function (uri, login, password)
+    local filename = formsdir .. string.match(string.gsub(uri, "%w+://", ""), "(.-)/.*")
+    local fd = io.open(filename, "a+")
+    fd:write(string.format("!httpuser %s\n!httppass %s\n", login, password))
+    fd:flush()
+    fd:close()
+end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
