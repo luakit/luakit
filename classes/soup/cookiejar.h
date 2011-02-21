@@ -32,6 +32,7 @@
 
 typedef struct {
     SoupCookieJar parent;
+    gboolean silent;
 } LuakitCookieJar;
 
 typedef struct {

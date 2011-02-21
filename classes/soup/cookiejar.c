@@ -59,12 +59,17 @@ luaH_push_message_uri(lua_State *L, SoupURI *uri)
 }
 
 static GSList*
-cookies_from_table(lua_State *L)
+cookies_from_table(lua_State *L, gint idx)
 {
     GSList *cookies = NULL;
 
-    /* iterate over cookies table */
+    /* bring a copy of the table to the top of the stack */
+    lua_pushvalue(L, idx);
+
+    /* push first index */
     lua_pushnil(L);
+
+    /* iterate over cookies table */
     while(luaH_next(L, -2)) {
         /* get cookie */
         cookie_t *c = luaH_toudata(L, -1, &cookie_class);
@@ -82,27 +87,40 @@ cookies_from_table(lua_State *L)
         /* remove item */
         lua_pop(L, 1);
     }
+
+    /* remove copy of the table */
+    lua_pop(L, 1);
+
     return cookies;
 }
 
 gint
 luaH_cookiejar_add_cookies(lua_State *L)
 {
-    SoupCookieJar *soupjar = SOUP_COOKIE_JAR(soupconf.cookiejar);
-    LuakitCookieJar *jar = LUAKIT_COOKIE_JAR(soupconf.cookiejar);
+    SoupCookieJar *sj = SOUP_COOKIE_JAR(soupconf.cookiejar);
+    LuakitCookieJar *j = LUAKIT_COOKIE_JAR(soupconf.cookiejar);
     GSList *cookies;
+    gboolean silent = TRUE;
 
+    /* cookies table */
     luaH_checktable(L, 1);
-    lua_settop(L, 1);
 
-    if ((cookies = cookies_from_table(L))) {
-        jar->silent = TRUE;
-        /* add updated cookies to the jar */
+    /* optional silent parameter */
+    if (lua_gettop(L) >= 2)
+        silent = luaH_checkboolean(L, 2);
+
+    /* get cookies from table */
+    if ((cookies = cookies_from_table(L, 1))) {
+        j->silent = silent;
+
+        /* insert cookies */
         for (GSList *p = cookies; p; p = g_slist_next(p))
-            soup_cookie_jar_add_cookie(soupjar, soup_cookie_copy(p->data));
+            soup_cookie_jar_add_cookie(sj, soup_cookie_copy(p->data));
+
         g_slist_free(cookies);
-        jar->silent = FALSE;
+        j->silent = FALSE;
     }
+
     return 0;
 }
 
@@ -111,8 +129,8 @@ request_started(SoupSessionFeature *feature, SoupSession *session, SoupMessage *
 {
     (void) session;
     (void) socket;
-    SoupCookieJar *soupjar = SOUP_COOKIE_JAR(feature);
-    SoupURI* uri = soup_message_get_uri(msg);
+    SoupCookieJar *sj = SOUP_COOKIE_JAR(feature);
+    SoupURI *uri = soup_message_get_uri(msg);
     lua_State *L = globalconf.L;
 
     /* give user a chance to add cookies from other instances into the jar */
@@ -120,7 +138,7 @@ request_started(SoupSessionFeature *feature, SoupSession *session, SoupMessage *
     signal_object_emit(L, soupconf.signals, "request-started", 1, 0);
 
     /* generate cookie header */
-    gchar *header = soup_cookie_jar_get_cookies(soupjar, uri, TRUE);
+    gchar *header = soup_cookie_jar_get_cookies(sj, uri, TRUE);
     if (header) {
         soup_message_headers_replace(msg->request_headers, "Cookie", header);
         g_free(header);
@@ -142,9 +160,11 @@ soup_cookie_truly_equal(SoupCookie *c1, SoupCookie *c2)
 }
 
 static void
-changed(SoupCookieJar *jar, SoupCookie *old, SoupCookie *new)
+changed(SoupCookieJar *sj, SoupCookie *old, SoupCookie *new)
 {
-    (void) jar;
+    if (LUAKIT_COOKIE_JAR(sj)->silent)
+        return;
+
     lua_State *L = globalconf.L;
 
     /* do nothing if cookies are equal */
@@ -172,9 +192,9 @@ finalize(GObject *object)
 
 
 static void
-luakit_cookie_jar_init(LuakitCookieJar *jar)
+luakit_cookie_jar_init(LuakitCookieJar *j)
 {
-    (void) jar;
+    j->silent = FALSE;
 }
 
 static void
