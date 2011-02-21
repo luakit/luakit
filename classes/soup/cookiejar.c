@@ -155,19 +155,20 @@ changed(SoupCookieJar *jar, SoupCookie *old, SoupCookie *new)
     lua_State *L = globalconf.L;
 
     /* do nothing if cookies are equal */
-    if (old && new && soup_cookie_truly_equal(old, new)) {
+    if (old && new && soup_cookie_truly_equal(old, new))
         return;
-    }
 
-    if (old) {
+    if (old)
         luaH_cookie_push(L, old);
-        signal_object_emit(L, soupconf.signals, "del-cookie", 1, 0);
-    }
+    else
+        lua_pushnil(L);
 
-    if (new) {
+    if (new)
         luaH_cookie_push(L, new);
-        signal_object_emit(L, soupconf.signals, "add-cookie", 1, 0);
-    }
+    else
+        lua_pushnil(L);
+
+    signal_object_emit(L, soupconf.signals, "cookie-changed", 2, 0);
 }
 
 static void
