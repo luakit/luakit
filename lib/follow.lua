@@ -243,8 +243,15 @@ local follow_js = [=[
 
             // Gets all visible elements using the selector and builds
             // hints for them. Returns the number of hints generated.
-            match: function (selector) {
+            // If ignore_frames is set, frames are removed from the
+            // list after the matching process.
+            match: function (selector, ignore_frames) {
                 var elements = getVisibleElements(selector);
+                if (ignore_frames) {
+                    elements = elements.filter(function (element) {
+                        return !isFrame(element);
+                    });
+                }
                 follow.hints = elements.map(function (element) {
                     return new Hint(element);
                 });
@@ -653,7 +660,8 @@ new_mode("follow", {
         -- Init all frames and gather label data
         local frames = {}
         local sum = 0
-        for _, f in ipairs(w:get_current().frames) do
+        local webkit_frames = w:get_current().frames
+        for _, f in ipairs(webkit_frames) do
             -- Load main following js
             local js_blocks = {}
             local subs = {
@@ -682,7 +690,7 @@ new_mode("follow", {
             local js = table.concat(js_blocks, "\n")
             w:eval_js(js, "(follow.lua)", f)
 
-            local num = tonumber(w:eval_js(string.format("follow.match(%q);", selector), "(follow.lua)", f))
+            local num = tonumber(w:eval_js(string.format("follow.match(%q, %s);", selector, tostring(#webkit_frames == 1)), "(follow.lua)", f))
             table.insert(frames, {num = num, frame = f})
             sum = sum + num
         end
