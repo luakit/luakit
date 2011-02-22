@@ -751,11 +751,12 @@ new_mode("follow", {
         end
         if state.reselect then focus(w, 1) end
         if active_hints == 1 then
-            w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
-            local sig
-            if state.func then sig = state.func(ret, state) end
-            if sig then w:emit_form_root_active_signal(sig) end
             w:set_mode()
+            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
+            ret = lousy.util.string.split(ret)
+            local sig
+            if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
+            if sig then w:emit_form_root_active_signal(sig) end
         elseif active_hints == 0 then
             state.reselect = true
         end
