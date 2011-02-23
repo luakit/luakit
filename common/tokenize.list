@@ -22,6 +22,7 @@ eventbox
 exec
 execpath
 fg
+filename
 focus
 font
 frames
@@ -57,6 +58,7 @@ load_string
 mime_type
 MUSIC
 notebook
+open
 pack_end
 pack_start
 PICTURES

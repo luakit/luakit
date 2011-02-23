@@ -23,12 +23,14 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <webkit/webkit.h>
+
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
-#include "classes/widget.h"
-#include "classes/timer.h"
 #include "classes/download.h"
+#include "classes/sqlite3.h"
+#include "classes/timer.h"
+#include "classes/widget.h"
 #include "luah.h"
 
 void
@@ -761,6 +763,9 @@ luaH_init(void)
 
     /* Export download */
     download_class_setup(L);
+
+    /* Export sqlite3 */
+    sqlite3_class_setup(L);
 
     /* Export timer */
     timer_class_setup(L);
