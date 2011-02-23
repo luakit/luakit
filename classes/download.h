@@ -1,5 +1,5 @@
 /*
- * download.h - WebKitDownload wrapper header
+ * classes/download.h - WebKitDownload wrapper header
  *
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
  *
@@ -30,4 +30,4 @@ gint luaH_download_push(lua_State*, WebKitDownload*);
 
 #endif
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
