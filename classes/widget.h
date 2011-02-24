@@ -42,6 +42,7 @@ widget_constructor_t widget_notebook;
 widget_constructor_t widget_vbox;
 widget_constructor_t widget_webview;
 widget_constructor_t widget_window;
+widget_constructor_t widget_socket;
 
 typedef const struct {
     luakit_token_t tok;

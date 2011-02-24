@@ -38,9 +38,6 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
--- Add vimperator-like link hinting & following
-require "follow"
-
 -- Add uzbl-like form filling
 require "formfiller"
 
@@ -56,6 +53,9 @@ require "session"
 -- Add command to list closed tabs & bind to open closed tabs
 require "undoclose"
 
+-- Add command to list tab history items
+require "tabhistory"
+
 -- Add greasemonkey-like javascript userscript support
 require "userscripts"
 
@@ -65,6 +65,10 @@ require "bookmarks"
 -- Add download support
 require "downloads"
 require "downloads_chrome"
+
+-- Add vimperator-like link hinting & following
+-- (depends on downloads)
+require "follow"
 
 -- Add command completion
 require "completion"

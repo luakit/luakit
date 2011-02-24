@@ -31,10 +31,17 @@
 #include "classes/soup/soup.h"
 #include "common/property.h"
 
+GHashTable *frames_by_view = NULL;
+
 static struct {
     GSList *refs;
     GSList *items;
 } last_popup = { NULL, NULL };
+
+typedef struct {
+    WebKitWebView *v;
+    WebKitWebFrame *f;
+} frame_destroy_callback_t;
 
 GHashTable *webview_properties = NULL;
 property_t webview_properties_table[] = {
@@ -288,8 +295,13 @@ luaH_webview_eval_js(lua_State *L)
     const gchar *filename = luaL_checkstring(L, 3);
 
     /* Check if js should be run on currently focused frame */
-    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
-        frame = webkit_web_view_get_focused_frame(view);
+    if (lua_gettop(L) >= 4) {
+        if (lua_islightuserdata(L, 4)) {
+            frame = lua_touserdata(L, 4);
+        } else if (lua_toboolean(L, 4)) {
+            frame = webkit_web_view_get_focused_frame(view);
+        }
+    }
     /* Fall back on main frame */
     if (!frame)
         frame = webkit_web_view_get_main_frame(WEBKIT_WEB_VIEW(view));
@@ -331,6 +343,38 @@ update_uri(widget_t *w, const gchar *new)
         luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
         lua_pop(L, 1);
     }
+}
+
+static void
+frame_destroyed_cb(frame_destroy_callback_t *d)
+{
+    gpointer hash = g_hash_table_lookup(frames_by_view, d->v);
+    /* the view might be destroyed before the frames */
+    if (hash) {
+        g_hash_table_remove(hash, d->f);
+    }
+    g_free(d);
+}
+
+static void
+luaH_push_frame(gpointer f, gpointer v, gpointer L)
+{
+    (void) v;
+    lua_pushlightuserdata((lua_State *)L, f);
+}
+
+static gint
+luaH_webview_push_frames(lua_State *L, WebKitWebView *v)
+{
+    gpointer hash = g_hash_table_lookup(frames_by_view, v);
+    gint size = g_hash_table_size(hash);
+    lua_createtable(L, size, 0);
+    gint top = lua_gettop(L);
+    g_hash_table_foreach(hash, luaH_push_frame, L);
+    for (int i = 1; i <= size; ++i) {
+        lua_rawseti(L, top, i);
+    }
+    return 1;
 }
 
 static void
@@ -396,6 +440,21 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 
     lua_pop(L, ret + 1);
     return TRUE;
+}
+
+static void
+document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+{
+    (void) w;
+
+    /* add a bogus property to the frame so we get notified when it's destroyed */
+    frame_destroy_callback_t *d = g_new(frame_destroy_callback_t, 1);
+    d->v = v;
+    d->f = f;
+    g_object_set_data_full(G_OBJECT(f), "dummy-destroy-notify", d, (GDestroyNotify)frame_destroyed_cb);
+
+    gpointer hash = g_hash_table_lookup(frames_by_view, v);
+    g_hash_table_insert(hash, f, NULL);
 }
 
 static gboolean
@@ -927,6 +986,9 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       /* push string properties */
       PS_CASE(HOVERED_URI, g_object_get_data(G_OBJECT(view), "hovered-uri"))
 
+      case L_TK_FRAMES:
+        return luaH_webview_push_frames(L, WEBKIT_WEB_VIEW(view));
+
       case L_TK_URI:
         tmp.c = g_object_get_data(G_OBJECT(view), "uri");
         lua_pushstring(L, tmp.c);
@@ -1182,6 +1244,7 @@ webview_destructor(widget_t *w)
     GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
     gtk_widget_destroy(GTK_WIDGET(view));
     gtk_widget_destroy(GTK_WIDGET(w->widget));
+    g_hash_table_remove(frames_by_view, view);
 }
 
 widget_t *
@@ -1199,6 +1262,11 @@ widget_webview(widget_t *w)
     if (!globalconf.webviews)
         globalconf.webviews = g_ptr_array_new();
 
+    /* keep a hash of all views and their frames */
+    if (!frames_by_view)
+        frames_by_view = g_hash_table_new_full(g_direct_hash, g_direct_equal, 
+            NULL, (GDestroyNotify) g_hash_table_destroy);
+
     GtkWidget *view = webkit_web_view_new();
     w->widget = gtk_scrolled_window_new(NULL, NULL);
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", w);
@@ -1207,6 +1275,10 @@ widget_webview(widget_t *w)
 
     /* set initial scrollbars state */
     show_scrollbars(w, TRUE);
+
+    /* insert data into global tables and arrays */
+    g_ptr_array_add(globalconf.webviews, w);
+    g_hash_table_insert(frames_by_view, view, g_hash_table_new(g_direct_hash, g_direct_equal));
 
     /* connect webview signals */
     g_object_connect(G_OBJECT(view),
@@ -1227,13 +1299,12 @@ widget_webview(widget_t *w)
       "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
+      "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       NULL);
 
     /* show widgets */
     gtk_widget_show(view);
     gtk_widget_show(w->widget);
-
-    g_ptr_array_add(globalconf.webviews, w);
 
     return w;
 }
