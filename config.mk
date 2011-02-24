@@ -9,7 +9,7 @@ MANPREFIX  ?= ${DESTDIR}${PREFIX}/share/man
 DOCDIR     ?= ${DESTDIR}${PREFIX}/share/luakit/docs
 
 # Generate includes and libs
-PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 lua
+PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 lua sqlite3
 INCS := $(shell pkg-config --cflags ${PKGS}) -I./
 LIBS := $(shell pkg-config --libs ${PKGS})
 

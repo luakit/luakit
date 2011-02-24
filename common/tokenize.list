@@ -24,6 +24,7 @@ exec
 execpath
 expires
 fg
+filename
 focus
 font
 frames
@@ -61,6 +62,7 @@ mime_type
 MUSIC
 name
 notebook
+open
 pack_end
 pack_start
 path
