@@ -19,6 +19,7 @@
  */
 
 #include <sqlite3.h>
+#include <time.h>
 
 #include "classes/sqlite3.h"
 #include "common/luaobject.h"
@@ -132,6 +133,7 @@ luaH_sqlite3_exec(lua_State *L)
     struct callback_data d = { L, 0 };
     gchar *error, *emsg;
     const gchar *sql;
+    struct timespec ts1, ts2;
     sqlite3_t *sqlite = luaH_checkudata(L, 1, &sqlite3_class);
 
     /* check database open */
@@ -144,12 +146,17 @@ luaH_sqlite3_exec(lua_State *L)
 
     /* check sql query */
     if (sqlite3_complete(sql) != 1) {
-        lua_pushliteral(L, "sqlite3: incomplete query");
+        emsg = g_strdup_printf("sqlite3: incomplete query: %s", sql);
+        lua_pushstring(L, emsg);
+        g_free(emsg);
         lua_error(L);
     }
 
     /* create table to insert result rows into */
     lua_newtable(L);
+
+    /* record time taken to exec query & build return table */
+    clock_gettime(CLOCK_REALTIME, &ts1);
 
     if (sqlite3_exec(sqlite->db, sql, callback, &d, &error)) {
         emsg = g_strdup_printf("sqlite3: failed to execute query: %s", error);
@@ -157,6 +164,15 @@ luaH_sqlite3_exec(lua_State *L)
         g_free(emsg);
         lua_error(L);
     }
+
+    /* get end time reference point */
+    clock_gettime(CLOCK_REALTIME, &ts2);
+
+    lua_pushstring(L, sql);
+    lua_pushnumber(L, sqlite3_changes(sqlite->db));
+    lua_pushnumber(L, (ts2.tv_sec + (ts2.tv_nsec / 1e9)) -
+        (ts1.tv_sec + (ts1.tv_nsec / 1e9)));
+    luaH_object_emit_signal(L, 1, "execute", 3, 0);
 
     return 1;
 }
