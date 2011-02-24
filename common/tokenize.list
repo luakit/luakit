@@ -31,6 +31,7 @@ frames
 get_alignment
 get_child
 get_children
+get_id
 get_padding
 get_property
 get_scroll_horiz
@@ -48,7 +49,6 @@ homogeneous
 hovered_uri
 http_only
 icon
-get_id
 indexof
 insert
 install_path
@@ -108,6 +108,7 @@ suggested_filename
 switch
 TEMPLATES
 text
+time
 title
 total_size
 type

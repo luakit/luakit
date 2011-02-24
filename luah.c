@@ -23,6 +23,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <webkit/webkit.h>
+#include <time.h>
 
 #include "common/util.h"
 #include "common/lualib.h"
@@ -550,6 +551,15 @@ luaH_luakit_spawn(lua_State *L)
 }
 
 static gint
+luaH_luakit_time(lua_State *L)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    lua_pushnumber(L, ts.tv_sec + (ts.tv_nsec / 1e9));
+    return 1;
+}
+
+static gint
 luaH_exec(lua_State *L)
 {
     const gchar *cmd = luaL_checkstring(L, 1);
@@ -578,6 +588,7 @@ luaH_luakit_index(lua_State *L)
     switch(token) {
 
       /* push class methods */
+      PF_CASE(TIME,             luaH_luakit_time)
       PF_CASE(GET_SPECIAL_DIR,  luaH_luakit_get_special_dir)
       PF_CASE(SAVE_FILE,        luaH_luakit_save_file)
       PF_CASE(SPAWN,            luaH_luakit_spawn)
