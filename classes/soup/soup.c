@@ -142,9 +142,6 @@ soup_lib_setup(lua_State *L)
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
-
-    /* setup cookie class */
-    cookie_class_setup(L);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

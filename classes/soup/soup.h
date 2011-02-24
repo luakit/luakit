@@ -26,7 +26,6 @@
 #include "luah.h"
 #include "classes/soup/auth.h"
 #include "classes/soup/cookiejar.h"
-#include "classes/soup/cookie.h"
 
 typedef struct {
     /* shared libsoup session */

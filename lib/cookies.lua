@@ -1,3 +1,8 @@
+------------------------------------------------------------
+-- Cross-instance luakit cookie management (with sqlite3) --
+-- (C) 2011 Mason Larobina <mason.larobina@gmail.com>     --
+------------------------------------------------------------
+
 require "math"
 local os = require "os"
 local io = require "io"
@@ -6,8 +11,7 @@ local string = string
 local table = table
 local print = print
 local ipairs = ipairs
-local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3,
-    cookie = cookie, timer = timer }
+local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
 local time, floor = luakit.time, math.floor
 
 module "cookies"
@@ -52,8 +56,8 @@ CREATE TABLE IF NOT EXISTS moz_cookies (
     isHttpOnly INTEGER
 );]]
 
-query_all_since = [[SELECT id, name, value, host AS domain, path, expiry,
-    isSecure AS secure, isHttpOnly AS http_only
+query_all_since = [[SELECT id, name, value, host AS domain, path,
+    expiry AS expires, isSecure AS secure, isHttpOnly AS http_only
 FROM moz_cookies
 WHERE lastAccessed >= %d;]]
 
@@ -78,7 +82,6 @@ db:exec(create_table)
 
 -- Load all cookies after the last check time
 function load_new_cookies(purge)
-    local cookies = {}
     local ctime = micro()
 
     -- Delete all expired cookies older than 90 seconds
@@ -87,21 +90,21 @@ function load_new_cookies(purge)
     end
 
     -- Get new cookies from the db
-    local rows = db:exec(string.format(query_all_since, checktime))
+    local cookies = db:exec(string.format(query_all_since, checktime))
 
     -- Update checktime for next run
     checktime = ctime
 
-    for i, r in ipairs(rows) do
-        local c = capi.cookie{ name = r.name, domain = r.domain,
-            value = r.value, path = r.path,
-            expiry = r.expriy ~= "-1" and r.expiry or nil,
-            secure = r.secure == "1",
-            http_only = r.http_only == "1" }
-        table.insert(cookies, c)
+    -- Convert query results into suitable cookie tables
+    for i, c in ipairs(cookies) do
+        c.secure = c.secure == "1"
+        c.http_only = c.http_only == "1"
     end
 
-    capi.soup.add_cookies(cookies)
+    -- Add new cookies to the cookiejar
+    if cookies[1] then
+        capi.soup.add_cookies(cookies)
+    end
 end
 
 capi.soup.add_signal("cookie-changed", function (old, new)

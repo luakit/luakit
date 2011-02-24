@@ -1,5 +1,5 @@
 /*
- * classes/soup/cookiejar.c - LuakitSoupCookieJar
+ * classes/soup/cookiejar.c - LuakitCookieJar
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -58,10 +58,122 @@ luaH_push_message_uri(lua_State *L, SoupURI *uri)
     return 1;
 }
 
+static gint
+luaH_cookie_push(lua_State *L, SoupCookie *c)
+{
+    lua_createtable(L, 0, 7);
+    /* push name */
+    lua_pushliteral(L, "name");
+    lua_pushstring(L, c->name);
+    lua_rawset(L, -3);
+    /* push value */
+    lua_pushliteral(L, "value");
+    lua_pushstring(L, c->value);
+    lua_rawset(L, -3);
+    /* push domain */
+    lua_pushliteral(L, "domain");
+    lua_pushstring(L, c->domain);
+    lua_rawset(L, -3);
+    /* push path */
+    lua_pushliteral(L, "path");
+    lua_pushstring(L, c->path);
+    lua_rawset(L, -3);
+    /* push secure */
+    lua_pushliteral(L, "secure");
+    lua_pushboolean(L, c->secure);
+    lua_rawset(L, -3);
+    /* push http_only */
+    lua_pushliteral(L, "http_only");
+    lua_pushboolean(L, c->http_only);
+    lua_rawset(L, -3);
+    /* push expires */
+    lua_pushliteral(L, "expires");
+    if (c->expires)
+        lua_pushnumber(L, soup_date_to_time_t(c->expires));
+    else
+        lua_pushnumber(L, -1);
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
+static SoupCookie*
+cookie_new_from_table(lua_State *L, gint idx, gchar **error)
+{
+    SoupCookie *cookie = NULL;
+    SoupDate *date;
+    const gchar *name, *value, *domain, *path;
+    name = value = domain = path = NULL;
+    gboolean secure, http_only;
+    gint expires;
+
+    /* correct relative index */
+    if (idx < 0)
+        idx = lua_gettop(L) + idx + 1;
+
+    /* check for cookie table */
+    if (!lua_istable(L, idx)) {
+        *error = g_strdup_printf("invalid cookie table, got %s",
+            lua_typename(L, lua_type(L, idx)));
+        return NULL;
+    }
+
+#define IS_STRING  (lua_isstring(L, -1)  || lua_isnumber(L, -1))
+#define IS_BOOLEAN (lua_isboolean(L, -1) || lua_isnil(L, -1))
+#define IS_NUMBER  (lua_isnumber(L, -1))
+
+#define GET_PROP(prop, typname, typexpr, typfunc)                           \
+    lua_pushliteral(L, #prop);                                              \
+    lua_rawget(L, idx);                                                     \
+    if ((typexpr)) {                                                        \
+        prop = typfunc(L, -1);                                              \
+        lua_pop(L, 1);                                                      \
+    } else {                                                                \
+        *error = g_strdup_printf("invalid cookie." #prop " type, expected " \
+            #typname ", got %s",  lua_typename(L, lua_type(L, -1)));        \
+        return NULL;                                                        \
+    }
+
+    /* get cookie properties */
+    GET_PROP(name,      string,  IS_STRING,  lua_tostring)
+    GET_PROP(value,     string,  IS_STRING,  lua_tostring)
+    GET_PROP(domain,    string,  IS_STRING,  lua_tostring)
+    GET_PROP(path,      string,  IS_STRING,  lua_tostring)
+    GET_PROP(secure,    boolean, IS_BOOLEAN, lua_toboolean)
+    GET_PROP(http_only, boolean, IS_BOOLEAN, lua_toboolean)
+    GET_PROP(expires,   number,  IS_NUMBER,  lua_tonumber)
+
+#undef IS_STRING
+#undef IS_BOOLEAN
+#undef IS_NUMBER
+#undef GET_PROP
+
+    /* create soup cookie */
+    if ((cookie = soup_cookie_new(name, value, domain, path, expires))) {
+        soup_cookie_set_secure(cookie, secure);
+        soup_cookie_set_http_only(cookie, http_only);
+
+        /* set real expiry date from unixtime */
+        if (expires > 0) {
+            date = soup_date_new_from_time_t((time_t) expires);
+            soup_cookie_set_expires(cookie, date);
+            soup_date_free(date);
+        }
+
+        return cookie;
+    }
+
+    /* soup cookie creation failed */
+    *error = g_strdup_printf("soup cookie creation failed");
+    return NULL;
+}
+
 static GSList*
 cookies_from_table(lua_State *L, gint idx)
 {
     GSList *cookies = NULL;
+    SoupCookie *cookie;
+    gchar *error;
 
     /* bring a copy of the table to the top of the stack */
     lua_pushvalue(L, idx);
@@ -71,20 +183,24 @@ cookies_from_table(lua_State *L, gint idx)
 
     /* iterate over cookies table */
     while(luaH_next(L, -2)) {
-        /* get cookie */
-        cookie_t *c = luaH_toudata(L, -1, &cookie_class);
+        /* create soup cookie from table */
+        if ((cookie = cookie_new_from_table(L, -1, &error)))
+            cookies = g_slist_prepend(cookies, cookie);
 
-        /* check type, print error if item invalid */
-        if (!c) {
-            luaL_error(L, "invalid item in cookies table, got %s",
-                lua_typename(L, lua_type(L, -1)));
+        /* bad cookie, raise error */
+        else if (error) {
+            /* free cookies */
+            for (GSList *p = cookies; p; p = g_slist_next(p))
+                soup_cookie_free(p->data);
+            g_slist_free(cookies);
 
-        /* add cookie's SoupCookie to cookies list */
-        } else if (c->cookie)
-            /* TODO: check cookie fields */
-            cookies = g_slist_prepend(cookies, c->cookie);
+            /* push & raise error */
+            lua_pushfstring(L, "bad cookie in cookies table (%s)", error);
+            g_free(error);
+            lua_error(L);
+        }
 
-        /* remove item */
+        /* remove cookie table */
         lua_pop(L, 1);
     }
 

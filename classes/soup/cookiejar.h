@@ -1,5 +1,5 @@
 /*
- * classes/soup/cookiejar.h - LuakitSoupCookieJar header
+ * classes/soup/cookiejar.h - LuakitCookieJar header
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
