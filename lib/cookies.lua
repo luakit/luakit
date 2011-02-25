@@ -21,6 +21,14 @@ function micro()
     return floor(time() * 1e6)
 end
 
+-- Escape values for SQL queries. In sqlite3: "A string constant is formed
+-- by enclosing the string in single quotes ('). A single quote within the
+-- string can be encoded by putting two single quotes in a row - as in
+-- Pascal." Read: http://sqlite.org/lang_expr.html
+function escape(s)
+    return "'" .. string.gsub(s, "'", "''") .. "'"
+end
+
 -- Last cookie check time
 local checktime = 0
 
@@ -62,14 +70,14 @@ FROM moz_cookies
 WHERE lastAccessed >= %d;]]
 
 query_insert = [[INSERT INTO moz_cookies
-VALUES(NULL, %q, %q, %q, %q, %d, %d, %d, %d);]]
+VALUES(NULL, %s, %s, %s, %s, %d, %d, %d, %d);]]
 
 query_expire = [[UPDATE moz_cookies
 SET expiry=0, lastAccessed=%d
-WHERE host=%q AND name=%q AND path=%q;]]
+WHERE host=%s AND name=%s AND path=%s;]]
 
 query_delete = [[DELETE FROM moz_cookies
-WHERE host=%q AND name=%q AND path=%q;]]
+WHERE host=%s AND name=%s AND path=%s;]]
 
 query_delete_expired = [[DELETE FROM moz_cookies
 WHERE expiry == 0 AND lastAccessed < %d;]]
@@ -108,19 +116,20 @@ function load_new_cookies(purge)
 end
 
 capi.soup.add_signal("cookie-changed", function (old, new)
+    local e = escape
     if new then
         -- Delete all previous matching/expired cookies.
         db:exec(string.format(query_delete,
-            new.domain, -- WHERE = host
-            new.name, -- WHERE = name
-            new.path)) -- WHERE = path
+            e(new.domain), -- WHERE = host
+            e(new.name), -- WHERE = name
+            e(new.path))) -- WHERE = path
 
         -- Insert new cookie
         db:exec(string.format(query_insert,
-            new.name, -- name
-            new.value, -- value
-            new.domain, -- host
-            new.path, -- path
+            e(new.name), -- name
+            e(new.value), -- value
+            e(new.domain), -- host
+            e(new.path), -- path
             new.expires or -1, -- expiry
             micro(), -- lastAccessed
             new.secure and 1 or 0, -- isSecure
@@ -130,9 +139,9 @@ capi.soup.add_signal("cookie-changed", function (old, new)
     elseif old then
         db:exec(string.format(query_expire,
             micro(), -- lastAccessed
-            old.domain, -- WHERE = host
-            old.name, -- WHERE = name
-            old.path)) -- WHERE = path
+            e(old.domain), -- WHERE = host
+            e(old.name), -- WHERE = name
+            e(old.path))) -- WHERE = path
     end
 end)
 
