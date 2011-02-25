@@ -14,7 +14,7 @@ local lousy = require "lousy"
 local theme = theme
 local unpack = unpack
 local table = table
-local capi = { luakit = luakit }
+local capi = { luakit = luakit, soup = soup }
 local webview = webview
 local widget = widget
 local window = window
@@ -125,7 +125,7 @@ end
 webview.init_funcs.set_proxy = function (view, w)
     local active = get_active()
     if active and active.address ~= '' then
-        view:set_prop('proxy-uri', active.address)
+        capi.soup.set_property('proxy-uri', active.address)
     end
     -- The proxy property is set globablly so this function only needs to be
     -- called once. Other proxy changes take place from the interactive
@@ -217,8 +217,7 @@ add_binds("proxymenu", lousy.util.table.join({
             if row and row.address then
                 set_active(row.name)
                 w:set_mode()
-                -- Change proxy for every tab
-                w:get_current():set_prop('proxy-uri', row.address)
+                capi.soup.set_property('proxy-uri', row.address)
                 if row.name then
                     w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
                 else

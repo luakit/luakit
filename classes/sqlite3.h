@@ -1,7 +1,7 @@
 /*
- * classes/download.h - WebKitDownload wrapper header
+ * classes/sqlite3.h - luakit sqlite3 wrapper
  *
- * Copyright © 2009 Julien Danjou <julien@danjou.info>
+ * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,14 +19,12 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_DOWNLOAD_H
-#define LUAKIT_CLASSES_DOWNLOAD_H
+#ifndef LUAKIT_CLASSES_SQLITE3_H
+#define LUAKIT_CLASSES_SQLITE3_H
 
 #include <lua.h>
-#include <webkit/webkitdownload.h>
 
-void download_class_setup(lua_State*);
-gint luaH_download_push(lua_State*, WebKitDownload*);
+void sqlite3_class_setup(lua_State*);
 
 #endif
 

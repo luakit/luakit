@@ -232,7 +232,7 @@ window.methods = {
 
     get_tab_title = function (w, view)
         if not view then view = w:get_current() end
-        return view:get_prop("title") or view.uri or "(Untitled)"
+        return view:get_property("title") or view.uri or "(Untitled)"
     end,
 
     -- Wrapper around the bind plugin's hit method
@@ -414,7 +414,7 @@ window.methods = {
 
     update_win_title = function (w, view)
         if not view then view = w:get_current() end
-        local uri, title = view.uri, view:get_prop("title")
+        local uri, title = view.uri, view:get_property("title")
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
@@ -433,7 +433,7 @@ window.methods = {
 
     update_progress = function (w, view, p)
         if not view then view = w:get_current() end
-        if not p then p = view:get_prop("progress") end
+        if not p then p = view:get_property("progress") end
         local loaded = w.sbar.l.loaded
         if not view:loading() or p == 1 then
             loaded:hide()

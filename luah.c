@@ -23,12 +23,16 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <webkit/webkit.h>
+#include <time.h>
+
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
-#include "classes/widget.h"
-#include "classes/timer.h"
 #include "classes/download.h"
+#include "classes/soup/soup.h"
+#include "classes/sqlite3.h"
+#include "classes/timer.h"
+#include "classes/widget.h"
 #include "luah.h"
 
 void
@@ -547,6 +551,15 @@ luaH_luakit_spawn(lua_State *L)
 }
 
 static gint
+luaH_luakit_time(lua_State *L)
+{
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    lua_pushnumber(L, ts.tv_sec + (ts.tv_nsec / 1e9));
+    return 1;
+}
+
+static gint
 luaH_exec(lua_State *L)
 {
     const gchar *cmd = luaL_checkstring(L, 1);
@@ -575,6 +588,7 @@ luaH_luakit_index(lua_State *L)
     switch(token) {
 
       /* push class methods */
+      PF_CASE(TIME,             luaH_luakit_time)
       PF_CASE(GET_SPECIAL_DIR,  luaH_luakit_get_special_dir)
       PF_CASE(SAVE_FILE,        luaH_luakit_save_file)
       PF_CASE(SPAWN,            luaH_luakit_spawn)
@@ -669,7 +683,7 @@ luaH_luakit_remove_signal(lua_State *L)
     luaH_checkfunction(L, 2);
     gpointer func = (gpointer) lua_topointer(L, 2);
     signal_remove(globalconf.signals, name, func);
-    luaH_object_unref(L, (void *) func);
+    luaH_object_unref(L, (gpointer) func);
     return 0;
 }
 
@@ -683,8 +697,8 @@ luaH_luakit_remove_signal(lua_State *L)
 static gint
 luaH_luakit_emit_signal(lua_State *L)
 {
-    signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1), lua_gettop(L) - 1, 0);
-    return 0;
+    return signal_object_emit(L, globalconf.signals, luaL_checkstring(L, 1),
+        lua_gettop(L) - 1, LUA_MULTRET);
 }
 
 static gint
@@ -756,11 +770,17 @@ luaH_init(void)
     /* Export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
 
+    /* Export soup lib */
+    soup_lib_setup(L);
+
     /* Export widget */
     widget_class_setup(L);
 
     /* Export download */
     download_class_setup(L);
+
+    /* Export sqlite3 */
+    sqlite3_class_setup(L);
 
     /* Export timer */
     timer_class_setup(L);
