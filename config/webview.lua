@@ -7,17 +7,15 @@ webview = {}
 
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
-    -- Set global properties
-    set_global_props = function (view, w)
+    -- Set useragent
+    set_useragent = function (view, w)
         view:set_property('user-agent', globals.useragent)
-        -- Set ssl options
-        if globals.ssl_strict ~= nil then
-            view:set_property('ssl-strict', globals.ssl_strict)
-        end
-        if globals.ca_file and os.exists(globals.ca_file) then
-            view:set_property('ssl-ca-file', globals.ca_file)
-            -- Warning: update the following variable if 'ssl-ca-file' is
-            -- changed anywhere else.
+    end,
+
+    -- Check if checking ssl certificates
+    checking_ssl = function (view, w)
+        local ca_file = soup.get_property("ssl-ca-file")
+        if ca_file and os.exists(ca_file) then
             w.checking_ssl = true
         end
     end,
