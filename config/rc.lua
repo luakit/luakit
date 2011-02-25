@@ -38,6 +38,9 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
+-- Add sqlite3 cookiejar
+require "cookies"
+
 -- Add uzbl-like form filling
 require "formfiller"
 

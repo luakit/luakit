@@ -7,17 +7,15 @@ webview = {}
 
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
-    -- Set global properties
-    set_global_props = function (view, w)
-        view:set_prop('user-agent', globals.useragent)
-        -- Set ssl options
-        if globals.ssl_strict ~= nil then
-            view:set_prop('ssl-strict', globals.ssl_strict)
-        end
-        if globals.ca_file and os.exists(globals.ca_file) then
-            view:set_prop('ssl-ca-file', globals.ca_file)
-            -- Warning: update the following variable if 'ssl-ca-file' is
-            -- changed anywhere else.
+    -- Set useragent
+    set_useragent = function (view, w)
+        view:set_property('user-agent', globals.useragent)
+    end,
+
+    -- Check if checking ssl certificates
+    checking_ssl = function (view, w)
+        local ca_file = soup.get_property("ssl-ca-file")
+        if ca_file and os.exists(ca_file) then
             w.checking_ssl = true
         end
     end,
@@ -150,7 +148,7 @@ webview.init_funcs = {
             local props = lousy.util.table.join(domain_props.all or {}, domain_props[domain] or {})
             for k, v in pairs(props) do
                 info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
-                view:set_prop(k, v)
+                view:set_property(k, v)
             end
         end)
     end,
@@ -234,11 +232,11 @@ webview.methods = {
 
     -- Property functions
     get = function (view, w, k)
-        return view:get_prop(k)
+        return view:get_property(k)
     end,
 
     set = function (view, w, k, v)
-        view:set_prop(k, v)
+        view:set_property(k, v)
     end,
 
     -- Evaluate javascript code and return string result
@@ -271,20 +269,20 @@ webview.methods = {
 
     -- Zoom functions
     zoom_in = function (view, w, step, full_zoom)
-        view:set_prop("full-content-zoom", not not full_zoom)
+        view:set_property("full-content-zoom", not not full_zoom)
         step = step or globals.zoom_step or 0.1
-        view:set_prop("zoom-level", view:get_prop("zoom-level") + step)
+        view:set_property("zoom-level", view:get_property("zoom-level") + step)
     end,
 
     zoom_out = function (view, w, step, full_zoom)
-        view:set_prop("full-content-zoom", not not full_zoom)
+        view:set_property("full-content-zoom", not not full_zoom)
         step = step or globals.zoom_step or 0.1
-        view:set_prop("zoom-level", math.max(0.01, view:get_prop("zoom-level") - step))
+        view:set_property("zoom-level", math.max(0.01, view:get_property("zoom-level") - step))
     end,
 
     zoom_set = function (view, w, level, full_zoom)
-        view:set_prop("full-content-zoom", not not full_zoom)
-        view:set_prop("zoom-level", level or 1.0)
+        view:set_property("full-content-zoom", not not full_zoom)
+        view:set_property("zoom-level", level or 1.0)
     end,
 
     -- Webview scroll functions

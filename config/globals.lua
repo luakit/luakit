@@ -19,17 +19,21 @@ local awkv = string.format("AppleWebKit/%s.%s+", luakit.webkit_user_agent_major_
 globals.useragent = string.format("Mozilla/5.0 (%s) %s %s %s", arch, awkv, wkv, lkv)
 
 -- Search common locations for a ca file which is used for ssl connection validation.
-local ca_files = {luakit.data_dir .. "/ca-certificates.crt",
-    "/etc/certs/ca-certificates.crt", "/etc/ssl/certs/ca-certificates.crt",}
+local ca_files = {
+    -- $XDG_DATA_HOME/luakit/ca-certificates.crt
+    luakit.data_dir .. "/ca-certificates.crt",
+    "/etc/certs/ca-certificates.crt",
+    "/etc/ssl/certs/ca-certificates.crt",
+}
 for _, ca_file in ipairs(ca_files) do
     if os.exists(ca_file) then
-        globals.ca_file = ca_file
+        soup.set_property("ssl-ca-file", ca_file)
         break
     end
 end
 
 -- Change to stop navigation sites with invalid or expired ssl certificates
-globals.ssl_strict = false
+soup.set_property("ssl-strict", false)
 
 -- Search engines
 search_engines = {

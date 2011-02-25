@@ -185,6 +185,7 @@ signal_object_emit(lua_State *L, signal_t *signals,
         const gchar *name, gint nargs, gint nret) {
 
     signal_array_t *sigfuncs = signal_lookup(signals, name);
+    debug("emitting \"%s\" with %d args and %d nret", name, nargs, nret);
     if(sigfuncs) {
         gint nbfunc = sigfuncs->len;
         luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 1,

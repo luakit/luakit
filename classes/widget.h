@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_WIDGET_H
-#define LUAKIT_WIDGET_H
+#ifndef LUAKIT_CLASSES_WIDGET_H
+#define LUAKIT_CLASSES_WIDGET_H
 
 typedef struct widget_t widget_t;
 

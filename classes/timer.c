@@ -143,10 +143,10 @@ timer_class_setup(lua_State *L)
     static const struct luaL_reg timer_meta[] =
     {
         LUA_OBJECT_META(timer)
-            LUA_CLASS_META
-            { "start", luaH_timer_start },
-            { "stop", luaH_timer_stop },
-            { NULL, NULL },
+        LUA_CLASS_META
+        { "start", luaH_timer_start },
+        { "stop", luaH_timer_stop },
+        { NULL, NULL },
     };
 
     luaH_class_setup(L, &timer_class, "timer",
