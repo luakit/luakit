@@ -17,13 +17,22 @@ local pattern = "^luakit://downloads/?"
 --- Template for a download.
 download_template = [==[
 <div class="download {status}"><h1>{id} {name}</h1>
-<span>{modeline}</span>&nbsp;&nbsp;
+<span class="modeline">{modeline}</span>&nbsp;&nbsp;
 <a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
 <a class="delete" href="javascript:delete_{id}()">Delete</a>
 <a class="restart" href="javascript:restart_{id}()">Restart</a>
-<a class="open" href="javascript:open_{id}()">Open</a>
+<a class="open" id="open_{id}" href="javascript:open_{id}()">Open</a>
+<span class="opening" id="opening_{id}" href="javascript:open_{id}()">Opening...</span>
 </div>
 ]==]
+
+download_js_template = [=[
+    if ({opening}) {
+        document.getElementById("open_{id}").style.display = "none";
+    } else {
+        document.getElementById("opening_{id}").style.display = "none";
+    }
+]=]
 
 --- Template for the HTML page.
 html_template = [==[
@@ -41,6 +50,9 @@ html_template = [==[
 <div id="downloads">
 {downloads}
 </div>
+<script>
+{script}
+</script>
 </body>
 </html>
 ]==]
@@ -84,8 +96,9 @@ html_style = [===[
         color: #333333;
         border-bottom: 1px solid #aaa;
     }
-    .download a {
+    .download a, .download span.opening {
         margin-left: 10px;
+        float: right;
     }
     .download a:link {
         color: #0077bb;
@@ -110,6 +123,7 @@ html_style = [===[
 -- Used to refresh the page
 local function inner_html()
     local rows = {}
+    local js = {}
     for i,d in ipairs(downloads.downloads) do
         local modeline
         if d.status == "started" then
@@ -127,16 +141,25 @@ local function inner_html()
         }
         local row = string.gsub(download_template, "{(%w+)}", subs)
         table.insert(rows, row)
+
+        subs = {
+            id       = i,
+            opening  = downloads.opening[d] and "true" or "false"
+        }
+        row = string.gsub(download_js_template, "{(%w+)}", subs)
+        table.insert(js, row)
     end
-    return table.concat(rows, "\n")
+    return table.concat(rows, "\n"), table.concat(js, "\n")
 end
 
 --- Compiles the HTML for the download page.
 -- @return The HTML to render.
 function html()
+    local inner_html, inner_js = inner_html()
     local html_subs = {
         style = html_style,
-        downloads = inner_html(),
+        downloads = inner_html,
+        script = inner_js,
     }
     return string.gsub(html_template, "{(%w+)}", html_subs)
 end
@@ -149,7 +172,9 @@ refresh_timer:add_signal("timeout", function ()
     for _, w in pairs(window.bywidget) do
         local view = w:get_current()
         if string.match(view.uri, pattern) then
-            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html()), "downloads.lua")
+            local inner_html, inner_js = inner_html()
+            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html), "downloads.lua")
+            view:eval_js(inner_js, "downloads.lua")
             continue = true
         end
     end
