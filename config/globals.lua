@@ -25,6 +25,7 @@ local ca_files = {
     "/etc/certs/ca-certificates.crt",
     "/etc/ssl/certs/ca-certificates.crt",
 }
+-- Use the first ca-file found
 for _, ca_file in ipairs(ca_files) do
     if os.exists(ca_file) then
         soup.set_property("ssl-ca-file", ca_file)
@@ -34,6 +35,10 @@ end
 
 -- Change to stop navigation sites with invalid or expired ssl certificates
 soup.set_property("ssl-strict", false)
+
+-- Set cookie acceptance policy
+cookie_policy = { always = 0, never = 1, no_third_party = 2 }
+soup.set_property("accept-policy", cookie_policy.always)
 
 -- Search engines
 search_engines = {
@@ -51,9 +56,6 @@ search_engines.default = search_engines.google
 -- Use this instead to disable auto-searching
 --search_engines.default = "{0}"
 
--- Fake the cookie policy enum here
-cookie_policy = { always = 0, never = 1, no_third_party = 2 }
-
 -- Per-domain webview properties
 -- See http://webkitgtk.org/reference/webkitgtk-WebKitWebSettings.html
 domain_props = { --[[
@@ -62,14 +64,10 @@ domain_props = { --[[
         ["enable-plugins"]          = false,
         ["enable-private-browsing"] = false,
         ["user-stylesheet-uri"]     = "",
-        ["accept-policy"]           = cookie_policy.never,
     },
     ["youtube.com"] = {
         ["enable-scripts"] = true,
         ["enable-plugins"] = true,
-    },
-    ["lwn.net"] = {
-       ["accept-policy"] = cookie_policy.no_third_party,
     },
     ["bbs.archlinux.org"] = {
         ["user-stylesheet-uri"]     = "file://" .. luakit.data_dir .. "/styles/dark.css",
