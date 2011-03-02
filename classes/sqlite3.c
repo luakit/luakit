@@ -102,6 +102,17 @@ luaH_sqlite3_get_open(lua_State *L, sqlite3_t *sqlite)
     return 1;
 }
 
+static gint
+luaH_sqlite3_changes(lua_State *L)
+{
+    sqlite3_t *sqlite = luaH_checkudata(L, 1, &sqlite3_class);
+    if (sqlite->db) {
+        lua_pushnumber(L, sqlite3_changes(sqlite->db));
+        return 1;
+    }
+    return 0;
+}
+
 /* insert all sqlite3 result rows into a lua table */
 static int
 callback (gpointer data, gint argc, gchar **argv, gchar **colname)
@@ -212,6 +223,7 @@ sqlite3_class_setup(lua_State *L)
         LUA_CLASS_META
         { "exec", luaH_sqlite3_exec },
         { "close", luaH_sqlite3_close },
+        { "changes", luaH_sqlite3_changes },
         { "__gc", luaH_sqlite3_gc },
         { NULL, NULL },
     };

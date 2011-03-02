@@ -3,6 +3,7 @@ append
 atindex
 bg
 cache_dir
+changes
 clear_search
 config_dir
 confpath
