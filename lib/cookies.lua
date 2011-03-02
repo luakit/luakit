@@ -7,6 +7,7 @@ require "math"
 local string = string
 local print = print
 local ipairs = ipairs
+local lousy = require "lousy"
 local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
 local time, floor = luakit.time, math.floor
 
@@ -15,14 +16,6 @@ module "cookies"
 -- Return microseconds from the unixtime epoch
 function micro()
     return floor(time() * 1e6)
-end
-
--- Escape values for SQL queries. In sqlite3: "A string constant is formed
--- by enclosing the string in single quotes ('). A single quote within the
--- string can be encoded by putting two single quotes in a row - as in
--- Pascal." Read: http://sqlite.org/lang_expr.html
-function escape(s)
-    return "'" .. string.gsub(s, "'", "''") .. "'"
 end
 
 -- Last cookie check time
@@ -104,7 +97,7 @@ function load_new_cookies(purge)
 end
 
 capi.soup.add_signal("cookie-changed", function (old, new)
-    local e = escape
+    local e = lousy.util.sql_escape
     if new then
         -- Delete all previous matching/expired cookies.
         db:exec(string.format(query_delete,
