@@ -131,7 +131,7 @@ static gint
 luaH_sqlite3_exec(lua_State *L)
 {
     struct callback_data d = { L, 0 };
-    gchar *error, *emsg;
+    gchar *error;
     const gchar *sql;
     struct timespec ts1, ts2;
     sqlite3_t *sqlite = luaH_checkudata(L, 1, &sqlite3_class);
@@ -146,9 +146,7 @@ luaH_sqlite3_exec(lua_State *L)
 
     /* check sql query */
     if (sqlite3_complete(sql) != 1) {
-        emsg = g_strdup_printf("sqlite3: incomplete query: %s", sql);
-        lua_pushstring(L, emsg);
-        g_free(emsg);
+        lua_pushfstring(L, "sqlite3: incomplete query: %s", sql);
         lua_error(L);
     }
 
@@ -159,9 +157,8 @@ luaH_sqlite3_exec(lua_State *L)
     clock_gettime(CLOCK_REALTIME, &ts1);
 
     if (sqlite3_exec(sqlite->db, sql, callback, &d, &error)) {
-        emsg = g_strdup_printf("sqlite3: failed to execute query: %s", error);
-        lua_pushstring(L, emsg);
-        g_free(emsg);
+        lua_pushfstring(L, "sqlite3: failed to execute query: %s", error);
+        sqlite3_free(error);
         lua_error(L);
     }
 
