@@ -133,6 +133,7 @@ luaH_sqlite3_exec(lua_State *L)
     struct callback_data d = { L, 0 };
     gchar *error;
     const gchar *sql;
+    gdouble td;
     struct timespec ts1, ts2;
     sqlite3_t *sqlite = luaH_checkudata(L, 1, &sqlite3_class);
 
@@ -143,6 +144,7 @@ luaH_sqlite3_exec(lua_State *L)
     }
 
     sql = luaL_checkstring(L, 2);
+    debug("%s", sql);
 
     /* check sql query */
     if (sqlite3_complete(sql) != 1) {
@@ -164,12 +166,14 @@ luaH_sqlite3_exec(lua_State *L)
 
     /* get end time reference point */
     clock_gettime(CLOCK_REALTIME, &ts2);
+    td = (ts2.tv_sec + (ts2.tv_nsec/1e9)) - (ts1.tv_sec + (ts1.tv_nsec/1e9));
 
-    lua_pushstring(L, sql);
-    lua_pushnumber(L, sqlite3_changes(sqlite->db));
-    lua_pushnumber(L, (ts2.tv_sec + (ts2.tv_nsec / 1e9)) -
-        (ts1.tv_sec + (ts1.tv_nsec / 1e9)));
-    luaH_object_emit_signal(L, 1, "execute", 3, 0);
+    debug("Query OK, %d rows returned (%f sec)", d.rowi, td);
+
+    /* push sql query & query time to "execute" signal */
+    lua_pushvalue(L, 2);
+    lua_pushnumber(L, td);
+    luaH_object_emit_signal(L, 1, "execute", 2, 0);
 
     return 1;
 }
