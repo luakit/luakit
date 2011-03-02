@@ -4,11 +4,7 @@
 ------------------------------------------------------------
 
 require "math"
-local os = require "os"
-local io = require "io"
-local assert = assert
 local string = string
-local table = table
 local print = print
 local ipairs = ipairs
 local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
@@ -42,14 +38,6 @@ local checktimer = capi.timer{ interval = 60e3 }
 db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/cookies.db" }
 -- Make reads/writes faster
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
-
--- Echo executed queries, number of rows changed & time each query took
-if capi.luakit.verbose then
-    db:add_signal("execute", function (_, sql, updates, time)
-        io.stderr:write(string.format("%s\nQuery OK, %d rows affected (%f sec)\n",
-            string.gsub(sql, "[%s\n]+", " "), updates, time))
-    end)
-end
 
 create_table = [[
 CREATE TABLE IF NOT EXISTS moz_cookies (
