@@ -175,7 +175,10 @@ luaH_sqlite3_exec(lua_State *L)
     lua_pushnumber(L, td);
     luaH_object_emit_signal(L, 1, "execute", 2, 0);
 
-    return 1;
+    /* push number of rows in result as second return arg */
+    lua_pushnumber(L, d.rowi);
+
+    return 2;
 }
 
 static gint
