@@ -407,90 +407,94 @@ window.follow = (function () {
 })();
 ]=]
 
-local default_theme = {
-    focus_bg      = "#00ff00";
-    normal_bg     = "#ffff99";
-    opacity       = 0.3;
-    border        = "1px dotted #000000";
-    frame_border  = "2px solid #880000";
-    tick_frame_bg = "#880000";
-    tick_fg       = "#ffffff";
-    tick_bg       = "#000088";
-    tick_border   = "2px dashed #000000";
-    tick_opacity  = 0.4;
-    tick_font     = "11px monospace bold";
-    vert_offset   = 0;
-    horiz_offset  = -10;
+local mode_settings_format = [=[
+  selector = "{selector}";
+  function evaluate(element) {
+    var rv = ({evaluator})(element);
+    clear();
+    return rv;
+  }]=]
+
+-- Table of following options & modes
+follow = {}
+
+follow.default_theme = {
+    focus_bg     = "#00ff00";
+    normal_bg    = "#ffff99";
+    opacity      = 0.3;
+    border       = "1px dotted #000000";
+    hint_fg      = "#ffffff";
+    hint_bg      = "#000088";
+    hint_border  = "2px dashed #000000";
+    hint_opacity = 0.4;
+    hint_font    = "11px monospace bold";
+    vert_offset  = 0;
+    horiz_offset = -10;
 }
 
 -- Merge `theme.follow` table with `follow.default_theme`
-local function get_theme()
-    return lousy.util.table.join(default_theme, theme.follow or {})
+function follow.get_theme()
+    return lousy.util.table.join(follow.default_theme, theme.follow or {})
 end
 
---- Selectors for the different modes
--- body selects frames (this is special magic to avoid cross-domain problems)
-selectors = {
+-- Selectors for the different modes
+follow.selectors = {
     followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
-    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
-    uri         = 'a, area, body',
+    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, frame, iframe, applet, object',
+    uri         = 'a, area, frame, iframe',
     desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
     image       = 'img, input[type=image]',
 }
 
---- Evaluators for the different modes
-evaluators = {
+-- Evaluators for the different modes
+follow.evaluators = {
     -- Click the element & return form/root active signals
     follow = [=[
         function(element) {
-            var tag = element.tagName.toLowerCase();
-            if (tag === "input" || tag === "textarea" ) {
-                var type = element.type.toLowerCase();
-                if (type === "radio" || type === "checkbox") {
-                    element.checked = !element.checked;
-                } else if (type === "submit" || type === "reset" || type  === "button") {
-                    follow.click(element);
-                } else {
-                    element.focus();
-                }
-            } else {
-                follow.click(element);
-            }
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
+          if (!is_input(element))
+            click_element(element);
+          if (is_editable(element))
+            return "form-active";
+          return "root-active";
         }]=],
     -- Return the uri.
     uri = [=[
         function (element) {
-            return element.src || element.href || element.location;
+          var e = element.element;
+          var uri = e.src || e.href;
+          if (!uri.match(/javascript:/))
+            return uri;
         }]=],
     -- Return image location.
     src = [=[
         function (element) {
-            return element.src;
+          return element.element.src;
         }]=],
     -- Return title or alt tag text.
     desc = [=[
         function (element) {
-            return element.title || element.alt || "";
+          var e = element.element;
+          return e.title || e.alt || "";
         }]=],
     -- Focus the element.
     focus = [=[
         function (element) {
-            element.focus();
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
+          element.element.focus();
+          if (is_editable(element))
+            return "form-active";
+          return "root-active";
         }]=],
 }
 
---- Table of modes and their selectors & evaulator functions.
-modes = {}
+-- Table of modes and their selectors & evaulator functions.
+-- follow.modes = it.reduce(function (a, v) return a[t[1]] = { selector = t[2], evaluator = t[3] } end, {
+--     {"follow",     "followable",   "follow"      },
+--     {"uri",        "uri",          "uri"         },
+--     {"desc",       "desc",         "desc"        },
+--     {"focus",      "focusable",    "focus"       },
+--     {"image",      "image",        "src"         },
+-- }, {})
+follow.modes = {}
 
 -- Build mode table
 for _, t in ipairs({
@@ -743,7 +747,7 @@ new_mode("follow", {
         -- Get following state & options
         if not w.follow_state then w.follow_state = {} end
         local state = w.follow_state
-        local mode = modes[state.mode or "follow"]
+        local mode = follow.modes[state.mode or "follow"]
         -- Get follow mode table
         if not mode then w:set_mode() return error("unknown follow mode") end
 
@@ -767,45 +771,26 @@ new_mode("follow", {
                     table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
                 end
             end
-
-            -- Load mode specific js
-            local evaluator = lousy.util.string.strip(evaluators[mode.evaluator])
-            local selector  = selectors[mode.selector],
-            table.insert(js_blocks, string.format("follow.evaluator = (%s);", evaluator))
-            table.insert(js_blocks, "follow.init();")
-
-            -- Evaluate js code
-            local js = table.concat(js_blocks, "\n")
-            w:eval_js(js, "(follow.lua)", f)
-
-            local num = tonumber(w:eval_js(string.format("follow.match(%q, %s);", selector, tostring(#webkit_frames == 1)), "(follow.lua)", f))
-            table.insert(frames, {num = num, frame = f})
-            sum = sum + num
-        end
-        -- abort if initialization failed
-        if not is_ready(w) then return w:set_mode() end
-
-        -- Generate labels
-        state.frames = frames
-        local labels = make_labels(sum)
-        state.labels = lousy.util.table.clone(labels)
-        state.current = 1
-        for i, l in ipairs(labels) do labels[i] = string.format("%q", l) end
-
-        -- Apply labels
-        local last = 0
-        for _,t in ipairs(frames) do
-            t.labels = {}
-            for i=1,t.num,1 do
-                t.labels[i] = labels[last+i]
-            end
-            last = last + t.num
-            local array = table.concat(t.labels, ",")
-            w:eval_js(string.format("follow.show([%s]);", array), "(follow.lua)", t.frame)
         end
 
-        -- Foucs a hint
-        focus(w, 1)
+        -- Load main following js
+        table.insert(js_blocks, follow_js)
+
+        -- Load mode specific js
+        local subs = {
+            selector  = follow.selectors[mode.selector],
+            evaluator = lousy.util.string.strip(follow.evaluators[mode.evaluator]),
+        }
+        local js, count = string.gsub(mode_settings_format, "{(%w+)}", subs)
+        if count ~= 2 then return error("invalid number of substitutions") end
+        table.insert(js_blocks, js);
+
+        -- Clear & show hints
+        table.insert(js_blocks, "clear();\nshow_hints();")
+
+        -- Evaluate js code
+        local js = table.concat(js_blocks, "\n")
+        w:eval_js(js, "(follow.lua)")
 
         -- Set prompt & input text
         w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
@@ -814,39 +799,17 @@ new_mode("follow", {
 
     -- Leave follow mode hook
     leave = function (w)
-        if w.eval_js then
-            for _,f in ipairs(w:get_current().frames) do
-                w:eval_js(clear_js, "(follow.lua)", f)
-            end
-        end
+        if w.eval_js then w:eval_js("clear();", "(follow.lua)") end
     end,
 
     -- Input bar changed hook
     changed = function (w, text)
-        if not is_ready(w) then return w:set_mode() end
+        local ret = w:eval_js(string.format("update(%q);", text), "(follow.lua)")
         local state = w.follow_state or {}
-        local filter, id = parse_input(text)
-        local active_hints = 0
-        local eval_frame
-        for _, f in ipairs(w:get_current().frames) do
-            local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)", f)
-            ret = lousy.util.string.split(ret)
-            local num = tonumber(ret[1])
-            local reselect = (ret[2] == "true")
-            if reselect then focus(w, 1) end
-            if num == 1 then eval_frame = f end
-            active_hints = active_hints + num
-        end
-        if state.reselect then focus(w, 1) end
-        if active_hints == 1 then
-            w:set_mode()
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
-            ret = lousy.util.string.split(ret)
+        if ret ~= "false" then
             local sig
-            if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
+            if state.func then sig = state.func(ret, state) end
             if sig then w:emit_form_root_active_signal(sig) end
-        elseif active_hints == 0 then
-            state.reselect = true
         end
     end,
 })
