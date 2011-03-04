@@ -186,8 +186,7 @@ function load(file, clear_first)
     if not os.exists(file) then return end
 
     -- Read lines into bookmarks data table
-    local fh = io.lines(file or bookmarks_file, "r")
-    for line in fh do
+    for line in io.lines(file or bookmarks_file) do
         local uri, tags = unpack(util.string.split(line, "\t"))
         if uri ~= "" then add(uri, tags, false, false) end
     end
