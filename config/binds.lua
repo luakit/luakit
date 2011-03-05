@@ -166,6 +166,8 @@ add_binds("normal", {
                                         if not uri then w:error("Empty selection.") return end
                                         for i = 1, m.count do w:new_tab(w:search_open(uri)) end
                                     end, {count = 1}),
+
+    -- Yanking
     buf("^yy$",                     function (w) w:set_selection((w:get_current() or {}).uri or "") end),
     buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
@@ -254,25 +256,25 @@ add_binds("normal", mod1binds)
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 add_cmds({
- -- cmd({command, alias1, ...},         function (w, arg, opts) .. end, opts),
- -- cmd("co[mmand]",                    function (w, arg, opts) .. end, opts),
-    cmd("o[pen]",                       function (w, a) w:navigate(w:search_open(a)) end),
-    cmd("t[abopen]",                    function (w, a) w:new_tab(w:search_open(a)) end),
-    cmd("w[inopen]",                    function (w, a) window.new{w:search_open(a)} end),
-    cmd("back",                         function (w, a) w:back(tonumber(a) or 1) end),
-    cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
-    cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
-    cmd("q[uit]",                       function (w)    w:close_win() end),
-    cmd("write",                        function (w)    w:save_session() end),
-    cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
-    cmd("c[lose]",                      function (w)    w:close_tab() end),
-    cmd("reload",                       function (w)    w:reload() end),
-    cmd("restart",                      function (w)    w:restart() end),
-    cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
-    cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
-    cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
-    cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
-    cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
+ -- cmd({command, alias1, ...}, function (w, arg, opts) .. end, opts),
+ -- cmd("co[mmand]",            function (w, arg, opts) .. end, opts),
+    cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
+    cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
+    cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
+    cmd("back",                 function (w, a) w:back(tonumber(a) or 1) end),
+    cmd("f[orward]",            function (w, a) w:forward(tonumber(a) or 1) end),
+    cmd("scroll",               function (w, a) w:scroll_vert(a) end),
+    cmd("q[uit]",               function (w)    w:close_win() end),
+    cmd("write",                function (w)    w:save_session() end),
+    cmd({"writequit", "wq"},    function (w)    w:save_session() w:close_win() end),
+    cmd("c[lose]",              function (w)    w:close_tab() end),
+    cmd("reload",               function (w)    w:reload() end),
+    cmd("restart",              function (w)    w:restart() end),
+    cmd("print",                function (w)    w:eval_js("print()", "rc.lua") end),
+    cmd({"viewsource",  "vs" }, function (w)    w:toggle_source(true) end),
+    cmd({"viewsource!", "vs!"}, function (w)    w:toggle_source() end),
+    cmd("inc[rease]",           function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
+    cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
     cmd("lua", function (w, a)
         if a then
