@@ -99,50 +99,44 @@ new_mode("historylist", {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("hist[ory]",
-        function (w) w:set_mode("historylist") end),
+    cmd("hist[ory]", function (w) w:set_mode("historylist") end),
 })
 
 local key = lousy.bind.key
 add_binds("historylist", lousy.util.table.join({
     -- Open hist item
-    key({}, "o",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                w:navigate(row.uri)
-            end
-        end),
+    key({}, "o", function (w)
+        local row = w.menu:get()
+        if row and row.uri then
+            w:navigate(row.uri)
+        end
+    end),
 
     -- Open hist item
-    key({}, "Return",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                w:navigate(row.uri)
-            end
-        end),
+    key({}, "Return", function (w)
+        local row = w.menu:get()
+        if row and row.uri then
+            w:navigate(row.uri)
+        end
+    end),
 
     -- Open hist item in background tab
-    key({}, "t",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                w:new_tab(row.uri, false)
-            end
-        end),
+    key({}, "t", function (w)
+        local row = w.menu:get()
+        if row and row.uri then
+            w:new_tab(row.uri, false)
+        end
+    end),
 
     -- Open hist item in new window
-    key({}, "w",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                window.new({row.uri})
-            end
-        end),
+    key({}, "w", function (w)
+        local row = w.menu:get()
+        if row and row.uri then
+            window.new({row.uri})
+        end
+    end),
 
-    key({}, "q",
-        function (w) w:set_mode() end),
+    key({}, "q", function (w) w:set_mode() end),
 
 }, menu_binds))
 

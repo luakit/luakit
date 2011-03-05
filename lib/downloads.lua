@@ -258,73 +258,56 @@ add_binds("normal", {
 
 -- Overwrite quit binds to check if downloads are finished
 add_binds("normal", {
-    buf("^D$",
-        function (w) try_close(w)      end),
-
-    buf("^ZZ$",
-        function (w) try_close(w,true) end),
-
-    buf("^ZQ$",
-        function (w) try_close(w)      end),
-
+    buf("^D$",  function (w) try_close(w)      end),
+    buf("^ZZ$", function (w) try_close(w,true) end),
+    buf("^ZQ$", function (w) try_close(w)      end),
 }, true)
 
 
 -- Download commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("down[load]",
-        function (w, a)
-            add(a)
-        end),
+    cmd("down[load]", function (w, a)
+        add(a)
+    end),
 
     -- View all downloads in an interactive menu
-    cmd("downloads",
-        function (w)
-            w:set_mode("downloadlist")
-        end),
+    cmd("downloads", function (w)
+        w:set_mode("downloadlist")
+    end),
 
-    cmd("dd[elete]",
-        function (w, a)
-            local d = downloads[assert(tonumber(a), "invalid index")]
-            if d then delete(d) end
-        end),
+    cmd("dd[elete]", function (w, a)
+        local d = downloads[assert(tonumber(a), "invalid index")]
+        if d then delete(d) end
+    end),
 
-    cmd("dc[ancel]",
-        function (w, a)
-            local d = downloads[assert(tonumber(a), "invalid index")]
-            if d then cancel(d) end
-        end),
+    cmd("dc[ancel]", function (w, a)
+        local d = downloads[assert(tonumber(a), "invalid index")]
+        if d then cancel(d) end
+    end),
 
-    cmd("dr[estart]",
-        function (w, a)
-            local d = downloads[assert(tonumber(a), "invalid index")]
-            if d then restart(d) end
-        end),
+    cmd("dr[estart]", function (w, a)
+        local d = downloads[assert(tonumber(a), "invalid index")]
+        if d then restart(d) end
+    end),
 
     cmd("dcl[ear]", clear),
 
-    cmd("do[pen]",
-        function (w, a)
-            local d = downloads[assert(tonumber(a), "invalid index")]
-            if d then open(d, w) end
-        end),
+    cmd("do[pen]", function (w, a)
+        local d = downloads[assert(tonumber(a), "invalid index")]
+        if d then open(d, w) end
+    end),
 })
 
 -- Overwrite quit commands to check if downloads are finished
 add_cmds({
-    cmd("q[uit]",
-        function (w) try_close(w)                   end),
-
-    cmd({"quit!", "q!"},
-        function (w) w:close_win()                  end),
-
-    cmd({"writequit", "wq"},
-        function (w) try_close(w, true, ":wq!")     end),
-
-    cmd({"writequit!", "wq!"},
-        function (w) w:save_session() w:close_win() end),
-
+    cmd("q[uit]", function (w) try_close(w) end),
+    cmd({"quit!", "q!"}, function (w) w:close_win() end),
+    cmd({"writequit", "wq"}, function (w) try_close(w, true, ":wq!") end),
+    cmd({"writequit!", "wq!"}, function (w)
+        w:save_session()
+        w:close_win()
+    end),
 }, true)
 
 -- Add mode to display all downloads in an interactive menu.
@@ -378,44 +361,40 @@ new_mode("downloadlist", {
 local key = lousy.bind.key
 add_binds("downloadlist", lousy.util.table.join({
     -- Delete download
-    key({}, "d",
-        function (w)
-            local row = w.menu:get()
-            if row and row.dl then
-                delete(row.dl)
-                w.menu:del()
-            end
-        end),
+    key({}, "d", function (w)
+        local row = w.menu:get()
+        if row and row.dl then
+            delete(row.dl)
+            w.menu:del()
+        end
+    end),
 
     -- Cancel download
-    key({}, "c",
-        function (w)
-            local row = w.menu:get()
-            if row and row.dl then
-                cancel(row.dl)
-            end
-        end),
+    key({}, "c", function (w)
+        local row = w.menu:get()
+        if row and row.dl then
+            cancel(row.dl)
+        end
+    end),
 
     -- Open download
-    key({}, "o",
-        function (w)
-            local row = w.menu:get()
-            if row and row.dl then
-                open(row.dl, w)
-            end
-        end),
+    key({}, "o", function (w)
+        local row = w.menu:get()
+        if row and row.dl then
+            open(row.dl, w)
+        end
+    end),
 
     -- Restart download
-    key({}, "r",
-        function (w)
-            local row = w.menu:get()
-            if row and row.dl then
-                restart(row.dl)
-            end
-            -- HACK: Bad way of refreshing download list to show new items
-            -- (I.e. the new download object from the restart)
-            w:set_mode("downloadlist")
-        end),
+    key({}, "r", function (w)
+        local row = w.menu:get()
+        if row and row.dl then
+            restart(row.dl)
+        end
+        -- HACK: Bad way of refreshing download list to show new items
+        -- (I.e. the new download object from the restart)
+        w:set_mode("downloadlist")
+    end),
 
     -- Exit menu
     key({}, "q", function (w) w:set_mode() end),

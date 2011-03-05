@@ -4,10 +4,10 @@
 ----------------------------------------------
 
 -- When a new tab is opened in a window, a tab order function is called to
--- determin where in the tab list it should be placed. window.new_tab() accepts
--- a tab order function as parameter. If this is not sent, taborder.default is
--- used if the new tab will be immediately switched to. Otherwise, i.e. if a
--- background tab is opened, taborder.bgdefault is used.
+-- determine where in the tab list it should be placed. window.new_tab()
+-- accepts a tab order function as parameter. If this is not sent,
+-- taborder.default is used if the new tab will be immediately switched to.
+-- Otherwise, i.e. if a background tab is opened, taborder.bgdefault is used.
 --
 -- A tab order function receives the current window, and the view that is being
 -- opened as parameters. In return, it gives the index at which the new tab

@@ -4,7 +4,7 @@
 -- (C) 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
 -------------------------------------------------------------
 
-local js = [=[
+local go_input = [=[
 (function (count) {
     var elements = document.querySelectorAll("textarea, input" + [
         ":not([type='button'])", ":not([type='checkbox'])",
@@ -33,13 +33,17 @@ local js = [=[
 
 -- Add `w:go_input()` webview method
 webview.methods.go_input = function(view, w, count)
-    local ret = w:eval_js(string.format("%s(%d);", js, count or 1), "(go_input.lua)")
+    local js = string.format("%s(%d);", go_input, count or 1)
+    local ret = w:eval_js(js, "(go_input.lua)")
     w:emit_form_root_active_signal(ret)
 end
 
 -- Add `gi` binding to normal mode
+local buf = lousy.bind.buf
 add_binds("normal", {
-    lousy.bind.buf("^gi$", function (w, b, m) w:go_input(m.count) end, {count=1})
+    buf("^gi$", function (w, b, m)
+        w:go_input(m.count)
+    end, {count=1})
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

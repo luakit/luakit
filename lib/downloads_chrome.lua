@@ -7,10 +7,7 @@ local pairs = pairs
 local string = string
 local window = window
 local chrome = require("chrome")
-
-local capi = {
-    timer = timer,
-}
+local capi = { timer = timer }
 
 module("downloads.chrome")
 
@@ -190,15 +187,13 @@ end
 -- Chrome buffer binds.
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^gd$",
-        function (w)
-            w:navigate(page)
-        end),
+    buf("^gd$", function (w)
+        w:navigate(page)
+    end),
 
-    buf("^gD$",
-        function (w, b, m)
-            for i=1,m.count do w:new_tab(page) end
-        end, {count=1}),
+    buf("^gD$", function (w, b, m)
+        for i=1,m.count do w:new_tab(page) end
+    end, {count=1}),
 })
 
 -- Add the chrome page interceptor
