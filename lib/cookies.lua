@@ -134,3 +134,5 @@ end)
 -- Setup checktimer timeout callback function and start timer.
 checktimer:add_signal("timeout", load_new_cookies)
 checktimer:start()
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -63,3 +63,5 @@ window.init_funcs.add_hist_binds = function (w)
         end
     end)
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

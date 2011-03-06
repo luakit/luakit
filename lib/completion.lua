@@ -98,3 +98,5 @@ new_mode("cmdcomp", {
         w:enter_cmd(text .. " ")
     end,
 })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

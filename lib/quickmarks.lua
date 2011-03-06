@@ -259,3 +259,5 @@ add_binds("qmarklist", lousy.util.table.join({
     key({}, "q", function (w) w:set_mode() end),
 
 }, menu_binds))
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
