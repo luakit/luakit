@@ -168,7 +168,7 @@ add_binds("normal", {
                                     end, {count = 1}),
 
     -- Yanking
-    buf("^yy$",                     function (w) w:set_selection((w:get_current() or {}).uri or "") end),
+    buf("^yy$",                     function (w) w:set_selection(w:get_current().uri or "") end),
     buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
     -- Commands
@@ -177,9 +177,9 @@ add_binds("normal", {
     buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
     buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
     buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
-    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. ((w:get_current() or {}).uri or "")) end),
-    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. ((w:get_current() or {}).uri or "")) end),
-    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
+    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. (w:get_current().uri or "")) end),
+    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. (w:get_current().uri or "")) end),
+    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. (w:get_current().uri or "")) end),
     buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
     -- History
@@ -211,7 +211,8 @@ add_binds("normal", {
     buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(homepage) end end, {count=1}),
     buf("^gh$",                     function (w)       w:navigate(homepage) end),
 
-    buf("^gy$",                     function (w) w:new_tab((w:get_current() or {}).history or "") end),
+    -- Open tab from current tab history
+    buf("^gy$",                     function (w) w:new_tab(w:get_current().history or "") end),
 
     key({},          "r",           function (w) w:reload() end),
     key({},          "R",           function (w) w:reload(true) end),

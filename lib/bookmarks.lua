@@ -250,7 +250,7 @@ chrome.add(chrome_pattern, show)
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({}, "B", function (w)
-        w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ")
+        w:enter_cmd(":bookmark " .. (w:get_current().uri or "http://") .. " ")
     end),
 
     buf("^gb$", function (w)
