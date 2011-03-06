@@ -40,7 +40,7 @@ html_template = [==[
     </div>
     <div class="main">
         <div id="results-separator">
-            History
+            {heading}
         </div>
         <div id="results">
             {items}
@@ -225,7 +225,9 @@ function html(opts)
 
     local subs = { style = html_style, items = table.concat(items, ""),
         terms = opts.q and string.format("value=%q", escape(opts.q)) or "",
-        buttons = table.concat(buttons, "") or "" }
+        buttons = table.concat(buttons, "") or "",
+        heading = (opts.q and string.format("Showing results for %q",
+            escape(opts.q))) or "History" }
     local html = string.gsub(html_template, "{(%w+)}", subs)
     return html
 end
