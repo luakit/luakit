@@ -130,11 +130,12 @@ div {
 #pagination {
     padding-top: 24px;
     -webkit-margin-start: 18px;
+    padding-bottom:18px;
 }
 
 #pagination a {
     padding: 8px;
-    background-color: #eee;
+    background-color: #ddd;
     -webkit-margin-end: 4px;
     color: -webkit-link;
 }
