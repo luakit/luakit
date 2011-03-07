@@ -35,6 +35,7 @@ function window.build()
                 layout = hbox(),
                 ebox   = eventbox(),
                 uri    = label(),
+                hist   = label(),
                 loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
@@ -76,6 +77,7 @@ function window.build()
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout:pack_start(l.uri,    false, false, 0)
+    l.layout:pack_start(l.hist,   false, false, 0)
     l.layout:pack_start(l.loaded, false, false, 0)
     l.ebox:set_child(l.layout)
 
@@ -110,6 +112,7 @@ function window.build()
     i.input.show_frame = false
     w.tabs.show_tabs = false
     l.loaded:hide()
+    l.hist:hide()
     l.uri.selectable = true
     r.ssl:hide()
 
@@ -137,6 +140,7 @@ window.init_funcs = {
             w:update_tablist(idx)
             w:update_buf()
             w:update_ssl(view)
+            w:update_hist(view)
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
             w:update_tab_count()
@@ -182,6 +186,7 @@ window.init_funcs = {
         -- Set foregrounds
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_fg,
+            [s.l.hist]   = theme.hist_sbar_fg,
             [s.l.loaded] = theme.sbar_loaded_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
@@ -203,6 +208,7 @@ window.init_funcs = {
         -- Set fonts
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_font,
+            [s.l.hist]   = theme.hist_sbar_font,
             [s.l.loaded] = theme.sbar_loaded_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.ssl]    = theme.ssl_sbar_font,
@@ -479,6 +485,19 @@ window.methods = {
             ssl:show()
         else
             ssl:hide()
+        end
+    end,
+
+    update_hist = function (w, view)
+        if not view then view = w:get_current() end
+        local hist = w.sbar.l.hist
+        local back, forward = view:can_go_back(), view:can_go_forward()
+        local s = (back and "+" or "") .. (forward and "-" or "")
+        if s ~= "" then
+            hist.text = '['..s..']'
+            hist:show()
+        else
+            hist:hide()
         end
     end,
 
