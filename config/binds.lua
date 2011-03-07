@@ -168,7 +168,10 @@ add_binds("normal", {
                                     end, {count = 1}),
 
     -- Yanking
-    buf("^yy$",                     function (w) w:set_selection(w:get_current().uri or "") end),
+    buf("^yy$",                     function (w)
+                                        local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
+                                        w:set_selection(uri)
+                                    end),
     buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
     -- Commands

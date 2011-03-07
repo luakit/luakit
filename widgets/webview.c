@@ -1264,7 +1264,7 @@ widget_webview(widget_t *w)
 
     /* keep a hash of all views and their frames */
     if (!frames_by_view)
-        frames_by_view = g_hash_table_new_full(g_direct_hash, g_direct_equal, 
+        frames_by_view = g_hash_table_new_full(g_direct_hash, g_direct_equal,
             NULL, (GDestroyNotify) g_hash_table_destroy);
 
     GtkWidget *view = webkit_web_view_new();

@@ -531,6 +531,7 @@ add_binds("normal", {
     -- Yank element uri or description into primary selection
     buf("^;y$", function (w,b,m)
         w:start_follow("uri", "yank", function (uri)
+            uri = string.gsub(uri, " ", "%%20")
             w:set_selection(uri)
             w:notify("Yanked: " .. uri)
         end)
