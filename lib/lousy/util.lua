@@ -177,6 +177,17 @@ function table.isclone(a, b)
     return true
 end
 
+--- Clone a table with all values as array items.
+-- @param t the table to clone
+-- @return all values in t
+function table.values(t)
+    local ret = {}
+    for _, v in pairs(t) do
+        rtable.insert(ret, v)
+    end
+    return ret
+end
+
 --- Check if a file exists and is readable.
 -- @param f The file path.
 -- @return True if the file exists and is readable.

@@ -40,21 +40,22 @@ soup.set_property("ssl-strict", false)
 cookie_policy = { always = 0, never = 1, no_third_party = 2 }
 soup.set_property("accept-policy", cookie_policy.always)
 
--- Search engines
+-- List of search engines. Each item must contain a single %s which is
+-- replaced by URI encoded search terms.
 search_engines = {
-    luakit      = "http://luakit.org/search/index/luakit?q={0}",
-    google      = "http://google.com/search?q={0}",
-    duckduckgo  = "http://duckduckgo.com/?q={0}",
-    wikipedia   = "http://en.wikipedia.org/wiki/Special:Search?search={0}",
-    debbugs     = "http://bugs.debian.org/{0}",
-    imdb        = "http://imdb.com/find?s=all&q={0}",
-    sourceforge = "http://sf.net/search/?words={0}",
+    luakit      = "http://luakit.org/search/index/luakit?q=%s",
+    google      = "http://google.com/search?q=%s",
+    duckduckgo  = "http://duckduckgo.com/?q=%s",
+    wikipedia   = "http://en.wikipedia.org/wiki/Special:Search?search=%s",
+    debbugs     = "http://bugs.debian.org/%s",
+    imdb        = "http://imdb.com/find?s=all&q=%s",
+    sourceforge = "http://sf.net/search/?words=%s",
 }
 
 -- Set google as fallback search engine
 search_engines.default = search_engines.google
 -- Use this instead to disable auto-searching
---search_engines.default = "{0}"
+--search_engines.default = "%s"
 
 -- Per-domain webview properties
 -- See http://webkitgtk.org/reference/webkitgtk-WebKitWebSettings.html

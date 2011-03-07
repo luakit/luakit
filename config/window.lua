@@ -660,36 +660,64 @@ window.methods = {
 
     -- Intelligent open command which can detect a uri or search argument.
     search_open = function (w, arg)
-        if not arg then return "about:blank" end
-        args = lousy.util.string.split(lousy.util.string.strip(arg))
+        local util = lousy.util
+        local join, values = util.table.join, util.table.values
+
+        -- Detect blank uris
+        if not arg or string.match(arg, "^%s*$") then return "about:blank" end
+
+        -- Strip whitespace and split by whitespace into args table
+        local args = util.string.split(util.string.strip(arg))
+
         -- Detect localhost, scheme:// or domain-like beginning in string
         if #args == 1 then
             local uri = args[1]
             if uri == "about:blank" then return uri end
-            local ip = string.match(uri, "^(%d+.%d+.%d+.%d+)$")
-            local scheme = string.match(uri, "^%w+://")
-            local localhost = string.match(uri, "^localhost[:/]%S*") or string.match(uri, "^localhost$")
-            -- Extract domain from before the first colon or slash
-            local domain = string.match(uri, "^([%w%-_%.]+)[:/]%S*") or string.match(uri, "^([%w%-_%.]+)$")
-            -- A valid domain consists of [%w%-_%.] and has at least one dot
-            -- with at least one [%w%-_] on the left and a TLD on the right
-            -- with at least two letters
-            if ip or scheme or localhost or (domain and string.match(domain, "^[%w%-_%.]*[%w%-_]%.%a%a[%a%.]*$")) then
-                return uri
+
+            -- Check for scheme://
+            if string.match(uri, "^%w+://") then return uri end
+
+            -- List of hosts/patterns to check
+            local hosts = {
+                "%d+.%d+.%d+.%d+", -- matches IP addresses
+                "[%w%-%.]*[%w%-]%.%a%a[%a%.]*", -- matches domain
+            }
+
+            -- Get hostnames from /etc/hosts (this should include localhost)
+            local etchosts = {}
+            for line in io.lines("/etc/hosts") do
+                if not string.match(line, "^#") then -- ignore comments
+                    local names = string.match(line, "^%S+%s+(.+)$")
+                    string.gsub(names or "", "([%w%-%.]+)", function (name)
+                        -- Add by key to remove duplicates
+                        etchosts[name] = name
+                    end)
+                end
+            end
+
+            -- Check hosts
+            for _, host in ipairs(join(hosts, values(etchosts))) do
+                local tails = string.match(uri, "^"..host.."(.*)")
+                if tails == "" then -- perfect match
+                    return uri
+                elseif tails then -- check for path or port (or both)
+                    for _, p in pairs{ "^/", "^:%d+$", "^:%d+/" } do
+                        if string.match(tails, p) then return uri end
+                    end
+                end
             end
         end
-        -- Find search engine
+
+        -- Find search engine (or use search_engines.default)
         local engine = "default"
-        if #args >= 1 and search_engines[args[1]] then
+        if args[1] and search_engines[args[1]] then
             engine = args[1]
             table.remove(args, 1)
         end
 
-        -- Percent-encode arguments
+        -- URI encode search terms
         local terms = luakit.uri_encode(table.concat(args, " "))
-
-        -- Return search terms sub'd into search string
-        return ({string.gsub(search_engines[engine], "{%d}", ({string.gsub(terms, "%%", "%%%%")})[1])})[1]
+        return string.format(search_engines[engine], terms)
     end,
 
     -- Increase (or decrease) the last found number in the current uri
