@@ -41,7 +41,10 @@ cookie_policy = { always = 0, never = 1, no_third_party = 2 }
 soup.set_property("accept-policy", cookie_policy.always)
 
 -- List of search engines. Each item must contain a single %s which is
--- replaced by URI encoded search terms.
+-- replaced by URI encoded search terms. All other occurances of the percent
+-- character (%) may need to be escaped by placing another % before or after
+-- it to avoid collisions with lua's string.format characters.
+-- See: http://www.lua.org/manual/5.1/manual.html#pdf-string.format
 search_engines = {
     luakit      = "http://luakit.org/search/index/luakit?q=%s",
     google      = "http://google.com/search?q=%s",
