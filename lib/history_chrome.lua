@@ -226,8 +226,8 @@ function html(opts)
     local subs = { style = html_style, items = table.concat(items, ""),
         terms = opts.q and string.format("value=%q", escape(opts.q)) or "",
         buttons = table.concat(buttons, "") or "",
-        heading = (opts.q and string.format("Showing results for %q",
-            escape(opts.q))) or "History" }
+        heading = (opts.q and string.format("Showing results for %s",
+            escape(string.format("%q", opts.q)))) or "History" }
     local html = string.gsub(html_template, "{(%w+)}", subs)
     return html
 end
