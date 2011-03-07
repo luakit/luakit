@@ -170,9 +170,9 @@ function html(opts)
     end
 
     local limit = tonumber(opts.limit) or 1000
-    local page = tonumber(opts.p) or 0
+    local page = math.max(tonumber(opts.p) or 1, 1)
     sql = string.format("%s ORDER BY last_visit DESC LIMIT %d OFFSET %d;",
-        sql, limit + 1, page * limit)
+        sql, limit + 1, (page - 1) * limit)
 
     -- Get history items
     local results, count = history.db:exec(sql)
