@@ -207,20 +207,20 @@ function html(opts)
     local buttons, button = {}
     local join = lousy.util.table.join
     local bopts = { limit = (opts.limit and "&limit=" .. opts.limit) or "",
-        page = 0, terms = capi.luakit.uri_encode(opts.q or "") }
-    if page ~= 0 then
+        page = 1, terms = capi.luakit.uri_encode(opts.q or "") }
+    if page > 1 then
         button = string.gsub(button_template, "{(%w+)}",
             join(bopts, { name = "Newest" }))
         table.insert(buttons, button)
         button = string.gsub(button_template, "{(%w+)}",
-            join(bopts, { page = page-1, name = "Newer" }))
+            join(bopts, { page = page-1, name = "Page " .. page-1 }))
         table.insert(buttons, button)
     end
 
     -- Check if there are older items
     if count > limit then
         button = string.gsub(button_template, "{(%w+)}",
-            join(bopts, { page = page+1, name = "Older" }))
+            join(bopts, { page = page+1, name = "Page " .. page+1 }))
         table.insert(buttons, button)
     end
 
