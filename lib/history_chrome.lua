@@ -18,6 +18,9 @@ local capi = { luakit = luakit }
 
 module "history.chrome"
 
+-- Time format option (either "24h" or "12h")
+time_format = "12h"
+
 html_template = [==[
 <html>
 <head>
@@ -114,7 +117,7 @@ div {
 .item .time {
     color: #888;
     float: left;
-    min-width: 66px;
+    padding-right: 6px;
     padding-top: 1px;
     white-space: nowrap;
     overflow: hidden;
@@ -196,7 +199,11 @@ function html(opts)
         ltime = tonumber(row.last_visit)
 
         -- Add history item
-        time = os.date("%I:%M %p", tonumber(row.last_visit))
+        if time_format == "12h" then
+            time = os.date("%I:%M %p", tonumber(row.last_visit))
+        else
+            time = os.date("%H:%M", tonumber(row.last_visit))
+        end
         title = (row.title ~= "" and row.title) or row.uri
         ihtml = string.gsub(item_template, "{(%w+)}", { time = time,
             href = escape(row.uri), title = escape(title) })
