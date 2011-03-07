@@ -706,6 +706,9 @@ window.methods = {
                     end
                 end
             end
+
+            -- Check for file in filesystem
+            if lfs.attributes(uri) then return "file://" .. uri end
         end
 
         -- Find search engine (or use search_engines.default)
