@@ -255,3 +255,5 @@ add_binds("proxymenu", lousy.util.table.join({
 
 -- Initialize module
 load()
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

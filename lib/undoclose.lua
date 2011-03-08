@@ -50,63 +50,59 @@ new_mode("undolist", {
 -- Add undolist menu binds
 add_binds("undolist", lousy.util.table.join({
     -- Delete closed tab history
-    key({}, "d",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uid then
-                for i, tab in ipairs(w.closed_tabs) do
-                    if tab.uid == row.uid then
-                        table.remove(w.closed_tabs, i)
-                        break
-                    end
+    key({}, "d", function (w)
+        local row = w.menu:get()
+        if row and row.uid then
+            for i, tab in ipairs(w.closed_tabs) do
+                if tab.uid == row.uid then
+                    table.remove(w.closed_tabs, i)
+                    break
                 end
-                w.menu:del()
             end
-        end),
+            w.menu:del()
+        end
+    end),
 
     -- Undo closed tab in background tab
-    key({}, "u",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uid then
-                for i, tab in ipairs(w.closed_tabs) do
-                    if tab.uid == row.uid then
-                        w:new_tab(table.remove(w.closed_tabs, i).hist, false)
-                        break
-                    end
+    key({}, "u", function (w)
+        local row = w.menu:get()
+        if row and row.uid then
+            for i, tab in ipairs(w.closed_tabs) do
+                if tab.uid == row.uid then
+                    w:new_tab(table.remove(w.closed_tabs, i).hist, false)
+                    break
                 end
-                w.menu:del()
             end
-        end),
+            w.menu:del()
+        end
+    end),
 
     -- Undo closed tab in new window
-    key({}, "w",
-        function (w)
-            local row = w.menu:get()
-            w:set_mode()
-            if row and row.uid then
-                for i, tab in ipairs(w.closed_tabs) do
-                    if tab.uid == row.uid then
-                        window.new({table.remove(w.closed_tabs, i).hist})
-                        return
-                    end
+    key({}, "w", function (w)
+        local row = w.menu:get()
+        w:set_mode()
+        if row and row.uid then
+            for i, tab in ipairs(w.closed_tabs) do
+                if tab.uid == row.uid then
+                    window.new({table.remove(w.closed_tabs, i).hist})
+                    return
                 end
             end
-        end),
+        end
+    end),
 
     -- Undo closed tab in current tab
-    key({}, "Return",
-        function (w)
-            local row = w.menu:get()
-            w:set_mode()
-            if row and row.uid then
-                for i, tab in ipairs(w.closed_tabs) do
-                    if tab.uid == row.uid then
-                        w:undo_close_tab(i)
-                    end
+    key({}, "Return", function (w)
+        local row = w.menu:get()
+        w:set_mode()
+        if row and row.uid then
+            for i, tab in ipairs(w.closed_tabs) do
+                if tab.uid == row.uid then
+                    w:undo_close_tab(i)
                 end
             end
-        end),
+        end
+    end),
 
     -- Exit menu
     key({}, "q", function (w) w:set_mode() end),
@@ -116,14 +112,13 @@ add_binds("undolist", lousy.util.table.join({
 -- Add `:undolist` command to view all closed tabs in an interactive menu
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("undolist",
-        function (w, a)
-            if #(w.closed_tabs) == 0 then
-                w:notify("No closed tabs to display")
-            else
-                w:set_mode("undolist")
-            end
-        end),
+    cmd("undolist", function (w, a)
+        if #(w.closed_tabs) == 0 then
+            w:notify("No closed tabs to display")
+        else
+            w:set_mode("undolist")
+        end
+    end),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

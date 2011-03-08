@@ -8,6 +8,19 @@ INSTALLDIR ?= $(DESTDIR)$(PREFIX)
 MANPREFIX  ?= $(DESTDIR)$(PREFIX)/share/man
 DOCDIR     ?= $(DESTDIR)$(PREFIX)/share/luakit/docs
 
+# Use the Just-In-Time compiler for lua (for faster lua code execution)
+# See http://luajit.org/ & http://luajit.org/performance.html for more
+# information.
+ifeq ($(USE_LUAJIT),1)
+LUA_PKG_NAME = $(shell pkg-config --exists luajit && echo luajit)
+ifeq ($(LUA_PKG_NAME),)
+$(error Unable to determine luajit pkg-config name, specify manually with \
+`LUA_PKG_NAME=<name> make`, use `pkg-config --list-all | grep luajit` to \
+find the correct package name for your system. Please also check that you \
+have luajit installed)
+endif
+endif
+
 # The lua pkg-config name changes from system to system, try autodetect it.
 ifeq ($(LUA_PKG_NAME),)
 LUA_PKG_NAME = $(shell pkg-config --exists lua && echo lua)

@@ -177,6 +177,17 @@ function table.isclone(a, b)
     return true
 end
 
+--- Clone a table with all values as array items.
+-- @param t the table to clone
+-- @return all values in t
+function table.values(t)
+    local ret = {}
+    for _, v in pairs(t) do
+        rtable.insert(ret, v)
+    end
+    return ret
+end
+
 --- Check if a file exists and is readable.
 -- @param f The file path.
 -- @return True if the file exists and is readable.
@@ -332,6 +343,15 @@ function ntos(num, sigs)
     local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
     num = tostring(math.floor(num))
     return (#dec == 0 and num) or (num .. "." .. dec)
+end
+
+--- Escape values for SQL queries.
+-- In sqlite3: "A string constant is formed by enclosing the string in single
+-- quotes ('). A single quote within the string can be encoded by putting two
+-- single quotes in a row - as in Pascal."
+-- Read: http://sqlite.org/lang_expr.html
+function sql_escape(s)
+    return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -251,3 +251,5 @@ end
 
 -- Initialize the userscripts
 load_all()
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

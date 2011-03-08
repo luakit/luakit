@@ -33,9 +33,11 @@ webview.init_funcs.chrome = function (view, w)
             if string.match(uri, r.pat) then
                 info("Matched chrome rule %q for uri %q", r.pat, uri)
                 -- Catch if function returns anything other than false
-                if r.func(v) ~= false then return false end
+                if r.func(v, uri) ~= false then return false end
             end
         end
         return true
     end)
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

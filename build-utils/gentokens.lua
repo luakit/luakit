@@ -70,7 +70,7 @@ end
 
 -- Load list of tokens
 tokens = {}
-for token in io.lines(arg[1], "r") do
+for token in io.lines(arg[1]) do
     if #token > 0 then
         if not string.match(token, "^[%w_]+$") then
             error(string.format("invalid token: %q", token))

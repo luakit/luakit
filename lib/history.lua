@@ -1,149 +1,106 @@
---------------------------------------------------------
--- Save web history                                   --
--- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+-------------------------------------------------------------
+-- Save history in sqlite3 database                        --
+-- (C) 2010-2011 Mason Larobina <mason.larobina@gmail.com> --
+-------------------------------------------------------------
 
--- Get environment we need from Lua stdlib
-local os = os
-local io = io
-local string = string
-local table = table
-local math = math
-
--- Get environment we need from luakit libs
-local new_mode = new_mode
-local add_cmds = add_cmds
-local add_binds = add_binds
-local menu_binds = menu_binds
+local os = require "os"
 local webview = webview
+local table = table
+local string = string
 local lousy = require "lousy"
-local escape = lousy.util.escape
-local capi = { luakit = luakit }
+local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
-module("history")
+module "history"
 
--- Location to save web history
-file = capi.luakit.data_dir .. "/history"
+-- Setup signals on history module
+lousy.signal.setup(_M)
 
--- Save web history
-webview.init_funcs.save_hist = function (view)
-    view:add_signal("load-status", function (v, status)
-        if status == "first-visual" and v.uri ~= "about:blank" then
-            local fh = io.open(file, "a")
-            fh:write(string.format("%d %s\n", os.time(), v.uri))
-            fh:close()
+db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/history.db" }
+db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
+
+create_table = [[
+CREATE TABLE IF NOT EXISTS history (
+    id INTEGER PRIMARY KEY,
+    uri TEXT,
+    title TEXT,
+    visits INTEGER,
+    last_visit INTEGER
+);]]
+
+db:exec(create_table)
+
+function add(uri, title, update_visits)
+    -- Ignore blank uris
+    if not uri or uri == "" or uri == "about:blank" then return end
+    -- Ask user if we should ignore uri
+    if _M:emit_signal("add", uri, title) == false then return end
+
+    local escape, format = lousy.util.sql_escape, string.format
+
+    -- Find exsiting history item
+    local results = db:exec(format([[SELECT * FROM history
+        WHERE uri = %s ORDER BY last_visit DESC;]], escape(uri)))
+    local item = results[1]
+
+    -- Merge duplicate items into the first item
+    if item and results[2] then
+        local visits, ids = tonumber(item.visits), {}
+        for i = 2, #results do
+            local h = results[i]
+            table.insert(ids, h.id)
+            visits = visits + h.visits
         end
-    end)
-end
+        -- Delete duplicates
+        db:exec(format("DELETE FROM history WHERE id IN (%s);",
+            table.concat(ids, ", ")))
+        -- Update visits
+        db:exec(format("UPDATE history SET visits = %d WHERE id = %d;",
+            visits, item.id))
+        -- Call add again now that the duplicates have been removed
+        return add(uri, title, update_visits)
+    end
 
-function reltime(time)
-    local d = math.max(os.time() - time, 0)
+    -- Update history item
+    if item then
+        local updates = {}
+        -- Update title
+        if title and title ~= "" then
+            table.insert(updates, format("title = %s", escape(title)))
+        end
+        -- Update visit count & last access time
+        if update_visits ~= false then
+            table.insert(updates, "visits = visits + 1")
+            table.insert(updates, format("last_visit = %d", os.time()))
+        end
+        -- Update item
+        if #updates > 0 then
+            db:exec(format("UPDATE history SET %s WHERE id = %d;",
+                table.concat(updates, ", "), item.id))
+        end
 
-    if d < 60*60*24 then
-        return "Today"
-    elseif d < 60*60*24*2 then
-        return "Yesterday"
-    elseif d < 60*60*24*7 then
-        return "Last 7 days"
-    elseif d < 60*60*24*30 then
-        return "Last Month"
-    elseif d < 60*60*24*30*3 then
-        return "Last 3 Months"
-    elseif d < 60*60*24*365 then
-        return "Last Year"
+    -- Add new item
     else
-        return "Ages ago"
+        db:exec(format([[INSERT INTO history VALUES(NULL, %s, %s,
+            1, %d);]], escape(uri), escape(title), os.time()))
     end
 end
 
-new_mode("historylist", {
-    enter = function (w)
-        -- Populate history menu
-        local items, count = {}, 0
-        if os.exists(file) then
-            for line in io.lines(file) do
-                local time, uri = string.match(line, "^(%d+)%s(.+)$")
-                if uri then
-                    count = count + 1
-                    table.insert(items, { time = time, uri = uri })
-                end
-            end
+webview.init_funcs.save_hist = function (view)
+    -- Add items
+    view:add_signal("load-status", function (v, status)
+        -- We use "committed" here instead of "first-visual" becase we want
+        -- this to fire before the "property::title" signal.
+        if status == "committed" then
+            add(v.uri)
         end
-
-        -- Check if no history
-        if count == 0 then
-            w:notify("No history to list")
-            return
+    end)
+    -- Update titles
+    view:add_signal("property::title", function (v)
+        local title = v:get_property("title")
+        if title and title ~= "" then
+            add(v.uri, title, false)
         end
-
-        -- Build rows (with headings)
-        local rows = {}
-        local last = nil
-        for i = 1, count do
-            local item = items[(count - i + 1)]
-            local h = reltime(item.time)
-            if h ~= last then
-                table.insert(rows, { h, title = true })
-                last = h
-            end
-            table.insert(rows, { escape(" " .. item.uri), uri = item.uri })
-        end
-        w.menu:build(rows)
-        w:notify("Use j/k to move, o open, t tabopen, w winopen.", false)
-    end,
-
-    leave = function (w)
-        w.menu:hide()
-    end,
-})
-
-local cmd = lousy.bind.cmd
-add_cmds({
-    cmd("hist[ory]",
-        function (w) w:set_mode("historylist") end),
-})
-
-local key = lousy.bind.key
-add_binds("historylist", lousy.util.table.join({
-    -- Open hist item
-    key({}, "o",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                w:navigate(row.uri)
-            end
-        end),
-
-    -- Open hist item
-    key({}, "Return",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                w:navigate(row.uri)
-            end
-        end),
-
-    -- Open hist item in background tab
-    key({}, "t",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                w:new_tab(row.uri, false)
-            end
-        end),
-
-    -- Open hist item in new window
-    key({}, "w",
-        function (w)
-            local row = w.menu:get()
-            if row and row.uri then
-                window.new({row.uri})
-            end
-        end),
-
-    key({}, "q",
-        function (w) w:set_mode() end),
-
-}, menu_binds))
+    end)
+end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

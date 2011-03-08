@@ -22,10 +22,10 @@ new_mode("formfiller", {
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za", function (w) w:formfiller("add")  end),
-    buf("^zn", function (w) w:formfiller("new")  end),
-    buf("^ze", function (w) w:formfiller("edit") end),
-    buf("^zl", function (w) w:formfiller("load") end),
+    buf("^za$", function (w) w:formfiller("add")  end),
+    buf("^zn$", function (w) w:formfiller("new")  end),
+    buf("^ze$", function (w) w:formfiller("edit") end),
+    buf("^zl$", function (w) w:formfiller("load") end),
 })
 
 -- Javascript functions

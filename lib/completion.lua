@@ -7,13 +7,12 @@
 local key = lousy.bind.key
 add_binds("command", {
     -- Start completion
-    key({}, "Tab",
-        function (w)
-            local i = w.ibar.input
-            -- Only complete commands, not args
-            if string.match(i.text, "%s") then return end
-            w:set_mode("cmdcomp")
-        end),
+    key({}, "Tab", function (w)
+        local i = w.ibar.input
+        -- Only complete commands, not args
+        if string.match(i.text, "%s") then return end
+        w:set_mode("cmdcomp")
+    end),
 })
 
 -- Exit completion
@@ -99,3 +98,5 @@ new_mode("cmdcomp", {
         w:enter_cmd(text .. " ")
     end,
 })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

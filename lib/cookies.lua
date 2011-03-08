@@ -4,13 +4,10 @@
 ------------------------------------------------------------
 
 require "math"
-local os = require "os"
-local io = require "io"
-local assert = assert
 local string = string
-local table = table
 local print = print
 local ipairs = ipairs
+local lousy = require "lousy"
 local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
 local time, floor = luakit.time, math.floor
 
@@ -19,14 +16,6 @@ module "cookies"
 -- Return microseconds from the unixtime epoch
 function micro()
     return floor(time() * 1e6)
-end
-
--- Escape values for SQL queries. In sqlite3: "A string constant is formed
--- by enclosing the string in single quotes ('). A single quote within the
--- string can be encoded by putting two single quotes in a row - as in
--- Pascal." Read: http://sqlite.org/lang_expr.html
-function escape(s)
-    return "'" .. string.gsub(s, "'", "''") .. "'"
 end
 
 -- Last cookie check time
@@ -42,14 +31,6 @@ local checktimer = capi.timer{ interval = 60e3 }
 db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/cookies.db" }
 -- Make reads/writes faster
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
-
--- Echo executed queries, number of rows changed & time each query took
-if capi.luakit.verbose then
-    db:add_signal("execute", function (_, sql, updates, time)
-        io.stderr:write(string.format("%s\nQuery OK, %d rows affected (%f sec)\n",
-            string.gsub(sql, "[%s\n]+", " "), updates, time))
-    end)
-end
 
 create_table = [[
 CREATE TABLE IF NOT EXISTS moz_cookies (
@@ -116,7 +97,7 @@ function load_new_cookies(purge)
 end
 
 capi.soup.add_signal("cookie-changed", function (old, new)
-    local e = escape
+    local e = lousy.util.sql_escape
     if new then
         -- Delete all previous matching/expired cookies.
         db:exec(string.format(query_delete,
@@ -153,3 +134,5 @@ end)
 -- Setup checktimer timeout callback function and start timer.
 checktimer:add_signal("timeout", load_new_cookies)
 checktimer:start()
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

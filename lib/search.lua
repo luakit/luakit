@@ -100,8 +100,13 @@ new_mode("search", {
 
 -- Add binds to search mode
 add_binds("search", {
-    key({"Control"}, "j",       function (w) w:search(w.search_state.last_search, true)  end),
-    key({"Control"}, "k",       function (w) w:search(w.search_state.last_search, false) end),
+    key({"Control"}, "j", function (w)
+        w:search(w.search_state.last_search, true)
+    end),
+
+    key({"Control"}, "k", function (w)
+        w:search(w.search_state.last_search, false)
+    end),
 })
 
 -- Add search functions to webview
@@ -165,3 +170,5 @@ for k, m in pairs({
     end,
 
 }) do webview.methods[k] = m end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

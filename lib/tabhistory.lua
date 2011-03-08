@@ -30,43 +30,40 @@ new_mode("tabhistory", {
 local key = lousy.bind.key
 add_binds("tabhistory", join({
     -- Open history item in new tab.
-    key({}, "t",
-        function (w)
-            local row = w.menu:get()
-            if row and row.index then
-                local v = w:get_current()
-                local uri = v.history.items[row.index].uri
-                w:new_tab(uri, false)
-            end
-        end),
+    key({}, "t", function (w)
+        local row = w.menu:get()
+        if row and row.index then
+            local v = w:get_current()
+            local uri = v.history.items[row.index].uri
+            w:new_tab(uri, false)
+        end
+    end),
 
     -- Open history item in new window.
-    key({}, "w",
-        function (w)
-            local row = w.menu:get()
-            w:set_mode()
-            if row and row.index then
-                local v = w:get_current()
-                local uri = v.history.items[row.index].uri
-                window.new({uri})
-            end
-        end),
+    key({}, "w", function (w)
+        local row = w.menu:get()
+        w:set_mode()
+        if row and row.index then
+            local v = w:get_current()
+            local uri = v.history.items[row.index].uri
+            window.new({uri})
+        end
+    end),
 
     -- Go to history item.
-    key({}, "Return",
-        function (w)
-            local row = w.menu:get()
-            w:set_mode()
-            if row and row.index then
-                local v = w:get_current()
-                local offset = row.index - v.history.index
-                if offset < 0 then
-                    v:go_back(-offset)
-                elseif offset > 0 then
-                    v:go_forward(offset)
-                end
+    key({}, "Return", function (w)
+        local row = w.menu:get()
+        w:set_mode()
+        if row and row.index then
+            local v = w:get_current()
+            local offset = row.index - v.history.index
+            if offset < 0 then
+                v:go_back(-offset)
+            elseif offset > 0 then
+                v:go_forward(offset)
             end
-        end),
+        end
+    end),
 
 }, menu_binds))
 

@@ -946,6 +946,24 @@ webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
 }
 
 static gint
+luaH_webview_can_go_back(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    lua_pushboolean(L, webkit_web_view_can_go_back(WEBKIT_WEB_VIEW(view)));
+    return 1;
+}
+
+static gint
+luaH_webview_can_go_forward(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    GtkWidget *view = g_object_get_data(G_OBJECT(w->widget), "webview");
+    lua_pushboolean(L, webkit_web_view_can_go_forward(WEBKIT_WEB_VIEW(view)));
+    return 1;
+}
+
+static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -970,6 +988,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       /* push history navigation methods */
       PF_CASE(GO_BACK,              luaH_webview_go_back)
       PF_CASE(GO_FORWARD,           luaH_webview_go_forward)
+      PF_CASE(CAN_GO_BACK,          luaH_webview_can_go_back)
+      PF_CASE(CAN_GO_FORWARD,       luaH_webview_can_go_forward)
       /* push misc webview methods */
       PF_CASE(EVAL_JS,              luaH_webview_eval_js)
       PF_CASE(REGISTER_FUNCTION,    luaH_webview_register_function)
@@ -1264,7 +1284,7 @@ widget_webview(widget_t *w)
 
     /* keep a hash of all views and their frames */
     if (!frames_by_view)
-        frames_by_view = g_hash_table_new_full(g_direct_hash, g_direct_equal, 
+        frames_by_view = g_hash_table_new_full(g_direct_hash, g_direct_equal,
             NULL, (GDestroyNotify) g_hash_table_destroy);
 
     GtkWidget *view = webkit_web_view_new();

@@ -186,8 +186,7 @@ function load(file, clear_first)
     if not os.exists(file) then return end
 
     -- Read lines into bookmarks data table
-    local fh = io.lines(file or bookmarks_file, "r")
-    for line in fh do
+    for line in io.lines(file or bookmarks_file) do
         local uri, tags = unpack(util.string.split(line, "\t"))
         if uri ~= "" then add(uri, tags, false, false) end
     end
@@ -250,47 +249,41 @@ chrome.add(chrome_pattern, show)
 -- Add normal binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({}, "B",
-        function (w)
-            w:enter_cmd(":bookmark " .. ((w:get_current() or {}).uri or "http://") .. " ")
-        end),
+    key({}, "B", function (w)
+        w:enter_cmd(":bookmark " .. (w:get_current().uri or "http://") .. " ")
+    end),
 
-    buf("^gb$",
-        function (w)
-            w:navigate(chrome_page)
-        end),
+    buf("^gb$", function (w)
+        w:navigate(chrome_page)
+    end),
 
-    buf("^gB$",
-        function (w, b, m)
-            for i=1, m.count do
-                w:new_tab(chrome_page)
-            end
-        end, {count=1}),
+    buf("^gB$", function (w, b, m)
+        for i=1, m.count do
+            w:new_tab(chrome_page)
+        end
+    end, {count=1}),
 })
 
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"bookmark", "bm"},
-        function (w, a)
-            if not a then
-                w:error("Missing bookmark arguments (use `:bookmark <uri> <tags>`)")
-                return
-            end
-            local args = util.string.split(a)
-            local uri = table.remove(args, 1)
-            add(uri, args)
-        end),
+    cmd({"bookmark", "bm"}, function (w, a)
+        if not a then
+            w:error("Missing bookmark arguments (use `:bookmark <uri> <tags>`)")
+            return
+        end
+        local args = util.string.split(a)
+        local uri = table.remove(args, 1)
+        add(uri, args)
+    end),
 
-    cmd("bookdel",
-        function (w, a)
-            del(tonumber(a))
-        end),
+    cmd("bookdel", function (w, a)
+        del(tonumber(a))
+    end),
 
-    cmd("bookmarks",
-        function (w)
-            w:navigate(chrome_page)
-        end),
+    cmd("bookmarks", function (w)
+        w:navigate(chrome_page)
+    end),
 })
 
 load()

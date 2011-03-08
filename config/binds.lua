@@ -140,10 +140,10 @@ add_binds("normal", {
     key({},          "Right",       function (w) w:scroll_horiz(more)  end),
     key({},          "Page_Down",   function (w) w:scroll_page(1.0)    end),
     key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end),
-    key({},          "Home",        function (w) w:scroll_vert("0%")   end),
+    key({},          "Home",        function (w) w:scroll_vert(0)   end),
     key({},          "End",         function (w) w:scroll_vert("100%") end),
-    key({},          "0",           function (w) w:scroll_horiz("0%")   end),
     key({},          "$",           function (w) w:scroll_horiz("100%") end),
+    key({},          "0",           function (w, m) if not m.count then w:scroll_horiz(0) else return false end end),
 
     -- Zooming
     key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
@@ -166,7 +166,12 @@ add_binds("normal", {
                                         if not uri then w:error("Empty selection.") return end
                                         for i = 1, m.count do w:new_tab(w:search_open(uri)) end
                                     end, {count = 1}),
-    buf("^yy$",                     function (w) w:set_selection((w:get_current() or {}).uri or "") end),
+
+    -- Yanking
+    buf("^yy$",                     function (w)
+                                        local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
+                                        w:set_selection(uri)
+                                    end),
     buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
 
     -- Commands
@@ -175,9 +180,9 @@ add_binds("normal", {
     buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
     buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
     buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
-    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. ((w:get_current() or {}).uri or "")) end),
-    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. ((w:get_current() or {}).uri or "")) end),
-    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. ((w:get_current() or {}).uri or "")) end),
+    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. (w:get_current().uri or "")) end),
+    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. (w:get_current().uri or "")) end),
+    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. (w:get_current().uri or "")) end),
     buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
     -- History
@@ -209,7 +214,8 @@ add_binds("normal", {
     buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(homepage) end end, {count=1}),
     buf("^gh$",                     function (w)       w:navigate(homepage) end),
 
-    buf("^gy$",                     function (w) w:new_tab((w:get_current() or {}).history or "") end),
+    -- Open tab from current tab history
+    buf("^gy$",                     function (w) w:new_tab(w:get_current().history or "") end),
 
     key({},          "r",           function (w) w:reload() end),
     key({},          "R",           function (w) w:reload(true) end),
@@ -254,25 +260,25 @@ add_binds("normal", mod1binds)
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 add_cmds({
- -- cmd({command, alias1, ...},         function (w, arg, opts) .. end, opts),
- -- cmd("co[mmand]",                    function (w, arg, opts) .. end, opts),
-    cmd("o[pen]",                       function (w, a) w:navigate(w:search_open(a)) end),
-    cmd("t[abopen]",                    function (w, a) w:new_tab(w:search_open(a)) end),
-    cmd("w[inopen]",                    function (w, a) window.new{w:search_open(a)} end),
-    cmd("back",                         function (w, a) w:back(tonumber(a) or 1) end),
-    cmd("f[orward]",                    function (w, a) w:forward(tonumber(a) or 1) end),
-    cmd("scroll",                       function (w, a) w:scroll_vert(a) end),
-    cmd("q[uit]",                       function (w)    w:close_win() end),
-    cmd("write",                        function (w)    w:save_session() end),
-    cmd({"writequit", "wq"},            function (w)    w:save_session() w:close_win() end),
-    cmd("c[lose]",                      function (w)    w:close_tab() end),
-    cmd("reload",                       function (w)    w:reload() end),
-    cmd("restart",                      function (w)    w:restart() end),
-    cmd("print",                        function (w)    w:eval_js("print()", "rc.lua") end),
-    cmd({"viewsource",  "vs" },         function (w)    w:toggle_source(true) end),
-    cmd({"viewsource!", "vs!"},         function (w)    w:toggle_source() end),
-    cmd("inc[rease]",                   function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
-    cmd({"javascript",   "js"},         function (w, a) w:eval_js(a, "javascript") end),
+ -- cmd({command, alias1, ...}, function (w, arg, opts) .. end, opts),
+ -- cmd("co[mmand]",            function (w, arg, opts) .. end, opts),
+    cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
+    cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
+    cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
+    cmd("back",                 function (w, a) w:back(tonumber(a) or 1) end),
+    cmd("f[orward]",            function (w, a) w:forward(tonumber(a) or 1) end),
+    cmd("scroll",               function (w, a) w:scroll_vert(a) end),
+    cmd("q[uit]",               function (w)    w:close_win() end),
+    cmd("write",                function (w)    w:save_session() end),
+    cmd({"writequit", "wq"},    function (w)    w:save_session() w:close_win() end),
+    cmd("c[lose]",              function (w)    w:close_tab() end),
+    cmd("reload",               function (w)    w:reload() end),
+    cmd("restart",              function (w)    w:restart() end),
+    cmd("print",                function (w)    w:eval_js("print()", "rc.lua") end),
+    cmd({"viewsource",  "vs" }, function (w)    w:toggle_source(true) end),
+    cmd({"viewsource!", "vs!"}, function (w)    w:toggle_source() end),
+    cmd("inc[rease]",           function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
+    cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
     cmd("lua", function (w, a)
         if a then

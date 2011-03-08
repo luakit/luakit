@@ -40,6 +40,15 @@ webview.init_funcs = {
         end)
     end,
 
+    -- Update history indicator
+    hist_update = function (view, w)
+        view:add_signal("load-status", function (v, status)
+            if w:is_current(v) then
+                w:update_hist(v)
+            end
+        end)
+    end,
+
     -- Update tab titles
     tablist_update = function (view, w)
         view:add_signal("load-status", function (v, status)
