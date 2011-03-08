@@ -728,8 +728,10 @@ window.methods = {
                 end
             end
 
-            -- Check for file in filesystem
-            if lfs.attributes(uri) then return "file://" .. uri end
+            -- Check for file in filesystem (if uri not search engine name)
+            if not search_engines[uri] and lfs.attributes(uri) then
+                return "file://" .. uri
+            end
         end
 
         -- Find search engine (or use search_engines.default)
