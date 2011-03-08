@@ -14,12 +14,16 @@ local webview = webview
 local downloads = require "downloads"
 local add_binds, new_mode = add_binds, new_mode
 local theme = theme
+local timer = timer
 
 module("follow")
 
 -- Should we sort follow labels? Not sorting can help reading labels on high
 -- link density sites.
 sort_labels = true
+
+-- How long should input be ignored after a successful follow?
+ignore_delay = 500
 
 local clear_js = [=[
 // Remove an element from its parentNode.
@@ -697,6 +701,25 @@ local function focus(w, offset)
     w.follow_state.refocus = false
 end
 
+-- Simple key-eating mode to prevent any follow keys from accidentally
+-- triggering unexpected behaviour.
+local any = lousy.bind.any
+new_mode("follow_ignore", {
+    any(function () end),
+})
+
+local function ignore_keys(w)
+    if ignore_delay > 0 then
+        local ignore_timer = timer{interval=ignore_delay}
+        ignore_timer:add_signal("timeout", function (t)
+            w:set_mode()
+            t:stop()
+        end)
+        w:set_mode("follow_ignore")
+        ignore_timer:start()
+    end
+end
+
 -- Add follow mode binds
 local key = lousy.bind.key
 add_binds("follow", {
@@ -723,6 +746,7 @@ add_binds("follow", {
                 local val = string.match(ret, "done (.*)")
                 local sig = s.func(val, s)
                 if sig then w:emit_form_root_active_signal(sig) end
+                ignore_keys(w)
                 return
             end
         end
@@ -838,6 +862,7 @@ new_mode("follow", {
             local sig
             if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
             if sig then w:emit_form_root_active_signal(sig) end
+            ignore_keys(w)
         elseif active_hints == 0 then
             state.reselect = true
         end
