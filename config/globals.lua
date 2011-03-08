@@ -7,7 +7,6 @@ globals = {
     max_cmd_history     = 100,
     max_srch_history    = 100,
  -- http_proxy          = "http://example.com:3128",
-    download_dir        = luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads"),
     default_window_size = "800x600",
 }
 
