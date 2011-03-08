@@ -17,6 +17,10 @@ local theme = theme
 
 module("follow")
 
+-- Should we sort follow labels? Not sorting can help reading labels on high
+-- link density sites.
+sort_labels = true
+
 local clear_js = [=[
 // Remove an element from its parentNode.
 var unlink = function (element) {
@@ -659,6 +663,7 @@ function make_labels(size)
     for i=start,size+start-1,1 do
         table.insert(labels, string.reverse(tostring(i)))
     end
+    if sort_labels then table.sort(labels) end
     return labels
 end
 
