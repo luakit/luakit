@@ -26,7 +26,79 @@ html_template = [==[
 <head>
     <title>History</title>
     <style type="text/css">
-    {style}
+        body {
+            background-color: white;
+            color: black;
+            margin: 10px;
+            display: block;
+            font-size: 84%;
+            font-family: sans-serif;
+        }
+
+        div {
+            display: block;
+        }
+
+        #results-separator {
+            border-top: 1px solid #888;
+            background-color: #ddd;
+            padding: 3px;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: -8px;
+        }
+
+        .form {
+            margin: 0;
+            padding: 0;
+        }
+
+        .day {
+            margin-top: 18px;
+            padding: 0px 3px;
+            display: inline-block;
+        }
+
+        .item {
+            margin: 6px 0 6px 18px;
+            overflow: auto;
+        }
+
+        .item .time {
+            color: #888;
+            float: left;
+            padding-right: 6px;
+            padding-top: 1px;
+            white-space: nowrap;
+            overflow: hidden;
+            text-overflow: ellipsis;
+        }
+
+        .item .title {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+        }
+
+        #pagination {
+            padding-top: 24px;
+            -webkit-margin-start: 18px;
+            padding-bottom:18px;
+        }
+
+        #pagination a {
+            padding: 8px;
+            background-color: #ddd;
+            -webkit-margin-end: 4px;
+            color: -webkit-link;
+        }
+
+        .gap {
+            margin: -5px 0 -5px 18px;
+            width: 16px;
+            border-right: 1px solid #ddd;
+            height: 14px;
+        }
     </style>
     <script>
     function search(term) {
@@ -73,83 +145,6 @@ button_template = [==[
 gap_html = [==[
 <div class="gap"></div>
 ]==]
-
-
-html_style = [===[
-body {
-    background-color: white;
-    color: black;
-    margin: 10px;
-    display: block;
-    font-size: 84%;
-    font-family: sans-serif;
-}
-
-div {
-    display: block;
-}
-
-#results-separator {
-    border-top: 1px solid #888;
-    background-color: #ddd;
-    padding: 3px;
-    font-weight: bold;
-    margin-top: 10px;
-    margin-bottom: -8px;
-}
-
-.form {
-    margin: 0;
-    padding: 0;
-}
-
-.day {
-    margin-top: 18px;
-    padding: 0px 3px;
-    display: inline-block;
-}
-
-.item {
-    margin: 6px 0 6px 18px;
-    overflow: auto;
-}
-
-.item .time {
-    color: #888;
-    float: left;
-    padding-right: 6px;
-    padding-top: 1px;
-    white-space: nowrap;
-    overflow: hidden;
-    text-overflow: ellipsis;
-}
-
-.item .title {
-    overflow: hidden;
-    white-space: nowrap;
-    text-overflow: ellipsis;
-}
-
-#pagination {
-    padding-top: 24px;
-    -webkit-margin-start: 18px;
-    padding-bottom:18px;
-}
-
-#pagination a {
-    padding: 8px;
-    background-color: #ddd;
-    -webkit-margin-end: 4px;
-    color: -webkit-link;
-}
-
-.gap {
-    margin: -5px 0 -5px 18px;
-    width: 16px;
-    border-right: 1px solid #ddd;
-    height: 14px;
-}
-]===]
 
 function html(opts)
     local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
@@ -231,11 +226,13 @@ function html(opts)
         table.insert(buttons, button)
     end
 
-    local subs = { style = html_style, items = table.concat(items, ""),
+    local subs = {
+        items = table.concat(items, ""),
         terms = opts.q and string.format("value=%q", escape(opts.q)) or "",
         buttons = table.concat(buttons, "") or "",
         heading = (opts.q and string.format("Showing results for %s",
-            escape(string.format("%q", opts.q)))) or "History" }
+            escape(string.format("%q", opts.q)))) or "History"
+    }
     local html = string.gsub(html_template, "{(%w+)}", subs)
     return html
 end
