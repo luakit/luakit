@@ -2,6 +2,8 @@
 -- luakit mode configuration --
 -------------------------------
 
+require "lousy"
+
 -- Table of modes and their callback hooks
 local modes = {}
 
@@ -15,6 +17,11 @@ end
 function get_mode(name)
     assert(string.match(name, "^[%w-_]+$"), "invalid mode name: " .. name)
     return modes[name]
+end
+
+-- Get all modes
+function get_modes()
+    return lousy.util.table.clone(modes)
 end
 
 -- Attach window & input bar signals for mode hooks

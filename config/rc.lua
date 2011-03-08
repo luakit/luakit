@@ -89,6 +89,9 @@ require "taborder"
 require "history"
 require "history_chrome"
 
+-- View all binds at chrome://binds
+require "binds_chrome"
+
 require "follow_selected"
 require "go_input"
 require "go_next_prev"
