@@ -702,15 +702,17 @@ window.methods = {
                 "[%w%-%.]*[%w%-]%.%a%a[%a%.]*", -- matches domain
             }
 
-            -- Get hostnames from /etc/hosts (this should include localhost)
-            local etchosts = {}
-            for line in io.lines("/etc/hosts") do
-                if not string.match(line, "^#") then -- ignore comments
-                    local names = string.match(line, "^%S+%s+(.+)$")
-                    string.gsub(names or "", "([%w%-%.]+)", function (name)
-                        -- Add by key to remove duplicates
-                        etchosts[name] = name
-                    end)
+            -- Get hostnames from /etc/hosts
+            local etchosts = { localhost = "localhost" }
+            if globals.load_etc_hosts ~= false then
+                for line in io.lines("/etc/hosts") do
+                    if not string.match(line, "^#") then -- ignore comments
+                        local names = string.match(line, "^%S+%s+(.+)$")
+                        string.gsub(names or "", "([%w%-%.]+)", function (name)
+                            -- Add by key to remove duplicates
+                            etchosts[name] = name
+                        end)
+                    end
                 end
             end
 
