@@ -59,12 +59,12 @@ menu_binds = {
 
 -- Add binds to special mode "all" which adds its binds to all modes.
 add_binds("all", {
-    key({},          "Escape",  function (w) w:set_mode() end),
-    key({"Control"}, "[",       function (w) w:set_mode() end),
+    key({},          "Escape",  function (w) w:set_mode() end, { desc = "Return to normal mode" }),
+    key({"Control"}, "[",       function (w) w:set_mode() end, { desc = "Return to normal mode" }),
 
     -- Mouse bindings
-    but({},     8,  function (w) w:back()     end),
-    but({},     9,  function (w) w:forward()  end),
+    but({},     8,  function (w) w:back()     end, { desc = "Go back" }),
+    but({},     9,  function (w) w:forward()  end, { desc = "Go forward" }),
 
     -- Open link in new tab or navigate to selection
     but({},     2,  function (w, m)
@@ -79,7 +79,7 @@ add_binds("all", {
                 if uri then w:navigate(w:search_open(uri)) end
             end
         end
-    end),
+    end, { desc = "Open link (or primary selection) in new tab" }),
 
     -- Open link in new tab when Ctrl-clicked.
     but({"Control"}, 1, function (w, m)
@@ -107,47 +107,49 @@ add_binds("normal", {
             end
         end
         return false
-    end),
+    end, { tostring = "[count]", desc = "Provides the [count] bind grammar" }),
 
-    key({},          "i",           function (w) w:set_mode("insert")  end),
-    key({},          ":",           function (w) w:set_mode("command") end),
+    -- Mode bindings
+    key({},          "i",           function (w) w:set_mode("insert")  end, {desc = "Enter insert mode"}),
+    key({},          ":",           function (w) w:set_mode("command") end, {desc = "Enter command mode"}),
 
     -- Scrolling
-    key({},          "j",           function (w) w:scroll_vert(more)  end),
-    key({},          "k",           function (w) w:scroll_vert(less)  end),
-    key({},          "h",           function (w) w:scroll_horiz(less) end),
-    key({},          "l",           function (w) w:scroll_horiz(more) end),
-    key({},          "^",           function (w) w:scroll_horiz("0%") end),
-    key({},          "$",           function (w) w:scroll_horiz("100%") end),
-    key({"Control"}, "e",           function (w) w:scroll_vert(more)  end),
-    key({"Control"}, "y",           function (w) w:scroll_vert(less)  end),
-    key({"Control"}, "d",           function (w) w:scroll_page(0.5)   end),
-    key({"Control"}, "u",           function (w) w:scroll_page(-0.5)  end),
-    key({"Control"}, "f",           function (w) w:scroll_page(1.0)   end),
-    key({"Control"}, "b",           function (w) w:scroll_page(-1.0)  end),
-    key({},          "space",       function (w) w:scroll_page(1.0)   end),
-    key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)  end),
-    key({},          "BackSpace",   function (w) w:scroll_page(-1.0)  end),
+    key({},          "j",           function (w) w:scroll_vert(more)   end, {desc = "Scroll document down"}),
+    key({},          "k",           function (w) w:scroll_vert(less)   end, {desc = "Scroll document up"}),
+    key({},          "h",           function (w) w:scroll_horiz(less)  end, {desc = "Scroll document to the left"}),
+    key({},          "l",           function (w) w:scroll_horiz(more)  end, {desc = "Scroll document to the right"}),
+    key({"Control"}, "e",           function (w) w:scroll_vert(more)   end, {desc = "Scroll the document down"}),
+    key({"Control"}, "y",           function (w) w:scroll_vert(less)   end, {desc = "Scroll the document up"}),
+    key({"Control"}, "d",           function (w) w:scroll_page(0.5)    end, {desc = "Scroll down a half-page"}),
+    key({"Control"}, "u",           function (w) w:scroll_page(-0.5)   end, {desc = "Scroll up a half-page"}),
+    key({"Control"}, "f",           function (w) w:scroll_page(1.0)    end, {desc = "Scroll down a full page"}),
+    key({"Control"}, "b",           function (w) w:scroll_page(-1.0)   end, {desc = "Scroll up a full page"}),
+    key({},          "space",       function (w) w:scroll_page(1.0)    end, {desc = "Scroll down a full page"}),
+    key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)   end, {desc = "Scroll up a full page"}),
+    key({},          "BackSpace",   function (w) w:scroll_page(-1.0)   end, {desc = "Scroll up a full page"}),
+    key({},          "Down",        function (w) w:scroll_vert(more)   end, {desc = "Scroll document down"}),
+    key({},          "Up",          function (w) w:scroll_vert(less)   end, {desc = "Scroll document up"}),
+    key({},          "Left",        function (w) w:scroll_horiz(less)  end, {desc = "Scroll document left"}),
+    key({},          "Right",       function (w) w:scroll_horiz(more)  end, {desc = "Scroll document right"}),
+    key({},          "Page_Down",   function (w) w:scroll_page(1.0)    end, {desc = "Scroll down a full page"}),
+    key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end, {desc = "Scroll up a full page"}),
+    key({},          "Home",        function (w) w:scroll_vert(0)      end, {desc = "Scroll to the top of the document"}),
+    key({},          "End",         function (w) w:scroll_vert("100%") end, {desc = "Scroll to the bottom of the document"}),
+    key({},          "0",           function (w, m)
+                                        if not m.count then w:scroll_horiz(0)
+                                        else return false end
+                                    end, {desc = "Scroll to the left of the document"}),
+    key({},          "$",           function (w) w:scroll_horiz("100%") end, {desc = "Scroll to the right of the document"}),
 
     -- Specific scroll
-    buf("^gg$",                     function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 0}),
-    buf("^G$",                      function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
-
-    -- Traditional scrolling commands
-    key({},          "Down",        function (w) w:scroll_vert(more)   end),
-    key({},          "Up",          function (w) w:scroll_vert(less)   end),
-    key({},          "Left",        function (w) w:scroll_horiz(less)  end),
-    key({},          "Right",       function (w) w:scroll_horiz(more)  end),
-    key({},          "Page_Down",   function (w) w:scroll_page(1.0)    end),
-    key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end),
-    key({},          "Home",        function (w) w:scroll_vert(0)   end),
-    key({},          "End",         function (w) w:scroll_vert("100%") end),
-    key({},          "$",           function (w) w:scroll_horiz("100%") end),
-    key({},          "0",           function (w, m) if not m.count then w:scroll_horiz(0) else return false end end),
+    buf("^gg$",                     function (w, b, m) w:scroll_vert(m.count.."%") end,
+                                        {count = 0,   desc = "Scroll to [count]% or top of document"}),
+    buf("^G$",                      function (w, b, m) w:scroll_vert(m.count.."%") end,
+                                        {count = 100, desc = "Scroll to [count]% or bottom of document"}),
 
     -- Zooming
-    key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
-    key({},          "-",           function (w, m)    w:zoom_out(zoom_step * m.count)       end, {count=1}),
+    key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count) end, {count=1, }),
+    key({},          "-",           function (w, m)    w:zoom_out(zoom_step * m.count) end, {count=1}),
     key({},          "=",           function (w, m)    w:zoom_set() end),
     buf("^zz$",                     function (w, b, m) w:zoom_set() end),
     buf("^z[iI]$",                  function (w, b, m) w:zoom_in(zoom_step  * m.count, b == "zI") end, {count=1}),
