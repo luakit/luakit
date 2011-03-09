@@ -22,8 +22,7 @@
 #ifndef LUAKIT_CLASSES_SOUP_AUTH_H
 #define LUAKIT_CLASSES_SOUP_AUTH_H
 
-#include <gtk/gtk.h>
-#include <libsoup/soup.h>
+#include <glib-object.h>
 
 #define LUAKIT_TYPE_AUTH_DIALOG            (luakit_auth_dialog_get_type ())
 #define LUAKIT_AUTH_DIALOG(object)         (G_TYPE_CHECK_INSTANCE_CAST ((object), LUAKIT_TYPE_AUTH_DIALOG, LuakitAuthDialog))

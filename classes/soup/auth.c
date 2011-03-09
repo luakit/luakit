@@ -22,6 +22,11 @@
 #include "classes/soup/soup.h"
 #include "luah.h"
 
+#include <gtk/gtk.h>
+#include <libsoup/soup-auth.h>
+#include <libsoup/soup-session-feature.h>
+#include <libsoup/soup-uri.h>
+
 static void luakit_auth_dialog_session_feature_init(SoupSessionFeatureInterface *interface, gpointer data);
 
 G_DEFINE_TYPE_WITH_CODE(LuakitAuthDialog, luakit_auth_dialog, G_TYPE_OBJECT,

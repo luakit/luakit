@@ -18,11 +18,12 @@
  *
  */
 
+#include "classes/soup/soup.h"
+#include "common/property.h"
+
 #include <libsoup/soup.h>
 #include <webkit/webkitsoupauthdialog.h>
 #include <webkit/webkitwebview.h>
-#include "classes/soup/soup.h"
-#include "common/property.h"
 
 GHashTable *soup_properties = NULL;
 property_t soup_properties_table[] = {
