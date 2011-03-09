@@ -19,24 +19,22 @@
  *
  */
 
-#include <stdbool.h>
+#include "common/luaobject.h"
+#include "classes/download.h"
+#include "luah.h"
+#include "globalconf.h"
+
 #include <webkit/webkitdownload.h>
 #include <webkit/webkitnetworkrequest.h>
 #include <glib/gstdio.h>
 
-#include "globalconf.h"
-#include "luah.h"
-#include "classes/download.h"
-#include "common/luaobject.h"
-
-typedef struct
-{
+typedef struct {
     LUA_OBJECT_HEADER
     WebKitDownload* webkit_download;
     gpointer ref;
     char *uri;
     char *destination;
-    bool error;
+    gboolean error;
 } download_t;
 
 static lua_class_t download_class;
@@ -79,7 +77,7 @@ luaH_download_new(lua_State *L)
     download_t *download = luaH_checkudata(L, -1, &download_class);
     lua_pushvalue(L, -1);
     download->ref = luaH_object_ref(L, -1); // prevent Lua garbage collection of download while running
-    download->error = false;
+    download->error = FALSE;
     WebKitNetworkRequest *request = webkit_network_request_new(download->uri);
     download->webkit_download = webkit_download_new(request);
     g_object_ref(G_OBJECT(download->webkit_download));
@@ -93,7 +91,7 @@ luaH_download_push(lua_State *L, WebKitDownload* d)
     download_t *download = luaH_checkudata(L, -1, &download_class);
     lua_pushvalue(L, -1);
     download->ref = luaH_object_ref(L, -1); // prevent Lua garbage collection of download while running
-    download->error = false;
+    download->error = FALSE;
     download->uri = g_strdup(webkit_download_get_uri(d));
     download->webkit_download = d;
     g_object_ref(G_OBJECT(download->webkit_download));
@@ -247,9 +245,8 @@ download_check_prerequesites(download_t *download)
     g_object_unref(stream);
     g_object_unref(file);
     // check for errors
-    if (free_space < total_size || error != NULL) {
-        download->error = true;
-    }
+    if (free_space < total_size || error != NULL)
+        download->error = TRUE;
 }
 
 static int
@@ -259,12 +256,11 @@ luaH_download_start(lua_State *L)
     if (download_is_started(download)) {
         luaH_warn(L, "download already running. Cannot start twice");
     } else {
-        download->error = false;
+        download->error = FALSE;
         download_check_prerequesites(download);
-        if (!download->error) {
+        if (!download->error)
             // everything OK, download
             webkit_download_start(download->webkit_download);
-        }
     }
     return 0;
 }
