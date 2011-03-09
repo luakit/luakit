@@ -18,6 +18,7 @@
  *
  */
 
+#include <libsoup/soup.h>
 #include <webkit/webkitsoupauthdialog.h>
 #include <webkit/webkitwebview.h>
 #include "classes/soup/soup.h"
