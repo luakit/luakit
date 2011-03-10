@@ -344,4 +344,28 @@ function sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
 
+--- Get all hostnames in /etc/hosts
+-- @param Force re-load of /etc/hosts
+-- @return Table of all hostnames in /etc/hosts
+local etc_hosts
+function get_etc_hosts(force)
+    -- Unless forced return previous hostnames
+    if not force and etc_hosts then
+        return etc_hosts
+    end
+    -- Parse /etc/hosts
+    local match, find, gsub = rstring.match, rstring.find, rstring.gsub
+    local h = { localhost = "localhost" }
+    for line in io.lines("/etc/hosts") do
+        if not find(line, "^#") then
+            local names = match(line, "^%S+%s+(.+)$")
+            gsub(names or "", "(%S+)", function (name)
+                h[name] = name -- key add removes duplicates
+            end)
+        end
+    end
+    etc_hosts = table.values(h)
+    return etc_hosts
+end
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80
