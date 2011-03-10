@@ -19,12 +19,6 @@
  *
  */
 
-#include <gtk/gtk.h>
-#include <stdlib.h>
-#include <sys/wait.h>
-#include <webkit/webkit.h>
-#include <time.h>
-
 #include "common/util.h"
 #include "common/lualib.h"
 #include "luakit.h"
@@ -34,6 +28,12 @@
 #include "classes/timer.h"
 #include "classes/widget.h"
 #include "luah.h"
+
+#include <gtk/gtk.h>
+#include <stdlib.h>
+#include <sys/wait.h>
+#include <webkit/webkit.h>
+#include <time.h>
 
 void
 luaH_modifier_table_push(lua_State *L, guint state) {

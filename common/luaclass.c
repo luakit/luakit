@@ -19,10 +19,10 @@
  *
  */
 
-#include <stdlib.h>
-
 #include "common/luaclass.h"
 #include "common/luaobject.h"
+
+#include <stdlib.h>
 
 struct lua_class_property {
     /** Callback function called when the property is found in object creation. */

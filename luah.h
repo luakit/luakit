@@ -22,10 +22,11 @@
 #ifndef LUAKIT_LUA_H
 #define LUAKIT_LUA_H
 
-#include <lua.h>
-#include "globalconf.h"
 #include "common/luaobject.h"
 #include "common/lualib.h"
+#include "globalconf.h"
+
+#include <lua.h>
 
 #define luaH_deprecate(L, repl) \
     do { \

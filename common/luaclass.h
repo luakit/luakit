@@ -22,11 +22,11 @@
 #ifndef LUAKIT_COMMON_LUACLASS_H
 #define LUAKIT_COMMON_LUACLASS_H
 
-#include <glib/gtree.h>
-
 #include "common/lualib.h"
 #include "common/signal.h"
 #include "common/tokenize.h"
+
+#include <glib/gtree.h>
 
 typedef struct     lua_class_property lua_class_property_t;
 typedef GHashTable lua_class_property_array_t;

@@ -18,11 +18,10 @@
  *
  */
 
-#include <webkit/webkit.h>
-
 #include "common/property.h"
 #include "classes/soup/soup.h"
 
+#include <webkit/webkit.h>
 
 GHashTable*
 hash_properties(property_t *properties_table)
