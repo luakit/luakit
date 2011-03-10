@@ -111,6 +111,8 @@ new_mode("command", {
     activate = function (w, text)
         w:set_mode()
         local cmd = string.sub(text, 2)
+        -- Ignore blank commands
+        if string.match(cmd, "^%s*$") then return end
         local success, match = pcall(w.match_cmd, w, cmd)
         if not success then
             w:error("In command call: " .. match)
