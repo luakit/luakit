@@ -156,6 +156,7 @@ function match_any(object, binds, args)
             end
         end
     end
+    return false
 end
 --- Try and match a key binding in a given table of bindings and call that
 -- bindings callback function.
@@ -174,6 +175,7 @@ function match_key(object, binds, mods, key, args)
             end
         end
     end
+    return false
 end
 
 --- Try and match a button binding in a given table of bindings and call that
@@ -193,6 +195,7 @@ function match_but(object, binds, mods, button, args)
             end
         end
     end
+    return false
 end
 
 --- Try and match a buffer binding in a given table of bindings and call that
@@ -215,6 +218,7 @@ function match_buf(object, binds, buffer, args)
         --    end
         end
     end
+    return false
 end
 
 --- Try and match a command or buffer binding in a given table of bindings
@@ -249,6 +253,7 @@ function match_cmd(object, binds, buffer, args)
         --    end
         end
     end
+    return false
 end
 
 --- Attempt to match either a key or buffer binding and execute it. This
