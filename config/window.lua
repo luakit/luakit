@@ -428,11 +428,11 @@ window.methods = {
     end,
 
     update_uri = function (w, view, uri, link)
-        if not view then view = w:get_current() end
         local u, escape = w.sbar.l.uri, lousy.util.escape
         if link then
             u.text = "Link: " .. escape(link)
         else
+            if not view then view = w:get_current() end
             u.text = escape((uri or (view and view.uri) or "about:blank"))
         end
     end,
