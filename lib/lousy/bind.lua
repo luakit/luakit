@@ -14,6 +14,7 @@ local type = type
 local unpack = unpack
 local util = require("lousy.util")
 local join = util.table.join
+local print = print
 
 --- Key, buffer and command binding functions.
 module("lousy.bind")
@@ -235,9 +236,15 @@ function match_cmd(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
     -- The command is the first word in the buffer string
-    local command  = string.match(buffer, "^([^%s]+)")
+    local command  = string.match(buffer, "^(%S+)")
     -- And the argument is the entire string thereafter
     local argument = string.match(string.sub(buffer, #command + 1), "^%s+([^%s].*)$")
+
+    -- Set args.cmd to tell buf/any binds they were called from match_cmd
+    args = join(args or {}, {
+        binds = binds,
+        cmd = buffer,
+    })
 
     for _, b in ipairs(binds) do
         -- Command matching
@@ -251,10 +258,10 @@ function match_cmd(object, binds, buffer, args)
                 return true
             end
         -- Any matching
-        --elseif b.type == "any" then
-        --    if b.func(object, join(b.opts, args)) ~= false then
-        --        return true
-        --    end
+        elseif b.type == "any" then
+            if b.func(object, join(b.opts, args)) ~= false then
+                return true
+            end
         end
     end
     return false
