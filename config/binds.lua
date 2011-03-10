@@ -252,6 +252,15 @@ add_binds("normal", mod1binds)
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 add_cmds({
+    -- Detect bangs (I.e. ":command! <args>")
+    buf("^%S+!", function (w, cmd, opts)
+        local cmd, args = string.match(cmd, "^(%S+)!+(.*)")
+        if cmd then
+            opts = join(opts, { bang = true })
+            return lousy.bind.match_cmd(w, opts.binds, cmd .. args, opts)
+        end
+    end),
+
  -- cmd({command, alias1, ...}, function (w, arg, opts) .. end, opts),
  -- cmd("co[mmand]",            function (w, arg, opts) .. end, opts),
     cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
