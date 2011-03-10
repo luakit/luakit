@@ -207,6 +207,8 @@ end
 -- opts table given when the bind was created.
 -- @return True if a binding was matched and called.
 function match_buf(object, binds, buffer, args)
+    assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+
     for _, b in ipairs(binds) do
         if b.type == "buffer" and string.match(buffer, b.pattern) then
             if b.func(object, buffer, join(b.opts, args)) ~= false then
@@ -230,6 +232,8 @@ end
 -- opts table given when the bind was created.
 -- @return True if either type of binding was matched and called.
 function match_cmd(object, binds, buffer, args)
+    assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+
     -- The command is the first word in the buffer string
     local command  = string.match(buffer, "^([^%s]+)")
     -- And the argument is the entire string thereafter
