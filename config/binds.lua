@@ -35,15 +35,7 @@ end
 
 -- Add commands to command mode
 function add_cmds(cmds, before)
-    assert(cmds and type(cmds) == "table", "invalid cmds table type: " .. type(cmds))
-    local mdata = get_mode("command")
-    if mdata and before then
-        mdata.commands = join(cmds, mdata.commands or {})
-    elseif mdata then
-        mdata.commands = join(mdata.commands or {}, cmds)
-    else
-        new_mode("command", { commands = cmds })
-    end
+    add_binds("command", cmds, before)
 end
 
 -- Adds the default menu widget bindings to a mode
