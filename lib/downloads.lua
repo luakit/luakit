@@ -14,7 +14,6 @@ local string = string
 local table = table
 local tonumber = tonumber
 local type = type
-local webview = webview
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
@@ -23,6 +22,7 @@ local add_cmds = add_cmds
 local menu_binds = menu_binds
 local new_mode = new_mode
 local window = window
+local webview = webview
 local theme = lousy.theme
 
 -- Grab environment from C API
@@ -328,10 +328,11 @@ new_mode("downloadlist", {
             end
             local function status()
                 if is_running(d) then
-                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576,
-                        d.total_size/1048576, (d.progress * 100), get_speed(d) / 1024)
+                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s",
+                        d.current_size/1048576, d.total_size/1048576,
+                        (d.progress * 100), get_speed(d) / 1024)
                 else
-                    return d.status
+                    return d.error or d.status
                 end
             end
             table.insert(rows, { name, status, dl = d })
