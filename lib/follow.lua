@@ -755,7 +755,7 @@ new_mode("follow", {
             -- Make theme js
             for k, v in pairs(get_theme()) do
                 if type(v) == "number" then
-                    table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
+                    table.insert(js_blocks, string.format("follow.theme.%s = %f;", k, v))
                 else
                     table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
                 end
