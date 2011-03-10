@@ -607,7 +607,18 @@ window.methods = {
         w:update_tablist()
     end,
 
-    close_win = function (w)
+    close_win = function (w, force)
+        -- Ask plugins if it's OK to close last window
+        if not force and (#luakit.windows == 1) then
+            local emsg = luakit.emit_signal("can-close", w)
+            if emsg then
+                assert(type(emsg) == "string", "invalid exit error message")
+                w:error(string.format("Can't close luakit: %s (force close "
+                    .. "with :q! or :wq!)", emsg))
+                return false
+            end
+        end
+
         w:emit_signal("close")
 
         -- Close all tabs
