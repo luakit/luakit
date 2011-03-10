@@ -11,6 +11,8 @@ globals = {
 
  -- Disables loading of hostnames from /etc/hosts (for large host files)
  -- load_etc_hosts      = false,
+ -- Disables checking if a filepath exists in search_open function
+ -- check_filepath      = false,
 }
 
 -- Make useragent
