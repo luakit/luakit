@@ -25,6 +25,9 @@ sort_labels = true
 -- How long should input be ignored after a successful follow?
 ignore_delay = 500
 
+-- Reverse labels (sometimes equates to less key presses)
+reverse_labels = true
+
 local clear_js = [=[
 // Remove an element from its parentNode.
 var unlink = function (element) {
@@ -664,10 +667,14 @@ function make_labels(size)
     local start = 10 ^ (digits - 1)
     if start == 1 then start = 0 end
     local labels = {}
-    for i=start,size+start-1,1 do
-        table.insert(labels, string.reverse(tostring(i)))
+    for i = start, size+start-1, 1 do
+        if reverse_labels then
+            table.insert(labels, string.reverse(i))
+        else
+            table.insert(labels, tostring(i))
+        end
     end
-    if sort_labels then table.sort(labels) end
+    if reverse_labels and sort_labels then table.sort(labels) end
     return labels
 end
 
@@ -779,7 +786,7 @@ new_mode("follow", {
             -- Make theme js
             for k, v in pairs(get_theme()) do
                 if type(v) == "number" then
-                    table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
+                    table.insert(js_blocks, string.format("follow.theme.%s = %f;", k, v))
                 else
                     table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
                 end

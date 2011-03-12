@@ -19,13 +19,14 @@
  *
  */
 
+#include "classes/soup/soup.h"
+#include "luah.h"
+
 #include <libsoup/soup-cookie.h>
 #include <libsoup/soup-date.h>
 #include <libsoup/soup-message.h>
 #include <libsoup/soup-session-feature.h>
-
-#include "classes/soup/soup.h"
-#include "luah.h"
+#include <libsoup/soup-uri.h>
 
 static void luakit_cookie_jar_session_feature_init(SoupSessionFeatureInterface *interface, gpointer data);
 G_DEFINE_TYPE_WITH_CODE (LuakitCookieJar, luakit_cookie_jar, SOUP_TYPE_COOKIE_JAR,

@@ -19,45 +19,38 @@
  *
  */
 
-#include <glib.h>
-#include <stdbool.h>
-
-#include "globalconf.h"
-#include "luah.h"
 #include "classes/timer.h"
 #include "common/luaobject.h"
+#include "globalconf.h"
+#include "luah.h"
 
-typedef struct
-{
+#include <glib.h>
+
+typedef struct {
     LUA_OBJECT_HEADER
     gpointer ref;
-    int timer_id;
+    int id;
     int interval;
 } ltimer_t;
-
-/* Glib returns a uint, so a negative number should be safe. */
-#define TIMER_STOPPED -1
-/* The field in which to store the function that handles the timeout. */
-#define TIMER_FUNC_FIELD "func"
-/* The field in which to store the interval of the timeout. */
-#define TIMER_INTERVAL_FIELD "interval"
 
 static lua_class_t timer_class;
 LUA_OBJECT_FUNCS(timer_class, ltimer_t, timer)
 
-/* Unrefs and resets the given timer and destroys its event source.
- * \param L The Lua VM state.
- * \param timer The timer structure.
- */
+#define TIMER_STOPPED -1
+
+#define luaH_checktimer(L, idx) luaH_checkudata(L, idx, &(timer_class))
+
 static void
 luaH_timer_destroy(lua_State *L, ltimer_t *timer) {
-    GSource *source = g_main_context_find_source_by_id(NULL, timer->timer_id);
-    if (source != NULL) {
+    GSource *source = g_main_context_find_source_by_id(NULL, timer->id);
+    if (source != NULL)
         g_source_destroy(source);
-    }
-    luaH_object_unref(L, timer->ref); // now the timer may be garbage collected
+
+    /* allow timer to be garbage collected */
+    luaH_object_unref(L, timer->ref);
     timer->ref = NULL;
-    timer->timer_id = TIMER_STOPPED;
+
+    timer->id = TIMER_STOPPED;
 }
 
 static gboolean
@@ -73,45 +66,42 @@ static int
 luaH_timer_new(lua_State *L)
 {
     luaH_class_new(L, &timer_class);
-    ltimer_t *timer = luaH_checkudata(L, -1, &timer_class);
-    timer->ref = NULL;
-    timer->timer_id = TIMER_STOPPED;
+    ltimer_t *timer = luaH_checktimer(L, -1);
+    timer->id = TIMER_STOPPED;
     return 1;
 }
 
 static int
 luaH_timer_start(lua_State *L)
 {
-    ltimer_t *timer = luaH_checkudata(L, 1, &timer_class);
-    // get interval
-    lua_getfield(L, -1, TIMER_INTERVAL_FIELD);
-    int millis = luaL_checkinteger(L, -1);
-    timer->ref = luaH_object_ref(L, 1); // ensure that timers don't get collected while running
-    if (timer->timer_id == TIMER_STOPPED) {
-        timer->timer_id = g_timeout_add(millis, timer_handle_timeout, timer);
-    } else {
-        luaH_warn(L, "timer already started. Cannot start a timer twice");
-    }
+    ltimer_t *timer = luaH_checktimer(L, 1);
+    if (!timer->interval)
+        luaL_error(L, "interval not set");
+
+    if (timer->id == TIMER_STOPPED) {
+        /* ensure timer isn't collected while running */
+        timer->ref = luaH_object_ref(L, 1);
+        timer->id = g_timeout_add(timer->interval, timer_handle_timeout, timer);
+    } else
+        luaH_warn(L, "timer already started");
     return 0;
 }
 
 static int
 luaH_timer_stop(lua_State *L)
 {
-    ltimer_t *timer = luaH_checkudata(L, 1, &timer_class);
-    if (timer->timer_id == TIMER_STOPPED) {
-        luaH_warn(L, "timer already stopped. Cannot stop a timer twice");
-    } else {
+    ltimer_t *timer = luaH_checktimer(L, 1);
+    if (timer->id == TIMER_STOPPED)
+        luaH_warn(L, "timer already stopped");
+    else
         luaH_timer_destroy(L, timer);
-    }
     return 0;
 }
 
 static int
 luaH_timer_set_interval(lua_State *L, ltimer_t *timer)
 {
-    int interval = luaL_checkinteger(L, -1);
-    timer->interval = interval;
+    timer->interval = luaL_checkint(L, -1);
     return 0;
 }
 
@@ -125,8 +115,7 @@ luaH_timer_get_interval(lua_State *L, ltimer_t *timer)
 static int
 luaH_timer_get_started(lua_State *L, ltimer_t *timer)
 {
-    bool started = (timer->timer_id != TIMER_STOPPED);
-    lua_pushboolean(L, started);
+    lua_pushboolean(L, (timer->id != TIMER_STOPPED));
     return 1;
 }
 
@@ -150,17 +139,21 @@ timer_class_setup(lua_State *L)
     };
 
     luaH_class_setup(L, &timer_class, "timer",
-                     (lua_class_allocator_t) timer_new,
-                     luaH_class_index_miss_property, luaH_class_newindex_miss_property,
-                     timer_methods, timer_meta);
+         (lua_class_allocator_t) timer_new,
+         luaH_class_index_miss_property, luaH_class_newindex_miss_property,
+         timer_methods, timer_meta);
+
     luaH_class_add_property(&timer_class, L_TK_INTERVAL,
-                            (lua_class_propfunc_t) luaH_timer_set_interval,
-                            (lua_class_propfunc_t) luaH_timer_get_interval,
-                            (lua_class_propfunc_t) luaH_timer_set_interval);
+        (lua_class_propfunc_t) luaH_timer_set_interval,
+        (lua_class_propfunc_t) luaH_timer_get_interval,
+        (lua_class_propfunc_t) luaH_timer_set_interval);
+
     luaH_class_add_property(&timer_class, L_TK_STARTED,
-                            NULL,
-                            (lua_class_propfunc_t) luaH_timer_get_started,
-                            NULL);
+        NULL,
+        (lua_class_propfunc_t) luaH_timer_get_started,
+        NULL);
 }
+
+#undef luaH_checktimer
 
 // vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80

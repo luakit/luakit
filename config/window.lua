@@ -258,7 +258,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
-        return lousy.bind.match_cmd(w, get_mode("command").commands, buffer)
+        return lousy.bind.match_cmd(w, get_mode("command").binds, buffer)
     end,
 
     -- enter command or characters into command line
@@ -428,11 +428,11 @@ window.methods = {
     end,
 
     update_uri = function (w, view, uri, link)
-        if not view then view = w:get_current() end
         local u, escape = w.sbar.l.uri, lousy.util.escape
         if link then
             u.text = "Link: " .. escape(link)
         else
+            if not view then view = w:get_current() end
             u.text = escape((uri or (view and view.uri) or "about:blank"))
         end
     end,
@@ -607,7 +607,18 @@ window.methods = {
         w:update_tablist()
     end,
 
-    close_win = function (w)
+    close_win = function (w, force)
+        -- Ask plugins if it's OK to close last window
+        if not force and (#luakit.windows == 1) then
+            local emsg = luakit.emit_signal("can-close", w)
+            if emsg then
+                assert(type(emsg) == "string", "invalid exit error message")
+                w:error(string.format("Can't close luakit: %s (force close "
+                    .. "with :q! or :wq!)", emsg))
+                return false
+            end
+        end
+
         w:emit_signal("close")
 
         -- Close all tabs
@@ -679,58 +690,42 @@ window.methods = {
 
     -- Intelligent open command which can detect a uri or search argument.
     search_open = function (w, arg)
-        local util = lousy.util
-        local join, values = util.table.join, util.table.values
+        local lstring = lousy.util.string
+        local match, find = string.match, string.find
 
         -- Detect blank uris
-        if not arg or string.match(arg, "^%s*$") then return "about:blank" end
+        if not arg or match(arg, "^%s*$") then return "about:blank" end
 
         -- Strip whitespace and split by whitespace into args table
-        local args = util.string.split(util.string.strip(arg))
+        local args = lstring.split(lstring.strip(arg))
 
-        -- Detect localhost, scheme:// or domain-like beginning in string
+        -- Guess if first argument is an address, search engine, file
         if #args == 1 then
             local uri = args[1]
             if uri == "about:blank" then return uri end
 
-            -- Check for scheme://
-            if string.match(uri, "^%w+://") then return uri end
+            -- Check if search engine name
+            if search_engines[uri] then
+                return string.format(search_engines[uri], "")
+            end
 
-            -- List of hosts/patterns to check
-            local hosts = {
-                "%d+.%d+.%d+.%d+", -- matches IP addresses
-                "[%w%-%.]*[%w%-]%.%a%a[%a%.]*", -- matches domain
-            }
+            -- Navigate if . or / in uri (I.e. domains, IP's, scheme://)
+            if find(uri, "%.") or find(uri, "/") then return uri end
 
-            -- Get hostnames from /etc/hosts
-            local etchosts = { localhost = "localhost" }
+            -- Valid hostnames to check
+            local hosts = { "localhost" }
             if globals.load_etc_hosts ~= false then
-                for line in io.lines("/etc/hosts") do
-                    if not string.match(line, "^#") then -- ignore comments
-                        local names = string.match(line, "^%S+%s+(.+)$")
-                        string.gsub(names or "", "([%w%-%.]+)", function (name)
-                            -- Add by key to remove duplicates
-                            etchosts[name] = name
-                        end)
-                    end
-                end
+                hosts = lousy.util.get_etc_hosts()
             end
 
-            -- Check hosts
-            for _, host in ipairs(join(hosts, values(etchosts))) do
-                local tails = string.match(uri, "^"..host.."(.*)")
-                if tails == "" then -- perfect match
-                    return uri
-                elseif tails then -- check for path or port (or both)
-                    for _, p in pairs{ "^/", "^:%d+$", "^:%d+/" } do
-                        if string.match(tails, p) then return uri end
-                    end
-                end
+            -- Check hostnames
+            for _, h in pairs(hosts) do
+                if h == uri or match(uri, "^"..h..":%d+$") then return uri end
             end
 
-            -- Check for file in filesystem (if uri not search engine name)
-            if not search_engines[uri] and lfs.attributes(uri) then
-                return "file://" .. uri
+            -- Check for file in filesystem
+            if globals.check_filepath ~= false then
+                if lfs.attributes(uri) then return "file://" .. uri end
             end
         end
 

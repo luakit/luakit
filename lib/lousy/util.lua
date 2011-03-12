@@ -335,16 +335,6 @@ function recursive_remove(wi)
     return children
 end
 
---- Convert a number to string independent from locale.
--- @param num A number.
--- @param sigs Signifigant figures (if float).
--- @return The string representation of the number.
-function ntos(num, sigs)
-    local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
-    num = tostring(math.floor(num))
-    return (#dec == 0 and num) or (num .. "." .. dec)
-end
-
 --- Escape values for SQL queries.
 -- In sqlite3: "A string constant is formed by enclosing the string in single
 -- quotes ('). A single quote within the string can be encoded by putting two
@@ -352,6 +342,30 @@ end
 -- Read: http://sqlite.org/lang_expr.html
 function sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
+end
+
+--- Get all hostnames in /etc/hosts
+-- @param Force re-load of /etc/hosts
+-- @return Table of all hostnames in /etc/hosts
+local etc_hosts
+function get_etc_hosts(force)
+    -- Unless forced return previous hostnames
+    if not force and etc_hosts then
+        return etc_hosts
+    end
+    -- Parse /etc/hosts
+    local match, find, gsub = rstring.match, rstring.find, rstring.gsub
+    local h = { localhost = "localhost" }
+    for line in io.lines("/etc/hosts") do
+        if not find(line, "^#") then
+            local names = match(line, "^%S+%s+(.+)$")
+            gsub(names or "", "(%S+)", function (name)
+                h[name] = name -- key add removes duplicates
+            end)
+        end
+    end
+    etc_hosts = table.values(h)
+    return etc_hosts
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

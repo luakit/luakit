@@ -21,7 +21,8 @@
 #ifndef LUAKIT_COMMON_PROPERTY_H
 #define LUAKIT_COMMON_PROPERTY_H
 
-#include "luah.h"
+#include <lua.h>
+#include <glib/ghash.h>
 
 typedef enum {
     BOOL,

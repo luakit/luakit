@@ -14,6 +14,7 @@ local type = type
 local unpack = unpack
 local util = require("lousy.util")
 local join = util.table.join
+local print = print
 
 --- Key, buffer and command binding functions.
 module("lousy.bind")
@@ -156,6 +157,7 @@ function match_any(object, binds, args)
             end
         end
     end
+    return false
 end
 --- Try and match a key binding in a given table of bindings and call that
 -- bindings callback function.
@@ -174,6 +176,7 @@ function match_key(object, binds, mods, key, args)
             end
         end
     end
+    return false
 end
 
 --- Try and match a button binding in a given table of bindings and call that
@@ -193,6 +196,7 @@ function match_but(object, binds, mods, button, args)
             end
         end
     end
+    return false
 end
 
 --- Try and match a buffer binding in a given table of bindings and call that
@@ -204,6 +208,8 @@ end
 -- opts table given when the bind was created.
 -- @return True if a binding was matched and called.
 function match_buf(object, binds, buffer, args)
+    assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+
     for _, b in ipairs(binds) do
         if b.type == "buffer" and string.match(buffer, b.pattern) then
             if b.func(object, buffer, join(b.opts, args)) ~= false then
@@ -215,6 +221,7 @@ function match_buf(object, binds, buffer, args)
         --    end
         end
     end
+    return false
 end
 
 --- Try and match a command or buffer binding in a given table of bindings
@@ -226,10 +233,18 @@ end
 -- opts table given when the bind was created.
 -- @return True if either type of binding was matched and called.
 function match_cmd(object, binds, buffer, args)
+    assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+
     -- The command is the first word in the buffer string
-    local command  = string.match(buffer, "^([^%s]+)")
+    local command  = string.match(buffer, "^(%S+)")
     -- And the argument is the entire string thereafter
     local argument = string.match(string.sub(buffer, #command + 1), "^%s+([^%s].*)$")
+
+    -- Set args.cmd to tell buf/any binds they were called from match_cmd
+    args = join(args or {}, {
+        binds = binds,
+        cmd = buffer,
+    })
 
     for _, b in ipairs(binds) do
         -- Command matching
@@ -243,12 +258,13 @@ function match_cmd(object, binds, buffer, args)
                 return true
             end
         -- Any matching
-        --elseif b.type == "any" then
-        --    if b.func(object, join(b.opts, args)) ~= false then
-        --        return true
-        --    end
+        elseif b.type == "any" then
+            if b.func(object, join(b.opts, args)) ~= false then
+                return true
+            end
         end
     end
+    return false
 end
 
 --- Attempt to match either a key or buffer binding and execute it. This

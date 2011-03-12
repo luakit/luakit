@@ -14,7 +14,6 @@ local string = string
 local table = table
 local tonumber = tonumber
 local type = type
-local webview = webview
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
@@ -23,6 +22,7 @@ local add_cmds = add_cmds
 local menu_binds = menu_binds
 local new_mode = new_mode
 local window = window
+local webview = webview
 local theme = lousy.theme
 
 -- Grab environment from C API
@@ -219,50 +219,24 @@ webview.init_funcs.download_request = function (view, w)
     end)
 end
 
--- Tests if any downloads are running.
--- @return true if the window can be closed.
-local function can_close()
-    if #(capi.luakit.windows) > 1 then return true end
-    for _,d in ipairs(downloads) do
-        if is_running(d) then
-            return false
-        end
+-- Check if downloads are finished and last window can exit.
+capi.luakit.add_signal("can-close", function ()
+    local count = 0
+    for _, d in ipairs(downloads) do
+        if is_running(d) then count = count + 1 end
     end
-    return true
-end
-
--- Tries to close the window, but will issue an error if any downloads are still
--- running.
--- @param w The window to close.
--- @param save true, if the session should be saved.
--- @param command The command to overwrite the check. Defaults to ":q!"
-local function try_close(w, save, command)
-    command = command or ":q!"
-    if can_close() then
-        if save then w:save_session() end
-        w:close_win()
-    else
-        w:error("Can't close last window since downloads are still running. " ..
-                "Use "..command.." to quit anyway.")
+    if count > 0 then
+        return count .. " download(s) still running"
     end
-end
+end)
 
 -- Download normal mode binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({"Control", "Shift"}, "D",
-        function (w)
-            w:enter_cmd(":download " .. (w:get_current().uri or "http://") .. " ")
-        end),
+    key({"Control"}, "D", function (w)
+        w:enter_cmd(":download " .. (w:get_current().uri or "http://") .. " ")
+    end),
 })
-
--- Overwrite quit binds to check if downloads are finished
-add_binds("normal", {
-    buf("^D$",  function (w) try_close(w)      end),
-    buf("^ZZ$", function (w) try_close(w,true) end),
-    buf("^ZQ$", function (w) try_close(w)      end),
-}, true)
-
 
 -- Download commands.
 local cmd = lousy.bind.cmd
@@ -299,17 +273,6 @@ add_cmds({
     end),
 })
 
--- Overwrite quit commands to check if downloads are finished
-add_cmds({
-    cmd("q[uit]", function (w) try_close(w) end),
-    cmd({"quit!", "q!"}, function (w) w:close_win() end),
-    cmd({"writequit", "wq"}, function (w) try_close(w, true, ":wq!") end),
-    cmd({"writequit!", "wq!"}, function (w)
-        w:save_session()
-        w:close_win()
-    end),
-}, true)
-
 -- Add mode to display all downloads in an interactive menu.
 new_mode("downloadlist", {
     enter = function (w)
@@ -328,10 +291,11 @@ new_mode("downloadlist", {
             end
             local function status()
                 if is_running(d) then
-                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576,
-                        d.total_size/1048576, (d.progress * 100), get_speed(d) / 1024)
+                    return string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s",
+                        d.current_size/1048576, d.total_size/1048576,
+                        (d.progress * 100), get_speed(d) / 1024)
                 else
-                    return d.status
+                    return d.error or d.status
                 end
             end
             table.insert(rows, { name, status, dl = d })

@@ -35,15 +35,7 @@ end
 
 -- Add commands to command mode
 function add_cmds(cmds, before)
-    assert(cmds and type(cmds) == "table", "invalid cmds table type: " .. type(cmds))
-    local mdata = get_mode("command")
-    if mdata and before then
-        mdata.commands = join(cmds, mdata.commands or {})
-    elseif mdata then
-        mdata.commands = join(mdata.commands or {}, cmds)
-    else
-        new_mode("command", { commands = cmds })
-    end
+    add_binds("command", cmds, before)
 end
 
 -- Adds the default menu widget bindings to a mode
@@ -260,25 +252,35 @@ add_binds("normal", mod1binds)
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 add_cmds({
+    -- Detect bangs (I.e. ":command! <args>")
+    buf("^%S+!", function (w, cmd, opts)
+        local cmd, args = string.match(cmd, "^(%S+)!+(.*)")
+        if cmd then
+            opts = join(opts, { bang = true })
+            return lousy.bind.match_cmd(w, opts.binds, cmd .. args, opts)
+        end
+    end),
+
  -- cmd({command, alias1, ...}, function (w, arg, opts) .. end, opts),
  -- cmd("co[mmand]",            function (w, arg, opts) .. end, opts),
-    cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
-    cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
-    cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
+    cmd("c[lose]",              function (w) w:close_tab() end),
+    cmd("print",                function (w) w:eval_js("print()", "rc.lua") end),
+    cmd("reload",               function (w) w:reload() end),
+    cmd("restart",              function (w) w:restart() end),
+    cmd("write",                function (w) w:save_session() end),
+
     cmd("back",                 function (w, a) w:back(tonumber(a) or 1) end),
     cmd("f[orward]",            function (w, a) w:forward(tonumber(a) or 1) end),
-    cmd("scroll",               function (w, a) w:scroll_vert(a) end),
-    cmd("q[uit]",               function (w)    w:close_win() end),
-    cmd("write",                function (w)    w:save_session() end),
-    cmd({"writequit", "wq"},    function (w)    w:save_session() w:close_win() end),
-    cmd("c[lose]",              function (w)    w:close_tab() end),
-    cmd("reload",               function (w)    w:reload() end),
-    cmd("restart",              function (w)    w:restart() end),
-    cmd("print",                function (w)    w:eval_js("print()", "rc.lua") end),
-    cmd({"viewsource",  "vs" }, function (w)    w:toggle_source(true) end),
-    cmd({"viewsource!", "vs!"}, function (w)    w:toggle_source() end),
     cmd("inc[rease]",           function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
+    cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
+    cmd("scroll",               function (w, a) w:scroll_vert(a) end),
+    cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
+    cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
+
+    cmd("q[uit]",               function (w, a, o) w:close_win(o.bang) end),
+    cmd({"viewsource",  "vs" }, function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
+    cmd({"writequit", "wq"},    function (w, a, o) w:save_session() w:close_win(o.bang) end),
 
     cmd("lua", function (w, a)
         if a then
@@ -290,7 +292,7 @@ add_cmds({
     end),
 
     cmd("dump", function (w, a)
-        local fname = string.gsub(w.win.title, '[^a-zA-Z0-9.-]', '_')..'.html' -- sanitize filename
+        local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.html' -- sanitize filename
         local downdir = luakit.get_special_dir("DOWNLOAD") or "."
         local file = a or luakit.save_file("Save file", w.win, downdir, fname)
         if file then

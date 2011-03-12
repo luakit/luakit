@@ -21,11 +21,11 @@
 #ifndef LUAKIT_CLASSES_SOUP_H
 #define LUAKIT_CLASSES_SOUP_H
 
-#include <libsoup/soup.h>
-
-#include "luah.h"
-#include "classes/soup/auth.h"
 #include "classes/soup/cookiejar.h"
+#include "classes/soup/auth.h"
+#include "luah.h"
+
+#include <libsoup/soup-session.h>
 
 typedef struct {
     /* shared libsoup session */

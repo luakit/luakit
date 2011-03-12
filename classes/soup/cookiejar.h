@@ -22,9 +22,9 @@
 #ifndef LUAKIT_CLASSES_SOUP_COOKIEJAR_H
 #define LUAKIT_CLASSES_SOUP_COOKIEJAR_H
 
-#include <libsoup/soup-cookie-jar.h>
-
 #include "luah.h"
+
+#include <libsoup/soup-cookie-jar.h>
 
 #define LUAKIT_TYPE_COOKIE_JAR         (luakit_cookie_jar_get_type ())
 #define LUAKIT_COOKIE_JAR(obj)         (G_TYPE_CHECK_INSTANCE_CAST ((obj),   LUAKIT_TYPE_COOKIE_JAR, LuakitCookieJar))

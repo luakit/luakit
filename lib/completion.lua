@@ -44,16 +44,18 @@ new_mode("cmdcomp", {
         -- Build completion table
         local cmpl = {{"Commands", title=true}}
         -- Get suitable commands
-        for _, b in ipairs(get_mode("command").commands) do
-            for i, c in ipairs(b.cmds) do
-                if string.match(c, pat) and not string.match(c, "!$") then
-                    if i == 1 then
-                        c = ":" .. c
-                    else
-                        c = string.format(":%s (:%s)", c, b.cmds[1])
+        for _, b in ipairs(get_mode("command").binds) do
+            if b.cmds then
+                for i, c in ipairs(b.cmds) do
+                    if string.match(c, pat) and not string.match(c, "!$") then
+                        if i == 1 then
+                            c = ":" .. c
+                        else
+                            c = string.format(":%s (:%s)", c, b.cmds[1])
+                        end
+                        table.insert(cmpl, { c, cmd = b.cmds[1] })
+                        break
                     end
-                    table.insert(cmpl, { c, cmd = b.cmds[1] })
-                    break
                 end
             end
         end
