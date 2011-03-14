@@ -538,6 +538,13 @@ luaH_luakit_spawn_sync(lua_State *L)
  * \param pid The PID of the process that has just finished
  * \param status status information about the spawned process. See waitpid(2)
  * \param data pointer to the Lua VM state
+ *
+ * The called Lua function receives 2 arguments:
+ *
+ * Exit type: one of: TERM_EXIT (normal exit), TERM_SIGNAL (terminated by
+ *            signal), TERM_UNKNOWN (another reason)
+ * Exit number: When normal exit happened, the exit code of the process. When
+ *              finished by a signal, the signal number. -1 otherwise.
  */
 void async_callback_handler(GPid pid, gint status, gpointer data) {
     lua_State *L = (lua_State *)data;
@@ -585,7 +592,6 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
-    // TODO check possibility of passing the command output to the callback function
     GError *e = NULL;
     GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
