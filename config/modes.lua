@@ -71,7 +71,6 @@ end
 local mset, mget = lousy.mode.set, lousy.mode.get
 for name, func in pairs({
     set_mode = function (w, name)        mset(w, name)   end,
-    get_mode = function (w)       return mget(w)         end,
     is_mode  = function (w, name) return name == mget(w) end,
 }) do window.methods[name] = func end
 
