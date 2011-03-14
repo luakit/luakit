@@ -25,7 +25,12 @@ window.init_funcs.modes_setup = function (w)
 
         -- Get new modes functions/hooks/data
         local mode = modes[name]
-        w.mode = mode
+
+        -- Create w.mode object
+        w.mode = setmetatable({}, {
+            __index    = mode,
+            __newindex = function () error("trying to edit w.mode") end,
+        })
 
         -- Call last modes leave hook.
         if leave then leave(w) end
