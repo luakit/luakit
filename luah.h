@@ -28,12 +28,6 @@
 
 #include <lua.h>
 
-typedef struct proc_callback_data_t {
-    lua_State *L;
-    gint stdout_fd;
-    gint stderr_fd;
-} proc_callback_data_t;
-
 typedef enum {
     TERM_EXIT = 1,
     TERM_SIGNAL,
