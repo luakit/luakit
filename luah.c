@@ -623,15 +623,10 @@ luaH_luakit_spawn(lua_State *L)
     int CB_FUNC_IDX = 2;
 
     int cb_type = lua_type(L, CB_FUNC_IDX);
-    if (cb_type == LUA_TNONE) {
-        g_free(cb); // no callback, hence no callback data needed
-        return 0;
-    }
+    if (cb_type == LUA_TNONE) return 0;
 
-    if (cb_type != LUA_TFUNCTION) {
-        g_free(cb);
+    if (cb_type != LUA_TFUNCTION)
         luaL_typerror(L, CB_FUNC_IDX, lua_typename(L, LUA_TFUNCTION));
-    }
 
     lua_pushliteral(L, LUAKIT_CALLBACKS_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
