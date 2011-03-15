@@ -571,7 +571,9 @@ void async_callback_handler(GPid pid, gint status, gpointer data) {
     }
     lua_pushinteger(L, exit_type);
     lua_pushinteger(L, exit_num);
-    lua_call(L, 2, 0);
+    if (lua_pcall(L, 2, 0, 0)) {
+        g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+    }
 
     // free callbacks[pid]
     lua_pushlightuserdata(L, (void *)pid);
