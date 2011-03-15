@@ -93,6 +93,8 @@ new_mode("insert", {
         w:set_prompt("-- INSERT --")
         w:set_input()
     end,
+    -- Send key events to webview
+    passthrough = true,
 })
 
 new_mode("passthrough", {
@@ -100,6 +102,12 @@ new_mode("passthrough", {
         w:set_prompt("-- PASS THROUGH --")
         w:set_input()
     end,
+    -- Send key events to webview
+    passthrough = true,
+    -- Don't exit mode when clicking outside of form fields
+    reset_on_focus = false,
+    -- Don't exit mode on navigation
+    reset_on_navigation = false,
 })
 
 -- Setup command mode

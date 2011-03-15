@@ -109,22 +109,23 @@ webview.init_funcs = {
         end)
 
         view:add_signal("form-active", function ()
-            if w.mode.name ~= "passthrough" then
+            if not w.mode.passthrough then
                 w:set_mode("insert")
             end
         end)
         view:add_signal("root-active", function ()
-            if w.mode.name ~= "passthrough" then
+            if w.mode.reset_on_focus ~= false then
                 w:set_mode()
             end
         end)
     end,
 
-    -- Stop key events hitting the webview if the user isn't in insert mode
+    -- Catch keys in non-passthrough modes
     mode_key_filter = function (view, w)
         view:add_signal("key-press", function ()
-            local mode = w.mode.name
-            if mode ~= "insert" and mode ~= "passthrough" then return true end
+            if not w.mode.passthrough then
+                return true
+            end
         end)
     end,
 
@@ -142,8 +143,10 @@ webview.init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if w:is_current(v) and status == "provisional" then
-                if w:is_mode("insert") or w:is_mode("command") then w:set_mode() end
+            if status == "provisional" and w:is_current(v) then
+                if w.mode.reset_on_navigation ~= false then
+                    w:set_mode()
+                end
             end
         end)
     end,
