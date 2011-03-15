@@ -3,9 +3,13 @@ local key = lousy.bind.key
 add_binds("normal",
           {
            key({}, "a", function (w)
-                            luakit.spawn("ls /home",
-                            function(exit_type, exit_num, stdout, stderr)
-                                w:warning(stdout)
+                            luakit.spawn("touch /tmp/luakit_iat_test",
+                            function(exit_type, exit_num)
+                                if exit_num == 0 then
+                                    w:warning("OK")
+                                else
+                                    w:warning("Not OK")
+                                end
                             end)
                         end),
           })
