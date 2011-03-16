@@ -189,9 +189,10 @@ webview.init_funcs = {
             info("New window decision: %s (%s)", link, reason)
             if reason == "link-clicked" then
                 window.new({ link })
-                return true
+            else
+                w:new_tab(link)
             end
-            w:new_tab(link)
+            return true
         end)
     end,
 
