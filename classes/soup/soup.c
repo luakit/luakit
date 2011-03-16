@@ -97,7 +97,7 @@ static gint
 luaH_soup_emit_signal(lua_State *L)
 {
     return signal_object_emit(L, soupconf.signals, luaL_checkstring(L, 1),
-        lua_gettop(L) - 1, LUA_MULTRET);
+            lua_gettop(L) - 1, LUA_MULTRET);
 }
 
 static void
@@ -113,16 +113,134 @@ soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
     }
 }
 
+static gint
+luaH_soup_uri_tostring(lua_State *L)
+{
+    const gchar *p;
+    gint port;
+    /* check for uri table */
+    luaH_checktable(L, 1);
+    /* create empty soup uri object */
+    SoupURI *uri = soup_uri_new(NULL);
+
+#define GET_PROP(prop)                                          \
+    lua_pushliteral(L, #prop);                                  \
+    lua_rawget(L, 1);                                           \
+    if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) \
+        soup_uri_set_##prop(uri, p);                            \
+    lua_pop(L, 1);
+
+    GET_PROP(scheme)
+    GET_PROP(user)
+    GET_PROP(password)
+    GET_PROP(host)
+    GET_PROP(path)
+    GET_PROP(query)
+    GET_PROP(fragment)
+
+#undef GET_PROP
+
+    lua_pushliteral(L, "port");
+    lua_rawget(L, 1);
+    if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1)))
+        soup_uri_set_port(uri, port);
+    lua_pop(L, 1);
+
+    /* check for mandatory fields */
+    if (!uri->scheme || !uri->path) {
+        soup_uri_free(uri);
+        luaL_error(L, "missing uri.scheme or uri.path");
+    }
+
+    gchar *str = soup_uri_to_string(uri, FALSE);
+    lua_pushstring(L, str);
+    g_free(str);
+    soup_uri_free(uri);
+    return 1;
+}
+
+gint
+luaH_soup_push_uri(lua_State *L, SoupURI *uri)
+{
+    const gchar *p;
+    /* create table for uri properties */
+    lua_newtable(L);
+
+    /* set __tostring metatable */
+    lua_newtable(L);
+    lua_pushliteral(L, "__tostring");
+    lua_pushcfunction(L, luaH_soup_uri_tostring);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+
+    if (!uri)
+        return 1;
+
+#define PUSH_PROP(prop)            \
+    if ((p = uri->prop) && p[0]) { \
+        lua_pushliteral(L, #prop); \
+        lua_pushstring(L, p);      \
+        lua_rawset(L, -3);         \
+    }
+
+    PUSH_PROP(scheme)
+    PUSH_PROP(user)
+    PUSH_PROP(password)
+    PUSH_PROP(host)
+    PUSH_PROP(path)
+    PUSH_PROP(query)
+    PUSH_PROP(fragment)
+
+#undef PUSH_PROP
+
+    if (uri->port) {
+        lua_pushliteral(L, "port");
+        lua_pushnumber(L, uri->port);
+        lua_rawset(L, -3);
+    }
+
+    return 1;
+}
+
+static gint
+luaH_soup_parse_uri(lua_State *L)
+{
+    /* return empty uri table if called with no arguments */
+    if (!lua_gettop(L))
+        return luaH_soup_push_uri(L, NULL);
+
+    /* check for blank uris */
+    gchar *str = (gchar*)luaL_checkstring(L, 1);
+    if (!str || !str[0] || !g_strcmp0(str, "about:blank"))
+        return 0;
+
+    /* default to http:// scheme */
+    if (!g_strrstr(str, "://"))
+        str = g_strdup_printf("http://%s", str);
+    else
+        str = g_strdup(str);
+
+    /* parse & push uri */
+    SoupURI *uri = soup_uri_new(str);
+    g_free(str);
+    if (uri) {
+        luaH_soup_push_uri(L, uri);
+        soup_uri_free(uri);
+    }
+    return uri ? 1 : 0;
+}
+
 void
 soup_lib_setup(lua_State *L)
 {
     static const struct luaL_reg soup_lib[] = {
         { "add_signal", luaH_soup_add_signal },
         { "remove_signal", luaH_soup_remove_signal },
-        { "emit_signal",   luaH_soup_emit_signal },
-        { "set_property",  luaH_soup_set_property },
-        { "get_property",  luaH_soup_get_property },
-        { "add_cookies",   luaH_cookiejar_add_cookies },
+        { "emit_signal", luaH_soup_emit_signal },
+        { "set_property", luaH_soup_set_property },
+        { "get_property", luaH_soup_get_property },
+        { "parse_uri", luaH_soup_parse_uri },
+        { "add_cookies", luaH_cookiejar_add_cookies },
         { NULL, NULL },
     };
 
@@ -132,15 +250,19 @@ soup_lib_setup(lua_State *L)
     /* init soup struct */
     soupconf.cookiejar = luakit_cookie_jar_new();
     soupconf.session = webkit_get_default_session();
-    soup_session_add_feature(soupconf.session, (SoupSessionFeature*) soupconf.cookiejar);
+    soup_session_add_feature(soupconf.session,
+            (SoupSessionFeature*) soupconf.cookiejar);
     soupconf.signals = signal_new();
 
     /* watch for property changes */
-    g_signal_connect(G_OBJECT(soupconf.session), "notify", G_CALLBACK(soup_notify_cb), NULL);
+    g_signal_connect(G_OBJECT(soupconf.session), "notify",
+            G_CALLBACK(soup_notify_cb), NULL);
 
     /* remove old auth dialog and add luakit's auth feature instead */
-    soup_session_remove_feature_by_type(soupconf.session, WEBKIT_TYPE_SOUP_AUTH_DIALOG);
-    soup_session_add_feature(soupconf.session, (SoupSessionFeature*) luakit_auth_dialog_new());
+    soup_session_remove_feature_by_type(soupconf.session,
+            WEBKIT_TYPE_SOUP_AUTH_DIALOG);
+    soup_session_add_feature(soupconf.session,
+            (SoupSessionFeature*) luakit_auth_dialog_new());
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
