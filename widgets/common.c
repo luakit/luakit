@@ -62,8 +62,8 @@ button_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
         break;
     }
 
-    /* User responded with TRUE, so do not propagate event any further */
-    if (ret && luaH_checkboolean(L, -1)) {
+    /* catch button signal */
+    if (ret && lua_toboolean(L, -1)) {
         lua_pop(L, ret + 1);
         return TRUE;
     }
