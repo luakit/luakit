@@ -42,30 +42,21 @@ static gint
 luaH_cookie_push(lua_State *L, SoupCookie *c)
 {
     lua_createtable(L, 0, 7);
-    /* push name */
-    lua_pushliteral(L, "name");
-    lua_pushstring(L, c->name);
+
+#define PUSH_PROP(prop, type)   \
+    lua_pushliteral(L, #prop);  \
+    lua_push##type(L, c->prop); \
     lua_rawset(L, -3);
-    /* push value */
-    lua_pushliteral(L, "value");
-    lua_pushstring(L, c->value);
-    lua_rawset(L, -3);
-    /* push domain */
-    lua_pushliteral(L, "domain");
-    lua_pushstring(L, c->domain);
-    lua_rawset(L, -3);
-    /* push path */
-    lua_pushliteral(L, "path");
-    lua_pushstring(L, c->path);
-    lua_rawset(L, -3);
-    /* push secure */
-    lua_pushliteral(L, "secure");
-    lua_pushboolean(L, c->secure);
-    lua_rawset(L, -3);
-    /* push http_only */
-    lua_pushliteral(L, "http_only");
-    lua_pushboolean(L, c->http_only);
-    lua_rawset(L, -3);
+
+    PUSH_PROP(name,      string)
+    PUSH_PROP(value,     string)
+    PUSH_PROP(domain,    string)
+    PUSH_PROP(path,      string)
+    PUSH_PROP(secure,    boolean)
+    PUSH_PROP(http_only, boolean)
+
+#undef PUSH_PROP
+
     /* push expires */
     lua_pushliteral(L, "expires");
     if (c->expires)
