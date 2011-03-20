@@ -179,8 +179,8 @@ webview.init_funcs = {
     -- Action to take on mime type decision request.
     mime_decision = function (view, w)
         -- Return true to accept or false to reject from this signal.
-        view:add_signal("mime-type-decision", function (v, link, mime)
-            info("Requested link: %s (%s)", link, mime)
+        view:add_signal("mime-type-decision", function (v, uri, mime)
+            info("Requested link: %s (%s)", uri, mime)
             -- i.e. block binary files like *.exe
             --if mime == "application/octet-stream" then
             --    return false
@@ -194,12 +194,12 @@ webview.init_funcs = {
         -- 'reason' contains the reason of the request (i.e. "link-clicked")
         -- return TRUE to handle the request by yourself or FALSE to proceed
         -- with default behaviour
-        view:add_signal("new-window-decision", function (v, link, reason)
-            info("New window decision: %s (%s)", link, reason)
+        view:add_signal("new-window-decision", function (v, uri, reason)
+            info("New window decision: %s (%s)", uri, reason)
             if reason == "link-clicked" then
-                window.new({ link })
+                window.new({uri})
             else
-                w:new_tab(link)
+                w:new_tab(uri)
             end
             return true
         end)
