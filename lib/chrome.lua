@@ -9,6 +9,10 @@ local string = string
 local webview = webview
 local table = table
 local info = info
+local assert = assert
+local type = type
+local print = print
+local capi = { soup = soup }
 
 module("chrome")
 
@@ -16,7 +20,10 @@ module("chrome")
 local rules = {}
 
 function add(pat, func)
-    table.insert(rules, { pat = pat, func = func })
+    assert(type(pat) == "string", "invalid pattern")
+    assert(type(func) == "function", "invalid function")
+    if string.match(pat, '^^') then pat = string.sub(pat, 2) end
+    table.insert(rules, { pat = '^' .. pat, func = func })
 end
 
 function del(pat)
@@ -29,8 +36,18 @@ end
 
 webview.init_funcs.chrome = function (view, w)
     view:add_signal("navigation-request", function (v, uri)
+        uri = capi.soup.parse_uri(uri)
+        if not uri then
+            return
+        elseif uri.scheme == "chrome" then
+            uri.scheme = "luakit"
+        elseif uri.scheme ~= "luakit" then
+            return
+        end
+        -- Match chrome pattern against "host/path"
+        local path = uri.host .. (uri.path or "/")
         for _, r in ipairs(rules) do
-            if string.match(uri, r.pat) then
+            if string.match(path, r.pat) then
                 info("Matched chrome rule %q for uri %q", r.pat, uri)
                 -- Catch if function returns anything other than false
                 if r.func(v, uri) ~= false then return false end
