@@ -156,11 +156,20 @@ webview.init_funcs = {
     -- Domain properties
     domain_properties = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if status ~= "committed" then return end
-            local domain = (v.uri and string.match(v.uri, "^%a+://([^/]*)/?")) or "about:blank"
-            if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
-            local props = lousy.util.table.join(domain_props.all or {}, domain_props[domain] or {})
-            for k, v in pairs(props) do
+            if status ~= "committed" or v.uri == "about:blank" then return end
+            -- Get domain
+            local domain = soup.parse_uri(v.uri).host
+            -- Strip leading www.
+            domain = string.match(domain, "^www%.(.+)") or domain
+            -- Build list of domain props tables to join & load.
+            -- I.e. for luakit.org load .luakit.org, luakit.org, .org
+            local props = {domain_props.all or {}, domain_props[domain] or {}}
+            repeat
+                table.insert(props, 2, domain_props["."..domain] or {})
+                domain = string.match(domain, "%.(.+)")
+            until not domain
+            -- Join all property tables
+            for k, v in pairs(lousy.util.table.join(unpack(props))) do
                 info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
                 view:set_property(k, v)
             end
