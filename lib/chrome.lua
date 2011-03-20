@@ -22,7 +22,7 @@ end
 function del(pat)
     for i, r in ipairs(rules) do
         if r.pat == pat then
-            table.remove(rules, i)
+            return table.remove(rules, i)
         end
     end
 end
