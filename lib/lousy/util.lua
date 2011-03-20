@@ -8,6 +8,8 @@
 local assert = assert
 local debug = debug
 local error = error
+local setmetatable = setmetatable
+local getmetatable = getmetatable
 local io = io
 local ipairs = ipairs
 local loadstring = loadstring
@@ -163,6 +165,14 @@ function table.clone(t)
         c[k] = v
     end
     return c
+end
+
+--- Clone table and set metatable
+-- @param t the table to clone
+-- @return a clone of t with t's metatable
+function table.copy(t)
+    local c = table.clone(t)
+    return setmetatable(c, getmetatable(t))
 end
 
 --- Check if two tables are identical.
