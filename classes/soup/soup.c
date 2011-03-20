@@ -122,6 +122,7 @@ luaH_soup_uri_tostring(lua_State *L)
     luaH_checktable(L, 1);
     /* create empty soup uri object */
     SoupURI *uri = soup_uri_new(NULL);
+    soup_uri_set_scheme(uri, "http");
 
 #define GET_PROP(prop)                                          \
     lua_pushliteral(L, #prop);                                  \
@@ -145,12 +146,6 @@ luaH_soup_uri_tostring(lua_State *L)
     if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1)))
         soup_uri_set_port(uri, port);
     lua_pop(L, 1);
-
-    /* check for mandatory fields */
-    if (!uri->scheme || !uri->path) {
-        soup_uri_free(uri);
-        luaL_error(L, "missing uri.scheme or uri.path");
-    }
 
     gchar *str = soup_uri_to_string(uri, FALSE);
     lua_pushstring(L, str);
