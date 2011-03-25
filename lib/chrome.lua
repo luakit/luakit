@@ -1,17 +1,21 @@
----------------------------------------------------------
--- Render chrome pages for luakit                      --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
----------------------------------------------------------
+----------------------------------------------------------
+-- Serve custom luakit:// pages according to user rules --
+-- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>   --
+-- (C) 2010 Mason Larobina  <mason.larobina@gmail.com>  --
+----------------------------------------------------------
 
+-- Get lua environment
 local ipairs = ipairs
 local string = string
-local webview = webview
 local table = table
 local info = info
 local assert = assert
 local type = type
 local print = print
+
+-- Get luakit environment
+local lousy = require "lousy"
+local webview = webview
 local capi = { soup = soup }
 
 module("chrome")
@@ -36,7 +40,7 @@ end
 
 webview.init_funcs.chrome = function (view, w)
     view:add_signal("navigation-request", function (v, uri)
-        uri = capi.soup.parse_uri(uri)
+        uri = lousy.uri.parse(uri)
         if not uri then
             return
         elseif uri.scheme == "chrome" then

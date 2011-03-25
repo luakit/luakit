@@ -161,16 +161,6 @@ luaH_soup_push_uri(lua_State *L, SoupURI *uri)
     /* create table for uri properties */
     lua_newtable(L);
 
-    /* set __tostring metatable */
-    lua_newtable(L);
-    lua_pushliteral(L, "__tostring");
-    lua_pushcfunction(L, luaH_soup_uri_tostring);
-    lua_rawset(L, -3);
-    lua_setmetatable(L, -2);
-
-    if (!uri)
-        return 1;
-
 #define PUSH_PROP(prop)            \
     if ((p = uri->prop) && p[0]) { \
         lua_pushliteral(L, #prop); \
@@ -200,13 +190,10 @@ luaH_soup_push_uri(lua_State *L, SoupURI *uri)
 static gint
 luaH_soup_parse_uri(lua_State *L)
 {
-    /* return empty uri table if called with no arguments */
-    if (!lua_gettop(L))
-        return luaH_soup_push_uri(L, NULL);
+    gchar *str = (gchar*)luaL_checkstring(L, 1);
 
     /* check for blank uris */
-    gchar *str = (gchar*)luaL_checkstring(L, 1);
-    if (!str || !str[0] || !g_strcmp0(str, "about:blank"))
+    if (!str[0] || !g_strcmp0(str, "about:blank"))
         return 0;
 
     /* default to http:// scheme */
@@ -229,14 +216,15 @@ void
 soup_lib_setup(lua_State *L)
 {
     static const struct luaL_reg soup_lib[] = {
-        { "add_signal", luaH_soup_add_signal },
+        { "add_signal",    luaH_soup_add_signal },
         { "remove_signal", luaH_soup_remove_signal },
-        { "emit_signal", luaH_soup_emit_signal },
-        { "set_property", luaH_soup_set_property },
-        { "get_property", luaH_soup_get_property },
-        { "parse_uri", luaH_soup_parse_uri },
-        { "add_cookies", luaH_cookiejar_add_cookies },
-        { NULL, NULL },
+        { "emit_signal",   luaH_soup_emit_signal },
+        { "set_property",  luaH_soup_set_property },
+        { "get_property",  luaH_soup_get_property },
+        { "parse_uri",     luaH_soup_parse_uri },
+        { "uri_tostring",  luaH_soup_uri_tostring },
+        { "add_cookies",   luaH_cookiejar_add_cookies },
+        { NULL,            NULL },
     };
 
     /* hash soup properties table */
