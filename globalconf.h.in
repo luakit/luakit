@@ -23,7 +23,6 @@
 
 #define LUAKIT_INSTALL_PATH         "/usr/local/share/luakit"
 #define LUAKIT_OBJECT_REGISTRY_KEY  "luakit.object.registry"
-#define LUAKIT_CALLBACKS_REGISTRY_KEY  "luakit.callbacks.registry"
 
 #include <glib/gtypes.h>
 #include <lua.h>
