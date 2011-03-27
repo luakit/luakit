@@ -39,8 +39,8 @@ function del(pat)
 end
 
 webview.init_funcs.chrome = function (view, w)
-    view:add_signal("navigation-request", function (v, uri)
-        uri = lousy.uri.parse(uri)
+    view:add_signal("navigation-request", function (v, ustr)
+        uri = lousy.uri.parse(ustr)
         if not uri then
             return
         elseif uri.scheme == "chrome" then
@@ -52,7 +52,7 @@ webview.init_funcs.chrome = function (view, w)
         local path = uri.host .. (uri.path or "/")
         for _, r in ipairs(rules) do
             if string.match(path, r.pat) then
-                info("Matched chrome rule %q for uri %q", r.pat, uri)
+                info("Matched chrome rule %q for uri %q", r.pat, ustr)
                 -- Catch if function returns anything other than false
                 if r.func(v, uri) ~= false then return false end
             end
