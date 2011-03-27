@@ -15,6 +15,7 @@ data_dir
 DESKTOP
 destination
 destroy
+dev_paths
 DOCUMENTS
 domain
 DOWNLOAD
