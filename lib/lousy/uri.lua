@@ -109,3 +109,11 @@ function parse(uri)
     uri.query = nil
     return setmetatable(uri, uri_metatable)
 end
+
+-- Duplicate uri object
+function copy(uri)
+    assert(type(uri) == "table", "not a table")
+    return parse(tostring(uri))
+end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
