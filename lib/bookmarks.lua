@@ -19,6 +19,7 @@ local lousy = require("lousy")
 local util = lousy.util
 local add_binds, add_cmds = add_binds, add_cmds
 local tonumber = tonumber
+local tostring = tostring
 local window = window
 
 -- Bookmark functions that operate on a flatfile and output to html
@@ -29,10 +30,6 @@ local data = {}
 
 -- Some default settings
 bookmarks_file = capi.luakit.data_dir .. '/bookmarks'
-
--- URI of the chrome page
-chrome_page    = "chrome://bookmarks/"
-chrome_pattern = "chrome://bookmarks/?"
 
 -- Templates
 block_template = [==[<div class="tag"><h1>{tag}</h1><ul>{links}</ul></div>]==]
@@ -164,11 +161,10 @@ function del(index, save_bookmarks)
     -- Save by default
     if save_bookmarks ~= false then save() end
 
-
     -- Refresh open bookmarks views
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs:get_children()) do
-            if string.match(v.uri, chrome_pattern) then
+            if string.match(v.uri, "^luakit://bookmarks/?") then
                 v:reload()
             end
         end
@@ -192,7 +188,8 @@ function load(file, clear_first)
     end
 end
 
-function html(file)
+--- Shows the chrome page in the given view.
+chrome.add("bookmarks/", function (view, uri)
     -- Get a list of all the unique tags in all the bookmarks and build a
     -- relation between a given tag and a list of bookmarks with that tag.
     local tags = {}
@@ -234,17 +231,13 @@ function html(file)
         title = html_page_title,
         style = html_style
     }
-    return string.gsub(html_template, "{(%w+)}", html_subs)
-end
 
---- Shows the chrome page in the given view.
--- @param view The view to show the page in.
-function show(view)
-    view:load_string(html(), chrome_page)
-end
+    local html = string.gsub(html_template, "{(%w+)}", html_subs)
+    view:load_string(html, tostring(uri))
+end)
 
--- Add chrome interceptor.
-chrome.add(chrome_pattern, show)
+-- URI of the chrome page
+chrome_page    = "luakit://bookmarks/"
 
 -- Add normal binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
