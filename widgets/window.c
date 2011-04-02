@@ -22,7 +22,7 @@
 #include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
-#include "classes/soup/auth.h"
+#include "clib/soup/auth.h"
 
 static void
 destroy_cb(GtkObject *win, widget_t *w)

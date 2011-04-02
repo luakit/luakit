@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/timer.h"
+#include "clib/timer.h"
 #include "common/luaobject.h"
 #include "globalconf.h"
 #include "luah.h"

@@ -1,5 +1,5 @@
 /*
- * classes/soup/auth.c - authentication management
+ * clib/soup/auth.c - authentication management
  *
  * Copyright (C) 2009 Igalia S.L.
  * Copyright (C) 2010 Fabian Streitel <karottenreibe@gmail.com>
@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 #include "luah.h"
 
 #include <gtk/gtk.h>

@@ -1,5 +1,5 @@
 /*
- * classes/soup/soup.c - soup library
+ * clib/soup/soup.c - soup library
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,7 +18,7 @@
  *
  */
 
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 #include "common/property.h"
 
 #include <libsoup/soup.h>

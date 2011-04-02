@@ -1,5 +1,5 @@
 /*
- * classes/download.h - WebKitDownload wrapper header
+ * clib/download.h - WebKitDownload wrapper header
  *
  * Copyright (C) 2011 Fabian Streitel <karottenreibe@gmail.com>
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
@@ -20,8 +20,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_DOWNLOAD_H
-#define LUAKIT_CLASSES_DOWNLOAD_H
+#ifndef LUAKIT_CLIB_DOWNLOAD_H
+#define LUAKIT_CLIB_DOWNLOAD_H
 
 #include <lua.h>
 #include <webkit/webkitdownload.h>

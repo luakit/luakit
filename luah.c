@@ -21,11 +21,11 @@
 
 #include "common/util.h"
 #include "common/lualib.h"
-#include "classes/download.h"
-#include "classes/soup/soup.h"
-#include "classes/sqlite3.h"
-#include "classes/timer.h"
-#include "classes/widget.h"
+#include "clib/download.h"
+#include "clib/soup/soup.h"
+#include "clib/sqlite3.h"
+#include "clib/timer.h"
+#include "clib/widget.h"
 #include "luakit.h"
 #include "luah.h"
 

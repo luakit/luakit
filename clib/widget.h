@@ -1,5 +1,5 @@
 /*
- * widget.h - widget managing header
+ * clib/widget.h - widget managing header
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_WIDGET_H
-#define LUAKIT_CLASSES_WIDGET_H
+#ifndef LUAKIT_CLIB_WIDGET_H
+#define LUAKIT_CLIB_WIDGET_H
 
 typedef struct widget_t widget_t;
 

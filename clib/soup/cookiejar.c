@@ -1,5 +1,5 @@
 /*
- * classes/soup/cookiejar.c - LuakitCookieJar
+ * clib/soup/cookiejar.c - LuakitCookieJar
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 #include "luah.h"
 
 #include <libsoup/soup-cookie.h>

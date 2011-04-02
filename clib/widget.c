@@ -1,5 +1,5 @@
 /*
- * widget.c - widget managing
+ * clib/widget.c - widget managing
  *
  * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/widget.h"
+#include "clib/widget.h"
 
 widget_info_t widgets_list[] = {
   { L_TK_ENTRY,      "entry",      widget_entry      },

@@ -21,7 +21,7 @@
  */
 
 #include "common/luaobject.h"
-#include "classes/download.h"
+#include "clib/download.h"
 #include "luah.h"
 #include "globalconf.h"
 

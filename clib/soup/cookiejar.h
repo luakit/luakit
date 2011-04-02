@@ -1,5 +1,5 @@
 /*
- * classes/soup/cookiejar.h - LuakitCookieJar header
+ * clib/soup/cookiejar.h - LuakitCookieJar header
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_SOUP_COOKIEJAR_H
-#define LUAKIT_CLASSES_SOUP_COOKIEJAR_H
+#ifndef LUAKIT_CLIB_SOUP_COOKIEJAR_H
+#define LUAKIT_CLIB_SOUP_COOKIEJAR_H
 
 #include "luah.h"
 

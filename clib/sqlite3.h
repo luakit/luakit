@@ -1,5 +1,5 @@
 /*
- * classes/sqlite3.h - luakit sqlite3 wrapper
+ * clib/sqlite3.h - luakit sqlite3 wrapper
  *
  * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_SQLITE3_H
-#define LUAKIT_CLASSES_SQLITE3_H
+#ifndef LUAKIT_CLIB_SQLITE3_H
+#define LUAKIT_CLIB_SQLITE3_H
 
 #include <lua.h>
 

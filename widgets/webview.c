@@ -27,8 +27,8 @@
 #include "globalconf.h"
 #include "luah.h"
 #include "widgets/common.h"
-#include "classes/download.h"
-#include "classes/soup/soup.h"
+#include "clib/download.h"
+#include "clib/soup/soup.h"
 #include "common/property.h"
 
 GHashTable *frames_by_view = NULL;
