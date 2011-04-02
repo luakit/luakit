@@ -232,19 +232,19 @@ sqlite3_class_setup(lua_State *L)
     };
 
     luaH_class_setup(L, &sqlite3_class, "sqlite3",
-        (lua_class_allocator_t) sqlite3_new,
-        NULL, NULL,
-        sqlite3_methods, sqlite3_meta);
+            (lua_class_allocator_t) sqlite3_new,
+            NULL, NULL,
+            sqlite3_methods, sqlite3_meta);
 
     luaH_class_add_property(&sqlite3_class, L_TK_FILENAME,
-        (lua_class_propfunc_t) luaH_sqlite3_set_filename,
-        (lua_class_propfunc_t) luaH_sqlite3_get_filename,
-        NULL);
+            (lua_class_propfunc_t) luaH_sqlite3_set_filename,
+            (lua_class_propfunc_t) luaH_sqlite3_get_filename,
+            NULL);
 
     luaH_class_add_property(&sqlite3_class, L_TK_OPEN,
-        NULL,
-        (lua_class_propfunc_t) luaH_sqlite3_get_open,
-        NULL);
+            NULL,
+            (lua_class_propfunc_t) luaH_sqlite3_get_open,
+            NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

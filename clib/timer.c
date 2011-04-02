@@ -140,19 +140,19 @@ timer_class_setup(lua_State *L)
     };
 
     luaH_class_setup(L, &timer_class, "timer",
-         (lua_class_allocator_t) timer_new,
-         luaH_class_index_miss_property, luaH_class_newindex_miss_property,
-         timer_methods, timer_meta);
+            (lua_class_allocator_t) timer_new,
+            luaH_class_index_miss_property, luaH_class_newindex_miss_property,
+            timer_methods, timer_meta);
 
     luaH_class_add_property(&timer_class, L_TK_INTERVAL,
-        (lua_class_propfunc_t) luaH_timer_set_interval,
-        (lua_class_propfunc_t) luaH_timer_get_interval,
-        (lua_class_propfunc_t) luaH_timer_set_interval);
+            (lua_class_propfunc_t) luaH_timer_set_interval,
+            (lua_class_propfunc_t) luaH_timer_get_interval,
+            (lua_class_propfunc_t) luaH_timer_set_interval);
 
     luaH_class_add_property(&timer_class, L_TK_STARTED,
-        NULL,
-        (lua_class_propfunc_t) luaH_timer_get_started,
-        NULL);
+            NULL,
+            (lua_class_propfunc_t) luaH_timer_get_started,
+            NULL);
 }
 
 #undef luaH_checktimer
