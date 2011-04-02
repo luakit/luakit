@@ -30,7 +30,6 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
-#include <locale.h>
 
 static void sigchld(int sigint);
 
@@ -49,9 +48,6 @@ init_lua(gchar **uris)
     /* init globalconf structs */
     globalconf.signals = signal_new();
     globalconf.windows = g_ptr_array_new();
-
-    /* set numeric locale to C */
-    setlocale(LC_NUMERIC, "C");
 
     /* init lua */
     luaH_init();

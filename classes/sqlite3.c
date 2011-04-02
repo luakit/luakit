@@ -144,6 +144,7 @@ luaH_sqlite3_exec(lua_State *L)
     struct callback_data d = { L, 0 };
     gchar *error;
     const gchar *sql;
+    gint timeout = 1000;
     gdouble td;
     struct timespec ts1, ts2;
     sqlite3_t *sqlite = luaH_checkudata(L, 1, &sqlite3_class);
@@ -154,14 +155,16 @@ luaH_sqlite3_exec(lua_State *L)
         lua_error(L);
     }
 
+    /* get sql query */
     sql = luaL_checkstring(L, 2);
     debug("%s", sql);
 
-    /* check sql query */
-    if (sqlite3_complete(sql) != 1) {
-        lua_pushfstring(L, "sqlite3: incomplete query: %s", sql);
-        lua_error(L);
-    }
+    /* get database busy timeout */
+    if (lua_gettop(L) > 2)
+        timeout = luaL_checknumber(L, 3);
+
+    /* set query timeout */
+    sqlite3_busy_timeout(sqlite->db, timeout);
 
     /* create table to insert result rows into */
     lua_newtable(L);

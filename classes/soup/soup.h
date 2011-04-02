@@ -26,6 +26,7 @@
 #include "luah.h"
 
 #include <libsoup/soup-session.h>
+#include <libsoup/soup-uri.h>
 
 typedef struct {
     /* shared libsoup session */
@@ -39,6 +40,7 @@ typedef struct {
 soup_t soupconf;
 
 void soup_lib_setup(lua_State *L);
+gint luaH_soup_push_uri(lua_State *L, SoupURI *uri);
 
 #endif
 

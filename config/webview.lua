@@ -99,32 +99,35 @@ webview.init_funcs = {
             -- Clear start search marker
             (w.search_state or {}).marker = nil
 
-            if button == 1 then
-                if context.editable then
-                    view:emit_signal("form-active")
-                else
-                    view:emit_signal("root-active")
-                end
+            if button == 1 and context.editable then
+                view:emit_signal("form-active")
             end
         end)
-
+        -- Emit root-active event in button release to prevent "missing"
+        -- buttons or links when the input bar hides.
+        view:add_signal("button-release", function (v, mods, button, context)
+            if button == 1 and not context.editable then
+                view:emit_signal("root-active")
+            end
+        end)
         view:add_signal("form-active", function ()
-            if w:get_mode() ~= "passthrough" then
+            if not w.mode.passthrough then
                 w:set_mode("insert")
             end
         end)
         view:add_signal("root-active", function ()
-            if w:get_mode() ~= "passthrough" then
+            if w.mode.reset_on_focus ~= false then
                 w:set_mode()
             end
         end)
     end,
 
-    -- Stop key events hitting the webview if the user isn't in insert mode
+    -- Catch keys in non-passthrough modes
     mode_key_filter = function (view, w)
         view:add_signal("key-press", function ()
-            local mode = w:get_mode()
-            if mode ~= "insert" and mode ~= "passthrough" then return true end
+            if not w.mode.passthrough then
+                return true
+            end
         end)
     end,
 
@@ -142,8 +145,10 @@ webview.init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if w:is_current(v) and status == "provisional" then
-                if w:is_mode("insert") or w:is_mode("command") then w:set_mode() end
+            if status == "provisional" and w:is_current(v) then
+                if w.mode.reset_on_navigation ~= false then
+                    w:set_mode()
+                end
             end
         end)
     end,
@@ -151,11 +156,20 @@ webview.init_funcs = {
     -- Domain properties
     domain_properties = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if status ~= "committed" then return end
-            local domain = (v.uri and string.match(v.uri, "^%a+://([^/]*)/?")) or "about:blank"
-            if string.match(domain, "^www.") then domain = string.sub(domain, 5) end
-            local props = lousy.util.table.join(domain_props.all or {}, domain_props[domain] or {})
-            for k, v in pairs(props) do
+            if status ~= "committed" or v.uri == "about:blank" then return end
+            -- Get domain
+            local domain = lousy.uri.parse(v.uri).host
+            -- Strip leading www.
+            domain = string.match(domain, "^www%.(.+)") or domain
+            -- Build list of domain props tables to join & load.
+            -- I.e. for luakit.org load .luakit.org, luakit.org, .org
+            local props = {domain_props.all or {}, domain_props[domain] or {}}
+            repeat
+                table.insert(props, 2, domain_props["."..domain] or {})
+                domain = string.match(domain, "%.(.+)")
+            until not domain
+            -- Join all property tables
+            for k, v in pairs(lousy.util.table.join(unpack(props))) do
                 info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
                 view:set_property(k, v)
             end
@@ -165,8 +179,8 @@ webview.init_funcs = {
     -- Action to take on mime type decision request.
     mime_decision = function (view, w)
         -- Return true to accept or false to reject from this signal.
-        view:add_signal("mime-type-decision", function (v, link, mime)
-            info("Requested link: %s (%s)", link, mime)
+        view:add_signal("mime-type-decision", function (v, uri, mime)
+            info("Requested link: %s (%s)", uri, mime)
             -- i.e. block binary files like *.exe
             --if mime == "application/octet-stream" then
             --    return false
@@ -180,13 +194,14 @@ webview.init_funcs = {
         -- 'reason' contains the reason of the request (i.e. "link-clicked")
         -- return TRUE to handle the request by yourself or FALSE to proceed
         -- with default behaviour
-        view:add_signal("new-window-decision", function (v, link, reason)
-            info("New window decision: %s (%s)", link, reason)
+        view:add_signal("new-window-decision", function (v, uri, reason)
+            info("New window decision: %s (%s)", uri, reason)
             if reason == "link-clicked" then
-                window.new({ link })
-                return true
+                window.new({uri})
+            else
+                w:new_tab(uri)
             end
-            w:new_tab(link)
+            return true
         end)
     end,
 

@@ -8,6 +8,8 @@
 local assert = assert
 local debug = debug
 local error = error
+local setmetatable = setmetatable
+local getmetatable = getmetatable
 local io = io
 local ipairs = ipairs
 local loadstring = loadstring
@@ -165,6 +167,14 @@ function table.clone(t)
     return c
 end
 
+--- Clone table and set metatable
+-- @param t the table to clone
+-- @return a clone of t with t's metatable
+function table.copy(t)
+    local c = table.clone(t)
+    return setmetatable(c, getmetatable(t))
+end
+
 --- Check if two tables are identical.
 -- @param a The first table.
 -- @param b The second table.
@@ -192,10 +202,11 @@ end
 -- @param f The file path.
 -- @return True if the file exists and is readable.
 function os.exists(f)
+    assert(type(f) == "string", "invalid path")
     fh, err = io.open(f)
     if fh then
         fh:close()
-        return true
+        return f
     end
 end
 
@@ -333,6 +344,16 @@ function recursive_remove(wi)
         children = table.join(recursive_remove(child), children)
     end
     return children
+end
+
+--- Convert a number to string independent from locale.
+-- @param num A number.
+-- @param sigs Signifigant figures (if float).
+-- @return The string representation of the number.
+function ntos(num, sigs)
+    local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
+    num = tostring(math.floor(num))
+    return (#dec == 0 and num) or (num .. "." .. dec)
 end
 
 --- Escape values for SQL queries.

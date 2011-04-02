@@ -21,19 +21,20 @@
 
 #include "common/util.h"
 #include "common/lualib.h"
-#include "luakit.h"
 #include "classes/download.h"
 #include "classes/soup/soup.h"
 #include "classes/sqlite3.h"
 #include "classes/timer.h"
 #include "classes/widget.h"
+#include "luakit.h"
 #include "luah.h"
 
+#include <glib.h>
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <sys/wait.h>
-#include <webkit/webkit.h>
 #include <time.h>
+#include <webkit/webkit.h>
 
 void
 luaH_modifier_table_push(lua_State *L, guint state) {
@@ -517,8 +518,7 @@ luaH_luakit_spawn_sync(lua_State *L)
     if (sigaction(SIGCHLD, &oldact, NULL))
         fatal("Can't restore SIGCHLD handler");
 
-    if(e)
-    {
+    if(e) {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
@@ -531,22 +531,86 @@ luaH_luakit_spawn_sync(lua_State *L)
     return 3;
 }
 
+/* Calls the Lua function defined as callback for a (async) spawned process
+ * The called Lua function receives 2 arguments:
+ * Exit type: one of: "exit" (normal exit), "signal" (terminated by
+ *            signal), "unknown" (another reason)
+ * Exit number: When normal exit happened, the exit code of the process. When
+ *              finished by a signal, the signal number. -1 otherwise.
+ */
+void async_callback_handler(GPid pid, gint status, gpointer cb_ref) {
+    lua_State *L = globalconf.L;
+    /* push callback function onto stack */
+    luaH_object_push(L, cb_ref);
+
+    /* push exit reason & exit status onto lua stack */
+    if (WIFEXITED(status)) {
+        lua_pushliteral(L, "exit");
+        lua_pushinteger(L, WEXITSTATUS(status));
+    } else if (WIFSIGNALED(status)) {
+        lua_pushliteral(L, "signal");
+        lua_pushinteger(L, WTERMSIG(status));
+    } else {
+        lua_pushliteral(L, "unknown");
+        lua_pushinteger(L, -1);
+    }
+
+    if (lua_pcall(L, 2, 0, 0)) {
+        warn("error in callback function: %s", lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+
+    luaH_object_unref(L, cb_ref);
+    g_spawn_close_pid(pid);
+}
+
 /* Spawns a command.
- * \param L The Lua VM state.
+ * \param L The Lua VM state. Contains a Lua function, the callback handler to use
+ * when the command finishes.
  * \return The number of elements pushed on stack (0).
  */
 static gint
 luaH_luakit_spawn(lua_State *L)
 {
     GError *e = NULL;
+    GPid pid = 0;
     const gchar *command = luaL_checkstring(L, 1);
-    g_spawn_command_line_async(command, &e);
-    if(e)
-    {
+    gint argc = 0;
+    gchar **argv = NULL;
+    gpointer cb_ref = NULL;
+
+    /* parse arguments */
+    g_shell_parse_argv(command, &argc, &argv, &e);
+    if (e) {
+        lua_pushstring(L, e->message);
+        g_clear_error(&e);
+        g_strfreev(argv);
+        lua_error(L);
+    }
+
+    /* check callback function type */
+    if (lua_gettop(L) > 1 && !lua_isnil(L, 2)) {
+        if (lua_type(L, 2) == LUA_TFUNCTION)
+            cb_ref = luaH_object_ref(L, 2);
+        else
+            luaL_typerror(L, 2, lua_typename(L, LUA_TFUNCTION));
+    }
+
+    /* spawn command */
+    g_spawn_async(NULL, argv, NULL,
+            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
+            &e);
+    g_strfreev(argv);
+    if(e) {
+        luaH_object_unref(L, cb_ref);
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
     }
+
+    if (cb_ref)
+        g_child_watch_add(pid, async_callback_handler, cb_ref);
+
     return 0;
 }
 
@@ -628,6 +692,14 @@ luaH_luakit_index(lua_State *L)
 
       case L_TK_VERSION:
         lua_pushliteral(L, VERSION);
+        return 1;
+
+      case L_TK_DEV_PATHS:
+#ifdef DEVELOPMENT_PATHS
+        lua_pushboolean(L, TRUE);
+#else
+        lua_pushboolean(L, FALSE);
+#endif
         return 1;
 
       default:

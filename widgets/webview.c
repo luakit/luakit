@@ -423,14 +423,13 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     (void) f;
     lua_State *L = globalconf.L;
     const gchar *uri = webkit_network_request_get_uri(r);
-    gint ret;
 
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     lua_pushstring(L, mime);
-    ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
+    gint ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
 
-    if (ret && !luaH_checkboolean(L, -1))
+    if (ret && !lua_toboolean(L, -1))
         /* User responded with false, ignore request */
         webkit_web_policy_decision_ignore(pd);
     else if (!webkit_web_view_can_show_mime_type(v, mime))
@@ -451,7 +450,8 @@ document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
     frame_destroy_callback_t *d = g_new(frame_destroy_callback_t, 1);
     d->v = v;
     d->f = f;
-    g_object_set_data_full(G_OBJECT(f), "dummy-destroy-notify", d, (GDestroyNotify)frame_destroyed_cb);
+    g_object_set_data_full(G_OBJECT(f), "dummy-destroy-notify", d,
+            (GDestroyNotify)frame_destroyed_cb);
 
     gpointer hash = g_hash_table_lookup(frames_by_view, v);
     g_hash_table_insert(hash, f, NULL);
@@ -459,8 +459,8 @@ document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 
 static gboolean
 resource_request_starting_cb(WebKitWebView *v, WebKitWebFrame *f,
-        WebKitWebResource *we, WebKitNetworkRequest *r, WebKitNetworkResponse *response,
-        widget_t *w)
+        WebKitWebResource *we, WebKitNetworkRequest *r,
+        WebKitNetworkResponse *response, widget_t *w)
 {
     (void) v;
     (void) f;
@@ -469,13 +469,12 @@ resource_request_starting_cb(WebKitWebView *v, WebKitWebFrame *f,
     (void) response;
     const gchar *uri = webkit_network_request_get_uri(r);
     lua_State *L = globalconf.L;
-    gint ret;
 
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
-    ret = luaH_object_emit_signal(L, -2, "resource-request-starting", 1, 1);
+    gint ret = luaH_object_emit_signal(L, -2, "resource-request-starting", 1, 1);
 
-    if (ret && !luaH_checkboolean(L, -1))
+    if (ret && !lua_toboolean(L, -1))
         /* User responded with false, ignore request */
         webkit_network_request_set_uri(r, "about:blank");
 
@@ -519,11 +518,9 @@ new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 
     /* User responded with true, meaning a decision was made
      * and the signal was handled */
-    if (ret && luaH_checkboolean(L, -1))
-    {
+    if (ret && lua_toboolean(L, -1)) {
         webkit_web_policy_decision_ignore(pd);
         lua_pop(L, ret + 1);
-
         return TRUE;
     }
 
@@ -622,7 +619,7 @@ navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
     lua_pushstring(L, uri);
     ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
 
-    if (ret && !luaH_checkboolean(L, -1))
+    if (ret && !lua_toboolean(L, -1))
         /* User responded with false, do not continue navigation request */
         webkit_web_policy_decision_ignore(p);
     else
@@ -1150,7 +1147,7 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
     }
 
     /* User responded with TRUE, so do not propagate event any further */
-    if (ret && luaH_checkboolean(L, -1)) {
+    if (ret && lua_toboolean(L, -1)) {
         lua_pop(L, ret + 1);
         return TRUE;
     }
@@ -1211,7 +1208,7 @@ populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
             }
 
         /* add separator if encounters `true` */
-        } else if(lua_type(L, -1) == LUA_TBOOLEAN && luaH_checkboolean(L, -1)) {
+        } else if(lua_type(L, -1) == LUA_TBOOLEAN && lua_toboolean(L, -1)) {
             item = gtk_separator_menu_item_new();
             last_popup.items = g_slist_prepend(last_popup.items, item);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);

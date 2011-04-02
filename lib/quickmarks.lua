@@ -4,7 +4,7 @@
 -- @author Mason Larobina    &lt;mason.larobina@gmail.com&gt; --
 ----------------------------------------------------------------
 
--- Prepare local environment
+-- Get lua environment
 local os = os
 local io = io
 local assert = assert
@@ -14,10 +14,13 @@ local pairs = pairs
 local tostring = tostring
 local type = type
 local table = table
-local lousy = require "lousy"
-local capi = { luakit = luakit }
 
-local new_mode, add_binds, add_cmds, menu_binds = new_mode, add_binds, add_cmds, menu_binds
+-- Get luakit environment
+local lousy = require "lousy"
+local window = window
+local add_binds, add_cmds = add_binds, add_cmds
+local new_mode, menu_binds = new_mode, menu_binds
+local capi = { luakit = luakit }
 
 module("quickmarks")
 

@@ -7,14 +7,12 @@ local pairs = pairs
 local string = string
 local window = window
 local chrome = require("chrome")
+local tostring = tostring
 local capi = { timer = timer }
 
 module("downloads.chrome")
 
---- The URI of the chrome page
-page    = "chrome://downloads/"
--- The pattern which identifies the chrome page
-pattern = "chrome://downloads/?"
+local pattern = "^luakit://downloads/?"
 
 --- Template for a download.
 download_template = [==[
@@ -161,8 +159,8 @@ end)
 
 --- Shows the chrome page in the given view.
 -- @param view The view to show the page in.
-function show(view)
-    view:load_string(html(), page)
+chrome.add("downloads/", function (view, uri)
+    view:load_string(html(), tostring(uri))
     -- small hack to achieve a one time signal
     local sig = {}
     sig.fun = function (v, status)
@@ -182,9 +180,10 @@ function show(view)
     end
     view:add_signal("load-status", sig.fun)
     if not refresh_timer.started then refresh_timer:start() end
-end
+end)
 
 -- Chrome buffer binds.
+local page = "luakit://downloads"
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^gd$", function (w)
@@ -195,8 +194,5 @@ add_binds("normal", {
         for i=1,m.count do w:new_tab(page) end
     end, {count=1}),
 })
-
--- Add the chrome page interceptor
-chrome.add(pattern, show)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

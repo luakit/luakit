@@ -9,12 +9,13 @@ local table = table
 local ipairs = ipairs
 local os = require "os"
 local tonumber = tonumber
+local tostring = tostring
 
 local lousy = require "lousy"
 local chrome = require "chrome"
 local history = require "history"
 local add_cmds = add_cmds
-local capi = { luakit = luakit }
+local capi = { luakit = luakit, soup = soup }
 
 module "history.chrome"
 
@@ -102,7 +103,10 @@ html_template = [==[
     </style>
     <script>
     function search(term) {
-        location = "chrome://history/?q=" + encodeURIComponent(term);
+        if ("{opts}")
+            location = "chrome://history/?{opts}&q=" + encodeURIComponent(term);
+        else
+            location = "chrome://history/?q=" + encodeURIComponent(term);
     }
     </script>
 </head>
@@ -139,35 +143,38 @@ item_template = [==[
 ]==]
 
 button_template = [==[
-<a href="chrome://history/?q={terms}{limit}&p={page}">{name}</a>
+<a href="{uri}">{name}</a>
 ]==]
 
 gap_html = [==[
 <div class="gap"></div>
 ]==]
 
-function html(opts)
+
+chrome.add("history/", function (view, uri)
     local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
+    local opts = uri.opts
+
     local items = {}
     local ihtml, dhtml, time, ltime, day, lday, title
     local today = os.date("%A, %B %d, %Y")
 
-    local sql = [[SELECT id, uri, title, last_visit FROM history]]
+    local sql = "SELECT id, uri, title, last_visit FROM history"
 
     -- Filter results with search terms
     local globs = {}
     if opts.q then
-        string.gsub(opts.q, "[^%s]+", function (term)
+        string.gsub(opts.q, "(%S+)", function (term)
             local glob = sql_escape("*" .. string.lower(term) .. "*")
-            table.insert(globs, string.format([[(lower(uri) GLOB %s
-                OR lower(title) GLOB %s)]], glob, glob))
+            table.insert(globs, string.format("(lower(uri) GLOB %s "
+                .. "OR lower(title) GLOB %s)", glob, glob))
         end)
     end
     if #globs > 0 then
         sql = string.format("%s WHERE %s", sql, table.concat(globs, " AND "))
     end
 
-    local limit = tonumber(opts.limit) or 1000
+    local limit = tonumber(opts.limit) or 250
     local page = math.max(tonumber(opts.p) or 1, 1)
     sql = string.format("%s ORDER BY last_visit DESC LIMIT %d OFFSET %d;",
         sql, limit + 1, (page - 1) * limit)
@@ -207,71 +214,53 @@ function html(opts)
 
     -- Add pagination buttons
     local buttons, button = {}
-    local join = lousy.util.table.join
-    local bopts = { limit = (opts.limit and "&limit=" .. opts.limit) or "",
-        page = 1, terms = capi.luakit.uri_encode(opts.q or "") }
+    local buri = lousy.uri.copy(uri)
     if page > 1 then
+        buri.opts.p = nil
         button = string.gsub(button_template, "{(%w+)}",
-            join(bopts, { name = "Newest" }))
+            { uri = tostring(buri), name = "Newest" })
         table.insert(buttons, button)
+
+        buri.opts.p = page-1
         button = string.gsub(button_template, "{(%w+)}",
-            join(bopts, { page = page-1, name = "Page " .. page-1 }))
+            { uri = tostring(buri), name = "Page " .. page-1 })
         table.insert(buttons, button)
     end
-
     -- Check if there are older items
     if count > limit then
+        buri.opts.p = page+1
         button = string.gsub(button_template, "{(%w+)}",
-            join(bopts, { page = page+1, name = "Page " .. page+1 }))
+            { uri = tostring(buri), name = "Page " .. page+1 })
         table.insert(buttons, button)
     end
 
     local subs = {
         items = table.concat(items, ""),
+        opts = tostring(opts + {p="", q=""}),
         terms = opts.q and string.format("value=%q", escape(opts.q)) or "",
         buttons = table.concat(buttons, "") or "",
         heading = (opts.q and string.format("Showing results for %s",
             escape(string.format("%q", opts.q)))) or "History"
     }
     local html = string.gsub(html_template, "{(%w+)}", subs)
-    return html
-end
-
--- Return table of options from uri (I.e. "?a=b&c=d" -> {a="b", c="d"})
-function parse_opts(args)
-    local opts = {}
-    string.gsub(args or "", "(%w+)=([^&]*)", function (k, v)
-        if v ~= "" then
-            opts[k] = capi.luakit.uri_decode(v)
-        end
-    end)
-    return opts
-end
-
-function show(view, uri)
-    local opts = parse_opts(string.match(uri, "%?(.+)"))
-    view:load_string(html(opts), uri)
-end
-
--- Catch chrome://history requests
-chrome.add("^chrome://history/?", show)
+    view:load_string(html, tostring(uri))
+end)
 
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("history", function (w, arg)
         if arg then
-            w:new_tab(string.format("chrome://history/?q=%s",
+            w:new_tab(string.format("luakit://history/?q=%s",
                 capi.luakit.uri_encode(arg)))
         else
-            w:new_tab("chrome://history")
+            w:new_tab("luakit://history")
         end
     end),
 })
 
-
 -- Prevent the chrome page showing up in history
 history:add_signal("add", function (_, uri)
-    if string.match(uri, "^chrome://history/?") then
+    if string.match(uri, "^luakit://history/?") then
         return false
     end
 end)

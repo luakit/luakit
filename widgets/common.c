@@ -62,8 +62,8 @@ button_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
         break;
     }
 
-    /* User responded with TRUE, so do not propagate event any further */
-    if (ret && luaH_checkboolean(L, -1)) {
+    /* catch button signal */
+    if (ret && lua_toboolean(L, -1)) {
         lua_pop(L, ret + 1);
         return TRUE;
     }
@@ -78,11 +78,20 @@ focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
     (void) win;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
+    gint ret;
     if (ev->in)
-        luaH_object_emit_signal(L, -1, "focus", 0, 0);
+        ret = luaH_object_emit_signal(L, -1, "focus", 0, 1);
     else
-        luaH_object_emit_signal(L, -1, "unfocus", 0, 0);
-    lua_pop(L, 1);
+        ret = luaH_object_emit_signal(L, -1, "unfocus", 0, 1);
+
+    /* catch focus event */
+    if (ret && lua_toboolean(L, -1)) {
+        lua_pop(L, ret + 1);
+        return TRUE;
+    }
+
+    lua_pop(L, ret + 1);
+    /* propagate event further */
     return FALSE;
 }
 

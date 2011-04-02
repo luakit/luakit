@@ -227,6 +227,12 @@ window.init_funcs = {
             warn("E: window.lua: invalid window size: %q", size)
         end
     end,
+
+    set_window_icon = function (w)
+        local path = (luakit.dev_paths and os.exists("./extras/luakit.png")) or
+            os.exists("/usr/share/pixmaps/luakit.png")
+        if path then w.win.icon = path end
+    end,
 }
 
 -- Helper functions which operate on the window widgets or structure.
@@ -767,12 +773,10 @@ window.methods = {
     -- If argument is form-active or root-active, emits signal. Ignores all
     -- other signals.
     emit_form_root_active_signal = function (w, s)
-        if w:get_mode() ~= "passthrough" then
-            if s == "form-active" then
-                w:get_current():emit_signal("form-active")
-            elseif s == "root-active" then
-                w:get_current():emit_signal("root-active")
-            end
+        if s == "form-active" then
+            w:get_current():emit_signal("form-active")
+        elseif s == "root-active" then
+            w:get_current():emit_signal("root-active")
         end
     end,
 }
