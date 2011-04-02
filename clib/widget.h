@@ -28,7 +28,6 @@ typedef struct widget_t widget_t;
 #include "common/luaclass.h"
 #include "common/luaobject.h"
 #include "luah.h"
-#include "luakit.h"
 
 #include <gtk/gtk.h>
 

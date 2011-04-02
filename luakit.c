@@ -22,7 +22,6 @@
 #include "globalconf.h"
 #include "common/util.h"
 #include "luah.h"
-#include "luakit.h"
 
 #include <gtk/gtk.h>
 #include <signal.h>
