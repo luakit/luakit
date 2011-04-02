@@ -1,6 +1,6 @@
 ------------------------------------------------------------
 -- Cross-instance luakit cookie management (with sqlite3) --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com>     --
+-- © 2011 Mason Larobina <mason.larobina@gmail.com>       --
 ------------------------------------------------------------
 
 require "math"

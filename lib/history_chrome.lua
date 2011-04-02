@@ -1,6 +1,6 @@
 --------------------------------------------------------
 -- chrome://history with search & pagnination support --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com> --
+-- © 2011 Mason Larobina <mason.larobina@gmail.com>   --
 --------------------------------------------------------
 
 local math = require "math"

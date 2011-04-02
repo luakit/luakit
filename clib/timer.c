@@ -1,7 +1,8 @@
 /*
  * timer.c - Simple timer class
  *
- * Copyright © 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -157,4 +158,4 @@ timer_class_setup(lua_State *L)
 
 #undef luaH_checktimer
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

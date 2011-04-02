@@ -1,8 +1,8 @@
----------------------------------------------------------
--- View and open history items in an interactive menu  --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
----------------------------------------------------------
+--------------------------------------------------------
+-- View and open history items in an interactive menu --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>   --
+-- © 2010 Mason Larobina  <mason.larobina@gmail.com>  --
+--------------------------------------------------------
 
 local util = require("lousy.util")
 local join = util.table.join

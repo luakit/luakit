@@ -1,7 +1,7 @@
---------------------------------------------------------
--- URI parsing functions                              --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+------------------------------------------------------
+-- URI parsing functions                            --
+-- © 2011 Mason Larobina <mason.larobina@gmail.com> --
+------------------------------------------------------
 
 -- Get lua environment
 local table = table

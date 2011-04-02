@@ -1,8 +1,8 @@
---------------------------------------------------------
--- View and undo closed tabs in an interactive menu   --
--- (C) 2010 Chris van Dijk <quigybo@hotmail.com>      --
--- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+------------------------------------------------------
+-- View and undo closed tabs in an interactive menu --
+-- © 2010 Chris van Dijk <quigybo@hotmail.com>      --
+-- © 2010 Mason Larobina <mason.larobina@gmail.com> --
+------------------------------------------------------
 
 -- Undo a closed tab (with complete tab history)
 window.methods.undo_close_tab = function (w, index)

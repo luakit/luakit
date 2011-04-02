@@ -1,8 +1,8 @@
 /*
  * download.c - Wrapper for the WebKitDownload class
  *
- * Copyright (C) 2011 Fabian Streitel <karottenreibe@gmail.com>
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -433,4 +433,4 @@ download_class_setup(lua_State *L)
             (lua_class_propfunc_t) NULL);
 }
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

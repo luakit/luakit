@@ -1,7 +1,7 @@
---------------------------------------------------------
--- Session saving / loading functions                 --
--- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+------------------------------------------------------
+-- Session saving / loading functions               --
+-- © 2010 Mason Larobina <mason.larobina@gmail.com> --
+------------------------------------------------------
 
 local function rm(file)
     luakit.spawn(string.format("rm %q", file))

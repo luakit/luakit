@@ -1,9 +1,9 @@
 ------------------------------------------------------------------------------
 -- Add {A,C,S,}-Return binds to follow selected link (or link in selection) --
--- (C) 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>                  --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>             --
--- (C) 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>                 --
--- (C) 2009 israellevin                                                     --
+-- © 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>                    --
+-- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>               --
+-- © 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>                   --
+-- © 2009 israellevin                                                       --
 ------------------------------------------------------------------------------
 
 -- Return selected uri or first uri in selection

@@ -1,7 +1,7 @@
 ----------------------------------------------------------
 -- Serve custom luakit:// pages according to user rules --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>   --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com>  --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>     --
+-- © 2010 Mason Larobina  <mason.larobina@gmail.com>    --
 ----------------------------------------------------------
 
 -- Get lua environment

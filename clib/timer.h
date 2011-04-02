@@ -1,7 +1,7 @@
 /*
  * timer.h - Timer class header
  *
- * Copyright © 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -28,4 +28,4 @@ void timer_class_setup(lua_State *);
 
 #endif
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

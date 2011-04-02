@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Luakit formfiller                                            --
--- (C) 2010 Pawel Tomak    (grodzik) <pawel.tomak@gmail.com>    --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
-------------------------------------------------------------------
+----------------------------------------------------------------
+-- Luakit formfiller                                          --
+-- © 2010 Pawel Tomak    (grodzik) <pawel.tomak@gmail.com>    --
+-- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
+----------------------------------------------------------------
 
 -- Load formfiller settings
 local ff = globals.formfiller or {}

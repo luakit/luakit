@@ -1,8 +1,8 @@
--------------------------------------------------------------
--- Go to the first input on a page and enter insert mode   --
--- (C) 2009 Aldrik Dunbar  (n30n)                          --
--- (C) 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
--------------------------------------------------------------
+-----------------------------------------------------------
+-- Go to the first input on a page and enter insert mode --
+-- © 2009 Aldrik Dunbar  (n30n)                          --
+-- © 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
+-----------------------------------------------------------
 
 local go_input = [=[
 (function (count) {

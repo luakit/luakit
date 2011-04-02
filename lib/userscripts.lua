@@ -1,8 +1,8 @@
----------------------------------------------------------
--- Userscript support for luakit                       --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
----------------------------------------------------------
+-------------------------------------------------------
+-- Userscript support for luakit                     --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
+-- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
+-------------------------------------------------------
 
 -- Grab environment we need
 local io = io

@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Go one step upward in the uri path structure.                --
--- (C) 2009 Aldrik Dunbar  (n30n)                               --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
-------------------------------------------------------------------
+----------------------------------------------------------------
+-- Go one step upward in the uri path structure.              --
+-- © 2009 Aldrik Dunbar  (n30n)                               --
+-- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
+----------------------------------------------------------------
 
 local go_up = [=[
 (function() {

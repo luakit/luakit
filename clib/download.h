@@ -1,8 +1,8 @@
 /*
  * clib/download.h - WebKitDownload wrapper header
  *
- * Copyright (C) 2011 Fabian Streitel <karottenreibe@gmail.com>
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

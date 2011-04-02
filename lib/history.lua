@@ -1,7 +1,7 @@
--------------------------------------------------------------
--- Save history in sqlite3 database                        --
--- (C) 2010-2011 Mason Larobina <mason.larobina@gmail.com> --
--------------------------------------------------------------
+-----------------------------------------------------------
+-- Save history in sqlite3 database                      --
+-- © 2010-2011 Mason Larobina <mason.larobina@gmail.com> --
+-----------------------------------------------------------
 
 local os = require "os"
 local webview = webview
