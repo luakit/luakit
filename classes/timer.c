@@ -135,6 +135,7 @@ timer_class_setup(lua_State *L)
         LUA_CLASS_META
         { "start", luaH_timer_start },
         { "stop", luaH_timer_stop },
+        { "__gc", luaH_object_gc },
         { NULL, NULL },
     };
 

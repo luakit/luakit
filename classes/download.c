@@ -79,7 +79,7 @@ luaH_download_gc(lua_State *L)
     if (download->error)
         g_free(download->error);
 
-    return 0;
+    return luaH_object_gc(L);
 }
 
 static gboolean
