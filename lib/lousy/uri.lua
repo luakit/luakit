@@ -19,6 +19,7 @@ local rawset = rawset
 local util = require "lousy.util"
 local capi = { soup = soup }
 local uri_encode = luakit.uri_encode
+local uri_decode = luakit.uri_decode
 
 module "lousy.uri"
 
@@ -63,7 +64,7 @@ local opts_metatable = {
 function parse_query(query)
     local opts, order = {}, {}
     string.gsub(query or "", "&*([^&=]+)=([^&]+)", function (k, v)
-        opts[k] = v
+        opts[k] = uri_decode(v)
         table.insert(order, k)
     end)
     -- Put order table in opts metatable
