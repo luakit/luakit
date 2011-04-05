@@ -286,6 +286,7 @@ function hit(object, binds, mods, key, args)
 
     -- Filter modifers table
     mods = filter_mods(mods, type(key) == "string" and #key == 1)
+    len = string.wlen(key)
 
     -- Compile metadata table
     args = join(args or {}, {
@@ -306,7 +307,7 @@ function hit(object, binds, mods, key, args)
         return false
 
     -- Match key bindings
-    elseif (not args.buffer or not args.enable_buffer) or #mods ~= 0 or #key ~= 1 then
+    elseif (not args.buffer or not args.enable_buffer) or #mods ~= 0 or len ~= 1 then
         -- Check if the current buffer affects key bind (I.e. if the key has a
         -- `[count]` prefix)
         if match_key(object, binds, mods, key, args) then
@@ -319,7 +320,7 @@ function hit(object, binds, mods, key, args)
         return false
 
     -- Else match buffer
-    elseif #key == 1 then
+    elseif len == 1 then
         if not args.updated_buf then
             args.buffer = (args.buffer or "") .. key
             args.updated_buf = true
