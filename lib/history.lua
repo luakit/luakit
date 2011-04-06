@@ -7,7 +7,9 @@ local os = require "os"
 local webview = webview
 local table = table
 local string = string
+local ipairs = ipairs
 local lousy = require "lousy"
+local math = { max = math.max }
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
 module "history"
@@ -127,8 +129,8 @@ function hist_list()
     local results = db:exec([[SELECT * FROM history ORDER BY last_visit;]])
 
     local items = {}
-    for line in ipairs(results) do
-        table.insert(items, { line.title, time = reltime(line.last_visit), uri = line.uri })
+    for _, line in ipairs(results) do
+        table.insert(items, { line.title, time = line.last_visit, uri = line.uri })
     end
 
     return #items == 0 and nil or items
