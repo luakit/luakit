@@ -506,7 +506,7 @@ for _, t in ipairs({
     {"image",      "image",        "src"         },
 }) do
     local mode, selector, evaluator = unpack(t)
-    modes[mode] = { selector = selector, evaluator = evaluator }
+    follow.modes[mode] = { selector = selector, evaluator = evaluator }
 end
 
 -- Add webview methods
@@ -753,18 +753,18 @@ new_mode("follow", {
 
         -- Init all frames and gather label data
         local frames = {}
+        local js_blocks = {}
         local sum = 0
         local webkit_frames = w:get_current().frames
         for _, f in ipairs(webkit_frames) do
             -- Load main following js
-            local js_blocks = {}
             local subs = { clear = clear_js }
             local js, count = string.gsub(follow_js, "{(%w+)}", subs)
             if count ~= 1 then return error("invalid number of substitutions") end
             table.insert(js_blocks, js);
 
             -- Make theme js
-            for k, v in pairs(get_theme()) do
+            for k, v in pairs(follow.get_theme()) do
                 if type(v) == "number" then
                     table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
                 else
