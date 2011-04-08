@@ -154,42 +154,42 @@ gint luaH_object_add_signal_simple(lua_State *L);
 gint luaH_object_remove_signal_simple(lua_State *L);
 gint luaH_object_emit_signal_simple(lua_State *L);
 
-#define LUA_OBJECT_FUNCS(lua_class, type, prefix)                              \
-    LUA_CLASS_FUNCS(prefix, lua_class)                                         \
-    static inline type *                                                       \
-    prefix##_new(lua_State *L) {                                               \
-        type *p = lua_newuserdata(L, sizeof(type));                            \
-        p_clear(p, 1);                                                         \
-        p->signals = signal_new();                                             \
-        luaH_settype(L, &(lua_class));                                         \
-        lua_newtable(L);                                                       \
-        lua_newtable(L);                                                       \
-        lua_setmetatable(L, -2);                                               \
-        lua_setfenv(L, -2);                                                    \
-        lua_pushvalue(L, -1);                                                  \
-        luaH_class_emit_signal(L, &(lua_class), "new", 1);                     \
-        return p;                                                              \
+#define LUA_OBJECT_FUNCS(lua_class, type, prefix)             \
+    LUA_CLASS_FUNCS(prefix, lua_class)                        \
+    static inline type *                                      \
+    prefix##_new(lua_State *L) {                              \
+        type *p = lua_newuserdata(L, sizeof(type));           \
+        p_clear(p, 1);                                        \
+        p->signals = signal_new();                            \
+        luaH_settype(L, &(lua_class));                        \
+        lua_newtable(L);                                      \
+        lua_newtable(L);                                      \
+        lua_setmetatable(L, -2);                              \
+        lua_setfenv(L, -2);                                   \
+        lua_pushvalue(L, -1);                                 \
+        luaH_class_emit_signal(L, &(lua_class), "new", 1, 0); \
+        return p;                                             \
     }
 
 #define OBJECT_EXPORT_PROPERTY(pfx, type, field) \
-    fieldtypeof(type, field) \
-    pfx##_get_##field(type *object) { \
-        return object->field; \
+    fieldtypeof(type, field)                     \
+    pfx##_get_##field(type *object) {            \
+        return object->field;                    \
     }
 
 #define LUA_OBJECT_EXPORT_PROPERTY(pfx, type, field, pusher) \
-    static gint \
-    luaH_##pfx##_get_##field(lua_State *L, type *object) { \
-        pusher(L, object->field); \
-        return 1; \
+    static gint                                              \
+    luaH_##pfx##_get_##field(lua_State *L, type *object) {   \
+        pusher(L, object->field);                            \
+        return 1;                                            \
     }
 
 gint luaH_object_tostring(lua_State *);
 gint luaH_object_gc(lua_State *);
 
-#define LUA_OBJECT_META(prefix) \
-    { "__tostring", luaH_object_tostring }, \
-    { "add_signal", luaH_object_add_signal_simple }, \
+#define LUA_OBJECT_META(prefix)                            \
+    { "__tostring", luaH_object_tostring },                \
+    { "add_signal", luaH_object_add_signal_simple },       \
     { "remove_signal", luaH_object_remove_signal_simple }, \
     { "emit_signal", luaH_object_emit_signal_simple },
 
