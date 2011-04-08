@@ -13,7 +13,7 @@ local capi = { luakit = luakit, sqlite3 = sqlite3 }
 module "history"
 
 -- Setup signals on history module
-lousy.signal.setup(_M)
+lousy.signal.setup(_M, true)
 
 db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/history.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
@@ -33,7 +33,7 @@ function add(uri, title, update_visits)
     -- Ignore blank uris
     if not uri or uri == "" or uri == "about:blank" then return end
     -- Ask user if we should ignore uri
-    if _M:emit_signal("add", uri, title) == false then return end
+    if _M.emit_signal("add", uri, title) == false then return end
 
     local escape, format = lousy.util.sql_escape, string.format
 

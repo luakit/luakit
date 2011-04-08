@@ -259,7 +259,7 @@ add_cmds({
 })
 
 -- Prevent the chrome page showing up in history
-history:add_signal("add", function (_, uri)
+history.add_signal("add", function (uri)
     if string.match(uri, "^luakit://history/?") then
         return false
     end

@@ -13,6 +13,9 @@ local time, floor = luakit.time, math.floor
 
 module "cookies"
 
+-- Setup signals on module
+lousy.signal.setup(_M, true)
+
 -- Return microseconds from the unixtime epoch
 function micro()
     return floor(time() * 1e6)
