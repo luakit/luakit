@@ -93,26 +93,26 @@ cookie_new_from_table(lua_State *L, gint idx, gchar **error)
 #define IS_BOOLEAN (lua_isboolean(L, -1) || lua_isnil(L, -1))
 #define IS_NUMBER  (lua_isnumber(L, -1))
 
-#define GET_PROP(prop, typname, typexpr, typfunc)                           \
+#define GET_PROP(prop, type, check)                                         \
     lua_pushliteral(L, #prop);                                              \
     lua_rawget(L, idx);                                                     \
-    if ((typexpr)) {                                                        \
-        prop = typfunc(L, -1);                                              \
+    if (check) {                                                            \
+        prop = lua_to##type(L, -1);                                         \
         lua_pop(L, 1);                                                      \
     } else {                                                                \
         *error = g_strdup_printf("invalid cookie." #prop " type, expected " \
-            #typname ", got %s",  lua_typename(L, lua_type(L, -1)));        \
+            #type ", got %s",  lua_typename(L, lua_type(L, -1)));           \
         return NULL;                                                        \
     }
 
     /* get cookie properties */
-    GET_PROP(name,      string,  IS_STRING,  lua_tostring)
-    GET_PROP(value,     string,  IS_STRING,  lua_tostring)
-    GET_PROP(domain,    string,  IS_STRING,  lua_tostring)
-    GET_PROP(path,      string,  IS_STRING,  lua_tostring)
-    GET_PROP(secure,    boolean, IS_BOOLEAN, lua_toboolean)
-    GET_PROP(http_only, boolean, IS_BOOLEAN, lua_toboolean)
-    GET_PROP(expires,   number,  IS_NUMBER,  lua_tonumber)
+    GET_PROP(name,      string,  IS_STRING)
+    GET_PROP(value,     string,  IS_STRING)
+    GET_PROP(domain,    string,  IS_STRING)
+    GET_PROP(path,      string,  IS_STRING)
+    GET_PROP(secure,    boolean, IS_BOOLEAN)
+    GET_PROP(http_only, boolean, IS_BOOLEAN)
+    GET_PROP(expires,   number,  IS_NUMBER)
 
 #undef IS_STRING
 #undef IS_BOOLEAN
