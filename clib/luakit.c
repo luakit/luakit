@@ -422,6 +422,52 @@ luaH_luakit_quit(lua_State *L)
     return 0;
 }
 
+static gboolean
+idle_cb(gpointer func)
+{
+    lua_State *L = globalconf.L;
+
+    /* get original stack size */
+    gint top = lua_gettop(L);
+    gboolean keep = FALSE;
+
+    /* call function */
+    luaH_object_push(L, func);
+    if (lua_pcall(L, 0, 1, 0))
+        /* remove idle source if error in callback */
+        warn("error in idle func: %s", lua_tostring(L, -1));
+    else
+        /* keep the source alive? */
+        keep = lua_toboolean(L, -1);
+
+    /* allow collection of idle callback func */
+    if (!keep)
+        luaH_object_unref(L, func);
+
+    /* leave stack how we found it */
+    lua_settop(L, top);
+
+    return keep;
+}
+
+static gint
+luaH_luakit_idle_add(lua_State *L)
+{
+    luaH_checkfunction(L, 1);
+    gpointer func = luaH_object_ref(L, 1);
+    g_idle_add(idle_cb, func);
+    return 0;
+}
+
+static gint
+luaH_luakit_idle_remove(lua_State *L)
+{
+    luaH_checkfunction(L, 1);
+    gpointer func = luaH_object_ref(L, 1);
+    lua_pushboolean(L, g_idle_remove_by_data(func));
+    return 1;
+}
+
 void
 luakit_lib_setup(lua_State *L)
 {
@@ -440,6 +486,8 @@ luakit_lib_setup(lua_State *L)
         { "time",            luaH_luakit_time },
         { "uri_decode",      luaH_luakit_uri_decode },
         { "uri_encode",      luaH_luakit_uri_encode },
+        { "idle_add",        luaH_luakit_idle_add },
+        { "idle_remove",     luaH_luakit_idle_remove },
         { NULL,              NULL }
     };
 
