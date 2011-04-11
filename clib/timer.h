@@ -1,8 +1,7 @@
 /*
- * classes/download.h - WebKitDownload wrapper header
+ * timer.h - Timer class header
  *
- * Copyright (C) 2011 Fabian Streitel <karottenreibe@gmail.com>
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -20,14 +19,12 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_DOWNLOAD_H
-#define LUAKIT_CLASSES_DOWNLOAD_H
+#ifndef LUAKIT_CLIB_TIMER_H
+#define LUAKIT_CLIB_TIMER_H
 
 #include <lua.h>
-#include <webkit/webkitdownload.h>
 
-void download_class_setup(lua_State*);
-gint luaH_download_push(lua_State*, WebKitDownload*);
+void timer_class_setup(lua_State *);
 
 #endif
 

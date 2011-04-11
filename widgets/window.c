@@ -1,8 +1,7 @@
 /*
  * widgets/window.c - gtk window widget wrapper
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -22,7 +21,7 @@
 #include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
-#include "classes/soup/auth.h"
+#include "clib/soup/auth.h"
 
 static void
 destroy_cb(GtkObject *win, widget_t *w)

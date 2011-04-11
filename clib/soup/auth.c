@@ -1,8 +1,8 @@
 /*
- * classes/soup/auth.c - authentication management
+ * clib/soup/auth.c - authentication management
  *
- * Copyright (C) 2009 Igalia S.L.
- * Copyright (C) 2010 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2009 Igalia S.L.
+ * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 #include "luah.h"
 
 #include <gtk/gtk.h>
@@ -57,7 +57,7 @@ luakit_store_password(SoupURI *soup_uri, const gchar *login, const gchar *passwo
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
-    signal_object_emit(L, soupconf.signals, "store-password", 3, 0);
+    signal_object_emit(L, soup_class.signals, "store-password", 3, 0);
     g_free(uri);
 }
 
@@ -67,7 +67,7 @@ luakit_find_password(SoupURI *soup_uri, const gchar **login, const gchar **passw
     lua_State *L = globalconf.L;
     gchar *uri = soup_uri_to_string(soup_uri, FALSE);
     lua_pushstring(L, uri);
-    gint ret = signal_object_emit(L, soupconf.signals, "authenticate", 1, LUA_MULTRET);
+    gint ret = signal_object_emit(L, soup_class.signals, "authenticate", 1, LUA_MULTRET);
     g_free(uri);
     if (ret >= 2) {
         *password = luaL_checkstring(L, -1);

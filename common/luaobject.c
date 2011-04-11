@@ -1,8 +1,8 @@
 /*
  * luaobject.c - useful functions for handling Lua objects
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2009 Julien Danjou <julien@danjou.info>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by

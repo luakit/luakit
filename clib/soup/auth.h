@@ -1,8 +1,8 @@
 /*
- * classes/soup/auth.h - authentication management header
+ * clib/soup/auth.h - authentication management header
  *
- * Copyright (C) 2009 Igalia S.L.
- * Copyright (C) 2010 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2009 Igalia S.L.
+ * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_SOUP_AUTH_H
-#define LUAKIT_CLASSES_SOUP_AUTH_H
+#ifndef LUAKIT_CLIB_SOUP_AUTH_H
+#define LUAKIT_CLIB_SOUP_AUTH_H
 
 #include <glib-object.h>
 

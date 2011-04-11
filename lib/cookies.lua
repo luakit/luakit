@@ -1,6 +1,6 @@
 ------------------------------------------------------------
 -- Cross-instance luakit cookie management (with sqlite3) --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com>     --
+-- © 2011 Mason Larobina <mason.larobina@gmail.com>       --
 ------------------------------------------------------------
 
 require "math"
@@ -12,6 +12,9 @@ local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
 local time, floor = luakit.time, math.floor
 
 module "cookies"
+
+-- Setup signals on module
+lousy.signal.setup(_M, true)
 
 -- Return microseconds from the unixtime epoch
 function micro()

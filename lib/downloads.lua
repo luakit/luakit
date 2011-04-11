@@ -1,8 +1,8 @@
----------------------------------------------------------
--- Downloads for luakit                                --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
----------------------------------------------------------
+-------------------------------------------------------
+-- Downloads for luakit                              --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
+-- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
+-------------------------------------------------------
 
 -- Grab environment we need from the standard lib
 local assert = assert
@@ -43,7 +43,7 @@ local speeds = setmetatable({}, { __mode = "k" })
 downloads = {}
 
 -- Setup signals on downloads module
-lousy.signal.setup(_M)
+lousy.signal.setup(_M, true)
 
 -- Calculates a fancy name for a download to show to the user.
 function get_basename(d)
@@ -118,7 +118,7 @@ function add(arg, opts)
         string.format("expected uri or download object, got: %s", type(d) or "nil"))
 
     -- Emit signal to determine the download location.
-    local file = _M:emit_signal("download-location", d.uri, d.suggested_filename)
+    local file = _M.emit_signal("download-location", d.uri, d.suggested_filename)
 
     -- Check return type
     assert(file == nil or type(file) == "string" and #file > 1,
@@ -172,7 +172,7 @@ function open(d, w)
     t:add_signal("timeout", function (t)
         if d.status == "finished" then
             t:stop()
-            if _M:emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
+            if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
                 if w then
                     w:error(string.format("Can't open: %q (%s)", d.desination, d.mime_type))
                 end

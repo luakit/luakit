@@ -1,8 +1,8 @@
 /*
- * widget.c - widget managing
+ * clib/widget.c - widget managing
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2007-2009 Julien Danjou <julien@danjou.info>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/widget.h"
+#include "clib/widget.h"
 
 widget_info_t widgets_list[] = {
   { L_TK_ENTRY,      "entry",      widget_entry      },
@@ -165,14 +165,15 @@ widget_class_setup(lua_State *L)
         { NULL, NULL }
     };
 
-    luaH_class_setup(L, &widget_class, "widget", (lua_class_allocator_t) widget_new,
-                     NULL, NULL,
-                     widget_methods, widget_meta);
+    luaH_class_setup(L, &widget_class, "widget",
+            (lua_class_allocator_t) widget_new,
+            NULL, NULL,
+            widget_methods, widget_meta);
 
     luaH_class_add_property(&widget_class, L_TK_TYPE,
-                            (lua_class_propfunc_t) luaH_widget_set_type,
-                            (lua_class_propfunc_t) luaH_widget_get_type,
-                            NULL);
+            (lua_class_propfunc_t) luaH_widget_set_type,
+            (lua_class_propfunc_t) luaH_widget_get_type,
+            NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

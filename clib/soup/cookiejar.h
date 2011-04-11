@@ -1,7 +1,7 @@
 /*
- * classes/soup/cookiejar.h - LuakitCookieJar header
+ * clib/soup/cookiejar.h - LuakitCookieJar header
  *
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_SOUP_COOKIEJAR_H
-#define LUAKIT_CLASSES_SOUP_COOKIEJAR_H
+#ifndef LUAKIT_CLIB_SOUP_COOKIEJAR_H
+#define LUAKIT_CLIB_SOUP_COOKIEJAR_H
 
 #include "luah.h"
 

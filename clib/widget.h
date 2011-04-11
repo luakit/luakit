@@ -1,8 +1,8 @@
 /*
- * widget.h - widget managing header
+ * clib/widget.h - widget managing header
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2007-2009 Julien Danjou <julien@danjou.info>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_WIDGET_H
-#define LUAKIT_CLASSES_WIDGET_H
+#ifndef LUAKIT_CLIB_WIDGET_H
+#define LUAKIT_CLIB_WIDGET_H
 
 typedef struct widget_t widget_t;
 
@@ -28,7 +28,6 @@ typedef struct widget_t widget_t;
 #include "common/luaclass.h"
 #include "common/luaobject.h"
 #include "luah.h"
-#include "luakit.h"
 
 #include <gtk/gtk.h>
 

@@ -1,7 +1,7 @@
 /*
  * common/property.c - GObject property set/get lua functions
  *
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  */
 
 #include "common/property.h"
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 
 #include <webkit/webkit.h>
 

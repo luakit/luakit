@@ -1,7 +1,8 @@
 /*
  * timer.c - Simple timer class
  *
- * Copyright © 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +20,7 @@
  *
  */
 
-#include "classes/timer.h"
+#include "clib/timer.h"
 #include "common/luaobject.h"
 #include "globalconf.h"
 #include "luah.h"
@@ -135,25 +136,26 @@ timer_class_setup(lua_State *L)
         LUA_CLASS_META
         { "start", luaH_timer_start },
         { "stop", luaH_timer_stop },
+        { "__gc", luaH_object_gc },
         { NULL, NULL },
     };
 
     luaH_class_setup(L, &timer_class, "timer",
-         (lua_class_allocator_t) timer_new,
-         luaH_class_index_miss_property, luaH_class_newindex_miss_property,
-         timer_methods, timer_meta);
+            (lua_class_allocator_t) timer_new,
+            luaH_class_index_miss_property, luaH_class_newindex_miss_property,
+            timer_methods, timer_meta);
 
     luaH_class_add_property(&timer_class, L_TK_INTERVAL,
-        (lua_class_propfunc_t) luaH_timer_set_interval,
-        (lua_class_propfunc_t) luaH_timer_get_interval,
-        (lua_class_propfunc_t) luaH_timer_set_interval);
+            (lua_class_propfunc_t) luaH_timer_set_interval,
+            (lua_class_propfunc_t) luaH_timer_get_interval,
+            (lua_class_propfunc_t) luaH_timer_set_interval);
 
     luaH_class_add_property(&timer_class, L_TK_STARTED,
-        NULL,
-        (lua_class_propfunc_t) luaH_timer_get_started,
-        NULL);
+            NULL,
+            (lua_class_propfunc_t) luaH_timer_get_started,
+            NULL);
 }
 
 #undef luaH_checktimer
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

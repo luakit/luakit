@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Follow "next" or "prev" links on a page                      --
--- (C) 2009 Aldrik Dunbar  (n30n)                               --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
-------------------------------------------------------------------
+----------------------------------------------------------------
+-- Follow "next" or "prev" links on a page                    --
+-- © 2009 Aldrik Dunbar  (n30n)                               --
+-- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
+----------------------------------------------------------------
 
 local go_next = [=[
 (function() {

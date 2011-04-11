@@ -1,7 +1,7 @@
 /*
  * widgets/common.h - common widget functions or callbacks
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -21,7 +21,7 @@
 #ifndef LUAKIT_WIDGETS_COMMON_H
 #define LUAKIT_WIDGETS_COMMON_H
 
-#include "classes/widget.h"
+#include "clib/widget.h"
 
 #define LUAKIT_WIDGET_INDEX_COMMON                    \
     case L_TK_SHOW:                                   \

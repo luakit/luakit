@@ -1,8 +1,8 @@
 /*
  * luaclass.h - useful functions for handling Lua classes
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2009 Julien Danjou <julien@danjou.info>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -62,14 +62,18 @@ typedef struct {
 const gchar *luaH_typename(lua_State *, gint);
 lua_class_t *luaH_class_get(lua_State *, gint);
 
-void luaH_class_add_signal(lua_State *, lua_class_t *, const gchar *, gint);
-void luaH_class_remove_signal(lua_State *, lua_class_t *, const gchar *, gint);
-void luaH_class_emit_signal(lua_State *, lua_class_t *, const gchar *, gint);
+void luaH_class_add_signal(lua_State *, lua_class_t *, const gchar *name,
+        gint ud);
+void luaH_class_remove_signal(lua_State *, lua_class_t *, const gchar *name,
+        gint ud);
+gint luaH_class_emit_signal(lua_State *, lua_class_t *, const gchar *name,
+        gint nargs, gint nret);
 
-void luaH_openlib(lua_State *, const gchar *, const struct luaL_reg[], const struct luaL_reg[]);
-void luaH_class_setup(lua_State *, lua_class_t *, const gchar *, lua_class_allocator_t,
-                      lua_class_propfunc_t, lua_class_propfunc_t,
-                      const struct luaL_reg[], const struct luaL_reg[]);
+void luaH_openlib(lua_State *, const gchar *, const struct luaL_reg[],
+        const struct luaL_reg[]);
+void luaH_class_setup(lua_State *, lua_class_t *, const gchar *,
+        lua_class_allocator_t, lua_class_propfunc_t, lua_class_propfunc_t,
+        const struct luaL_reg[], const struct luaL_reg[]);
 
 void luaH_class_add_property(lua_class_t *, luakit_token_t token,
         lua_class_propfunc_t, lua_class_propfunc_t, lua_class_propfunc_t);
@@ -98,16 +102,14 @@ luaH_checkudataornil(lua_State *L, gint udx, lua_class_t *class) {
                                                                                \
     static inline gint                                                         \
     luaH_##prefix##_class_remove_signal(lua_State *L) {                        \
-        luaH_class_remove_signal(L, &(lua_class),                              \
-                                 luaL_checkstring(L, 1), 2);                   \
+        luaH_class_remove_signal(L, &(lua_class), luaL_checkstring(L, 1), 2);  \
         return 0;                                                              \
     }                                                                          \
                                                                                \
     static inline gint                                                         \
     luaH_##prefix##_class_emit_signal(lua_State *L) {                          \
-        luaH_class_emit_signal(L, &(lua_class), luaL_checkstring(L, 1),        \
-                              lua_gettop(L) - 1);                              \
-        return 0;                                                              \
+        return luaH_class_emit_signal(L, &(lua_class), luaL_checkstring(L, 1), \
+                lua_gettop(L) - 1, LUA_MULTRET);                               \
     }
 
 #define LUA_CLASS_METHODS(class) \

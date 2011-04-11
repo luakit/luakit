@@ -1,7 +1,7 @@
 /*
- * classes/soup/soup.c - soup library
+ * clib/soup/soup.c - soup library
  *
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,12 +18,16 @@
  *
  */
 
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 #include "common/property.h"
+#include "common/signal.h"
 
 #include <libsoup/soup.h>
 #include <webkit/webkitsoupauthdialog.h>
 #include <webkit/webkitwebview.h>
+
+/* setup soup module signals */
+LUA_CLASS_FUNCS(soup, soup_class);
 
 GHashTable *soup_properties = NULL;
 property_t soup_properties_table[] = {
@@ -53,53 +57,6 @@ luaH_soup_set_property(lua_State *L)
     return luaH_set_property(L, soup_properties, NULL, 1, 2);
 }
 
-/* Add a soup signal.
- * Returns the number of elements pushed on stack.
- * \luastack
- * \lparam A string with the event name.
- * \lparam The function to call.
- */
-static gint
-luaH_soup_add_signal(lua_State *L)
-{
-    const gchar *name = luaL_checkstring(L, 1);
-    luaH_checkfunction(L, 2);
-    signal_add(soupconf.signals, name, luaH_object_ref(L, 2));
-    return 0;
-}
-
-/* Remove a soup signal.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack.
- * \luastack
- * \lparam A string with the event name.
- * \lparam The function to call.
- */
-static gint
-luaH_soup_remove_signal(lua_State *L)
-{
-    const gchar *name = luaL_checkstring(L, 1);
-    luaH_checkfunction(L, 2);
-    gpointer func = (gpointer) lua_topointer(L, 2);
-    signal_remove(soupconf.signals, name, func);
-    luaH_object_unref(L, (gpointer) func);
-    return 0;
-}
-
-/* Emit a global signal.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack.
- * \luastack
- * \lparam A string with the event name.
- * \lparam The function to call.
- */
-static gint
-luaH_soup_emit_signal(lua_State *L)
-{
-    return signal_object_emit(L, soupconf.signals, luaL_checkstring(L, 1),
-            lua_gettop(L) - 1, LUA_MULTRET);
-}
-
 static void
 soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
 {
@@ -109,7 +66,7 @@ soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
     /* emit soup property signal if found in properties table */
     if ((p = g_hash_table_lookup(soup_properties, ps->name))) {
         lua_State *L = globalconf.L;
-        signal_object_emit(L, soupconf.signals, p->signame, 0, 0);
+        signal_object_emit(L, soup_class.signals, p->signame, 0, 0);
     }
 }
 
@@ -215,10 +172,9 @@ luaH_soup_parse_uri(lua_State *L)
 void
 soup_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg soup_lib[] = {
-        { "add_signal",    luaH_soup_add_signal },
-        { "remove_signal", luaH_soup_remove_signal },
-        { "emit_signal",   luaH_soup_emit_signal },
+    static const struct luaL_reg soup_lib[] =
+    {
+        LUA_CLASS_METHODS(soup)
         { "set_property",  luaH_soup_set_property },
         { "get_property",  luaH_soup_get_property },
         { "parse_uri",     luaH_soup_parse_uri },
@@ -226,6 +182,9 @@ soup_lib_setup(lua_State *L)
         { "add_cookies",   luaH_cookiejar_add_cookies },
         { NULL,            NULL },
     };
+
+    /* create signals array */
+    soup_class.signals = signal_new();
 
     /* hash soup properties table */
     soup_properties = hash_properties(soup_properties_table);
@@ -235,7 +194,6 @@ soup_lib_setup(lua_State *L)
     soupconf.session = webkit_get_default_session();
     soup_session_add_feature(soupconf.session,
             (SoupSessionFeature*) soupconf.cookiejar);
-    soupconf.signals = signal_new();
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(soupconf.session), "notify",

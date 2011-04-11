@@ -1,8 +1,8 @@
----------------------------------------------------------
--- Command completion                                  --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
----------------------------------------------------------
+-------------------------------------------------------
+-- Command completion                                --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
+-- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
+-------------------------------------------------------
 
 local key = lousy.bind.key
 add_binds("command", {

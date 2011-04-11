@@ -1,7 +1,7 @@
 /*
- * timer.h - Timer class header
+ * clib/sqlite3.h - luakit sqlite3 wrapper
  *
- * Copyright © 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,13 +19,13 @@
  *
  */
 
-#ifndef LUAKIT_CLASSES_TIMER_H
-#define LUAKIT_CLASSES_TIMER_H
+#ifndef LUAKIT_CLIB_SQLITE3_H
+#define LUAKIT_CLIB_SQLITE3_H
 
 #include <lua.h>
 
-void timer_class_setup(lua_State *);
+void sqlite3_class_setup(lua_State*);
 
 #endif
 
-// vim: filetype=c:expandtab:shiftwidth=4:tabstop=8:softtabstop=4:textwidth=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

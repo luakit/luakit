@@ -2,7 +2,7 @@
 
 -- build-utils/gentokens.lua - gen tokenize lib
 --
--- Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
+-- Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
 --
 -- This program is free software: you can redistribute it and/or modify
 -- it under the terms of the GNU General Public License as published by

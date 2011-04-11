@@ -1,7 +1,7 @@
---------------------------------------------------------
--- Enables command history in modes that support it   --
--- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+------------------------------------------------------
+-- Enables command history in modes that support it --
+-- © 2010 Mason Larobina <mason.larobina@gmail.com> --
+------------------------------------------------------
 
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when

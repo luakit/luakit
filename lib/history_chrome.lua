@@ -1,6 +1,6 @@
 --------------------------------------------------------
 -- chrome://history with search & pagnination support --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com> --
+-- © 2011 Mason Larobina <mason.larobina@gmail.com>   --
 --------------------------------------------------------
 
 local math = require "math"
@@ -259,7 +259,7 @@ add_cmds({
 })
 
 -- Prevent the chrome page showing up in history
-history:add_signal("add", function (_, uri)
+history.add_signal("add", function (uri)
     if string.match(uri, "^luakit://history/?") then
         return false
     end

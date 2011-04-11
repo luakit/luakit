@@ -1,8 +1,7 @@
 /*
  * webview.c - webkit webview widget
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2007-2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,8 +26,8 @@
 #include "globalconf.h"
 #include "luah.h"
 #include "widgets/common.h"
-#include "classes/download.h"
-#include "classes/soup/soup.h"
+#include "clib/download.h"
+#include "clib/soup/soup.h"
 #include "common/property.h"
 
 GHashTable *frames_by_view = NULL;
@@ -337,7 +336,8 @@ update_uri(widget_t *w, const gchar *new)
 
     /* uris are the same, do nothing */
     if (g_strcmp0(old, new)) {
-        g_object_set_data_full(G_OBJECT(view), "uri", g_strdup(new), g_free);
+        g_object_set_data_full(G_OBJECT(view), "uri",
+                g_strdup(new && new[0] ? new : "about:blank"), g_free);
         lua_State *L = globalconf.L;
         luaH_object_push(L, w->ref);
         luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
@@ -1024,8 +1024,11 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 static gchar*
 parse_uri(const gchar *uri) {
     gchar *curdir, *filepath, *new;
+    /* check for null uri */
+    if (!uri || !uri[0])
+        new = g_strdup("about:blank");
     /* check for scheme or "about:blank" */
-    if (g_strrstr(uri, "://") || !g_strcmp0(uri, "about:blank"))
+    else if (g_strrstr(uri, "://") || !g_strcmp0(uri, "about:blank"))
         new = g_strdup(uri);
     /* check if uri points to a file */
     else if (file_exists(uri)) {

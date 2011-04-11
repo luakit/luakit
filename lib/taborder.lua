@@ -1,7 +1,7 @@
-----------------------------------------------
--- Rules for where to put new tabs          --
--- (C) 2010 Henrik Hallberg <henrik@k2h.se> --
-----------------------------------------------
+--------------------------------------------
+-- Rules for where to put new tabs        --
+-- © 2010 Henrik Hallberg <henrik@k2h.se> --
+--------------------------------------------
 
 -- When a new tab is opened in a window, a tab order function is called to
 -- determine where in the tab list it should be placed. window.new_tab()

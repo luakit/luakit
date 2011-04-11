@@ -1,7 +1,7 @@
 /*
- * classes/soup/cookiejar.c - LuakitCookieJar
+ * clib/soup/cookiejar.c - LuakitCookieJar
  *
- * Copyright (C) 2011 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software; you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -19,7 +19,7 @@
  *
  */
 
-#include "classes/soup/soup.h"
+#include "clib/soup/soup.h"
 #include "luah.h"
 
 #include <libsoup/soup-cookie.h>
@@ -93,26 +93,26 @@ cookie_new_from_table(lua_State *L, gint idx, gchar **error)
 #define IS_BOOLEAN (lua_isboolean(L, -1) || lua_isnil(L, -1))
 #define IS_NUMBER  (lua_isnumber(L, -1))
 
-#define GET_PROP(prop, typname, typexpr, typfunc)                           \
+#define GET_PROP(prop, type, check)                                         \
     lua_pushliteral(L, #prop);                                              \
     lua_rawget(L, idx);                                                     \
-    if ((typexpr)) {                                                        \
-        prop = typfunc(L, -1);                                              \
+    if (check) {                                                            \
+        prop = lua_to##type(L, -1);                                         \
         lua_pop(L, 1);                                                      \
     } else {                                                                \
         *error = g_strdup_printf("invalid cookie." #prop " type, expected " \
-            #typname ", got %s",  lua_typename(L, lua_type(L, -1)));        \
+            #type ", got %s",  lua_typename(L, lua_type(L, -1)));           \
         return NULL;                                                        \
     }
 
     /* get cookie properties */
-    GET_PROP(name,      string,  IS_STRING,  lua_tostring)
-    GET_PROP(value,     string,  IS_STRING,  lua_tostring)
-    GET_PROP(domain,    string,  IS_STRING,  lua_tostring)
-    GET_PROP(path,      string,  IS_STRING,  lua_tostring)
-    GET_PROP(secure,    boolean, IS_BOOLEAN, lua_toboolean)
-    GET_PROP(http_only, boolean, IS_BOOLEAN, lua_toboolean)
-    GET_PROP(expires,   number,  IS_NUMBER,  lua_tonumber)
+    GET_PROP(name,      string,  IS_STRING)
+    GET_PROP(value,     string,  IS_STRING)
+    GET_PROP(domain,    string,  IS_STRING)
+    GET_PROP(path,      string,  IS_STRING)
+    GET_PROP(secure,    boolean, IS_BOOLEAN)
+    GET_PROP(http_only, boolean, IS_BOOLEAN)
+    GET_PROP(expires,   number,  IS_NUMBER)
 
 #undef IS_STRING
 #undef IS_BOOLEAN
@@ -202,7 +202,7 @@ luaH_cookiejar_add_cookies(lua_State *L)
 
         /* insert cookies */
         for (GSList *p = cookies; p; p = g_slist_next(p))
-            soup_cookie_jar_add_cookie(sj, soup_cookie_copy(p->data));
+            soup_cookie_jar_add_cookie(sj, p->data);
 
         g_slist_free(cookies);
         j->silent = FALSE;
@@ -225,7 +225,7 @@ request_started(SoupSessionFeature *feature, SoupSession *session,
     gchar *str = soup_uri_to_string(uri, FALSE);
     lua_pushstring(L, str);
     g_free(str);
-    signal_object_emit(L, soupconf.signals, "request-started", 1, 0);
+    signal_object_emit(L, soup_class.signals, "request-started", 1, 0);
 
     /* generate cookie header */
     gchar *header = soup_cookie_jar_get_cookies(sj, uri, TRUE);
@@ -272,7 +272,7 @@ changed(SoupCookieJar *sj, SoupCookie *old, SoupCookie *new)
     else
         lua_pushnil(L);
 
-    signal_object_emit(L, soupconf.signals, "cookie-changed", 2, 0);
+    signal_object_emit(L, soup_class.signals, "cookie-changed", 2, 0);
 }
 
 static void

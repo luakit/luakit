@@ -1,7 +1,7 @@
---------------------------------------------------------
--- Search for a string in the current webview         --
--- (C) 2010 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+------------------------------------------------------
+-- Search for a string in the current webview       --
+-- © 2010 Mason Larobina <mason.larobina@gmail.com> --
+------------------------------------------------------
 
 -- Add searching binds to normal mode
 local key = lousy.bind.key

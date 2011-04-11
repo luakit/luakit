@@ -6,8 +6,8 @@ TLIST = common/tokenize.list
 THEAD = common/tokenize.h
 TSRC  = common/tokenize.c
 
-SRCS  = $(filter-out $(TSRC),$(wildcard *.c) $(wildcard common/*.c) $(wildcard classes/*.c) $(wildcard classes/soup/*.c) $(wildcard widgets/*.c)) $(TSRC)
-HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h) $(wildcard classes/*.h) $(wildcard classes/soup/*.h) $(THEAD) globalconf.h
+SRCS  = $(filter-out $(TSRC),$(wildcard *.c) $(wildcard common/*.c) $(wildcard clib/*.c) $(wildcard clib/soup/*.c) $(wildcard widgets/*.c)) $(TSRC)
+HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h) $(wildcard clib/*.h) $(wildcard clib/soup/*.h) $(THEAD) globalconf.h
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
 all: options newline luakit luakit.1

@@ -1,8 +1,8 @@
 /*
  * luaclass.c - useful functions for handling Lua classes
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
- * Copyright (C) 2009 Julien Danjou <julien@danjou.info>
+ * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2009 Julien Danjou <julien@danjou.info>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -189,10 +189,10 @@ luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
     lua_remove(L, ud);
 }
 
-void
+gint
 luaH_class_emit_signal(lua_State *L, lua_class_t *lua_class,
-        const gchar *name, gint nargs) {
-    signal_object_emit(L, lua_class->signals, name, nargs, 0);
+        const gchar *name, gint nargs, gint nret) {
+    return signal_object_emit(L, lua_class->signals, name, nargs, nret);
 }
 
 /* Try to use the metatable of an object.

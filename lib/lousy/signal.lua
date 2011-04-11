@@ -30,15 +30,14 @@ local methods = {
     "remove_signals",
 }
 
-local function get_signals(object)
-    -- Check table supports signals
-    local signals = data[object]
-    assert(signals, "given object doesn't support signals")
-    return signals
+local function get_data(object)
+    local d = data[object]
+    assert(d, "object isn't setup for signals")
+    return d
 end
 
 function add_signal(object, signame, func)
-    local signals = get_signals(object)
+    local signals = get_data(object).signals
 
     -- Check signal name
     assert(type(signame) == "string", "invalid signame type: " .. type(signame))
@@ -56,14 +55,21 @@ function add_signal(object, signame, func)
 end
 
 function emit_signal(object, signame, ...)
-    local sigfuncs = get_signals(object)[signame] or {}
+    local d = get_data(object)
+    local sigfuncs = d.signals[signame] or {}
 
     if verbose then
-        io.stderr:write(string.format("D: lousy.signal: emit_signal: %q on %s\n", signame, tostring(object)))
+        io.stderr:write(string.format("D: lousy.signal: emit_signal: "
+            .. "%q on %s\n", signame, tostring(object)))
     end
 
     for _, sigfunc in ipairs(sigfuncs) do
-        local ret = { sigfunc(object, ...) }
+        local ret
+        if d.module then
+            ret = { sigfunc(...) }
+        else
+            ret = { sigfunc(object, ...) }
+        end
         if #ret > 0 and ret[1] ~= nil then
             return unpack(ret)
         end
@@ -72,29 +78,40 @@ end
 
 -- Remove a signame & function pair.
 function remove_signal(object, signame, func)
-    local sigfuncs = get_signals(object)[signame] or {}
+    local signals = get_data(object).signals
+    local sigfuncs = signals[signame] or {}
 
     for i, sigfunc in ipairs(sigfuncs) do
         if sigfunc == func then
-            return table.remove(sigfuncs, i)
+            table.remove(sigfuncs, i)
+            -- Remove empty sigfuncs table
+            if #sigfuncs == 0 then
+                signals[signame] = nil
+            end
+            return func
         end
     end
 end
 
 -- Remove all signal handlers with the given signame.
 function remove_signals(object, signame)
-    local signals = get_signals(object) or {}
+    local signals = get_data(object).signals
     signals[signame] = nil
 end
 
-function setup(object)
+function setup(object, module)
     assert(not data[object], "given object already setup for signals")
 
-    data[object] = {}
+    data[object] = { signals = {}, module = module }
 
-    for _, func in ipairs(methods) do
-        assert(not object[func], "signal object method conflict: " .. func)
-        object[func] = _M[func]
+    for _, fn in ipairs(methods) do
+        assert(not object[fn], "signal object method conflict: " .. fn)
+        if module then
+            local func = _M[fn]
+            object[fn] = function (...) func(object, ...) end
+        else
+            object[fn] = _M[fn]
+        end
     end
 
     return object

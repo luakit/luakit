@@ -1,7 +1,7 @@
 /*
- * luakit.h - luakit main functions
+ * clib/luakit.h - Generic functions for Lua scripts
  *
- * Copyright (C) 2010 Mason Larobina <mason.larobina@gmail.com>
+ * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,23 +18,14 @@
  *
  */
 
-#ifndef LUAKIT_LUAKIT_H
-#define LUAKIT_LUAKIT_H
+#ifndef LUAKIT_CLIB_LUAKIT_H
+#define LUAKIT_CLIB_LUAKIT_H
 
-#include <lua.h>
-#include "common/signal.h"
+/* lua luakit class for signals */
+lua_class_t luakit_class;
 
-typedef struct {
-    /* Path to the config file */
-    gchar *confpath;
-    /* Lua VM state */
-    lua_State *L;
-    /* global signals */
-    signal_t *signals;
-} Luakit;
-
-/* Global config/state object */
-extern Luakit luakit;
+void luakit_lib_setup(lua_State *L);
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

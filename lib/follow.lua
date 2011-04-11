@@ -1,8 +1,8 @@
----------------------------------------------------------
--- Vimperator-like link following script for luakit    --
--- (C) 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- (C) 2010 Mason Larobina  <mason.larobina@gmail.com> --
----------------------------------------------------------
+-------------------------------------------------------
+-- Vimperator-like link following script for luakit  --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
+-- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
+-------------------------------------------------------
 
 local ipairs, pairs = ipairs, pairs
 local table, string = table, string

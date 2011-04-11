@@ -1,7 +1,8 @@
----------------------------------------------------------------------------
--- @author Henning Hasemann &lt;hhasemann@web.de&gt;
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
----------------------------------------------------------------------------
+----------------------------------------------------------------
+-- Bookmark managing                                          --
+-- Copyright © 2010 Henning Hasemann <hhasemann@web.de>       --
+-- Copyright © 2010 Mason Larobina <mason.larobina@gmail.com> --
+----------------------------------------------------------------
 
 -- Grab environment we need
 local table = table
