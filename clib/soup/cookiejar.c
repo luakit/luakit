@@ -202,7 +202,7 @@ luaH_cookiejar_add_cookies(lua_State *L)
 
         /* insert cookies */
         for (GSList *p = cookies; p; p = g_slist_next(p))
-            soup_cookie_jar_add_cookie(sj, soup_cookie_copy(p->data));
+            soup_cookie_jar_add_cookie(sj, p->data);
 
         g_slist_free(cookies);
         j->silent = FALSE;
