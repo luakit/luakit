@@ -176,7 +176,7 @@ function open(d, w)
         if d.status == "finished" then
             t:stop()
             opening[d] = false
-            if _M:emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
+            if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
                 if w then
                     w:error(string.format("Can't open: %q (%s)", d.desination, d.mime_type))
                 end
