@@ -186,7 +186,7 @@ luaH_download_get_progress(lua_State *L, download_t *download)
 static gint
 luaH_download_get_mime_type(lua_State *L, download_t *download)
 {
-    GError *error;
+    GError *error = NULL;
     const gchar *destination = webkit_download_get_destination_uri(
             download->webkit_download);
     GFile *file = g_file_new_for_uri(destination);
