@@ -18,9 +18,10 @@
  *
  */
 
-#include "luah.h"
-#include "clib/widget.h"
 #include "common/signal.h"
+#include "clib/widget.h"
+#include "clib/luakit.h"
+#include "luah.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -29,7 +30,6 @@
 #include <webkit/webkit.h>
 
 /* setup luakit module signals */
-static lua_class_t luakit_class;
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
 /* Returns a string from X selection.

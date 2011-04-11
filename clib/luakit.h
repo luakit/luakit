@@ -21,6 +21,9 @@
 #ifndef LUAKIT_CLIB_LUAKIT_H
 #define LUAKIT_CLIB_LUAKIT_H
 
+/* lua luakit class for signals */
+lua_class_t luakit_class;
+
 void luakit_lib_setup(lua_State *L);
 
 #endif

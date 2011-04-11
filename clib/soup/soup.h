@@ -33,11 +33,12 @@ typedef struct {
     SoupSession *session;
     /* shared custom cookie jar */
     LuakitCookieJar *cookiejar;
-    /* soup signals table */
-    signal_t *signals;
 } soup_t;
 
 soup_t soupconf;
+
+/* lua soup class for signals */
+lua_class_t soup_class;
 
 void soup_lib_setup(lua_State *L);
 gint luaH_soup_push_uri(lua_State *L, SoupURI *uri);

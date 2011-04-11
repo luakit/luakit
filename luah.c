@@ -328,7 +328,7 @@ luaH_dofunction_on_error(lua_State *L)
     /* duplicate string error */
     lua_pushvalue(L, -1);
     /* emit error signal */
-    signal_object_emit(L, globalconf.signals, "debug::error", 1, 0);
+    signal_object_emit(L, luakit_class.signals, "debug::error", 1, 0);
 
     if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
     {
@@ -513,7 +513,7 @@ gint
 luaH_class_index_miss_property(lua_State *L, lua_object_t *obj)
 {
     (void) obj;
-    signal_object_emit(L, globalconf.signals, "debug::index::miss", 2, 0);
+    signal_object_emit(L, luakit_class.signals, "debug::index::miss", 2, 0);
     return 0;
 }
 
@@ -521,7 +521,7 @@ gint
 luaH_class_newindex_miss_property(lua_State *L, lua_object_t *obj)
 {
     (void) obj;
-    signal_object_emit(L, globalconf.signals, "debug::newindex::miss", 3, 0);
+    signal_object_emit(L, luakit_class.signals, "debug::newindex::miss", 3, 0);
     return 0;
 }
 

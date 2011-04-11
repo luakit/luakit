@@ -27,7 +27,6 @@
 #include <webkit/webkitwebview.h>
 
 /* setup soup module signals */
-static lua_class_t soup_class;
 LUA_CLASS_FUNCS(soup, soup_class);
 
 GHashTable *soup_properties = NULL;
@@ -67,7 +66,7 @@ soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
     /* emit soup property signal if found in properties table */
     if ((p = g_hash_table_lookup(soup_properties, ps->name))) {
         lua_State *L = globalconf.L;
-        signal_object_emit(L, soupconf.signals, p->signame, 0, 0);
+        signal_object_emit(L, soup_class.signals, p->signame, 0, 0);
     }
 }
 
@@ -195,7 +194,6 @@ soup_lib_setup(lua_State *L)
     soupconf.session = webkit_get_default_session();
     soup_session_add_feature(soupconf.session,
             (SoupSessionFeature*) soupconf.cookiejar);
-    soupconf.signals = signal_new();
 
     /* watch for property changes */
     g_signal_connect(G_OBJECT(soupconf.session), "notify",

@@ -41,8 +41,6 @@ typedef struct {
     gboolean verbose;
     /* Lua VM state */
     lua_State *L;
-    /* Global signals table */
-    signal_t *signals;
     /* Array of windows */
     GPtrArray *windows;
     /* Array of webviews */
@@ -52,4 +50,4 @@ typedef struct {
 luakit_t globalconf;
 
 #endif
-// vim: ft=c:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
