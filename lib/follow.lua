@@ -715,15 +715,20 @@ new_mode("follow_ignore", {
     any(function () end),
 })
 
-local function ignore_keys(w)
+local function ignore_keys(w, sig)
     if ignore_delay > 0 then
-        local ignore_timer = timer{interval=ignore_delay}
-        ignore_timer:add_signal("timeout", function (t)
-            w:set_mode()
-            t:stop()
-        end)
-        w:set_mode("follow_ignore")
-        ignore_timer:start()
+        if sig == "form-active" then
+            w:emit_form_root_active_signal(sig)
+        else
+            local ignore_timer = timer{interval=ignore_delay}
+            ignore_timer:add_signal("timeout", function (t)
+                t:stop()
+                w:set_mode()
+                if sig then w:emit_form_root_active_signal(sig) end
+            end)
+            w:set_mode("follow_ignore")
+            ignore_timer:start()
+        end
     end
 end
 
@@ -752,8 +757,7 @@ add_binds("follow", {
             if done then
                 local val = string.match(ret, "done (.*)")
                 local sig = s.func(val, s)
-                if sig then w:emit_form_root_active_signal(sig) end
-                ignore_keys(w)
+                ignore_keys(w, sig)
                 return
             end
         end
@@ -868,8 +872,7 @@ new_mode("follow", {
             ret = lousy.util.string.split(ret)
             local sig
             if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
-            if sig then w:emit_form_root_active_signal(sig) end
-            ignore_keys(w)
+            ignore_keys(w, sig)
         elseif active_hints == 0 then
             state.reselect = true
         end
