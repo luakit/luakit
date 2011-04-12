@@ -69,12 +69,11 @@ luaH_sqlite3_gc(lua_State *L)
 static gint
 luaH_sqlite3_set_filename(lua_State *L, sqlite3_t *sqlite)
 {
-    const gchar *filename = luaL_checkstring(L, -1);
-    sqlite->filename = g_strdup(filename);
     gchar *error;
+    const gchar *filename = luaL_checkstring(L, -1);
 
     /* open database */
-    if (sqlite3_open(sqlite->filename, &sqlite->db)) {
+    if (sqlite3_open(filename, &sqlite->db)) {
         sqlite3_close(sqlite->db);
         sqlite->db = NULL;
 
@@ -85,14 +84,20 @@ luaH_sqlite3_set_filename(lua_State *L, sqlite3_t *sqlite)
         lua_error(L);
     }
 
+    /* save filename */
+    sqlite->filename = g_strdup(filename);
+
     return 0;
 }
 
 static gint
 luaH_sqlite3_get_filename(lua_State *L, sqlite3_t *sqlite)
 {
-    lua_pushstring(L, sqlite->filename);
-    return 1;
+    if (sqlite->filename) {
+        lua_pushstring(L, sqlite->filename);
+        return 1;
+    }
+    return 0;
 }
 
 static gint
