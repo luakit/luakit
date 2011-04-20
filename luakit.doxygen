@@ -43,10 +43,11 @@ DISTRIBUTE_GROUP_DOC   = NO
 SUBGROUPING            = YES
 
 ALIASES += luastack="\par Lua Stack:"
-ALIASES += lvalue="- \em value "
-ALIASES += lparam="- \em param "
+ALIASES += lvalue="- \em value \c "
+ALIASES += lparam="- \em param \c "
 ALIASES += lreturn="- \em returns "
 ALIASES += lfield="- \em fields "
+ALIASES += lcode="\par Lua Example: \n \code"
 #---------------------------------------------------------------------------
 # Build related configuration options
 #---------------------------------------------------------------------------
