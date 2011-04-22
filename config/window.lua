@@ -364,12 +364,6 @@ window.methods = {
         end
     end,
 
-    -- Wrapper around luakit.set_selection that shows a notification
-    set_selection = function (w, text, selection)
-        luakit.set_selection(text, selection or "primary")
-        w:notify("Yanked: " .. text)
-    end,
-
     -- Shows a notification until the next keypress of the user.
     notify = function (w, msg, set_mode)
         if set_mode ~= false then w:set_mode() end

@@ -14,6 +14,7 @@ local webview = webview
 local downloads = require "downloads"
 local add_binds, new_mode = add_binds, new_mode
 local theme = theme
+local capi = { luakit = luakit }
 
 module("follow")
 
@@ -539,16 +540,16 @@ add_binds("normal", {
     buf("^;y$", function (w,b,m)
         w:start_follow("uri", "yank", function (uri)
             uri = string.gsub(uri, " ", "%%20")
-            w:set_selection(uri)
-            w:notify("Yanked: " .. uri)
+            capi.luakit.set_selection(uri)
+            w:notify("Yanked uri: " .. uri)
         end)
     end),
 
     -- Yank element description
     buf("^;Y$", function (w,b,m)
         w:start_follow("desc", "yank desc", function (desc)
-            w:set_selection(desc)
-            w:notify("Yanked: " .. desc)
+            capi.luakit.set_selection(desc)
+            w:notify("Yanked desc: " .. desc)
         end)
     end),
 
