@@ -305,9 +305,19 @@ luaH_luakit_get_special_dir(lua_State *L)
     return 1;
 }
 
-/* Spawns a command synchonously.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack (3).
+/** Executes a child synchronously (waits for the child to exit before
+ * returning). The exit status and all stdout and stderr output from the
+ * child is returned.
+ * \see http://developer.gnome.org/glib/stable/glib-Spawning-Processes.html#g-spawn-command-line-sync
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack (3).
+ *
+ * \luastack
+ * \lparam cmd The command to run (from a shell).
+ * \lreturn The exit status of the child.
+ * \lreturn The childs stdout.
+ * \lreturn The childs stderr.
  */
 static gint
 luaH_luakit_spawn_sync(lua_State *L)
@@ -328,15 +338,21 @@ luaH_luakit_spawn_sync(lua_State *L)
     sigact.sa_flags=0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
+
     g_spawn_command_line_sync(command, &_stdout, &_stderr, &rv, &e);
+
+    /* restore SIGCHLD handler */
     if (sigaction(SIGCHLD, &oldact, NULL))
         fatal("Can't restore SIGCHLD handler");
 
+    /* raise error on spawn function error */
     if(e) {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
     }
+
+    /* push exit status, stdout, stderr on to stack and return */
     lua_pushinteger(L, WEXITSTATUS(rv));
     lua_pushstring(L, _stdout);
     lua_pushstring(L, _stderr);
@@ -352,7 +368,8 @@ luaH_luakit_spawn_sync(lua_State *L)
  * Exit number: When normal exit happened, the exit code of the process. When
  *              finished by a signal, the signal number. -1 otherwise.
  */
-void async_callback_handler(GPid pid, gint status, gpointer cb_ref) {
+void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
+{
     lua_State *L = globalconf.L;
     /* push callback function onto stack */
     luaH_object_push(L, cb_ref);
@@ -378,10 +395,38 @@ void async_callback_handler(GPid pid, gint status, gpointer cb_ref) {
     g_spawn_close_pid(pid);
 }
 
-/* Spawns a command.
- * \param L The Lua VM state. Contains a Lua function, the callback handler to use
- * when the command finishes.
- * \return The number of elements pushed on stack (0).
+/** Executes a child program asynchronously (your program will not block waiting
+ * for the child to exit).
+ *
+ * \see \ref async_callback_handler
+ * \see http://developer.gnome.org/glib/stable/glib-Shell-related-Utilities.html#g-shell-parse-argv
+ * \see http://developer.gnome.org/glib/stable/glib-Spawning-Processes.html#g-spawn-async
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack (0).
+ *
+ * \luastack
+ * \lparam command  The command to execute a child program.
+ * \lparam callback Optional Lua callback function.
+ * \lreturn The child pid.
+ *
+ * \lcode
+ * local editor = "gvim"
+ * local filename = "config"
+ *
+ * function editor_callback(exit_reason, exit_status)
+ *     if exit_reason == "exit" then
+ *         print(string.format("Contents of %q:", filename))
+ *         for line in io.lines(filename) do
+ *             print(line)
+ *         end
+ *     else
+ *         print("Editor exited with status: " .. exit_status)
+ *     end
+ * end
+ *
+ * luakit.spawn(string.format("%s %q", editor, filename), editor_callback)
+ * \endcode
  */
 static gint
 luaH_luakit_spawn(lua_State *L)
@@ -393,38 +438,38 @@ luaH_luakit_spawn(lua_State *L)
     gchar **argv = NULL;
     gpointer cb_ref = NULL;
 
-    /* parse arguments */
-    g_shell_parse_argv(command, &argc, &argv, &e);
-    if (e) {
-        lua_pushstring(L, e->message);
-        g_clear_error(&e);
-        g_strfreev(argv);
-        lua_error(L);
-    }
-
     /* check callback function type */
     if (lua_gettop(L) > 1 && !lua_isnil(L, 2)) {
-        if (lua_type(L, 2) == LUA_TFUNCTION)
+        if (lua_isfunction(L, 2))
             cb_ref = luaH_object_ref(L, 2);
         else
             luaL_typerror(L, 2, lua_typename(L, LUA_TFUNCTION));
     }
 
-    /* spawn command */
-    g_spawn_async(NULL, argv, NULL,
-            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
-            &e);
-    g_strfreev(argv);
-    if(e) {
-        luaH_object_unref(L, cb_ref);
-        lua_pushstring(L, e->message);
-        g_clear_error(&e);
-        lua_error(L);
-    }
+    /* parse arguments */
+    if (!g_shell_parse_argv(command, &argc, &argv, &e))
+        goto spawn_error;
 
+    /* spawn command */
+    if (!g_spawn_async(NULL, argv, NULL,
+            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
+            &e))
+        goto spawn_error;
+
+    /* attach users Lua callback */
     if (cb_ref)
         g_child_watch_add(pid, async_callback_handler, cb_ref);
 
+    g_strfreev(argv);
+    lua_pushnumber(L, pid);
+    return 1;
+
+spawn_error:
+    luaH_object_unref(L, cb_ref);
+    lua_pushstring(L, e->message);
+    g_clear_error(&e);
+    g_strfreev(argv);
+    lua_error(L);
     return 0;
 }
 
