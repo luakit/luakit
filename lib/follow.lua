@@ -4,6 +4,7 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
 -------------------------------------------------------
 
+local print = print
 local ipairs, pairs = ipairs, pairs
 local table, string = table, string
 local tonumber, tostring = tonumber, tostring
@@ -100,6 +101,16 @@ window.follow = (function () {
         return elements;
     }
 
+    function createElement(tag) {
+        var element = document.createElement(tag);
+        // This fails on some sites, need to use xhtml namespace there
+        if (!element.style) {
+            var ns = document.getElementsByTagName('html')[0].getAttribute('xmlns') || "http://www.w3.org/1999/xhtml"
+            element = document.createElementNS(ns, tag);
+        }
+        return element;
+    }
+
     // Hint class. Wraps data and functions related to hint manipulation.
     function Hint(element) {
         this.element = element;
@@ -107,7 +118,7 @@ window.follow = (function () {
 
         // Hint creation helper functions.
         function createSpan(hint, h, v) {
-            var span = document.createElement("span");
+            var span = createElement("span");
             var leftpos, toppos;
             if (isFrame(hint.element)) {
                 leftpos = document.defaultView.scrollX;
@@ -225,19 +236,19 @@ window.follow = (function () {
         // Returns true on success. If false is returned, the other hinting functions
         // cannot be used safely.
         init: function () {
-            if (!document.body || !document.activeElement) {
+            if (!document.body || !/interactive|loaded|complete/.test(document.readyState)) {
                 return;
             }
             follow.hints = [];
             follow.activeHint = null;
             if (!follow.tickParent) {
-                var tickParent = document.createElement("div");
+                var tickParent = createElement("div");
                 tickParent.id = "luakit_follow_tickParent";
                 document.body.appendChild(tickParent);
                 follow.tickParent = tickParent;
             }
             if (!follow.overlayParent) {
-                var overlayParent = document.createElement("div");
+                var overlayParent = createElement("div");
                 overlayParent.id = "luakit_follow_overlayParent";
                 document.body.appendChild(overlayParent);
                 follow.overlayParent = overlayParent;
@@ -269,7 +280,9 @@ window.follow = (function () {
 
         // Shows all hints and assigns them the given IDs.
         show: function (ids) {
-            document.activeElement.blur();
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
             for (var i = 0; i < ids.length; ++i) {
                 var hint = follow.hints[i];
                 hint.setId(ids[i]);
@@ -645,7 +658,7 @@ add_binds("normal", {
 -- Check if following is possible safely
 local function is_ready(w)
     for _, f in ipairs(w:get_current().frames) do
-        local ret = w:eval_js("!!(document.activeElement && window.follow)", "(follow.lua)", f)
+        local ret = w:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", "(follow.lua)", f)
         if ret ~= "true" then return false end
     end
     return true
