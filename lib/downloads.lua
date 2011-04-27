@@ -36,28 +36,36 @@ local capi = {
 --- Provides internal support for downloads.
 module("downloads")
 
--- Track speed data for downloads by weak table
-local speeds = setmetatable({}, { __mode = "k" })
--- Track which downloads are being opened
+--- The downloads module.
+-- @field opening Tracks which downloads are being opened.
+-- @field downloads The list of active downloads.
+-- @field default_dir The default directory for a new download.
+-- @class table
+-- @name downloads
 opening = setmetatable({}, { __mode = "k" })
-
---- The list of active download objects.
 downloads = {}
+default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
 
--- Setup signals on downloads module
+-- Tracks speed data for downloads by weak table.
+local speeds = setmetatable({}, { __mode = "k" })
+
+-- Setup signals on downloads module.
 lousy.signal.setup(_M, true)
 
--- Calculates a fancy name for a download to show to the user.
+--- Calculates a fancy name for a download to show to the user.
+-- @param d The download.
 function get_basename(d)
     return string.match(d.destination or "", ".*/([^/]*)$") or "no filename"
 end
 
--- Checks whether the download is in created or started state.
+--- Checks whether the download is in created or started state.
+-- @param d The download.
 function is_running(d)
     return d.status == "created" or d.status == "started"
 end
 
--- Calculates the speed of a download in b/s.
+--- Calculates the speed of a download in b/s.
+-- @param d The download.
 function get_speed(d)
     local s = speeds[d] or {}
     if s.current_size then
@@ -104,20 +112,19 @@ status_timer:add_signal("timeout", function ()
     end
 end)
 
---- The default directory for a new download.
-default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
-
 --- Adds a download.
 -- Tries to apply one of the <code>rules</code>. If that fails,
 -- asks the user to choose a location with a save dialog.
--- @param arg The uri or download or webkit download object.
+-- @param arg The uri or download or webkit download.
 -- @param opts Download options.
+--      - autostart: Whether to start the download right away.
+--      - window: A window to display the save-as dialog over.
 -- @return <code>true</code> if a download was started
 function add(arg, opts)
     opts = opts or {}
     local d = (type(arg) == "string" and capi.download{uri=arg}) or arg
     assert(type(d) == "download",
-        string.format("expected uri or download object, got: %s", type(d) or "nil"))
+        string.format("expected uri or download, got: %s", type(d) or "nil"))
 
     -- Emit signal to determine the download location.
     local file = _M.emit_signal("download-location", d.uri, d.suggested_filename)
@@ -161,11 +168,12 @@ local function get_download(d)
     if type(d) == "number" then
         d = assert(downloads[d], "invalid index")
     end
-    assert(type(d) == "download", "invalid download object")
+    assert(type(d) == "download", "invalid download")
     return d
 end
 
 --- Opens the download at the given index after completion.
+-- @param d The download or its index.
 -- @param i The index of the download to open.
 -- @param w A window to show notifications in, if necessary.
 function open(d, w)
@@ -186,17 +194,19 @@ function open(d, w)
     t:start()
 end
 
--- Wrapper around download class cancel method.
+--- Cancels the download.
+-- @param d The download or its index.
 function cancel(d)
     d = get_download(d)
     d:cancel()
 end
 
--- Remove the given download object from the downloads table and cancel it if
+--- Remove the given download from the downloads table and cancel it if.
 -- necessary.
+-- @param d The download or its index.
 function delete(d)
     d = get_download(d)
-    -- Remove download object from downloads table
+    -- Remove download from downloads table
     for i, v in ipairs(downloads) do
         if v == d then
             table.remove(downloads, i)
@@ -208,6 +218,7 @@ function delete(d)
 end
 
 -- Removes and re-adds the given download.
+-- @param d The download or its index.
 function restart(d)
     d = get_download(d)
     local new_d = add(d.uri)
@@ -360,7 +371,7 @@ add_binds("downloadlist", lousy.util.table.join({
             restart(row.dl)
         end
         -- HACK: Bad way of refreshing download list to show new items
-        -- (I.e. the new download object from the restart)
+        -- (I.e. the new download from the restart)
         w:set_mode("downloadlist")
     end),
 
