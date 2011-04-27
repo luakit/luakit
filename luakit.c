@@ -28,6 +28,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 #include <errno.h>
+#include <locale.h>
 
 static void sigchld(int sigint);
 
@@ -143,6 +144,12 @@ main(gint argc, gchar *argv[]) {
     sigact.sa_flags = SA_NOCLDSTOP;
     if (sigaction(SIGCHLD, &sigact, NULL))
         fatal("Can't install SIGCHLD handler");
+
+    /* set numeric locale to C (required for compatibility with
+       LuaJIT and luakit scripts) */
+    gtk_set_locale();
+    gtk_disable_setlocale();
+    setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */
     uris = parseopts(argc, argv, &nonblock);

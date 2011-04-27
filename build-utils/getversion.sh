@@ -32,4 +32,4 @@ echo "ERROR: Commit hash detection failure. Dear packager, please figure out"\
 
 exit 2
 
-# vim: ft=sh:et:sw=4:ts=8:sts=4:enc=utf-8:tw=80
+# vim: ft=sh:et:sw=4:ts=8:sts=4:tw=80

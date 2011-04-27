@@ -71,10 +71,8 @@ luaH_cookie_push(lua_State *L, SoupCookie *c)
 static SoupCookie*
 cookie_new_from_table(lua_State *L, gint idx, gchar **error)
 {
-    SoupCookie *cookie = NULL;
     SoupDate *date;
-    const gchar *name, *value, *domain, *path;
-    name = value = domain = path = NULL;
+    const gchar *name = NULL, *value = NULL, *domain = NULL, *path = NULL;
     gboolean secure, http_only;
     gint expires;
 
@@ -89,7 +87,7 @@ cookie_new_from_table(lua_State *L, gint idx, gchar **error)
         return NULL;
     }
 
-#define IS_STRING  (lua_isstring(L, -1)  || lua_isnumber(L, -1))
+#define IS_STRING  (lua_isstring(L, -1))
 #define IS_BOOLEAN (lua_isboolean(L, -1) || lua_isnil(L, -1))
 #define IS_NUMBER  (lua_isnumber(L, -1))
 
@@ -114,29 +112,30 @@ cookie_new_from_table(lua_State *L, gint idx, gchar **error)
     GET_PROP(http_only, boolean, IS_BOOLEAN)
     GET_PROP(expires,   number,  IS_NUMBER)
 
-#undef IS_STRING
-#undef IS_BOOLEAN
-#undef IS_NUMBER
-#undef GET_PROP
-
     /* create soup cookie */
-    if ((cookie = soup_cookie_new(name, value, domain, path, expires))) {
-        soup_cookie_set_secure(cookie, secure);
-        soup_cookie_set_http_only(cookie, http_only);
+    SoupCookie *cookie = soup_cookie_new(name, value, domain, path, 0);
 
-        /* set real expiry date from unixtime */
-        if (expires > 0) {
-            date = soup_date_new_from_time_t((time_t) expires);
-            soup_cookie_set_expires(cookie, date);
-            soup_date_free(date);
-        }
-
-        return cookie;
+    if (!cookie) {
+        warn("cookie creation failed (domain %s, path %s, name %s, value %s, "
+                "http_only %d, secure %d, expires %d)", domain, path, name,
+                value, http_only, secure, expires);
+        return NULL;
     }
 
-    /* soup cookie creation failed */
-    *error = g_strdup_printf("soup cookie creation failed");
-    return NULL;
+    soup_cookie_set_secure(cookie, secure);
+    soup_cookie_set_http_only(cookie, http_only);
+
+    /* set expiry date from unixtime */
+    if (expires > 0) {
+        date = soup_date_new_from_time_t((time_t) expires);
+        soup_cookie_set_expires(cookie, date);
+        soup_date_free(date);
+
+    /* set session cookie */
+    } else if (expires == -1)
+        soup_cookie_set_max_age(cookie, expires);
+
+    return cookie;
 }
 
 static GSList*
@@ -144,7 +143,7 @@ cookies_from_table(lua_State *L, gint idx)
 {
     GSList *cookies = NULL;
     SoupCookie *cookie;
-    gchar *error;
+    gchar *error = NULL;
 
     /* bring a copy of the table to the top of the stack */
     lua_pushvalue(L, idx);

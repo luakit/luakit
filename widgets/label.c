@@ -131,6 +131,7 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
         tmp = luaL_checklstring(L, 3, &len);
         font = pango_font_description_from_string(tmp);
         gtk_widget_modify_font(GTK_WIDGET(w->widget), font);
+        pango_font_description_free(font);
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
         break;
 

@@ -45,9 +45,9 @@ typedef struct {
     GPtrArray *windows;
     /* Array of webviews */
     GPtrArray *webviews;
-} luakit_t;
+} globalconf_t;
 
-luakit_t globalconf;
+globalconf_t globalconf;
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

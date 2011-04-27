@@ -38,6 +38,8 @@ module("downloads")
 
 -- Track speed data for downloads by weak table
 local speeds = setmetatable({}, { __mode = "k" })
+-- Track which downloads are being opened
+opening = setmetatable({}, { __mode = "k" })
 
 --- The list of active download objects.
 downloads = {}
@@ -169,9 +171,11 @@ end
 function open(d, w)
     d = get_download(d)
     local t = capi.timer{interval=1000}
+    opening[d] = true
     t:add_signal("timeout", function (t)
         if d.status == "finished" then
             t:stop()
+            opening[d] = false
             if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
                 if w then
                     w:error(string.format("Can't open: %q (%s)", d.desination, d.mime_type))

@@ -160,7 +160,7 @@ webview.init_funcs = {
             -- Get domain
             local domain = lousy.uri.parse(v.uri).host
             -- Strip leading www.
-            domain = string.match(domain, "^www%.(.+)") or domain
+            domain = string.match(domain or "", "^www%.(.+)") or domain or "all"
             -- Build list of domain props tables to join & load.
             -- I.e. for luakit.org load .luakit.org, luakit.org, .org
             local props = {domain_props.all or {}, domain_props[domain] or {}}

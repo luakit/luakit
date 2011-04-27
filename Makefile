@@ -51,8 +51,11 @@ apidoc: luadoc/luakit.lua
 	mkdir -p apidocs
 	luadoc --nofiles -d apidocs luadoc/* lib/*
 
+doc: globalconf.h $(THEAD) $(TSRC)
+	doxygen -s luakit.doxygen
+
 clean:
-	rm -rf apidocs luakit $(OBJS) $(TSRC) $(THEAD) globalconf.h luakit.1
+	rm -rf apidocs doc luakit $(OBJS) $(TSRC) $(THEAD) globalconf.h luakit.1
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
@@ -81,4 +84,4 @@ uninstall:
 	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
 newline: options;@echo
-.PHONY: all clean options install newline apidoc
+.PHONY: all clean options install newline apidoc doc
