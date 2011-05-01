@@ -16,15 +16,106 @@ local add_binds, new_mode = add_binds, new_mode
 local theme = theme
 local capi = { luakit = luakit }
 
+--- Provides link following.
 module("follow")
 
--- Should we sort follow labels? Not sorting can help reading labels on high
--- link density sites.
+--- The follow module.
+-- @field sort_labels If <code>true</code>, the follow hints will be sorted.
+--  <br> Not sorting can help reading labels on high link density sites.
+-- @field reverse_labels If <code>true</code>, the follow hints will be reversed.
+--  <br> This sometimes equates to less key presses.
+-- @field selectors A hash of <code>mode = selector</code>.
+--  <br> <code>mode</code> is the name of a follow mode.
+--  <br> <code>selector</code> is a CSS selector that indicates all elements
+--  that can be followed.
+-- @field evaluators A hash of <code>mode = evaluator</code>
+--  <br> <code>mode</code> is the name of a follow mode.
+--  <br> <code>evaluator</code> is a javascript function that gets the element
+--  that was selected for following and performs the following. Optionally, it
+--  may return <code>"form-active"</code> or <code>"root-active"</code>.
+-- @type table
+-- @name follow
 sort_labels = true
-
--- Reverse labels (sometimes equates to less key presses)
 reverse_labels = true
 
+--- Selectors for the different modes.
+-- body selects frames (this is special magic to avoid cross-domain problems)
+selectors = {
+    followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
+    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
+    uri         = 'a, area, body',
+    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
+    image       = 'img, input[type=image]',
+}
+
+--- Evaluators for the different modes
+evaluators = {
+    -- Click the element & return form/root active signals
+    follow = [=[
+        function (element) {
+            var tag = element.tagName.toLowerCase();
+            if (tag === "input" || tag === "textarea" ) {
+                var type = element.type.toLowerCase();
+                if (type === "radio" || type === "checkbox") {
+                    element.checked = !element.checked;
+                } else if (type === "submit" || type === "reset" || type  === "button") {
+                    follow.click(element);
+                } else {
+                    element.focus();
+                }
+            } else {
+                follow.click(element);
+            }
+            if (follow.isEditable(element)) {
+                return "form-active";
+            } else {
+                return "root-active";
+            }
+        }]=],
+    -- Return the uri.
+    uri = [=[
+        function (element) {
+            return element.src || element.href || element.location;
+        }]=],
+    -- Return image location.
+    src = [=[
+        function (element) {
+            return element.src;
+        }]=],
+    -- Return title or alt tag text.
+    desc = [=[
+        function (element) {
+            return element.title || element.alt || "";
+        }]=],
+    -- Focus the element.
+    focus = [=[
+        function (element) {
+            element.focus();
+            if (follow.isEditable(element)) {
+                return "form-active";
+            } else {
+                return "root-active";
+            }
+        }]=],
+}
+
+--- Table of modes and their selectors & evaulator functions.
+local modes = {}
+
+-- Build mode table
+for _, t in ipairs({
+  -- Follow mode,  Selector name,  Evaluator name
+    {"follow",     "followable",   "follow"      },
+    {"uri",        "uri",          "uri"         },
+    {"desc",       "desc",         "desc"        },
+    {"focus",      "focusable",    "focus"       },
+    {"image",      "image",        "src"         },
+}) do
+    local mode, selector, evaluator = unpack(t)
+    modes[mode] = { selector = selector, evaluator = evaluator }
+end
+
+-- Clears all follow stuff from the page.
 local clear_js = [=[
 // Remove an element from its parentNode.
 var unlink = function (element) {
@@ -135,7 +226,7 @@ window.follow = (function () {
             tick.style.border = follow.theme.tick_border;
             tick.style.zIndex = 10001;
             tick.style.visibility = 'visible';
-            tick.addEventListener('click', function() { click(tick.element); }, false );
+            tick.addEventListener('click', function () { click(tick.element); }, false );
             return tick;
         }
 
@@ -154,7 +245,7 @@ window.follow = (function () {
                 overlay.style.border = follow.theme.border;
                 overlay.style.backgroundColor = follow.theme.normal_bg;
             }
-            overlay.addEventListener('click', function() { click(hint.element); }, false );
+            overlay.addEventListener('click', function () { click(hint.element); }, false );
             return overlay;
         }
 
@@ -242,7 +333,7 @@ window.follow = (function () {
         },
 
         // Removes all hints and resets the system to default.
-        clear: function() {
+        clear: function () {
             {clear}
             follow.init();
         },
@@ -429,83 +520,6 @@ local function get_theme()
     return lousy.util.table.join(default_theme, theme.follow or {})
 end
 
---- Selectors for the different modes
--- body selects frames (this is special magic to avoid cross-domain problems)
-selectors = {
-    followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
-    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
-    uri         = 'a, area, body',
-    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
-    image       = 'img, input[type=image]',
-}
-
---- Evaluators for the different modes
-evaluators = {
-    -- Click the element & return form/root active signals
-    follow = [=[
-        function(element) {
-            var tag = element.tagName.toLowerCase();
-            if (tag === "input" || tag === "textarea" ) {
-                var type = element.type.toLowerCase();
-                if (type === "radio" || type === "checkbox") {
-                    element.checked = !element.checked;
-                } else if (type === "submit" || type === "reset" || type  === "button") {
-                    follow.click(element);
-                } else {
-                    element.focus();
-                }
-            } else {
-                follow.click(element);
-            }
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
-        }]=],
-    -- Return the uri.
-    uri = [=[
-        function (element) {
-            return element.src || element.href || element.location;
-        }]=],
-    -- Return image location.
-    src = [=[
-        function (element) {
-            return element.src;
-        }]=],
-    -- Return title or alt tag text.
-    desc = [=[
-        function (element) {
-            return element.title || element.alt || "";
-        }]=],
-    -- Focus the element.
-    focus = [=[
-        function (element) {
-            element.focus();
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
-        }]=],
-}
-
---- Table of modes and their selectors & evaulator functions.
-modes = {}
-
--- Build mode table
-for _, t in ipairs({
-  -- Follow mode,  Selector name,  Evaluator name
-    {"follow",     "followable",   "follow"      },
-    {"uri",        "uri",          "uri"         },
-    {"desc",       "desc",         "desc"        },
-    {"focus",      "focusable",    "focus"       },
-    {"image",      "image",        "src"         },
-}) do
-    local mode, selector, evaluator = unpack(t)
-    modes[mode] = { selector = selector, evaluator = evaluator }
-end
-
 -- Add webview methods
 webview.methods.start_follow = function (view, w, mode, prompt, func, count)
     w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
@@ -648,8 +662,12 @@ local function is_ready(w)
     return true
 end
 
---- Generates the labels for the hints. Must return an array of strings with the
--- given size.
+--- Generates the labels for the hints.
+-- Can be overridden to have different labels, e.g. with letters instead of
+-- numbers.
+--
+-- @param size How many labels to generate
+-- @return An array of strings with the given size.
 function make_labels(size)
     local digits = 1
     while true do
@@ -676,6 +694,22 @@ function make_labels(size)
 end
 
 --- Parses the user's input into a match string and an ID.
+-- Can be overriden to have a different matching procedure, e.g. when
+-- <code>make_labels</code> has been overridden.
+--
+-- <br><br><h3>Example</h3>
+--
+-- To only perform the following on the follow labels and not on the text
+-- content of the elements, you could use
+--
+-- <pre>follow.parse_input = function (text)
+--  <br>  return "", text
+--  <br>end
+-- </pre>
+--
+-- @param text The input of the user.
+-- @return A string that is used to filter the hints by their text content.
+-- @return An string that is used to filter the hints by their IDs.
 function parse_input(text)
     return string.match(text, "^(.-)(%d*)$")
 end

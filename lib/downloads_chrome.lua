@@ -10,11 +10,25 @@ local chrome = require("chrome")
 local tostring = tostring
 local capi = { timer = timer }
 
+--- Adds support for a downloads chrome page under luakit://downloads.
 module("downloads.chrome")
 
 local pattern = "^luakit://downloads/?"
 
---- Template for a download.
+--- The downloads chrome module.
+-- @field html_template HTML template for the chrome page.
+--  <br> Use <code>{style}</code> to insert the CSS from <code>html_style</code>.
+--  <br> Use <code>{script}</code> to insert the JS from <code>download_js_template</code>.
+--  <br> Use <code>{downloads}</code> to insert the HTML from <code>download_template</code>.
+-- @field html_style CSS template for the chrome page.
+-- @field download_template HTML template for each download.
+--  <br> Use <code>{modeline}</code>, <code>{status}</code>, <code>{id}</code>,
+--  <code>{name}</code> to insert data of the download.
+-- @field download_js_template JavaScript template for each download.
+--  <br> Use {opening} to test if the download is being opened.
+-- @class table
+-- @name downloads.chrome
+
 download_template = [==[
 <div class="download {status}"><h1>{id} {name}</h1>
 <span class="modeline">{modeline}</span>&nbsp;&nbsp;
@@ -152,9 +166,8 @@ local function inner_html()
     return table.concat(rows, "\n"), table.concat(js, "\n")
 end
 
---- Compiles the HTML for the download page.
--- @return The HTML to render.
-function html()
+-- Compiles the HTML for the download page.
+local function html()
     local inner_html, inner_js = inner_html()
     local html_subs = {
         style = html_style,
@@ -182,8 +195,7 @@ refresh_timer:add_signal("timeout", function ()
     if not continue then refresh_timer:stop() end
 end)
 
---- Shows the chrome page in the given view.
--- @param view The view to show the page in.
+-- Registers the download page with the chrome library.
 chrome.add("downloads/", function (view, uri)
     view:load_string(html(), tostring(uri))
     -- small hack to achieve a one time signal
