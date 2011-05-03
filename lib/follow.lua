@@ -4,6 +4,7 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
 -------------------------------------------------------
 
+local print = print
 local ipairs, pairs = ipairs, pairs
 local table, string = table, string
 local tonumber, tostring = tonumber, tostring
@@ -14,16 +15,117 @@ local webview = webview
 local downloads = require "downloads"
 local add_binds, new_mode = add_binds, new_mode
 local theme = theme
+local timer = timer
 
+--- Provides link following.
 module("follow")
 
--- Should we sort follow labels? Not sorting can help reading labels on high
--- link density sites.
+--- The follow module.
+-- @field sort_labels If <code>true</code>, the follow hints will be sorted.
+--  <br> Not sorting can help reading labels on high link density sites.
+--  <br> <em>Default:</em> true
+-- @field reverse_labels If <code>true</code>, the follow hints will be reversed.
+--  <br> This sometimes equates to less key presses.
+--  <br> <em>Default:</em> true
+-- @field ignore_delay Determines how long input from the user should be ignored
+--  after a successful follow.
+--  <br> This helps avoid accidentially triggering normal mode binds after a
+--  follow.
+--  <br> The duration is given in milliseconds.
+--  <br> <em>Default:</em> 500
+-- @field selectors A hash of <code>mode = selector</code>.
+--  <br> <code>mode</code> is the name of a follow mode.
+--  <br> <code>selector</code> is a CSS selector that indicates all elements
+--  that can be followed.
+-- @field evaluators A hash of <code>mode = evaluator</code>
+--  <br> <code>mode</code> is the name of a follow mode.
+--  <br> <code>evaluator</code> is a javascript function that gets the element
+--  that was selected for following and performs the following. Optionally, it
+--  may return <code>"form-active"</code> or <code>"root-active"</code>.
+-- @type table
+-- @name follow
 sort_labels = true
-
--- Reverse labels (sometimes equates to less key presses)
+ignore_delay = 500
 reverse_labels = true
 
+--- Selectors for the different modes.
+-- body selects frames (this is special magic to avoid cross-domain problems)
+selectors = {
+    followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
+    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
+    uri         = 'a, area, body',
+    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
+    image       = 'img, input[type=image]',
+}
+
+--- Evaluators for the different modes
+evaluators = {
+    -- Click the element & return form/root active signals
+    follow = [=[
+        function (element) {
+            var tag = element.tagName.toLowerCase();
+            if (tag === "input" || tag === "textarea" ) {
+                var type = element.type.toLowerCase();
+                if (type === "radio" || type === "checkbox") {
+                    element.checked = !element.checked;
+                } else if (type === "submit" || type === "reset" || type  === "button") {
+                    follow.click(element);
+                } else {
+                    element.focus();
+                }
+            } else {
+                follow.click(element);
+            }
+            if (follow.isEditable(element)) {
+                return "form-active";
+            } else {
+                return "root-active";
+            }
+        }]=],
+    -- Return the uri.
+    uri = [=[
+        function (element) {
+            return element.src || element.href || element.location;
+        }]=],
+    -- Return image location.
+    src = [=[
+        function (element) {
+            return element.src;
+        }]=],
+    -- Return title or alt tag text.
+    desc = [=[
+        function (element) {
+            return element.title || element.alt || "";
+        }]=],
+    -- Focus the element.
+    focus = [=[
+        function (element) {
+            element.focus();
+            if (follow.isEditable(element)) {
+                return "form-active";
+            } else {
+                return "root-active";
+            }
+        }]=],
+}
+
+--- Table of modes and their selectors & evaulator functions.
+local modes = {}
+
+-- Build mode table
+for _, t in ipairs({
+  -- Follow mode,  Selector name,  Evaluator name
+    {"follow",     "followable",   "follow"      },
+    {"uri",        "uri",          "uri"         },
+    {"desc",       "desc",         "desc"        },
+    {"focus",      "focusable",    "focus"       },
+    {"image",      "image",        "src"         },
+}) do
+    local mode, selector, evaluator = unpack(t)
+    modes[mode] = { selector = selector, evaluator = evaluator }
+end
+
+-- Clears all follow stuff from the page.
 local clear_js = [=[
 // Remove an element from its parentNode.
 var unlink = function (element) {
@@ -96,6 +198,16 @@ window.follow = (function () {
         return elements;
     }
 
+    function createElement(tag) {
+        var element = document.createElement(tag);
+        // This fails on some sites, need to use xhtml namespace there
+        if (!element.style) {
+            var ns = document.getElementsByTagName('html')[0].getAttribute('xmlns') || "http://www.w3.org/1999/xhtml"
+            element = document.createElementNS(ns, tag);
+        }
+        return element;
+    }
+
     // Hint class. Wraps data and functions related to hint manipulation.
     function Hint(element) {
         this.element = element;
@@ -103,7 +215,7 @@ window.follow = (function () {
 
         // Hint creation helper functions.
         function createSpan(hint, h, v) {
-            var span = document.createElement("span");
+            var span = createElement("span");
             var leftpos, toppos;
             if (isFrame(hint.element)) {
                 leftpos = document.defaultView.scrollX;
@@ -134,7 +246,7 @@ window.follow = (function () {
             tick.style.border = follow.theme.tick_border;
             tick.style.zIndex = 10001;
             tick.style.visibility = 'visible';
-            tick.addEventListener('click', function() { click(tick.element); }, false );
+            tick.addEventListener('click', function () { click(tick.element); }, false );
             return tick;
         }
 
@@ -153,7 +265,7 @@ window.follow = (function () {
                 overlay.style.border = follow.theme.border;
                 overlay.style.backgroundColor = follow.theme.normal_bg;
             }
-            overlay.addEventListener('click', function() { click(hint.element); }, false );
+            overlay.addEventListener('click', function () { click(hint.element); }, false );
             return overlay;
         }
 
@@ -221,19 +333,19 @@ window.follow = (function () {
         // Returns true on success. If false is returned, the other hinting functions
         // cannot be used safely.
         init: function () {
-            if (!document.body || !document.activeElement) {
+            if (!document.body || !/interactive|loaded|complete/.test(document.readyState)) {
                 return;
             }
             follow.hints = [];
             follow.activeHint = null;
             if (!follow.tickParent) {
-                var tickParent = document.createElement("div");
+                var tickParent = createElement("div");
                 tickParent.id = "luakit_follow_tickParent";
                 document.body.appendChild(tickParent);
                 follow.tickParent = tickParent;
             }
             if (!follow.overlayParent) {
-                var overlayParent = document.createElement("div");
+                var overlayParent = createElement("div");
                 overlayParent.id = "luakit_follow_overlayParent";
                 document.body.appendChild(overlayParent);
                 follow.overlayParent = overlayParent;
@@ -241,7 +353,7 @@ window.follow = (function () {
         },
 
         // Removes all hints and resets the system to default.
-        clear: function() {
+        clear: function () {
             {clear}
             follow.init();
         },
@@ -265,7 +377,9 @@ window.follow = (function () {
 
         // Shows all hints and assigns them the given IDs.
         show: function (ids) {
-            document.activeElement.blur();
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
             for (var i = 0; i < ids.length; ++i) {
                 var hint = follow.hints[i];
                 hint.setId(ids[i]);
@@ -428,83 +542,6 @@ local function get_theme()
     return lousy.util.table.join(default_theme, theme.follow or {})
 end
 
---- Selectors for the different modes
--- body selects frames (this is special magic to avoid cross-domain problems)
-selectors = {
-    followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
-    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
-    uri         = 'a, area, body',
-    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
-    image       = 'img, input[type=image]',
-}
-
---- Evaluators for the different modes
-evaluators = {
-    -- Click the element & return form/root active signals
-    follow = [=[
-        function(element) {
-            var tag = element.tagName.toLowerCase();
-            if (tag === "input" || tag === "textarea" ) {
-                var type = element.type.toLowerCase();
-                if (type === "radio" || type === "checkbox") {
-                    element.checked = !element.checked;
-                } else if (type === "submit" || type === "reset" || type  === "button") {
-                    follow.click(element);
-                } else {
-                    element.focus();
-                }
-            } else {
-                follow.click(element);
-            }
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
-        }]=],
-    -- Return the uri.
-    uri = [=[
-        function (element) {
-            return element.src || element.href || element.location;
-        }]=],
-    -- Return image location.
-    src = [=[
-        function (element) {
-            return element.src;
-        }]=],
-    -- Return title or alt tag text.
-    desc = [=[
-        function (element) {
-            return element.title || element.alt || "";
-        }]=],
-    -- Focus the element.
-    focus = [=[
-        function (element) {
-            element.focus();
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
-        }]=],
-}
-
---- Table of modes and their selectors & evaulator functions.
-modes = {}
-
--- Build mode table
-for _, t in ipairs({
-  -- Follow mode,  Selector name,  Evaluator name
-    {"follow",     "followable",   "follow"      },
-    {"uri",        "uri",          "uri"         },
-    {"desc",       "desc",         "desc"        },
-    {"focus",      "focusable",    "focus"       },
-    {"image",      "image",        "src"         },
-}) do
-    local mode, selector, evaluator = unpack(t)
-    modes[mode] = { selector = selector, evaluator = evaluator }
-end
-
 -- Add webview methods
 webview.methods.start_follow = function (view, w, mode, prompt, func, count)
     w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
@@ -641,14 +678,18 @@ add_binds("normal", {
 -- Check if following is possible safely
 local function is_ready(w)
     for _, f in ipairs(w:get_current().frames) do
-        local ret = w:eval_js("!!(document.activeElement && window.follow)", "(follow.lua)", f)
+        local ret = w:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", "(follow.lua)", f)
         if ret ~= "true" then return false end
     end
     return true
 end
 
---- Generates the labels for the hints. Must return an array of strings with the
--- given size.
+--- Generates the labels for the hints.
+-- Can be overridden to have different labels, e.g. with letters instead of
+-- numbers.
+--
+-- @param size How many labels to generate
+-- @return An array of strings with the given size.
 function make_labels(size)
     local digits = 1
     while true do
@@ -675,6 +716,22 @@ function make_labels(size)
 end
 
 --- Parses the user's input into a match string and an ID.
+-- Can be overriden to have a different matching procedure, e.g. when
+-- <code>make_labels</code> has been overridden.
+--
+-- <br><br><h3>Example</h3>
+--
+-- To only perform the following on the follow labels and not on the text
+-- content of the elements, you could use
+--
+-- <pre>follow.parse_input = function (text)
+--  <br>  return "", text
+--  <br>end
+-- </pre>
+--
+-- @param text The input of the user.
+-- @return A string that is used to filter the hints by their text content.
+-- @return An string that is used to filter the hints by their IDs.
 function parse_input(text)
     return string.match(text, "^(.-)(%d*)$")
 end
@@ -704,6 +761,70 @@ local function focus(w, offset)
     w.follow_state.refocus = false
 end
 
+-- Simple key-eating mode to prevent any follow keys from accidentally
+-- triggering unexpected behaviour.
+local any = lousy.bind.any
+new_mode("follow_ignore", {
+    any(function () end),
+
+    enter = function (w)
+        w:set_input()
+    end
+})
+
+-- Ignores any keypresses for ignore_delay milliseconds, then calls fun.
+local function ignore_keys(w, fun)
+    if ignore_delay > 0 then
+        if sig == "form-active" then
+            w:emit_form_root_active_signal(sig)
+        else
+            local ignore_timer = timer{interval=ignore_delay}
+            ignore_timer:add_signal("timeout", function (t)
+                t:stop()
+                fun()
+            end)
+            w:set_mode("follow_ignore")
+            ignore_timer:start()
+        end
+    else
+    end
+end
+
+-- Accepts the follow after pressing enter or narrowing down the search to a
+-- single item.
+-- Does nothing if the window is not ready for following.
+local function accept_follow(w, frame)
+    if not is_ready(w) then return w:set_mode() end
+    local s = (w.follow_state or {})
+    local val
+    if frame then
+        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+        local done = string.match(ret, "^done")
+        if done then
+            val = string.match(ret, "done (.*)")
+        end
+    else
+        for _, f in ipairs(w:get_current().frames) do
+            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+            local done = string.match(ret, "^done")
+            if done then
+                frame = f
+                val = string.match(ret, "done (.*)")
+                break
+            end
+        end
+    end
+    if val then
+        ignore_keys(w, function ()
+            local sig = s.func(val, s)
+            if sig then w:emit_form_root_active_signal(sig) end
+        end)
+    else
+        w:set_mode()
+        w:error("Following failed")
+    end
+end
+
 -- Add follow mode binds
 local key = lousy.bind.key
 add_binds("follow", {
@@ -721,18 +842,7 @@ add_binds("follow", {
 
     -- Evaluate selected follow tag
     key({}, "Return", function (w)
-        if not is_ready(w) then return w:set_mode() end
-        local s = (w.follow_state or {})
-        for _, f in ipairs(w:get_current().frames) do
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
-            local done = string.match(ret, "^done")
-            if done then
-                local val = string.match(ret, "done (.*)")
-                local sig = s.func(val, s)
-                if sig then w:emit_form_root_active_signal(sig) end
-                return
-            end
-        end
+        accept_follow(w)
     end),
 })
 
@@ -839,12 +949,7 @@ new_mode("follow", {
         end
         if state.reselect then focus(w, 1) end
         if active_hints == 1 then
-            w:set_mode()
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
-            ret = lousy.util.string.split(ret)
-            local sig
-            if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
-            if sig then w:emit_form_root_active_signal(sig) end
+            accept_follow(w, eval_frame)
         elseif active_hints == 0 then
             state.reselect = true
         end
