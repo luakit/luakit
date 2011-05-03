@@ -766,6 +766,10 @@ end
 local any = lousy.bind.any
 new_mode("follow_ignore", {
     any(function () end),
+
+    enter = function (w)
+        w:set_input()
+    end
 })
 
 -- Ignores any keypresses for ignore_delay milliseconds, then calls fun.
