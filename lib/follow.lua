@@ -543,8 +543,8 @@ local function get_theme()
 end
 
 -- Add webview methods
-webview.methods.start_follow = function (view, w, mode, prompt, func, count)
-    w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
+webview.methods.start_follow = function (view, w, mode, prompt, func, count, nodelay)
+    w.follow_state = { mode = mode, prompt = prompt, func = func, count = count, nodelay = nodelay }
     w:set_mode("follow")
 end
 
@@ -594,7 +594,7 @@ add_binds("normal", {
         w:start_follow("uri", "multi tab", function (uri, s)
             w:new_tab(uri, false)
             w:set_mode("follow")
-        end)
+        end, nil, true)
     end),
 
     -- Download uri
@@ -810,7 +810,7 @@ add_binds("follow", {
             if done then
                 local val = string.match(ret, "done (.*)")
                 local sig = s.func(val, s)
-                ignore_keys(w, sig)
+                if not s.nodelay then ignore_keys(w, sig) end
                 return
             end
         end
@@ -925,7 +925,7 @@ new_mode("follow", {
             ret = lousy.util.string.split(ret)
             local sig
             if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
-            ignore_keys(w, sig)
+            if not state.nodelay then ignore_keys(w, sig) end
         elseif active_hints == 0 then
             state.reselect = true
         end
