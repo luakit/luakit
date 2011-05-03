@@ -543,8 +543,8 @@ local function get_theme()
 end
 
 -- Add webview methods
-webview.methods.start_follow = function (view, w, mode, prompt, func, count, nodelay)
-    w.follow_state = { mode = mode, prompt = prompt, func = func, count = count, nodelay = nodelay }
+webview.methods.start_follow = function (view, w, mode, prompt, func, count)
+    w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
     w:set_mode("follow")
 end
 
@@ -594,7 +594,7 @@ add_binds("normal", {
         w:start_follow("uri", "multi tab", function (uri, s)
             w:new_tab(uri, false)
             w:set_mode("follow")
-        end, nil, true)
+        end)
     end),
 
     -- Download uri
@@ -768,7 +768,8 @@ new_mode("follow_ignore", {
     any(function () end),
 })
 
-local function ignore_keys(w, sig)
+-- Ignores any keypresses for ignore_delay milliseconds, then calls fun.
+local function ignore_keys(w, fun)
     if ignore_delay > 0 then
         if sig == "form-active" then
             w:emit_form_root_active_signal(sig)
@@ -776,12 +777,47 @@ local function ignore_keys(w, sig)
             local ignore_timer = timer{interval=ignore_delay}
             ignore_timer:add_signal("timeout", function (t)
                 t:stop()
-                w:set_mode()
-                if sig then w:emit_form_root_active_signal(sig) end
+                fun()
             end)
             w:set_mode("follow_ignore")
             ignore_timer:start()
         end
+    else
+    end
+end
+
+-- Accepts the follow after pressing enter or narrowing down the search to a
+-- single item.
+-- Does nothing if the window is not ready for following.
+local function accept_follow(w, frame)
+    if not is_ready(w) then return w:set_mode() end
+    local s = (w.follow_state or {})
+    local val
+    if frame then
+        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+        local done = string.match(ret, "^done")
+        if done then
+            val = string.match(ret, "done (.*)")
+        end
+    else
+        for _, f in ipairs(w:get_current().frames) do
+            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+            local done = string.match(ret, "^done")
+            if done then
+                frame = f
+                val = string.match(ret, "done (.*)")
+                break
+            end
+        end
+    end
+    if val then
+        ignore_keys(w, function ()
+            local sig = s.func(val, s)
+            if sig then w:emit_form_root_active_signal(sig) end
+        end)
+    else
+        w:set_mode()
+        w:error("Following failed")
     end
 end
 
@@ -802,18 +838,7 @@ add_binds("follow", {
 
     -- Evaluate selected follow tag
     key({}, "Return", function (w)
-        if not is_ready(w) then return w:set_mode() end
-        local s = (w.follow_state or {})
-        for _, f in ipairs(w:get_current().frames) do
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
-            local done = string.match(ret, "^done")
-            if done then
-                local val = string.match(ret, "done (.*)")
-                local sig = s.func(val, s)
-                if not s.nodelay then ignore_keys(w, sig) end
-                return
-            end
-        end
+        accept_follow(w)
     end),
 })
 
@@ -920,12 +945,7 @@ new_mode("follow", {
         end
         if state.reselect then focus(w, 1) end
         if active_hints == 1 then
-            w:set_mode()
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
-            ret = lousy.util.string.split(ret)
-            local sig
-            if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
-            if not state.nodelay then ignore_keys(w, sig) end
+            accept_follow(w, eval_frame)
         elseif active_hints == 0 then
             state.reselect = true
         end
