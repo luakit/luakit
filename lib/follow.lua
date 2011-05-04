@@ -4,6 +4,7 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
 -------------------------------------------------------
 
+local print = print
 local ipairs, pairs = ipairs, pairs
 local table, string = table, string
 local tonumber, tostring = tonumber, tostring
@@ -14,7 +15,7 @@ local webview = webview
 local downloads = require "downloads"
 local add_binds, new_mode = add_binds, new_mode
 local theme = theme
-local capi = { luakit = luakit }
+local capi = { luakit = luakit, timer = timer }
 
 --- Provides link following.
 module("follow")
@@ -22,8 +23,16 @@ module("follow")
 --- The follow module.
 -- @field sort_labels If <code>true</code>, the follow hints will be sorted.
 --  <br> Not sorting can help reading labels on high link density sites.
+--  <br> <em>Default:</em> true
 -- @field reverse_labels If <code>true</code>, the follow hints will be reversed.
 --  <br> This sometimes equates to less key presses.
+--  <br> <em>Default:</em> true
+-- @field ignore_delay Determines how long input from the user should be ignored
+--  after a successful follow.
+--  <br> This helps avoid accidentially triggering normal mode binds after a
+--  follow.
+--  <br> The duration is given in milliseconds.
+--  <br> <em>Default:</em> 500
 -- @field selectors A hash of <code>mode = selector</code>.
 --  <br> <code>mode</code> is the name of a follow mode.
 --  <br> <code>selector</code> is a CSS selector that indicates all elements
@@ -36,6 +45,7 @@ module("follow")
 -- @type table
 -- @name follow
 sort_labels = true
+ignore_delay = 500
 reverse_labels = true
 
 --- Selectors for the different modes.
@@ -188,6 +198,16 @@ window.follow = (function () {
         return elements;
     }
 
+    function createElement(tag) {
+        var element = document.createElement(tag);
+        // This fails on some sites, need to use xhtml namespace there
+        if (!element.style) {
+            var ns = document.getElementsByTagName('html')[0].getAttribute('xmlns') || "http://www.w3.org/1999/xhtml"
+            element = document.createElementNS(ns, tag);
+        }
+        return element;
+    }
+
     // Hint class. Wraps data and functions related to hint manipulation.
     function Hint(element) {
         this.element = element;
@@ -195,7 +215,7 @@ window.follow = (function () {
 
         // Hint creation helper functions.
         function createSpan(hint, h, v) {
-            var span = document.createElement("span");
+            var span = createElement("span");
             var leftpos, toppos;
             if (isFrame(hint.element)) {
                 leftpos = document.defaultView.scrollX;
@@ -313,19 +333,19 @@ window.follow = (function () {
         // Returns true on success. If false is returned, the other hinting functions
         // cannot be used safely.
         init: function () {
-            if (!document.body || !document.activeElement) {
+            if (!document.body || !/interactive|loaded|complete/.test(document.readyState)) {
                 return;
             }
             follow.hints = [];
             follow.activeHint = null;
             if (!follow.tickParent) {
-                var tickParent = document.createElement("div");
+                var tickParent = createElement("div");
                 tickParent.id = "luakit_follow_tickParent";
                 document.body.appendChild(tickParent);
                 follow.tickParent = tickParent;
             }
             if (!follow.overlayParent) {
-                var overlayParent = document.createElement("div");
+                var overlayParent = createElement("div");
                 overlayParent.id = "luakit_follow_overlayParent";
                 document.body.appendChild(overlayParent);
                 follow.overlayParent = overlayParent;
@@ -357,7 +377,9 @@ window.follow = (function () {
 
         // Shows all hints and assigns them the given IDs.
         show: function (ids) {
-            document.activeElement.blur();
+            if (document.activeElement) {
+                document.activeElement.blur();
+            }
             for (var i = 0; i < ids.length; ++i) {
                 var hint = follow.hints[i];
                 hint.setId(ids[i]);
@@ -656,7 +678,7 @@ add_binds("normal", {
 -- Check if following is possible safely
 local function is_ready(w)
     for _, f in ipairs(w:get_current().frames) do
-        local ret = w:eval_js("!!(document.activeElement && window.follow)", "(follow.lua)", f)
+        local ret = w:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", "(follow.lua)", f)
         if ret ~= "true" then return false end
     end
     return true
@@ -739,6 +761,70 @@ local function focus(w, offset)
     w.follow_state.refocus = false
 end
 
+-- Simple key-eating mode to prevent any follow keys from accidentally
+-- triggering unexpected behaviour.
+local any = lousy.bind.any
+new_mode("follow_ignore", {
+    any(function () end),
+
+    enter = function (w)
+        w:set_input()
+    end
+})
+
+-- Ignores any keypresses for ignore_delay milliseconds, then calls fun.
+local function ignore_keys(w, fun)
+    if ignore_delay > 0 then
+        if sig == "form-active" then
+            w:emit_form_root_active_signal(sig)
+        else
+            local ignore_timer = capi.timer{interval=ignore_delay}
+            ignore_timer:add_signal("timeout", function (t)
+                t:stop()
+                fun()
+            end)
+            w:set_mode("follow_ignore")
+            ignore_timer:start()
+        end
+    else
+    end
+end
+
+-- Accepts the follow after pressing enter or narrowing down the search to a
+-- single item.
+-- Does nothing if the window is not ready for following.
+local function accept_follow(w, frame)
+    if not is_ready(w) then return w:set_mode() end
+    local s = (w.follow_state or {})
+    local val
+    if frame then
+        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+        local done = string.match(ret, "^done")
+        if done then
+            val = string.match(ret, "done (.*)")
+        end
+    else
+        for _, f in ipairs(w:get_current().frames) do
+            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+            local done = string.match(ret, "^done")
+            if done then
+                frame = f
+                val = string.match(ret, "done (.*)")
+                break
+            end
+        end
+    end
+    if val then
+        ignore_keys(w, function ()
+            local sig = s.func(val, s)
+            if sig then w:emit_form_root_active_signal(sig) end
+        end)
+    else
+        w:set_mode()
+        w:error("Following failed")
+    end
+end
+
 -- Add follow mode binds
 local key = lousy.bind.key
 add_binds("follow", {
@@ -756,18 +842,7 @@ add_binds("follow", {
 
     -- Evaluate selected follow tag
     key({}, "Return", function (w)
-        if not is_ready(w) then return w:set_mode() end
-        local s = (w.follow_state or {})
-        for _, f in ipairs(w:get_current().frames) do
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
-            local done = string.match(ret, "^done")
-            if done then
-                local val = string.match(ret, "done (.*)")
-                local sig = s.func(val, s)
-                if sig then w:emit_form_root_active_signal(sig) end
-                return
-            end
-        end
+        accept_follow(w)
     end),
 })
 
@@ -874,12 +949,7 @@ new_mode("follow", {
         end
         if state.reselect then focus(w, 1) end
         if active_hints == 1 then
-            w:set_mode()
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", eval_frame)
-            ret = lousy.util.string.split(ret)
-            local sig
-            if ret[1] == "done" and state.func then sig = state.func(ret[2], state) end
-            if sig then w:emit_form_root_active_signal(sig) end
+            accept_follow(w, eval_frame)
         elseif active_hints == 0 then
             state.reselect = true
         end
