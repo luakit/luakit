@@ -45,7 +45,7 @@ module("follow")
 -- @type table
 -- @name follow
 sort_labels = true
-ignore_delay = 500
+ignore_delay = 250
 reverse_labels = true
 
 --- Selectors for the different modes.
