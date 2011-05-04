@@ -23,8 +23,7 @@
 #include "common/signal.h"
 
 #include <libsoup/soup.h>
-#include <webkit/webkitsoupauthdialog.h>
-#include <webkit/webkitwebview.h>
+#include <webkit/webkit.h>
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
