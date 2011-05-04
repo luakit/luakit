@@ -162,9 +162,14 @@ add_binds("normal", {
     -- Yanking
     buf("^yy$",                     function (w)
                                         local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
-                                        w:set_selection(uri)
+                                        luakit.set_selection(uri)
+                                        w:notify("Yanked uri: " .. uri)
                                     end),
-    buf("^yt$",                     function (w) w:set_selection(w.win.title) end),
+
+    buf("^yt$",                     function (w)
+                                        luakit.set_selection(w.win.title)
+                                        w:notify("Yanked title: " .. w.win.title)
+                                    end),
 
     -- Commands
     key({"Control"}, "a",           function (w)    w:navigate(w:inc_uri(1)) end),

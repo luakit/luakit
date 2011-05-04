@@ -32,20 +32,30 @@
 /* setup luakit module signals */
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
-/* Returns a string from X selection.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack (1).
+/** Returns text from an X selection.
+ * \see http://en.wikipedia.org/wiki/X_Window_selection
+ * \see http://developer.gnome.org/gtk/stable/gtk-Clipboards.html#gtk-clipboard-wait-for-text
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ *
+ * \luastack
+ * \lparam selection The selection from which to get text. Selection name may
+ *                   be any of \c "primary", \c "secondary" or \c "clipboard".
+ *                   Following \c xclip(1) behavior only the first character
+ *                   (or more) of each of the selection names is required.
+ *                   Invalid selection names will trigger an argument error.
+ *                   If \c selection is not given the \c "primary" selection
+ *                   is used.
+ * \lreturn          The selection text (if any) or nil.
  */
 static gint
 luaH_luakit_get_selection(lua_State *L)
 {
-    gint n = lua_gettop(L);
     GdkAtom atom = GDK_SELECTION_PRIMARY;
 
-    if (n) {
-        const gchar *arg = luaL_checkstring(L, 1);
-        /* Follow xclip(1) behavior: check only the first character of argument */
-        switch (arg[0]) {
+    if (lua_gettop(L)) {
+        switch (luaL_checkstring(L, 1)[0]) {
           case 'p':
             break;
           case 's':
@@ -59,31 +69,55 @@ luaH_luakit_get_selection(lua_State *L)
             break;
         }
     }
+
     GtkClipboard *selection = gtk_clipboard_get(atom);
     gchar *text = gtk_clipboard_wait_for_text(selection);
-    lua_pushstring(L, text);
-    g_free(text);
-    return 1;
+    if (text) {
+        lua_pushstring(L, text);
+        g_free(text);
+        return 1;
+    }
+    return 0;
 }
 
-/* Sets an X selection.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack (0).
+/** Sets an X selection.
+ * \see http://en.wikipedia.org/wiki/X_Window_selection
+ * \see http://developer.gnome.org/gtk/stable/gtk-Clipboards.html#gtk-clipboard-set-text
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack (0).
+ *
+ * \luastack
+ * \lparam selection The selection buffer to set. Select name may be any of
+ *                   \c "primary", \c "secondary" or \c "clipboard". Following
+ *                   \c xclip(1) behavior only the first character (or more)
+ *                   of each of the selection names is required. Invalid
+ *                   selection names will trigger an argument error. If
+ *                   \c selection is not given the \c "primary" selection is
+ *                   used.
+ * \lparam text      The selection text or nil.
+ *
+ * \lcode
+ * luakit.set_selection("Malcolm Reynolds") // sets primary selection
+ * luakit.set_selection("clipboard", "John Crichton") // sets clipboard text
+ * print(luakit.get_selection()) // outputs "Malcolm Reynolds"
+ * print(luakit.get_selection("p")) // outputs "Malcolm Reynolds"
+ * print(luakit.get_selection("c")) // outputs "John Crichton"
+ * print(luakit.get_selection("secondary")) // outputs nothing
+ * luakit.set_selection(nil) // clear primary
+ * luakit.set_selection("c", nil) // clear clipboard
+ * \endcode
  */
 static gint
 luaH_luakit_set_selection(lua_State *L)
 {
-    gint n = lua_gettop(L);
     GdkAtom atom = GDK_SELECTION_PRIMARY;
+    gint n = lua_gettop(L);
+    const gchar *text = NULL;
 
-    if (0 == n)
-        luaL_error(L, "missing argument, string expected");
-    const gchar *text = luaL_checkstring(L, 1);
-    if (1 < n)
-    {
-        const gchar *arg = luaL_checkstring(L, 2);
-        /* Follow xclip(1) behavior: check only the first character of argument */
-        switch (arg[0]) {
+    /* selection name given */
+    if (n > 1) {
+        switch (luaL_checkstring(L, 1)[0]) {
           case 'p':
             break;
           case 's':
@@ -96,90 +130,154 @@ luaH_luakit_set_selection(lua_State *L)
             luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
             break;
         }
-    }
+        if (!lua_isnil(L, 2))
+            text = luaL_checkstring(L, 1);
+
+    /* just text given */
+    } else if (n == 1 && !lua_isnil(L, 1))
+        text = luaL_checkstring(L, 1);
+
     GtkClipboard *selection = gtk_clipboard_get(atom);
-    glong len = g_utf8_strlen (text, -1);
-    gtk_clipboard_set_text(selection, text, len);
+
+    /* set selection text */
+    if (text) {
+        glong len = g_utf8_strlen (text, -1);
+        gtk_clipboard_set_text(selection, text, len);
+
+    /* clear selection text */
+    } else
+        gtk_clipboard_clear(selection);
+
     return 0;
 }
 
-/* Escapes a string for use in a URI.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack (1).
+/** Escapes a string for use in a URI.
+ * \see http://developer.gnome.org/glib/stable/glib-URI-Functions.html#g-uri-escape-string
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ *
+ * \luastack
+ * \lparam string  The string to escape for use in a URI.
+ * \lparam allowed Optional string of allowed characters to leave unescaped in
+ *                 the \c string.
+ * \lreturn        The escaped string.
  */
 static gint
 luaH_luakit_uri_encode(lua_State *L)
 {
     const gchar *string = luaL_checkstring(L, 1);
-    gchar *res = g_uri_escape_string(string, NULL, false);
+    const gchar *allowed = NULL;
+
+    /* get list of reserved characters that are allowed in the string */
+    if (1 < lua_gettop(L) && !lua_isnil(L, 2))
+        allowed = luaL_checkstring(L, 2);
+
+    gchar *res = g_uri_escape_string(string, allowed, true);
     lua_pushstring(L, res);
     g_free(res);
     return 1;
 }
 
-/* Unescapes a whole escaped string.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack (1).
+/** Unescapes an escaped string used in a URI.
+ * \see http://developer.gnome.org/glib/stable/glib-URI-Functions.html#g-uri-unescape-string
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ *
+ * \luastack
+ * \lparam string  The string to unescape.
+ * \lparam illegal Optional string of illegal chars which should not appear in
+ *                 the unescaped string.
+ * \lreturn        The unescaped string or \c nil if illegal chars found.
  */
 static gint
 luaH_luakit_uri_decode(lua_State *L)
 {
     const gchar *string = luaL_checkstring(L, 1);
-    gchar *res = g_uri_unescape_string(string, NULL);
+    const gchar *illegal = NULL;
+
+    /* get list of illegal chars not to be found in the unescaped string */
+    if (1 < lua_gettop(L) && !lua_isnil(L, 2))
+        illegal = luaL_checkstring(L, 2);
+
+    gchar *res = g_uri_unescape_string(string, illegal);
+    if (!res)
+        return 0;
+
     lua_pushstring(L, res);
     g_free(res);
     return 1;
 }
 
-/* Shows a Gtk save dialog.
+/** Shows a Gtk save dialog.
+ * \see http://developer.gnome.org/gtk/stable/GtkDialog.html
+ *
  * \param L The Lua VM state.
- * \return The number of objects pushed onto the stack.
+ * \return The number of elements pushed on stack.
+ *
  * \luastack
- * \lparam title The title of the dialog.
- * \lparam parent The parent window of the dialog or nil.
- * \lparam default_folder The folder to initially display in the dialog.
- * \lparam default_name The filename to preselect in the dialog.
- * \lreturn The name of the selected file or nil if the dialog was cancelled.
+ * \lparam title          The title of the dialog window.
+ * \lparam parent         The parent window of the dialog or \c nil.
+ * \lparam default_folder The folder to initially display in the file dialog.
+ * \lparam default_name   The filename to preselect in the dialog.
+ * \lreturn               The name of the selected file or \c nil if the
+ *                        dialog was cancelled.
  */
 static gint
 luaH_luakit_save_file(lua_State *L)
 {
     const gchar *title = luaL_checkstring(L, 1);
-    // decipher the parent
-    GtkWindow *parent_window;
-    if (lua_isnil(L, 2)) {
-        parent_window = NULL;
-    } else {
+
+    /* get window to display dialog over */
+    GtkWindow *parent_window = NULL;
+    if (!lua_isnil(L, 2)) {
         widget_t *parent = luaH_checkudata(L, 2, &widget_class);
-        if (GTK_IS_WINDOW(parent->widget)) {
-            parent_window = GTK_WINDOW(parent->widget);
-        } else {
-            luaH_warn(L, "dialog expects a window as parent, but some other widget was given");
-            parent_window = NULL;
-        }
+        if (!GTK_IS_WINDOW(parent->widget))
+            luaL_argerror(L, 2, "window widget");
+        parent_window = GTK_WINDOW(parent->widget);
     }
+
     const gchar *default_folder = luaL_checkstring(L, 3);
     const gchar *default_name = luaL_checkstring(L, 4);
+
     GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
             parent_window,
             GTK_FILE_CHOOSER_ACTION_SAVE,
             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
             GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
             NULL);
-    // set default folder, name and overwrite confirmation policy
+
+    /* set default folder, name and overwrite confirmation policy */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), default_folder);
     gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), default_name);
     gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+
     if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
         gchar *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
         lua_pushstring(L, filename);
         g_free(filename);
     } else
         lua_pushnil(L);
+
     gtk_widget_destroy(dialog);
     return 1;
 }
 
+/** Returns the full path of a special directory. On Unix this is done using the
+ * XDG special user directories.
+ * \see http://developer.gnome.org/glib/stable/glib-Miscellaneous-Utility-Functions.html
+ * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ *
+ * \luastack
+ * \lparam user_dir One of \c "DESKTOP", \c "DOCUMENTS", \c "DOWNLOAD", \c
+ *                  "MUSIC", \c "PICTURES", \c  "PUBLIC_SHARE", \c "TEMPLATES"
+ *                  or \c "VIDEOS". Errors if invalid special dir given.
+ * \lreturn         Returns the full path of the given special directory.
+ */
 static gint
 luaH_luakit_get_special_dir(lua_State *L)
 {
@@ -207,9 +305,19 @@ luaH_luakit_get_special_dir(lua_State *L)
     return 1;
 }
 
-/* Spawns a command synchonously.
- * \param L The Lua VM state.
- * \return The number of elements pushed on stack (3).
+/** Executes a child synchronously (waits for the child to exit before
+ * returning). The exit status and all stdout and stderr output from the
+ * child is returned.
+ * \see http://developer.gnome.org/glib/stable/glib-Spawning-Processes.html#g-spawn-command-line-sync
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack (3).
+ *
+ * \luastack
+ * \lparam cmd The command to run (from a shell).
+ * \lreturn The exit status of the child.
+ * \lreturn The childs stdout.
+ * \lreturn The childs stderr.
  */
 static gint
 luaH_luakit_spawn_sync(lua_State *L)
@@ -230,15 +338,21 @@ luaH_luakit_spawn_sync(lua_State *L)
     sigact.sa_flags=0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
+
     g_spawn_command_line_sync(command, &_stdout, &_stderr, &rv, &e);
+
+    /* restore SIGCHLD handler */
     if (sigaction(SIGCHLD, &oldact, NULL))
         fatal("Can't restore SIGCHLD handler");
 
+    /* raise error on spawn function error */
     if(e) {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
     }
+
+    /* push exit status, stdout, stderr on to stack and return */
     lua_pushinteger(L, WEXITSTATUS(rv));
     lua_pushstring(L, _stdout);
     lua_pushstring(L, _stderr);
@@ -254,7 +368,8 @@ luaH_luakit_spawn_sync(lua_State *L)
  * Exit number: When normal exit happened, the exit code of the process. When
  *              finished by a signal, the signal number. -1 otherwise.
  */
-void async_callback_handler(GPid pid, gint status, gpointer cb_ref) {
+void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
+{
     lua_State *L = globalconf.L;
     /* push callback function onto stack */
     luaH_object_push(L, cb_ref);
@@ -280,10 +395,38 @@ void async_callback_handler(GPid pid, gint status, gpointer cb_ref) {
     g_spawn_close_pid(pid);
 }
 
-/* Spawns a command.
- * \param L The Lua VM state. Contains a Lua function, the callback handler to use
- * when the command finishes.
- * \return The number of elements pushed on stack (0).
+/** Executes a child program asynchronously (your program will not block waiting
+ * for the child to exit).
+ *
+ * \see \ref async_callback_handler
+ * \see http://developer.gnome.org/glib/stable/glib-Shell-related-Utilities.html#g-shell-parse-argv
+ * \see http://developer.gnome.org/glib/stable/glib-Spawning-Processes.html#g-spawn-async
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack (0).
+ *
+ * \luastack
+ * \lparam command  The command to execute a child program.
+ * \lparam callback Optional Lua callback function.
+ * \lreturn The child pid.
+ *
+ * \lcode
+ * local editor = "gvim"
+ * local filename = "config"
+ *
+ * function editor_callback(exit_reason, exit_status)
+ *     if exit_reason == "exit" then
+ *         print(string.format("Contents of %q:", filename))
+ *         for line in io.lines(filename) do
+ *             print(line)
+ *         end
+ *     else
+ *         print("Editor exited with status: " .. exit_status)
+ *     end
+ * end
+ *
+ * luakit.spawn(string.format("%s %q", editor, filename), editor_callback)
+ * \endcode
  */
 static gint
 luaH_luakit_spawn(lua_State *L)
@@ -295,38 +438,38 @@ luaH_luakit_spawn(lua_State *L)
     gchar **argv = NULL;
     gpointer cb_ref = NULL;
 
-    /* parse arguments */
-    g_shell_parse_argv(command, &argc, &argv, &e);
-    if (e) {
-        lua_pushstring(L, e->message);
-        g_clear_error(&e);
-        g_strfreev(argv);
-        lua_error(L);
-    }
-
     /* check callback function type */
     if (lua_gettop(L) > 1 && !lua_isnil(L, 2)) {
-        if (lua_type(L, 2) == LUA_TFUNCTION)
+        if (lua_isfunction(L, 2))
             cb_ref = luaH_object_ref(L, 2);
         else
             luaL_typerror(L, 2, lua_typename(L, LUA_TFUNCTION));
     }
 
-    /* spawn command */
-    g_spawn_async(NULL, argv, NULL,
-            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
-            &e);
-    g_strfreev(argv);
-    if(e) {
-        luaH_object_unref(L, cb_ref);
-        lua_pushstring(L, e->message);
-        g_clear_error(&e);
-        lua_error(L);
-    }
+    /* parse arguments */
+    if (!g_shell_parse_argv(command, &argc, &argv, &e))
+        goto spawn_error;
 
+    /* spawn command */
+    if (!g_spawn_async(NULL, argv, NULL,
+            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
+            &e))
+        goto spawn_error;
+
+    /* attach users Lua callback */
     if (cb_ref)
         g_child_watch_add(pid, async_callback_handler, cb_ref);
 
+    g_strfreev(argv);
+    lua_pushnumber(L, pid);
+    return 1;
+
+spawn_error:
+    luaH_object_unref(L, cb_ref);
+    lua_pushstring(L, e->message);
+    g_clear_error(&e);
+    g_strfreev(argv);
+    lua_error(L);
     return 0;
 }
 

@@ -1,5 +1,5 @@
 /*
- * download.c - Wrapper for the WebKitDownload class
+ * clib/download.c - wrapper for the WebKitDownload class
  *
  * Copyright © 2011 Fabian Streitel <karottenreibe@gmail.com>
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
@@ -29,12 +29,23 @@
 #include <webkit/webkitnetworkrequest.h>
 #include <glib/gstdio.h>
 
+/** Internal data structure for luakit's downloads. */
 typedef struct {
+    /** Common \ref lua_object_t header. \see LUA_OBJECT_HEADER */
     LUA_OBJECT_HEADER
+    /** \privatesection */
+    /** The \c WebKitDownload that handles the actual data transfer. */
     WebKitDownload* webkit_download;
+    /** The reference to the Lua object representing the download.
+     * As long as the download is running, the object will be reffed to
+     * prevent its garbage-collection.
+     */
     gpointer ref;
+    /** The URI that is being downloaded. */
     gchar *uri;
+    /** The destination path in the filesystem where the file is save to. */
     gchar *destination;
+    /** The error message in case of a download failure. */
     gchar *error;
 } download_t;
 
@@ -43,7 +54,16 @@ LUA_OBJECT_FUNCS(download_class, download_t, download)
 
 #define luaH_checkdownload(L, idx) luaH_checkudata(L, idx, &(download_class))
 
-/* allow garbage collection of the download object */
+/**
+ * Allow garbage collection of the download.
+ *
+ * This function unrefs the download from the object registry.
+ * It also deletes the backup files that may be created by WebKit while
+ * downloading.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t to unref.
+ */
 static void
 luaH_download_unref(lua_State *L, download_t *download)
 {
@@ -58,6 +78,11 @@ luaH_download_unref(lua_State *L, download_t *download)
     g_free(backup);
 }
 
+/**
+ * Returns true if the download is currently in progress.
+ *
+ * \param download The \ref download_t whose progress to check.
+ */
 static gboolean
 download_is_started(download_t *download)
 {
@@ -66,6 +91,15 @@ download_is_started(download_t *download)
     return status == WEBKIT_DOWNLOAD_STATUS_STARTED;
 }
 
+/**
+ * Frees all data associated with the download and disposes
+ * of the Lua object.
+ *
+ * \param L The Lua VM state.
+ *
+ * \luastack
+ * \lparam A \c download object to free.
+ */
 static gint
 luaH_download_gc(lua_State *L)
 {
@@ -82,6 +116,13 @@ luaH_download_gc(lua_State *L)
     return luaH_object_gc(L);
 }
 
+/**
+ * Callback from the \c WebKitDownload in case of errors.
+ *
+ * Fills the \c error member of \ref download_t.
+ *
+ * \returns \c FALSE
+ */
 static gboolean
 error_cb(WebKitDownload *d, gint error_code, gint error_detail, gchar *reason,
         download_t *download)
@@ -102,19 +143,28 @@ error_cb(WebKitDownload *d, gint error_code, gint error_detail, gchar *reason,
         lua_pushstring(L, reason);
         luaH_object_emit_signal(L, -2, "error", 1, 0);
         lua_pop(L, 1);
-        /* unref download object */
+        /* unref download */
         luaH_download_unref(L, download);
     }
     return FALSE;
 }
 
+/**
+ * Creates a new download on the stack.
+ *
+ * \param L The Lua VM state.
+ *
+ * \luastack
+ * \lvalue A table containing properties to set on the download.
+ * \lreturn A new \c download object.
+ */
 static gint
 luaH_download_new(lua_State *L)
 {
     luaH_class_new(L, &download_class);
     download_t *download = luaH_checkdownload(L, -1);
 
-    /* create download object from constructor properties */
+    /* create download from constructor properties */
     WebKitNetworkRequest *request = webkit_network_request_new(
             download->uri);
     download->webkit_download = webkit_download_new(request);
@@ -124,10 +174,21 @@ luaH_download_new(lua_State *L)
     g_signal_connect(G_OBJECT(download->webkit_download), "error",
             G_CALLBACK(error_cb), download);
 
-    /* return download object */
+    /* return download */
     return 1;
 }
 
+/**
+ * Pushes the given download onto the Lua stack.
+ *
+ * Obtains a GTK reference on the \c WebKitDownload.
+ *
+ * \param L The Lua VM state.
+ * \param d The \c WebKitDownload to push onto the stack.
+ *
+ * \luastack
+ * \lreturn A \c download object.
+ */
 gint
 luaH_download_push(lua_State *L, WebKitDownload *d)
 {
@@ -143,10 +204,22 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
     g_signal_connect(G_OBJECT(download->webkit_download), "error",
             G_CALLBACK(error_cb), download);
 
-    /* return download object */
+    /* return download */
     return 1;
 }
 
+/**
+ * Sets the destination of a download.
+ *
+ * Converts the given destination to a \c file:// URI.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lvalue A string containing the new destination for the download.
+ */
 static gint
 luaH_download_set_destination(lua_State *L, download_t *download)
 {
@@ -171,8 +244,27 @@ luaH_download_set_destination(lua_State *L, download_t *download)
     return 0;
 }
 
+/**
+ * Returns the destination URI of the given download.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ */
 LUA_OBJECT_EXPORT_PROPERTY(download, download_t, destination, lua_pushstring)
 
+/**
+ * Returns the current progress in percent of the given download.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The progress of the download as a number between 0.0 and 1.0
+ */
 static gint
 luaH_download_get_progress(lua_State *L, download_t *download)
 {
@@ -183,6 +275,16 @@ luaH_download_get_progress(lua_State *L, download_t *download)
     return 1;
 }
 
+/**
+ * Returns the inferred MIME type of the given download.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The inferred MIME type of the download as a string.
+ */
 static gint
 luaH_download_get_mime_type(lua_State *L, download_t *download)
 {
@@ -211,6 +313,25 @@ luaH_download_get_mime_type(lua_State *L, download_t *download)
     return 0;
 }
 
+/**
+ * Returns the status of the given download.
+ *
+ * The status will be one of the following:
+ * - \c finished
+ * - \c created
+ * - \c started
+ * - \c cancelled
+ * - \c error
+ *
+ * Returns nothing if an error occurs.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The status of the download as a string or \c nil.
+ */
 static gint
 luaH_download_get_status(lua_State *L, download_t *download)
 {
@@ -244,8 +365,32 @@ luaH_download_get_status(lua_State *L, download_t *download)
     return 1;
 }
 
+/* \fn static gint luaH_download_get_error(lua_State *L)
+ * Returns the message of the last error that occurred for the given download.
+ *
+ * If no error occurred so far, returns \c nil.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The message of the last download error as a string or \c nil.
+ */
 LUA_OBJECT_EXPORT_PROPERTY(download, download_t, error, lua_pushstring)
 
+/**
+ * Returns the expected total size of the download.
+ *
+ * May vary during downloading as not all servers send this correctly.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The total size of the download in bytes as a number.
+ */
 static gint
 luaH_download_get_total_size(lua_State *L, download_t *download)
 {
@@ -255,6 +400,16 @@ luaH_download_get_total_size(lua_State *L, download_t *download)
     return 1;
 }
 
+/**
+ * Returns the current size of the download, i.e. the bytes already downloaded.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The current size of the download in bytes as a number.
+ */
 static gint
 luaH_download_get_current_size(lua_State *L, download_t *download)
 {
@@ -264,6 +419,16 @@ luaH_download_get_current_size(lua_State *L, download_t *download)
     return 1;
 }
 
+/**
+ * Returns the elapsed time since starting the download.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The elapsed time since starting the download in seconds as a number.
+ */
 static gint
 luaH_download_get_elapsed_time(lua_State *L, download_t *download)
 {
@@ -273,6 +438,17 @@ luaH_download_get_elapsed_time(lua_State *L, download_t *download)
     return 1;
 }
 
+/**
+ * Returns the suggested filename for the download.
+ * This is provided by \c WebKit and inferred from the URI and response headers.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The filename that WebKit suggests for the download as a string.
+ */
 static gint
 luaH_download_get_suggested_filename(lua_State *L, download_t *download)
 {
@@ -282,6 +458,17 @@ luaH_download_get_suggested_filename(lua_State *L, download_t *download)
     return 1;
 }
 
+/**
+ * Sets the URI of the download.
+ * This does not have any effect if the download is already running.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lvalue The new URI to download.
+ */
 static gint
 luaH_download_set_uri(lua_State *L, download_t *download)
 {
@@ -295,9 +482,28 @@ luaH_download_set_uri(lua_State *L, download_t *download)
     return 0;
 }
 
+/**
+ * Returns the URI that is being downloaded.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \luastack
+ * \lparam A \c download object.
+ * \lreturn The URI of this download as a string.
+ */
 LUA_OBJECT_EXPORT_PROPERTY(download, download_t, uri, lua_pushstring)
 
-/* check prerequesites for download */
+/**
+ * Checks prerequesites for downloading.
+ * - clears the last error message of the download.
+ * - checks that a destination has been set.
+ *
+ * \param L The Lua VM state.
+ * \param download The \ref download_t of the download.
+ *
+ * \returns \c TRUE if the download is ready to begin.
+ */
 static gboolean
 download_check_prerequesites(lua_State *L, download_t *download)
 {
@@ -321,6 +527,18 @@ download_check_prerequesites(lua_State *L, download_t *download)
     return TRUE;
 }
 
+/**
+ * Starts the download.
+ *
+ * Will produce a warning if the download is already running.
+ * References the download to prevent its garbage collection.
+ * Will raise a Lua error if the start failed.
+ *
+ * \param L The Lua VM state.
+ *
+ * \luastack
+ * \lparam A \c download object to start.
+ */
 static gint
 luaH_download_start(lua_State *L)
 {
@@ -330,7 +548,7 @@ luaH_download_start(lua_State *L)
         lua_pushvalue(L, 1);
         download->ref = luaH_object_ref(L, -1);
 
-        /* check if we can download to destination & if enough disk space */
+        /* check if we can download to destination */
         if (download_check_prerequesites(L, download))
             webkit_download_start(download->webkit_download);
 
@@ -345,6 +563,17 @@ luaH_download_start(lua_State *L)
     return 0;
 }
 
+/**
+ * Aborts the download.
+ *
+ * Will produce a warning if the download is not running.
+ * Unreferences the download to allow its garbage collection.
+ *
+ * \param L The Lua VM state.
+ *
+ * \luastack
+ * \lparam A \c download object to abort.
+ */
 static gint
 luaH_download_cancel(lua_State *L)
 {
@@ -357,6 +586,11 @@ luaH_download_cancel(lua_State *L)
     return 0;
 }
 
+/**
+ * Creates the Lua download class.
+ *
+ * \param L The Lua VM state.
+ */
 void
 download_class_setup(lua_State *L)
 {
