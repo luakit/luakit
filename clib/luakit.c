@@ -131,7 +131,7 @@ luaH_luakit_set_selection(lua_State *L)
             break;
         }
         if (!lua_isnil(L, 2))
-            text = luaL_checkstring(L, 1);
+            text = luaL_checkstring(L, 2);
 
     /* just text given */
     } else if (n == 1 && !lua_isnil(L, 1))
