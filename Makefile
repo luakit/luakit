@@ -61,7 +61,7 @@ install:
 	install -d $(INSTALLDIR)/share/luakit/
 	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
-	cp -r lib/ $(INSTALLDIR)/share/luakit/
+	cp -r lib $(INSTALLDIR)/share/luakit/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/widget/
