@@ -68,14 +68,15 @@ install:
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/*.lua
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/*.lua
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/widget/*.lua
-	install -D luakit $(INSTALLDIR)/bin/luakit
+	install -d $(INSTALLDIR)/bin
+	install luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
-	install -D config/*.lua $(DESTDIR)/etc/xdg/luakit/
+	install config/*.lua $(DESTDIR)/etc/xdg/luakit/
 	chmod 644 $(DESTDIR)/etc/xdg/luakit/*.lua
-	install -d $(DESTDIR)/usr/share/pixmaps/
-	install -D extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
-	install -d $(DESTDIR)/usr/share/applications/
-	install -D extras/luakit.desktop $(DESTDIR)/usr/share/applications/
+	install -d $(DESTDIR)/usr/share/pixmaps
+	install extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
+	install -d $(DESTDIR)/usr/share/applications
+	install extras/luakit.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(INSTALLDIR)/share/man/man1/
 	install -m644 luakit.1 $(INSTALLDIR)/share/man/man1/
 
