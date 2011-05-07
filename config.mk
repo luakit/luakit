@@ -2,11 +2,14 @@
 # of the current commit.
 VERSION   ?= $(shell ./build-utils/getversion.sh)
 
-# Paths
 PREFIX     ?= /usr/local
-INSTALLDIR ?= $(DESTDIR)$(PREFIX)
-MANPREFIX  ?= $(DESTDIR)$(PREFIX)/share/man
-DOCDIR     ?= $(DESTDIR)$(PREFIX)/share/luakit/docs
+INSTALLDIR := $(DESTDIR)$(PREFIX)
+
+MANPREFIX  ?= $(PREFIX)/share/man
+MANPREFIX  := $(DESTDIR)$(MANPREFIX)
+
+DOCDIR     ?= $(PREFIX)/share/luakit/docs
+DOCDIR     := $(DESTDIR)$(DOCDIR)
 
 # Use the Just-In-Time compiler for lua (for faster lua code execution)
 # See http://luajit.org/ & http://luajit.org/performance.html for more

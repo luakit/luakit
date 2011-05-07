@@ -77,11 +77,11 @@ install:
 	install extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
 	install -d $(DESTDIR)/usr/share/applications
 	install extras/luakit.desktop $(DESTDIR)/usr/share/applications/
-	install -d $(INSTALLDIR)/share/man/man1/
-	install -m644 luakit.1 $(INSTALLDIR)/share/man/man1/
+	install -d $(MANPREFIX)/man1/
+	install -m644 luakit.1 $(MANPREFIX)/man1/
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/share/man/man1/luakit.1
+	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(MANPREFIX)/man1/luakit.1
 	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
 newline: options;@echo
