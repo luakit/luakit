@@ -1255,7 +1255,7 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
     if (ret && lua_istable(L, -1))
         populate_popup_from_table(L, menu, w);
     lua_settop(L, top);
-    g_signal_connect(menu, "hide", G_CALLBACK(hide_popup_cb), NULL);
+    g_signal_connect(menu, "unrealize", G_CALLBACK(hide_popup_cb), NULL);
 }
 
 static void
