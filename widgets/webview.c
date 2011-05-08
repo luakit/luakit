@@ -1255,7 +1255,13 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
     if (ret && lua_istable(L, -1))
         populate_popup_from_table(L, menu, w);
     lua_settop(L, top);
+
+    /* destroy all context menu items when we are finished with them */
+#if WEBKIT_CHECK_VERSION(1, 4, 0)
     g_signal_connect(menu, "unrealize", G_CALLBACK(hide_popup_cb), NULL);
+#else
+    g_signal_connect(menu, "hide", G_CALLBACK(hide_popup_cb), NULL);
+#endif
 }
 
 static void
