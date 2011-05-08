@@ -40,7 +40,7 @@ module("follow")
 -- @type table
 -- @name follow
 ignore_delay = 250
-style = styles.filtered_number_hints(true, true)
+style = styles.matching(true, true)
 
 --- Selectors for the different modes.
 -- body selects frames (this is special magic to avoid cross-domain problems)

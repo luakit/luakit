@@ -59,7 +59,7 @@ end
 --  <br> Not sorting can help reading labels on high link density sites.
 -- @param reverse Whether to reverse the hint labels.
 --  <br> This sometimes equates to less key presses.
-function filtered_number_hints(sort, reverse)
+function matching(sort, reverse)
     return {
         make_labels = function (size)
             -- calculate the number of digits to use
@@ -90,7 +90,7 @@ end
 --- Style that uses characters from a charset for the hint labels.
 --
 -- @param charset The characters to use for the labels.
-function char_hints(charset)
+function charset(charset)
     return {
         make_labels = function (size)
             -- calculate the number of digits to use
