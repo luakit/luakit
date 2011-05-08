@@ -6,6 +6,7 @@
 
 local table, string = table, string
 local tostring = tostring
+local ipairs = ipairs
 
 --- Contains different styles for following.
 -- A style is a function that returns a hash with the following entries:
@@ -54,12 +55,7 @@ local function calculate_hint_length(size, charset)
 end
 
 --- Style that uses numbers for the hint labels and matches other text against the pages elements.
---
--- @param sort Whether to sort the hint labels
---  <br> Not sorting can help reading labels on high link density sites.
--- @param reverse Whether to reverse the hint labels.
---  <br> This sometimes equates to less key presses.
-function matching(sort, reverse)
+function matching()
     return {
         make_labels = function (size)
             -- calculate the number of digits to use
@@ -70,14 +66,8 @@ function matching(sort, reverse)
             -- assemble all labels
             local labels = {}
             for i = start, size+start-1, 1 do
-                if reverse then
-                    table.insert(labels, string.reverse(i))
-                else
-                    table.insert(labels, tostring(i))
-                end
+                table.insert(labels, tostring(i))
             end
-            -- sort labels if necessary
-            if reverse and sort then table.sort(labels) end
             return labels
         end,
 
@@ -130,5 +120,35 @@ function charset(charset)
             return "", text
         end,
     }
+end
+
+--- Decorator for a style that reverses each label.
+-- This sometimes equates to less key presses.
+--
+-- @param style The style to decorate.
+function reverse(style)
+    local maker = style.make_labels
+    style.make_labels = function (size)
+        local labels = {}
+        for _, l in ipairs(maker(size)) do
+            table.insert(labels, string.reverse(l))
+        end
+        return labels
+    end
+    return style
+end
+
+--- Decorator for a style that sorts the labels.
+-- Not sorting can help reading labels on high link density sites when using follow.styles.matching.
+--
+-- @param style The style to decorate.
+function sort(style)
+    local maker = style.make_labels
+    style.make_labels = function (size)
+        local labels = maker(size)
+        table.sort(labels)
+        return labels
+    end
+    return style
 end
 
