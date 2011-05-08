@@ -214,19 +214,19 @@ webview.init_funcs = {
 
     -- Creates context menu popup from table (and nested tables).
     -- Use `true` for menu separators.
-    populate_popup = function (view, w)
-        view:add_signal("populate-popup", function (v)
-            return {
-                true,
-                { "_Toggle Source", function () w:toggle_source() end },
-                { "_Zoom", {
-                    { "Zoom _In",    function () w:zoom_in()  end },
-                    { "Zoom _Out",   function () w:zoom_out() end },
-                    true,
-                    { "Zoom _Reset", function () w:zoom_set() end }, }, },
-            }
-        end)
-    end,
+    -- populate_popup = function (view, w)
+    --     view:add_signal("populate-popup", function (v)
+    --         return {
+    --             true,
+    --             { "_Toggle Source", function () w:toggle_source() end },
+    --             { "_Zoom", {
+    --                 { "Zoom _In",    function () w:zoom_in()  end },
+    --                 { "Zoom _Out",   function () w:zoom_out() end },
+    --                 true,
+    --                 { "Zoom _Reset", function () w:zoom_set() end }, }, },
+    --         }
+    --     end)
+    -- end,
 
     -- Action to take on resource request.
     resource_request_decision = function (view, w)
