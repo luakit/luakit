@@ -41,7 +41,7 @@ module("follow")
 -- @type table
 -- @name follow
 ignore_delay = 250
-style = styles.sort(styles.reverse(styles.matching()))
+style = styles.remove_leading("0", styles.sort(styles.reverse(styles.matching())))
 
 --- Selectors for the different modes.
 -- body selects frames (this is special magic to avoid cross-domain problems)
