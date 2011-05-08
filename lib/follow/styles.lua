@@ -4,6 +4,9 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
 -------------------------------------------------------
 
+local table, string = table, string
+local tostring = tostring
+
 --- Contains different styles for following.
 -- A style is a function that returns a hash with the following entries:
 -- <ul>
@@ -47,7 +50,7 @@ module("follow.styles")
 --  <br> Not sorting can help reading labels on high link density sites.
 -- @param reverse Whether to reverse the hint labels.
 --  <br> This sometimes equates to less key presses.
-function number_hints(sort, reverse)
+function filtered_number_hints(sort, reverse)
     return {
         make_labels = function (size)
             local digits = 1
