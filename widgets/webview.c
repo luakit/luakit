@@ -1170,6 +1170,29 @@ menu_item_cb(GtkMenuItem *menuitem, widget_t *w)
 }
 
 static void
+hide_popup_cb() {
+    GSList *iter;
+    lua_State *L = globalconf.L;
+
+    /* dereference context menu items callback functions from the last
+       context menu */
+    if (last_popup.refs) {
+        for (iter = last_popup.refs; iter; iter = iter->next)
+            luaH_object_unref(L, iter->data);
+        g_slist_free(last_popup.refs);
+        last_popup.refs = NULL;
+    }
+
+    /* destroy context menu item widgets from the last context menu */
+    if (last_popup.items) {
+        for (iter = last_popup.items; iter; iter = iter->next)
+            gtk_widget_destroy(iter->data);
+        g_slist_free(last_popup.items);
+        last_popup.items = NULL;
+    }
+}
+
+static void
 populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
 {
     GtkWidget *item, *submenu;
@@ -1225,36 +1248,14 @@ static void
 populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
 {
     (void) v;
-    (void) menu;
-    gint top;
-    gint ret;
-
-    GSList *iter;
     lua_State *L = globalconf.L;
-
-    /* dereference context menu items callback functions from the last
-       context menu */
-    if (last_popup.refs) {
-        for (iter = last_popup.refs; iter; iter = iter->next)
-            luaH_object_unref(L, iter->data);
-        g_slist_free(last_popup.refs);
-        last_popup.refs = NULL;
-    }
-
-    /* destroy context menu item widgets from the last context menu */
-    if (last_popup.items) {
-        for (iter = last_popup.items; iter; iter = iter->next)
-            gtk_widget_destroy(iter->data);
-        g_slist_free(last_popup.items);
-        last_popup.items = NULL;
-    }
-
+    gint top = lua_gettop(L);
     luaH_object_push(L, w->ref);
-    top = lua_gettop(L);
-    ret = luaH_object_emit_signal(L, top, "populate-popup", 0, 1);
-    if(ret && (lua_type(L, -1) == LUA_TTABLE))
+    gint ret = luaH_object_emit_signal(L, top + 1, "populate-popup", 0, 1);
+    if (ret && lua_istable(L, -1))
         populate_popup_from_table(L, menu, w);
-    lua_pop(L, ret + 1);
+    lua_settop(L, top);
+    g_signal_connect(menu, "hide", G_CALLBACK(hide_popup_cb), NULL);
 }
 
 static void
