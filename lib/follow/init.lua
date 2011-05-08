@@ -4,7 +4,6 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
 -------------------------------------------------------
 
-local print = print
 local ipairs, pairs = ipairs, pairs
 local table, string = table, string
 local tonumber, tostring = tonumber, tostring
@@ -23,18 +22,13 @@ local capi = { luakit = luakit, timer = timer }
 module("follow")
 
 --- The follow module.
--- @field sort_labels If <code>true</code>, the follow hints will be sorted.
---  <br> Not sorting can help reading labels on high link density sites.
---  <br> <em>Default:</em> true
--- @field reverse_labels If <code>true</code>, the follow hints will be reversed.
---  <br> This sometimes equates to less key presses.
---  <br> <em>Default:</em> true
 -- @field ignore_delay Determines how long input from the user should be ignored
 --  after a successful follow.
 --  <br> This helps avoid accidentially triggering normal mode binds after a
 --  follow.
 --  <br> The duration is given in milliseconds.
---  <br> <em>Default:</em> 500
+-- @filed style The style to use for following.
+--  <br> See <code>follow.styles</code> for details.
 -- @field selectors A hash of <code>mode = selector</code>.
 --  <br> <code>mode</code> is the name of a follow mode.
 --  <br> <code>selector</code> is a CSS selector that indicates all elements
@@ -46,9 +40,8 @@ module("follow")
 --  may return <code>"form-active"</code> or <code>"root-active"</code>.
 -- @type table
 -- @name follow
-sort_labels = true
 ignore_delay = 250
-reverse_labels = true
+style = styles.filtered_number_hints(true, true)
 
 --- Selectors for the different modes.
 -- body selects frames (this is special magic to avoid cross-domain problems)
@@ -686,58 +679,6 @@ local function is_ready(w)
     return true
 end
 
---- Generates the labels for the hints.
--- Can be overridden to have different labels, e.g. with letters instead of
--- numbers.
---
--- @param size How many labels to generate
--- @return An array of strings with the given size.
-function make_labels(size)
-    local digits = 1
-    while true do
-        local max = 10 ^ digits - 10 ^ (digits - 1)
-        if max == 9 then max = 10 end
-        if max >= size then
-            break
-        else
-            digits = digits + 1
-        end
-    end
-    local start = 10 ^ (digits - 1)
-    if start == 1 then start = 0 end
-    local labels = {}
-    for i = start, size+start-1, 1 do
-        if reverse_labels then
-            table.insert(labels, string.reverse(i))
-        else
-            table.insert(labels, tostring(i))
-        end
-    end
-    if reverse_labels and sort_labels then table.sort(labels) end
-    return labels
-end
-
---- Parses the user's input into a match string and an ID.
--- Can be overriden to have a different matching procedure, e.g. when
--- <code>make_labels</code> has been overridden.
---
--- <br><br><h3>Example</h3>
---
--- To only perform the following on the follow labels and not on the text
--- content of the elements, you could use
---
--- <pre>follow.parse_input = function (text)
---  <br>  return "", text
---  <br>end
--- </pre>
---
--- @param text The input of the user.
--- @return A string that is used to filter the hints by their text content.
--- @return An string that is used to filter the hints by their IDs.
-function parse_input(text)
-    return string.match(text, "^(.-)(%d*)$")
-end
-
 -- Focus the next element in the correct frame
 local function focus(w, offset)
     if not is_ready(w) then return w:set_mode() end
@@ -899,7 +840,7 @@ new_mode("follow", {
 
         -- Generate labels
         state.frames = frames
-        local labels = make_labels(sum)
+        local labels = style.make_labels(sum)
         state.labels = lousy.util.table.clone(labels)
         state.current = 1
         for i, l in ipairs(labels) do labels[i] = string.format("%q", l) end
@@ -937,7 +878,7 @@ new_mode("follow", {
     changed = function (w, text)
         if not is_ready(w) then return w:set_mode() end
         local state = w.follow_state or {}
-        local filter, id = parse_input(text)
+        local filter, id = style.parse_input(text)
         local active_hints = 0
         local eval_frame
         for _, f in ipairs(w:get_current().frames) do
