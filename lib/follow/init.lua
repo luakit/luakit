@@ -14,6 +14,7 @@ local lousy = require "lousy"
 local window = window
 local webview = webview
 local downloads = require "downloads"
+local styles = require "follow.styles"
 local add_binds, new_mode = add_binds, new_mode
 local theme = theme
 local capi = { luakit = luakit, timer = timer }
