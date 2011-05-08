@@ -152,3 +152,20 @@ function sort(style)
     return style
 end
 
+--- Decorator for a style that removes all leading occurrances of a given char from the labels.
+-- If a label consists only of the character to remove, it will be truncated to just that character.
+--
+-- @param char The character to remove.
+-- @param style The style to decorate.
+function remove_leading(char, style)
+    local maker = style.make_labels
+    style.make_labels = function (size)
+        local labels = {}
+        for _, l in ipairs(maker(size)) do
+            table.insert(labels, string.match(l, char.."*(.+)"))
+        end
+        return labels
+    end
+    return style
+end
+
