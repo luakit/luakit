@@ -62,9 +62,12 @@ end
 function filtered_number_hints(sort, reverse)
     return {
         make_labels = function (size)
+            -- calculate the number of digits to use
             local digits = calculate_hint_length(size, 10)
+            -- calculate the first hint's number
             local start = 10 ^ (digits - 1)
             if start == 1 then start = 0 end
+            -- assemble all labels
             local labels = {}
             for i = start, size+start-1, 1 do
                 if reverse then
@@ -73,6 +76,7 @@ function filtered_number_hints(sort, reverse)
                     table.insert(labels, tostring(i))
                 end
             end
+            -- sort labels if necessary
             if reverse and sort then table.sort(labels) end
             return labels
         end,
