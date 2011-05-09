@@ -720,13 +720,8 @@ local function ignore_keys(w, fun)
         if sig == "form-active" then
             w:emit_form_root_active_signal(sig)
         else
-            local ignore_timer = capi.timer{interval=ignore_delay}
-            ignore_timer:add_signal("timeout", function (t)
-                t:stop()
-                fun()
-            end)
             w:set_mode("follow_ignore")
-            ignore_timer:start()
+            capi.timer.once(ignore_delay, fun)
         end
     else
     end
