@@ -148,7 +148,7 @@ luaH_warn(lua_State *L, const gchar *fmt, ...) {
 void luaH_init();
 gboolean luaH_parserc(const gchar *, gboolean);
 gboolean luaH_hasitem(lua_State *, gconstpointer);
-gint luaH_next(lua_State *, gint);
+gint luaH_mtnext(lua_State *, gint);
 gboolean luaH_isloop(lua_State *, gint);
 
 gint luaH_class_index_miss_property(lua_State *, lua_object_t *);

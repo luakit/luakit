@@ -152,7 +152,7 @@ cookies_from_table(lua_State *L, gint idx)
     lua_pushnil(L);
 
     /* iterate over cookies table */
-    while(luaH_next(L, -2)) {
+    while(luaH_mtnext(L, -2)) {
         /* create soup cookie from table */
         if ((cookie = cookie_new_from_table(L, -1, &error)))
             cookies = g_slist_prepend(cookies, cookie);
