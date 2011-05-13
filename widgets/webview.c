@@ -37,8 +37,6 @@ typedef struct {
     WebKitWebView *view;
     /** The GtkScrolledWindow for the webview widget */
     GtkScrolledWindow *win;
-    /** Hash table of frames in the current webview */
-    GHashTable *frames;
     /** Current webview uri */
     gchar *uri;
     /** Currently hovered uri */
@@ -377,11 +375,12 @@ update_uri(widget_t *w, const gchar *uri)
 static gint
 luaH_webview_push_frames(lua_State *L, webview_data_t *d)
 {
-    lua_createtable(L, g_hash_table_size(d->frames), 0);
+    GHashTable *frames = g_hash_table_lookup(frames_by_view, d->view);
+    lua_createtable(L, g_hash_table_size(frames), 0);
     gint i = 1, tidx = lua_gettop(L);
     gpointer frame;
     GHashTableIter iter;
-    g_hash_table_iter_init(&iter, d->frames);
+    g_hash_table_iter_init(&iter, frames);
     while (g_hash_table_iter_next(&iter, &frame, NULL)) {
         lua_pushlightuserdata(L, frame);
         lua_rawseti(L, tidx, i++);
