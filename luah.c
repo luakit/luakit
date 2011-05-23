@@ -108,7 +108,7 @@ luaHe_next(lua_State *L)
  * next elements. `idx` is the index number of elements in stack.
  * Returns 1 if more elements to come, 0 otherwise. */
 gint
-luaH_next(lua_State *L, gint idx)
+luaH_mtnext(lua_State *L, gint idx)
 {
     if(luaL_getmetafield(L, idx, "__next")) {
         /* if idx is relative, reduce it since we got __next */
@@ -235,7 +235,7 @@ gboolean
 luaH_hasitem(lua_State *L, gconstpointer item)
 {
     lua_pushnil(L);
-    while(luaH_next(L, -2)) {
+    while(luaH_mtnext(L, -2)) {
         if(lua_topointer(L, -1) == item) {
             /* remove value and key */
             lua_pop(L, 2);
@@ -275,7 +275,7 @@ luaH_isloop_check(lua_State *L, GPtrArray *elems)
 
         /* look every object in the "table" */
         lua_pushnil(L);
-        while(luaH_next(L, -2)) {
+        while(luaH_mtnext(L, -2)) {
             if(!luaH_isloop_check(L, elems)) {
                 /* remove key and value */
                 lua_pop(L, 2);

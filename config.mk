@@ -70,7 +70,7 @@ endif
 # Add flags
 CPPFLAGS := -DVERSION=\"$(VERSION)\" $(CPPFLAGS)
 CFLAGS   := -std=gnu99 -ggdb -W -Wall -Wextra $(INCS) $(CFLAGS)
-LDFLAGS  := $(LIBS) $(LDFLAGS)
+LDFLAGS  := $(LIBS) $(LDFLAGS) -Wl,--export-dynamic
 
 # Building on OSX
 # TODO: These lines have never been tested

@@ -75,14 +75,9 @@ void widget_class_setup(lua_State *);
 static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)
 {
-    static gchar *emsg = NULL;
-    if (emsg) { g_free(emsg); emsg = NULL; }
-
     widget_t *w = luaH_checkudata(L, udx, &widget_class);
-    if (!w->widget) {
-        emsg = g_strdup_printf("given/using destroyed widget (of type: %s)", w->info->name);
-        luaL_argerror(L, udx, emsg);
-    }
+    if (!w->widget)
+        luaL_argerror(L, udx, "using destroyed widget");
     return w;
 }
 
@@ -93,6 +88,8 @@ luaH_checkwidgetornil(lua_State *L, gint udx)
         return NULL;
     return luaH_checkwidget(L, udx);
 }
+
+#define luaH_towidget(L, udx) luaH_toudata(L, udx, &widget_class)
 
 #endif
 
