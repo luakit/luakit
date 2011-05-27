@@ -473,6 +473,13 @@ spawn_error:
     return 0;
 }
 
+/** Get seconds from unix epoch with nanosecond precision (or nearest
+ * supported by the users system).
+ * \see http://www.kernel.org/doc/man-pages/online/pages/man2/clock_gettime.2.html
+ *
+ * \param L The Lua VM state.
+ * \return  The number of elements pushed on the stack (1).
+ */
 static gint
 luaH_luakit_time(lua_State *L)
 {
@@ -482,6 +489,14 @@ luaH_luakit_time(lua_State *L)
     return 1;
 }
 
+/** Wrapper around the execl POSIX function. The exec family of functions
+ * replaces the current process image with a new process image. This function
+ * will only return if there was an error with the execl call.
+ * \see http://en.wikipedia.org/wiki/Execl
+ *
+ * \param L The Lua VM state.
+ * \return  The number of elements pushed on the stack (0).
+ */
 static gint
 luaH_luakit_exec(lua_State *L)
 {
