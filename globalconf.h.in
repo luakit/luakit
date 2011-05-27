@@ -21,29 +21,49 @@
 #ifndef LUAKIT_GLOBALCONF
 #define LUAKIT_GLOBALCONF
 
-#define LUAKIT_INSTALL_PATH         "/usr/local/share/luakit"
-#define LUAKIT_OBJECT_REGISTRY_KEY  "luakit.object.registry"
+/** Install location of luakit shared files. This serves as the base path for
+ * all system Lua module loading paths. */
+#define LUAKIT_INSTALL_PATH "/usr/local/share/luakit"
+
+/** Registry key for the Lua registry API to store a private reference counting
+ * table. This table prevents garbage collection of objects (userdata or
+ * tables) while in use by C functions or objects.
+ * \see http://www.lua.org/manual/5.1/manual.html#3.5 */
+#define LUAKIT_OBJECT_REGISTRY_KEY "luakit.object.registry"
 
 #include <glib/gtypes.h>
 #include <lua.h>
 #include "common/signal.h"
 
+/** Global luakit state struct. */
 typedef struct {
-    /* XDG directories */
-    gchar *cache_dir;
-    gchar *config_dir;
-    gchar *data_dir;
-    /* Path to the current config file */
-    gchar *confpath;
-    /* luakit executable path */
-    gchar *execpath;
-    /* Print verbose output */
-    gboolean verbose;
-    /* Lua VM state */
+    /** Main Lua VM state.
+     * \see http://www.lua.org/manual/5.1/manual.html#lua_State */
     lua_State *L;
-    /* Array of windows */
+
+    /** User path $XDG_CONFIG_DIR/luakit/ (defaults to ~/.config/luakit/) where
+     * configuration files should be stored.
+     * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html */
+    gchar *config_dir;
+    /** User path $XDG_DATA_DIR/luakit/ (defaults to ~/.local/share/luakit/)
+     * where data files should be stored.
+     * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html */
+    gchar *data_dir;
+    /** User path $XDG_CACHE_DIR/luakit/ (defaults to ~/.cache/luakit/) where
+     * non-essential data files should be stored.
+     * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html */
+    gchar *cache_dir;
+
+    /** Path to the currently loaded config file. */
+    gchar *confpath;
+    /** The luakit executable path. */
+    gchar *execpath;
+    /** Print verbose output. */
+    gboolean verbose;
+
+    /** Pointer array to all active window userdata objects. */
     GPtrArray *windows;
-    /* Array of webviews */
+    /** Pointer array to all active webview userdata objects. */
     GPtrArray *webviews;
 } globalconf_t;
 
