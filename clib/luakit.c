@@ -623,8 +623,9 @@ static gint
 luaH_luakit_idle_remove(lua_State *L)
 {
     luaH_checkfunction(L, 1);
-    gpointer func = luaH_object_ref(L, 1);
+    gpointer func = (gpointer)lua_topointer(L, 1);
     lua_pushboolean(L, g_idle_remove_by_data(func));
+    luaH_object_unref(L, func);
     return 1;
 }
 
