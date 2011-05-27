@@ -485,8 +485,10 @@ luaH_luakit_time(lua_State *L)
 static gint
 luaH_luakit_exec(lua_State *L)
 {
-    const gchar *cmd = luaL_checkstring(L, 1);
-    l_exec(cmd);
+    static const gchar *shell = NULL;
+    if (!shell && !(shell = g_getenv("SHELL")))
+        shell = "/bin/sh";
+    execl(shell, shell, "-c", luaL_checkstring(L, 1), NULL);
     return 0;
 }
 

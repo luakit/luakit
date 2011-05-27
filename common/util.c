@@ -68,15 +68,3 @@ file_exists(const gchar *filename)
 {
     return (access(filename, F_OK) == 0);
 }
-
-/* Execute a command and replace the current process. */
-void
-l_exec(const gchar *cmd)
-{
-    static const gchar *shell = NULL;
-
-    if(!shell && !(shell = g_getenv("SHELL")))
-        shell = "/bin/sh";
-
-    execl(shell, shell, "-c", cmd, NULL);
-}
