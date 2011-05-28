@@ -146,10 +146,9 @@ true_cb()
 
 /* set child method for gtk container widgets */
 gint
-luaH_widget_set_child(lua_State *L)
+luaH_widget_set_child(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidgetornil(L, 2);
+    widget_t *child = luaH_checkwidgetornil(L, 3);
 
     /* remove old child */
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
@@ -166,9 +165,8 @@ luaH_widget_set_child(lua_State *L)
 
 /* get child method for gtk container widgets */
 gint
-luaH_widget_get_child(lua_State *L)
+luaH_widget_get_child(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
     widget_t *child = NULL;
 

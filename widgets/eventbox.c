@@ -29,7 +29,7 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
-      LUAKIT_WIDGET_BIN_INDEX_COMMON
+      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push string properties */
@@ -51,6 +51,8 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+
       case L_TK_BG:
         tmp = luaL_checklstring(L, 3, &len);
         if (!gdk_color_parse(tmp, &c))

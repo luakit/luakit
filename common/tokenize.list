@@ -5,6 +5,7 @@ cache_dir
 can_go_back
 can_go_forward
 changes
+child
 clear_search
 config_dir
 confpath
@@ -84,7 +85,6 @@ secure
 selectable
 select_region
 set_alignment
-set_child
 set_default_size
 set_padding
 set_property

@@ -63,7 +63,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_BIN_INDEX_COMMON
+      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push widget class methods */
@@ -91,19 +91,20 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_window_newindex(lua_State *L, luakit_token_t token)
 {
-    size_t len;
     widget_t *w = luaH_checkwidget(L, 1);
 
     switch(token)
     {
+      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+
       case L_TK_TITLE:
         gtk_window_set_title(GTK_WINDOW(w->widget),
-            luaL_checklstring(L, 3, &len));
+            luaL_checkstring(L, 3));
         break;
 
       case L_TK_ICON:
         gtk_window_set_icon_from_file(GTK_WINDOW(w->widget),
-            luaL_checklstring(L, 3, &len), NULL);
+            luaL_checkstring(L, 3), NULL);
         break;
 
       default:

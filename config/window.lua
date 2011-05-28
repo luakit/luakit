@@ -65,8 +65,8 @@ function window.build()
     }
 
     -- Assemble window
-    w.ebox:set_child(w.layout)
-    w.win:set_child(w.ebox)
+    w.ebox.child = w.layout
+    w.win.child = w.ebox
 
     -- Pack tablist
     w.layout:pack(w.tablist.widget)
@@ -79,7 +79,7 @@ function window.build()
     l.layout:pack(l.uri)
     l.layout:pack(l.hist)
     l.layout:pack(l.loaded)
-    l.ebox:set_child(l.layout)
+    l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
@@ -87,14 +87,14 @@ function window.build()
     r.layout:pack(r.ssl)
     r.layout:pack(r.tabi)
     r.layout:pack(r.scroll)
-    r.ebox:set_child(r.layout)
+    r.ebox.child = r.layout
 
     -- Pack status bar elements
     local s = w.sbar
     s.layout:pack(l.ebox)
     s.layout:pack(s.sep, { expand = true, fill = true })
     s.layout:pack(r.ebox)
-    s.ebox:set_child(s.layout)
+    s.ebox.child = s.layout
     w.layout:pack(s.ebox)
 
     -- Pack menu widget
@@ -105,7 +105,7 @@ function window.build()
     local i = w.ibar
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
-    i.ebox:set_child(i.layout)
+    i.ebox.child = i.layout
     w.layout:pack(i.ebox)
 
     -- Other settings

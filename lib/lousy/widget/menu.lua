@@ -49,7 +49,7 @@ function update(menu)
                 hbox = capi.widget{type = "hbox"},
                 cols = {},
             }
-            rw.ebox:set_child(rw.hbox)
+            rw.ebox.child = rw.hbox
             d.table[i] = rw
             -- Add to main vbox
             menu.widget:pack(rw.ebox)
