@@ -20,6 +20,7 @@ DOCUMENTS
 domain
 DOWNLOAD
 elapsed_time
+end
 entry
 error
 eval_js
@@ -66,8 +67,7 @@ MUSIC
 name
 notebook
 open
-pack_end
-pack_start
+pack
 path
 PICTURES
 position
@@ -103,6 +103,7 @@ spacing
 spawn
 spawn_sync
 ssl_trusted
+start
 started
 status
 stop

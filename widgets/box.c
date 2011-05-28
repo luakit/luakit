@@ -21,31 +21,46 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-/* direct wrapper around gtk_box_pack_start */
 static gint
-luaH_box_pack_start(lua_State *L)
+luaH_box_pack(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
-    gboolean expand = luaH_checkboolean(L, 3);
-    gboolean fill = luaH_checkboolean(L, 4);
-    guint padding = luaL_checknumber(L, 5);
-    gtk_box_pack_start(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-        expand, fill, padding);
-    return 0;
-}
 
-/* direct wrapper around gtk_box_pack_end */
-static gint
-luaH_box_pack_end(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidget(L, 2);
-    gboolean expand = luaH_checkboolean(L, 3);
-    gboolean fill = luaH_checkboolean(L, 4);
-    guint padding = luaL_checknumber(L, 5);
-    gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-        expand, fill, padding);
+    gint top = lua_gettop(L);
+    gboolean expand = FALSE, fill = FALSE, start = TRUE;
+    guint padding = 0;
+
+    /* check for options table */
+    if (top > 2 && !lua_isnil(L, 3)) {
+        luaH_checktable(L, 3);
+
+        /* pack child from start or end of container? */
+        if (luaH_rawfield(L, 3, "from"))
+            start = L_TK_END == l_tokenize(lua_tostring(L, -1)) ? FALSE : TRUE;
+
+        /* expand? */
+        if (luaH_rawfield(L, 3, "expand"))
+            expand = lua_toboolean(L, -1) ? TRUE : FALSE;
+
+        /* fill? */
+        if (luaH_rawfield(L, 3, "fill"))
+            fill = lua_toboolean(L, -1) ? TRUE : FALSE;
+
+        /* padding? */
+        if (luaH_rawfield(L, 3, "padding"))
+            padding = (guint)lua_tonumber(L, -1);
+
+        /* return stack to original state */
+        lua_settop(L, top);
+    }
+
+    if (start)
+        gtk_box_pack_start(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+                expand, fill, padding);
+    else
+        gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+                expand, fill, padding);
     return 0;
 }
 
@@ -71,8 +86,7 @@ luaH_box_index(lua_State *L, luakit_token_t token)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(PACK_END,     luaH_box_pack_end)
-      PF_CASE(PACK_START,   luaH_box_pack_start)
+      PF_CASE(PACK,         luaH_box_pack)
       PF_CASE(REORDER,      luaH_box_reorder_child)
       /* push boolean properties */
       PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
