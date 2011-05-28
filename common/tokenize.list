@@ -1,3 +1,4 @@
+align
 append
 atindex
 bg
@@ -34,11 +35,9 @@ filename
 focus
 font
 frames
-get_alignment
 get_child
 get_children
 get_id
-get_padding
 get_property
 get_scroll_horiz
 get_scroll_vert
@@ -69,6 +68,7 @@ name
 notebook
 open
 pack
+padding
 path
 PICTURES
 position
@@ -84,9 +84,7 @@ search
 secure
 selectable
 select_region
-set_alignment
 set_default_size
-set_padding
 set_property
 set_scroll_horiz
 set_scroll_vert
@@ -129,6 +127,7 @@ webkit_minor_version
 webkit_user_agent_major_version
 webkit_user_agent_minor_version
 webview
+width
 window
 windows
 xid

@@ -35,7 +35,7 @@ function update(tlist, tabs, current)
             local tl = { ebox  = capi.widget{type = "eventbox"},
                          label = capi.widget{type = "label"} }
             tl.label.font = theme.tab_font
-            tl.label:set_width(1)
+            tl.label.width = 1
             tl.ebox.child = tl.label
             tl.ebox:add_signal("button-release", function (e, mods, but)
                 return tlist:emit_signal("tab-clicked", i, mods, but)
