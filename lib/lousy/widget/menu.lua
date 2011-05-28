@@ -52,7 +52,7 @@ function update(menu)
             rw.ebox:set_child(rw.hbox)
             d.table[i] = rw
             -- Add to main vbox
-            menu.widget:pack_start(rw.ebox, false, false, 0)
+            menu.widget:pack(rw.ebox)
 
         -- Remove row
         elseif not row and rw then
@@ -111,7 +111,7 @@ function update(menu)
                 -- Make new row column widget
                 if text and not cell then
                     cell = capi.widget{type = "label"}
-                    rw.hbox:pack_start(cell, true, true, 0)
+                    rw.hbox:pack(cell, { expand = true, fill = true })
                     rw.cols[c] = cell
                     cell.font = font
                     cell:set_width(1)

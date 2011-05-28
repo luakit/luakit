@@ -78,7 +78,7 @@ end
 window.init_funcs.downloads_status = function (w)
     local r = w.sbar.r
     r.downloads = capi.widget{type="label"}
-    r.layout:pack_start(r.downloads, false, false, 0)
+    r.layout:pack(r.downloads)
     r.layout:reorder(r.downloads, 1)
     -- Apply theme
     local theme = theme.get()

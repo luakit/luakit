@@ -69,44 +69,44 @@ function window.build()
     w.win:set_child(w.ebox)
 
     -- Pack tablist
-    w.layout:pack_start(w.tablist.widget, false, false, 0)
+    w.layout:pack(w.tablist.widget)
 
     -- Pack notebook
-    w.layout:pack_start(w.tabs, true, true, 0)
+    w.layout:pack(w.tabs, { expand = true, fill = true })
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
-    l.layout:pack_start(l.uri,    false, false, 0)
-    l.layout:pack_start(l.hist,   false, false, 0)
-    l.layout:pack_start(l.loaded, false, false, 0)
+    l.layout:pack(l.uri)
+    l.layout:pack(l.hist)
+    l.layout:pack(l.loaded)
     l.ebox:set_child(l.layout)
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
-    r.layout:pack_start(r.buf,    false, false, 0)
-    r.layout:pack_start(r.ssl,    false, false, 0)
-    r.layout:pack_start(r.tabi,   false, false, 0)
-    r.layout:pack_start(r.scroll, false, false, 0)
+    r.layout:pack(r.buf)
+    r.layout:pack(r.ssl)
+    r.layout:pack(r.tabi)
+    r.layout:pack(r.scroll)
     r.ebox:set_child(r.layout)
 
     -- Pack status bar elements
     local s = w.sbar
-    s.layout:pack_start(l.ebox,   false, false, 0)
-    s.layout:pack_start(s.sep,    true,  true,  0)
-    s.layout:pack_start(r.ebox,   false, false, 0)
+    s.layout:pack(l.ebox)
+    s.layout:pack(s.sep, { expand = true, fill = true })
+    s.layout:pack(r.ebox)
     s.ebox:set_child(s.layout)
-    w.layout:pack_start(s.ebox,   false, false, 0)
+    w.layout:pack(s.ebox)
 
     -- Pack menu widget
-    w.layout:pack_start(w.menu.widget, false, false, 0)
+    w.layout:pack(w.menu.widget)
     w.menu:hide()
 
     -- Pack input bar
     local i = w.ibar
-    i.layout:pack_start(i.prompt, false, false, 0)
-    i.layout:pack_start(i.input,  true,  true,  0)
+    i.layout:pack(i.prompt)
+    i.layout:pack(i.input, { expand = true, fill = true })
     i.ebox:set_child(i.layout)
-    w.layout:pack_start(i.ebox,    false, false, 0)
+    w.layout:pack(i.ebox)
 
     -- Other settings
     i.input.show_frame = false

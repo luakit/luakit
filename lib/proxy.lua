@@ -137,7 +137,7 @@ end
 window.init_funcs.build_proxy_indicator = function (w)
     local r = w.sbar.r
     r.proxyi = widget{type="label"}
-    r.layout:pack_start(r.proxyi, false, false, 0)
+    r.layout:pack(r.proxyi)
     r.layout:reorder(r.proxyi, 2)
 
     r.proxyi.fg = theme.proxyi_sbar_fg

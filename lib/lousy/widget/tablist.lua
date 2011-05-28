@@ -43,7 +43,7 @@ function update(tlist, tabs, current)
             tl.ebox:add_signal("button-double-click", function (e, mods, but)
                 return tlist:emit_signal("tab-double-clicked", i, mods, but)
             end)
-            tlist.widget:pack_start(tl.ebox, true, true, 0)
+            tlist.widget:pack(tl.ebox, { expand = true, fill = true })
             labels[i] = tl
         end
     end
