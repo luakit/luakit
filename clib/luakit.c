@@ -139,13 +139,9 @@ luaH_luakit_set_selection(lua_State *L)
 
     GtkClipboard *selection = gtk_clipboard_get(atom);
 
-    /* set selection text */
-    if (text) {
-        glong len = g_utf8_strlen (text, -1);
-        gtk_clipboard_set_text(selection, text, len);
-
-    /* clear selection text */
-    } else
+    if (text)
+        gtk_clipboard_set_text(selection, text, -1);
+    else
         gtk_clipboard_clear(selection);
 
     return 0;
