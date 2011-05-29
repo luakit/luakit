@@ -562,21 +562,13 @@ window.methods = {
         -- Make new webview widget
         if not view then
             view = webview.new(w)
-
+            -- Get tab order function
             if not order and taborder then
-                order = (switch == false and taborder.default_bg) or
-                                             taborder.default
+                order = (switch == false and taborder.default_bg)
+                    or taborder.default
             end
-
-            if not order then
-                -- No taborder, or no taborder defaults. Put new tab last.
-                order = function(w) return w.tabs:count() + 1 end
-            end
-
-            local newindex = order(w, view)
-            newindex = w.tabs:insert(view, newindex)
-
-            if switch ~= false then w.tabs:switch(newindex) end
+            pos = w.tabs:insert((order and order(w, view)) or -1, view)
+            if switch ~= false then w.tabs:switch(pos) end
         end
         -- Load uri or webview history table
         if type(arg) == "string" then view.uri = arg

@@ -84,32 +84,23 @@ static gint
 luaH_notebook_insert(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidget(L, 2);
-    gint i = luaL_checknumber(L, 3);
-    /* correct index */
-    if (i != -1) i--;
 
-    i = gtk_notebook_insert_page(GTK_NOTEBOOK(w->widget),
-        child->widget, NULL, i);
+    /* get insert position (or append page) */
+    gint pos = -1, idx = 2;
+    if (lua_gettop(L) > 2) {
+        pos = luaL_checknumber(L, idx++);
+        if (pos > 0) pos--; /* correct lua index */
+    }
 
-    /* return new index or nil */
-    if (!++i) return 0;
-    lua_pushnumber(L, i);
-    return 1;
-}
+    pos = gtk_notebook_insert_page(GTK_NOTEBOOK(w->widget),
+        GTK_WIDGET(luaH_checkwidget(L, idx)->widget), NULL, pos);
 
-/* Appends a widget to the notebook widget */
-static gint
-luaH_notebook_append(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidget(L, 2);
-    gint i = gtk_notebook_append_page(GTK_NOTEBOOK(w->widget),
-        child->widget, NULL);
+    /* failed to insert page */
+    if (pos == -1)
+        return 0;
 
-    /* return new index or nil */
-    if (!++i) return 0;
-    lua_pushnumber(L, i);
+    /* return new (lua corrected) index */
+    lua_pushnumber(L, ++pos);
     return 1;
 }
 
@@ -179,7 +170,6 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(APPEND,       luaH_notebook_append)
       PF_CASE(ATINDEX,      luaH_notebook_atindex)
       PF_CASE(COUNT,        luaH_notebook_count)
       PF_CASE(CURRENT,      luaH_notebook_current)
