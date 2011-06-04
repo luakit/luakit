@@ -49,19 +49,24 @@ window.init_funcs.modes_setup = function (w)
         w:emit_signal("mode-entered", mode)
     end)
 
+    local input = w.ibar.input
+
     -- Calls the changed hook on input widget changed.
-    w.ibar.input:add_signal("changed", function ()
-        local mode = w.mode
-        if mode and mode.changed then
-            mode.changed(w, w.ibar.input.text)
-        end
+    input:add_signal("changed", function ()
+        local changed = w.mode.changed
+        if changed then changed(w, input.text) end
+    end)
+
+    input:add_signal("property::position", function ()
+        local move_cursor = w.mode.move_cursor
+        if move_cursor then move_cursor(w, input.position) end
     end)
 
     -- Calls the `activate` hook on input widget activate.
-    w.ibar.input:add_signal("activate", function ()
+    input:add_signal("activate", function ()
         local mode = w.mode
         if mode and mode.activate then
-            local text, hist = w.ibar.input.text, mode.history
+            local text, hist = input.text, mode.history
             if mode.activate(w, text) == false then return end
             -- Check if last history item is identical
             if hist and hist.items and hist.items[hist.len or -1] ~= text then
@@ -69,7 +74,6 @@ window.init_funcs.modes_setup = function (w)
             end
         end
     end)
-
 end
 
 -- Add mode related window methods
