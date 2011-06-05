@@ -1,27 +1,23 @@
 ------------------------------------------------------------
 -- Command completion                                     --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
 -- © 2010-2011 Mason Larobina  <mason.larobina@gmail.com> --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
 ------------------------------------------------------------
 
-local lousy = require "lousy"
+-- Get Lua environment
+local ipairs = ipairs
+local setmetatable = setmetatable
 local string = string
 local table = table
-local setmetatable = setmetatable
-local add_binds = add_binds
-local new_mode = new_mode
-local ipairs = ipairs
-local assert = assert
 local unpack = unpack
-local debug = debug
+
+-- Get luakit environment
+local lousy = require "lousy"
 local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
-local capi = { luakit = luakit }
-
--- Required for history completion
 local history = require "history"
-
--- Required for command completion
-local get_mode = get_mode
+local new_mode, get_mode = new_mode, get_mode
+local add_binds = add_binds
+local capi = { luakit = luakit }
 
 module "completion"
 
@@ -70,12 +66,13 @@ function update_completions(w, text, pos)
     state.left = string.sub(text, 2, pos)
     state.right = string.sub(text, pos + 1)
 
-    local rows = {}
+    -- Call each completion function
+    local groups = {}
     for _, func in ipairs(_M.order) do
-        table.insert(rows, func(state) or {})
+        table.insert(groups, func(state) or {})
     end
     -- Join all result tables
-    rows = lousy.util.table.join(unpack(rows))
+    rows = lousy.util.table.join(unpack(groups))
 
     if rows[1] then
         -- Prevent callbacks triggering recursive updates.
@@ -149,11 +146,11 @@ new_mode("completion", {
 funcs = {
     -- Add command completion items to the menu
     command = function (state)
-        -- Only interested in first word
+        -- We are only interested in the first word
         if string.match(state.left, "%s") then return end
+        -- Check each command binding for matches
         local pat = "^" .. state.left
         local cmds = {}
-        -- Check each command binding for matches
         for _, b in ipairs(get_mode("command").binds) do
             if b.cmds then
                 for i, cmd in ipairs(b.cmds) do
@@ -169,31 +166,40 @@ funcs = {
                 end
             end
         end
-        -- Sort matching commands
+        -- Sort commands
         local keys = lousy.util.table.keys(cmds)
+        -- Return if no results
         if not keys[1] then return end
         -- Build completion menu items
         local ret = {{ "Commands", title = true }}
-        for _, row in ipairs(keys) do
-            table.insert(ret, cmds[row])
+        for _, cmd in ipairs(keys) do
+            table.insert(ret, cmds[cmd])
         end
         return ret
     end,
 
     -- Add history completion items to the menu
     history = function (state)
-        -- Find word under cursor (and check that not first word)
+        -- Find word under cursor (also checks not first word)
         local term = string.match(state.left, "%s(%S+)$")
         if not term then return end
+
         -- Build query & sort results by number of times visited
         local glob = sql_escape("*" .. string.lower(term) .. "*")
+
+        -- Build SQL query
         local results = history.db:exec(string.format([[SELECT uri, title
             FROM history WHERE lower(uri) GLOB %s OR lower(title) GLOB %s
             ORDER BY visits DESC LIMIT 25;]], glob, glob))
+
+        -- Return if no history items matched
         if not results[1] then return end
-        -- Strip last word and make common left text
+
+        -- Strip last word (so that we can append the completion uri)
         local left = ":" .. string.sub(state.left, 1,
             string.find(state.left, "%s(%S+)$"))
+
+        -- Build rows
         local ret = {{ "History", "URI", title = true }}
         for _, row in ipairs(results) do
             table.insert(ret, { escape(row.title), escape(row.uri),
