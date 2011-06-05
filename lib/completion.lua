@@ -40,6 +40,8 @@ end
 add_binds("completion", {
     key({},          "Tab",    function (w) w.menu:move_down() end),
     key({"Shift"},   "Tab",    function (w) w.menu:move_up()   end),
+    key({},          "Up",     function (w) w.menu:move_up()   end),
+    key({},          "Down",   function (w) w.menu:move_down() end),
     key({},          "Escape", exit_completion),
     key({"Control"}, "[",      exit_completion),
 })
