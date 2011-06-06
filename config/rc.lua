@@ -2,6 +2,19 @@
 -- luakit configuration file, more information at http://luakit.org/ --
 -----------------------------------------------------------------------
 
+-- Check for running instances (of the same version)
+unique.new("browser.luakit")
+if unique.is_running() then
+    if uris[1] then
+        for _, uri in ipairs(uris) do
+            unique.send_message("open " .. uri)
+        end
+    else
+        unique.send_message("winopen")
+    end
+    luakit.quit()
+end
+
 -- Load library of useful functions for luakit
 require "lousy"
 
@@ -108,5 +121,20 @@ else
     -- Or open new window
     window.new(uris)
 end
+
+-------------------------------------------
+-- Open URIs from other luakit instances --
+-------------------------------------------
+
+unique.add_signal("message", function (msg, screen)
+    local cmd, arg = string.match(msg, "^(%S+)%s*(.*)")
+    local w = lousy.util.table.values(window.bywidget)[1]
+    if cmd == "open" then
+        w:new_tab(arg)
+    elseif cmd == "winopen" then
+        w = window.new((arg ~= "") and { arg } or {})
+    end
+    w.win:set_screen(screen)
+end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
