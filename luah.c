@@ -28,6 +28,7 @@
 #include "clib/timer.h"
 #include "clib/widget.h"
 #include "clib/luakit.h"
+#include "clib/unique.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -367,6 +368,9 @@ luaH_init(void)
 
     /* Export soup lib */
     soup_lib_setup(L);
+
+    /* Export unique lib */
+    unique_lib_setup(L);
 
     /* Export widget */
     widget_class_setup(L);

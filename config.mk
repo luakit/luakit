@@ -58,7 +58,7 @@ webkit-gtk installed?)
 endif
 
 # Generate includes and libs
-PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 $(LUA_PKG_NAME) sqlite3
+PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 $(LUA_PKG_NAME) sqlite3 unique-1.0
 INCS := $(shell pkg-config --cflags $(PKGS)) -I./
 LIBS := $(shell pkg-config --libs $(PKGS))
 
