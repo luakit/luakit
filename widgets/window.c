@@ -57,6 +57,22 @@ luaH_window_show(lua_State *L)
 }
 
 static gint
+luaH_window_set_screen(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    GdkScreen *screen;
+
+    if (lua_islightuserdata(L, 2))
+        screen = (GdkScreen*)lua_touserdata(L, 2);
+    else
+        luaL_argerror(L, 2, "expected GdkScreen lightuserdata");
+
+    gtk_window_set_screen(GTK_WINDOW(w->widget), screen);
+    gtk_window_present(GTK_WINDOW(w->widget));
+    return 0;
+}
+
+static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -74,6 +90,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
       PF_CASE(SHOW,             luaH_window_show)
+      PF_CASE(SET_SCREEN,       luaH_window_set_screen)
 
       /* push string methods */
       PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))
