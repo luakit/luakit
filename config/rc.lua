@@ -73,9 +73,6 @@ require "downloads_chrome"
 -- (depends on downloads)
 require "follow"
 
--- Add command completion
-require "completion"
-
 -- Add command history
 require "cmdhist"
 
@@ -88,6 +85,9 @@ require "taborder"
 -- Save web history
 require "history"
 require "history_chrome"
+
+-- Add command completion
+require "completion"
 
 require "follow_selected"
 require "go_input"

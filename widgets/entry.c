@@ -160,6 +160,17 @@ changed_cb(widget_t *w)
     lua_pop(L, 1);
 }
 
+static void
+position_cb(GtkEntry *e, GParamSpec *ps, widget_t *w)
+{
+    (void) e;
+    (void) ps;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "property::position", 0, 0);
+    lua_pop(L, 1);
+}
+
 widget_t *
 widget_entry(widget_t *w)
 {
@@ -180,6 +191,7 @@ widget_entry(widget_t *w)
       "signal::focus-out-event",                   G_CALLBACK(focus_cb),      w,
       "signal::key-press-event",                   G_CALLBACK(key_press_cb),  w,
       "signal::parent-set",                        G_CALLBACK(parent_set_cb), w,
+      "signal::notify::cursor-position",           G_CALLBACK(position_cb),   w,
       // The following signals replace the old "signal::changed", since that
       // does not allow for the selection to be changed in it's callback.
       "swapped-signal-after::backspace",           G_CALLBACK(changed_cb),    w,
