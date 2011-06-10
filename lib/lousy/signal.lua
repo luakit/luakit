@@ -70,7 +70,7 @@ function emit_signal(object, signame, ...)
         else
             ret = { sigfunc(object, ...) }
         end
-        if #ret > 0 and ret[1] ~= nil then
+        if ret[1] ~= nil then
             return unpack(ret)
         end
     end
@@ -108,7 +108,7 @@ function setup(object, module)
         assert(not object[fn], "signal object method conflict: " .. fn)
         if module then
             local func = _M[fn]
-            object[fn] = function (...) func(object, ...) end
+            object[fn] = function (...) return func(object, ...) end
         else
             object[fn] = _M[fn]
         end
