@@ -19,6 +19,8 @@
  *
  */
 
+#if WITH_UNIQUE
+
 #ifndef LUAKIT_CLIB_UNIQUE_H
 #define LUAKIT_CLIB_UNIQUE_H
 
@@ -26,6 +28,7 @@
 
 void unique_lib_setup(lua_State*);
 
-#endif
+#endif /* #if LUAKIT_CLIB_UNIQUE_H */
+#endif /* #if WITH_UNIQUE */
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

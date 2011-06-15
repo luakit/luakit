@@ -45,31 +45,37 @@ find the correct package name for your system. Please also check that you \
 have lua >= 5.1 installed)
 endif
 
-# Check if user has sqlite3 libs installed.
-ifeq ($(shell pkg-config --exists sqlite3 && echo 1),)
-$(error Unable to find sqlite3 libs on your system, do you have sqlite3 \
-installed?)
-endif
+# Packages required to build luakit
+PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 sqlite3 $(LUA_PKG_NAME)
 
-# Check if user has webkit-gtk libs installed.
-ifeq ($(shell pkg-config --exists webkit-1.0 && echo 1),)
-$(error Unable to find webkit-gtk libs on your system, do you have \
-webkit-gtk installed?)
+# Build luakit with libunqiue bindings (for writing simple single-
+# instance applications using dbus).
+# To disable use `make USE_UNIQUE=0`.
+ifneq ($(USE_UNIQUE),0)
+CPPFLAGS += -DWITH_UNIQUE
+PKGS     += unique-1.0
 endif
-
-# Generate includes and libs
-PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 $(LUA_PKG_NAME) sqlite3 unique-1.0
-INCS := $(shell pkg-config --cflags $(PKGS)) -I./
-LIBS := $(shell pkg-config --libs $(PKGS))
 
 # Should we load relative config paths first?
 ifneq ($(DEVELOPMENT_PATHS),0)
 CPPFLAGS += -DDEVELOPMENT_PATHS
 endif
 
-# Add flags
+# Check user has the required libs installed.
+ifneq ($(shell pkg-config --print-errors --exists $(PKGS) && echo 1),1)
+$(error Cannot find required libraries to build luakit. Please check you \
+have the above packages installed and try again.)
+endif
+
+# Add pre-processor flags
 CPPFLAGS := -DVERSION=\"$(VERSION)\" $(CPPFLAGS)
+
+# Generate compiler options
+INCS     := $(shell pkg-config --cflags $(PKGS)) -I./
 CFLAGS   := -std=gnu99 -ggdb -W -Wall -Wextra $(INCS) $(CFLAGS)
+
+# Generate linker options
+LIBS     := $(shell pkg-config --libs $(PKGS))
 LDFLAGS  := $(LIBS) $(LDFLAGS) -Wl,--export-dynamic
 
 # Building on OSX

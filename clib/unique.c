@@ -19,6 +19,8 @@
  *
  */
 
+#if WITH_UNIQUE
+
 #include "clib/unique.h"
 #include "luah.h"
 
@@ -113,5 +115,7 @@ unique_lib_setup(lua_State *L)
     /* export unique lib */
     luaH_openlib(L, "unique", unique_lib, unique_lib);
 }
+
+#endif /* #if WITH_UNIQUE */
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
