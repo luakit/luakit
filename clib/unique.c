@@ -1,5 +1,5 @@
 /*
- * clib/unique.c - libunique bindings for writing single instance 
+ * clib/unique.c - libunique bindings for writing single instance
  * applications
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
@@ -34,7 +34,7 @@ LUA_CLASS_FUNCS(unique, unique_class);
 UniqueApp *application = NULL;
 
 UniqueResponse
-message_cb(UniqueApp *a, gint id, UniqueMessageData *message_data, 
+message_cb(UniqueApp *a, gint id, UniqueMessageData *message_data,
         guint time, gpointer data)
 {
     (void) a;
@@ -53,7 +53,7 @@ message_cb(UniqueApp *a, gint id, UniqueMessageData *message_data,
         /* emit signal */
         signal_object_emit(L, unique_class.signals, "message", 2, 0);
     }
-    
+
     return UNIQUE_RESPONSE_OK;
 }
 
@@ -65,7 +65,7 @@ luaH_unique_new(lua_State *L)
 
     const gchar *name = luaL_checkstring(L, 1);
     application = unique_app_new_with_commands(name, NULL, "message", 1, NULL);
-    g_signal_connect(G_OBJECT(application), "message-received", 
+    g_signal_connect(G_OBJECT(application), "message-received",
             G_CALLBACK(message_cb), L);
     return 0;
 }

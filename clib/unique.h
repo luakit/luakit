@@ -1,5 +1,5 @@
 /*
- * clib/unique.c - libunique bindings for writing single instance 
+ * clib/unique.c - libunique bindings for writing single instance
  * applications
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
