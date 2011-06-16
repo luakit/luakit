@@ -60,7 +60,7 @@ static gint
 luaH_window_set_screen(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    GdkScreen *screen;
+    GdkScreen *screen = NULL;
 
     if (lua_islightuserdata(L, 2))
         screen = (GdkScreen*)lua_touserdata(L, 2);
