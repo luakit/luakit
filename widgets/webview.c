@@ -1266,6 +1266,20 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
 #endif
 }
 
+static gboolean
+scroll_event_cb(GtkWidget *v, GdkEventScroll *ev, widget_t *w)
+{
+    (void) v;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
+    lua_pushinteger(L, ((int)ev->direction) + 4);
+    gint ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
+    gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
+    lua_pop(L, ret + 1);
+    return catch;
+}
+
 static void
 webview_destructor(widget_t *w)
 {
@@ -1343,6 +1357,8 @@ widget_webview(widget_t *w)
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
+      "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
+
       NULL);
 
     /* show widgets */
