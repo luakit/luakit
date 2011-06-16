@@ -1342,6 +1342,7 @@ widget_webview(widget_t *w)
       "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
       "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
+      "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
       "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
       "signal::focus-in-event",                       G_CALLBACK(focus_cb),                     w,
@@ -1356,9 +1357,7 @@ widget_webview(widget_t *w)
       "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
-      "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
-
       NULL);
 
     /* show widgets */
