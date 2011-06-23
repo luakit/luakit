@@ -24,7 +24,6 @@
 
 #include "globalconf.h"
 #include "widgets/common.h"
-#include "clib/download.h"
 #include "clib/soup/soup.h"
 #include "common/property.h"
 #include "luah.h"
@@ -118,6 +117,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 
 #include "widgets/webview/javascript.c"
 #include "widgets/webview/frames.c"
+#include "widgets/webview/downloads.c"
 
 static gint
 luaH_webview_get_property(lua_State *L)
@@ -214,33 +214,6 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
     lua_pushstring(L, name);
     luaH_object_emit_signal(L, -2, "load-status", 1, 0);
     lua_pop(L, 1);
-}
-
-static gboolean
-mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
-        WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
-        widget_t *w)
-{
-    (void) v;
-    (void) f;
-    lua_State *L = globalconf.L;
-    const gchar *uri = webkit_network_request_get_uri(r);
-
-    luaH_object_push(L, w->ref);
-    lua_pushstring(L, uri);
-    lua_pushstring(L, mime);
-    gint ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
-
-    if (ret && !lua_toboolean(L, -1))
-        /* User responded with false, ignore request */
-        webkit_web_policy_decision_ignore(pd);
-    else if (!webkit_web_view_can_show_mime_type(v, mime))
-        webkit_web_policy_decision_download(pd);
-    else
-        webkit_web_policy_decision_use(pd);
-
-    lua_pop(L, ret + 1);
-    return TRUE;
 }
 
 static gboolean
@@ -344,19 +317,6 @@ create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 
     lua_settop(L, top);
     return view;
-}
-
-static gboolean
-download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
-{
-    (void) v;
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_download_push(L, dl);
-    gint ret = luaH_object_emit_signal(L, 1, "download-request", 1, 1);
-    gboolean handled = (ret && lua_toboolean(L, 2));
-    lua_pop(L, 1 + ret);
-    return handled;
 }
 
 static void
