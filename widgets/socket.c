@@ -56,15 +56,6 @@ luaH_socket_add_id(lua_State *L)
 }
 
 static gint
-luaH_socket_get_id(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    GdkNativeWindow id = gtk_socket_get_id(GTK_SOCKET(w->widget));
-    lua_pushnumber(L, (int) id);
-    return 1;
-}
-
-static gint
 luaH_socket_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -75,7 +66,8 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
 
       /* push class methods */
       PF_CASE(ADD_ID,     luaH_socket_add_id)
-      PF_CASE(ID,         luaH_socket_get_id)
+      /* push integer methods */
+      PI_CASE(ID,         (int) gtk_socket_get_id(GTK_SOCKET(w->widget)))
       /* push boolean methods */
       PB_CASE(IS_PLUGGED, gtk_socket_get_plug_window(GTK_SOCKET(w->widget)) != NULL)
 
