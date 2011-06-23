@@ -46,17 +46,10 @@ typedef struct {
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
 
-GHashTable *frames_by_view = NULL;
-
 static struct {
     GSList *refs;
     GSList *items;
 } last_popup = { NULL, NULL };
-
-typedef struct {
-    WebKitWebView *view;
-    WebKitWebFrame *frame;
-} frame_destroy_callback_t;
 
 GHashTable *webview_properties = NULL;
 property_t webview_properties_table[] = {
@@ -124,6 +117,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 }
 
 #include "widgets/webview/javascript.c"
+#include "widgets/webview/frames.c"
 
 static gint
 luaH_webview_get_property(lua_State *L)
@@ -184,22 +178,6 @@ update_uri(widget_t *w, const gchar *uri)
         luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
         lua_pop(L, 1);
     }
-}
-
-static gint
-luaH_webview_push_frames(lua_State *L, webview_data_t *d)
-{
-    GHashTable *frames = g_hash_table_lookup(frames_by_view, d->view);
-    lua_createtable(L, g_hash_table_size(frames), 0);
-    gint i = 1, tidx = lua_gettop(L);
-    gpointer frame;
-    GHashTableIter iter;
-    g_hash_table_iter_init(&iter, frames);
-    while (g_hash_table_iter_next(&iter, &frame, NULL)) {
-        lua_pushlightuserdata(L, frame);
-        lua_rawseti(L, tidx, i++);
-    }
-    return 1;
 }
 
 static void
@@ -263,30 +241,6 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 
     lua_pop(L, ret + 1);
     return TRUE;
-}
-
-static void
-frame_destroyed_cb(frame_destroy_callback_t *st)
-{
-    gpointer hash = g_hash_table_lookup(frames_by_view, st->view);
-    /* the view might be destroyed before the frames */
-    if (hash)
-        g_hash_table_remove(hash, st->frame);
-    g_slice_free(frame_destroy_callback_t, st);
-}
-
-static void
-document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
-{
-    (void) w;
-    /* add a bogus property to the frame so we get notified when it's destroyed */
-    frame_destroy_callback_t *st = g_slice_new(frame_destroy_callback_t);
-    st->view = v;
-    st->frame = f;
-    g_object_set_data_full(G_OBJECT(f), "dummy-destroy-notify", st,
-            (GDestroyNotify)frame_destroyed_cb);
-    GHashTable *frames = g_hash_table_lookup(frames_by_view, v);
-    g_hash_table_insert(frames, f, NULL);
 }
 
 static gboolean
