@@ -51,6 +51,7 @@ hide
 history
 homogeneous
 hovered_uri
+hpaned
 http_only
 icon
 indexof
@@ -121,6 +122,7 @@ vbox
 verbose
 version
 VIDEOS
+vpaned
 webkit_major_version
 webkit_micro_version
 webkit_minor_version

@@ -37,6 +37,8 @@ typedef void (widget_destructor_t)(widget_t *);
 widget_constructor_t widget_entry;
 widget_constructor_t widget_eventbox;
 widget_constructor_t widget_hbox;
+widget_constructor_t widget_hpaned;
+widget_constructor_t widget_vpaned;
 widget_constructor_t widget_label;
 widget_constructor_t widget_notebook;
 widget_constructor_t widget_vbox;

@@ -25,6 +25,8 @@ widget_info_t widgets_list[] = {
   { L_TK_ENTRY,      "entry",      widget_entry      },
   { L_TK_EVENTBOX,   "eventbox",   widget_eventbox   },
   { L_TK_HBOX,       "hbox",       widget_hbox       },
+  { L_TK_HPANED,     "hpaned",     widget_hpaned     },
+  { L_TK_VPANED,     "vpaned",     widget_vpaned     },
   { L_TK_LABEL,      "label",      widget_label      },
   { L_TK_NOTEBOOK,   "notebook",   widget_notebook   },
   { L_TK_VBOX,       "vbox",       widget_vbox       },
