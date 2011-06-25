@@ -69,6 +69,9 @@ require "cookies"
 -- Add uzbl-like form filling
 require "formfiller"
 
+-- Add webinspector
+require "webinspector"
+
 -- Add proxy support & manager
 require "proxy"
 
