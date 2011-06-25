@@ -1,6 +1,7 @@
 align
 atindex
 bg
+bottom
 cache_dir
 can_go_back
 can_go_forward
@@ -59,6 +60,7 @@ insert
 install_path
 interval
 label
+left
 loading
 loading_chrome
 load_string
@@ -68,6 +70,8 @@ name
 notebook
 open
 pack
+pack1
+pack2
 padding
 path
 PICTURES
@@ -79,6 +83,7 @@ reload
 reload_bypass_cache
 remove
 reorder
+right
 save_file
 search
 secure
@@ -112,6 +117,7 @@ TEMPLATES
 text
 time
 title
+top
 total_size
 type
 uri
