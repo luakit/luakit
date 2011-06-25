@@ -23,6 +23,7 @@
 #include "clib/luakit.h"
 #include "luah.h"
 
+#include <stdlib.h>
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <sys/wait.h>
@@ -576,7 +577,10 @@ static gint
 luaH_luakit_quit(lua_State *L)
 {
     (void) L;
-    gtk_main_quit();
+    if (gtk_main_level())
+        gtk_main_quit();
+    else
+        exit(EXIT_SUCCESS);
     return 0;
 }
 

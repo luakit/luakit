@@ -11,6 +11,7 @@ local tonumber, tostring = tonumber, tostring
 local type, unpack = type, unpack
 
 local lousy = require "lousy"
+local window = window
 local webview = webview
 local downloads = require "downloads"
 local add_binds, new_mode = add_binds, new_mode

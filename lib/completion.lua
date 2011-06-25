@@ -1,104 +1,220 @@
--------------------------------------------------------
--- Command completion                                --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
--------------------------------------------------------
+------------------------------------------------------------
+-- Command completion                                     --
+-- © 2010-2011 Mason Larobina  <mason.larobina@gmail.com> --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
+------------------------------------------------------------
 
+-- Get Lua environment
+local ipairs = ipairs
+local setmetatable = setmetatable
+local string = string
+local table = table
+local unpack = unpack
+
+-- Get luakit environment
+local lousy = require "lousy"
+local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
+local history = require "history"
+local new_mode, get_mode = new_mode, get_mode
+local add_binds = add_binds
+local capi = { luakit = luakit }
+
+module "completion"
+
+-- Store completion state (indexed by window)
+local data = setmetatable({}, { __mode = "k" })
+
+-- Add completion start trigger
 local key = lousy.bind.key
 add_binds("command", {
-    -- Start completion
-    key({}, "Tab", function (w)
-        local i = w.ibar.input
-        -- Only complete commands, not args
-        if string.match(i.text, "%s") then return end
-        w:set_mode("cmdcomp")
-    end),
+    key({}, "Tab", function (w) w:set_mode("completion") end),
 })
 
--- Exit completion
-local function exitcomp(w)
-    w:enter_cmd(":" .. w.comp_state.orig)
+-- Return to command mode with original text and with original cursor position
+function exit_completion(w)
+    local state = data[w]
+    w:enter_cmd(state.orig_text, { pos = state.orig_pos })
 end
 
 -- Command completion binds
-add_binds("cmdcomp", {
-    key({},          "Tab",     function (w) w.menu:move_down() end),
-    key({"Shift"},   "Tab",     function (w) w.menu:move_up()   end),
-    key({},          "Escape",  exitcomp),
-    key({"Control"}, "[",       exitcomp),
+add_binds("completion", {
+    key({},          "Tab",    function (w) w.menu:move_down() end),
+    key({"Shift"},   "Tab",    function (w) w.menu:move_up()   end),
+    key({},          "Up",     function (w) w.menu:move_up()   end),
+    key({},          "Down",   function (w) w.menu:move_down() end),
+    key({},          "Escape", exit_completion),
+    key({"Control"}, "[",      exit_completion),
 })
 
--- Create interactive menu of available command completions
-new_mode("cmdcomp", {
+function update_completions(w, text, pos)
+    local state = data[w]
+
+    -- Other parts of the code are triggering input changed events
+    if state.lock then return end
+
+    local input = w.ibar.input
+    local text, pos = text or input.text, pos or input.position
+
+    -- Don't rebuild the menu if the text & cursor position are the same
+    if text == state.text and pos == state.pos then return end
+
+    -- Exit completion if cursor outside a word
+    if string.sub(text, pos, pos) == " " then
+        w:enter_cmd(text, { pos = pos })
+    end
+
+    -- Update left and right strings
+    state.text, state.pos = text, pos
+    state.left = string.sub(text, 2, pos)
+    state.right = string.sub(text, pos + 1)
+
+    -- Call each completion function
+    local groups = {}
+    for _, func in ipairs(_M.order) do
+        table.insert(groups, func(state) or {})
+    end
+    -- Join all result tables
+    rows = lousy.util.table.join(unpack(groups))
+
+    if rows[1] then
+        -- Prevent callbacks triggering recursive updates.
+        state.lock = true
+        w.menu:build(rows)
+        w.menu:show()
+        if not state.built then
+            state.built = true
+            if rows[2] then w.menu:move_down() end
+        end
+        state.lock = false
+    elseif not state.built then
+        exit_completion(w)
+    else
+        w.menu:hide()
+    end
+end
+
+new_mode("completion", {
     enter = function (w)
-        local i = w.ibar.input
-        local text = i.text
-        -- Clean state
-        w.comp_state = {}
-        local s = w.comp_state
-        -- Get completion text
-        s.orig = string.sub(text, 2)
-        s.left = string.sub(text, 2, i.position)
-        -- Make pattern
-        local pat = "^" .. s.left
-        -- Build completion table
-        local cmpl = {{"Commands", title=true}}
-        -- Get suitable commands
+        -- Clear state
+        local state = {}
+        data[w] = state
+
+        -- Save original text and cursor position
+        local input = w.ibar.input
+        state.orig_text = input.text
+        state.orig_pos = input.position
+
+        -- Update input text when scrolling through completion menu items
+        w.menu:add_signal("changed", function (m, row)
+            state.lock = true
+            if row then
+                input.text = row.left .. " " .. state.right
+                input.position = #row.left
+            else
+                input.text = state.orig_text
+                input.position = state.orig_pos
+            end
+            state.lock = false
+        end)
+
+        update_completions(w)
+    end,
+
+    changed = function (w, text)
+        if not data[w].lock then
+            update_completions(w, text)
+        end
+    end,
+
+    move_cursor = function (w, pos)
+        if not data[w].lock then
+            update_completions(w, nil, pos)
+        end
+    end,
+
+    leave = function (w)
+        w.menu:hide()
+        w.menu:remove_signals("changed")
+    end,
+
+    activate = function (w, text)
+        local pos = w.ibar.input.position
+        if string.sub(text, pos+1, pos+1) == " " then pos = pos+1 end
+        w:enter_cmd(text, { pos = pos })
+    end,
+})
+
+-- Completion functions
+funcs = {
+    -- Add command completion items to the menu
+    command = function (state)
+        -- We are only interested in the first word
+        if string.match(state.left, "%s") then return end
+        -- Check each command binding for matches
+        local pat = "^" .. state.left
+        local cmds = {}
         for _, b in ipairs(get_mode("command").binds) do
             if b.cmds then
-                for i, c in ipairs(b.cmds) do
-                    if string.match(c, pat) and not string.match(c, "!$") then
+                for i, cmd in ipairs(b.cmds) do
+                    if string.match(cmd, pat) then
                         if i == 1 then
-                            c = ":" .. c
+                            cmd = ":" .. cmd
                         else
-                            c = string.format(":%s (:%s)", c, b.cmds[1])
+                            cmd = string.format(":%s (:%s)", cmd, b.cmds[1])
                         end
-                        table.insert(cmpl, { c, cmd = b.cmds[1] })
+                        cmds[cmd] = { escape(cmd), left = ":" .. b.cmds[1] }
                         break
                     end
                 end
             end
         end
-        -- Exit mode if no suitable commands found
-        if #cmpl <= 1 then
-            w:enter_cmd(text)
-            return
+        -- Sort commands
+        local keys = lousy.util.table.keys(cmds)
+        -- Return if no results
+        if not keys[1] then return end
+        -- Build completion menu items
+        local ret = {{ "Commands", title = true }}
+        for _, cmd in ipairs(keys) do
+            table.insert(ret, cmds[cmd])
         end
-        -- Build menu
-        w.menu:build(cmpl)
-        w.menu:add_signal("changed", function(m, row)
-            local pos
-            if row then
-                s.text = ":" .. row.cmd
-                pos = #(row.cmd) + 1
-            else
-                s.text = ":" .. s.orig
-                pos = #(s.left) + 1
-            end
-            -- Update input bar
-            i.text = s.text
-            i.position = pos
-        end)
-        -- Set initial position
-        w.menu:move_down()
+        return ret
     end,
 
-    leave = function (w)
-        w.menu:hide()
-        -- Remove all changed signal callbacks
-        w.menu:remove_signals("changed")
-    end,
+    -- Add history completion items to the menu
+    history = function (state)
+        -- Find word under cursor (also checks not first word)
+        local term = string.match(state.left, "%s(%S+)$")
+        if not term then return end
 
-    changed = function (w, text)
-        -- Return if change was made by cycling through completion options.
-        if text ~= w.comp_state.text then
-            w:enter_cmd(text, { pos = w.ibar.input.position })
+        -- Build query & sort results by number of times visited
+        local glob = sql_escape("*" .. string.lower(term) .. "*")
+
+        -- Build SQL query
+        local results = history.db:exec(string.format([[SELECT uri, title
+            FROM history WHERE lower(uri) GLOB %s OR lower(title) GLOB %s
+            ORDER BY visits DESC LIMIT 25;]], glob, glob))
+
+        -- Return if no history items matched
+        if not results[1] then return end
+
+        -- Strip last word (so that we can append the completion uri)
+        local left = ":" .. string.sub(state.left, 1,
+            string.find(state.left, "%s(%S+)$"))
+
+        -- Build rows
+        local ret = {{ "History", "URI", title = true }}
+        for _, row in ipairs(results) do
+            table.insert(ret, { escape(row.title), escape(row.uri),
+                left = left .. row.uri })
         end
+        return ret
     end,
+}
 
-    activate = function (w, text)
-        w:enter_cmd(text .. " ")
-    end,
-})
+-- Order of completion items
+order = {
+    funcs.command,
+    funcs.history,
+}
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
