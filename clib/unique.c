@@ -34,13 +34,9 @@ LUA_CLASS_FUNCS(unique, unique_class);
 UniqueApp *application = NULL;
 
 UniqueResponse
-message_cb(UniqueApp *a, gint id, UniqueMessageData *message_data,
-        guint time, gpointer data)
+message_cb(UniqueApp* UNUSED(a), gint UNUSED(id),
+        UniqueMessageData *message_data, guint UNUSED(time), gpointer data)
 {
-    (void) a;
-    (void) id;
-    (void) time;
-
     if (message_data) {
         lua_State *L = (lua_State*)data;
         /* get message text */

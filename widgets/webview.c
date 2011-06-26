@@ -126,13 +126,9 @@ luaH_checkwebview(lua_State *L, gint udx)
 
 static JSValueRef
 webview_registered_function_callback(JSContextRef context, JSObjectRef fun,
-        JSObjectRef thisObject, size_t argumentCount,
-        const JSValueRef *arguments, JSValueRef *exception)
+        JSObjectRef UNUSED(thisObject), size_t UNUSED(argumentCount),
+        const JSValueRef* UNUSED(arguments), JSValueRef *exception)
 {
-    (void) thisObject;
-    (void) argumentCount;
-    (void) arguments;
-
     lua_State *L = globalconf.L;
     gpointer ref = JSObjectGetPrivate(fun);
     // get function
@@ -337,9 +333,8 @@ luaH_webview_eval_js(lua_State *L)
 }
 
 static void
-notify_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
+notify_cb(WebKitWebView* UNUSED(v), GParamSpec *ps, widget_t *w)
 {
-    (void) v;
     property_t *p;
     /* emit webview property signal if found in properties table */
     if ((p = g_hash_table_lookup(webview_properties, ps->name))) {
@@ -389,10 +384,8 @@ luaH_webview_push_frames(lua_State *L, webview_data_t *d)
 }
 
 static void
-notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
+notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 {
-    (void) ps;
-
     /* Get load status */
     WebKitLoadStatus s = webkit_web_view_get_load_status(v);
 
@@ -425,12 +418,10 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec *ps, widget_t *w)
 }
 
 static gboolean
-mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
         WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
         widget_t *w)
 {
-    (void) v;
-    (void) f;
     lua_State *L = globalconf.L;
     const gchar *uri = webkit_network_request_get_uri(r);
 
@@ -462,9 +453,9 @@ frame_destroyed_cb(frame_destroy_callback_t *st)
 }
 
 static void
-document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f,
+        widget_t* UNUSED(w))
 {
-    (void) w;
     /* add a bogus property to the frame so we get notified when it's destroyed */
     frame_destroy_callback_t *st = g_slice_new(frame_destroy_callback_t);
     st->view = v;
@@ -476,15 +467,11 @@ document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 }
 
 static gboolean
-resource_request_starting_cb(WebKitWebView *v, WebKitWebFrame *f,
-        WebKitWebResource *we, WebKitNetworkRequest *r,
-        WebKitNetworkResponse *response, widget_t *w)
+resource_request_starting_cb(WebKitWebView* UNUSED(v),
+        WebKitWebFrame* UNUSED(f), WebKitWebResource* UNUSED(we),
+        WebKitNetworkRequest *r, WebKitNetworkResponse* UNUSED(response),
+        widget_t *w)
 {
-    (void) v;
-    (void) f;
-    (void) we;
-    (void) f;
-    (void) response;
     const gchar *uri = webkit_network_request_get_uri(r);
     lua_State *L = globalconf.L;
 
@@ -501,12 +488,10 @@ resource_request_starting_cb(WebKitWebView *v, WebKitWebFrame *f,
 }
 
 static gboolean
-new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+new_window_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
         WebKitNetworkRequest *r, WebKitWebNavigationAction *na,
         WebKitWebPolicyDecision *pd, widget_t *w)
 {
-    (void) v;
-    (void) f;
     lua_State *L = globalconf.L;
     const gchar *uri = webkit_network_request_get_uri(r);
     gchar *reason = NULL;
@@ -549,10 +534,9 @@ new_window_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 }
 
 static WebKitWebView*
-create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
+        widget_t *w)
 {
-    (void) v;
-    (void) f;
     WebKitWebView *view = NULL;
     widget_t *new;
 
@@ -579,9 +563,8 @@ create_web_view_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
 }
 
 static gboolean
-download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
+download_request_cb(WebKitWebView* UNUSED(v), WebKitDownload *dl, widget_t *w)
 {
-    (void) v;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_download_push(L, dl);
@@ -592,10 +575,9 @@ download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
 }
 
 static void
-link_hover_cb(WebKitWebView *v, const gchar *t, const gchar *link, widget_t *w)
+link_hover_cb(WebKitWebView* UNUSED(v), const gchar* UNUSED(t),
+        const gchar *link, widget_t *w)
 {
-    (void) t;
-    (void) v;
     lua_State *L = globalconf.L;
     webview_data_t *d = w->data;
 
@@ -634,14 +616,10 @@ link_hover_cb(WebKitWebView *v, const gchar *t, const gchar *link, widget_t *w)
  * over the navigation request by launching an external application.
  */
 static gboolean
-navigation_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
-        WebKitNetworkRequest *r, WebKitWebNavigationAction *a,
+navigation_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
+        WebKitNetworkRequest *r, WebKitWebNavigationAction* UNUSED(a),
         WebKitWebPolicyDecision *p, widget_t *w)
 {
-    (void) v;
-    (void) f;
-    (void) a;
-
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
     const gchar *uri = webkit_network_request_get_uri(r);
@@ -1084,10 +1062,8 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 }
 
 static gboolean
-expose_cb(GtkWidget *widget, GdkEventExpose *e, widget_t *w)
+expose_cb(GtkWidget* UNUSED(widget), GdkEventExpose* UNUSED(e), widget_t *w)
 {
-    (void) e;
-    (void) widget;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "expose", 0, 0);
@@ -1247,9 +1223,8 @@ populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
 }
 
 static void
-populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
+populate_popup_cb(WebKitWebView* UNUSED(v), GtkMenu *menu, widget_t *w)
 {
-    (void) v;
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
     luaH_object_push(L, w->ref);
@@ -1267,9 +1242,8 @@ populate_popup_cb(WebKitWebView *v, GtkMenu *menu, widget_t *w)
 }
 
 static gboolean
-scroll_event_cb(GtkWidget *v, GdkEventScroll *ev, widget_t *w)
+scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
 {
-    (void) v;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);

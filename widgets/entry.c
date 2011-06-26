@@ -132,9 +132,8 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
 }
 
 static void
-activate_cb(GtkEntry *e, widget_t *w)
+activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 {
-    (void) e;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "activate", 0, 0);
@@ -151,10 +150,8 @@ changed_cb(widget_t *w)
 }
 
 static void
-position_cb(GtkEntry *e, GParamSpec *ps, widget_t *w)
+position_cb(GtkEntry* UNUSED(e), GParamSpec* UNUSED(ps), widget_t *w)
 {
-    (void) e;
-    (void) ps;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "property::position", 0, 0);

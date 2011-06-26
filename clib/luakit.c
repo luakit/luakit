@@ -574,9 +574,8 @@ luaH_luakit_index(lua_State *L)
  * \return   The number of elements pushed on stack.
  */
 static gint
-luaH_luakit_quit(lua_State *L)
+luaH_luakit_quit(lua_State* UNUSED(L))
 {
-    (void) L;
     if (gtk_main_level())
         gtk_main_quit();
     else

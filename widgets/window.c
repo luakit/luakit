@@ -24,10 +24,8 @@
 #include "clib/soup/auth.h"
 
 static void
-destroy_cb(GtkObject *win, widget_t *w)
+destroy_cb(GtkObject* UNUSED(win), widget_t *w)
 {
-    (void) win;
-
     /* remove window from global windows list */
     g_ptr_array_remove(globalconf.windows, w);
 

@@ -217,10 +217,8 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
 }
 
 static void
-page_added_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
+page_added_cb(GtkNotebook* UNUSED(n), GtkWidget *widget, guint i, widget_t *w)
 {
-    (void) n;
-
     widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -231,11 +229,9 @@ page_added_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 }
 
 static void
-page_removed_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
+page_removed_cb(GtkNotebook* UNUSED(n), GtkWidget *widget, guint UNUSED(i),
+        widget_t *w)
 {
-    (void) i;
-    (void) n;
-
     widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -245,9 +241,8 @@ page_removed_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 }
 
 static void
-switch_cb(GtkNotebook *n, GtkNotebookPage *p, guint i, widget_t *w)
+switch_cb(GtkNotebook *n, GtkNotebookPage* UNUSED(p), guint i, widget_t *w)
 {
-    (void) p;
     GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(n), i);
     widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
 
@@ -260,9 +255,8 @@ switch_cb(GtkNotebook *n, GtkNotebookPage *p, guint i, widget_t *w)
 }
 
 static void
-reorder_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
+reorder_cb(GtkNotebook* UNUSED(n), GtkWidget *widget, guint i, widget_t *w)
 {
-    (void) n;
     widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
 
     lua_State *L = globalconf.L;

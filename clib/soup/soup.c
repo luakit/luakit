@@ -57,10 +57,8 @@ luaH_soup_set_property(lua_State *L)
 }
 
 static void
-soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
+soup_notify_cb(SoupSession* UNUSED(s), GParamSpec *ps, gpointer UNUSED(d))
 {
-    (void) s;
-    (void) d;
     property_t *p;
     /* emit soup property signal if found in properties table */
     if ((p = g_hash_table_lookup(soup_properties, ps->name))) {

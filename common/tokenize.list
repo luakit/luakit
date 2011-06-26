@@ -35,7 +35,6 @@ filename
 focus
 font
 frames
-get_child
 get_children
 get_id
 get_property
