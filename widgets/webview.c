@@ -1294,7 +1294,7 @@ webview_destructor(widget_t *w)
 }
 
 widget_t *
-widget_webview(widget_t *w)
+widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_webview_index;
     w->newindex = luaH_webview_newindex;

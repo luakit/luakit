@@ -121,27 +121,24 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
     return luaH_object_emit_property_signal(L, 1);
 }
 
-#define BOX_WIDGET_CONSTRUCTOR(type)                                         \
-    widget_t *                                                               \
-    widget_##type(widget_t *w)                                               \
-    {                                                                        \
-        w->index = luaH_box_index;                                           \
-        w->newindex = luaH_box_newindex;                                     \
-        w->destructor = widget_destructor;                                   \
-        w->widget = gtk_##type##_new(FALSE, 0);                              \
-        g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);  \
-        gtk_widget_show(w->widget);                                          \
-        g_object_connect(G_OBJECT(w->widget),                                \
-          "signal::add",        G_CALLBACK(add_cb),        w,                \
-          "signal::parent-set", G_CALLBACK(parent_set_cb), w,                \
-          "signal::remove",     G_CALLBACK(remove_cb),     w,                \
-          NULL);                                                             \
-        return w;                                                            \
-    }
+widget_t *
+widget_box(widget_t *w, luakit_token_t token)
+{
+    w->index = luaH_box_index;
+    w->newindex = luaH_box_newindex;
+    w->destructor = widget_destructor;
 
-BOX_WIDGET_CONSTRUCTOR(vbox)
-BOX_WIDGET_CONSTRUCTOR(hbox)
+    w->widget = (token == L_TK_VBOX) ? gtk_vbox_new(FALSE, 0) :
+            gtk_hbox_new(FALSE, 0);
 
-#undef BOX_WIDGET_CONSTRUCTOR
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::add",        G_CALLBACK(add_cb),        w,
+      "signal::parent-set", G_CALLBACK(parent_set_cb), w,
+      "signal::remove",     G_CALLBACK(remove_cb),     w,
+      NULL);
+    gtk_widget_show(w->widget);
+    return w;
+}
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

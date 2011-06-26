@@ -186,7 +186,7 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
 }
 
 widget_t *
-widget_label(widget_t *w)
+widget_label(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_label_index;
     w->newindex = luaH_label_newindex;

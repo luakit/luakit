@@ -274,7 +274,7 @@ reorder_cb(GtkNotebook *n, GtkWidget *widget, guint i, widget_t *w)
 }
 
 widget_t *
-widget_notebook(widget_t *w)
+widget_notebook(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_notebook_index;
     w->newindex = luaH_notebook_newindex;

@@ -105,24 +105,23 @@ luaH_paned_index(lua_State *L, luakit_token_t token)
     return 0;
 }
 
-#define PANED_WIDGET_CONSTRUCTOR(type)                                      \
-    widget_t *                                                              \
-    widget_##type(widget_t *w)                                              \
-    {                                                                       \
-        w->index = luaH_paned_index;                                        \
-        w->destructor = widget_destructor;                                  \
-        w->widget = gtk_##type##_new();                                     \
-        g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w); \
-        gtk_widget_show(w->widget);                                         \
-        g_object_connect(G_OBJECT(w->widget),                               \
-          "signal::add",        G_CALLBACK(add_cb),        w,               \
-          "signal::parent-set", G_CALLBACK(parent_set_cb), w,               \
-          "signal::remove",     G_CALLBACK(remove_cb),     w,               \
-          NULL);                                                            \
-        return w;                                                           \
-    }
+widget_t *
+widget_paned(widget_t *w, luakit_token_t token)
+{
+    w->index = luaH_paned_index;
+    w->destructor = widget_destructor;
 
-PANED_WIDGET_CONSTRUCTOR(vpaned)
-PANED_WIDGET_CONSTRUCTOR(hpaned)
+    w->widget = (token == L_TK_VPANED) ? gtk_vpaned_new() :
+            gtk_hpaned_new();
+
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::add",        G_CALLBACK(add_cb),        w,
+      "signal::parent-set", G_CALLBACK(parent_set_cb), w,
+      "signal::remove",     G_CALLBACK(remove_cb),     w,
+      NULL);
+    gtk_widget_show(w->widget);
+    return w;
+}
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
