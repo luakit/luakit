@@ -53,19 +53,18 @@ webview.init_funcs.inspector = function (view, w)
 end
 
 -- Toggle web inspector.
-webview.methods.toggle_inspector = function (view, w, show)
-    if show or not view.inspector.visible then
-        view.inspector:show()
-    else
+webview.methods.toggle_inspector = function (view, w)
+    if view.inspector.visible then
         view.inspector:close()
+    else
+        view.inspector:show()
     end
 end
 
 -- Add command to toggle inspector.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"inspect"},       function (w)    w:toggle_inspector(true) end),
-    cmd({"inspect!"},      function (w)    w:toggle_inspector() end),
+    cmd({"inspect"},       function (w)    w:toggle_inspector() end),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
