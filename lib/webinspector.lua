@@ -29,7 +29,7 @@ webview.init_funcs.inspector = function (view, w)
         w.tabs:remove_signal("switch-page", switcher)
         local win = windows[iview]
         if view.inspector.attached then
-            w.layout:remove(iview)
+            w.paned:remove(iview)
         end
         if win then win:destroy() end
         windows[iview] = nil
@@ -43,8 +43,8 @@ webview.init_funcs.inspector = function (view, w)
     end)
     view:add_signal("detach-inspector", function (_, iview)
         local win = widget{type="window"}
-        w.layout:remove(iview)
-        win:set_child(iview)
+        w.paned:remove(iview)
+        win.child = iview
         windows[iview] = win
         win:show()
     end)
