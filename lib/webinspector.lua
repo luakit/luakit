@@ -31,8 +31,10 @@ webview.init_funcs.inspector = function (view, w)
         if view.inspector.attached then
             w.paned:remove(iview)
         end
-        if win then win:destroy() end
         windows[iview] = nil
+        if win then
+            win:destroy()
+        end
     end)
     view:add_signal("attach-inspector", function (_, iview)
         local win = windows[iview]

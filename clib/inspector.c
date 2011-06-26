@@ -44,17 +44,6 @@ inspector_create_widget(inspector_t *i)
     return new->data;
 }
 
-/* destroys the inspector's webview widget */
-static void
-inspector_destroy_widget(inspector_t *i)
-{
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, i->widget->ref);
-    luaH_widget_gc(L);
-    i->widget = NULL;
-    lua_pop(L, 1);
-}
-
 /* emits the signal of the given name on the inspector, passing the inspected
  * webview and the inspector's webview as arguments */
 static void
@@ -96,10 +85,11 @@ show_window_cb(WebKitWebInspector *inspector, inspector_t *i)
 static void
 inspector_close_window(inspector_t *i)
 {
-    inspector_emit_signal(i, "close-inspector");
-    inspector_destroy_widget(i);
+    if (i->visible)
+        inspector_emit_signal(i, "close-inspector");
     i->visible = FALSE;
     i->attached = FALSE;
+    i->widget = NULL;
 }
 
 /* callback when the inspector is to be hidden */
@@ -219,7 +209,8 @@ void
 inspector_destroy(lua_State *L, inspector_t *i)
 {
     /* manually close the window to prevent segfaults */
-    inspector_close_window(i);
+    if (i->visible)
+        inspector_close_window(i);
     /* unref the inspector so it can be collected by Lua */
     luaH_object_unref(L, i->ref);
 }
@@ -228,9 +219,6 @@ inspector_destroy(lua_State *L, inspector_t *i)
 static gint
 luaH_inspector_gc(lua_State *L)
 {
-    inspector_t *i = luaH_checkudata(L, -1, &inspector_class);
-    if (i->widget)
-        inspector_destroy_widget(i);
     return luaH_object_gc(L);
 }
 
