@@ -22,13 +22,9 @@
 
 static JSValueRef
 webview_registered_function_callback(JSContextRef context, JSObjectRef fun,
-        JSObjectRef thisObject, size_t argumentCount,
-        const JSValueRef *arguments, JSValueRef *exception)
+        JSObjectRef UNUSED(thisObject), size_t UNUSED(argumentCount),
+        const JSValueRef* UNUSED(arguments), JSValueRef *exception)
 {
-    (void) thisObject;
-    (void) argumentCount;
-    (void) arguments;
-
     lua_State *L = globalconf.L;
     gpointer ref = JSObjectGetPrivate(fun);
     // get function

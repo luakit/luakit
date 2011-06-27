@@ -52,9 +52,9 @@ frame_destroyed_cb(frame_destroy_callback_t *st)
 }
 
 static void
-document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f, widget_t *w)
+document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f,
+        widget_t* UNUSED(w))
 {
-    (void) w;
     /* add a bogus property to the frame so we get notified when it's destroyed */
     frame_destroy_callback_t *st = g_slice_new(frame_destroy_callback_t);
     st->view = v;

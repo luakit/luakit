@@ -21,12 +21,10 @@
 #include "clib/download.h"
 
 static gboolean
-mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
+mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
         WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
         widget_t *w)
 {
-    (void) v;
-    (void) f;
     lua_State *L = globalconf.L;
     const gchar *uri = webkit_network_request_get_uri(r);
 
@@ -48,9 +46,8 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame *f,
 }
 
 static gboolean
-download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
+download_request_cb(WebKitWebView* UNUSED(v), WebKitDownload *dl, widget_t *w)
 {
-    (void) v;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_download_push(L, dl);
@@ -60,3 +57,4 @@ download_request_cb(WebKitWebView *v, WebKitDownload *dl, widget_t *w)
     return handled;
 }
 
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

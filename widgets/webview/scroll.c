@@ -95,4 +95,3 @@ show_scrollbars(webview_data_t *d, gboolean show)
                 G_CALLBACK(true_cb), NULL);
     }
 }
-
