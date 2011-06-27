@@ -18,14 +18,12 @@
  *
  */
 
-#include <JavaScriptCore/JavaScript.h>
 #include <webkit/webkit.h>
 #include <libsoup/soup-message.h>
 #include <math.h>
 
 #include "globalconf.h"
 #include "widgets/common.h"
-#include "clib/download.h"
 #include "clib/soup/soup.h"
 #include "common/property.h"
 #include "luah.h"
@@ -47,17 +45,10 @@ typedef struct {
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
 
-GHashTable *frames_by_view = NULL;
-
 static struct {
     GSList *refs;
     GSList *items;
 } last_popup = { NULL, NULL };
-
-typedef struct {
-    WebKitWebView *view;
-    WebKitWebFrame *frame;
-} frame_destroy_callback_t;
 
 GHashTable *webview_properties = NULL;
 property_t webview_properties_table[] = {
@@ -124,137 +115,11 @@ luaH_checkwebview(lua_State *L, gint udx)
     return w;
 }
 
-static JSValueRef
-webview_registered_function_callback(JSContextRef context, JSObjectRef fun,
-        JSObjectRef UNUSED(thisObject), size_t UNUSED(argumentCount),
-        const JSValueRef* UNUSED(arguments), JSValueRef *exception)
-{
-    lua_State *L = globalconf.L;
-    gpointer ref = JSObjectGetPrivate(fun);
-    // get function
-    luaH_object_push(L, ref);
-    // call function
-    gint ret = lua_pcall(L, 0, 0, 0);
-    // handle errors
-    if (ret != 0) {
-        const gchar *exn_cstring = luaL_checkstring(L, -1);
-        lua_pop(L, 1);
-        JSStringRef exn_js_string = JSStringCreateWithUTF8CString(exn_cstring);
-        JSValueRef exn_js_value = JSValueMakeString(context, exn_js_string);
-        *exception = JSValueToObject(context, exn_js_value, NULL);
-        JSStringRelease(exn_js_string);
-    }
-    return JSValueMakeUndefined(context);
-}
-
-static void
-webview_collect_registered_function(JSObjectRef obj)
-{
-    lua_State *L = globalconf.L;
-    gpointer ref = JSObjectGetPrivate(obj);
-    luaH_object_unref(L, ref);
-}
-
-static void
-webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref)
-{
-    JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
-    JSStringRef js_name = JSStringCreateWithUTF8CString(name);
-    // prepare callback function
-    JSClassDefinition def = kJSClassDefinitionEmpty;
-    def.callAsFunction = webview_registered_function_callback;
-    def.className = g_strdup(name);
-    def.finalize = webview_collect_registered_function;
-    JSClassRef class = JSClassCreate(&def);
-    JSObjectRef fun = JSObjectMake(context, class, ref);
-    // register with global object
-    JSObjectRef global = JSContextGetGlobalObject(context);
-    JSObjectSetProperty(context, global, js_name, fun, kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly, NULL);
-    // release strings
-    JSStringRelease(js_name);
-    JSClassRelease(class);
-}
-
-static const gchar*
-webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file)
-{
-    JSGlobalContextRef context;
-    JSObjectRef globalobject;
-    JSStringRef js_file;
-    JSStringRef js_script;
-    JSValueRef js_result;
-    JSValueRef js_exc = NULL;
-    JSStringRef js_result_string;
-    GString *result = g_string_new(NULL);
-    size_t js_result_size;
-
-    context = webkit_web_frame_get_global_context(frame);
-    globalobject = JSContextGetGlobalObject(context);
-
-    /* evaluate the script and get return value*/
-    js_script = JSStringCreateWithUTF8CString(script);
-    js_file = JSStringCreateWithUTF8CString(file);
-    js_result = JSEvaluateScript(context, js_script, globalobject, js_file, 0, &js_exc);
-    if (js_result && !JSValueIsUndefined(context, js_result)) {
-        js_result_string = JSValueToStringCopy(context, js_result, NULL);
-        js_result_size = JSStringGetMaximumUTF8CStringSize(js_result_string);
-
-        if (js_result_size) {
-            gchar js_result_utf8[js_result_size];
-            JSStringGetUTF8CString(js_result_string, js_result_utf8, js_result_size);
-            g_string_assign(result, js_result_utf8);
-        }
-
-        JSStringRelease(js_result_string);
-    }
-    else if (js_exc) {
-        size_t size;
-        JSStringRef prop, val;
-        JSObjectRef exc = JSValueToObject(context, js_exc, NULL);
-
-        g_printf("Exception occured while executing script:\n");
-
-        /* Print file */
-        prop = JSStringCreateWithUTF8CString("sourceURL");
-        val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
-        size = JSStringGetMaximumUTF8CStringSize(val);
-        if(size) {
-            gchar cstr[size];
-            JSStringGetUTF8CString(val, cstr, size);
-            g_printf("At %s", cstr);
-        }
-        JSStringRelease(prop);
-        JSStringRelease(val);
-
-        /* Print line */
-        prop = JSStringCreateWithUTF8CString("line");
-        val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
-        size = JSStringGetMaximumUTF8CStringSize(val);
-        if(size) {
-            gchar cstr[size];
-            JSStringGetUTF8CString(val, cstr, size);
-            g_printf(":%s: ", cstr);
-        }
-        JSStringRelease(prop);
-        JSStringRelease(val);
-
-        /* Print message */
-        val = JSValueToStringCopy(context, exc, NULL);
-        size = JSStringGetMaximumUTF8CStringSize(val);
-        if(size) {
-            gchar cstr[size];
-            JSStringGetUTF8CString(val, cstr, size);
-            g_printf("%s\n", cstr);
-        }
-        JSStringRelease(val);
-    }
-
-    /* cleanup */
-    JSStringRelease(js_script);
-    JSStringRelease(js_file);
-
-    return g_string_free(result, FALSE);
-}
+#include "widgets/webview/javascript.c"
+#include "widgets/webview/frames.c"
+#include "widgets/webview/downloads.c"
+#include "widgets/webview/history.c"
+#include "widgets/webview/scroll.c"
 
 static gint
 luaH_webview_get_property(lua_State *L)
@@ -279,57 +144,6 @@ luaH_webview_load_string(lua_State *L)
     WebKitWebFrame *frame = webkit_web_view_get_main_frame(d->view);
     webkit_web_frame_load_alternate_string(frame, string, base_uri, base_uri);
     return 0;
-}
-
-static gint
-luaH_webview_register_function(lua_State *L)
-{
-    WebKitWebFrame *frame = NULL;
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    const gchar *name = luaL_checkstring(L, 2);
-
-    /* get lua callback function */
-    luaH_checkfunction(L, 3);
-    lua_pushvalue(L, 3);
-    gpointer ref = luaH_object_ref(L, -1);
-
-    /* Check if function should be registered on currently focused frame */
-    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
-        frame = webkit_web_view_get_focused_frame(d->view);
-
-    /* Fall back on main frame */
-    if (!frame)
-        frame = webkit_web_view_get_main_frame(d->view);
-
-    /* register function */
-    webview_register_function(frame, name, ref);
-    return 0;
-}
-
-static gint
-luaH_webview_eval_js(lua_State *L)
-{
-    WebKitWebFrame *frame = NULL;
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    const gchar *script = luaL_checkstring(L, 2);
-    const gchar *filename = luaL_checkstring(L, 3);
-
-    /* Check if js should be run on currently focused frame */
-    if (lua_gettop(L) >= 4) {
-        if (lua_islightuserdata(L, 4))
-            frame = lua_touserdata(L, 4);
-        else if (lua_toboolean(L, 4))
-            frame = webkit_web_view_get_focused_frame(d->view);
-    }
-
-    /* Fall back on main frame */
-    if (!frame)
-        frame = webkit_web_view_get_main_frame(d->view);
-
-    /* evaluate javascript script and push return result onto lua stack */
-    const gchar *result = webview_eval_js(frame, script, filename);
-    lua_pushstring(L, result);
-    return 1;
 }
 
 static void
@@ -367,22 +181,6 @@ update_uri(widget_t *w, const gchar *uri)
     }
 }
 
-static gint
-luaH_webview_push_frames(lua_State *L, webview_data_t *d)
-{
-    GHashTable *frames = g_hash_table_lookup(frames_by_view, d->view);
-    lua_createtable(L, g_hash_table_size(frames), 0);
-    gint i = 1, tidx = lua_gettop(L);
-    gpointer frame;
-    GHashTableIter iter;
-    g_hash_table_iter_init(&iter, frames);
-    while (g_hash_table_iter_next(&iter, &frame, NULL)) {
-        lua_pushlightuserdata(L, frame);
-        lua_rawseti(L, tidx, i++);
-    }
-    return 1;
-}
-
 static void
 notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 {
@@ -418,58 +216,9 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 }
 
 static gboolean
-mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
-        WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
-        widget_t *w)
-{
-    lua_State *L = globalconf.L;
-    const gchar *uri = webkit_network_request_get_uri(r);
-
-    luaH_object_push(L, w->ref);
-    lua_pushstring(L, uri);
-    lua_pushstring(L, mime);
-    gint ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
-
-    if (ret && !lua_toboolean(L, -1))
-        /* User responded with false, ignore request */
-        webkit_web_policy_decision_ignore(pd);
-    else if (!webkit_web_view_can_show_mime_type(v, mime))
-        webkit_web_policy_decision_download(pd);
-    else
-        webkit_web_policy_decision_use(pd);
-
-    lua_pop(L, ret + 1);
-    return TRUE;
-}
-
-static void
-frame_destroyed_cb(frame_destroy_callback_t *st)
-{
-    gpointer hash = g_hash_table_lookup(frames_by_view, st->view);
-    /* the view might be destroyed before the frames */
-    if (hash)
-        g_hash_table_remove(hash, st->frame);
-    g_slice_free(frame_destroy_callback_t, st);
-}
-
-static void
-document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f,
-        widget_t* UNUSED(w))
-{
-    /* add a bogus property to the frame so we get notified when it's destroyed */
-    frame_destroy_callback_t *st = g_slice_new(frame_destroy_callback_t);
-    st->view = v;
-    st->frame = f;
-    g_object_set_data_full(G_OBJECT(f), "dummy-destroy-notify", st,
-            (GDestroyNotify)frame_destroyed_cb);
-    GHashTable *frames = g_hash_table_lookup(frames_by_view, v);
-    g_hash_table_insert(frames, f, NULL);
-}
-
-static gboolean
-resource_request_starting_cb(WebKitWebView* UNUSED(v),
-        WebKitWebFrame* UNUSED(f), WebKitWebResource* UNUSED(we),
-        WebKitNetworkRequest *r, WebKitNetworkResponse* UNUSED(response),
+resource_request_starting_cb(WebKitWebView* UNUSED(v), 
+        WebKitWebFrame* UNUSED(f), WebKitWebResource* UNUSED(we), 
+        WebKitNetworkRequest *r, WebKitNetworkResponse* UNUSED(response), 
         widget_t *w)
 {
     const gchar *uri = webkit_network_request_get_uri(r);
@@ -562,18 +311,6 @@ create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     return view;
 }
 
-static gboolean
-download_request_cb(WebKitWebView* UNUSED(v), WebKitDownload *dl, widget_t *w)
-{
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_download_push(L, dl);
-    gint ret = luaH_object_emit_signal(L, 1, "download-request", 1, 1);
-    gboolean handled = (ret && lua_toboolean(L, 2));
-    lua_pop(L, 1 + ret);
-    return handled;
-}
-
 static void
 link_hover_cb(WebKitWebView* UNUSED(v), const gchar* UNUSED(t),
         const gchar *link, widget_t *w)
@@ -636,80 +373,6 @@ navigation_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
 
     lua_settop(L, top);
     return TRUE;
-}
-
-inline static gint
-luaH_adjustment_push_values(lua_State *L, GtkAdjustment *a)
-{
-    gdouble view_size = gtk_adjustment_get_page_size(a);
-    gdouble value = gtk_adjustment_get_value(a);
-    gdouble max = gtk_adjustment_get_upper(a) - view_size;
-    lua_pushnumber(L, value);
-    lua_pushnumber(L, (max < 0 ? 0 : max));
-    lua_pushnumber(L, view_size);
-    return 3;
-}
-
-static gint
-luaH_webview_get_scroll_vert(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(d->win);
-    return luaH_adjustment_push_values(L, a);
-}
-
-static gint
-luaH_webview_get_scroll_horiz(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(d->win);
-    return luaH_adjustment_push_values(L, a);
-}
-
-inline static void
-adjustment_set(GtkAdjustment *a, gdouble new)
-{
-    gdouble view_size = gtk_adjustment_get_page_size(a);
-    gdouble max = gtk_adjustment_get_upper(a) - view_size;
-    gtk_adjustment_set_value(a, ((new < 0 ? 0 : new) > max ? max : new));
-}
-
-static gint
-luaH_webview_set_scroll_vert(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gdouble value = (gdouble) luaL_checknumber(L, 2);
-    GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(d->win);
-    adjustment_set(a, value);
-    return 0;
-}
-
-static gint
-luaH_webview_set_scroll_horiz(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gdouble value = (gdouble) luaL_checknumber(L, 2);
-    GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(d->win);
-    adjustment_set(a, value);
-    return 0;
-}
-
-static gint
-luaH_webview_go_back(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gint steps = (gint) luaL_checknumber(L, 2);
-    webkit_web_view_go_back_or_forward(d->view, steps * -1);
-    return 0;
-}
-
-static gint
-luaH_webview_go_forward(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gint steps = (gint) luaL_checknumber(L, 2);
-    webkit_web_view_go_back_or_forward(d->view, steps);
-    return 0;
 }
 
 static gint
@@ -810,143 +473,6 @@ luaH_webview_ssl_trusted(lua_State *L)
     }
     /* return nil if not viewing https uri */
     return 0;
-}
-
-void
-show_scrollbars(webview_data_t *d, gboolean show)
-{
-    GObject *frame = G_OBJECT(webkit_web_view_get_main_frame(d->view));
-
-    /* show scrollbars */
-    if (show) {
-        if (d->hide_id)
-            g_signal_handler_disconnect(frame, d->hide_id);
-        gtk_scrolled_window_set_policy(d->win,
-                GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-        d->hide_id = 0;
-
-    /* hide scrollbars */
-    } else if (!d->hide_id) {
-        gtk_scrolled_window_set_policy(d->win,
-                GTK_POLICY_NEVER, GTK_POLICY_NEVER);
-        d->hide_id = g_signal_connect(frame, "scrollbars-policy-changed",
-                G_CALLBACK(true_cb), NULL);
-    }
-}
-
-static gint
-luaH_webview_push_history(lua_State *L, WebKitWebView *view)
-{
-    /* obtain the history list of the tab and get information about it */
-    WebKitWebBackForwardList *bflist = webkit_web_back_forward_list_new_with_web_view(view);
-    WebKitWebHistoryItem *item;
-    gint backlen = webkit_web_back_forward_list_get_back_length(bflist);
-    gint forwardlen = webkit_web_back_forward_list_get_forward_length(bflist);
-
-    /* compose an overall table with the history list and the position thereof */
-    lua_createtable(L, 0, 2);
-    /* Set hist[index] = pos */
-    lua_pushliteral(L, "index");
-    lua_pushnumber(L, backlen + 1);
-    lua_rawset(L, -3);
-
-    /* create a table with the history items */
-    lua_createtable(L, backlen + forwardlen + 1, 0);
-    for(gint i = -backlen; i <= forwardlen; i++) {
-        /* each individual history item is composed of a URL and a page title */
-        item = webkit_web_back_forward_list_get_nth_item(bflist, i);
-        lua_createtable(L, 0, 2);
-        /* Set hist_item[uri] = uri */
-        lua_pushliteral(L, "uri");
-        lua_pushstring(L, item ? webkit_web_history_item_get_uri(item) : "about:blank");
-        lua_rawset(L, -3);
-        /* Set hist_item[title] = title */
-        lua_pushliteral(L, "title");
-        lua_pushstring(L, item ? webkit_web_history_item_get_title(item) : "");
-        lua_rawset(L, -3);
-        lua_rawseti(L, -2, backlen + i + 1);
-    }
-
-    /* Set hist[items] = hist_items_table */
-    lua_pushliteral(L, "items");
-    lua_insert(L, lua_gettop(L) - 1);
-    lua_rawset(L, -3);
-    return 1;
-}
-
-static void
-webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
-{
-    gint pos, bflen;
-    WebKitWebBackForwardList *bflist;
-    WebKitWebHistoryItem *item = NULL;
-    gchar *uri = NULL;
-
-    if(!lua_istable(L, idx))
-        luaL_error(L, "invalid history table");
-
-    /* get history items table */
-    lua_pushliteral(L, "items");
-    lua_rawget(L, idx);
-    bflen = lua_objlen(L, -1);
-
-    /* create new back-forward history list */
-    bflist = webkit_web_back_forward_list_new_with_web_view(view);
-    webkit_web_back_forward_list_clear(bflist);
-
-    /* get position of current history item */
-    lua_pushliteral(L, "index");
-    lua_rawget(L, idx);
-    pos = (gint)lua_tonumber(L, -1);
-    /* load last item if out of range */
-    pos = (pos < 1 || pos > bflen) ? 0 : pos - bflen;
-    lua_pop(L, 1);
-
-    /* now we actually set the history to the content of the list */
-    for (gint i = 1; i <= bflen; i++) {
-        lua_rawgeti(L, -1, i);
-        lua_pushliteral(L, "title");
-        lua_rawget(L, -2);
-        lua_pushliteral(L, "uri");
-        lua_rawget(L, -3);
-        if (pos || i < bflen) {
-            item = webkit_web_history_item_new_with_data(lua_tostring(L, -1), NONULL(lua_tostring(L, -2)));
-            webkit_web_back_forward_list_add_item(bflist, item);
-        } else
-            uri = g_strdup(lua_tostring(L, -1));
-        lua_pop(L, 3);
-    }
-
-    /* load last item */
-    if (uri) {
-        webkit_web_view_load_uri(view, uri);
-        g_free(uri);
-
-    /* load item in history */
-    } else if (bflen && webkit_web_view_can_go_back_or_forward(view, pos)) {
-        webkit_web_view_go_back_or_forward(view, pos);
-
-    /* load "about:blank" on empty history list */
-    } else
-        webkit_web_view_load_uri(view, "about:blank");
-
-    lua_pop(L, 1);
-}
-
-static gint
-luaH_webview_can_go_back(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    lua_pushboolean(L, webkit_web_view_can_go_back(d->view));
-    return 1;
-}
-
-static gint
-luaH_webview_can_go_forward(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    lua_pushboolean(L, webkit_web_view_can_go_forward(d->view));
-    return 1;
 }
 
 static gint
