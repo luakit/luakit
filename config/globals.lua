@@ -22,6 +22,14 @@ local wkv  = string.format("WebKitGTK+/%d.%d.%d", luakit.webkit_major_version, l
 local awkv = string.format("AppleWebKit/%s.%s+", luakit.webkit_user_agent_major_version, luakit.webkit_user_agent_minor_version)
 globals.useragent = string.format("Mozilla/5.0 (%s) %s %s %s", arch, awkv, wkv, lkv)
 
+-- list of predefined user-agents
+globals.available_useragents = {
+    default = globals.useragent,
+    chrome = "Mozilla/5.0 (X11; Linux x86_64) AppleWebKit/535.1 (KHTML, like Gecko) Chrome/13.0.782.20 Safari/535.1",
+    firefox = "Mozilla/5.0 (X11; Linux i686 on x86_64; rv:5.0a2) Gecko/20110524 Firefox/5.0a2",
+    ie = "Mozilla/5.0 (compatible; MSIE 10.0; Windows NT 6.1; WOW64; Trident/6.0)",
+}
+
 -- Search common locations for a ca file which is used for ssl connection validation.
 local ca_files = {
     -- $XDG_DATA_HOME/luakit/ca-certificates.crt

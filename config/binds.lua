@@ -44,6 +44,8 @@ end
 function set_ua(w, ua, restore)
     if restore then
         ua = globals.useragent
+    elseif globals.available_useragents[ua] then
+        ua = globals.available_useragents[ua]
     end
 
     w:get_current():set_property('user-agent', ua)
