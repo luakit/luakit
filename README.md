@@ -1,4 +1,4 @@
-### Luakit
+# Luakit
 
 luakit is a fast, light and simple to use micro-browser framework exensible
 by Lua using the WebKit web content engine and the GTK+ toolkit.
@@ -23,23 +23,23 @@ luakit behaves similarly out of the box.
 
 To compile the stock luakit run:
 
-  make
+    make
 
 To link against LuaJIT (if you have LuaJIT installed) run:
 
-  make USE_LUAJIT=1
+    make USE_LUAJIT=1
 
 To build without libunique (which uses dbus) run:
 
-  make USE_UNIQUE=0
+    make USE_UNIQUE=0
 
 To build with a custom compiler run:
 
-  make CC=clang
+    make CC=clang
 
 Note to packagers: you may wish to build luakit with:
 
-  make DEVELOPMENT_PATHS=0
+    make DEVELOPMENT_PATHS=0
 
 To prevent luakit searching in relative paths (./config & ./lib) for luakit
 configs.
@@ -51,35 +51,35 @@ build options do not conflict. You can use whichever you desire.
 
 To install luakit run:
 
-  make install
+    make install
 
 The luakit binary will be installed at:
 
-  /usr/local/bin/luakit
+    /usr/local/bin/luakit
 
 And configs to:
 
-  /etc/xdg/luakit/
+    /etc/xdg/luakit/
 
 And the luakit libraries to:
 
-  /usr/local/share/luakit/lib/
+    /usr/local/share/luakit/lib/
 
 To change the install prefix you will need to re-compile luakit (after a
 `make clean`) with the following option:
 
-  make PREFIX=/usr
-  sudo make PREFIX=/usr install
+    make PREFIX=/usr
+    sudo make PREFIX=/usr install
 
 ## Use Luakit
 
 Just run:
 
-  luakit [URI..]
+    luakit [URI..]
 
 And:
 
-  luakit -h
+    luakit -h
 
 For the full list of launch options.
 
@@ -95,7 +95,7 @@ There are several files of interest:
  * binds.lua   -- defines every action the browser takes when you press a
                   button or combination of buttons (even mouse buttons,
                   direction keys & etc) and the browser commands (I.e. :quit,
-                  :restart, :open, :lua <code> & etc).
+                  :restart, :open, :lua & etc).
  * theme.lua   -- change fonts and colours used by the interface widgets.
  * window.lua  -- is responsible for building the luakit browser window and
                   defining several helper methods (I.e. w:close_tab(),
@@ -119,31 +119,31 @@ when you next launch it.
 
 To delete luakit from your system run:
 
-  make uninstall
+    make uninstall
 
 If you installed with a custom prefix remember to add the identical prefix
 here also, example:
 
-  make PREFIX=/usr uninstall
+    make PREFIX=/usr uninstall
 
 ## Reporting Bugs
 
 Please use the bug tracker at:
 
-  http://luakit.org/projects/luakit/issues
+    http://luakit.org/projects/luakit/issues
 
 ## Community
 
-# Mailing list
+### Mailing list
 
 Subscribe to the development mailing list here:
 
-  http://lists.luakit.org/mailman/listinfo/luakit-dev
+    http://lists.luakit.org/mailman/listinfo/luakit-dev
 
 Or view the archives at:
 
-  http://lists.luakit.org/archive/luakit-dev/
+    http://lists.luakit.org/archive/luakit-dev/
 
-# IRC
+### IRC
 
 Join us in #luakit on the irc.oftc.net network.
