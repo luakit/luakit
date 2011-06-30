@@ -41,11 +41,11 @@ Note to packagers: you may wish to build luakit with:
 
     make DEVELOPMENT_PATHS=0
 
-To prevent luakit searching in relative paths (./config & ./lib) for luakit
-configs.
+To prevent luakit searching in relative paths (`./config` & `./lib`) for
+user configs.
 
-The USE_LUAJIT=1, USE_UNIQUE=0, PREFIX=/path, DEVELOPMENT_PATHS=0, CC=clang
-build options do not conflict. You can use whichever you desire.
+The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`,
+`CC=clang` build options do not conflict. You can use whichever you desire.
 
 ## Installing
 
@@ -86,7 +86,7 @@ For the full list of launch options.
 ## Configuration
 
 The configuration options are endless, the entire browser is constructed by
-the config files present in /etc/xdg/luakit
+the config files present in `/etc/xdg/luakit`
 
 There are several files of interest:
 
@@ -94,26 +94,26 @@ There are several files of interest:
                   order different parts of the browser are loaded.
  * binds.lua   -- defines every action the browser takes when you press a
                   button or combination of buttons (even mouse buttons,
-                  direction keys & etc) and the browser commands (I.e. :quit,
-                  :restart, :open, :lua & etc).
+                  direction keys & etc) and the browser commands (I.e.
+                  `:quit`, `:restart`, `:open`, `:lua <code>` & etc).
  * theme.lua   -- change fonts and colours used by the interface widgets.
  * window.lua  -- is responsible for building the luakit browser window and
-                  defining several helper methods (I.e. w:close_tab(),
-                  w:close_win(), w:navigate("google luakit"), etc).
+                  defining several helper methods (I.e. `w:close_tab()`,
+                  `w:close_win()`, `w:navigate("google luakit"`), etc).
  * webview.lua -- is a wrapper around the webview widget object and is
                   responsible for watching webview signals (I.e. "key-press",
                   "load-status", "resource-request-starting" & etc). This file
                   also provides several window methods which operate on the
-                  current webview tab (I.e. w:reload(),
-                  w:eval_js("code here.."), w:back(), w:forward()).
+                  current webview tab (I.e. `w:reload()`,
+                  `w:eval_js("code here..")`, `w:back()`, `w:forward()`).
  * modes.lua   -- manages the modal aspect of the browser and the actions
                   that occur when switching modes.
  * globals.lua -- change global options like scroll/zoom step, default
                   window size, useragent, search engines & etc).
 
 Just copy the files you wish to change (and the rc.lua) into
-$XDG_CONFIG_HOME/luakit (~/.config/luakit/) and luakit will use those files
-when you next launch it.
+`$XDG_CONFIG_HOME/luakit` (defaults to `~/.config/luakit/`) and luakit will
+use those files when you next launch it.
 
 ## Uninstall
 
@@ -146,4 +146,4 @@ Or view the archives at:
 
 ### IRC
 
-Join us in #luakit on the irc.oftc.net network.
+Join us in `#luakit` on the `irc.oftc.net` network.
