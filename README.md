@@ -51,7 +51,7 @@ The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`,
 
 To install luakit run:
 
-    make install
+    sudo make install
 
 The luakit binary will be installed at:
 
@@ -77,11 +77,9 @@ Just run:
 
     luakit [URI..]
 
-And:
+Or to see the full list of luakit launch options run:
 
     luakit -h
-
-For the full list of launch options.
 
 ## Configuration
 
@@ -98,8 +96,8 @@ There are several files of interest:
                   `:quit`, `:restart`, `:open`, `:lua <code>` & etc).
  * theme.lua   -- change fonts and colours used by the interface widgets.
  * window.lua  -- is responsible for building the luakit browser window and
-                  defining several helper methods (I.e. `w:close_tab()`,
-                  `w:close_win()`, `w:navigate("google luakit"`), etc).
+                  defining several helper methods (I.e. `w:new_tab(uri)`,
+                  `w:close_tab()`, `w:close_win()` & etc).
  * webview.lua -- is a wrapper around the webview widget object and is
                   responsible for watching webview signals (I.e. "key-press",
                   "load-status", "resource-request-starting" & etc). This file
