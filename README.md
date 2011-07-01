@@ -128,7 +128,7 @@ here also, example:
 
 Please use the bug tracker at:
 
-    http://luakit.org/projects/luakit/issues
+  http://luakit.org/projects/luakit/issues
 
 ## Community
 
@@ -136,11 +136,11 @@ Please use the bug tracker at:
 
 Subscribe to the development mailing list here:
 
-    http://lists.luakit.org/mailman/listinfo/luakit-dev
+  http://lists.luakit.org/mailman/listinfo/luakit-dev
 
 Or view the archives at:
 
-    http://lists.luakit.org/archive/luakit-dev/
+  http://lists.luakit.org/archive/luakit-dev/
 
 ### IRC
 
