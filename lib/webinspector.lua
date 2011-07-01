@@ -21,6 +21,9 @@ webview.init_funcs.inspector = function (view, w)
     view:set_property("enable-developer-extras", true)
     view:add_signal("show-inspector", function (_, iview)
         if not view.inspector.visible then
+            iview:add_signal("focus", function ()
+                w:set_mode("insert")
+            end)
             iview:eval_js("WebInspector.toggleAttach();", "(webinspector.lua)")
             w.tabs:add_signal("switch-page", switcher)
         end
