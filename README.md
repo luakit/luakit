@@ -81,6 +81,53 @@ Or to see the full list of luakit launch options run:
 
     luakit -h
 
+## Quick Start Guide
+
+The default config makes luakit look and behave like the Vim text editor. It
+has similar key bindings, and in the same way the key bindings differ
+according to which mode you are in.
+
+### Normal mode (default)
+
+#### Mode switching
+
+    +---------------+--------------------------------------+
+    | Key           | Action                               |
+    +---------------+--------------------------------------+
+    | i             | enter insert mode for text input     |
+    | :             | enter command mode for command input |
+    | Ctrl+z        | enter passthrough mode (all keys bar |
+    |               | Escape reach the webview widget)     |
+    +---------------+--------------------------------------+
+
+#### Scrolling
+
+    +---------------+--------------------------------------+
+    | h             | scroll left                          |
+    | j             | scroll down                          |
+    | k             | scroll up                            |
+    | l             | scroll right                         |
+    | 0             | scroll to left-most of document      |
+    | $             | scroll to right-most of document     |
+    | space         | page down                            |
+    | Shift+space   | page up                              |
+    | BackSpace     | page up                              |
+    | gg            | go to top of page                    |
+    | G             | go to bottom of page                 |
+    | [count]G      | scroll to [count] percent of page    |
+    +---------------+--------------------------------------+
+
+#### Zooming
+
+    +---------------+--------------------------------------+
+    | zi / +        | zoom in                              |
+    | zo / -        | zoom out                             |
+    | zz / =        | zoom reset                           |
+    | zI            | full content zoom in                 |
+    | zO            | full content zoom out                |
+    | [count]zZ     | zoom to [count] precent              |
+    +---------------+--------------------------------------+
+
 ## Configuration
 
 The configuration options are endless, the entire browser is constructed by
