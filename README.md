@@ -125,7 +125,8 @@ according to which mode you are in.
     | zz / =        | zoom reset                           |
     | zI            | full content zoom in                 |
     | zO            | full content zoom out                |
-    | [count]zZ     | zoom to [count] precent              |
+    | [count]zz     | zoom to [count] percent              |
+    | [count]zZ     | full content zoom to [count] percent |
     +---------------+--------------------------------------+
 
 ## Configuration
