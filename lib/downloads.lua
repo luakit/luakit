@@ -181,8 +181,8 @@ function open(d, w)
     local t = capi.timer{interval=1000}
     opening[d] = true
     t:add_signal("timeout", function (t)
+        if not is_running(d) then t:stop() end
         if d.status == "finished" then
-            t:stop()
             opening[d] = false
             if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
                 if w then
