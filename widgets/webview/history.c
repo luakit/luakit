@@ -150,4 +150,3 @@ luaH_webview_go_forward(lua_State *L)
     webkit_web_view_go_back_or_forward(d->view, steps);
     return 0;
 }
-

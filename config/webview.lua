@@ -310,29 +310,6 @@ webview.methods = {
         view:set_property("zoom-level", level or 1.0)
     end,
 
-    -- Webview scroll functions
-    scroll_vert = function (view, w, value)
-        local cur, max = view:get_scroll_vert()
-        if type(value) == "string" then
-            value = lousy.util.parse_scroll(cur, max, value)
-        end
-        view:set_scroll_vert(value)
-    end,
-
-    scroll_horiz = function (view, w, value)
-        local cur, max = view:get_scroll_horiz()
-        if type(value) == "string" then
-            value = lousy.util.parse_scroll(cur, max, value)
-        end
-        view:set_scroll_horiz(value)
-    end,
-
-    -- vertical scroll of a multiple of the view_size
-    scroll_page = function (view, w, value)
-        local cur, max, size = view:get_scroll_vert()
-        view:set_scroll_vert(cur + (size * value))
-    end,
-
     -- History traversing functions
     back = function (view, w, n)
         view:go_back(n or 1)
@@ -342,6 +319,44 @@ webview.methods = {
         view:go_forward(n or 1)
     end,
 }
+
+webview.scroll_parse_funcs = {
+    -- Abs "100px"
+    ["^(%d+)px$"] = function (_, _, px) return px end,
+
+    -- Rel "+/-100px"
+    ["^([-+]%d+)px$"] = function (s, axis, px) return s[axis] + px end,
+
+    -- Abs "10%"
+    ["^(%d+)%%$"] = function (s, axis, pc)
+        return math.ceil(s[axis.."max"] * (pc / 100))
+    end,
+
+    -- Rel "+/-10%"
+    ["^([-+]%d+)%%$"] = function (s, axis, pc)
+        return s[axis] + math.ceil(s[axis.."max"] * (pc / 100))
+    end,
+
+    -- Abs "10p" (pages)
+    ["^(%d+%.?%d*)p$"] = function (s, axis, p)
+        return math.ceil(s[axis.."page_size"] * p)
+    end,
+
+    -- Rel "+10p" (pages)
+    ["^([-+]%d+%.?%d*)p$"] = function (s, axis, p)
+        return s[axis] + math.ceil(s[axis.."page_size"] * p)
+    end,
+}
+
+function webview.methods.scroll(view, w, new)
+    local scroll = view.scroll
+    for axis, val in pairs{ x = new.x, y = new.y } do
+        for pat, func in pairs(webview.scroll_parse_funcs) do
+            local n = string.match(val, pat)
+            if n then scroll[axis] = func(scroll, axis, tonumber(n)) end
+        end
+    end
+end
 
 function webview.new(w)
     local view = widget{type = "webview"}

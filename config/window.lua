@@ -472,18 +472,19 @@ window.methods = {
 
     update_scroll = function (w, view)
         if not view then view = w:get_current() end
-        local scroll = w.sbar.r.scroll
+        local label = w.sbar.r.scroll
         if view then
-            local val, max = view:get_scroll_vert()
-            if max == 0 then val = "All"
-            elseif val == 0 then val = "Top"
-            elseif val == max then val = "Bot"
-            else val = string.format("%2d%%", (val/max) * 100)
+            local scroll = view.scroll
+            local y, max, text = scroll.y, scroll.ymax
+            if     max == 0   then text = "All"
+            elseif y   == 0   then text = "Top"
+            elseif y   == max then text = "Bot"
+            else text = string.format("%2d%%", (y / max) * 100)
             end
-            if scroll.text ~= val then scroll.text = val end
-            scroll:show()
+            if label.text ~= text then label.text = text end
+            label:show()
         else
-            scroll:hide()
+            label:hide()
         end
     end,
 

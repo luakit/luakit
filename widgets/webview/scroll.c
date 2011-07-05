@@ -18,60 +18,72 @@
  *
  */
 
-inline static gint
-luaH_adjustment_push_values(lua_State *L, GtkAdjustment *a)
-{
-    gdouble view_size = gtk_adjustment_get_page_size(a);
-    gdouble value = gtk_adjustment_get_value(a);
-    gdouble max = gtk_adjustment_get_upper(a) - view_size;
-    lua_pushnumber(L, value);
-    lua_pushnumber(L, (max < 0 ? 0 : max));
-    lua_pushnumber(L, view_size);
-    return 3;
-}
-
 static gint
-luaH_webview_get_scroll_vert(lua_State *L)
+luaH_webview_scroll_newindex(lua_State *L)
 {
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(d->win);
-    return luaH_adjustment_push_values(L, a);
-}
+    /* get webview widget upvalue */
+    webview_data_t *d = luaH_checkwvdata(L, lua_upvalueindex(1));
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t t = l_tokenize(prop);
 
-static gint
-luaH_webview_get_scroll_horiz(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(d->win);
-    return luaH_adjustment_push_values(L, a);
-}
+    GtkAdjustment *a;
+    if (t == L_TK_X)      a = gtk_scrolled_window_get_hadjustment(d->win);
+    else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->win);
+    else return 0;
 
-inline static void
-adjustment_set(GtkAdjustment *a, gdouble new)
-{
-    gdouble view_size = gtk_adjustment_get_page_size(a);
-    gdouble max = gtk_adjustment_get_upper(a) - view_size;
-    gtk_adjustment_set_value(a, ((new < 0 ? 0 : new) > max ? max : new));
-}
-
-static gint
-luaH_webview_set_scroll_vert(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gdouble value = (gdouble) luaL_checknumber(L, 2);
-    GtkAdjustment *a = gtk_scrolled_window_get_vadjustment(d->win);
-    adjustment_set(a, value);
+    gdouble value = luaL_checknumber(L, 3);
+    gdouble max = gtk_adjustment_get_upper(a) -
+            gtk_adjustment_get_page_size(a);
+    gtk_adjustment_set_value(a, ((value < 0 ? 0 : value) > max ? max : value));
     return 0;
 }
 
 static gint
-luaH_webview_set_scroll_horiz(lua_State *L)
+luaH_webview_scroll_index(lua_State *L)
 {
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gdouble value = (gdouble) luaL_checknumber(L, 2);
-    GtkAdjustment *a = gtk_scrolled_window_get_hadjustment(d->win);
-    adjustment_set(a, value);
+    webview_data_t *d = luaH_checkwvdata(L, lua_upvalueindex(1));
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t t = l_tokenize(prop);
+
+    GtkAdjustment *a = (*prop == 'x') ?
+              gtk_scrolled_window_get_hadjustment(d->win)
+            : gtk_scrolled_window_get_vadjustment(d->win);
+
+    if (t == L_TK_X || t == L_TK_Y) {
+        lua_pushnumber(L, gtk_adjustment_get_value(a));
+        return 1;
+
+    } else if (t == L_TK_XMAX || t == L_TK_YMAX) {
+        lua_pushnumber(L, gtk_adjustment_get_upper(a) -
+                gtk_adjustment_get_page_size(a));
+        return 1;
+
+    } else if (t == L_TK_XPAGE_SIZE || t == L_TK_YPAGE_SIZE) {
+        lua_pushnumber(L, gtk_adjustment_get_page_size(a));
+        return 1;
+    }
     return 0;
+}
+
+static gint
+luaH_webview_push_scroll_table(lua_State *L)
+{
+    /* create scroll table */
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy webview userdata */
+    lua_pushcclosure(L, luaH_webview_scroll_index, 1);
+    lua_rawset(L, -3);
+    /* push __newindex metafunction */
+    lua_pushliteral(L, "__newindex");
+    lua_pushvalue(L, 1); /* copy webview userdata */
+    lua_pushcclosure(L, luaH_webview_scroll_newindex, 1);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
 }
 
 void

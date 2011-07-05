@@ -216,9 +216,9 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 }
 
 static gboolean
-resource_request_starting_cb(WebKitWebView* UNUSED(v), 
-        WebKitWebFrame* UNUSED(f), WebKitWebResource* UNUSED(we), 
-        WebKitNetworkRequest *r, WebKitNetworkResponse* UNUSED(response), 
+resource_request_starting_cb(WebKitWebView* UNUSED(v),
+        WebKitWebFrame* UNUSED(f), WebKitWebResource* UNUSED(we),
+        WebKitNetworkRequest *r, WebKitNetworkResponse* UNUSED(response),
         widget_t *w)
 {
     const gchar *uri = webkit_network_request_get_uri(r);
@@ -486,13 +486,8 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       /* push property methods */
       PF_CASE(GET_PROPERTY,         luaH_webview_get_property)
       PF_CASE(SET_PROPERTY,         luaH_webview_set_property)
-      /* push scroll adjustment methods */
-      PF_CASE(GET_SCROLL_HORIZ,     luaH_webview_get_scroll_horiz)
-      PF_CASE(GET_SCROLL_VERT,      luaH_webview_get_scroll_vert)
-      PF_CASE(SET_SCROLL_HORIZ,     luaH_webview_set_scroll_horiz)
-      PF_CASE(SET_SCROLL_VERT,      luaH_webview_set_scroll_vert)
-      /* push search methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
+      /* push search methods */
       PF_CASE(SEARCH,               luaH_webview_search)
       /* push history navigation methods */
       PF_CASE(GO_BACK,              luaH_webview_go_back)
@@ -521,6 +516,9 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
 
       case L_TK_HISTORY:
         return luaH_webview_push_history(L, d->view);
+
+      case L_TK_SCROLL:
+        return luaH_webview_push_scroll_table(L);
 
       default:
         break;

@@ -64,4 +64,3 @@ document_load_finished_cb(WebKitWebView *v, WebKitWebFrame *f,
     GHashTable *frames = g_hash_table_lookup(frames_by_view, v);
     g_hash_table_insert(frames, f, NULL);
 }
-

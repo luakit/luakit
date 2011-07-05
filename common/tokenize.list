@@ -84,6 +84,7 @@ remove
 reorder
 right
 save_file
+scroll
 search
 secure
 selectable
@@ -137,4 +138,10 @@ webview
 width
 window
 windows
+x
 xid
+xmax
+xpage_size
+y
+ymax
+ypage_size

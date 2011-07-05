@@ -202,4 +202,3 @@ luaH_webview_eval_js(lua_State *L)
     lua_pushstring(L, result);
     return 1;
 }
-
