@@ -42,8 +42,6 @@ get_child
 get_children
 get_id
 get_property
-get_scroll_horiz
-get_scroll_vert
 get_selection
 get_special_dir
 get_title
@@ -97,8 +95,6 @@ select_region
 set_default_size
 set_property
 set_screen
-set_scroll_horiz
-set_scroll_vert
 set_selection
 set_title
 set_view_source

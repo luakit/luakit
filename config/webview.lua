@@ -351,9 +351,13 @@ webview.scroll_parse_funcs = {
 function webview.methods.scroll(view, w, new)
     local scroll = view.scroll
     for axis, val in pairs{ x = new.x, y = new.y } do
-        for pat, func in pairs(webview.scroll_parse_funcs) do
-            local n = string.match(val, pat)
-            if n then scroll[axis] = func(scroll, axis, tonumber(n)) end
+        if type(val) == "number" then
+            scroll[axis] = val
+        else
+            for pat, func in pairs(webview.scroll_parse_funcs) do
+                local n = string.match(val, pat)
+                if n then scroll[axis] = func(scroll, axis, tonumber(n)) end
+            end
         end
     end
 end
