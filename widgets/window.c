@@ -72,6 +72,39 @@ luaH_window_set_screen(lua_State *L)
     return 0;
 }
 
+
+static gint
+luaH_window_fullscreen(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_window_fullscreen(GTK_WINDOW(w->widget));
+    return 0;
+}
+
+static gint
+luaH_window_unfullscreen(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_window_unfullscreen(GTK_WINDOW(w->widget));
+    return 0;
+}
+
+static gint
+luaH_window_maximize(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_window_maximize(GTK_WINDOW(w->widget));
+    return 0;
+}
+
+static gint
+luaH_window_unmaximize(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_window_unmaximize(GTK_WINDOW(w->widget));
+    return 0;
+}
+
 static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
@@ -91,9 +124,16 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
       PF_CASE(SHOW,             luaH_window_show)
       PF_CASE(SET_SCREEN,       luaH_window_set_screen)
+      PF_CASE(FULLSCREEN,       luaH_window_fullscreen)
+      PF_CASE(UNFULLSCREEN,     luaH_window_unfullscreen)
+      PF_CASE(MAXIMIZE,         luaH_window_maximize)
+      PF_CASE(UNMAXIMIZE,       luaH_window_unmaximize)
 
       /* push string methods */
       PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))
+
+      /* push boolean properties */
+      PB_CASE(DECORATED, gtk_window_get_decorated(GTK_WINDOW(w->widget)))
 
       case L_TK_XID:
         lua_pushnumber(L, GDK_WINDOW_XID(GTK_WIDGET(w->widget)->window));
@@ -113,6 +153,11 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      case L_TK_DECORATED:
+        gtk_window_set_decorated(GTK_WINDOW(w->widget),
+                luaH_checkboolean(L, 3));
+        break;
+
       case L_TK_TITLE:
         gtk_window_set_title(GTK_WINDOW(w->widget),
             luaL_checklstring(L, 3, &len));

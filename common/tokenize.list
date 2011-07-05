@@ -12,6 +12,7 @@ count
 current
 current_size
 data_dir
+decorated
 DESKTOP
 destination
 destroy
@@ -32,6 +33,7 @@ filename
 focus
 font
 frames
+fullscreen
 get_alignment
 get_child
 get_children
@@ -61,6 +63,7 @@ label
 loading
 loading_chrome
 load_string
+maximize
 mime_type
 MUSIC
 name
@@ -115,6 +118,8 @@ time
 title
 total_size
 type
+unfullscreen
+unmaximize
 uri
 uri_decode
 uri_encode
