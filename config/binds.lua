@@ -143,12 +143,10 @@ add_binds("normal", {
     key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
     key({},          "-",           function (w, m)    w:zoom_out(zoom_step * m.count)       end, {count=1}),
     key({},          "=",           function (w, m)    w:zoom_set() end),
-    buf("^zz$",                     function (w, b, m) w:zoom_set() end),
     buf("^z[iI]$",                  function (w, b, m) w:zoom_in(zoom_step  * m.count, b == "zI") end, {count=1}),
     buf("^z[oO]$",                  function (w, b, m) w:zoom_out(zoom_step * m.count, b == "zO") end, {count=1}),
-
-    -- Specific zoom
-    buf("^zZ$",                     function (w, b, m) w:zoom_set(m.count/100, true) end, {count=100}),
+    -- Zoom reset or specific zoom ([count]zZ for full content zoom)
+    buf("^z[zZ]$",                  function (w, b, m) w:zoom_set(m.count/100, b == "zZ") end, {count=100}),
 
     -- Clipboard
     key({},          "p",           function (w)
