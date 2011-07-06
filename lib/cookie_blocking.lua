@@ -63,7 +63,8 @@ cookies.add_signal("accept-cookie", function (cookie)
         return false
     end
 
-    return cookies.default_allow
+    cache[domain] = cookies.default_allow
+    return cache[domain]
 end)
 
 -- Initial load of users cookie.whitelist / cookie.blacklist files
