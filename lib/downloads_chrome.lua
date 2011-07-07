@@ -212,7 +212,7 @@ chrome.add("downloads/", function (view, uri)
 end)
 
 chrome.add_signal("refresh", function (pat, view)
-    if pat == pattern then refresh(view) end
+    if string.match(pattern, pat) then refresh(view) end
 end)
 
 -- Chrome buffer binds.

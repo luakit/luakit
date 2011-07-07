@@ -240,8 +240,9 @@ chrome.add(pattern, function (view, uri)
     view:load_string(html, tostring(uri))
 end)
 
+-- Listen for page refresh requests
 chrome.add_signal("refresh", function (pat, view)
-    if pat == pattern then view:refresh() end
+    if string.match(pattern, pat) then view:reload() end
 end)
 
 -- URI of the chrome page

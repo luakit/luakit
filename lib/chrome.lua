@@ -11,7 +11,6 @@ local table = table
 local info = info
 local assert = assert
 local type = type
-local print = print
 
 -- Get luakit environment
 local lousy = require "lousy"
@@ -74,7 +73,7 @@ webview.init_funcs.chrome = function (view, w)
     -- Catch tab switches to ensure proper updates of chrome pages
     w.tabs:add_signal("switch-page", function (nbook, view, index)
         local uri = lousy.uri.parse(view.uri or "")
-        local path = prepare_uri(view.uri)
+        local path = prepare_uri(uri)
         if not path then return end
         for _, r in ipairs(rules) do
             if string.match(path, r.pat) then
