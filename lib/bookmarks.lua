@@ -29,6 +29,9 @@ module("bookmarks")
 -- Loaded bookmarks
 local data = {}
 
+-- The chrome pattern for the bookmarks page
+local pattern = "bookmarks/"
+
 -- Some default settings
 bookmarks_file = capi.luakit.data_dir .. '/bookmarks'
 
@@ -190,7 +193,7 @@ function load(file, clear_first)
 end
 
 --- Shows the chrome page in the given view.
-chrome.add("bookmarks/", function (view, uri)
+chrome.add(pattern, function (view, uri)
     -- Get a list of all the unique tags in all the bookmarks and build a
     -- relation between a given tag and a list of bookmarks with that tag.
     local tags = {}
@@ -235,6 +238,10 @@ chrome.add("bookmarks/", function (view, uri)
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
     view:load_string(html, tostring(uri))
+end)
+
+chrome.add_signal("refresh", function (pat, view)
+    if pat == pattern then view:refresh() end
 end)
 
 -- URI of the chrome page
