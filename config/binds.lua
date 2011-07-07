@@ -67,7 +67,7 @@ add_binds("all", {
             if uri then
                 w:new_tab(uri, false)
             else -- Open selection in current tab
-                uri = luakit.get_selection()
+                uri = luakit.selection.primary
                 if uri then w:navigate(w:search_open(uri)) end
             end
         end
@@ -150,11 +150,11 @@ add_binds("normal", {
 
     -- Clipboard
     key({},          "p",           function (w)
-                                        local uri = luakit.get_selection()
+                                        local uri = luakit.selection.primary
                                         if uri then w:navigate(w:search_open(uri)) else w:error("Empty selection.") end
                                     end),
     key({},          "P",           function (w, m)
-                                        local uri = luakit.get_selection()
+                                        local uri = luakit.selection.primary
                                         if not uri then w:error("Empty selection.") return end
                                         for i = 1, m.count do w:new_tab(w:search_open(uri)) end
                                     end, {count = 1}),
@@ -162,12 +162,12 @@ add_binds("normal", {
     -- Yanking
     buf("^yy$",                     function (w)
                                         local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
-                                        luakit.set_selection(uri)
+                                        luakit.selection.primary = uri
                                         w:notify("Yanked uri: " .. uri)
                                     end),
 
     buf("^yt$",                     function (w)
-                                        luakit.set_selection(w.win.title)
+                                        luakit.selection.primary = w.win.title
                                         w:notify("Yanked title: " .. w.win.title)
                                     end),
 
@@ -235,7 +235,7 @@ add_binds("insert", {
 })
 
 add_binds({"command", "search"}, {
-    key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.get_selection()) end),
+    key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.selection.primary) end),
     key({"Control"}, "w",       function (w) w:del_word() end),
     key({"Control"}, "u",       function (w) w:del_line() end),
     key({"Control"}, "h",       function (w) w:del_backward_char() end),
