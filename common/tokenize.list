@@ -8,6 +8,7 @@ can_go_forward
 changes
 child
 clear_search
+clipboard
 config_dir
 confpath
 count
@@ -42,7 +43,6 @@ get_child
 get_children
 get_id
 get_property
-get_selection
 get_special_dir
 get_title
 get_view_source
@@ -78,6 +78,7 @@ padding
 path
 PICTURES
 position
+primary
 progress
 PUBLIC_SHARE
 register_function
@@ -89,13 +90,14 @@ right
 save_file
 scroll
 search
+secondary
 secure
 selectable
+selection
 select_region
 set_default_size
 set_property
 set_screen
-set_selection
 set_title
 set_view_source
 set_width
