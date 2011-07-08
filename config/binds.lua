@@ -80,6 +80,10 @@ add_binds("all", {
             w:new_tab(uri, false)
         end
     end),
+
+    -- Zoom binds
+    but({"Control"}, 4, function (w, m) w:zoom_in()  end),
+    but({"Control"}, 5, function (w, m) w:zoom_out() end),
 })
 
 add_binds("normal", {
