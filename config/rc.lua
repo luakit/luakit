@@ -114,6 +114,12 @@ require "history_chrome"
 -- Add command completion
 require "completion"
 
+-- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
+-- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
+-- Remove all "enable-scripts" & "enable-plugins" lines from your 
+-- domain_props table (in config/globals.lua) as this module will conflict.
+--require "noscript"
+
 require "follow_selected"
 require "go_input"
 require "go_next_prev"
