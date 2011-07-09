@@ -169,8 +169,9 @@ add_binds("normal", {
                                     end),
 
     buf("^yt$",                     function (w)
-                                        luakit.set_selection(w.win.title)
-                                        w:notify("Yanked title: " .. w.win.title)
+                                        local title = w:get_current():get_property("title")
+                                        luakit.set_selection(title)
+                                        w:notify("Yanked title: " .. title)
                                     end),
 
     -- Commands
