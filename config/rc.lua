@@ -61,7 +61,7 @@ require "cookies"
 -- and blacklist at "$XDG_CONFIG_HOME/luakit/cookie.blacklist".
 -- Each domain must be on it's own line and you may use "*" as a
 -- wildcard character (I.e. "*google.com")
-require "cookie_blocking"
+--require "cookie_blocking"
 
 -- Block all cookies by default (unless whitelisted)
 --cookies.default_allow = false
