@@ -10,27 +10,45 @@ local io = io
 local loadstring, pcall = loadstring, pcall
 local setfenv = setfenv
 local warn = warn
+local print = print
 local capi = {
     luakit = luakit
 }
-local print = print
 
 local new_mode, add_binds = new_mode, add_binds
 
 --- Provides functionaliy to auto-fill forms based on a Lua DSL
 module("formfiller")
 
--- The formfiller rules
+-- The formfiller rules.
+-- Basically a table of functions that either return nil to indicate
+-- that the rule doesn't match, another table of functions (sub-rules)
+-- that must be evaluated or true to indicate that the rule matched.
 local rules = {}
 
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/formfiller.lua"
 
+-- DSL method to match a page by it's URI
+local function on(pattern)
+    return function (table)
+        table.insert(rules, function (w, v)
+            if string.match(v.uri, pattern) then
+                return table
+            else
+                return nil
+            end
+        end)
+    end
+end
+
+--
 -- Reads the rules from the formfiller DSL file
 function init()
     -- the environment of the DSL script
     local env = {
         print = print,
+        on = on,
     }
     -- load the script
     local f = io.open(file, "r")
@@ -43,11 +61,9 @@ function init()
     end
     -- execute in sandbox
     setfenv(dsl, env)
-    local success, data = pcall(dsl)
-    if success then
-        rules = data
-    else
-        warn("error in " .. file .. ": " .. data)
+    local success, err = pcall(dsl)
+    if not success then
+        warn("error in " .. file .. ": " .. err)
     end
 end
 
