@@ -9,9 +9,11 @@ local string = string
 local io = io
 local loadstring, pcall = loadstring, pcall
 local setfenv = setfenv
+local warn = warn
 local capi = {
     luakit = luakit
 }
+local print = print
 
 local new_mode, add_binds = new_mode, add_binds
 
@@ -27,7 +29,9 @@ local file = capi.luakit.data_dir .. "/formfiller.lua"
 -- Reads the rules from the formfiller DSL file
 function init()
     -- the environment of the DSL script
-    local env = {}
+    local env = {
+        print = print,
+    }
     -- load the script
     local f = io.open(file, "r")
     local code = f:read("*all")
@@ -39,7 +43,12 @@ function init()
     end
     -- execute in sandbox
     setfenv(dsl, env)
-    rules = pcall(dsl)
+    local success, data = pcall(dsl)
+    if success then
+        rules = data
+    else
+        warn("error in " .. file .. ": " .. data)
+    end
 end
 
 --- Adds a new entry to the formfiller based on the current webpage.
