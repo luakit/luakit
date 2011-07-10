@@ -34,7 +34,8 @@ local formfiller_js = [=[
     formfiller = {
         forms = [],
         input = null,
-        AttributeMatcher: function (tag, attrs) {
+        AttributeMatcher: function (tag, attrs, parents) {
+            parents = parents || [document];
             var toA = function (arr) {
                 return Array.prototype.slice.call(arr);
             };
@@ -43,11 +44,17 @@ local formfiller_js = [=[
                 keys.push(k);
             }
             this.getAll = function () {
-                return toA(document.getElementsByTagName(tag)).filter(function (element) {
-                    return keys.every(function (key) {
-                        return new RegExp(attrs[key]).test(element[key]);
+                var elements = [];
+                parents.forEach(function (p) {
+                    toA(p.getElementsByTagName(tag)).filter(function (element) {
+                        return keys.every(function (key) {
+                            return new RegExp(attrs[key]).test(element[key]);
+                        });
+                    }).forEach(function (e) {
+                        elements.push(e);
                     });
                 });
+                return elements;
             };
         },
     }
@@ -80,6 +87,38 @@ local function form(table)
         -- ensure all attributes are there
         local attrs = ""
         for _, k in ipairs({"method", "name", "id", "action", "className"}) do
+            if table[k] then
+                attrs = attrs .. string.format("%s: %q, ", k, table[k])
+            end
+        end
+        local js = string.gsub(html_template, "{(%w+)}", {attrs = attrs})
+        local ret = w:eval_js(js, "(formfiller.lua)")
+        if ret == "true" then
+            local t = {}
+            for _, v in ipairs(table) do
+                table.insert(t, v)
+            end
+            return #t == 0 and true or t
+        else
+            return false
+        end
+    end
+end
+
+-- DSL method to match an input element by it's attributes
+local function input(table)
+    return function (w, v)
+        local js_template = [=[
+            var matcher = new formfiller.AttributeMatcher("input", {
+                {attrs}
+            }, formfiller.forms);
+            var elements = matcher.getAll();
+            formfiller.inputs = elements;
+            return elements.length > 0;
+        ]=]
+        -- ensure all attributes are there
+        local attrs = ""
+        for _, k in ipairs({"name", "id", "className"}) do
             if table[k] then
                 attrs = attrs .. string.format("%s: %q, ", k, table[k])
             end
