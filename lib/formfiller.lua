@@ -64,7 +64,15 @@ local formfiller_js = [=[
 local function on(pattern)
     return function (data)
         table.insert(rules, function (w, v)
-            if string.match(v.uri, pattern) then
+            -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
+            local js_template = [=[
+                (new RegExp({pattern}).test(location.href));
+            ]=]
+            local js = string.gsub(js_template, "{(%w+)}", {
+                pattern = string.format("%q", pattern)
+            })
+            local ret = w:eval_js(js, "(formfiller.lua)")
+            if ret == "true" then
                 return data
             else
                 return nil
