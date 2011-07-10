@@ -93,7 +93,10 @@ local function match(w, tag, attributes, data, parents)
     end
 end
 
+-- The function environment for the formfiller script
 local DSL = {
+    print = print,
+
     -- DSL method to match a page by it's URI
     on = function (pattern)
         return function (data)
@@ -165,14 +168,6 @@ local DSL = {
 --- Reads the rules from the formfiller DSL file
 function init()
     -- the environment of the DSL script
-    local env = {
-        print  = print,
-        on     = DSL.on,
-        form   = DSL.form,
-        input  = DSL.input,
-        fill   = DSL.fill,
-        submit = DSL.submit,
-    }
     -- load the script
     local f = io.open(file, "r")
     local code = f:read("*all")
@@ -183,7 +178,7 @@ function init()
         return
     end
     -- execute in sandbox
-    setfenv(dsl, env)
+    setfenv(dsl, DSL)
     local success, err = pcall(dsl)
     if not success then
         warn("error in " .. file .. ": " .. err)
