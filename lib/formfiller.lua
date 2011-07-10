@@ -98,10 +98,7 @@ local function match(tag, attributes, data, parents)
     })
     local ret = w:eval_js(js, "(formfiller.lua)")
     if ret == "true" then
-        local t = {}
-        for _, v in ipairs(data) do
-            table.insert(t, v)
-        end
+        local t = lousy.util.table.toarray(data)
         return #t == 0 and true or t
     else
         return false
