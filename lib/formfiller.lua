@@ -5,8 +5,7 @@
 -----------------------------------------------------------------
 
 local lousy = require("lousy")
-local string = string
-local io = io
+local string, table, io = string, table, io
 local loadstring, pcall = loadstring, pcall
 local setfenv = setfenv
 local warn = warn
@@ -33,6 +32,7 @@ local file = capi.luakit.data_dir .. "/formfiller.lua"
 local formfiller_js = [=[
     formfiller = {
         forms = [],
+        inputs = [],
         input = null,
         AttributeMatcher: function (tag, attrs, parents) {
             parents = parents || [document];
@@ -62,10 +62,10 @@ local formfiller_js = [=[
 
 -- DSL method to match a page by it's URI
 local function on(pattern)
-    return function (table)
+    return function (data)
         table.insert(rules, function (w, v)
             if string.match(v.uri, pattern) then
-                return table
+                return data
             else
                 return nil
             end
@@ -73,67 +73,52 @@ local function on(pattern)
     end
 end
 
+-- Invokes an AttributeMatcher for the given tag and attributes with the
+-- given data on the given parents.
+local function match(tag, attributes, data, parents)
+    local js_template = [=[
+        var matcher = new formfiller.AttributeMatcher("{tag}", {
+            {attrs}
+        }, {parents});
+        var elements = matcher.getAll();
+        formfiller.{tag}s = elements;
+        return elements.length > 0;
+    ]=]
+    -- ensure all attributes are there
+    local attrs = ""
+    for _, k in ipairs(attributes) do
+        if data[k] then
+            attrs = attrs .. string.format("%s: %q, ", k, data[k])
+        end
+    end
+    local js = string.gsub(html_template, "{(%w+)}", {
+        attrs = attrs,
+        tag = tag,
+        parents = parents and string.format("formfiller.%s", parents) or "null",
+    })
+    local ret = w:eval_js(js, "(formfiller.lua)")
+    if ret == "true" then
+        local t = {}
+        for _, v in ipairs(data) do
+            table.insert(t, v)
+        end
+        return #t == 0 and true or t
+    else
+        return false
+    end
+end
+
 -- DSL method to match a form by it's attributes
-local function form(table)
+local function form(data)
     return function (w, v)
-        local js_template = [=[
-            var matcher = new formfiller.AttributeMatcher("form", {
-                {attrs}
-            });
-            var forms = matcher.getAll();
-            formfiller.forms = forms;
-            return forms.length > 0;
-        ]=]
-        -- ensure all attributes are there
-        local attrs = ""
-        for _, k in ipairs({"method", "name", "id", "action", "className"}) do
-            if table[k] then
-                attrs = attrs .. string.format("%s: %q, ", k, table[k])
-            end
-        end
-        local js = string.gsub(html_template, "{(%w+)}", {attrs = attrs})
-        local ret = w:eval_js(js, "(formfiller.lua)")
-        if ret == "true" then
-            local t = {}
-            for _, v in ipairs(table) do
-                table.insert(t, v)
-            end
-            return #t == 0 and true or t
-        else
-            return false
-        end
+        return match("form", {"method", "name", "id", "action", "className"}, data)
     end
 end
 
 -- DSL method to match an input element by it's attributes
 local function input(table)
     return function (w, v)
-        local js_template = [=[
-            var matcher = new formfiller.AttributeMatcher("input", {
-                {attrs}
-            }, formfiller.forms);
-            var elements = matcher.getAll();
-            formfiller.inputs = elements;
-            return elements.length > 0;
-        ]=]
-        -- ensure all attributes are there
-        local attrs = ""
-        for _, k in ipairs({"name", "id", "className"}) do
-            if table[k] then
-                attrs = attrs .. string.format("%s: %q, ", k, table[k])
-            end
-        end
-        local js = string.gsub(html_template, "{(%w+)}", {attrs = attrs})
-        local ret = w:eval_js(js, "(formfiller.lua)")
-        if ret == "true" then
-            local t = {}
-            for _, v in ipairs(table) do
-                table.insert(t, v)
-            end
-            return #t == 0 and true or t
-        else
-            return false
-        end
+        return match("input", {"name", "id", "className"}, data, "forms")
     end
 end
 
@@ -145,6 +130,7 @@ function init()
         print = print,
         on = on,
         form = form,
+        input = input,
     }
     -- load the script
     local f = io.open(file, "r")
