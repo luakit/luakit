@@ -113,7 +113,7 @@ local function form(data)
 end
 
 -- DSL method to match an input element by it's attributes
-local function input(table)
+local function input(data)
     return function (w, v)
         return match(w, "input", {"name", "id", "className"}, data, "forms")
     end
@@ -129,7 +129,7 @@ local function fill(str)
                 });
             }
         ]=]
-        local js = string.gsub(html_template, "{(%w+)}", {
+        local js = string.gsub(js_template, "{(%w+)}", {
             str = string.format("%q", str)
         })
         w:eval_js(js, "(formfiller.lua)")

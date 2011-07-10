@@ -204,7 +204,7 @@ end
 function table.toarray(t)
     local ret = {}
     for k, v in ipairs(t) do
-        t[k] = v
+        ret[k] = v
     end
     return ret
 end
