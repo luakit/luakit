@@ -137,13 +137,18 @@ local DSL = {
         return function (w, v)
             local js_template = [=[
                 if (formfiller.inputs) {
+                    var val = {str};
                     formfiller.inputs.forEach(function (i) {
-                        i.value = {str};
+                        if (i.type === "radio" || i.type === "checkbox") {
+                            i.checked = (val && val !== "false");
+                        } else {
+                            i.value = val;
+                        }
                     });
                 }
             ]=]
             local js = string.gsub(js_template, "{(%w+)}", {
-                str = string.format("%q", str)
+                str = string.format("%q", tostring(str))
             })
             w:eval_js(js, "(formfiller.lua)")
             return true
