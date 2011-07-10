@@ -122,6 +122,23 @@ local function input(table)
     end
 end
 
+-- DSL method to fill an input element
+local function fill(str)
+    return function (w, v)
+        local js_template = [=[
+            if (formfiller.inputs) {
+                formfiller.inputs.forEach(function (i) {
+                    i.value = {str};
+                });
+            }
+        ]=]
+        local js = string.gsub(html_template, "{(%w+)}", {
+            str = string.format("%q", str)
+        })
+        w:eval_js(js, "(formfiller.lua)")
+    end
+end
+
 --
 -- Reads the rules from the formfiller DSL file
 function init()
