@@ -136,6 +136,18 @@ local function fill(str)
     end
 end
 
+-- DSL method to submit a form
+local function submit()
+    return function (w, v)
+        local js = [=[
+            if (formfiller.forms && formfiller.forms[0]) {
+                formfiller.forms[0].submit();
+            }
+        ]=]
+        w:eval_js(js, "(formfiller.lua)")
+    end
+end
+
 --
 -- Reads the rules from the formfiller DSL file
 function init()
