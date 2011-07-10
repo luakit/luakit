@@ -29,6 +29,30 @@ local rules = {}
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/formfiller.lua"
 
+-- The global formfiller JS code
+local formfiller_js = [=[
+    formfiller = {
+        forms = [],
+        input = null,
+        AttributeMatcher: function (tag, attrs) {
+            var toA = function (arr) {
+                return Array.prototype.slice.call(arr);
+            };
+            var keys = []
+            for (var k in attrs) {
+                keys.push(k);
+            }
+            this.getAll = function () {
+                return toA(document.getElementsByTagName(tag)).filter(function (element) {
+                    return keys.every(function (key) {
+                        return new RegExp(attrs[key]).test(element[key]);
+                    });
+                });
+            };
+        },
+    }
+]=]
+
 -- DSL method to match a page by it's URI
 local function on(pattern)
     return function (table)
@@ -42,6 +66,38 @@ local function on(pattern)
     end
 end
 
+-- DSL method to match a form by it's attributes
+local function form(table)
+    return function (w, v)
+        local js_template = [=[
+            var matcher = new formfiller.AttributeMatcher("form", {
+                {attrs}
+            });
+            var forms = matcher.getAll();
+            formfiller.forms = forms;
+            return forms.length > 0;
+        ]=]
+        -- ensure all attributes are there
+        local attrs = ""
+        for _, k in ipairs({"method", "name", "id", "action", "className"}) do
+            if table[k] then
+                attrs = attrs .. string.format("%s: %q, ", k, table[k])
+            end
+        end
+        local js = string.gsub(html_template, "{(%w+)}", {attrs = attrs})
+        local ret = w:eval_js(js, "(formfiller.lua)")
+        if ret == "true" then
+            local t = {}
+            for _, v in ipairs(table) do
+                table.insert(t, v)
+            end
+            return #t == 0 and true or t
+        else
+            return false
+        end
+    end
+end
+
 --
 -- Reads the rules from the formfiller DSL file
 function init()
@@ -49,6 +105,7 @@ function init()
     local env = {
         print = print,
         on = on,
+        form = form,
     }
     -- load the script
     local f = io.open(file, "r")
