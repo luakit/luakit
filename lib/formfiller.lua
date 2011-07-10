@@ -32,13 +32,19 @@ local file = capi.luakit.data_dir .. "/formfiller.lua"
 -- The global formfiller JS code
 local formfiller_js = [=[
     formfiller = {
+        toA: function (arr) {
+            return Array.prototype.slice.call(arr);
+        },
+        rexEscape: function (str) {
+            return str.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
+        },
+        toLuaString: function (str) {
+            return "'" + str.replace(/[\\'']/g, "\\$&") + "'";
+        },
         forms: [],
         inputs: [],
         AttributeMatcher: function (tag, attrs, parents) {
             parents = parents || [document];
-            var toA = function (arr) {
-                return Array.prototype.slice.call(arr);
-            };
             var keys = []
             for (var k in attrs) {
                 keys.push(k);
@@ -46,7 +52,7 @@ local formfiller_js = [=[
             this.getAll = function () {
                 var elements = [];
                 parents.forEach(function (p) {
-                    toA(p.getElementsByTagName(tag)).filter(function (element) {
+                    formfiller.toA(p.getElementsByTagName(tag)).filter(function (element) {
                         return keys.every(function (key) {
                             return new RegExp(attrs[key]).test(element[key]);
                         });
@@ -128,7 +134,7 @@ local DSL = {
     -- DSL method to match an input element by it's attributes
     input = function (data)
         return function (w, v)
-            return match(w, "input", {"name", "id", "className"}, data, "forms")
+            return match(w, "input", {"name", "id", "className", "type"}, data, "forms")
         end
     end,
 
@@ -199,6 +205,45 @@ end
 
 --- Adds a new entry to the formfiller based on the current webpage.
 function add(w)
+    -- load JS prerequisites
+    w:eval_js(formfiller_js, "(formfiller.lua)")
+    local js = [=[
+        var addAttr = function (str, elem, attr, indent) {
+            if (elem[attr]) {
+                str += indent + attr + ' = ' + formfiller.toLuaString(formfiller.rexEscape(elem[attr])) + ',\n';
+            }
+            return str;
+        }
+
+        var str = 'on ' + formfiller.toLuaString(formfiller.rexEscape(location.href)) + ' {\n';
+        formfiller.toA(document.forms).forEach(function (form) {
+            str += "  form {\n";
+            ["method", "action", "id", "className", "name"].forEach(function (attr) {
+                str = addAttr(str, form, attr, "    ");
+            });
+            formfiller.toA(form.getElementsByTagName("input")).forEach(function (input) {
+                if (input.type === "button" || input.type === "submit" || input.type === "hidden") {
+                    return;
+                }
+                str += "    input {\n";
+                ["id", "className", "name", "type"].forEach(function (attr) {
+                    str = addAttr(str, input, attr, "      ");
+                });
+                if (input.type === "radio" || input.type === "checkbox") {
+                    str += "      fill(" + input.checked + "),\n";
+                } else {
+                    str += "      fill(" + formfiller.toLuaString(input.value) + "),\n";
+                }
+                str += "    },\n";
+            });
+            str += "  },\n";
+        });
+        str += "}\n\n";
+    ]=]
+    local ret = w:eval_js(js, "(formfiller.lua)")
+    local f = io.open(file, "a")
+    f:write(ret)
+    f:close()
 end
 
 --- Edits the formfiller rules.
