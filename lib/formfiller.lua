@@ -17,6 +17,10 @@ local capi = {
 
 local new_mode, add_binds = new_mode, add_binds
 
+local term       = globals.term   or "xterm"
+local editor     = globals.editor or (os.getenv("EDITOR") or "vim")
+local editor_cmd = string.format("%s -e %s", term, editor)
+
 --- Provides functionaliy to auto-fill forms based on a Lua DSL
 module("formfiller")
 
@@ -244,6 +248,7 @@ function add(w)
     local f = io.open(file, "a")
     f:write(ret)
     f:close()
+    capi.luakit.spawn(string.format("%s %q", editor_cmd, file))
 end
 
 --- Edits the formfiller rules.
