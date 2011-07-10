@@ -60,27 +60,7 @@ local formfiller_js = [=[
     }
 ]=]
 
--- DSL method to match a page by it's URI
-local function on(pattern)
-    return function (data)
-        table.insert(rules, function (w, v)
-            -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
-            local js_template = [=[
-                (new RegExp({pattern}).test(location.href));
-            ]=]
-            local js = string.gsub(js_template, "{(%w+)}", {
-                pattern = string.format("%q", pattern)
-            })
-            local ret = w:eval_js(js, "(formfiller.lua)")
-            if ret == "true" then
-                return data
-            else
-                return nil
-            end
-        end)
-    end
-end
-
+-- DSL helper method.
 -- Invokes an AttributeMatcher for the given tag and attributes with the
 -- given data on the given parents.
 local function match(w, tag, attributes, data, parents)
@@ -113,63 +93,85 @@ local function match(w, tag, attributes, data, parents)
     end
 end
 
--- DSL method to match a form by it's attributes
-local function form(data)
-    return function (w, v)
-        return match(w, "form", {"method", "name", "id", "action", "className"}, data)
-    end
-end
+local DSL = {
+    -- DSL method to match a page by it's URI
+    on = function (pattern)
+        return function (data)
+            table.insert(rules, function (w, v)
+                -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
+                local js_template = [=[
+                    (new RegExp({pattern}).test(location.href));
+                ]=]
+                local js = string.gsub(js_template, "{(%w+)}", {
+                    pattern = string.format("%q", pattern)
+                })
+                local ret = w:eval_js(js, "(formfiller.lua)")
+                if ret == "true" then
+                    return data
+                else
+                    return nil
+                end
+            end)
+        end
+    end,
 
--- DSL method to match an input element by it's attributes
-local function input(data)
-    return function (w, v)
-        return match(w, "input", {"name", "id", "className"}, data, "forms")
-    end
-end
+    -- DSL method to match a form by it's attributes
+    form = function (data)
+        return function (w, v)
+            return match(w, "form", {"method", "name", "id", "action", "className"}, data)
+        end
+    end,
 
--- DSL method to fill an input element
-local function fill(str)
-    return function (w, v)
-        local js_template = [=[
-            if (formfiller.inputs) {
-                formfiller.inputs.forEach(function (i) {
-                    i.value = {str};
-                });
-            }
-        ]=]
-        local js = string.gsub(js_template, "{(%w+)}", {
-            str = string.format("%q", str)
-        })
-        w:eval_js(js, "(formfiller.lua)")
-        return true
-    end
-end
+    -- DSL method to match an input element by it's attributes
+    input = function (data)
+        return function (w, v)
+            return match(w, "input", {"name", "id", "className"}, data, "forms")
+        end
+    end,
 
--- DSL method to submit a form
-local function submit()
-    return function (w, v)
-        local js = [=[
-            if (formfiller.forms && formfiller.forms[0]) {
-                formfiller.forms[0].submit();
-            }
-        ]=]
-        w:eval_js(js, "(formfiller.lua)")
-        -- abort after a form has been submitted (page will reload!)
-        return false
-    end
-end
+    -- DSL method to fill an input element
+    fill = function (str)
+        return function (w, v)
+            local js_template = [=[
+                if (formfiller.inputs) {
+                    formfiller.inputs.forEach(function (i) {
+                        i.value = {str};
+                    });
+                }
+            ]=]
+            local js = string.gsub(js_template, "{(%w+)}", {
+                str = string.format("%q", str)
+            })
+            w:eval_js(js, "(formfiller.lua)")
+            return true
+        end
+    end,
 
---
--- Reads the rules from the formfiller DSL file
+    -- DSL method to submit a form
+    submit = function ()
+        return function (w, v)
+            local js = [=[
+                if (formfiller.forms && formfiller.forms[0]) {
+                    formfiller.forms[0].submit();
+                }
+            ]=]
+            w:eval_js(js, "(formfiller.lua)")
+            -- abort after a form has been submitted (page will reload!)
+            return false
+        end
+    end,
+}
+
+--- Reads the rules from the formfiller DSL file
 function init()
     -- the environment of the DSL script
     local env = {
-        print = print,
-        on = on,
-        form = form,
-        input = input,
-        fill = fill,
-        submit = submit,
+        print  = print,
+        on     = DSL.on,
+        form   = DSL.form,
+        input  = DSL.input,
+        fill   = DSL.fill,
+        submit = DSL.submit,
     }
     -- load the script
     local f = io.open(file, "r")
