@@ -11,6 +11,7 @@ local setfenv = setfenv
 local warn = warn
 local print, type = print, type
 local pairs, ipairs = pairs, ipairs
+local tostring = tostring
 local capi = {
     luakit = luakit
 }
