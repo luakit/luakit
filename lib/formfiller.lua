@@ -26,8 +26,8 @@ module("formfiller")
 
 -- The formfiller rules.
 -- Basically a table of functions that either return nil to indicate
--- that the rule doesn't match, another table of functions (sub-rules)
--- that must be evaluated or true to indicate that the rule matched.
+-- that the rule doesn't match or another table of functions (sub-rules)
+-- that must be evaluated.
 local rules = {}
 
 -- The Lua DSL file containing the formfiller rules
@@ -99,7 +99,7 @@ local function match(w, tag, attributes, data, parents)
         local t = lousy.util.table.toarray(data)
         return #t == 0 and true or t
     else
-        return false
+        return nil
     end
 end
 
@@ -161,7 +161,7 @@ local DSL = {
                 str = string.format("%q", tostring(str))
             })
             w:eval_js(js, "(formfiller.lua)")
-            return true
+            return {}
         end
     end,
 
@@ -175,7 +175,7 @@ local DSL = {
             ]=]
             w:eval_js(js, "(formfiller.lua)")
             -- abort after a form has been submitted (page will reload!)
-            return false
+            return nil
         end
     end,
 }
@@ -266,15 +266,15 @@ function load(w)
     while #stack > 0 do
         local fun = table.remove(stack)
         local ret = fun(w, w:get_current())
-        if ret == false then
-            break
-        elseif type(ret) == "table" then
+        if ret then
             ret = lousy.util.table.reverse(ret)
             for _,f in ipairs(ret) do
                 if type(f) == "function" then
                     table.insert(stack, f)
                 end
             end
+        else
+            break
         end
     end
 end
