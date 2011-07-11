@@ -207,6 +207,11 @@ function init()
     end
 end
 
+--- Edits the formfiller rules.
+function edit(w)
+    capi.luakit.spawn(string.format("%s %q", editor_cmd, file))
+end
+
 --- Adds a new entry to the formfiller based on the current webpage.
 function add(w)
     -- load JS prerequisites
@@ -248,11 +253,7 @@ function add(w)
     local f = io.open(file, "a")
     f:write(ret)
     f:close()
-    capi.luakit.spawn(string.format("%s %q", editor_cmd, file))
-end
-
---- Edits the formfiller rules.
-function edit(w)
+    edit()
 end
 
 --- Fills the current page from the formfiller rules.
