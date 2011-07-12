@@ -49,6 +49,7 @@ function set_ua(w, ua, restore)
     end
 
     w:get_current():set_property('user-agent', ua)
+    w:notify("Set user-agent to: " .. ua)
 end
 
 -- Adds the default menu widget bindings to a mode
