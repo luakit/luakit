@@ -56,6 +56,16 @@ require "binds"
 -- Add sqlite3 cookiejar
 require "cookies"
 
+-- Cookie blocking by domain (extends cookies module)
+-- Add domains to the whitelist at "$XDG_CONFIG_HOME/luakit/cookie.whitelist"
+-- and blacklist at "$XDG_CONFIG_HOME/luakit/cookie.blacklist".
+-- Each domain must be on it's own line and you may use "*" as a
+-- wildcard character (I.e. "*google.com")
+--require "cookie_blocking"
+
+-- Block all cookies by default (unless whitelisted)
+--cookies.default_allow = false
+
 -- Add uzbl-like form filling
 require "formfiller"
 
@@ -103,6 +113,12 @@ require "history_chrome"
 
 -- Add command completion
 require "completion"
+
+-- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
+-- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
+-- Remove all "enable-scripts" & "enable-plugins" lines from your 
+-- domain_props table (in config/globals.lua) as this module will conflict.
+--require "noscript"
 
 require "follow_selected"
 require "go_input"

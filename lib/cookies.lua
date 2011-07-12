@@ -51,20 +51,20 @@ CREATE TABLE IF NOT EXISTS moz_cookies (
 query_all_since = [[SELECT id, name, value, host AS domain, path,
     expiry AS expires, isSecure AS secure, isHttpOnly AS http_only
 FROM moz_cookies
-WHERE lastAccessed >= %d;]]
+WHERE lastAccessed >= %.0f;]]
 
 query_insert = [[INSERT INTO moz_cookies
-VALUES(NULL, %s, %s, %s, %s, %d, %d, %d, %d);]]
+VALUES(NULL, %s, %s, %s, %s, %.0f, %.0f, %d, %d);]]
 
 query_expire = [[UPDATE moz_cookies
-SET expiry=0, lastAccessed=%d
+SET expiry=0, lastAccessed=%.0f
 WHERE host=%s AND name=%s AND path=%s;]]
 
 query_delete = [[DELETE FROM moz_cookies
 WHERE host=%s AND name=%s AND path=%s;]]
 
 query_delete_expired = [[DELETE FROM moz_cookies
-WHERE expiry == 0 AND lastAccessed < %d;]]
+WHERE expiry == 0 AND lastAccessed < %.0f;]]
 
 query_delete_session = [[DELETE FROM moz_cookies
 WHERE expiry == -1;]]
@@ -107,6 +107,11 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             e(new.domain), -- WHERE = host
             e(new.name), -- WHERE = name
             e(new.path))) -- WHERE = path
+
+        if _M.emit_signal("accept-cookie", new) == false then
+            new.expires = 0 -- expire cookie
+            capi.soup.add_cookies{new}
+        end
 
         -- Insert new cookie
         db:exec(string.format(query_insert,
