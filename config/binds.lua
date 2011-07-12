@@ -154,6 +154,13 @@ add_binds("normal", {
     -- Zoom reset or specific zoom ([count]zZ for full content zoom)
     buf("^z[zZ]$",                  function (w, b, m) w:zoom_set(m.count/100, b == "zZ") end, {count=100}),
 
+    -- Fullscreen
+    key({},          "F11",         function (w)
+                                        w.fullscreen = not w.fullscreen
+                                        if w.fullscreen then w.win:fullscreen()
+                                        else w.win:unfullscreen() end
+                                    end),
+
     -- Clipboard
     key({},          "p",           function (w)
                                         local uri = luakit.get_selection()
