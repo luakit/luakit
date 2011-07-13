@@ -104,7 +104,7 @@ local function match(w, tag, attributes, data, parents)
         local t = lousy.util.table.toarray(data)
         return #t == 0 and true or t
     else
-        return nil
+        return {}
     end
 end
 
@@ -128,7 +128,7 @@ DSL = {
                     -- show menu
                     w:set_mode("formfiller")
                     -- suspend evaluation
-                    return false
+                    return nil
                 end
             end)
             table.insert(rules, function (w, v)
@@ -144,7 +144,7 @@ DSL = {
                 if ret == "true" then
                     return data
                 else
-                    return nil
+                    return {}
                 end
             end)
         end
