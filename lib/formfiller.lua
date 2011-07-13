@@ -113,7 +113,7 @@ local DSL
 DSL = {
     print = print,
 
-    -- DSL method to match a page by it's URI
+    -- DSL method to match a page by its URI
     on = function (pattern)
         return function (data)
             table.insert(rules, function (w, v)
@@ -150,7 +150,7 @@ DSL = {
         end
     end,
 
-    -- DSL method to match a form by it's attributes
+    -- DSL method to match a form by its attributes
     form = function (data)
         if type(data) == "string" then
             -- add a menu entry for the profile
@@ -173,6 +173,7 @@ DSL = {
         end
     end,
 
+    -- Alternative version of the `form` method that ignores profiles
     fast_form = function (data)
         if type(data) == "string" then
             -- ignore profiles
@@ -185,7 +186,7 @@ DSL = {
         end
     end,
 
-    -- DSL method to match an input element by it's attributes
+    -- DSL method to match an input element by its attributes
     input = function (data)
         return function (w, v)
             return match(w, "input", {"name", "id", "className", "type"}, data, "forms")
