@@ -156,14 +156,15 @@ DSL = {
             -- add a menu entry for the profile
             local profile = data
             return function (data)
-                table.insert(menu_cache, {
-                    profile,
-                    fun = function (w, v)
-                        return match(w, "form", {"method", "name", "id", "action", "className"}, data)
-                    end,
-                })
-                -- continue matching
-                return {}
+                return function (w, v)
+                    table.insert(menu_cache, {
+                        profile,
+                        fun = function (w, v)
+                            return match(w, "form", {"method", "name", "id", "action", "className"}, data)
+                        end,
+                    })
+                    return {}
+                end
             end
         else
             -- return a form matcher
