@@ -31,6 +31,9 @@ module("formfiller")
 -- that must be evaluated.
 local rules = {}
 
+-- The menu cache that stores menu entries while evaluating.
+local menu_cache = {}
+
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/formfiller.lua"
 
@@ -131,8 +134,24 @@ local DSL = {
 
     -- DSL method to match a form by it's attributes
     form = function (data)
-        return function (w, v)
-            return match(w, "form", {"method", "name", "id", "action", "className"}, data)
+        if type(data) == "string" then
+            -- add a menu entry for the profile
+            local profile = data
+            return function (data)
+                table.insert(menu_cache, {
+                    name = profile,
+                    fun = function (w, v)
+                        return match(w, "form", {"method", "name", "id", "action", "className"}, data)
+                    end,
+                })
+                -- continue matching
+                return {}
+            end
+        else
+            -- return a form matcher
+            return function (w, v)
+                return match(w, "form", {"method", "name", "id", "action", "className"}, data)
+            end
         end
     end,
 
@@ -183,6 +202,8 @@ local DSL = {
 
 --- Reads the rules from the formfiller DSL file
 function init()
+    -- reset variables
+    menu_cache = {}
     -- the environment of the DSL script
     -- load the script
     local f = io.open(file, "r")
