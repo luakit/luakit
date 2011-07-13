@@ -113,6 +113,14 @@ local DSL
 DSL = {
     print = print,
 
+    -- DSL method that allows the emission of debug messages
+    debug = function (message)
+        return function ()
+            print(message)
+            return {}
+        end
+    end,
+
     -- DSL method to match a page by its URI
     on = function (pattern)
         return function (data)
