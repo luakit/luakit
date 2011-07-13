@@ -259,6 +259,8 @@ end
 
 --- Fills the current page from the formfiller rules.
 function load(w)
+    -- reload the DSL
+    init()
     -- load JS prerequisites
     w:eval_js(formfiller_js, "(formfiller.lua)")
     -- the function stack. pushed functions are evaluated until there is none
@@ -279,10 +281,6 @@ function load(w)
         end
     end
 end
-
-
--- Initialize the formfiller
-init()
 
 -- Add formfiller mode
 new_mode("formfiller", {
