@@ -132,6 +132,7 @@ DSL = {
                 end
             end)
             table.insert(rules, function (w, v)
+                menu_cache = {}
                 -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
                 local js_template = [=[
                     (new RegExp({pattern}).test(location.href));
@@ -231,8 +232,6 @@ DSL = {
 
 --- Reads the rules from the formfiller DSL file
 function init()
-    -- reset variables
-    menu_cache = {}
     -- the environment of the DSL script
     -- load the script
     local f = io.open(file, "r")
