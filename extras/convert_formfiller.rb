@@ -31,7 +31,7 @@ while (line = f.gets)
   end
   next if line =~ /^> vim/
   form[:profile] = $1 if line =~ /^!profile=(.*)/
-  if line =~ /^!form[(.*?)|(.*?)|(.*?)|(.*?)]:autosubmit=(.)/
+  if line =~ /^!form\[(.*?)\|(.*?)\|(.*?)\|(.*?)\]:autosubmit=(.)/
     form[:name] = $1 unless $1 == ""
     form[:id] = $2 unless $2 == ""
     form[:method] = $3 unless $3 == ""
