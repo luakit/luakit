@@ -17,6 +17,7 @@ local capi = {
 }
 
 local new_mode, add_binds = new_mode, add_binds
+local menu_binds = menu_binds
 
 local term       = globals.term   or "xterm"
 local editor     = globals.editor or (os.getenv("EDITOR") or "vim")
@@ -115,6 +116,21 @@ local DSL = {
     on = function (pattern)
         return function (data)
             table.insert(rules, function (w, v)
+                -- show menu if necessary
+                if #(menu_cache) == 0 then
+                    -- continue matching
+                    return {}
+                elseif #(menu_cache) == 1 then
+                    -- evaluate that cache function
+                    return {menu_cache[1].fun}
+                else
+                    -- show menu
+                    w:set_mode("formfiller")
+                    -- suspend evaluation
+                    return false
+                end
+            end)
+            table.insert(rules, function (w, v)
                 -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
                 local js_template = [=[
                     (new RegExp({pattern}).test(location.href));
@@ -139,7 +155,7 @@ local DSL = {
             local profile = data
             return function (data)
                 table.insert(menu_cache, {
-                    name = profile,
+                    profile,
                     fun = function (w, v)
                         return match(w, "form", {"method", "name", "id", "action", "className"}, data)
                     end,
@@ -279,22 +295,25 @@ function add(w)
 end
 
 --- Fills the current page from the formfiller rules.
-function load(w)
-    -- reload the DSL
-    init()
-    -- load JS prerequisites
-    w:eval_js(formfiller_js, "(formfiller.lua)")
+-- @param w The window on which to fill the forms
+-- @param skip_init Prevents re-initialization of the window
+function load(w, skip_init)
+    if not skip_init then
+        -- reload the DSL
+        init()
+        -- load JS prerequisites
+        w:eval_js(formfiller_js, "(formfiller.lua)")
+    end
     -- the function stack. pushed functions are evaluated until there is none
     -- left or one of them returns false
-    local stack = lousy.util.table.clone(rules)
-    while #stack > 0 do
-        local fun = table.remove(stack)
+    while #rules > 0 do
+        local fun = table.remove(rules)
         local ret = fun(w, w:get_current())
         if ret then
             ret = lousy.util.table.reverse(ret)
             for _,f in ipairs(ret) do
                 if type(f) == "function" then
-                    table.insert(stack, f)
+                    table.insert(rules, f)
                 end
             end
         else
@@ -305,16 +324,35 @@ end
 
 -- Add formfiller mode
 new_mode("formfiller", {
+    enter = function (w)
+        local rows = {{ "Profile", title = true }}
+        for _, m in ipairs(menu_cache) do
+            table.insert(rows, m)
+        end
+        w.menu:build(rows)
+    end,
+
     leave = function (w)
         w.menu:hide()
     end,
 })
 
+local key = lousy.bind.key
+add_binds("formfiller", lousy.util.table.join({
+    -- use profile
+    key({}, "Return", function (w)
+        local row = w.menu:get()
+        table.insert(rules, row.fun)
+        w:set_mode()
+        load(w, true)
+    end),
+}, menu_binds))
+
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za$", add),
-    buf("^ze$", edit),
-    buf("^zl$", load),
+    buf("^za$", function (w) add(w)  end),
+    buf("^ze$", function (w) edit(w) end),
+    buf("^zl$", function (w) load(w) end),
 })
 
