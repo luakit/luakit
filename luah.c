@@ -344,7 +344,7 @@ luaH_dofunction_on_error(lua_State *L)
 }
 
 void
-luaH_init(void)
+luaH_init(gboolean unique)
 {
     lua_State *L;
 
@@ -371,7 +371,8 @@ luaH_init(void)
 
 #if WITH_UNIQUE
     /* Export unique lib */
-    unique_lib_setup(L);
+    if (unique)
+        unique_lib_setup(L);
 #endif
 
     /* Export widget */
