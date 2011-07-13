@@ -116,22 +116,7 @@ DSL = {
     -- DSL method to match a page by its URI
     on = function (pattern)
         return function (data)
-            table.insert(rules, function (w, v)
-                -- show menu if necessary
-                if #(menu_cache) == 0 then
-                    -- continue matching
-                    return {}
-                elseif #(menu_cache) == 1 then
-                    -- evaluate that cache function
-                    return {menu_cache[1].fun}
-                else
-                    -- show menu
-                    w:set_mode("formfiller")
-                    -- suspend evaluation
-                    return nil
-                end
-            end)
-            table.insert(rules, function (w, v)
+            table.insert(rules, 1, function (w, v)
                 menu_cache = {}
                 -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
                 local js_template = [=[
@@ -145,6 +130,21 @@ DSL = {
                     return data
                 else
                     return {}
+                end
+            end)
+            table.insert(rules, 1, function (w, v)
+                -- show menu if necessary
+                if #(menu_cache) == 0 then
+                    -- continue matching
+                    return {}
+                elseif #(menu_cache) == 1 then
+                    -- evaluate that cache function
+                    return {menu_cache[1].fun}
+                else
+                    -- show menu
+                    w:set_mode("formfiller")
+                    -- suspend evaluation
+                    return nil
                 end
             end)
         end
@@ -234,6 +234,7 @@ DSL = {
 
 --- Reads the rules from the formfiller DSL file
 function init()
+    rules = {}
     -- the environment of the DSL script
     -- load the script
     local f = io.open(file, "r")
