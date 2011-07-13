@@ -109,7 +109,8 @@ local function match(w, tag, attributes, data, parents)
 end
 
 -- The function environment for the formfiller script
-local DSL = {
+local DSL
+DSL = {
     print = print,
 
     -- DSL method to match a page by it's URI
@@ -163,6 +164,18 @@ local DSL = {
                 -- continue matching
                 return {}
             end
+        else
+            -- return a form matcher
+            return function (w, v)
+                return match(w, "form", {"method", "name", "id", "action", "className"}, data)
+            end
+        end
+    end,
+
+    fast_form = function (data)
+        if type(data) == "string" then
+            -- ignore profiles
+            return DSL.fast_form
         else
             -- return a form matcher
             return function (w, v)
@@ -322,6 +335,15 @@ function load(w, skip_init)
     end
 end
 
+--- Fills the current page from the formfiller rules, ignoring all profiles.
+-- @param w The window on which to fill the forms
+function load_fast(w)
+    local form = DSL.form
+    DSL.form = DSL.fast_form
+    load(w)
+    DSL.form = form
+end
+
 -- Add formfiller mode
 new_mode("formfiller", {
     enter = function (w)
@@ -351,8 +373,9 @@ add_binds("formfiller", lousy.util.table.join({
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za$", function (w) add(w)  end),
-    buf("^ze$", function (w) edit(w) end),
-    buf("^zl$", function (w) load(w) end),
+    buf("^za$", function (w) add(w)       end),
+    buf("^ze$", function (w) edit(w)      end),
+    buf("^zl$", function (w) load_fast(w) end),
+    buf("^zL$", function (w) load(w)      end),
 })
 
