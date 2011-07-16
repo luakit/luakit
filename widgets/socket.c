@@ -1,8 +1,7 @@
 /*
  * widgets/socket.c - gtk socket widget
  *
- * Copyright (C) 2010 Mason Larobina  <mason.larobina@gmail.com>
- * Copyright (C) 2010 Fabian Streitel <karottenreibe@gmail.com>
+ * Copyright © 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -27,7 +26,6 @@ static void
 plug_added_cb(GtkSocket *socket, widget_t *w)
 {
     (void) socket;
-
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "plug-added", 1, 0);
@@ -37,7 +35,6 @@ static gboolean
 plug_removed_cb(GtkSocket *socket, widget_t *w)
 {
     (void) socket;
-
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "plug-removed", 1, 0);
@@ -48,7 +45,7 @@ static gint
 luaH_socket_add_id(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    int id = luaL_checkint(L, 2);
+    gint id = luaL_checkint(L, 2);
     gtk_socket_add_id(GTK_SOCKET(w->widget), (GdkNativeWindow) id);
     return 0;
 }
@@ -79,7 +76,6 @@ widget_t *
 widget_socket(widget_t *w)
 {
     w->index = luaH_socket_index;
-    w->newindex = NULL;
     w->destructor = widget_destructor;
     w->widget = gtk_socket_new();
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
@@ -90,4 +86,3 @@ widget_socket(widget_t *w)
       NULL);
     return w;
 }
-
