@@ -108,6 +108,11 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             e(new.name), -- WHERE = name
             e(new.path))) -- WHERE = path
 
+        if _M.emit_signal("accept-cookie", new) == false then
+            new.expires = 0 -- expire cookie
+            capi.soup.add_cookies{new}
+        end
+
         -- Insert new cookie
         db:exec(string.format(query_insert,
             e(new.name), -- name

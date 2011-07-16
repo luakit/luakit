@@ -799,7 +799,7 @@ local function accept_follow(w, frame)
     local s = (w.follow_state or {})
     local val
     if frame then
-        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", frame)
         local done = string.match(ret, "^done")
         if done then
             val = string.match(ret, "done (.*)")
