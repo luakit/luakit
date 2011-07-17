@@ -23,7 +23,52 @@ local term       = globals.term   or "xterm"
 local editor     = globals.editor or (os.getenv("EDITOR") or "vim")
 local editor_cmd = string.format("%s -e %s", term, editor)
 
---- Provides functionaliy to auto-fill forms based on a Lua DSL
+--- Provides functionaliy to auto-fill forms based on a Lua DSL.
+-- The configuration is stored in $XDG_DATA_DIR/luakit/formfiller.lua
+--
+-- The following is an example for a formfiller definition:
+--
+-- <pre>
+--   on "luakit.org" {
+--     form "profile1" {
+--       method = "post",
+--       input {
+--         name = "username",
+--         type = "text",
+--         className = "someClass",
+--         id = "username_field",
+--         fill("myUsername"),
+--       },
+--       input {
+--         name = "password",
+--         type = "password",
+--         fill("myPassword"),
+--       },
+--       input {
+--         name = "autologin",
+--         type = "checkbox",
+--         fill(true),
+--       },
+--       submit(),
+--     },
+--   }
+-- </pre>
+--
+-- The form function's string argument is optional. It allows
+-- you to define multiple profiles.
+--
+-- All entries are matched top to bottom, until one fully matches
+-- or calls <code>submit()</code>.
+--
+-- The submit function takes an optional argument that gives the
+-- index of the submit button to click (starting with <code>1</code>).
+--
+-- The string argument to the <code>on</code> function and all of
+-- the attributes of the <code>form</code> and <code>input</code>
+-- tables take JavaScript regular expressions.
+-- BEWARE their escaping!
+--
+
 module("formfiller")
 
 -- The formfiller rules.
