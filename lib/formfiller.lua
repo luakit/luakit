@@ -1,8 +1,8 @@
------------------------------------------------------------------
--- Luakit formfiller                                           --
--- © 2011 Fabian Streitel (karottenreibe) <k@rottenrei.be>     --
--- © 2011 Mason Larobina  (mason-l) <mason.larobina@gmail.com> --
------------------------------------------------------------------
+------------------------------------------------------------------
+-- Luakit formfiller                                            --
+-- © 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be> --
+-- © 2011 Mason Larobina  (mason-l) <mason.larobina@gmail.com>  --
+------------------------------------------------------------------
 
 local lousy = require("lousy")
 local string, table, io = string, table, io
@@ -29,46 +29,51 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 -- The following is an example for a formfiller definition:
 --
 -- <pre>
---   on "luakit.org" {
---     form "profile1" {
---       method = "post",
---       input {
---         name = "username",
---         type = "text",
---         className = "someClass",
---         id = "username_field",
---         fill("myUsername"),
---       },
---       input {
---         name = "password",
---         type = "password",
---         fill("myPassword"),
---       },
---       input {
---         name = "autologin",
---         type = "checkbox",
---         fill(true),
---       },
---       submit(),
---     },
---   }
+-- <br>  on "luakit.org" {
+-- <br>    form "profile1" {
+-- <br>      method = "post",
+-- <br>      action = "/login",
+-- <br>      className = "someFormClass",
+-- <br>      id = "form_id",
+-- <br>      input {
+-- <br>        name = "username",
+-- <br>        type = "text",
+-- <br>        className = "someClass",
+-- <br>        id = "username_field",
+-- <br>        fill("myUsername"),
+-- <br>      },
+-- <br>      input {
+-- <br>        name = "password",
+-- <br>        fill("myPassword"),
+-- <br>      },
+-- <br>      input {
+-- <br>        name = "autologin",
+-- <br>        type = "checkbox",
+-- <br>        fill(true),
+-- <br>      },
+-- <br>      submit(),
+-- <br>    },
+-- <br>  }
 -- </pre>
 --
--- The form function's string argument is optional. It allows
--- you to define multiple profiles.
+-- <ul>
+-- <li> The <code>form</code> function's string argument is optional.
+--      It allows you to define multiple profiles.
+-- <li> All entries are matched top to bottom, until one fully matches
+--      or calls <code>submit()</code>.
+-- <li> The submit function takes an optional argument that gives the
+--      index of the submit button to click (starting with <code>1</code>).
+--      If there is no such button (e.g. with a negative index),
+--      <code>form.submit()</code> will be called instead.
+-- <li> The string argument to the <code>on</code> function and all of
+--      the attributes of the <code>form</code> and <code>input</code>
+--      tables take JavaScript regular expressions.
+--      BEWARE their escaping!
+-- </ul>
 --
--- All entries are matched top to bottom, until one fully matches
--- or calls <code>submit()</code>.
---
--- The submit function takes an optional argument that gives the
--- index of the submit button to click (starting with <code>1</code>).
--- If there is no such button (e.g. with a negative index),
--- <code>form.submit()</code> will be called instead.
---
--- The string argument to the <code>on</code> function and all of
--- the attributes of the <code>form</code> and <code>input</code>
--- tables take JavaScript regular expressions.
--- BEWARE their escaping!
+-- There is a conversion script in the luakit repository that converts
+-- from the old formfiller format to the new one. For more information,
+-- see the converter script under <code>extras/convert_formfiller.rb</code>
 --
 
 module("formfiller")
@@ -330,11 +335,12 @@ function init()
 end
 
 --- Edits the formfiller rules.
-function edit(w)
+function edit()
     capi.luakit.spawn(string.format("%s %q", editor_cmd, file))
 end
 
 --- Adds a new entry to the formfiller based on the current webpage.
+-- @param w The window for which to add an entry.
 function add(w)
     -- load JS prerequisites
     w:eval_js(formfiller_js, "(formfiller.lua)")
@@ -445,7 +451,7 @@ add_binds("formfiller", lousy.util.table.join({
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^za$", function (w) add(w)       end),
-    buf("^ze$", function (w) edit(w)      end),
+    buf("^ze$", function (w) edit()       end),
     buf("^zl$", function (w) load_fast(w) end),
     buf("^zL$", function (w) load(w)      end),
 })
