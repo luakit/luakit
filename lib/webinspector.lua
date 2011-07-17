@@ -38,6 +38,7 @@ webview.init_funcs.inspector = function (view, w)
         if win then
             win:destroy()
         end
+        w:set_mode()
     end)
     view:add_signal("attach-inspector", function (_, iview)
         local win = windows[iview]
