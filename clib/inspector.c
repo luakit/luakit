@@ -32,15 +32,22 @@ inspector_create_widget(inspector_t *i)
 {
     lua_State *L = globalconf.L;
     /* create new webview widget */
-    lua_pushstring(L, "webview");
     lua_newtable(L);
     lua_pushstring(L, "type");
     lua_pushstring(L, "webview");
     lua_rawset(L, -3);
+    /* move to absolute index 2 -- needed for luaH_class_new */
+    lua_insert(L, 1);
+    lua_pushnil(L);
+    lua_insert(L, 1);
+    /* call widget constructor */
     luaH_widget_new(L);
     widget_t *new = luaH_checkwidget(L, -1);
-    lua_pop(L, 3);
     i->widget = new;
+    /* clean up the stack again */
+    lua_remove(L, 1);
+    lua_remove(L, 1);
+    lua_pop(L, 1);
     /* fix attached size */
     gtk_widget_set_size_request(i->widget->widget, -1, 300);
     return new->data;
