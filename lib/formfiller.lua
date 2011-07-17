@@ -50,6 +50,11 @@ local formfiller_js = [=[
         toLuaString: function (str) {
             return "'" + str.replace(/[\\'']/g, "\\$&") + "'";
         },
+        click: function (element) {
+            var mouseEvent = document.createEvent("MouseEvent");
+            mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+            element.dispatchEvent(mouseEvent);
+        },
         forms: [],
         inputs: [],
         AttributeMatcher: function (tag, attrs, parents) {
@@ -226,13 +231,29 @@ DSL = {
     end,
 
     -- DSL method to submit a form
-    submit = function ()
+    submit = function (n)
         return function (w, v)
-            local js = [=[
-                if (formfiller.forms && formfiller.forms[0]) {
-                    formfiller.forms[0].submit();
-                }
-            ]=]
+            local js
+            if type(n) == "number" then
+                js = string.format([=[
+                    if (formfiller.forms && formfiller.forms[0]) {
+                        var inputs = formfiller.forms[0].getElementsByTagName('input');
+                        inputs = formfiller.toA(inputs).filter(function (input) {
+                            return /submit/i.test(input.type);
+                        });
+                        var n = %i - 1;
+                        if (inputs[n]) {
+                            formfiller.click(inputs[n]);
+                        }
+                    }
+                ]=], n)
+            else
+                js = [=[
+                    if (formfiller.forms && formfiller.forms[0]) {
+                        formfiller.forms[0].submit();
+                    }
+                ]=]
+            end
             w:eval_js(js, "(formfiller.lua)")
             -- abort after a form has been submitted (page will reload!)
             return nil
