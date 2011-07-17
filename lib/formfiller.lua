@@ -62,6 +62,8 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 --
 -- The submit function takes an optional argument that gives the
 -- index of the submit button to click (starting with <code>1</code>).
+-- If there is no such button (e.g. with a negative index),
+-- <code>form.submit()</code> will be called instead.
 --
 -- The string argument to the <code>on</code> function and all of
 -- the attributes of the <code>form</code> and <code>input</code>
@@ -278,27 +280,20 @@ DSL = {
     -- DSL method to submit a form
     submit = function (n)
         return function (w, v)
-            local js
-            if type(n) == "number" then
-                js = string.format([=[
-                    if (formfiller.forms && formfiller.forms[0]) {
-                        var inputs = formfiller.forms[0].getElementsByTagName('input');
-                        inputs = formfiller.toA(inputs).filter(function (input) {
-                            return /submit/i.test(input.type);
-                        });
-                        var n = %i - 1;
-                        if (inputs[n]) {
-                            formfiller.click(inputs[n]);
-                        }
-                    }
-                ]=], n)
-            else
-                js = [=[
-                    if (formfiller.forms && formfiller.forms[0]) {
+            local js = string.format([=[
+                if (formfiller.forms && formfiller.forms[0]) {
+                    var inputs = formfiller.forms[0].getElementsByTagName('input');
+                    inputs = formfiller.toA(inputs).filter(function (input) {
+                        return /submit/i.test(input.type);
+                    });
+                    var n = %i - 1;
+                    if (inputs[n]) {
+                        formfiller.click(inputs[n]);
+                    } else {
                         formfiller.forms[0].submit();
                     }
-                ]=]
-            end
+                }
+            ]=], tonumber(n) or 1)
             w:eval_js(js, "(formfiller.lua)")
             -- abort after a form has been submitted (page will reload!)
             return nil
