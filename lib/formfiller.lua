@@ -88,12 +88,6 @@ module("formfiller")
 -- that must be evaluated.
 local rules = {}
 
--- The menu cache that stores menu entries while evaluating.
-local menu_cache = {}
-
--- Whether insert mode should be entered after the evaluation.
-local insert_mode = false
-
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/formfiller.lua"
 
@@ -166,7 +160,7 @@ local function match(w, tag, attributes, data, parents)
     local ret = w:eval_js(js, "(formfiller.lua)")
     if ret == "true" then
         local t = lousy.util.table.toarray(data)
-        return #t == 0 and true or t
+        return t
     else
         return {}
     end
@@ -189,8 +183,10 @@ DSL = {
     on = function (pattern)
         return function (data)
             table.insert(rules, 1, function (w, v)
-                menu_cache = {}
-                insert_mode = false
+                w.formfiller_state = {
+                    menu_cache = {},
+                    insert_mode = false,
+                }
                 -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
                 local js_template = [=[
                     (new RegExp({pattern}).test(location.href));
@@ -207,12 +203,12 @@ DSL = {
             end)
             table.insert(rules, 1, function (w, v)
                 -- show menu if necessary
-                if #(menu_cache) == 0 then
+                if #(w.formfiller_state.menu_cache) == 0 then
                     -- continue matching
                     return {}
-                elseif #(menu_cache) == 1 then
+                elseif #(w.formfiller_state.menu_cache) == 1 then
                     -- evaluate that cache function
-                    return {menu_cache[1].fun}
+                    return {w.formfiller_state.menu_cache[1].fun}
                 else
                     -- show menu
                     w:set_mode("formfiller")
@@ -221,7 +217,7 @@ DSL = {
                 end
             end)
             table.insert(rules, 1, function (w, v)
-                if insert_mode then
+                if w.formfiller_state.insert_mode then
                     w:set_mode("insert")
                 end
                 return {}
@@ -236,7 +232,7 @@ DSL = {
             local profile = data
             return function (data)
                 return function (w, v)
-                    table.insert(menu_cache, {
+                    table.insert(w.formfiller_state.menu_cache, {
                         profile,
                         fun = function (w, v)
                             return match(w, "form", {"method", "name", "id", "action", "className"}, data)
@@ -311,7 +307,7 @@ DSL = {
                 }
             ]=], do_select and "true" or "false")
             local ret = w:eval_js(js, "(formfiller.lua)")
-            insert_mode = (ret == "true")
+            w.formfiller_state.insert_mode = (ret == "true")
             return {}
         end
     end,
@@ -459,7 +455,7 @@ end
 new_mode("formfiller", {
     enter = function (w)
         local rows = {{ "Profile", title = true }}
-        for _, m in ipairs(menu_cache) do
+        for _, m in ipairs(w.formfiller_state.menu_cache) do
             table.insert(rows, m)
         end
         w.menu:build(rows)
