@@ -65,6 +65,10 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 --      index of the submit button to click (starting with <code>1</code>).
 --      If there is no such button (e.g. with a negative index),
 --      <code>form.submit()</code> will be called instead.
+-- <li> Instead of <code>submit()</code>, you can also use <code>focus()</code>
+--      inside an <code>input</code> to focus that element. If <code>true</code>
+--      is given as an argument to the function, the text of the input will be
+--      selected.
 -- <li> The string argument to the <code>on</code> function and all of
 --      the attributes of the <code>form</code> and <code>input</code>
 --      tables take JavaScript regular expressions.
@@ -86,6 +90,9 @@ local rules = {}
 
 -- The menu cache that stores menu entries while evaluating.
 local menu_cache = {}
+
+-- Whether insert mode should be entered after the evaluation.
+local insert_mode = false
 
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/formfiller.lua"
@@ -183,6 +190,7 @@ DSL = {
         return function (data)
             table.insert(rules, 1, function (w, v)
                 menu_cache = {}
+                insert_mode = false
                 -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
                 local js_template = [=[
                     (new RegExp({pattern}).test(location.href));
@@ -211,6 +219,12 @@ DSL = {
                     -- suspend evaluation
                     return nil
                 end
+            end)
+            table.insert(rules, 1, function (w, v)
+                if insert_mode then
+                    w:set_mode("insert")
+                end
+                return {}
             end)
         end
     end,
@@ -278,6 +292,23 @@ DSL = {
                 str = string.format("%q", tostring(str))
             })
             w:eval_js(js, "(formfiller.lua)")
+            return {}
+        end
+    end,
+
+    -- DSL method to focus an input element
+    focus = function (do_select)
+        return function (w, v)
+            local js = string.format([=[
+                if (formfiller.inputs && formfiller.inputs[0]) {
+                    formfiller.inputs[0].focus();
+                    if (%s) {
+                        formfiller.inputs[0].select();
+                    }
+                }
+            ]=], do_select and "true" or "false")
+            w:eval_js(js, "(formfiller.lua)")
+            insert_mode = true
             return {}
         end
     end,
