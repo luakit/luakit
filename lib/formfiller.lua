@@ -305,10 +305,13 @@ DSL = {
                     if (%s) {
                         formfiller.inputs[0].select();
                     }
+                    "true";
+                } else {
+                    "false";
                 }
             ]=], do_select and "true" or "false")
-            w:eval_js(js, "(formfiller.lua)")
-            insert_mode = true
+            local ret = w:eval_js(js, "(formfiller.lua)")
+            insert_mode = (ret == "true")
             return {}
         end
     end,
