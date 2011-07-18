@@ -11,7 +11,7 @@ local setfenv = setfenv
 local warn = warn
 local print, type = print, type
 local pairs, ipairs = pairs, ipairs
-local tostring = tostring
+local tostring, tonumber = tostring, tonumber
 local capi = {
     luakit = luakit
 }
@@ -81,12 +81,6 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 --
 
 module("formfiller")
-
--- The formfiller rules.
--- Basically a table of functions that either return nil to indicate
--- that the rule doesn't match or another table of functions (sub-rules)
--- that must be evaluated.
-local rules = {}
 
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/formfiller.lua"
@@ -180,13 +174,11 @@ DSL = {
     end,
 
     -- DSL method to match a page by its URI
-    on = function (pattern)
+    on = function (rules, pattern)
         return function (data)
             table.insert(rules, 1, function (w, v)
-                w.formfiller_state = {
-                    menu_cache = {},
-                    insert_mode = false,
-                }
+                w.formfiller_state.menu_cache = {}
+                w.formfiller_state.insert_mode = false
                 -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
                 local js_template = [=[
                     (new RegExp({pattern}).test(location.href));
@@ -337,8 +329,10 @@ DSL = {
 }
 
 --- Reads the rules from the formfiller DSL file
-function init()
-    rules = {}
+function init(w)
+    w.formfiller_state = {
+        rules = {},
+    }
     -- the environment of the DSL script
     -- load the script
     local f = io.open(file, "r")
@@ -350,16 +344,19 @@ function init()
         return
     end
     -- execute in sandbox
-    setfenv(dsl, DSL)
+    local env = lousy.util.table.clone(DSL)
+    -- wrap the on function so it can access the rules
+    env.on = function (...) return DSL.on(w.formfiller_state.rules, ...) end
+    setfenv(dsl, env)
     local success, err = pcall(dsl)
     if not success then
         warn("error in " .. file .. ": " .. err)
     end
     -- ensure we only have functions on the rule stack
-    for i,f in pairs(rules) do
+    for i,f in pairs(w.formfiller_state.rules) do
         if type(f) ~= "function" then
             warn("formfiller: rule stack contains non-function at index " .. i)
-            rules = {}
+            w.formfiller_state.rules = {}
         end
     end
 end
@@ -420,12 +417,13 @@ end
 function load(w, skip_init)
     if not skip_init then
         -- reload the DSL
-        init()
+        init(w)
         -- load JS prerequisites
         w:eval_js(formfiller_js, "(formfiller.lua)")
     end
     -- the function stack. pushed functions are evaluated until there is none
     -- left or one of them returns false
+    local rules = w.formfiller_state.rules
     while #rules > 0 do
         local fun = table.remove(rules)
         local ret = fun(w, w:get_current())
@@ -471,7 +469,7 @@ add_binds("formfiller", lousy.util.table.join({
     -- use profile
     key({}, "Return", function (w)
         local row = w.menu:get()
-        table.insert(rules, row.fun)
+        table.insert(w.formfiller_state.rules, row.fun)
         w:set_mode()
         load(w, true)
     end),
