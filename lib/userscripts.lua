@@ -14,8 +14,10 @@ local string = string
 local table = table
 local warn = warn
 local webview = webview
+local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
+local add_cmds = add_cmds
 local capi = { luakit = luakit }
 
 --- Evaluates and manages userscripts.
@@ -203,7 +205,7 @@ local function load_js(file)
     f:close()
 
     -- Inspect userscript header
-    local header = string.match(js, "^//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
+    local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
     if header then
         local script = parse_header(header, file)
         script.js = js
@@ -235,6 +237,17 @@ local function invoke(view, on_start)
     end
 end
 
+local function save(file, js)
+    if not os.exists(dir) then
+        util.mkdir(dir)
+    end
+
+    local f = io.open(dir .. "/" .. file, "w")
+    f:write(js)
+    f:close()
+    load_js(dir .. "/" .. file)
+end
+
 --- Hook on the webview's load-status signal to invoke the userscripts.
 webview.init_funcs.userscripts = function (view, w)
     view:add_signal("load-status", function (v, status)
@@ -248,6 +261,22 @@ webview.init_funcs.userscripts = function (view, w)
         end
     end)
 end
+
+-- Add userscript commands
+local cmd = bind.cmd
+add_cmds({
+    -- Saves the content of the open view as an userscript
+    cmd({"userscriptinstall", "usinstall"}, function (w, a)
+        local view = w:get_current()
+        local file = string.match(view.uri, "/(%w+%.user%.js)$")
+        if (not file) then return w:error("URL is not a *.user.js file") end
+
+        local js = util.unescape(view:eval_js("document.body.getElementsByTagName('pre')[0].innerHTML", "(userscripts:install)"))
+        local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
+        if not header then return w:error("Could not find userscript header") end
+        save(file, js)
+    end),
+})
 
 -- Initialize the userscripts
 load_all()
