@@ -8,7 +8,6 @@ local ipairs, pairs = ipairs, pairs
 local table, string = table, string
 local tonumber, tostring = tonumber, tostring
 local type, unpack = type, unpack
-local print = print
 local assert = assert
 
 local lousy = require "lousy"
@@ -46,7 +45,7 @@ module("follow")
 -- @type table
 -- @name follow
 ignore_delay = 250
-style = styles.remove_leading("0", styles.sort(styles.reverse(styles.matching())))
+style = styles.sort(styles.reverse(styles.numbers_and_labels()))
 
 -- Clears all follow stuff from the page.
 local clear_js = [=[

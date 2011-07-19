@@ -1,117 +1,42 @@
--------------------------------------------------------
--- Follow styles to customize hints for luakit       --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
--------------------------------------------------------
+------------------------------------------------------------
+-- Follow styles to customize hints for luakit            --
+-- © 2010-2011 Fabian Streitel <karottenreibe@gmail.com>  --
+-- © 2010-2011 Mason Larobina  <mason.larobina@gmail.com> --
+------------------------------------------------------------
 
 local table, string = table, string
 local tostring = tostring
 local ipairs = ipairs
+local math = require "math"
 
---- Contains different styles for following.
--- A style is a function that returns a hash with the following entries:
---
--- <ul>
--- <li> <code>make_labels</code>
--- <li> <code>parse_inupt</code>
--- </ul>
---
--- See below for documentation of these functions
 module("follow.styles")
 
---- Generates the labels for the hints.
---
--- @param size How many labels to generate
--- @return An array of strings with the given size.
---
--- @class function
--- @name make_labels
-
---- Parses the user's input into a match string and an ID.
---
--- @param text The input of the user.
--- @return A string that is used to filter the hints by their text content.
--- @return An string that is used to filter the hints by their IDs.
---
--- @class function
--- @name parse_input
-
 -- Calculates the minimum number of characters needed in a hint given a
--- charset of a certain length.
---
--- @param size The number of hints that need to be generated
--- @param charset The length of the charset
-local function calculate_hint_length(size, charset)
-    local digits = 1
-    while true do
-        local max = charset ^ digits
-        if max >= size then
-            break
-        else
-            digits = digits + 1
-        end
-    end
-    return digits
+-- charset of a certain length (I.e. the base)
+local function max_hint_len(size, base)
+    local floor, len = math.floor, 0
+    while size > 0 do size, len = floor(size / base), len + 1 end
+    return len
 end
 
---- Style that uses numbers for the hint labels and matches other text against the pages elements.
-function matching()
-    return {
-        make_labels = function (size)
-            -- calculate the number of digits to use
-            local digits = calculate_hint_length(size, 10)
-            -- calculate the first hint's number
-            local start = 10 ^ (digits - 1)
-            if start == 1 then start = 0 end
-            -- assemble all labels
-            local labels = {}
-            for i = start, size+start-1, 1 do
-                table.insert(labels, tostring(i))
-            end
-            return labels
-        end,
-
-        parse_input = function (text)
-            return string.match(text, "^(.-)(%d*)$")
-        end,
-    }
-end
-
---- Style that uses characters from a charset for the hint labels.
---
--- @param charset The characters to use for the labels.
 function charset(charset)
+    local floor, sub = math.floor, string.sub
+    local insert, concat = table.insert, table.concat
     return {
         make_labels = function (size)
-            -- calculate the number of digits to use
-            local digits = calculate_hint_length(size, #charset)
-            -- use this to track what label to generate next
-            local state = {}
-            for i = 1, digits, 1 do
-                table.insert(state, 1)
+            local base = #charset
+            local digits = max_hint_len(size, base)
+            local labels, blanks = {}, {}
+            for n = 1, digits do
+                insert(blanks, sub(charset, 1, 1))
             end
-            -- make all labels
-            local labels = {}
-            for i = 1, size, 1 do
-                -- assemble each label according to state
-                local label = ""
-                for i = 1, digits, 1 do
-                    label = string.sub(charset, state[i], state[i]) .. label
-                end
-                table.insert(labels, label)
-                -- increase the state
-                local inc
-                inc = function (digit)
-                    local s = state[digit]
-                    if not s then return end
-                    s = s + 1
-                    if s > #charset then
-                        s = 1
-                        inc(digit + 1)
-                    end
-                    state[digit] = s
-                end
-                inc(1)
+            for n = 1, size do
+                local t, d = {}
+                repeat
+                    d, n = (n % base) + 1, floor(n / base)
+                    insert(t, 1, sub(charset, d, d))
+                until n == 0
+                insert(labels, concat(blanks, "", #t + 1) .. concat(t, ""))
             end
             return labels
         end,
@@ -122,10 +47,17 @@ function charset(charset)
     }
 end
 
+--- Style that uses numbers for the hint labels and matches other text against
+-- the pages elements.
+function numbers_and_labels()
+    local style = charset("0123456789")
+    style.parse_input = function (text)
+        return string.match(text, "^(.-)(%d*)$")
+    end
+    return style
+end
+
 --- Decorator for a style that reverses each label.
--- This sometimes equates to less key presses.
---
--- @param style The style to decorate.
 function reverse(style)
     local maker = style.make_labels
     style.make_labels = function (size)
@@ -139,9 +71,6 @@ function reverse(style)
 end
 
 --- Decorator for a style that sorts the labels.
--- Not sorting can help reading labels on high link density sites when using follow.styles.matching.
---
--- @param style The style to decorate.
 function sort(style)
     local maker = style.make_labels
     style.make_labels = function (size)
