@@ -50,6 +50,12 @@ local return_selected = [=[
             }
             container = container.parentNode;
         }
+        // Check for javascript in text
+        var text = range.toString()
+        alert(text);
+        if (text && text.match(/^\s*javascript:/)) {
+            return text;
+        }
     }
     // Check for active links
     var element = document.activeElement;
@@ -83,7 +89,7 @@ function save(token, js)
     local fd_name = dir .. '/' .. token .. '.js'
 
     -- Save javascript URIs as normal javascript files
-    local js_encoded = string.match(js, "^javascript:(.*)$")
+    local js_encoded = string.match(js, "^%s*javascript:(.*)$")
     if js_encoded then
         js = capi.luakit.uri_decode(js_encoded)
     end
