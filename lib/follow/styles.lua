@@ -168,4 +168,3 @@ function remove_leading(char, style)
     end
     return style
 end
-

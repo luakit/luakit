@@ -8,6 +8,8 @@ local ipairs, pairs = ipairs, pairs
 local table, string = table, string
 local tonumber, tostring = tonumber, tostring
 local type, unpack = type, unpack
+local print = print
+local assert = assert
 
 local lousy = require "lousy"
 local window = window
@@ -17,6 +19,9 @@ local styles = require "follow.styles"
 local add_binds, new_mode = add_binds, new_mode
 local theme = theme
 local capi = { luakit = luakit, timer = timer }
+
+require "follow.modes"
+require "follow.binds"
 
 --- Provides link following.
 module("follow")
@@ -42,83 +47,6 @@ module("follow")
 -- @name follow
 ignore_delay = 250
 style = styles.remove_leading("0", styles.sort(styles.reverse(styles.matching())))
-
---- Selectors for the different modes.
--- body selects frames (this is special magic to avoid cross-domain problems)
-selectors = {
-    followable  = 'a, area, textarea, select, input:not([type=hidden]), button',
-    focusable   = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
-    uri         = 'a, area, body',
-    desc        = '*[title], img[alt], applet[alt], area[alt], input[alt]',
-    image       = 'img, input[type=image]',
-}
-
---- Evaluators for the different modes
-evaluators = {
-    -- Click the element & return form/root active signals
-    follow = [=[
-        function (element) {
-            var tag = element.tagName.toLowerCase();
-            if (tag === "input" || tag === "textarea" ) {
-                var type = element.type.toLowerCase();
-                if (type === "radio" || type === "checkbox") {
-                    element.checked = !element.checked;
-                } else if (type === "submit" || type === "reset" || type  === "button") {
-                    follow.click(element);
-                } else {
-                    element.focus();
-                }
-            } else {
-                follow.click(element);
-            }
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
-        }]=],
-    -- Return the uri.
-    uri = [=[
-        function (element) {
-            return element.src || element.href || element.location;
-        }]=],
-    -- Return image location.
-    src = [=[
-        function (element) {
-            return element.src;
-        }]=],
-    -- Return title or alt tag text.
-    desc = [=[
-        function (element) {
-            return element.title || element.alt || "";
-        }]=],
-    -- Focus the element.
-    focus = [=[
-        function (element) {
-            element.focus();
-            if (follow.isEditable(element)) {
-                return "form-active";
-            } else {
-                return "root-active";
-            }
-        }]=],
-}
-
---- Table of modes and their selectors & evaulator functions.
-local modes = {}
-
--- Build mode table
-for _, t in ipairs({
-  -- Follow mode,  Selector name,  Evaluator name
-    {"follow",     "followable",   "follow"      },
-    {"uri",        "uri",          "uri"         },
-    {"desc",       "desc",         "desc"        },
-    {"focus",      "focusable",    "focus"       },
-    {"image",      "image",        "src"         },
-}) do
-    local mode, selector, evaluator = unpack(t)
-    modes[mode] = { selector = selector, evaluator = evaluator }
-end
 
 -- Clears all follow stuff from the page.
 local clear_js = [=[
@@ -539,136 +467,13 @@ end
 
 -- Add webview methods
 webview.methods.start_follow = function (view, w, mode, prompt, func, count)
+    if type(mode) == "string" then
+        mode = assert(modes[mode], "invalid mode name: " .. mode)
+    end
+    assert(type(mode) == "table", "invalid mode table")
     w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
     w:set_mode("follow")
 end
-
--- Add link following binds
-local buf = lousy.bind.buf
-add_binds("normal", {
-
-    -- Follow link
-    buf("^f$", function (w,b,m)
-        w:start_follow("follow", nil, function (sig) return sig end)
-    end),
-
-    -- Focus element
-    buf("^;;$", function (w,b,m)
-        w:start_follow("focus", "focus", function (sig) return sig end)
-    end),
-
-    -- Open new tab (optionally [count] times)
-    buf("^F$", function (w,b,m)
-        local name
-        if (m.count or 0) > 1 then name = "open "..m.count.." tabs(s)" end
-        w:start_follow("uri", name or "open tab", function (uri, s)
-            for i=1,(s.count or 1) do w:new_tab(uri, false) end
-            return "root-active"
-        end, m.count)
-    end),
-
-    -- Yank element uri or description into primary selection
-    buf("^;y$", function (w,b,m)
-        w:start_follow("uri", "yank", function (uri)
-            uri = string.gsub(uri, " ", "%%20")
-            capi.luakit.set_selection(uri)
-            w:notify("Yanked uri: " .. uri)
-        end)
-    end),
-
-    -- Yank element description
-    buf("^;Y$", function (w,b,m)
-        w:start_follow("desc", "yank desc", function (desc)
-            capi.luakit.set_selection(desc)
-            w:notify("Yanked desc: " .. desc)
-        end)
-    end),
-
-    -- Follow a sequence of <CR> delimited hints in background tabs.
-    buf("^;F$", function (w,b,m)
-        w:start_follow("uri", "multi tab", function (uri, s)
-            w:new_tab(uri, false)
-            w:set_mode("follow")
-        end)
-    end),
-
-    -- Download uri
-    buf("^;s$", function (w,b,m)
-        w:start_follow("uri", "download", function (uri)
-            downloads.add(uri)
-            return "root-active"
-        end)
-    end),
-
-    -- Open image src
-    buf("^;i$", function (w,b,m)
-        w:start_follow("image", "open image", function (src)
-            w:navigate(src)
-            return "root-active"
-        end)
-    end),
-
-    -- Open image src in new tab
-    buf("^;I$", function (w,b,m)
-        w:start_follow("image", "tab image", function (src)
-            w:new_tab(src)
-            return "root-active"
-        end)
-    end),
-
-    -- Open link
-    buf("^;o$", function (w,b,m)
-        w:start_follow("uri", "open", function (uri)
-            w:navigate(uri)
-            return "root-active"
-        end)
-    end),
-
-    -- Open link in new tab
-    buf("^;t$", function (w,b,m)
-        w:start_follow("uri", "open tab", function (uri)
-            w:new_tab(uri)
-            return "root-active"
-        end)
-    end),
-
-    -- Open link in background tab
-    buf("^;b$", function (w,b,m)
-        w:start_follow("uri", "open bg tab", function (uri)
-            w:new_tab(uri, false)
-            return "root-active"
-        end)
-    end),
-
-    -- Open link in new window
-    buf("^;w$", function (w,b,m)
-        w:start_follow("uri", "open window", function (uri)
-            window.new{uri}
-            return "root-active"
-        end)
-    end),
-
-    -- Set command `:open <uri>`
-    buf("^;O$", function (w,b,m)
-        w:start_follow("uri", ":open", function (uri)
-            w:enter_cmd(":open "   ..uri)
-        end)
-    end),
-
-    -- Set command `:tabopen <uri>`
-    buf("^;T$", function (w,b,m)
-        w:start_follow("uri", ":tabopen", function (uri)
-            w:enter_cmd(":tabopen "..uri)
-        end)
-    end),
-
-    -- Set command `:winopen <uri>`
-    buf("^;W$", function (w,b,m)
-        w:start_follow("uri",    ":winopen",   function (uri)
-            w:enter_cmd(":winopen "..uri)
-        end)
-    end),
-})
 
 -- Check if following is possible safely
 local function is_ready(w)
@@ -796,9 +601,10 @@ new_mode("follow", {
         -- Get following state & options
         if not w.follow_state then w.follow_state = {} end
         local state = w.follow_state
-        local mode = modes[state.mode or "follow"]
-        -- Get follow mode table
-        if not mode then w:set_mode() return error("unknown follow mode") end
+        if not state.mode or type(state.mode) ~= "table" then
+            w:set_mode()
+            w:error("invalid follow mode table")
+        end
 
         -- Init all frames and gather label data
         local frames = {}
@@ -822,16 +628,15 @@ new_mode("follow", {
             end
 
             -- Load mode specific js
-            local evaluator = lousy.util.string.strip(evaluators[mode.evaluator])
-            local selector  = selectors[mode.selector],
-            table.insert(js_blocks, string.format("follow.evaluator = (%s);", evaluator))
+            table.insert(js_blocks, string.format("follow.evaluator = (%s);", state.mode.evaluator))
             table.insert(js_blocks, "follow.init();")
 
             -- Evaluate js code
             local js = table.concat(js_blocks, "\n")
             w:eval_js(js, "(follow.lua)", f)
 
-            local num = tonumber(w:eval_js(string.format("follow.match(%q, %s);", selector, tostring(#webkit_frames == 1)), "(follow.lua)", f))
+            local match_js = string.format("follow.match(%q, %s);", state.mode.selector, tostring(#webkit_frames == 1))
+            local num = tonumber(w:eval_js(match_js, "(follow.lua)", f))
             table.insert(frames, {num = num, frame = f})
             sum = sum + num
         end
