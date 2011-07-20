@@ -35,9 +35,9 @@ window.methods.send = function (w, keystring)
         w:error("bad keystring: " .. keystring)
         return
     end
-    for _, k in ipairs(keys) do
+    for _, key in ipairs(keys) do
         if not w.win:send_key(key) then
-            w:error("failed to send key: " .. k)
+            w:error("failed to send key: " .. key)
             return
         end
     end
