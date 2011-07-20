@@ -32,6 +32,21 @@ window.methods.send = function (w, keystring)
             modifiers = {}
         elseif symbol and char == "-" then
             if string.match(symbol, "S(hift)?|C(ontrol)?|L(ock)?|M(od)?[12345]") then
+                for short, long in pairs({
+                    S = "Shift",
+                    C = "Control",
+                    L = "Lock",
+                    M1 = "Mod1",
+                    M2 = "Mod2",
+                    M3 = "Mod3",
+                    M4 = "Mod4",
+                    M5 = "Mod5",
+                }) do
+                    if symbol == short then
+                        symbol = long
+                        break
+                    end
+                end
                 table.insert(modifiers, symbol)
                 symbol = ""
             else
