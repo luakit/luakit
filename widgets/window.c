@@ -19,6 +19,7 @@
  */
 
 #include <gdk/gdkx.h>
+#include <gdk/gdkkeysyms.h>
 #include "luah.h"
 #include "widgets/common.h"
 #include "clib/soup/auth.h"
@@ -111,6 +112,11 @@ luaH_window_send_key(lua_State *L)
     widget_t *w = luaH_checkwidget(L, 1);
     const gchar *key = luaL_checkstring(L, 2);
     guint keyval = gdk_keyval_from_name(key);
+
+    if (!keyval || keyval == GDK_KEY_VoidSymbol) {
+        warn("cannot simulate key `%s'", key);
+        return 0;
+    }
 
     GdkKeymapKey* keys;
     gint n_keys;
