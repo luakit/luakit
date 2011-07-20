@@ -14,6 +14,7 @@ return {
     uri    = require("lousy.uri"),
     load   = require("lousy.load"),
     pickle = require("lousy.pickle"),
+    keysym = require("lousy.keysym"),
 }
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
