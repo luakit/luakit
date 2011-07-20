@@ -88,6 +88,34 @@ luaH_window_send_key(lua_State *L)
         return 1;
     }
 
+    guint state = 0x0000;
+    luaH_checktable(L, 3);
+    /* push the first key before iterating */
+    lua_pushnil(L);
+    /* iterate over the modifiers */
+    while(lua_next(L, 3)) {
+        const gchar *mod = luaL_checkstring(L, -1);
+
+#define MODKEY(modstr, modconst) \
+        if (strcmp(modstr, mod) == 0) { \
+            state = state | GDK_##modconst##_MASK; \
+        }
+
+        MODKEY("S", SHIFT);
+        MODKEY("C", CONTROL);
+        MODKEY("L", LOCK);
+        MODKEY("M1", MOD1);
+        MODKEY("M2", MOD2);
+        MODKEY("M3", MOD3);
+        MODKEY("M4", MOD4);
+        MODKEY("M5", MOD5);
+
+#undef MODKEY
+
+        /* pop value */
+        lua_pop(L, 1);
+    }
+
     GdkKeymapKey* keys;
     gint n_keys;
     gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
@@ -96,7 +124,7 @@ luaH_window_send_key(lua_State *L)
     event_key->window = gtk_widget_get_window(w->widget);
     event_key->send_event = TRUE;
     event_key->time = GDK_CURRENT_TIME;
-    event_key->state = GDK_KEY_PRESS_MASK;
+    event_key->state = state;
     event_key->keyval = keyval;
     event_key->hardware_keycode = keys[0].keycode;
     event_key->group = keys[0].group;
