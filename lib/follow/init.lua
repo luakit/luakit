@@ -480,10 +480,8 @@ end
 
 -- Add webview methods
 webview.methods.start_follow = function (view, w, mode, prompt, func, count)
-    if type(mode) == "string" then
-        mode = assert(modes[mode], "invalid mode name: " .. mode)
-    end
     assert(type(mode) == "table", "invalid mode table")
+    assert(type(func) == "function", "invalid callback function")
     w.follow_state = { mode = mode, prompt = prompt, func = func, count = count }
     w:set_mode("follow")
 end
@@ -689,12 +687,12 @@ new_mode("follow", {
         local filter, id = style.parse_input(text)
         local active_hints = 0
         local eval_frame
+        local split = lousy.util.string.split
+        local filter_js = string.format("follow.filter(%q, %q);", filter, id)
         for _, f in ipairs(w:get_current().frames) do
-            local ret = w:eval_js(string.format("follow.filter(%q, %q);", filter, id), "(follow.lua)", f)
-            ret = lousy.util.string.split(ret)
+            local ret = split(w:eval_js(filter_js, "(follow.lua)", f))
+            if ret[2] == "true" then focus(w, 1) end -- Reselect active hint
             local num = tonumber(ret[1])
-            local reselect = (ret[2] == "true")
-            if reselect then focus(w, 1) end
             if num == 1 then eval_frame = f end
             active_hints = active_hints + num
         end
