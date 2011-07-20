@@ -462,9 +462,20 @@ local default_theme = {
     horiz_offset  = -10;
 }
 
--- Merge `theme.follow` table with `follow.default_theme`
-local function get_theme()
-    return lousy.util.table.join(default_theme, theme.follow or {})
+function mk_theme_js()
+    -- Merge `theme.follow` table with `follow.default_theme`
+    local theme = lousy.util.table.join(default_theme, theme.follow or {})
+    local lines, ntos = {}, lousy.util.ntos
+    for k, v in pairs(theme) do
+        if type(v) == "number" then
+            table.insert(lines,
+                string.format("follow.theme.%s = %s;", k, ntos(v)))
+        else
+            table.insert(lines,
+                string.format("follow.theme.%s = %q;", k, v))
+        end
+    end
+    return table.concat(lines, "\n")
 end
 
 -- Add webview methods
