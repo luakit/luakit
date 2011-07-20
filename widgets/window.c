@@ -84,8 +84,8 @@ luaH_window_send_key(lua_State *L)
     }
 
     if (!keyval || keyval == GDK_KEY_VoidSymbol) {
-        warn("cannot simulate key `%s'", key);
-        return 0;
+        lua_pushboolean(L, FALSE);
+        return 1;
     }
 
     GdkKeymapKey* keys;
@@ -103,7 +103,8 @@ luaH_window_send_key(lua_State *L)
 
     gdk_event_put(event);
 
-    return 0;
+    lua_pushboolean(L, TRUE);
+    return 1;
 }
 
 static gint
