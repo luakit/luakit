@@ -443,6 +443,9 @@ window.follow = (function () {
 })();
 ]=]
 
+-- Insert clear_js function into main following JavaScript
+follow_js = string.gsub(follow_js, "{clear}", clear_js)
+
 local default_theme = {
     focus_bg      = "#00ff00";
     normal_bg     = "#ffff99";
