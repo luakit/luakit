@@ -71,6 +71,31 @@ luaH_window_set_default_size(lua_State *L)
 }
 
 static gint
+luaH_window_send_key(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    const gchar *key = luaL_checkstring(L, 2);
+    guint keyval = gdk_keyval_from_name(key);
+
+    GdkKeymapKey* keys;
+    gint n_keys;
+    gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
+    GdkEvent *event = gdk_event_new(GDK_KEY_PRESS);
+    GdkEventKey *event_key = (GdkEventKey *) event;
+    event_key->window = gtk_widget_get_window(w->widget);
+    event_key->send_event = TRUE;
+    event_key->time = GDK_CURRENT_TIME;
+    event_key->state = GDK_KEY_PRESS_MASK;
+    event_key->keyval = keyval;
+    event_key->hardware_keycode = keys[0].keycode;
+    event_key->group = keys[0].group;
+
+    gdk_event_put(event);
+
+    return 0;
+}
+
+static gint
 luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     window_data_t *d = w->data;
@@ -82,6 +107,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
+      PF_CASE(SEND_KEY,         luaH_window_send_key)
 
       /* push string properties */
       PS_CASE(TITLE, gtk_window_get_title(d->win))
