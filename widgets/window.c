@@ -106,6 +106,31 @@ luaH_window_unmaximize(lua_State *L)
 }
 
 static gint
+luaH_window_send_key(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    const gchar *key = luaL_checkstring(L, 2);
+    guint keyval = gdk_keyval_from_name(key);
+
+    GdkKeymapKey* keys;
+    gint n_keys;
+    gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
+    GdkEvent *event = gdk_event_new(GDK_KEY_PRESS);
+    GdkEventKey *event_key = (GdkEventKey *) event;
+    event_key->window = gtk_widget_get_window(w->widget);
+    event_key->send_event = TRUE;
+    event_key->time = GDK_CURRENT_TIME;
+    event_key->state = GDK_KEY_PRESS_MASK;
+    event_key->keyval = keyval;
+    event_key->hardware_keycode = keys[0].keycode;
+    event_key->group = keys[0].group;
+
+    gdk_event_put(event);
+
+    return 0;
+}
+
+static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -128,6 +153,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       PF_CASE(UNFULLSCREEN,     luaH_window_unfullscreen)
       PF_CASE(MAXIMIZE,         luaH_window_maximize)
       PF_CASE(UNMAXIMIZE,       luaH_window_unmaximize)
+      PF_CASE(SEND_KEY,         luaH_window_send_key)
 
       /* push string methods */
       PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))
