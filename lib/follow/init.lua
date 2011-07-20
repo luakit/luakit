@@ -621,65 +621,55 @@ new_mode("follow", {
 
         -- Init all frames and gather label data
         local frames = {}
+        local theme_js = mk_theme_js()
+
         local sum = 0
         local webkit_frames = w:get_current().frames
+        local ignore_frames = tostring(#webkit_frames == 1)
+        local m = state.mode
+
+        local init_js = table.concat({
+            follow_js, theme_js,
+            string.format("follow.evaluator = (%s);", m.evaluator),
+            "follow.init();",
+        }, "\n")
+
+        local match_js = string.format("follow.match(%q, %s);",
+            m.selector, ignore_frames)
+
         for _, f in ipairs(webkit_frames) do
-            -- Load main following js
-            local js_blocks = {}
-            local subs = { clear = clear_js }
-            local js, count = string.gsub(follow_js, "{(%w+)}", subs)
-            if count ~= 1 then return error("invalid number of substitutions") end
-            table.insert(js_blocks, js);
-
-            -- Make theme js
-            for k, v in pairs(get_theme()) do
-                if type(v) == "number" then
-                    table.insert(js_blocks, string.format("follow.theme.%s = %s;", k, lousy.util.ntos(v)))
-                else
-                    table.insert(js_blocks, string.format("follow.theme.%s = %q;", k, v))
-                end
-            end
-
-            -- Load mode specific js
-            table.insert(js_blocks, string.format("follow.evaluator = (%s);", state.mode.evaluator))
-            table.insert(js_blocks, "follow.init();")
-
-            -- Evaluate js code
-            local js = table.concat(js_blocks, "\n")
-            w:eval_js(js, "(follow.lua)", f)
-
-            local match_js = string.format("follow.match(%q, %s);", state.mode.selector, tostring(#webkit_frames == 1))
+            -- Init follow js in frame
+            w:eval_js(init_js, "(follow.lua)", f)
+            -- Get number of matches in the frame
             local num = tonumber(w:eval_js(match_js, "(follow.lua)", f))
             table.insert(frames, {num = num, frame = f})
             sum = sum + num
         end
+
         -- abort if initialization failed
         if not is_ready(w) then return w:set_mode() end
 
         -- Generate labels
         state.frames = frames
         local labels = style.make_labels(sum)
-        state.labels = lousy.util.table.clone(labels)
         state.current = 1
         for i, l in ipairs(labels) do labels[i] = string.format("%q", l) end
 
         -- Apply labels
         local last = 0
         for _,t in ipairs(frames) do
-            t.labels = {}
-            for i=1,t.num,1 do
-                t.labels[i] = labels[last+i]
-            end
+            t.labels = table.concat(labels, ",", last + 1, last + t.num)
             last = last + t.num
-            local array = table.concat(t.labels, ",")
-            w:eval_js(string.format("follow.show([%s]);", array), "(follow.lua)", t.frame)
+            local show_js = string.format("follow.show([%s]);", t.labels)
+            w:eval_js(show_js, "(follow.lua)", t.frame)
         end
 
         -- Foucs a hint
         focus(w, 1)
 
         -- Set prompt & input text
-        w:set_prompt(state.prompt and string.format("Follow (%s):", state.prompt) or "Follow:")
+        local p = state.prompt
+        w:set_prompt((p and string.format("Follow (%s):", p)) or "Follow:")
         w:set_input("")
     end,
 
