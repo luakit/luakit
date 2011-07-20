@@ -76,7 +76,12 @@ luaH_window_send_key(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     const gchar *key = luaL_checkstring(L, 2);
+
     guint keyval = gdk_keyval_from_name(key);
+    if ((!keyval || keyval == GDK_KEY_VoidSymbol) && strlen(key) == 1) {
+        /* try unicode character conversion */
+        keyval = gdk_unicode_to_keyval(key[0]);
+    }
 
     if (!keyval || keyval == GDK_KEY_VoidSymbol) {
         warn("cannot simulate key `%s'", key);
