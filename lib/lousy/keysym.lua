@@ -36,7 +36,7 @@ window.methods.send = function (w, keystring)
         return
     end
     for _, k in ipairs(keys) do
-        if not w:send_key(key) then
+        if not w.win:send_key(key) then
             w:error("failed to send key: " .. k)
             return
         end
