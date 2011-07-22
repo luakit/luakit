@@ -277,7 +277,7 @@ add_cmds({
     -- Saves the content of the open view as an userscript
     cmd({"userscriptinstall", "usi", "usinstall"}, function (w, a)
         local view = w:get_current()
-        local file = string.match(view.uri, "/(%w+%.user%.js)$")
+        local file = string.match(view.uri, "/([^/]+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
 
         local js = util.unescape(view:eval_js("document.body.getElementsByTagName('pre')[0].innerHTML", "(userscripts:install)"))
