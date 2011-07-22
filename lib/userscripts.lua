@@ -279,11 +279,12 @@ add_cmds({
         local view = w:get_current()
         local file = string.match(view.uri, "/([^/]+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
-
+        if view:loading() then w:error("Wait for script to finish loading first.") end
         local js = util.unescape(view:eval_js("document.body.getElementsByTagName('pre')[0].innerHTML", "(userscripts:install)"))
         local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
         if not header then return w:error("Could not find userscript header") end
         save(file, js)
+        w:notify("Installed userscript to: " .. dir .. "/" .. file)
     end),
 
     cmd({"userscripts", "uscripts"}, function (w) w:set_mode("uscriptlist") end),
