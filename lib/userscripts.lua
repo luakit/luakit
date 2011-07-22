@@ -210,6 +210,7 @@ local function load_js(file)
     if header then
         local script = parse_header(header, file)
         script.js = js
+        script.file = file
         scripts[file] = setmetatable(script, { __index = prototype })
     else
         warn("(userscripts.lua): Invalid userscript header in file: %s", file)
@@ -243,7 +244,6 @@ function save(file, js)
     if not os.exists(dir) then
         util.mkdir(dir)
     end
-
     local f = io.open(dir .. "/" .. file, "w")
     f:write(js)
     f:close()
@@ -296,10 +296,10 @@ new_mode("uscriptlist", {
         for file, script in pairs(scripts) do
             local active = script:match(w:get_current().uri) and "*" or " "
             local title = (script.name or file) .. " " .. (script.version or "")
-            table.insert(rows, { " " .. active .. title, " " .. script.description, file = file })
+            table.insert(rows, { " " .. active .. title, " " .. script.description, script = script })
         end
         w.menu:build(rows)
-        w:notify("Use j/k to move, d delete, o to visit website, t tabopen, w winopen. '*' signalizes active scripts.", false)
+        w:notify("Use j/k to move, d delete, o visit website, t tabopen, w winopen. '*' indicates active scripts.", false)
     end,
 
     leave = function (w)
@@ -312,8 +312,8 @@ add_binds("uscriptlist", util.table.join({
     -- Delete userscript
     key({}, "d", function (w)
         local row = w.menu:get()
-        if row and row.file then
-            del(row.file)
+        if row and row.script then
+            del(row.script.file)
             w.menu:del()
         end
     end),
@@ -321,33 +321,24 @@ add_binds("uscriptlist", util.table.join({
     -- Open userscript homepage
     key({}, "o", function (w)
         local row = w.menu:get()
-        if row and row.file then
-            local homepage = scripts[row.file] and scripts[row.file].homepage
-            if homepage then
-                w:navigate(homepage)
-            end
+        if row and row.script and row.script.homepage then
+            w:navigate(row.script.homepage)
         end
     end),
 
     -- Open userscript homepage in new tab
     key({}, "t", function (w)
         local row = w.menu:get()
-        if row and row.file then
-            local homepage = scripts[row.file] and scripts[row.file].homepage
-            if homepage then
-                w:new_tab(homepage, false)
-            end
+        if row and row.script and row.script.homepage then
+            w:new_tab(row.script.homepage, false)
         end
     end),
 
     -- Open userscript homepage in new window
     key({}, "w", function (w)
         local row = w.menu:get()
-        if row and row.file then
-            local homepage = scripts[row.file] and scripts[row.file].homepage
-            if homepage then
-                window.new(homepage)
-            end
+        if row and row.script and row.script.homepage then
+            window.new(row.script.homepage)
         end
     end),
 
