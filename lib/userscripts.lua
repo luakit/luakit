@@ -298,6 +298,11 @@ new_mode("uscriptlist", {
             local title = (script.name or file) .. " " .. (script.version or "")
             table.insert(rows, { " " .. active .. title, " " .. script.description, script = script })
         end
+        if #rows == 1 then
+            w:notify(string.format("No userscripts installed. Use `:usinstall`"
+                .. "or place .user.js files in %q manually.", dir))
+            return
+        end
         w.menu:build(rows)
         w:notify("Use j/k to move, d delete, o visit website, t tabopen, w winopen. '*' indicates active scripts.", false)
     end,
