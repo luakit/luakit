@@ -275,7 +275,7 @@ end
 local cmd = bind.cmd
 add_cmds({
     -- Saves the content of the open view as an userscript
-    cmd({"userscriptinstall", "usi[nstall]"}, function (w, a)
+    cmd({"userscriptinstall", "usi", "usinstall"}, function (w, a)
         local view = w:get_current()
         local file = string.match(view.uri, "/(%w+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
