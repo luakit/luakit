@@ -39,7 +39,7 @@ sigchld(int signum) {
 }
 
 void
-init_lua(gchar **uris)
+init_lua(gchar **uris, gboolean unique)
 {
     gchar *uri;
     lua_State *L;
@@ -48,7 +48,7 @@ init_lua(gchar **uris)
     globalconf.windows = g_ptr_array_new();
 
     /* init lua */
-    luaH_init();
+    luaH_init(unique);
     L = globalconf.L;
 
     /* push a table of the statup uris */
@@ -74,7 +74,7 @@ init_directories(void)
 
 /* load command line options into luakit and return uris to load */
 gchar**
-parseopts(int argc, gchar *argv[], gboolean **nonblock) {
+parseopts(int argc, gchar *argv[], gboolean **nonblock, gboolean **nonunique) {
     GOptionContext *context;
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
@@ -85,13 +85,14 @@ parseopts(int argc, gchar *argv[], gboolean **nonblock) {
 
     /* define command line options */
     const GOptionEntry entries[] = {
-      { "uri",     'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                 "uri(s) to load at startup", "URI"  },
-      { "config",  'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath,  "configuration file to use", "FILE" },
-      { "verbose", 'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,   "print debugging output",    NULL   },
-      { "version", 'V', 0, G_OPTION_ARG_NONE,         &version_only,         "print version and exit",    NULL   },
-      { "check",   'k', 0, G_OPTION_ARG_NONE,         &check_only,           "check config and exit",     NULL   },
-      { "nonblock",'n', 0, G_OPTION_ARG_NONE,         nonblock,              "run in background",         NULL   },
-      { NULL,      0,   0, 0,                         NULL,                  NULL,                        NULL   },
+      { "uri",       'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                 "uri(s) to load at startup", "URI"  },
+      { "config",    'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath,  "configuration file to use", "FILE" },
+      { "verbose",   'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,   "print debugging output",    NULL   },
+      { "version",   'V', 0, G_OPTION_ARG_NONE,         &version_only,         "print version and exit",    NULL   },
+      { "check",     'k', 0, G_OPTION_ARG_NONE,         &check_only,           "check config and exit",     NULL   },
+      { "nonblock",  'n', 0, G_OPTION_ARG_NONE,         nonblock,              "run in background",         NULL   },
+      { "nonunique", 'U', 0, G_OPTION_ARG_NONE,         nonunique,             "ignore libunique",          NULL   },
+      { NULL,         0,  0, 0,                         NULL,                  NULL,                        NULL   },
     };
 
     /* parse command line options */
@@ -112,7 +113,7 @@ parseopts(int argc, gchar *argv[], gboolean **nonblock) {
     /* check config syntax and exit */
     if (check_only) {
         init_directories();
-        init_lua(NULL);
+        init_lua(NULL, FALSE);
         if (!luaH_parserc(globalconf.confpath, FALSE)) {
             g_fprintf(stderr, "Confiuration file syntax error.\n");
             exit(EXIT_FAILURE);
@@ -134,6 +135,7 @@ parseopts(int argc, gchar *argv[], gboolean **nonblock) {
 gint
 main(gint argc, gchar *argv[]) {
     gboolean *nonblock = NULL;
+    gboolean *nonunique = NULL;
     gchar **uris = NULL;
     pid_t pid, sid;
 
@@ -152,7 +154,7 @@ main(gint argc, gchar *argv[]) {
     setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */
-    uris = parseopts(argc, argv, &nonblock);
+    uris = parseopts(argc, argv, &nonblock, &nonunique);
 
     /* if non block mode - respawn, detach and continue in child */
     if (nonblock) {
@@ -173,7 +175,7 @@ main(gint argc, gchar *argv[]) {
         g_thread_init(NULL);
 
     init_directories();
-    init_lua(uris);
+    init_lua(uris, !nonunique);
 
     /* parse and run configuration file */
     if(!luaH_parserc(globalconf.confpath, TRUE))

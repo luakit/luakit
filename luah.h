@@ -145,7 +145,7 @@ luaH_warn(lua_State *L, const gchar *fmt, ...) {
     fprintf(stderr, "\n");
 }
 
-void luaH_init();
+void luaH_init(gboolean);
 gboolean luaH_parserc(const gchar *, gboolean);
 gboolean luaH_hasitem(lua_State *, gconstpointer);
 gint luaH_mtnext(lua_State *, gint);
