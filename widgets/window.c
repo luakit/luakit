@@ -19,6 +19,7 @@
  */
 
 #include <gdk/gdkx.h>
+#include <gdk/gdkkeysyms.h>
 #include "luah.h"
 #include "widgets/common.h"
 #include "clib/soup/auth.h"
@@ -106,6 +107,70 @@ luaH_window_unmaximize(lua_State *L)
 }
 
 static gint
+luaH_window_send_key(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    const gchar *key = luaL_checkstring(L, 2);
+
+    guint keyval = gdk_keyval_from_name(key);
+    if ((!keyval || keyval == GDK_KEY_VoidSymbol) && strlen(key) == 1) {
+        /* try unicode character conversion */
+        keyval = gdk_unicode_to_keyval(key[0]);
+    }
+
+    if (!keyval || keyval == GDK_KEY_VoidSymbol) {
+        lua_pushboolean(L, FALSE);
+        return 1;
+    }
+
+    guint state = 0x0000;
+    luaH_checktable(L, 3);
+    /* push the first key before iterating */
+    lua_pushnil(L);
+    /* iterate over the modifiers */
+    while(lua_next(L, 3)) {
+        const gchar *mod = luaL_checkstring(L, -1);
+
+#define MODKEY(modstr, modconst) \
+        if (strcmp(modstr, mod) == 0) { \
+            state = state | GDK_##modconst##_MASK; \
+        }
+
+        MODKEY("S", SHIFT);
+        MODKEY("C", CONTROL);
+        MODKEY("L", LOCK);
+        MODKEY("M1", MOD1);
+        MODKEY("M2", MOD2);
+        MODKEY("M3", MOD3);
+        MODKEY("M4", MOD4);
+        MODKEY("M5", MOD5);
+
+#undef MODKEY
+
+        /* pop value */
+        lua_pop(L, 1);
+    }
+
+    GdkKeymapKey* keys;
+    gint n_keys;
+    gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
+    GdkEvent *event = gdk_event_new(GDK_KEY_PRESS);
+    GdkEventKey *event_key = (GdkEventKey *) event;
+    event_key->window = gtk_widget_get_window(w->widget);
+    event_key->send_event = TRUE;
+    event_key->time = GDK_CURRENT_TIME;
+    event_key->state = state;
+    event_key->keyval = keyval;
+    event_key->hardware_keycode = keys[0].keycode;
+    event_key->group = keys[0].group;
+
+    gdk_event_put(event);
+
+    lua_pushboolean(L, TRUE);
+    return 1;
+}
+
+static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -128,6 +193,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       PF_CASE(UNFULLSCREEN,     luaH_window_unfullscreen)
       PF_CASE(MAXIMIZE,         luaH_window_maximize)
       PF_CASE(UNMAXIMIZE,       luaH_window_unmaximize)
+      PF_CASE(SEND_KEY,         luaH_window_send_key)
 
       /* push string methods */
       PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))

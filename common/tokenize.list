@@ -89,6 +89,7 @@ search
 secure
 selectable
 select_region
+send_key
 set_alignment
 set_child
 set_default_size
