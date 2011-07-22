@@ -179,12 +179,13 @@ end
 local function parse_header(header, file)
     local ret = { file = file, include = {}, exclude = {} }
     for i, line in ipairs(util.string.split(header, "\n")) do
-        -- Parse `// @key value` line in header.
+        local singles = { name = true, description = true,
+            version = true, homepage = true }
+        -- Parse `// @key value` lines in header.
         local key, val = string.match(line, "^// @([%w%-]+)%s+(.+)$")
         if key then
             val = util.string.strip(val or "")
-            -- Populate header table
-            if key == "name" or key == "description" or key == "version" or key == "homepage" then
+            if singles[key] then
                 -- Only grab the first of its kind
                 if not ret[key] then ret[key] = val end
             elseif key == "include" or key == "exclude" then
@@ -192,8 +193,6 @@ local function parse_header(header, file)
             elseif key == "run-at" and val == "document-start" then
                 ret.on_start = true
             end
-        else
-            warn("(userscripts.lua): Invalid line in header: %s:%d:%s", file, i, line)
         end
     end
     return ret
