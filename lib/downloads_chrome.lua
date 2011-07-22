@@ -56,6 +56,9 @@ html_template = [==[
     <style type="text/css">
     {style}
     </style>
+    <script>
+        setInterval(refresh, 1000);
+    </script>
 </head>
 <body>
 <div class="header">
@@ -177,23 +180,12 @@ local function html()
     return string.gsub(html_template, "{(%w+)}", html_subs)
 end
 
--- Refreshes all download views.
-local refresh_timer = capi.timer{interval=1000}
-refresh_timer:add_signal("timeout", function ()
-    local continue = false
-    -- refresh views
-    for _, w in pairs(window.bywidget) do
-        local view = w:get_current()
-        if string.match(view.uri, pattern) then
-            local inner_html, inner_js = inner_html()
-            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html), "downloads.lua")
-            view:eval_js(inner_js, "downloads.lua")
-            continue = true
-        end
-    end
-    -- stop timer if no view was refreshed
-    if not continue then refresh_timer:stop() end
-end)
+-- Refreshes the given view.
+local function refresh(view)
+    local inner_html, inner_js = inner_html()
+    view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html), "downloads.lua")
+    view:eval_js(inner_js, "downloads.lua")
+end
 
 -- Registers the download page with the chrome library.
 chrome.add("downloads/", function (view, uri)
@@ -204,6 +196,7 @@ chrome.add("downloads/", function (view, uri)
         view:remove_signal("load-status", sig.fun)
         if status ~= "committed" or not string.match(view.uri, pattern) then return end
         view:register_function("clear", downloads.clear)
+        view:register_function("refresh", function () refresh(view) end)
         for i = 1, #(downloads.downloads) do
             for k, v in pairs({
                 ["cancel_" ..i] = function() downloads.cancel(i)  end,
@@ -216,7 +209,10 @@ chrome.add("downloads/", function (view, uri)
         end
     end
     view:add_signal("load-status", sig.fun)
-    if not refresh_timer.started then refresh_timer:start() end
+end)
+
+chrome.add_signal("refresh", function (pat, view)
+    if string.match(pattern, pat) then refresh(view) end
 end)
 
 -- Chrome buffer binds.
