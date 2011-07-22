@@ -82,16 +82,18 @@ parseopts(int argc, gchar *argv[], gboolean **nonblock) {
 
     /* save luakit exec path */
     globalconf.execpath = g_strdup(argv[0]);
+    globalconf.nounique = FALSE;
 
     /* define command line options */
     const GOptionEntry entries[] = {
-      { "uri",     'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                 "uri(s) to load at startup", "URI"  },
-      { "config",  'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath,  "configuration file to use", "FILE" },
-      { "verbose", 'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,   "print debugging output",    NULL   },
-      { "version", 'V', 0, G_OPTION_ARG_NONE,         &version_only,         "print version and exit",    NULL   },
-      { "check",   'k', 0, G_OPTION_ARG_NONE,         &check_only,           "check config and exit",     NULL   },
-      { "nonblock",'n', 0, G_OPTION_ARG_NONE,         nonblock,              "run in background",         NULL   },
-      { NULL,      0,   0, 0,                         NULL,                  NULL,                        NULL   },
+      { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
+      { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
+      { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
+      { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
+      { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
+      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,  "print debugging output",    NULL   },
+      { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
+      { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
     };
 
     /* parse command line options */

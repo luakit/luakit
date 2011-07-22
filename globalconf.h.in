@@ -60,6 +60,8 @@ typedef struct {
     gchar *execpath;
     /** Print verbose output. */
     gboolean verbose;
+    /** Ignore loading libunqiue bindings (for a single instance session) */
+    gboolean nounique;
 
     /** Pointer array to all active window userdata objects. */
     GPtrArray *windows;

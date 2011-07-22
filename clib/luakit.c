@@ -529,6 +529,7 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(CONFPATH,         globalconf.confpath)
       /* push boolean properties */
       PB_CASE(VERBOSE,          globalconf.verbose)
+      PB_CASE(NOUNIQUE,         globalconf.nounique)
       /* push integer properties */
       PI_CASE(WEBKIT_MAJOR_VERSION, webkit_major_version())
       PI_CASE(WEBKIT_MINOR_VERSION, webkit_minor_version())
