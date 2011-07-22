@@ -685,6 +685,8 @@ window.methods = {
         -- Generate luakit launch command.
         local args = {({string.gsub(luakit.execpath, " ", "\\ ")})[1]}
         if luakit.verbose then table.insert(args, "-v") end
+        -- Relaunch without libunique bindings?
+        if luakit.nounique then table.insert(args, "-U") end
 
         -- Get new config path
         local conf
