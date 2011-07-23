@@ -674,6 +674,10 @@ window.methods = {
     navigate = function (w, uri, view)
         if not view then view = w:get_current() end
         if view then
+            local js = string.match(uri, "^javascript:(.+)$")
+            if js then
+                return view:eval_js(luakit.uri_decode(js), "(javascript-uri)")
+            end
             view.uri = uri
         else
             return w:new_tab(uri)
@@ -733,6 +737,9 @@ window.methods = {
 
             -- Navigate if . or / in uri (I.e. domains, IP's, scheme://)
             if find(uri, "%.") or find(uri, "/") then return uri end
+
+            -- Navigate if this is a javascript-uri
+            if find(uri, "^javascript:") then return uri end
 
             -- Valid hostnames to check
             local hosts = { "localhost" }
