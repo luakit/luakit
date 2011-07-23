@@ -137,4 +137,18 @@ add_binds("normal", {
             w:enter_cmd(":winopen "..uri)
         end)
     end),
+
+	-- Set command `:qmark <cursor> <uri>`
+	buf("^;M$", function (w,b,m)
+		w:start_follow(modes.uri, "quickmark", function (uri)
+			w:enter_cmd(":qmark  " .. uri, { pos = 7 })
+		end)
+	end),
+
+	-- Set command `:bookmark <uri> `
+	buf("^;B$", function (w,b,m)
+		w:start_follow(modes.uri, ":bookmark", function (uri)
+			w:enter_cmd(":bookmark " .. uri .. " ")
+		end)
+	end),
 })
