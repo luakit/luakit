@@ -98,6 +98,11 @@ require "downloads_chrome"
 -- (depends on downloads)
 require "follow"
 
+-- To use a custom character set for the follow hint labels un-comment and
+-- modify the following:
+--local s = follow.styles
+--follow.style = s.sort(s.reverse(s.charset("asdfqwerzxcv"))) -- I'm a lefty
+
 -- Add command history
 require "cmdhist"
 
@@ -116,7 +121,7 @@ require "completion"
 
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
--- Remove all "enable-scripts" & "enable-plugins" lines from your 
+-- Remove all "enable-scripts" & "enable-plugins" lines from your
 -- domain_props table (in config/globals.lua) as this module will conflict.
 --require "noscript"
 

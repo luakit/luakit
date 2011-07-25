@@ -370,8 +370,9 @@ luaH_init(void)
     soup_lib_setup(L);
 
 #if WITH_UNIQUE
-    /* Export unique lib */
-    unique_lib_setup(L);
+    if (!globalconf.nounique)
+        /* Export unique lib */
+        unique_lib_setup(L);
 #endif
 
     /* Export widget */
