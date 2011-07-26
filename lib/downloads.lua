@@ -93,18 +93,16 @@ status_timer:add_signal("timeout", function ()
     local running = 0
     for _, d in ipairs(downloads) do
         if is_running(d) then running = running + 1 end
-    end
-    for _, d in ipairs(downloads) do
-        -- Update download indicator widget
-        for _, w in pairs(window.bywidget) do
-            w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
-        end
         -- Get speed table
         if not speeds[d] then speeds[d] = {} end
         local s = speeds[d]
         -- Save download progress
         s.last_size = s.current_size or 0
         s.current_size = d.current_size
+    end
+    -- Update download indicator widget
+    for _, w in pairs(window.bywidget) do
+        w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
     end
     -- Stop after downloads finish
     if #downloads == 0 or running == 0 then
