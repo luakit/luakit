@@ -105,21 +105,29 @@ local formfiller_js = [=[
         forms: [],
         inputs: [],
         AttributeMatcher: function (tag, attrs, parents) {
-            parents = parents || [document];
+            var documents = formfiller.toA(window.frames).map(function (frame) {
+                return frame.document;
+            });
+            documents.push(document);
+            this.parents = parents || documents;
             var keys = []
             for (var k in attrs) {
                 keys.push(k);
             }
             this.getAll = function () {
                 var elements = [];
-                parents.forEach(function (p) {
-                    formfiller.toA(p.getElementsByTagName(tag)).filter(function (element) {
-                        return keys.every(function (key) {
-                            return new RegExp(attrs[key]).test(element[key]);
+                this.parents.forEach(function (p) {
+                    try {
+                        formfiller.toA(p.getElementsByTagName(tag)).filter(function (element) {
+                            return keys.every(function (key) {
+                                return new RegExp(attrs[key]).test(element[key]);
+                            });
+                        }).forEach(function (e) {
+                            elements.push(e);
                         });
-                    }).forEach(function (e) {
-                        elements.push(e);
-                    });
+                    } catch (e) {
+                        // ignore errors, is probably cross-domain stuff
+                    }
                 });
                 return elements;
             };
