@@ -89,7 +89,11 @@ local file = capi.luakit.data_dir .. "/formfiller.lua"
 local formfiller_js = [=[
     formfiller = {
         toA: function (arr) {
-            return Array.prototype.slice.call(arr);
+            var ret = [];
+            for (var i = 0; i < arr.length; ++i) {
+                ret.push(arr[i]);
+            }
+            return ret;
         },
         rexEscape: function (str) {
             return str.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
