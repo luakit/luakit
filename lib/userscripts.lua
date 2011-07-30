@@ -257,6 +257,19 @@ function del(file)
     scripts[file] = nil
 end
 
+-- Installs a userscript from the current view
+function install(w)
+    local view = w:get_current()
+    local file = string.match(view.uri, "/([^/]+%.user%.js)$")
+    if (not file) then return w:error("URL is not a *.user.js file") end
+    if view:loading() then w:error("Wait for script to finish loading first.") end
+    local js = util.unescape(view:eval_js("document.body.getElementsByTagName('pre')[0].innerHTML", "(userscripts:install)"))
+    local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
+    if not header then return w:error("Could not find userscript header") end
+    save(file, js)
+    w:notify("Installed userscript to: " .. dir .. "/" .. file)
+end
+
 --- Hook on the webview's load-status signal to invoke the userscripts.
 webview.init_funcs.userscripts = function (view, w)
     view:add_signal("load-status", function (v, status)
@@ -266,7 +279,11 @@ webview.init_funcs.userscripts = function (view, w)
         elseif status == "first-visual" then
             invoke(v, true)
         elseif status == "finished" then
-            invoke(v)
+            if string.match(view.uri, "\.user\.js$") then
+                install(w)
+            else
+                invoke(v)
+            end
         end
     end)
 end
@@ -275,17 +292,7 @@ end
 local cmd = bind.cmd
 add_cmds({
     -- Saves the content of the open view as an userscript
-    cmd({"userscriptinstall", "usi", "usinstall"}, function (w, a)
-        local view = w:get_current()
-        local file = string.match(view.uri, "/([^/]+%.user%.js)$")
-        if (not file) then return w:error("URL is not a *.user.js file") end
-        if view:loading() then w:error("Wait for script to finish loading first.") end
-        local js = util.unescape(view:eval_js("document.body.getElementsByTagName('pre')[0].innerHTML", "(userscripts:install)"))
-        local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
-        if not header then return w:error("Could not find userscript header") end
-        save(file, js)
-        w:notify("Installed userscript to: " .. dir .. "/" .. file)
-    end),
+    cmd({"userscriptinstall", "usi", "usinstall"}, install),
 
     cmd({"userscripts", "uscripts"}, function (w) w:set_mode("uscriptlist") end),
 })
