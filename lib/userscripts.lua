@@ -39,7 +39,6 @@ local gm_functions = [=[
         while (c.charAt(0) == ' ') c = c.substring(1, c.length);
         if (c.indexOf(nameEQ) == 0) {
           var value = unescape(c.substring(nameEQ.length, c.length));
-          //alert(name + ": " + value);
           return value;
         }
       }
@@ -280,7 +279,9 @@ webview.init_funcs.userscripts = function (view, w)
             invoke(v, true)
         elseif status == "finished" then
             if string.match(view.uri, "\.user\.js$") then
-                install(w)
+                if capi.luakit.confirm("Userscript detected. Do you want to install it?", w.win) then
+                    install(w)
+                end
             else
                 invoke(v)
             end
