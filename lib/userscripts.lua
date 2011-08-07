@@ -279,7 +279,7 @@ webview.init_funcs.userscripts = function (view, w)
             invoke(v, true)
         elseif status == "finished" then
             if string.match(view.uri, "\.user\.js$") then
-                if capi.luakit.confirm("Userscript detected. Do you want to install it?", w.win) then
+                if capi.luakit.confirm("Userscript detected. Do you want to install it?", {parent = w.win}) then
                     install(w)
                 end
             else

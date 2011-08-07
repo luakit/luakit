@@ -275,19 +275,46 @@ luaH_luakit_save_file(lua_State *L)
  *
  * \luastack
  * \lparam message        The message of the dialog window.
- * \lparam parent         The parent window of the dialog or \c nil.
- * \lreturn               \c true if the user clicked "yes", \c false otherwise
+ * \lparam opts           The options for the dialog.
+ *   \lfield yes          The text for the "yes" button.
+ *   \lfield no           The text for the "no" button.
+ *   \lfield parent       The parent window of the dialog.
+ * \lreturn               \c true if the user clicked the "yes" button, \c false otherwise.
  */
 static gint
 luaH_luakit_confirm(lua_State *L)
 {
     const gchar *message = luaL_checkstring(L, 1);
-    GtkWindow *parent_window = luaH_checkwindow(L, 2);
+    GtkWindow *parent_window = NULL;
+    const gchar *button_yes = GTK_STOCK_YES;
+    const gchar *button_no = GTK_STOCK_NO;
+
+    if (lua_gettop(L) > 1) {
+        luaH_checktable(L, 2);
+
+#define GET_FIELD(field, var, checker)              \
+        lua_pushstring(L, field);                   \
+        lua_gettable(L, 2);                         \
+        if (!lua_isnil(L, -1))                      \
+            var = checker(L, -1);                   \
+        lua_pop(L, 1);
+
+        GET_FIELD("parent", parent_window, luaH_checkwindow)
+        GET_FIELD("yes", button_yes, luaL_checkstring)
+        GET_FIELD("no", button_no, luaL_checkstring)
+
+#undef GET_FIELD
+
+    }
 
     GtkWidget *dialog = gtk_message_dialog_new(parent_window,
             GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
-            GTK_MESSAGE_QUESTION, GTK_BUTTONS_YES_NO,
+            GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
             "%s", message);
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+            button_yes, GTK_RESPONSE_YES,
+            button_no, GTK_RESPONSE_NO,
+            NULL);
     gboolean accepted = (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_YES);
     gtk_widget_destroy(dialog);
     lua_pushboolean(L, accepted);
