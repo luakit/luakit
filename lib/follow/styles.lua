@@ -19,6 +19,10 @@ local function max_hint_len(size, base)
     return len
 end
 
+--- Style that uses a given set of characters for the hint labels and
+-- does not perform text matching against the page elements.
+--
+-- @param charset A string of characters to use for the hint labels.
 function charset(charset)
     local floor, sub = math.floor, string.sub
     local insert, concat = table.insert, table.concat
@@ -58,6 +62,8 @@ function numbers_and_labels()
 end
 
 --- Decorator for a style that reverses each label.
+--
+-- @param style The style to decorate.
 function reverse(style)
     local maker = style.make_labels
     style.make_labels = function (size)
@@ -71,6 +77,8 @@ function reverse(style)
 end
 
 --- Decorator for a style that sorts the labels.
+--
+-- @param style The style to decorate.
 function sort(style)
     local maker = style.make_labels
     style.make_labels = function (size)
@@ -97,3 +105,25 @@ function remove_leading(char, style)
     end
     return style
 end
+
+--- Decorator for a style that makes the label matching case-insensitive.
+-- It also converts all labels to upper-case for readability.
+--
+-- @param style The style to decorate.
+function upper(style)
+    local maker = style.make_labels
+    style.make_labels = function (size)
+        local labels = {}
+        for _, l in ipairs(maker(size)) do
+            table.insert(labels, string.upper(l))
+        end
+        return labels
+    end
+    local parser = style.parse_input
+    style.parse_input = function (text)
+        local text, id = parser(text)
+        return text, string.upper(id)
+    end
+    return style
+end
+
