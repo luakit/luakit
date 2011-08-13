@@ -67,9 +67,9 @@ end
 function reverse(style)
     local maker = style.make_labels
     style.make_labels = function (size)
-        local labels = {}
-        for _, l in ipairs(maker(size)) do
-            table.insert(labels, string.reverse(l))
+        local labels = maker(size)
+        for i, l in ipairs(labels) do
+            labels[i] = string.reverse(l)
         end
         return labels
     end
@@ -97,9 +97,9 @@ end
 function remove_leading(char, style)
     local maker = style.make_labels
     style.make_labels = function (size)
-        local labels = {}
-        for _, l in ipairs(maker(size)) do
-            table.insert(labels, string.match(l, char.."*(.+)"))
+        local labels = maker(size)
+        for i, l in ipairs(labels) do
+            labels[i] = string.match(l, char.."*(.+)")
         end
         return labels
     end
@@ -113,9 +113,9 @@ end
 function upper(style)
     local maker = style.make_labels
     style.make_labels = function (size)
-        local labels = {}
-        for _, l in ipairs(maker(size)) do
-            table.insert(labels, string.upper(l))
+        local labels = maker(size)
+        for i, l in ipairs(labels) do
+            labels[i] = string.upper(l)
         end
         return labels
     end
