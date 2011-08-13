@@ -40,15 +40,6 @@ plug_removed_cb(GtkSocket* UNUSED(socket), widget_t *w)
 }
 
 static gint
-luaH_socket_add_id(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    gint id = luaL_checkint(L, 2);
-    gtk_socket_add_id(GTK_SOCKET(w->widget), (GdkNativeWindow) id);
-    return 0;
-}
-
-static gint
 luaH_socket_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
@@ -57,8 +48,6 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
 
-      /* push class methods */
-      PF_CASE(ADD_ID,     luaH_socket_add_id)
       /* push integer methods */
       PI_CASE(ID,         (int) gtk_socket_get_id(GTK_SOCKET(w->widget)))
       /* push boolean methods */
@@ -70,10 +59,22 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
     return 0;
 }
 
+static gint
+luaH_socket_newindex(lua_State *L, luakit_token_t token)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    if (token == L_TK_ID) {
+        gint id = luaL_checkint(L, 2);
+        gtk_socket_add_id(GTK_SOCKET(w->widget), (GdkNativeWindow) id);
+    }
+    return 0;
+}
+
 widget_t *
 widget_socket(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_socket_index;
+    w->newindex = luaH_socket_newindex;
     w->destructor = widget_destructor;
     w->widget = gtk_socket_new();
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
