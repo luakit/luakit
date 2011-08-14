@@ -547,7 +547,7 @@ window.methods = {
         local escape, get_title = lousy.util.escape, w.get_tab_title
         local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
 
-        for i, view in ipairs(w.tabs:get_children()) do
+        for i, view in ipairs(w.tabs.children) do
             -- Get tab number theme
             local ntheme = nfg
             if view:loading() then -- Show loading on all tabs

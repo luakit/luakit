@@ -38,7 +38,7 @@ taborder = {
         if not currentview then return 1 end
 
         local kids = taborder.kidsof
-        local views = w.tabs:get_children()
+        local views = w.tabs.children
 
         if kids[currentview] then
             -- Collect all descendants
