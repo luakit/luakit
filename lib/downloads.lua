@@ -127,7 +127,8 @@ function add(arg, opts)
         string.format("expected uri or download, got: %s", type(d) or "nil"))
 
     -- Emit signal to determine the download location.
-    local file = _M.emit_signal("download-location", d.uri, d.suggested_filename)
+    local file = _M.emit_signal("download-location", d.uri,
+        d.suggested_filename, d.mime_type)
 
     -- Check return type
     assert(file == nil or type(file) == "string" and #file > 1,
