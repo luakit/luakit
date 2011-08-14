@@ -40,7 +40,6 @@ focus
 font
 frames
 fullscreen
-get_alignment
 get_property
 get_special_dir
 get_title
@@ -60,7 +59,7 @@ indexof
 insert
 install_path
 interval
-is_plugged
+plugged
 label
 left
 loading

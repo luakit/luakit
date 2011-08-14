@@ -49,9 +49,9 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push integer methods */
-      PI_CASE(ID,         (int) gtk_socket_get_id(GTK_SOCKET(w->widget)))
+      PI_CASE(ID,      (int) gtk_socket_get_id(GTK_SOCKET(w->widget)))
       /* push boolean methods */
-      PB_CASE(IS_PLUGGED, gtk_socket_get_plug_window(GTK_SOCKET(w->widget)) != NULL)
+      PB_CASE(PLUGGED, gtk_socket_get_plug_window(GTK_SOCKET(w->widget))!=NULL)
 
       default:
         break;
