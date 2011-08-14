@@ -8,6 +8,7 @@ can_go_back
 can_go_forward
 changes
 child
+children
 clear_search
 clipboard
 config_dir
@@ -40,9 +41,6 @@ font
 frames
 fullscreen
 get_alignment
-get_child
-get_children
-get_id
 get_property
 get_special_dir
 get_title

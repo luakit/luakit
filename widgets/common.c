@@ -177,9 +177,8 @@ luaH_widget_remove(lua_State *L)
 }
 
 gint
-luaH_widget_get_children(lua_State *L)
+luaH_widget_get_children(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child;
     GList *children = gtk_container_get_children(GTK_CONTAINER(w->widget));
     GList *iter = children;

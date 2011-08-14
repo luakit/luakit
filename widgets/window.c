@@ -111,7 +111,7 @@ luaH_window_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push widget class methods */
       PF_CASE(DESTROY, luaH_widget_destroy)

@@ -59,9 +59,8 @@ luaH_paned_pack(lua_State *L)
 }
 
 static gint
-luaH_paned_get_child(lua_State *L, gint n)
+luaH_paned_get_child(lua_State *L, widget_t *w, gint n)
 {
-    widget_t *w = luaH_checkpaned(L, 1);
     GtkWidget *widget = NULL;
     if (n == 1)
         widget = gtk_paned_get_child1(GTK_PANED(w->widget));
@@ -79,10 +78,12 @@ luaH_paned_get_child(lua_State *L, gint n)
 static gint
 luaH_paned_index(lua_State *L, luakit_token_t token)
 {
+    widget_t *w = luaH_checkpaned(L, 1);
+
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push paned widget methods */
       case L_TK_PACK1:
@@ -93,11 +94,11 @@ luaH_paned_index(lua_State *L, luakit_token_t token)
 
       case L_TK_TOP:
       case L_TK_LEFT:
-        return luaH_paned_get_child(L, 1);
+        return luaH_paned_get_child(L, w, 1);
 
       case L_TK_BOTTOM:
       case L_TK_RIGHT:
-        return luaH_paned_get_child(L, 2);
+        return luaH_paned_get_child(L, w, 2);
 
       default:
         break;

@@ -181,8 +181,8 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
       PF_CASE(SWITCH,       luaH_notebook_switch)
       PF_CASE(REORDER,      luaH_notebook_reorder)
 
-      /* push container class methods */
-      PF_CASE(GET_CHILDREN, luaH_widget_get_children)
+      case L_TK_CHILDREN:
+        return luaH_widget_get_children(L, w);
 
       /* push boolean properties */
       PB_CASE(SHOW_TABS,    gtk_notebook_get_show_tabs(GTK_NOTEBOOK(w->widget)))
