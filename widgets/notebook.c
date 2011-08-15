@@ -35,14 +35,12 @@ luaH_notebook_current(lua_State *L)
 }
 
 static gint
-luaH_notebook_atindex(lua_State *L)
+luaH_notebook_atindex(lua_State *L, widget_t *w, gint idx)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-    gint i = luaL_checknumber(L, 2);
     /* correct index */
-    if (i != -1) i--;
+    if (idx != -1) idx--;
 
-    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
+    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), idx);
     if (!widget)
         return 0;
 
@@ -165,12 +163,15 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
 
+    /* handle numerical index lookups */
+    if (token == L_TK_UNKNOWN && lua_isnumber(L, 2))
+        return luaH_notebook_atindex(L, w, (gint)luaL_checknumber(L, 2));
+
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(ATINDEX,      luaH_notebook_atindex)
       PF_CASE(COUNT,        luaH_notebook_count)
       PF_CASE(CURRENT,      luaH_notebook_current)
       PF_CASE(GET_TITLE,    luaH_notebook_get_title)
