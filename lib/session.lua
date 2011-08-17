@@ -17,9 +17,9 @@ session = {
         -- Save tabs from all the given windows
         for wi, w in pairs(wins) do
             local current = w.tabs:current()
-            for ti = 1, w.tabs:count() do
-                local uri = w.tabs:atindex(ti).uri or "about:blank"
-                table.insert(lines, string.format("%d\t%d\t%s\t%s", wi, ti, tostring(current == ti), uri))
+            for ti, tab in ipairs(w.tabs.children) do
+                table.insert(lines, string.format("%d\t%d\t%s\t%s", wi, ti,
+                    tostring(current == ti), tab.uri))
             end
         end
 

@@ -174,7 +174,7 @@ window.init_funcs = {
                 w.tabs:switch(index)
                 return true
             elseif button == 2 then
-                w:close_tab(w.tabs:atindex(index))
+                w:close_tab(w.tabs[index])
                 return true
             end
         end)
@@ -238,7 +238,7 @@ window.init_funcs = {
 -- Helper functions which operate on the window widgets or structure.
 window.methods = {
     -- Return the widget in the currently active tab
-    get_current = function (w)       return w.tabs:atindex(w.tabs:current())       end,
+    get_current = function (w)       return w.tabs[w.tabs:current()] end,
     -- Check if given widget is the widget in the currently active tab
     is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
 
@@ -576,8 +576,8 @@ window.methods = {
     new_tab = function (w, arg, switch, order)
         local view
         -- Use blank tab first
-        if w.has_blank and w.tabs:count() == 1 and w.tabs:atindex(1).uri == "about:blank" then
-            view = w.tabs:atindex(1)
+        if w.has_blank and w.tabs:count() == 1 and w.tabs[1].uri == "about:blank" then
+            view = w.tabs[1]
         end
         w.has_blank = nil
         -- Make new webview widget
@@ -613,7 +613,7 @@ window.methods = {
         local tab = {hist = view.history,}
         -- And relative location
         local index = w.tabs:indexof(view)
-        if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
+        if index ~= 1 then tab.after = w.tabs[index-1] end
         table.insert(w.closed_tabs, tab)
         view:destroy()
         w:update_tab_count()

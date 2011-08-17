@@ -377,7 +377,7 @@ end
 -- Insert webview method lookup on window structure
 table.insert(window.indexes, 1, function (w, k)
     -- Get current webview
-    local view = w.tabs:atindex(w.tabs:current())
+    local view = w.tabs[w.tabs:current()]
     if not view then return end
     -- Lookup webview method
     local func = webview.methods[k]
