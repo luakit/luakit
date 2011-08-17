@@ -84,7 +84,7 @@ function webview.methods.toggle_plugins(view, w)
         enable_plugins = itob(row.enable_plugins)
         update(row.id, "enable_plugins", not enable_plugins)
     else
-        insert(domain, not _M.enable_scripts, enable_plugins)
+        insert(domain, _M.enable_scripts, not enable_plugins)
     end
 
     w:notify(string.format("%sabled plugins for domain: %s",
