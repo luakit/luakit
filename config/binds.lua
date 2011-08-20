@@ -14,7 +14,6 @@ local strip, split = lousy.util.string.strip, lousy.util.string.split
 local scroll_step = globals.scroll_step or 20
 local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
 local zoom_step = globals.zoom_step or 0.1
-local homepage = globals.homepage or "http://luakit.org"
 
 function get_homepage ()
    return globals.homepage or "http://luakit.org"
