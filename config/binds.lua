@@ -217,7 +217,7 @@ add_binds("normal", {
     buf("^gT$",                     function (w, b, m) w:prev_tab(m.count) end, {count=1}),
     buf("^gt$",                     function (w, b, m) if not w:goto_tab(m.count) then w:next_tab() end end, {count=0}),
 
-    key({"Control"}, "t",           function (w)    w:new_tab(homepage) end),
+    key({"Control"}, "t",           function (w)    w:new_tab(get_homepage()) end),
     key({"Control"}, "w",           function (w)    w:close_tab()       end),
     key({},          "d",           function (w, m) for i=1,m.count do w:close_tab()      end end, {count=1}),
 
@@ -226,8 +226,8 @@ add_binds("normal", {
     key({"Mod1"},    "Page_Up",     function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
     key({"Mod1"},    "Page_Down",   function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
 
-    buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(homepage) end end, {count=1}),
-    buf("^gh$",                     function (w)       w:navigate(homepage) end),
+    buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(get_homepage()) end end, {count=1}),
+    buf("^gh$",                     function (w)       w:navigate(get_homepage()) end),
 
     -- Open tab from current tab history
     buf("^gy$",                     function (w) w:new_tab(w:get_current().history or "") end),
