@@ -16,6 +16,10 @@ local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
 local zoom_step = globals.zoom_step or 0.1
 local homepage = globals.homepage or "http://luakit.org"
 
+function get_homepage ()
+   return globals.homepage or "http://luakit.org"
+end
+
 -- Add binds to a mode
 function add_binds(mode, binds, before)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
