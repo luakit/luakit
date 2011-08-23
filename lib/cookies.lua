@@ -109,6 +109,11 @@ function load_new_cookies(purge)
     end
 end
 
+-- Delete all session cookies
+function delete_session_cookies()
+    db:exec(string.format(query_delete_session))
+end
+
 capi.soup.add_signal("cookie-changed", function (old, new)
     local e = lousy.util.sql_escape
     if new then
