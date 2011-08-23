@@ -19,9 +19,9 @@ module "cookies"
 -- @field session_timeout Makes session cookies expire after some time
 -- rather than at the end of the browser session.
 -- <br> The duration is in seconds.
--- <br> A value of nil means the usual session behaviour is observed.
+-- <br> A value of false means the usual session behaviour is observed.
 force_session = false
-session_timeout = nil
+session_timeout = false
 
 -- Setup signals on module
 lousy.signal.setup(_M, true)
@@ -128,7 +128,13 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             capi.soup.add_cookies{new}
         end
 
-        session_expire = session_timeout and (time() + session_timeout) or -1
+        -- Set the expiry to -1 or time() + session_timeout if set, and use
+        -- the earlier of this value and that specified by the cookie,
+        -- depending on whether force_session is set
+        local expires = session_timeout and (time() + session_timeout) or -1
+        if new.expires and (not force_session or new.expires < expires) then
+            expires = new.expires
+        end
 
         -- Insert new cookie
         db:exec(string.format(query_insert,
@@ -136,7 +142,7 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             e(new.value), -- value
             e(new.domain), -- host
             e(new.path), -- path
-            (not force_session) and new.expires or session_expire, -- expiry
+            expires, -- expiry
             micro(), -- lastAccessed
             new.secure and 1 or 0, -- isSecure
             new.http_only and 1 or 0)) -- isHttpOnly
