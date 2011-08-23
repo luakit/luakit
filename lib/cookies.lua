@@ -31,6 +31,14 @@ function micro()
     return floor(time() * 1e6)
 end
 
+-- Return the expire value for session cookies
+function cookie_expires(expiry)
+    if not force_session and expiry >= 0 then return expiry end
+    if not session_timeout then return -1 end
+    local timeout = floor(time() + session_timeout)
+    return (expiry >= 0 and expiry < timeout) and expiry or timeout
+end
+
 -- Last cookie check time
 local checktime = 0
 
@@ -128,21 +136,13 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             capi.soup.add_cookies{new}
         end
 
-        -- Set the expiry to -1 or time() + session_timeout if set, and use
-        -- the earlier of this value and that specified by the cookie,
-        -- depending on whether force_session is set
-        local expires = session_timeout and (time() + session_timeout) or -1
-        if new.expires and (not force_session or new.expires < expires) then
-            expires = new.expires
-        end
-
         -- Insert new cookie
         db:exec(string.format(query_insert,
             e(new.name), -- name
             e(new.value), -- value
             e(new.domain), -- host
             e(new.path), -- path
-            expires, -- expiry
+            cookie_expires(new.expires or -1), -- expiry
             micro(), -- lastAccessed
             new.secure and 1 or 0, -- isSecure
             new.http_only and 1 or 0)) -- isHttpOnly
