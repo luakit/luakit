@@ -91,6 +91,9 @@ WHERE expiry == 0 AND lastAccessed < %.0f;]]
 query_delete_session = [[DELETE FROM moz_cookies
 WHERE expiry == -1;]]
 
+query_delete_expire_before = [[DELETE FROM moz_cookies
+WHERE expiry < %.0f;]]
+
 -- Create table (if not exists)
 db:exec(create_table)
 
@@ -124,6 +127,9 @@ end
 -- Delete all session cookies
 function delete_session_cookies()
     db:exec(string.format(query_delete_session))
+    if session_timeout then
+        db:exec(string.format(query_delete_expire_before, cookie_expires(-1)))
+    end
 end
 
 capi.soup.add_signal("cookie-changed", function (old, new)
