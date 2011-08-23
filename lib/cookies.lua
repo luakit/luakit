@@ -11,7 +11,17 @@ local lousy = require "lousy"
 local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
 local time, floor = luakit.time, math.floor
 
+-- Provides cookie functionality.
 module "cookies"
+
+--- The cookies module.
+-- @field force_session Forces all cookies to expire at the end of the session.
+-- @field session_timeout Makes session cookies expire after some time
+-- rather than at the end of the browser session.
+-- <br> The duration is in seconds.
+-- <br> A value of nil means the usual session behaviour is observed.
+force_session = false
+session_timeout = nil
 
 -- Setup signals on module
 lousy.signal.setup(_M, true)
@@ -113,13 +123,15 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             capi.soup.add_cookies{new}
         end
 
+        session_expire = session_timeout and (time() + session_timeout) or -1
+
         -- Insert new cookie
         db:exec(string.format(query_insert,
             e(new.name), -- name
             e(new.value), -- value
             e(new.domain), -- host
             e(new.path), -- path
-            new.expires or -1, -- expiry
+            (not force_session) and new.expires or session_expire, -- expiry
             micro(), -- lastAccessed
             new.secure and 1 or 0, -- isSecure
             new.http_only and 1 or 0)) -- isHttpOnly

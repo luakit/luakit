@@ -65,6 +65,10 @@ require "cookies"
 
 -- Block all cookies by default (unless whitelisted)
 --cookies.default_allow = false
+-- Force all cookies to session cookies
+--cookies.force_session = true
+-- Expire all session cookies after 3600 seconds
+--cookies.session_timeout = 3600
 
 -- Add uzbl-like form filling
 require "formfiller"
