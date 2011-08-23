@@ -31,12 +31,16 @@ function micro()
     return floor(time() * 1e6)
 end
 
--- Return the expire value for session cookies
+-- Return the expire value for a cookie
 function cookie_expires(expiry)
-    if not force_session and expiry >= 0 then return expiry end
-    if not session_timeout then return -1 end
-    local timeout = floor(time() + session_timeout)
-    return (expiry >= 0 and expiry < timeout) and expiry or timeout
+    if not force_session and expiry > 0 or expiry == 0 then
+        return expiry
+    elseif not session_timeout then
+        return -1
+    else
+        local timeout = floor(time() + session_timeout)
+        return (expiry > 0 and expiry < timeout) and expiry or timeout
+    end
 end
 
 -- Last cookie check time
