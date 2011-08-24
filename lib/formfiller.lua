@@ -385,7 +385,7 @@ function add(w)
     w:eval_js(formfiller_js, "(formfiller.lua)")
     local js = [=[
         var addAttr = function (str, elem, attr, indent) {
-            if (typeof(elem[attr]) == "string") {
+            if (typeof(elem[attr]) == "string" && elem[attr] !== "") {
                 str += indent + attr + ' = ' + formfiller.toLuaString(formfiller.rexEscape(elem[attr])) + ',\n';
             }
             return str;
