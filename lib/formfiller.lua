@@ -258,6 +258,7 @@ function add(w)
             return str;
         }
 
+        var rendered_something = false;
         var str = 'on ' + formfiller.toLuaString(formfiller.rexEscape(location.href)) + ' {\n';
         formfiller.toA(document.forms).forEach(function (form) {
             var inputs = formfiller.toA(form.getElementsByTagName("input"));
@@ -285,10 +286,13 @@ function add(w)
             });
             str += "    submit = true,\n";
             str += "  },\n";
+            rendered_something = true;
         });
         str += "}\n\n";
+        rendered_something ? str : false;
     ]=]
     local ret = w:eval_js(js, "(formfiller.lua)")
+    if ret == "false" then return w:error("no forms with inputs found") end
     local f = io.open(file, "a")
     f:write(ret)
     f:close()
