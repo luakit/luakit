@@ -140,7 +140,6 @@ local formfiller_js = [=[
     }
 ]=]
 
--- DSL helper method.
 -- Invokes an AttributeMatcher for the given tag and attributes with the
 -- given data on the given parents.
 -- Saves all found elements in an array under formfiller.{tag}s
@@ -191,21 +190,27 @@ local DSL = {
 
     -- DSL method to match a form by its attributes
     form = function (s, data)
+        local transform = function (inputs, profile)
+            local form = {
+                profile = profile,
+                inputs = {},
+            }
+            for k, v in pairs(inputs) do
+                if type(k) == "number" then
+                    form.inputs[k] = v
+                else
+                    form[k] = v
+                end
+            end
+            return form
+        end
         if type(data) == "string" then
             local profile = data
             return function (inputs)
-                local form = {
-                    profile = profile,
-                    submit = inputs.submit,
-                    inputs = inputs,
-                }
-                return form
+                transform(inputs, profile)
             end
         else
-            return {
-                submit = data.submit,
-                inputs = data,
-            }
+            return transform(data)
         end
     end,
 
