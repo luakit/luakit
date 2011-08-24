@@ -279,6 +279,7 @@ function add(w)
                 }
                 str += "    },\n";
             });
+            str += "    submit = true,\n";
             str += "  },\n";
         });
         str += "}\n\n";
