@@ -175,12 +175,14 @@ add_binds("normal", {
     buf("^yy$",                     function (w)
                                         local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
                                         luakit.set_selection(uri)
+                                        luakit.set_selection("clipboard", uri)
                                         w:notify("Yanked uri: " .. uri)
                                     end),
 
     buf("^yt$",                     function (w)
                                         local title = w:get_current():get_property("title")
                                         luakit.set_selection(title)
+                                        luakit.set_selection("clipboard", title)
                                         w:notify("Yanked title: " .. title)
                                     end),
 
