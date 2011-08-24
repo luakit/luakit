@@ -165,7 +165,7 @@ function del(index, save_bookmarks)
     -- Refresh open bookmarks views
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs:get_children()) do
-            if string.match(v.uri, "^luakit://bookmarks/?") then
+            if string.match(v.uri, "^luakit://bookmarks/?") and v.status == "finished" then
                 v:reload()
             end
         end
