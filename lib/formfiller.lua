@@ -51,24 +51,25 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 -- <br>        type = "checkbox",
 -- <br>        checked = true,
 -- <br>      },
--- <br>      submit(),
+-- <br>      submit = true,
 -- <br>    },
 -- <br>  }
 -- </pre>
 --
 -- <ul>
 -- <li> The <code>form</code> function's string argument is optional.
---      It allows you to define multiple profiles.
+--      It allows you to define multiple profiles for use with the
+--      <code>zL</code> binding.
 -- <li> All entries are matched top to bottom, until one fully matches
 --      or calls <code>submit()</code>.
--- <li> The submit function takes an optional argument that gives the
---      index of the submit button to click (starting with <code>1</code>).
---      If there is no such button (e.g. with a negative index),
+-- <li> The <code>submit</code> attribute of a form can also be a number, which
+--      gives index of the submit button to click (starting with <code>1</code>).
+--      If there is no such button ore the argument is <code>true</code>,
 --      <code>form.submit()</code> will be called instead.
--- <li> Instead of <code>submit()</code>, you can also use <code>focus()</code>
---      inside an <code>input</code> to focus that element. If <code>true</code>
---      is given as an argument to the function, the text of the input will be
---      selected.
+-- <li> Instead of <code>submit</code>, you can also use <code>focus = true</code>
+--      inside an <code>input</code> to focus that element or <code>select = true</code>
+--      to select the text inside it.
+--      <code>focus</code> will trigger input mode.
 -- <li> The string argument to the <code>on</code> function and all of
 --      the attributes of the <code>form</code> and <code>input</code>
 --      tables take JavaScript regular expressions.
@@ -142,6 +143,13 @@ local formfiller_js = [=[
 -- DSL helper method.
 -- Invokes an AttributeMatcher for the given tag and attributes with the
 -- given data on the given parents.
+-- Saves all found elements in an array under formfiller.{tag}s
+-- @param w The window to fill the forms on
+-- @param tag The element tag name to match against
+-- @param attributes The attributes to match
+-- @param data The attribute data to use for matching
+-- @param parents Start the search using formfiller.{parents}
+-- @return true iff something matched
 local function match(w, tag, attributes, data, parents)
     local js_template = [=[
         var matcher = new formfiller.AttributeMatcher("{tag}", {
@@ -164,180 +172,42 @@ local function match(w, tag, attributes, data, parents)
         parents = parents and string.format("formfiller.%s", parents) or "null",
     })
     local ret = w:eval_js(js, "(formfiller.lua)")
-    if ret == "true" then
-        local t = lousy.util.table.toarray(data)
-        return t
-    else
-        return {}
-    end
+    return (ret == "true")
 end
 
 -- The function environment for the formfiller script
-local DSL
-DSL = {
-    print = print,
-
-    -- DSL method that allows the emission of debug messages
-    debug = function (message)
-        return function ()
-            print(message)
-            return {}
-        end
-    end,
+local DSL = {
+    print = function (s, ...) print(...) end,
 
     -- DSL method to match a page by its URI
-    on = function (rules, pattern)
-        return function (data)
-            table.insert(rules, 1, function (w, v)
-                w.formfiller_state.menu_cache = {}
-                w.formfiller_state.insert_mode = false
-                -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
-                local js_template = [=[
-                    (new RegExp({pattern}).test(location.href));
-                ]=]
-                local js = string.gsub(js_template, "{(%w+)}", {
-                    pattern = string.format("%q", pattern)
-                })
-                local ret = w:eval_js(js, "(formfiller.lua)")
-                if ret == "true" then
-                    return data
-                else
-                    return {}
-                end
-            end)
-            table.insert(rules, 1, function (w, v)
-                -- show menu if necessary
-                if #(w.formfiller_state.menu_cache) == 0 then
-                    -- continue matching
-                    return {}
-                elseif #(w.formfiller_state.menu_cache) == 1 then
-                    -- evaluate that cache function
-                    return {w.formfiller_state.menu_cache[1].fun}
-                else
-                    -- show menu
-                    w:set_mode("formfiller")
-                    -- suspend evaluation
-                    return nil
-                end
-            end)
-            table.insert(rules, 1, function (w, v)
-                if w.formfiller_state.insert_mode then
-                    w:set_mode("insert")
-                end
-                return {}
-            end)
+    on = function (s, pattern)
+        return function (forms)
+            table.insert(s.rules, {
+                pattern = pattern,
+                forms = forms,
+            })
         end
     end,
 
     -- DSL method to match a form by its attributes
-    form = function (data)
+    form = function (s, data)
         if type(data) == "string" then
-            -- add a menu entry for the profile
             local profile = data
-            return function (data)
-                return function (w, v)
-                    table.insert(w.formfiller_state.menu_cache, {
-                        profile,
-                        fun = function (w, v)
-                            return match(w, "form", {"method", "name", "id", "action", "className"}, data)
-                        end,
-                    })
-                    return {}
-                end
+            return function (inputs)
+                local form = {
+                    profile = profile,
+                    inputs = inputs
+                }
+                return form
             end
         else
-            -- return a form matcher
-            return function (w, v)
-                return match(w, "form", {"method", "name", "id", "action", "className"}, data)
-            end
-        end
-    end,
-
-    -- Alternative version of the `form` method that ignores profiles
-    fast_form = function (data)
-        if type(data) == "string" then
-            -- ignore profiles
-            return DSL.fast_form
-        else
-            -- return a form matcher
-            return function (w, v)
-                return match(w, "form", {"method", "name", "id", "action", "className"}, data)
-            end
+            return { inputs = data }
         end
     end,
 
     -- DSL method to match an input element by its attributes
-    input = function (data)
-        return function (w, v)
-            if match(w, "input", {"name", "id", "className", "type"}, data, "forms") then
-                local val = data.value or data.checked
-                local fill = function (w, v)
-                    local js_template = [=[
-                        if (formfiller.inputs) {
-                            var val = {str};
-                            formfiller.inputs.forEach(function (i) {
-                                if (i.type === "radio" || i.type === "checkbox") {
-                                    i.checked = (val && val !== "false");
-                                } else {
-                                    i.value = val;
-                                }
-                            });
-                        }
-                    ]=]
-                    local js = string.gsub(js_template, "{(%w+)}", {
-                        str = string.format("%q", tostring(val))
-                    })
-                    w:eval_js(js, "(formfiller.lua)")
-                    return {}
-                end
-                return {fill}
-            else
-                return {}
-            end
-        end
-    end,
-
-    -- DSL method to focus an input element
-    focus = function (do_select)
-        return function (w, v)
-            local js = string.format([=[
-                if (formfiller.inputs && formfiller.inputs[0]) {
-                    formfiller.inputs[0].focus();
-                    if (%s) {
-                        formfiller.inputs[0].select();
-                    }
-                    "true";
-                } else {
-                    "false";
-                }
-            ]=], do_select and "true" or "false")
-            local ret = w:eval_js(js, "(formfiller.lua)")
-            w.formfiller_state.insert_mode = (ret == "true")
-            return {}
-        end
-    end,
-
-    -- DSL method to submit a form
-    submit = function (n)
-        return function (w, v)
-            local js = string.format([=[
-                if (formfiller.forms && formfiller.forms[0]) {
-                    var inputs = formfiller.forms[0].getElementsByTagName('input');
-                    inputs = formfiller.toA(inputs).filter(function (input) {
-                        return /submit/i.test(input.type);
-                    });
-                    var n = %i - 1;
-                    if (inputs[n]) {
-                        formfiller.click(inputs[n]);
-                    } else {
-                        formfiller.forms[0].submit();
-                    }
-                }
-            ]=], tonumber(n) or 1)
-            w:eval_js(js, "(formfiller.lua)")
-            -- abort after a form has been submitted (page will reload!)
-            return nil
-        end
+    input = function (s, attrs)
+        return attrs
     end,
 }
 
@@ -345,6 +215,7 @@ DSL = {
 function init(w)
     w.formfiller_state = {
         rules = {},
+        menu_cache = {},
     }
     -- the environment of the DSL script
     -- load the script
@@ -357,20 +228,15 @@ function init(w)
         return
     end
     -- execute in sandbox
-    local env = lousy.util.table.clone(DSL)
-    -- wrap the on function so it can access the rules
-    env.on = function (...) return DSL.on(w.formfiller_state.rules, ...) end
+    local env = {}
+    -- wrap the DSL functions so they can access the state
+    for k, fun in pairs(DSL) do
+        env[k] = function (...) return DSL[k](w.formfiller_state, ...) end
+    end
     setfenv(dsl, env)
     local success, err = pcall(dsl)
     if not success then
         warn("error in " .. file .. ": " .. err)
-    end
-    -- ensure we only have functions on the rule stack
-    for i,f in pairs(w.formfiller_state.rules) do
-        if type(f) ~= "function" then
-            warn("formfiller: rule stack contains non-function at index " .. i)
-            w.formfiller_state.rules = {}
-        end
     end
 end
 
@@ -424,44 +290,176 @@ function add(w)
     edit()
 end
 
---- Fills the current page from the formfiller rules.
+-- Matches all rules against the current view's URI.
 -- @param w The window on which to fill the forms
--- @param skip_init Prevents re-initialization of the window
-function load(w, skip_init)
-    if not skip_init then
-        -- reload the DSL
-        init(w)
-        -- load JS prerequisites
-        w:eval_js(formfiller_js, "(formfiller.lua)")
+-- @param rules The rules to filter
+-- @return A new table containing only the rules that matched the URI
+local function filter_rules(w, rules)
+    local filtered = {}
+    for _, rule in ipairs(rules) do
+        -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
+        local js_template = [=[
+            (new RegExp({pattern}).test(location.href));
+        ]=]
+        local js = string.gsub(js_template, "{(%w+)}", {
+            pattern = string.format("%q", rule.pattern)
+        })
+        local ret = w:eval_js(js, "(formfiller.lua)")
+        if ret == "true" then table.insert(filtered, rule) end
     end
-    -- the function stack. pushed functions are evaluated until there is none
-    -- left or one of them returns false. if a function returns a table of
-    -- functions, these will be added to the top of the stack.
-    -- when evaluated, each function is passed the window and current view
-    local rules = w.formfiller_state.rules
-    while #rules > 0 do
-        local fun = table.remove(rules)
-        local ret = fun(w, w:get_current())
-        if ret and type(ret) == "table" then
-            ret = lousy.util.table.reverse(ret)
-            for _,f in ipairs(ret) do
-                if type(f) == "function" then
-                    table.insert(rules, f)
-                end
-            end
-        else
-            break
+    return filtered
+end
+
+-- Matches all forms against the current view.
+-- @param w The window on which to fill the forms
+-- @param forms The forms to filter
+-- @return A new table containing only the forms that matched the current view
+local function filter_forms(w, forms)
+    local filtered = {}
+    for _, form in ipairs(forms) do
+        if match(w, "form", {"method", "name", "id", "action", "className"}, form) then
+            table.insert(filtered, form)
         end
+    end
+    return filtered
+end
+
+-- Shows a menu with all forms that contain a profile if there is more than one.
+-- @param w The window on which to fill the forms
+-- @param forms The forms to search for profiles
+-- @return true iff the menu was shown
+local function show_menu(w, forms)
+    local menu = {}
+    for _, form in ipairs(forms) do
+        if form.profile then
+            table.insert(menu, { form.profile, form = form })
+        end
+    end
+    -- show menu if necessary
+    if #menu < 2 then
+        return false
+    else
+        w.formfiller_state.menu_cache = menu
+        w:set_mode("formfiller")
+        return true
     end
 end
 
---- Fills the current page from the formfiller rules, ignoring all profiles.
+-- Fills the currently selected input with the given value
 -- @param w The window on which to fill the forms
-function load_fast(w)
-    local form = DSL.form
-    DSL.form = DSL.fast_form
-    load(w)
-    DSL.form = form
+-- @param val The value to fill the input with
+local function fill_input(w, val)
+    local js_template = [=[
+        if (formfiller.inputs) {
+            var val = {str};
+            formfiller.inputs.forEach(function (i) {
+                if (i.type === "radio" || i.type === "checkbox") {
+                    i.checked = (val && val !== "false");
+                } else {
+                    i.value = val;
+                }
+            });
+        }
+    ]=]
+    local js = string.gsub(js_template, "{(%w+)}", {
+        str = string.format("%q", tostring(val))
+    })
+    w:eval_js(js, "(formfiller.lua)")
+end
+
+-- Focuses the currently selected input.
+-- @param w The window on which to fill the forms
+local function focus_input(w)
+    local js = [=[
+        if (formfiller.inputs && formfiller.inputs[0]) {
+            formfiller.inputs[0].focus();
+            "true";
+        } else {
+            "false";
+        }
+    ]=]
+    local ret = w:eval_js(js, "(formfiller.lua)")
+    if ret == "true" then w:set_mode("insert") end
+end
+
+-- Selects all text in the currently selected input.
+-- @param w The window on which to fill the forms
+local function select_input(w)
+    local js = [=[
+        if (formfiller.inputs && formfiller.inputs[0]) {
+            formfiller.inputs[0].select();
+        }
+    ]=]
+    local ret = w:eval_js(js, "(formfiller.lua)")
+end
+
+-- Submits the currently selected form by clicking the nth button or
+-- calling form.submit().
+-- @param w The window on which to fill the forms
+-- @param n The index of the button to click.
+local function submit_form(w, n)
+    local js = string.format([=[
+        if (formfiller.forms && formfiller.forms[0]) {
+            var inputs = formfiller.forms[0].getElementsByTagName('input');
+            inputs = formfiller.toA(inputs).filter(function (input) {
+                return /submit/i.test(input.type);
+            });
+            var n = %i - 1;
+            if (inputs[n]) {
+                formfiller.click(inputs[n]);
+            } else {
+                formfiller.forms[0].submit();
+            }
+        }
+    ]=], n)
+    w:eval_js(js, "(formfiller.lua)")
+end
+
+-- Applies all values to all matching inputs in a form and optionally focuses and selects
+-- the inputs or submits the form.
+-- @param w The window on which to fill the forms
+-- @returns true iff the form matched fully or was submitted
+local function apply_form(w, form)
+    local full_match = true
+    for _, input in ipairs(form.inputs) do
+        if match(w, "input", {"name", "id", "className", "type"}, input, "forms") then
+            local val = input.value or input.checked
+            if val then fill_input(w, val) end
+            if input.focus then focus_input(w) end
+            if input.select then select_input(w) end
+        else
+            full_match = false
+        end
+    end
+    if form.submit then
+        submit_form(w, form.submit)
+        return true
+    else
+        return full_match
+    end
+end
+
+--- Fills the current page from the formfiller rules.
+-- @param w The window on which to fill the forms
+-- @param fast Prevents any menus from being shown
+function load(w, fast)
+    -- reload the DSL
+    init(w)
+    -- load JS prerequisites
+    w:eval_js(formfiller_js, "(formfiller.lua)")
+    -- filter out all rules that do not match the current URI
+    local rules = filter_rules(w, w.formfiller_state.rules)
+    for _, rule in ipairs(rules) do
+        -- filter out all forms that do not match the current page
+        local forms = filter_forms(w, rule.forms)
+        -- assemble a list of menu items to display, if any exist
+        if fast or not show_menu(w, forms) then
+            -- apply until the first form submits
+            for _, form in ipairs(forms) do
+                if apply_form(w, form) then return end
+            end
+        end
+    end
 end
 
 -- Add formfiller mode
@@ -484,18 +482,18 @@ add_binds("formfiller", lousy.util.table.join({
     -- use profile
     key({}, "Return", function (w)
         local row = w.menu:get()
-        table.insert(w.formfiller_state.rules, row.fun)
+        local form = row.form
         w:set_mode()
-        load(w, true)
+        apply_form(w, form)
     end),
 }, menu_binds))
 
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za$", function (w) add(w)       end),
-    buf("^ze$", function (w) edit()       end),
-    buf("^zl$", function (w) load_fast(w) end),
-    buf("^zL$", function (w) load(w)      end),
+    buf("^za$", function (w) add(w)        end),
+    buf("^ze$", function (w) edit()        end),
+    buf("^zl$", function (w) load(w, true) end),
+    buf("^zL$", function (w) load(w)       end),
 })
 
