@@ -260,11 +260,15 @@ function add(w)
 
         var str = 'on ' + formfiller.toLuaString(formfiller.rexEscape(location.href)) + ' {\n';
         formfiller.toA(document.forms).forEach(function (form) {
+            var inputs = formfiller.toA(form.getElementsByTagName("input"));
+            if (inputs.length == 0) {
+                return;
+            }
             str += "  form {\n";
             ["method", "action", "id", "className", "name"].forEach(function (attr) {
                 str = addAttr(str, form, attr, "    ");
             });
-            formfiller.toA(form.getElementsByTagName("input")).forEach(function (input) {
+            inputs.forEach(function (input) {
                 if (input.type === "button" || input.type === "submit" || input.type === "hidden") {
                     return;
                 }
