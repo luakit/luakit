@@ -84,16 +84,16 @@ EOL
     end
     if input[:fill].is_a?(String)
       puts <<EOL
-      fill("#{input[:fill]}"),
+      value = "#{input[:fill]}",
 EOL
     else
       puts <<EOL
-      fill(#{input[:fill]}),
+      checked = #{input[:fill]},
 EOL
     end
     puts "    },"
   end
-  puts "    submit()," if form[:submit]
+  puts "    submit = true," if form[:submit]
   puts "  },"
 end
 
