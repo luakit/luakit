@@ -261,8 +261,10 @@ function add(w)
         var rendered_something = false;
         var str = 'on ' + formfiller.toLuaString(formfiller.rexEscape(location.href)) + ' {\n';
         formfiller.toA(document.forms).forEach(function (form) {
-            var inputs = formfiller.toA(form.getElementsByTagName("input"));
-            if (inputs.length == 0) {
+            var inputs = formfiller.toA(form.getElementsByTagName("input")).filter(function (input) {
+                return (input.type !== "button" && input.type !== "submit" && input.type !== "hidden");
+            });
+            if (inputs.length === 0) {
                 return;
             }
             str += "  form {\n";
@@ -270,9 +272,6 @@ function add(w)
                 str = addAttr(str, form, attr, "    ");
             });
             inputs.forEach(function (input) {
-                if (input.type === "button" || input.type === "submit" || input.type === "hidden") {
-                    return;
-                }
                 str += "    input {\n";
                 ["id", "className", "name", "type"].forEach(function (attr) {
                     str = addAttr(str, input, attr, "      ");
