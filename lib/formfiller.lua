@@ -40,16 +40,16 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 -- <br>        type = "text",
 -- <br>        className = "someClass",
 -- <br>        id = "username_field",
--- <br>        fill("myUsername"),
+-- <br>        value = "myUsername",
 -- <br>      },
 -- <br>      input {
 -- <br>        name = "password",
--- <br>        fill("myPassword"),
+-- <br>        value = "myPassword",
 -- <br>      },
 -- <br>      input {
 -- <br>        name = "autologin",
 -- <br>        type = "checkbox",
--- <br>        fill(true),
+-- <br>        checked = true,
 -- <br>      },
 -- <br>      submit(),
 -- <br>    },
@@ -269,30 +269,31 @@ DSL = {
     -- DSL method to match an input element by its attributes
     input = function (data)
         return function (w, v)
-            return match(w, "input", {"name", "id", "className", "type"}, data, "forms")
-        end
-    end,
-
-    -- DSL method to fill an input element
-    fill = function (str)
-        return function (w, v)
-            local js_template = [=[
-                if (formfiller.inputs) {
-                    var val = {str};
-                    formfiller.inputs.forEach(function (i) {
-                        if (i.type === "radio" || i.type === "checkbox") {
-                            i.checked = (val && val !== "false");
-                        } else {
-                            i.value = val;
+            if match(w, "input", {"name", "id", "className", "type"}, data, "forms") then
+                local val = data.value or data.checked
+                local fill = function (w, v)
+                    local js_template = [=[
+                        if (formfiller.inputs) {
+                            var val = {str};
+                            formfiller.inputs.forEach(function (i) {
+                                if (i.type === "radio" || i.type === "checkbox") {
+                                    i.checked = (val && val !== "false");
+                                } else {
+                                    i.value = val;
+                                }
+                            });
                         }
-                    });
-                }
-            ]=]
-            local js = string.gsub(js_template, "{(%w+)}", {
-                str = string.format("%q", tostring(str))
-            })
-            w:eval_js(js, "(formfiller.lua)")
-            return {}
+                    ]=]
+                    local js = string.gsub(js_template, "{(%w+)}", {
+                        str = string.format("%q", tostring(val))
+                    })
+                    w:eval_js(js, "(formfiller.lua)")
+                    return {}
+                end
+                return {fill}
+            else
+                return {}
+            end
         end
     end,
 
@@ -406,9 +407,9 @@ function add(w)
                     str = addAttr(str, input, attr, "      ");
                 });
                 if (input.type === "radio" || input.type === "checkbox") {
-                    str += "      fill(" + input.checked + "),\n";
+                    str += "      checked = " + input.checked + ",\n";
                 } else {
-                    str += "      fill(" + formfiller.toLuaString(input.value) + "),\n";
+                    str += "      value = " + formfiller.toLuaString(input.value) + ",\n";
                 }
                 str += "    },\n";
             });
@@ -434,12 +435,14 @@ function load(w, skip_init)
         w:eval_js(formfiller_js, "(formfiller.lua)")
     end
     -- the function stack. pushed functions are evaluated until there is none
-    -- left or one of them returns false
+    -- left or one of them returns false. if a function returns a table of
+    -- functions, these will be added to the top of the stack.
+    -- when evaluated, each function is passed the window and current view
     local rules = w.formfiller_state.rules
     while #rules > 0 do
         local fun = table.remove(rules)
         local ret = fun(w, w:get_current())
-        if ret then
+        if ret and type(ret) == "table" then
             ret = lousy.util.table.reverse(ret)
             for _,f in ipairs(ret) do
                 if type(f) == "function" then
