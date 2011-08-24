@@ -196,12 +196,16 @@ local DSL = {
             return function (inputs)
                 local form = {
                     profile = profile,
-                    inputs = inputs
+                    submit = inputs.submit,
+                    inputs = inputs,
                 }
                 return form
             end
         else
-            return { inputs = data }
+            return {
+                submit = data.submit,
+                inputs = data,
+            }
         end
     end,
 
@@ -404,7 +408,7 @@ end
 -- Submits the currently selected form by clicking the nth button or
 -- calling form.submit().
 -- @param w The window on which to fill the forms
--- @param n The index of the button to click.
+-- @param n The index of the button to click or -1 to use form.submit()
 local function submit_form(w, n)
     local js = string.format([=[
         if (formfiller.forms && formfiller.forms[0]) {
@@ -439,8 +443,9 @@ local function apply_form(w, form)
             full_match = false
         end
     end
-    if form.submit then
-        submit_form(w, form.submit)
+    local s = form.submit
+    if s then
+        submit_form(w, type(s) == "number" and s or -1)
         return true
     else
         return full_match
