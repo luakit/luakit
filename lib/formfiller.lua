@@ -260,9 +260,9 @@ function add(w)
     -- load JS prerequisites
     w:eval_js(formfiller_js, "(formfiller.lua)")
     local js = [=[
-        var addAttr = function (str, elem, attr, indent) {
+        var addAttr = function (str, elem, attr, indent, tail) {
             if (typeof(elem[attr]) == "string" && elem[attr] !== "") {
-                str += indent + attr + ' = ' + formfiller.toLuaString(formfiller.rexEscape(elem[attr])) + ',\n';
+                str += indent + attr + ' = ' + formfiller.toLuaString(formfiller.rexEscape(elem[attr])) + tail;
             }
             return str;
         }
@@ -278,17 +278,17 @@ function add(w)
             }
             str += "  form {\n";
             ["method", "action", "id", "className", "name"].forEach(function (attr) {
-                str = addAttr(str, form, attr, "    ");
+                str = addAttr(str, form, attr, "    ", ",\n");
             });
             inputs.forEach(function (input) {
-                str += "    input {\n";
+                str += "    input {\n      ";
                 ["id", "className", "name", "type"].forEach(function (attr) {
-                    str = addAttr(str, input, attr, "      ");
+                    str = addAttr(str, input, attr, "", ", ");
                 });
                 if (input.type === "radio" || input.type === "checkbox") {
-                    str += "      checked = " + input.checked + ",\n";
+                    str += "\n      checked = " + input.checked + ",\n";
                 } else {
-                    str += "      value = " + formfiller.toLuaString(input.value) + ",\n";
+                    str += "\n      value = " + formfiller.toLuaString(input.value) + ",\n";
                 }
                 str += "    },\n";
             });
