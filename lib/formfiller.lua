@@ -24,7 +24,7 @@ local editor     = globals.editor or (os.getenv("EDITOR") or "vim")
 local editor_cmd = string.format("%s -e %s", term, editor)
 
 --- Provides functionaliy to auto-fill forms based on a Lua DSL.
--- The configuration is stored in $XDG_DATA_DIR/luakit/formfiller.lua
+-- The configuration is stored in $XDG_DATA_DIR/luakit/forms.lua
 --
 -- The following is an example for a formfiller definition:
 --
@@ -84,7 +84,7 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 module("formfiller")
 
 -- The Lua DSL file containing the formfiller rules
-local file = capi.luakit.data_dir .. "/formfiller.lua"
+local file = capi.luakit.data_dir .. "/forms.lua"
 
 -- The global formfiller JS code
 local formfiller_js = [=[
