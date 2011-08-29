@@ -229,6 +229,7 @@ function init(w)
     -- the environment of the DSL script
     -- load the script
     local f = io.open(file, "r")
+    if not f then return end -- file doesn't exist
     local code = f:read("*all")
     f:close()
     local dsl, message = loadstring(code)
