@@ -4,11 +4,10 @@
 #
 # To use it, run the following in your favorite shell:
 #
-#   for f in ~/.local/share/luakit/forms/*; do ./convert.rb $f >> ~/.local/share/luakit/formfiller.lua; done
+#   for f in ~/.local/share/luakit/forms/*; do ./convert.rb $f >> ~/.local/share/luakit/forms.lua; done
 #
 # BEWARE: this script is not fool-proof. Errors may occur during conversion,
-# so du a manual check after the conversion!
-#
+# so do a manual check after the conversion!
 
 def die(msg)
   puts msg
@@ -99,4 +98,3 @@ end
 
 puts "}"
 puts
-
