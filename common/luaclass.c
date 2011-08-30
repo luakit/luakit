@@ -111,6 +111,13 @@ luaH_typename(lua_State *L, gint idx) {
     return lua_typename(L, type);
 }
 
+/** Registers a library under a global name in Lua.
+ *
+ * \param L The Lua VM state.
+ * \param name The name under which the library should be accessible in Lua.
+ * \param methods The methods of the library.
+ * \param meta The methods of the library's metatable.
+ */
 void
 luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
         const struct luaL_reg meta[]) {
