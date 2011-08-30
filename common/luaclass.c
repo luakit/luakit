@@ -219,6 +219,14 @@ luaH_class_setup(lua_State *L, lua_class_t *class,
     g_ptr_array_add(luaH_classes, class);
 }
 
+/** Generic wrapper around GTK's \c signal_add.
+ * Will be used to implement the Lua \c add_signal method of a class.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class that handles the signal.
+ * \param name The name of the signal.
+ * \param ud The index of the handler function.
+ */
 void
 luaH_class_add_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint ud) {
@@ -235,6 +243,14 @@ luaH_class_add_signal(lua_State *L, lua_class_t *lua_class,
     signal_add(lua_class->signals, name, luaH_object_ref(L, ud));
 }
 
+/** Generic wrapper around GTK's \c signal_remove.
+ * Will be used to implement the Lua \c remove_signal method of a class.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class that handles the signal.
+ * \param name The name of the signal.
+ * \param ud The index of the handler function.
+ */
 void
 luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint ud) {
@@ -245,6 +261,15 @@ luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
     lua_remove(L, ud);
 }
 
+/** Generic wrapper around GTK's \c signal_emit.
+ * Will be used to implement the Lua \c emit_signal method of a class.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class that handles the signal.
+ * \param name The name of the signal.
+ * \param nargs The number of arguments the signal expects.
+ * \param nret The number of return values the signal expects.
+ */
 gint
 luaH_class_emit_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint nargs, gint nret) {
