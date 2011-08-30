@@ -132,6 +132,17 @@ luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
     lua_pop(L, 2);
 }
 
+/** Adds a property to a \ref lua_class_t.
+ * All callbacks functions can also be NULL, in which case the property either
+ * cannot be initialized, set or read.
+ *
+ * \param lua_class The class to add the property to.
+ * \param token The property's name.
+ * \param cb_new The function to call when the property is set on
+ *          initialization.
+ * \param cb_index The function to call when the property is read.
+ * \param cb_newindex The function to call when the property is set.
+ */
 void
 luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
         lua_class_propfunc_t cb_new,
@@ -152,6 +163,19 @@ luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
             (gpointer) token, prop);
 }
 
+/** Creates a new Lua class.
+ *
+ * \param L The Lua VM state.
+ * \param class The \ref lua_class_t that identifies the class.
+ * \param name The name of the class and it's constructor in Lua.
+ * \param allocator The constructor of the class.
+ * \param index_miss_property The function to call when an unknown property was
+ *          indexed. Can be NULL.
+ * \param newindex_miss_property The function to call when an unknown property was
+ *          set. Can be NULL.
+ * \param methods The methods of the class's objects.
+ * \param meta The methods of the class itself.
+ */
 void
 luaH_class_setup(lua_State *L, lua_class_t *class,
         const gchar *name,
