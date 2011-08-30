@@ -306,8 +306,10 @@ luaH_class_newindex(lua_State *L) {
  * Returns the number of elements pushed on stack. */
 gint
 luaH_class_new(lua_State *L, lua_class_t *lua_class) {
+    gint idx = lua_gettop(L);
+
     /* Check we have a table that should contains some properties */
-    luaH_checktable(L, 2);
+    luaH_checktable(L, idx);
 
     /* Create a new object */
     lua_object_t *object = lua_class->allocator(L);
@@ -315,7 +317,7 @@ luaH_class_new(lua_State *L, lua_class_t *lua_class) {
     /* Push the first key before iterating */
     lua_pushnil(L);
     /* Iterate over the property keys */
-    while(lua_next(L, 2)) {
+    while(lua_next(L, idx)) {
         /* Check that the key is a string.
          * We cannot call tostring blindly or Lua will convert a key that is a
          * number TO A STRING, confusing lua_next() */
