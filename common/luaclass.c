@@ -303,7 +303,15 @@ luaH_class_newindex(lua_State *L) {
 }
 
 /* Generic constructor function for objects.
- * Returns the number of elements pushed on stack. */
+ * Returns the number of elements pushed on stack.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class of the new object.
+ *
+ * \luastack
+ * \lvalue A table that contains properties of the new object.
+ * \lreturn A new object derived from the given class.
+ */
 gint
 luaH_class_new(lua_State *L, lua_class_t *lua_class) {
     gint idx = lua_gettop(L);
