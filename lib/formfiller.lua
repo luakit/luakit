@@ -207,7 +207,7 @@ local DSL = {
         if type(data) == "string" then
             local profile = data
             return function (inputs)
-                transform(inputs, profile)
+                return transform(inputs, profile)
             end
         else
             return transform(data)
