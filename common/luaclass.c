@@ -35,10 +35,13 @@ struct lua_class_property {
 
 static GPtrArray *luaH_classes = NULL;
 
-/* Convert a object to a udata if possible.
- * `ud` is the index.
- * `class` is the wanted class.
- * Returns a pointer to the object, NULL otherwise. */
+/** Convert an object to a userdata if possible.
+ *
+ * \param L The Lua VM state.
+ * \param ud The index of the object to convert.
+ * \param class The to try and convert it to.
+ * \return A pointer to the converted object, NULL otherwise.
+ */
 gpointer
 luaH_toudata(lua_State *L, gint ud, lua_class_t *class) {
     gpointer p = lua_touserdata(L, ud);
@@ -54,10 +57,14 @@ luaH_toudata(lua_State *L, gint ud, lua_class_t *class) {
     return p;
 }
 
-/* Check for a udata class.
- * `ud` is the object index on the stack.
- * `class` is the wanted class.
- * Returns a pointer to the wanted class. */
+/** Checks if the object at the given index is a userdata of the given class.
+ * Raises a Lua type error if it is not.
+ *
+ * \param L The Lua VM state.
+ * \param ud The object index on the stack.
+ * \param class The wanted class.
+ * \return A pointer to the converted object.
+ */
 gpointer
 luaH_checkudata(lua_State *L, gint ud, lua_class_t *class) {
     gpointer p = luaH_toudata(L, ud, class);
@@ -66,8 +73,12 @@ luaH_checkudata(lua_State *L, gint ud, lua_class_t *class) {
     return p;
 }
 
-/* Get an object lua_class.
- * `idx` of the index of the object on the stack. */
+/** Get an object's \ref lua_class_t.
+ *
+ * \param L The Lua VM state.
+ * \param idx The index of the object on the stack.
+ * \return The \ref lua_class_t of the object, if it has one. \c NULL otherwise.
+ */
 lua_class_t *
 luaH_class_get(lua_State *L, gint idx) {
     gint type = lua_type(L, idx);
@@ -84,6 +95,7 @@ luaH_class_get(lua_State *L, gint idx) {
 }
 
 /** Enhanced version of lua_typename that recognizes setup Lua classes.
+ *
  * \param L The Lua VM state.
  * \param idx The index of the object on the stack.
  */
