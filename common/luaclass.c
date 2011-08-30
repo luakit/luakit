@@ -286,10 +286,13 @@ luaH_class_property_signal(lua_State *L, lua_class_t *lua_class,
     return 0;
 }
 
-/* Try to use the metatable of an object.
- * `idxobj` is the index of the object.
- * `idxfield` is the index of the field (attribute) to get.
- * Returns the number of element pushed on stack. */
+/** Try to use the metatable of an object.
+ *
+ * \param L The Lua VM state.
+ * \param idxobj The index of the object to index.
+ * \param idxfield The index of the field (attribute) to get.
+ * \return The number of element pushed on the stack.
+ */
 gint
 luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
     /* Get metatable of the object. */
@@ -309,10 +312,13 @@ luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
     return 0;
 }
 
-/* Get a property of a object.
- * `lua_class` is the Lua class.
- * `fieldidx` is the index of the field name.
- * Return is the object property if found, NULL otherwise. */
+/** Get a property of an object.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class of the object.
+ * \param fieldidx The index of the field name.
+ * \return The object property if found, NULL otherwise.
+ */
 static lua_class_property_t *
 luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
     const gchar *attr = luaL_checkstring(L, fieldidx);
@@ -323,7 +329,14 @@ luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
 }
 
 /* Generic index meta function for objects.
- * Return the number of elements pushed on stack. */
+ *
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on the stack.
+ *
+ * \luastack
+ * \lvalue The object to index.
+ * \lvalue The property to get.
+ */
 gint
 luaH_class_index(lua_State *L) {
     /* Try to use metatable first. */
@@ -347,7 +360,15 @@ luaH_class_index(lua_State *L) {
 }
 
 /* Generic newindex meta function for objects.
- * Returns the number of elements pushed on stack. */
+ *
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on the stack.
+ *
+ * \luastack
+ * \lvalue The object to index.
+ * \lvalue The property to set.
+ * \lvalue The value to set it to.
+ */
 gint
 luaH_class_newindex(lua_State *L) {
     /* Try to use metatable first. */
@@ -370,7 +391,7 @@ luaH_class_newindex(lua_State *L) {
     return 0;
 }
 
-/* Generic constructor function for objects.
+/** Generic constructor function for objects.
  * Returns the number of elements pushed on stack.
  *
  * \param L The Lua VM state.
