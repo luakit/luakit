@@ -31,6 +31,7 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 -- <pre>
 -- <br>  on "luakit.org" {
 -- <br>    form "profile1" {
+-- <br>      debug = "debug_name",
 -- <br>      method = "post",
 -- <br>      action = "/login",
 -- <br>      className = "someFormClass",
@@ -74,6 +75,8 @@ local editor_cmd = string.format("%s -e %s", term, editor)
 --      the attributes of the <code>form</code> and <code>input</code>
 --      tables take JavaScript regular expressions.
 --      BEWARE their escaping!
+-- <li> The <code>debug</code> parameter of a <code>form</code> gives it a name that will
+--      be used when printing debug messages to stdout during the matching/filling process.
 -- </ul>
 --
 -- There is a conversion script in the luakit repository that converts
@@ -202,6 +205,7 @@ local DSL = {
                     form[k] = v
                 end
             end
+            if form.debug then form.debug = tostring(form.debug) end
             return form
         end
         if type(data) == "string" then
@@ -336,7 +340,10 @@ local function filter_forms(w, forms)
     local filtered = {}
     for _, form in ipairs(forms) do
         if match(w, "form", {"method", "name", "id", "action", "className"}, form) then
+            if form.debug then print(string.format("form %s matched its criteria", form.debug)) end
             table.insert(filtered, form)
+        else
+            if form.debug then print(string.format("form %s failed its criteria", form.debug)) end
         end
     end
     return filtered
@@ -445,15 +452,31 @@ local function apply_form(w, form)
             if val then fill_input(w, val) end
             if input.focus then focus_input(w) end
             if input.select then select_input(w) end
+            if form.debug then
+                print(string.format("input (id = %s, name = %s, className = %s, type = %s) filled with %s",
+                    input.id or "",  input.name or "",  input.className or "",  input.type or "", tostring(val)))
+            end
         else
+            if form.debug then
+                print(string.format("input (id = %s, name = %s, className = %s, type = %s) did not match",
+                    input.id or "",  input.name or "",  input.className or "",  input.type or ""))
+            end
             full_match = false
         end
     end
     local s = form.submit
     if s then
+        if form.debug then
+            if type(s) == "number" then
+                print(string.format("submitting form %s using `form.submit()`", form.debug))
+            else
+                print(string.format("submitting form %s using `input[%i].click()`", form.debug, s))
+            end
+        end
         submit_form(w, type(s) == "number" and s or -1)
         return true
     else
+        if form.debug then print(string.format("form %s not submitted", form.debug)) end
         return full_match
     end
 end
@@ -475,6 +498,7 @@ function load(w, fast)
         if fast or not show_menu(w, forms) then
             -- apply until the first form submits
             for _, form in ipairs(forms) do
+                if form.debug then print(string.format("trying to apply form %s", form.debug)) end
                 if apply_form(w, form) then return end
             end
         end
