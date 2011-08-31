@@ -168,7 +168,7 @@ function del(index, save_bookmarks)
     -- Refresh open bookmarks views
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs:get_children()) do
-            if string.match(v.uri, "^luakit://bookmarks/?") then
+            if string.match(v.uri, "^luakit://bookmarks/?") and v.status == "finished" then
                 v:reload()
             end
         end
@@ -242,7 +242,7 @@ end)
 
 -- Listen for page refresh requests
 chrome.add_signal("refresh", function (pat, view)
-    if string.match(pattern, pat) then view:reload() end
+    if string.match(pattern, pat) and view.status == "finished" then view:reload() end
 end)
 
 -- URI of the chrome page
