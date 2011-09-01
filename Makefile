@@ -40,6 +40,8 @@ $(OBJS): $(HEADS) config.mk
 	@echo $(CC) -c $< -o $@
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
+widgets/webview.o: $(wildcard widgets/webview/*.c)
+
 luakit: $(OBJS)
 	@echo $(CC) -o $@ $(OBJS)
 	@$(CC) -o $@ $(OBJS) $(LDFLAGS)
