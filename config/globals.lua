@@ -9,8 +9,8 @@ globals = {
  -- http_proxy          = "http://example.com:3128",
     default_window_size = "800x600",
 
- -- allow URLSs to be opened in new windows instead of tabs?
-    allow_new_windows      = false,
+ -- allow URLs to be opened in new windows instead of tabs?
+    allow_new_windows      = true,
 
  -- Disables loading of hostnames from /etc/hosts (for large host files)
  -- load_etc_hosts      = false,
