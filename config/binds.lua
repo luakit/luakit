@@ -290,6 +290,7 @@ add_cmds({
     cmd("reload",               function (w) w:reload() end),
     cmd("restart",              function (w) w:restart() end),
     cmd("write",                function (w) w:save_session() end),
+    cmd("noh[lsearch]",         function (w) w:clear_search() end),
 
     cmd("back",                 function (w, a) w:back(tonumber(a) or 1) end),
     cmd("f[orward]",            function (w, a) w:forward(tonumber(a) or 1) end),
