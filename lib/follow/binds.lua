@@ -41,6 +41,7 @@ add_binds("normal", {
         w:start_follow(modes.uri, "yank", function (uri)
             uri = string.gsub(uri, " ", "%%20")
             capi.luakit.selection.primary = uri
+            capi.luakit.selection.clipboard = uri
             w:notify("Yanked uri: " .. uri)
         end)
     end),
@@ -48,7 +49,8 @@ add_binds("normal", {
     -- Yank element description
     buf("^;Y$", function (w,b,m)
         w:start_follow(modes.desc, "yank desc", function (desc)
-            capi.luakit.selection.primary = desc
+            capi.luakit.selection.primary = uri
+            capi.luakit.selection.clipboard = uri
             w:notify("Yanked desc: " .. desc)
         end)
     end),

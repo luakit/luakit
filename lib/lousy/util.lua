@@ -198,6 +198,17 @@ function table.values(t)
     return ret
 end
 
+--- Convert a table to an array by removing all keys that are not sequential numbers.
+-- @param t the table to converts
+-- @return a new table with all non-number keys removed
+function table.toarray(t)
+    local ret = {}
+    for k, v in ipairs(t) do
+        ret[k] = v
+    end
+    return ret
+end
+
 --- Check if a file exists and is readable.
 -- @param f The file path.
 -- @return True if the file exists and is readable.
