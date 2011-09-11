@@ -16,11 +16,10 @@ globals = {
 }
 
 -- Make useragent
-local arch = string.match(({luakit.spawn_sync("uname -sm")})[2], "([^\n]*)")
-local lkv  = string.format("luakit/%s", luakit.version)
-local wkv  = string.format("WebKitGTK+/%d.%d.%d", luakit.webkit_major_version, luakit.webkit_minor_version, luakit.webkit_micro_version)
+local lkv  = string.format("luakit")
+local wkv  = string.format("WebKitGTK+/%d.%d", luakit.webkit_major_version, luakit.webkit_minor_version)
 local awkv = string.format("AppleWebKit/%s.%s+", luakit.webkit_user_agent_major_version, luakit.webkit_user_agent_minor_version)
-globals.useragent = string.format("Mozilla/5.0 (%s) %s %s %s", arch, awkv, wkv, lkv)
+globals.useragent = string.format("Mozilla/5.0 %s %s %s", awkv, wkv, lkv)
 
 -- Search common locations for a ca file which is used for ssl connection validation.
 local ca_files = {
