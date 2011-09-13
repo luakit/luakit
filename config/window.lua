@@ -128,19 +128,27 @@ window.init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
         w.tabs:add_signal("page-added", function (nbook, view, idx)
-            w:update_tab_count(idx)
-            w:update_tablist()
+            luakit.idle_add(function ()
+                w:update_tab_count()
+                w:update_tablist()
+                return false
+            end)
         end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
+            w.view = nil
             w:set_mode()
-            w:update_tab_count(idx)
-            w:update_win_title(view)
-            w:update_uri(view)
-            w:update_progress(view)
-            w:update_tablist(idx)
-            w:update_buf()
-            w:update_ssl(view)
-            w:update_hist(view)
+            -- Update widgets after tab switch
+            luakit.idle_add(function ()
+                w:update_tab_count()
+                w:update_win_title()
+                w:update_uri()
+                w:update_progress()
+                w:update_tablist()
+                w:update_buf()
+                w:update_ssl()
+                w:update_hist()
+                return false
+            end)
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
             w:update_tab_count()
@@ -237,16 +245,6 @@ window.init_funcs = {
 
 -- Helper functions which operate on the window widgets or structure.
 window.methods = {
-    -- Return the widget in the currently active tab
-    get_current = function (w)       return w.tabs[w.tabs:current()] end,
-    -- Check if given widget is the widget in the currently active tab
-    is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
-
-    get_tab_title = function (w, view)
-        if not view then view = w:get_current() end
-        return view:get_property("title") or view.uri or "(Untitled)"
-    end,
-
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
         local opts = lousy.util.table.join(opts or {}, {
@@ -434,63 +432,47 @@ window.methods = {
     end,
 
     -- GUI content update functions
-    update_tab_count = function (w, i, t)
-        w.sbar.r.tabi.text = string.format("[%d/%d]", i or w.tabs:current(), t or w.tabs:count())
+    update_tab_count = function (w)
+        w.sbar.r.tabi.text = string.format("[%d/%d]", w.tabs:current(), w.tabs:count())
     end,
 
-    update_win_title = function (w, view)
-        if not view then view = w:get_current() end
-        local uri, title = view.uri, view:get_property("title")
+    update_win_title = function (w)
+        local uri, title = w.view.uri, w.view:get_property("title")
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
     end,
 
-    update_uri = function (w, view, uri, link)
-        local u, escape = w.sbar.l.uri, lousy.util.escape
-        if link then
-            u.text = "Link: " .. escape(link)
-        else
-            if not view then view = w:get_current() end
-            u.text = escape((uri or (view and view.uri) or "about:blank"))
-        end
+    update_uri = function (w, link)
+        w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
+            or (w.view and w.view.uri) or "about:blank")
     end,
 
-    update_progress = function (w, view, p)
-        if not view then view = w:get_current() end
-        if not p then p = view:get_property("progress") end
+    update_progress = function (w)
+        local p = w.view:get_property("progress")
         local loaded = w.sbar.l.loaded
-        if not view:loading() or p == 1 then
+        if not w.view:loading() or p == 1 then
             loaded:hide()
         else
             loaded:show()
-            local text = string.format("(%d%%)", p * 100)
-            if loaded.text ~= text then loaded.text = text end
+            loaded.text = string.format("(%d%%)", p * 100)
         end
     end,
 
-    update_scroll = function (w, view)
-        if not view then view = w:get_current() end
-        local label = w.sbar.r.scroll
-        if view then
-            local scroll = view.scroll
-            local y, max, text = scroll.y, scroll.ymax
-            if     max == 0   then text = "All"
-            elseif y   == 0   then text = "Top"
-            elseif y   == max then text = "Bot"
-            else text = string.format("%2d%%", (y / max) * 100)
-            end
-            if label.text ~= text then label.text = text end
-            label:show()
-        else
-            label:hide()
+    update_scroll = function (w)
+        local scroll, label = w.view.scroll, w.sbar.r.scroll
+        local y, max, text = scroll.y, scroll.ymax
+        if     max == 0   then text = "All"
+        elseif y   == 0   then text = "Top"
+        elseif y   == max then text = "Bot"
+        else text = string.format("%2d%%", (y / max) * 100)
         end
+        if label.text ~= text then label.text = text end
     end,
 
-    update_ssl = function (w, view)
-        if not view then view = w:get_current() end
-        local trusted = view:ssl_trusted()
+    update_ssl = function (w)
+        local trusted = w.view:ssl_trusted()
         local ssl = w.sbar.r.ssl
         if trusted ~= nil and not w.checking_ssl then
             ssl.fg = theme.notrust_fg
@@ -509,10 +491,9 @@ window.methods = {
         end
     end,
 
-    update_hist = function (w, view)
-        if not view then view = w:get_current() end
+    update_hist = function (w)
         local hist = w.sbar.l.hist
-        local back, forward = view:can_go_back(), view:can_go_forward()
+        local back, forward = w.view:can_go_back(), w.view:can_go_forward()
         local s = (back and "+" or "") .. (forward and "-" or "")
         if s ~= "" then
             hist.text = '['..s..']'
@@ -540,11 +521,11 @@ window.methods = {
         w:update_buf()
     end,
 
-    update_tablist = function (w, current)
-        local current = current or w.tabs:current()
+    update_tablist = function (w)
+        local current = w.tabs:current()
         local fg, bg, nfg, snfg = theme.tab_fg, theme.tab_bg, theme.tab_ntheme, theme.selected_ntheme
         local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
-        local escape, get_title = lousy.util.escape, w.get_tab_title
+        local escape = lousy.util.escape
         local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
 
         for i, view in ipairs(w.tabs.children) do
@@ -561,9 +542,9 @@ window.methods = {
                     ntheme = gfg
                 end
             end
-
+            local title = view:get_property("title") or view.uri or "(Untitled)"
             tabs[i] = {
-                title = string.format(tfmt, ntheme or fg, i, escape(get_title(w, view))),
+                title = string.format(tfmt, ntheme or fg, i, escape(title)),
                 fg = (current == i and theme.tab_selected_fg) or fg,
                 bg = (current == i and theme.tab_selected_bg) or bg,
             }
@@ -602,7 +583,7 @@ window.methods = {
 
     -- close the current tab
     close_tab = function (w, view, blank_last)
-        view = view or w:get_current()
+        view = view or w.view
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 1 then
             if not view:loading() and view.uri == "about:blank" then return end
@@ -665,7 +646,7 @@ window.methods = {
 
     -- Navigate current view or open new tab
     navigate = function (w, uri, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         if view then
             local js = string.match(uri, "^javascript:(.+)$")
             if js then
@@ -765,7 +746,7 @@ window.methods = {
 
     -- Increase (or decrease) the last found number in the current uri
     inc_uri = function (w, arg)
-        local uri = string.gsub(w:get_current().uri, "(%d+)([^0-9]*)$", function (num, rest)
+        local uri = string.gsub(w.view.uri, "(%d+)([^0-9]*)$", function (num, rest)
             return string.format("%0"..#num.."d", tonumber(num) + (arg or 1)) .. rest
         end)
         return uri
@@ -790,9 +771,9 @@ window.methods = {
     -- other signals.
     emit_form_root_active_signal = function (w, s)
         if s == "form-active" then
-            w:get_current():emit_signal("form-active")
+            w.view:emit_signal("form-active")
         elseif s == "root-active" then
-            w:get_current():emit_signal("root-active")
+            w.view:emit_signal("root-active")
         end
     end,
 }

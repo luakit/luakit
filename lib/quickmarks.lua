@@ -142,7 +142,7 @@ add_binds("normal", {
     -- Quickmark current uri (`M{a-zA-Z0-9}`)
     buf("^M%w$", function (w, b)
         local token = string.match(b, "^M(.)$")
-        local uri = w:get_current().uri
+        local uri = w.view.uri
         set(token, {uri})
         w:notify(string.format("Quickmarked %q: %s", token, uri))
     end),

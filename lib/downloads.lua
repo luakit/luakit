@@ -250,7 +250,7 @@ end)
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({"Control"}, "D", function (w)
-        w:enter_cmd(":download " .. (w:get_current().uri or "http://") .. " ")
+        w:enter_cmd(":download " .. (w.view.uri or "http://") .. " ")
     end),
 })
 
