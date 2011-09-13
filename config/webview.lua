@@ -35,7 +35,7 @@ webview.init_funcs = {
         view:add_signal("property::uri", function (v)
             w:update_tablist()
             if w:is_current(v) then
-                w:update_uri(v)
+                w:update_uri()
             end
         end)
     end,
@@ -44,7 +44,7 @@ webview.init_funcs = {
     hist_update = function (view, w)
         view:add_signal("load-status", function (v, status)
             if w:is_current(v) then
-                w:update_hist(v)
+                w:update_hist()
             end
         end)
     end,
@@ -62,7 +62,7 @@ webview.init_funcs = {
     scroll_update = function (view, w)
         view:add_signal("expose", function (v)
             if w:is_current(v) then
-                w:update_scroll(v)
+                w:update_scroll()
             end
         end)
     end,
@@ -72,8 +72,8 @@ webview.init_funcs = {
         for _, sig in ipairs({"load-status", "property::progress"}) do
             view:add_signal(sig, function (v)
                 if w:is_current(v) then
-                    w:update_progress(v)
-                    w:update_ssl(v)
+                    w:update_progress()
+                    w:update_ssl()
                 end
             end)
         end
@@ -83,12 +83,12 @@ webview.init_funcs = {
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)
             if w:is_current(v) and link then
-                w:update_uri(v, nil, link)
+                w:update_uri(link)
             end
         end)
         view:add_signal("link-unhover", function (v)
             if w:is_current(v) then
-                w:update_uri(v)
+                w:update_uri()
             end
         end)
     end,

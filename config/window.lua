@@ -128,24 +128,29 @@ window.init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
         w.tabs:add_signal("page-added", function (nbook, view, idx)
-            w.view = nil
-            w:update_tab_count(idx)
-            w:update_tablist()
+            luakit.idle_add(function ()
+                w:update_tab_count()
+                w:update_tablist()
+                return false
+            end)
         end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
             w.view = nil
             w:set_mode()
-            w:update_tab_count(idx)
-            w:update_win_title(view)
-            w:update_uri(view)
-            w:update_progress(view)
-            w:update_tablist(idx)
-            w:update_buf()
-            w:update_ssl(view)
-            w:update_hist(view)
+            -- Update widgets after tab switch
+            luakit.idle_add(function ()
+                w:update_tab_count()
+                w:update_win_title()
+                w:update_uri()
+                w:update_progress()
+                w:update_tablist()
+                w:update_buf()
+                w:update_ssl()
+                w:update_hist()
+                return false
+            end)
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
-            w.view = nil
             w:update_tab_count()
             w:update_tablist()
         end)
@@ -242,11 +247,6 @@ window.init_funcs = {
 window.methods = {
     -- Check if given widget is the widget in the currently active tab
     is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
-
-    get_tab_title = function (w, view)
-        view = view or w.view
-        return view:get_property("title") or view.uri or "(Untitled)"
-    end,
 
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
@@ -435,62 +435,48 @@ window.methods = {
     end,
 
     -- GUI content update functions
-    update_tab_count = function (w, i, t)
-        w.sbar.r.tabi.text = string.format("[%d/%d]", i or w.tabs:current(), t or w.tabs:count())
+    update_tab_count = function (w)
+        w.sbar.r.tabi.text = string.format("[%d/%d]", w.tabs:current(), w.tabs:count())
     end,
 
-    update_win_title = function (w, view)
-        view = view or w.view
-        local uri, title = view.uri, view:get_property("title")
+    update_win_title = function (w)
+        local uri, title = w.view.uri, w.view:get_property("title")
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
     end,
 
-    update_uri = function (w, view, uri, link)
-        local u, escape = w.sbar.l.uri, lousy.util.escape
-        if link then
-            u.text = "Link: " .. escape(link)
-        else
-            view = view or w.view
-            u.text = escape((uri or (view and view.uri) or "about:blank"))
-        end
+    update_uri = function (w, link)
+        w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
+            or (w.view and w.view.uri) or "about:blank")
     end,
 
-    update_progress = function (w, view, p)
-        view = view or w.view
-        if not p then p = view:get_property("progress") end
+    update_progress = function (w)
+        local p = w.view:get_property("progress")
         local loaded = w.sbar.l.loaded
-        if not view:loading() or p == 1 then
+        if not w.view:loading() or p == 1 then
             loaded:hide()
         else
             loaded:show()
-            local text = string.format("(%d%%)", p * 100)
-            if loaded.text ~= text then loaded.text = text end
+            loaded.text = string.format("(%d%%)", p * 100)
         end
     end,
 
-    update_scroll = function (w, view)
-        view = view or w.view
+    update_scroll = function (w)
+        local val, max = w.view:get_scroll_vert()
+        if max == 0 then val = "All"
+        elseif val == 0 then val = "Top"
+        elseif val == max then val = "Bot"
+        else val = string.format("%2d%%", (val/max) * 100)
+        end
         local scroll = w.sbar.r.scroll
-        if view then
-            local val, max = view:get_scroll_vert()
-            if max == 0 then val = "All"
-            elseif val == 0 then val = "Top"
-            elseif val == max then val = "Bot"
-            else val = string.format("%2d%%", (val/max) * 100)
-            end
-            if scroll.text ~= val then scroll.text = val end
-            scroll:show()
-        else
-            scroll:hide()
-        end
+        if scroll.text ~= val then scroll.text = val end
+        scroll:show()
     end,
 
-    update_ssl = function (w, view)
-        view = view or w.view
-        local trusted = view:ssl_trusted()
+    update_ssl = function (w)
+        local trusted = w.view:ssl_trusted()
         local ssl = w.sbar.r.ssl
         if trusted ~= nil and not w.checking_ssl then
             ssl.fg = theme.notrust_fg
@@ -509,10 +495,9 @@ window.methods = {
         end
     end,
 
-    update_hist = function (w, view)
-        view = view or w.view
+    update_hist = function (w)
         local hist = w.sbar.l.hist
-        local back, forward = view:can_go_back(), view:can_go_forward()
+        local back, forward = w.view:can_go_back(), w.view:can_go_forward()
         local s = (back and "+" or "") .. (forward and "-" or "")
         if s ~= "" then
             hist.text = '['..s..']'
@@ -540,11 +525,11 @@ window.methods = {
         w:update_buf()
     end,
 
-    update_tablist = function (w, current)
-        local current = current or w.tabs:current()
+    update_tablist = function (w)
+        local current = w.tabs:current()
         local fg, bg, nfg, snfg = theme.tab_fg, theme.tab_bg, theme.tab_ntheme, theme.selected_ntheme
         local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
-        local escape, get_title = lousy.util.escape, w.get_tab_title
+        local escape = lousy.util.escape
         local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
 
         for i, view in ipairs(w.tabs:get_children()) do
@@ -561,9 +546,9 @@ window.methods = {
                     ntheme = gfg
                 end
             end
-
+            local title = view:get_property("title") or view.uri or "(Untitled)"
             tabs[i] = {
-                title = string.format(tfmt, ntheme or fg, i, escape(get_title(w, view))),
+                title = string.format(tfmt, ntheme or fg, i, escape(title)),
                 fg = (current == i and theme.tab_selected_fg) or fg,
                 bg = (current == i and theme.tab_selected_bg) or bg,
             }
