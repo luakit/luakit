@@ -24,7 +24,7 @@ webview.init_funcs = {
     title_update = function (view, w)
         view:add_signal("property::title", function (v)
             w:update_tablist()
-            if w:is_current(v) then
+            if w.view == v then
                 w:update_win_title()
             end
         end)
@@ -34,7 +34,7 @@ webview.init_funcs = {
     uri_update = function (view, w)
         view:add_signal("property::uri", function (v)
             w:update_tablist()
-            if w:is_current(v) then
+            if w.view == v then
                 w:update_uri()
             end
         end)
@@ -43,7 +43,7 @@ webview.init_funcs = {
     -- Update history indicator
     hist_update = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if w:is_current(v) then
+            if w.view == v then
                 w:update_hist()
             end
         end)
@@ -61,7 +61,7 @@ webview.init_funcs = {
     -- Update scroll widget
     scroll_update = function (view, w)
         view:add_signal("expose", function (v)
-            if w:is_current(v) then
+            if w.view == v then
                 w:update_scroll()
             end
         end)
@@ -71,7 +71,7 @@ webview.init_funcs = {
     progress_update = function (view, w)
         for _, sig in ipairs({"load-status", "property::progress"}) do
             view:add_signal(sig, function (v)
-                if w:is_current(v) then
+                if w.view == v then
                     w:update_progress()
                     w:update_ssl()
                 end
@@ -82,12 +82,12 @@ webview.init_funcs = {
     -- Display hovered link in statusbar
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)
-            if w:is_current(v) and link then
+            if w.view == v and link then
                 w:update_uri(link)
             end
         end)
         view:add_signal("link-unhover", function (v)
-            if w:is_current(v) then
+            if w.view == v then
                 w:update_uri()
             end
         end)
@@ -145,7 +145,7 @@ webview.init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if status == "provisional" and w:is_current(v) then
+            if status == "provisional" and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
                 end

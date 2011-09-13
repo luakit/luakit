@@ -245,9 +245,6 @@ window.init_funcs = {
 
 -- Helper functions which operate on the window widgets or structure.
 window.methods = {
-    -- Check if given widget is the widget in the currently active tab
-    is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
-
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
         local opts = lousy.util.table.join(opts or {}, {
