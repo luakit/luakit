@@ -357,14 +357,20 @@ end
 
 -- Insert webview method lookup on window structure
 table.insert(window.indexes, 1, function (w, k)
-    -- Get current webview
-    local view = w.tabs:atindex(w.tabs:current())
-    if not view then return end
+    if k == "view" then
+        local view = w.tabs:atindex(w.tabs:current())
+        if view and type(view) == "widget" and view.type == "webview" then
+            w.view = view
+            return view
+        end
+    end
     -- Lookup webview method
     local func = webview.methods[k]
     if not func then return end
-    -- Return webview method wrapper function
-    return function (_, ...) return func(view, w, ...) end
+    local view = w.view
+    if view then
+        return function (_, ...) return func(view, w, ...) end
+    end
 end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
