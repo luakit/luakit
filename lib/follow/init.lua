@@ -488,7 +488,7 @@ end
 
 -- Check if following is possible safely
 local function is_ready(w)
-    for _, f in ipairs(w:get_current().frames) do
+    for _, f in ipairs(w.view.frames) do
         local ret = w:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", "(follow.lua)", f)
         if ret ~= "true" then return false end
     end
@@ -502,7 +502,7 @@ local function focus(w, offset)
         return (w:eval_js("follow.focused();", "(follow.lua)", f) == "true")
     end
     -- sort frames with currently active one first
-    local frames = w:get_current().frames
+    local frames = w.view.frames
     if #frames == 0 then return end
     for i=1,#frames,1 do
         if is_focused(frames[1]) then break end
@@ -563,7 +563,7 @@ local function accept_follow(w, frame)
             val = string.match(ret, "done (.*)")
         end
     else
-        for _, f in ipairs(w:get_current().frames) do
+        for _, f in ipairs(w.view.frames) do
             local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
             local done = string.match(ret, "^done")
             if done then
@@ -622,7 +622,7 @@ new_mode("follow", {
         local theme_js = mk_theme_js()
 
         local sum = 0
-        local webkit_frames = w:get_current().frames
+        local webkit_frames = w.view.frames
         local ignore_frames = tostring(#webkit_frames == 1)
         local m = state.mode
 
@@ -674,7 +674,7 @@ new_mode("follow", {
     -- Leave follow mode hook
     leave = function (w)
         if w.eval_js then
-            for _,f in ipairs(w:get_current().frames) do
+            for _,f in ipairs(w.view.frames) do
                 w:eval_js(clear_js, "(follow.lua)", f)
             end
         end
@@ -689,7 +689,7 @@ new_mode("follow", {
         local eval_frame
         local split = lousy.util.string.split
         local filter_js = string.format("follow.filter(%q, %q);", filter, id)
-        for _, f in ipairs(w:get_current().frames) do
+        for _, f in ipairs(w.view.frames) do
             local ret = split(w:eval_js(filter_js, "(follow.lua)", f))
             if ret[2] == "true" then focus(w, 1) end -- Reselect active hint
             local num = tonumber(ret[1])

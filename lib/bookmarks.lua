@@ -244,7 +244,7 @@ chrome_page    = "luakit://bookmarks/"
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({}, "B", function (w)
-        w:enter_cmd(":bookmark " .. (w:get_current().uri or "http://") .. " ")
+        w:enter_cmd(":bookmark " .. (w.view.uri or "http://") .. " ")
     end),
 
     buf("^gb$", function (w)

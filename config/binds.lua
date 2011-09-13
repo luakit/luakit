@@ -62,7 +62,7 @@ add_binds("all", {
         -- Ignore button 2 clicks in form fields
         if not m.context.editable then
             -- Open hovered uri in new tab
-            local uri = w:get_current().hovered_uri
+            local uri = w.view.hovered_uri
             if uri then
                 w:new_tab(uri, false)
             else -- Open selection in current tab
@@ -74,7 +74,7 @@ add_binds("all", {
 
     -- Open link in new tab when Ctrl-clicked.
     but({"Control"}, 1, function (w, m)
-        local uri = w:get_current().hovered_uri
+        local uri = w.view.hovered_uri
         if uri then
             w:new_tab(uri, false)
         end
@@ -173,14 +173,14 @@ add_binds("normal", {
 
     -- Yanking
     buf("^yy$",                     function (w)
-                                        local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
+                                        local uri = string.gsub(w.view.uri or "", " ", "%%20")
                                         luakit.set_selection(uri)
                                         luakit.set_selection("clipboard", uri)
                                         w:notify("Yanked uri: " .. uri)
                                     end),
 
     buf("^yt$",                     function (w)
-                                        local title = w:get_current():get_property("title")
+                                        local title = w.view:get_property("title")
                                         luakit.set_selection(title)
                                         luakit.set_selection("clipboard", title)
                                         w:notify("Yanked title: " .. title)
@@ -192,9 +192,9 @@ add_binds("normal", {
     buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
     buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
     buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
-    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. (w:get_current().uri or "")) end),
-    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. (w:get_current().uri or "")) end),
-    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. (w:get_current().uri or "")) end),
+    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. (w.view.uri or "")) end),
+    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. (w.view.uri or "")) end),
+    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. (w.view.uri or "")) end),
     buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
     -- History
@@ -218,16 +218,16 @@ add_binds("normal", {
     key({"Control"}, "w",           function (w)    w:close_tab()       end),
     key({},          "d",           function (w, m) for i=1,m.count do w:close_tab()      end end, {count=1}),
 
-    key({},          "<",           function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
-    key({},          ">",           function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
-    key({"Mod1"},    "Page_Up",     function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
-    key({"Mod1"},    "Page_Down",   function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
+    key({},          "<",           function (w, m) w.tabs:reorder(w.view, w.tabs:current() - m.count) end, {count=1}),
+    key({},          ">",           function (w, m) w.tabs:reorder(w.view, (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
+    key({"Mod1"},    "Page_Up",     function (w, m) w.tabs:reorder(w.view, w.tabs:current() - m.count) end, {count=1}),
+    key({"Mod1"},    "Page_Down",   function (w, m) w.tabs:reorder(w.view, (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
 
     buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(globals.homepage) end end, {count=1}),
     buf("^gh$",                     function (w)       w:navigate(globals.homepage) end),
 
     -- Open tab from current tab history
-    buf("^gy$",                     function (w) w:new_tab(w:get_current().history or "") end),
+    buf("^gy$",                     function (w) w:new_tab(w.view.history or "") end),
 
     key({},          "r",           function (w) w:reload() end),
     key({},          "R",           function (w) w:reload(true) end),

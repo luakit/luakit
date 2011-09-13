@@ -51,7 +51,7 @@ new_mode("search", {
         -- Check if search was aborted and return to original position
         local s = w.search_state
         if s.marker then
-            w:get_current():set_scroll_vert(s.marker)
+            w.view:set_scroll_vert(s.marker)
             s.marker = nil
         end
     end,
@@ -64,7 +64,7 @@ new_mode("search", {
             if #text > 3 then
                 w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
                 if s.ret == false then
-                    if s.marker then w:get_current():set_scroll_vert(s.marker) end
+                    if s.marker then w.view:set_scroll_vert(s.marker) end
                     w.ibar.input.fg = theme.ibar_error_fg
                     w.ibar.input.bg = theme.ibar_error_bg
                 else

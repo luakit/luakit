@@ -128,10 +128,12 @@ window.init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
         w.tabs:add_signal("page-added", function (nbook, view, idx)
+            w.view = nil
             w:update_tab_count(idx)
             w:update_tablist()
         end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
+            w.view = nil
             w:set_mode()
             w:update_tab_count(idx)
             w:update_win_title(view)
@@ -143,6 +145,7 @@ window.init_funcs = {
             w:update_hist(view)
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
+            w.view = nil
             w:update_tab_count()
             w:update_tablist()
         end)
@@ -237,13 +240,11 @@ window.init_funcs = {
 
 -- Helper functions which operate on the window widgets or structure.
 window.methods = {
-    -- Return the widget in the currently active tab
-    get_current = function (w)       return w.tabs:atindex(w.tabs:current())       end,
     -- Check if given widget is the widget in the currently active tab
     is_current  = function (w, wi)   return w.tabs:indexof(wi) == w.tabs:current() end,
 
     get_tab_title = function (w, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         return view:get_property("title") or view.uri or "(Untitled)"
     end,
 
@@ -439,7 +440,7 @@ window.methods = {
     end,
 
     update_win_title = function (w, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         local uri, title = view.uri, view:get_property("title")
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = globals.max_title_len or 80
@@ -452,13 +453,13 @@ window.methods = {
         if link then
             u.text = "Link: " .. escape(link)
         else
-            if not view then view = w:get_current() end
+            view = view or w.view
             u.text = escape((uri or (view and view.uri) or "about:blank"))
         end
     end,
 
     update_progress = function (w, view, p)
-        if not view then view = w:get_current() end
+        view = view or w.view
         if not p then p = view:get_property("progress") end
         local loaded = w.sbar.l.loaded
         if not view:loading() or p == 1 then
@@ -471,7 +472,7 @@ window.methods = {
     end,
 
     update_scroll = function (w, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         local scroll = w.sbar.r.scroll
         if view then
             local val, max = view:get_scroll_vert()
@@ -488,7 +489,7 @@ window.methods = {
     end,
 
     update_ssl = function (w, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         local trusted = view:ssl_trusted()
         local ssl = w.sbar.r.ssl
         if trusted ~= nil and not w.checking_ssl then
@@ -509,7 +510,7 @@ window.methods = {
     end,
 
     update_hist = function (w, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         local hist = w.sbar.l.hist
         local back, forward = view:can_go_back(), view:can_go_forward()
         local s = (back and "+" or "") .. (forward and "-" or "")
@@ -609,7 +610,7 @@ window.methods = {
 
     -- close the current tab
     close_tab = function (w, view, blank_last)
-        view = view or w:get_current()
+        view = view or w.view
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 1 then
             if not view:loading() and view.uri == "about:blank" then return end
@@ -672,7 +673,7 @@ window.methods = {
 
     -- Navigate current view or open new tab
     navigate = function (w, uri, view)
-        if not view then view = w:get_current() end
+        view = view or w.view
         if view then
             local js = string.match(uri, "^javascript:(.+)$")
             if js then
@@ -772,7 +773,7 @@ window.methods = {
 
     -- Increase (or decrease) the last found number in the current uri
     inc_uri = function (w, arg)
-        local uri = string.gsub(w:get_current().uri, "(%d+)([^0-9]*)$", function (num, rest)
+        local uri = string.gsub(w.view.uri, "(%d+)([^0-9]*)$", function (num, rest)
             return string.format("%0"..#num.."d", tonumber(num) + (arg or 1)) .. rest
         end)
         return uri
@@ -797,9 +798,9 @@ window.methods = {
     -- other signals.
     emit_form_root_active_signal = function (w, s)
         if s == "form-active" then
-            w:get_current():emit_signal("form-active")
+            w.view:emit_signal("form-active")
         elseif s == "root-active" then
-            w:get_current():emit_signal("root-active")
+            w.view:emit_signal("root-active")
         end
     end,
 }
