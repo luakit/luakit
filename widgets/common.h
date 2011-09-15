@@ -43,7 +43,8 @@
 
 #define LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(widget)     \
     case L_TK_CHILD:                                  \
-      return luaH_widget_set_child(L, widget);
+      luaH_widget_set_child(L, widget);               \
+      break;
 
 #define LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(widget)  \
     case L_TK_REMOVE:                                 \
