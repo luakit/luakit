@@ -157,7 +157,7 @@ window.follow = (function () {
         }
 
         function createTick(hint) {
-            var tick = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect.height/2);
+            var tick = createSpan(hint, follow.theme.horiz_offset, follow.theme.vert_offset - hint.rect0.height/2);
             tick.style.font = follow.theme.tick_font;
             tick.style.color = follow.theme.tick_fg;
             if (isFrame(hint.element)) {
