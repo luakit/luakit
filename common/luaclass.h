@@ -69,6 +69,8 @@ void luaH_class_remove_signal(lua_State *, lua_class_t *, const gchar *name,
 gint luaH_class_emit_signal(lua_State *, lua_class_t *, const gchar *name,
         gint nargs, gint nret);
 
+gint luaH_class_property_signal(lua_State *, lua_class_t *, luakit_token_t);
+
 void luaH_openlib(lua_State *, const gchar *, const struct luaL_reg[],
         const struct luaL_reg[]);
 void luaH_class_setup(lua_State *, lua_class_t *, const gchar *,
