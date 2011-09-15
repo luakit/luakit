@@ -9,12 +9,12 @@ webview = {}
 webview.init_funcs = {
     -- Set useragent
     set_useragent = function (view, w)
-        view:set_property('user-agent', globals.useragent)
+        view.user_agent = globals.useragent
     end,
 
     -- Check if checking ssl certificates
     checking_ssl = function (view, w)
-        local ca_file = soup.get_property("ssl-ca-file")
+        local ca_file = soup.ssl_ca_file
         if ca_file and os.exists(ca_file) then
             w.checking_ssl = true
         end
@@ -171,7 +171,7 @@ webview.init_funcs = {
             -- Join all property tables
             for k, v in pairs(lousy.util.table.join(unpack(props))) do
                 info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
-                view:set_property(k, v)
+                view[k] = v
             end
         end)
     end,
@@ -254,15 +254,6 @@ webview.methods = {
         end
     end,
 
-    -- Property functions
-    get = function (view, w, k)
-        return view:get_property(k)
-    end,
-
-    set = function (view, w, k, v)
-        view:set_property(k, v)
-    end,
-
     -- Evaluate javascript code and return string result
     -- The frame argument can be any of the following:
     -- * true to evaluate on the focused frame
@@ -294,20 +285,20 @@ webview.methods = {
 
     -- Zoom functions
     zoom_in = function (view, w, step, full_zoom)
-        view:set_property("full-content-zoom", not not full_zoom)
+        view.full_content_zoom = not not full_zoom
         step = step or globals.zoom_step or 0.1
-        view:set_property("zoom-level", view:get_property("zoom-level") + step)
+        view.zoom_level = view.zoom_level + step
     end,
 
     zoom_out = function (view, w, step, full_zoom)
-        view:set_property("full-content-zoom", not not full_zoom)
+        view.full_content_zoom = not not full_zoom
         step = step or globals.zoom_step or 0.1
-        view:set_property("zoom-level", math.max(0.01, view:get_property("zoom-level") - step))
+        view.zoom_level = math.max(0.01, view.zoom_level) - step
     end,
 
     zoom_set = function (view, w, level, full_zoom)
-        view:set_property("full-content-zoom", not not full_zoom)
-        view:set_property("zoom-level", level or 1.0)
+        view.full_content_zoom = not not full_zoom
+        view.zoom_level = level or 1.0
     end,
 
     -- History traversing functions

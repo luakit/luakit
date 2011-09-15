@@ -125,7 +125,7 @@ end
 webview.init_funcs.set_proxy = function (view, w)
     local active = get_active()
     if active and active.address ~= '' then
-        capi.soup.set_property('proxy-uri', active.address)
+        capi.soup.proxy_uri = active.address
     end
     -- The proxy property is set globablly so this function only needs to be
     -- called once. Other proxy changes take place from the interactive
@@ -217,7 +217,7 @@ add_binds("proxymenu", lousy.util.table.join({
             if row and row.address then
                 set_active(row.name)
                 w:set_mode()
-                capi.soup.set_property('proxy-uri', row.address)
+                capi.soup.proxy_uri = row.address
                 if row.name then
                     w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
                 else

@@ -437,7 +437,7 @@ window.methods = {
     end,
 
     update_win_title = function (w)
-        local uri, title = w.view.uri, w.view:get_property("title")
+        local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
@@ -450,7 +450,7 @@ window.methods = {
     end,
 
     update_progress = function (w)
-        local p = w.view:get_property("progress")
+        local p = w.view.progress
         local loaded = w.sbar.l.loaded
         if not w.view:loading() or p == 1 then
             loaded:hide()
@@ -542,7 +542,7 @@ window.methods = {
                     ntheme = gfg
                 end
             end
-            local title = view:get_property("title") or view.uri or "(Untitled)"
+            local title = view.title or view.uri or "(Untitled)"
             tabs[i] = {
                 title = string.format(tfmt, ntheme or fg, i, escape(title)),
                 fg = (current == i and theme.tab_selected_fg) or fg,

@@ -182,7 +182,7 @@ add_binds("normal", {
                                     end),
 
     buf("^yt$",                     function (w)
-                                        local title = w.view:get_property("title")
+                                        local title = w.view.title
                                         luakit.selection.primary = title
                                         luakit.selection.clipboard = uri
                                         w:notify("Yanked title: " .. title)
