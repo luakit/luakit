@@ -182,7 +182,7 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
         return 0;
     }
 
-    return luaH_object_emit_property_signal(L, 1);
+    return luaH_object_property_signal(L, 1, token);
 }
 
 widget_t *

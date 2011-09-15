@@ -128,7 +128,7 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
         warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
-    return luaH_object_emit_property_signal(L, 1);
+    return luaH_object_property_signal(L, 1, token);
 }
 
 static void
