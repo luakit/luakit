@@ -50,60 +50,64 @@ static struct {
     GSList *items;
 } last_popup = { NULL, NULL };
 
-GHashTable *webview_properties = NULL;
-property_t webview_properties_table[] = {
-  { "auto-load-images",                             BOOL,   SETTINGS,    TRUE,  NULL },
-  { "auto-resize-window",                           BOOL,   SETTINGS,    TRUE,  NULL },
-  { "auto-shrink-images",                           BOOL,   SETTINGS,    TRUE,  NULL },
-  { "cursive-font-family",                          CHAR,   SETTINGS,    TRUE,  NULL },
-  { "custom-encoding",                              CHAR,   WEBKITVIEW,  TRUE,  NULL },
-  { "default-encoding",                             CHAR,   SETTINGS,    TRUE,  NULL },
-  { "default-font-family",                          CHAR,   SETTINGS,    TRUE,  NULL },
-  { "default-font-size",                            INT,    SETTINGS,    TRUE,  NULL },
-  { "default-monospace-font-size",                  INT,    SETTINGS,    TRUE,  NULL },
-  { "editable",                                     BOOL,   WEBKITVIEW,  TRUE,  NULL },
-  { "enable-caret-browsing",                        BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-default-context-menu",                  BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-developer-extras",                      BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-dom-paste",                             BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-file-access-from-file-uris",            BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-html5-database",                        BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-html5-local-storage",                   BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-java-applet",                           BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-offline-web-application-cache",         BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-page-cache",                            BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-plugins",                               BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-private-browsing",                      BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-scripts",                               BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-site-specific-quirks",                  BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-spatial-navigation",                    BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-spell-checking",                        BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-universal-access-from-file-uris",       BOOL,   SETTINGS,    TRUE,  NULL },
-  { "enable-xss-auditor",                           BOOL,   SETTINGS,    TRUE,  NULL },
-  { "encoding",                                     CHAR,   WEBKITVIEW,  FALSE, NULL },
-  { "enforce-96-dpi",                               BOOL,   SETTINGS,    TRUE,  NULL },
-  { "fantasy-font-family",                          CHAR,   SETTINGS,    TRUE,  NULL },
-  { "full-content-zoom",                            BOOL,   WEBKITVIEW,  TRUE,  NULL },
-  { "icon-uri",                                     CHAR,   WEBKITVIEW,  FALSE, NULL },
-  { "javascript-can-access-clipboard",              BOOL,   SETTINGS,    TRUE,  NULL },
-  { "javascript-can-open-windows-automatically",    BOOL,   SETTINGS,    TRUE,  NULL },
-  { "minimum-font-size",                            INT,    SETTINGS,    TRUE,  NULL },
-  { "minimum-logical-font-size",                    INT,    SETTINGS,    TRUE,  NULL },
-  { "monospace-font-family",                        CHAR,   SETTINGS,    TRUE,  NULL },
-  { "print-backgrounds",                            BOOL,   SETTINGS,    TRUE,  NULL },
-  { "progress",                                     DOUBLE, WEBKITVIEW,  FALSE, NULL },
-  { "resizable-text-areas",                         BOOL,   SETTINGS,    TRUE,  NULL },
-  { "sans-serif-font-family",                       CHAR,   SETTINGS,    TRUE,  NULL },
-  { "serif-font-family",                            CHAR,   SETTINGS,    TRUE,  NULL },
-  { "spell-checking-languages",                     CHAR,   SETTINGS,    TRUE,  NULL },
-  { "tab-key-cycles-through-elements",              BOOL,   SETTINGS,    TRUE,  NULL },
-  { "title",                                        CHAR,   WEBKITVIEW,  FALSE, NULL },
-  { "transparent",                                  BOOL,   WEBKITVIEW,  TRUE,  NULL },
-  { "user-agent",                                   CHAR,   SETTINGS,    TRUE,  NULL },
-  { "user-stylesheet-uri",                          CHAR,   SETTINGS,    TRUE,  NULL },
-  { "zoom-level",                                   FLOAT,  WEBKITVIEW,  TRUE,  NULL },
-  { "zoom-step",                                    FLOAT,  SETTINGS,    TRUE,  NULL },
-  { NULL,                                           0,      0,           0,     NULL },
+property_t webview_properties[] = {
+  { L_TK_CUSTOM_ENCODING,   "custom-encoding",   CHAR,   TRUE  },
+  { L_TK_EDITABLE,          "editable",          BOOL,   TRUE  },
+  { L_TK_ENCODING,          "encoding",          CHAR,   FALSE },
+  { L_TK_FULL_CONTENT_ZOOM, "full-content-zoom", BOOL,   TRUE  },
+  { L_TK_ICON_URI,          "icon-uri",          CHAR,   FALSE },
+  { L_TK_PROGRESS,          "progress",          DOUBLE, FALSE },
+  { L_TK_TITLE,             "title",             CHAR,   FALSE },
+  { L_TK_TRANSPARENT,       "transparent",       BOOL,   TRUE  },
+  { L_TK_URI,               "uri",               CHAR,   FALSE }, /* dummy */
+  { L_TK_ZOOM_LEVEL,        "zoom-level",        FLOAT,  TRUE  },
+  { 0,                      NULL,                0,      0     },
+};
+
+property_t webview_settings_properties[] = {
+  { L_TK_AUTO_LOAD_IMAGES,                          "auto-load-images",                          BOOL,  TRUE },
+  { L_TK_AUTO_RESIZE_WINDOW,                        "auto-resize-window",                        BOOL,  TRUE },
+  { L_TK_AUTO_SHRINK_IMAGES,                        "auto-shrink-images",                        BOOL,  TRUE },
+  { L_TK_CURSIVE_FONT_FAMILY,                       "cursive-font-family",                       CHAR,  TRUE },
+  { L_TK_DEFAULT_ENCODING,                          "default-encoding",                          CHAR,  TRUE },
+  { L_TK_DEFAULT_FONT_FAMILY,                       "default-font-family",                       CHAR,  TRUE },
+  { L_TK_DEFAULT_FONT_SIZE,                         "default-font-size",                         INT,   TRUE },
+  { L_TK_DEFAULT_MONOSPACE_FONT_SIZE,               "default-monospace-font-size",               INT,   TRUE },
+  { L_TK_ENABLE_CARET_BROWSING,                     "enable-caret-browsing",                     BOOL,  TRUE },
+  { L_TK_ENABLE_DEFAULT_CONTEXT_MENU,               "enable-default-context-menu",               BOOL,  TRUE },
+  { L_TK_ENABLE_DEVELOPER_EXTRAS,                   "enable-developer-extras",                   BOOL,  TRUE },
+  { L_TK_ENABLE_DOM_PASTE,                          "enable-dom-paste",                          BOOL,  TRUE },
+  { L_TK_ENABLE_FILE_ACCESS_FROM_FILE_URIS,         "enable-file-access-from-file-uris",         BOOL,  TRUE },
+  { L_TK_ENABLE_HTML5_DATABASE,                     "enable-html5-database",                     BOOL,  TRUE },
+  { L_TK_ENABLE_HTML5_LOCAL_STORAGE,                "enable-html5-local-storage",                BOOL,  TRUE },
+  { L_TK_ENABLE_JAVA_APPLET,                        "enable-java-applet",                        BOOL,  TRUE },
+  { L_TK_ENABLE_OFFLINE_WEB_APPLICATION_CACHE,      "enable-offline-web-application-cache",      BOOL,  TRUE },
+  { L_TK_ENABLE_PAGE_CACHE,                         "enable-page-cache",                         BOOL,  TRUE },
+  { L_TK_ENABLE_PLUGINS,                            "enable-plugins",                            BOOL,  TRUE },
+  { L_TK_ENABLE_PRIVATE_BROWSING,                   "enable-private-browsing",                   BOOL,  TRUE },
+  { L_TK_ENABLE_SCRIPTS,                            "enable-scripts",                            BOOL,  TRUE },
+  { L_TK_ENABLE_SITE_SPECIFIC_QUIRKS,               "enable-site-specific-quirks",               BOOL,  TRUE },
+  { L_TK_ENABLE_SPATIAL_NAVIGATION,                 "enable-spatial-navigation",                 BOOL,  TRUE },
+  { L_TK_ENABLE_SPELL_CHECKING,                     "enable-spell-checking",                     BOOL,  TRUE },
+  { L_TK_ENABLE_UNIVERSAL_ACCESS_FROM_FILE_URIS,    "enable-universal-access-from-file-uris",    BOOL,  TRUE },
+  { L_TK_ENABLE_XSS_AUDITOR,                        "enable-xss-auditor",                        BOOL,  TRUE },
+  { L_TK_ENFORCE_96_DPI,                            "enforce-96-dpi",                            BOOL,  TRUE },
+  { L_TK_FANTASY_FONT_FAMILY,                       "fantasy-font-family",                       CHAR,  TRUE },
+  { L_TK_JAVASCRIPT_CAN_ACCESS_CLIPBOARD,           "javascript-can-access-clipboard",           BOOL,  TRUE },
+  { L_TK_JAVASCRIPT_CAN_OPEN_WINDOWS_AUTOMATICALLY, "javascript-can-open-windows-automatically", BOOL,  TRUE },
+  { L_TK_MINIMUM_FONT_SIZE,                         "minimum-font-size",                         INT,   TRUE },
+  { L_TK_MINIMUM_LOGICAL_FONT_SIZE,                 "minimum-logical-font-size",                 INT,   TRUE },
+  { L_TK_MONOSPACE_FONT_FAMILY,                     "monospace-font-family",                     CHAR,  TRUE },
+  { L_TK_PRINT_BACKGROUNDS,                         "print-backgrounds",                         BOOL,  TRUE },
+  { L_TK_RESIZABLE_TEXT_AREAS,                      "resizable-text-areas",                      BOOL,  TRUE },
+  { L_TK_SANS_SERIF_FONT_FAMILY,                    "sans-serif-font-family",                    CHAR,  TRUE },
+  { L_TK_SERIF_FONT_FAMILY,                         "serif-font-family",                         CHAR,  TRUE },
+  { L_TK_SPELL_CHECKING_LANGUAGES,                  "spell-checking-languages",                  CHAR,  TRUE },
+  { L_TK_TAB_KEY_CYCLES_THROUGH_ELEMENTS,           "tab-key-cycles-through-elements",           BOOL,  TRUE },
+  { L_TK_USER_AGENT,                                "user-agent",                                CHAR,  TRUE },
+  { L_TK_USER_STYLESHEET_URI,                       "user-stylesheet-uri",                       CHAR,  TRUE },
+  { L_TK_ZOOM_STEP,                                 "zoom-step",                                 FLOAT, TRUE },
+  { 0,                                              NULL,                                        0,     0    },
 };
 
 widget_t*
@@ -122,20 +126,6 @@ luaH_checkwebview(lua_State *L, gint udx)
 #include "widgets/webview/scroll.c"
 
 static gint
-luaH_webview_get_property(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    return luaH_get_property(L, webview_properties, d->view, 2);
-}
-
-static gint
-luaH_webview_set_property(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    return luaH_set_property(L, webview_properties, d->view, 2, 3);
-}
-
-static gint
 luaH_webview_load_string(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
@@ -149,12 +139,19 @@ luaH_webview_load_string(lua_State *L)
 static void
 notify_cb(WebKitWebView* UNUSED(v), GParamSpec *ps, widget_t *w)
 {
+    static GHashTable *wvprops = NULL;
     property_t *p;
-    /* emit webview property signal if found in properties table */
-    if ((p = g_hash_table_lookup(webview_properties, ps->name))) {
+
+    if (!wvprops) {
+        wvprops = g_hash_table_new(g_str_hash, g_str_equal);
+        for (p = webview_properties; p->name; p++)
+            g_hash_table_insert(wvprops, (gpointer)p->name, (gpointer)p);
+    }
+
+    if ((p = g_hash_table_lookup(wvprops, ps->name))) {
         lua_State *L = globalconf.L;
         luaH_object_push(L, w->ref);
-        luaH_object_emit_signal(L, -1, p->signame, 0, 0);
+        luaH_object_property_signal(L, -1, p->tok);
         lua_pop(L, 1);
     }
 }
@@ -479,13 +476,12 @@ static gint
 luaH_webview_index(lua_State *L, luakit_token_t token)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
+    gint ret;
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push property methods */
-      PF_CASE(GET_PROPERTY,         luaH_webview_get_property)
-      PF_CASE(SET_PROPERTY,         luaH_webview_set_property)
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
       /* push search methods */
       PF_CASE(SEARCH,               luaH_webview_search)
@@ -524,7 +520,12 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
         break;
     }
 
-    return 0;
+    if ((ret = luaH_gobject_index(L, webview_properties, token,
+            G_OBJECT(d->view))))
+        return ret;
+
+    return luaH_gobject_index(L, webview_settings_properties, token,
+            G_OBJECT(webkit_web_view_get_settings(d->view)));
 }
 
 static gchar*
@@ -558,31 +559,39 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 {
     size_t len;
     webview_data_t *d = luaH_checkwvdata(L, 1);
-    property_tmp_value_t tmp;
+    gchar *uri;
 
     switch(token)
     {
       case L_TK_URI:
-        tmp.c = parse_uri(luaL_checklstring(L, 3, &len));
-        webkit_web_view_load_uri(d->view, tmp.c);
-        update_uri(d->widget, tmp.c);
-        g_free(tmp.c);
+        uri = parse_uri(luaL_checklstring(L, 3, &len));
+        webkit_web_view_load_uri(d->view, uri);
+        update_uri(d->widget, uri);
+        g_free(uri);
         return 0;
 
       case L_TK_SHOW_SCROLLBARS:
         show_scrollbars(d, luaH_checkboolean(L, 3));
-        break;
+        return luaH_object_property_signal(L, 1, token);
 
       case L_TK_HISTORY:
         webview_set_history(L, d->view, 3);
-        break;
+        return luaH_object_property_signal(L, 1, token);
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
-        return 0;
+        break;
     }
 
-    return luaH_object_emit_property_signal(L, 1);
+    /* check for webview widget gobject properties */
+    gboolean emit = luaH_gobject_newindex(L, webview_properties, token, 3,
+            G_OBJECT(d->view));
+
+    /* check for webkit widget's settings gobject properties */
+    if (!emit)
+        emit = luaH_gobject_newindex(L, webview_settings_properties, token, 3,
+            G_OBJECT(webkit_web_view_get_settings(d->view)));
+
+    return emit ? luaH_object_property_signal(L, 1, token) : 0;
 }
 
 static gboolean
@@ -802,10 +811,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     w->data = g_slice_new0(webview_data_t);
     webview_data_t *d = (webview_data_t*)w->data;
     d->widget = w;
-
-    /* init properties hash table */
-    if (!webview_properties)
-        webview_properties = hash_properties(webview_properties_table);
 
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
