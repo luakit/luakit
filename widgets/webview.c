@@ -110,7 +110,7 @@ property_t webview_settings_properties[] = {
   { 0,                                              NULL,                                        0,     0    },
 };
 
-widget_t*
+static widget_t*
 luaH_checkwebview(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkwidget(L, udx);
@@ -808,9 +808,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     w->destructor = webview_destructor;
 
     /* create private webview data struct */
-    w->data = g_slice_new0(webview_data_t);
-    webview_data_t *d = (webview_data_t*)w->data;
+    webview_data_t *d = g_slice_new0(webview_data_t);
     d->widget = w;
+    w->data = d;
 
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)

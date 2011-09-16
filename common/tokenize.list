@@ -103,7 +103,7 @@ loading_chrome
 load_string
 max_conns
 max_conns_per_host
-maximize
+maximized
 mime_type
 minimum_font_size
 minimum_logical_font_size
@@ -177,8 +177,6 @@ top
 total_size
 transparent
 type
-unfullscreen
-unmaximize
 uri
 uri_decode
 uri_encode

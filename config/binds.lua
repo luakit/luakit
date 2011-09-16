@@ -157,9 +157,7 @@ add_binds("normal", {
 
     -- Fullscreen
     key({},          "F11",         function (w)
-                                        w.fullscreen = not w.fullscreen
-                                        if w.fullscreen then w.win:fullscreen()
-                                        else w.win:unfullscreen() end
+                                        w.win.fullscreen = not w.win.fullscreen
                                     end),
 
     -- Clipboard
