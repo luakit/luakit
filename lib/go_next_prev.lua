@@ -1,9 +1,9 @@
-------------------------------------------------------------------
--- Follow "next" or "prev" links on a page                      --
--- (C) 2009 Aldrik Dunbar  (n30n)                               --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
--- (C) 2011 Roman Leonov <rliaonau@gmail.com>                   --
-------------------------------------------------------------------
+----------------------------------------------------------------
+-- Follow "next" or "prev" links on a page                    --
+-- © 2009 Aldrik Dunbar  (n30n)                               --
+-- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
+-- © 2011 Roman Leonov <rliaonau@gmail.com>                   --
+----------------------------------------------------------------
 
 local defaults = {
     next = [[(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)]],
