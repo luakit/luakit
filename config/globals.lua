@@ -83,4 +83,12 @@ domain_props = { --[[
     }, ]]
 }
 
+globals.go_next_prev = {
+-- default settings
+ --  next = [[(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)]],
+ --  prev = [[(\b(prev|previous)\b|^<$|^(<<|«)$|^(<|«)|(<|«)$)]],
+-- domains specific settings
+ -- ["google.com"] = {next = "Next", prev = "Previous"},
+}
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

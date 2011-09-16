@@ -1,20 +1,41 @@
-----------------------------------------------------------------
--- Follow "next" or "prev" links on a page                    --
--- © 2009 Aldrik Dunbar  (n30n)                               --
--- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
-----------------------------------------------------------------
+------------------------------------------------------------------
+-- Follow "next" or "prev" links on a page                      --
+-- (C) 2009 Aldrik Dunbar  (n30n)                               --
+-- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
+-- (C) 2011 Roman Leonov <rliaonau@gmail.com>                   --
+------------------------------------------------------------------
 
-local go_next = [=[
+local defaults = {
+    next = [[(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)]],
+    prev = [[(\b(prev|previous)\b|^<$|^(<<|«)$|^(<|«)|(<|«)$)]],
+}
+
+local cut_www = function(d) return string.gsub(string.lower(d), '^www%.', '') end
+
+local go_table = setmetatable({}, {
+    __index = function(tab, key)
+        return rawget(tab, cut_www(key))
+        or setmetatable({}, {
+            __newindex = function(...) tab[key] = rawset(...) end,
+            __index = function(_, k) return rawget(tab, k) or defaults[k] end,
+        })
+    end,
+    __newindex = function(tab, key, val) rawset(tab, cut_www(key), val) end,
+})
+
+for k, v in pairs(globals.go_next_prev or {}) do go_table[k] = v end
+
+local go_next_or_prev_js = [=[
 (function() {
-    var el = document.querySelector("[rel='next']");
+    var el = document.querySelector("[rel='{where}']");
     if (el) { // Wow a developer that knows what he's doing!
         location = el.href;
     }
-    else { // Search from the bottom of the page up for a next link.
+    else { // Search from the bottom of the page up for a next/previous link.
         var els = document.getElementsByTagName("a");
         var i = els.length;
         while ((el = els[--i])) {
-            if (el.text.search(/(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)/i) > -1) {
+            if (el.text.search(/{pattern}/i) > -1) {
                 location = el.href;
                 break;
             }
@@ -23,30 +44,17 @@ local go_next = [=[
 })();
 ]=]
 
-local go_prev = [=[
-(function() {
-    var el = document.querySelector("[rel='prev']");
-    if (el) {
-        location = el.href;
-    }
-    else {
-        var els = document.getElementsByTagName("a");
-        var i = els.length;
-        while ((el = els[--i])) {
-            if (el.text.search(/(\b(prev|previous)\b|^<$|^(<<|«)$|^(<|«)|(<|«)$)/i) > -1) {
-                location = el.href;
-                break;
-            }
-        }
-    }
-})();
-]=]
+local do_js = function (w, direction)
+    w:eval_js(string.gsub( go_next_or_prev_js, "{(%w+)}", {
+        pattern = go_table[lousy.uri.parse(w.view.uri).host][direction],
+        where = direction,
+    }))
+end
 
 -- Add `[[` & `]]` bindings to the normal mode.
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^%]%]$", function (w) w:eval_js(go_next) end),
-    buf("^%[%[$", function (w) w:eval_js(go_prev) end),
+    lousy.bind.buf("^%]%]$", function(w) do_js(w, 'next') end),
+    lousy.bind.buf("^%[%[$", function(w) do_js(w, 'prev') end),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
