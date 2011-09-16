@@ -135,6 +135,7 @@ resizable_text_areas
 right
 sans_serif_font_family
 save_file
+screen
 scroll
 search
 secondary
@@ -144,7 +145,6 @@ selection
 select_region
 serif_font_family
 set_default_size
-set_screen
 set_title
 set_view_source
 set_width

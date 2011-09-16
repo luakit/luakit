@@ -55,9 +55,8 @@ luaH_window_show(lua_State *L)
 }
 
 static gint
-luaH_window_set_screen(lua_State *L)
+luaH_window_set_screen(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
     GdkScreen *screen = NULL;
 
     if (lua_islightuserdata(L, 2))
@@ -67,9 +66,9 @@ luaH_window_set_screen(lua_State *L)
 
     gtk_window_set_screen(GTK_WINDOW(w->widget), screen);
     gtk_window_present(GTK_WINDOW(w->widget));
+
     return 0;
 }
-
 
 static gint
 luaH_window_fullscreen(lua_State *L)
@@ -121,7 +120,6 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
       PF_CASE(SHOW,             luaH_window_show)
-      PF_CASE(SET_SCREEN,       luaH_window_set_screen)
       PF_CASE(FULLSCREEN,       luaH_window_fullscreen)
       PF_CASE(UNFULLSCREEN,     luaH_window_unfullscreen)
       PF_CASE(MAXIMIZE,         luaH_window_maximize)
@@ -135,6 +133,10 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 
       case L_TK_XID:
         lua_pushnumber(L, GDK_WINDOW_XID(GTK_WIDGET(w->widget)->window));
+        return 1;
+
+      case L_TK_SCREEN:
+        lua_pushlightuserdata(L, gtk_window_get_screen(GTK_WINDOW(w->widget)));
         return 1;
 
       default:
@@ -165,6 +167,10 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
       case L_TK_ICON:
         gtk_window_set_icon_from_file(GTK_WINDOW(w->widget),
             luaL_checkstring(L, 3), NULL);
+        break;
+
+      case L_TK_SCREEN:
+        luaH_window_set_screen(L, w);
         break;
 
       default:
