@@ -278,9 +278,12 @@ webview.methods = {
 
     -- Toggle source view
     toggle_source = function (view, w, show)
-        local showing = view:get_view_source()
-        if show == nil then show = not showing end
-        if show ~= showing then view:set_view_source(show) end
+        if show == nil then
+            view.view_source = not view.view_source
+        else
+            view.view_source = show
+        end
+        view:reload()
     end,
 
     -- Zoom functions

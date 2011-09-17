@@ -76,7 +76,6 @@ full_content_zoom
 fullscreen
 get_special_dir
 get_title
-get_view_source
 go_back
 go_forward
 hbox
@@ -146,8 +145,6 @@ select_region
 serif_font_family
 set_default_size
 set_title
-set_view_source
-set_width
 show
 show_border
 show_frame
@@ -187,6 +184,7 @@ vbox
 verbose
 version
 VIDEOS
+view_source
 vpaned
 webkit_major_version
 webkit_micro_version

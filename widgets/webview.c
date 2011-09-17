@@ -373,24 +373,6 @@ navigation_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
 }
 
 static gint
-luaH_webview_get_view_source(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    lua_pushboolean(L, webkit_web_view_get_view_source_mode(d->view));
-    return 1;
-}
-
-static gint
-luaH_webview_set_view_source(lua_State *L)
-{
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gboolean show = luaH_checkboolean(L, 2);
-    webkit_web_view_set_view_source_mode(d->view, show);
-    webkit_web_view_reload(d->view);
-    return 0;
-}
-
-static gint
 luaH_webview_reload(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
@@ -499,13 +481,13 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       PF_CASE(RELOAD_BYPASS_CACHE,  luaH_webview_reload_bypass_cache)
       PF_CASE(SSL_TRUSTED,          luaH_webview_ssl_trusted)
       PF_CASE(STOP,                 luaH_webview_stop)
-      /* push source viewing methods */
-      PF_CASE(GET_VIEW_SOURCE,      luaH_webview_get_view_source)
-      PF_CASE(SET_VIEW_SOURCE,      luaH_webview_set_view_source)
 
       /* push string properties */
       PS_CASE(HOVERED_URI,          d->hover)
       PS_CASE(URI,                  d->uri)
+
+      /* push boolean properties */
+      PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_source_mode(d->view))
 
       case L_TK_FRAMES:
         return luaH_webview_push_frames(L, d);
@@ -576,6 +558,10 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
       case L_TK_HISTORY:
         webview_set_history(L, d->view, 3);
+        return luaH_object_property_signal(L, 1, token);
+
+      case L_TK_VIEW_SOURCE:
+        webkit_web_view_set_view_source_mode(d->view, luaH_checkboolean(L, 3));
         return luaH_object_property_signal(L, 1, token);
 
       default:
