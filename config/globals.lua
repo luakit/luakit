@@ -17,7 +17,7 @@ globals = {
 
 -- Make useragent
 local _, arch = luakit.spawn_sync("uname -sm")
-globals.useragent = string.format("Mozilla/5.0 (%s) AppleWebKit/%s+ WebKitGTK+/%s luakit/%s",
+globals.useragent = string.format("Mozilla/5.0 (%s) AppleWebKit/%s+ (KHTML, like Gecko) WebKitGTK+/%s luakit/%s",
     string.sub(arch, 1, -2), luakit.webkit_user_agent_version,
     luakit.webkit_version, luakit.version)
 
