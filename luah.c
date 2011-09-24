@@ -23,12 +23,13 @@
 
 /* include clib headers */
 #include "clib/download.h"
+#include "clib/luakit.h"
 #include "clib/soup/soup.h"
 #include "clib/sqlite3.h"
 #include "clib/timer.h"
-#include "clib/widget.h"
-#include "clib/luakit.h"
 #include "clib/unique.h"
+#include "clib/widget.h"
+#include "clib/xdg.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -365,6 +366,9 @@ luaH_init(void)
 
     /* Export luakit lib */
     luakit_lib_setup(L);
+
+    /* Export xdg lib */
+    xdg_lib_setup(L);
 
     /* Export soup lib */
     soup_lib_setup(L);

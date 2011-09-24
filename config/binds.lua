@@ -314,8 +314,7 @@ add_cmds({
 
     cmd("dump", function (w, a)
         local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.html' -- sanitize filename
-        local downdir = luakit.get_special_dir("DOWNLOAD") or "."
-        local file = a or luakit.save_file("Save file", w.win, downdir, fname)
+        local file = a or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
         if file then
             local fd = assert(io.open(file, "w"), "failed to open: " .. file)
             local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")

@@ -231,47 +231,6 @@ luaH_luakit_save_file(lua_State *L)
     return 1;
 }
 
-/** Returns the full path of a special directory. On Unix this is done using the
- * XDG special user directories.
- * \see http://developer.gnome.org/glib/stable/glib-Miscellaneous-Utility-Functions.html
- * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on stack.
- *
- * \luastack
- * \lparam user_dir One of \c "DESKTOP", \c "DOCUMENTS", \c "DOWNLOAD", \c
- *                  "MUSIC", \c "PICTURES", \c  "PUBLIC_SHARE", \c "TEMPLATES"
- *                  or \c "VIDEOS". Errors if invalid special dir given.
- * \lreturn         Returns the full path of the given special directory.
- */
-static gint
-luaH_luakit_get_special_dir(lua_State *L)
-{
-    const gchar *name = luaL_checkstring(L, 1);
-    luakit_token_t token = l_tokenize(name);
-    GUserDirectory atom;
-    /* match token with G_USER_DIR_* atom */
-    switch(token) {
-#define UD_CASE(TOK) case L_TK_##TOK: atom = G_USER_DIRECTORY_##TOK; break;
-      UD_CASE(DESKTOP)
-      UD_CASE(DOCUMENTS)
-      UD_CASE(DOWNLOAD)
-      UD_CASE(MUSIC)
-      UD_CASE(PICTURES)
-      UD_CASE(PUBLIC_SHARE)
-      UD_CASE(TEMPLATES)
-      UD_CASE(VIDEOS)
-#undef UD_CASE
-      default:
-        warn("unknown atom G_USER_DIRECTORY_%s", name);
-        luaL_argerror(L, 1, "invalid G_USER_DIRECTORY_* atom");
-        return 0;
-    }
-    lua_pushstring(L, g_get_user_special_dir(atom));
-    return 1;
-}
-
 /** Executes a child synchronously (waits for the child to exit before
  * returning). The exit status and all stdout and stderr output from the
  * child is returned.
@@ -650,7 +609,6 @@ luakit_lib_setup(lua_State *L)
         LUA_CLASS_METHODS(luakit)
         { "__index",         luaH_luakit_index },
         { "exec",            luaH_luakit_exec },
-        { "get_special_dir", luaH_luakit_get_special_dir },
         { "quit",            luaH_luakit_quit },
         { "save_file",       luaH_luakit_save_file },
         { "spawn",           luaH_luakit_spawn },
