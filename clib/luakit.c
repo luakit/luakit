@@ -500,12 +500,6 @@ luaH_luakit_index(lua_State *L)
       /* push boolean properties */
       PB_CASE(VERBOSE,          globalconf.verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
-      /* push integer properties */
-      PI_CASE(WEBKIT_MAJOR_VERSION, webkit_major_version())
-      PI_CASE(WEBKIT_MINOR_VERSION, webkit_minor_version())
-      PI_CASE(WEBKIT_MICRO_VERSION, webkit_micro_version())
-      PI_CASE(WEBKIT_USER_AGENT_MAJOR_VERSION, WEBKIT_USER_AGENT_MAJOR_VERSION)
-      PI_CASE(WEBKIT_USER_AGENT_MINOR_VERSION, WEBKIT_USER_AGENT_MINOR_VERSION)
 
       case L_TK_WINDOWS:
         lua_newtable(L);
@@ -514,6 +508,16 @@ luaH_luakit_index(lua_State *L)
             luaH_object_push(L, w->ref);
             lua_rawseti(L, -2, i+1);
         }
+        return 1;
+
+      case L_TK_WEBKIT_VERSION:
+        lua_pushfstring(L, "%d.%d.%d", WEBKIT_MAJOR_VERSION,
+                WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
+        return 1;
+
+      case L_TK_WEBKIT_USER_AGENT_VERSION:
+        lua_pushfstring(L, "%d.%d", WEBKIT_USER_AGENT_MAJOR_VERSION,
+                WEBKIT_USER_AGENT_MINOR_VERSION);
         return 1;
 
       case L_TK_SELECTION:
