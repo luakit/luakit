@@ -31,6 +31,7 @@ local capi = {
     timer = timer,
     luakit = luakit,
     widget = widget,
+    xdg = xdg,
 }
 
 --- Provides internal support for downloads.
@@ -44,7 +45,7 @@ module("downloads")
 -- @name downloads
 opening = setmetatable({}, { __mode = "k" })
 downloads = {}
-default_dir = capi.luakit.get_special_dir("DOWNLOAD") or (os.getenv("HOME") .. "/downloads")
+default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Tracks speed data for downloads by weak table.
 local speeds = setmetatable({}, { __mode = "k" })
@@ -78,7 +79,7 @@ end
 window.init_funcs.downloads_status = function (w)
     local r = w.sbar.r
     r.downloads = capi.widget{type="label"}
-    r.layout:pack_start(r.downloads, false, false, 0)
+    r.layout:pack(r.downloads)
     r.layout:reorder(r.downloads, 1)
     -- Apply theme
     local theme = theme.get()
