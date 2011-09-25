@@ -22,23 +22,18 @@
 #define LUAKIT_COMMON_PROPERTY_H
 
 #include <lua.h>
-#include <glib/ghash.h>
+#include <glib-object.h>
+
+#include "common/tokenize.h"
 
 typedef enum {
     BOOL,
     CHAR,
-    INT,
-    FLOAT,
     DOUBLE,
+    FLOAT,
+    INT,
     URI,
 } property_value_t;
-
-typedef enum {
-    SETTINGS,
-    WEBKITVIEW,
-    SESSION,
-    COOKIEJAR,
-} property_scope;
 
 typedef union {
     gchar *c;
@@ -46,18 +41,17 @@ typedef union {
     gdouble d;
     gfloat f;
     gint i;
-} property_tmp_value_t;
+} property_tmp_t;
 
 typedef struct {
+    luakit_token_t tok;
     const gchar *name;
     property_value_t type;
-    property_scope scope;
     gboolean writable;
-    const gchar *signame;
 } property_t;
 
-GHashTable* hash_properties(property_t *properties);
-gint luaH_get_property(lua_State *L, GHashTable *properties, gpointer obj, gint nidx);
-gint luaH_set_property(lua_State *L, GHashTable *properties, gpointer obj, gint nidx, gint vidx);
+gint luaH_gobject_index(lua_State *, property_t *, luakit_token_t, GObject *);
+gboolean luaH_gobject_newindex(lua_State *, property_t *, luakit_token_t,
+        gint, GObject *);
 
 #endif

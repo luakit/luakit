@@ -25,11 +25,12 @@ tokenize_h = [[
 #include <glib/gtypes.h>
 
 typedef enum luakit_token_t {
-    L_TK_UNKNOWN=0, /* (luakit_token_t) NULL == L_TK_UNKNOWN */
+    L_TK_UNKNOWN=0, /* (luakit_token_t) 0 == L_TK_UNKNOWN */
     %s
 } luakit_token_t;
 
-__attribute__((pure)) enum luakit_token_t l_tokenize(const gchar *s);
+__attribute__((pure)) enum luakit_token_t l_tokenize(const gchar *);
+__attribute__((pure)) const gchar * token_tostring(luakit_token_t);
 
 #endif
 ]]
@@ -39,8 +40,6 @@ tokenize_c = [[
 
 #include <glib/ghash.h>
 #include "common/tokenize.h"
-
-static GHashTable *tokens = NULL;
 
 typedef struct {
     luakit_token_t tok;
@@ -52,8 +51,11 @@ token_map_t tokens_table[] = {
     { 0, NULL },
 };
 
-luakit_token_t l_tokenize(const gchar *s)
+luakit_token_t
+l_tokenize(const gchar *s)
 {
+    static GHashTable *tokens = NULL;
+
     if (!tokens) {
         tokens = g_hash_table_new(g_str_hash, g_str_equal);
         for (token_map_t *t = tokens_table; t->name; t++)
@@ -62,30 +64,44 @@ luakit_token_t l_tokenize(const gchar *s)
 
     return (luakit_token_t) g_hash_table_lookup(tokens, s);
 }
+
+const gchar *
+token_tostring(luakit_token_t tok)
+{
+    if (tok == L_TK_UNKNOWN)
+        return NULL;
+
+    return tokens_table[((gint)tok) - 1].name;
+}
 ]]
 
 if #arg ~= 2 then
-    error("invalid args, usage: gentokens.lua [token list] [out.c/out.h]")
+    error("invalid args, usage: gentokens.lua [tokens.list] [out.c/out.h]")
 end
 
 -- Load list of tokens
-tokens = {}
+local tokens = {}
 for token in io.lines(arg[1]) do
     if #token > 0 then
         if not string.match(token, "^[%w_]+$") then
             error(string.format("invalid token: %q", token))
         end
-        tokens["L_TK_" .. string.upper(token)] = token
+        enum = "L_TK_"..string.upper(token)
+        tokens[enum] = { enum = enum, token = token }
     end
 end
 
+-- Order tokens
+local order = {}
+for k, _ in pairs(tokens) do table.insert(order, k) end
+table.sort(order)
+
 if string.match(arg[2], "%.h$") then
     -- Gen list of tokens
-    enums = {}
-    for k, _ in pairs(tokens) do
+    local enums = {}
+    for _, k in pairs(order) do
         table.insert(enums, string.format("%s,", k))
     end
-    table.sort(enums)
 
     -- Write header file
     fh = io.open(arg[2], "w")
@@ -94,14 +110,15 @@ if string.match(arg[2], "%.h$") then
 
 elseif string.match(arg[2], "%.c$") then
     -- Gen table of { token, "literal" }
-    tok_table = {}
-    for k, v in pairs(tokens) do
-        table.insert(tok_table, string.format('{ %s, "%s" },', k, v))
+    local tokmap = {}
+    for _, k in pairs(order) do
+        local t = tokens[k]
+        table.insert(tokmap, string.format('{ %s, %q },', t.enum, t.token))
     end
 
     -- Write source file
     fh = io.open(arg[2], "w")
-    fh:write(string.format(tokenize_c, table.concat(tok_table, "\n    ")))
+    fh:write(string.format(tokenize_c, table.concat(tokmap,  "\n    ")))
     fh:close()
 
 else

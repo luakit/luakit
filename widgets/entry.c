@@ -22,29 +22,20 @@
 #include "widgets/common.h"
 
 static gint
-luaH_entry_append(lua_State *L)
-{
-    size_t len;
-    widget_t *w = luaH_checkwidget(L, 1);
-    const gchar *text = luaL_checklstring(L, 2, &len);
-    gint pos = -1;
-    gtk_editable_insert_text(GTK_EDITABLE(w->widget),
-        text, g_utf8_strlen(text, len), &pos);
-    lua_pushnumber(L, pos);
-    return 1;
-}
-
-static gint
 luaH_entry_insert(lua_State *L)
 {
-    size_t len;
     widget_t *w = luaH_checkwidget(L, 1);
-    gint pos = luaL_checknumber(L, 2);
-    const gchar *text = luaL_checklstring(L, 3, &len);
+
+    /* get insert position (or append text) */
+    gint pos = -1, idx = 2;
+    if (lua_gettop(L) > 2) {
+        pos = luaL_checknumber(L, idx++);
+        if (pos > 0) pos--; /* correct lua index */
+    }
+
     gtk_editable_insert_text(GTK_EDITABLE(w->widget),
-        text, g_utf8_strlen(text, len), &pos);
-    lua_pushnumber(L, pos);
-    return 1;
+        luaL_checkstring(L, idx), -1, &pos);
+    return 0;
 }
 
 static gint
@@ -70,7 +61,6 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
       LUAKIT_WIDGET_INDEX_COMMON
 
       /* push class methods */
-      PF_CASE(APPEND,           luaH_entry_append)
       PF_CASE(INSERT,           luaH_entry_insert)
       PF_CASE(SELECT_REGION,    luaH_entry_select_region)
       /* push integer properties */
@@ -138,13 +128,12 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
         warn("unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
-    return luaH_object_emit_property_signal(L, 1);
+    return luaH_object_property_signal(L, 1, token);
 }
 
 static void
-activate_cb(GtkEntry *e, widget_t *w)
+activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 {
-    (void) e;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "activate", 0, 0);
@@ -161,10 +150,8 @@ changed_cb(widget_t *w)
 }
 
 static void
-position_cb(GtkEntry *e, GParamSpec *ps, widget_t *w)
+position_cb(GtkEntry* UNUSED(e), GParamSpec* UNUSED(ps), widget_t *w)
 {
-    (void) e;
-    (void) ps;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "property::position", 0, 0);
@@ -172,7 +159,7 @@ position_cb(GtkEntry *e, GParamSpec *ps, widget_t *w)
 }
 
 widget_t *
-widget_entry(widget_t *w)
+widget_entry(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_entry_index;
     w->newindex = luaH_entry_newindex;

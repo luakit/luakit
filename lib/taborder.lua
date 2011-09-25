@@ -34,11 +34,11 @@ taborder = {
     -- Logical way to use when one "queues" background-followed links
     by_origin = function(w, newview)
         local newindex = 0
-        local currentview = w:get_current()
+        local currentview = w.view
         if not currentview then return 1 end
 
         local kids = taborder.kidsof
-        local views = w.tabs:get_children()
+        local views = w.tabs.children
 
         if kids[currentview] then
             -- Collect all descendants
