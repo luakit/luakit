@@ -158,7 +158,7 @@ if unique then
         elseif cmd == "winopen" then
             w = window.new((arg ~= "") and { arg } or {})
         end
-        w.win:set_screen(screen)
+        w.win.screen = screen
     end)
 end
 
