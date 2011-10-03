@@ -94,9 +94,10 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       PS_CASE(TITLE, gtk_window_get_title(d->win))
 
       /* push boolean properties */
-      PB_CASE(DECORATED,  gtk_window_get_decorated(d->win))
-      PB_CASE(FULLSCREEN, d->state & GDK_WINDOW_STATE_FULLSCREEN)
-      PB_CASE(MAXIMIZED,  d->state & GDK_WINDOW_STATE_MAXIMIZED)
+      PB_CASE(DECORATED,    gtk_window_get_decorated(d->win))
+      PB_CASE(URGENCY_HINT, gtk_window_get_urgency_hint(d->win))
+      PB_CASE(FULLSCREEN,   d->state & GDK_WINDOW_STATE_FULLSCREEN)
+      PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
       PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
@@ -122,6 +123,10 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
 
       case L_TK_DECORATED:
         gtk_window_set_decorated(d->win, luaH_checkboolean(L, 3));
+        break;
+
+      case L_TK_URGENCY_HINT:
+        gtk_window_set_urgency_hint(d->win, luaH_checkboolean(L, 3));
         break;
 
       case L_TK_TITLE:
