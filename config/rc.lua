@@ -159,6 +159,7 @@ if unique then
             w = window.new((arg ~= "") and { arg } or {})
         end
         w.win.screen = screen
+        w.win.urgency_hint = true
     end)
 end
 
