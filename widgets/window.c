@@ -213,6 +213,8 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     g_object_connect(G_OBJECT(w->widget),
       "signal::add",                G_CALLBACK(add_cb),          w,
       "signal::destroy",            G_CALLBACK(destroy_cb),      w,
+      "signal::focus-in-event",     G_CALLBACK(focus_cb),        w,
+      "signal::focus-out-event",    G_CALLBACK(focus_cb),        w,
       "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
       "signal::remove",             G_CALLBACK(remove_cb),       w,
       "signal::window-state-event", G_CALLBACK(window_state_cb), w,
