@@ -24,7 +24,7 @@ webview.init_funcs.inspector = function (view, w)
             iview:add_signal("focus", function ()
                 w:set_mode("insert")
             end)
-            iview:eval_js("WebInspector.toggleAttach();", "(webinspector.lua)")
+            iview:eval_js("WebInspector._toggleAttach();", "(webinspector.lua)")
             w.tabs:add_signal("switch-page", switcher)
         end
     end)
