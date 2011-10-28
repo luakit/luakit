@@ -92,7 +92,7 @@ property_t webview_settings_properties[] = {
   { 0,                                              NULL,                                        0,     0    },
 };
 
-static widget_t*
+widget_t*
 luaH_checkwebview(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkwidget(L, udx);
