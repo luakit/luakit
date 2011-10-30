@@ -241,6 +241,12 @@ window.init_funcs = {
             os.exists("/usr/share/pixmaps/luakit.png")
         if path then w.win.icon = path end
     end,
+
+    clear_urgency_hint = function (w)
+        w.win:add_signal("focus", function ()
+            w.win.urgency_hint = false
+        end)
+    end,
 }
 
 -- Helper functions which operate on the window widgets or structure.

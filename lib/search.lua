@@ -58,7 +58,7 @@ new_mode("search", {
 
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
-        if string.match(text, "^[\?\/]") then
+        if string.match(text, "^[?/]") then
             s = w.search_state
             s.last_search = string.sub(text, 2)
             if #text > 3 then

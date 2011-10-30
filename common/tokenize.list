@@ -173,6 +173,7 @@ top
 total_size
 transparent
 type
+urgency_hint
 uri
 uri_decode
 uri_encode
