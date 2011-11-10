@@ -18,7 +18,7 @@ webview.init_funcs.inspector = function (view, w)
             if iview then iview:hide() end
         end
     end
-    view:set_property("enable-developer-extras", true)
+    view.enable_developer_extras = true
     view:add_signal("show-inspector", function (_, iview)
         if not view.inspector.visible then
             iview:add_signal("focus", function ()
