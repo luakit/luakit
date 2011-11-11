@@ -429,6 +429,7 @@ local function submit_form(w, n)
             inputs = formfiller.toA(inputs).filter(function (input) {
                 return /submit/i.test(input.type);
             });
+            inputs = inputs.concat(formfiller.toA(formfiller.forms[0].getElementsByTagName('button')));
             var n = %i - 1;
             if (inputs[n]) {
                 formfiller.click(inputs[n]);
