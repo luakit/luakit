@@ -21,31 +21,46 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-/* direct wrapper around gtk_box_pack_start */
 static gint
-luaH_box_pack_start(lua_State *L)
+luaH_box_pack(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
-    gboolean expand = luaH_checkboolean(L, 3);
-    gboolean fill = luaH_checkboolean(L, 4);
-    guint padding = luaL_checknumber(L, 5);
-    gtk_box_pack_start(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-        expand, fill, padding);
-    return 0;
-}
 
-/* direct wrapper around gtk_box_pack_end */
-static gint
-luaH_box_pack_end(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidget(L, 2);
-    gboolean expand = luaH_checkboolean(L, 3);
-    gboolean fill = luaH_checkboolean(L, 4);
-    guint padding = luaL_checknumber(L, 5);
-    gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-        expand, fill, padding);
+    gint top = lua_gettop(L);
+    gboolean expand = FALSE, fill = FALSE, start = TRUE;
+    guint padding = 0;
+
+    /* check for options table */
+    if (top > 2 && !lua_isnil(L, 3)) {
+        luaH_checktable(L, 3);
+
+        /* pack child from start or end of container? */
+        if (luaH_rawfield(L, 3, "from"))
+            start = L_TK_END == l_tokenize(lua_tostring(L, -1)) ? FALSE : TRUE;
+
+        /* expand? */
+        if (luaH_rawfield(L, 3, "expand"))
+            expand = lua_toboolean(L, -1) ? TRUE : FALSE;
+
+        /* fill? */
+        if (luaH_rawfield(L, 3, "fill"))
+            fill = lua_toboolean(L, -1) ? TRUE : FALSE;
+
+        /* padding? */
+        if (luaH_rawfield(L, 3, "padding"))
+            padding = (guint)lua_tonumber(L, -1);
+
+        /* return stack to original state */
+        lua_settop(L, top);
+    }
+
+    if (start)
+        gtk_box_pack_start(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+                expand, fill, padding);
+    else
+        gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
+                expand, fill, padding);
     return 0;
 }
 
@@ -68,11 +83,10 @@ luaH_box_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push class methods */
-      PF_CASE(PACK_END,     luaH_box_pack_end)
-      PF_CASE(PACK_START,   luaH_box_pack_start)
+      PF_CASE(PACK,         luaH_box_pack)
       PF_CASE(REORDER,      luaH_box_reorder_child)
       /* push boolean properties */
       PB_CASE(HOMOGENEOUS,  gtk_box_get_homogeneous(GTK_BOX(w->widget)))
@@ -104,30 +118,27 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
         return 0;
     }
 
-    return luaH_object_emit_property_signal(L, 1);
+    return luaH_object_property_signal(L, 1, token);
 }
 
-#define BOX_WIDGET_CONSTRUCTOR(type)                                         \
-    widget_t *                                                               \
-    widget_##type(widget_t *w)                                               \
-    {                                                                        \
-        w->index = luaH_box_index;                                           \
-        w->newindex = luaH_box_newindex;                                     \
-        w->destructor = widget_destructor;                                   \
-        w->widget = gtk_##type##_new(FALSE, 0);                              \
-        g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);  \
-        gtk_widget_show(w->widget);                                          \
-        g_object_connect(G_OBJECT(w->widget),                                \
-          "signal::add",        G_CALLBACK(add_cb),        w,                \
-          "signal::parent-set", G_CALLBACK(parent_set_cb), w,                \
-          "signal::remove",     G_CALLBACK(remove_cb),     w,                \
-          NULL);                                                             \
-        return w;                                                            \
-    }
+widget_t *
+widget_box(widget_t *w, luakit_token_t token)
+{
+    w->index = luaH_box_index;
+    w->newindex = luaH_box_newindex;
+    w->destructor = widget_destructor;
 
-BOX_WIDGET_CONSTRUCTOR(vbox)
-BOX_WIDGET_CONSTRUCTOR(hbox)
+    w->widget = (token == L_TK_VBOX) ? gtk_vbox_new(FALSE, 0) :
+            gtk_hbox_new(FALSE, 0);
 
-#undef BOX_WIDGET_CONSTRUCTOR
+    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
+    g_object_connect(G_OBJECT(w->widget),
+      "signal::add",        G_CALLBACK(add_cb),        w,
+      "signal::parent-set", G_CALLBACK(parent_set_cb), w,
+      "signal::remove",     G_CALLBACK(remove_cb),     w,
+      NULL);
+    gtk_widget_show(w->widget);
+    return w;
+}
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

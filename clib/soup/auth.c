@@ -107,10 +107,9 @@ response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data
 }
 
 static GtkWidget *
-table_add_entry(GtkWidget *table, gint row, const gchar *label_text, const gchar *value, gpointer user_data)
+table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
+        const gchar *value, gpointer UNUSED(user_data))
 {
-    (void) user_data;
-
     GtkWidget *label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
 
@@ -205,12 +204,10 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 }
 
 static void
-session_authenticate(SoupSession *session, SoupMessage *msg, SoupAuth *auth, gboolean retrying, gpointer user_data)
+session_authenticate(SoupSession *session, SoupMessage *msg, SoupAuth *auth,
+        gboolean UNUSED(retrying), gpointer user_data)
 {
-    (void) retrying;
-
     SoupSessionFeature *manager = SOUP_SESSION_FEATURE(user_data);
-
     soup_session_pause_message(session, msg);
 
     /* We need to make sure the message sticks around when pausing it */
@@ -243,21 +240,19 @@ detach(SoupSessionFeature *manager, SoupSession *session)
 }
 
 static void
-luakit_auth_dialog_class_init(LuakitAuthDialogClass *klass)
+luakit_auth_dialog_class_init(LuakitAuthDialogClass* UNUSED(klass))
 {
-    (void) klass;
 }
 
 static void
-luakit_auth_dialog_init(LuakitAuthDialog *instance)
+luakit_auth_dialog_init(LuakitAuthDialog* UNUSED(instance))
 {
-    (void) instance;
 }
 
 static void
-luakit_auth_dialog_session_feature_init(SoupSessionFeatureInterface *interface, gpointer data)
+luakit_auth_dialog_session_feature_init(SoupSessionFeatureInterface *interface,
+        gpointer UNUSED(data))
 {
-    (void) data;
     interface->attach = attach;
     interface->detach = detach;
 }

@@ -108,8 +108,8 @@ webview.init_funcs.noscript_load = function (view)
             enable_scripts = itob(row.enable_scripts)
             enable_plugins = itob(row.enable_plugins)
         end
-        view:set_property("enable-scripts", enable_scripts)
-        view:set_property("enable-plugins", enable_plugins)
+        view.enable_scripts = enable_scripts
+        view.enable_plugins = enable_plugins
     end)
 end
 

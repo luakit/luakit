@@ -89,7 +89,7 @@ webview.init_funcs.save_hist = function (view)
     -- Add items
     view:add_signal("load-status", function (v, status)
         -- Don't add history items when in private browsing mode
-        if v:get_property("enable-private-browsing") then return end
+        if v.enable_private_browsing then return end
 
         -- We use the "committed" status here because we are not interested in
         -- any intermediate uri redirects taken before reaching the real uri.
@@ -102,9 +102,9 @@ webview.init_funcs.save_hist = function (view)
     -- Update titles
     view:add_signal("property::title", function (v)
         -- Don't add history items when in private browsing mode
-        if v:get_property("enable-private-browsing") then return end
+        if v.enable_private_browsing then return end
 
-        local title = v:get_property("title")
+        local title = v.title
         if title and title ~= "" then
             add(v.uri, title, false)
         end

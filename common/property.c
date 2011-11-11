@@ -23,163 +23,119 @@
 
 #include <webkit/webkit.h>
 
-GHashTable*
-hash_properties(property_t *properties_table)
+static gint
+luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 {
-    GHashTable *properties = g_hash_table_new(g_str_hash, g_str_equal);
-    for (property_t *p = properties_table; p->name; p++) {
-        /* pre-compile "property::name" signals for each property */
-        if (!p->signame)
-            p->signame = g_strdup_printf("property::%s", p->name);
-        g_hash_table_insert(properties, (gpointer) p->name, (gpointer) p);
-    }
-    return properties;
-}
+    SoupURI *u;
+    property_tmp_t tmp;
 
-inline static GObject*
-get_scope_object(gpointer obj, property_t *p)
-{
-    switch (p->scope) {
-      case SETTINGS:
-        return G_OBJECT(webkit_web_view_get_settings(WEBKIT_WEB_VIEW(obj)));
-      case WEBKITVIEW:
-        return G_OBJECT(obj);
-      case SESSION:
-        return G_OBJECT(soupconf.session);
-      case COOKIEJAR:
-        return G_OBJECT(soupconf.cookiejar);
+#define TG_CASE(type, dest, pfunc)                    \
+      case type:                                      \
+        g_object_get(object, p->name, &(dest), NULL); \
+        pfunc(L, dest);                               \
+        return 1;
+
+    switch(p->type) {
+      TG_CASE(BOOL,   tmp.b, lua_pushboolean)
+      TG_CASE(INT,    tmp.i, lua_pushnumber)
+      TG_CASE(FLOAT,  tmp.f, lua_pushnumber)
+      TG_CASE(DOUBLE, tmp.d, lua_pushnumber)
+
+      case CHAR:
+        g_object_get(object, p->name, &tmp.c, NULL);
+        lua_pushstring(L, tmp.c);
+        g_free(tmp.c);
+        return 1;
+
+      case URI:
+        g_object_get(object, p->name, &u, NULL);
+        tmp.c = u ? soup_uri_to_string(u, 0) : NULL;
+        lua_pushstring(L, tmp.c);
+        if (u) soup_uri_free(u);
+        g_free(tmp.c);
+        return 1;
+
       default:
         break;
     }
-    warn("programmer error: unknown settings scope for property: %s", p->name);
-    return NULL;
+    /* unhandled property type */
+    g_assert_not_reached();
 }
 
-/* sets a gobject property from lua */
-gint
-luaH_get_property(lua_State *L, GHashTable *properties, gpointer obj, gint nidx)
+static gboolean
+luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
 {
     SoupURI *u;
-    GObject *so;
-    property_t *p;
-    property_tmp_value_t tmp;
-
-    /* get property struct */
-    const gchar *name = luaL_checkstring(L, nidx);
-    if ((p = g_hash_table_lookup(properties, name))) {
-        /* get scope object */
-        so = get_scope_object(obj, p);
-
-        switch(p->type) {
-          case BOOL:
-            g_object_get(so, p->name, &tmp.b, NULL);
-            lua_pushboolean(L, tmp.b);
-            return 1;
-
-          case INT:
-            g_object_get(so, p->name, &tmp.i, NULL);
-            lua_pushnumber(L, tmp.i);
-            return 1;
-
-          case FLOAT:
-            g_object_get(so, p->name, &tmp.f, NULL);
-            lua_pushnumber(L, tmp.f);
-            return 1;
-
-          case DOUBLE:
-            g_object_get(so, p->name, &tmp.d, NULL);
-            lua_pushnumber(L, tmp.d);
-            return 1;
-
-          case CHAR:
-            g_object_get(so, p->name, &tmp.c, NULL);
-            lua_pushstring(L, tmp.c);
-            g_free(tmp.c);
-            return 1;
-
-          case URI:
-            g_object_get(so, p->name, &u, NULL);
-            tmp.c = u ? soup_uri_to_string(u, 0) : NULL;
-            lua_pushstring(L, tmp.c);
-            if (u) soup_uri_free(u);
-            g_free(tmp.c);
-            return 1;
-
-          default:
-            warn("unknown property type for: %s", p->name);
-            break;
-        }
-    }
-    warn("unknown property: %s", name);
-    return 0;
-}
-
-/* gets a gobject property from lua */
-gint
-luaH_set_property(lua_State *L, GHashTable *properties, gpointer obj, gint nidx, gint vidx)
-{
+    property_tmp_t tmp;
     size_t len;
-    GObject *so;
-    SoupURI *u;
-    property_t *p;
-    property_tmp_value_t tmp;
 
-    /* get property struct */
-    const gchar *name = luaL_checkstring(L, nidx);
-    if ((p = g_hash_table_lookup(properties, name))) {
-        if (!p->writable) {
-            warn("attempt to set read-only property: %s", p->name);
-            return 0;
-        }
+#define TS_CASE(type, cast, dest, cfunc)           \
+      case type:                                   \
+        dest = (cast)cfunc(L, vidx);               \
+        g_object_set(object, p->name, dest, NULL); \
+        break;
 
-        so = get_scope_object(obj, p);
-        switch(p->type) {
-          case BOOL:
-            tmp.b = luaH_checkboolean(L, vidx);
-            g_object_set(so, p->name, tmp.b, NULL);
-            return 0;
+    switch(p->type) {
+      TS_CASE(BOOL,   gboolean, tmp.b, luaH_checkboolean);
+      TS_CASE(INT,    gint,     tmp.i, luaL_checknumber);
+      TS_CASE(FLOAT,  gfloat,   tmp.f, luaL_checknumber);
+      TS_CASE(DOUBLE, gdouble,  tmp.d, luaL_checknumber);
 
-          case INT:
-            tmp.i = (gint) luaL_checknumber(L, vidx);
-            g_object_set(so, p->name, tmp.i, NULL);
-            return 0;
+      case CHAR:
+        tmp.c = (gchar*) luaL_checkstring(L, vidx);
+        g_object_set(object, p->name, tmp.c, NULL);
+        break;
 
-          case FLOAT:
-            tmp.f = (gfloat) luaL_checknumber(L, vidx);
-            g_object_set(so, p->name, tmp.f, NULL);
-            return 0;
-
-          case DOUBLE:
-            tmp.d = (gdouble) luaL_checknumber(L, vidx);
-            g_object_set(so, p->name, tmp.d, NULL);
-            return 0;
-
-          case CHAR:
-            tmp.c = (gchar*) luaL_checkstring(L, vidx);
-            g_object_set(so, p->name, tmp.c, NULL);
-            return 0;
-
-          case URI:
-            tmp.c = (gchar*) luaL_checklstring(L, vidx, &len);
-            /* use http protocol if none specified */
-            if (!len || g_strrstr(tmp.c, "://"))
-                tmp.c = g_strdup(tmp.c);
-            else
-                tmp.c = g_strdup_printf("http://%s", tmp.c);
-            u = soup_uri_new(tmp.c);
-            if (!u || SOUP_URI_VALID_FOR_HTTP(u))
-                g_object_set(so, p->name, u, NULL);
-            else
-                luaL_error(L, "cannot parse uri: %s", tmp.c);
-            if (u) soup_uri_free(u);
+      case URI:
+        tmp.c = (gchar*) luaL_checklstring(L, vidx, &len);
+        /* use http protocol if none specified */
+        if (!len || g_strrstr(tmp.c, "://"))
+            tmp.c = g_strdup(tmp.c);
+        else
+            tmp.c = g_strdup_printf("http://%s", tmp.c);
+        u = soup_uri_new(tmp.c);
+        gboolean valid = !u || SOUP_URI_VALID_FOR_HTTP(u);
+        if (valid) {
+            g_object_set(object, p->name, u, NULL);
             g_free(tmp.c);
-            return 0;
-
-          default:
-            warn("unknown property type for: %s", p->name);
-            break;
         }
+        soup_uri_free(u);
+        if (!valid) {
+            lua_pushfstring(L, "invalid uri: %s", tmp.c);
+            g_free(tmp.c);
+            lua_error(L);
+        }
+        break;
+
+      default:
+        /* unhandled property type */
+        g_assert_not_reached();
     }
-    warn("unknown property: %s", name);
+    return TRUE;
+}
+
+gint
+luaH_gobject_index(lua_State *L, property_t *props, luakit_token_t tok,
+        GObject *object)
+{
+    for (property_t *p = props; p->tok; p++)
+        if (p->tok == tok)
+            return luaH_gobject_get(L, p, object);
     return 0;
+}
+
+gboolean
+luaH_gobject_newindex(lua_State *L, property_t *props, luakit_token_t tok,
+        gint vidx, GObject *object)
+{
+    for (property_t *p = props; p->tok; p++) {
+        if (p->tok != tok)
+            continue;
+        if (p->writable)
+            return luaH_gobject_set(L, p, vidx, object);
+        else
+            warn("read-only property: %s", p->name);
+        break;
+    }
+    return FALSE;
 }

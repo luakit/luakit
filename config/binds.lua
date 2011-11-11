@@ -62,11 +62,11 @@ add_binds("all", {
         -- Ignore button 2 clicks in form fields
         if not m.context.editable then
             -- Open hovered uri in new tab
-            local uri = w:get_current().hovered_uri
+            local uri = w.view.hovered_uri
             if uri then
                 w:new_tab(uri, false)
             else -- Open selection in current tab
-                uri = luakit.get_selection()
+                uri = luakit.selection.primary
                 if uri then w:navigate(w:search_open(uri)) end
             end
         end
@@ -74,7 +74,7 @@ add_binds("all", {
 
     -- Open link in new tab when Ctrl-clicked.
     but({"Control"}, 1, function (w, m)
-        local uri = w:get_current().hovered_uri
+        local uri = w.view.hovered_uri
         if uri then
             w:new_tab(uri, false)
         end
@@ -85,8 +85,8 @@ add_binds("all", {
     but({"Control"}, 5, function (w, m) w:zoom_out() end),
 
     -- Horizontal mouse scroll binds
-    but({"Shift"},   4, function (w, m) w:scroll_horiz(less) end),
-    but({"Shift"},   5, function (w, m) w:scroll_horiz(more) end),
+    but({"Shift"},   4, function (w, m) w:scroll{ x = less } end),
+    but({"Shift"},   5, function (w, m) w:scroll{ x = more } end),
 })
 
 add_binds("normal", {
@@ -112,37 +112,39 @@ add_binds("normal", {
     key({},          ":",           function (w) w:set_mode("command") end),
 
     -- Scrolling
-    key({},          "j",           function (w) w:scroll_vert(more)  end),
-    key({},          "k",           function (w) w:scroll_vert(less)  end),
-    key({},          "h",           function (w) w:scroll_horiz(less) end),
-    key({},          "l",           function (w) w:scroll_horiz(more) end),
-    key({},          "^",           function (w) w:scroll_horiz("0%") end),
-    key({},          "$",           function (w) w:scroll_horiz("100%") end),
-    key({"Control"}, "e",           function (w) w:scroll_vert(more)  end),
-    key({"Control"}, "y",           function (w) w:scroll_vert(less)  end),
-    key({"Control"}, "d",           function (w) w:scroll_page(0.5)   end),
-    key({"Control"}, "u",           function (w) w:scroll_page(-0.5)  end),
-    key({"Control"}, "f",           function (w) w:scroll_page(1.0)   end),
-    key({"Control"}, "b",           function (w) w:scroll_page(-1.0)  end),
-    key({},          "space",       function (w) w:scroll_page(1.0)   end),
-    key({"Shift"},   "space",       function (w) w:scroll_page(-1.0)  end),
-    key({},          "BackSpace",   function (w) w:scroll_page(-1.0)  end),
+    key({},          "j",           function (w) w:scroll{ y = more    } end),
+    key({},          "k",           function (w) w:scroll{ y = less    } end),
+    key({},          "h",           function (w) w:scroll{ x = less    } end),
+    key({},          "l",           function (w) w:scroll{ x = more    } end),
+    key({},          "^",           function (w) w:scroll{ x = "0%"    } end),
+    key({},          "$",           function (w) w:scroll{ x = "100%"  } end),
+    key({"Control"}, "e",           function (w) w:scroll{ y = more    } end),
+    key({"Control"}, "y",           function (w) w:scroll{ y = less    } end),
+    key({"Control"}, "d",           function (w) w:scroll{ y = "+0.5p" } end),
+    key({"Control"}, "u",           function (w) w:scroll{ y = "-0.5p" } end),
+    key({"Control"}, "f",           function (w) w:scroll{ y = "+1.0p" } end),
+    key({"Control"}, "b",           function (w) w:scroll{ y = "-1.0p" } end),
+    key({},          "space",       function (w) w:scroll{ y = "+1.0p" } end),
+    key({"Shift"},   "space",       function (w) w:scroll{ y = "-1.0p" } end),
+    key({},          "BackSpace",   function (w) w:scroll{ y = "-1.0p" } end),
 
     -- Specific scroll
-    buf("^gg$",                     function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 0}),
-    buf("^G$",                      function (w, b, m) w:scroll_vert(m.count.."%") end, {count = 100}),
+    buf("^gg$",                     function (w, b, m) w:scroll{ y = m.count.."%" } end, {count = 0}),
+    buf("^G$",                      function (w, b, m) w:scroll{ y = m.count.."%" } end, {count = 100}),
 
     -- Traditional scrolling commands
-    key({},          "Down",        function (w) w:scroll_vert(more)   end),
-    key({},          "Up",          function (w) w:scroll_vert(less)   end),
-    key({},          "Left",        function (w) w:scroll_horiz(less)  end),
-    key({},          "Right",       function (w) w:scroll_horiz(more)  end),
-    key({},          "Page_Down",   function (w) w:scroll_page(1.0)    end),
-    key({},          "Page_Up",     function (w) w:scroll_page(-1.0)   end),
-    key({},          "Home",        function (w) w:scroll_vert(0)   end),
-    key({},          "End",         function (w) w:scroll_vert("100%") end),
-    key({},          "$",           function (w) w:scroll_horiz("100%") end),
-    key({},          "0",           function (w, m) if not m.count then w:scroll_horiz(0) else return false end end),
+    key({},          "Down",        function (w) w:scroll{ y = more    } end),
+    key({},          "Up",          function (w) w:scroll{ y = less    } end),
+    key({},          "Left",        function (w) w:scroll{ x = less    } end),
+    key({},          "Right",       function (w) w:scroll{ x = more    } end),
+    key({},          "Page_Down",   function (w) w:scroll{ y = "+1.0p" } end),
+    key({},          "Page_Up",     function (w) w:scroll{ y = "-1.0p" } end),
+    key({},          "Home",        function (w) w:scroll{ y = "0%"    } end),
+    key({},          "End",         function (w) w:scroll{ y = "100%"  } end),
+    key({},          "$",           function (w) w:scroll{ x = "100%"  } end),
+    key({},          "0",           function (w, m)
+                                        if not m.count then w:scroll{ y = "0%" } else return false end
+                                    end),
 
     -- Zooming
     key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
@@ -155,34 +157,32 @@ add_binds("normal", {
 
     -- Fullscreen
     key({},          "F11",         function (w)
-                                        w.fullscreen = not w.fullscreen
-                                        if w.fullscreen then w.win:fullscreen()
-                                        else w.win:unfullscreen() end
+                                        w.win.fullscreen = not w.win.fullscreen
                                     end),
 
     -- Clipboard
     key({},          "p",           function (w)
-                                        local uri = luakit.get_selection()
+                                        local uri = luakit.selection.primary
                                         if uri then w:navigate(w:search_open(uri)) else w:error("Empty selection.") end
                                     end),
     key({},          "P",           function (w, m)
-                                        local uri = luakit.get_selection()
+                                        local uri = luakit.selection.primary
                                         if not uri then w:error("Empty selection.") return end
                                         for i = 1, m.count do w:new_tab(w:search_open(uri)) end
                                     end, {count = 1}),
 
     -- Yanking
     buf("^yy$",                     function (w)
-                                        local uri = string.gsub(w:get_current().uri or "", " ", "%%20")
-                                        luakit.set_selection(uri)
-                                        luakit.set_selection("clipboard", uri)
+                                        local uri = string.gsub(w.view.uri or "", " ", "%%20")
+                                        luakit.selection.primary = uri
+                                        luakit.selection.clipboard = uri
                                         w:notify("Yanked uri: " .. uri)
                                     end),
 
     buf("^yt$",                     function (w)
-                                        local title = w:get_current():get_property("title")
-                                        luakit.set_selection(title)
-                                        luakit.set_selection("clipboard", title)
+                                        local title = w.view.title
+                                        luakit.selection.primary = title
+                                        luakit.selection.clipboard = uri
                                         w:notify("Yanked title: " .. title)
                                     end),
 
@@ -192,9 +192,9 @@ add_binds("normal", {
     buf("^o$",                      function (w, c) w:enter_cmd(":open ")    end),
     buf("^t$",                      function (w, c) w:enter_cmd(":tabopen ") end),
     buf("^w$",                      function (w, c) w:enter_cmd(":winopen ") end),
-    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. (w:get_current().uri or "")) end),
-    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. (w:get_current().uri or "")) end),
-    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. (w:get_current().uri or "")) end),
+    buf("^O$",                      function (w, c) w:enter_cmd(":open "    .. (w.view.uri or "")) end),
+    buf("^T$",                      function (w, c) w:enter_cmd(":tabopen " .. (w.view.uri or "")) end),
+    buf("^W$",                      function (w, c) w:enter_cmd(":winopen " .. (w.view.uri or "")) end),
     buf("^,g$",                     function (w, c) w:enter_cmd(":open google ") end),
 
     -- History
@@ -218,16 +218,16 @@ add_binds("normal", {
     key({"Control"}, "w",           function (w)    w:close_tab()       end),
     key({},          "d",           function (w, m) for i=1,m.count do w:close_tab()      end end, {count=1}),
 
-    key({},          "<",           function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
-    key({},          ">",           function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
-    key({"Mod1"},    "Page_Up",     function (w, m) w.tabs:reorder(w:get_current(), w.tabs:current() - m.count) end, {count=1}),
-    key({"Mod1"},    "Page_Down",   function (w, m) w.tabs:reorder(w:get_current(), (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
+    key({},          "<",           function (w, m) w.tabs:reorder(w.view, w.tabs:current() - m.count) end, {count=1}),
+    key({},          ">",           function (w, m) w.tabs:reorder(w.view, (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
+    key({"Mod1"},    "Page_Up",     function (w, m) w.tabs:reorder(w.view, w.tabs:current() - m.count) end, {count=1}),
+    key({"Mod1"},    "Page_Down",   function (w, m) w.tabs:reorder(w.view, (w.tabs:current() + m.count) % w.tabs:count()) end, {count=1}),
 
     buf("^gH$",                     function (w, b, m) for i=1,m.count do w:new_tab(globals.homepage) end end, {count=1}),
     buf("^gh$",                     function (w)       w:navigate(globals.homepage) end),
 
     -- Open tab from current tab history
-    buf("^gy$",                     function (w) w:new_tab(w:get_current().history or "") end),
+    buf("^gy$",                     function (w) w:new_tab(w.view.history or "") end),
 
     key({},          "r",           function (w) w:reload() end),
     key({},          "R",           function (w) w:reload(true) end),
@@ -250,7 +250,7 @@ add_binds("insert", {
 })
 
 add_binds({"command", "search"}, {
-    key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.get_selection()) end),
+    key({"Shift"},   "Insert",  function (w) w:insert_cmd(luakit.selection.primary) end),
     key({"Control"}, "w",       function (w) w:del_word() end),
     key({"Control"}, "u",       function (w) w:del_line() end),
     key({"Control"}, "h",       function (w) w:del_backward_char() end),
@@ -290,12 +290,12 @@ add_cmds({
     cmd("reload",               function (w) w:reload() end),
     cmd("restart",              function (w) w:restart() end),
     cmd("write",                function (w) w:save_session() end),
+    cmd("noh[lsearch]",         function (w) w:clear_search() end),
 
     cmd("back",                 function (w, a) w:back(tonumber(a) or 1) end),
     cmd("f[orward]",            function (w, a) w:forward(tonumber(a) or 1) end),
     cmd("inc[rease]",           function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
     cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
-    cmd("scroll",               function (w, a) w:scroll_vert(a) end),
     cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
     cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
@@ -315,8 +315,7 @@ add_cmds({
 
     cmd("dump", function (w, a)
         local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.html' -- sanitize filename
-        local downdir = luakit.get_special_dir("DOWNLOAD") or "."
-        local file = a or luakit.save_file("Save file", w.win, downdir, fname)
+        local file = a or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
         if file then
             local fd = assert(io.open(file, "w"), "failed to open: " .. file)
             local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")
