@@ -436,7 +436,13 @@ local function submit_form(w, f, n)
             if (inputs[n]) {
                 formfiller.click(inputs[n]);
             } else {
-                formfiller.forms[0].submit();
+                var submit = formfiller.forms[0].submit;
+                if (typeof(submit) == "function") {
+                    submit();
+                } else {
+                    // form.submit is the submit button
+                    formfiller.click(submit);
+                }
             }
         }
     ]=], n)
