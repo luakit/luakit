@@ -164,7 +164,7 @@ function del(index, save_bookmarks)
 
     -- Refresh open bookmarks views
     for _, w in pairs(window.bywidget) do
-        for _, v in ipairs(w.tabs:get_children()) do
+        for _, v in ipairs(w.tabs.children) do
             if string.match(v.uri, "^luakit://bookmarks/?") then
                 v:reload()
             end
@@ -244,7 +244,7 @@ chrome_page    = "luakit://bookmarks/"
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({}, "B", function (w)
-        w:enter_cmd(":bookmark " .. (w:get_current().uri or "http://") .. " ")
+        w:enter_cmd(":bookmark " .. (w.view.uri or "http://") .. " ")
     end),
 
     buf("^gb$", function (w)

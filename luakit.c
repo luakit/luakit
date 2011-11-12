@@ -33,8 +33,7 @@
 static void sigchld(int sigint);
 
 void
-sigchld(int signum) {
-    (void) signum;
+sigchld(int UNUSED(signum)) {
     while(0 < waitpid(-1, NULL, WNOHANG));
 }
 

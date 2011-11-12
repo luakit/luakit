@@ -14,7 +14,7 @@ new_mode("tabhistory", {
     end,
 
     enter = function (w)
-        local h = w:get_current().history
+        local h = w.view.history
         local rows = {{"Title", "URI", title = true},}
         for i, hi in ipairs(h.items) do
             local title, uri = util.escape(hi.title), util.escape(hi.uri)
@@ -33,7 +33,7 @@ add_binds("tabhistory", join({
     key({}, "t", function (w)
         local row = w.menu:get()
         if row and row.index then
-            local v = w:get_current()
+            local v = w.view
             local uri = v.history.items[row.index].uri
             w:new_tab(uri, false)
         end
@@ -44,7 +44,7 @@ add_binds("tabhistory", join({
         local row = w.menu:get()
         w:set_mode()
         if row and row.index then
-            local v = w:get_current()
+            local v = w.view
             local uri = v.history.items[row.index].uri
             window.new({uri})
         end
@@ -55,7 +55,7 @@ add_binds("tabhistory", join({
         local row = w.menu:get()
         w:set_mode()
         if row and row.index then
-            local v = w:get_current()
+            local v = w.view
             local offset = row.index - v.history.index
             if offset < 0 then
                 v:go_back(-offset)
@@ -69,7 +69,7 @@ add_binds("tabhistory", join({
 
 -- Additional window methods.
 window.methods.tab_history = function (w)
-    if #(w:get_current().history.items) < 2 then
+    if #(w.view.history.items) < 2 then
         w:notify("No history items to display")
     else
         w:set_mode("tabhistory")

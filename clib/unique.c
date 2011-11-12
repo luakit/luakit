@@ -31,29 +31,25 @@
 lua_class_t unique_class;
 LUA_CLASS_FUNCS(unique, unique_class);
 
-UniqueApp *application = NULL;
+static UniqueApp *application = NULL;
 
-UniqueResponse
-message_cb(UniqueApp *a, gint id, UniqueMessageData *message_data,
-        guint time, gpointer data)
+#define MESSAGE_ID (1)
+#define PING_ID    (2)
+
+static UniqueResponse
+message_cb(UniqueApp* UNUSED(a), gint id, UniqueMessageData *message_data,
+        guint UNUSED(time), lua_State *L)
 {
-    (void) a;
-    (void) id;
-    (void) time;
-
-    if (message_data) {
-        lua_State *L = (lua_State*)data;
-        /* get message text */
+    if (id == MESSAGE_ID && message_data) {
         gchar *text = unique_message_data_get_text(message_data);
         lua_pushstring(L, text);
         g_free(text);
-        /* get message screen */
+
         GdkScreen *screen = unique_message_data_get_screen(message_data);
         lua_pushlightuserdata(L, screen);
-        /* emit signal */
+
         signal_object_emit(L, unique_class.signals, "message", 2, 0);
     }
-
     return UNIQUE_RESPONSE_OK;
 }
 
@@ -64,7 +60,8 @@ luaH_unique_new(lua_State *L)
         luaL_error(L, "unique app already setup");
 
     const gchar *name = luaL_checkstring(L, 1);
-    application = unique_app_new_with_commands(name, NULL, "message", 1, NULL);
+    application = unique_app_new_with_commands(name, NULL,
+            "message", MESSAGE_ID, "ping", PING_ID, NULL);
     g_signal_connect(G_OBJECT(application), "message-received",
             G_CALLBACK(message_cb), L);
     return 0;
@@ -76,7 +73,15 @@ luaH_unique_is_running(lua_State *L)
     if (!application)
         luaL_error(L, "unique app not setup");
 
-    lua_pushboolean(L, unique_app_is_running(application) ? TRUE : FALSE);
+    gboolean running = unique_app_is_running(application);
+
+    /* Double-check instance is running, found unique_app_is_running
+     * returning TRUE when luakit wasn't running on some systems. */
+    if (running)
+        running = (unique_app_send_message(application, PING_ID, NULL)
+                   == UNIQUE_RESPONSE_OK);
+
+    lua_pushboolean(L, running);
     return 1;
 }
 
@@ -92,7 +97,7 @@ luaH_unique_send_message(lua_State *L)
     const gchar *text = luaL_checkstring(L, 1);
     UniqueMessageData *data = unique_message_data_new();
     unique_message_data_set_text(data, text, -1);
-    unique_app_send_message(application, 1, data);
+    unique_app_send_message(application, MESSAGE_ID, data);
     unique_message_data_free(data);
     return 0;
 }

@@ -139,20 +139,10 @@ void luaH_object_remove_signal(lua_State *L, gint oud,
 gint luaH_object_emit_signal(lua_State *L, gint oud,
         const gchar *name, gint nargs, gint nret);
 
-static inline gint
-luaH_object_emit_property_signal(lua_State *L, gint oud)
-{
-    size_t len;
-    gchar *signame = g_strdup_printf("property::%s",
-        luaL_checklstring(L, oud + 1, &len));
-    luaH_object_emit_signal(L, oud, signame, 0, 0);
-    g_free(signame);
-    return 0;
-}
-
 gint luaH_object_add_signal_simple(lua_State *L);
 gint luaH_object_remove_signal_simple(lua_State *L);
 gint luaH_object_emit_signal_simple(lua_State *L);
+gint luaH_object_property_signal(lua_State *, gint, luakit_token_t);
 
 #define LUA_OBJECT_FUNCS(lua_class, type, prefix)             \
     LUA_CLASS_FUNCS(prefix, lua_class)                        \

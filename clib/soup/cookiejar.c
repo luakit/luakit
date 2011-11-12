@@ -211,11 +211,9 @@ luaH_cookiejar_add_cookies(lua_State *L)
 }
 
 static void
-request_started(SoupSessionFeature *feature, SoupSession *session,
-        SoupMessage *msg, SoupSocket *socket)
+request_started(SoupSessionFeature *feature, SoupSession* UNUSED(session),
+        SoupMessage *msg, SoupSocket* UNUSED(socket))
 {
-    (void) session;
-    (void) socket;
     SoupCookieJar *sj = SOUP_COOKIE_JAR(feature);
     SoupURI *uri = soup_message_get_uri(msg);
     lua_State *L = globalconf.L;
@@ -296,9 +294,8 @@ luakit_cookie_jar_class_init(LuakitCookieJarClass *class)
 
 static void
 luakit_cookie_jar_session_feature_init(SoupSessionFeatureInterface *interface,
-        gpointer data)
+        gpointer UNUSED(data))
 {
-    (void) data;
     interface->request_started = request_started;
 }
 

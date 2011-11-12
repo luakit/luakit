@@ -9,12 +9,12 @@ webview = {}
 webview.init_funcs = {
     -- Set useragent
     set_useragent = function (view, w)
-        view:set_property('user-agent', globals.useragent)
+        view.user_agent = globals.useragent
     end,
 
     -- Check if checking ssl certificates
     checking_ssl = function (view, w)
-        local ca_file = soup.get_property("ssl-ca-file")
+        local ca_file = soup.ssl_ca_file
         if ca_file and os.exists(ca_file) then
             w.checking_ssl = true
         end
@@ -24,7 +24,7 @@ webview.init_funcs = {
     title_update = function (view, w)
         view:add_signal("property::title", function (v)
             w:update_tablist()
-            if w:is_current(v) then
+            if w.view == v then
                 w:update_win_title()
             end
         end)
@@ -34,8 +34,8 @@ webview.init_funcs = {
     uri_update = function (view, w)
         view:add_signal("property::uri", function (v)
             w:update_tablist()
-            if w:is_current(v) then
-                w:update_uri(v)
+            if w.view == v then
+                w:update_uri()
             end
         end)
     end,
@@ -43,8 +43,8 @@ webview.init_funcs = {
     -- Update history indicator
     hist_update = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if w:is_current(v) then
-                w:update_hist(v)
+            if w.view == v then
+                w:update_hist()
             end
         end)
     end,
@@ -61,8 +61,8 @@ webview.init_funcs = {
     -- Update scroll widget
     scroll_update = function (view, w)
         view:add_signal("expose", function (v)
-            if w:is_current(v) then
-                w:update_scroll(v)
+            if w.view == v then
+                w:update_scroll()
             end
         end)
     end,
@@ -71,9 +71,9 @@ webview.init_funcs = {
     progress_update = function (view, w)
         for _, sig in ipairs({"load-status", "property::progress"}) do
             view:add_signal(sig, function (v)
-                if w:is_current(v) then
-                    w:update_progress(v)
-                    w:update_ssl(v)
+                if w.view == v then
+                    w:update_progress()
+                    w:update_ssl()
                 end
             end)
         end
@@ -82,13 +82,13 @@ webview.init_funcs = {
     -- Display hovered link in statusbar
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)
-            if w:is_current(v) and link then
-                w:update_uri(v, nil, link)
+            if w.view == v and link then
+                w:update_uri(link)
             end
         end)
         view:add_signal("link-unhover", function (v)
-            if w:is_current(v) then
-                w:update_uri(v)
+            if w.view == v then
+                w:update_uri()
             end
         end)
     end,
@@ -145,7 +145,7 @@ webview.init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view, w)
         view:add_signal("load-status", function (v, status)
-            if status == "provisional" and w:is_current(v) then
+            if status == "provisional" and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
                 end
@@ -171,7 +171,7 @@ webview.init_funcs = {
             -- Join all property tables
             for k, v in pairs(lousy.util.table.join(unpack(props))) do
                 info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
-                view:set_property(k, v)
+                view[k] = v
             end
         end)
     end,
@@ -254,15 +254,6 @@ webview.methods = {
         end
     end,
 
-    -- Property functions
-    get = function (view, w, k)
-        return view:get_property(k)
-    end,
-
-    set = function (view, w, k, v)
-        view:set_property(k, v)
-    end,
-
     -- Evaluate javascript code and return string result
     -- The frame argument can be any of the following:
     -- * true to evaluate on the focused frame
@@ -287,50 +278,30 @@ webview.methods = {
 
     -- Toggle source view
     toggle_source = function (view, w, show)
-        local showing = view:get_view_source()
-        if show == nil then show = not showing end
-        if show ~= showing then view:set_view_source(show) end
+        if show == nil then
+            view.view_source = not view.view_source
+        else
+            view.view_source = show
+        end
+        view:reload()
     end,
 
     -- Zoom functions
     zoom_in = function (view, w, step, full_zoom)
-        view:set_property("full-content-zoom", not not full_zoom)
+        view.full_content_zoom = not not full_zoom
         step = step or globals.zoom_step or 0.1
-        view:set_property("zoom-level", view:get_property("zoom-level") + step)
+        view.zoom_level = view.zoom_level + step
     end,
 
     zoom_out = function (view, w, step, full_zoom)
-        view:set_property("full-content-zoom", not not full_zoom)
+        view.full_content_zoom = not not full_zoom
         step = step or globals.zoom_step or 0.1
-        view:set_property("zoom-level", math.max(0.01, view:get_property("zoom-level") - step))
+        view.zoom_level = math.max(0.01, view.zoom_level) - step
     end,
 
     zoom_set = function (view, w, level, full_zoom)
-        view:set_property("full-content-zoom", not not full_zoom)
-        view:set_property("zoom-level", level or 1.0)
-    end,
-
-    -- Webview scroll functions
-    scroll_vert = function (view, w, value)
-        local cur, max = view:get_scroll_vert()
-        if type(value) == "string" then
-            value = lousy.util.parse_scroll(cur, max, value)
-        end
-        view:set_scroll_vert(value)
-    end,
-
-    scroll_horiz = function (view, w, value)
-        local cur, max = view:get_scroll_horiz()
-        if type(value) == "string" then
-            value = lousy.util.parse_scroll(cur, max, value)
-        end
-        view:set_scroll_horiz(value)
-    end,
-
-    -- vertical scroll of a multiple of the view_size
-    scroll_page = function (view, w, value)
-        local cur, max, size = view:get_scroll_vert()
-        view:set_scroll_vert(cur + (size * value))
+        view.full_content_zoom = not not full_zoom
+        view.zoom_level = level or 1.0
     end,
 
     -- History traversing functions
@@ -342,6 +313,48 @@ webview.methods = {
         view:go_forward(n or 1)
     end,
 }
+
+webview.scroll_parse_funcs = {
+    -- Abs "100px"
+    ["^(%d+)px$"] = function (_, _, px) return px end,
+
+    -- Rel "+/-100px"
+    ["^([-+]%d+)px$"] = function (s, axis, px) return s[axis] + px end,
+
+    -- Abs "10%"
+    ["^(%d+)%%$"] = function (s, axis, pc)
+        return math.ceil(s[axis.."max"] * (pc / 100))
+    end,
+
+    -- Rel "+/-10%"
+    ["^([-+]%d+)%%$"] = function (s, axis, pc)
+        return s[axis] + math.ceil(s[axis.."max"] * (pc / 100))
+    end,
+
+    -- Abs "10p" (pages)
+    ["^(%d+%.?%d*)p$"] = function (s, axis, p)
+        return math.ceil(s[axis.."page_size"] * p)
+    end,
+
+    -- Rel "+10p" (pages)
+    ["^([-+]%d+%.?%d*)p$"] = function (s, axis, p)
+        return s[axis] + math.ceil(s[axis.."page_size"] * p)
+    end,
+}
+
+function webview.methods.scroll(view, w, new)
+    local scroll = view.scroll
+    for axis, val in pairs{ x = new.x, y = new.y } do
+        if type(val) == "number" then
+            scroll[axis] = val
+        else
+            for pat, func in pairs(webview.scroll_parse_funcs) do
+                local n = string.match(val, pat)
+                if n then scroll[axis] = func(scroll, axis, tonumber(n)) end
+            end
+        end
+    end
+end
 
 function webview.new(w)
     local view = widget{type = "webview"}
@@ -357,14 +370,20 @@ end
 
 -- Insert webview method lookup on window structure
 table.insert(window.indexes, 1, function (w, k)
-    -- Get current webview
-    local view = w.tabs:atindex(w.tabs:current())
-    if not view then return end
+    if k == "view" then
+        local view = w.tabs[w.tabs:current()]
+        if view and type(view) == "widget" and view.type == "webview" then
+            w.view = view
+            return view
+        end
+    end
     -- Lookup webview method
     local func = webview.methods[k]
     if not func then return end
-    -- Return webview method wrapper function
-    return function (_, ...) return func(view, w, ...) end
+    local view = w.view
+    if view then
+        return function (_, ...) return func(view, w, ...) end
+    end
 end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

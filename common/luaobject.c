@@ -313,6 +313,15 @@ luaH_object_emit_signal(lua_State *L, gint oud,
 }
 
 gint
+luaH_object_property_signal(lua_State *L, gint oud, luakit_token_t tok)
+{
+    gchar *signame = g_strdup_printf("property::%s", token_tostring(tok));
+    luaH_object_emit_signal(L, oud, signame, 0, 0);
+    g_free(signame);
+    return 0;
+}
+
+gint
 luaH_object_add_signal_simple(lua_State *L) {
     luaH_object_add_signal(L, 1, luaL_checkstring(L, 2), 3);
     return 0;
