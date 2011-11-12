@@ -22,15 +22,17 @@
 #include "clib/widget.h"
 
 widget_info_t widgets_list[] = {
-  { L_TK_ENTRY,      "entry",      widget_entry      },
-  { L_TK_EVENTBOX,   "eventbox",   widget_eventbox   },
-  { L_TK_HBOX,       "hbox",       widget_hbox       },
-  { L_TK_LABEL,      "label",      widget_label      },
-  { L_TK_NOTEBOOK,   "notebook",   widget_notebook   },
-  { L_TK_VBOX,       "vbox",       widget_vbox       },
-  { L_TK_WEBVIEW,    "webview",    widget_webview    },
-  { L_TK_WINDOW,     "window",     widget_window     },
-  { L_TK_SOCKET,     "socket",     widget_socket     },
+  { L_TK_ENTRY,     "entry",    widget_entry    },
+  { L_TK_EVENTBOX,  "eventbox", widget_eventbox },
+  { L_TK_HBOX,      "hbox",     widget_box      },
+  { L_TK_HPANED,    "hpaned",   widget_paned    },
+  { L_TK_LABEL,     "label",    widget_label    },
+  { L_TK_NOTEBOOK,  "notebook", widget_notebook },
+  { L_TK_SOCKET,    "socket",   widget_socket   },
+  { L_TK_VBOX,      "vbox",     widget_box      },
+  { L_TK_VPANED,    "vpaned",   widget_paned    },
+  { L_TK_WEBVIEW,   "webview",  widget_webview  },
+  { L_TK_WINDOW,    "window",   widget_window   },
 };
 
 LUA_OBJECT_FUNCS(widget_class, widget_t, widget);
@@ -127,7 +129,7 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
 
         winfo = &widgets_list[i];
         w->info = winfo;
-        winfo->wc(w);
+        winfo->wc(w, tok);
         luaH_object_emit_signal(L, -3, "init", 0, 0);
         return 0;
     }

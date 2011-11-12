@@ -31,15 +31,15 @@ typedef struct widget_t widget_t;
 
 #include <gtk/gtk.h>
 
-typedef widget_t *(widget_constructor_t)(widget_t *);
+typedef widget_t *(widget_constructor_t)(widget_t *, luakit_token_t);
 typedef void (widget_destructor_t)(widget_t *);
 
+widget_constructor_t widget_box;
 widget_constructor_t widget_entry;
 widget_constructor_t widget_eventbox;
-widget_constructor_t widget_hbox;
 widget_constructor_t widget_label;
 widget_constructor_t widget_notebook;
-widget_constructor_t widget_vbox;
+widget_constructor_t widget_paned;
 widget_constructor_t widget_webview;
 widget_constructor_t widget_window;
 widget_constructor_t widget_socket;

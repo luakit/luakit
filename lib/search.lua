@@ -51,20 +51,20 @@ new_mode("search", {
         -- Check if search was aborted and return to original position
         local s = w.search_state
         if s.marker then
-            w:get_current():set_scroll_vert(s.marker)
+            w:scroll(s.marker)
             s.marker = nil
         end
     end,
 
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
-        if string.match(text, "^[\?\/]") then
+        if string.match(text, "^[?/]") then
             s = w.search_state
             s.last_search = string.sub(text, 2)
             if #text > 3 then
                 w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
                 if s.ret == false then
-                    if s.marker then w:get_current():set_scroll_vert(s.marker) end
+                    if s.marker then w:scroll(s.marker) end
                     w.ibar.input.fg = theme.ibar_error_fg
                     w.ibar.input.bg = theme.ibar_error_bg
                 else
@@ -143,7 +143,8 @@ for k, m in pairs({
             -- Haven't searched before, save some state.
             s.forward = forward
             s.wrap = wrap
-            s.marker = view:get_scroll_vert()
+            local scroll = view.scroll
+            s.marker = { x = scroll.x, y = scroll.y }
         else
             -- Invert direction if originally searching in reverse
             forward = (s.forward == forward)

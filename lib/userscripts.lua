@@ -258,7 +258,7 @@ end
 
 -- Installs a userscript from the current view
 function install(w)
-    local view = w:get_current()
+    local view = w.view
     local file = string.match(view.uri, "/([^/]+%.user%.js)$")
     if (not file) then return w:error("URL is not a *.user.js file") end
     if view:loading() then w:error("Wait for script to finish loading first.") end
@@ -303,7 +303,7 @@ new_mode("uscriptlist", {
     enter = function (w)
         local rows = {{ "Userscripts", "Description", title = true }}
         for file, script in pairs(scripts) do
-            local active = script:match(w:get_current().uri) and "*" or " "
+            local active = script:match(w.view.uri) and "*" or " "
             local title = (script.name or file) .. " " .. (script.version or "")
             table.insert(rows, { " " .. active .. title, " " .. script.description, script = script })
         end

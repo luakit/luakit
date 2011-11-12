@@ -22,7 +22,7 @@ require "lousy"
 
 -- Small util functions to print output (info prints only when luakit.verbose is true)
 function warn(...) io.stderr:write(string.format(...) .. "\n") end
-function info(...) if luakit.verbose then io.stderr:write(string.format(...) .. "\n") end end
+function info(...) if luakit.verbose then io.stdout:write(string.format(...) .. "\n") end end
 
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
@@ -121,7 +121,7 @@ require "completion"
 
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
--- Remove all "enable-scripts" & "enable-plugins" lines from your
+-- Remove all "enable_scripts" & "enable_plugins" lines from your
 -- domain_props table (in config/globals.lua) as this module will conflict.
 --require "noscript"
 
@@ -158,7 +158,8 @@ if unique then
         elseif cmd == "winopen" then
             w = window.new((arg ~= "") and { arg } or {})
         end
-        w.win:set_screen(screen)
+        w.win.screen = screen
+        w.win.urgency_hint = true
     end)
 end
 
