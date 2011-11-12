@@ -2,6 +2,8 @@
 -- Window class --
 ------------------
 
+require "lfs"
+
 -- Window class table
 window = {}
 
