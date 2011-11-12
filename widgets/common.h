@@ -37,21 +37,21 @@
       lua_pushcfunction(L, luaH_widget_destroy);      \
       return 1;
 
-#define LUAKIT_WIDGET_BIN_INDEX_COMMON                \
-    case L_TK_SET_CHILD:                              \
-      lua_pushcfunction(L, luaH_widget_set_child);    \
-      return 1;                                       \
-    case L_TK_GET_CHILD:                              \
-      lua_pushcfunction(L, luaH_widget_get_child);    \
-      return 1;                                       \
+#define LUAKIT_WIDGET_BIN_INDEX_COMMON(widget)        \
+    case L_TK_CHILD:                                  \
+      return luaH_widget_get_child(L, widget);
 
-#define LUAKIT_WIDGET_CONTAINER_INDEX_COMMON          \
+#define LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(widget)     \
+    case L_TK_CHILD:                                  \
+      luaH_widget_set_child(L, widget);               \
+      break;
+
+#define LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(widget)  \
     case L_TK_REMOVE:                                 \
       lua_pushcfunction(L, luaH_widget_remove);       \
       return 1;                                       \
-    case L_TK_GET_CHILDREN:                           \
-      lua_pushcfunction(L, luaH_widget_get_children); \
-      return 1;
+    case L_TK_CHILDREN:                               \
+      return luaH_widget_get_children(L, widget);
 
 gboolean button_cb(GtkWidget*, GdkEventButton*, widget_t*);
 gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
@@ -61,11 +61,11 @@ gboolean true_cb();
 
 gint luaH_widget_destroy(lua_State*);
 gint luaH_widget_focus(lua_State*);
-gint luaH_widget_get_child(lua_State*);
-gint luaH_widget_get_children(lua_State*);
+gint luaH_widget_get_child(lua_State*, widget_t*);
+gint luaH_widget_get_children(lua_State*, widget_t*);
 gint luaH_widget_hide(lua_State*);
 gint luaH_widget_remove(lua_State*);
-gint luaH_widget_set_child(lua_State*);
+gint luaH_widget_set_child(lua_State*, widget_t*);
 gint luaH_widget_show(lua_State*);
 
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);

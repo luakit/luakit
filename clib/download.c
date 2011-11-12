@@ -27,6 +27,8 @@
 
 #include <webkit/webkitdownload.h>
 #include <webkit/webkitnetworkrequest.h>
+#include <webkit/webkitnetworkresponse.h>
+#include <libsoup/soup-message.h>
 #include <glib/gstdio.h>
 
 /** Internal data structure for luakit's downloads. */
@@ -124,13 +126,9 @@ luaH_download_gc(lua_State *L)
  * \returns \c FALSE
  */
 static gboolean
-error_cb(WebKitDownload *d, gint error_code, gint error_detail, gchar *reason,
-        download_t *download)
+error_cb(WebKitDownload* UNUSED(d), gint UNUSED(error_code),
+        gint UNUSED(error_detail), gchar *reason, download_t *download)
 {
-    (void) d;
-    (void) error_detail;
-    (void) error_code;
-
     /* save error message */
     if (download->error)
         g_free(download->error);
@@ -276,36 +274,26 @@ luaH_download_get_progress(lua_State *L, download_t *download)
 }
 
 /**
- * Returns the inferred MIME type of the given download.
+ * Returns the value of the Content-Type webkit network reponse header.
  *
  * \param L The Lua VM state.
  * \param download The \ref download_t of the download.
  *
  * \luastack
  * \lparam A \c download object.
- * \lreturn The inferred MIME type of the download as a string.
+ * \lreturn The network request Content-Type.
  */
 static gint
 luaH_download_get_mime_type(lua_State *L, download_t *download)
 {
-    GError *error = NULL;
-    const gchar *destination = webkit_download_get_destination_uri(
+    WebKitNetworkResponse *response = webkit_download_get_network_response(
             download->webkit_download);
-    GFile *file = g_file_new_for_uri(destination);
-    GFileInfo *info = g_file_query_info(file, "standard::*", 0, NULL, &error);
-
-    if (error) {
-        if (download->error)
-            g_free(download->error);
-        download->error = g_strdup(error->message);
-        luaH_warn(L, "%s", download->error);
+    if (!response)
         return 0;
-    }
-
-    const gchar *content_type = g_file_info_get_content_type(info);
-    const gchar *mime_type = g_content_type_get_mime_type(content_type);
-
-    g_object_unref(file);
+    SoupMessage *msg = webkit_network_response_get_message(response);
+    SoupMessageHeaders *headers;
+    g_object_get(G_OBJECT(msg), "response-headers", &headers, NULL);
+    const gchar *mime_type = soup_message_headers_get_one(headers, "Content-Type");
     if (mime_type) {
         lua_pushstring(L, mime_type);
         return 1;

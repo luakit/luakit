@@ -183,7 +183,7 @@ refresh_timer:add_signal("timeout", function ()
     local continue = false
     -- refresh views
     for _, w in pairs(window.bywidget) do
-        local view = w:get_current()
+        local view = w.view
         if string.match(view.uri, pattern) then
             local inner_html, inner_js = inner_html()
             view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html), "downloads.lua")

@@ -27,9 +27,8 @@
 #include "widgets/common.h"
 
 gboolean
-key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
+key_press_cb(GtkWidget* UNUSED(win), GdkEventKey *ev, widget_t *w)
 {
-    (void) win;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
@@ -41,9 +40,8 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
 }
 
 gboolean
-button_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
+button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 {
-    (void) win;
     gint ret;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -68,9 +66,8 @@ button_cb(GtkWidget *win, GdkEventButton *ev, widget_t *w)
 }
 
 gboolean
-focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
+focus_cb(GtkWidget* UNUSED(win), GdkEventFocus *ev, widget_t *w)
 {
-    (void) win;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     gint ret;
@@ -92,9 +89,8 @@ focus_cb(GtkWidget *win, GdkEventFocus *ev, widget_t *w)
 
 /* gtk container add callback */
 void
-add_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
+add_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
-    (void) c;
     widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -105,9 +101,8 @@ add_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
 
 /* gtk container remove callback */
 void
-remove_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
+remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
-    (void) c;
     widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -117,9 +112,8 @@ remove_cb(GtkContainer *c, GtkWidget *widget, widget_t *w)
 }
 
 void
-parent_set_cb(GtkWidget *widget, GtkObject *old, widget_t *w)
+parent_set_cb(GtkWidget *widget, GtkObject* UNUSED(old), widget_t *w)
 {
-    (void) old;
     lua_State *L = globalconf.L;
     widget_t *parent = NULL;
     GtkContainer *new;
@@ -141,10 +135,9 @@ true_cb()
 
 /* set child method for gtk container widgets */
 gint
-luaH_widget_set_child(lua_State *L)
+luaH_widget_set_child(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidgetornil(L, 2);
+    widget_t *child = luaH_checkwidgetornil(L, 3);
 
     /* remove old child */
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
@@ -161,9 +154,8 @@ luaH_widget_set_child(lua_State *L)
 
 /* get child method for gtk container widgets */
 gint
-luaH_widget_get_child(lua_State *L)
+luaH_widget_get_child(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
     GtkWidget *widget = gtk_bin_get_child(GTK_BIN(w->widget));
 
     if (!widget)
@@ -185,9 +177,8 @@ luaH_widget_remove(lua_State *L)
 }
 
 gint
-luaH_widget_get_children(lua_State *L)
+luaH_widget_get_children(lua_State *L, widget_t *w)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child;
     GList *children = gtk_container_get_children(GTK_CONTAINER(w->widget));
     GList *iter = children;

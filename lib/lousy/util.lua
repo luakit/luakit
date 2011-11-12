@@ -302,59 +302,19 @@ function find_cache(f)
     return find_file(paths)
 end
 
---- Parses scroll amounts.
--- @param current The current scroll amount.
--- @param max The maximum scroll amount.
--- @param value A value of the form: "+20%", "-20%", "+20px", "-20px", 20, "20%", "20px"
--- @return An absolute scroll amount.
-function parse_scroll(current, max, value)
-    if rstring.match(value, "^%d+px$") then
-        return tonumber(rstring.match(value, "^(%d+)px$"))
-    elseif rstring.match(value, "^%d+%%$") then
-        return math.ceil(max * (tonumber(rstring.match(value, "^(%d+)%%$")) / 100))
-    elseif rstring.match(value, "^[\-\+]%d+px") then
-        return current + tonumber(rstring.match(value, "^([\-\+]%d+)px"))
-    elseif rstring.match(value, "^[\-\+]%d+%%$") then
-        return math.ceil(current + (max * (tonumber(rstring.match(value, "^([\-\+]%d+)%%$")) / 100)))
-    else
-        return error(rstring.format("unable to parse scroll amount: %q", value))
-    end
-end
-
 --- Recursively traverse widget tree and return all widgets.
 -- @param wi The widget.
 function recursive_remove(wi)
-    if not wi then return end
-    local children = {}
-
-    -- Remove pages from notebook widgets
-    if wi.type == "notebook" then
-        while wi:count() ~= 0 do
-            local child = wi:atindex(-1)
-            wi:remove(child)
-            rtable.insert(children, child)
-        end
-    end
-
+    local ret = {}
     -- Empty other container widgets
-    if wi.get_children then
-        for _, child in ipairs(wi:get_children()) do
-            wi:remove(child)
-            rtable.insert(children, child)
+    for _, child in ipairs(wi.children or {}) do
+        wi:remove(child)
+        rtable.insert(ret, child)
+        for _, c in ipairs(recursive_remove(child)) do
+            rtable.insert(ret, c)
         end
     end
-
-    -- Empty bin widgets
-    if wi.get_child and wi:get_child() then
-        local child = wi:get_child()
-        wi:remove(child)
-        rtable.insert(children, child)
-    end
-
-    for _, child in ipairs(children) do
-        children = table.join(recursive_remove(child), children)
-    end
-    return children
+    return ret
 end
 
 --- Convert a number to string independent from locale.

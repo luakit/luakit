@@ -263,13 +263,20 @@ luaH_class_emit_signal(lua_State *L, lua_class_t *lua_class,
     return signal_object_emit(L, lua_class->signals, name, nargs, nret);
 }
 
-/** Try to use the metatable of an object.
- *
- * \param L The Lua VM state.
- * \param idxobj The index of the object to index.
- * \param idxfield The index of the field (attribute) to get.
- * \return The number of element pushed on the stack.
- */
+gint
+luaH_class_property_signal(lua_State *L, lua_class_t *lua_class,
+        luakit_token_t tok)
+{
+    gchar *signame = g_strdup_printf("property::%s", token_tostring(tok));
+    signal_object_emit(L, lua_class->signals, signame, 0, 0);
+    g_free(signame);
+    return 0;
+}
+
+/* Try to use the metatable of an object.
+ * `idxobj` is the index of the object.
+ * `idxfield` is the index of the field (attribute) to get.
+ * Returns the number of element pushed on stack. */
 gint
 luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
     /* Get metatable of the object. */
