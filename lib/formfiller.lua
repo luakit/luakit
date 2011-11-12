@@ -113,11 +113,7 @@ local formfiller_js = [=[
         forms: [],
         inputs: [],
         AttributeMatcher: function (tag, attrs, parents) {
-            var documents = formfiller.toA(window.frames).map(function (frame) {
-                return frame.document;
-            });
-            documents.push(document);
-            this.parents = parents || documents;
+            this.parents = parents || [document];
             var keys = []
             for (var k in attrs) {
                 keys.push(k);
@@ -152,7 +148,7 @@ local formfiller_js = [=[
 -- @param data The attribute data to use for matching
 -- @param parents Start the search using formfiller.{parents}
 -- @return true iff something matched
-local function match(w, tag, attributes, data, parents)
+local function match(w, f, tag, attributes, data, parents)
     local js_template = [=[
         var matcher = new formfiller.AttributeMatcher("{tag}", {
             {attrs}
@@ -173,7 +169,7 @@ local function match(w, tag, attributes, data, parents)
         tag = tag,
         parents = parents and string.format("formfiller.%s", parents) or "null",
     })
-    local ret = w:eval_js(js, "(formfiller.lua)")
+    local ret = w:eval_js(js, "(formfiller.lua)", f)
     return (ret == "true")
 end
 
@@ -263,7 +259,6 @@ end
 -- @param w The window for which to add an entry.
 function add(w)
     -- load JS prerequisites
-    w:eval_js(formfiller_js, "(formfiller.lua)")
     local js = [=[
         var addAttr = function (str, elem, attr, indent, tail) {
             if (typeof(elem[attr]) == "string" && elem[attr] !== "") {
@@ -304,10 +299,17 @@ function add(w)
         str += "}\n\n";
         rendered_something ? str : false;
     ]=]
-    local ret = w:eval_js(js, "(formfiller.lua)")
-    if ret == "false" then return w:error("no forms with inputs found") end
+    local str
+    for _, f in ipairs(w.view.frames) do
+        w:eval_js(formfiller_js, "(formfiller.lua)", f)
+        local ret = w:eval_js(js, "(formfiller.lua)", f)
+        if ret ~= "false" then
+            str = (str or "") .. ret
+        end
+    end
+    if not str then return w:error("no forms with inputs found") end
     local f = io.open(file, "a")
-    f:write(ret)
+    f:write(str)
     f:close()
     edit()
 end
@@ -316,7 +318,7 @@ end
 -- @param w The window on which to fill the forms
 -- @param rules The rules to filter
 -- @return A new table containing only the rules that matched the URI
-local function filter_rules(w, rules)
+local function filter_rules(w, f, rules)
     local filtered = {}
     for _, rule in ipairs(rules) do
         -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
@@ -326,7 +328,7 @@ local function filter_rules(w, rules)
         local js = string.gsub(js_template, "{(%w+)}", {
             pattern = string.format("%q", rule.pattern)
         })
-        local ret = w:eval_js(js, "(formfiller.lua)")
+        local ret = w:eval_js(js, "(formfiller.lua)", f)
         if ret == "true" then table.insert(filtered, rule) end
     end
     return filtered
@@ -336,10 +338,10 @@ end
 -- @param w The window on which to fill the forms
 -- @param forms The forms to filter
 -- @return A new table containing only the forms that matched the current view
-local function filter_forms(w, forms)
+local function filter_forms(w, f, forms)
     local filtered = {}
     for _, form in ipairs(forms) do
-        if match(w, "form", {"method", "name", "id", "action", "className"}, form) then
+        if match(w, f, "form", {"method", "name", "id", "action", "className"}, form) then
             if form.debug then print(string.format("form %s matched its criteria", form.debug)) end
             table.insert(filtered, form)
         else
@@ -373,7 +375,7 @@ end
 -- Fills the currently selected input with the given value
 -- @param w The window on which to fill the forms
 -- @param val The value to fill the input with
-local function fill_input(w, val)
+local function fill_input(w, f, val)
     local js_template = [=[
         if (formfiller.inputs) {
             var val = {str};
@@ -389,12 +391,12 @@ local function fill_input(w, val)
     local js = string.gsub(js_template, "{(%w+)}", {
         str = string.format("%q", tostring(val))
     })
-    w:eval_js(js, "(formfiller.lua)")
+    w:eval_js(js, "(formfiller.lua)", f)
 end
 
 -- Focuses the currently selected input.
 -- @param w The window on which to fill the forms
-local function focus_input(w)
+local function focus_input(w, f)
     local js = [=[
         if (formfiller.inputs && formfiller.inputs[0]) {
             formfiller.inputs[0].focus();
@@ -403,26 +405,26 @@ local function focus_input(w)
             "false";
         }
     ]=]
-    local ret = w:eval_js(js, "(formfiller.lua)")
+    local ret = w:eval_js(js, "(formfiller.lua)", f)
     if ret == "true" then w:set_mode("insert") end
 end
 
 -- Selects all text in the currently selected input.
 -- @param w The window on which to fill the forms
-local function select_input(w)
+local function select_input(w, f)
     local js = [=[
         if (formfiller.inputs && formfiller.inputs[0]) {
             formfiller.inputs[0].select();
         }
     ]=]
-    local ret = w:eval_js(js, "(formfiller.lua)")
+    local ret = w:eval_js(js, "(formfiller.lua)", f)
 end
 
 -- Submits the currently selected form by clicking the nth button or
 -- calling form.submit().
 -- @param w The window on which to fill the forms
 -- @param n The index of the button to click or -1 to use form.submit()
-local function submit_form(w, n)
+local function submit_form(w, f, n)
     local js = string.format([=[
         if (formfiller.forms && formfiller.forms[0]) {
             var inputs = formfiller.forms[0].getElementsByTagName('input');
@@ -438,21 +440,21 @@ local function submit_form(w, n)
             }
         }
     ]=], n)
-    w:eval_js(js, "(formfiller.lua)")
+    w:eval_js(js, "(formfiller.lua)", f)
 end
 
 -- Applies all values to all matching inputs in a form and optionally focuses and selects
 -- the inputs or submits the form.
 -- @param w The window on which to fill the forms
 -- @returns true iff the form matched fully or was submitted
-local function apply_form(w, form)
+local function apply_form(w, f, form)
     local full_match = true
     for _, input in ipairs(form.inputs) do
-        if match(w, "input", {"name", "id", "className", "type"}, input, "forms") then
+        if match(w, f, "input", {"name", "id", "className", "type"}, input, "forms") then
             local val = input.value or input.checked
-            if val then fill_input(w, val) end
-            if input.focus then focus_input(w) end
-            if input.select then select_input(w) end
+            if val then fill_input(w, f, val) end
+            if input.focus then focus_input(w, f) end
+            if input.select then select_input(w, f) end
             if form.debug then
                 print(string.format("input (id = %s, name = %s, className = %s, type = %s) filled with %s",
                     input.id or "",  input.name or "",  input.className or "",  input.type or "", tostring(val)))
@@ -474,7 +476,7 @@ local function apply_form(w, form)
                 print(string.format("submitting form %s using `input[%i].click()`", form.debug, s))
             end
         end
-        submit_form(w, type(s) == "number" and s or -1)
+        submit_form(w, f, type(s) == "number" and s or -1)
         return true
     else
         if form.debug then print(string.format("form %s not submitted", form.debug)) end
@@ -489,18 +491,20 @@ function load(w, fast)
     -- reload the DSL
     init(w)
     -- load JS prerequisites
-    w:eval_js(formfiller_js, "(formfiller.lua)")
-    -- filter out all rules that do not match the current URI
-    local rules = filter_rules(w, w.formfiller_state.rules)
-    for _, rule in ipairs(rules) do
-        -- filter out all forms that do not match the current page
-        local forms = filter_forms(w, rule.forms)
-        -- assemble a list of menu items to display, if any exist
-        if fast or not show_menu(w, forms) then
-            -- apply until the first form submits
-            for _, form in ipairs(forms) do
-                if form.debug then print(string.format("trying to apply form %s", form.debug)) end
-                if apply_form(w, form) then return end
+    for _, f in ipairs(w.view.frames) do
+        w:eval_js(formfiller_js, "(formfiller.lua)", f)
+        -- filter out all rules that do not match the current URI
+        local rules = filter_rules(w, f, w.formfiller_state.rules)
+        for _, rule in ipairs(rules) do
+            -- filter out all forms that do not match the current page
+            local forms = filter_forms(w, f, rule.forms)
+            -- assemble a list of menu items to display, if any exist
+            if fast or not show_menu(w, forms) then
+                -- apply until the first form submits
+                for _, form in ipairs(forms) do
+                    if form.debug then print(string.format("trying to apply form %s", form.debug)) end
+                    if apply_form(w, f, form) then return end
+                end
             end
         end
     end
