@@ -143,17 +143,21 @@ local function callback(v)
     for _, win in pairs(capi.luakit.windows) do
         local w = window.bywidget[win]
         for n = 1, w.tabs:count() do
-            local view = w.tabs:atindex(n)
+            local view = w.tabs[n]
             if (view ~= v and get_domain(view.uri) == get_domain(v.uri)) then
-                view:remove_signal("property::zoom-level",        callback)
-                view:remove_signal("property::full-content-zoom", callback)
+                view:remove_signal("property::zoom_level",        callback)
+                view:remove_signal("property::full_content_zoom", callback)
                 set_zoom(view)
-                view:add_signal("property::zoom-level",        callback)
-                view:add_signal("property::full-content-zoom", callback)
+                view:add_signal("property::zoom_level",        callback)
+                view:add_signal("property::full_content_zoom", callback)
             end
         end
-        if (get_domain(w.tabs:atindex(w.tabs:current()).uri) == get_domain(v.uri)) then
-            w:update_zoom()
+        if (get_domain(w.tabs[w.tabs:current()].uri) == get_domain(v.uri)) then
+--            w:update_zoom()
+            capi.luakit.idle_add(function ()
+                w:update_zoom()
+                return false
+            end)
         end
     end
 end
@@ -165,8 +169,8 @@ webview.init_funcs.autozoom_setup = function (view, w)
         set_zoom(view)
         w:update_zoom()
     end)
-    view:add_signal("property::zoom-level",        callback)
-    view:add_signal("property::full-content-zoom", callback)
+    view:add_signal("property::zoom_level",        callback)
+    view:add_signal("property::full_content_zoom", callback)
 end
 
 setmetatable(_M, { __newindex = function (_, k, v) settings[k] = v end })
