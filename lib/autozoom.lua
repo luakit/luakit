@@ -83,13 +83,13 @@ local function is_default(level, full_content)
 end
 
 local function get_zoom(v)
-    return  round(v:get_property("zoom-level")), v:get_property("full-content-zoom")
+    return  round(v.zoom_level), v.full_content_zoom
 end
 
 local function set_zoom(v)
     local level, full_content = get(v.uri)
-    v:set_property("zoom-level", level)
-    v:set_property("full-content-zoom", full_content)
+    v.zoom_level = level
+    v.full_content_zoom = full_content
 end
 
 local function update_db(v)
@@ -115,7 +115,7 @@ end
 window.init_funcs.create_zoom_label = function (w)
     local sbar = w.sbar.l
     sbar.zoom = widget({ type = "label" })
-    sbar.layout:pack_start(sbar.zoom, false, false, 0)
+    sbar.layout:pack(sbar.zoom)
     sbar.layout:reorder(sbar.zoom, 0)
     sbar.zoom.fg = theme.zoom_sbar_fg
     sbar.zoom.font = theme.zoom_sbar_font
