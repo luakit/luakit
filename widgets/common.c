@@ -36,8 +36,6 @@ key_press_cb(GtkWidget *win, GdkEventKey *ev, widget_t *w)
             ev->state,
             0, /* group */
             &keyval, NULL, NULL, NULL);
-
-    (void) win;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
