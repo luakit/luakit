@@ -112,7 +112,7 @@ remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 }
 
 void
-parent_set_cb(GtkWidget *widget, GtkObject* UNUSED(old), widget_t *w)
+parent_set_cb(GtkWidget *widget, GtkWidget* UNUSED(old), widget_t *w)
 {
     lua_State *L = globalconf.L;
     widget_t *parent = NULL;

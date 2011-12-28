@@ -65,22 +65,22 @@ endif
 # === Required build packages ================================================
 
 # Packages required to build luakit.
-PKGS += gtk+-2.0
+PKGS += gtk+-3.0
 PKGS += gthread-2.0
-PKGS += webkit-1.0
+PKGS += webkitgtk-3.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
 
 # For systems using older WebKit-GTK versions which bundle JavaScriptCore
 # within the WebKit-GTK package.
 ifneq ($(NO_JAVASCRIPTCORE),1)
-	PKGS += javascriptcoregtk-1.0
+	PKGS += javascriptcoregtk-3.0
 endif
 
 # Build luakit with libunique bindings? (single instance support)
 ifneq ($(USE_UNIQUE),0)
 	CPPFLAGS += -DWITH_UNIQUE
-	PKGS     += unique-1.0
+	PKGS     += unique-3.0
 endif
 
 # Check user has correct packages installed (and found by pkg-config).

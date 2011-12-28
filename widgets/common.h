@@ -82,8 +82,13 @@ gint luaH_widget_get_visible(lua_State *L, widget_t*);
 gint luaH_widget_set_visible(lua_State *L, widget_t*);
 
 
+#include <gtk/gtk.h>
+#include <gtk/gtkx.h>
+
+#include <glib-object.h>
+
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);
-void parent_set_cb(GtkWidget*, GtkObject*, widget_t*);
+void parent_set_cb(GtkWidget*, GtkWidget*, widget_t*);
 void remove_cb(GtkContainer*, GtkWidget*, widget_t*);
 void widget_destructor(widget_t*);
 

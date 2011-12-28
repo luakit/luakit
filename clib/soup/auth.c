@@ -138,11 +138,14 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
        NULL);
 
     /* set dialog properties */
-    gtk_dialog_set_has_separator(dialog, FALSE);
+    // gtk_dialog_set_has_separator(dialog, FALSE);
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
-    gtk_box_set_spacing(GTK_BOX(dialog->vbox), 2);
-    gtk_container_set_border_width(GTK_CONTAINER(dialog->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(dialog->action_area), 6);
+    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
+
+    gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
+
+    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_action_area(dialog)), 6);
+
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
     gtk_window_set_icon_name(window, GTK_STOCK_DIALOG_AUTHENTICATION);
@@ -152,7 +155,7 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     /* build contents */
     GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
-    gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
 
     GtkWidget *icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
 

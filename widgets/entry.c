@@ -140,6 +140,7 @@ activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 static void
 changed_cb(widget_t *w)
 {
+    printf("hello friend\n");
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "changed", 0, 0);
@@ -184,7 +185,9 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
 
     // Further signal to replace "signal::changed"
     GtkEntry* entry = GTK_ENTRY(w->widget);
-    g_object_connect(G_OBJECT(entry->im_context),
+    // XXX I'm unsure what event this maps to in GTK3, so I've left it how it
+    // is.
+    g_object_connect(G_OBJECT(entry),
       "swapped-signal::commit", G_CALLBACK(changed_cb), w,
       NULL);
 

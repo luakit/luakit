@@ -871,7 +871,8 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
-      "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
+      // XXX expose-event was replaced with draw.
+      "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
       "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,
