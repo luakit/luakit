@@ -23,11 +23,26 @@
 #include "widgets/common.h"
 #include "clib/soup/auth.h"
 
-static void
-destroy_cb(GtkObject *win, widget_t *w)
-{
-    (void) win;
+typedef struct {
+    widget_t *widget;
+    GtkWindow *win;
+    GdkWindowState state;
+} window_data_t;
 
+static widget_t *
+luaH_checkwindow(lua_State *L, gint udx)
+{
+    widget_t *w = luaH_checkwidget(L, udx);
+    if (w->info->tok != L_TK_WINDOW)
+        luaL_argerror(L, udx, "expected window widget");
+    return w;
+}
+
+#define luaH_checkwindata(L, udx) ((window_data_t*)(luaH_checkwindow(L, udx)->data))
+
+static void
+destroy_cb(GtkObject* UNUSED(win), widget_t *w)
+{
     /* remove window from global windows list */
     g_ptr_array_remove(globalconf.windows, w);
 
@@ -40,10 +55,10 @@ destroy_cb(GtkObject *win, widget_t *w)
 static gint
 luaH_window_set_default_size(lua_State *L)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
+    window_data_t *d = luaH_checkwindata(L, 1);
     gint width = (gint) luaL_checknumber(L, 2);
     gint height = (gint) luaL_checknumber(L, 3);
-    gtk_window_set_default_size(GTK_WINDOW(w->widget), width, height);
+    gtk_window_set_default_size(d->win, width, height);
     return 0;
 }
 
@@ -57,63 +72,14 @@ luaH_window_show(lua_State *L)
 }
 
 static gint
-luaH_window_set_screen(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    GdkScreen *screen = NULL;
-
-    if (lua_islightuserdata(L, 2))
-        screen = (GdkScreen*)lua_touserdata(L, 2);
-    else
-        luaL_argerror(L, 2, "expected GdkScreen lightuserdata");
-
-    gtk_window_set_screen(GTK_WINDOW(w->widget), screen);
-    gtk_window_present(GTK_WINDOW(w->widget));
-    return 0;
-}
-
-
-static gint
-luaH_window_fullscreen(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    gtk_window_fullscreen(GTK_WINDOW(w->widget));
-    return 0;
-}
-
-static gint
-luaH_window_unfullscreen(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    gtk_window_unfullscreen(GTK_WINDOW(w->widget));
-    return 0;
-}
-
-static gint
-luaH_window_maximize(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    gtk_window_maximize(GTK_WINDOW(w->widget));
-    return 0;
-}
-
-static gint
-luaH_window_unmaximize(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    gtk_window_unmaximize(GTK_WINDOW(w->widget));
-    return 0;
-}
-
-static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
+    window_data_t *d = luaH_checkwindata(L, 1);
 
     switch(token)
     {
-      LUAKIT_WIDGET_BIN_INDEX_COMMON
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
+      LUAKIT_WIDGET_BIN_INDEX_COMMON(d->widget)
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(d->widget)
 
       /* push widget class methods */
       PF_CASE(DESTROY, luaH_widget_destroy)
@@ -123,20 +89,21 @@ luaH_window_index(lua_State *L, luakit_token_t token)
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
       PF_CASE(SHOW,             luaH_window_show)
-      PF_CASE(SET_SCREEN,       luaH_window_set_screen)
-      PF_CASE(FULLSCREEN,       luaH_window_fullscreen)
-      PF_CASE(UNFULLSCREEN,     luaH_window_unfullscreen)
-      PF_CASE(MAXIMIZE,         luaH_window_maximize)
-      PF_CASE(UNMAXIMIZE,       luaH_window_unmaximize)
 
-      /* push string methods */
-      PS_CASE(TITLE, gtk_window_get_title(GTK_WINDOW(w->widget)))
+      /* push string properties */
+      PS_CASE(TITLE, gtk_window_get_title(d->win))
 
       /* push boolean properties */
-      PB_CASE(DECORATED, gtk_window_get_decorated(GTK_WINDOW(w->widget)))
+      PB_CASE(DECORATED,    gtk_window_get_decorated(d->win))
+      PB_CASE(URGENCY_HINT, gtk_window_get_urgency_hint(d->win))
+      PB_CASE(FULLSCREEN,   d->state & GDK_WINDOW_STATE_FULLSCREEN)
+      PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
-      case L_TK_XID:
-        lua_pushnumber(L, GDK_WINDOW_XID(GTK_WIDGET(w->widget)->window));
+      /* push integer properties */
+      PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
+
+      case L_TK_SCREEN:
+        lua_pushlightuserdata(L, gtk_window_get_screen(d->win));
         return 1;
 
       default:
@@ -148,56 +115,114 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 static gint
 luaH_window_newindex(lua_State *L, luakit_token_t token)
 {
-    size_t len;
-    widget_t *w = luaH_checkwidget(L, 1);
+    window_data_t *d = luaH_checkwindata(L, 1);
 
     switch(token)
     {
+      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(d->widget)
+
       case L_TK_DECORATED:
-        gtk_window_set_decorated(GTK_WINDOW(w->widget),
-                luaH_checkboolean(L, 3));
+        gtk_window_set_decorated(d->win, luaH_checkboolean(L, 3));
+        break;
+
+      case L_TK_URGENCY_HINT:
+        gtk_window_set_urgency_hint(d->win, luaH_checkboolean(L, 3));
         break;
 
       case L_TK_TITLE:
-        gtk_window_set_title(GTK_WINDOW(w->widget),
-            luaL_checklstring(L, 3, &len));
+        gtk_window_set_title(d->win, luaL_checkstring(L, 3));
         break;
 
       case L_TK_ICON:
-        gtk_window_set_icon_from_file(GTK_WINDOW(w->widget),
-            luaL_checklstring(L, 3, &len), NULL);
+        gtk_window_set_icon_from_file(d->win, luaL_checkstring(L, 3), NULL);
         break;
+
+      case L_TK_SCREEN:
+        if (!lua_islightuserdata(L, 3))
+            luaL_argerror(L, 3, "expected GdkScreen lightuserdata");
+        gtk_window_set_screen(d->win, (GdkScreen*)lua_touserdata(L, 3));
+        gtk_window_present(d->win);
+        break;
+
+      case L_TK_FULLSCREEN:
+        if (luaH_checkboolean(L, 3))
+            gtk_window_fullscreen(d->win);
+        else
+            gtk_window_unfullscreen(d->win);
+        return 0;
+
+      case L_TK_MAXIMIZED:
+        if (luaH_checkboolean(L, 3))
+            gtk_window_maximize(d->win);
+        else
+            gtk_window_unmaximize(d->win);
+        return 0;
 
       default:
         return 0;
     }
 
-    return luaH_object_emit_property_signal(L, 1);
+    return luaH_object_property_signal(L, 1, token);
+}
+
+static gboolean
+window_state_cb(GtkWidget* UNUSED(widget), GdkEventWindowState *ev, widget_t *w)
+{
+    window_data_t *d = (window_data_t*)w->data;
+    d->state = ev->new_window_state;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+
+    if (ev->changed_mask & GDK_WINDOW_STATE_MAXIMIZED)
+        luaH_object_property_signal(L, -1, L_TK_MAXIMIZED);
+
+    if (ev->changed_mask & GDK_WINDOW_STATE_FULLSCREEN)
+        luaH_object_property_signal(L, -1, L_TK_FULLSCREEN);
+
+    lua_pop(L, 1);
+    return FALSE;
+}
+
+static void
+window_destructor(widget_t *w)
+{
+    g_slice_free(window_data_t, w->data);
+    widget_destructor(w);
 }
 
 widget_t *
-widget_window(widget_t *w)
+widget_window(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_window_index;
     w->newindex = luaH_window_newindex;
-    w->destructor = widget_destructor;
+    w->destructor = window_destructor;
+
+    /* create private window data struct */
+    window_data_t *d = g_slice_new0(window_data_t);
+    d->widget = w;
+    w->data = d;
 
     /* create and setup window widget */
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    d->win = GTK_WINDOW(w->widget);
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
-    gtk_window_set_wmclass(GTK_WINDOW(w->widget), "luakit", "luakit");
-    gtk_window_set_default_size(GTK_WINDOW(w->widget), 800, 600);
-    gtk_window_set_title(GTK_WINDOW(w->widget), "luakit");
+    gtk_window_set_wmclass(d->win, "luakit", "luakit");
+    gtk_window_set_default_size(d->win, 800, 600);
+    gtk_window_set_title(d->win, "luakit");
+
     GdkGeometry hints;
     hints.min_width = 1;
     hints.min_height = 1;
-    gtk_window_set_geometry_hints(GTK_WINDOW(w->widget), NULL, &hints, GDK_HINT_MIN_SIZE);
+    gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect(G_OBJECT(w->widget),
-      "signal::add",             G_CALLBACK(add_cb),       w,
-      "signal::destroy",         G_CALLBACK(destroy_cb),   w,
-      "signal::key-press-event", G_CALLBACK(key_press_cb), w,
-      "signal::remove",          G_CALLBACK(remove_cb),    w,
+      "signal::add",                G_CALLBACK(add_cb),          w,
+      "signal::destroy",            G_CALLBACK(destroy_cb),      w,
+      "signal::focus-in-event",     G_CALLBACK(focus_cb),        w,
+      "signal::focus-out-event",    G_CALLBACK(focus_cb),        w,
+      "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
+      "signal::remove",             G_CALLBACK(remove_cb),       w,
+      "signal::window-state-event", G_CALLBACK(window_state_cb), w,
       NULL);
 
     /* add to global windows list */

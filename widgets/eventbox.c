@@ -29,8 +29,8 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON
-      LUAKIT_WIDGET_BIN_INDEX_COMMON
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON
+      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push string properties */
       PS_CASE(BG, g_object_get_data(G_OBJECT(w->widget), "bg"))
@@ -51,6 +51,8 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+
       case L_TK_BG:
         tmp = luaL_checklstring(L, 3, &len);
         if (!gdk_color_parse(tmp, &c))
@@ -63,11 +65,11 @@ luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
         return 0;
     }
 
-    return luaH_object_emit_property_signal(L, 1);
+    return luaH_object_property_signal(L, 1, token);
 }
 
 widget_t *
-widget_eventbox(widget_t *w)
+widget_eventbox(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_eventbox_index;
     w->newindex = luaH_eventbox_newindex;
