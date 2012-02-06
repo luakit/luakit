@@ -33,119 +33,89 @@
 /* setup luakit module signals */
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
-/** Returns text from an X selection.
+GtkClipboard*
+luaH_clipboard_get(lua_State *L, gint idx)
+{
+#define CB_CASE(t) case L_TK_##t: return gtk_clipboard_get(GDK_SELECTION_##t);
+    switch(l_tokenize(luaL_checkstring(L, idx)))
+    {
+      CB_CASE(PRIMARY)
+      CB_CASE(SECONDARY)
+      CB_CASE(CLIPBOARD)
+      default: break;
+    }
+    return NULL;
+#undef CB_CASE
+}
+
+/** __index metamethod for the luakit.selection table which
+ * returns text from an X selection.
  * \see http://en.wikipedia.org/wiki/X_Window_selection
  * \see http://developer.gnome.org/gtk/stable/gtk-Clipboards.html#gtk-clipboard-wait-for-text
  *
  * \param  L The Lua VM state.
  * \return   The number of elements pushed on stack.
- *
- * \luastack
- * \lparam selection The selection from which to get text. Selection name may
- *                   be any of \c "primary", \c "secondary" or \c "clipboard".
- *                   Following \c xclip(1) behavior only the first character
- *                   (or more) of each of the selection names is required.
- *                   Invalid selection names will trigger an argument error.
- *                   If \c selection is not given the \c "primary" selection
- *                   is used.
- * \lreturn          The selection text (if any) or nil.
  */
 static gint
-luaH_luakit_get_selection(lua_State *L)
+luaH_luakit_selection_index(lua_State *L)
 {
-    GdkAtom atom = GDK_SELECTION_PRIMARY;
-
-    if (lua_gettop(L)) {
-        switch (luaL_checkstring(L, 1)[0]) {
-          case 'p':
-            break;
-          case 's':
-            atom = GDK_SELECTION_SECONDARY;
-            break;
-          case 'c':
-            atom = GDK_SELECTION_CLIPBOARD;
-            break;
-          default:
-            luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
-            break;
+    GtkClipboard *selection = luaH_clipboard_get(L, 2);
+    if (selection) {
+        gchar *text = gtk_clipboard_wait_for_text(selection);
+        if (text) {
+            lua_pushstring(L, text);
+            g_free(text);
+            return 1;
         }
-    }
-
-    GtkClipboard *selection = gtk_clipboard_get(atom);
-    gchar *text = gtk_clipboard_wait_for_text(selection);
-    if (text) {
-        lua_pushstring(L, text);
-        g_free(text);
-        return 1;
     }
     return 0;
 }
 
-/** Sets an X selection.
+/** __newindex metamethod for the luakit.selection table which
+ * sets an X selection.
  * \see http://en.wikipedia.org/wiki/X_Window_selection
  * \see http://developer.gnome.org/gtk/stable/gtk-Clipboards.html#gtk-clipboard-set-text
  *
  * \param  L The Lua VM state.
  * \return   The number of elements pushed on stack (0).
  *
- * \luastack
- * \lparam selection The selection buffer to set. Select name may be any of
- *                   \c "primary", \c "secondary" or \c "clipboard". Following
- *                   \c xclip(1) behavior only the first character (or more)
- *                   of each of the selection names is required. Invalid
- *                   selection names will trigger an argument error. If
- *                   \c selection is not given the \c "primary" selection is
- *                   used.
- * \lparam text      The selection text or nil.
- *
  * \lcode
- * luakit.set_selection("Malcolm Reynolds") // sets primary selection
- * luakit.set_selection("clipboard", "John Crichton") // sets clipboard text
- * print(luakit.get_selection()) // outputs "Malcolm Reynolds"
- * print(luakit.get_selection("p")) // outputs "Malcolm Reynolds"
- * print(luakit.get_selection("c")) // outputs "John Crichton"
- * print(luakit.get_selection("secondary")) // outputs nothing
- * luakit.set_selection(nil) // clear primary
- * luakit.set_selection("c", nil) // clear clipboard
+ * luakit.selection.primary = "Malcolm Reynolds"
+ * luakit.selection.clipboard = "John Crichton"
+ * print(luakit.selection.primary) // outputs "Malcolm Reynolds"
+ * luakit.selection.primary = nil  // clears the primary selection
+ * print(luakit.selection.primary) // outputs nothing
  * \endcode
  */
 static gint
-luaH_luakit_set_selection(lua_State *L)
+luaH_luakit_selection_newindex(lua_State *L)
 {
-    GdkAtom atom = GDK_SELECTION_PRIMARY;
-    gint n = lua_gettop(L);
-    const gchar *text = NULL;
-
-    /* selection name given */
-    if (n > 1) {
-        switch (luaL_checkstring(L, 1)[0]) {
-          case 'p':
-            break;
-          case 's':
-            atom = GDK_SELECTION_SECONDARY;
-            break;
-          case 'c':
-            atom = GDK_SELECTION_CLIPBOARD;
-            break;
-          default:
-            luaL_argerror(L, 1, "should be 'primary', 'secondary' or 'clipboard'");
-            break;
-        }
-        if (!lua_isnil(L, 2))
-            text = luaL_checkstring(L, 2);
-
-    /* just text given */
-    } else if (n == 1 && !lua_isnil(L, 1))
-        text = luaL_checkstring(L, 1);
-
-    GtkClipboard *selection = gtk_clipboard_get(atom);
-
-    if (text)
-        gtk_clipboard_set_text(selection, text, -1);
-    else
-        gtk_clipboard_clear(selection);
-
+    GtkClipboard *selection = luaH_clipboard_get(L, 2);
+    if (selection) {
+        const gchar *text = !lua_isnil(L, 3) ? luaL_checkstring(L, 3) : NULL;
+        if (text && *text)
+            gtk_clipboard_set_text(selection, text, -1);
+        else
+            gtk_clipboard_clear(selection);
+    }
     return 0;
+}
+
+static gint
+luaH_luakit_selection_table_push(lua_State *L)
+{
+    /* create selection table */
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    lua_pushliteral(L, "__index");
+    lua_pushcfunction(L, luaH_luakit_selection_index);
+    lua_rawset(L, -3);
+    lua_pushliteral(L, "__newindex");
+    lua_pushcfunction(L, luaH_luakit_selection_newindex);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
 }
 
 /** Escapes a string for use in a URI.
@@ -258,47 +228,6 @@ luaH_luakit_save_file(lua_State *L)
         lua_pushnil(L);
 
     gtk_widget_destroy(dialog);
-    return 1;
-}
-
-/** Returns the full path of a special directory. On Unix this is done using the
- * XDG special user directories.
- * \see http://developer.gnome.org/glib/stable/glib-Miscellaneous-Utility-Functions.html
- * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on stack.
- *
- * \luastack
- * \lparam user_dir One of \c "DESKTOP", \c "DOCUMENTS", \c "DOWNLOAD", \c
- *                  "MUSIC", \c "PICTURES", \c  "PUBLIC_SHARE", \c "TEMPLATES"
- *                  or \c "VIDEOS". Errors if invalid special dir given.
- * \lreturn         Returns the full path of the given special directory.
- */
-static gint
-luaH_luakit_get_special_dir(lua_State *L)
-{
-    const gchar *name = luaL_checkstring(L, 1);
-    luakit_token_t token = l_tokenize(name);
-    GUserDirectory atom;
-    /* match token with G_USER_DIR_* atom */
-    switch(token) {
-#define UD_CASE(TOK) case L_TK_##TOK: atom = G_USER_DIRECTORY_##TOK; break;
-      UD_CASE(DESKTOP)
-      UD_CASE(DOCUMENTS)
-      UD_CASE(DOWNLOAD)
-      UD_CASE(MUSIC)
-      UD_CASE(PICTURES)
-      UD_CASE(PUBLIC_SHARE)
-      UD_CASE(TEMPLATES)
-      UD_CASE(VIDEOS)
-#undef UD_CASE
-      default:
-        warn("unknown atom G_USER_DIRECTORY_%s", name);
-        luaL_argerror(L, 1, "invalid G_USER_DIRECTORY_* atom");
-        return 0;
-    }
-    lua_pushstring(L, g_get_user_special_dir(atom));
     return 1;
 }
 
@@ -530,12 +459,6 @@ luaH_luakit_index(lua_State *L)
       /* push boolean properties */
       PB_CASE(VERBOSE,          globalconf.verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
-      /* push integer properties */
-      PI_CASE(WEBKIT_MAJOR_VERSION, webkit_major_version())
-      PI_CASE(WEBKIT_MINOR_VERSION, webkit_minor_version())
-      PI_CASE(WEBKIT_MICRO_VERSION, webkit_micro_version())
-      PI_CASE(WEBKIT_USER_AGENT_MAJOR_VERSION, WEBKIT_USER_AGENT_MAJOR_VERSION)
-      PI_CASE(WEBKIT_USER_AGENT_MINOR_VERSION, WEBKIT_USER_AGENT_MINOR_VERSION)
 
       case L_TK_WINDOWS:
         lua_newtable(L);
@@ -545,6 +468,19 @@ luaH_luakit_index(lua_State *L)
             lua_rawseti(L, -2, i+1);
         }
         return 1;
+
+      case L_TK_WEBKIT_VERSION:
+        lua_pushfstring(L, "%d.%d.%d", WEBKIT_MAJOR_VERSION,
+                WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
+        return 1;
+
+      case L_TK_WEBKIT_USER_AGENT_VERSION:
+        lua_pushfstring(L, "%d.%d", WEBKIT_USER_AGENT_MAJOR_VERSION,
+                WEBKIT_USER_AGENT_MINOR_VERSION);
+        return 1;
+
+      case L_TK_SELECTION:
+        return luaH_luakit_selection_table_push(L);
 
       case L_TK_INSTALL_PATH:
         lua_pushliteral(L, LUAKIT_INSTALL_PATH);
@@ -575,9 +511,8 @@ luaH_luakit_index(lua_State *L)
  * \return   The number of elements pushed on stack.
  */
 static gint
-luaH_luakit_quit(lua_State *L)
+luaH_luakit_quit(lua_State* UNUSED(L))
 {
-    (void) L;
     if (gtk_main_level())
         gtk_main_quit();
     else
@@ -674,11 +609,8 @@ luakit_lib_setup(lua_State *L)
         LUA_CLASS_METHODS(luakit)
         { "__index",         luaH_luakit_index },
         { "exec",            luaH_luakit_exec },
-        { "get_special_dir", luaH_luakit_get_special_dir },
         { "quit",            luaH_luakit_quit },
         { "save_file",       luaH_luakit_save_file },
-        { "set_selection",   luaH_luakit_set_selection },
-        { "get_selection",   luaH_luakit_get_selection },
         { "spawn",           luaH_luakit_spawn },
         { "spawn_sync",      luaH_luakit_spawn_sync },
         { "time",            luaH_luakit_time },

@@ -126,13 +126,9 @@ luaH_download_gc(lua_State *L)
  * \returns \c FALSE
  */
 static gboolean
-error_cb(WebKitDownload *d, gint error_code, gint error_detail, gchar *reason,
-        download_t *download)
+error_cb(WebKitDownload* UNUSED(d), gint UNUSED(error_code),
+        gint UNUSED(error_detail), gchar *reason, download_t *download)
 {
-    (void) d;
-    (void) error_detail;
-    (void) error_code;
-
     /* save error message */
     if (download->error)
         g_free(download->error);
