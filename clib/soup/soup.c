@@ -28,46 +28,18 @@
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
 
-GHashTable *soup_properties = NULL;
-property_t soup_properties_table[] = {
-  { "accept-language",      CHAR,   SESSION,   TRUE,  NULL },
-  { "accept-language-auto", BOOL,   SESSION,   TRUE,  NULL },
-  { "accept-policy",        INT,    COOKIEJAR, TRUE,  NULL },
-  { "idle-timeout",         INT,    SESSION,   TRUE,  NULL },
-  { "max-conns",            INT,    SESSION,   TRUE,  NULL },
-  { "max-conns-per-host",   INT,    SESSION,   TRUE,  NULL },
-  { "proxy-uri",            URI,    SESSION,   TRUE,  NULL },
-  { "ssl-ca-file",          CHAR,   SESSION,   TRUE,  NULL },
-  { "ssl-strict",           BOOL,   SESSION,   TRUE,  NULL },
-  { "timeout",              INT,    SESSION,   TRUE,  NULL },
-  { "use-ntlm",             BOOL,   SESSION,   TRUE,  NULL },
-  { NULL,                   0,      0,         0,     NULL },
+property_t soup_properties[] = {
+  { L_TK_ACCEPT_LANGUAGE,      "accept-language",      CHAR, TRUE },
+  { L_TK_ACCEPT_LANGUAGE_AUTO, "accept-language-auto", BOOL, TRUE },
+  { L_TK_IDLE_TIMEOUT,         "idle-timeout",         INT,  TRUE },
+  { L_TK_MAX_CONNS,            "max-conns",            INT,  TRUE },
+  { L_TK_MAX_CONNS_PER_HOST,   "max-conns-per-host",   INT,  TRUE },
+  { L_TK_PROXY_URI,            "proxy-uri",            URI,  TRUE },
+  { L_TK_SSL_CA_FILE,          "ssl-ca-file",          CHAR, TRUE },
+  { L_TK_SSL_STRICT,           "ssl-strict",           BOOL, TRUE },
+  { L_TK_TIMEOUT,              "timeout",              INT,  TRUE },
+  { 0,                         NULL,                   0,    0    },
 };
-
-inline static gint
-luaH_soup_get_property(lua_State *L)
-{
-    return luaH_get_property(L, soup_properties, NULL, 1);
-}
-
-inline static gint
-luaH_soup_set_property(lua_State *L)
-{
-    return luaH_set_property(L, soup_properties, NULL, 1, 2);
-}
-
-static void
-soup_notify_cb(SoupSession *s, GParamSpec *ps, gpointer *d)
-{
-    (void) s;
-    (void) d;
-    property_t *p;
-    /* emit soup property signal if found in properties table */
-    if ((p = g_hash_table_lookup(soup_properties, ps->name))) {
-        lua_State *L = globalconf.L;
-        signal_object_emit(L, soup_class.signals, p->signame, 0, 0);
-    }
-}
 
 static gint
 luaH_soup_uri_tostring(lua_State *L)
@@ -94,8 +66,6 @@ luaH_soup_uri_tostring(lua_State *L)
     GET_PROP(path)
     GET_PROP(query)
     GET_PROP(fragment)
-
-#undef GET_PROP
 
     lua_pushliteral(L, "port");
     lua_rawget(L, 1);
@@ -132,8 +102,6 @@ luaH_soup_push_uri(lua_State *L, SoupURI *uri)
     PUSH_PROP(query)
     PUSH_PROP(fragment)
 
-#undef PUSH_PROP
-
     if (uri->port) {
         lua_pushliteral(L, "port");
         lua_pushnumber(L, uri->port);
@@ -168,14 +136,46 @@ luaH_soup_parse_uri(lua_State *L)
     return uri ? 1 : 0;
 }
 
+static gint
+luaH_soup_index(lua_State *L)
+{
+    if (!lua_isstring(L, 2))
+        return 0;
+
+    return luaH_gobject_index(L, soup_properties,
+            l_tokenize(lua_tostring(L, 2)),
+            G_OBJECT(soupconf.session));
+}
+
+static gint
+luaH_soup_newindex(lua_State *L)
+{
+    if (!lua_isstring(L, 2))
+        return 0;
+
+    luakit_token_t token = l_tokenize(lua_tostring(L, 2));
+
+    if (token == L_TK_ACCEPT_POLICY) {
+        g_object_set(G_OBJECT(soupconf.cookiejar), "accept-policy",
+                (gint)luaL_checknumber(L, 3), NULL);
+        return luaH_class_property_signal(L, &soup_class, token);
+    }
+
+    if (luaH_gobject_newindex(L, soup_properties, token, 3,
+                G_OBJECT(soupconf.session)))
+        return luaH_class_property_signal(L, &soup_class, token);
+
+    return 0;
+}
+
 void
 soup_lib_setup(lua_State *L)
 {
     static const struct luaL_reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
-        { "set_property",  luaH_soup_set_property },
-        { "get_property",  luaH_soup_get_property },
+        { "__index",       luaH_soup_index },
+        { "__newindex",    luaH_soup_newindex },
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
         { "add_cookies",   luaH_cookiejar_add_cookies },
@@ -185,18 +185,11 @@ soup_lib_setup(lua_State *L)
     /* create signals array */
     soup_class.signals = signal_new();
 
-    /* hash soup properties table */
-    soup_properties = hash_properties(soup_properties_table);
-
     /* init soup struct */
     soupconf.cookiejar = luakit_cookie_jar_new();
     soupconf.session = webkit_get_default_session();
     soup_session_add_feature(soupconf.session,
             (SoupSessionFeature*) soupconf.cookiejar);
-
-    /* watch for property changes */
-    g_signal_connect(G_OBJECT(soupconf.session), "notify",
-            G_CALLBACK(soup_notify_cb), NULL);
 
     /* remove old auth dialog and add luakit's auth feature instead */
     soup_session_remove_feature_by_type(soupconf.session,

@@ -31,6 +31,15 @@
 #define NONULL(x) (x ? x : "")
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
 
+#ifdef UNUSED
+#elif defined(__GNUC__)
+# define UNUSED(x) UNUSED_ ## x __attribute__((unused))
+#elif defined(__LCLINT__)
+# define UNUSED(x) /*@unused@*/ x
+#else
+# define UNUSED(x) x
+#endif
+
 /* stack pushing macros */
 #define PB_CASE(t, b) case L_TK_##t: lua_pushboolean   (L, b); return 1;
 #define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction (L, f); return 1;

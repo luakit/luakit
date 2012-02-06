@@ -145,6 +145,17 @@ luaH_warn(lua_State *L, const gchar *fmt, ...) {
     fprintf(stderr, "\n");
 }
 
+static inline gint
+luaH_rawfield(lua_State *L, gint idx, const gchar *field)
+{
+    lua_pushstring(L, field);
+    lua_rawget(L, idx);
+    if (!lua_isnil(L, -1))
+        return 1;
+    lua_pop(L, 1);
+    return 0;
+}
+
 void luaH_init();
 gboolean luaH_parserc(const gchar *, gboolean);
 gboolean luaH_hasitem(lua_State *, gconstpointer);

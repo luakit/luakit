@@ -2,6 +2,8 @@
 -- Window class --
 ------------------
 
+require "lfs"
+
 -- Window class table
 window = {}
 
@@ -65,48 +67,48 @@ function window.build()
     }
 
     -- Assemble window
-    w.ebox:set_child(w.layout)
-    w.win:set_child(w.ebox)
+    w.ebox.child = w.layout
+    w.win.child = w.ebox
 
     -- Pack tablist
-    w.layout:pack_start(w.tablist.widget, false, false, 0)
+    w.layout:pack(w.tablist.widget)
 
     -- Pack notebook
-    w.layout:pack_start(w.tabs, true, true, 0)
+    w.layout:pack(w.tabs, { expand = true, fill = true })
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
-    l.layout:pack_start(l.uri,    false, false, 0)
-    l.layout:pack_start(l.hist,   false, false, 0)
-    l.layout:pack_start(l.loaded, false, false, 0)
-    l.ebox:set_child(l.layout)
+    l.layout:pack(l.uri)
+    l.layout:pack(l.hist)
+    l.layout:pack(l.loaded)
+    l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
-    r.layout:pack_start(r.buf,    false, false, 0)
-    r.layout:pack_start(r.ssl,    false, false, 0)
-    r.layout:pack_start(r.tabi,   false, false, 0)
-    r.layout:pack_start(r.scroll, false, false, 0)
-    r.ebox:set_child(r.layout)
+    r.layout:pack(r.buf)
+    r.layout:pack(r.ssl)
+    r.layout:pack(r.tabi)
+    r.layout:pack(r.scroll)
+    r.ebox.child = r.layout
 
     -- Pack status bar elements
     local s = w.sbar
-    s.layout:pack_start(l.ebox,   false, false, 0)
-    s.layout:pack_start(s.sep,    true,  true,  0)
-    s.layout:pack_start(r.ebox,   false, false, 0)
-    s.ebox:set_child(s.layout)
-    w.layout:pack_start(s.ebox,   false, false, 0)
+    s.layout:pack(l.ebox)
+    s.layout:pack(s.sep, { expand = true, fill = true })
+    s.layout:pack(r.ebox)
+    s.ebox.child = s.layout
+    w.layout:pack(s.ebox)
 
     -- Pack menu widget
-    w.layout:pack_start(w.menu.widget, false, false, 0)
+    w.layout:pack(w.menu.widget)
     w.menu:hide()
 
     -- Pack input bar
     local i = w.ibar
-    i.layout:pack_start(i.prompt, false, false, 0)
-    i.layout:pack_start(i.input,  true,  true,  0)
-    i.ebox:set_child(i.layout)
-    w.layout:pack_start(i.ebox,    false, false, 0)
+    i.layout:pack(i.prompt)
+    i.layout:pack(i.input, { expand = true, fill = true })
+    i.ebox.child = i.layout
+    w.layout:pack(i.ebox)
 
     -- Other settings
     i.input.show_frame = false
@@ -182,7 +184,7 @@ window.init_funcs = {
                 w.tabs:switch(index)
                 return true
             elseif button == 2 then
-                w:close_tab(w.tabs:atindex(index))
+                w:close_tab(w.tabs[index])
                 return true
             end
         end)
@@ -240,6 +242,12 @@ window.init_funcs = {
         local path = (luakit.dev_paths and os.exists("./extras/luakit.png")) or
             os.exists("/usr/share/pixmaps/luakit.png")
         if path then w.win.icon = path end
+    end,
+
+    clear_urgency_hint = function (w)
+        w.win:add_signal("focus", function ()
+            w.win.urgency_hint = false
+        end)
     end,
 }
 
@@ -437,7 +445,7 @@ window.methods = {
     end,
 
     update_win_title = function (w)
-        local uri, title = w.view.uri, w.view:get_property("title")
+        local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
@@ -450,7 +458,7 @@ window.methods = {
     end,
 
     update_progress = function (w)
-        local p = w.view:get_property("progress")
+        local p = w.view.progress
         local loaded = w.sbar.l.loaded
         if not w.view:loading() or p == 1 then
             loaded:hide()
@@ -461,15 +469,14 @@ window.methods = {
     end,
 
     update_scroll = function (w)
-        local val, max = w.view:get_scroll_vert()
-        if max == 0 then val = "All"
-        elseif val == 0 then val = "Top"
-        elseif val == max then val = "Bot"
-        else val = string.format("%2d%%", (val/max) * 100)
+        local scroll, label = w.view.scroll, w.sbar.r.scroll
+        local y, max, text = scroll.y, scroll.ymax
+        if     max == 0   then text = "All"
+        elseif y   == 0   then text = "Top"
+        elseif y   == max then text = "Bot"
+        else text = string.format("%2d%%", (y / max) * 100)
         end
-        local scroll = w.sbar.r.scroll
-        if scroll.text ~= val then scroll.text = val end
-        scroll:show()
+        if label.text ~= text then label.text = text end
     end,
 
     update_ssl = function (w)
@@ -529,7 +536,7 @@ window.methods = {
         local escape = lousy.util.escape
         local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
 
-        for i, view in ipairs(w.tabs:get_children()) do
+        for i, view in ipairs(w.tabs.children) do
             -- Get tab number theme
             local ntheme = nfg
             if view:loading() then -- Show loading on all tabs
@@ -543,7 +550,7 @@ window.methods = {
                     ntheme = gfg
                 end
             end
-            local title = view:get_property("title") or view.uri or "(Untitled)"
+            local title = view.title or view.uri or "(Untitled)"
             tabs[i] = {
                 title = string.format(tfmt, ntheme or fg, i, escape(title)),
                 fg = (current == i and theme.tab_selected_fg) or fg,
@@ -558,28 +565,20 @@ window.methods = {
     new_tab = function (w, arg, switch, order)
         local view
         -- Use blank tab first
-        if w.has_blank and w.tabs:count() == 1 and w.tabs:atindex(1).uri == "about:blank" then
-            view = w.tabs:atindex(1)
+        if w.has_blank and w.tabs:count() == 1 and w.tabs[1].uri == "about:blank" then
+            view = w.tabs[1]
         end
         w.has_blank = nil
         -- Make new webview widget
         if not view then
             view = webview.new(w)
-
+            -- Get tab order function
             if not order and taborder then
-                order = (switch == false and taborder.default_bg) or
-                                             taborder.default
+                order = (switch == false and taborder.default_bg)
+                    or taborder.default
             end
-
-            if not order then
-                -- No taborder, or no taborder defaults. Put new tab last.
-                order = function(w) return w.tabs:count() + 1 end
-            end
-
-            local newindex = order(w, view)
-            newindex = w.tabs:insert(view, newindex)
-
-            if switch ~= false then w.tabs:switch(newindex) end
+            pos = w.tabs:insert((order and order(w, view)) or -1, view)
+            if switch ~= false then w.tabs:switch(pos) end
         end
         -- Load uri or webview history table
         if type(arg) == "string" then view.uri = arg
@@ -603,7 +602,7 @@ window.methods = {
         local tab = {hist = view.history,}
         -- And relative location
         local index = w.tabs:indexof(view)
-        if index ~= 1 then tab.after = w.tabs:atindex(index-1) end
+        if index ~= 1 then tab.after = w.tabs[index-1] end
         table.insert(w.closed_tabs, tab)
         view:destroy()
         w:update_tab_count()

@@ -29,7 +29,7 @@ add_binds("normal", {
     -- Open new tab (optionally [count] times)
     buf("^F$", function (w,b,m)
         local name
-        if (m.count or 0) > 1 then name = "open "..m.count.." tabs(s)" end
+        if (m.count or 0) > 1 then name = "open "..m.count.." tabs" end
         w:start_follow(modes.uri, name or "open tab", function (uri, s)
             for i=1,(s.count or 1) do w:new_tab(uri, false) end
             return "root-active"
@@ -40,8 +40,8 @@ add_binds("normal", {
     buf("^;y$", function (w,b,m)
         w:start_follow(modes.uri, "yank", function (uri)
             uri = string.gsub(uri, " ", "%%20")
-            capi.luakit.set_selection(uri)
-            capi.luakit.set_selection("clipboard", uri)
+            capi.luakit.selection.primary = uri
+            capi.luakit.selection.clipboard = uri
             w:notify("Yanked uri: " .. uri)
         end)
     end),
@@ -49,8 +49,8 @@ add_binds("normal", {
     -- Yank element description
     buf("^;Y$", function (w,b,m)
         w:start_follow(modes.desc, "yank desc", function (desc)
-            capi.luakit.set_selection(desc)
-            capi.luakit.set_selection("clipboard", desc)
+            capi.luakit.selection.primary = uri
+            capi.luakit.selection.clipboard = uri
             w:notify("Yanked desc: " .. desc)
         end)
     end),
@@ -68,6 +68,14 @@ add_binds("normal", {
         w:start_follow(modes.uri, "download", function (uri)
             downloads.add(uri)
             return "root-active"
+        end)
+    end),
+
+    -- Download a sequence of <CR> delimited hints
+    buf("^;S$", function (w,b,m)
+        w:start_follow(modes.uri, "multi download", function (uri)
+            downloads.add(uri)
+            w:set_mode("follow") -- re-enter follow mode with same state
         end)
     end),
 
