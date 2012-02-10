@@ -93,6 +93,10 @@ endif
 # Add pkg-config options to compile flags.
 CFLAGS  += $(shell pkg-config --cflags $(PKGS))
 CFLAGS  += -I./
+CFLAGS  += -DGTK_DISABLE_SINGLE_INCLUDES
+CFLAGS  += -DGDK_DISABLE_DEPRECATED
+CLFAGS  += -DGTK_DISABLE_DEPRECATED
+CFLAGS  += -DGSEAL_ENABLE
 
 # Add pkg-config options to linker flags.
 LDFLAGS += $(shell pkg-config --libs $(PKGS))

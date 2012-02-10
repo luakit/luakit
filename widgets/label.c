@@ -129,7 +129,7 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
     const gchar *tmp;
-    GdkColor c;
+    GdkRGBA c;
     PangoFontDescription *font;
 
     switch(token) {
@@ -148,19 +148,19 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_FG:
         tmp = luaL_checklstring(L, 3, &len);
-        if (!gdk_color_parse(tmp, &c)) {
+        if (!gdk_rgba_parse(&c, tmp)) {
             warn("invalid color: %s", tmp);
             return 0;
         }
 
-        gtk_widget_modify_fg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+        gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
         g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
         break;
 
       case L_TK_FONT:
         tmp = luaL_checklstring(L, 3, &len);
         font = pango_font_description_from_string(tmp);
-        gtk_widget_modify_font(GTK_WIDGET(w->widget), font);
+        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
         pango_font_description_free(font);
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
         break;

@@ -263,6 +263,19 @@ reorder_cb(GtkNotebook* UNUSED(n), GtkWidget *widget, guint i, widget_t *w)
     lua_pop(L, 1);
 }
 
+static gboolean
+size_allocate_cb(GtkWidget* v, GtkAllocation *all, widget_t *w)
+{
+/*    printf("%d, %d\n", all->width, all->height);*/
+    GtkAllocation nal;
+    nal.x       = all->x;
+    nal.y       = all->y;
+    nal.width   = all->width;
+    nal.height  = 710;
+    gtk_widget_size_allocate(v, &nal);
+    return FALSE;
+}
+
 widget_t *
 widget_notebook(widget_t *w, luakit_token_t UNUSED(token))
 {
@@ -282,6 +295,7 @@ widget_notebook(widget_t *w, luakit_token_t UNUSED(token))
       "signal::page-removed",      G_CALLBACK(page_removed_cb), w,
       "signal::page-reordered",    G_CALLBACK(reorder_cb),      w,
       "signal::switch-page",       G_CALLBACK(switch_cb),       w,
+      "signal::size-allocate",     G_CALLBACK(size_allocate_cb),w,
       NULL);
 
     gtk_widget_show(w->widget);
