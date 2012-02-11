@@ -34,6 +34,7 @@
 #include <glib.h>
 #include <lua.h>
 #include "common/signal.h"
+#include <gtk/gtk.h>
 
 /** Global luakit state struct. */
 typedef struct {
@@ -67,6 +68,8 @@ typedef struct {
     GPtrArray *windows;
     /** Pointer array to all active webview userdata objects. */
     GPtrArray *webviews;
+    /** css to hide scrollbars **/
+    GtkCssProvider *scrollbar_provider;
 
     /** Start time for debug messages */
     gdouble starttime;

@@ -788,26 +788,6 @@ scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
     return catch;
 }
 
-static gboolean
-size_allocate_cb(GtkWidget* v, GtkAllocation *all, widget_t *w)
-{
-/*    printf("webview size allocation : %d, %d\n", all->width, all->height);*/
-    GtkAllocation nal;
-    nal.x       = all->x;
-    nal.y       = all->y;
-    nal.width   = all->width;
-    nal.height  = 700;
-    gtk_widget_size_allocate(v, &nal);
-    return FALSE;
-}
-
-static gboolean
-configure_event_cb(GtkWidget* v, GdkEventConfigure *ev, widget_t *w)
-{
-/*    printf("webview configure : %d, %d\n", ev->width, ev->height);*/
-    return TRUE;
-}
-
 static void
 webview_destructor(widget_t *w)
 {
@@ -871,6 +851,10 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->win = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
     w->widget = GTK_WIDGET(d->win);
 
+    // with GTK_POLICY_NEVER webview allocates size of whole content
+    // we'll use GTK_POLICY_AUTOMATIC everywhere. We can hide scrollbars by using css
+    gtk_scrolled_window_set_policy(d->win, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+
     /* add webview to scrolled window */
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));
 
@@ -904,8 +888,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
-      "signal::size-allocate",                        G_CALLBACK(size_allocate_cb),             w,
-      "signal::configure-event",                      G_CALLBACK(configure_event_cb),           w,
      NULL);
 
     g_object_connect(G_OBJECT(d->win),

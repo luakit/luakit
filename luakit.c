@@ -45,6 +45,11 @@ init_lua(gchar **uris)
 
     /* init globalconf structs */
     globalconf.windows = g_ptr_array_new();
+    globalconf.scrollbar_provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(globalconf.scrollbar_provider,
+        "GtkScrollbar { -GtkRange-slider-width: 0; -GtkRange-trough-border: 0; }\
+        GtkScrolledWindow { -GtkScrolledWindow-scrollbar-spacing: 0;}",
+        -1, NULL);
 
     /* init lua */
     luaH_init();
