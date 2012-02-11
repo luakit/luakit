@@ -596,11 +596,15 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 static gboolean
-draw_cb(GtkWidget* UNUSED(widget), cairo_t* UNUSED(cr), widget_t *w)
+#if GTK_CHECK_VERSION(3,0,0)
+expose_cb(GtkWidget* UNUSED(widget), cairo_t* UNUSED(cr), widget_t *w)
+#else
+expose_cb(GtkWidget* UNUSED(widget), GdkEventExpose* UNUSED(e), widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "draw", 0, 0);
+    luaH_object_emit_signal(L, -1, "expose", 0, 0);
     lua_pop(L, 1);
     return FALSE;
 }
@@ -851,9 +855,11 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->win = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
     w->widget = GTK_WIDGET(d->win);
 
+#if GTK_CHECK_VERSION(3,0,0)
     // with GTK_POLICY_NEVER webview allocates size of whole content
     // we'll use GTK_POLICY_AUTOMATIC everywhere. We can hide scrollbars by using css
     gtk_scrolled_window_set_policy(d->win, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#endif
 
     /* add webview to scrolled window */
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));
@@ -875,8 +881,11 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
-      // XXX expose-event was replaced with draw.
-      "signal::draw",                                 G_CALLBACK(draw_cb),                      w,
+#if GTK_CHECK_VERSION(3,0,0)
+      "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
+#else
+      "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
+#endif
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
       "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,

@@ -60,7 +60,7 @@ webview.init_funcs = {
 
     -- Update scroll widget
     scroll_update = function (view, w)
-        view:add_signal("draw", function (v)
+        view:add_signal("expose", function (v)
             if w.view == v then
                 w:update_scroll()
             end

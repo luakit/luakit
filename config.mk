@@ -65,22 +65,47 @@ endif
 # === Required build packages ================================================
 
 # Packages required to build luakit.
-PKGS += gtk+-3.0
 PKGS += gthread-2.0
-PKGS += webkitgtk-3.0
 PKGS += sqlite3
+ifeq ($(USE_GTK3),1)
+	PKGS += gtk+-3.0
+	PKGS += webkitgtk-3.0
+else
+	PKGS += gtk+-2.0
+	PKGS += webkit-1.0
+endif
 PKGS += $(LUA_PKG_NAME)
 
 # For systems using older WebKit-GTK versions which bundle JavaScriptCore
 # within the WebKit-GTK package.
 ifneq ($(NO_JAVASCRIPTCORE),1)
+ifeq ($(USE_GTK3),1)
 	PKGS += javascriptcoregtk-3.0
+else
+	PKGS += javascriptcoregtk-1.0
+endif
 endif
 
 # Build luakit with libunique bindings? (single instance support)
 ifneq ($(USE_UNIQUE),0)
 	CPPFLAGS += -DWITH_UNIQUE
-	PKGS     += unique-3.0
+ifeq ($(USE_GTK3),1)
+	PKGS += unique-3.0
+else
+	PKGS += unique-1.0
+endif
+endif
+
+ifeq ($(USE_GTK3),1)
+CPPFLAGS  += -DGTK_DISABLE_SINGLE_INCLUDES
+CPPFLAGS  += -DGDK_PIXBUF_DISABLE_SINGLE_INCLUDES
+CPPFLAGS  += -DGDK_DISABLE_SINGLE_INCLUDES
+CPPFLAGS  += -DG_DISABLE_SINGLE_INCLUDES
+CPPFLAGS  += -DGDK_DISABLE_DEPRECATED
+CPPFLAGS  += -DGTK_DISABLE_DEPRECATED
+CPPFLAGS  += -DGDK_PIXBUF_DISABLE_DEPRECATED
+CPPFLAGS  += -DG_DISABLE_DEPRECATED
+CPPFLAGS  += -DGSEAL_ENABLE
 endif
 
 # Check user has correct packages installed (and found by pkg-config).
@@ -93,10 +118,7 @@ endif
 # Add pkg-config options to compile flags.
 CFLAGS  += $(shell pkg-config --cflags $(PKGS))
 CFLAGS  += -I./
-CFLAGS  += -DGTK_DISABLE_SINGLE_INCLUDES
-CFLAGS  += -DGDK_DISABLE_DEPRECATED
-CLFAGS  += -DGTK_DISABLE_DEPRECATED
-CFLAGS  += -DGSEAL_ENABLE
 
 # Add pkg-config options to linker flags.
 LDFLAGS += $(shell pkg-config --libs $(PKGS))
+

@@ -45,11 +45,13 @@ init_lua(gchar **uris)
 
     /* init globalconf structs */
     globalconf.windows = g_ptr_array_new();
+#if GTK_CHECK_VERSION(3,0,0)
     globalconf.scrollbar_provider = gtk_css_provider_new();
     gtk_css_provider_load_from_data(globalconf.scrollbar_provider,
         "GtkScrollbar { -GtkRange-slider-width: 0; -GtkRange-trough-border: 0; }\
         GtkScrolledWindow { -GtkScrolledWindow-scrollbar-spacing: 0;}",
         -1, NULL);
+#endif
 
     /* init lua */
     luaH_init();
@@ -153,10 +155,11 @@ main(gint argc, gchar *argv[]) {
 
     /* set numeric locale to C (required for compatibility with
        LuaJIT and luakit scripts) */
-
-    // XXX GTK3 removed gtk_set_locale
-    // gtk_set_locale();
-    // gtk_disable_setlocale();
+#if GTK_CHECK_VERSION(3,0,0)
+#else
+    gtk_set_locale();
+    gtk_disable_setlocale();
+#endif
     setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */

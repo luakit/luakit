@@ -138,6 +138,10 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
        NULL);
 
     /* set dialog properties */
+#if GTK_CHECK_VERSION(3,0,0)
+#else
+    gtk_dialog_set_has_separator(dialog, FALSE);
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
     gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
     gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
@@ -150,7 +154,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
 
     /* build contents */
+#if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+#else
+    GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
 
@@ -159,7 +167,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
     gtk_box_pack_start(GTK_BOX(hbox), icon, FALSE, FALSE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 18);
+#else
+    GtkWidget *main_vbox = gtk_vbox_new(FALSE, 18);
+#endif
     gtk_box_pack_start(GTK_BOX(hbox), main_vbox, TRUE, TRUE, 0);
 
     SoupURI *uri = soup_message_get_uri(auth_data->msg);
@@ -170,7 +182,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
     gtk_box_pack_start(GTK_BOX(main_vbox), GTK_WIDGET(msg_label), FALSE, FALSE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+#else
+    GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
+#endif
     gtk_box_pack_start(GTK_BOX(main_vbox), vbox, FALSE, FALSE, 0);
 
     /* the table that holds the entries */
@@ -190,7 +206,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     gtk_entry_set_visibility(GTK_ENTRY(auth_data->password_entry), FALSE);
 
+#if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *remember_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+#else
+    GtkWidget *remember_box = gtk_vbox_new(FALSE, 6);
+#endif
     gtk_box_pack_start(GTK_BOX(vbox), remember_box,
                         FALSE, FALSE, 0);
 

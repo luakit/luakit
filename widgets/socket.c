@@ -21,8 +21,9 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include <stdlib.h>
+#if GTK_CHECK_VERSION(3,0,0)
 #include <gtk/gtkx.h>
-#include <gdk/gdk.h>
+#endif
 
 static void
 plug_added_cb(GtkSocket* UNUSED(socket), widget_t *w)

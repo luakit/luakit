@@ -124,7 +124,12 @@ widget_box(widget_t *w, luakit_token_t token)
     w->newindex = luaH_box_newindex;
     w->destructor = widget_destructor;
 
+#if GTK_CHECK_VERSION(3,0,0)
     w->widget = gtk_box_new((token == L_TK_VBOX) ? GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL, 0);
+#else
+    w->widget = (token == L_TK_VBOX) ? gtk_vbox_new(FALSE, 0) :
+            gtk_hbox_new(FALSE, 0);
+#endif
 
     g_object_connect(G_OBJECT(w->widget),
       "signal::add",        G_CALLBACK(add_cb),        w,
