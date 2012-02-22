@@ -29,18 +29,20 @@
 gboolean
 key_press_cb(GtkWidget* UNUSED(win), GdkEventKey *ev, widget_t *w)
 {
-    guint keyval = 0;
+    guint transformed_keyval = ev->keyval;
     gdk_keymap_translate_keyboard_state(
             gdk_keymap_get_default(),
             ev->hardware_keycode,
             ev->state,
-            0, /* group */
-            &keyval, NULL, NULL, NULL);
+            0, /* default group */
+            &transformed_keyval, NULL, NULL, NULL);
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
-    luaH_keystr_push(L, keyval);
-    gint ret = luaH_object_emit_signal(L, -3, "key-press", 2, 1);
+    luaH_keystr_push(L, ev->keyval);
+    lua_pushinteger(L, ev->group);
+    luaH_keystr_push(L, transformed_keyval);
+    gint ret = luaH_object_emit_signal(L, -5, "key-press", 4, 1);
     gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
     lua_pop(L, ret + 1);
     return catch;

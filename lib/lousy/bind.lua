@@ -14,7 +14,7 @@ local type = type
 local unpack = unpack
 local util = require("lousy.util")
 local join = util.table.join
-local print = print
+local keymap = require("keymap")
 
 --- Key, buffer and command binding functions.
 module("lousy.bind")
@@ -23,9 +23,15 @@ module("lousy.bind")
 ignore_modifiers = { "Mod2", "Mod3", "Mod5", "Lock" }
 
 --- A table that contains mappings for key names.
-map = {
-    ISO_Left_Tab = "Tab",
-}
+function map(key, group, tr_key)
+    if (keymap.map and keymap.map[key]) then
+        return keymap.map[key]
+    elseif (keymap.convert_groups and keymap.convert_groups[group]) then
+        return tr_key or key
+    else
+        return key
+    end
+end
 
 --- Return cloned, sorted & filtered modifier mask table.
 -- @param mods The table of modifiers
@@ -52,12 +58,12 @@ end
 -- @return A key binding struct.
 function key(mods, key, func, opts)
     assert(type(mods) == "table", "invalid modifiers table")
-    assert(type(key)  == "string" and #key > 0, "invalid key string")
+    assert(type(key)  == "string" and string.wlen(key) > 0, "invalid key string")
     assert(type(func) == "function", "invalid callback function")
 
     return {
         type = "key",
-        mods = filter_mods(mods, #key == 1), -- Remove Shift key for char keys
+        mods = filter_mods(mods, string.wlen(key) == 1), -- Remove Shift key for char keys
         key  = key,
         func = func,
         opts = opts or {},
@@ -90,7 +96,7 @@ end
 -- @param opts Optional binding and callback options/state/metadata.
 -- @return A buffer binding struct.
 function buf(pattern, func, opts)
-    assert(type(pattern) == "string" and #pattern > 0, "invalid pattern string")
+    assert(type(pattern) == "string" and string.wlen(pattern) > 0, "invalid pattern string")
     assert(type(func) == "function", "invalid callback function")
 
     return {
@@ -238,7 +244,7 @@ function match_cmd(object, binds, buffer, args)
     -- The command is the first word in the buffer string
     local command  = string.match(buffer, "^(%S+)")
     -- And the argument is the entire string thereafter
-    local argument = string.match(string.sub(buffer, #command + 1), "^%s+([^%s].*)$")
+    local argument = string.match(string.sub(buffer, string.wlen(command) + 1), "^%s+([^%s].*)$")
 
     -- Set args.cmd to tell buf/any binds they were called from match_cmd
     args = join(args or {}, {
@@ -280,12 +286,12 @@ end
 -- the buffer.
 -- @return The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing).
-function hit(object, binds, mods, key, args)
+function hit(object, binds, mods, key, args, group, tr_key)
     -- Convert keys using map
-    key = map[key] or key
+    key = map(key, group, tr_key)
 
     -- Filter modifers table
-    mods = filter_mods(mods, type(key) == "string" and #key == 1)
+    mods = filter_mods(mods, type(key) == "string" and string.wlen(key) == 1)
     len = string.wlen(key)
 
     -- Compile metadata table

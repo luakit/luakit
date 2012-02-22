@@ -167,9 +167,9 @@ window.init_funcs = {
     end,
 
     key_press_match = function (w)
-        w.win:add_signal("key-press", function (_, mods, key)
+        w.win:add_signal("key-press", function (_, mods, key, group, tr_key)
             -- Match & exec a bind
-            local success, match = pcall(w.hit, w, mods, key)
+            local success, match = pcall(w.hit, w, mods, key, {}, group, tr_key )
             if not success then
                 w:error("In bind call: " .. match)
             elseif match then
@@ -254,13 +254,13 @@ window.init_funcs = {
 -- Helper functions which operate on the window widgets or structure.
 window.methods = {
     -- Wrapper around the bind plugin's hit method
-    hit = function (w, mods, key, opts)
+    hit = function (w, mods, key, opts, group, tr_key)
         local opts = lousy.util.table.join(opts or {}, {
             enable_buffer = w:is_mode("normal"),
             buffer = w.buffer,
         })
 
-        local caught, newbuf = lousy.bind.hit(w, w.binds, mods, key, opts)
+        local caught, newbuf = lousy.bind.hit(w, w.binds, mods, key, opts, group, tr_key)
         if w.win then -- Check binding didn't cause window to exit
             w.buffer = newbuf
             w:update_buf()
