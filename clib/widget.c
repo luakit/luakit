@@ -41,7 +41,7 @@ LUA_OBJECT_FUNCS(widget_class, widget_t, widget);
  * \param L The Lua VM state.
  * \return 0
  */
-static gint
+gint
 luaH_widget_gc(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
@@ -58,7 +58,7 @@ luaH_widget_gc(lua_State *L)
  * \lparam A table with at least a type value.
  * \lreturn A brand new widget.
  */
-static gint
+gint
 luaH_widget_new(lua_State *L)
 {
     luaH_class_new(L, &widget_class);

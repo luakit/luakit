@@ -18,32 +18,14 @@
  *
  */
 
-#include <webkit/webkit.h>
 #include <libsoup/soup-message.h>
 #include <math.h>
 
+#include "widgets/webview.h"
 #include "globalconf.h"
-#include "widgets/common.h"
 #include "clib/soup/soup.h"
 #include "common/property.h"
 #include "luah.h"
-
-typedef struct {
-    /** The parent widget_t struct */
-    widget_t *widget;
-    /** The webview widget */
-    WebKitWebView *view;
-    /** The GtkScrolledWindow for the webview widget */
-    GtkScrolledWindow *win;
-    /** Current webview uri */
-    gchar *uri;
-    /** Currently hovered uri */
-    gchar *hover;
-    /** Scrollbar hide signal id */
-    gulong hide_id;
-} webview_data_t;
-
-#define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
 
 static struct {
     GSList *refs;
@@ -110,7 +92,7 @@ property_t webview_settings_properties[] = {
   { 0,                                              NULL,                                        0,     0    },
 };
 
-static widget_t*
+widget_t*
 luaH_checkwebview(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkwidget(L, udx);
@@ -498,6 +480,10 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
       case L_TK_SCROLL:
         return luaH_webview_push_scroll_table(L);
 
+      case L_TK_INSPECTOR:
+        luaH_object_push(L, d->inspector->ref);
+        return 1;
+
       default:
         break;
     }
@@ -776,7 +762,9 @@ scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
 static void
 webview_destructor(widget_t *w)
 {
+    lua_State *L = globalconf.L;
     webview_data_t *d = w->data;
+    inspector_destroy(L, d->inspector);
     g_ptr_array_remove(globalconf.webviews, w);
     gtk_widget_destroy(GTK_WIDGET(d->view));
     gtk_widget_destroy(GTK_WIDGET(d->win));
@@ -789,6 +777,8 @@ webview_destructor(widget_t *w)
 widget_t *
 widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 {
+    lua_State *L = globalconf.L;
+
     w->index = luaH_webview_index;
     w->newindex = luaH_webview_newindex;
     w->destructor = webview_destructor;
@@ -819,6 +809,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     /* set initial scrollbars state */
     show_scrollbars(d, TRUE);
+
+    /* initialize inspector */
+    d->inspector = luaH_inspector_new(L, w);
 
     /* insert data into global tables and arrays */
     g_ptr_array_add(globalconf.webviews, w);

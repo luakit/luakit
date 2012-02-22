@@ -17,6 +17,7 @@ local function hbox()     return widget{type="hbox"}     end
 local function label()    return widget{type="label"}    end
 local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
+local function vpaned()   return widget{type="vpaned"}   end
 
 -- Build and pack window widgets
 function window.build()
@@ -24,6 +25,7 @@ function window.build()
     local w = {
         win    = widget{type="window"},
         ebox   = eventbox(),
+        paned  = vpaned(),
         layout = vbox(),
         tabs   = notebook(),
         -- Tablist widget
@@ -67,7 +69,8 @@ function window.build()
     }
 
     -- Assemble window
-    w.ebox.child = w.layout
+    w.paned:pack1(w.layout)
+    w.ebox.child = w.paned
     w.win.child = w.ebox
 
     -- Pack tablist

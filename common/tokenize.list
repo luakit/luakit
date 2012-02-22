@@ -6,6 +6,8 @@ append
 auto_load_images
 auto_resize_window
 auto_shrink_images
+atindex
+attached
 bg
 bottom
 cache_dir
@@ -90,6 +92,7 @@ id
 idle_timeout
 indexof
 insert
+inspector
 install_path
 interval
 javascript_can_access_clipboard
@@ -185,11 +188,14 @@ verbose
 version
 videos_dir
 view_source
+VIDEOS
+visible
 vpaned
 webkit_user_agent_version
 webkit_version
 webview
 width
+widget
 window
 windows
 x

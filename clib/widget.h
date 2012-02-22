@@ -72,6 +72,7 @@ struct widget_t
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
+gint luaH_widget_new(lua_State *);
 
 static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)
