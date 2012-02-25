@@ -50,7 +50,7 @@ end
 -- @param dir The directory.
 -- @return mkdir return code
 function mkdir(dir)
-    return os.execute(string.format("mkdir -p %q",  dir))
+    return os.execute(rstring.format("mkdir -p %q",  dir))
 end
 
 --- Eval Lua code.
