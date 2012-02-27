@@ -13,6 +13,8 @@ globals = {
  -- load_etc_hosts      = false,
  -- Disables checking if a filepath exists in search_open function
  -- check_filepath      = false,
+ -- Disable loading pages in new window, when link asks for
+    window_link_to_tab   = false,
 }
 
 -- Make useragent
