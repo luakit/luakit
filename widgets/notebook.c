@@ -169,7 +169,7 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(w)
 
       /* push class methods */
       PF_CASE(COUNT,        luaH_notebook_count)
@@ -202,6 +202,8 @@ luaH_notebook_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+
       case L_TK_SHOW_TABS:
         gtk_notebook_set_show_tabs(GTK_NOTEBOOK(w->widget), luaH_checkboolean(L, 3));
         break;

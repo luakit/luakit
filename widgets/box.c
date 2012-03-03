@@ -82,7 +82,7 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push class methods */
@@ -106,6 +106,8 @@ luaH_box_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+
       case L_TK_HOMOGENEOUS:
         gtk_box_set_homogeneous(GTK_BOX(w->widget), luaH_checkboolean(L, 3));
         break;

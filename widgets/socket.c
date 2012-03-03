@@ -46,7 +46,7 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(w)
 
       /* push integer methods */
       PI_CASE(ID,      (int) gtk_socket_get_id(GTK_SOCKET(w->widget)))
@@ -63,9 +63,18 @@ static gint
 luaH_socket_newindex(lua_State *L, luakit_token_t token)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    if (token == L_TK_ID) {
-        gint id = luaL_checkint(L, 2);
-        gtk_socket_add_id(GTK_SOCKET(w->widget), (GdkNativeWindow) id);
+
+    switch(token)
+    {
+      LUAKIT_WIDGET_INDEX_COMMON(w)
+
+      case L_TK_ID:
+        gtk_socket_add_id(GTK_SOCKET(w->widget),
+                (GdkNativeWindow) luaL_checkint(L, 2));
+        break;
+
+      default:
+        break;
     }
     return 0;
 }

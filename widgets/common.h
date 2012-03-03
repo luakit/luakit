@@ -23,7 +23,9 @@
 
 #include "clib/widget.h"
 
-#define LUAKIT_WIDGET_INDEX_COMMON                    \
+#define LUAKIT_WIDGET_INDEX_COMMON(widget)            \
+    case L_TK_VISIBLE:                                \
+      return luaH_widget_get_visible(L, widget);      \
     case L_TK_SHOW:                                   \
       lua_pushcfunction(L, luaH_widget_show);         \
       return 1;                                       \
@@ -36,6 +38,10 @@
     case L_TK_DESTROY:                                \
       lua_pushcfunction(L, luaH_widget_destroy);      \
       return 1;
+
+#define LUAKIT_WIDGET_NEWINDEX_COMMON(widget)         \
+    case L_TK_VISIBLE:                                \
+      return luaH_widget_set_visible(L, widget);
 
 #define LUAKIT_WIDGET_BIN_INDEX_COMMON(widget)        \
     case L_TK_CHILD:                                  \
@@ -67,6 +73,9 @@ gint luaH_widget_hide(lua_State*);
 gint luaH_widget_remove(lua_State*);
 gint luaH_widget_set_child(lua_State*, widget_t*);
 gint luaH_widget_show(lua_State*);
+gint luaH_widget_get_visible(lua_State *L, widget_t*);
+gint luaH_widget_set_visible(lua_State *L, widget_t*);
+
 
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);
 void parent_set_cb(GtkWidget*, GtkObject*, widget_t*);

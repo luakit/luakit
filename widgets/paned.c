@@ -82,7 +82,7 @@ luaH_paned_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push paned widget methods */
@@ -106,10 +106,26 @@ luaH_paned_index(lua_State *L, luakit_token_t token)
     return 0;
 }
 
+static gint
+luaH_paned_newindex(lua_State *L, luakit_token_t token)
+{
+    widget_t *w = luaH_checkpaned(L, 1);
+
+    switch(token)
+    {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+
+      default:
+        break;
+    }
+    return 0;
+}
+
 widget_t *
 widget_paned(widget_t *w, luakit_token_t token)
 {
     w->index = luaH_paned_index;
+    w->newindex = luaH_paned_newindex;
     w->destructor = widget_destructor;
 
     w->widget = (token == L_TK_VPANED) ? gtk_vpaned_new() :

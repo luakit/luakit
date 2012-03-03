@@ -58,7 +58,7 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(w)
 
       /* push class methods */
       PF_CASE(INSERT,           luaH_entry_insert)
@@ -90,6 +90,8 @@ luaH_entry_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+
       case L_TK_TEXT:
         gtk_entry_set_text(GTK_ENTRY(w->widget),
             luaL_checklstring(L, 3, &len));

@@ -63,32 +63,18 @@ luaH_window_set_default_size(lua_State *L)
 }
 
 static gint
-luaH_window_show(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_show(w->widget);
-    gdk_window_set_events(gtk_widget_get_window(w->widget), GDK_ALL_EVENTS_MASK);
-    return 0;
-}
-
-static gint
 luaH_window_index(lua_State *L, luakit_token_t token)
 {
     window_data_t *d = luaH_checkwindata(L, 1);
 
     switch(token)
     {
+      LUAKIT_WIDGET_INDEX_COMMON(d->widget)
       LUAKIT_WIDGET_BIN_INDEX_COMMON(d->widget)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(d->widget)
 
-      /* push widget class methods */
-      PF_CASE(DESTROY, luaH_widget_destroy)
-      PF_CASE(FOCUS,   luaH_widget_focus)
-      PF_CASE(HIDE,    luaH_widget_hide)
-
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
-      PF_CASE(SHOW,             luaH_window_show)
 
       /* push string properties */
       PS_CASE(TITLE, gtk_window_get_title(d->win))
@@ -119,6 +105,7 @@ luaH_window_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(d->widget)
       LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(d->widget)
 
       case L_TK_DECORATED:

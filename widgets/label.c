@@ -104,7 +104,7 @@ luaH_label_index(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(w)
 
       case L_TK_PADDING:
         return luaH_label_get_padding(L, w);
@@ -138,6 +138,8 @@ luaH_label_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+
       case L_TK_PADDING:
         return luaH_label_set_padding(L, w);
 

@@ -461,7 +461,7 @@ luaH_webview_index(lua_State *L, luakit_token_t token)
     gint ret;
 
     switch(token) {
-      LUAKIT_WIDGET_INDEX_COMMON
+      LUAKIT_WIDGET_INDEX_COMMON(d->widget)
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -545,6 +545,8 @@ luaH_webview_newindex(lua_State *L, luakit_token_t token)
 
     switch(token)
     {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(d->widget)
+
       case L_TK_URI:
         uri = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(d->view, uri);
