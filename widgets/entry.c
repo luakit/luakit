@@ -175,11 +175,9 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
 
     g_object_connect(G_OBJECT(w->widget),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::activate",                          G_CALLBACK(activate_cb),   w,
-      "signal::focus-in-event",                    G_CALLBACK(focus_cb),      w,
-      "signal::focus-out-event",                   G_CALLBACK(focus_cb),      w,
       "signal::key-press-event",                   G_CALLBACK(key_press_cb),  w,
-      "signal::parent-set",                        G_CALLBACK(parent_set_cb), w,
       "signal::notify::cursor-position",           G_CALLBACK(position_cb),   w,
       // The following signals replace the old "signal::changed", since that
       // does not allow for the selection to be changed in it's callback.

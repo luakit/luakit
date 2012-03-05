@@ -830,14 +830,13 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     /* connect webview signals */
     g_object_connect(G_OBJECT(d->view),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
       "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
       "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
-      "signal::focus-in-event",                       G_CALLBACK(focus_cb),                     w,
-      "signal::focus-out-event",                      G_CALLBACK(focus_cb),                     w,
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
       "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,
@@ -845,7 +844,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::new-window-policy-decision-requested", G_CALLBACK(new_window_decision_cb),       w,
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
       "signal::notify::load-status",                  G_CALLBACK(notify_load_status_cb),        w,
-      "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,

@@ -59,6 +59,11 @@
     case L_TK_CHILDREN:                               \
       return luaH_widget_get_children(L, widget);
 
+#define LUAKIT_WIDGET_SIGNAL_COMMON(w)                       \
+    "signal::focus-in-event",  G_CALLBACK(focus_cb),      w, \
+    "signal::focus-out-event", G_CALLBACK(focus_cb),      w, \
+    "signal::parent-set",      G_CALLBACK(parent_set_cb), w,
+
 gboolean button_cb(GtkWidget*, GdkEventButton*, widget_t*);
 gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
 gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);

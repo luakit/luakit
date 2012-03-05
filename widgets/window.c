@@ -203,10 +203,9 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect(G_OBJECT(w->widget),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",                G_CALLBACK(add_cb),          w,
       "signal::destroy",            G_CALLBACK(destroy_cb),      w,
-      "signal::focus-in-event",     G_CALLBACK(focus_cb),        w,
-      "signal::focus-out-event",    G_CALLBACK(focus_cb),        w,
       "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
       "signal::remove",             G_CALLBACK(remove_cb),       w,
       "signal::window-state-event", G_CALLBACK(window_state_cb), w,

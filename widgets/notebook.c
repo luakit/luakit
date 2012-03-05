@@ -284,13 +284,11 @@ widget_notebook(widget_t *w, luakit_token_t UNUSED(token))
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(w->widget), TRUE);
 
     g_object_connect(G_OBJECT(w->widget),
-      "signal::focus-in-event",    G_CALLBACK(focus_cb),        w,
-      "signal::focus-out-event",   G_CALLBACK(focus_cb),        w,
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::key-press-event",   G_CALLBACK(key_press_cb),    w,
       "signal::page-added",        G_CALLBACK(page_added_cb),   w,
       "signal::page-removed",      G_CALLBACK(page_removed_cb), w,
       "signal::page-reordered",    G_CALLBACK(reorder_cb),      w,
-      "signal::parent-set",        G_CALLBACK(parent_set_cb),   w,
       "signal::switch-page",       G_CALLBACK(switch_cb),       w,
       NULL);
 

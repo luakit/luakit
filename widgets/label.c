@@ -205,10 +205,8 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
     gtk_misc_set_padding(GTK_MISC(w->widget), 2, 2);
 
     g_object_connect(G_OBJECT(w->widget),
-      "signal::focus-in-event",    G_CALLBACK(focus_cb),      w,
-      "signal::focus-out-event",   G_CALLBACK(focus_cb),      w,
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::key-press-event",   G_CALLBACK(key_press_cb),  w,
-      "signal::parent-set",        G_CALLBACK(parent_set_cb), w,
       NULL);
 
     gtk_widget_show(w->widget);

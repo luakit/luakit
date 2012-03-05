@@ -89,6 +89,7 @@ widget_socket(widget_t *w, luakit_token_t UNUSED(token))
     g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_widget_show(w->widget);
     g_object_connect(G_OBJECT(w->widget),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::plug-added",   G_CALLBACK(plug_added_cb),   w,
       "signal::plug-removed", G_CALLBACK(plug_removed_cb), w,
       NULL);
