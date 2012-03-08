@@ -42,6 +42,8 @@ enable_caret_browsing
 enable_default_context_menu
 enable_developer_extras
 enable_dom_paste
+show_inspector
+close_inspector
 enable_file_access_from_file_uris
 enable_html5_database
 enable_html5_local_storage
@@ -90,6 +92,7 @@ id
 idle_timeout
 indexof
 insert
+inspector
 install_path
 interval
 javascript_can_access_clipboard

@@ -517,4 +517,3 @@ add_binds("normal", {
     buf("^zl$", function (w) load(w, true) end),
     buf("^zL$", function (w) load(w)       end),
 })
-

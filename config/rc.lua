@@ -53,6 +53,8 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
+require "webinspector"
+
 -- Add sqlite3 cookiejar
 require "cookies"
 
