@@ -840,9 +840,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->win = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
     w->widget = GTK_WIDGET(d->win);
 
-    /* set gobject property to give other widgets a pointer to our webview */
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", w);
-
     /* add webview to scrolled window */
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));
 

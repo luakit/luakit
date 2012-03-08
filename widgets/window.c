@@ -192,7 +192,6 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     /* create and setup window widget */
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     d->win = GTK_WINDOW(w->widget);
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_window_set_wmclass(d->win, "luakit", "luakit");
     gtk_window_set_default_size(d->win, 800, 600);
     gtk_window_set_title(d->win, "luakit");

@@ -196,7 +196,6 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
 
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
 
     /* setup default settings */
     gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);

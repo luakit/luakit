@@ -85,8 +85,8 @@ widget_socket(widget_t *w, luakit_token_t UNUSED(token))
     w->index = luaH_socket_index;
     w->newindex = luaH_socket_newindex;
     w->destructor = widget_destructor;
+
     w->widget = gtk_socket_new();
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_widget_show(w->widget);
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)

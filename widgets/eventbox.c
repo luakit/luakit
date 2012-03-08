@@ -77,7 +77,6 @@ widget_eventbox(widget_t *w, luakit_token_t UNUSED(token))
     w->destructor = widget_destructor;
 
     w->widget = gtk_event_box_new();
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     gtk_widget_show(w->widget);
 
     g_object_connect(G_OBJECT(w->widget),

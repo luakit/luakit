@@ -70,7 +70,7 @@ luaH_paned_get_child(lua_State *L, widget_t *w, gint n)
     if (!widget)
         return 0;
 
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
+    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
     luaH_object_push(L, child->ref);
     return 1;
 }
@@ -131,7 +131,6 @@ widget_paned(widget_t *w, luakit_token_t token)
     w->widget = (token == L_TK_VPANED) ? gtk_vpaned_new() :
             gtk_hpaned_new();
 
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
     g_object_connect(G_OBJECT(w->widget),
       "signal::add",        G_CALLBACK(add_cb),        w,
       "signal::parent-set", G_CALLBACK(parent_set_cb), w,

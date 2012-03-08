@@ -91,7 +91,7 @@ focus_cb(GtkWidget* UNUSED(win), GdkEventFocus *ev, widget_t *w)
 void
 add_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
+    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
@@ -103,7 +103,7 @@ add_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 void
 remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
-    widget_t *child = g_object_get_data(G_OBJECT(widget), "lua_widget");
+    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
@@ -119,7 +119,7 @@ parent_set_cb(GtkWidget *widget, GtkObject* UNUSED(old), widget_t *w)
     GtkContainer *new;
     g_object_get(G_OBJECT(widget), "parent", &new, NULL);
     luaH_object_push(L, w->ref);
-    if (new && (parent = g_object_get_data(G_OBJECT(new), "lua_widget")))
+    if (new && (parent = GOBJECT_TO_LUAKIT_WIDGET(new)))
         luaH_object_push(L, parent->ref);
     else
         lua_pushnil(L);
@@ -161,7 +161,7 @@ luaH_widget_get_child(lua_State *L, widget_t *w)
     if (!widget)
         return 0;
 
-    widget_t *child = g_object_get_data(G_OBJECT(w->widget), "lua_widget");
+    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(w->widget);
     luaH_object_push(L, child->ref);
     return 1;
 }
@@ -179,15 +179,13 @@ luaH_widget_remove(lua_State *L)
 gint
 luaH_widget_get_children(lua_State *L, widget_t *w)
 {
-    widget_t *child;
     GList *children = gtk_container_get_children(GTK_CONTAINER(w->widget));
     GList *iter = children;
 
     /* push table of the containers children onto the stack */
     lua_newtable(L);
     for (gint i = 1; iter; iter = iter->next) {
-        child = g_object_get_data(G_OBJECT(iter->data), "lua_widget");
-        luaH_object_push(L, child->ref);
+        luaH_object_push(L, GOBJECT_TO_LUAKIT_WIDGET(iter->data)->ref);
         lua_rawseti(L, -2, i++);
     }
     g_list_free(children);

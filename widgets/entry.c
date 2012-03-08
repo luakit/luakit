@@ -169,7 +169,6 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
 
     /* create gtk label widget as main widget */
     w->widget = gtk_entry_new();
-    g_object_set_data(G_OBJECT(w->widget), "lua_widget", (gpointer) w);
 
     /* setup default settings */
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);

@@ -31,6 +31,11 @@ typedef struct widget_t widget_t;
 
 #include <gtk/gtk.h>
 
+#define GOBJECT_LUAKIT_WIDGET_DATA_KEY "luakit_widget_data"
+
+#define GOBJECT_TO_LUAKIT_WIDGET(gtk_widget) ((widget_t*)g_object_get_data(G_OBJECT(gtk_widget), \
+            GOBJECT_LUAKIT_WIDGET_DATA_KEY))
+
 typedef widget_t *(widget_constructor_t)(widget_t *, luakit_token_t);
 typedef void (widget_destructor_t)(widget_t *);
 
