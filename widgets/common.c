@@ -211,20 +211,18 @@ luaH_widget_hide(lua_State *L)
 gint
 luaH_widget_set_visible(lua_State *L, widget_t *w)
 {
-    if (luaH_checkboolean(L, 3)) {
-        gtk_widget_show(w->widget);
-        if (w->info->tok == L_TK_WINDOW)
-            gdk_window_set_events(gtk_widget_get_window(w->widget),
-                    GDK_ALL_EVENTS_MASK);
-    } else
-        gtk_widget_hide(w->widget);
+    gboolean visible = luaH_checkboolean(L, 3);
+    gtk_widget_set_visible(w->widget, visible);
+    if (visible && w->info->tok == L_TK_WINDOW)
+        gdk_window_set_events(gtk_widget_get_window(w->widget),
+                GDK_ALL_EVENTS_MASK);
     return 0;
 }
 
 gint
 luaH_widget_get_visible(lua_State *L, widget_t *w)
 {
-    lua_pushboolean(L, GTK_WIDGET_VISIBLE(w->widget));
+    lua_pushboolean(L, gtk_widget_get_visible(w->widget));
     return 1;
 }
 
