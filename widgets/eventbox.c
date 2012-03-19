@@ -22,12 +22,9 @@
 #include "widgets/common.h"
 
 static gint
-luaH_eventbox_index(lua_State *L, luakit_token_t token)
+luaH_eventbox_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
@@ -42,15 +39,13 @@ luaH_eventbox_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_eventbox_newindex(lua_State *L, luakit_token_t token)
+luaH_eventbox_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *tmp;
     GdkColor c;
 
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
       LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
 

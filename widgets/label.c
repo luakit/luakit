@@ -98,12 +98,9 @@ luaH_label_set_padding(lua_State *L, widget_t *w)
 }
 
 static gint
-luaH_label_index(lua_State *L, luakit_token_t token)
+luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
       case L_TK_PADDING:
@@ -128,16 +125,14 @@ luaH_label_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_label_newindex(lua_State *L, luakit_token_t token)
+luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *tmp;
     GdkColor c;
     PangoFontDescription *font;
 
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_PADDING:

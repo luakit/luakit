@@ -462,13 +462,13 @@ luaH_webview_ssl_trusted(lua_State *L)
 }
 
 static gint
-luaH_webview_index(lua_State *L, luakit_token_t token)
+luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    webview_data_t *d = luaH_checkwvdata(L, 1);
+    webview_data_t *d = w->data;
     gint ret;
 
     switch(token) {
-      LUAKIT_WIDGET_INDEX_COMMON(d->widget)
+      LUAKIT_WIDGET_INDEX_COMMON(w)
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -553,20 +553,19 @@ parse_uri(const gchar *uri) {
 
 /* The __newindex method for the webview object */
 static gint
-luaH_webview_newindex(lua_State *L, luakit_token_t token)
+luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
-    webview_data_t *d = luaH_checkwvdata(L, 1);
+    webview_data_t *d = w->data;
     gchar *uri;
 
-    switch(token)
-    {
-      LUAKIT_WIDGET_NEWINDEX_COMMON(d->widget)
+    switch(token) {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_URI:
         uri = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(d->view, uri);
-        update_uri(d->widget, uri);
+        update_uri(w, uri);
         g_free(uri);
         return 0;
 

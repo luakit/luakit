@@ -52,12 +52,9 @@ luaH_entry_select_region(lua_State* L)
 }
 
 static gint
-luaH_entry_index(lua_State *L, luakit_token_t token)
+luaH_entry_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
       /* push class methods */
@@ -80,16 +77,14 @@ luaH_entry_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_entry_newindex(lua_State *L, luakit_token_t token)
+luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
-    widget_t *w = luaH_checkwidget(L, 1);
     const gchar *tmp;
     GdkColor c;
     PangoFontDescription *font;
 
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_TEXT:

@@ -40,12 +40,9 @@ plug_removed_cb(GtkSocket* UNUSED(socket), widget_t *w)
 }
 
 static gint
-luaH_socket_index(lua_State *L, luakit_token_t token)
+luaH_socket_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
       /* push integer methods */
@@ -60,12 +57,9 @@ luaH_socket_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_socket_newindex(lua_State *L, luakit_token_t token)
+luaH_socket_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
       case L_TK_ID:

@@ -63,15 +63,14 @@ luaH_window_set_default_size(lua_State *L)
 }
 
 static gint
-luaH_window_index(lua_State *L, luakit_token_t token)
+luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    window_data_t *d = luaH_checkwindata(L, 1);
+    window_data_t *d = w->data;
 
-    switch(token)
-    {
-      LUAKIT_WIDGET_INDEX_COMMON(d->widget)
-      LUAKIT_WIDGET_BIN_INDEX_COMMON(d->widget)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(d->widget)
+    switch(token) {
+      LUAKIT_WIDGET_INDEX_COMMON(w)
+      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
@@ -99,14 +98,13 @@ luaH_window_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_window_newindex(lua_State *L, luakit_token_t token)
+luaH_window_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    window_data_t *d = luaH_checkwindata(L, 1);
+    window_data_t *d = w->data;
 
-    switch(token)
-    {
-      LUAKIT_WIDGET_NEWINDEX_COMMON(d->widget)
-      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(d->widget)
+    switch(token) {
+      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
 
       case L_TK_DECORATED:
         gtk_window_set_decorated(d->win, luaH_checkboolean(L, 3));

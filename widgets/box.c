@@ -76,12 +76,9 @@ luaH_box_reorder_child(lua_State *L)
 }
 
 static gint
-luaH_box_index(lua_State *L, luakit_token_t token)
+luaH_box_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
@@ -100,12 +97,9 @@ luaH_box_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_box_newindex(lua_State *L, luakit_token_t token)
+luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_HOMOGENEOUS:

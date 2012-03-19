@@ -91,7 +91,7 @@ luaH_widget_index(lua_State *L)
 
     /* Then call special widget index */
     widget_t *widget = luaH_checkudata(L, 1, &widget_class);
-    return widget->index ? widget->index(L, token) : 0;
+    return widget->index ? widget->index(L, widget, token) : 0;
 }
 
 /** Generic widget newindex.
@@ -109,7 +109,7 @@ luaH_widget_newindex(lua_State *L)
 
     /* Then call special widget newindex */
     widget_t *widget = luaH_checkudata(L, 1, &widget_class);
-    return widget->newindex ? widget->newindex(L, token) : 0;
+    return widget->newindex ? widget->newindex(L, widget, token) : 0;
 }
 
 static gint

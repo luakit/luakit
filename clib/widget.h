@@ -64,9 +64,9 @@ struct widget_t
     /* Widget destructor */
     widget_destructor_t *destructor;
     /* Index function */
-    gint (*index)(lua_State *, luakit_token_t);
+    gint (*index)(lua_State *, widget_t *, luakit_token_t);
     /* Newindex function */
-    gint (*newindex)(lua_State *, luakit_token_t);
+    gint (*newindex)(lua_State *, widget_t *, luakit_token_t);
     /* Lua object ref */
     gpointer ref;
     /* Main gtk widget */

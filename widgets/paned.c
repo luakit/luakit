@@ -21,19 +21,10 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-widget_t*
-luaH_checkpaned(lua_State *L, gint udx)
-{
-    widget_t *w = luaH_checkwidget(L, udx);
-    if ((w->info->tok != L_TK_VPANED) && (w->info->tok != L_TK_HPANED))
-        luaL_argerror(L, udx, "incorrect widget type (expected paned)");
-    return w;
-}
-
 static gint
 luaH_paned_pack(lua_State *L)
 {
-    widget_t *w = luaH_checkpaned(L, 1);
+    widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
     gint top = lua_gettop(L);
     gboolean resize = TRUE, shrink = TRUE;
@@ -76,12 +67,9 @@ luaH_paned_get_child(lua_State *L, widget_t *w, gint n)
 }
 
 static gint
-luaH_paned_index(lua_State *L, luakit_token_t token)
+luaH_paned_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkpaned(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
@@ -107,12 +95,9 @@ luaH_paned_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_paned_newindex(lua_State *L, luakit_token_t token)
+luaH_paned_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkpaned(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       default:

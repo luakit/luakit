@@ -159,10 +159,8 @@ luaH_notebook_reorder(lua_State *L)
 }
 
 static gint
-luaH_notebook_index(lua_State *L, luakit_token_t token)
+luaH_notebook_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
     /* handle numerical index lookups */
     if (token == L_TK_UNKNOWN && lua_isnumber(L, 2))
         return luaH_notebook_atindex(L, w, (gint)luaL_checknumber(L, 2));
@@ -196,12 +194,9 @@ luaH_notebook_index(lua_State *L, luakit_token_t token)
 }
 
 static gint
-luaH_notebook_newindex(lua_State *L, luakit_token_t token)
+luaH_notebook_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
-    widget_t *w = luaH_checkwidget(L, 1);
-
-    switch(token)
-    {
+    switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_SHOW_TABS:
