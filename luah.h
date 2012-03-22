@@ -158,9 +158,7 @@ luaH_rawfield(lua_State *L, gint idx, const gchar *field)
 
 void luaH_init();
 gboolean luaH_parserc(const gchar *, gboolean);
-gboolean luaH_hasitem(lua_State *, gconstpointer);
 gint luaH_mtnext(lua_State *, gint);
-gboolean luaH_isloop(lua_State *, gint);
 
 gint luaH_class_index_miss_property(lua_State *, lua_object_t *);
 gint luaH_class_newindex_miss_property(lua_State *, lua_object_t *);
