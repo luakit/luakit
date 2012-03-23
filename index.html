@@ -2,39 +2,48 @@
 <html>
 <head>
   <meta charset='UTF-8'>
-
   <title>Luakit Browser Framework</title>
-
   <style type="text/css">
+
     body {
       margin-top: 1.0em;
-      background-color: #FFF;
+      background-color: #fff;
       font-family: Helvetica, Arial, FreeSans, san-serif;
       color: #000;
     }
-    #container {
-      margin: 0 auto;
-      width: 700px;
-    }
-    h1 { font-size: 3.8em; color: #888; margin-bottom: 3px; }
-    h1 .small { font-size: 0.4em; }
-    h1 a { text-decoration: none }
-    h2 { font-size: 1.5em; color: #888; }
-    h3 { text-align: center; color: #888; }
-    a { color: #888; }
-    .description { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic;}
-    .download { float: right; }
-    pre { background: #000; color: #fff; padding: 15px;}
-    hr { border: 0; width: 80%; border-bottom: 1px solid #aaa}
-    .footer { text-align:center; padding-top:30px; font-style: italic; }
+
+    h1            { font-size: 3.8em; color: #888; margin-bottom: 3px; }
+    h1 .small     { font-size: 0.4em; }
+    h1 a          { color: #bbb; text-decoration: none }
+
+    h2            { font-size: 1.5em; color: #888; }
+    h3            { text-align: center; color: #888; }
+
+    a             { color: #555; }
+    a:hover       { color: #7DC1fF; }
+    pre           { background: #000; color: #fff; padding: 15px;}
+
+    #container    { margin: 0 auto; width: 700px; }
+    #ld a         { text-decoration: none; color: #000; }
+    #ld a:hover   { text-decoration: underline; color: #7DC1fF; }
+
+    .description  { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic; }
+    .download     { float: right; }
+    .footer       { text-align:center; padding-top:30px; font-style: italic; }
+
+    .rl a         { color: #000; text-decoration: underline; }
+    .rl a:hover   { color: #7DC1fF; }
+
   </style>
 </head>
 
 <body>
-  <a href="https://github.com/mason-larobina/luakit"><img style="position: absolute; top: 0; right: 0; border: 0;" src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png" alt="Fork me on GitHub" /></a>
+  <a href="https://github.com/mason-larobina/luakit">
+    <img style="position: absolute; top: 0;right: 0; border: 0;"
+      src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
+      alt="Fork me on GitHub" /></a>
 
   <div id="container">
-
     <div class="download">
       <a href="https://github.com/mason-larobina/luakit/zipball/master">
         <img border="0" width="90" src="https://github.com/images/modules/download/zip.png"></a>
@@ -42,57 +51,79 @@
         <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
     </div>
 
-    <h1><a href="https://github.com/mason-larobina/luakit">luakit</a>
-      <span class="small">by <a href="https://github.com/mason-larobina">mason-larobina</a></span></h1>
+    <h1>
+      <a href="https://github.com/mason-larobina/luakit">luakit</a>
+      <span class="small">
+        by <a href="https://github.com/mason-larobina">mason-larobina</a>
+      </span>
+    </h1>
 
     <div class="description">
       Fast, small, webkit based browser framework extensible by Lua.
     </div>
 
-    
-      <p>Luakit is a highly configurable, micro-browser framework based on the WebKit web content engine and the GTK+ toolkit. It is very fast, extensible by Lua and licensed under the GNU GPLv3 license.
+    <p id="ld">Luakit is a highly configurable, micro-browser framework based on the <a
+      href="http://webkit.org/">WebKit</a> web content engine and the <a
+      href="http://gtk.org/">GTK+</a> toolkit. It is very fast, extensible by <a
+      href="http://lua.org/">Lua</a> and licensed under the <a
+      href="https://raw.github.com/mason-larobina/luakit/develop/COPYING.GPLv3">GNU GPLv3</a>
+    license.  It is primarily targeted at power users, developers and any people with too much time
+    on their hands who want to have fine-grained control over their web browsers behaviour and
+    interface.</p>
 
-It is primarily targeted at power users, developers and any people with too much time on their hands who want to have fine-grained control over their web browsers behaviour and interface.</p>
-    
-      <h2>Dependencies</h2>
-      <p>
-          <ul>
-            <li>glib (&gt;2.14)</li>
-            <li>gtk2</li>
-            <li>lua (5.1)</li>
-            <li>libwebkit</li>
-            <li>lfs (lua file system)</li>
-            <li>sqlite3</li>
-            <li>libunique</li>
-        </ul>
-      </p>
-    
+    <h2>Resources</h2>
+    <!-- about luakit -->
+    <p><ul class="rl">
+      <li><a href="https://github.com/mason-larobina/luakit/wiki/Install-Instructions"        >Install Instructions</a></li>
+      <li><a href="https://github.com/mason-larobina/luakit/wiki/Features"                    >Features</a></li>
+      <li><a href="https://github.com/mason-larobina/luakit/wiki/Screenshots"                 >Screenshots</a></li>
+    </ul></p>
+
+    <!-- resources for existing luakit users -->
+    <p><ul class="rl">
+      <li><a href="https://github.com/mason-larobina/luakit/wiki/Quick-Start-Guide"           >Quick Start Guide</a></li>
+      <li><a href="https://github.com/mason-larobina/luakit/issues"                           >Issue Tracker</a></li>
+      <li><a href="https://github.com/mason-larobina/luakit/wiki"                             >Community Wiki</a></li>
+      <li><a href="https://github.com/mason-larobina/luakit/wiki/Frequently-Asked-Questions"  >Frequently Asked Questions</a></li>
+    </ul></p>
+
     <h2>Download</h2>
     <p>
-      You can download this project in either
+      You can download the latest stable luakit version in either
       <a href="https://github.com/mason-larobina/luakit/zipball/master">zip</a> or
-      <a href="https://github.com/mason-larobina/luakit/tarball/master">tar formats.
+      <a href="https://github.com/mason-larobina/luakit/tarball/master">tar</a> formats.
     </p>
+
+    <p>
+      Or the latest development version in
+      <a href="https://github.com/mason-larobina/luakit/zipball/develop">zip</a> or
+      <a href="https://github.com/mason-larobina/luakit/tarball/develop">tar</a> formats.
+    </p>
+
     <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
       by running:
       <pre>$ git clone git://github.com/mason-larobina/luakit</pre>
     </p>
 
     <div class="footer">
-      get the source code on GitHub : <a href="https://github.com/mason-larobina/luakit">mason-larobina/luakit</a>
+      get the source code on GitHub :
+      <a href="https://github.com/mason-larobina/luakit">mason-larobina/luakit</a>
     </div>
 
-  </div>
+  </div> <!-- <div id="container"> -->
 
-<script type="text/javascript">
-var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
-document.write(unescape("%3Cscript src='" + gaJsHost + "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
-</script>
-<script type="text/javascript">
-try {
-var pageTracker = _gat._getTracker("UA-18744071-1");
-pageTracker._trackPageview();
-} catch(err) {}</script>
+  <script type="text/javascript">
+    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+    document.write(unescape("%3Cscript src='" + gaJsHost +
+      "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+  </script>
+
+  <script type="text/javascript">
+    try {
+      var pageTracker = _gat._getTracker("UA-18744071-1");
+      pageTracker._trackPageview();
+    } catch(err) {};
+  </script>
 
 </body>
 </html>
