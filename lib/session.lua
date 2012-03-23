@@ -9,7 +9,8 @@ end
 
 -- Session functions
 session = {
-    file = luakit.cache_dir .. "/session",
+    -- The file which we'll use for session info, $XDG_DATA_HOME/luakit/session
+    file = luakit.data_dir .. "/session",
 
     -- Save all given windows uris to file.
     save = function (wins)
@@ -24,7 +25,6 @@ session = {
         end
 
         if #lines > 0 then
-            -- Save to $XDG_CACHE_HOME/luakit/session
             local fh = io.open(session.file, "w")
             fh:write(table.concat(lines, "\n"))
             io.close(fh)
