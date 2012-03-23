@@ -2,12 +2,15 @@
 -- luakit configuration file, more information at http://luakit.org/ --
 -----------------------------------------------------------------------
 
+require "lfs"
+
 if unique then
     unique.new("org.luakit")
     -- Check for a running luakit instance
     if unique.is_running() then
         if uris[1] then
             for _, uri in ipairs(uris) do
+                if lfs.attributes(uri) then uri = luakit.absolutize(uri) end
                 unique.send_message("tabopen " .. uri)
             end
         else

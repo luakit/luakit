@@ -231,6 +231,30 @@ luaH_luakit_save_file(lua_State *L)
     return 1;
 }
 
+/** Returns the absolute version of a relative file path, if that file exists.
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on the stack.
+ *
+ * \luastack
+ * \lparam rel_path The relative file path to convert.
+ * \lreturn         Returns the full path of the given file.
+ */
+static gint
+luaH_luakit_absolutize(lua_State *L)
+{
+    const gchar *path = luaL_checkstring(L, 1);
+    GFile *file = g_file_new_for_path(path);
+    if (!file)
+        return 0;
+    gchar *absolute = g_file_get_path(file);
+    if (!absolute)
+        return 0;
+    lua_pushstring(L, absolute);
+    g_free(absolute);
+    return 1;
+}
+
 /** Executes a child synchronously (waits for the child to exit before
  * returning). The exit status and all stdout and stderr output from the
  * child is returned.
@@ -618,6 +642,7 @@ luakit_lib_setup(lua_State *L)
         { "uri_encode",      luaH_luakit_uri_encode },
         { "idle_add",        luaH_luakit_idle_add },
         { "idle_remove",     luaH_luakit_idle_remove },
+        { "absolutize",      luaH_luakit_absolutize },
         { NULL,              NULL }
     };
 
