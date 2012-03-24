@@ -23,7 +23,7 @@
 #ifndef LUAKIT_COMMON_UTIL_H
 #define LUAKIT_COMMON_UTIL_H
 
-#include <glib/gtypes.h>
+#include <glib.h>
 #include <string.h>
 #include <unistd.h>
 
