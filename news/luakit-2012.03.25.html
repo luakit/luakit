@@ -1,0 +1,117 @@
+<h1>luakit 2012.03.25</h1>
+
+<p>The focus for this release has been a re-work of the Lua API to make it more
+human readable and Lua-like.</p>
+
+<p>We also have <code>WebKitWebInspector</code> support for the first time and several other
+performance and stability improvements.</p>
+
+<h3>Lua API Changes:</h3>
+
+<ul>
+<li>New wrappers for <code>GtkVPaned</code>/<code>GtkHPaned</code> widgets (construct with <code>"vpaned"</code>
+&amp; <code>"hpaned"</code>).</li>
+<li>Box widgets <code>:pack_{start,end}</code> methods replaced with <code>:pack(widget [, {
+options }])</code>.</li>
+<li>All <code>GtkBin</code> widgets now have a settable/gettable <code>.child</code> property.</li>
+<li>All <code>GtkContainer</code> widgets now have <code>.children</code> property. Removed
+<code>:get_children</code> methods where implemented.</li>
+<li>Replaced <code>label</code> widget <code>:set_{alignment,padding}</code> methods with <code>.align</code> and
+<code>.padding</code> properties. Set with <code>label.align = { x = 0.5, y = 1.0 }</code>.</li>
+<li>Replaced <code>label</code> widget <code>:set_width</code> method with <code>.width</code> int property.</li>
+<li>Removed <code>notebook</code> &amp; <code>entry</code> widgets <code>:append</code> methods. Made <code>:insert</code>
+methods work like <code>table.insert</code> (append when no index arg given).</li>
+<li>Replaced <code>webview</code> widget <code>:{get,set}_scroll_{horiz,vert}</code> methods with
+<code>.scroll</code> table with settable/gettable <code>.x .y .xmax .ymax .xpage_size
+.ypage_size</code> properties.</li>
+<li>Replaced <code>luakit.{set,get}_selection</code> functions with <code>.selection</code> table with
+settable/gettable <code>.primary .secondary .selection</code> properties. Clearing
+selections is simple with <code>luakit.selection.primary = nil</code>.</li>
+<li>Replaced <code>socket:add_id</code> method with <code>.id</code> property.</li>
+<li>Renamed <code>socket.is_plugged</code> to <code>.plugged</code>.</li>
+<li>Replaced <code>notebook:atindex(idx)</code> method with <code>notebook[idx]</code>.</li>
+<li>New function <code>os.abspath(path)</code> turns relative paths into absolute paths.</li>
+<li>All <code>WebKitWebView</code> and <code>WebKitWebSettings</code> properties are now set/get
+directly on the <code>view</code> instance. For example:
+<code>view:set_property("enforce-96-dpi", true)</code> is now <code>view.enforce_96_dpi =
+true</code>.</li>
+<li>Similarly the <code>soup:{get,set}_property</code> functions have been removed and
+properties are now set directly on the <code>soup</code> module.</li>
+<li>Replaced <code>window:set_screen</code> method with settable/gettable <code>.screen</code>
+property.</li>
+<li>Replaced <code>window:{fullscreen,unfullscreen,maximize,unmaximize}</code> methods with
+settable/gettable <code>.fullscreen .maximized</code> properties.</li>
+<li>Replaced <code>webview:{get,set}_view_source</code> method with <code>.view_source</code>
+property.</li>
+<li>Replaced <code>luakit.webkit_{major,micro,minor}_version</code> with concatenated
+"major.micro.minor" version string. Likewise with
+<code>luakit.webkit_user_agent_{major,minor}_version</code>.</li>
+<li>Removed <code>luakit.get_special_dir(ATOM)</code> function. Added small <code>xdg</code> module
+with <code>.{cache,config,data,desktop,documents,download,..}_dir</code> fields
+pointing to their respective <code>$XDG_???_DIR</code> paths.</li>
+<li>Add settable <code>window.urgency_hint</code> property.</li>
+<li>Add settable/gettable <code>.visible</code> property to all widgets.</li>
+<li>Add <code>webview:{show,close}_inspector</code> to show/hide the <code>WebKitWebInspector</code>.</li>
+</ul>
+
+<h3>Luakit Library Changes</h3>
+
+<ul>
+<li>Formfiller now stores form data in new Lua DSL format. To automatically
+convert old forms to new format use <code>extras/convert_formfiller.rb</code>.</li>
+<li>Add bookmark follow mode <code>;B</code> and quickmark follow mode <code>;M[a-zA-Z0-9]</code>.</li>
+<li>Add <code>follow.styles.upper</code> which makes all hints upper-case and the matching
+process case-insensitive.</li>
+<li>Add multi-download follow mode <code>;S</code>.</li>
+<li>Bugfix: when toggling noscript plugins on a page with no entry.</li>
+<li>Get homepage with <code>globals.homepage</code> in <code>binds.lua</code>. Allows user to edit
+homepage anywhere in their <code>rc.lua</code>.</li>
+<li>Several follow &amp; formfiller bugs fixed.</li>
+<li>Print <code>info()</code> messages to <code>stdout</code>.</li>
+<li>Window <code>.view</code> property dynamically points to the current visible webview
+widget in the notebook of that window. Also caches result cutting out a huge
+number of unnecessary calls to the old <code>w:get_current()</code>.</li>
+<li>Add <code>"(KHTML, like Gecko)"</code> to the default useragent to make Google Plus and
+other websites work with luakit out of the box.</li>
+<li>Reduce useragent 'identifiability', only give a luakit version if it matches
+the <code>YYYY.MM.DD</code> format.</li>
+<li>Added vim's <code>:noh[lsearch]</code> command to un-highlight the last search results.</li>
+<li>When follow hints are on links that span multiple lines only hint the first
+rect region.</li>
+<li><code>domain_props</code> table updated to use the new <code>view.&lt;property-name&gt;</code> form.</li>
+<li>Store <code>session</code> file in <code>xdg.data_dir</code>. As per XDG spec: cache dir is only
+for non-essential files.</li>
+<li>Bugfix: Escape <code>lousy.util.mkdir</code> paths.</li>
+</ul>
+
+<h3>C Source Changes:</h3>
+
+<ul>
+<li>New <code>luaH_rawfield</code> function returns <code>1</code> if given table field is non-<code>nil</code>.</li>
+<li>New <code>token_tostring</code> function returns the string literal for each
+<code>luakit_token_t</code> token.</li>
+<li>New <code>luaH_{class,object}_property_signal</code> functions give us simple emitting
+of class and object <code>"property::name"</code> signals.</li>
+<li>Use <code>Content-Type</code> soup header to determine the mime-type of
+<code>WebkitDownload</code> files.</li>
+<li>Pass <code>luakit_token_t</code> to widget constructor, index and newindex functions.</li>
+<li>Use <code>UNUSED(arg)</code> macro to silence compiler warnings about unused arguments.</li>
+<li>Refactor GObject property setting/getting functions to use <code>luakit_token_t</code>
+tokens directly. Faster lookups, cleaner code.</li>
+<li>Get property signal names from <code>luakit_token_t</code> tokens &amp; add class property
+signal emitting functi</li>
+<li>Bugfix: Make <code>luaH_unique_is_running</code> ping the other instance to ensure it
+is running/responding. Several reports of <code>unique.is_running()</code> returning
+true when it clearly shouldn't causing luakit to quit.</li>
+<li>Add missing <code>javascriptcoregtk-1.0</code> package after <code>WebKitGtk+</code> split into
+two packages.</li>
+<li>Move more common functions, signal handlers, index and newindex properties
+to <code>widgets/common.{c,h}</code>.</li>
+<li>Use <code>GOBJECT_TO_LUAKIT_WIDGET</code> macro to convert GObject into <code>widget_t*</code>
+widget struct in all signal callbacks.</li>
+<li>And move the <code>g_object_set_data</code> call which saves the <code>widget_t*</code> pointer in
+each GObject to the <code>luaH_widget_set_type</code> function.</li>
+<li>Removed individual glib header includes (no longer supported).</li>
+<li>Remove the never used <code>luaH_hasitem</code>, <code>luaH_isloop</code> &amp; <code>luaH_isloop_check</code>
+functions (from the awesomewm codebase).</li>
+</ul>
