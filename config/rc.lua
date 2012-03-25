@@ -10,7 +10,7 @@ if unique then
     if unique.is_running() then
         if uris[1] then
             for _, uri in ipairs(uris) do
-                if lfs.attributes(uri) then uri = luakit.absolutize(uri) end
+                if lfs.attributes(uri) then uri = os.abspath(uri) end
                 unique.send_message("tabopen " .. uri)
             end
         else

@@ -200,6 +200,30 @@ luaHe_type(lua_State *L)
     return 1;
 }
 
+/** Returns the absolute version of a relative file path, if that file exists.
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on the stack.
+ *
+ * \luastack
+ * \lparam rel_path The relative file path to convert.
+ * \lreturn         Returns the full path of the given file.
+ */
+static gint
+luaH_abspath(lua_State *L)
+{
+    const gchar *path = luaL_checkstring(L, 1);
+    GFile *file = g_file_new_for_path(path);
+    if (!file)
+        return 0;
+    gchar *absolute = g_file_get_path(file);
+    if (!absolute)
+        return 0;
+    lua_pushstring(L, absolute);
+    g_free(absolute);
+    return 1;
+}
+
 /* Fix up and add handy standard lib functions */
 static void
 luaH_fixups(lua_State *L)
@@ -208,6 +232,11 @@ luaH_fixups(lua_State *L)
     lua_getglobal(L, "string");
     lua_pushcfunction(L, &luaH_utf8_strlen);
     lua_setfield(L, -2, "wlen");
+    lua_pop(L, 1);
+    /* export os.abspath */
+    lua_getglobal(L, "os");
+    lua_pushcfunction(L, &luaH_abspath);
+    lua_setfield(L, -2, "abspath");
     lua_pop(L, 1);
     /* replace next */
     lua_pushliteral(L, "next");
