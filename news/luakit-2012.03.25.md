@@ -6,7 +6,7 @@ human readable and Lua-like.
 We also have `WebKitWebInspector` support for the first time and several other
 performance and stability improvements.
 
-### Lua API Changes:
+## Lua API Changes:
 
 * New wrappers for `GtkVPaned`/`GtkHPaned` widgets (construct with `"vpaned"`
   & `"hpaned"`).
@@ -52,7 +52,7 @@ selections is simple with `luakit.selection.primary = nil`.
 * Add settable/gettable `.visible` property to all widgets.
 * Add `webview:{show,close}_inspector` to show/hide the `WebKitWebInspector`.
 
-### Luakit Library Changes
+## Luakit Library Changes:
 
 * Formfiller now stores form data in new Lua DSL format. To automatically
   convert old forms to new format use `extras/convert_formfiller.rb`.
@@ -80,7 +80,7 @@ selections is simple with `luakit.selection.primary = nil`.
   for non-essential files.
 * Bugfix: Escape `lousy.util.mkdir` paths.
 
-### C Source Changes:
+## C Source Changes:
 
 * New `luaH_rawfield` function returns `1` if given table field is non-`nil`.
 * New `token_tostring` function returns the string literal for each
