@@ -33,8 +33,8 @@ module("luakit")
 -- @class function
 
 --- Set selection
--- @param text UTF-8 string to be copied to clipboard
 -- @param clipboard X clipboard name ('primary', 'secondary' or 'clipboard')
+-- @param text UTF-8 string to be copied to clipboard
 -- @name set_selection
 -- @class function
 
