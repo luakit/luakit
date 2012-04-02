@@ -490,7 +490,7 @@ end
 -- Check if following is possible safely
 local function is_ready(w)
     for _, f in ipairs(w.view.frames) do
-        local ret = w:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", "(follow.lua)", f)
+        local ret = w.view:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", { frame = f })
         if ret ~= "true" then return false end
     end
     return true
@@ -500,7 +500,7 @@ end
 local function focus(w, offset)
     if not is_ready(w) then return w:set_mode() end
     local function is_focused(f)
-        return (w:eval_js("follow.focused();", "(follow.lua)", f) == "true")
+        return (w.view:eval_js("follow.focused();", { frame = f }) == "true")
     end
     -- sort frames with currently active one first
     local frames = w.view.frames
@@ -512,12 +512,12 @@ local function focus(w, offset)
     end
     -- ask all frames to jump to the next hint until one responds
     for _, f in ipairs(frames) do
-        local ret = w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", f)
+        local ret = w.view:eval_js(string.format("follow.focus(%i);", offset), { frame = f })
         if ret == "true" then return end
     end
     -- we get here, if only one frame has visible hints and it reached its limit
     -- in the preciding loop. Thus, we ask it to refocus again
-    w:eval_js(string.format("follow.focus(%i);", offset), "(follow.lua)", frames[1])
+    w.view:eval_js(string.format("follow.focus(%i);", offset), { frame = frames[1] })
     w.follow_state.refocus = false
 end
 
@@ -558,14 +558,14 @@ local function accept_follow(w, frame)
     local s = (w.follow_state or {})
     local val
     if frame then
-        local ret = w:eval_js("follow.evaluate();", "(follow.lua)", frame)
+        local ret = w.view:eval_js("follow.evaluate();", { frame = frame })
         local done = string.match(ret, "^done")
         if done then
             val = string.match(ret, "done (.*)")
         end
     else
         for _, f in ipairs(w.view.frames) do
-            local ret = w:eval_js("follow.evaluate();", "(follow.lua)", f)
+            local ret = w.view:eval_js("follow.evaluate();", { frame = f })
             local done = string.match(ret, "^done")
             if done then
                 frame = f
@@ -638,9 +638,9 @@ new_mode("follow", {
 
         for _, f in ipairs(webkit_frames) do
             -- Init follow js in frame
-            w:eval_js(init_js, "(follow.lua)", f)
+            w.view:eval_js(init_js, { frame = f })
             -- Get number of matches in the frame
-            local num = tonumber(w:eval_js(match_js, "(follow.lua)", f))
+            local num = tonumber(w.view:eval_js(match_js, { frame = f }))
             table.insert(frames, {num = num, frame = f})
             sum = sum + num
         end
@@ -660,7 +660,7 @@ new_mode("follow", {
             t.labels = table.concat(labels, ",", last + 1, last + t.num)
             last = last + t.num
             local show_js = string.format("follow.show([%s]);", t.labels)
-            w:eval_js(show_js, "(follow.lua)", t.frame)
+            w.view:eval_js(show_js, { frame = t.frame })
         end
 
         -- Foucs a hint
@@ -674,10 +674,9 @@ new_mode("follow", {
 
     -- Leave follow mode hook
     leave = function (w)
-        if w.eval_js then
-            for _,f in ipairs(w.view.frames) do
-                w:eval_js(clear_js, "(follow.lua)", f)
-            end
+        if not w.view then return end
+        for _, f in ipairs(w.view.frames) do
+            w.view:eval_js(clear_js, { frame = f })
         end
     end,
 
@@ -691,7 +690,7 @@ new_mode("follow", {
         local split = lousy.util.string.split
         local filter_js = string.format("follow.filter(%q, %q);", filter, id)
         for _, f in ipairs(w.view.frames) do
-            local ret = split(w:eval_js(filter_js, "(follow.lua)", f))
+            local ret = split(w.view:eval_js(filter_js, { frame = f }))
             if ret[2] == "true" then focus(w, 1) end -- Reselect active hint
             local num = tonumber(ret[1])
             if num == 1 then eval_frame = f end
