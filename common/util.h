@@ -26,6 +26,7 @@
 #include <glib.h>
 #include <string.h>
 #include <unistd.h>
+#include <lua.h>
 
 /* Useful macros */
 #define NONULL(x) (x ? x : "")
@@ -66,6 +67,7 @@ static inline ssize_t l_strlen(const gchar *s) {
 
 gboolean file_exists(const gchar*);
 void l_exec(const gchar*);
+gchar *luaH_callerinfo(lua_State*);
 
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

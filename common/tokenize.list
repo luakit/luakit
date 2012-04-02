@@ -16,6 +16,7 @@ child
 children
 clear_search
 clipboard
+close_inspector
 config_dir
 confpath
 count
@@ -42,8 +43,6 @@ enable_caret_browsing
 enable_default_context_menu
 enable_developer_extras
 enable_dom_paste
-show_inspector
-close_inspector
 enable_file_access_from_file_uris
 enable_html5_database
 enable_html5_local_storage
@@ -72,6 +71,7 @@ fantasy_font_family
 fg
 filename
 focus
+focused
 font
 frames
 full_content_zoom
@@ -150,6 +150,7 @@ set_title
 show
 show_border
 show_frame
+show_inspector
 show_scrollbars
 show_tabs
 socket
