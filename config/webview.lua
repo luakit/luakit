@@ -243,8 +243,6 @@ webview.init_funcs = {
 -- as the first argument. All methods must take `view` & `w` as the first two
 -- arguments.
 webview.methods = {
-    stop   = function (view) view:stop() end,
-
     -- Reload with or without ignoring cache
     reload = function (view, w, bypass_cache)
         if bypass_cache then
@@ -252,28 +250,6 @@ webview.methods = {
         else
             view:reload()
         end
-    end,
-
-    -- Evaluate javascript code and return string result
-    -- The frame argument can be any of the following:
-    -- * true to evaluate on the focused frame
-    -- * false or nothing to evaluate on the main frame
-    -- * a frame object to evaluate on the given frame
-    eval_js = function (view, w, script, file, frame)
-        return view:eval_js(script, file or "(inline)", frame)
-    end,
-
-    -- Evaluate javascript code from file and return string result
-    -- The frame argument can be any of the following:
-    -- * true to evaluate on the focused frame
-    -- * false or nothing to evaluate on the main frame
-    -- * a frame object to evaluate on the given frame
-    eval_js_from_file = function (view, w, file, frame)
-        local fh, err = io.open(file)
-        if not fh then return error(err) end
-        local script = fh:read("*a")
-        fh:close()
-        return view:eval_js(script, file, frame)
     end,
 
     -- Toggle source view
