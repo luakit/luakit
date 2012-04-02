@@ -231,7 +231,7 @@ add_binds("normal", {
 
     key({},          "r",           function (w) w:reload() end),
     key({},          "R",           function (w) w:reload(true) end),
-    key({"Control"}, "c",           function (w) w:stop() end),
+    key({"Control"}, "c",           function (w) w.view:stop() end),
 
     -- Config reloading
     key({"Control", "Shift"}, "R",  function (w) w:restart() end),
