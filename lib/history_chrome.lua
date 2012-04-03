@@ -253,7 +253,7 @@ add_cmds({
             w:new_tab(string.format("luakit://history/?q=%s",
                 capi.luakit.uri_encode(arg)))
         else
-            w:new_tab("luakit://history")
+            w:new_tab("luakit://history/?p=1")
         end
     end),
 })
