@@ -50,6 +50,9 @@ default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 -- Tracks speed data for downloads by weak table.
 local speeds = setmetatable({}, { __mode = "k" })
 
+-- Track auto opened files to prevent multiple signals
+local auto_opened = setmetatable({}, { __mode = "k" })
+
 -- Setup signals on downloads module.
 lousy.signal.setup(_M, true)
 
@@ -94,18 +97,24 @@ status_timer:add_signal("timeout", function ()
     local running = 0
     for _, d in ipairs(downloads) do
         if is_running(d) then running = running + 1 end
-    end
-    for _, d in ipairs(downloads) do
-        -- Update download indicator widget
-        for _, w in pairs(window.bywidget) do
-            w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
-        end
         -- Get speed table
         if not speeds[d] then speeds[d] = {} end
         local s = speeds[d]
         -- Save download progress
         s.last_size = s.current_size or 0
         s.current_size = d.current_size
+        -- Auto open finished files
+        if d.status == "finished" and not opening[d] and not auto_opened[d] then
+            auto_opened[d] = true
+            local should_open = _M.emit_signal("auto-open-filter", d.destination, d.mime_type)
+            if should_open then
+                open(d)
+            end
+        end
+    end
+    -- Update download indicator widget
+    for _, w in pairs(window.bywidget) do
+        w.sbar.r.downloads.text = running == 0 and "" or running.."↓"
     end
     -- Stop after downloads finish
     if #downloads == 0 or running == 0 then
@@ -186,6 +195,7 @@ function open(d, w)
         if not is_running(d) then t:stop() end
         if d.status == "finished" then
             opening[d] = false
+            auto_opened[d] = true
             if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
                 if w then
                     w:error(string.format("Can't open: %q (%s)", d.destination, d.mime_type))
