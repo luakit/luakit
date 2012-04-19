@@ -9,6 +9,9 @@ globals = {
  -- http_proxy          = "http://example.com:3128",
     default_window_size = "800x600",
 
+ -- allow URLs to be opened in new windows instead of tabs?
+    allow_new_windows      = true,
+
  -- Disables loading of hostnames from /etc/hosts (for large host files)
  -- load_etc_hosts      = false,
  -- Disables checking if a filepath exists in search_open function
@@ -69,18 +72,18 @@ search_engines.default = search_engines.google
 -- See http://webkitgtk.org/reference/webkitgtk/stable/WebKitWebSettings.html
 domain_props = { --[[
     ["all"] = {
-        enable_scripts          = false,
-        enable_plugins          = false,
-        enable_private_browsing = false,
-        user_stylesheet_uri     = "",
+        ["enable-scripts"]          = false,
+        ["enable-plugins"]          = false,
+        ["enable-private-browsing"] = false,
+        ["user-stylesheet-uri"]     = "",
     },
     ["youtube.com"] = {
-        enable_scripts = true,
-        enable_plugins = true,
+        ["enable-scripts"] = true,
+        ["enable-plugins"] = true,
     },
     ["bbs.archlinux.org"] = {
-        user_stylesheet_uri     = "file://" .. luakit.data_dir .. "/styles/dark.css",
-        enable_private_browsing = true,
+        ["user-stylesheet-uri"]     = "file://" .. luakit.data_dir .. "/styles/dark.css",
+        ["enable-private-browsing"] = true,
     }, ]]
 }
 
