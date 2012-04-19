@@ -11,7 +11,17 @@ local lousy = require "lousy"
 local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
 local time, floor = luakit.time, math.floor
 
+-- Provides cookie functionality.
 module "cookies"
+
+--- The cookies module.
+-- @field force_session Forces all cookies to expire at the end of the session.
+-- @field session_timeout Makes session cookies expire after some time
+-- rather than at the end of the browser session.
+-- <br> The duration is in seconds.
+-- <br> A value of false means the usual session behaviour is observed.
+force_session = false
+session_timeout = false
 
 -- Setup signals on module
 lousy.signal.setup(_M, true)
@@ -19,6 +29,18 @@ lousy.signal.setup(_M, true)
 -- Return microseconds from the unixtime epoch
 function micro()
     return floor(time() * 1e6)
+end
+
+-- Return the expire value for a cookie
+function cookie_expires(expiry)
+    if not force_session and expiry > 0 or expiry == 0 then
+        return expiry
+    elseif not session_timeout then
+        return -1
+    else
+        local timeout = floor(time() + session_timeout)
+        return (expiry > 0 and expiry < timeout) and expiry or timeout
+    end
 end
 
 -- Last cookie check time
@@ -69,6 +91,9 @@ WHERE expiry == 0 AND lastAccessed < %.0f;]]
 query_delete_session = [[DELETE FROM moz_cookies
 WHERE expiry == -1;]]
 
+query_delete_expire_before = [[DELETE FROM moz_cookies
+WHERE expiry < %.0f;]]
+
 -- Create table (if not exists)
 db:exec(create_table)
 
@@ -99,6 +124,14 @@ function load_new_cookies(purge)
     end
 end
 
+-- Delete all session cookies
+function delete_session_cookies()
+    db:exec(string.format(query_delete_session))
+    if session_timeout then
+        db:exec(string.format(query_delete_expire_before, cookie_expires(-1)))
+    end
+end
+
 capi.soup.add_signal("cookie-changed", function (old, new)
     local e = lousy.util.sql_escape
     if new then
@@ -119,7 +152,7 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             e(new.value), -- value
             e(new.domain), -- host
             e(new.path), -- path
-            new.expires or -1, -- expiry
+            cookie_expires(new.expires or -1), -- expiry
             micro(), -- lastAccessed
             new.secure and 1 or 0, -- isSecure
             new.http_only and 1 or 0)) -- isHttpOnly
