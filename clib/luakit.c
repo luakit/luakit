@@ -177,6 +177,19 @@ luaH_luakit_uri_decode(lua_State *L)
     return 1;
 }
 
+static GtkWindow *
+luaH_checkwindow(lua_State *L, gint idx)
+{
+    GtkWindow *window = NULL;
+    if (!lua_isnil(L, idx)) {
+        widget_t *widget = luaH_checkudata(L, idx, &widget_class);
+        if (!GTK_IS_WINDOW(widget->widget))
+            luaL_argerror(L, idx, "window widget");
+        window = GTK_WINDOW(widget->widget);
+    }
+    return window;
+}
+
 /** Shows a Gtk save dialog.
  * \see http://developer.gnome.org/gtk/stable/GtkDialog.html
  *
@@ -197,14 +210,7 @@ luaH_luakit_save_file(lua_State *L)
     const gchar *title = luaL_checkstring(L, 1);
 
     /* get window to display dialog over */
-    GtkWindow *parent_window = NULL;
-    if (!lua_isnil(L, 2)) {
-        widget_t *parent = luaH_checkudata(L, 2, &widget_class);
-        if (!GTK_IS_WINDOW(parent->widget))
-            luaL_argerror(L, 2, "window widget");
-        parent_window = GTK_WINDOW(parent->widget);
-    }
-
+    GtkWindow *parent_window = luaH_checkwindow(L, 2);
     const gchar *default_folder = luaL_checkstring(L, 3);
     const gchar *default_name = luaL_checkstring(L, 4);
 
@@ -228,6 +234,60 @@ luaH_luakit_save_file(lua_State *L)
         lua_pushnil(L);
 
     gtk_widget_destroy(dialog);
+    return 1;
+}
+
+/** Shows a Gtk confirm dialog.
+ * \see http://developer.gnome.org/gtk/stable/GtkMessageDialog.html
+ *
+ * \param L The Lua VM state.
+ * \return The number of elements pushed onto the stack.
+ *
+ * \luastack
+ * \lparam message        The message of the dialog window.
+ * \lparam opts           The options for the dialog.
+ *   \lfield yes          The text for the "yes" button.
+ *   \lfield no           The text for the "no" button.
+ *   \lfield parent       The parent window of the dialog.
+ * \lreturn               \c true if the user clicked the "yes" button, \c false otherwise.
+ */
+static gint
+luaH_luakit_confirm(lua_State *L)
+{
+    const gchar *message = luaL_checkstring(L, 1);
+    GtkWindow *parent_window = NULL;
+    const gchar *button_yes = GTK_STOCK_YES;
+    const gchar *button_no = GTK_STOCK_NO;
+
+    if (lua_gettop(L) > 1) {
+        luaH_checktable(L, 2);
+
+#define GET_FIELD(field, var, checker)              \
+        lua_pushstring(L, field);                   \
+        lua_gettable(L, 2);                         \
+        if (!lua_isnil(L, -1))                      \
+            var = checker(L, -1);                   \
+        lua_pop(L, 1);
+
+        GET_FIELD("parent", parent_window, luaH_checkwindow)
+        GET_FIELD("yes", button_yes, luaL_checkstring)
+        GET_FIELD("no", button_no, luaL_checkstring)
+
+#undef GET_FIELD
+
+    }
+
+    GtkWidget *dialog = gtk_message_dialog_new(parent_window,
+            GTK_DIALOG_MODAL | GTK_DIALOG_DESTROY_WITH_PARENT,
+            GTK_MESSAGE_QUESTION, GTK_BUTTONS_NONE,
+            "%s", message);
+    gtk_dialog_add_buttons(GTK_DIALOG(dialog),
+            button_yes, GTK_RESPONSE_YES,
+            button_no, GTK_RESPONSE_NO,
+            NULL);
+    gboolean accepted = (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_YES);
+    gtk_widget_destroy(dialog);
+    lua_pushboolean(L, accepted);
     return 1;
 }
 
@@ -611,6 +671,7 @@ luakit_lib_setup(lua_State *L)
         { "exec",            luaH_luakit_exec },
         { "quit",            luaH_luakit_quit },
         { "save_file",       luaH_luakit_save_file },
+        { "confirm",         luaH_luakit_confirm },
         { "spawn",           luaH_luakit_spawn },
         { "spawn_sync",      luaH_luakit_spawn_sync },
         { "time",            luaH_luakit_time },
