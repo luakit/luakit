@@ -37,6 +37,20 @@ function add_cmds(cmds, before)
     add_binds("command", cmds, before)
 end
 
+-- Change the user-agent of the current webview
+-- If restore == true, then the user-agent is reset to its original
+-- value
+function set_ua(w, ua, restore)
+    if restore then
+        ua = globals.useragent
+    elseif globals.available_useragents[ua] then
+        ua = globals.available_useragents[ua]
+    end
+
+    w:get_current():set_property('user-agent', ua)
+    w:notify("Set user-agent to: " .. ua)
+end
+
 -- Adds the default menu widget bindings to a mode
 menu_binds = {
     -- Navigate items
@@ -301,6 +315,7 @@ add_cmds({
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
     cmd("q[uit]",               function (w, a, o) w:close_win(o.bang) end),
+    cmd({"useragent",   "ua"},  function (w, a, o) set_ua(w, a, o.bang) end),
     cmd({"viewsource",  "vs" }, function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
     cmd({"writequit", "wq"},    function (w, a, o) w:save_session() w:close_win(o.bang) end),
 
