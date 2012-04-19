@@ -288,6 +288,7 @@ add_cmds({
     cmd("c[lose]",              function (w) w:close_tab() end),
     cmd("print",                function (w) w:eval_js("print()", "rc.lua") end),
     cmd("reload",               function (w) w:reload() end),
+    cmd("reloadall",            function (w) w:reloadall() end),
     cmd("restart",              function (w) w:restart() end),
     cmd("write",                function (w) w:save_session() end),
     cmd("noh[lsearch]",         function (w) w:clear_search() end),

@@ -669,6 +669,14 @@ window.methods = {
         end
     end,
 
+    -- Reload all tabs
+    reloadall = function (w)
+        w:notify(tostring(w.tabs:count()))
+        for index = 1,w.tabs:count() do
+            w.tabs[index]:reload();
+        end
+    end,
+
     -- Save, restart luakit and reload session.
     restart = function (w)
         -- Generate luakit launch command.
