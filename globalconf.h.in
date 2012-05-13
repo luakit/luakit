@@ -31,7 +31,7 @@
  * \see http://www.lua.org/manual/5.1/manual.html#3.5 */
 #define LUAKIT_OBJECT_REGISTRY_KEY "luakit.object.registry"
 
-#include <glib/gtypes.h>
+#include <glib.h>
 #include <lua.h>
 #include "common/signal.h"
 
