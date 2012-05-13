@@ -22,10 +22,7 @@
 #ifndef LUAKIT_COMMON_SIGNAL
 #define LUAKIT_COMMON_SIGNAL
 
-#include <glib/garray.h>
-#include <glib/gstrfuncs.h>
-#include <glib/gtestutils.h>
-#include <glib/gtree.h>
+#include <glib.h>
 
 #include "common/util.h"
 

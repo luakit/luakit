@@ -22,7 +22,7 @@
 #ifndef LUAKIT_COMMON_LUALIB
 #define LUAKIT_COMMON_LUALIB
 
-#include <glib/gprintf.h>
+#include <glib.h>
 #include <lauxlib.h>
 #include <lua.h>
 #include <lualib.h>

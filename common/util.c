@@ -23,7 +23,7 @@
 #include "common/util.h"
 #include "globalconf.h"
 
-#include <glib/gprintf.h>
+#include <glib.h>
 #include <stdarg.h>
 #include <stdlib.h>
 

@@ -26,7 +26,7 @@
 #include "common/signal.h"
 #include "common/tokenize.h"
 
-#include <glib/gtree.h>
+#include <glib.h>
 
 typedef struct     lua_class_property lua_class_property_t;
 typedef GHashTable lua_class_property_array_t;
