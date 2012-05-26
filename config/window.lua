@@ -281,6 +281,12 @@ window.methods = {
         w:set_input(cmd, opts)
     end,
 
+    -- run command as if typed into the command line
+    run_cmd = function (w, cmd, opts)
+        w:enter_cmd(w, cmd, opts)
+        w:activate()
+    end,
+
     -- insert a string into the command line at the current cursor position
     insert_cmd = function (w, str)
         if not str then return end
