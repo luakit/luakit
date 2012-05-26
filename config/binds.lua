@@ -298,6 +298,7 @@ add_cmds({
     cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
     cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
     cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
+    cmd("tab",                  function (w, a) w:new_tab() w:enter_cmd(":" .. a) w:activate() end),
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
     cmd("q[uit]",               function (w, a, o) w:close_win(o.bang) end),
