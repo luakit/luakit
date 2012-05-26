@@ -784,6 +784,16 @@ window.methods = {
         end
     end,
 
+    -- For each tab, switches to that tab and calls the given function passing
+    -- it the view contained in the tab.
+    each_tab = function (w, fn)
+        for _, view in ipairs(w.tabs.children) do
+            -- XXX Can we get the index some other way?
+            w:goto_tab(w.tabs:indexof(view))
+            fn(view)
+        end
+    end,
+
     -- If argument is form-active or root-active, emits signal. Ignores all
     -- other signals.
     emit_form_root_active_signal = function (w, s)
