@@ -281,6 +281,12 @@ window.methods = {
         w:set_input(cmd, opts)
     end,
 
+    -- run command as if typed into the command line
+    run_cmd = function (w, cmd, opts)
+        w:enter_cmd(cmd, opts)
+        w:activate()
+    end,
+
     -- insert a string into the command line at the current cursor position
     insert_cmd = function (w, str)
         if not str then return end
@@ -775,6 +781,15 @@ window.methods = {
     goto_tab = function (w, n)
         if n and (n == -1 or n > 0) then
             return w.tabs:switch((n <= w.tabs:count() and n) or -1)
+        end
+    end,
+
+    -- For each tab, switches to that tab and calls the given function passing
+    -- it the view contained in the tab.
+    each_tab = function (w, fn)
+        for index = 1, w.tabs:count() do
+            w:goto_tab(index)
+            fn(w.tabs[index])
         end
     end,
 
