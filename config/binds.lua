@@ -307,6 +307,8 @@ add_cmds({
     cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.uri or "") end),
     cmd("tabfir[st]",           function (w)    w:goto_tab(1) end),
     cmd("tabl[ast]",            function (w)    w:goto_tab(-1) end),
+    cmd("tabn[ext]",            function (w)    w:next_tab() end),
+    cmd("tabp[revious]",        function (w)    w:prev_tab() end),
 
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
