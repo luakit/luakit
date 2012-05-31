@@ -299,7 +299,7 @@ add_cmds({
     cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
     cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
     cmd("tab",                  function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
-    cmd("tabdo",                function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
+    cmd("tabd[o]",              function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
     cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.uri or "") end),
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
