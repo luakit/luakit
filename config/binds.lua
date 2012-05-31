@@ -213,6 +213,8 @@ add_binds("normal", {
     key({"Shift","Control"}, "Tab", function (w)       w:prev_tab() end),
     buf("^gT$",                     function (w, b, m) w:prev_tab(m.count) end, {count=1}),
     buf("^gt$",                     function (w, b, m) if not w:goto_tab(m.count) then w:next_tab() end end, {count=0}),
+    buf("^g0$",                     function (w)       w:goto_tab(1)  end),
+    buf("^g$$",                     function (w)       w:goto_tab(-1) end),
 
     key({"Control"}, "t",           function (w)    w:new_tab(globals.homepage) end),
     key({"Control"}, "w",           function (w)    w:close_tab()       end),
@@ -298,9 +300,14 @@ add_cmds({
     cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
     cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
     cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
+
+    -- Tab manipulation commands
     cmd("tab",                  function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
     cmd("tabd[o]",              function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
     cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.uri or "") end),
+    cmd("tabfir[st]",           function (w)    w:goto_tab(1) end),
+    cmd("tabl[ast]",            function (w)    w:goto_tab(-1) end),
+
     cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
 
     cmd("q[uit]",               function (w, a, o) w:close_win(o.bang) end),
