@@ -787,10 +787,9 @@ window.methods = {
     -- For each tab, switches to that tab and calls the given function passing
     -- it the view contained in the tab.
     each_tab = function (w, fn)
-        for _, view in ipairs(w.tabs.children) do
-            -- XXX Can we get the index some other way?
-            w:goto_tab(w.tabs:indexof(view))
-            fn(view)
+        for index = 1, w.tabs:count() do
+            w:goto_tab(index)
+            fn(w.tabs[index])
         end
     end,
 
