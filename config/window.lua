@@ -283,7 +283,7 @@ window.methods = {
 
     -- run command as if typed into the command line
     run_cmd = function (w, cmd, opts)
-        w:enter_cmd(w, cmd, opts)
+        w:enter_cmd(cmd, opts)
         w:activate()
     end,
 
