@@ -304,7 +304,7 @@ add_cmds({
     -- Tab manipulation commands
     cmd("tab",                  function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
     cmd("tabd[o]",              function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
-    cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.uri or "") end),
+    cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.history) end),
     cmd("tabfir[st]",           function (w)    w:goto_tab(1) end),
     cmd("tabl[ast]",            function (w)    w:goto_tab(-1) end),
     cmd("tabn[ext]",            function (w)    w:next_tab() end),
