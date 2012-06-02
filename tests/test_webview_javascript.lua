@@ -38,4 +38,10 @@ function test_register_function_args()
         orig_assert(type(a_null) == "nil")
     end)
     view:eval_js([[check_args("a string", 100, true, undefined, null);]])
+
+    assert_error_match("assertion failed!$",
+        function () view:eval_js([[check_args(100, "a string", null, undefined);]]) end)
+
+    assert_error_match("^bad argument #0 ",
+        function () view:eval_js([[check_args(function() {});]]) end)
 end

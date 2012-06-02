@@ -72,6 +72,8 @@ luaJS_pushvalue(lua_State *L, JSContextRef context, JSValueRef value, gchar **er
       default:
         break;
     }
+    if (error)
+        *error = g_strdup("Unable to convert value into equivalent Lua type");
     return 0;
 }
 
