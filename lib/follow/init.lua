@@ -358,9 +358,7 @@ window.follow = (function () {
                 }
                 var ret = follow.evaluator(hint.element);
                 follow.clear();
-                return "done " + ret;
-            } else {
-                return "continue";
+                return ret;
             }
         },
 
@@ -487,11 +485,14 @@ webview.methods.start_follow = function (view, w, mode, prompt, func, count)
     w:set_mode("follow")
 end
 
+
 -- Check if following is possible safely
 local function is_ready(w)
+    local ready = [=[!!(document.body
+        && /interactive|loaded|complete/.test(document.readyState)
+        && window.follow)]=]
     for _, f in ipairs(w.view.frames) do
-        local ret = w.view:eval_js("!!(document.body && /interactive|loaded|complete/.test(document.readyState) && window.follow)", { frame = f })
-        if ret ~= "true" then return false end
+        if not w.view:eval_js(ready, { frame = f }) then return false end
     end
     return true
 end
@@ -499,26 +500,32 @@ end
 -- Focus the next element in the correct frame
 local function focus(w, offset)
     if not is_ready(w) then return w:set_mode() end
-    local function is_focused(f)
-        return (w.view:eval_js("follow.focused();", { frame = f }) == "true")
+
+    local function is_focused(frame)
+        return w.view:eval_js("follow.focused();", { frame = frame })
     end
+
     -- sort frames with currently active one first
     local frames = w.view.frames
     if #frames == 0 then return end
-    for i=1,#frames,1 do
+
+    for i = 1, #frames do
         if is_focused(frames[1]) then break end
-        local f = table.remove(frames, 1)
-        table.insert(frames, f)
+        table.insert(frames, table.remove(frames, 1))
     end
+
     -- ask all frames to jump to the next hint until one responds
-    for _, f in ipairs(frames) do
-        local ret = w.view:eval_js(string.format("follow.focus(%i);", offset), { frame = f })
-        if ret == "true" then return end
+    local function next_focus(frame, offset)
+        return w.view:eval_js(string.format("follow.focus(%i);", offset),
+            { frame = frame })
     end
+    for _, f in ipairs(frames) do
+        if next_focus(f, offset) then return end
+    end
+
     -- we get here, if only one frame has visible hints and it reached its limit
     -- in the preciding loop. Thus, we ask it to refocus again
-    w.view:eval_js(string.format("follow.focus(%i);", offset), { frame = frames[1] })
-    w.follow_state.refocus = false
+    next_focus(frames[1], offset)
 end
 
 -- Simple key-eating mode to prevent any follow keys from accidentally
@@ -558,18 +565,13 @@ local function accept_follow(w, frame)
     local s = (w.follow_state or {})
     local val
     if frame then
-        local ret = w.view:eval_js("follow.evaluate();", { frame = frame })
-        local done = string.match(ret, "^done")
-        if done then
-            val = string.match(ret, "done (.*)")
-        end
+        -- follow.evaluate() returns value if successful otherwise nil
+        val = w.view:eval_js("follow.evaluate();", { frame = frame })
     else
         for _, f in ipairs(w.view.frames) do
-            local ret = w.view:eval_js("follow.evaluate();", { frame = f })
-            local done = string.match(ret, "^done")
-            if done then
+            val = w.view:eval_js("follow.evaluate();", { frame = f })
+            if val then
                 frame = f
-                val = string.match(ret, "done (.*)")
                 break
             end
         end
