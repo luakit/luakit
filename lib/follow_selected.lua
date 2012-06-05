@@ -47,28 +47,28 @@ local key = lousy.bind.key
 add_binds("normal", {
     -- Follow selected link
     key({}, "Return", function (w)
-        local uri = w:eval_js(return_selected)
+        local uri = w.view:eval_js(return_selected)
         if uri == "" then return false end
         w:navigate(uri)
     end),
 
     -- Follow selected link in new tab
     key({"Control"}, "Return", function (w)
-        local uri = w:eval_js(return_selected)
+        local uri = w.view:eval_js(return_selected)
         if uri == "" then return false end
         w:new_tab(uri, false)
     end),
 
     -- Follow selected link in new window
     key({"Shift"}, "Return", function (w)
-        local uri = w:eval_js(return_selected)
+        local uri = w.view:eval_js(return_selected)
         if uri == "" then return false end
         window.new({uri})
     end),
 
     -- Download selected uri
     key({"Mod1"}, "Return", function (w)
-        local uri = w:eval_js(return_selected)
+        local uri = w.view:eval_js(return_selected)
         if uri == "" then return false end
         w:download(uri)
     end),
