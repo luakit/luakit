@@ -19,21 +19,87 @@
  */
 
 #include <JavaScriptCore/JavaScript.h>
+#include <stdlib.h>
+
+static JSValueRef
+luaJS_tovalue(lua_State *L, JSContextRef context, gint idx, gchar **error);
+
+static gint
+luaJS_pushvalue(lua_State *L, JSContextRef context, JSValueRef value, gchar **error);
+
+static gchar*
+tostring(JSContextRef context, JSValueRef value, gchar **error)
+{
+    JSStringRef str = JSValueToStringCopy(context, value, NULL);
+    if (!str) {
+        if (error)
+            *error = g_strdup("string conversion failed");
+        return NULL;
+    }
+    size_t size = JSStringGetMaximumUTF8CStringSize(str);
+    gchar *ret = g_malloc(sizeof(gchar)*size);
+    JSStringGetUTF8CString(str, ret, size);
+    JSStringRelease(str);
+    return ret;
+}
 
 static gint
 luaJS_pushstring(lua_State *L, JSContextRef context, JSValueRef value, gchar **error)
 {
-    JSStringRef s = JSValueToStringCopy(context, value, NULL);
-    if (!s) {
-        if (error)
-            *error = g_strdup("failed to convert object into string");
-        return 0;
+    gchar *str = tostring(context, value, error);
+    if (str) {
+        lua_pushstring(L, str);
+        g_free(str);
+        return 1;
     }
-    size_t size = JSStringGetMaximumUTF8CStringSize(s);
-    gchar cstr[size];
-    JSStringGetUTF8CString(s, cstr, size);
-    lua_pushstring(L, cstr);
-    JSStringRelease(s);
+    return 0;
+}
+
+static gint
+luaJS_pushobject(lua_State *L, JSContextRef context, JSObjectRef obj, gchar **error)
+{
+    gint top = lua_gettop(L);
+
+    JSPropertyNameArrayRef keys = JSObjectCopyPropertyNames(context, obj);
+    size_t count = JSPropertyNameArrayGetCount(keys);
+    JSValueRef exception = NULL;
+
+    lua_newtable(L);
+
+    for (size_t i = 0; i < count; i++) {
+        /* push table key onto stack */
+        JSStringRef key = JSPropertyNameArrayGetNameAtIndex(keys, i);
+        size_t slen = JSStringGetMaximumUTF8CStringSize(key);
+        gchar cstr[slen];
+        JSStringGetUTF8CString(key, cstr, slen);
+
+        gchar *eptr = NULL;
+        int n = strtol(cstr, &eptr, 10);
+        if (!*eptr)
+            lua_pushinteger(L, ++n); /* 0-index array to 1-index array */
+        else
+            lua_pushstring(L, cstr);
+
+        /* push table value into stack */
+        JSValueRef val = JSObjectGetProperty(context, obj, key, &exception);
+        if (exception) {
+            lua_settop(L, top);
+            if (error) {
+                gchar *err = tostring(context, exception, NULL);
+                *error = g_strdup_printf("JSObjectGetProperty call failed (%s)",
+                        err ? err : "unknown reason");
+                g_free(err);
+            }
+            return 0;
+        }
+        luaJS_pushvalue(L, context, val, error);
+        if (error && *error) {
+            lua_settop(L, top);
+            return 0;
+        }
+        lua_rawset(L, -3);
+    }
+    JSPropertyNameArrayRelease(keys);
     return 1;
 }
 
@@ -53,6 +119,9 @@ luaJS_pushvalue(lua_State *L, JSContextRef context, JSValueRef value, gchar **er
       case kJSTypeString:
         return luaJS_pushstring(L, context, value, error);
 
+      case kJSTypeObject:
+        return luaJS_pushobject(L, context, (JSObjectRef)value, error);
+
       case kJSTypeUndefined:
       case kJSTypeNull:
         lua_pushnil(L);
@@ -64,6 +133,72 @@ luaJS_pushvalue(lua_State *L, JSContextRef context, JSValueRef value, gchar **er
     if (error)
         *error = g_strdup("Unable to convert value into equivalent Lua type");
     return 0;
+}
+
+static JSValueRef
+luaJS_fromtable(lua_State *L, JSContextRef context, gint idx, gchar **error)
+{
+    gint top = lua_gettop(L);
+
+    /* convert relative index into abs */
+    if (idx < 0)
+        idx = top + idx + 1;
+
+    JSValueRef exception = NULL;
+    JSObjectRef obj;
+
+    size_t len = lua_objlen(L, idx);
+    if (len) {
+        obj = JSObjectMakeArray(context, 0, NULL, &exception);
+        if (exception) {
+            if (error) {
+                gchar *err = tostring(context, exception, NULL);
+                *error = g_strdup_printf("JSObjectMakeArray call failed (%s)",
+                        err ? err : "unknown reason");
+                g_free(err);
+            }
+            return NULL;
+        }
+
+        lua_pushnil(L);
+        for (guint i = 0; i < len && lua_next(L, idx); i++) {
+            JSValueRef val = luaJS_tovalue(L, context, -1, error);
+            if (error && *error) {
+                lua_settop(L, top);
+                return NULL;
+            }
+            lua_pop(L, 1);
+            JSObjectSetPropertyAtIndex(context, obj, i, val, &exception);
+        }
+    } else {
+        obj = JSObjectMake(context, NULL, NULL);
+        lua_pushnil(L);
+        while (lua_next(L, idx)) {
+            /* We only care about string attributes in the table */
+            if (lua_type(L, -2) == LUA_TSTRING) {
+                JSValueRef val = luaJS_tovalue(L, context, -1, error);
+                if (error && *error) {
+                    lua_settop(L, top);
+                    return NULL;
+                }
+                JSStringRef key = JSStringCreateWithUTF8CString(lua_tostring(L, -2));
+                JSObjectSetProperty(context, obj, key, val,
+                        kJSPropertyAttributeNone, &exception);
+                JSStringRelease(key);
+                if (exception) {
+                    if (error) {
+                        gchar *err = tostring(context, exception, NULL);
+                        *error = g_strdup_printf("JSObjectSetProperty call failed (%s)",
+                                err ? err : "unknown reason");
+                        g_free(err);
+                    }
+                    return NULL;
+                }
+            }
+            lua_pop(L, 1);
+        }
+    }
+    return obj;
 }
 
 /* Make JavaScript value from Lua value */
@@ -80,17 +215,20 @@ luaJS_tovalue(lua_State *L, JSContextRef context, gint idx, gchar **error)
       case LUA_TNUMBER:
         return JSValueMakeNumber(context, lua_tonumber(L, idx));
 
+      case LUA_TNIL:
+        return JSValueMakeNull(context);
+
+      case LUA_TNONE:
+        return JSValueMakeUndefined(context);
+
       case LUA_TSTRING:
         str = JSStringCreateWithUTF8CString(lua_tostring(L, idx));
         ret = JSValueMakeString(context, str);
         JSStringRelease(str);
         return ret;
 
-      case LUA_TNIL:
-        return JSValueMakeNull(context);
-
-      case LUA_TNONE:
-        return JSValueMakeUndefined(context);
+      case LUA_TTABLE:
+        return luaJS_fromtable(L, context, idx, error);
 
       default:
         break;
