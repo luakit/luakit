@@ -642,7 +642,7 @@ new_mode("follow", {
             -- Init follow js in frame
             w.view:eval_js(init_js, { frame = f })
             -- Get number of matches in the frame
-            local num = tonumber(w.view:eval_js(match_js, { frame = f }))
+            local num = w.view:eval_js(match_js, { frame = f })
             table.insert(frames, {num = num, frame = f})
             sum = sum + num
         end
@@ -692,7 +692,8 @@ new_mode("follow", {
         local split = lousy.util.string.split
         local filter_js = string.format("follow.filter(%q, %q);", filter, id)
         for _, f in ipairs(w.view.frames) do
-            local ret = split(w.view:eval_js(filter_js, { frame = f }))
+            local ret = w.view:eval_js(filter_js, { frame = f })
+            ret = split(ret)
             if ret[2] == "true" then focus(w, 1) end -- Reselect active hint
             local num = tonumber(ret[1])
             if num == 1 then eval_frame = f end

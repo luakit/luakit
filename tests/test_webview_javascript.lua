@@ -14,8 +14,9 @@ function test_eval_js_return_types()
 end
 
 function test_catch_js_exception()
-    assert_error_match("^ReferenceError:",
-        function () view:eval_js("unknownVariable;") end)
+    local ret, err = view:eval_js("unknownVariable;")
+    assert_nil(ret)
+    assert_match("^ReferenceError:", err)
 end
 
 function test_register_function()
@@ -25,8 +26,9 @@ end
 
 function test_register_function_error()
     view:register_function("raise_error", function (msg) error(msg) end)
-    assert_error_match("Some error message$",
-        function () view:eval_js([[raise_error("Some error message");]]) end)
+    local ret, err = view:eval_js([[raise_error("Some error message");]])
+    assert_nil(ret)
+    assert_match("Some error message$", err)
 end
 
 function test_register_function_args()
@@ -37,11 +39,16 @@ function test_register_function_args()
         orig_assert(type(a_undefined) == "nil")
         orig_assert(type(a_null) == "nil")
     end)
-    view:eval_js([[check_args("a string", 100, true, undefined, null);]])
 
-    assert_error_match("assertion failed!$",
-        function () view:eval_js([[check_args(100, "a string", null, undefined);]]) end)
+    local ret, err = view:eval_js([[check_args("a string", 100, true, undefined, null);]])
+    assert_nil(ret)
+    assert_nil(err)
 
-    assert_error_match("^bad argument #0 ",
-        function () view:eval_js([[check_args(function() {});]]) end)
+    local ret, err = view:eval_js([[check_args(100, "a string", null, undefined);]])
+    assert_nil(ret)
+    assert_match("assertion failed!$", err)
+
+    local ret, err = view:eval_js([[check_args(function() {});]])
+    assert_nil(ret)
+    assert_match("^bad argument #0 ", err)
 end

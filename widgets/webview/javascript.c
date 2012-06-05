@@ -37,17 +37,6 @@ luaJS_pushstring(lua_State *L, JSContextRef context, JSValueRef value, gchar **e
     return 1;
 }
 
-static gint
-luaJS_raise_exception(lua_State *L, JSContextRef context,
-        JSValueRef exception)
-{
-    if (!luaJS_pushstring(L, context, exception, NULL))
-        lua_pushliteral(L, "Unknown JavaScript Exception (unable to convert "
-                "exception object into string for error message)");
-    lua_error(L);
-    return 0; /* never returns */
-}
-
 /* Push JavaScript value onto Lua stack */
 static gint
 luaJS_pushvalue(lua_State *L, JSContextRef context, JSValueRef value, gchar **error)
@@ -213,17 +202,25 @@ luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gch
     JSStringRelease(js_script);
     JSStringRelease(js_source);
 
-    if (exception)
-        return luaJS_raise_exception(L, context, exception);
-
-    gchar *error = NULL;
-    gint ret = luaJS_pushvalue(L, context, result, &error);
-    if (error) {
-        lua_pushstring(L, error);
-        g_free(error);
-        lua_error(L);
+    /* handle javascript exceptions while running script */
+    if (exception) {
+        lua_pushnil(L);
+        if (!luaJS_pushstring(L, context, exception, NULL))
+            lua_pushliteral(L, "Unknown JavaScript exception (unable to "
+                    "convert thrown exception object into string)");
+        return 2;
     }
-    return ret;
+
+    /* push return value onto lua stack */
+    gchar *error = NULL;
+    if (luaJS_pushvalue(L, context, result, &error))
+        return 1;
+
+    /* handle type conversion errors */
+    lua_pushnil(L);
+    lua_pushstring(L, error);
+    g_free(error);
+    return 2;
 }
 
 static gint
