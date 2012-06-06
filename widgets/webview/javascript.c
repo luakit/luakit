@@ -75,7 +75,7 @@ luaJS_pushobject(lua_State *L, JSContextRef context, JSObjectRef obj, gchar **er
 
         gchar *eptr = NULL;
         int n = strtol(cstr, &eptr, 10);
-        if (!*eptr)
+        if (!*eptr) /* end at '\0' ? == it's a number! */
             lua_pushinteger(L, ++n); /* 0-index array to 1-index array */
         else
             lua_pushstring(L, cstr);
@@ -90,11 +90,13 @@ luaJS_pushobject(lua_State *L, JSContextRef context, JSObjectRef obj, gchar **er
                         err ? err : "unknown reason");
                 g_free(err);
             }
+            JSPropertyNameArrayRelease(keys);
             return 0;
         }
         luaJS_pushvalue(L, context, val, error);
         if (error && *error) {
             lua_settop(L, top);
+            JSPropertyNameArrayRelease(keys);
             return 0;
         }
         lua_rawset(L, -3);
