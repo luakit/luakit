@@ -327,7 +327,8 @@ luaJS_register_function(JSContextRef context, const gchar *name, gpointer ref)
 }
 
 static gint
-luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gchar *source)
+luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script,
+        const gchar *source, bool no_return)
 {
     JSStringRef js_source, js_script;
     JSValueRef result, exception = NULL;
@@ -350,6 +351,9 @@ luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gch
                     "convert thrown exception object into string)");
         return 2;
     }
+
+    if (no_return)
+        return 0;
 
     /* push return value onto lua stack */
     gchar *error = NULL;
@@ -397,23 +401,28 @@ luaH_webview_eval_js(lua_State *L)
     const gchar *script = luaL_checkstring(L, 2);
     const gchar *usr_source = NULL;
     gchar *source = NULL;
+    bool no_return = false;
 
     gint top = lua_gettop(L);
     if (top >= 3 && !lua_isnil(L, 3)) {
         luaH_checktable(L, 3);
 
         /* source filename to use in error messages and webinspector */
-        if (luaH_rawfield(L, 3, "source") && lua_isstring(L, 3))
-            usr_source = lua_tostring(L, 3);
+        if (luaH_rawfield(L, 3, "source") && lua_isstring(L, -1))
+            usr_source = lua_tostring(L, -1);
 
         if (luaH_rawfield(L, 3, "frame")) {
-            if (lua_islightuserdata(L, 3))
-                frame = lua_touserdata(L, 3);
-            else if (lua_isstring(L, 3)) {
+            if (lua_islightuserdata(L, -1))
+                frame = lua_touserdata(L, -1);
+            else if (lua_isstring(L, -1)) {
                 if (L_TK_FOCUSED == l_tokenize(lua_tostring(L, -1)))
                     frame = webkit_web_view_get_focused_frame(d->view);
             }
         }
+
+        if (luaH_rawfield(L, 3, "no_return"))
+            no_return = lua_toboolean(L, -1);
+
         lua_settop(L, top);
     }
 
@@ -428,7 +437,7 @@ luaH_webview_eval_js(lua_State *L)
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
 
     gint ret = luaJS_eval_js(L, context, script,
-        usr_source ? usr_source : (const gchar*)source);
+        usr_source ? usr_source : (const gchar*)source, no_return);
 
     g_free(source);
 
