@@ -1,235 +1,295 @@
 local downloads = require("downloads")
 local lousy = require("lousy")
-local table = table
-local add_binds = add_binds
-local ipairs = ipairs
-local pairs = pairs
-local string = string
-local window = window
 local chrome = require("chrome")
-local tostring = tostring
-local capi = { timer = timer }
+local add_binds = add_binds
+local add_cmds = add_cmds
+local table = table
+local string = string
+local io = io
+local print = print
+local pairs = pairs
+local ipairs = ipairs
+local webview = webview
+local math = math
+local assert = assert
 
---- Adds support for a downloads chrome page under luakit://downloads.
-module("downloads.chrome")
+module("downloads_chrome")
 
-local pattern = "^luakit://downloads/?"
+local jquery_path, jquery_js = "lib/jquery-1.7.2.min.js"
+do
+    local file = io.open(jquery_path)
+    jquery_js = file:read("*a")
+    file:close()
+end
 
---- The downloads chrome module.
--- @field html_template HTML template for the chrome page.
---  <br> Use <code>{style}</code> to insert the CSS from <code>html_style</code>.
---  <br> Use <code>{script}</code> to insert the JS from <code>download_js_template</code>.
---  <br> Use <code>{downloads}</code> to insert the HTML from <code>download_template</code>.
--- @field html_style CSS template for the chrome page.
--- @field download_template HTML template for each download.
---  <br> Use <code>{modeline}</code>, <code>{status}</code>, <code>{id}</code>,
---  <code>{name}</code> to insert data of the download.
--- @field download_js_template JavaScript template for each download.
---  <br> Use {opening} to test if the download is being opened.
--- @class table
--- @name downloads.chrome
-
-download_template = [==[
-<div class="download {status}"><h1>{id} {name}</h1>
-<span class="modeline">{modeline}</span>&nbsp;&nbsp;
-<a class="cancel" href="javascript:cancel_{id}()">Cancel</a>
-<a class="delete" href="javascript:delete_{id}()">Delete</a>
-<a class="restart" href="javascript:restart_{id}()">Restart</a>
-<a class="open" id="open_{id}" href="javascript:open_{id}()">Open</a>
-<span class="opening" id="opening_{id}" href="javascript:open_{id}()">Opening...</span>
-</div>
-]==]
-
-download_js_template = [=[
-    if ({opening}) {
-        document.getElementById("open_{id}").style.display = "none";
-    } else {
-        document.getElementById("opening_{id}").style.display = "none";
-    }
-]=]
-
---- Template for the HTML page.
-html_template = [==[
+local html = [==[
+<!doctype html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>Downloads</title>
     <style type="text/css">
-    {style}
+        body {
+            background-color: white;
+            color: black;
+            margin: 10px;
+            display: block;
+            font-size: 84%;
+            font-family: sans-serif;
+        }
+
+        div {
+            display: block;
+        }
+
+        #downloads-summary {
+            border-top: 1px solid #888;
+            background-color: #ddd;
+            padding: 3px;
+            font-weight: bold;
+            margin-top: 10px;
+            margin-bottom: 10px;
+        }
+
+        #download-list {
+        }
+
+        .download {
+            -webkit-margin-start: 90px;
+            -webkit-padding-start: 10px;
+            position: relative;
+            display: block;
+            margin-bottom: 10px;
+        }
+
+        .download .date {
+            left: -90px;
+            width: 90px;
+            position: absolute;
+            display: block;
+            color: #888;
+        }
+
+        .download .title a {
+            color: #3F6EC2;
+            padding-right: 16px;
+        }
+
+        .download .status {
+            display: inline;
+            color: #999;
+            white-space: nowrap;
+        }
+
+        .download .uri a {
+            color: #56D;
+            text-overflow: ellipsis;
+            display: inline-block;
+            white-space: nowrap;
+            text-decoration: none;
+            overflow: hidden;
+            max-width: 500px;
+        }
+
+        .download .controls a {
+            color: #777;
+            margin-right: 16px;
+        }
+
+        .hover {
+            background-color: #eee;
+        }
     </style>
 </head>
 <body>
-<div class="header">
-<a href="javascript:clear()">Clear all stopped downloads</a>
-</div>
-<div id="downloads">
-{downloads}
-</div>
-<script>
-{script}
-</script>
+    <div id="main">
+        <div id="downloads-summary">
+            Downloads
+        </div>
+        <div id="download-list">
+        </div>
+    </div>
+    <script>
+    </script>
 </body>
 </html>
 ]==]
 
---- CSS styles for the HTML page.
-html_style = [===[
-    body {
-        font-family: monospace;
-        margin: 25px;
-        line-height: 1.5em;
-        font-size: 12pt;
-    }
-    div.download {
-        width: 100%;
-        padding: 0px;
-        margin: 0 0 25px 0;
-        clear: both;
-    }
-    .download.cancelled {
-        background-color: #ffffff;
-    }
-    .download.error {
-        background-color: #ffa07a;
-    }
-    .download.created {
-        background-color: #ffffff;
-    }
-    .download.started {
-        background-color: #ffffff;
-    }
-    .download.finished {
-        background-color: #90ee90;
-    }
-    .download h1 {
-        font-size: 12pt;
-        font-weight: bold;
-        font-style: normal;
-        font-variant: small-caps;
-        padding: 0 0 5px 0;
-        margin: 0;
-        color: #333333;
-        border-bottom: 1px solid #aaa;
-    }
-    .download a, .download span.opening {
-        margin-left: 10px;
-        float: right;
-    }
-    .download a:link {
-        color: #0077bb;
-        text-decoration: none;
-    }
-    .download a:hover {
-        color: #0077bb;
-        text-decoration: underline;
-    }
-    .download.created   a.delete,
-    .download.started   a.delete,
-    .download.finished  a.cancel,
-    .download.error     a.cancel,
-    .download.cancelled a.cancel,
-    .download.cancelled a.open,
-    .download.error     a.open {
-        display:none
-    }
-]===]
+local main_js = [=[
 
--- Compiles the HTML for the downlods, but not the HTML structure around them.
--- Used to refresh the page
-local function inner_html()
-    local rows = {}
-    local js = {}
-    for i,d in ipairs(downloads.downloads) do
-        local modeline
-        if d.status == "started" then
-            modeline = string.format("%.2f/%.2f Mb (%i%%) at %.1f Kb/s", d.current_size/1048576,
-                d.total_size/1048576, (d.progress * 100), downloads.get_speed(d) / 1024)
-        else
-            modeline = string.format("%.2f/%.2f Mb (%i%%)", d.current_size/1048576,
-                d.total_size/1048576, (d.progress * 100))
+var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+
+function basename(url) {
+    return url.substring(url.lastIndexOf('/') + 1);
+};
+
+function make_download_elem(d) {
+    var e = "<div class='download' id='" + d.id + "'>";
+
+    var dt = new Date(d.created * 1000);
+    e += ("<div class='date'>" + dt.getDate() + " "
+        + months[dt.getMonth()] + " " + dt.getFullYear() + "</div>");
+
+    e += ("<div class='details'>"
+        + "<div class='title'><a href='file://" + encodeURI(d.dest) + "'>"
+        + encodeURI(basename(d.dest)) + "</a>"
+        + "<div class='status'></div></div>"
+        + "<div class='uri'><a href='" + encodeURI(d.uri) + "'>"
+        + encodeURI(d.uri) + "</a></div></div>");
+
+    e += ("<div class='controls'>"
+        + "<a class='show'    href='#'>Show in folder</a>"
+        + "<a class='restart' href='#'>Retry download</a>"
+        + "<a class='remove'  href='#'>Remove from list</a>"
+        + "<a class='cancel'  href='#'>Cancel</a>"
+        + "</div>");
+
+    e += "<div class='graph' style='display: none;'>Some graph here lol</div>";
+
+    e += "</div>"; // <div class="download">
+
+    return e;
+}
+
+function getid(that) {
+    return $(that).parents(".download").eq(0).attr("id");
+};
+
+function update() {
+    var downloads = downloads_get_all();
+    var ids = [];
+
+    // Check for empty downloads list
+    if (downloads.length !== "undefined") {
+        for (var i = 0; i < downloads.length; i++) {
+            var d = downloads[i];
+            var elem = $("#"+d.id);
+
+            // is this a new download?
+            if (elem.length === 0) {
+                $("#download-list").prepend(make_download_elem(d));
+                elem = $("#"+d.id);
+                elem.fadeIn();
+            }
+
+            if (d.status !== $(elem).attr("status")) {
+                // hide all download controls
+                $(elem).find(".controls a").hide();
+                // now display only the relevant download controls
+                switch (d.status) {
+                    case "created":
+                    case "started":
+                        $(elem).find(".cancel,.show").fadeIn();
+                        break;
+                    case "finished":
+                        $(elem).find(".show,.remove").fadeIn();
+                        break;
+                    case "error":
+                    case "cancelled":
+                        $(elem).find(".remove,.restart").fadeIn();
+                        break;
+                    default:
+                        break;
+                }
+                // save latest download status
+                $(elem).attr("status", d.status);
+            };
+        }
+    }
+    setTimeout(update, 1000) // update 1s from now
+};
+
+$(document).ready(function () {
+    $("#download-list").on("click", ".controls .show", function (e) {
+        downloads_show(getid(this));
+    });
+
+    $("#download-list").on("click", ".controls .restart", function (e) {
+        downloads_restart(getid(this));
+    });
+
+    $("#download-list").on("click", ".controls .remove", function (e) {
+        downloads_remove(getid(this));
+    });
+
+    $("#download-list").on("click", ".controls .cancel", function (e) {
+        downloads_cancel(getid(this));
+    });
+
+    update();
+});
+]=]
+
+local export_funcs = {
+    downloads_get_all = function ()
+        local ret = {}
+        for d, data in pairs(downloads.get_all()) do
+            table.insert(ret, {
+                id = data.id,
+                dest = d.destination,
+                status = d.status,
+                created = data.created,
+                mime = d.mime_type,
+                uri = d.uri,
+                opening = not not data.opening,
+            })
         end
-        local subs = {
-            id       = i,
-            name     = downloads.get_basename(d),
-            status   = d.status,
-            modeline = modeline,
-        }
-        local row = string.gsub(download_template, "{(%w+)}", subs)
-        table.insert(rows, row)
+        return ret
+    end,
 
-        subs = {
-            id       = i,
-            opening  = downloads.opening[d] and "true" or "false"
-        }
-        row = string.gsub(download_js_template, "{(%w+)}", subs)
-        table.insert(js, row)
+    downloads_show = function (id)
+        local d, data = downloads.get(id)
+        local dest = string.gsub(d.destination, "(.*/)(.*)", "%1")
+        if downloads.emit_signal("open-file", dest, "inode/directory") ~= true then
+            error("Couldn't open directory (no handler)")
+        end
+    end,
+
+    downloads_cancel = downloads.cancel,
+    downloads_restart = downloads.restart,
+    downloads_open = downloads.open,
+    downloads_clear = downloads.clear,
+    downloads_remove = downloads.remove,
+}
+
+function export_functions(view)
+    for name, func in pairs(export_funcs) do
+        view:register_function(name, func)
     end
-    return table.concat(rows, "\n"), table.concat(js, "\n")
 end
 
--- Compiles the HTML for the download page.
-local function html()
-    local inner_html, inner_js = inner_html()
-    local html_subs = {
-        style = html_style,
-        downloads = inner_html,
-        script = inner_js,
-    }
-    return string.gsub(html_template, "{(%w+)}", html_subs)
-end
-
--- Refreshes all download views.
-local refresh_timer = capi.timer{interval=1000}
-refresh_timer:add_signal("timeout", function ()
-    local continue = false
-    -- refresh views
-    for _, w in pairs(window.bywidget) do
-        local view = w.view
-        if string.match(view.uri, pattern) then
-            local inner_html, inner_js = inner_html()
-            view:eval_js(string.format('document.getElementById("downloads").innerHTML = %q', inner_html), "downloads.lua")
-            view:eval_js(inner_js, "downloads.lua")
-            continue = true
-        end
-    end
-    -- stop timer if no view was refreshed
-    if not continue then refresh_timer:stop() end
-end)
-
--- Registers the download page with the chrome library.
 chrome.add("downloads/", function (view, uri)
-    view:load_string(html(), tostring(uri))
-    -- small hack to achieve a one time signal
-    local sig = {}
-    sig.fun = function (v, status)
-        view:remove_signal("load-status", sig.fun)
-        if status ~= "committed" or not string.match(view.uri, pattern) then return end
-        view:register_function("clear", downloads.clear)
-        for i = 1, #(downloads.downloads) do
-            for k, v in pairs({
-                ["cancel_" ..i] = function() downloads.cancel(i)  end,
-                ["open_"   ..i] = function() downloads.open(i)    end,
-                ["restart_"..i] = function() downloads.restart(i) end,
-                ["delete_" ..i] = function() downloads.delete(i)  end,
-            }) do
-                view:register_function(k, v)
+    view:load_string(html, "luakit://downloads")
+
+    function on_first_visual(_, status)
+        if status == "first-visual" then
+            if view.uri == "luakit://downloads" then -- double check
+                export_functions(view)
+                view:eval_js(jquery_js, { no_return = true })
+                local _, err = view:eval_js(main_js, { no_return = true })
+                assert(not err, err)
             end
+            view:remove_signal("load-status", on_first_visual)
         end
     end
-    view:add_signal("load-status", sig.fun)
-    if not refresh_timer.started then refresh_timer:start() end
+    view:add_signal("load-status", on_first_visual)
 end)
 
--- Chrome buffer binds.
-local page = "luakit://downloads"
+local page = "luakit://downloads/"
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^gd$", function (w)
         w:navigate(page)
     end),
 
-    buf("^gD$", function (w, b, m)
-        for i=1,m.count do w:new_tab(page) end
-    end, {count=1}),
+    buf("^gD$", function (w)
+        w:new_tab(page)
+    end),
 })
 
--- vim: et:sw=4:ts=8:sts=4:tw=80
+local cmd = lousy.bind.cmd
+add_cmds({
+    cmd("downloads", function (w)
+        w:new_tab(page)
+    end),
+})
