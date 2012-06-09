@@ -11,6 +11,7 @@ local setmetatable = setmetatable
 local rawget = rawget
 local rawset = rawset
 local type = type
+local os = os
 
 -- Grab the luakit environment we need
 local downloads = require("downloads")
@@ -25,11 +26,21 @@ local capi = {
 
 module("downloads_chrome")
 
-local jquery_path, jquery_js = "lib/jquery-1.7.2.min.js"
-do
-    local file = io.open(jquery_path)
-    jquery_js = file:read("*a")
+local function readfile(path)
+    local file = assert(io.open(path), "unable to open: " .. path)
+    local all = file:read("*a")
     file:close()
+    return all
+end
+
+local jquery_path, jquery_js = "lib/jquery-1.7.2.min.js"
+if capi.luakit.dev_paths then
+    if os.exists(jquery_path) then jquery_js = readfile(jquery_path) end
+end
+
+if not jquery_js then
+    jquery_path = capi.luakit.install_path .. "/" .. jquery_path
+    jquery_js = readfile(jquery_path)
 end
 
 local html = [==[
@@ -253,7 +264,7 @@ $(document).ready(function () {
         var id = getid(this);
         download_remove(id);
         elem = $("#"+id);
-        elem.fadeOut(250, function () {
+        elem.fadeOut("fast", function () {
             elem.remove();
         });
     });
