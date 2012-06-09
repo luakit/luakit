@@ -81,12 +81,10 @@ end
 
 local status_timer = capi.timer{interval=1000}
 status_timer:add_signal("timeout", function ()
-    local running = {}
+    local running = 0
     for d, data in pairs(downloads) do
         -- Create list of running downloads
-        if is_running(d) then
-            table.insert(running, d)
-        end
+        if is_running(d) then running = running + 1 end
 
         -- Raise "download::status" signals
         local status = d.status
@@ -102,15 +100,14 @@ status_timer:add_signal("timeout", function ()
     end
 
     -- Stop the status_timer after all downloads finished
-    local rlen = #running
-    if rlen == 0 then status_timer:stop() end
+    if running == 0 then status_timer:stop() end
 
     -- Update window download status widget
     for _, w in pairs(window.bywidget) do
-        w.sbar.r.downloads.text = (rlen == 0 and "") or rlen.."↓"
+        w.sbar.r.downloads.text = (running == 0 and "") or running.."↓"
     end
 
-    _M.emit_signal("status-tick", rlen, running)
+    _M.emit_signal("status-tick", running)
 end)
 
 function add(uri, opts)
