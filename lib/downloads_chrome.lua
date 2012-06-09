@@ -12,6 +12,7 @@ local rawget = rawget
 local rawset = rawset
 local type = type
 local os = os
+local error = error
 
 -- Grab the luakit environment we need
 local downloads = require("downloads")
@@ -166,7 +167,7 @@ function getid(that) {
 };
 
 function update_list() {
-    var downloads = downloads_get_all(["status"]);
+    var downloads = downloads_get_all(["status", "speed"]);
 
     // return if no downloads to display
     if (downloads.length === "undefined") {
@@ -228,19 +229,24 @@ function update_list() {
         // update status text
         var $st = $elem.find(".status").eq(0);
         switch (d.status) {
-        case "created":
         case "started":
-            $st.html("downloading");
+            var speed = Math.round((d.speed || 0) / 1024);
+            if (speed >= 1024) { // MB/s
+                $st.text("downloading - " + Math.round(speed/10.24)/100 + " MB/s")
+            } else {
+                $st.text("downloading - " + speed + " KB/s")
+            }
             break;
 
         case "error":
-            $st.html("error!");
+            $st.html("Error");
             break;
 
         case "cancelled":
-            $st.html("cancelled");
+            $st.html("Cancelled");
             break;
 
+        case "created":
         case "finished":
         default:
             $st.html("");
@@ -300,6 +306,7 @@ local function collate_download_data(d, data, filter)
     -- data table properties
     if rawget(f, "created")      then rawset(ret, "created", data.created)         end
     if rawget(f, "opening")      then rawset(ret, "opening", not not data.opening) end
+    if rawget(f, "speed")        then rawset(ret, "speed", data.speed)             end
     return ret
 end
 
@@ -346,6 +353,20 @@ function export_functions(view)
         view:register_function(name, func)
     end
 end
+
+downloads.add_signal("status-tick", function (running)
+    if running == 0 then
+        for _, data in pairs(downloads.get_all()) do data.speed = nil end
+        return
+    end
+    for d, data in pairs(downloads.get_all()) do
+        if d.status == "started" then
+            local last, curr = rawget(data, "last_size") or 0, d.current_size
+            rawset(data, "speed", curr - last)
+            rawset(data, "last_size", curr)
+        end
+    end
+end)
 
 chrome.add("downloads/", function (view, uri)
     view:load_string(html, "luakit://downloads")
