@@ -195,7 +195,6 @@ end
 -- Catch "download-request" webview widget signals
 webview.init_funcs.download_request = function (view, w)
     view:add_signal("download-request", function (v, d)
-        print(d)
         add(d, { window = w.win })
         return true
     end)
