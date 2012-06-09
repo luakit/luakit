@@ -163,7 +163,7 @@ luaJS_fromtable(lua_State *L, JSContextRef context, gint idx, gchar **error)
         }
 
         lua_pushnil(L);
-        for (guint i = 0; i < len && lua_next(L, idx); i++) {
+        for (guint i = 0; lua_next(L, idx); i++) {
             JSValueRef val = luaJS_tovalue(L, context, -1, error);
             if (error && *error) {
                 lua_settop(L, top);
