@@ -44,7 +44,7 @@ end
 
 function test_register_function()
     view:register_function("my_add", function (a, b) return a + b end)
-    assert_equal(view:eval_js("my_add(40,50);"), 90)
+    assert_equal(90, view:eval_js("my_add(40,50);"))
 end
 
 function test_register_function_error()
@@ -76,17 +76,17 @@ function test_register_function_return()
     view:register_function("return_num", function () return 100 end)
     local ret, err = view:eval_js("return_num();")
     assert_equal(nil, err)
-    assert_equal(ret, 100)
+    assert_equal(100, ret)
 
     view:register_function("return_string", function () return "a string" end)
     local ret, err = view:eval_js("return_string();")
     assert_equal(nil, err)
-    assert_equal(ret, "a string")
+    assert_equal("a string", ret)
 
     view:register_function("return_bool", function () return true end)
     local ret, err = view:eval_js("return_bool();")
     assert_equal(nil, err)
-    assert_equal(ret, true)
+    assert_equal(true, ret)
 
     view:register_function("return_nil", function () return nil end)
     local ret, err = view:eval_js("return_nil();")
@@ -98,7 +98,7 @@ function test_register_function_return()
     end)
     local ret, err = view:eval_js([=[return_array().join(",");]=])
     assert_equal(nil, err)
-    assert_equal(ret, "10,20,30")
+    assert_equal("10,20,30,donkey,200,val", ret)
 
     view:register_function("return_object", function ()
         return { a = "Some", b = "string", [200] = "e" }
@@ -108,7 +108,7 @@ function test_register_function_return()
         o["a"] + " " + o["b"];
     ]=])
     assert_equal(nil, err)
-    assert_equal(ret, "Some string")
+    assert_equal("Some string", ret)
 
     view:register_function("return_sub_array", function () return {{10,20,{30}}} end)
     local ret, err = view:eval_js([=[
@@ -116,5 +116,5 @@ function test_register_function_return()
         a[0][0] + a[0][1] + a[0][2][0];
     ]=])
     assert_equal(nil, err)
-    assert_equal(ret, 60)
+    assert_equal(60, ret)
 end
