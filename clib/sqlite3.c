@@ -25,7 +25,6 @@
 
 #include <sqlite3.h>
 
-
 /** Internal data structure for all Lua \c sqlite3 object instances. */
 typedef struct {
     /** Common \ref lua_object_t header. \see LUA_OBJECT_HEADER */
@@ -38,10 +37,18 @@ typedef struct {
     sqlite3 *db;
 } sqlite3_t;
 
-static lua_class_t sqlite3_class;
-LUA_OBJECT_FUNCS(sqlite3_class, sqlite3_t, sqlite3)
+typedef struct {
+    sqlite3_t *sqlite;
+    sqlite3_stmt *stmt;
+    gpointer parent_ref;
+} sqlite3_stmt_t;
 
 #define luaH_checksqlite3(L, idx) luaH_checkudata(L, idx, &sqlite3_class)
+#define luaH_checkstmtud(L, idx)  luaH_checkudata(L, idx, &sqlite3_stmt_class)
+
+static lua_class_t sqlite3_class, sqlite3_stmt_class;
+
+LUA_OBJECT_FUNCS(sqlite3_class, sqlite3_t, sqlite3)
 
 static inline void
 luaH_sqlite3_checkopen(lua_State *L, sqlite3_t *sqlite)
@@ -50,6 +57,71 @@ luaH_sqlite3_checkopen(lua_State *L, sqlite3_t *sqlite)
         lua_pushliteral(L, "sqlite3: database handle closed");
         lua_error(L);
     }
+}
+
+static gint
+luaH_sqlite3_stmt_gc(lua_State *L)
+{
+    sqlite3_stmt_t *stmt = luaH_checkstmtud(L, 1);
+    /* release hold over parent sqlite3 object */
+    luaH_object_unref(L, stmt->parent_ref);
+    sqlite3_finalize(stmt->stmt);
+    return 0;
+}
+
+/* create userdata object for executing prepared/compiled SQL statements */
+sqlite3_stmt_t*
+sqlite3_stmt_new(lua_State *L)
+{
+    sqlite3_stmt_t *p = lua_newuserdata(L, sizeof(sqlite3_stmt_t));
+    p_clear(p, 1);
+    luaH_settype(L, &sqlite3_stmt_class);
+    lua_newtable(L);
+    lua_newtable(L);
+    lua_setmetatable(L, -2);
+    lua_setfenv(L, -2);
+    return p;
+}
+
+/* return compliled SQL statement userdata object */
+static gint
+luaH_sqlite3_compile(lua_State *L)
+{
+    sqlite3_t *sqlite = luaH_checksqlite3(L, 1);
+    luaH_sqlite3_checkopen(L, sqlite);
+
+    const gchar *sql = luaL_checkstring(L, 2);
+
+    /* compile SQL statement */
+    const gchar *tail;
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(sqlite->db, sql, -1, &stmt, &tail)) {
+        lua_pushfstring(L, "sqlite3: statement compilation failed (%s)",
+                sqlite3_errmsg(sqlite->db));
+        sqlite3_finalize(stmt);
+        lua_error(L);
+    } else if (!stmt) {
+        lua_pushfstring(L, "sqlite3: no SQL found in string: \"%s\"", sql);
+        lua_error(L);
+    }
+
+    /* create userdata object */
+    sqlite3_stmt_t *p = sqlite3_stmt_new(L);
+    p->sqlite = sqlite;
+    p->stmt = stmt;
+    /* store reference to parent sqlite3 object to prevent it being collected
+     * while a sqlite3_stmt object is still around */
+    p->parent_ref = luaH_object_ref(L, 1);
+
+    /* sqlite3_prepare_v2 only compiles the first statement found in the sql
+     * query, if there are several `tail` points to the first character of the
+     * next query */
+    if (tail && *tail) {
+        lua_pushstring(L, tail);
+        return 2;
+    }
+
+    return 1;
 }
 
 static gint
@@ -281,6 +353,64 @@ luaH_sqlite3_exec(lua_State *L)
 }
 
 static gint
+luaH_sqlite3_stmt_exec(lua_State *L)
+{
+    sqlite3_stmt_t *stmt = luaH_checkstmtud(L, 1);
+    sqlite3_t *sqlite = stmt->sqlite;
+    luaH_sqlite3_checkopen(L, sqlite);
+
+    /* reset prepared statement back to original state */
+    sqlite3_reset(stmt->stmt);
+
+    gint ret;
+
+    /* is there values to bind to this statement? */
+    if (!lua_isnoneornil(L, 2)) {
+        luaH_checktable(L, 2);
+
+        /* clear bound values */
+        sqlite3_clear_bindings(stmt->stmt);
+
+        /* iterate through table and bind values to the compiled statement */
+        lua_pushnil(L);
+        gint idx;
+
+        while (lua_next(L, 2)) {
+            /* check valid parameter index */
+            if ((idx = luaH_param_index(L, stmt->stmt, -2)) == 0) {
+                lua_pop(L, 1);
+                continue;
+            }
+
+            /* bind value at index */
+            ret = luaH_bind_value(L, stmt->stmt, idx, -1);
+
+            /* check for sqlite3_bind_* error */
+            if (!(ret == SQLITE_OK || ret == SQLITE_RANGE)) {
+                lua_pushfstring(L, "sqlite3: sqlite3_bind_* failed (%s)",
+                        sqlite3_errmsg(sqlite->db));
+                sqlite3_finalize(stmt->stmt);
+                lua_error(L);
+            }
+
+            /* pop value */
+            lua_pop(L, 1);
+        }
+    }
+
+    ret = luaH_sqlite3_do_exec(L, stmt->stmt);
+
+    /* check for error */
+    if (ret == -1) {
+        lua_pushfstring(L, "sqlite3: exec error (%s)",
+                sqlite3_errmsg(sqlite->db));
+        lua_error(L);
+    }
+
+    return 1;
+}
+
+static gint
 luaH_sqlite3_new(lua_State *L)
 {
     luaH_class_new(L, &sqlite3_class);
@@ -308,6 +438,7 @@ sqlite3_class_setup(lua_State *L)
         LUA_CLASS_META
         { "exec", luaH_sqlite3_exec },
         { "close", luaH_sqlite3_close },
+        { "compile", luaH_sqlite3_compile },
         { "changes", luaH_sqlite3_changes },
         { "__gc", luaH_sqlite3_gc },
         { NULL, NULL },
@@ -322,6 +453,16 @@ sqlite3_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_sqlite3_set_filename,
             (lua_class_propfunc_t) luaH_sqlite3_get_filename,
             NULL);
+
+    static const struct luaL_reg sqlite3_stmt_meta[] =
+    {
+        { "exec", luaH_sqlite3_stmt_exec },
+        { "__gc", luaH_sqlite3_stmt_gc },
+        { NULL, NULL },
+    };
+
+    luaH_class_setup(L, &sqlite3_stmt_class, "sqlite3::statement",
+            NULL, NULL, NULL, NULL, sqlite3_stmt_meta);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

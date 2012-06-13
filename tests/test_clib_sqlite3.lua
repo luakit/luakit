@@ -70,3 +70,51 @@ function test_sqlite3_exec()
 --        end
 --    end
 end
+
+function test_compile_statement()
+    local db = sqlite3{filename=":memory:"}
+    local ret, tail = db:exec([[CREATE TABLE IF NOT EXISTS test (
+        id INTEGER PRIMARY KEY,
+        uri TEXT,
+        created FLOAT
+    )]])
+    assert_nil(ret)
+    assert_nil(tail)
+
+    -- Compile some statements
+    local insert, tail = db:compile([[INSERT INTO test VALUES(:id, :uri, :created);]])
+    assert_equal("sqlite3::statement", type(insert))
+    assert_nil(tail)
+
+    local select_all, tail = db:compile([[SELECT * FROM test;]])
+    assert_equal("sqlite3::statement", type(select_all))
+    assert_nil(tail)
+
+    local ret = insert:exec{ [":uri"] = "google.com", [":created"] = 1000 }
+    assert_nil(ret)
+    local ret = insert:exec{ [":uri"] = "reddit.com", [":created"] = 12.34 }
+    assert_nil(ret)
+
+    local ret = select_all:exec()
+    assert_table(ret)
+    assert_equal(2, #ret)
+
+    assert_table(ret[1])
+    assert_equal("google.com", ret[1].uri)
+    assert_equal(1000, ret[1].created)
+    assert_table(ret[2])
+    assert_equal("reddit.com", ret[2].uri)
+    assert_equal(12.34, ret[2].created)
+
+    -- Re-run last statement with same bound values
+    local ret = insert:exec()
+    assert_nil(ret)
+
+    local ret = select_all:exec()
+    assert_table(ret)
+    assert_equal(3, #ret)
+
+    assert_table(ret[3])
+    assert_equal("reddit.com", ret[3].uri)
+    assert_equal(12.34, ret[3].created)
+end
