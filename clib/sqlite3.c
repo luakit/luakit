@@ -36,8 +36,6 @@ typedef struct {
     /** Internal SQLite3 connection handle object.
         \see http://www.sqlite.org/c3ref/sqlite3.html */
     sqlite3 *db;
-    /** Internal count of rows returned from the last SQL query. */
-    guint rows;
 } sqlite3_t;
 
 static lua_class_t sqlite3_class;
@@ -113,89 +111,48 @@ luaH_sqlite3_changes(lua_State *L)
 }
 
 static gint
-luaH_sqlite3_exec(lua_State *L)
+luaH_param_index(lua_State *L, sqlite3_stmt *stmt, gint idx)
 {
-    sqlite3_t *sqlite = luaH_checksqlite3(L, 1);
-    luaH_sqlite3_checkopen(L, sqlite);
+    int type = lua_type(L, idx);
+    if (type == LUA_TNUMBER)
+        return lua_tointeger(L, idx);
+    else if (type == LUA_TSTRING)
+        return sqlite3_bind_parameter_index(stmt, lua_tostring(L, idx));
+    return 0;
+}
 
-    /* reset row count for callback function */
-    sqlite->rows = 0;
-
-    /* get SQL query */
-    const gchar *sql = luaL_checkstring(L, 2);
-
-    /* check type before we prepare statement */
-    if (!lua_isnoneornil(L, 3))
-        luaH_checktable(L, 3);
-
-    gint ret = 0, ncol = 0;
-
-    /* compile SQL statement */
-    const gchar *tail;
-    sqlite3_stmt *stmt;
-    if (sqlite3_prepare_v2(sqlite->db, sql, -1, &stmt, &tail)) {
-        lua_pushfstring(L, "sqlite3: statement compilation failed (%s)",
-                sqlite3_errmsg(sqlite->db));
-        sqlite3_finalize(stmt);
-        lua_error(L);
-    } else if (!stmt) {
-        lua_pushfstring(L, "sqlite3: no SQL found in string: \"%s\"", sql);
-        lua_error(L);
+static gint
+luaH_bind_value(lua_State *L, sqlite3_stmt *stmt, gint bidx, gint idx)
+{
+    switch (lua_type(L, idx)) {
+    case LUA_TNUMBER:
+        return sqlite3_bind_double(stmt, bidx, lua_tonumber(L, idx));
+    case LUA_TBOOLEAN:
+        return sqlite3_bind_int(stmt, bidx, lua_toboolean(L, idx) ? 1 : 0);
+    case LUA_TSTRING:
+        return sqlite3_bind_text(stmt, bidx, lua_tostring(L, idx), -1,
+                SQLITE_TRANSIENT);
+    default:
+        warn("sqlite3: unable to bind Lua value (type %s)",
+                lua_typename(L, lua_type(L, idx)));
+        break;
     }
+    return SQLITE_OK; /* ignore invalid types */
+}
 
-    /* is there values to bind to this statement? */
-    if (!lua_isnoneornil(L, 3)) {
-        /* iterate through table and bind values to the compiled statement */
-        lua_pushnil(L);
-        while (lua_next(L, 3)) {
-            gint idx = 0;
-            if (lua_isnumber(L, -2))
-                idx = lua_tonumber(L, -2);
-            else if (lua_isstring(L, -2))
-                idx = sqlite3_bind_parameter_index(stmt, lua_tostring(L, -2));
+static gint
+luaH_sqlite3_do_exec(lua_State *L, sqlite3_stmt *stmt)
+{
+    gint ret = sqlite3_step(stmt), rows = 0, ncol;
 
-            /* invalid index */
-            if (idx <= 0) {
-                lua_pop(L, 1);
-                continue;
-            }
-
-            /* bind values */
-            ret = 0;
-            switch (lua_type(L, -1)) {
-            case LUA_TNUMBER:
-                ret = sqlite3_bind_double(stmt, idx, lua_tonumber(L, -1));
-                break;
-            case LUA_TBOOLEAN:
-                ret = sqlite3_bind_int(stmt, idx, lua_toboolean(L, -1)?1:0);
-                break;
-            case LUA_TSTRING:
-                ret = sqlite3_bind_text(stmt, idx, lua_tostring(L, -1), -1,
-                        SQLITE_TRANSIENT);
-                break;
-            default:
-                break;
-            }
-
-            if (!(ret == SQLITE_OK || ret == SQLITE_RANGE)) {
-                lua_pushfstring(L, "sqlite3: sqlite3_bind_* failed (%s)",
-                        sqlite3_errmsg(sqlite->db));
-                sqlite3_finalize(stmt);
-                lua_error(L);
-            }
-
-            /* pop value */
-            lua_pop(L, 1);
-        }
-    }
-
-    ret = sqlite3_step(stmt);
-
+    /* determine if this statement returns rows */
     if (ret == SQLITE_DONE || ret == SQLITE_ROW) {
         if ((ncol = sqlite3_column_count(stmt)))
+            /* user will expect table even if SQLITE_DONE */
             lua_newtable(L);
         else
-            lua_pushnil(L); /* statement doesn't return rows */
+            /* statement doesn't return rows */
+            lua_pushnil(L);
     }
 
 check_next_step:
@@ -229,27 +186,98 @@ check_next_step:
                 break;
             }
         }
-        lua_rawseti(L, -2, ++(sqlite->rows));
+        lua_rawseti(L, -2, ++rows);
         break;
 
     /* there was an error */
     default:
-        lua_pushfstring(L, "sqlite3: exec error (%s)",
-                sqlite3_errmsg(sqlite->db));
-        sqlite3_finalize(stmt);
-        lua_error(L);
+        return -1;
     }
 
+    /* process next row (or check if done) */
     ret = sqlite3_step(stmt);
     goto check_next_step;
 
 exec_done:
-    sqlite3_finalize(stmt);
-    if (tail && *tail) /* this is the leftovers from sqlite3_prepare_v2 */
-        lua_pushstring(L, tail);
-    else
+    return 1;
+}
+
+static gint
+luaH_sqlite3_exec(lua_State *L)
+{
+    sqlite3_t *sqlite = luaH_checksqlite3(L, 1);
+    luaH_sqlite3_checkopen(L, sqlite);
+
+    /* get SQL query */
+    const gchar *sql = luaL_checkstring(L, 2);
+
+    /* check type before we prepare statement */
+    if (!lua_isnoneornil(L, 3))
+        luaH_checktable(L, 3);
+
+    gint ret = 0;
+
+    /* compile SQL statement */
+    const gchar *tail;
+    sqlite3_stmt *stmt;
+    if (sqlite3_prepare_v2(sqlite->db, sql, -1, &stmt, &tail)) {
+        lua_pushfstring(L, "sqlite3: statement compilation failed (%s)",
+                sqlite3_errmsg(sqlite->db));
+        sqlite3_finalize(stmt);
+        lua_error(L);
+    } else if (!stmt) {
+        lua_pushfstring(L, "sqlite3: no SQL found in string: \"%s\"", sql);
+        lua_error(L);
+    }
+
+    /* is there values to bind to this statement? */
+    if (!lua_isnoneornil(L, 3)) {
+        /* iterate through table and bind values to the compiled statement */
         lua_pushnil(L);
-    return 2;
+        gint idx;
+
+        while (lua_next(L, 3)) {
+            /* check valid parameter index */
+            if ((idx = luaH_param_index(L, stmt, -2)) == 0) {
+                lua_pop(L, 1);
+                continue;
+            }
+
+            /* bind value at index */
+            ret = luaH_bind_value(L, stmt, idx, -1);
+
+            /* check for sqlite3_bind_* error */
+            if (!(ret == SQLITE_OK || ret == SQLITE_RANGE)) {
+                lua_pushfstring(L, "sqlite3: sqlite3_bind_* failed (%s)",
+                        sqlite3_errmsg(sqlite->db));
+                sqlite3_finalize(stmt);
+                lua_error(L);
+            }
+
+            /* pop value */
+            lua_pop(L, 1);
+        }
+    }
+
+    ret = luaH_sqlite3_do_exec(L, stmt);
+    sqlite3_finalize(stmt);
+
+    /* check for error */
+    if (ret == -1) {
+        lua_pushfstring(L, "sqlite3: exec error (%s)",
+                sqlite3_errmsg(sqlite->db));
+        lua_error(L);
+    }
+
+    /* the sqlite3_prepare_*() functions only compile the first statement
+     * in the input string. If there are more `tail` points to the first
+     * character of the next statement (valid or not). */
+    if (tail && *tail) {
+        lua_pushstring(L, tail);
+        return 2;
+    }
+
+    return 1;
 }
 
 static gint
