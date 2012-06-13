@@ -144,7 +144,7 @@ function make_download(d) {
         + months[dt.getMonth()] + " " + dt.getFullYear() + "</div>");
 
     e += ("<div class='details'>"
-        + "<div class='title'><a href='file://" + encodeURI(d.destination) + "'>"
+        + "<div class='title'><a href='file://" + escape(d.destination) + "'>"
         + encodeURI(basename(d.destination)) + "</a>"
         + "<div class='status'>waiting</div></div>"
         + "<div class='uri'><a href='" + encodeURI(d.uri) + "'>"
