@@ -308,12 +308,12 @@ webview.scroll_parse_funcs = {
     end,
 
     -- Abs "10p" (pages)
-    ["^(%d+%.?%d*)p$"] = function (s, axis, p)
+    ["^(%d+[%.,]?%d*)p$"] = function (s, axis, p)
         return math.ceil(s[axis.."page_size"] * p)
     end,
 
     -- Rel "+10p" (pages)
-    ["^([-+]%d+%.?%d*)p$"] = function (s, axis, p)
+    ["^([-+]%d+[%.,]?%d*)p$"] = function (s, axis, p)
         return s[axis] + math.ceil(s[axis.."page_size"] * p)
     end,
 }
