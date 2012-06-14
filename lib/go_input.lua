@@ -34,8 +34,7 @@ local go_input = [=[
 -- Add `w:go_input()` webview method
 webview.methods.go_input = function(view, w, count)
     local js = string.format("%s(%d);", go_input, count or 1)
-    local ret = w:eval_js(js, "(go_input.lua)")
-    w:emit_form_root_active_signal(ret)
+    w:emit_form_root_active_signal(w.view:eval_js(js))
 end
 
 -- Add `gi` binding to normal mode

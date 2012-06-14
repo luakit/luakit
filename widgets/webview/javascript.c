@@ -71,12 +71,12 @@ webview_register_function(WebKitWebFrame *frame, const gchar *name, gpointer ref
     JSClassRelease(class);
 }
 
-static const gchar*
-webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file)
+static gchar*
+webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *source)
 {
     JSGlobalContextRef context;
     JSObjectRef globalobject;
-    JSStringRef js_file;
+    JSStringRef js_source;
     JSStringRef js_script;
     JSValueRef js_result;
     JSValueRef js_exc = NULL;
@@ -89,8 +89,8 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file)
 
     /* evaluate the script and get return value*/
     js_script = JSStringCreateWithUTF8CString(script);
-    js_file = JSStringCreateWithUTF8CString(file);
-    js_result = JSEvaluateScript(context, js_script, globalobject, js_file, 0, &js_exc);
+    js_source = JSStringCreateWithUTF8CString(source);
+    js_result = JSEvaluateScript(context, js_script, globalobject, js_source, 0, &js_exc);
     if (js_result && !JSValueIsUndefined(context, js_result)) {
         js_result_string = JSValueToStringCopy(context, js_result, NULL);
         js_result_size = JSStringGetMaximumUTF8CStringSize(js_result_string);
@@ -114,7 +114,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file)
         prop = JSStringCreateWithUTF8CString("sourceURL");
         val = JSValueToStringCopy(context, JSObjectGetProperty(context, exc, prop, NULL), NULL);
         size = JSStringGetMaximumUTF8CStringSize(val);
-        if(size) {
+        if (size) {
             gchar cstr[size];
             JSStringGetUTF8CString(val, cstr, size);
             g_printf("At %s", cstr);
@@ -147,7 +147,7 @@ webview_eval_js(WebKitWebFrame *frame, const gchar *script, const gchar *file)
 
     /* cleanup */
     JSStringRelease(js_script);
-    JSStringRelease(js_file);
+    JSStringRelease(js_source);
 
     return g_string_free(result, FALSE);
 }
@@ -183,22 +183,44 @@ luaH_webview_eval_js(lua_State *L)
     WebKitWebFrame *frame = NULL;
     webview_data_t *d = luaH_checkwvdata(L, 1);
     const gchar *script = luaL_checkstring(L, 2);
-    const gchar *filename = luaL_checkstring(L, 3);
+    const gchar *usr_source = NULL;
+    gchar *source = NULL;
 
-    /* Check if js should be run on currently focused frame */
-    if (lua_gettop(L) >= 4) {
-        if (lua_islightuserdata(L, 4))
-            frame = lua_touserdata(L, 4);
-        else if (lua_toboolean(L, 4))
-            frame = webkit_web_view_get_focused_frame(d->view);
+    gint top = lua_gettop(L);
+    if (top >= 3 && !lua_isnil(L, 3)) {
+        luaH_checktable(L, 3);
+
+        /* source filename to use in error messages and webinspector */
+        if (luaH_rawfield(L, 3, "source") && lua_isstring(L, 3))
+            usr_source = lua_tostring(L, 3);
+
+        if (luaH_rawfield(L, 3, "frame")) {
+            if (lua_islightuserdata(L, 3))
+                frame = lua_touserdata(L, 3);
+            else if (lua_isstring(L, 3)) {
+                if (L_TK_FOCUSED == l_tokenize(lua_tostring(L, -1)))
+                    frame = webkit_web_view_get_focused_frame(d->view);
+            }
+        }
+        lua_settop(L, top);
     }
+
+    if (!usr_source)
+        source = luaH_callerinfo(L);
 
     /* Fall back on main frame */
     if (!frame)
         frame = webkit_web_view_get_main_frame(d->view);
 
     /* evaluate javascript script and push return result onto lua stack */
-    const gchar *result = webview_eval_js(frame, script, filename);
-    lua_pushstring(L, result);
-    return 1;
+    gchar *result = webview_eval_js(frame, script,
+        usr_source ? usr_source : (const gchar*)source);
+
+    if (result)
+        lua_pushstring(L, result);
+
+    g_free(source);
+    g_free(result);
+
+    return result ? 1 : 0;
 }

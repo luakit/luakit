@@ -30,11 +30,11 @@ local go_upmost = [=[
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^gu$", function (w)
-        w:eval_js(go_up, "(go_up.lua)")
+        w.view:eval_js(go_up)
     end),
 
     buf("^gU$", function (w)
-        w:eval_js(go_upmost, "(go_up.lua)")
+        w.view:eval_js(go_upmost)
     end),
 })
 

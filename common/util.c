@@ -68,3 +68,18 @@ file_exists(const gchar *filename)
 {
     return (access(filename, F_OK) == 0);
 }
+
+/* Pretty-format calling function filename, function name & line number for
+ * debugging purposes */
+gchar*
+luaH_callerinfo(lua_State *L)
+{
+    lua_Debug ar;
+
+    /* get information about calling lua function */
+    if (lua_getstack(L, 1, &ar) && lua_getinfo(L, "Sln", &ar))
+        return g_strdup_printf("(%s%s%s:%d)", ar.short_src,
+            ar.name ? ":" : "", ar.name, ar.currentline);
+
+    return NULL;
+}

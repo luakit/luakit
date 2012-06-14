@@ -213,6 +213,8 @@ add_binds("normal", {
     key({"Shift","Control"}, "Tab", function (w)       w:prev_tab() end),
     buf("^gT$",                     function (w, b, m) w:prev_tab(m.count) end, {count=1}),
     buf("^gt$",                     function (w, b, m) if not w:goto_tab(m.count) then w:next_tab() end end, {count=0}),
+    buf("^g0$",                     function (w)       w:goto_tab(1)  end),
+    buf("^g$$",                     function (w)       w:goto_tab(-1) end),
 
     key({"Control"}, "t",           function (w)    w:new_tab(globals.homepage) end),
     key({"Control"}, "w",           function (w)    w:close_tab()       end),
@@ -231,7 +233,7 @@ add_binds("normal", {
 
     key({},          "r",           function (w) w:reload() end),
     key({},          "R",           function (w) w:reload(true) end),
-    key({"Control"}, "c",           function (w) w:stop() end),
+    key({"Control"}, "c",           function (w) w.view:stop() end),
 
     -- Config reloading
     key({"Control", "Shift"}, "R",  function (w) w:restart() end),
@@ -286,7 +288,8 @@ add_cmds({
  -- cmd({command, alias1, ...}, function (w, arg, opts) .. end, opts),
  -- cmd("co[mmand]",            function (w, arg, opts) .. end, opts),
     cmd("c[lose]",              function (w) w:close_tab() end),
-    cmd("print",                function (w) w:eval_js("print()", "rc.lua") end),
+    cmd("print",                function (w) w.view:eval_js("print();") end),
+    cmd("stop",                 function (w) w.view:stop() end),
     cmd("reload",               function (w) w:reload() end),
     cmd("restart",              function (w) w:restart() end),
     cmd("write",                function (w) w:save_session() end),
@@ -298,7 +301,16 @@ add_cmds({
     cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
     cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
     cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
-    cmd({"javascript",   "js"}, function (w, a) w:eval_js(a, "javascript") end),
+    cmd({"javascript", "js"},   function (w, a) w.view:eval_js(a) end),
+
+    -- Tab manipulation commands
+    cmd("tab",                  function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
+    cmd("tabd[o]",              function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
+    cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.history) end),
+    cmd("tabfir[st]",           function (w)    w:goto_tab(1) end),
+    cmd("tabl[ast]",            function (w)    w:goto_tab(-1) end),
+    cmd("tabn[ext]",            function (w)    w:next_tab() end),
+    cmd("tabp[revious]",        function (w)    w:prev_tab() end),
 
     cmd("q[uit]",               function (w, a, o) w:close_win(o.bang) end),
     cmd({"viewsource",  "vs" }, function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
@@ -318,7 +330,7 @@ add_cmds({
         local file = a or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
         if file then
             local fd = assert(io.open(file, "w"), "failed to open: " .. file)
-            local html = assert(w:eval_js("document.documentElement.outerHTML", "dump"), "Unable to get HTML")
+            local html = assert(w.view:eval_js("document.documentElement.outerHTML"), "Unable to get HTML")
             assert(fd:write(html), "unable to save html")
             io.close(fd)
             w:notify("Dumped HTML to: " .. file)
