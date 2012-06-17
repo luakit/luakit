@@ -290,44 +290,33 @@ webview.methods = {
     end,
 }
 
-webview.scroll_parse_funcs = {
-    -- Abs "100px"
-    ["^(%d+)px$"] = function (_, _, px) return px end,
-
-    -- Rel "+/-100px"
-    ["^([-+]%d+)px$"] = function (s, axis, px) return s[axis] + px end,
-
-    -- Abs "10%"
-    ["^(%d+)%%$"] = function (s, axis, pc)
-        return math.ceil(s[axis.."max"] * (pc / 100))
-    end,
-
-    -- Rel "+/-10%"
-    ["^([-+]%d+)%%$"] = function (s, axis, pc)
-        return s[axis] + math.ceil(s[axis.."max"] * (pc / 100))
-    end,
-
-    -- Abs "10p" (pages)
-    ["^(%d+[%.,]?%d*)p$"] = function (s, axis, p)
-        return math.ceil(s[axis.."page_size"] * p)
-    end,
-
-    -- Rel "+10p" (pages)
-    ["^([-+]%d+[%.,]?%d*)p$"] = function (s, axis, p)
-        return s[axis] + math.ceil(s[axis.."page_size"] * p)
-    end,
-}
-
 function webview.methods.scroll(view, w, new)
-    local scroll = view.scroll
-    for axis, val in pairs{ x = new.x, y = new.y } do
-        if type(val) == "number" then
-            scroll[axis] = val
-        else
-            for pat, func in pairs(webview.scroll_parse_funcs) do
-                local n = string.match(val, pat)
-                if n then scroll[axis] = func(scroll, axis, tonumber(n)) end
+    local s = view.scroll
+    for _, axis in ipairs{ "x", "y" } do
+        -- Relative px movement
+        if rawget(new, axis.."rel") then
+            s[axis] = s[axis] + new[axis.."rel"]
+
+        -- Relative page movement
+        elseif rawget(new, axis .. "pagerel") then
+            s[axis] = s[axis] + math.ceil(s[axis.."page_size"] * new[axis.."pagerel"])
+
+        -- Absolute px movement
+        elseif rawget(new, axis) then
+            local n = new[axis]
+            if n == -1 then
+                s[axis] = s[axis.."max"]
+            else
+                s[axis] = n
             end
+
+        -- Absolute page movement
+        elseif rawget(new, axis.."page") then
+            s[axis] = math.ceil(s[axis.."page_size"] * new[axis.."page"])
+
+        -- Absolute percent movement
+        elseif rawget(new, axis .. "pct") then
+            s[axis] = math.ceil(s[axis.."max"] * (new[axis.."pct"]/100))
         end
     end
 end

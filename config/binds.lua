@@ -12,7 +12,6 @@ local strip, split = lousy.util.string.strip, lousy.util.string.split
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
-local more, less = "+"..scroll_step.."px", "-"..scroll_step.."px"
 local zoom_step = globals.zoom_step or 0.1
 
 -- Add binds to a mode
@@ -112,39 +111,44 @@ add_binds("normal", {
     key({},          ":",           function (w) w:set_mode("command") end),
 
     -- Scrolling
-    key({},          "j",           function (w) w:scroll{ y = more    } end),
-    key({},          "k",           function (w) w:scroll{ y = less    } end),
-    key({},          "h",           function (w) w:scroll{ x = less    } end),
-    key({},          "l",           function (w) w:scroll{ x = more    } end),
-    key({},          "^",           function (w) w:scroll{ x = "0%"    } end),
-    key({},          "$",           function (w) w:scroll{ x = "100%"  } end),
-    key({"Control"}, "e",           function (w) w:scroll{ y = more    } end),
-    key({"Control"}, "y",           function (w) w:scroll{ y = less    } end),
-    key({"Control"}, "d",           function (w) w:scroll{ y = string.format("+%.1fp", 0.5) } end),
-    key({"Control"}, "u",           function (w) w:scroll{ y = string.format("-%.1fp", 0.5) } end),
-    key({"Control"}, "f",           function (w) w:scroll{ y = string.format("+%.1fp", 1.0) } end),
-    key({"Control"}, "b",           function (w) w:scroll{ y = string.format("-%.1fp", 1.0) } end),
-    key({},          "space",       function (w) w:scroll{ y = string.format("+%.1fp", 1.0) } end),
-    key({"Shift"},   "space",       function (w) w:scroll{ y = string.format("-%.1fp", 1.0) } end),
-    key({},          "BackSpace",   function (w) w:scroll{ y = string.format("-%.1fp", 1.0) } end),
+    key({},          "j",           function (w) w:scroll{ yrel =  scroll_step } end),
+    key({},          "k",           function (w) w:scroll{ yrel = -scroll_step } end),
+    key({},          "h",           function (w) w:scroll{ xrel = -scroll_step } end),
+    key({},          "l",           function (w) w:scroll{ xrel =  scroll_step } end),
+    key({},          "Down",        function (w) w:scroll{ yrel =  scroll_step } end),
+    key({},          "Up",          function (w) w:scroll{ yrel = -scroll_step } end),
+    key({},          "Left",        function (w) w:scroll{ xrel = -scroll_step } end),
+    key({},          "Right",       function (w) w:scroll{ xrel =  scroll_step } end),
+
+    key({},          "^",           function (w) w:scroll{ x =  0 } end),
+    key({},          "$",           function (w) w:scroll{ x = -1 } end),
+    key({},          "0",           function (w, m)
+                                        if not m.count then w:scroll{ y = 0 } else return false end
+                                    end),
+
+    key({"Control"}, "e",           function (w) w:scroll{ yrel =  scroll_step } end),
+    key({"Control"}, "y",           function (w) w:scroll{ yrel = -scroll_step } end),
+    key({"Control"}, "d",           function (w) w:scroll{ ypagerel =  0.5 } end),
+    key({"Control"}, "u",           function (w) w:scroll{ ypagerel = -0.5 } end),
+    key({"Control"}, "f",           function (w) w:scroll{ ypagerel =  1.0 } end),
+    key({"Control"}, "b",           function (w) w:scroll{ ypagerel = -1.0 } end),
+
+    key({},          "space",       function (w) w:scroll{ ypagerel =  1.0 } end),
+    key({"Shift"},   "space",       function (w) w:scroll{ ypagerel = -1.0 } end),
+    key({},          "BackSpace",   function (w) w:scroll{ ypagerel = -1.0 } end),
+
+    key({},          "Page_Down",   function (w) w:scroll{ ypagerel =  1.0 } end),
+    key({},          "Page_Up",     function (w) w:scroll{ ypagerel = -1.0 } end),
+
+    key({},          "Home",        function (w) w:scroll{ y =  0 } end),
+    key({},          "End",         function (w) w:scroll{ y = -1 } end),
 
     -- Specific scroll
-    buf("^gg$",                     function (w, b, m) w:scroll{ y = m.count.."%" } end, {count = 0}),
-    buf("^G$",                      function (w, b, m) w:scroll{ y = m.count.."%" } end, {count = 100}),
+    buf("^gg$",                     function (w, b, m) w:scroll{ ypct = m.count } end, {count = 0}),
+    buf("^G$",                      function (w, b, m) w:scroll{ ypct = m.count } end, {count = 100}),
+    buf("^%%$",                     function (w, b, m) w:scroll{ ypct = m.count } end),
 
     -- Traditional scrolling commands
-    key({},          "Down",        function (w) w:scroll{ y = more    } end),
-    key({},          "Up",          function (w) w:scroll{ y = less    } end),
-    key({},          "Left",        function (w) w:scroll{ x = less    } end),
-    key({},          "Right",       function (w) w:scroll{ x = more    } end),
-    key({},          "Page_Down",   function (w) w:scroll{ y = string.format("+%.1fp", 1.0) } end),
-    key({},          "Page_Up",     function (w) w:scroll{ y = string.format("-%.1fp", 1.0) } end),
-    key({},          "Home",        function (w) w:scroll{ y = "0%"    } end),
-    key({},          "End",         function (w) w:scroll{ y = "100%"  } end),
-    key({},          "$",           function (w) w:scroll{ x = "100%"  } end),
-    key({},          "0",           function (w, m)
-                                        if not m.count then w:scroll{ y = "0%" } else return false end
-                                    end),
 
     -- Zooming
     key({},          "+",           function (w, m)    w:zoom_in(zoom_step  * m.count)       end, {count=1}),
