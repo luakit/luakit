@@ -84,8 +84,8 @@ add_binds("all", {
     but({"Control"}, 5, function (w, m) w:zoom_out() end),
 
     -- Horizontal mouse scroll binds
-    but({"Shift"},   4, function (w, m) w:scroll{ x = less } end),
-    but({"Shift"},   5, function (w, m) w:scroll{ x = more } end),
+    but({"Shift"},   4, function (w, m) w:scroll{ xrel = -scroll_step } end),
+    but({"Shift"},   5, function (w, m) w:scroll{ xrel =  scroll_step } end),
 })
 
 add_binds("normal", {
