@@ -152,7 +152,7 @@ add_binds("normal", {
 local cmd = lousy.bind.cmd
 add_cmds({
     -- Quickmark add (`:qmark f http://forum1.com, forum2.com, imdb some artist`)
-    cmd("qma[rk]", function (w, a)
+    cmd("qma[rk]", "add quickmark", function (w, a)
         local token, uris = string.match(lousy.util.string.strip(a), "^(%w)%s+(.+)$")
         assert(token, "invalid token")
         uris = lousy.util.string.split(uris, ",%s+")
@@ -161,7 +161,7 @@ add_cmds({
     end),
 
     -- Quickmark edit (`:qmarkedit f` -> `:qmark f furi1, furi2, ..`)
-    cmd({"qmarkedit", "qme"}, function (w, a)
+    cmd({"qmarkedit", "qme"}, "edit quickmark", function (w, a)
         token = lousy.util.string.strip(a)
         assert(#token == 1, "invalid token length: " .. token)
         local uris = get(token)
@@ -169,7 +169,7 @@ add_cmds({
     end),
 
     -- Quickmark del (`:delqmarks b-p Aa z 4-9`)
-    cmd("delqm[arks]", function (w, a)
+    cmd("delqm[arks]", "delete quickmark", function (w, a)
         -- Find and del all range specifiers
         string.gsub(a, "(%w%-%w)", function (range)
             range = "["..range.."]"
@@ -183,10 +183,10 @@ add_cmds({
     end),
 
     -- View all quickmarks in an interactive menu
-    cmd("qmarks", function (w) w:set_mode("qmarklist") end),
+    cmd("qmarks", "list all quickmarks", function (w) w:set_mode("qmarklist") end),
 
     -- Delete all quickmarks
-    cmd({"delqmarks!", "delqm!"}, function (w) delall() end),
+    cmd({"delqmarks!", "delqm!"}, "delete all quickmarks", function (w) delall() end),
 })
 
 -- Add mode to display all quickmarks in an interactive menu

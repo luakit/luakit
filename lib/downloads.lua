@@ -258,33 +258,33 @@ add_binds("normal", {
 -- Download commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("down[load]", function (w, a)
+    cmd("down[load]", "download file", function (w, a)
         add(a)
     end),
 
     -- View all downloads in an interactive menu
-    cmd("downloads", function (w)
+    cmd("downloads", "list downloads", function (w)
         w:set_mode("downloadlist")
     end),
 
-    cmd("dd[elete]", function (w, a)
+    cmd("dd[elete]", "delete download", function (w, a)
         local d = downloads[assert(tonumber(a), "invalid index")]
         if d then delete(d) end
     end),
 
-    cmd("dc[ancel]", function (w, a)
+    cmd("dc[ancel]", "cancel download", function (w, a)
         local d = downloads[assert(tonumber(a), "invalid index")]
         if d then cancel(d) end
     end),
 
-    cmd("dr[estart]", function (w, a)
+    cmd("dr[estart]", "restart download", function (w, a)
         local d = downloads[assert(tonumber(a), "invalid index")]
         if d then restart(d) end
     end),
 
-    cmd("dcl[ear]", clear),
+    cmd("dcl[ear]", "clear downloads list", clear),
 
-    cmd("do[pen]", function (w, a)
+    cmd("do[pen]", "open downloaded file", function (w, a)
         local d = downloads[assert(tonumber(a), "invalid index")]
         if d then open(d, w) end
     end),

@@ -194,7 +194,7 @@ new_mode("proxymenu", {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("proxy",
+    cmd("proxy", "add proxy server",
         function (w, a)
             local params = lousy.util.string.split(a or '')
             if not a then

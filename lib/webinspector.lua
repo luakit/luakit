@@ -70,7 +70,7 @@ end
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("in[spect]", function (w, _, o)
+    cmd("in[spect]", "open DOM inspector", function (w, _, o)
         local v = w.view
         if o.bang then -- "inspect!" toggles inspector
             (v.inspector and v.close_inspector or v.show_inspector)(v)

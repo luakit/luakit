@@ -162,6 +162,10 @@ funcs = {
                         else
                             cmd = string.format(":%s (:%s)", cmd, b.cmds[1])
                         end
+
+                        local padd = string.rep(" ", 30 - #cmd)
+                        cmd = cmd .. padd .. b.desc
+
                         cmds[cmd] = { escape(cmd), left = ":" .. b.cmds[1] }
                         break
                     end
