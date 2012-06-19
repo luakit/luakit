@@ -25,7 +25,7 @@ local hist_binds = {
     key({}, "Down", function (w)
         local h = w.mode.history
         if not h.cursor then return end
-        if (h.cursor + 1) >= h.len then
+        if h.cursor >= h.len then
             w:set_input(h.orig)
             h.cursor = nil
             h.orig = nil
