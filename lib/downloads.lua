@@ -21,6 +21,7 @@ local lousy = require("lousy")
 local webview = webview
 local window = window
 local add_cmds = add_cmds
+local add_binds = add_binds
 
 local capi = {
     download = download,
