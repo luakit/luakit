@@ -88,7 +88,7 @@ local file = capi.luakit.data_dir .. "/forms.lua"
 
 -- The global formfiller JS code
 local formfiller_js = [=[
-    formfiller = {
+    var formfiller = {
         toA: function (arr) {
             var ret = [];
             for (var i = 0; i < arr.length; ++i) {
@@ -137,7 +137,7 @@ local formfiller_js = [=[
                 return elements;
             };
         },
-    }
+    };
 ]=]
 
 -- Invokes an AttributeMatcher for the given tag and attributes with the
@@ -170,7 +170,7 @@ local function match(w, tag, attributes, data, parents)
         tag = tag,
         parents = parents and string.format("formfiller.%s", parents) or "null",
     })
-    return w.view:eval_js(js) == "true"
+    return w.view:eval_js(js)
 end
 
 -- The function environment for the formfiller script
@@ -299,8 +299,11 @@ function add(w)
         str += "}\n\n";
         rendered_something ? str : false;
     ]=]
+
     local ret = w.view:eval_js(js)
-    if ret == "false" then return w:error("no forms with inputs found") end
+    if not ret then
+        return w:error("no forms with inputs found")
+    end
     local f = io.open(file, "a")
     f:write(ret)
     f:close()
@@ -321,8 +324,9 @@ local function filter_rules(w, rules)
         local js = string.gsub(js_template, "{(%w+)}", {
             pattern = string.format("%q", rule.pattern)
         })
-        local ret = w.view:eval_js(js)
-        if ret == "true" then table.insert(filtered, rule) end
+        if w.view:eval_js(js) then
+            table.insert(filtered, rule)
+        end
     end
     return filtered
 end
@@ -395,7 +399,7 @@ local function focus_input(w)
             "false";
         }
     ]=]
-    if w.view:eval_js(js) == "true" then
+    if w.view:eval_js(js) then
         w:set_mode("insert")
     end
 end

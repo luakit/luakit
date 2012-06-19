@@ -126,4 +126,3 @@ function upper(style)
     end
     return style
 end
-

@@ -82,11 +82,19 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
       TS_CASE(DOUBLE, gdouble,  tmp.d, luaL_checknumber);
 
       case CHAR:
-        tmp.c = (gchar*) luaL_checkstring(L, vidx);
+        if (lua_isnil(L, vidx))
+            tmp.c = NULL;
+        else
+            tmp.c = (gchar*) luaL_checkstring(L, vidx);
         g_object_set(object, p->name, tmp.c, NULL);
         break;
 
       case URI:
+        if (lua_isnil(L, vidx)) {
+            g_object_set(object, p->name, NULL, NULL);
+            break;
+        }
+
         tmp.c = (gchar*) luaL_checklstring(L, vidx, &len);
         /* use http protocol if none specified */
         if (!len || g_strrstr(tmp.c, "://"))

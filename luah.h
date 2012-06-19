@@ -150,10 +150,10 @@ luaH_rawfield(lua_State *L, gint idx, const gchar *field)
 {
     lua_pushstring(L, field);
     lua_rawget(L, idx);
-    if (!lua_isnil(L, -1))
-        return 1;
-    lua_pop(L, 1);
-    return 0;
+    gint type = lua_type(L, -1);
+    if (type == LUA_TNIL)
+        lua_pop(L, 1);
+    return type;
 }
 
 void luaH_init();
