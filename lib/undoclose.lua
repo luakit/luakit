@@ -112,7 +112,7 @@ add_binds("undolist", lousy.util.table.join({
 -- Add `:undolist` command to view all closed tabs in an interactive menu
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("undolist", function (w, a)
+    cmd("undolist", "undo closed tabs by entry", function (w, a)
         if #(w.closed_tabs) == 0 then
             w:notify("No closed tabs to display")
         else

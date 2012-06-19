@@ -5,6 +5,7 @@
 
 --- Grab environment we need
 local assert = assert
+local error = error -- ##TODO
 local ipairs = ipairs
 local pairs = pairs
 local setmetatable = setmetatable
@@ -103,10 +104,11 @@ end
 
 --- Create new command binding.
 -- @param cmds A table of command names to match or "co[mmand]" string to parse.
+-- @param desc A short command description.
 -- @param func The callback function.
 -- @param opts Optional binding and callback options/state/metadata.
 -- @return A command binding struct.
-function cmd(cmds, func, opts)
+function cmd(cmds, desc, func, opts)
     -- Parse "co[mmand]" or literal.
     if type(cmds) == "string" then
         if string.match(cmds, "^(%w+)%[(%w+)%]") then
@@ -117,13 +119,20 @@ function cmd(cmds, func, opts)
         end
     end
 
+    if type(desc) ~= 'string' then
+        error("invalid description type", 2)
+    end
+    -- ##TODO
+
     assert(type(cmds) == "table", "invalid commands table type")
+ -- assert(type(desc) == 'string', "invalid description type")
     assert(#cmds > 0, "empty commands table")
     assert(type(func) == "function", "invalid function type")
 
     return {
         type = "command",
         cmds = cmds,
+        desc = desc,
         func = func,
         opts = opts or {},
     }

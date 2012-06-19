@@ -261,7 +261,7 @@ add_binds("normal", {
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"bookmark", "bm"}, function (w, a)
+    cmd({"bookmark", "bm"}, "add bookmark", function (w, a)
         if not a then
             w:error("Missing bookmark arguments (use `:bookmark <uri> <tags>`)")
             return
@@ -271,11 +271,11 @@ add_cmds({
         add(uri, args)
     end),
 
-    cmd("bookdel", function (w, a)
+    cmd("bookdel", "delete bookmark", function (w, a)
         del(tonumber(a))
     end),
 
-    cmd("bookmarks", function (w)
+    cmd("bookmarks", "list bookmarks", function (w)
         w:navigate(chrome_page)
     end),
 })
