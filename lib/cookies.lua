@@ -3,15 +3,28 @@
 -- © 2011 Mason Larobina <mason.larobina@gmail.com>       --
 ------------------------------------------------------------
 
-require "math"
+local math = require "math"
 local string = string
-local print = print
 local ipairs = ipairs
+local pairs = pairs
+local print = print
 local lousy = require "lousy"
-local capi = { luakit = luakit, soup = soup, sqlite3 = sqlite3, timer = timer }
+local capi = {
+    luakit = luakit,
+    soup = soup,
+    sqlite3 = sqlite3,
+    timer = timer
+}
 local time, floor = luakit.time, math.floor
 
 module "cookies"
+
+-- Last access time
+local atime = 0
+
+-- Set max session age to 3600
+session_timeout = 3600
+force_session_timeout = true
 
 -- Setup signals on module
 lousy.signal.setup(_M, true)
@@ -21,126 +34,132 @@ function micro()
     return floor(time() * 1e6)
 end
 
--- Last cookie check time
-local checktime = 0
+function init()
+    -- cookies database handle already open
+    if db then return end
 
--- Check for new cookies every 60 seconds. A new cookie has a lastAccessed
--- time greater than the last checktime. It is important that this timer is
--- always running to see time-critical cookie deletions which are only
--- present in the cookie jar for 90 seconds before being purged.
-local checktimer = capi.timer{ interval = 60e3 }
+    -- Open cookies sqlite database at $XDG_DATA_HOME/luakit/cookies.db
+    db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/cookies.db" }
 
--- Open cookies sqlite database at $XDG_DATA_HOME/luakit/cookies.db
-db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/cookies.db" }
--- Make reads/writes faster
-db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
+    db:exec [[
+        PRAGMA synchronous = OFF;
+        PRAGMA secure_delete = 1;
 
-create_table = [[
-CREATE TABLE IF NOT EXISTS moz_cookies (
-    id INTEGER PRIMARY KEY,
-    name TEXT,
-    value TEXT,
-    host TEXT,
-    path TEXT,
-    expiry INTEGER,
-    lastAccessed INTEGER,
-    isSecure INTEGER,
-    isHttpOnly INTEGER
-);]]
+        CREATE TABLE IF NOT EXISTS moz_cookies (
+            id INTEGER PRIMARY KEY,
+            name TEXT,
+            value TEXT,
+            host TEXT,
+            path TEXT,
+            expiry INTEGER,
+            lastAccessed INTEGER,
+            isSecure INTEGER,
+            isHttpOnly INTEGER
+        );
 
-query_all_since = [[SELECT id, name, value, host AS domain, path,
-    expiry AS expires, isSecure AS secure, isHttpOnly AS http_only
-FROM moz_cookies
-WHERE lastAccessed >= %.0f;]]
+        CREATE TRIGGER IF NOT EXISTS delete_old_cookie
+            BEFORE INSERT ON moz_cookies
+            BEGIN
+                DELETE FROM moz_cookies
+                WHERE (
+                    host == new.host AND
+                    path == new.path AND
+                    name == new.name
+                );
+            END;
+    ]]
 
-query_insert = [[INSERT INTO moz_cookies
-VALUES(NULL, %s, %s, %s, %s, %.0f, %.0f, %d, %d);]]
+    query_all_since = db:compile [[
+        SELECT id, name, value, host AS domain, path, expiry AS expires,
+            isSecure AS secure, isHttpOnly AS http_only
+        FROM moz_cookies
+        WHERE lastAccessed >= ? AND expiry >= ?
+    ]]
 
-query_expire = [[UPDATE moz_cookies
-SET expiry=0, lastAccessed=%.0f
-WHERE host=%s AND name=%s AND path=%s;]]
+    query_insert = db:compile [[
+        INSERT INTO moz_cookies
+        VALUES(NULL, ?, ?, ?, ?, ?, ?, ?, ?)
+    ]]
 
-query_delete = [[DELETE FROM moz_cookies
-WHERE host=%s AND name=%s AND path=%s;]]
+    query_expire = db:compile [[
+        UPDATE moz_cookies
+        SET expiry = 0, value = NULL, lastAccessed = ?
+        WHERE host = ? AND path = ? AND name = ?
+    ]]
 
-query_delete_expired = [[DELETE FROM moz_cookies
-WHERE expiry == 0 AND lastAccessed < %.0f;]]
-
-query_delete_session = [[DELETE FROM moz_cookies
-WHERE expiry == -1;]]
-
--- Create table (if not exists)
-db:exec(create_table)
-
--- Load all cookies after the last check time
-function load_new_cookies(purge)
-    local ctime = micro()
-
-    -- Delete all expired cookies older than 90 seconds
-    if purge ~= false then
-        db:exec(string.format(query_delete_expired, ctime - 90e6))
-    end
-
-    -- Get new cookies from the db
-    local cookies = db:exec(string.format(query_all_since, checktime))
-
-    -- Update checktime for next run
-    checktime = ctime
-
-    -- Convert query results into suitable cookie tables
-    for i, c in ipairs(cookies) do
-        c.secure = c.secure == "1"
-        c.http_only = c.http_only == "1"
-    end
-
-    -- Add new cookies to the cookiejar
-    if cookies[1] then
-        capi.soup.add_cookies(cookies)
-    end
+    query_delete_expired = db:compile [[
+        DELETE FROM moz_cookies
+        WHERE expiry < ? AND lastAccessed < ?
+    ]]
 end
 
-capi.soup.add_signal("cookie-changed", function (old, new)
-    local e = lousy.util.sql_escape
-    if new then
-        -- Delete all previous matching/expired cookies.
-        db:exec(string.format(query_delete,
-            e(new.domain), -- WHERE = host
-            e(new.name), -- WHERE = name
-            e(new.path))) -- WHERE = path
+-- Open database handle after window has time to open
+capi.luakit.idle_add(init)
 
+-- Load all cookies after the last check time
+
+capi.soup.add_signal("request-started", function ()
+    local old_atime, new_atime = atime, micro()
+    -- Rate limit select queries to 1 p/s
+    if (new_atime - old_atime) > 1e6 then
+        local cookies = query_all_since:exec{ old_atime,
+            -- On first exec don't load any expired cookies
+            (atime == 0 and time()) or 0 }
+        atime = new_atime
+        if cookies[1] then
+            capi.soup.add_cookies(cookies)
+        end
+    end
+end)
+
+capi.soup.add_signal("cookie-changed", function (old, new)
+    if new then
         if _M.emit_signal("accept-cookie", new) == false then
             new.expires = 0 -- expire cookie
             capi.soup.add_cookies{new}
+            return
+        end
+
+        -- Set session cookie timeout & keep session cookies in memory
+        if new.expires == -1 then
+            if _M.force_session_timeout then
+                new.expires = math.ceil(time() + _M.session_timeout)
+                capi.soup.add_cookies{new}
+            end
+            return
         end
 
         -- Insert new cookie
-        db:exec(string.format(query_insert,
-            e(new.name), -- name
-            e(new.value), -- value
-            e(new.domain), -- host
-            e(new.path), -- path
-            new.expires or -1, -- expiry
-            micro(), -- lastAccessed
-            new.secure and 1 or 0, -- isSecure
-            new.http_only and 1 or 0)) -- isHttpOnly
+        query_insert:exec {
+            new.name,
+            new.value,
+            new.domain,
+            new.path,
+            new.expires,
+            micro(),
+            new.secure,
+            new.http_only
+        }
+        return
+    end
 
     -- Expire old cookie
-    elseif old then
-        db:exec(string.format(query_expire,
+    if old then
+        query_expire:exec {
             micro(), -- lastAccessed
-            e(old.domain), -- WHERE = host
-            e(old.name), -- WHERE = name
-            e(old.path))) -- WHERE = path
+            old.domain,
+            old.path,
+            old.name
+        }
     end
 end)
 
-capi.soup.add_signal("request-started", function (uri)
-    -- Load all new cookies since last update
-    load_new_cookies(false)
+-- When closing luakit delete most expired cookies.
+capi.luakit.add_signal("can-close", function ()
+    if query_delete_expired then
+        local t = time()
+        query_delete_expired:exec{ t, (t - 86400) * 1e6 }
+    end
 end)
-
--- Setup checktimer timeout callback function and start timer.
-checktimer:add_signal("timeout", load_new_cookies)
-checktimer:start()
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

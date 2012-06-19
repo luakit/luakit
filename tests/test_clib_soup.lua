@@ -44,13 +44,40 @@ function test_add_cookies()
 
     assert_pass(function ()
         soup.add_cookies({
-            { domain = "google.com", path = "/", name = "test", value = "test" }
+            { domain = "google.com", path = "/", name = "test",
+              value = "test", expires = 10, http_only = true, secure = true }
         })
     end)
 
     assert_pass(function ()
         soup.add_cookies({
-            { domain = "google.com", path = "/", name = "test", value = nil }
+            { domain = "google.com", path = "/", name = nil,
+              value = "test", expires = 10, http_only = true, secure = true }
+        })
+        soup.add_cookies({
+            { domain = "google.com", path = "/", name = "",
+              value = nil, expires = 10, http_only = true, secure = true }
+        })
+        soup.add_cookies({
+            { domain = "google.com", path = "/", name = "",
+              value = "", expires = 10, http_only = true, secure = true }
+        })
+        soup.add_cookies({
+            { domain = "google.com", path = "/", name = "test",
+              value = "test", expires = 10, http_only = 1, secure = 1 }
+        })
+    end)
+
+    assert_error(function ()
+        soup.add_cookies({
+            { domain = 10, path = "/", name = "test",
+              value = "test", expires = 10, http_only = true, secure = true }
+        })
+    end)
+    assert_error(function ()
+        soup.add_cookies({
+            { domain = "google.com", path = 10, name = "test",
+              value = "test", expires = 10, http_only = true, secure = true }
         })
     end)
 end
