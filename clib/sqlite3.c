@@ -281,26 +281,26 @@ luaH_sqlite3_exec(lua_State *L)
     luaH_sqlite3_checkopen(L, sqlite);
 
     /* get SQL query */
-    const gchar *sql = luaL_checkstring(L, 2);
+    const gchar *sql = luaL_checkstring(L, 2), *tail;
 
     /* check type before we prepare statement */
     if (!lua_isnoneornil(L, 3))
         luaH_checktable(L, 3);
 
-    gint ret = 0;
+    gint top = lua_gettop(L), ret = 0;
 
     /* compile SQL statement */
-    const gchar *tail;
     sqlite3_stmt *stmt;
+
+next_statement:
+
     if (sqlite3_prepare_v2(sqlite->db, sql, -1, &stmt, &tail)) {
         lua_pushfstring(L, "sqlite3: statement compilation failed (%s)",
                 sqlite3_errmsg(sqlite->db));
         sqlite3_finalize(stmt);
         lua_error(L);
-    } else if (!stmt) {
-        lua_pushfstring(L, "sqlite3: no SQL found in string: \"%s\"", sql);
-        lua_error(L);
-    }
+    } else if (!stmt)
+        return 0;
 
     /* is there values to bind to this statement? */
     if (!lua_isnoneornil(L, 3)) {
@@ -345,8 +345,9 @@ luaH_sqlite3_exec(lua_State *L)
      * in the input string. If there are more `tail` points to the first
      * character of the next statement (valid or not). */
     if (tail && *tail) {
-        lua_pushstring(L, tail);
-        return 2;
+        sql = tail;
+        lua_settop(L, top);
+        goto next_statement;
     }
 
     return 1;
