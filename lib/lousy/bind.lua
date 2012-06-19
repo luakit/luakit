@@ -103,10 +103,16 @@ end
 
 --- Create new command binding.
 -- @param cmds A table of command names to match or "co[mmand]" string to parse.
+-- @param desc A short command description.
 -- @param func The callback function.
 -- @param opts Optional binding and callback options/state/metadata.
 -- @return A command binding struct.
-function cmd(cmds, func, opts)
+function cmd(cmds, desc, func, opts)
+    -- Detect optional description
+    if type(desc) == "function" then
+        desc, func, opts = nil, desc, func
+    end
+
     -- Parse "co[mmand]" or literal.
     if type(cmds) == "string" then
         if string.match(cmds, "^(%w+)%[(%w+)%]") then
@@ -118,12 +124,14 @@ function cmd(cmds, func, opts)
     end
 
     assert(type(cmds) == "table", "invalid commands table type")
+    assert(desc == nil or type(desc) == 'string', "invalid description type")
     assert(#cmds > 0, "empty commands table")
     assert(type(func) == "function", "invalid function type")
 
     return {
         type = "command",
         cmds = cmds,
+        desc = desc,
         func = func,
         opts = opts or {},
     }

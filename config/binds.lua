@@ -291,36 +291,60 @@ add_cmds({
 
  -- cmd({command, alias1, ...}, function (w, arg, opts) .. end, opts),
  -- cmd("co[mmand]",            function (w, arg, opts) .. end, opts),
-    cmd("c[lose]",              function (w) w:close_tab() end),
-    cmd("print",                function (w) w.view:eval_js("print();") end),
-    cmd("stop",                 function (w) w.view:stop() end),
-    cmd("reload",               function (w) w:reload() end),
-    cmd("restart",              function (w) w:restart() end),
-    cmd("write",                function (w) w:save_session() end),
-    cmd("noh[lsearch]",         function (w) w:clear_search() end),
+    cmd("c[lose]",              "close current tab",
+                                function (w) w:close_tab() end),
+    cmd("print",                "print page",
+                                function (w) w.view:eval_js("print();") end),
+    cmd("stop",                 "stop loading",
+                                function (w) w.view:stop() end),
+    cmd("reload",               "reload page",
+                                function (w) w:reload() end),
+    cmd("restart",              "restart browser (reload config files)",
+                                function (w) w:restart() end),
+    cmd("write",                "save current session",
+                                function (w) w:save_session() end),
+    cmd("noh[lsearch]",         "clear search highlighting",
+                                function (w) w:clear_search() end),
 
-    cmd("back",                 function (w, a) w:back(tonumber(a) or 1) end),
-    cmd("f[orward]",            function (w, a) w:forward(tonumber(a) or 1) end),
-    cmd("inc[rease]",           function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
-    cmd("o[pen]",               function (w, a) w:navigate(w:search_open(a)) end),
-    cmd("t[abopen]",            function (w, a) w:new_tab(w:search_open(a)) end),
-    cmd("w[inopen]",            function (w, a) window.new{w:search_open(a)} end),
-    cmd({"javascript", "js"},   function (w, a) w.view:eval_js(a) end),
+    cmd("back",                 "go back",
+                                function (w, a) w:back(tonumber(a) or 1) end),
+    cmd("f[orward]",            "go forward",
+                                function (w, a) w:forward(tonumber(a) or 1) end),
+    cmd("inc[rease]",           "go to next page (increment number in URL)",
+                                function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
+    cmd("o[pen]",               "open page",
+                                function (w, a) w:navigate(w:search_open(a)) end),
+    cmd("t[abopen]",            "open page in new tab",
+                                function (w, a) w:new_tab(w:search_open(a)) end),
+    cmd("w[inopen]",            "open page in new window",
+                                function (w, a) window.new{w:search_open(a)} end),
+    cmd({"javascript",   "js"}, "evaluate javascript snippet",
+                                function (w, a) w.view:eval_js(a) end),
 
     -- Tab manipulation commands
-    cmd("tab",                  function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
-    cmd("tabd[o]",              function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
-    cmd("tabdu[plicate]",       function (w)    w:new_tab(w.view.history) end),
-    cmd("tabfir[st]",           function (w)    w:goto_tab(1) end),
-    cmd("tabl[ast]",            function (w)    w:goto_tab(-1) end),
-    cmd("tabn[ext]",            function (w)    w:next_tab() end),
-    cmd("tabp[revious]",        function (w)    w:prev_tab() end),
+    cmd("tab",                  "run command in new tab",
+                                function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
+    cmd("tabd[o]",              "run command in each tab",
+                                function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
+    cmd("tabdu[plicate]",       "duplicate tab",
+                                function (w)    w:new_tab(w.view.history) end),
+    cmd("tabfir[st]",           "go to first tab",
+                                function (w)    w:goto_tab(1) end),
+    cmd("tabl[ast]",            "go to last tab",
+                                function (w)    w:goto_tab(-1) end),
+    cmd("tabn[ext]",            "go to next tab",
+                                function (w)    w:next_tab() end),
+    cmd("tabp[revious]",        "go to previous tab",
+                                function (w)    w:prev_tab() end),
 
-    cmd("q[uit]",               function (w, a, o) w:close_win(o.bang) end),
-    cmd({"viewsource",  "vs" }, function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
-    cmd({"writequit", "wq"},    function (w, a, o) w:save_session() w:close_win(o.bang) end),
+    cmd("q[uit]",               "close window",
+                                function (w, a, o) w:close_win(o.bang) end),
+    cmd({"viewsource",  "vs" }, "toggle source view",
+                                function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
+    cmd({"writequit", "wq"},    "write and quit",
+                                function (w, a, o) w:save_session() w:close_win(o.bang) end),
 
-    cmd("lua", function (w, a)
+    cmd("lua", "evaluate lua snippet", function (w, a)
         if a then
             local ret = assert(loadstring("return function(w) return "..a.." end"))()(w)
             if ret then print(ret) end
@@ -329,7 +353,7 @@ add_cmds({
         end
     end),
 
-    cmd("dump", function (w, a)
+    cmd("dump", "save current webpage", function (w, a)
         local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.html' -- sanitize filename
         local file = a or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
         if file then

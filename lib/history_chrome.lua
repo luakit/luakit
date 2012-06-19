@@ -248,7 +248,7 @@ end)
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("history", function (w, arg)
+    cmd("history", "open history tab", function (w, arg)
         if arg then
             w:new_tab(string.format("luakit://history/?q=%s",
                 capi.luakit.uri_encode(arg)))

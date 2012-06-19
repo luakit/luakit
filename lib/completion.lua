@@ -162,7 +162,8 @@ funcs = {
                         else
                             cmd = string.format(":%s (:%s)", cmd, b.cmds[1])
                         end
-                        cmds[cmd] = { escape(cmd), left = ":" .. b.cmds[1] }
+
+                        cmds[cmd] = { escape(cmd), escape(b.desc) or "", left = ":" .. b.cmds[1] }
                         break
                     end
                 end
@@ -173,7 +174,7 @@ funcs = {
         -- Return if no results
         if not keys[1] then return end
         -- Build completion menu items
-        local ret = {{ "Commands", title = true }}
+        local ret = {{ "Command", "Description", title = true }}
         for _, cmd in ipairs(keys) do
             table.insert(ret, cmds[cmd])
         end

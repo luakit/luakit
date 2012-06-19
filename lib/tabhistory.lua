@@ -79,7 +79,7 @@ end
 -- Add `:history` command to view all history items for the current tab in an interactive menu.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("tabhistory", window.methods.tab_history),
+    cmd("tabhistory", "list history for tab", window.methods.tab_history),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
