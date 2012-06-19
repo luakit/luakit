@@ -5,7 +5,6 @@
 
 --- Grab environment we need
 local assert = assert
-local error = error -- ##TODO
 local ipairs = ipairs
 local pairs = pairs
 local setmetatable = setmetatable
@@ -109,6 +108,11 @@ end
 -- @param opts Optional binding and callback options/state/metadata.
 -- @return A command binding struct.
 function cmd(cmds, desc, func, opts)
+    -- Detect optional description
+    if type(desc) == "function" then
+        desc, func, opts = nil, desc, func
+    end
+
     -- Parse "co[mmand]" or literal.
     if type(cmds) == "string" then
         if string.match(cmds, "^(%w+)%[(%w+)%]") then
@@ -119,13 +123,8 @@ function cmd(cmds, desc, func, opts)
         end
     end
 
-    if type(desc) ~= 'string' then
-        error("invalid description type", 2)
-    end
-    -- ##TODO
-
     assert(type(cmds) == "table", "invalid commands table type")
- -- assert(type(desc) == 'string', "invalid description type")
+    assert(desc == nil or type(desc) == 'string', "invalid description type")
     assert(#cmds > 0, "empty commands table")
     assert(type(func) == "function", "invalid function type")
 
