@@ -508,7 +508,7 @@ add_binds("formfiller", lousy.util.table.join({
         local form = row.form
         w:set_mode()
         for _, f in ipairs(w.view.frames) do
-            if apply_form(w, f, form) then return end
+            if apply_form(w, form) then return end
         end
     end),
 }, menu_binds))
