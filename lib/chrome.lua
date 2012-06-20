@@ -1,63 +1,72 @@
-----------------------------------------------------------
--- Serve custom luakit:// pages according to user rules --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>     --
--- © 2010 Mason Larobina  <mason.larobina@gmail.com>    --
-----------------------------------------------------------
+------------------------------------------------------------
+-- Add custom luakit:// scheme rendering functions        --
+-- © 2010-2012 Mason Larobina  <mason.larobina@gmail.com> --
+-- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
+------------------------------------------------------------
 
 -- Get lua environment
-local ipairs = ipairs
-local string = string
-local table = table
-local info = info
 local assert = assert
+local string = string
 local type = type
-local print = print
+local xpcall = xpcall
+local debug = debug
 
 -- Get luakit environment
-local lousy = require "lousy"
 local webview = webview
-local capi = { soup = soup }
 
 module("chrome")
 
--- Ordered list of chrome page generation rules
-local rules = {}
+-- luakit:// page handlers
+local handlers = {}
 
-function add(pat, func)
-    assert(type(pat) == "string", "invalid pattern")
-    assert(type(func) == "function", "invalid function")
-    if string.match(pat, '^^') then pat = string.sub(pat, 2) end
-    table.insert(rules, { pat = '^' .. pat, func = func })
+function add(page, func)
+    -- Do some sanity checking
+    assert(type(page) == "string",
+        "invalid chrome page name (string expected, got "..type(page)..")")
+    assert(string.match(page, "^[%w%-]+$"),
+        "illegal characters in chrome page name: " .. page)
+    assert(type(func) == "function",
+        "invalid chrome handler (function expected, got "..type(func)..")")
+
+    handlers[page] = func
 end
 
-function del(pat)
-    for i, r in ipairs(rules) do
-        if r.pat == pat then
-            return table.remove(rules, i)
-        end
-    end
+function remove(page)
+    handlers[page] = nil
 end
 
+-- Catch all navigations to the luakit:// scheme
 webview.init_funcs.chrome = function (view, w)
-    view:add_signal("navigation-request", function (v, ustr)
-        uri = lousy.uri.parse(ustr)
-        if not uri then
-            return
-        elseif uri.scheme == "chrome" then
-            uri.scheme = "luakit"
-        elseif uri.scheme ~= "luakit" then
-            return
-        end
-        -- Match chrome pattern against "host/path"
-        local path = uri.host .. (uri.path or "/")
-        for _, r in ipairs(rules) do
-            if string.match(path, r.pat) then
-                info("Matched chrome rule %q for uri %q", r.pat, ustr)
-                -- Catch if function returns anything other than false
-                if r.func(v, uri) ~= false then return false end
+    view:add_signal("navigation-request", function (_, uri)
+        -- Match "luakit://page/path"
+        local page, path = string.match(uri, "^luakit://([^/]+)/?(.*)")
+        if not page then return end
+
+        local func = handlers[page]
+        if func then
+            -- Give the handler function everything it may need
+            local meta = { uri = uri, page = page, path = path, w = w }
+
+            -- Render error output in webview with traceback
+            local function error_handler(err)
+                view:load_string("<p><b>Error in <code>luakit://" .. page
+                    .. "/</code> handler function:</b></p><pre>"
+                    .. debug.traceback(err, 2) .. "</pre>", uri)
+            end
+
+            -- Call luakit:// page handler
+            local ok, err = xpcall(function () return func(view, meta) end,
+                error_handler)
+
+            if not ok or err ~= false then
+                -- Stop the navigation request
+                return false
             end
         end
-        return true
+
+        -- Load blank error page
+        view:load_string("<p><b>No chrome handler for <code>" .. uri
+            .. "</code></b></p>", uri)
     end)
 end
 
