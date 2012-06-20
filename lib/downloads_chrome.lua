@@ -25,24 +25,7 @@ local capi = {
     luakit = luakit
 }
 
-module("downloads_chrome")
-
-local function readfile(path)
-    local file = assert(io.open(path), "unable to open: " .. path)
-    local all = file:read("*a")
-    file:close()
-    return all
-end
-
-local jquery_path, jquery_js = "lib/jquery-1.7.2.min.js"
-if capi.luakit.dev_paths then
-    if os.exists(jquery_path) then jquery_js = readfile(jquery_path) end
-end
-
-if not jquery_js then
-    jquery_path = capi.luakit.install_path .. "/" .. jquery_path
-    jquery_js = readfile(jquery_path)
-end
+module("downloads.chrome")
 
 local html = [==[
 <!doctype html>
@@ -344,15 +327,8 @@ local export_funcs = {
     download_restart = downloads.restart,
     download_open = downloads.open,
     download_remove = downloads.remove,
-
     downloads_clear = downloads.clear,
 }
-
-function export_functions(view)
-    for name, func in pairs(export_funcs) do
-        view:register_function(name, func)
-    end
-end
 
 downloads.add_signal("status-tick", function (running)
     if running == 0 then
@@ -368,24 +344,40 @@ downloads.add_signal("status-tick", function (running)
     end
 end)
 
-chrome.add("downloads/", function (view, uri)
-    view:load_string(html, "luakit://downloads")
+chrome.add("downloads", function (view, uri)
+    view:load_string(html, "luakit://downloads/")
+
     function on_first_visual(_, status)
-        if status == "first-visual" then
-            view:remove_signal("load-status", on_first_visual)
-            if view.uri == "luakit://downloads" then -- double check
-                export_functions(view)
-                view:eval_js(jquery_js, { no_return = true })
-                local _, err = view:eval_js(main_js, { no_return = true })
-                assert(not err, err)
-            end
+        -- Wait for new page to be created
+        if status ~= "first-visual" then return end
+
+        -- Hack to run-once
+        view:remove_signal("load-status", on_first_visual)
+
+        -- Double check that we are where we should be
+        if view.uri ~= "luakit://downloads/" then return end
+
+        -- Export luakit JS<->Lua API functions
+        for name, func in pairs(export_funcs) do
+            view:register_function(name, func)
         end
+
+        -- Load jQuery JavaScript library
+        local jquery = lousy.load("lib/jquery.min.js")
+        local _, err = view:eval_js(jquery, { no_return = true })
+        assert(not err, err)
+
+        -- Load main luakit://download/ JavaScript
+        local _, err = view:eval_js(main_js, { no_return = true })
+        assert(not err, err)
     end
+
     view:add_signal("load-status", on_first_visual)
 end)
 
 local page = "luakit://downloads/"
-local buf = lousy.bind.buf
+local buf, cmd = lousy.bind.buf, lousy.bind.cmd
+
 add_binds("normal", {
     buf("^gd$", function (w)
         w:navigate(page)
@@ -396,7 +388,6 @@ add_binds("normal", {
     end),
 })
 
-local cmd = lousy.bind.cmd
 add_cmds({
     cmd("downloads", function (w)
         w:new_tab(page)
