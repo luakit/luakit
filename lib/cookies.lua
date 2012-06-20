@@ -19,6 +19,9 @@ local time, floor = luakit.time, math.floor
 
 module "cookies"
 
+-- Path of cookies sqlite database to open/create/update
+db_path = capi.luakit.data_dir .. "/cookies.db"
+
 -- Last access time
 local atime = 0
 
@@ -35,12 +38,10 @@ function micro()
 end
 
 function init()
-    -- cookies database handle already open
+    -- Return if database handle already open
     if db then return end
 
-    -- Open cookies sqlite database at $XDG_DATA_HOME/luakit/cookies.db
-    db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/cookies.db" }
-
+    db = capi.sqlite3{ filename = _M.db_path }
     db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
@@ -97,7 +98,6 @@ end
 capi.luakit.idle_add(init)
 
 -- Load all cookies after the last check time
-
 capi.soup.add_signal("request-started", function ()
     local old_atime, new_atime = atime, micro()
     -- Rate limit select queries to 1 p/s

@@ -12,6 +12,9 @@ local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
 module "history"
 
+-- Path of history sqlite database to open/create/update
+db_path = capi.luakit.data_dir .. "/history.db"
+
 -- Setup signals on history module
 lousy.signal.setup(_M, true)
 
@@ -19,7 +22,7 @@ function init()
     -- Return if database handle already open
     if db then return end
 
-    db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/history.db" }
+    db = capi.sqlite3{ filename = _M.db_path }
     db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
@@ -62,7 +65,6 @@ function init()
         SET title = ?
         WHERE id = ?
     ]]
-
 end
 
 capi.luakit.idle_add(init)
