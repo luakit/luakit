@@ -10,6 +10,7 @@ require("lousy.theme")
 require("lousy.signal")
 require("lousy.widget")
 require("lousy.uri")
+require("lousy.load")
 
 --- Useful functions for luakit.
 module("lousy")
