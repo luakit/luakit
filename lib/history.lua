@@ -70,6 +70,8 @@ end
 capi.luakit.idle_add(init)
 
 function add(uri, title, update_visits)
+    if not db then init() end
+
     -- Ignore blank uris
     if not uri or uri == "" or uri == "about:blank" then return end
     -- Ask user if we should ignore uri
