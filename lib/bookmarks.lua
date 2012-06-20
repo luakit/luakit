@@ -190,7 +190,7 @@ function load(file, clear_first)
 end
 
 --- Shows the chrome page in the given view.
-chrome.add("bookmarks/", function (view, uri)
+chrome.add("bookmarks", function (view, uri)
     -- Get a list of all the unique tags in all the bookmarks and build a
     -- relation between a given tag and a list of bookmarks with that tag.
     local tags = {}

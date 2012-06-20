@@ -151,7 +151,7 @@ gap_html = [==[
 ]==]
 
 
-chrome.add("history/", function (view, uri)
+chrome.add("history", function (view, uri)
     local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
     local opts = uri.opts
 
