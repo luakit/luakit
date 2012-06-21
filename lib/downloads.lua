@@ -68,7 +68,8 @@ function get(id)
 end
 
 local function is_running(d)
-    return d.status == "created" or d.status == "started"
+    local status = d.status
+    return status == "created" or status == "started"
 end
 
 function do_open(d, w)
