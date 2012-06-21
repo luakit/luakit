@@ -39,13 +39,13 @@ function window.build()
                 ebox   = eventbox(),
                 uri    = label(),
                 hist   = label(),
-                loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
             sep = eventbox(),
             -- Right aligned widgets
             r = {
                 layout = hbox(),
+                loaded = label(),
                 ebox   = eventbox(),
                 buf    = label(),
                 ssl    = label(),
@@ -82,13 +82,14 @@ function window.build()
     local l = w.sbar.l
     l.layout:pack(l.uri)
     l.layout:pack(l.hist)
-    l.layout:pack(l.loaded)
     l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
+    
     r.layout:pack(r.buf)
     r.layout:pack(r.ssl)
+    r.layout:pack(r.loaded)
     r.layout:pack(r.tabi)
     r.layout:pack(r.scroll)
     r.ebox.child = r.layout
@@ -115,7 +116,7 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.loaded:hide()
+    r.loaded:hide()
     l.hist:hide()
     l.uri.selectable = true
     r.ssl:hide()
@@ -199,7 +200,7 @@ window.init_funcs = {
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_fg,
             [s.l.hist]   = theme.hist_sbar_fg,
-            [s.l.loaded] = theme.sbar_loaded_fg,
+            [s.r.loaded] = theme.sbar_loaded_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [s.r.scroll] = theme.scroll_sbar_fg,
@@ -221,7 +222,7 @@ window.init_funcs = {
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_font,
             [s.l.hist]   = theme.hist_sbar_font,
-            [s.l.loaded] = theme.sbar_loaded_font,
+            [s.r.loaded] = theme.sbar_loaded_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
@@ -467,7 +468,7 @@ window.methods = {
 
     update_progress = function (w)
         local p = w.view.progress
-        local loaded = w.sbar.l.loaded
+        local loaded = w.sbar.r.loaded
         if not w.view:loading() or p == 1 then
             loaded:hide()
         else
