@@ -38,8 +38,6 @@ function window.build()
                 layout = hbox(),
                 ebox   = eventbox(),
                 uri    = label(),
-                hist   = label(),
-                loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
             sep = eventbox(),
@@ -48,6 +46,8 @@ function window.build()
                 layout = hbox(),
                 ebox   = eventbox(),
                 buf    = label(),
+                loaded = label(),
+                hist   = label(),
                 ssl    = label(),
                 tabi   = label(),
                 scroll = label(),
@@ -81,13 +81,13 @@ function window.build()
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout:pack(l.uri)
-    l.layout:pack(l.hist)
-    l.layout:pack(l.loaded)
     l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout:pack(r.buf)
+    r.layout:pack(r.loaded)
+    r.layout:pack(r.hist)
     r.layout:pack(r.ssl)
     r.layout:pack(r.tabi)
     r.layout:pack(r.scroll)
@@ -115,9 +115,9 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.loaded:hide()
-    l.hist:hide()
     l.uri.selectable = true
+    r.loaded:hide()
+    r.hist:hide()
     r.ssl:hide()
 
     -- Allows indexing of window struct by window widget
@@ -198,8 +198,8 @@ window.init_funcs = {
         -- Set foregrounds
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_fg,
-            [s.l.hist]   = theme.hist_sbar_fg,
-            [s.l.loaded] = theme.sbar_loaded_fg,
+            [s.r.hist]   = theme.hist_sbar_fg,
+            [s.r.loaded] = theme.sbar_loaded_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [s.r.scroll] = theme.scroll_sbar_fg,
@@ -211,6 +211,7 @@ window.init_funcs = {
         for wi, v in pairs({
             [s.l.ebox]   = theme.sbar_bg,
             [s.r.ebox]   = theme.sbar_bg,
+            [s.r.ebox]   = theme.sbar_bg,
             [s.sep]      = theme.sbar_bg,
             [s.ebox]     = theme.sbar_bg,
             [i.ebox]     = theme.ibar_bg,
@@ -220,8 +221,8 @@ window.init_funcs = {
         -- Set fonts
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_font,
-            [s.l.hist]   = theme.hist_sbar_font,
-            [s.l.loaded] = theme.sbar_loaded_font,
+            [s.r.hist]   = theme.hist_sbar_font,
+            [s.r.loaded] = theme.sbar_loaded_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
@@ -467,7 +468,7 @@ window.methods = {
 
     update_progress = function (w)
         local p = w.view.progress
-        local loaded = w.sbar.l.loaded
+        local loaded = w.sbar.r.loaded
         if not w.view:loading() or p == 1 then
             loaded:hide()
         else
@@ -508,7 +509,7 @@ window.methods = {
     end,
 
     update_hist = function (w)
-        local hist = w.sbar.l.hist
+        local hist = w.sbar.r.hist
         local back, forward = w.view:can_go_back(), w.view:can_go_forward()
         local s = (back and "+" or "") .. (forward and "-" or "")
         if s ~= "" then
