@@ -211,7 +211,6 @@ window.init_funcs = {
         for wi, v in pairs({
             [s.l.ebox]   = theme.sbar_bg,
             [s.r.ebox]   = theme.sbar_bg,
-            [s.r.ebox]   = theme.sbar_bg,
             [s.sep]      = theme.sbar_bg,
             [s.ebox]     = theme.sbar_bg,
             [i.ebox]     = theme.ibar_bg,
