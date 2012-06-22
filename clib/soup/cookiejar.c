@@ -116,7 +116,7 @@ luaH_cookie_from_table(lua_State *L, gint idx, gchar **error)
         http_only = lua_toboolean(L, -1);
 
     /* cookie.secure */
-    if ((type = luaH_rawfield(L, idx, "http_only")) == LUA_TNUMBER)
+    if ((type = luaH_rawfield(L, idx, "secure")) == LUA_TNUMBER)
         secure = lua_tointeger(L, -1) ? TRUE : FALSE;
     else if (type == LUA_TBOOLEAN)
         secure = lua_toboolean(L, -1);
