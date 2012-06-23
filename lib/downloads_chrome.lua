@@ -344,7 +344,7 @@ downloads.add_signal("status-tick", function (running)
     end
 end)
 
-chrome.add("downloads", function (view, uri)
+chrome.add("downloads", function (view, meta)
     view:load_string(html, "luakit://downloads/")
 
     function on_first_visual(_, status)

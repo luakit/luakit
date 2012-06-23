@@ -35,6 +35,15 @@ function remove(page)
     handlers[page] = nil
 end
 
+error_html = [==[
+<html><head><title>Chrome handler error</title><style>
+pre { border-top: 1px solid #aaa; border-bottom: 1px solid #aaa;
+    margin: -5px 5px; padding: 5px; background-color: #f2f2f2; }
+</style></head><body>
+<p>Error in <big><code>%q</code></big> handler function:</p>
+<pre>%s</pre></body></html>
+]==]
+
 -- Catch all navigations to the luakit:// scheme
 webview.init_funcs.chrome = function (view, w)
     view:add_signal("navigation-request", function (_, uri)
@@ -49,9 +58,8 @@ webview.init_funcs.chrome = function (view, w)
 
             -- Render error output in webview with traceback
             local function error_handler(err)
-                view:load_string("<p><b>Error in <code>luakit://" .. page
-                    .. "/</code> handler function:</b></p><pre>"
-                    .. debug.traceback(err, 2) .. "</pre>", uri)
+                view:load_string(string.format(error_html, uri,
+                    debug.traceback(err, 2)), uri)
             end
 
             -- Call luakit:// page handler
@@ -65,8 +73,8 @@ webview.init_funcs.chrome = function (view, w)
         end
 
         -- Load blank error page
-        view:load_string("<p><b>No chrome handler for <code>" .. uri
-            .. "</code></b></p>", uri)
+        view:load_string("<p>No chrome handler for: <big><code>" .. uri
+            .. "</code></big></p>", uri)
     end)
 end
 
