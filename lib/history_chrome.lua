@@ -1,30 +1,37 @@
---------------------------------------------------------
--- chrome://history with search & pagnination support --
--- © 2011 Mason Larobina <mason.larobina@gmail.com>   --
---------------------------------------------------------
-
-local math = require "math"
-local string = string
+-- Grab what we need from the Lua environment
 local table = table
+local string = string
+local io = io
+local print = print
+local pairs = pairs
 local ipairs = ipairs
-local os = require "os"
-local tonumber = tonumber
-local tostring = tostring
+local math = math
+local assert = assert
+local setmetatable = setmetatable
+local rawget = rawget
+local rawset = rawset
+local type = type
+local os = os
+local error = error
 
-local lousy = require "lousy"
-local chrome = require "chrome"
-local history = require "history"
+-- Grab the luakit environment we need
+local history = require("history")
+local lousy = require("lousy")
+local chrome = require("chrome")
+local add_binds = add_binds
 local add_cmds = add_cmds
-local capi = { luakit = luakit, soup = soup }
+local webview = webview
+local capi = {
+    luakit = luakit
+}
 
-module "history.chrome"
+module("history.chrome")
 
--- Time format option (either "24h" or "12h")
-time_format = "12h"
-
-html_template = [==[
+local html = [==[
+<!doctype html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>History</title>
     <style type="text/css">
         body {
@@ -36,22 +43,18 @@ html_template = [==[
             font-family: sans-serif;
         }
 
-        div {
-            display: block;
-        }
-
-        #results-separator {
+        #results-header {
             border-top: 1px solid #888;
             background-color: #ddd;
             padding: 3px;
             font-weight: bold;
             margin-top: 10px;
-            margin-bottom: -8px;
         }
 
-        .form {
-            margin: 0;
-            padding: 0;
+        #search-form input {
+            width: 50%;
+            min-width: 300px;
+            font-size: 140%;
         }
 
         .day {
@@ -60,38 +63,27 @@ html_template = [==[
             display: inline-block;
         }
 
-        .item {
-            margin: 6px 0 6px 18px;
+        .hist-item {
+            margin: 6px 0 6px 0;
             overflow: auto;
         }
 
-        .item .time {
+        .hist-item .time {
             color: #888;
             float: left;
-            padding-right: 6px;
+            margin-right: 0.75em;
+            overflow: hidden;
             padding-top: 1px;
-            white-space: nowrap;
-            overflow: hidden;
+            text-align: right;
             text-overflow: ellipsis;
+            white-space: nowrap;
+            width: 7em;
         }
 
-        .item .title {
+        .hist-item .title {
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
-        }
-
-        #pagination {
-            padding-top: 24px;
-            -webkit-margin-start: 18px;
-            padding-bottom:18px;
-        }
-
-        #pagination a {
-            padding: 8px;
-            background-color: #ddd;
-            -webkit-margin-end: 4px;
-            color: -webkit-link;
         }
 
         .gap {
@@ -101,168 +93,178 @@ html_template = [==[
             height: 14px;
         }
     </style>
-    <script>
-    function search(term) {
-        if ("{opts}")
-            location = "chrome://history/?{opts}&q=" + encodeURIComponent(term);
-        else
-            location = "chrome://history/?q=" + encodeURIComponent(term);
-    }
-    </script>
 </head>
 <body>
     <div class="header">
-        <form action="javascript:void();" onsubmit="search(this.term.value);" class="form">
-            <input type="text" name="term" id="term" {terms} />
-            <input type="submit" name="submit" value="Search history" />
+        <form id="search-form">
+            <input type="text" id="search" />
         </form>
     </div>
     <div class="main">
-        <div id="results-separator">
-            {heading}
+        <div id="results-header">
+            History
         </div>
         <div id="results">
-            {items}
-        </div>
-        <div id="pagination">
-            {buttons}
         </div>
     </div>
 </body>
 ]==]
 
-day_template = [==[
-<div class="day">{day}</div>
-]==]
+local main_js = [=[
+$(document).ready(function () {
 
-item_template = [==[
-<div class="item">
-    <div class="time">{time}</div>
-    <div class="title"><a href="{href}">{title}</a></div>
-</div>
-]==]
+    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
 
-button_template = [==[
-<a href="{uri}">{name}</a>
-]==]
+    function make_history_item(h, absdate) {
+        var d = new Date(h.last_visit * 1000);
 
-gap_html = [==[
-<div class="gap"></div>
-]==]
+        if (absdate) {
+            var dstr = (d.getDate() + "&nbsp;" + months[d.getMonth()] + "&nbsp;"
+                + d.getFullYear());
+        } else {
+            var dstr = (d.getHours() + ":" + d.getMinutes());
+        }
+
+        var e = ("<div class='hist-item' id='" + h.id + "'><div class='time'>"
+            + dstr + "</div><div class='title'><a href='" + encodeURI(h.uri)
+            + "'>" + $('<div/>').text(h.title).html() + "</a></div></div>");
+        return e;
+    };
+
+    var $search = $('#search').eq(0);
+    var $search_form = $('#search-form').eq(0);
+    var $results_header = $("#results-header").eq(0);
+    var $results = $('#results').eq(0);
+
+    var non_blank = /\S/;
+
+    var auto_submit_timer;
+    var last_search;
+
+    $search_form.submit(function (e) {
+        // Stop submit
+        e.preventDefault();
+
+        // Stop auto-submit timer
+        clearTimeout(auto_submit_timer);
+
+        var query = $search.val();
+
+        if (non_blank.test(query)) {
+            var absdate = true;
+            $results_header.text("Showing results for \"" + query + "\"");
+        } else {
+            var absdate = false;
+            $results_header.text("History");
+        }
+
+        var results = history_search({ query: query, limit: 100 });
+
+        // Clear all previous results
+        $results.empty();
+
+        // Save last search query
+        last_search = $search.val();
+
+        // return if no history items to display
+        if (results.length === "undefined") {
+            return;
+        }
+
+        for (var i = 0; i < results.length; i++) {
+            var h = results[i];
+            $results.append(make_history_item(h, absdate));
+        }
+    });
+
+    function submit_search() {
+        if ($search.val() !== last_search) {
+            $search_form.submit();
+        }
+    };
+
+    $search.keydown(function () {
+        clearTimeout(auto_submit_timer);
+        auto_submit_timer = setTimeout(submit_search, 1000);
+    });
 
 
-chrome.add("history", function (view, uri)
-    local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
-    local opts = uri.opts
+    $search_form.submit();
+});
 
-    local items = {}
-    local ihtml, dhtml, time, ltime, day, lday, title
-    local today = os.date("%A, %B %d, %Y")
+]=]
 
-    local sql = "SELECT id, uri, title, last_visit FROM history"
+export_funcs = {
+    history_search = function (opts)
+        local sql = { [[
+            SELECT id, uri, title, last_visit FROM (
+                SELECT *, lower(uri||title) AS urititle FROM history]] }
 
-    -- Filter results with search terms
-    local globs = {}
-    if opts.q then
-        string.gsub(opts.q, "(%S+)", function (term)
-            local glob = sql_escape("*" .. string.lower(term) .. "*")
-            table.insert(globs, string.format("(lower(uri) GLOB %s "
-                .. "OR lower(title) GLOB %s)", glob, glob))
+        local where, args, argc = {}, {}, 1
+
+        string.gsub(opts.query or "", "(-?)([^%s]+)", function (notlike, term)
+            if #term ~= 0 then
+                table.insert(where, (notlike == "-" and "NOT " or "") ..
+                    string.format("(urititle GLOB ?%d)", argc, argc))
+                argc = argc + 1
+                table.insert(args, "*"..string.lower(term).."*")
+            end
         end)
-    end
-    if #globs > 0 then
-        sql = string.format("%s WHERE %s", sql, table.concat(globs, " AND "))
-    end
 
-    local limit = tonumber(opts.limit) or 250
-    local page = math.max(tonumber(opts.p) or 1, 1)
-    sql = string.format("%s ORDER BY last_visit DESC LIMIT %d OFFSET %d;",
-        sql, limit + 1, (page - 1) * limit)
-
-    -- Get history items
-    local results, count = history.db:exec(sql)
-
-    -- Build html from results
-    for i = 1, math.min(count, limit) do
-        local row = results[i]
-        day = os.date("%A, %B %d, %Y", tonumber(row.last_visit))
-
-        -- Check if we need a new day separator
-        if lday ~= day then
-            lday, ltime = day, nil
-            if day == today then day = "Today - " .. day end
-            dhtml = string.gsub(day_template, "{(%w+)}", { day = day })
-            table.insert(items, dhtml)
-
-        -- Insert gap between items more than 30 minutes apart
-        elseif ltime and (ltime - tonumber(row.last_visit)) > 60*30 then
-            table.insert(items, gap_html)
+        if #where ~= 0 then
+            table.insert(sql, "WHERE " .. table.concat(where, " AND "))
         end
-        ltime = tonumber(row.last_visit)
 
-        -- Add history item
-        if time_format == "12h" then
-            time = os.date("%I:%M %p", tonumber(row.last_visit))
-        else
-            time = os.date("%H:%M", tonumber(row.last_visit))
+        table.insert(sql, "ORDER BY last_visit DESC")
+
+        table.insert(sql, string.format("LIMIT ?%d OFFSET ?%d)", argc, argc+1))
+        table.insert(args, opts.limit or -1)
+        table.insert(args, opts.offset or 0)
+
+        local query = table.concat(sql, " ")
+        local rows = history.db:exec(query, args)
+
+        print(string.gsub(table.concat(sql, " "), "%s+", " "))
+
+        return rows
+    end,
+}
+
+chrome.add("history", function (view, meta)
+    local uri = "luakit://history/"
+    view:load_string(html, uri)
+
+    function on_first_visual(_, status)
+        -- Wait for new page to be created
+        if status ~= "first-visual" then return end
+
+        -- Hack to run-once
+        view:remove_signal("load-status", on_first_visual)
+
+        -- Double check that we are where we should be
+        if view.uri ~= uri then return end
+
+        -- Export luakit JS<->Lua API functions
+        for name, func in pairs(export_funcs) do
+            view:register_function(name, func)
         end
-        title = (row.title ~= "" and row.title) or row.uri
-        ihtml = string.gsub(item_template, "{(%w+)}", { time = time,
-            href = escape(row.uri), title = escape(title) })
-        table.insert(items, ihtml)
+
+        -- Load jQuery JavaScript library
+        local jquery = lousy.load("lib/jquery.min.js")
+        local _, err = view:eval_js(jquery, { no_return = true })
+        assert(not err, err)
+
+        -- Load main luakit://download/ JavaScript
+        local _, err = view:eval_js(main_js, { no_return = true })
+        assert(not err, err)
     end
 
-    -- Add pagination buttons
-    local buttons, button = {}
-    local buri = lousy.uri.copy(uri)
-    if page > 1 then
-        buri.opts.p = nil
-        button = string.gsub(button_template, "{(%w+)}",
-            { uri = tostring(buri), name = "Newest" })
-        table.insert(buttons, button)
-
-        buri.opts.p = page-1
-        button = string.gsub(button_template, "{(%w+)}",
-            { uri = tostring(buri), name = "Page " .. page-1 })
-        table.insert(buttons, button)
-    end
-    -- Check if there are older items
-    if count > limit then
-        buri.opts.p = page+1
-        button = string.gsub(button_template, "{(%w+)}",
-            { uri = tostring(buri), name = "Page " .. page+1 })
-        table.insert(buttons, button)
-    end
-
-    local subs = {
-        items = table.concat(items, ""),
-        opts = tostring(opts + {p="", q=""}),
-        terms = opts.q and string.format("value=%q", escape(opts.q)) or "",
-        buttons = table.concat(buttons, "") or "",
-        heading = (opts.q and string.format("Showing results for %s",
-            escape(string.format("%q", opts.q)))) or "History"
-    }
-    local html = string.gsub(html_template, "{(%w+)}", subs)
-    view:load_string(html, tostring(uri))
+    view:add_signal("load-status", on_first_visual)
 end)
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("history", "open history tab", function (w, arg)
-        if arg then
-            w:new_tab(string.format("luakit://history/?q=%s",
-                capi.luakit.uri_encode(arg)))
-        else
-            w:new_tab("luakit://history/?p=1")
-        end
+    cmd("history", function (w)
+        w:new_tab("luakit://history/")
     end),
 })
-
--- Prevent the chrome page showing up in history
-history.add_signal("add", function (uri)
-    if string.match(uri, "^luakit://history/?") then
-        return false
-    end
-end)
-
--- vim: et:sw=4:ts=8:sts=4:tw=80
