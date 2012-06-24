@@ -37,61 +37,130 @@ local html = [==[
         body {
             background-color: white;
             color: black;
-            margin: 10px;
+            margin: 1em;
             display: block;
             font-size: 84%;
             font-family: sans-serif;
         }
 
-        #results-header {
-            border-top: 1px solid #888;
-            background-color: #ddd;
-            padding: 3px;
-            font-weight: bold;
-            margin-top: 10px;
+        ol, li {
+            margin: 0px;
+            padding: 0px;
+        }
+
+        h3 {
+            color: black;
+            font-size: 1.2em;
+            margin-bottom: 0.5em;
+        }
+
+        h1, h2, h3 {
+            text-shadow: 0 1px 0 #f2f2f2;
+            -webkit-user-select: none;
+            font-weight: normal;
         }
 
         #search-form input {
             width: 50%;
             min-width: 300px;
-            font-size: 140%;
+            font-weight: normal;
+            font-size: 120%;
+        }
+
+        #results-header {
+            border-top: 1px solid #aaa;
+            background-color: #f2f2f2;
+            padding: 3px;
+            font-weight: normal;
+            font-size: 120%;
+            margin-top: 0.5em;
+            margin-bottom: 0.5em;
         }
 
         .day {
-            margin-top: 18px;
-            padding: 0px 3px;
-            display: inline-block;
+            white-space: nowrap;
+            margin-top: 1em;
+            padding: 0 3px;
+            display: block;
+
+            -webkit-user-select: none;
+            cursor: default;
         }
 
-        .hist-item {
-            margin: 6px 0 6px 0;
-            overflow: auto;
+        .day-results {
+            margin-bottom: 1em;
         }
 
-        .hist-item .time {
+        .entry {
+            margin: 0;
+            padding: 0;
+            list-style: none;
+            display: -webkit-box;
+        }
+
+        .entry:hover {
+            background-color: #f6f6f6;
+            -webkit-border-radius: 4px;
+        }
+
+        .entry .time, .entry .date {
             color: #888;
-            float: left;
-            margin-right: 0.75em;
-            overflow: hidden;
-            padding-top: 1px;
             text-align: right;
+
+            overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+
+            padding: 0.2em 0.3em 0.2em 0;
+            margin: 0 0.3em 0 0;
+            border-right: 1px solid #f2f2f2;
+
+            -webkit-user-select: none;
+            cursor: default;
+        }
+
+        .entry .time {
+            width: 4em;
+        }
+
+        .entry .date {
             width: 7em;
         }
 
-        .hist-item .title {
+        .entry .title {
+            padding: 0.2em 0;
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            max-width: 500px;
+        }
+        .entry .title a {
+            text-decoration: none;
+        }
+
+        .entry .title a:hover {
+            text-decoration: underline;
+        }
+
+        .entry .domain {
+            color: #bbb;
+
+            padding: 0.2em 0;
+            margin-left: 0.75em;
+
+            -webkit-box-flex: 1;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
         }
 
-        .gap {
-            margin: -5px 0 -5px 18px;
-            width: 16px;
-            border-right: 1px solid #ddd;
-            height: 14px;
+        .entry .domain a:hover {
+            color: #999;
+            text-decoration: underline;
+            cursor: pointer;
+            -webkit-user-select: none;
         }
+
     </style>
 </head>
 <body>
@@ -114,21 +183,25 @@ local main_js = [=[
 $(document).ready(function () {
 
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    function make_history_item(h, absdate) {
-        var d = new Date(h.last_visit * 1000);
-
-        if (absdate) {
-            var dstr = (d.getDate() + "&nbsp;" + months[d.getMonth()] + "&nbsp;"
-                + d.getFullYear());
-        } else {
-            var dstr = (d.getHours() + ":" + d.getMinutes());
-        }
-
-        var e = ("<div class='hist-item' id='" + h.id + "'><div class='time'>"
-            + dstr + "</div><div class='title'><a href='" + encodeURI(h.uri)
-            + "'>" + $('<div/>').text(h.title).html() + "</a></div></div>");
-        return e;
+    function make_history_item(h, use_date) {
+        var domain = /:\/\/([^/]+)\//.exec(h.uri);
+        return $("<li/>")
+            .addClass("entry")
+            .attr("id", h.id)
+            .append($("<div/>") // time/date
+                .addClass(use_date && "date" || "time")
+                .text(use_date && h.date || h.time))
+            .append($("<div/>") // title / uri
+                .addClass("title")
+                .append($("<a/>")
+                    .attr("href", h.uri)
+                    .text(h.title)))
+            .append($("<div/>")
+                .addClass("domain")
+                .append($("<a/>")
+                    .text(domain && domain[1] || "")));
     };
 
     var $search = $('#search').eq(0);
@@ -141,6 +214,7 @@ $(document).ready(function () {
     var auto_submit_timer;
     var last_search;
 
+
     $search_form.submit(function (e) {
         // Stop submit
         e.preventDefault();
@@ -149,14 +223,10 @@ $(document).ready(function () {
         clearTimeout(auto_submit_timer);
 
         var query = $search.val();
+        var mode = non_blank.test(query) && "results" || "main";
 
-        if (non_blank.test(query)) {
-            var absdate = true;
-            $results_header.text("Showing results for \"" + query + "\"");
-        } else {
-            var absdate = false;
-            $results_header.text("History");
-        }
+        $results_header.text(mode == "main" && "History" ||
+            "Showing results for \"" + query + "\"");
 
         var results = history_search({ query: query, limit: 100 });
 
@@ -171,10 +241,35 @@ $(document).ready(function () {
             return;
         }
 
+        var last_date;
+        var $dlist;
+
         for (var i = 0; i < results.length; i++) {
             var h = results[i];
-            $results.append(make_history_item(h, absdate));
+
+            if (h.date !== last_date) {
+                last_date = h.date;
+
+                if (i !== 0) {
+                    $results.append($dlist);
+                }
+
+                if (mode === "main") {
+                    $results.append($("<h3/>").addClass("day").text(h.date));
+                }
+
+                $dlist = $("<ol/>").addClass("day-results");
+            }
+
+            $dlist.append(make_history_item(h, mode === "results"));
         }
+
+        $results.append($dlist);
+    });
+
+    $results.on("click", ".entry .domain", function (e) {
+        $search.val($(this).text());
+        $search.submit();
     });
 
     function submit_search() {
@@ -188,7 +283,6 @@ $(document).ready(function () {
         auto_submit_timer = setTimeout(submit_search, 1000);
     });
 
-
     $search_form.submit();
 });
 
@@ -196,9 +290,9 @@ $(document).ready(function () {
 
 export_funcs = {
     history_search = function (opts)
-        local sql = { [[
-            SELECT id, uri, title, last_visit FROM (
-                SELECT *, lower(uri||title) AS urititle FROM history]] }
+        local sql = { "SELECT id, uri, title, last_visit FROM ("
+            .. "SELECT *, lower(uri||title) AS urititle FROM history"
+        }
 
         local where, args, argc = {}, {}, 1
 
@@ -215,16 +309,18 @@ export_funcs = {
             table.insert(sql, "WHERE " .. table.concat(where, " AND "))
         end
 
-        table.insert(sql, "ORDER BY last_visit DESC")
-
-        table.insert(sql, string.format("LIMIT ?%d OFFSET ?%d)", argc, argc+1))
+        table.insert(sql, string.format("ORDER BY last_visit DESC "
+            .. "LIMIT ?%d OFFSET ?%d)", argc, argc+1))
         table.insert(args, opts.limit or -1)
         table.insert(args, opts.offset or 0)
 
-        local query = table.concat(sql, " ")
-        local rows = history.db:exec(query, args)
+        local rows = history.db:exec(table.concat(sql, " "), args)
 
-        print(string.gsub(table.concat(sql, " "), "%s+", " "))
+        for i, row in ipairs(rows) do
+            local time = rawget(row, "last_visit")
+            rawset(row, "date", os.date("%d %b %Y", time))
+            rawset(row, "time", os.date("%H:%M", time))
+        end
 
         return rows
     end,
