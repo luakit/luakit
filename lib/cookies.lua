@@ -99,6 +99,8 @@ capi.luakit.idle_add(init)
 -- Load all cookies after the last check time
 
 capi.soup.add_signal("request-started", function ()
+    if not db then init() end
+
     local old_atime, new_atime = atime, micro()
     -- Rate limit select queries to 1 p/s
     if (new_atime - old_atime) > 1e6 then
