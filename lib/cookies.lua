@@ -19,6 +19,8 @@ local time, floor = luakit.time, math.floor
 
 module "cookies"
 
+db_path = capi.luakit.data_dir .. "/cookies.db"
+
 -- Last access time
 local atime = 0
 
@@ -39,7 +41,7 @@ function init()
     if db then return end
 
     -- Open cookies sqlite database at $XDG_DATA_HOME/luakit/cookies.db
-    db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/cookies.db" }
+    db = capi.sqlite3{ filename = _M.db_path }
 
     db:exec [[
         PRAGMA synchronous = OFF;
