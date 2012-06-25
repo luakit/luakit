@@ -145,10 +145,10 @@ local prototype = {
     run = function (s, view)
         -- Load common greasemonkey methods
         if not lstate[view].gmloaded then
-            view:eval_js(gm_functions)
+            view:eval_js(gm_functions, { no_return = true })
             lstate[view].gmloaded = true
         end
-        view:eval_js(s.js, { source = s.file })
+        view:eval_js(s.js, { source = s.file, no_return = true })
         lstate[view].loaded[s.file] = s
     end,
     -- Check if the given uri matches the userscripts include/exclude patterns
