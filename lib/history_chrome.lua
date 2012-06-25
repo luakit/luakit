@@ -197,7 +197,7 @@ $(document).ready(function () {
                 .addClass("title")
                 .append($("<a/>")
                     .attr("href", h.uri)
-                    .text(h.title)))
+                    .text(h.title || h.uri)))
             .append($("<div/>")
                 .addClass("domain")
                 .append($("<a/>")
