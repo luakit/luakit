@@ -96,6 +96,18 @@ function tag(bookmark_id, name_or_id)
     _M.emit_signal("tagged-bookmark", bookmark_id, tag_id, tag_name)
 end
 
+-- Deletes all orphaned tags
+local function delete_orphan_tags()
+    db:exec [[
+        DELETE FROM tags WHERE id IN (
+            SELECT tags.id FROM tags
+            LEFT JOIN tagmap ON tags.id = tagmap.tag_id
+            GROUP BY tags.id
+            HAVING count(tagmap.id) == 0
+        );
+    ]]
+end
+
 -- Untag bookmark
 function untag(bookmark_id, name_or_id)
     assert(type(bookmark_id) == "number", "invalid bookmark id (number expected)")
@@ -110,7 +122,7 @@ function untag(bookmark_id, name_or_id)
         _M.emit_signal("untagged-bookmark", bookmark_id, tag_id, tag_name)
     end
 
-    -- TODO check if tag orphaned
+    delete_orphan_tags()
 end
 
 -- Add new bookmark
@@ -153,6 +165,7 @@ function add(uri, opts)
     return bookmark_id
 end
 
+
 -- Delete bookmark
 function remove(bookmark_id)
     assert(type(bookmark_id) == "number",
@@ -164,6 +177,8 @@ function remove(bookmark_id)
         DELETE FROM tagmap WHERE bookmark_id = ?1;
         DELETE FROM bookmarks WHERE id = ?1;
     ]], { bookmark_id })
+
+    delete_orphan_tags()
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
