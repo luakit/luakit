@@ -61,16 +61,14 @@ end
 local function find_tag(name_or_id)
     -- Returns id of tag (if exists)
     if type(name_or_id) == "number" then
-        local row = db:exec("SELECT * FROM tags WHERE id = ? LIMIT 1",
-            { name_or_id })[1] or {}
-        return row.id, row.name
+        return db:exec("SELECT * FROM tags WHERE id = ? LIMIT 1",
+            { name_or_id })[1]
 
     -- Returns id of tag name (if exists)
     elseif type(name_or_id) == "string" then
         assert(valid_tag_name(name_or_id), "invalid tag name: " .. name_or_id)
-        local row = db:exec("SELECT id FROM tags WHERE name = ? LIMIT 1",
-            { name_or_id })[1] or {}
-        return row.id, row.name
+        return db:exec("SELECT * FROM tags WHERE name = ? LIMIT 1",
+            { name_or_id })[1]
     end
 
     error("invalid tag (name/id expected, got " .. type(name_or_id) .. ")")
@@ -81,19 +79,19 @@ function tag(bookmark_id, name_or_id)
     assert(type(bookmark_id) == "number", "invalid bookmark id (number expected)")
 
     -- Find tag (if exists)
-    local tag_id, tag_name = find_tag(name_or_id)
+    local tag = find_tag(name_or_id)
 
     -- Create new tag
-    if not tag_id then
+    if not tag then
         -- Add tag name to database
         db:exec("INSERT INTO tags VALUES (NULL, ?)", { name_or_id })
-        tag_id = db:exec("SELECT last_insert_rowid() AS id")[1].id
-        _M.emit_signal("new-tag", tag_id, name_or_id)
+        tag = assert(find_tag(name_or_id), "failed to add tag: " .. name_or_id)
+        _M.emit_signal("new-tag", tag)
     end
 
     -- Tag bookmark
-    db:exec("INSERT INTO tagmap VALUES(NULL, ?, ?)", { bookmark_id, tag_id })
-    _M.emit_signal("tagged-bookmark", bookmark_id, tag_id, tag_name)
+    db:exec("INSERT INTO tagmap VALUES(NULL, ?, ?)", { bookmark_id, tag.id })
+    _M.emit_signal("tagged-bookmark", bookmark_id, tag)
 end
 
 -- Deletes all orphaned tags
@@ -113,16 +111,15 @@ function untag(bookmark_id, name_or_id)
     assert(type(bookmark_id) == "number", "invalid bookmark id (number expected)")
 
     -- Find tag (if exists)
-    local tag_id, tag_name = find_tag(name_or_id)
+    local tag = find_tag(name_or_id)
 
     -- Remove tag from bookmark
-    if tag_id then
+    if tag then
         db:exec("DELETE FROM tagmap WHERE bid = ? AND tid = ?",
-            { bookmark_id, tag_id })
-        _M.emit_signal("untagged-bookmark", bookmark_id, tag_id, tag_name)
+            { bookmark_id, tag.id })
+        _M.emit_signal("untagged-bookmark", bookmark_id, tag)
+        delete_orphan_tags()
     end
-
-    delete_orphan_tags()
 end
 
 -- Add new bookmark
