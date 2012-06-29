@@ -189,21 +189,16 @@ webview.init_funcs = {
     end,
 
     -- Action to take on window open request.
-    window_decision = function (view, w)
-        -- 'link' contains the download link
-        -- 'reason' contains the reason of the request (i.e. "link-clicked")
-        -- return TRUE to handle the request by yourself or FALSE to proceed
-        -- with default behaviour
-        view:add_signal("new-window-decision", function (v, uri, reason)
-            info("New window decision: %s (%s)", uri, reason)
-            if reason == "link-clicked" then
-                window.new({uri})
-            else
-                w:new_tab(uri)
-            end
-            return true
-        end)
-    end,
+    --window_decision = function (view, w)
+    --    view:add_signal("new-window-decision", function (v, uri, reason)
+    --        if reason == "link-clicked" then
+    --            window.new({uri})
+    --        else
+    --            w:new_tab(uri)
+    --        end
+    --        return true
+    --    end)
+    --end,
 
     create_webview = function (view, w)
         -- Return a newly created webview in a new tab
@@ -214,19 +209,19 @@ webview.init_funcs = {
 
     -- Creates context menu popup from table (and nested tables).
     -- Use `true` for menu separators.
-    -- populate_popup = function (view, w)
-    --     view:add_signal("populate-popup", function (v)
-    --         return {
-    --             true,
-    --             { "_Toggle Source", function () w:toggle_source() end },
-    --             { "_Zoom", {
-    --                 { "Zoom _In",    function () w:zoom_in()  end },
-    --                 { "Zoom _Out",   function () w:zoom_out() end },
-    --                 true,
-    --                 { "Zoom _Reset", function () w:zoom_set() end }, }, },
-    --         }
-    --     end)
-    -- end,
+    --populate_popup = function (view, w)
+    --    view:add_signal("populate-popup", function (v)
+    --        return {
+    --            true,
+    --            { "_Toggle Source", function () w:toggle_source() end },
+    --            { "_Zoom", {
+    --                { "Zoom _In",    function () w:zoom_in()  end },
+    --                { "Zoom _Out",   function () w:zoom_out() end },
+    --                true,
+    --                { "Zoom _Reset", function () w:zoom_set() end }, }, },
+    --        }
+    --    end)
+    --end,
 
     -- Action to take on resource request.
     resource_request_decision = function (view, w)
