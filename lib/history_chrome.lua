@@ -37,21 +37,21 @@ local html = [==[
         body {
             background-color: white;
             color: black;
-            margin: 1em;
             display: block;
-            font-size: 84%;
+            font-size: 62.5%;
+            margin: 1em;
             font-family: sans-serif;
         }
 
         ol, li {
-            margin: 0px;
-            padding: 0px;
+            margin: 0;
+            padding: 0;
         }
 
         h3 {
             color: black;
-            font-size: 1.2em;
-            margin-bottom: 0.5em;
+            font-size: 1.6em;
+            margin-bottom: 1.0em;
         }
 
         h1, h2, h3 {
@@ -61,28 +61,27 @@ local html = [==[
         }
 
         #search-form input {
-            width: 50%;
-            min-width: 300px;
+            min-width: 33%;
+            width: 10em;
+            font-size: 1.6em;
             font-weight: normal;
-            font-size: 120%;
         }
 
         #results-header {
             border-top: 1px solid #aaa;
             background-color: #f2f2f2;
-            padding: 3px;
+            padding: 0.3em;
             font-weight: normal;
-            font-size: 120%;
+            font-size: 1.2em;
             margin-top: 0.5em;
             margin-bottom: 0.5em;
         }
 
         .day {
             white-space: nowrap;
-            margin-top: 1em;
-            padding: 0 3px;
+            margin: 1em 0 0.5em 0;
+            padding: 0 0.3em;
             display: block;
-
             -webkit-user-select: none;
             cursor: default;
         }
@@ -94,13 +93,14 @@ local html = [==[
         .entry {
             margin: 0;
             padding: 0;
+            font-size: 1.2em;
             list-style: none;
             display: -webkit-box;
         }
 
         .entry:hover {
             background-color: #f6f6f6;
-            -webkit-border-radius: 4px;
+            -webkit-border-radius: 0.5em;
         }
 
         .entry .time, .entry .date {
@@ -111,8 +111,8 @@ local html = [==[
             text-overflow: ellipsis;
             white-space: nowrap;
 
-            padding: 0.2em 0.3em 0.2em 0;
-            margin: 0 0.3em 0 0;
+            padding: 0.3em 0.45em 0.3em 0;
+            margin: 0 0.45em 0 0;
             border-right: 1px solid #f2f2f2;
 
             -webkit-user-select: none;
@@ -128,11 +128,11 @@ local html = [==[
         }
 
         .entry .title {
-            padding: 0.2em 0;
+            padding: 0.3em 0;
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
-            max-width: 500px;
+            max-width: 600px;
         }
         .entry .title a {
             text-decoration: none;
@@ -144,10 +144,8 @@ local html = [==[
 
         .entry .domain {
             color: #bbb;
-
-            padding: 0.2em 0;
+            padding: 0.3em 0;
             margin-left: 0.75em;
-
             -webkit-box-flex: 1;
             overflow: hidden;
             white-space: nowrap;
@@ -176,6 +174,24 @@ local html = [==[
         <div id="results">
         </div>
     </div>
+
+    <div id="templates" style="display: hidden;">
+        <div id="normal-entry-template">
+            <li class="entry">
+                <div class="time"></div>
+                <div class="title"><a></a></div>
+                <div class="domain"><a></a></div>
+            </li>
+        </div>
+        <div id="result-entry-template">
+            <li class="entry">
+                <div class="date"></div>
+                <div class="title"><a></a></div>
+                <div class="domain"><a></a></div>
+            </li>
+        </div>
+    </div>
+
 </body>
 ]==]
 
@@ -185,23 +201,22 @@ $(document).ready(function () {
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
+    var norm_entry_html = $("#normal-entry-template").html();
+    var result_entry_html = $("#result-entry-template").html();
+
     function make_history_item(h, use_date) {
+        // Create element
+        var $e = $(use_date && result_entry_html || norm_entry_html);
+        // Update date/time
+        $e.find("div").eq(0).text(use_date && h.date || h.time);
+        // Set title & href
+        $e.find(".title a")
+            .attr("href", h.uri)
+            .text(h.title || h.uri);
+        // Set domain link
         var domain = /:\/\/([^/]+)\//.exec(h.uri);
-        return $("<li/>")
-            .addClass("entry")
-            .attr("id", h.id)
-            .append($("<div/>") // time/date
-                .addClass(use_date && "date" || "time")
-                .text(use_date && h.date || h.time))
-            .append($("<div/>") // title / uri
-                .addClass("title")
-                .append($("<a/>")
-                    .attr("href", h.uri)
-                    .text(h.title || h.uri)))
-            .append($("<div/>")
-                .addClass("domain")
-                .append($("<a/>")
-                    .text(domain && domain[1] || "")));
+        $e.find(".domain a").text(domain && domain[1] || "");
+        return $e;
     };
 
     var $search = $('#search').eq(0);
@@ -213,7 +228,6 @@ $(document).ready(function () {
 
     var auto_submit_timer;
     var last_search;
-
 
     $search_form.submit(function (e) {
         // Stop submit
