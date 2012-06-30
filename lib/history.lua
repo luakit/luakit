@@ -41,12 +41,7 @@ function init()
         FROM history
         WHERE uri = ?
         ORDER BY last_visit DESC
-        LIMIT 1;
-    ]]
-
-    query_del_by_uri = db:compile [[
-        DELETE FROM history
-        WHERE uri = ?
+        LIMIT 1
     ]]
 
     query_insert = db:compile [[
