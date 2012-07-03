@@ -180,6 +180,15 @@ void
 luaH_class_add_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
+
+    if (globalconf.verbose) {
+        gchar *origin = luaH_callerinfo(L);
+        debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+                " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
+                name, lua_class, origin);
+        g_free(origin);
+    }
+
     signal_add(lua_class->signals, name, luaH_object_ref(L, ud));
 }
 

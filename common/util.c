@@ -26,15 +26,20 @@
 #include <glib/gprintf.h>
 #include <stdarg.h>
 #include <stdlib.h>
+#include <unistd.h>
 
 /* Print error and exit with EXIT_FAILURE code. */
 void
 _fatal(gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
+    gint atty = isatty(STDERR_FILENO);
+    if (atty) g_fprintf(stderr, ANSI_COLOR_BG_RED);
+    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
     g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
     g_vfprintf(stderr, fmt, ap);
     va_end(ap);
+    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
     g_fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
 }
@@ -44,9 +49,13 @@ void
 _warn(gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    g_fprintf(stderr, "W: luakit: %s:%d: ", fct, line);
+    gint atty = isatty(STDERR_FILENO);
+    if (atty) g_fprintf(stderr, ANSI_COLOR_RED);
+    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
+    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
     g_vfprintf(stderr, fmt, ap);
     va_end(ap);
+    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
     g_fprintf(stderr, "\n");
 }
 
@@ -56,6 +65,7 @@ _debug(gint line, const gchar *fct, const gchar *fmt, ...) {
     if (globalconf.verbose) {
         va_list ap;
         va_start(ap, fmt);
+        g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
         g_fprintf(stderr, "D: luakit: %s:%d: ", fct, line);
         g_vfprintf(stderr, fmt, ap);
         va_end(ap);
@@ -78,8 +88,8 @@ luaH_callerinfo(lua_State *L)
 
     /* get information about calling lua function */
     if (lua_getstack(L, 1, &ar) && lua_getinfo(L, "Sln", &ar))
-        return g_strdup_printf("(%s%s%s:%d)", ar.short_src,
-            ar.name ? ":" : "", ar.name, ar.currentline);
+        return g_strdup_printf("%s%s%s:%d", ar.short_src,
+            ar.name ? ":" : "", ar.name ? ar.name : "", ar.currentline);
 
     return NULL;
 }

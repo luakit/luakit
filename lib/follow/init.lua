@@ -264,13 +264,11 @@ window.follow = (function () {
             if (!follow.tickParent) {
                 var tickParent = createElement("div");
                 tickParent.id = "luakit_follow_tickParent";
-                document.body.appendChild(tickParent);
                 follow.tickParent = tickParent;
             }
             if (!follow.overlayParent) {
                 var overlayParent = createElement("div");
                 overlayParent.id = "luakit_follow_overlayParent";
-                document.body.appendChild(overlayParent);
                 follow.overlayParent = overlayParent;
             }
         },
@@ -308,6 +306,8 @@ window.follow = (function () {
                 hint.setId(ids[i]);
                 hint.show();
             }
+            document.body.appendChild(follow.overlayParent);
+            document.body.appendChild(follow.tickParent);
         },
 
         // Filters the hints according to the given string and ID.

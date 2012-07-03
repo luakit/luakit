@@ -28,6 +28,18 @@
 #include <unistd.h>
 #include <lua.h>
 
+/* ANSI term color codes */
+#define ANSI_COLOR_RESET   "\x1b[0m"
+
+#define ANSI_COLOR_RED     "\x1b[31m"
+#define ANSI_COLOR_GREEN   "\x1b[32m"
+#define ANSI_COLOR_YELLOW  "\x1b[33m"
+#define ANSI_COLOR_BLUE    "\x1b[34m"
+#define ANSI_COLOR_MAGENTA "\x1b[35m"
+#define ANSI_COLOR_CYAN    "\x1b[36m"
+
+#define ANSI_COLOR_BG_RED  "\x1b[41m"
+
 /* Useful macros */
 #define NONULL(x) (x ? x : "")
 #define LENGTH(x) sizeof(x)/sizeof((x)[0])
@@ -61,6 +73,12 @@ void _debug(int, const gchar *, const gchar *, ...);
  * ssize_t, and supports its argument being NULL. */
 static inline ssize_t l_strlen(const gchar *s) {
     return s ? strlen(s) : 0;
+}
+
+static inline gdouble l_time() {
+    struct timespec ts;
+    clock_gettime(CLOCK_REALTIME, &ts);
+    return ts.tv_sec + (ts.tv_nsec / 1e9);
 }
 
 #define p_clear(p, count)       ((void)memset((p), 0, sizeof(*(p)) * (count)))

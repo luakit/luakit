@@ -409,9 +409,7 @@ spawn_error:
 static gint
 luaH_luakit_time(lua_State *L)
 {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    lua_pushnumber(L, ts.tv_sec + (ts.tv_nsec / 1e9));
+    lua_pushnumber(L, l_time());
     return 1;
 }
 

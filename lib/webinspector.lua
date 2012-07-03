@@ -42,7 +42,7 @@ webview.init_funcs.inspector_setup = function (view, w)
     view:add_signal("show-inspector", function ()
         switch_inspector(w, view)
         -- We start in paned view
-        view.inspector:eval_js("WebInspector._toggleAttach();")
+        view.inspector:eval_js("WebInspector.attached = true;")
     end)
 
     view:add_signal("close-inspector", function (_, iview)
