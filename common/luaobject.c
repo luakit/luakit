@@ -148,6 +148,15 @@ luaH_object_add_signal(lua_State *L, gint oud,
         const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
+
+    if (globalconf.verbose) {
+        gchar *origin = luaH_callerinfo(L);
+        debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+                " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
+                name, obj, origin);
+        g_free(origin);
+    }
+
     signal_add(obj->signals, name, luaH_object_ref_item(L, oud, ud));
 }
 
@@ -185,21 +194,30 @@ signal_object_emit(lua_State *L, signal_t *signals,
         const gchar *name, gint nargs, gint nret) {
 
     signal_array_t *sigfuncs = signal_lookup(signals, name);
-    debug("emitting \"%s\" with %d args and %d nret", name, nargs, nret);
-    if(sigfuncs) {
+
+    if (globalconf.verbose) {
+        gchar *origin = luaH_callerinfo(L);
+        debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+                " on %p from "
+                ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
+                name, signals, origin ? origin : "<GTK>", nargs, nret);
+        g_free(origin);
+    }
+
+    if (sigfuncs) {
         gint nbfunc = sigfuncs->len;
         luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 1,
                 "too much signal");
         /* Push all functions and then execute, because this list can change
          * while executing funcs. */
-        for(gint i = 0; i < nbfunc; i++) {
+        for (gint i = 0; i < nbfunc; i++) {
             luaH_object_push(L, sigfuncs->pdata[i]);
         }
 
-        for(gint i = 0; i < nbfunc; i++) {
+        for (gint i = 0; i < nbfunc; i++) {
             gint stacksize = lua_gettop(L);
             /* push all args */
-            for(gint j = 0; j < nargs; j++)
+            for (gint j = 0; j < nargs; j++)
                 lua_pushvalue(L, - nargs - nbfunc + i);
             /* push first function */
             lua_pushvalue(L, - nargs - nbfunc + i);
@@ -258,23 +276,33 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     gint ret, top, bot = lua_gettop(L) - nargs + 1;
     gint oud_abs = luaH_absindex(L, oud);
     lua_object_t *obj = lua_touserdata(L, oud);
-    debug("emitting \"%s\" on %p with %d args and %d nret", name, obj, nargs, nret);
+
+    if (globalconf.verbose) {
+        gchar *origin = luaH_callerinfo(L);
+        debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+                " on %p from "
+                ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
+                name, obj, origin ? origin : "<GTK>", nargs, nret);
+        g_free(origin);
+    }
+
     if(!obj)
         luaL_error(L, "trying to emit signal on non-object");
+
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
-    if(sigfuncs) {
+    if (sigfuncs) {
         guint nbfunc = sigfuncs->len;
         luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 2, "too much signal");
         /* Push all functions and then execute, because this list can change
          * while executing funcs. */
-        for(guint i = 0; i < nbfunc; i++)
+        for (guint i = 0; i < nbfunc; i++)
             luaH_object_push_item(L, oud_abs, sigfuncs->pdata[i]);
 
-        for(guint i = 0; i < nbfunc; i++) {
+        for (guint i = 0; i < nbfunc; i++) {
             /* push object */
             lua_pushvalue(L, oud_abs);
             /* push all args */
-            for(gint j = 0; j < nargs; j++)
+            for (gint j = 0; j < nargs; j++)
                 lua_pushvalue(L, - nargs - nbfunc - 1 + i);
             /* push first function */
             lua_pushvalue(L, - nargs - nbfunc - 1 + i);

@@ -241,7 +241,6 @@ luaH_widget_destroy(lua_State *L)
     if (w->destructor)
         w->destructor(w);
     w->destructor = NULL;
-    debug("unreffing widget %p of type '%s'", w, w->info->name);
     luaH_object_unref(L, w->ref);
     return 0;
 }
@@ -249,7 +248,7 @@ luaH_widget_destroy(lua_State *L)
 void
 widget_destructor(widget_t *w)
 {
-    debug("destroying widget %p of type '%s'", w, w->info->name);
+    debug("destroy %p (%s)", w, w->info->name);
     if (w->widget)
         gtk_widget_destroy(GTK_WIDGET(w->widget));
     w->widget = NULL;

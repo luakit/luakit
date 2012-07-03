@@ -67,6 +67,9 @@ typedef struct {
     GPtrArray *windows;
     /** Pointer array to all active webview userdata objects. */
     GPtrArray *webviews;
+
+    /** Start time for debug messages */
+    gdouble starttime;
 } globalconf_t;
 
 globalconf_t globalconf;

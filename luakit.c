@@ -138,6 +138,8 @@ main(gint argc, gchar *argv[]) {
     gchar **uris = NULL;
     pid_t pid, sid;
 
+    globalconf.starttime = l_time();
+
     /* clean up any zombies */
     struct sigaction sigact;
     sigact.sa_handler=sigchld;
