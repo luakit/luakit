@@ -54,7 +54,8 @@ webview.init_funcs.chrome = function (view, w)
         local func = handlers[page]
         if func then
             -- Give the handler function everything it may need
-            local meta = { uri = uri, page = page, path = path, w = w }
+            local meta = { page = page, path = path, w = w,
+                uri = "luakit://" .. page .. "/" .. path }
 
             -- Render error output in webview with traceback
             local function error_handler(err)
