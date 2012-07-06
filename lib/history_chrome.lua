@@ -363,6 +363,11 @@ chrome.add("history", function (view, meta)
     view:add_signal("load-status", on_first_visual)
 end)
 
+-- Prevent history items from turning up in history
+history.add_signal("add", function (uri)
+    if string.match(uri, "^luakit://history/") then return false end
+end)
+
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("history", function (w, query)
