@@ -46,6 +46,7 @@ local html = [==[
         ol, li {
             margin: 0;
             padding: 0;
+            list-style: none;
         }
 
         h3 {
@@ -94,7 +95,6 @@ local html = [==[
             margin: 0;
             padding: 0;
             font-size: 1.2em;
-            list-style: none;
             display: -webkit-box;
         }
 
@@ -103,8 +103,9 @@ local html = [==[
             -webkit-border-radius: 0.5em;
         }
 
-        .entry .time, .entry .date {
+        .entry .time {
             color: #888;
+            width: 4em;
             text-align: right;
 
             overflow: hidden;
@@ -119,14 +120,6 @@ local html = [==[
             cursor: default;
         }
 
-        .entry .time {
-            width: 4em;
-        }
-
-        .entry .date {
-            width: 7em;
-        }
-
         .entry .title {
             padding: 0.3em 0;
             overflow: hidden;
@@ -134,6 +127,7 @@ local html = [==[
             text-overflow: ellipsis;
             max-width: 600px;
         }
+
         .entry .title a {
             text-decoration: none;
         }
@@ -150,6 +144,7 @@ local html = [==[
             overflow: hidden;
             white-space: nowrap;
             text-overflow: ellipsis;
+            text-decoration: none;
         }
 
         .entry .domain a:hover {
@@ -175,17 +170,10 @@ local html = [==[
         </div>
     </div>
 
-    <div id="templates" style="display: hidden;">
-        <div id="normal-entry-template">
+    <div id="templates">
+        <div id="entry-template">
             <li class="entry">
                 <div class="time"></div>
-                <div class="title"><a></a></div>
-                <div class="domain"><a></a></div>
-            </li>
-        </div>
-        <div id="result-entry-template">
-            <li class="entry">
-                <div class="date"></div>
                 <div class="title"><a></a></div>
                 <div class="domain"><a></a></div>
             </li>
@@ -201,14 +189,14 @@ $(document).ready(function () {
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    var norm_entry_html = $("#normal-entry-template").html();
-    var result_entry_html = $("#result-entry-template").html();
+    var entry_html = $("#entry-template").html();
+    $("#templates").remove();
 
-    function make_history_item(h, use_date) {
+    function make_history_item(h) {
         // Create element
-        var $e = $(use_date && result_entry_html || norm_entry_html);
+        var $e = $(entry_html);
         // Update date/time
-        $e.find("div").eq(0).text(use_date && h.date || h.time);
+        $e.find(".time").text(h.time);
         // Set title & href
         $e.find(".title a")
             .attr("href", h.uri)
@@ -220,84 +208,84 @@ $(document).ready(function () {
     };
 
     var $search = $('#search').eq(0);
-    var $search_form = $('#search-form').eq(0);
     var $results_header = $("#results-header").eq(0);
     var $results = $('#results').eq(0);
 
-    var non_blank = /\S/;
+    function do_search(query, limit) {
+        $results_header.text(query && "Showing results for \"" +
+            query + "\"" || "History");
 
-    var auto_submit_timer;
-    var last_search;
+        var rows = history_search({ query: query, limit: limit || 100 });
 
-    $search_form.submit(function (e) {
-        // Stop submit
-        e.preventDefault();
-
-        // Stop auto-submit timer
-        clearTimeout(auto_submit_timer);
-
-        var query = $search.val();
-        var mode = non_blank.test(query) && "results" || "main";
-
-        $results_header.text(mode == "main" && "History" ||
-            "Showing results for \"" + query + "\"");
-
-        var results = history_search({ query: query, limit: 100 });
-
-        // Clear all previous results
         $results.empty();
 
-        // Save last search query
-        last_search = $search.val();
-
-        // return if no history items to display
-        if (results.length === "undefined") {
+        if (!rows.length)
             return;
-        }
 
-        var last_date;
-        var $dlist;
+        var last_date, last_time = 0;
+        var $group;
 
-        for (var i = 0; i < results.length; i++) {
-            var h = results[i];
+        for (var i = 0; i < rows.length; i++) {
+            var h = rows[i];
 
+            // Group items by date
             if (h.date !== last_date) {
                 last_date = h.date;
 
-                if (i !== 0) {
-                    $results.append($dlist);
-                }
+                if (i !== 0)
+                    $results.append($group);
 
-                if (mode === "main") {
-                    $results.append($("<h3/>").addClass("day").text(h.date));
-                }
+                $results.append($("<h3/>").addClass("day").text(h.date));
+                $group = $("<ol/>").addClass("day-results");
 
-                $dlist = $("<ol/>").addClass("day-results");
+            // Create another <ol> group if items more than an hour apart
+            } else if ((last_time - h.last_visit) > 3600) {
+                $results.append($group);
+                $group = $("<ol/>").addClass("day-results");
             }
 
-            $dlist.append(make_history_item(h, mode === "results"));
+            last_time = h.last_visit;
+            $group.append(make_history_item(h));
         }
+        $results.append($group);
 
-        $results.append($dlist);
+        document.location.hash = encodeURIComponent(query && query || "");
+    }
+
+    var $search_form = $('#search-form').eq(0);
+
+    $search_form.submit(function (e) {
+        e.preventDefault();
+        // Unfocus search box
+        $search.blur();
+        reset_mode(); // luakit mode
+        // Display results
+        var query = $search.val();
+        do_search(query !== "" && query || null);
     });
 
+    // Auto search history by domain when clicking on domain
     $results.on("click", ".entry .domain", function (e) {
         $search.val($(this).text());
         $search.submit();
     });
 
-    function submit_search() {
-        if ($search.val() !== last_search) {
-            $search_form.submit();
-        }
+    function parse_frag_query() {
+        return decodeURIComponent(document.location.hash.substr(1));
     };
 
-    $search.keydown(function () {
-        clearTimeout(auto_submit_timer);
-        auto_submit_timer = setTimeout(submit_search, 1000);
-    });
-
+    $search.val(parse_frag_query());
     $search_form.submit();
+
+    $(window).on("hashchange", function () {
+        var hash = parse_frag_query();
+
+        if ($search.val() === hash)
+            return;
+
+        $search.val(hash);
+        $search_form.submit();
+    });
 });
 
 ]=]
@@ -311,7 +299,7 @@ export_funcs = {
         local where, args, argc = {}, {}, 1
 
         string.gsub(opts.query or "", "(-?)([^%s]+)", function (notlike, term)
-            if #term ~= 0 then
+            if term ~= "" then
                 table.insert(where, (notlike == "-" and "NOT " or "") ..
                     string.format("(urititle GLOB ?%d)", argc, argc))
                 argc = argc + 1
@@ -332,7 +320,7 @@ export_funcs = {
 
         for i, row in ipairs(rows) do
             local time = rawget(row, "last_visit")
-            rawset(row, "date", os.date("%d %b %Y", time))
+            rawset(row, "date", os.date("%A, %d %B %Y", time))
             rawset(row, "time", os.date("%H:%M", time))
         end
 
@@ -341,8 +329,7 @@ export_funcs = {
 }
 
 chrome.add("history", function (view, meta)
-    local uri = "luakit://history/"
-    view:load_string(html, uri)
+    view:load_string(html, meta.uri)
 
     function on_first_visual(_, status)
         -- Wait for new page to be created
@@ -352,12 +339,16 @@ chrome.add("history", function (view, meta)
         view:remove_signal("load-status", on_first_visual)
 
         -- Double check that we are where we should be
-        if view.uri ~= uri then return end
+        if view.uri ~= meta.uri then return end
 
         -- Export luakit JS<->Lua API functions
         for name, func in pairs(export_funcs) do
             view:register_function(name, func)
         end
+
+        view:register_function("reset_mode", function ()
+            meta.w:set_mode() -- HACK to unfocus search box
+        end)
 
         -- Load jQuery JavaScript library
         local jquery = lousy.load("lib/jquery.min.js")
@@ -374,7 +365,7 @@ end)
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("history", function (w)
-        w:new_tab("luakit://history/")
+    cmd("history", function (w, query)
+        w:new_tab("luakit://history/" .. (query and "#"..query or ""))
     end),
 })
