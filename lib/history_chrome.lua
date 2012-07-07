@@ -103,6 +103,15 @@ local html = [==[
             -webkit-border-radius: 0.5em;
         }
 
+        .selected {
+            background-color: #f0f0f0;
+        }
+
+        .selected:hover {
+            background-color: #f0f0f0 !important;
+            -webkit-border-radius: 0 !important;
+        }
+
         .entry .time {
             color: #888;
             width: 4em;
@@ -154,6 +163,10 @@ local html = [==[
             -webkit-user-select: none;
         }
 
+        #controls {
+            margin: 1em 0 0 0;
+        }
+
     </style>
 </head>
 <body>
@@ -165,6 +178,11 @@ local html = [==[
     <div class="main">
         <div id="results-header">
             History
+        </div>
+        <div id="controls">
+            <input type="button" id="clear-all" value="Clear All History...">
+            <input type="button" id="clear-results" value="Clear All Results">
+            <input type="button" id="clear-selected" value="Clear All Selected">
         </div>
         <div id="results">
         </div>
@@ -195,6 +213,7 @@ $(document).ready(function () {
     function make_history_item(h) {
         // Create element
         var $e = $(entry_html);
+        $e.attr("id", h.id);
         // Update date/time
         $e.find(".time").text(h.time);
         // Set title & href
@@ -207,20 +226,30 @@ $(document).ready(function () {
         return $e;
     };
 
-    var $search = $('#search').eq(0);
-    var $results_header = $("#results-header").eq(0);
-    var $results = $('#results').eq(0);
+    var $search = $('#search').eq(0),
+        $results = $('#results').eq(0),
+        $results_header = $("#results-header").eq(0),
+        $clear_all = $("#clear-all").eq(0),
+        $clear_results = $("#clear-results").eq(0),
+        $clear_selected = $("#clear-selected").eq(0);
 
-    function do_search(query, limit) {
+    function do_search(query) {
         $results_header.text(query && "Showing results for \"" +
             query + "\"" || "History");
 
-        var rows = history_search({ query: query, limit: limit || 100 });
+        $clear_all.attr("disabled", !!query);
+        $clear_results.attr("disabled", !query);
+        $clear_selected.attr("disabled", true);
+
+        var rows = history_search({ query: query, limit: 100 });
 
         $results.empty();
 
-        if (!rows.length)
+        if (!rows.length) {
+            $clear_results.attr("disabled", true);
+            $clear_all.attr("disabled", true);
             return;
+        }
 
         var last_date, last_time = 0;
         var $group;
@@ -238,7 +267,7 @@ $(document).ready(function () {
                 $results.append($("<h3/>").addClass("day").text(h.date));
                 $group = $("<ol/>").addClass("day-results");
 
-            // Create another <ol> group if items more than an hour apart
+            // Create another group if items more than an hour apart
             } else if ((last_time - h.last_visit) > 3600) {
                 $results.append($group);
                 $group = $("<ol/>").addClass("day-results");
@@ -265,9 +294,58 @@ $(document).ready(function () {
     });
 
     // Auto search history by domain when clicking on domain
-    $results.on("click", ".entry .domain", function (e) {
+    $results.on("click", ".entry .domain a", function (e) {
         $search.val($(this).text());
         $search.submit();
+    });
+
+    $results.on("click", ".entry", function (e) {
+        var $e = $(this);
+        if ($e.hasClass("selected")) {
+            $(this).removeClass("selected");
+            if ($results.find(".selected").length === 0)
+                $clear_selected.attr("disabled", true);
+        } else {
+            $(this).addClass("selected");
+            $clear_selected.attr("disabled", false);
+        }
+
+    });
+
+    $clear_all.click(function () {
+        if (confirm("Clear all browsing history?")) {
+            history_clear_all();
+            $results.fadeOut("fast", function () {
+                $results.empty();
+                $results.show();
+                $search_form.submit();
+            });
+            $clear_all.blur();
+        }
+    });
+
+    function clear_elems($elems) {
+        var ids = [], last_index = $elems.length - 1;
+        $elems.each(function (index) {
+            var $e = $(this);
+            ids.push($e.attr("id"));
+            if (index == last_index)
+                $e.fadeOut("fast", function () { $search_form.submit() });
+            else
+                $e.fadeOut("fast");
+            if (ids.length)
+                history_clear_list(ids);
+        });
+    };
+
+    $clear_results.click(function () {
+        clear_elems($results.find(".entry"));
+        $clear_results.blur();
+    });
+
+    $clear_selected.click(function () {
+        clear_elems($results.find(".selected"));
+        $clear_selected.blur();
     });
 
     function parse_frag_query() {
@@ -325,6 +403,18 @@ export_funcs = {
         end
 
         return rows
+    end,
+
+    history_clear_all = function ()
+        history.db:exec [[ DELETE FROM history ]]
+    end,
+
+    history_clear_list = function (ids)
+        if not ids or #ids == 0 then return end
+        local marks = {}
+        for i=1,#ids do marks[i] = "?" end
+        history.db:exec("DELETE FROM history WHERE id IN ("
+            .. table.concat(marks, ",") .. " )", ids)
     end,
 }
 
