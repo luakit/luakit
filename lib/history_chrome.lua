@@ -167,6 +167,28 @@ local html = [==[
             margin: 1em 0 0 0;
         }
 
+        #nav-buttons {
+            display: -webkit-box;
+            margin: 2em 0 2em 0.5em;
+        }
+
+        #nav-buttons a {
+            font-size: 1.2em;
+            display: block;
+            padding: 0.5em 1em;
+            margin-left: 0.5em;
+            background-color: #eee;
+            border: 1px solid #eee;
+            -webkit-user-select: none;
+            cursor: pointer;
+            text-decoration: none;
+            color: #444;
+        }
+
+        #nav-buttons a:hover {
+            border: 1px solid #aaa;
+        }
+
     </style>
 </head>
 <body>
@@ -186,6 +208,10 @@ local html = [==[
         </div>
         <div id="results">
         </div>
+        <div id="nav-buttons">
+            <a id="nav-prev" href>prev</a>
+            <a id="nav-next" href>next</a>
+        </div>
     </div>
 
     <div id="templates">
@@ -203,6 +229,8 @@ local html = [==[
 
 local main_js = [=[
 $(document).ready(function () {
+
+    var limit = 100, page = 1, results_len = 0;
 
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -231,9 +259,47 @@ $(document).ready(function () {
         $results_header = $("#results-header").eq(0),
         $clear_all = $("#clear-all").eq(0),
         $clear_results = $("#clear-results").eq(0),
-        $clear_selected = $("#clear-selected").eq(0);
+        $clear_selected = $("#clear-selected").eq(0),
+        $next = $("#nav-next").eq(0),
+        $prev = $("#nav-prev").eq(0);
+
+    function update_frag(query) {
+        if (limit !== 100 || page > 1)
+            document.location.hash = (
+                encodeURIComponent(query ? query : "") + "/"
+                + (limit === 100 ? "" : limit + ",") + page);
+        else
+            document.location.hash = (
+                query ? encodeURIComponent(query) : "");
+    }
+
+    function update_buttons(query) {
+        var uri = ("#" + encodeURIComponent(query) + "/" +
+            (limit === 100 ? "" : limit + ","));
+
+        if (page > 1) {
+            $prev.show();
+            $prev.attr("href", uri + (page - 1));
+        } else {
+            $prev.hide();
+            $next.attr("href", document.location.hash);
+        }
+
+        if (results_len == limit) {
+            $next.show();
+            $next.attr("href", uri + (page + 1));
+        } else {
+            $next.hide();
+            $next.attr("href", document.location.hash);
+        }
+
+    }
 
     function do_search(query) {
+        // Detect blank query
+        if (query && /^\s*$/.test(query))
+            query = null;
+
         $results_header.text(query && "Showing results for \"" +
             query + "\"" || "History");
 
@@ -241,11 +307,15 @@ $(document).ready(function () {
         $clear_results.attr("disabled", !query);
         $clear_selected.attr("disabled", true);
 
-        var rows = history_search({ query: query, limit: 100 });
+        var rows = history_search({ query: query, limit: limit, page: page });
 
         $results.empty();
 
+        // Used to trigger hiding of next nav button when results_len < limit
+        results_len = rows.length ? rows.length : 0;
+
         if (!rows.length) {
+            results_len = 0;
             $clear_results.attr("disabled", true);
             $clear_all.attr("disabled", true);
             return;
@@ -278,19 +348,19 @@ $(document).ready(function () {
         }
         $results.append($group);
 
-        document.location.hash = encodeURIComponent(query && query || "");
+        update_frag(query);
+        update_buttons(query);
     }
 
     var $search_form = $('#search-form').eq(0);
 
     $search_form.submit(function (e) {
         e.preventDefault();
-        // Unfocus search box
         $search.blur();
-        reset_mode(); // luakit mode
-        // Display results
-        var query = $search.val();
-        do_search(query !== "" && query || null);
+        reset_mode();
+        // We are starting a new query, show page 1
+        page = 1;
+        do_search($search.val());
     });
 
     // Auto search history by domain when clicking on domain
@@ -309,7 +379,6 @@ $(document).ready(function () {
             $(this).addClass("selected");
             $clear_selected.attr("disabled", false);
         }
-
     });
 
     $clear_all.click(function () {
@@ -348,22 +417,38 @@ $(document).ready(function () {
         $clear_selected.blur();
     });
 
-    function parse_frag_query() {
-        return decodeURIComponent(document.location.hash.substr(1));
-    };
-
-    $search.val(parse_frag_query());
-    $search_form.submit();
+    function parse_frag() {
+        var frag = document.location.hash.substr(1);
+        var m = /\/(\d+),(\d+)$/.exec(frag) || /\/(\d+)$/.exec(frag);
+        return {
+            limit: m && m.length == 3 ? parseInt(m[1]) : 100,
+            page: m ? parseInt(m[m.length - 1]) : 1,
+            query: decodeURIComponent(
+                m ? frag.substr(0, frag.length - m[0].length) : frag)
+        }
+    }
 
     $(window).on("hashchange", function () {
-        var hash = parse_frag_query();
+        var frag = parse_frag();
 
-        if ($search.val() === hash)
+        if ($search.val() === frag.query && limit === frag.limit
+            && page === frag.page)
             return;
 
-        $search.val(hash);
-        $search_form.submit();
+        limit = frag.limit;
+        page = frag.page;
+        $search.val(frag.query);
+        do_search(frag.query);
     });
+
+    // Get initial query, limit & page num from URI fragment
+    var frag = parse_frag();
+    limit = frag.limit;
+    page = frag.page;
+    $search.val(frag.query);
+
+    // Show initial search results
+    do_search(frag.query);
 });
 
 ]=]
@@ -392,7 +477,7 @@ export_funcs = {
         table.insert(sql, string.format("ORDER BY last_visit DESC "
             .. "LIMIT ?%d OFFSET ?%d)", argc, argc+1))
         table.insert(args, opts.limit or -1)
-        table.insert(args, opts.offset or 0)
+        table.insert(args, (opts.limit and opts.limit * (opts.page - 1)) or 0)
 
         local rows = history.db:exec(table.concat(sql, " "), args)
 
