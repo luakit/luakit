@@ -274,7 +274,7 @@ $(document).ready(function () {
     }
 
     function update_buttons(query) {
-        var uri = ("#" + encodeURIComponent(query) + "/" +
+        var uri = ("#" + encodeURIComponent(query ? query : "") + "/" +
             (limit === 100 ? "" : limit + ","));
 
         if (page > 1) {
@@ -282,7 +282,7 @@ $(document).ready(function () {
             $prev.attr("href", uri + (page - 1));
         } else {
             $prev.hide();
-            $next.attr("href", document.location.hash);
+            $prev.attr("href", uri + page);
         }
 
         if (results_len == limit) {
@@ -290,7 +290,7 @@ $(document).ready(function () {
             $next.attr("href", uri + (page + 1));
         } else {
             $next.hide();
-            $next.attr("href", document.location.hash);
+            $next.attr("href", uri + page);
         }
 
     }
@@ -299,6 +299,8 @@ $(document).ready(function () {
         // Detect blank query
         if (query && /^\s*$/.test(query))
             query = null;
+
+        update_frag(query);
 
         $results_header.text(query && "Showing results for \"" +
             query + "\"" || "History");
@@ -316,6 +318,7 @@ $(document).ready(function () {
 
         if (!rows.length) {
             results_len = 0;
+            update_buttons(query);
             $clear_results.attr("disabled", true);
             $clear_all.attr("disabled", true);
             return;
@@ -348,7 +351,6 @@ $(document).ready(function () {
         }
         $results.append($group);
 
-        update_frag(query);
         update_buttons(query);
     }
 
