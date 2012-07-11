@@ -2,6 +2,7 @@ local new_mode = new_mode
 local debug = debug
 local add_binds = add_binds
 local print = print
+local math = math
 local lousy = require "lousy"
 local ipairs = ipairs
 local pairs = pairs
@@ -19,13 +20,13 @@ local capi = {
 module("follow")
 
 follow_js = [=[
-window.luakit_follow = (function () {
-    // Secret squirrel data/functions
-    var priv = { api: window.luakit_follow_api };
-    delete window.luakit_follow_api;
+window.luakit_follow = (function (window, document) {
+    // Secret squirrel data
+    var priv = {};
 
-    // Launch callback function asynchronously
-    function async(func) { return setTimeout(func, 1); };
+    // Prevent other scripts using the luakit_follow_api function (I hope)
+    var api = window.luakit_follow_api;
+    delete window.luakit_follow_api;
 
     // Unlink element from DOM (and return it)
     function unlink(element) {
@@ -56,59 +57,46 @@ window.luakit_follow = (function () {
         return overlay;
     }
 
-    function Hint(element, overlay, scroll_x, scroll_y) {
-        this.element = element;
-        this.tag = element.tagName.toLowerCase();
-
-        var rect0 = element.getClientRects()[0];
-
-        // Create hint overlay
-        var o = document.createElement("span");
-        o.className = "follow_hint_overlay follow_hint_overlay_" + this.tag;
-        var style = o.style;
-        style.left = (scroll_x + rect0.left) + "px";
-        style.top = (scroll_y + rect0.top) + "px";
-        style.width = ( rect0.right - rect0.left ) + "px";
-        style.height = ( rect0.bottom - rect0.top ) + "px";
-
-        // Create hint span
-        var l = document.createElement("span");
-        l.className = "follow_hint_label follow_hint_label_" + this.tag;
-        var style = l.style;
-        style.left = Math.max(scroll_x, (scroll_x + rect0.left - 5)) + "px";
-        style.top = Math.max(scroll_y, (scroll_y + rect0.top - 5)) + "px";
-        l.innerHTML = "asdf";
-
-        this.overlay = o;
-        this.label = l;
-
-        overlay.appendChild(o);
-        overlay.appendChild(l);
+    function Hint(arr, label) {
+        this.element = arr[0];
+        this.left = arr[1];
+        this.top = arr[2];
+        this.right = arr[3];
+        this.bottom = arr[4];
+        this.label = label;
+        this.tag = this.element.tagName.toLowerCase();
+        if (this.tag === "input" || this.tag === "select")
+            this.text = this.element.value;
+        else
+            this.text = this.element.textContent;
     }
 
-    function make_hints(elements, overlay) {
-        var hints = [];
+    Hint.prototype.make_html = function (scroll_x, scroll_y) {
+        // Check if already generated
+        if (this.html)
+            return this.html;
 
-        var scroll_x = document.defaultView.scrollX,
-            scroll_y = document.defaultView.scrollY;
+        var left = scroll_x + this.left, top = scroll_y + this.top;
 
-        var len = elements.length;
-        for (var i = 0; i < len; i++)
-            hints.push(new Hint(elements[i], overlay, scroll_x, scroll_y));
+        this.html = ["<span class='follow_hint_overlay follow_hint_overlay_",
+            this.tag, "' style='left:", left, "px; top:", top, "px; width:",
+            (this.right - this.left), "px; height:", (this.bottom - this.top),
+            "px;'></span><span class='follow_hint_label follow_hint_label_",
+            this.tag, "' style='left:", Math.max(scroll_x, left - 10),
+            "px; top:", Math.max(scroll_y, top - 10), "px;'>", this.label,
+            "</span>"].join("");
 
-        return hints;
+        return this.html;
     }
 
     function eval_selector(selector) {
-        // Get viewport dimensions
         var win_h = window.innerHeight,
             win_w = window.innerWidth;
 
         var elements = [];
-
         var results = document.querySelectorAll(selector);
-        var len = results.length;
 
+        var len = results.length;
         for (var i = 0; i < len; i++) {
             var e = results[i];
             var r = e.getBoundingClientRect();
@@ -119,19 +107,55 @@ window.luakit_follow = (function () {
                 || !e.getClientRects()[0])
                 continue;
 
-            elements.push(e);
+            elements.push([e, r.left, r.top, r.right, r.bottom]);
         }
 
-        // Sort left to right
-        elements.sort(function (a, b) {
-            return a.getClientRects()[0].left - b.getClientRects()[0].left;
-        });
-        // Sort top to bottom
-        elements.sort(function (a, b) {
-            return a.getClientRects()[0].top - b.getClientRects()[0].top;
-        });
+        // Sort elements top to bottom left to right
+        elements.sort(function (a, b) { return a[1] - b[1]; });
+        elements.sort(function (a, b) { return a[2] - b[2]; });
 
         return elements;
+    }
+
+    function show_hints(hints) {
+        var len = hints.length, html = [], overlay = priv.overlay;
+
+        for (var i = 0; i < len; i++)
+            html.push(hints[i].html);
+
+        overlay.style.display = "none";
+        overlay.innerHTML = html.join("");
+        overlay.style.display = "inline";
+    }
+
+    function make_hints(elements, labels, overlay) {
+        var hints = [], len = elements.length,
+            scroll_x = document.defaultView.scrollX,
+            scroll_y = document.defaultView.scrollY;
+
+        for (var i = 0; i < len; i++) {
+            var hint = new Hint(elements[i], labels[i]);
+            hint.make_html(scroll_x, scroll_y);
+            hints.push(hint);
+        }
+
+        return hints;
+    }
+
+    function init() {
+        priv.mode = api("mode-options");
+        priv.elements = eval_selector(priv.mode.selector);
+        return priv.elements.length;
+    }
+
+    function show(labels) {
+        priv.overlay = create_overlay("luakit_follow_overlay");
+        priv.stylesheet = create_stylesheet("luakit_follow_stylesheet",
+            priv.mode.css);
+
+        priv.hints = make_hints(priv.elements, labels.split(" "));
+
+        show_hints(priv.hints);
     }
 
     function cleanup() {
@@ -144,35 +168,38 @@ window.luakit_follow = (function () {
         delete priv.hints;
     }
 
-    function init() {
-        var api = priv.api;
+    function strneq(a, b, n) {
+        return !!(a && b && a.substring(0, n) == b.substring(0, n));
+    }
 
-        // Get follow mode options
-        var mode = api("mode-options");
+    function filter(pat) {
+        var last = priv.last_pat;
+        if (last === pat) return;
+        var re = new RegExp(pat);
 
-        // Find all matching elements for given follow mode selector
-        var elements = eval_selector(mode.selector);
+        var hints = last && strneq(last, pat, last.length) ?
+            priv.filtered_hints : priv.hints;
 
-        if (elements.length === 0)
-            return 0;
+        hints = hints.filter(function (hint) {
+            return re.test(hint.label) || re.test(hint.text);
+        });
 
-        priv.stylesheet = create_stylesheet(
-            "luakit_follow_stylesheet", mode.css);
+        // Save info for next call
+        priv.last_pat = pat;
+        priv.filtered_hints = hints;
 
-        priv.overlay = create_overlay("luakit_follow_overlay");
+        show_hints(hints);
 
-        priv.hints = make_hints(elements, priv.overlay);
-
-        priv.overlay.style.display = "inline";
-
-        return priv.hints.length;
+        return hints.length;
     }
 
     return {
         init: init,
-        cleanup: cleanup
+        cleanup: cleanup,
+        show: show,
+        filter: filter,
     };
-})();
+})(window, document);
 window.luakit_follow.init();
 ]=]
 
@@ -189,7 +216,7 @@ init_js = [=[
     if (window.luakit_follow)
         return window.luakit_follow.init();
 
-    return "ready"
+    return "first-run"
 })()
 ]=]
 
@@ -207,14 +234,37 @@ local function count_matches(frames)
     return n
 end
 
-local function show_labels(state, count)
-    local labels, i = gen_labels(count), 1
-    local frames = state.frames
-    for _, f in ipairs(frames) do
-        local d = frames[f]
-        print(f, table.concat(labels, ",", i, i + d.count - 1))
-        i = i + d.count
+-- Calculates the minimum number of characters needed in a hint given a
+-- charset of a certain length (I.e. the base)
+local function max_hint_len(size, base)
+    local floor, len = math.floor, 0
+    while size > 0 do size, len = floor(size / base), len + 1 end
+    return len
+end
+
+--- Style that uses a given set of characters for the hint labels and
+-- does not perform text matching against the page elements.
+--
+-- @param charset A string of characters to use for the hint labels.
+function charset(charset, size)
+    local floor, sub = math.floor, string.sub
+    local insert, concat = table.insert, table.concat
+
+    local base = #charset
+    local digits = max_hint_len(size, base)
+    local labels, blanks = {}, {}
+    for n = 1, digits do
+        insert(blanks, sub(charset, 1, 1))
     end
+    for n = 1, size do
+        local t, d = {}
+        repeat
+            d, n = (n % base) + 1, floor(n / base)
+            insert(t, 1, sub(charset, d, d))
+        until n == 0
+        insert(labels, concat(blanks, "", #t + 1) .. concat(t, ""))
+    end
+    return labels
 end
 
 local function api(w, frame, action, ...)
@@ -228,7 +278,7 @@ end
 
 new_mode("follow", {
     enter = function (w)
-        local view, data = w.view, {}
+        local view = w.view
         local all_frames, frames = view.frames, {}
 
         local mode = w.follow_mode
@@ -242,7 +292,7 @@ new_mode("follow", {
             local count, err = view:eval_js(init_js, opts)
             assert(not err, err)
 
-            if count == "ready" then
+            if count == "first-run" then
                 view:register_function("luakit_follow_api", function (...)
                     return api(w, f, ...)
                 end, f)
@@ -252,31 +302,62 @@ new_mode("follow", {
             end
 
             if type(count) == "number" and count > 0 then
-                frames[f] = { count = count }
-                table.insert(frames, f)
+                table.insert(frames, { frame = f, count = count })
                 total_count = total_count + count
             end
         end
 
         if #frames == 0 then
+            print("No frames")
             w:set_mode()
             return
         end
 
         if total_count == 0 then
-            w:notify("No matches...")
+            print("no matches")
             w:set_mode()
             return
         end
 
-        print("TOTAL TIME", capi.luakit.time() - state.time)
+        -- Make all the labels
+        local labels = charset("0123456789", total_count)
+
+        -- Give each frame its hint labels
+        local i = 1
+        for _, d in ipairs(frames) do
+            view:eval_js(string.format("window.luakit_follow.show(%q)",
+                table.concat(labels, " ", i, i + d.count - 1)),
+                { frame = d.frame, no_return = true })
+            i = i + d.count
+        end
+
+        print("HINT CREATION TIME", capi.luakit.time() - state.time)
+
+        w:set_prompt("Follow:")
+        w:set_input("")
+    end,
+
+    changed = function (w, text)
+        local a = capi.luakit.time()
+        local state = w.follow_state or {}
+        local frames, view = state.frames, state.view
+        local active_count = 0
+
+        for _, d in ipairs(frames) do
+            local filter = string.format("luakit_follow.filter(%q)", text)
+            local count, err = view:eval_js(filter, { frame = d.frame })
+            if type(count) == "number" then
+                active_count = active_count + count
+            end
+        end
+        print("FILTER TIME", capi.luakit.time() - a, "ACTIVE HINTS", active_count)
     end,
 
     leave = function (w)
         local state = w.follow_state
         local view = state.view
-        for _, f in ipairs(state.frames) do
-            view:eval_js(cleanup_js, { frame = f })
+        for _, d in ipairs(state.frames) do
+            view:eval_js(cleanup_js, { frame = d.frame })
         end
     end,
 })
