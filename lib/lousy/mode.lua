@@ -6,8 +6,6 @@
 --- Grab environment we need
 local setmetatable = setmetatable
 local type = type
-local io = io
-local debug = debug
 local error = error
 
 --- Mode setting and getting operations for objects.
@@ -28,7 +26,9 @@ setmetatable(default_modes, { __mode = "k" })
 -- An object is considered mode-able if it has an "emit_signal" method.
 -- @param object The object to check.
 function is_modeable(object)
-    return (object and object.emit_signal and type(object.emit_signal) == "function")
+    local t = type(object)
+    return ((t == "table" or t == "userdata" or t == "lightuserdata")
+        and type(object.emit_signal) == "function")
 end
 
 --- Get the current mode for a given object.
@@ -46,25 +46,15 @@ end
 -- @param object A mode-able object.
 -- @param mode A mode name (I.e. "insert", "command", ...)
 -- @return The newly set mode.
-function set(object, mode)
+function set(object, mode, ...)
     if not is_modeable(object) then
         return error("attempt to set mode on non-modeable object")
     end
     local mode = mode or default_modes[object] or default_mode
     current_modes[object] = mode
     -- Raises a mode change signal on the object.
-    object:emit_signal("mode-changed", mode)
+    object:emit_signal("mode-changed", mode, ...)
     return mode
-end
-
---- Set the default mode for a given object.
--- @param object A mode-able object.
--- @param mode A mode name (I.e. "insert", "command", ...)
-function set_default(object, mode)
-    if not is_modeable(object) then
-        return error("attempt to set default mode on non-modeable object")
-    end
-    default_modes[object] = mode
 end
 
 setmetatable(_M, { __call = function(_, ...) return set(...) end })
