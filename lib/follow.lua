@@ -77,7 +77,8 @@ window.luakit_follow = (function (window, document) {
                continue;
 
             hints[j++] = { element: e, tag: e.tagName,
-                left: left, top: top, bottom: bottom, right: right,
+                left: left, top: top,
+                width: right - left, height: bottom - top,
                 text: e.value || e.textContent };
         }
 
@@ -110,9 +111,8 @@ window.luakit_follow = (function (window, document) {
 
             h.html = "<span class='hint_overlay hint_overlay_"
                 + tag + "' style='left:" + h_left + "px; top:" + h_top
-                + "px; width:" + (h.right - left) + "px; height:"
-                + (h.bottom - top) + "px;'></span>"
-                + "<span class='hint_label hint_label_" + tag
+                + "px; width:" + h.width + "px; height:" + h.height
+                + "px;'></span>" + "<span class='hint_label hint_label_" + tag
                 + "' style='left:" + l_left + "px; top:" + l_top + "px;'>"
                 + label + "</span>\n";
 
