@@ -143,7 +143,7 @@ window.luakit_follow = (function (window, document) {
             hints = eval_selector_make_hints(mode.selector);
         state.mode = mode;
         state.hints = hints;
-        state.filtered_hints = hints;
+        state.filtered = hints;
         return hints.length;
     }
 
@@ -156,27 +156,30 @@ window.luakit_follow = (function (window, document) {
     }
 
     function focus(step) {
-        var hints = state.filtered_hints, last = state.focused, i = 0;
+        var hints = state.filtered, last = state.focused, i = 0;
 
         unfocus();
 
+        // Nothing to focus in this frame
         if (hints.length === 0)
             return "next-frame";
 
         var labels = document.querySelectorAll("#luakit_follow_overlay .hint_overlay"),
             len = labels.length;
 
+        // Focus first hint in this frame
         if (step === "first")
             i = 0
 
+        // Focus last hint in this frame
         else if (step === "last")
             i = len - 1;
 
-        // Focus next element
+        // Focus hints[current + step]
         else if (last)
             i = last.index + step;
 
-        // Move to next frame
+        // Out of bounds check = check next frame
         if (i >= len || i < 0)
             return "next-frame";
 
@@ -193,10 +196,13 @@ window.luakit_follow = (function (window, document) {
             head = document.getElementsByTagName('head')[0],
             style = create_stylesheet("luakit_follow_stylesheet", rules);
 
+        // Create and append follow stylesheet to document's <head>
         head.appendChild(style);
         state.stylesheet = style;
 
-        show_hints(assign_labels_make_html(state.hints, labels));
+        // Give all hints their labels and render hints
+        var html = assign_labels_make_html(state.hints, labels);
+        show_hints(html);
     }
 
     function cleanup() {
@@ -207,53 +213,77 @@ window.luakit_follow = (function (window, document) {
         state = {};
     }
 
-    function filter(pat) {
-        var last = state.last_pat;
+    function filter(hint_pat, text_pat) {
+        var hpat = hint_pat !== "" && hint_pat,
+            tpat = text_pat !== "" && text_pat, i = 0, html = "";
 
-        if (last === pat)
-            return state.filtered_hints.length;
-
-        var hints = last && pat.substring(0, last.length) === last ?
-            state.filtered_hints : state.hints;
-
-        var len = hints.length, i = 0, html = "";
-
-        // Render all hints
-        if (pat === "") {
+        // No filter patterns given, render all hints
+        if (!hpat && !tpat) {
+            var hints = state.hints, len = hints.length;
             for (; i < len;)
                 html += hints[i++].html;
+            show_hints(html);
+            delete state.last_hpat;
+            delete state.last_tpat;
+            state.filtered = hints;
+            return len;
+        }
 
-        // Filter hints by pattern
-        } else if (len > 0) {
-            var label_re = new RegExp("^" + pat), text_re = new RegExp(pat),
-                matches = [], j = 0, h;
+        // Check if we can cut corners by checking last filter patterns
+        var last_hpat = state.last_hpat, last_tpat = state.last_tpat, hints;
+        if (last_hpat || last_tpat) {
+            // No action if new patterns equal last patterns
+            if (last_hpat === hpat && last_tpat === tpat)
+                return state.filtered.length;
 
-            for (; i < len;) {
-                h = hints[i++];
-                if (label_re.test(h.label) || text_re.test(h.text)) {
-                    matches[j++] = h;
-                    html += h.html;
+            // Check type hasn't changed
+            if (!!hpat === !!last_hpat && !!tpat === !!last_tpat) {
+                // If new patterns are substrings of last patterns then we can
+                // filter against the results of the last filter call
+                if ((!hpat ||
+                    hpat.substring(0, last_hpat.length) === last_hpat) &&
+                    (!tpat ||
+                    tpat.substring(0, last_tpat.length) === last_tpat)) {
+                    hints = state.filtered;
                 }
             }
-            hints = matches;
+        }
+
+        // Patterns are different or it's our first run
+        if (!hints)
+            hints = state.hints;
+
+        var hint_re = hpat && new RegExp(hpat),
+            text_re = tpat && new RegExp(tpat),
+            matches = [], len = hints.length, j = 0, h;
+
+        // Filter hints
+        for (; i < len;) {
+            h = hints[i++];
+            if ((hint_re && hint_re.test(h.label)) ||
+                (text_re && text_re.test(h.text))) {
+                matches[j++] = h;
+                html += h.html;
+            }
         }
 
         // Save info for next call
-        state.last_pat = pat;
-        state.filtered_hints = hints;
+        state.last_hpat = hpat;
+        state.last_tpat = tpat;
+        state.filtered = matches;
 
         show_hints(html);
 
-        return hints.length;
+        return matches.length;
     }
 
     function focused_element() {
-        return state.filtered_hints[state.focused.index].element;
+        return state.filtered[state.focused.index].element;
     }
 
     function visible_elements() {
-        var hints = state.filtered_hints, elems = [], i = 0;
-        for (; i < len;)
+        var hints = state.filtered, len = hints.length, elems = [], i = 0;
+        for (; i < len; i++)
             elems[i] = hints[i].element;
         return elems;
     }
@@ -297,7 +327,8 @@ stylesheet = [===[
     background-color: #000088;
     border: 1px dashed #000;
     color: #fff;
-    font: 11px monospace bold;
+    font-size: 10px;
+    font-family: monospace, courier, sans-serif;
     opacity: 0.4;
     position: absolute;
     z-index: 10002;
@@ -344,52 +375,68 @@ local function charset(seq, size)
     return labels
 end
 
--- Follow styles
-styles = {
+-- Different hint label styles
+label_styles = {
     charset = function (seq)
         assert(type(seq) == "string" and #seq > 0, "invalid sequence")
-        return {
-            maker = function (size) return charset(seq, size) end
-        }
+        return function (size) return charset(seq, size) end
     end,
 
     numbers = function ()
-        return {
-            maker = function (size) return charset("0123456789", size) end
-        }
+        return function (size) return charset("0123456789", size) end
     end,
 
-    sort = function (style)
-        local maker = style.maker
-        style.maker = function (size)
-            local labels = maker(size)
+    -- Chainable style: sorts labels
+    sort = function (make_labels)
+        return function (size)
+            local labels = make_labels(size)
             table.sort(labels)
             return labels
         end
-        return style
     end,
 
-    reverse = function (style)
-        local maker = style.maker
-        style.maker = function (size)
+    -- Chainable style: reverses label strings
+    reverse = function (make_labels)
+        return function (size)
             local rawset, rawget, reverse = rawset, rawget, string.reverse
-            local labels = maker(size)
+            local labels = make_labels(size)
             for i = 1, #labels do
                 rawset(labels, i, reverse(rawget(labels, i)))
             end
             return labels
         end
-        return style
-    end,
-
-    no_text_match = function (style)
-        style.no_text_match = true
-        return style
     end,
 }
 
 -- Default follow style
-style = styles.sort(styles.reverse(styles.numbers()))
+local s = label_styles
+label_maker = s.sort(s.reverse(s.numbers()))
+
+-- JavaScript regex escape function
+local function regex_escape(s)
+     local s = string.gsub(s, "([.?*+^$[%]\\(){}|-])", "\\%1")
+     return s
+end
+
+-- Different hint matching styles
+pattern_styles = {
+    -- String match hint label & regex match text
+    match_label_re_text = function (text)
+        return #text > 0 and "^"..regex_escape(text) or "", text
+    end,
+
+    -- JavaScript regular expression match hint text
+    re_match_text = function (text)
+        return "", text
+    end,
+
+    match_label = function (text)
+        return #text > 0 and "^"..regex_escape(text) or "", ""
+    end,
+}
+
+-- Default pattern style
+pattern_maker = pattern_styles.match_label_re_text
 
 local function api(w, frame, action, ...)
     local mode = w.follow_state.mode
@@ -461,16 +508,59 @@ local function follow(w)
     if mode.func then mode.func(ret) end
 end
 
+local eval_all_format = [=[
+(function (elems) {
+    var evaluator = (%s);
+    var ret = [], len = elems.length, i = 0, j = 0, val;
+    for (; i < len;)
+        if (val = evaluator(elems[i++]))
+            ret[j++] = val;
+    return ret;
+})(window.luakit_follow.visible_elements())
+]=]
+
+local function follow_all_hints(w)
+    local state = w.follow_state
+    local view, mode = state.view, state.mode
+
+    assert(type(state.focus_frame) == "number", "no frame focused")
+    local d = assert(state.frames[state.focus_frame],
+        "invalid focus frame index")
+
+    local evaluator = string.format(eval_all_format, mode.evaluator)
+    local ret, err = view:eval_js(evaluator, d)
+    assert(not err, err)
+
+    -- Leave follow mode
+    w:set_mode()
+
+    -- Call mode callback to deal with evaluator return
+    if mode.func then
+        for _, v in ipairs(ret) do
+            mode.func(v)
+        end
+    end
+end
+
 new_mode("follow", {
     enter = function (w, mode)
         assert(type(mode) == "table", "invalid follow mode")
+        -- Check users label_maker function (or valid default)
+        local label_maker = mode.label_maker or _M.label_maker
+        assert(type(label_maker) == "function",
+            "invalid label_maker function")
+        -- Check users pattern_maker function (or valid default)
+        assert(type(mode.pattern_maker or _M.pattern_maker) == "function",
+            "invalid pattern_maker function")
+
+        assert(type(mode.evaluator) == "string", "missing mode evaluator")
+        assert(type(mode.selector) == "string", "missing mode selector")
+
         local view = w.view
         local all_frames, frames = view.frames, {}
-
         local state = { mode = mode, view = view, frames = frames,
             ready_count = 0, time = capi.luakit.time() }
         w.follow_state = state
-
 
         local size = 0
         for _, f in ipairs(all_frames) do
@@ -494,17 +584,15 @@ new_mode("follow", {
             end
         end
 
-
         -- No hintable items found
         if size == 0 then
-            print("NOT HINTS GOUND")
             w:set_mode()
             w:notify("No matches...")
             return
         end
 
         -- Make all the labels
-        local labels = _M.style.maker(size)
+        local labels = label_maker(size)
 
         -- Give each frame its hint labels
         local offset = 0
@@ -516,6 +604,8 @@ new_mode("follow", {
             offset = offset + d.count
         end
 
+        focus(w, 0)
+
         if mode.prompt then
             w:set_prompt(string.format("Follow (%s):", mode.prompt))
         else
@@ -526,16 +616,20 @@ new_mode("follow", {
     end,
 
     changed = function (w, text)
-        local a = capi.luakit.time()
         local state = w.follow_state or {}
-        local frames, view = state.frames, state.view
-        local active_count, active_frame = 0
+        local frames, view, mode = state.frames, state.view, state.mode
+        local active_count = 0
+
+        -- Make the hint label/text matching patterns
+        local pattern_maker = mode.pattern_maker or _M.pattern_maker
+        local hint_pat, text_pat = pattern_maker(text)
+
+        local filter = string.format("luakit_follow.filter(%q, %q)",
+            hint_pat or "", text_pat or "")
 
         for _, d in ipairs(frames) do
-            local filter = string.format("luakit_follow.filter(%q)", text)
             local count, err = assert(view:eval_js(filter, d))
             if type(count) == "number" and count > 0 then
-                active_frame = d
                 active_count = active_count + count
             end
         end
@@ -562,9 +656,10 @@ new_mode("follow", {
 
 local key = lousy.bind.key
 add_binds("follow", {
-    key({},          "Tab",    function (w) focus(w,  1)    end),
-    key({"Shift"},   "Tab",    function (w) focus(w, -1)    end),
-    key({},          "Return", function (w) follow(w)       end),
+    key({},          "Tab",    function (w) focus(w,  1)        end),
+    key({"Shift"},   "Tab",    function (w) focus(w, -1)        end),
+    key({},          "Return", function (w) follow(w)           end),
+    key({"Shift"},   "Return", function (w) follow_all_hints(w) end),
 })
 
 selectors = {
@@ -573,6 +668,7 @@ selectors = {
     uri = 'a, area',
     desc = '*[title], img[alt], applet[alt], area[alt], input[alt]',
     image = 'img, input[type=image]',
+    thumbnail = "a img",
 }
 
 evaluators = {
@@ -614,6 +710,10 @@ evaluators = {
 
     src = [=[function (element) {
         return element.src;
+    }]=],
+
+    parent_href = [=[function (element) {
+        return element.parentNode.href;
     }]=]
 }
 
@@ -699,6 +799,30 @@ add_binds("normal", {
             func = function (src)
                 assert(type(src) == "string")
                 w:new_tab(src)
+            end
+        })
+    end),
+
+    -- Open thumbnail link
+    buf("^;x$", function (w)
+        w:set_mode("follow", {
+            prompt = "open image link", selector = s.thumbnail,
+            evaluator = e.parent_href,
+            func = function (uri)
+                assert(type(uri) == "string")
+                w:navigate(uri)
+            end
+        })
+    end),
+
+    -- Open thumbnail link in new tab
+    buf("^;X$", function (w)
+        w:set_mode("follow", {
+            prompt = "tab image link", selector = s.thumbnail,
+            evaluator = e.parent_href,
+            func = function (uri)
+                assert(type(uri) == "string")
+                w:new_tab(uri, false)
             end
         })
     end),

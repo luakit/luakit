@@ -107,13 +107,14 @@ require "downloads_chrome"
 --end)
 
 -- Add vimperator-like link hinting & following
--- (depends on downloads)
 require "follow"
 
--- To use a custom character set for the follow hint labels un-comment and
--- modify the following:
---local s = follow.styles
---follow.style = s.sort(s.reverse(s.charset("asdfqwerzxcv"))) -- I'm a lefty
+-- Use a custom charater set for hint labels
+--local s = follow.label_styles
+--follow.label_maker = s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+
+-- Match only hint labels
+--follow.pattern_maker = follow.pattern_styles.match_label
 
 -- Add command history
 require "cmdhist"
