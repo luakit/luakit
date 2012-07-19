@@ -320,6 +320,7 @@ function webview.new(w)
     local view = widget{type = "webview"}
 
     view.show_scrollbars = false
+    view.enforce_96_dpi = false
 
     -- Call webview init functions
     for k, func in pairs(webview.init_funcs) do

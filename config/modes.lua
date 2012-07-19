@@ -4,17 +4,28 @@
 
 -- Table of modes and their callback hooks
 local modes = {}
+local lousy = require "lousy"
 local join = lousy.util.table.join
+local order = 0
 
 -- Add new mode table (optionally merges with original mode)
-function new_mode(name, mode, replace)
+function new_mode(name, desc, mode, replace)
     assert(string.match(name, "^[%w-_]+$"), "invalid mode name: " .. name)
-    modes[name] = join((not replace and modes[name]) or {},
-        mode, { name = name })
+    -- Detect optional description
+    if type(desc) == "table" then
+        desc, mode, replace = nil, desc, mode
+    end
+    local traceback = debug.traceback("Creation traceback:", 2)
+    order = order + 1
+    modes[name] = join({ order = order, traceback = traceback },
+        (not replace and modes[name]) or {}, mode or {},
+        { name = name, desc = desc })
 end
 
 -- Get mode table
 function get_mode(name) return modes[name] end
+
+function get_modes() return lousy.util.table.clone(modes) end
 
 -- Attach window & input bar signals for mode hooks
 window.init_funcs.modes_setup = function (w)
@@ -73,7 +84,8 @@ local mget = lousy.mode.get
 window.methods.is_mode = function (w, name) return name == mget(w) end
 
 -- Setup normal mode
-new_mode("normal", {
+new_mode("normal", [[When luakit first starts you will find yourself in this
+    mode.]], {
     enter = function (w)
         w:set_prompt()
         w:set_input()
@@ -81,7 +93,9 @@ new_mode("normal", {
 })
 
 -- Setup insert mode
-new_mode("insert", {
+new_mode("insert", [[When clicking on form fields luakit will enter the insert
+    mode which allows you to enter text in form fields without accidentally
+    triggering normal mode bindings.]], {
     enter = function (w)
         w:set_prompt("-- INSERT --")
         w:set_input()
@@ -90,7 +104,8 @@ new_mode("insert", {
     passthrough = true,
 })
 
-new_mode("passthrough", {
+new_mode("passthrough", [[Luakit will pass every key event to the WebView
+    until the user presses Escape.]], {
     enter = function (w)
         w:set_prompt("-- PASS THROUGH --")
         w:set_input()
@@ -104,7 +119,7 @@ new_mode("passthrough", {
 })
 
 -- Setup command mode
-new_mode("command", {
+new_mode("command", [[Enter commands.]], {
     enter = function (w)
         w:set_prompt()
         w:set_input(":")
@@ -128,7 +143,8 @@ new_mode("command", {
     history = {maxlen = 50},
 })
 
-new_mode("lua", {
+new_mode("lua", [[Execute arbitrary Lua commands within the luakit
+    environment.]], {
     enter = function (w)
         w:set_prompt(">")
         w:set_input("")

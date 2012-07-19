@@ -490,8 +490,11 @@ local function follow(w)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
 
-    -- Leave follow mode
-    w:set_mode()
+    if state.persist then
+        w:set_mode("follow", mode)
+    else
+        w:set_mode()
+    end
 
     -- Call mode callback to deal with evaluator return
     if mode.func then mode.func(ret) end
@@ -520,8 +523,11 @@ local function follow_all_hints(w)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
 
-    -- Leave follow mode
-    w:set_mode()
+    if state.persist then
+        w:set_mode("follow", mode)
+    else
+        w:set_mode()
+    end
 
     -- Call mode callback to deal with evaluator return
     if mode.func then
@@ -548,8 +554,10 @@ new_mode("follow", {
         local view = w.view
         local all_frames, frames = view.frames, {}
         local state = { mode = mode, view = view, frames = frames,
-            ready_count = 0, time = capi.luakit.time() }
+            ready_count = 0, time = capi.luakit.time(),
+            persist = not not w.follow_persist }
         w.follow_state = state
+        w.follow_persist = false
 
         local size = 0
         for _, f in ipairs(all_frames) do
@@ -652,7 +660,7 @@ add_binds("follow", {
 })
 
 selectors = {
-    normal = 'a, area, textarea, select, input:not([type=hidden]), button',
+    clickable = 'a, area, textarea, select, input:not([type=hidden]), button',
     focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
     uri = 'a, area',
     desc = '*[title], img[alt], applet[alt], area[alt], input[alt]',
@@ -661,7 +669,7 @@ selectors = {
 }
 
 evaluators = {
-    default = [=[function (element) {
+    click = [=[function (element) {
         function click(element) {
             var mouse_event = document.createEvent("MouseEvent");
             mouse_event.initMouseEvent("click", true, true, window,
@@ -709,218 +717,245 @@ evaluators = {
 local s, e = selectors, evaluators
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^f$", function (w)
-        w:set_mode("follow", {
-            selector = s.normal, evaluator = e.default,
-        })
-    end),
-
-    buf("^;;$", function (w)
-        w:set_mode("follow", {
-            prompt = "focus", selector = s.focus, evaluator = e.focus,
-        })
-    end),
+    buf("^f$", [[Start <code>follow</code> mode. Hint all clickable elements
+        (as defined by the <code>follow.selectors.clickable</code>
+        selector) and open links in the current tab.]],
+        function (w)
+            w:set_mode("follow", {
+                selector = s.clickable, evaluator = e.click,
+            })
+        end),
 
     -- Open new tab
-    buf("^F$", function (w)
-        w:set_mode("follow", {
-            prompt = "background tab", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:new_tab(uri, false)
-            end
-        })
-    end),
+    buf("^F$", [[Start <code>follow</code> mode. Hint all links (as defined by
+        the <code>follow.selectors.uri</code> selector) and open links in
+        a new tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "background tab", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:new_tab(uri, false)
+                end
+            })
+        end),
+
+    -- Start extended follow mode
+    buf("^;$", [[Start <code>ex-follow</code> mode. See the
+        <code>ex-follow</code> section for the list of follow modes]],
+        function (w)
+            w:set_mode("ex-follow")
+        end),
+
+    buf("^g;$", [[Start <code>ex-follow</code> mode and stay there until
+        <code>&lt;Escape&gt;</code> is pressed.]],
+        function (w)
+            w:set_mode("ex-follow", true)
+        end),
+})
+
+-- Extended follow mode
+new_mode("ex-follow", {
+    enter = function (w, persist)
+        w.follow_persist = persist
+    end,
+})
+
+add_binds("ex-follow", {
+    key({}, ";", [[Hint all focusable elements (as defined by the
+        <code>follow.selectors.focus</code> selector) and focus the
+        matched element.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "focus", selector = s.focus, evaluator = e.focus,
+            })
+        end),
 
     -- Yank element uri or description into primary selection
-    buf("^;y$", function (w)
-        w:set_mode("follow", {
-            prompt = "yank", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                uri = string.gsub(uri, " ", "%%20")
-                capi.luakit.selection.primary = uri
-                w:notify("Yanked uri: " .. uri)
-            end
-        })
-    end),
+    key({}, "y", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and set the primary
+        selection to the matched elements URI.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "yank", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    uri = string.gsub(uri, " ", "%%20")
+                    capi.luakit.selection.primary = uri
+                    w:notify("Yanked uri: " .. uri, false)
+                end
+            })
+        end),
 
     -- Yank element description
-    buf("^;Y$", function (w)
-        w:set_mode("follow", {
-            prompt = "yank desc", selector = s.desc, evaluator = e.desc,
-            func = function (desc)
-                assert(type(desc) == "string")
-                capi.luakit.selection.primary = desc
-                w:notify("Yanked desc: " .. desc)
-            end
-        })
-    end),
-
-    -- Follow a sequence of <CR> delimited hints in background tabs.
-    buf("^;F$", function (w)
-        w:set_mode("follow", {
-            prompt = "multi-tab", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:new_tab(uri, false)
-                -- Re-enter follow mode with same mode
-                w:set_mode("follow", w.follow_state.mode)
-            end
-        })
-    end),
+    key({}, "Y", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and set the primary
+        selection to the matched elements URI.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "yank desc", selector = s.desc, evaluator = e.desc,
+                func = function (desc)
+                    assert(type(desc) == "string")
+                    capi.luakit.selection.primary = desc
+                    w:notify("Yanked desc: " .. desc)
+                end
+            })
+        end),
 
     -- Open image src
-    buf("^;i$", function (w)
-        w:set_mode("follow", {
-            prompt = "open image", selector = s.image, evaluator = e.src,
-            func = function (src)
-                assert(type(src) == "string")
-                w:navigate(src)
-            end
-        })
-    end),
+    key({}, "i", [[Hint all images (as defined by the
+        <code>follow.selectors.image</code> selector) and open matching
+        image location in the current tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "open image", selector = s.image, evaluator = e.src,
+                func = function (src)
+                    assert(type(src) == "string")
+                    w:navigate(src)
+                end
+            })
+        end),
 
     -- Open image src in new tab
-    buf("^;I$", function (w)
-        w:set_mode("follow", {
-            prompt = "tab image", selector = s.image, evaluator = e.src,
-            func = function (src)
-                assert(type(src) == "string")
-                w:new_tab(src)
-            end
-        })
-    end),
+    key({}, "I", [[Hint all images (as defined by the
+        <code>follow.selectors.image</code> selector) and open matching
+        image location in a new tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "tab image", selector = s.image, evaluator = e.src,
+                func = function (src)
+                    assert(type(src) == "string")
+                    w:new_tab(src)
+                end
+            })
+        end),
 
     -- Open thumbnail link
-    buf("^;x$", function (w)
-        w:set_mode("follow", {
-            prompt = "open image link", selector = s.thumbnail,
-            evaluator = e.parent_href,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:navigate(uri)
-            end
-        })
-    end),
+    key({}, "x", [[Hint all thumbnails (as defined by the
+        <code>follow.selectors.thumbnail</code> selector) and open link
+        in current tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "open image link", selector = s.thumbnail,
+                evaluator = e.parent_href,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:navigate(uri)
+                end
+            })
+        end),
 
     -- Open thumbnail link in new tab
-    buf("^;X$", function (w)
-        w:set_mode("follow", {
-            prompt = "tab image link", selector = s.thumbnail,
-            evaluator = e.parent_href,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:new_tab(uri, false)
-            end
-        })
-    end),
+    key({}, "X", [[Hint all thumbnails (as defined by the
+        <code>follow.selectors.thumbnail</code> selector) and open link
+        in a new tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "tab image link", selector = s.thumbnail,
+                evaluator = e.parent_href,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:new_tab(uri, false)
+                end
+            })
+        end),
 
     -- Open link
-    buf("^;o$", function (w)
-        w:set_mode("follow", {
-            prompt = "open", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:navigate(uri)
-            end
-        })
-    end),
+    key({}, "o", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and open its location
+        in the current tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "open", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:navigate(uri)
+                end
+            })
+        end),
 
     -- Open link in new tab
-    buf("^;t$", function (w)
-        w:set_mode("follow", {
-            prompt = "open tab", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:new_tab(uri)
-            end
-        })
-    end),
+    key({}, "t", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and open its location
+        in a new tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "open tab", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:new_tab(uri)
+                end
+            })
+        end),
 
     -- Open link in background tab
-    buf("^;b$", function (w)
-        w:set_mode("follow", {
-            prompt = "background tab", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:new_tab(uri, false)
-            end
-        })
-    end),
+    key({}, "b", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and open its location
+        in a background tab.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "background tab",
+                selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:new_tab(uri, false)
+                end
+            })
+        end),
 
     -- Open link in new window
-    buf("^;w$", function (w)
-        w:set_mode("follow", {
-            prompt = "open window", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                window.new{uri}
-            end
-        })
-    end),
+    key({}, "w", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and open its location
+        in a new window.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = "open window", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    window.new{uri}
+                end
+            })
+        end),
 
     -- Set command `:open <uri>`
-    buf("^;O$", function (w,b,m)
-        w:set_mode("follow", {
-            prompt = ":open", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:enter_cmd(":open " .. uri)
-            end
-        })
-    end),
+    key({}, "O", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and generate a
+        <code>:open</code> command with the elements URI.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = ":open", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:enter_cmd(":open " .. uri)
+                end
+            })
+        end),
 
     -- Set command `:tabopen <uri>`
-    buf("^;T$", function (w)
-        w:set_mode("follow", {
-            prompt = ":tabopen", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:enter_cmd(":tabopen " .. uri)
-            end
-        })
-    end),
+    key({}, "T", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and generate a
+        <code>:tabopen</code> command with the elements URI.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = ":tabopen", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:enter_cmd(":tabopen " .. uri)
+                end
+            })
+        end),
 
     -- Set command `:winopen <uri>`
-    buf("^;W$", function (w)
-        w:set_mode("follow", {
-            prompt = ":winopen", selector = s.uri, evaluator = e.uri,
-            func = function (uri)
-                assert(type(uri) == "string")
-                w:enter_cmd(":winopen " .. uri)
-            end
-        })
-    end),
-
---    -- Download uri
---    buf("^;s$", function (w,b,m)
---        w:start_follow(modes.uri, "download", function (uri)
---            downloads.add(uri)
---            return "root-active"
---        end)
---    end),
---
---    -- Download a sequence of <CR> delimited hints
---    buf("^;S$", function (w,b,m)
---        w:start_follow(modes.uri, "multi download", function (uri)
---            downloads.add(uri)
---            w:set_mode("follow") -- re-enter follow mode with same state
---        end)
---    end),
---
---	-- Set command `:qmark <cursor> <uri>`
---    buf("^;M%w$", function (w,b,m)
---        local token = string.match(b, "^;M(.)$")
---        w:start_follow(modes.uri, ":qmark " .. token, function (uri)
---            w:enter_cmd(string.format(":qmark %s %s", token, uri))
---        end)
---    end),
---
---    -- Set command `:bookmark <uri> `
---    buf("^;B$", function (w,b,m)
---        w:start_follow(modes.uri, ":bookmark", function (uri)
---            w:enter_cmd(":bookmark " .. uri .. " ")
---        end)
---    end),
+    key({}, "W", [[Hint all links (as defined by the
+        <code>follow.selectors.uri</code> selector) and generate a
+        <code>:winopen</code> command with the elements URI.]],
+        function (w)
+            w:set_mode("follow", {
+                prompt = ":winopen", selector = s.uri, evaluator = e.uri,
+                func = function (uri)
+                    assert(type(uri) == "string")
+                    w:enter_cmd(":winopen " .. uri)
+                end
+            })
+        end),
 })

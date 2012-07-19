@@ -129,6 +129,8 @@ require "taborder"
 require "history"
 require "history_chrome"
 
+require "introspector"
+
 -- Add command completion
 require "completion"
 
