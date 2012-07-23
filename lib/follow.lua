@@ -31,6 +31,17 @@ window.luakit_follow = (function (window, document) {
     var api = window.luakit_follow_api;
     delete window.luakit_follow_api;
 
+    // Unlink element from DOM (and return it)
+    function unlink(e) {
+        if (typeof e === "string")
+            e = document.getElementById(e);
+
+        if (e) {
+            e.parentNode.removeChild(e);
+            return e;
+        }
+    }
+
     function create_stylesheet(id, rules) {
         var style = document.createElement('style');
         style.id = id;
