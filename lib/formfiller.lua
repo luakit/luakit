@@ -503,19 +503,27 @@ new_mode("formfiller", {
 local key = lousy.bind.key
 add_binds("formfiller", lousy.util.table.join({
     -- use profile
-    key({}, "Return", function (w)
-        local row = w.menu:get()
-        local form = row.form
-        w:set_mode()
-        if apply_form(w, form) then return end
-    end),
+    key({}, "Return", "Select formfiller profile.",
+        function (w)
+            local row = w.menu:get()
+            local form = row.form
+            w:set_mode()
+            if apply_form(w, form) then return end
+        end),
 }, menu_binds))
 
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za$", function (w) add(w)        end),
-    buf("^ze$", function (w) edit()        end),
-    buf("^zl$", function (w) load(w, true) end),
-    buf("^zL$", function (w) load(w)       end),
+    buf("^za$", "Add formfiller form.",
+        function (w) add(w) end),
+
+    buf("^ze$", "Edit formfiller forms for current domain.",
+        function (w) edit() end),
+
+    buf("^zl$", "Load formfiller form (use first profile).",
+        function (w) load(w, true) end),
+
+    buf("^zL$", "Load formfiller form.",
+        function (w) load(w) end),
 })

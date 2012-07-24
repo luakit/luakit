@@ -49,43 +49,58 @@ menu_binds = {
 
 -- Add binds to special mode "all" which adds its binds to all modes.
 add_binds("all", {
-    key({},          "Escape",  function (w) w:set_mode() end),
-    key({"Control"}, "[",       function (w) w:set_mode() end),
+    key({}, "Escape", "Return to `normal` mode.",
+        function (w) w:set_mode() end),
+
+    key({"Control"}, "[", "Return to `normal` mode.",
+        function (w) w:set_mode() end),
 
     -- Mouse bindings
-    but({},     8,  function (w) w:back()     end),
-    but({},     9,  function (w) w:forward()  end),
+    but({}, 8, "Go back.",
+        function (w) w:back() end),
+
+    but({}, 9, "Go forward.",
+        function (w) w:forward() end),
 
     -- Open link in new tab or navigate to selection
-    but({},     2,  function (w, m)
-        -- Ignore button 2 clicks in form fields
-        if not m.context.editable then
-            -- Open hovered uri in new tab
+    but({}, 2, [[Open link under mouse cursor in new tab or navigate to the
+        contents of `luakit.selection.primary`.]],
+        function (w, m)
+            -- Ignore button 2 clicks in form fields
+            if not m.context.editable then
+                -- Open hovered uri in new tab
+                local uri = w.view.hovered_uri
+                if uri then
+                    w:new_tab(uri, false)
+                else -- Open selection in current tab
+                    uri = luakit.selection.primary
+                    if uri then w:navigate(w:search_open(uri)) end
+                end
+            end
+        end),
+
+    -- Open link in new tab when Ctrl-clicked.
+    but({"Control"}, 1, "Open link under mouse cursor in new tab.",
+        function (w, m)
             local uri = w.view.hovered_uri
             if uri then
                 w:new_tab(uri, false)
-            else -- Open selection in current tab
-                uri = luakit.selection.primary
-                if uri then w:navigate(w:search_open(uri)) end
             end
-        end
-    end),
-
-    -- Open link in new tab when Ctrl-clicked.
-    but({"Control"}, 1, function (w, m)
-        local uri = w.view.hovered_uri
-        if uri then
-            w:new_tab(uri, false)
-        end
-    end),
+        end),
 
     -- Zoom binds
-    but({"Control"}, 4, function (w, m) w:zoom_in()  end),
-    but({"Control"}, 5, function (w, m) w:zoom_out() end),
+    but({"Control"}, 4, "Increase text zoom level.",
+        function (w, m) w:zoom_in() end),
+
+    but({"Control"}, 5, "Reduce text zoom level.",
+        function (w, m) w:zoom_out() end),
 
     -- Horizontal mouse scroll binds
-    but({"Shift"},   4, function (w, m) w:scroll{ xrel = -scroll_step } end),
-    but({"Shift"},   5, function (w, m) w:scroll{ xrel =  scroll_step } end),
+    but({"Shift"}, 4, "Scroll left.",
+        function (w, m) w:scroll{ xrel = -scroll_step } end),
+
+    but({"Shift"}, 5, "Scroll right.",
+        function (w, m) w:scroll{ xrel =  scroll_step } end),
 })
 
 add_binds("normal", {
@@ -107,10 +122,10 @@ add_binds("normal", {
         return false
     end),
 
-    key({}, "i", "Enter <code>insert</code> mode.",
+    key({}, "i", "Enter `insert` mode.",
         function (w) w:set_mode("insert")  end),
 
-    key({}, ":", "Enter <code>command</code> mode.",
+    key({}, ":", "Enter `command` mode.",
         function (w) w:set_mode("command") end),
 
     -- Scrolling
@@ -195,7 +210,7 @@ add_binds("normal", {
     buf("^G$", "Go to the bottom of the document.",
         function (w, b, m) w:scroll{ ypct = m.count } end, {count = 100}),
 
-    buf("^%%$", "Go to {count} percent of the document.",
+    buf("^%%$", "Go to `{count}` percent of the document.",
         function (w, b, m) w:scroll{ ypct = m.count } end),
 
     -- Zooming
@@ -208,22 +223,21 @@ add_binds("normal", {
     key({}, "=", "Reset zoom level.",
         function (w, m) w:zoom_set() end),
 
-    buf("^z[iI]$", [[Enlarge text zoom of current page with <code>zi</code>,
-        use <code>zI</code> to reduce full zoom.]],
+    buf("^z[iI]$", [[Enlarge text zoom of current page with `zi` or `zI` to
+        reduce full zoom.]],
         function (w, b, m)
             w:zoom_in(zoom_step  * m.count, b == "zI")
         end, {count=1}),
 
-    buf("^z[oO]$", [[Reduce text zoom of current page with <code>zo</code>,
-        use <code>zO</code> to reduce full zoom.]],
+    buf("^z[oO]$", [[Reduce text zoom of current page with `zo` or `zO` to
+        reduce full zoom.]],
         function (w, b, m)
             w:zoom_out(zoom_step * m.count, b == "zO")
         end, {count=1}),
 
     -- Zoom reset or specific zoom ([count]zZ for full content zoom)
-    buf("^z[zZ]$", [[Set current page zoom to {count} percent with
-        <code>{count}zz</code>, use <code>{count}zZ</code> to set full zoom
-        percent.]],
+    buf("^z[zZ]$", [[Set current page zoom to `{count}` percent with
+        `{count}zz`, use `{count}zZ` to set full zoom percent.]],
         function (w, b, m)
             w:zoom_set(m.count/100, b == "zZ")
         end, {count=100}),
@@ -241,7 +255,7 @@ add_binds("normal", {
         end),
 
     key({}, "P", [[Open a URL based on the current primary selection contents
-        in {count=1} new tab(s).]],
+        in `{count=1}` new tab(s).]],
         function (w, m)
             local uri = assert(luakit.selection.primary, "Empty selection.")
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
@@ -292,10 +306,10 @@ add_binds("normal", {
         function (w) w:enter_cmd(":winopen " .. (w.view.uri or "")) end),
 
     -- History
-    key({}, "H", "Go back in the browser history {count=1} items.",
+    key({}, "H", "Go back in the browser history `{count=1}` items.",
         function (w, m) w:back(m.count) end),
 
-    key({}, "L", "Go forward in the browser history {count=1} times.",
+    key({}, "L", "Go forward in the browser history `{count=1}` times.",
         function (w, m) w:forward(m.count) end),
 
     key({}, "XF86Back", "Go back in the browser history.",
@@ -326,7 +340,7 @@ add_binds("normal", {
     buf("^gT$", "Go to previous tab.",
         function (w) w:prev_tab() end),
 
-    buf("^gt$", "Go to next tab (or {count} nth tab).",
+    buf("^gt$", "Go to next tab (or `{count}` nth tab).",
         function (w, b, m)
             if not w:goto_tab(m.count) then w:next_tab() end
         end, {count=0}),
@@ -343,15 +357,15 @@ add_binds("normal", {
     key({"Control"}, "w", "Close current tab.",
         function (w) w:close_tab() end),
 
-    key({}, "d", "Close current tab (or {count} tabs).",
+    key({}, "d", "Close current tab (or `{count}` tabs).",
         function (w, m) for i=1,m.count do w:close_tab() end end, {count=1}),
 
-    key({}, "<", "Reorder tab left {count=1} positions.",
+    key({}, "<", "Reorder tab left `{count=1}` positions.",
         function (w, m)
             w.tabs:reorder(w.view, w.tabs:current() - m.count)
         end, {count=1}),
 
-    key({}, ">", "Reorder tab right {count=1} positions.",
+    key({}, ">", "Reorder tab right `{count=1}` positions.",
         function (w, m)
             w.tabs:reorder(w.view,
                 (w.tabs:current() + m.count) % w.tabs:count())
@@ -390,13 +404,13 @@ add_binds("normal", {
 
     -- Enter passthrough mode
     key({"Control"}, "z",
-        "Enter <code>passthrough</code> mode, ignores all luakit keybindings",
+        "Enter `passthrough` mode, ignores all luakit keybindings.",
         function (w) w:set_mode("passthrough") end),
 })
 
 add_binds("insert", {
     key({"Control"}, "z",
-        "Enter <code>passthrough</code> mode, ignores all luakit keybindings",
+        "Enter `passthrough` mode, ignores all luakit keybindings.",
         function (w) w:set_mode("passthrough") end),
 })
 
@@ -451,10 +465,9 @@ add_binds("normal", mod1binds)
 -- entered into the input bar.
 add_cmds({
     buf("^%S+!",
-        [[Detect bangs syntax in <code>:command!</code> and recursively calls
-        <code>lousy.bind.match_cmd(..)</code> removing the bang from the
-        command string and setting <code>bang = true</code> in the bind opts
-        table.]],
+        [[Detect bang syntax in `:command!` and recursively calls
+        `lousy.bind.match_cmd(..)` removing the bang from the command string
+        and setting `bang = true` in the bind opts table.]],
         function (w, cmd, opts)
             local cmd, args = string.match(cmd, "^(%S+)!+(.*)")
             if cmd then
@@ -484,10 +497,10 @@ add_cmds({
     cmd("noh[lsearch]", "Clear search highlighting.",
         function (w) w:clear_search() end),
 
-    cmd("back", "Go back in the browser history {count=1} items.",
+    cmd("back", "Go back in the browser history `{count=1}` items.",
         function (w, a) w:back(tonumber(a) or 1) end),
 
-    cmd("f[orward]", "Go forward in the browser history {count=1} items.",
+    cmd("f[orward]", "Go forward in the browser history `{count=1}` items.",
         function (w, a) w:forward(tonumber(a) or 1) end),
 
     cmd("inc[rease]", "Increment last number in URL.",

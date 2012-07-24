@@ -92,6 +92,9 @@ new_mode("normal", [[When luakit first starts you will find yourself in this
     end,
 })
 
+new_mode("all", [[Special meta-mode in which the bindings for this mode are
+    present in all modes.]])
+
 -- Setup insert mode
 new_mode("insert", [[When clicking on form fields luakit will enter the insert
     mode which allows you to enter text in form fields without accidentally

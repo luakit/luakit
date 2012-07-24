@@ -379,17 +379,17 @@ local page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
 add_binds("normal", {
-    buf("^gd$", function (w)
-        w:navigate(page)
-    end),
+    buf("^gd$",
+        [[Open [luakit://downloads](luakit://downloads/) in current tab.]],
+        function (w) w:navigate(page) end),
 
-    buf("^gD$", function (w)
-        w:new_tab(page)
-    end),
+    buf("^gD$",
+        [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
+        function (w) w:new_tab(page) end),
 })
 
 add_cmds({
-    cmd("downloads", function (w)
-        w:new_tab(page)
-    end),
+    cmd("downloads",
+        [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
+        function (w) w:new_tab(page) end),
 })
