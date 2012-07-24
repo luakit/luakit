@@ -8,38 +8,35 @@
 
 -- Return selected uri or first uri in selection
 local return_selected = [=[
-(function() {
-    var selection = window.getSelection();
-    var container = document.createElement('div');
-    var range;
-    var elements;
-    var idx;
-    if ('' + selection) {
+(function(document) {
+    var selection = window.getSelection(),
+        container = document.createElement('div'),
+        range, elements, i = 0;
+
+    if (selection.toString() !== "") {
         range = selection.getRangeAt(0);
         // Check for links contained within the selection
         container.appendChild(range.cloneContents());
-        elements = container.getElementsByTagName('a');
-        for (idx in elements) {
-            if (elements[idx].href) {
-                return elements[idx].href;
-            }
-        }
+
+        var elements = container.getElementsByTagName('a'),
+            len = elements.length, i = 0, href;
+
+        for (; i < len;)
+            if ((href = elements[i++].href))
+                return href;
+
         // Check for links which contain the selection
         container = range.startContainer;
-        while (container != document) {
-            if (container.href) {
-                return container.href;
-            }
+        while (container !== document) {
+            if ((href = container.href))
+                return href;
             container = container.parentNode;
         }
     }
     // Check for active links
     var element = document.activeElement;
-    var uri = element.src || element.href;
-    if (uri && !uri.match(/javascript:/)) {
-        return uri;
-    }
-})();
+    return element.src || element.href;
+})(document);
 ]=]
 
 -- Add binding to normal mode to follow selected link
@@ -49,6 +46,7 @@ add_binds("normal", {
     key({}, "Return", function (w)
         local uri = w.view:eval_js(return_selected)
         if not uri then return false end
+        assert(type(uri) == "string")
         w:navigate(uri)
     end),
 
@@ -56,6 +54,7 @@ add_binds("normal", {
     key({"Control"}, "Return", function (w)
         local uri = w.view:eval_js(return_selected)
         if not uri then return false end
+        assert(type(uri) == "string")
         w:new_tab(uri, false)
     end),
 
@@ -63,6 +62,7 @@ add_binds("normal", {
     key({"Shift"}, "Return", function (w)
         local uri = w.view:eval_js(return_selected)
         if not uri then return false end
+        assert(type(uri) == "string")
         window.new({uri})
     end),
 
@@ -70,6 +70,7 @@ add_binds("normal", {
     key({"Mod1"}, "Return", function (w)
         local uri = w.view:eval_js(return_selected)
         if not uri then return false end
+        assert(type(uri) == "string")
         w:download(uri)
     end),
 })
