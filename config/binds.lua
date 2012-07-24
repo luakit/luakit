@@ -106,21 +106,40 @@ add_binds("all", {
 add_binds("normal", {
     -- Autoparse the `[count]` before a binding and re-call the hit function
     -- with the count removed and added to the opts table.
-    any(function (w, m)
-        local count, buf
-        if m.buffer then
-            count = string.match(m.buffer, "^(%d+)")
-        end
-        if count then
-            buf = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
-            local opts = join(m, {count = tonumber(count)})
-            opts.buffer = (#buf > 0 and buf) or nil
-            if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
-                return true
+    any([[Meta-binding to detect the `^[count]` syntax. The `[count]` is parsed
+        and stripped from the internal buffer string and the value assigned to
+        `state.count`. Then `lousy.bind.hit()` is re-called with the modified
+        buffer string & original modifier state.
+
+        #### Example binding
+
+            lousy.bind.key({}, "%", function (w, state)
+                w:scroll{ ypct = state.count }
+            end, { count = 0 })
+
+        This binding demonstrates several concepts. Firstly that you are able to
+        specify per-binding default values of `count`. In this case if the user
+        types `"%"` the document will be scrolled vertically to `0%` (the top).
+
+        If the user types `"100%"` then the document will be scrolled to `100%`
+        (the bottom). All without the need to use `lousy.bind.buf` bindings
+        everywhere and or using a `^(%d*)` pattern prefix on every binding which
+        would like to make use of the `[count]` syntax.]],
+        function (w, m)
+            local count, buf
+            if m.buffer then
+                count = string.match(m.buffer, "^(%d+)")
             end
-        end
-        return false
-    end),
+            if count then
+                buf = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
+                local opts = join(m, {count = tonumber(count)})
+                opts.buffer = (#buf > 0 and buf) or nil
+                if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
+                    return true
+                end
+            end
+            return false
+        end),
 
     key({}, "i", "Enter `insert` mode.",
         function (w) w:set_mode("insert")  end),
@@ -205,12 +224,12 @@ add_binds("normal", {
 
     -- Specific scroll
     buf("^gg$", "Go to the top of the document.",
-        function (w, b, m) w:scroll{ ypct = m.count } end, {count = 0}),
+        function (w, b, m) w:scroll{ ypct = m.count } end, {count=0}),
 
     buf("^G$", "Go to the bottom of the document.",
-        function (w, b, m) w:scroll{ ypct = m.count } end, {count = 100}),
+        function (w, b, m) w:scroll{ ypct = m.count } end, {count=100}),
 
-    buf("^%%$", "Go to `{count}` percent of the document.",
+    buf("^%%$", "Go to `[count]` percent of the document.",
         function (w, b, m) w:scroll{ ypct = m.count } end),
 
     -- Zooming
@@ -236,8 +255,8 @@ add_binds("normal", {
         end, {count=1}),
 
     -- Zoom reset or specific zoom ([count]zZ for full content zoom)
-    buf("^z[zZ]$", [[Set current page zoom to `{count}` percent with
-        `{count}zz`, use `{count}zZ` to set full zoom percent.]],
+    buf("^z[zZ]$", [[Set current page zoom to `[count]` percent with
+        `[count]zz`, use `[count]zZ` to set full zoom percent.]],
         function (w, b, m)
             w:zoom_set(m.count/100, b == "zZ")
         end, {count=100}),
@@ -255,7 +274,7 @@ add_binds("normal", {
         end),
 
     key({}, "P", [[Open a URL based on the current primary selection contents
-        in `{count=1}` new tab(s).]],
+        in `[count=1]` new tab(s).]],
         function (w, m)
             local uri = assert(luakit.selection.primary, "Empty selection.")
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
@@ -306,10 +325,10 @@ add_binds("normal", {
         function (w) w:enter_cmd(":winopen " .. (w.view.uri or "")) end),
 
     -- History
-    key({}, "H", "Go back in the browser history `{count=1}` items.",
+    key({}, "H", "Go back in the browser history `[count=1]` items.",
         function (w, m) w:back(m.count) end),
 
-    key({}, "L", "Go forward in the browser history `{count=1}` times.",
+    key({}, "L", "Go forward in the browser history `[count=1]` times.",
         function (w, m) w:forward(m.count) end),
 
     key({}, "XF86Back", "Go back in the browser history.",
@@ -340,7 +359,7 @@ add_binds("normal", {
     buf("^gT$", "Go to previous tab.",
         function (w) w:prev_tab() end),
 
-    buf("^gt$", "Go to next tab (or `{count}` nth tab).",
+    buf("^gt$", "Go to next tab (or `[count]` nth tab).",
         function (w, b, m)
             if not w:goto_tab(m.count) then w:next_tab() end
         end, {count=0}),
@@ -357,15 +376,15 @@ add_binds("normal", {
     key({"Control"}, "w", "Close current tab.",
         function (w) w:close_tab() end),
 
-    key({}, "d", "Close current tab (or `{count}` tabs).",
+    key({}, "d", "Close current tab (or `[count]` tabs).",
         function (w, m) for i=1,m.count do w:close_tab() end end, {count=1}),
 
-    key({}, "<", "Reorder tab left `{count=1}` positions.",
+    key({}, "<", "Reorder tab left `[count=1]` positions.",
         function (w, m)
             w.tabs:reorder(w.view, w.tabs:current() - m.count)
         end, {count=1}),
 
-    key({}, ">", "Reorder tab right `{count=1}` positions.",
+    key({}, ">", "Reorder tab right `[count=1]` positions.",
         function (w, m)
             w.tabs:reorder(w.view,
                 (w.tabs:current() + m.count) % w.tabs:count())
@@ -497,10 +516,10 @@ add_cmds({
     cmd("noh[lsearch]", "Clear search highlighting.",
         function (w) w:clear_search() end),
 
-    cmd("back", "Go back in the browser history `{count=1}` items.",
+    cmd("back", "Go back in the browser history `[count=1]` items.",
         function (w, a) w:back(tonumber(a) or 1) end),
 
-    cmd("f[orward]", "Go forward in the browser history `{count=1}` items.",
+    cmd("f[orward]", "Go forward in the browser history `[count=1]` items.",
         function (w, a) w:forward(tonumber(a) or 1) end),
 
     cmd("inc[rease]", "Increment last number in URL.",

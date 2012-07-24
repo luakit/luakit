@@ -20,6 +20,7 @@ local debug = debug
 local lousy = require("lousy")
 local chrome = require("chrome")
 local history = require("history")
+local markdown = require("markdown")
 local get_modes = get_modes
 local get_mode = get_mode
 local add_binds = add_binds
@@ -70,9 +71,8 @@ local html = [==[
             border-bottom: 1px solid #888;
         }
 
-        h1, h2, h3 {
+        h1, h2, h3, h4 {
             -webkit-user-select: none;
-            font-weight: normal;
         }
 
         ol, li {
@@ -85,6 +85,7 @@ local html = [==[
             margin: 0;
             padding: 0;
         }
+
 
         .mode {
             width: 100%;
@@ -108,10 +109,6 @@ local html = [==[
             padding: 5px;
         }
 
-        .bind:hover {
-            background-color: #fafafa;
-        }
-
         .bind .source {
             float: right;
             font-family: monospace, sans-serif;
@@ -133,13 +130,30 @@ local html = [==[
         .bind .desc {
             float: right;
             width: 550px;
+            margin: -1em 0 -1em 0;
         }
 
         .bind .desc code {
-            color: #444;
-            padding: 2px;
+            color: #2525ff;
             display: inline-block;
-            background-color: #f2f2f2;
+            font-size: 1.1em;
+        }
+
+        .bind .desc pre {
+            margin: 1em 0 1em 1em;
+            padding: 0.5em;
+            background-color: #EFC;
+            border-top: 1px solid #AC9;
+            border-bottom: 1px solid #AC9;
+        }
+
+        .bind .desc pre code {
+            color: #000;
+        }
+
+        .mode h1, .mode h2, .mode h3, .mode h4 {
+            margin: 0.5em 0 0.5em 0;
+            padding: 0;
         }
 
         .bind .clear {
@@ -201,7 +215,7 @@ $(document).ready(function () {
         var $mode = $(mode_section_html);
         $mode.addClass("mode_" + mode.name);
         $mode.find("h3.mode-name").text(mode.name + " mode");
-        $mode.find("p.mode-desc").text(mode.desc);
+        $mode.find("p.mode-desc").html(mode.desc);
         $mode.find("pre.mode-traceback").text(mode.traceback);
 
         var $binds = $mode.find(".binds");
@@ -260,6 +274,7 @@ export_funcs = {
     help_get_modes = function ()
         local ret = {}
         local modes = lousy.util.table.values(get_modes())
+        local dedent = lousy.util.string.dedent
         table.sort(modes, function (a, b) return a.order < b.order end)
 
         for _, mode in pairs(modes) do
@@ -269,9 +284,13 @@ export_funcs = {
                 for i, b in pairs(mode.binds) do
                     local info = debug.getinfo(b.func, "uS")
 
+                    if not b.markdown_desc and b.desc then
+                        b.markdown_desc = markdown(dedent(b.desc))
+                    end
+
                     binds[i] = {
                         type = b.type,
-                        desc = b.desc,
+                        desc = b.markdown_desc,
                         source = info.short_src,
                         lineno = info.linedefined,
                         key = bind_tostring(b),
@@ -279,9 +298,13 @@ export_funcs = {
                 end
             end
 
+            if not mode.markdown_desc and mode.desc then
+                mode.markdown_desc = markdown(dedent(mode.desc))
+            end
+
             table.insert(ret, {
                 name = mode.name,
-                desc = mode.desc,
+                desc = mode.markdown_desc,
                 binds = binds,
                 traceback = mode.traceback
             })

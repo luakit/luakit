@@ -261,6 +261,19 @@ function string.strip(s, pattern)
     return rstring.sub(s, sub_start or 1, sub_end or #s)
 end
 
+function string.dedent(text)
+    local min
+    rstring.gsub(text, "\n(%s*)", function (spaces)
+        local len = #spaces
+        if not min or len < min then min = len end
+    end)
+    if min and min > 0 then
+        local pat = "\n" .. rstring.rep(" ", min)
+        text = rstring.gsub(text, pat, "\n")
+    end
+    return text
+end
+
 local function find_file(paths)
     for _, p in ipairs(paths) do
         if os.exists(p) then return p end
