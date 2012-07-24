@@ -148,6 +148,7 @@ function any(desc, func, opts)
     return {
         type = "any",
         func = func,
+        desc = desc,
         opts = opts or {},
     }
 end
