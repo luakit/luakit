@@ -18,6 +18,7 @@ local debug = debug
 
 -- Grab the luakit environment we need
 local lousy = require("lousy")
+local dedent = lousy.util.string.dedent
 local chrome = require("chrome")
 local history = require("history")
 local markdown = require("markdown")
@@ -109,16 +110,31 @@ local html = [==[
             padding: 5px;
         }
 
-        .bind .source {
+        .bind:hover {
+            background-color: #f8f8f8;
+            -webkit-border-radius: 0.5em;
+        }
+
+        .bind .link-box {
             float: right;
             font-family: monospace, sans-serif;
             text-decoration: none;
         }
 
-        .bind .source:hover {
+        .bind .link-box a {
+            color: #11c;
+            text-decoration: none;
+        }
+
+        .bind .link-box a:hover {
             color: #11c;
             text-decoration: underline;
         }
+
+        .bind .func-source {
+            display: none;
+        }
+
 
         .bind .key {
             font-family: monospace, sans-serif;
@@ -127,32 +143,39 @@ local html = [==[
             font-weight: bold;
         }
 
-        .bind .desc {
+        .bind .box {
             float: right;
             width: 550px;
-            margin: -1em 0 -1em 0;
         }
 
-        .bind .desc code {
+        .bind .desc p:first-child {
+            margin-top: 0;
+        }
+
+        .bind .desc p:last-child {
+            margin-bottom: 0;
+        }
+
+        .bind code {
             color: #2525ff;
             display: inline-block;
             font-size: 1.1em;
         }
 
-        .bind .desc pre {
-            margin: 1em 0 1em 1em;
+        .bind pre {
+            margin: 1em;
             padding: 0.5em;
             background-color: #EFC;
             border-top: 1px solid #AC9;
             border-bottom: 1px solid #AC9;
         }
 
-        .bind .desc pre code {
+        .bind pre code {
             color: #000;
         }
 
-        .mode h1, .mode h2, .mode h3, .mode h4 {
-            margin: 0.5em 0 0.5em 0;
+        .mode h4 {
+            margin: 1em 0;
             padding: 0;
         }
 
@@ -188,10 +211,17 @@ local html = [==[
         </div>
         <div id="mode-bind-skelly">
             <ol class="bind">
-                <a href class="source"></a>
+                <div class="link-box">
+                    <a href class="filename"></a>
+                    <a href class="linedefined"></a>
+                </div>
                 <hr class="clear" />
                 <div class="key"></div>
-                <div class="desc"></div>
+                <div class="box desc"></div>
+                <div class="box func-source">
+                    <h4>Function source:</h4>
+                    <pre><code></code></pre>
+                </div>
             </ol>
         </div>
     </div>
@@ -226,7 +256,14 @@ $(document).ready(function () {
             var $bind = $(mode_bind_html);
             $bind.addClass("bind_type_" + b.type);
             $bind.find(".key").text(b.key);
-            $bind.find(".source").text(b.source + ":" + b.lineno);
+            $bind.find(".func-source code").text(b.func);
+            $bind.find(".filename").text(b.filename);
+
+            var $l = $bind.find(".linedefined");
+            $l.text("#" + b.linedefined);
+            $l.attr("filename", b.filename);
+            $l.attr("line", b.linedefined);
+
             if (b.desc)
                 $bind.find(".desc").html(b.desc);
             else
@@ -237,6 +274,22 @@ $(document).ready(function () {
 
         $body.append($mode);
     }
+
+    $body.on("click", ".bind .linedefined", function (event) {
+        event.preventDefault();
+        var $e = $(this);
+        open_editor($e.attr("filename"), $e.attr("line"));
+        return false;
+    })
+
+    $body.on("click", ".bind", function (e) {
+        var $src = $(this).find(".func-source");
+        if ($src.is(":visible"))
+            $src.slideUp();
+        else
+            $src.slideDown();
+        return false;
+    })
 });
 ]=]
 
@@ -270,11 +323,27 @@ local function bind_tostring(b)
     end
 end
 
+local source_lines = {}
+local function function_source_range(func, info)
+    local lines = source_lines[info.short_src]
+
+    if not lines then
+        local source = lousy.load(info.short_src)
+        lines = {}
+        string.gsub(source, "([^\n]*)\n", function (line)
+            table.insert(lines, line)
+        end)
+        source_lines[info.short_src] = lines
+    end
+
+    return dedent(table.concat(lines, "\n", info.linedefined,
+        info.lastlinedefined), true)
+end
+
 export_funcs = {
     help_get_modes = function ()
         local ret = {}
         local modes = lousy.util.table.values(get_modes())
-        local dedent = lousy.util.string.dedent
         table.sort(modes, function (a, b) return a.order < b.order end)
 
         for _, mode in pairs(modes) do
@@ -284,32 +353,32 @@ export_funcs = {
                 for i, b in pairs(mode.binds) do
                     local info = debug.getinfo(b.func, "uS")
 
-                    if not b.markdown_desc and b.desc then
-                        b.markdown_desc = markdown(dedent(b.desc))
-                    end
-
                     binds[i] = {
                         type = b.type,
-                        desc = b.markdown_desc,
-                        source = info.short_src,
-                        lineno = info.linedefined,
                         key = bind_tostring(b),
+                        desc = b.desc and markdown(dedent(b.desc)) or nil,
+                        filename = info.short_src,
+                        linedefined = info.linedefined,
+                        lastlinedefined = info.lastlinedefined,
+                        func = function_source_range(b.func, info),
                     }
                 end
             end
 
-            if not mode.markdown_desc and mode.desc then
-                mode.markdown_desc = markdown(dedent(mode.desc))
-            end
-
             table.insert(ret, {
                 name = mode.name,
-                desc = mode.markdown_desc,
+                desc = mode.desc and markdown(dedent(mode.desc)) or nil,
                 binds = binds,
                 traceback = mode.traceback
             })
         end
+        -- Clear source file cache
+        source_lines = {}
         return ret
+    end,
+
+    open_editor = function (file, line)
+        capi.luakit.spawn(string.format("urxvt -e vim %q +%d", file, line))
     end,
 }
 
