@@ -138,7 +138,17 @@ window.luakit_follow = (function (window, document) {
         state.overlay = overlay;
     }
 
+    function cleanup() {
+        unlink(state.stylesheet);
+        unlink(state.overlay);
+
+        // Reset follow state
+        state = {};
+    }
+
     function init() {
+        cleanup();
+
         var mode = api("mode-options"),
             hints = eval_selector_make_hints(mode.selector);
         state.mode = mode;
@@ -205,13 +215,6 @@ window.luakit_follow = (function (window, document) {
         show_hints(html);
     }
 
-    function cleanup() {
-        unlink(state.stylesheet);
-        unlink(state.overlay);
-
-        // Reset follow state
-        state = {};
-    }
 
     function filter(hint_pat, text_pat) {
         var hpat = hint_pat !== "" && hint_pat,
