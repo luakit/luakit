@@ -731,8 +731,8 @@ evaluators = {
 local s, e = selectors, evaluators
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^f$", [[Start <code>follow</code> mode. Hint all clickable elements
-        (as defined by the <code>follow.selectors.clickable</code>
+    buf("^f$", [[Start `follow` mode. Hint all clickable elements
+        (as defined by the `follow.selectors.clickable`
         selector) and open links in the current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -741,9 +741,8 @@ add_binds("normal", {
         end),
 
     -- Open new tab
-    buf("^F$", [[Start <code>follow</code> mode. Hint all links (as defined by
-        the <code>follow.selectors.uri</code> selector) and open links in
-        a new tab.]],
+    buf("^F$", [[Start follow mode. Hint all links (as defined by the
+        `follow.selectors.uri` selector) and open links in a new tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "background tab", selector = s.uri, evaluator = e.uri,
@@ -755,14 +754,14 @@ add_binds("normal", {
         end),
 
     -- Start extended follow mode
-    buf("^;$", [[Start <code>ex-follow</code> mode. See the
-        <code>ex-follow</code> section for the list of follow modes]],
+    buf("^;$", [[Start `ex-follow` mode. See the [ex-follow](#mode-ex-follow)
+        help section for the list of follow modes.]],
         function (w)
             w:set_mode("ex-follow")
         end),
 
-    buf("^g;$", [[Start <code>ex-follow</code> mode and stay there until
-        <code>&lt;Escape&gt;</code> is pressed.]],
+    buf("^g;$", [[Start `ex-follow` mode and stay there until `<Escape>` is
+        pressed.]],
         function (w)
             w:set_mode("ex-follow", true)
         end),
@@ -777,8 +776,7 @@ new_mode("ex-follow", {
 
 add_binds("ex-follow", {
     key({}, ";", [[Hint all focusable elements (as defined by the
-        <code>follow.selectors.focus</code> selector) and focus the
-        matched element.]],
+        `follow.selectors.focus` selector) and focus the matched element.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "focus", selector = s.focus, evaluator = e.focus,
@@ -786,9 +784,8 @@ add_binds("ex-follow", {
         end),
 
     -- Yank element uri or description into primary selection
-    key({}, "y", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and set the primary
-        selection to the matched elements URI.]],
+    key({}, "y", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "yank", selector = s.uri, evaluator = e.uri,
@@ -802,9 +799,8 @@ add_binds("ex-follow", {
         end),
 
     -- Yank element description
-    key({}, "Y", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and set the primary
-        selection to the matched elements URI.]],
+    key({}, "Y", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "yank desc", selector = s.desc, evaluator = e.desc,
@@ -817,9 +813,8 @@ add_binds("ex-follow", {
         end),
 
     -- Open image src
-    key({}, "i", [[Hint all images (as defined by the
-        <code>follow.selectors.image</code> selector) and open matching
-        image location in the current tab.]],
+    key({}, "i", [[Hint all images (as defined by the `follow.selectors.image`
+        selector) and open matching image location in the current tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "open image", selector = s.image, evaluator = e.src,
@@ -832,8 +827,8 @@ add_binds("ex-follow", {
 
     -- Open image src in new tab
     key({}, "I", [[Hint all images (as defined by the
-        <code>follow.selectors.image</code> selector) and open matching
-        image location in a new tab.]],
+        `follow.selectors.image` selector) and open matching image location in
+        a new tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "tab image", selector = s.image, evaluator = e.src,
@@ -846,8 +841,7 @@ add_binds("ex-follow", {
 
     -- Open thumbnail link
     key({}, "x", [[Hint all thumbnails (as defined by the
-        <code>follow.selectors.thumbnail</code> selector) and open link
-        in current tab.]],
+        `follow.selectors.thumbnail` selector) and open link in current tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "open image link", selector = s.thumbnail,
@@ -861,8 +855,7 @@ add_binds("ex-follow", {
 
     -- Open thumbnail link in new tab
     key({}, "X", [[Hint all thumbnails (as defined by the
-        <code>follow.selectors.thumbnail</code> selector) and open link
-        in a new tab.]],
+        `follow.selectors.thumbnail` selector) and open link in a new tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "tab image link", selector = s.thumbnail,
@@ -875,9 +868,8 @@ add_binds("ex-follow", {
         end),
 
     -- Open link
-    key({}, "o", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and open its location
-        in the current tab.]],
+    key({}, "o", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and open its location in the current tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "open", selector = s.uri, evaluator = e.uri,
@@ -889,9 +881,8 @@ add_binds("ex-follow", {
         end),
 
     -- Open link in new tab
-    key({}, "t", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and open its location
-        in a new tab.]],
+    key({}, "t", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and open its location in a new tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "open tab", selector = s.uri, evaluator = e.uri,
@@ -903,9 +894,8 @@ add_binds("ex-follow", {
         end),
 
     -- Open link in background tab
-    key({}, "b", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and open its location
-        in a background tab.]],
+    key({}, "b", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and open its location in a background tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "background tab",
@@ -918,9 +908,8 @@ add_binds("ex-follow", {
         end),
 
     -- Open link in new window
-    key({}, "w", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and open its location
-        in a new window.]],
+    key({}, "w", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and open its location in a new window.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "open window", selector = s.uri, evaluator = e.uri,
@@ -932,9 +921,8 @@ add_binds("ex-follow", {
         end),
 
     -- Set command `:open <uri>`
-    key({}, "O", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and generate a
-        <code>:open</code> command with the elements URI.]],
+    key({}, "O", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and generate a `:open` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
                 prompt = ":open", selector = s.uri, evaluator = e.uri,
@@ -946,9 +934,8 @@ add_binds("ex-follow", {
         end),
 
     -- Set command `:tabopen <uri>`
-    key({}, "T", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and generate a
-        <code>:tabopen</code> command with the elements URI.]],
+    key({}, "T", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and generate a `:tabopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
                 prompt = ":tabopen", selector = s.uri, evaluator = e.uri,
@@ -960,9 +947,8 @@ add_binds("ex-follow", {
         end),
 
     -- Set command `:winopen <uri>`
-    key({}, "W", [[Hint all links (as defined by the
-        <code>follow.selectors.uri</code> selector) and generate a
-        <code>:winopen</code> command with the elements URI.]],
+    key({}, "W", [[Hint all links (as defined by the `follow.selectors.uri`
+        selector) and generate a `:winopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
                 prompt = ":winopen", selector = s.uri, evaluator = e.uri,
