@@ -135,7 +135,6 @@ local html = [==[
             display: none;
         }
 
-
         .bind .key {
             font-family: monospace, sans-serif;
             float: left;
@@ -243,7 +242,7 @@ $(document).ready(function () {
     for (var i = 0; i < modes.length; i++) {
         var mode = modes[i];
         var $mode = $(mode_section_html);
-        $mode.addClass("mode_" + mode.name);
+        $mode.attr("id", "mode-" + mode.name);
         $mode.find("h3.mode-name").text(mode.name + " mode");
         $mode.find("p.mode-desc").html(mode.desc);
         $mode.find("pre.mode-traceback").text(mode.traceback);
@@ -282,13 +281,16 @@ $(document).ready(function () {
         return false;
     })
 
+    $body.on("click", ".bind .desc a", function (event) {
+        event.stopPropagation(); // prevent source toggling
+    })
+
     $body.on("click", ".bind", function (e) {
         var $src = $(this).find(".func-source");
         if ($src.is(":visible"))
             $src.slideUp();
         else
             $src.slideDown();
-        return false;
     })
 });
 ]=]
