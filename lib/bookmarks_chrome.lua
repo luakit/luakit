@@ -272,9 +272,32 @@ chrome.add("bookmarks", function (view, meta)
     view:add_signal("load-status", on_first_visual)
 end)
 
+chrome_page = "luakit://bookmarks/"
+
+local key, buf = lousy.bind.key, lousy.bind.buf
+add_binds("normal", {
+    key({}, "B", "Shortcut to add a bookmark to the current URL",
+        function(w)
+            w:enter_cmd(":bookmark " .. (w.view.uri or "http://") .. " ")
+        end),
+
+    buf("^gb$", "Open the bookmarks manager",
+        function(w)
+            w:navigate(chrome_page)
+        end),
+
+    buf("^gB$", "Open the bookmarks manager in a new tab",
+        function(w)
+            w:new_tab(chrome_page)
+        end)
+})
+
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("bookmarks", function (w)
-        w:new_tab("luakit://bookmarks/")
-    end),
+    cmd("bookmarks", "Open the bookmarks manager",
+        function (w)
+            w:new_tab(chrome_page) end),
+    cmd("bookmark", "Add bookmark",
+        function (w, a)
+            bookmarks.add(a) end),
 })
