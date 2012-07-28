@@ -24,7 +24,8 @@ end
 
 local key = lousy.bind.key
 add_binds("normal", {
-    key({}, "u", function (w, m) w:undo_close_tab(-m.count) end, {count=1}),
+    key({}, "u", "Undo closed tab (restoring tab history).",
+        function (w, m) w:undo_close_tab(-m.count) end, {count=1}),
 })
 
 -- View closed tabs in a list
@@ -50,7 +51,7 @@ new_mode("undolist", {
 -- Add undolist menu binds
 add_binds("undolist", lousy.util.table.join({
     -- Delete closed tab history
-    key({}, "d", function (w)
+    key({}, "d", "Delete closed tab history item.", function (w)
         local row = w.menu:get()
         if row and row.uid then
             for i, tab in ipairs(w.closed_tabs) do
@@ -63,8 +64,7 @@ add_binds("undolist", lousy.util.table.join({
         end
     end),
 
-    -- Undo closed tab in background tab
-    key({}, "u", function (w)
+    key({}, "u", "Undo closed tab in new background tab.", function (w)
         local row = w.menu:get()
         if row and row.uid then
             for i, tab in ipairs(w.closed_tabs) do
@@ -78,7 +78,7 @@ add_binds("undolist", lousy.util.table.join({
     end),
 
     -- Undo closed tab in new window
-    key({}, "w", function (w)
+    key({}, "w", "Undo closed tab in new window.", function (w)
         local row = w.menu:get()
         w:set_mode()
         if row and row.uid then
@@ -92,7 +92,7 @@ add_binds("undolist", lousy.util.table.join({
     end),
 
     -- Undo closed tab in current tab
-    key({}, "Return", function (w)
+    key({}, "Return", "Undo closed tab in current tab.", function (w)
         local row = w.menu:get()
         w:set_mode()
         if row and row.uid then
@@ -105,14 +105,15 @@ add_binds("undolist", lousy.util.table.join({
     end),
 
     -- Exit menu
-    key({}, "q", function (w) w:set_mode() end),
+    key({}, "q", "Close menu.",
+        function (w) w:set_mode() end),
 
 }, menu_binds))
 
 -- Add `:undolist` command to view all closed tabs in an interactive menu
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("undolist", "undo closed tabs by entry", function (w, a)
+    cmd("undolist", "Undo closed tabs menu.", function (w, a)
         if #(w.closed_tabs) == 0 then
             w:notify("No closed tabs to display")
         else

@@ -94,19 +94,27 @@ require "userscripts"
 
 -- Add bookmarks support
 require "bookmarks"
+require "bookmarks_chrome"
 
 -- Add download support
 require "downloads"
 require "downloads_chrome"
 
+-- Example using xdg-open for opening downloads / showing download folders
+--downloads.add_signal("open-file", function (file, mime)
+--    luakit.spawn(string.format("xdg-open %q", file))
+--    return true
+--end)
+
 -- Add vimperator-like link hinting & following
--- (depends on downloads)
 require "follow"
 
--- To use a custom character set for the follow hint labels un-comment and
--- modify the following:
---local s = follow.styles
---follow.style = s.sort(s.reverse(s.charset("asdfqwerzxcv"))) -- I'm a lefty
+-- Use a custom charater set for hint labels
+--local s = follow.label_styles
+--follow.label_maker = s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+
+-- Match only hint labels
+--follow.pattern_maker = follow.pattern_styles.match_label
 
 -- Add command history
 require "cmdhist"
@@ -120,6 +128,8 @@ require "taborder"
 -- Save web history
 require "history"
 require "history_chrome"
+
+require "introspector"
 
 -- Add command completion
 require "completion"

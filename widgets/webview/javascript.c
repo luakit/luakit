@@ -330,6 +330,7 @@ static gint
 luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script,
         const gchar *source, bool no_return)
 {
+
     JSStringRef js_source, js_script;
     JSValueRef result, exception = NULL;
 
@@ -379,9 +380,14 @@ luaH_webview_register_function(lua_State *L)
     lua_pushvalue(L, 3);
     gpointer ref = luaH_object_ref(L, -1);
 
-    /* Check if function should be registered on currently focused frame */
-    if (lua_gettop(L) >= 4 && luaH_checkboolean(L, 4))
-        frame = webkit_web_view_get_focused_frame(d->view);
+    if (lua_gettop(L) >= 4) {
+        if (lua_islightuserdata(L, 4))
+            frame = lua_touserdata(L, 4);
+        else if (lua_isstring(L, 4)) {
+            if (L_TK_FOCUSED == l_tokenize(lua_tostring(L, 4)))
+                frame = webkit_web_view_get_focused_frame(d->view);
+        }
+    }
 
     /* Fall back on main frame */
     if (!frame)

@@ -38,12 +38,23 @@ end
 
 -- Command completion binds
 add_binds("completion", {
-    key({},          "Tab",    function (w) w.menu:move_down() end),
-    key({"Shift"},   "Tab",    function (w) w.menu:move_up()   end),
-    key({},          "Up",     function (w) w.menu:move_up()   end),
-    key({},          "Down",   function (w) w.menu:move_down() end),
-    key({},          "Escape", exit_completion),
-    key({"Control"}, "[",      exit_completion),
+    key({}, "Tab", "Select next matching completion item.",
+        function (w) w.menu:move_down() end),
+
+    key({"Shift"}, "Tab", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end),
+
+    key({}, "Up", "Select next matching completion item.",
+        function (w) w.menu:move_up() end),
+
+    key({}, "Down", "Select previous matching completion item.",
+        function (w) w.menu:move_down() end),
+
+    key({}, "Escape", "Stop completion and restore original command.",
+        exit_completion),
+
+    key({"Control"}, "[", "Stop completion and restore original command.",
+        exit_completion),
 })
 
 function update_completions(w, text, pos)

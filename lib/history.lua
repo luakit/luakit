@@ -12,101 +12,98 @@ local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
 module "history"
 
+-- Path of history sqlite database to open/create/update
+db_path = capi.luakit.data_dir .. "/history.db"
+
 -- Setup signals on history module
 lousy.signal.setup(_M, true)
 
-db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/history.db" }
-db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
+function init()
+    -- Return if database handle already open
+    if db then return end
 
-create_table = [[
-CREATE TABLE IF NOT EXISTS history (
-    id INTEGER PRIMARY KEY,
-    uri TEXT,
-    title TEXT,
-    visits INTEGER,
-    last_visit INTEGER
-);]]
+    db = capi.sqlite3{ filename = _M.db_path }
+    db:exec [[
+        PRAGMA synchronous = OFF;
+        PRAGMA secure_delete = 1;
 
-db:exec(create_table)
+        CREATE TABLE IF NOT EXISTS history (
+            id INTEGER PRIMARY KEY,
+            uri TEXT,
+            title TEXT,
+            visits INTEGER,
+            last_visit INTEGER
+        );
+    ]]
+
+    query_find_last = db:compile [[
+        SELECT id
+        FROM history
+        WHERE uri = ?
+        ORDER BY last_visit DESC
+        LIMIT 1
+    ]]
+
+    query_insert = db:compile [[
+        INSERT INTO history
+        VALUES (NULL, ?, ?, ?, ?)
+    ]]
+
+    query_update_visits = db:compile [[
+        UPDATE history
+        SET visits = visits + 1, last_visit = ?
+        WHERE id = ?
+    ]]
+
+    query_update_title = db:compile [[
+        UPDATE history
+        SET title = ?
+        WHERE id = ?
+    ]]
+end
+
+capi.luakit.idle_add(init)
 
 function add(uri, title, update_visits)
+    if not db then init() end
+
     -- Ignore blank uris
     if not uri or uri == "" or uri == "about:blank" then return end
     -- Ask user if we should ignore uri
     if _M.emit_signal("add", uri, title) == false then return end
 
-    local escape, format = lousy.util.sql_escape, string.format
-
-    -- Find exsiting history item
-    local results = db:exec(format([[SELECT * FROM history
-        WHERE uri = %s ORDER BY last_visit DESC;]], escape(uri)))
-    local item = results[1]
-
-    -- Merge duplicate items into the first item
-    if item and results[2] then
-        local visits, ids = tonumber(item.visits), {}
-        for i = 2, #results do
-            local h = results[i]
-            table.insert(ids, h.id)
-            visits = visits + h.visits
-        end
-        -- Delete duplicates
-        db:exec(format("DELETE FROM history WHERE id IN (%s);",
-            table.concat(ids, ", ")))
-        -- Update visits
-        db:exec(format("UPDATE history SET visits = %d WHERE id = %d;",
-            visits, item.id))
-        -- Call add again now that the duplicates have been removed
-        return add(uri, title, update_visits)
-    end
-
-    -- Update history item
+    -- Find existing item
+    local item = (query_find_last:exec{uri})[1]
     if item then
-        local updates = {}
-        -- Update title
-        if title and title ~= "" then
-            table.insert(updates, format("title = %s", escape(title)))
-        end
-        -- Update visit count & last access time
         if update_visits ~= false then
-            table.insert(updates, "visits = visits + 1")
-            table.insert(updates, format("last_visit = %d", os.time()))
+            query_update_visits:exec{os.time(), item.id}
         end
-        -- Update item
-        if #updates > 0 then
-            db:exec(format("UPDATE history SET %s WHERE id = %d;",
-                table.concat(updates, ", "), item.id))
+        if title then
+            query_update_title:exec{title, item.id}
         end
-
-    -- Add new item
     else
-        db:exec(format([[INSERT INTO history VALUES(NULL, %s, %s,
-            1, %d);]], escape(uri), escape(title), os.time()))
+        query_insert:exec{uri, title, 1, os.time()}
     end
 end
 
 webview.init_funcs.save_hist = function (view)
-    -- Add items
-    view:add_signal("load-status", function (v, status)
+    -- Add items & update visit count
+    view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
-        if v.enable_private_browsing then return end
+        if view.enable_private_browsing then return end
 
-        -- We use the "committed" status here because we are not interested in
-        -- any intermediate uri redirects taken before reaching the real uri.
-        -- The "property::title" signal takes care of filling in the history
-        -- item title.
         if status == "committed" then
-            add(v.uri)
+            add(view.uri)
         end
     end)
     -- Update titles
-    view:add_signal("property::title", function (v)
+    view:add_signal("property::title", function ()
         -- Don't add history items when in private browsing mode
-        if v.enable_private_browsing then return end
+        if view.enable_private_browsing then return end
 
-        local title = v.title
+        local title = view.title
         if title and title ~= "" then
-            add(v.uri, title, false)
+            add(view.uri, title, false)
         end
     end)
 end

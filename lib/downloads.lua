@@ -68,7 +68,8 @@ function get(id)
 end
 
 local function is_running(d)
-    return d.status == "created" or d.status == "started"
+    local status = d.status
+    return status == "created" or status == "started"
 end
 
 function do_open(d, w)
@@ -228,15 +229,17 @@ end)
 -- Download normal mode binds.
 local key = lousy.bind.key
 add_binds("normal", {
-    key({"Control"}, "D", function (w)
-        w:enter_cmd(":download " .. (w.view.uri or "http://") .. " ")
-    end),
+    key({"Control"}, "D",
+        "Generate `:download` command with current URI.",
+        function (w)
+            w:enter_cmd(":download " .. (w.view.uri or "http://"))
+        end),
 })
 
 -- Download commands
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("down[load]", "download a file", function (w, a)
+    cmd("down[load]", "Download the given URI.", function (w, a)
         add(a, { window = w.win })
     end),
 })
