@@ -299,5 +299,12 @@ add_cmds({
             w:new_tab(chrome_page) end),
     cmd("bookmark", "Add bookmark",
         function (w, a)
-            bookmarks.add(a) end),
+            if not a then
+                w:error("Missing bookmark arguments (use: `:bookmark <uri> [<tags>]`)")
+                return
+            end
+            local args = lousy.util.string.split(a)
+            local uri = table.remove(args, 1)
+            bookmarks.add(uri, { tags = args })
+        end),
 })
