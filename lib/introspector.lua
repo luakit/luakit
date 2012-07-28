@@ -418,6 +418,12 @@ chrome.add("help", function (view, meta)
     view:add_signal("load-status", on_first_visual)
 end)
 
+local cmd = lousy.bind.cmd
+add_cmds({
+    cmd("help", "Open [luakit://help/](luakit://help/) in a new tab.",
+        function (w) w:new_tab("luakit://help/") end),
+})
+
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)
     if string.match(uri, "^luakit://help/") then return false end
