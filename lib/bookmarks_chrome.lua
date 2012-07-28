@@ -281,12 +281,12 @@ add_binds("normal", {
             w:enter_cmd(":bookmark " .. (w.view.uri or "http://") .. " ")
         end),
 
-    buf("^gb$", "Open the bookmarks manager",
+    buf("^gb$", "Open bookmarks manager in the current tab.",
         function(w)
             w:navigate(chrome_page)
         end),
 
-    buf("^gB$", "Open the bookmarks manager in a new tab",
+    buf("^gB$", "Open bookmarks manager in a new tab.",
         function(w)
             w:new_tab(chrome_page)
         end)
@@ -294,9 +294,11 @@ add_binds("normal", {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("bookmarks", "Open the bookmarks manager",
+    cmd("bookmarks", "Open bookmarks manager in a new tab.",
         function (w)
-            w:new_tab(chrome_page) end),
+            w:new_tab(chrome_page)
+        end),
+
     cmd("bookmark", "Add bookmark",
         function (w, a)
             if not a then
