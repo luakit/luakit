@@ -18,6 +18,7 @@ local debug = debug
 
 -- Grab the luakit environment we need
 local lousy = require("lousy")
+local globals = globals
 local dedent = lousy.util.string.dedent
 local chrome = require("chrome")
 local history = require("history")
@@ -380,7 +381,9 @@ export_funcs = {
     end,
 
     open_editor = function (file, line)
-        capi.luakit.spawn(string.format("urxvt -e vim %q +%d", file, line))
+        local cmd = string.format("%s -e %s %q +%d", globals.term or "xterm",
+            globals.editor or "vim", file, line)
+        capi.luakit.spawn(cmd)
     end,
 }
 
