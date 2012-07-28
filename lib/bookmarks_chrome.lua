@@ -139,7 +139,7 @@ local html = [==[
         }
 
         .bookmark .lhs {
-            width: 7em;
+            width: 9em;
             margin: 0;
             padding: 0;
             color: #888;
@@ -148,6 +148,10 @@ local html = [==[
             text-overflow: ellipsis;
             -webkit-user-select: none;
             cursor: default;
+        }
+
+        .bookmark .lhs span {
+            margin-right: 2em;
         }
     </style>
 </head>
@@ -201,7 +205,7 @@ $(document).ready(function () {
         var $e = $(bookmark_html);
         $e.find(".title a").attr("href", b.uri).text(b.title || b.uri);
        // $e.find(".uri").text(b.uri);
-        $e.find(".lhs").text(b.date);
+        $e.find(".lhs").html("<span>" + b.id + "</span>" + b.date);
 
         if (b.tags) {
             var $tags = $e.find(".tags");
