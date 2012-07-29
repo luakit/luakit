@@ -223,8 +223,10 @@ $(document).ready(function () {
             return;
         }
 
+        /* clear results container */
         $results.empty();
 
+        /* add new results */
         for (var i = 0; i < results.length; i++) {
             var b = results[i];
 
@@ -232,6 +234,7 @@ $(document).ready(function () {
             $e.find(".title a").attr("href", b.uri).text(b.title || b.uri);
             $e.find(".lhs").html("<span>" + b.id + "</span>" + b.date);
 
+            /* add tags if specified */
             if (b.tags) {
                 var $tags = $e.find(".tags");
                 $tags.empty();
@@ -243,9 +246,18 @@ $(document).ready(function () {
                 }
             }
 
-            $e.mouseenter(function() { $(".del", this).show(); });
-            $e.mouseleave(function() { $(".del", this).hide(); });
+            /* add callbacks to 'delete' link */
+            var del = $e.find(".del");
 
+            $e.mouseenter({ item : del }, function(ev) { ev.data.item.show(); });
+            $e.mouseleave({ item : del }, function(ev) { ev.data.item.hide(); });
+
+            del.find("a").click({ id : b.id, par : $e }, function(ev) {
+                delete_bookmark(ev.data.id);
+                ev.data.par.hide(100, function() { ev.data.par.remove(); });
+            });
+
+            /* add result to container */
             $results.append($e);
         }
     };
@@ -297,6 +309,13 @@ export_funcs = {
         end
 
         return rows
+    end,
+
+    delete_bookmark = function (id)
+        if not id then return end
+        local bookmark_id = type(id) == "number" and id or tonumber(id)
+
+        bookmarks.remove(bookmark_id)
     end,
 }
 
