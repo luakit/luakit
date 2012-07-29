@@ -214,6 +214,18 @@ $(document).ready(function () {
 
     $("#templates").empty();
 
+    var delete_link = function(element, id) {
+        var del = element.find(".del");
+
+        element.mouseenter(function() { del.show(); });
+        element.mouseleave(function() { del.hide(); });
+
+        del.find("a").click(function() {
+            delete_bookmark(id);
+            element.hide(100, function() { element.remove(); });
+        });
+    };
+
     var process_results = function(results) {
 
         if (results.length === "undefined") {
@@ -244,15 +256,7 @@ $(document).ready(function () {
             }
 
             /* add callbacks to 'delete' link */
-            var del = $e.find(".del");
-
-            $e.mouseenter({ item : del }, function(ev) { ev.data.item.show(); });
-            $e.mouseleave({ item : del }, function(ev) { ev.data.item.hide(); });
-
-            del.find("a").click({ id : b.id, par : $e }, function(ev) {
-                delete_bookmark(ev.data.id);
-                ev.data.par.hide(100, function() { ev.data.par.remove(); });
-            });
+            delete_link($e, b.id);
 
             /* add result to container */
             $results.append($e);
