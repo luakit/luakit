@@ -146,8 +146,15 @@ local html = [==[
             color: #000;
         }
 
+        .bookmark .tag a {
+            margin: 0 0.4em;
+            text-decoration: none;
+            font-weight: bold;
+            color: #700;
+        }
+
         .bookmark .lhs {
-            width: 9em;
+            width: 8em;
             margin: 0;
             padding: 0;
             color: #888;
@@ -170,7 +177,7 @@ local html = [==[
         }
 
         .bookmark .del a:hover {
-            color: #000;
+            color: #700;
             text-decoration: underline;
         }
     </style>
@@ -226,6 +233,19 @@ $(document).ready(function () {
         });
     };
 
+    var add_tag = function(element, name, bid) {
+        var tag = $("<div class=\"tag\">" + name + "</div>");
+        var remove = $("<a href=\"#\">X</a>");
+
+        remove.click(function() {
+            remove_tag(bid, name);
+            tag.hide(100, function() { tag.remove(); });
+        });
+
+        tag.append(remove);
+        element.append(tag);
+    };
+
     var process_results = function(results) {
 
         if (results.length === "undefined") {
@@ -251,7 +271,7 @@ $(document).ready(function () {
                 var tags = (b.tags || "").split(",");
 
                 for (var j = 0; j < tags.length; j++) {
-                    $tags.append($("<div></div>").addClass("tag").text(tags[j]));
+                    add_tag($tags, tags[j], b.id);
                 }
             }
 
@@ -318,6 +338,13 @@ export_funcs = {
 
         bookmarks.remove(bookmark_id)
     end,
+
+    remove_tag = function (bookmark, tag)
+        if not bookmark or not tag then return end
+        local bookmark_id = type(bookmark) == "number" and bookmark or tonumber(bookmark)
+
+        bookmarks.untag(bookmark_id, tag)
+    end
 }
 
 chrome.add("bookmarks", function (view, meta)

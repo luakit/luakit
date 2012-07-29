@@ -115,7 +115,7 @@ function untag(bookmark_id, name_or_id)
 
     -- Remove tag from bookmark
     if tag then
-        db:exec("DELETE FROM tagmap WHERE bid = ? AND tid = ?",
+        db:exec("DELETE FROM tagmap WHERE bookmark_id = ? AND tag_id = ?",
             { bookmark_id, tag.id })
         _M.emit_signal("untagged-bookmark", bookmark_id, tag)
         delete_orphan_tags()
