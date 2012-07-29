@@ -205,6 +205,7 @@ local html = [==[
             <input type="button" id="clear-all" value="Clear All History...">
             <input type="button" id="clear-results" value="Clear All Results">
             <input type="button" id="clear-selected" value="Clear All Selected">
+            <input type="button" id="invert-selection" value="Invert Selection">
         </div>
         <div id="results">
         </div>
@@ -260,6 +261,7 @@ $(document).ready(function () {
         $clear_all = $("#clear-all").eq(0),
         $clear_results = $("#clear-results").eq(0),
         $clear_selected = $("#clear-selected").eq(0),
+        $invert_selection = $("#invert-selection").eq(0),
         $next = $("#nav-next").eq(0),
         $prev = $("#nav-prev").eq(0);
 
@@ -372,15 +374,7 @@ $(document).ready(function () {
     });
 
     $results.on("click", ".entry", function (e) {
-        var $e = $(this);
-        if ($e.hasClass("selected")) {
-            $(this).removeClass("selected");
-            if ($results.find(".selected").length === 0)
-                $clear_selected.attr("disabled", true);
-        } else {
-            $(this).addClass("selected");
-            $clear_selected.attr("disabled", false);
-        }
+        invert_item($(this))
     });
 
     $clear_all.click(function () {
@@ -408,6 +402,23 @@ $(document).ready(function () {
                 history_clear_list(ids);
         });
     };
+    
+    function invert_item($e) {
+        if ($e.hasClass("selected")) {
+            $e.removeClass("selected");
+            if ($results.find(".selected").length === 0)
+                $clear_selected.attr("disabled", true);
+        } else {
+            $e.addClass("selected");
+            $clear_selected.attr("disabled", false);
+        }
+    }
+    
+    function invert_select($elems) {
+        $elems.each(function (index) {
+            invert_item($(this))
+        });
+    };
 
     $clear_results.click(function () {
         clear_elems($results.find(".entry"));
@@ -418,6 +429,11 @@ $(document).ready(function () {
         clear_elems($results.find(".selected"));
         $clear_selected.blur();
     });
+    
+    $invert_selection.click(function () {
+        invert_select($results.find(".entry"));
+    });
+    
 
     function parse_frag() {
         var frag = document.location.hash.substr(1);
