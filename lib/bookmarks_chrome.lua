@@ -18,6 +18,7 @@ local error = error
 local bookmarks = require("bookmarks")
 local lousy = require("lousy")
 local chrome = require("chrome")
+local sql_escape = lousy.util.sql_escape
 local add_binds = add_binds
 local add_cmds = add_cmds
 local webview = webview
@@ -61,7 +62,7 @@ local html = [==[
             font-weight: normal;
         }
 
-        #search-form input {
+        #input {
             min-width: 33%;
             width: 10em;
             font-size: 1.6em;
@@ -157,9 +158,8 @@ local html = [==[
 </head>
 <body>
     <div class="header">
-        <form id="search-form">
-            <input type="text" id="search" />
-        </form>
+        <input type="text" id="input" />
+        <input type="button" id="search" value="search" />
     </div>
     <div class="main">
         <div id="results-header">
@@ -187,40 +187,59 @@ local html = [==[
 
 local main_js = [=[
 $(document).ready(function () {
-    var results = bookmarks_search({ limit: 100 })
-
-    if (results.length === "undefined") {
-        return;
-    }
-
-    var $results = $("#results").eq(0);
+    var default_limit = 100;
 
     var bookmark_html = $("#bookmark-template").html();
+    var $results = $("#results");
 
     $("#templates").empty();
 
-    for (var i = 0; i < results.length; i++) {
-        var b = results[i];
+    var process_results = function(results) {
 
-        var $e = $(bookmark_html);
-        $e.find(".title a").attr("href", b.uri).text(b.title || b.uri);
-       // $e.find(".uri").text(b.uri);
-        $e.find(".lhs").html("<span>" + b.id + "</span>" + b.date);
-
-        if (b.tags) {
-            var $tags = $e.find(".tags");
-            $tags.empty();
-
-            var tags = (b.tags || "").split(",");
-
-            for (var j = 0; j < tags.length; j++) {
-                $tags.append($("<div></div>").addClass("tag").text(tags[j]));
-            }
+        if (results.length === "undefined") {
+            return;
         }
 
-        $results.append($e);
-    }
+        $results.empty();
 
+        for (var i = 0; i < results.length; i++) {
+            var b = results[i];
+
+            var $e = $(bookmark_html);
+            $e.find(".title a").attr("href", b.uri).text(b.title || b.uri);
+            $e.find(".lhs").html("<span>" + b.id + "</span>" + b.date);
+
+            if (b.tags) {
+                var $tags = $e.find(".tags");
+                $tags.empty();
+
+                var tags = (b.tags || "").split(",");
+
+                for (var j = 0; j < tags.length; j++) {
+                    $tags.append($("<div></div>").addClass("tag").text(tags[j]));
+                }
+            }
+
+            $results.append($e);
+        }
+    };
+
+    var input = $("#input");
+    var handle = function() {
+        var query = input.val();
+        process_results(bookmarks_search({
+            limit : default_limit,
+            query : query }));
+    };
+
+    input.keydown(function(ev) {
+        if (ev.which == 13) handle();
+    });
+
+    var search = $("#search");
+    search.click(handle);
+
+    process_results(bookmarks_search({ limit: default_limit }));
 });
 ]=]
 
@@ -228,13 +247,24 @@ export_funcs = {
     bookmarks_search = function (opts)
         if not bookmarks.db then bookmarks.init() end
 
-        local rows = bookmarks.db:exec [[
+        local limit = opts.limit or 100
+        local has_query = opts.query and opts.query ~= ""
+
+        local rows = has_query and bookmarks.db:exec(string.format([[
+            SELECT b.*, group_concat(t.name) AS tags
+            FROM bookmarks AS b LEFT JOIN tagmap AS map LEFT JOIN tags AS t
+            ON map.bookmark_id = b.id AND map.tag_id = t.id
+            WHERE lower(b.uri) GLOB %s
+            GROUP BY b.id
+            LIMIT ?
+        ]], sql_escape("*"..string.lower(opts.query).."*")), { limit })
+        or bookmarks.db:exec([[
             SELECT b.*, group_concat(t.name) AS tags
             FROM bookmarks AS b LEFT JOIN tagmap AS map LEFT JOIN tags AS t
             ON map.bookmark_id = b.id AND map.tag_id = t.id
             GROUP BY b.id
-            LIMIT 100
-        ]]
+            LIMIT ?
+        ]], { limit })
 
         for i, row in ipairs(rows) do
             rawset(row, "date", os.date("%d %b %Y", rawget(row, "created")))
