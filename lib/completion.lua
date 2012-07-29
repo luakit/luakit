@@ -13,8 +13,9 @@ local unpack = unpack
 
 -- Get luakit environment
 local lousy = require "lousy"
-local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
 local history = require "history"
+local bookmarks = require "bookmarks"
+local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
 local new_mode, get_mode = new_mode, get_mode
 local add_binds = add_binds
 local capi = { luakit = luakit }
@@ -221,11 +222,41 @@ funcs = {
         end
         return ret
     end,
+
+    -- add bookmarks completion to the menu
+    bookmarks = function (state)
+        -- Find word under cursor (also checks not first word)
+        local term = string.match(state.left, "%s(%S+)$")
+        if not term then return end
+
+        -- Build query & sort results by number of times visited
+        local glob = sql_escape("*" .. string.lower(term) .. "*")
+
+        local results = bookmarks.db:exec(string.format([[SELECT uri,title
+            FROM bookmarks WHERE lower(uri) GLOB %s OR lower(title) GLOB %s
+            LIMIT 25;]], glob, glob))
+
+        if not results[1] then return end
+
+        -- Strip last word (so that we can append the completion uri)
+        local left = ":" .. string.sub(state.left, 1,
+            string.find(state.left, "%s(%S+)$"))
+
+        -- Build rows
+        local ret = {{ "Bookmarks", "URI", title = true }}
+        for _, row in ipairs(results) do
+            local title = row.title ~= "" and row.title or row.uri
+            table.insert(ret, { escape(title), escape(row.uri),
+                left = left .. row.uri })
+        end
+        return ret
+    end,
 }
 
 -- Order of completion items
 order = {
     funcs.command,
+    funcs.bookmarks,
     funcs.history,
 }
 
