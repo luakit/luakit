@@ -69,6 +69,12 @@ local html = [==[
             font-weight: normal;
         }
 
+        #search {
+            padding: 0 0.6em;
+            font-size: 1.6em;
+            font-weight: normal;
+        }
+
         #results-header {
             border-top: 1px solid #aaa;
             background-color: #f2f2f2;
