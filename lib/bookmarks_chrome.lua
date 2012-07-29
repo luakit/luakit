@@ -158,7 +158,23 @@ local html = [==[
         }
 
         .bookmark .lhs span {
+            font-size: 80%;
             margin-right: 2em;
+        }
+
+        .bookmark .del {
+            margin: 0 2em;
+            display: none;
+        }
+
+        .bookmark .del a {
+            text-decoration: none;
+            color: #888;
+        }
+
+        .bookmark .del a:hover {
+            color: #000;
+            text-decoration: underline;
         }
     </style>
 </head>
@@ -184,6 +200,7 @@ local html = [==[
                         <li><div class="tags"></div></li>
                     </ol>
                 </li>
+                <li class="del"><a href="#">Delete</a></li>
             </ol>
         </div>
     </div>
@@ -225,6 +242,9 @@ $(document).ready(function () {
                     $tags.append($("<div></div>").addClass("tag").text(tags[j]));
                 }
             }
+
+            $e.mouseenter(function() { $(".del", this).show(); });
+            $e.mouseleave(function() { $(".del", this).hide(); });
 
             $results.append($e);
         }
