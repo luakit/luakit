@@ -151,6 +151,7 @@ local html = [==[
             text-decoration: none;
             font-weight: bold;
             color: #700;
+            visibility: hidden;
         }
 
         .bookmark .lhs {
@@ -224,8 +225,15 @@ $(document).ready(function () {
     var delete_link = function(element, id) {
         var del = element.find(".del");
 
-        element.mouseenter(function() { del.show(); });
-        element.mouseleave(function() { del.hide(); });
+        element.mouseenter(function() {
+            del.show();
+            element.find(".tag a").css("visibility", "visible");
+        });
+
+        element.mouseleave(function() {
+            del.hide();
+            element.find(".tag a").css("visibility", "hidden");
+        });
 
         del.find("a").click(function() {
             delete_bookmark(id);
