@@ -118,6 +118,7 @@ local html = [==[
 
         .bookmark .tags {
             display: -webkit-box;
+            margin-top: 3px;
         }
 
         .bookmark .tag {
@@ -157,17 +158,13 @@ local html = [==[
             cursor: default;
         }
 
-        .bookmark .lhs span {
-            font-size: 80%;
-            margin-right: 2em;
-        }
-
         .bookmark .del {
             margin: 0 2em;
             display: none;
         }
 
         .bookmark .del a {
+            font-size: 90%;
             text-decoration: none;
             color: #888;
         }
@@ -232,7 +229,7 @@ $(document).ready(function () {
 
             var $e = $(bookmark_html);
             $e.find(".title a").attr("href", b.uri).text(b.title || b.uri);
-            $e.find(".lhs").html("<span>" + b.id + "</span>" + b.date);
+            $e.find(".lhs").text(b.date);
 
             /* add tags if specified */
             if (b.tags) {
