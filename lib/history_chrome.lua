@@ -415,11 +415,8 @@ $(document).ready(function () {
     }
     
     function invert_select($elems) {
-        var ids = [], last_index = $elems.length - 1;
         $elems.each(function (index) {
-            var $e = $(this);
-            ids.push($e.attr("id"));
-            invert_item($e)
+            invert_item($(this))
         });
     };
 
