@@ -231,6 +231,10 @@ local html = [==[
             min-width: 0;
             padding: 0.3em 0.5em;
         }
+
+        #templates {
+            display: none;
+        }
     </style>
 </head>
 <body>

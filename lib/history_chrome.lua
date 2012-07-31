@@ -189,6 +189,9 @@ local html = [==[
             border: 1px solid #aaa;
         }
 
+        #templates {
+            display: none;
+        }
     </style>
 </head>
 <body>

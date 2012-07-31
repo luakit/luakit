@@ -192,6 +192,10 @@ local html = [==[
             color: #888;
             float: left;
         }
+
+        #templates {
+            display: none;
+        }
     </style>
 </head>
 <body>
