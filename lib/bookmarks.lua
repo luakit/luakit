@@ -134,7 +134,7 @@ function add(uri, opts)
 
     -- Add new bookmark
     db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?)",
-        { uri, opts.title, opts.desc, os.time(), os.time() })
+        { uri, opts.title, opts.desc, opts.created or os.time(), os.time() })
 
     -- Get new bookmark id
     local bookmark_id = db:exec("SELECT last_insert_rowid() AS id")[1].id
