@@ -324,53 +324,70 @@ $(document).ready(function () {
         /* add new results */
         for (var i = 0; i < results.length; i++)
             $results.append(make_bookmark(results[i]));
+
+        // Show bookmark controls when hovering directly over buttons
+        $results.on("mouseenter", ".bookmark .controls", function () {
+            $(this).removeClass("hidden");
+        });
+
+        // Hide controls when leaving bookmark
+        $results.on("mouseleave", ".bookmark", function () {
+            $(this).find(".bottom .controls").addClass("hidden");
+        });
+
+        $results.on("click", ".bookmark .controls .edit-button", function (e) {
+            var $b = $(this).parents(".bookmark").eq(0), $e = $(edit_html);
+
+            // Remove previous edit form
+            $b.find(".edit").remove();
+
+            $b.addClass("editing");
+
+            // Animate out & delete form
+            $e.find(".cancel-button").click(function (e) {
+                $b.removeClass("editing");
+                $e.slideUp(function () { $e.remove(); })
+            });
+
+            var b = bookmarks[$b.attr("bookmark_id")],
+                $title = $e.find(".title input").eq(0).val(b.title),
+                $uri = $e.find(".uri input").eq(0).val(b.uri),
+                $tags = $e.find(".tags input").eq(0).val(b.tags);
+                $desc = $e.find(".edit-desc textarea").eq(0).val(b.desc);
+
+            $e.find(".submit-button").click(function (e) {
+                // Add new bookmark
+                bookmarks_add($uri.val(), { title: $title.val(), tags: $tags.val(),
+                    desc: $desc.val(), created: b.created });
+                // Remove old bookmark
+                bookmarks_remove(b.id);
+                $e.slideUp(function () {
+                    render_results(bookmarks_search({ limit: default_limit }));
+                });
+            });
+
+            $e.hide();
+            $b.append($e);
+            $e.slideDown();
+        });
     };
 
-    // Show bookmark controls when hovering directly over buttons
-    $results.on("mouseenter", ".bookmark .controls", function () {
-        $(this).removeClass("hidden");
+    var input = $("#input");
+    var search = function() {
+        var query = input.val();
+        render_results(bookmarks_search({
+            limit : default_limit,
+            query : query
+        }));
+    };
+
+    /* input field callback */
+    input.keydown(function(ev) {
+        if (ev.which == 13) search();
     });
 
-    // Hide controls when leaving bookmark
-    $results.on("mouseleave", ".bookmark", function () {
-        $(this).find(".bottom .controls").addClass("hidden");
-    });
-
-    $results.on("click", ".bookmark .controls .edit-button", function (e) {
-        var $b = $(this).parents(".bookmark").eq(0), $e = $(edit_html);
-
-        // Remove previous edit form
-        $b.find(".edit").remove();
-
-        $b.addClass("editing");
-
-        // Animate out & delete form
-        $e.find(".cancel-button").click(function (e) {
-            $b.removeClass("editing");
-            $e.slideUp(function () { $e.remove(); })
-        });
-
-        var b = bookmarks[$b.attr("bookmark_id")],
-            $title = $e.find(".title input").eq(0).val(b.title),
-            $uri = $e.find(".uri input").eq(0).val(b.uri),
-            $tags = $e.find(".tags input").eq(0).val(b.tags);
-            $desc = $e.find(".edit-desc textarea").eq(0).val(b.desc);
-
-        $e.find(".submit-button").click(function (e) {
-            // Add new bookmark
-            bookmarks_add($uri.val(), { title: $title.val(), tags: $tags.val(),
-                desc: $desc.val(), created: b.created });
-            // Remove old bookmark
-            bookmarks_remove(b.id);
-            $e.slideUp(function () {
-                render_results(bookmarks_search({ limit: default_limit }));
-            });
-        });
-
-        $e.hide();
-        $b.append($e);
-        $e.slideDown();
-    });
+    /* search button callback */
+    $("#search").click(search);
 
     render_results(bookmarks_search({ limit: default_limit }));
 });
@@ -380,14 +397,24 @@ export_funcs = {
     bookmarks_search = function (opts)
         if not bookmarks.db then bookmarks.init() end
 
-        local rows = bookmarks.db:exec [[
+        local limit = opts.limit or 100
+        local has_query = opts.query and opts.query ~= ""
+
+        local rows = has_query and bookmarks.db:exec(string.format([[
+            SELECT b.*, group_concat(t.name) AS tags
+            FROM bookmarks AS b LEFT JOIN tagmap AS map LEFT JOIN tags AS t
+            ON map.bookmark_id = b.id AND map.tag_id = t.id
+            WHERE lower(b.uri) GLOB %s
+            GROUP BY b.id
+            LIMIT ?
+        ]], sql_escape("*"..string.lower(opts.query).."*")), { limit })
+        or bookmarks.db:exec([[
             SELECT b.*, group_concat(t.name) AS tags
             FROM bookmarks AS b LEFT JOIN tagmap AS map LEFT JOIN tags AS t
             ON map.bookmark_id = b.id AND map.tag_id = t.id
             GROUP BY b.id
-            ORDER BY b.created DESC
-            LIMIT 100
-        ]]
+            LIMIT ?
+        ]], { limit })
 
         for i, row in ipairs(rows) do
             rawset(row, "date", os.date("%d %B %Y", rawget(row, "created")))
