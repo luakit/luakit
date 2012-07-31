@@ -256,8 +256,8 @@ window.luakit_follow = (function (window, document) {
         if (!hints)
             hints = state.hints;
 
-        var hint_re = hpat && new RegExp(hpat),
-            text_re = tpat && new RegExp(tpat),
+        var hint_re = hpat && new RegExp(hpat, "i"),
+            text_re = tpat && new RegExp(tpat, "i"),
             matches = [], len = hints.length, j = 0, h;
 
         // Filter hints
