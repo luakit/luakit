@@ -122,37 +122,41 @@ end
 -- Add quickmarking binds to normal mode
 local buf = lousy.bind.buf
 add_binds("normal", {
-    -- Quickmark open in current tab, new tabs or new window (I.e. `[count]g{onw}{a-zA-Z0-9}`)
-    buf("^g[onw]%w$", function (w, b, m)
-        local mode, token = string.match(b, "^g(.)(.)$")
-        local uris = lousy.util.table.clone(get(token) or {})
-        for i, uri in ipairs(uris) do uris[i] = w:search_open(uri) end
-        for c=1,m.count do
-            if mode == "w" then
-                window.new(uris)
-            else
-                for i, uri in ipairs(uris or {}) do
-                    if mode == "o" and c == 1 and i == 1 then w:navigate(uri)
-                    else w:new_tab(uri, i == 1) end
+    buf("^g[onw][a-zA-Z0-9]$",
+        [[Jump to quickmark in current tab with `go{a-zA-Z0-9}`,
+        `gn{a-zA-Z0-9}` to open in new tab and or `gw{a-zA-Z0-9}` to open a
+        quickmark in a new window.]],
+        function (w, b, m)
+            local mode, token = string.match(b, "^g(.)(.)$")
+            local uris = lousy.util.table.clone(get(token) or {})
+            for i, uri in ipairs(uris) do uris[i] = w:search_open(uri) end
+            for c=1,m.count do
+                if mode == "w" then
+                    window.new(uris)
+                else
+                    for i, uri in ipairs(uris or {}) do
+                        if mode == "o" and c == 1 and i == 1 then w:navigate(uri)
+                        else w:new_tab(uri, i == 1) end
+                    end
                 end
             end
-        end
-    end, {count=1}),
+        end, {count=1}),
 
-    -- Quickmark current uri (`M{a-zA-Z0-9}`)
-    buf("^M%w$", function (w, b)
-        local token = string.match(b, "^M(.)$")
-        local uri = w.view.uri
-        set(token, {uri})
-        w:notify(string.format("Quickmarked %q: %s", token, uri))
-    end),
+    buf("^M[a-zA-Z0-9]$",
+        [[Add quickmark for current URL.]],
+        function (w, b)
+            local token = string.match(b, "^M(.)$")
+            local uri = w.view.uri
+            set(token, {uri})
+            w:notify(string.format("Quickmarked %q: %s", token, uri))
+        end),
 })
 
 -- Add quickmarking commands
 local cmd = lousy.bind.cmd
 add_cmds({
     -- Quickmark add (`:qmark f http://forum1.com, forum2.com, imdb some artist`)
-    cmd("qma[rk]", "add quickmark", function (w, a)
+    cmd("qma[rk]", "Add a quickmark.", function (w, a)
         local token, uris = string.match(lousy.util.string.strip(a), "^(%w)%s+(.+)$")
         assert(token, "invalid token")
         uris = lousy.util.string.split(uris, ",%s+")
@@ -161,7 +165,7 @@ add_cmds({
     end),
 
     -- Quickmark edit (`:qmarkedit f` -> `:qmark f furi1, furi2, ..`)
-    cmd({"qmarkedit", "qme"}, "edit quickmark", function (w, a)
+    cmd({"qmarkedit", "qme"}, "Edit a quickmark.", function (w, a)
         token = lousy.util.string.strip(a)
         assert(#token == 1, "invalid token length: " .. token)
         local uris = get(token)
@@ -169,7 +173,7 @@ add_cmds({
     end),
 
     -- Quickmark del (`:delqmarks b-p Aa z 4-9`)
-    cmd("delqm[arks]", "delete quickmark", function (w, a)
+    cmd("delqm[arks]", "Delete a quickmark.", function (w, a)
         -- Find and del all range specifiers
         string.gsub(a, "(%w%-%w)", function (range)
             range = "["..range.."]"
@@ -183,10 +187,10 @@ add_cmds({
     end),
 
     -- View all quickmarks in an interactive menu
-    cmd("qmarks", "list all quickmarks", function (w) w:set_mode("qmarklist") end),
+    cmd("qmarks", "List all quickmarks.", function (w) w:set_mode("qmarklist") end),
 
     -- Delete all quickmarks
-    cmd({"delqmarks!", "delqm!"}, "delete all quickmarks", function (w) delall() end),
+    cmd({"delqmarks!", "delqm!"}, "Delete all quickmarks.", function (w) delall() end),
 })
 
 -- Add mode to display all quickmarks in an interactive menu

@@ -28,6 +28,9 @@ Contributors to luakit (A to Z):
   Stjujsckij Nickolaj           <sterkrig@home.no>          2011
   Vasuvi                        <vasuvi@inbox.com>          2010-2011
 
+Author of `lib/markdown.lua`:
+  Niklas Frykholm               <niklas@frykholm.se>        2008
+
 Author of the JavaScript greasemonkey methods in `lib/userscripts.lua`:
   Jim Tuttle                                                2009
 

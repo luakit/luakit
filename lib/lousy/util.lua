@@ -6,6 +6,7 @@
 
 --- Grab environment we need
 local assert = assert
+local print = print
 local debug = debug
 local error = error
 local setmetatable = setmetatable
@@ -259,6 +260,19 @@ function string.strip(s, pattern)
     if f_start then sub_end = f_start - 1 end
 
     return rstring.sub(s, sub_start or 1, sub_end or #s)
+end
+
+function string.dedent(text, first)
+    local min = first and #rstring.match(text, "^(%s*)") or nil
+    rstring.gsub(text, "\n(%s*)", function (spaces)
+        local len = #spaces
+        if not min or len < min then min = len end
+    end)
+    if min and min > 0 then
+        local pat = "\n" .. rstring.rep(" ", min)
+        text = rstring.gsub(text, pat, "\n")
+    end
+    return first and rstring.sub(text, min + 1) or text
 end
 
 local function find_file(paths)

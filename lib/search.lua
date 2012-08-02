@@ -6,10 +6,13 @@
 -- Add searching binds to normal mode
 local key = lousy.bind.key
 add_binds("normal", {
-    key({}, "/", function (w) w:start_search("/") end),
-    key({}, "?", function (w) w:start_search("?") end),
+    key({}, "/", "Search for string on current page.",
+        function (w) w:start_search("/") end),
 
-    key({}, "n", function (w, m)
+    key({}, "?", "Reverse search for string on current page.",
+        function (w) w:start_search("?") end),
+
+    key({}, "n", "Find next search result.", function (w, m)
         for i=1,m.count do w:search(nil, true)  end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
@@ -22,7 +25,7 @@ add_binds("normal", {
         end
     end, {count=1}),
 
-    key({}, "N", function (w, m)
+    key({}, "N", "Find previous search result.", function (w, m)
         for i=1,m.count do w:search(nil, false) end
         if w.search_state.ret == false then
             w:error("Pattern not found: " .. w.search_state.last_search)
@@ -100,11 +103,11 @@ new_mode("search", {
 
 -- Add binds to search mode
 add_binds("search", {
-    key({"Control"}, "j", function (w)
+    key({"Control"}, "j", "Select next search result.", function (w)
         w:search(w.search_state.last_search, true)
     end),
 
-    key({"Control"}, "k", function (w)
+    key({"Control"}, "k", "Select previous result.", function (w)
         w:search(w.search_state.last_search, false)
     end),
 })

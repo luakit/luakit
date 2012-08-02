@@ -3,7 +3,7 @@
 -- @copyright 2010 Mason Larobina
 ---------------------------------------------------------------------------
 
---- Grab environment we need
+-- Grab environment we need
 local assert = assert
 local ipairs = ipairs
 local pairs = pairs
@@ -16,22 +16,18 @@ local util = require("lousy.util")
 local join = util.table.join
 local print = print
 
---- Key, buffer and command binding functions.
+-- Key, buffer and command binding functions.
 module("lousy.bind")
 
 -- Modifiers to ignore
 ignore_modifiers = { "Mod2", "Mod3", "Mod5", "Lock" }
 
---- A table that contains mappings for key names.
+-- A table that contains mappings for key names.
 map = {
     ISO_Left_Tab = "Tab",
 }
 
---- Return cloned, sorted & filtered modifier mask table.
--- @param mods The table of modifiers
--- @param remove_shift Remove Shift key from modifiers table (Normally done if
--- the key pressed is a single character)
--- @return Filtered modifiers table
+-- Return cloned, sorted & filtered modifier mask table.
 function filter_mods(mods, remove_shift)
     -- Clone & sort new modifiers table
     mods = util.table.clone(mods)
@@ -44,71 +40,73 @@ function filter_mods(mods, remove_shift)
     return mods
 end
 
---- Create new key binding.
--- @param mods Modifiers table.
--- @param key The key name.
--- @param func The callback function.
--- @param opts Optional binding and callback options/state/metadata.
--- @return A key binding struct.
-function key(mods, key, func, opts)
+-- Create new key binding.
+function key(mods, key, desc, func, opts)
+    -- Detect optional description & adjust argument positions
+    if type(desc) == "function" then
+        desc, func, opts = nil, desc, func
+    end
+
     assert(type(mods) == "table", "invalid modifiers table")
     assert(type(key)  == "string" and #key > 0, "invalid key string")
+    assert(not desc or type(desc) == "string", "invalid description")
     assert(type(func) == "function", "invalid callback function")
 
     return {
         type = "key",
         mods = filter_mods(mods, #key == 1), -- Remove Shift key for char keys
         key  = key,
+        desc = desc,
         func = func,
         opts = opts or {},
     }
 end
 
---- Create new button binding.
--- @param mods Modifiers table.
--- @param button The mouse button number.
--- @param func The callback function.
--- @param opts Optional binding and callback options/state/metadata.
--- @return A button binding struct.
-function but(mods, button, func, opts)
+-- Create new button binding.
+function but(mods, button, desc, func, opts)
+    -- Detect optional description & adjust argument positions
+    if type(desc) == "function" then
+        desc, func, opts = nil, desc, func
+    end
+
     assert(type(mods) == "table", "invalid modifiers table")
     assert(type(button) == "number", "invalid button number")
+    assert(not desc or type(desc) == "string", "invalid description")
     assert(type(func) == "function", "invalid callback function")
 
     return {
         type   = "button",
         mods   = filter_mods(mods), -- Sort modifiers
         button = button,
+        desc   = desc,
         func   = func,
         opts   = opts or {},
     }
 end
 
---- Create new buffer binding.
--- @param pattern The pattern to match against the buffer.
--- @param func The callback function.
--- @param opts Optional binding and callback options/state/metadata.
--- @return A buffer binding struct.
-function buf(pattern, func, opts)
+-- Create new buffer binding.
+function buf(pattern, desc, func, opts)
+    -- Detect optional description & adjust argument positions
+    if type(desc) == "function" then
+        desc, func, opts = nil, desc, func
+    end
+
     assert(type(pattern) == "string" and #pattern > 0, "invalid pattern string")
+    assert(not desc or type(desc) == "string", "invalid description")
     assert(type(func) == "function", "invalid callback function")
 
     return {
         type    = "buffer",
         pattern = pattern,
+        desc    = desc,
         func    = func,
         opts    = opts or {},
     }
 end
 
---- Create new command binding.
--- @param cmds A table of command names to match or "co[mmand]" string to parse.
--- @param desc A short command description.
--- @param func The callback function.
--- @param opts Optional binding and callback options/state/metadata.
--- @return A command binding struct.
+-- Create new command binding.
 function cmd(cmds, desc, func, opts)
-    -- Detect optional description
+    -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
         desc, func, opts = nil, desc, func
     end
@@ -124,9 +122,9 @@ function cmd(cmds, desc, func, opts)
     end
 
     assert(type(cmds) == "table", "invalid commands table type")
-    assert(desc == nil or type(desc) == 'string', "invalid description type")
     assert(#cmds > 0, "empty commands table")
-    assert(type(func) == "function", "invalid function type")
+    assert(not desc or type(desc) == "string", "invalid description")
+    assert(type(func) == "function", "invalid callback function")
 
     return {
         type = "command",
@@ -137,26 +135,25 @@ function cmd(cmds, desc, func, opts)
     }
 end
 
---- Create a binding which is always called.
--- @param func The callback function.
--- @param opts Optional binding and callback options/state/metadata.
--- opts table given when the bind was created.
-function any(func, opts)
+-- Create a binding which is always called.
+function any(desc, func, opts)
+    -- Detect optional description & adjust argument positions
+    if type(desc) == "function" then
+        desc, func, opts = nil, desc, func
+    end
+
+    assert(not desc or type(desc) == "string", "invalid description")
     assert(type(func) == "function", "invalid callback function")
 
     return {
         type = "any",
         func = func,
+        desc = desc,
         opts = opts or {},
     }
 end
 
---- Try and match an any binding.
--- @param object The first argument of the bind callback function.
--- @param binds The table of binds in which to check for a match.
--- @param args The bind options/state/metadata table which is applied over the
--- opts table given when the bind was created.
--- @return True if a binding was matched and called.
+-- Try and match an any binding.
 function match_any(object, binds, args)
     for _, b in ipairs(binds) do
         if b.type == "any" then
@@ -167,15 +164,9 @@ function match_any(object, binds, args)
     end
     return false
 end
---- Try and match a key binding in a given table of bindings and call that
+
+-- Try and match a key binding in a given table of bindings and call that
 -- bindings callback function.
--- @param object The first argument of the bind callback function.
--- @param binds The table of binds in which to check for a match.
--- @param mods The modifiers to match.
--- @param key The key name to match.
--- @param args The bind options/state/metadata table which is applied over the
--- opts table given when the bind was created.
--- @return True if a binding was matched and called.
 function match_key(object, binds, mods, key, args)
     for _, b in ipairs(binds) do
         if b.type == "key" and b.key == key and util.table.isclone(b.mods, mods) then
@@ -187,15 +178,8 @@ function match_key(object, binds, mods, key, args)
     return false
 end
 
---- Try and match a button binding in a given table of bindings and call that
+-- Try and match a button binding in a given table of bindings and call that
 -- bindings callback function.
--- @param object The first argument of the bind callback function.
--- @param binds The table of binds in which to check for a match.
--- @param mods The modifiers to match.
--- @param button The mouse button number to match.
--- @param args The bind options/state/metadata table which is applied over the
--- opts table given when the bind was created.
--- @return True if a binding was matched and called.
 function match_but(object, binds, mods, button, args)
     for _, b in ipairs(binds) do
         if b.type == "button" and b.button == button and util.table.isclone(b.mods, mods) then

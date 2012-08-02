@@ -37,12 +37,10 @@ function micro()
 end
 
 function init()
-    -- cookies database handle already open
+    -- Return if database handle already open
     if db then return end
 
-    -- Open cookies sqlite database at $XDG_DATA_HOME/luakit/cookies.db
     db = capi.sqlite3{ filename = _M.db_path }
-
     db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
@@ -99,7 +97,6 @@ end
 capi.luakit.idle_add(init)
 
 -- Load all cookies after the last check time
-
 capi.soup.add_signal("request-started", function ()
     if not db then init() end
 
