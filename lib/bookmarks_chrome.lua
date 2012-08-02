@@ -63,15 +63,9 @@ local html = [==[
             font-weight: normal;
         }
 
-        #input {
+        #search {
             min-width: 33%;
             width: 10em;
-            font-size: 1.6em;
-            font-weight: normal;
-        }
-
-        #search {
-            padding: 0 0.6em;
             font-size: 1.6em;
             font-weight: normal;
         }
@@ -139,6 +133,7 @@ local html = [==[
             margin: 0 .3em;
             padding: .2em .4em;
             color: #666;
+            font-size: 0.9em;
             background-color: #f0f0f0;
             border-left: 1px solid #f5f5f5;
             border-top: 1px solid #f5f5f5;
@@ -239,8 +234,7 @@ local html = [==[
 </head>
 <body>
     <div class="header">
-        <input type="text" id="input" />
-        <input type="button" id="search" value="search" />
+        <input type="text" id="search" />
     </div>
     <div class="main">
         <div id="results-header">Bookmark Manager</div>
@@ -287,7 +281,8 @@ $(document).ready(function () {
 
     var bookmark_html = $("#bookmark-skelly").html(),
         edit_html = $("#edit-skelly").html(),
-        $results = $("#results");
+        $results = $("#results"),
+        $search = $("#search");
 
     $("#templates").remove();
 
@@ -307,7 +302,7 @@ $(document).ready(function () {
         /* add tags if specified */
         if (b.tags) {
             var $tags = $b.find(".tags").eq(0);
-            var tags = (b.tags || "").split(","), len = tags.length;
+            var tags = (b.tags || "").split(" "), len = tags.length;
             for (var i = 0; i < len; i++)
                 $tags.append($("<a></a>").text(tags[i]));
         }
@@ -362,7 +357,8 @@ $(document).ready(function () {
                 // Remove old bookmark
                 bookmarks_remove(b.id);
                 $e.slideUp(function () {
-                    render_results(bookmarks_search({ limit: default_limit }));
+                    $search.val("");
+                    search();
                 });
             });
 
@@ -372,24 +368,20 @@ $(document).ready(function () {
         });
     };
 
-    var input = $("#input");
-    var search = function() {
-        var query = input.val();
-        render_results(bookmarks_search({
-            limit : default_limit,
-            query : query
-        }));
+    function search() {
+        render_results(bookmarks_search({ query: $search.val() }));
     };
 
     /* input field callback */
-    input.keydown(function(ev) {
-        if (ev.which == 13) search();
+    $search.keydown(function(ev) {
+        if (ev.which == 13) {
+            search();
+            $search.blur();
+            reset_mode();
+        }
     });
 
-    /* search button callback */
-    $("#search").click(search);
-
-    render_results(bookmarks_search({ limit: default_limit }));
+    search();
 });
 ]=]
 
@@ -397,24 +389,40 @@ export_funcs = {
     bookmarks_search = function (opts)
         if not bookmarks.db then bookmarks.init() end
 
-        local limit = opts.limit or 100
-        local has_query = opts.query and opts.query ~= ""
+        local sql = { [[
+            SELECT b.*, group_concat(t.name, ' ') AS tags
+            FROM bookmarks AS b
+            LEFT JOIN tagmap AS map LEFT JOIN tags AS t
+            ON map.bookmark_id = b.id AND map.tag_id = t.id
+            GROUP BY b.id
+        ]] }
 
-        local rows = has_query and bookmarks.db:exec(string.format([[
-            SELECT b.*, group_concat(t.name) AS tags
-            FROM bookmarks AS b LEFT JOIN tagmap AS map LEFT JOIN tags AS t
-            ON map.bookmark_id = b.id AND map.tag_id = t.id
-            WHERE lower(b.uri) GLOB %s
-            GROUP BY b.id
-            LIMIT ?
-        ]], sql_escape("*"..string.lower(opts.query).."*")), { limit })
-        or bookmarks.db:exec([[
-            SELECT b.*, group_concat(t.name) AS tags
-            FROM bookmarks AS b LEFT JOIN tagmap AS map LEFT JOIN tags AS t
-            ON map.bookmark_id = b.id AND map.tag_id = t.id
-            GROUP BY b.id
-            LIMIT ?
-        ]], { limit })
+        local where, args, argc = {}, {}, 1
+
+        string.gsub(opts.query or "", "(-?)([^%s]+)", function (notlike, term)
+            if term ~= "" then
+                table.insert(where, (notlike == "-" and "NOT " or "") ..
+                    string.format("(matchtext GLOB ?%d)", argc, argc))
+                argc = argc + 1
+                table.insert(args, "*"..string.lower(term).."*")
+            end
+        end)
+
+        if #where ~= 0 then
+            sql[1] = [[SELECT *, lower(ifnull(uri,'') || ' ' ||
+                ifnull(title,'') || ' ' || ifnull(desc,'') || ' ' ||
+                ifnull(tags, '')) AS matchtext FROM (]] .. sql[1] .. ")"
+            table.insert(sql, "WHERE " .. table.concat(where, " AND "))
+        end
+
+        table.insert(sql, string.format(
+            "ORDER BY created DESC LIMIT ?%d OFFSET ?%d", argc, argc+1))
+
+        local limit, page = opts.limit or 100, opts.page or 1
+        table.insert(args, limit)
+        table.insert(args, limit > 0 and (limit * (page - 1)) or 0)
+
+        local rows = bookmarks.db:exec(table.concat(sql, " "), args)
 
         for i, row in ipairs(rows) do
             rawset(row, "date", os.date("%d %B %Y", rawget(row, "created")))
@@ -449,6 +457,10 @@ chrome.add("bookmarks", function (view, meta)
         for name, func in pairs(export_funcs) do
             view:register_function(name, func)
         end
+
+        view:register_function("reset_mode", function ()
+            meta.w:set_mode() -- HACK to unfocus search box
+        end)
 
         -- Load jQuery JavaScript library
         local jquery = lousy.load("lib/jquery.min.js")
