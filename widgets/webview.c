@@ -238,7 +238,7 @@ resource_request_starting_cb(WebKitWebView* UNUSED(v),
             webkit_network_request_set_uri(r, "about:blank");
         } else if (lua_isstring(L, -1)) {
             /* User returned a string, set it as the uri */
-            const char *newuri = strdup(lua_tostring(L, -1));
+            const char *newuri = g_strdup(lua_tostring(L, -1));
             webkit_network_request_set_uri(r, newuri);
         }
     }
