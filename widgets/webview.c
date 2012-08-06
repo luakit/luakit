@@ -232,9 +232,12 @@ resource_request_starting_cb(WebKitWebView* UNUSED(v),
     lua_pushstring(L, uri);
     gint ret = luaH_object_emit_signal(L, -2, "resource-request-starting", 1, 1);
 
-    if (ret && !lua_toboolean(L, -1))
-        /* User responded with false, ignore request */
-        webkit_network_request_set_uri(r, "about:blank");
+    if (ret) {
+        if (lua_isstring(L, -1)) /* redirect */
+            webkit_network_request_set_uri(r, lua_tostring(L, -1));
+        else if (!lua_toboolean(L, -1)) /* ignore */
+            webkit_network_request_set_uri(r, "about:blank");
+    }
 
     lua_pop(L, ret + 1);
     return TRUE;
