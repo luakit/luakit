@@ -318,22 +318,30 @@ init_js = [=[
 ]=]
 
 stylesheet = [===[
+#luakit_follow_overlay {
+    position: absolute;
+    left: 0;
+    top: 0;
+}
+
 #luakit_follow_overlay .hint_overlay {
+    display: block;
+    position: absolute;
     background-color: #ffff99;
     border: 1px dotted #000;
     opacity: 0.3;
-    position: absolute;
     z-index: 10001;
 }
 
 #luakit_follow_overlay .hint_label {
+    display: block;
+    position: absolute;
     background-color: #000088;
     border: 1px dashed #000;
     color: #fff;
     font-size: 10px;
     font-family: monospace, courier, sans-serif;
     opacity: 0.4;
-    position: absolute;
     z-index: 10002;
 }
 
