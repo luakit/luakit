@@ -431,16 +431,22 @@ end
 
 -- Different hint matching styles
 pattern_styles = {
-    -- String match hint label & regex match text
-    match_label_re_text = function (text)
-        return #text > 0 and "^"..regex_escape(text) or "", text
-    end,
-
     -- JavaScript regular expression match hint text
     re_match_text = function (text)
         return "", text
     end,
 
+    -- JavaScript regex match hint labels & text
+    re_match_both = function (text)
+        return text, text
+    end,
+
+    -- String match hint label & regex match text
+    match_label_re_text = function (text)
+        return #text > 0 and "^"..regex_escape(text) or "", text
+    end,
+
+    -- Only match label
     match_label = function (text)
         return #text > 0 and "^"..regex_escape(text) or "", ""
     end,
