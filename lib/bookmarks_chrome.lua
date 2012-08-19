@@ -330,6 +330,7 @@ $(document).ready(function () {
             $(this).find(".bottom .controls").addClass("hidden");
         });
 
+        // 'edit' callback
         $results.on("click", ".bookmark .controls .edit-button", function (e) {
             var $b = $(this).parents(".bookmark").eq(0), $e = $(edit_html);
 
@@ -365,6 +366,18 @@ $(document).ready(function () {
             $e.hide();
             $b.append($e);
             $e.slideDown();
+        });
+
+        // 'delete' callback
+        $results.on("click", ".bookmark .controls .delete-button", function (e) {
+            var $b = $(this).parents(".bookmark").eq(0);
+            var b = bookmarks[$b.attr("bookmark_id")];
+
+            // delete bookmark from database
+            bookmarks_remove(b.id);
+
+            // remove/hide bookmark from list
+            $b.slideUp(function() { $b.remove(); });
         });
     };
 
