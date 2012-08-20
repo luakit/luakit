@@ -371,10 +371,9 @@ $(document).ready(function () {
         // 'delete' callback
         $results.on("click", ".bookmark .controls .delete-button", function (e) {
             var $b = $(this).parents(".bookmark").eq(0);
-            var b = bookmarks[$b.attr("bookmark_id")];
 
             // delete bookmark from database
-            bookmarks_remove(b.id);
+            bookmarks_remove(parseInt($b.attr("bookmark_id")));
 
             // remove/hide bookmark from list
             $b.slideUp(function() { $b.remove(); });
