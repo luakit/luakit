@@ -371,15 +371,14 @@ navigation_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     gint ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
+    gboolean ignore = ret && !lua_toboolean(L, top+1) ? TRUE : FALSE;
 
-    if (ret && !lua_toboolean(L, -1))
+    if (ignore)
         /* User responded with false, do not continue navigation request */
         webkit_web_policy_decision_ignore(p);
-    else
-        webkit_web_policy_decision_use(p);
 
     lua_settop(L, top);
-    return TRUE;
+    return ignore;
 }
 
 static gint
