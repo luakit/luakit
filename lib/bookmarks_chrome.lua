@@ -401,46 +401,45 @@ export_funcs = {
     bookmarks_search = function (opts)
         if not bookmarks.db then bookmarks.init() end
 
-        local sql = { [[
-            SELECT b.*, group_concat(t.name, ' ') AS tags
-            FROM bookmarks AS b
-            LEFT JOIN tagmap AS map LEFT JOIN tags AS t
-            ON map.bookmark_id = b.id AND map.tag_id = t.id
-            GROUP BY b.id
-        ]] }
+        local sql = { "SELECT", "*", "FROM bookmarks" }
 
         local where, args, argc = {}, {}, 1
 
         string.gsub(opts.query or "", "(-?)([^%s]+)", function (notlike, term)
             if term ~= "" then
                 table.insert(where, (notlike == "-" and "NOT " or "") ..
-                    string.format("(matchtext GLOB ?%d)", argc, argc))
+                    string.format("(text GLOB ?%d)", argc, argc))
                 argc = argc + 1
                 table.insert(args, "*"..string.lower(term).."*")
             end
         end)
 
         if #where ~= 0 then
-            sql[1] = [[SELECT *, lower(ifnull(uri,'') || ' ' ||
-                ifnull(title,'') || ' ' || ifnull(desc,'') || ' ' ||
-                ifnull(tags, '')) AS matchtext FROM (]] .. sql[1] .. ")"
+            sql[2] = [[ *, lower(uri||title||desc||tags) AS text ]]
             table.insert(sql, "WHERE " .. table.concat(where, " AND "))
         end
 
-        table.insert(sql, string.format(
-            "ORDER BY created DESC LIMIT ?%d OFFSET ?%d", argc, argc+1))
+        local order_by = [[ ORDER BY created DESC LIMIT ?%d OFFSET ?%d ]]
+        table.insert(sql, string.format(order_by, argc, argc+1))
 
         local limit, page = opts.limit or 100, opts.page or 1
         table.insert(args, limit)
         table.insert(args, limit > 0 and (limit * (page - 1)) or 0)
 
-        local rows = bookmarks.db:exec(table.concat(sql, " "), args)
+        local wrap = [[
+            SELECT id, uri, title, desc, tags, created, modified
+            FROM (%s)
+        ]]
 
-        for i, row in ipairs(rows) do
-            rawset(row, "date", os.date("%d %B %Y", rawget(row, "created")))
-            local desc = rawget(row, "desc")
-            if desc then
-                rawset(row, "markdown_desc", markdown(desc))
+        sql = string.format(wrap, table.concat(sql, " "))
+        local rows = bookmarks.db:exec(sql, args)
+
+        local date = os.date
+        for _, row in ipairs(rows) do
+            row.date = date("%d %B %Y", row.created)
+            local desc = row.desc
+            if desc and string.find(desc, "%S") then
+                row.markdown_desc = markdown(desc)
             end
         end
 

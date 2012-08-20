@@ -12,6 +12,7 @@ local ipairs = ipairs
 local os = os
 local error = error
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
+local keys = lousy.util.table.keys
 
 module("bookmarks")
 
@@ -29,23 +30,11 @@ function init()
         CREATE TABLE IF NOT EXISTS bookmarks (
             id INTEGER PRIMARY KEY,
             uri TEXT NOT NULL,
-            title TEXT,
-            desc TEXT,
+            title TEXT NOT NULL,
+            desc TEXT NOT NULL,
+            tags TEXT NOT NULL,
             created INTEGER,
             modified INTEGER
-        );
-
-        CREATE TABLE IF NOT EXISTS tags (
-            id INTEGER PRIMARY KEY,
-            name TEXT
-        );
-
-        CREATE TABLE IF NOT EXISTS tagmap (
-            id INTEGER PRIMARY KEY,
-            bookmark_id INTEGER,
-            tag_id INTEGER,
-            FOREIGN KEY(bookmark_id) REFERENCES bookmarks(id),
-            FOREIGN KEY(tag_id) REFERENCES tags(id)
         );
     ]]
 end
@@ -57,68 +46,60 @@ local function valid_tag_name(name)
     return not not string.match(name, "^%w[%w-]*$")
 end
 
--- Return the tag id of a tag in the database (by it's name or id)
-local function find_tag(name_or_id)
-    -- Returns id of tag (if exists)
-    if type(name_or_id) == "number" then
-        return db:exec("SELECT * FROM tags WHERE id = ? LIMIT 1",
-            { name_or_id })[1]
+function get(id)
+    assert(type(id) == "number", "invalid bookmark id (number expected)")
+    local rows = db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
+    return rows[1]
+end
 
-    -- Returns id of tag name (if exists)
-    elseif type(name_or_id) == "string" then
-        assert(valid_tag_name(name_or_id), "invalid tag name: " .. name_or_id)
-        return db:exec("SELECT * FROM tags WHERE name = ? LIMIT 1",
-            { name_or_id })[1]
+function remove(id)
+    assert(type(id) == "number", "invalid bookmark id (number expected)")
+
+    _M.emit_signal("remove", id)
+
+    db:exec([[ DELETE FROM bookmarks WHERE id = ? ]], { id })
+end
+
+local function parse_tags(tags)
+    local ret = {}
+    local remains = string.gsub(tags, "%w[%w-]*",
+        function (tag) ret[tag] = true return "" end)
+    return ret, remains
+end
+
+local function update_tags(b, tags)
+    table.sort(tags)
+    tags = table.concat(tags, " ")
+    db:exec([[ UPDATE bookmarks SET tags = ?, modified = ? WHERE id = ? ]],
+        { tags, os.time(), b.id })
+    _M.emit_signal("update", id)
+end
+
+function tag(id, new_tags, replace)
+    local b = assert(get(id), "bookmark not found")
+
+    if type(new_tags) == "table" then
+        new_tags = table.concat(new_tags, " ")
     end
 
-    error("invalid tag (name/id expected, got " .. type(name_or_id) .. ")")
-end
+    local all_tags = string.format("%s %s", new_tags,
+        (not replace and b.tags) or "")
 
--- Tag bookmark
-function tag(bookmark_id, name_or_id)
-    assert(type(bookmark_id) == "number", "invalid bookmark id (number expected)")
+    local tags, remains = parse_tags(all_tags)
 
-    -- Find tag (if exists)
-    local tag = find_tag(name_or_id)
-
-    -- Create new tag
-    if not tag then
-        -- Add tag name to database
-        db:exec("INSERT INTO tags VALUES (NULL, ?)", { name_or_id })
-        tag = assert(find_tag(name_or_id), "failed to add tag: " .. name_or_id)
-        _M.emit_signal("new-tag", tag)
+    if string.find(remains, "[^%s,]") then
+        error("invalid tags: " ..  remains)
     end
 
-    -- Tag bookmark
-    db:exec("INSERT INTO tagmap VALUES(NULL, ?, ?)", { bookmark_id, tag.id })
-    _M.emit_signal("tagged-bookmark", bookmark_id, tag)
+    update_tags(b, keys(tags))
 end
 
--- Deletes all orphaned tags
-local function delete_orphan_tags()
-    db:exec [[
-        DELETE FROM tags WHERE id IN (
-            SELECT tags.id FROM tags
-            LEFT JOIN tagmap ON tags.id = tagmap.tag_id
-            GROUP BY tags.id
-            HAVING count(tagmap.id) == 0
-        );
-    ]]
-end
-
--- Untag bookmark
-function untag(bookmark_id, name_or_id)
-    assert(type(bookmark_id) == "number", "invalid bookmark id (number expected)")
-
-    -- Find tag (if exists)
-    local tag = find_tag(name_or_id)
-
-    -- Remove tag from bookmark
-    if tag then
-        db:exec("DELETE FROM tagmap WHERE bookmark_id = ? AND tag_id = ?",
-            { bookmark_id, tag.id })
-        _M.emit_signal("untagged-bookmark", bookmark_id, tag)
-        delete_orphan_tags()
+function untag(id, name)
+    local b = assert(get(id), "bookmark not found")
+    if b.tags then
+        local tags = parse_tags(b.tags)
+        tags[name] = nil
+        update_tags(b, keys(tags))
     end
 end
 
@@ -131,51 +112,21 @@ function add(uri, opts)
         "invalid bookmark title")
     assert(opts.desc == nil or type(opts.desc) == "string",
         "invalid bookmark description")
+    assert(opts.created == nil or type(opts.created) == "number",
+        "invalid creation time")
 
-    -- Add new bookmark
-    db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?)",
-        { uri, opts.title, opts.desc, opts.created or os.time(), os.time() })
+    db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?, ?)", {
+        uri, opts.title or "", opts.desc or "", "", opts.created or os.time(),
+        os.time() -- modified time (now)
+    })
 
-    -- Get new bookmark id
-    local bookmark_id = db:exec("SELECT last_insert_rowid() AS id")[1].id
+    local id = db:exec("SELECT last_insert_rowid() AS id")[1].id
+    _M.emit_signal("add", id)
 
-    opts.uri, opts.id = uri, bookmark_id
-    _M.emit_signal("new-bookmark", opts)
+    -- Add bookmark tags
+    if opts.tags then tag(id, opts.tags) end
 
-    -- Add tags
-    local tags = opts.tags
-    if tags then
-        -- Parse tags from string separated by spaces or commas
-        if type(tags) == "string" then
-            string.gsub(tags, "[^%s,]+", function (name)
-                tag(bookmark_id, name)
-            end)
-
-        -- Or from table of tag names
-        elseif type(tags) == "table" then
-            for _, name in ipairs(tags) do
-                tag(bookmark_id, name)
-            end
-        end
-    end
-
-    return bookmark_id
-end
-
-
--- Delete bookmark
-function remove(bookmark_id)
-    assert(type(bookmark_id) == "number",
-        "invalid bookmark id (number expected)")
-
-    _M.emit_signal("removing-bookmark", bookmark_id)
-
-    db:exec([[
-        DELETE FROM tagmap WHERE bookmark_id = ?1;
-        DELETE FROM bookmarks WHERE id = ?1;
-    ]], { bookmark_id })
-
-    delete_orphan_tags()
+    return id
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
