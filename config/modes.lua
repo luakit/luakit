@@ -134,12 +134,13 @@ new_mode("command", [[Enter commands.]], {
     activate = function (w, text)
         w:set_mode()
         local cmd = string.sub(text, 2)
-        -- Ignore blank commands
-        if string.match(cmd, "^%s*$") then return end
-        local success, match = pcall(w.match_cmd, w, cmd)
-        if not success then
-            w:error("In command call: " .. match)
-        elseif not match then
+        if not string.find(cmd, "%S") then return end
+
+        local success, match = xpcall(
+            function () return w:match_cmd(cmd) end,
+            function (err) w:error(debug.traceback(err, 3)) end)
+
+        if success and not match then
             w:error(string.format("Not a browser command: %q", cmd))
         end
     end,

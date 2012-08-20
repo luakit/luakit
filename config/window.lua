@@ -171,10 +171,11 @@ window.init_funcs = {
     key_press_match = function (w)
         w.win:add_signal("key-press", function (_, mods, key)
             -- Match & exec a bind
-            local success, match = pcall(w.hit, w, mods, key)
-            if not success then
-                w:error("In bind call: " .. match)
-            elseif match then
+            local success, match = xpcall(
+                function () return w:hit(mods, key) end,
+                function (err) w:error(debug.traceback(err, 3)) end)
+
+            if success and match then
                 return true
             end
         end)
