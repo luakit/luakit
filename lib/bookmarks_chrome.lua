@@ -41,14 +41,9 @@ local html = [==[
             color: black;
             display: block;
             font-size: 62.5%;
-            margin: 1em;
+            margin: 0;
+            padding: 0;
             font-family: sans-serif;
-        }
-
-        ol, li {
-            margin: 0px;
-            padding: 0px;
-            list-style: none;
         }
 
         h3 {
@@ -63,63 +58,137 @@ local html = [==[
             font-weight: normal;
         }
 
-        #search {
-            min-width: 33%;
-            width: 10em;
-            font-size: 1.6em;
-            font-weight: normal;
+        #page-header {
+            font-size: 1.3em;
+            background-color: #eee;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            margin: 0;
+            padding: 0;
+            border-bottom: 1px solid #ddd;
+            -webkit-box-shadow: 0 0.5em 2em #fff;
+            overflow: hidden;
+            white-space: nowrap;
         }
 
-        #results-header {
-            border-top: 1px solid #aaa;
-            background-color: #f2f2f2;
-            padding: 0.3em;
+        header input {
+            font-size: inherit;
+            font-weight: 100;
+            padding: 0.5em 0.75em;
+            border: none;
+            outline: none;
+            margin: 0;
+            background-color: #fff;
+        }
+
+        header #search-box {
+            display: inline-block;
+            margin: 1em 0 1em 1em;
+            padding: 0;
+            background-color: #fff;
+            border-radius: 0.25em;
+            box-shadow: 0 1px 1px #888;
+        }
+
+        header #search {
+            width: 20em;
             font-weight: normal;
-            font-size: 1.2em;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
+            color: #111;
+            border-radius: 0.25em 0 0 0.25em;
+            margin: 0;
+            padding-right: 0;
+        }
+
+        header #clear-button {
+            margin-left: 0;
+            font-weight: 100;
+            color: #444;
+            border-radius: 0 0.25em 0.25em 0;
+        }
+
+        header #clear-button:hover {
+            color: #000;
+        }
+
+        header #clear-button:active {
+            background-color: #eee;
+        }
+
+        header .button {
+            box-shadow: 0 1px 1px #888;
+            margin: 1em 0 1em 0.5em;
+            border-radius: 0.25em;
+            color: #444;
+        }
+
+        header .button:hover {
+            color: #000;
+        }
+
+        header .button:active {
+            background-color: #eee;
+        }
+
+        header .rhs {
+            position: absolute;
+            right: 0;
+            padding: 0 1em 0.5em 0;
+            margin: 0;
+            display: inline-block;
+            background-color: inherit;
+            box-shadow: -1em 0 1em #eee;
+        }
+
+        header .rhs input {
+            margin-bottom: 0;
+        }
+
+        #results-view {
+            margin: 6.5em 1em 5em 1em;
         }
 
         .bookmark {
-            font-size: 1.2em;
-            display: block;
+            font-size: 1.1em;
+            line-height: 1.5em;
             padding: .5em;
             margin: 0.2em 0;
             left: 0;
             right: 0;
             border: 1px solid #fff;
-            -webkit-border-radius: 0.3em;
+            border-radius: 0.3em;
         }
 
-        .bookmark:hover {
-            background-color: #f8f8f8;
-        }
-
-        .bookmark .top, .bookmark .bottom {
-            display: block;
-        }
-
-        .bookmark .top {
-            max-width: 700px;
+        .bookmark .title, .bookmark .uri {
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
-            font-size: 1em;
         }
 
-        .bookmark .top .title {
+        .bookmark .top {
+            position: relative;
+        }
+
+        .bookmark .title a {
+            font-weight: 100;
+            font-size: 1.6em;
             text-decoration: none;
-            font-size: 1.1em;
         }
 
-        .bookmark .top .title:hover {
+        .bookmark .title a:hover {
             text-decoration: underline;
         }
 
+        .bookmark .uri, .bookmark .desc {
+            display: none;
+        }
+
+        .bookmark .uri {
+            color: #aaa;
+        }
+
         .bookmark .bottom {
-            margin: .5em 0 0 .5em;
-            font-size: 0.9em;
-            vertical-align: middle;
             white-space: nowrap;
         }
 
@@ -129,123 +198,153 @@ local html = [==[
             cursor: default;
         }
 
+        .bookmark .bottom a:hover {
+            cursor: pointer;
+        }
+
         .bookmark .tags a {
-            margin: 0 .3em;
-            padding: .2em .4em;
             color: #666;
-            font-size: 0.9em;
-            background-color: #f0f0f0;
-            border-left: 1px solid #f5f5f5;
-            border-top: 1px solid #f5f5f5;
-            border-bottom: 1px solid #bbb;
-            border-right: 1px solid #bbb;
-            -webkit-border-radius: 0.3em;
+            background-color: #f6f6f6;
+            padding: 0.1em 0.4em;
+            margin: 0 0.3em;
+            -webkit-border-radius: 0.2em;
+            -webkit-box-shadow: 0 0.1em 0.1em #666;
         }
 
         .bookmark .tags a:hover {
-            color: #222;
-            cursor: pointer;
+            color: #111;
         }
 
         .bookmark .controls a {
-            color: #aaa;
-            margin: 0 .3em;
+            color: #888;
+            padding: 0.1em 0.4em;
+            margin: 0 0;
         }
 
         .bookmark .controls a:hover {
-            color: #11c;
-            text-decoration: underline;
-            cursor: pointer;
+            background-color: #fff;
+            -webkit-border-radius: 0.2em;
+            -webkit-box-shadow: 0 0.1em 0.1em #666;
         }
 
-        .bookmark .hidden {
-            opacity: 0;
-        }
-
-        .bookmark .desc {
-            border-left: 1px solid #aaa;
-            padding: 0.3em 0 0.3em 0.5em;
-            width: 500px;
-            display: block;
-            margin: 0.2em 0 0 0.5em;
-        }
-
-        .bookmark .desc :first-child {
-            margin-top: 0;
-        }
-
-        .bookmark .desc :last-child {
-            margin-bottom: 0;
-        }
-
-        .edit {
-            margin: 1em 0 0 0.5em;
-            left: 0;
-            right: 0;
-        }
-
-        .edit li {
-            margin-left: 4em;
-            display: block;
-        }
-
-        .edit li span {
-            display: inline-block;
-            width: 4em;
-            margin-left: -4em;
-            text-align: right;
-            margin-top: 0.7em;
-            vertical-align: top;
-            line-height: 1.4em;
-        }
-
-        .edit .field input {
-            margin: 0.3em;
-            font-size: 1.1em;
-            display: inline-block;
-            width: 400px;
-            outline: none;
-            padding: 0.3em;
-        }
-
-        .edit li textarea {
-            outline: none;
-            width: 350px;
-            padding: 0.3em;
-            margin: 0.3em;
-            height: 4em;
-        }
-
-        .editing, .editing:hover {
-            border: 1px solid #aaa;
-            background-color: #f8f8f8;
-        }
-
-        .edit .submit-button {
-            display: inline-block;
-            min-width: 0;
-            padding: 0.3em 0.5em;
+        .bookmark .date {
+            color: #444;
         }
 
         #templates {
             display: none;
         }
+
+        #blackout {
+            position: fixed;
+            left: 0;
+            right: 0;
+            top: 0;
+            bottom: 0;
+            opacity: 0.5;
+            background-color: #000;
+            z-index: 100;
+        }
+
+        #edit-dialog {
+            position: fixed;
+            z-index: 101;
+            font-size: 1.3em;
+            font-weight: 100;
+
+            top: 6em;
+            left: 50%;
+            margin-left: -20em;
+            margin-bottom: 6em;
+            padding: 2em;
+            width: 36em;
+
+            background-color: #eee;
+            border-radius: 0.5em;
+            box-shadow: 0 0.5em 1em #000;
+        }
+
+        #edit-dialog td:first-child {
+            vertical-align: middle;
+            text-align: right;
+            width: 4em;
+        }
+
+        #edit-dialog td {
+            padding: 0.3em;
+        }
+
+        #edit-dialog input, #edit-dialog textarea {
+            font-size: inherit;
+            border: none;
+            outline: none;
+            margin: 0;
+            padding: 0;
+            background-color: #fff;
+            border-radius: 0.25em;
+            box-shadow: 0 0.1em 0.1em #888;
+        }
+
+        #edit-dialog input[type="text"], #edit-dialog textarea {
+            width: 30em;
+            padding: 0.5em;
+        }
+
+        #edit-dialog input[type="button"] {
+            padding: 0.5em 1em;
+            margin-right: 0.5em;
+            color: #444;
+        }
+
+        #edit-dialog textarea {
+            height: 5em;
+        }
+
+        #edit-view {
+            display: none;
+        }
+
     </style>
 </head>
 <body>
-    <div class="header">
-        <input type="text" id="search" />
-    </div>
-    <div class="main">
-        <div id="results-header">Bookmark Manager</div>
-        <ol id="results">
-        </ol>
+    <header id="page-header">
+        <span id="search-box">
+            <input type="text" id="search" placeholder="Search bookmarks..." />
+            <input type="button" id="clear-button" value="X" />
+        </span>
+        <input type="button" id="search-button" class="button" value="Search" />
+        <div class="rhs">
+            <!-- <input type="button" class="button" id="edit-button" value="Edit" /> -->
+            <input type="button" class="button" id="new-button" value="New" />
+        </div>
+    </header>
+
+    <div class="view" id="results-view"></div>
+
+    <div id="edit-view" stlye="position: absolute;">
+        <div id="blackout"></div>
+        <div id="edit-dialog">
+            <table>
+                <tr><td>Title:</td> <td><input class="title" type="text" /></td> </tr>
+                <tr><td>URI:</td>   <td><input class="uri"   type="text" /></td> </tr>
+                <tr><td>Tags:</td>  <td><input class="tags"  type="text" /></td> </tr>
+                <tr><td>Info:</td>  <td><textarea class="desc"></textarea></td>  </tr>
+                <tr>
+                    <td></td>
+                    <td>
+                        <input type="button" class="submit-button" value="Save" />
+                        <input type="button" class="cancel-button" value="Cancel" />
+                    </td>
+                </tr>
+            </table>
+        </div>
     </div>
 
     <div id="templates">
         <div id="bookmark-skelly">
-            <li class="bookmark">
-                <div class="top"><a class="title"></a></div>
+            <div class="bookmark">
+                <div class="title"><a></a></div>
+                <div class="uri"></div>
                 <div class="desc"></div>
                 <div class="bottom">
                     <span class="date"></span>
@@ -255,147 +354,166 @@ local html = [==[
                         <a class="delete-button">delete</a>
                     </span>
                 </div>
-            </li>
-        </div>
-        <div id="edit-skelly">
-            <ol class="edit">
-                <li class="field title"><span>Title:&nbsp;</span><input /></li>
-                <li class="field uri"><span>URI:&nbsp;</span><input /></li>
-                <li class="field tags"><span>Tags:&nbsp;</span><input /></li>
-                <li class="edit-desc"><span>Info:&nbsp;</span><textarea></textarea></li>
-                <li>
-                    <input type="button" class="submit-button" value="Update" />
-                    <input type="button" class="cancel-button" value="Cancel" />
-                </li>
-            </ol>
+            </div>
         </div>
     </div>
 </body>
 ]==]
 
 local main_js = [=[
-$(document).ready(function () {
-    var default_limit = 100;
-
-    var bookmarks = {};
+$(document).ready(function () { 'use strict'
 
     var bookmark_html = $("#bookmark-skelly").html(),
-        edit_html = $("#edit-skelly").html(),
-        $results = $("#results"),
-        $search = $("#search");
-
-    $("#templates").remove();
+        $results = $("#results-view"), $search = $("#search"),
+        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog");
 
     function make_bookmark(b) {
-        bookmarks[b.id] = b;
-
         var $b = $(bookmark_html);
+
         $b.attr("bookmark_id", b.id);
-        $b.find(".title").attr("href", b.uri).text(b.title || b.uri);
+        $b.find(".title a").attr("href", b.uri).text(b.title || b.uri);
         $b.find(".date").text(b.date);
 
-        if (b.markdown_desc)
-            $b.find(".desc").html(b.markdown_desc);
-        else
-            $b.find(".desc").remove();
+        if (b.title)
+            $b.find(".uri").text(b.uri).show();
 
-        /* add tags if specified */
+        if (b.markdown_desc)
+            $b.find(".desc").html(b.markdown_desc).show();
+
         if (b.tags) {
-            var $tags = $b.find(".tags").eq(0);
-            var tags = (b.tags || "").split(" "), len = tags.length;
-            for (var i = 0; i < len; i++)
-                $tags.append($("<a></a>").text(tags[i]));
+            var $tags = $b.find(".tags"), tags = b.tags.split(" "),
+                len = tags.length, i = 0;
+            for (; i < len;)
+                $tags.append($("<a></a>").text(tags[i++]));
         }
 
-        return $b;
+        return $b.prop("outerHTML");
     }
 
-    function render_results(results) {
-        if (results.length === "undefined") return;
-
-        /* clear results container */
-        $results.empty();
-
-        /* add new results */
-        for (var i = 0; i < results.length; i++)
-            $results.append(make_bookmark(results[i]));
-
-        // Show bookmark controls when hovering directly over buttons
-        $results.on("mouseenter", ".bookmark .controls", function () {
-            $(this).removeClass("hidden");
+    function show_edit(b) {
+        b = b || {};
+        var $e = $edit_dialog;
+        $e.attr("bookmark_id", b.id);
+        $e.attr("created", b.created);
+        $e.find(".title").val(b.title);
+        $e.find(".uri").val(b.uri);
+        $e.find(".tags").val(b.tags);
+        $e.find(".desc").val(b.desc);
+        $edit_view.fadeIn("fast", function () {
+            $edit_dialog.find(".title").focus();
         });
+    }
 
-        // Hide controls when leaving bookmark
-        $results.on("mouseleave", ".bookmark", function () {
-            $(this).find(".bottom .controls").addClass("hidden");
-        });
-
-        // 'edit' callback
-        $results.on("click", ".bookmark .controls .edit-button", function (e) {
-            var $b = $(this).parents(".bookmark").eq(0), $e = $(edit_html);
-
-            // Remove previous edit form
-            $b.find(".edit").remove();
-
-            $b.addClass("editing");
-
-            // Animate out & delete form
-            $e.find(".cancel-button").click(function (e) {
-                $b.removeClass("editing");
-                $e.slideUp(function () { $e.remove(); })
-            });
-
-            var b = bookmarks[$b.attr("bookmark_id")],
-                $title = $e.find(".title input").eq(0).val(b.title),
-                $uri = $e.find(".uri input").eq(0).val(b.uri),
-                $tags = $e.find(".tags input").eq(0).val(b.tags);
-                $desc = $e.find(".edit-desc textarea").eq(0).val(b.desc);
-
-            $e.find(".submit-button").click(function (e) {
-                // Add new bookmark
-                bookmarks_add($uri.val(), { title: $title.val(), tags: $tags.val(),
-                    desc: $desc.val(), created: b.created });
-                // Remove old bookmark
-                bookmarks_remove(b.id);
-                $e.slideUp(function () {
-                    $search.val("");
-                    search();
-                });
-            });
-
-            $e.hide();
-            $b.append($e);
-            $e.slideDown();
-        });
-
-        // 'delete' callback
-        $results.on("click", ".bookmark .controls .delete-button", function (e) {
-            var $b = $(this).parents(".bookmark").eq(0);
-
-            // delete bookmark from database
-            bookmarks_remove(parseInt($b.attr("bookmark_id")));
-
-            // remove/hide bookmark from list
-            $b.slideUp(function() { $b.remove(); });
-        });
-    };
+    function find_bookmark_parent(that) {
+        return $(that).parents(".bookmark").eq(0);
+    }
 
     function search() {
-        render_results(bookmarks_search({ query: $search.val() }));
+
+        var results = bookmarks_search({ query: $search.val() });
+
+        if (results.length === "undefined") {
+            $results.empty();
+            return;
+        }
+
+        /* display results */
+        var html = "";
+        for (var i = 0; i < results.length; i++)
+            html += make_bookmark(results[i]);
+
+        $results.get(0).innerHTML = html;
     };
 
     /* input field callback */
     $search.keydown(function(ev) {
-        if (ev.which == 13) {
+        if (ev.which == 13) { /* Return */
             search();
             $search.blur();
             reset_mode();
         }
     });
 
+    // 'delete' callback
+    $results.on("click", ".bookmark .controls .delete-button", function (e) {
+        var $b = find_bookmark_parent(this);
+        // delete bookmark from database
+        bookmarks_remove(parseInt($b.attr("bookmark_id")));
+        // remove/hide bookmark from list
+        $b.slideUp(function() { $b.remove(); });
+    });
+
+    $results.on("click", ".bookmark .tags a", function () {
+        $search.val($(this).text());
+        search();
+    });
+
+    $results.on("click", ".bookmark .controls .edit-button", function (e) {
+        var $b = find_bookmark_parent(this);
+        var b = bookmarks_get(parseInt($b.attr("bookmark_id")));
+        show_edit(b);
+    });
+
+    function edit_submit() {
+        var $e = $edit_dialog, id = $e.attr("bookmark_id"),
+            created = $e.attr("created");
+
+        try {
+            bookmarks_add($e.find(".uri").val(), {
+                title: $e.find(".title").val(),
+                tags: $e.find(".tags").val(),
+                desc: $e.find(".desc").val(),
+                created: created ? parseInt(created) : undefined,
+            });
+        } catch (err) {
+            alert(err);
+            return;
+        }
+
+        // Delete existing bookmark (only when editing bookmark)
+        if (id)
+            bookmarks_remove(parseInt(id));
+
+        search();
+
+        $edit_view.fadeOut("fast");
+    };
+
+    $edit_dialog.on("click", ".submit-button", function (e) {
+        edit_submit();
+    });
+
+    $edit_dialog.find('input[type="text"]').keydown(function(ev) {
+        if (ev.which == 13) /* Return */
+            edit_submit();
+    });
+
+    $edit_dialog.on("click", ".cancel-button", function (e) {
+        $edit_view.fadeOut("fast");
+    });
+
+    $("#new-button").click(function () {
+        show_edit();
+    });
+
+    $("#clear-button").click(function () {
+        $search.val("");
+        search();
+    });
+
+    $("#search-button").click(function () {
+        search();
+    });
+
     search();
+
+    var values = new_bookmark_values();
+    if (values)
+        show_edit(values);
 });
 ]=]
+
+local new_bookmark_values
 
 export_funcs = {
     bookmarks_search = function (opts)
@@ -447,7 +565,14 @@ export_funcs = {
     end,
 
     bookmarks_add = bookmarks.add,
+    bookmarks_get = bookmarks.get,
     bookmarks_remove = bookmarks.remove,
+
+    new_bookmark_values = function ()
+        local values = new_bookmark_values
+        new_bookmark_values = nil
+        return values
+    end,
 }
 
 chrome.add("bookmarks", function (view, meta)
@@ -492,7 +617,8 @@ local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({}, "B", "Shortcut to add a bookmark to the current URL",
         function(w)
-            w:enter_cmd(":bookmark " .. (w.view.uri or "http://") .. " ")
+            new_bookmark_values = { uri = w.view.uri, title = w.view.title }
+            w:new_tab(chrome_page)
         end),
 
     buf("^gb$", "Open bookmarks manager in the current tab.",
