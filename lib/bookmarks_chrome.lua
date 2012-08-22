@@ -349,7 +349,7 @@ local html = [==[
                 <div class="bottom">
                     <span class="date"></span>
                     <span class="tags"></span>
-                    <span class="controls hidden">
+                    <span class="controls">
                         <a class="edit-button">edit</a>
                         <a class="delete-button">delete</a>
                     </span>
