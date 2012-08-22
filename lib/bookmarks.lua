@@ -115,6 +115,11 @@ function add(uri, opts)
     assert(opts.created == nil or type(opts.created) == "number",
         "invalid creation time")
 
+    -- Default to http:// scheme if none provided
+    if not string.match(uri, "^%w+://") then
+        uri = "http://" .. uri
+    end
+
     db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?, ?)", {
         uri, opts.title or "", opts.desc or "", "", opts.created or os.time(),
         os.time() -- modified time (now)
