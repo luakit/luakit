@@ -647,6 +647,7 @@ add_cmds({
             end
             local args = lousy.util.string.split(a)
             local uri = table.remove(args, 1)
-            bookmarks.add(uri, { tags = args })
+            new_bookmark_values = { uri = uri, tags = table.concat(args, " ") }
+            w:new_tab(chrome_page)
         end),
 })
