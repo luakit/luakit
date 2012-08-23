@@ -435,12 +435,14 @@ export_funcs = {
         table.insert(args, limit)
         table.insert(args, limit > 0 and (limit * (page - 1)) or 0)
 
-        local wrap = [[
-            SELECT id, uri, title, desc, tags, created, modified
-            FROM (%s)
-        ]]
+        sql = table.concat(sql, " ")
 
-        sql = string.format(wrap, table.concat(sql, " "))
+        if #where ~= 0 then
+            local wrap = [[SELECT id, uri, title, desc, tags, created, modified
+                FROM (%s)]]
+            sql = string.format(wrap, sql)
+        end
+
         local rows = bookmarks.db:exec(sql, args)
 
         local date = os.date

@@ -330,31 +330,39 @@ local initial_search_term
 
 export_funcs = {
     history_search = function (opts)
-        local sql = { "SELECT id, uri, title, last_visit FROM ("
-            .. "SELECT *, lower(uri||title) AS urititle FROM history"
-        }
+        local sql = { "SELECT", "*", "FROM history" }
 
         local where, args, argc = {}, {}, 1
 
         string.gsub(opts.query or "", "(-?)([^%s]+)", function (notlike, term)
             if term ~= "" then
                 table.insert(where, (notlike == "-" and "NOT " or "") ..
-                    string.format("(urititle GLOB ?%d)", argc, argc))
+                    string.format("(text GLOB ?%d)", argc, argc))
                 argc = argc + 1
                 table.insert(args, "*"..string.lower(term).."*")
             end
         end)
 
         if #where ~= 0 then
+            sql[2] = [[ *, lower(uri||title) AS text ]]
             table.insert(sql, "WHERE " .. table.concat(where, " AND "))
         end
 
-        table.insert(sql, string.format("ORDER BY last_visit DESC "
-            .. "LIMIT ?%d OFFSET ?%d)", argc, argc+1))
-        table.insert(args, opts.limit or -1)
-        table.insert(args, (opts.limit and opts.limit * (opts.page - 1)) or 0)
+        local order_by = [[ ORDER BY last_visit DESC LIMIT ?%d OFFSET ?%d ]]
+        table.insert(sql, string.format(order_by, argc, argc+1))
 
-        local rows = history.db:exec(table.concat(sql, " "), args)
+        local limit, page = opts.limit or 100, opts.page or 1
+        table.insert(args, limit)
+        table.insert(args, limit > 0 and (limit * (page - 1)) or 0)
+
+        sql = table.concat(sql, " ")
+
+        if #where ~= 0 then
+            local wrap = [[SELECT id, uri, title, last_visit FROM (%s)]]
+            sql = string.format(wrap, sql)
+        end
+
+        local rows = history.db:exec(sql, args)
 
         for i, row in ipairs(rows) do
             local time = rawget(row, "last_visit")
