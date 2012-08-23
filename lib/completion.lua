@@ -15,7 +15,7 @@ local unpack = unpack
 local lousy = require "lousy"
 local history = require "history"
 local bookmarks = require "bookmarks"
-local sql_escape, escape = lousy.util.sql_escape, lousy.util.escape
+local escape = lousy.util.escape
 local new_mode, get_mode = new_mode, get_mode
 local add_binds = add_binds
 local capi = { luakit = luakit }
@@ -50,6 +50,12 @@ add_binds("completion", {
 
     key({}, "Down", "Select previous matching completion item.",
         function (w) w.menu:move_down() end),
+
+    key({"Control"}, "j", "Select next matching completion item.",
+        function (w) w.menu:move_down() end),
+
+    key({"Control"}, "k", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end),
 
     key({}, "Escape", "Stop completion and restore original command.",
         exit_completion),
@@ -199,16 +205,14 @@ funcs = {
         local term = string.match(state.left, "%s(%S+)$")
         if not term then return end
 
-        -- Build query & sort results by number of times visited
-        local glob = sql_escape("*" .. string.lower(term) .. "*")
+        local sql = [[
+            SELECT uri, title, lower(uri||title) AS text
+            FROM history WHERE text GLOB ?
+            ORDER BY visits DESC LIMIT 25
+        ]]
 
-        -- Build SQL query
-        local results = history.db:exec(string.format([[SELECT uri, title
-            FROM history WHERE lower(uri) GLOB %s OR lower(title) GLOB %s
-            ORDER BY visits DESC LIMIT 25;]], glob, glob))
-
-        -- Return if no history items matched
-        if not results[1] then return end
+        local rows = history.db:exec(sql, { string.format("*%s*", term) })
+        if not rows[1] then return end
 
         -- Strip last word (so that we can append the completion uri)
         local left = ":" .. string.sub(state.left, 1,
@@ -216,7 +220,7 @@ funcs = {
 
         -- Build rows
         local ret = {{ "History", "URI", title = true }}
-        for _, row in ipairs(results) do
+        for _, row in ipairs(rows) do
             table.insert(ret, { escape(row.title), escape(row.uri),
                 left = left .. row.uri })
         end
@@ -229,14 +233,14 @@ funcs = {
         local term = string.match(state.left, "%s(%S+)$")
         if not term then return end
 
-        -- Build query & sort results by number of times visited
-        local glob = sql_escape("*" .. string.lower(term) .. "*")
+        local sql = [[
+            SELECT uri, title, lower(uri||title||tags) AS text
+            FROM bookmarks WHERE text GLOB ?
+            ORDER BY title DESC LIMIT 25
+        ]]
 
-        local results = bookmarks.db:exec(string.format([[SELECT uri,title
-            FROM bookmarks WHERE lower(uri) GLOB %s OR lower(title) GLOB %s
-            LIMIT 25;]], glob, glob))
-
-        if not results[1] then return end
+        local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
+        if not rows[1] then return end
 
         -- Strip last word (so that we can append the completion uri)
         local left = ":" .. string.sub(state.left, 1,
@@ -244,7 +248,7 @@ funcs = {
 
         -- Build rows
         local ret = {{ "Bookmarks", "URI", title = true }}
-        for _, row in ipairs(results) do
+        for _, row in ipairs(rows) do
             local title = row.title ~= "" and row.title or row.uri
             table.insert(ret, { escape(title), escape(row.uri),
                 left = left .. row.uri })
@@ -256,8 +260,8 @@ funcs = {
 -- Order of completion items
 order = {
     funcs.command,
-    funcs.bookmarks,
     funcs.history,
+    funcs.bookmarks,
 }
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
