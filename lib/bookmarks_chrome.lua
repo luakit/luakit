@@ -53,7 +53,7 @@ stylesheet = [===[
 
 .bookmark .title a {
     font-weight: 100;
-    font-size: 1.6em;
+    font-size: 1.4em;
     text-decoration: none;
 }
 
