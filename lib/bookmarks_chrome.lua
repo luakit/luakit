@@ -29,6 +29,164 @@ local capi = {
 
 module("bookmarks.chrome")
 
+stylesheet = [===[
+.bookmark {
+    font-size: 1.1em;
+    line-height: 1.5em;
+    padding: .5em;
+    margin: 0.2em 0;
+    left: 0;
+    right: 0;
+    border: 1px solid #fff;
+    border-radius: 0.3em;
+}
+
+.bookmark .title, .bookmark .uri {
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.bookmark .top {
+    position: relative;
+}
+
+.bookmark .title a {
+    font-weight: 100;
+    font-size: 1.6em;
+    text-decoration: none;
+}
+
+.bookmark .title a:hover {
+    text-decoration: underline;
+}
+
+.bookmark .uri, .bookmark .desc {
+    display: none;
+}
+
+.bookmark .uri {
+    color: #aaa;
+}
+
+.bookmark .bottom {
+    white-space: nowrap;
+}
+
+.bookmark .bottom a {
+    text-decoration: none;
+    -webkit-user-select: none;
+    cursor: default;
+}
+
+.bookmark .bottom a:hover {
+    cursor: pointer;
+}
+
+.bookmark .tags a {
+    color: #666;
+    background-color: #f6f6f6;
+    padding: 0.1em 0.4em;
+    margin: 0 0.3em;
+    -webkit-border-radius: 0.2em;
+    -webkit-box-shadow: 0 0.1em 0.1em #666;
+}
+
+.bookmark .tags a:hover {
+    color: #111;
+}
+
+.bookmark .controls a {
+    color: #888;
+    padding: 0.1em 0.4em;
+    margin: 0 0;
+}
+
+.bookmark .controls a:hover {
+    background-color: #fff;
+    -webkit-border-radius: 0.2em;
+    -webkit-box-shadow: 0 0.1em 0.1em #666;
+}
+
+.bookmark .date {
+    color: #444;
+}
+
+#templates {
+    display: none;
+}
+
+#blackout {
+    position: fixed;
+    left: 0;
+    right: 0;
+    top: 0;
+    bottom: 0;
+    opacity: 0.5;
+    background-color: #000;
+    z-index: 100;
+}
+
+#edit-dialog {
+    position: fixed;
+    z-index: 101;
+    font-size: 1.3em;
+    font-weight: 100;
+
+    top: 6em;
+    left: 50%;
+    margin-left: -20em;
+    margin-bottom: 6em;
+    padding: 2em;
+    width: 36em;
+
+    background-color: #eee;
+    border-radius: 0.5em;
+    box-shadow: 0 0.5em 1em #000;
+}
+
+#edit-dialog td:first-child {
+    vertical-align: middle;
+    text-align: right;
+    width: 4em;
+}
+
+#edit-dialog td {
+    padding: 0.3em;
+}
+
+#edit-dialog input, #edit-dialog textarea {
+    font-size: inherit;
+    border: none;
+    outline: none;
+    margin: 0;
+    padding: 0;
+    background-color: #fff;
+    border-radius: 0.25em;
+    box-shadow: 0 0.1em 0.1em #888;
+}
+
+#edit-dialog input[type="text"], #edit-dialog textarea {
+    width: 30em;
+    padding: 0.5em;
+}
+
+#edit-dialog input[type="button"] {
+    padding: 0.5em 1em;
+    margin-right: 0.5em;
+    color: #444;
+}
+
+#edit-dialog textarea {
+    height: 5em;
+}
+
+#edit-view {
+    display: none;
+}
+]===]
+
+
 local html = [==[
 <!doctype html>
 <html>
@@ -36,274 +194,7 @@ local html = [==[
     <meta charset="utf-8">
     <title>Bookmarks</title>
     <style type="text/css">
-        body {
-            background-color: white;
-            color: black;
-            display: block;
-            font-size: 62.5%;
-            margin: 0;
-            padding: 0;
-            font-family: sans-serif;
-        }
-
-        h3 {
-            color: black;
-            font-size: 1.6em;
-            margin-bottom: 1.0em;
-        }
-
-        h1, h2, h3 {
-            text-shadow: 0 1px 0 #f2f2f2;
-            -webkit-user-select: none;
-            font-weight: normal;
-        }
-
-        #page-header {
-            font-size: 1.3em;
-            background-color: #eee;
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            margin: 0;
-            padding: 0;
-            border-bottom: 1px solid #ddd;
-            -webkit-box-shadow: 0 0.5em 2em #fff;
-            overflow: hidden;
-            white-space: nowrap;
-        }
-
-        header input {
-            font-size: inherit;
-            font-weight: 100;
-            padding: 0.5em 0.75em;
-            border: none;
-            outline: none;
-            margin: 0;
-            background-color: #fff;
-        }
-
-        header #search-box {
-            display: inline-block;
-            margin: 1em 0 1em 1em;
-            padding: 0;
-            background-color: #fff;
-            border-radius: 0.25em;
-            box-shadow: 0 1px 1px #888;
-        }
-
-        header #search {
-            width: 20em;
-            font-weight: normal;
-            color: #111;
-            border-radius: 0.25em 0 0 0.25em;
-            margin: 0;
-            padding-right: 0;
-        }
-
-        header #clear-button {
-            margin-left: 0;
-            font-weight: 100;
-            color: #444;
-            border-radius: 0 0.25em 0.25em 0;
-        }
-
-        header #clear-button:hover {
-            color: #000;
-        }
-
-        header #clear-button:active {
-            background-color: #eee;
-        }
-
-        header .button {
-            box-shadow: 0 1px 1px #888;
-            margin: 1em 0 1em 0.5em;
-            border-radius: 0.25em;
-            color: #444;
-        }
-
-        header .button:hover {
-            color: #000;
-        }
-
-        header .button:active {
-            background-color: #eee;
-        }
-
-        header .rhs {
-            position: absolute;
-            right: 0;
-            padding: 0 1em 0.5em 0;
-            margin: 0;
-            display: inline-block;
-            background-color: inherit;
-            box-shadow: -1em 0 1em #eee;
-        }
-
-        header .rhs input {
-            margin-bottom: 0;
-        }
-
-        #results-view {
-            margin: 6.5em 1em 5em 1em;
-        }
-
-        .bookmark {
-            font-size: 1.1em;
-            line-height: 1.5em;
-            padding: .5em;
-            margin: 0.2em 0;
-            left: 0;
-            right: 0;
-            border: 1px solid #fff;
-            border-radius: 0.3em;
-        }
-
-        .bookmark .title, .bookmark .uri {
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-        }
-
-        .bookmark .top {
-            position: relative;
-        }
-
-        .bookmark .title a {
-            font-weight: 100;
-            font-size: 1.6em;
-            text-decoration: none;
-        }
-
-        .bookmark .title a:hover {
-            text-decoration: underline;
-        }
-
-        .bookmark .uri, .bookmark .desc {
-            display: none;
-        }
-
-        .bookmark .uri {
-            color: #aaa;
-        }
-
-        .bookmark .bottom {
-            white-space: nowrap;
-        }
-
-        .bookmark .bottom a {
-            text-decoration: none;
-            -webkit-user-select: none;
-            cursor: default;
-        }
-
-        .bookmark .bottom a:hover {
-            cursor: pointer;
-        }
-
-        .bookmark .tags a {
-            color: #666;
-            background-color: #f6f6f6;
-            padding: 0.1em 0.4em;
-            margin: 0 0.3em;
-            -webkit-border-radius: 0.2em;
-            -webkit-box-shadow: 0 0.1em 0.1em #666;
-        }
-
-        .bookmark .tags a:hover {
-            color: #111;
-        }
-
-        .bookmark .controls a {
-            color: #888;
-            padding: 0.1em 0.4em;
-            margin: 0 0;
-        }
-
-        .bookmark .controls a:hover {
-            background-color: #fff;
-            -webkit-border-radius: 0.2em;
-            -webkit-box-shadow: 0 0.1em 0.1em #666;
-        }
-
-        .bookmark .date {
-            color: #444;
-        }
-
-        #templates {
-            display: none;
-        }
-
-        #blackout {
-            position: fixed;
-            left: 0;
-            right: 0;
-            top: 0;
-            bottom: 0;
-            opacity: 0.5;
-            background-color: #000;
-            z-index: 100;
-        }
-
-        #edit-dialog {
-            position: fixed;
-            z-index: 101;
-            font-size: 1.3em;
-            font-weight: 100;
-
-            top: 6em;
-            left: 50%;
-            margin-left: -20em;
-            margin-bottom: 6em;
-            padding: 2em;
-            width: 36em;
-
-            background-color: #eee;
-            border-radius: 0.5em;
-            box-shadow: 0 0.5em 1em #000;
-        }
-
-        #edit-dialog td:first-child {
-            vertical-align: middle;
-            text-align: right;
-            width: 4em;
-        }
-
-        #edit-dialog td {
-            padding: 0.3em;
-        }
-
-        #edit-dialog input, #edit-dialog textarea {
-            font-size: inherit;
-            border: none;
-            outline: none;
-            margin: 0;
-            padding: 0;
-            background-color: #fff;
-            border-radius: 0.25em;
-            box-shadow: 0 0.1em 0.1em #888;
-        }
-
-        #edit-dialog input[type="text"], #edit-dialog textarea {
-            width: 30em;
-            padding: 0.5em;
-        }
-
-        #edit-dialog input[type="button"] {
-            padding: 0.5em 1em;
-            margin-right: 0.5em;
-            color: #444;
-        }
-
-        #edit-dialog textarea {
-            height: 5em;
-        }
-
-        #edit-view {
-            display: none;
-        }
-
+        {%stylesheet}
     </style>
 </head>
 <body>
@@ -319,7 +210,7 @@ local html = [==[
         </div>
     </header>
 
-    <div class="view" id="results-view"></div>
+    <div id="results" class="content-margin"></div>
 
     <div id="edit-view" stlye="position: absolute;">
         <div id="blackout"></div>
@@ -340,7 +231,7 @@ local html = [==[
         </div>
     </div>
 
-    <div id="templates">
+    <div id="templates" class="hidden">
         <div id="bookmark-skelly">
             <div class="bookmark">
                 <div class="title"><a></a></div>
@@ -364,7 +255,7 @@ local main_js = [=[
 $(document).ready(function () { 'use strict'
 
     var bookmark_html = $("#bookmark-skelly").html(),
-        $results = $("#results-view"), $search = $("#search"),
+        $results = $("#results"), $search = $("#search"),
         $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog");
 
     function make_bookmark(b) {
@@ -577,6 +468,12 @@ export_funcs = {
 
 chrome.add("bookmarks", function (view, meta)
     local uri = "luakit://bookmarks/"
+
+    local html = string.gsub(html, "{%%(%w+)}", {
+        -- Merge common chrome stylesheet and history stylesheet
+        stylesheet = chrome.stylesheet .. stylesheet
+    })
+
     view:load_string(html, uri)
 
     function on_first_visual(_, status)

@@ -27,6 +27,74 @@ local capi = {
 
 module("history.chrome")
 
+stylesheet = [===[
+.day-heading {
+    font-size: 1.6em;
+    font-weight: 100;
+    margin: 1em 0 0.5em 0.5em;
+    -webkit-user-select: none;
+    cursor: default;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.day-sep {
+    height: 1em;
+}
+
+.item {
+    font-size: 1.3em;
+    font-weight: 400;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.item span {
+    padding: 0.2em;
+}
+
+.item .time {
+    -webkit-user-select: none;
+    cursor: default;
+    color: #888;
+    display: inline-block;
+    width: 5em;
+    text-align: right;
+    border-right: 1px solid #ddd;
+    padding-right: 0.5em;
+    margin-right: 0.1em;
+}
+
+.item a {
+    text-decoration: none;
+}
+
+.item .domain a {
+    color: #aaa;
+}
+
+.item .domain a:hover {
+    color: #666;
+}
+
+.item.selected {
+    background-color: #eee;
+}
+
+.nav-button-box {
+    margin: 2em;
+}
+
+.nav-button-box a {
+    display: none;
+    border: 1px solid #aaa;
+    padding: 0.4em 1em;
+}
+
+]===]
+
 local html = [==[
 <!doctype html>
 <html>
@@ -34,347 +102,162 @@ local html = [==[
     <meta charset="utf-8">
     <title>History</title>
     <style type="text/css">
-        body {
-            background-color: white;
-            color: black;
-            display: block;
-            font-size: 62.5%;
-            margin: 1em;
-            font-family: sans-serif;
-        }
-
-        ol, li {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        h3 {
-            color: black;
-            font-size: 1.6em;
-            margin-bottom: 1.0em;
-        }
-
-        h1, h2, h3 {
-            text-shadow: 0 1px 0 #f2f2f2;
-            -webkit-user-select: none;
-            font-weight: normal;
-        }
-
-        #search-form input {
-            min-width: 33%;
-            width: 10em;
-            font-size: 1.6em;
-            font-weight: normal;
-        }
-
-        #results-header {
-            border-top: 1px solid #aaa;
-            background-color: #f2f2f2;
-            padding: 0.3em;
-            font-weight: normal;
-            font-size: 1.2em;
-            margin-top: 0.5em;
-            margin-bottom: 0.5em;
-        }
-
-        .day {
-            white-space: nowrap;
-            margin: 1em 0 0.5em 0;
-            padding: 0 0.3em;
-            display: block;
-            -webkit-user-select: none;
-            cursor: default;
-        }
-
-        .day-results {
-            margin-bottom: 1em;
-        }
-
-        .entry {
-            margin: 0;
-            padding: 0;
-            font-size: 1.2em;
-            display: -webkit-box;
-        }
-
-        .entry:hover {
-            background-color: #f6f6f6;
-            -webkit-border-radius: 0.5em;
-        }
-
-        .selected {
-            background-color: #f0f0f0;
-        }
-
-        .selected:hover {
-            background-color: #f0f0f0 !important;
-            -webkit-border-radius: 0 !important;
-        }
-
-        .entry .time {
-            color: #888;
-            width: 4em;
-            text-align: right;
-
-            overflow: hidden;
-            text-overflow: ellipsis;
-            white-space: nowrap;
-
-            padding: 0.3em 0.45em 0.3em 0;
-            margin: 0 0.45em 0 0;
-            border-right: 1px solid #f2f2f2;
-
-            -webkit-user-select: none;
-            cursor: default;
-        }
-
-        .entry .title {
-            padding: 0.3em 0;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            max-width: 600px;
-        }
-
-        .entry .title a {
-            text-decoration: none;
-        }
-
-        .entry .title a:hover {
-            text-decoration: underline;
-        }
-
-        .entry .domain {
-            color: #bbb;
-            padding: 0.3em 0;
-            margin-left: 0.75em;
-            -webkit-box-flex: 1;
-            overflow: hidden;
-            white-space: nowrap;
-            text-overflow: ellipsis;
-            text-decoration: none;
-        }
-
-        .entry .domain a:hover {
-            color: #999;
-            text-decoration: underline;
-            cursor: pointer;
-            -webkit-user-select: none;
-        }
-
-        #controls {
-            margin: 1em 0 0 0;
-        }
-
-        #nav-buttons {
-            display: -webkit-box;
-            margin: 2em 0 2em 0.5em;
-        }
-
-        #nav-buttons a {
-            font-size: 1.2em;
-            display: block;
-            padding: 0.5em 1em;
-            margin-left: 0.5em;
-            background-color: #eee;
-            border: 1px solid #eee;
-            -webkit-user-select: none;
-            cursor: pointer;
-            text-decoration: none;
-            color: #444;
-        }
-
-        #nav-buttons a:hover {
-            border: 1px solid #aaa;
-        }
-
-        #templates {
-            display: none;
-        }
+        {%stylesheet}
     </style>
 </head>
 <body>
-    <div class="header">
-        <form id="search-form">
-            <input type="text" id="search" />
-        </form>
-    </div>
-    <div class="main">
-        <div id="results-header">
-            History
+    <header id="page-header">
+        <span id="search-box">
+            <input type="text" id="search" placeholder="Search history..." />
+            <input type="button" id="clear-button" value="X" />
+        </span>
+        <input type="button" id="search-button" class="button" value="Search" />
+        <div class="rhs">
+            <input type="button" class="button" disabled id="clear-selected-button" value="Clear selected" />
+            <input type="button" class="button" disabled id="clear-results-button" value="Clear results" />
+            <input type="button" class="button" id="clear-all-button" value="Clear all" />
         </div>
-        <div id="controls">
-            <input type="button" id="clear-all" value="Clear All History...">
-            <input type="button" id="clear-results" value="Clear All Results">
-            <input type="button" id="clear-selected" value="Clear All Selected">
-        </div>
-        <div id="results">
-        </div>
-        <div id="nav-buttons">
-            <a id="nav-prev" href>prev</a>
-            <a id="nav-next" href>next</a>
-        </div>
+    </header>
+
+    <div id="results" class="content-margin"></div>
+
+    <div class="nav-button-box">
+        <a id="nav-prev">prev</a>
+        <a id="nav-next">next</a>
     </div>
 
-    <div id="templates">
-        <div id="entry-template">
-            <li class="entry">
-                <div class="time"></div>
-                <div class="title"><a></a></div>
-                <div class="domain"><a></a></div>
-            </li>
+    <div id="templates" class="hidden">
+        <div id="item-skelly">
+            <div class="item">
+                <span class="time"></span>
+                <span class="title"><a></a></span>
+                <span class="domain"><a></a></span>
+            </div>
         </div>
     </div>
-
 </body>
 ]==]
 
 local main_js = [=[
-$(document).ready(function () {
+$(document).ready(function () { 'use strict';
 
     var limit = 100, page = 1, results_len = 0;
 
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
-    var entry_html = $("#entry-template").html();
+    var item_html = $("#item-skelly").html();
     $("#templates").remove();
 
     function make_history_item(h) {
-        // Create element
-        var $e = $(entry_html);
-        $e.attr("id", h.id);
-        // Update date/time
+        var $e = $(item_html);
+        $e.attr("history_id", h.id);
         $e.find(".time").text(h.time);
-        // Set title & href
         $e.find(".title a")
             .attr("href", h.uri)
             .text(h.title || h.uri);
-        // Set domain link
         var domain = /:\/\/([^/]+)\//.exec(h.uri);
         $e.find(".domain a").text(domain && domain[1] || "");
-        return $e;
+        return $e.prop("outerHTML");
     };
 
     var $search = $('#search').eq(0),
         $results = $('#results').eq(0),
         $results_header = $("#results-header").eq(0),
-        $clear_all = $("#clear-all").eq(0),
-        $clear_results = $("#clear-results").eq(0),
-        $clear_selected = $("#clear-selected").eq(0),
+        $clear_all = $("#clear-all-button").eq(0),
+        $clear_results = $("#clear-results-button").eq(0),
+        $clear_selected = $("#clear-selected-button").eq(0),
         $next = $("#nav-next").eq(0),
         $prev = $("#nav-prev").eq(0);
 
-    function update_frag(query) {
-        if (limit !== 100 || page > 1)
-            document.location.hash = (
-                encodeURIComponent(query ? query : "") + "/"
-                + (limit === 100 ? "" : limit + ",") + page);
-        else
-            document.location.hash = (
-                query ? encodeURIComponent(query) : "");
+    function update_clear_buttons(all, results, selected) {
+        $clear_all.attr("disabled", !!all);
+        $clear_results.attr("disabled", !!results);
+        $clear_selected.attr("disabled", !!selected);
     }
 
-    function update_buttons(query) {
-        var uri = ("#" + encodeURIComponent(query ? query : "") + "/" +
-            (limit === 100 ? "" : limit + ","));
-
-        if (page > 1) {
-            $prev.show();
-            $prev.attr("href", uri + (page - 1));
-        } else {
-            $prev.hide();
-            $prev.attr("href", uri + page);
-        }
-
-        if (results_len == limit) {
+    function update_nav_buttons() {
+        if (results_len === limit)
             $next.show();
-            $next.attr("href", uri + (page + 1));
-        } else {
+        else
             $next.hide();
-            $next.attr("href", uri + page);
-        }
-
+        if (page > 1)
+            $prev.show();
+        else
+            $prev.hide();
     }
 
-    function do_search(query) {
-        // Detect blank query
-        if (query && /^\s*$/.test(query))
-            query = null;
-
-        update_frag(query);
-
-        $results_header.text(query && "Showing results for \"" +
-            query + "\"" || "History");
-
-        $clear_all.attr("disabled", !!query);
-        $clear_results.attr("disabled", !query);
-        $clear_selected.attr("disabled", true);
-
-        var rows = history_search({ query: query, limit: limit, page: page });
-
-        $results.empty();
+    function search() {
+        var query = $search.val(),
+            results = history_search({
+                query: query, limit: limit, page: page });
 
         // Used to trigger hiding of next nav button when results_len < limit
-        results_len = rows.length ? rows.length : 0;
+        results_len = results.length || 0;
 
-        if (!rows.length) {
-            results_len = 0;
-            update_buttons(query);
-            $clear_results.attr("disabled", true);
-            $clear_all.attr("disabled", true);
+        update_clear_buttons(query, !query, true);
+
+        if (!results.length) {
+            $results.empty();
+            update_nav_buttons();
             return;
         }
 
-        var last_date, last_time = 0;
-        var $group;
+        var last_date, last_time = 0, group_html;
 
-        for (var i = 0; i < rows.length; i++) {
-            var h = rows[i];
+        var i = 0, len = results.length, html = "";
 
-            // Group items by date
+        var sep = $("<div/>").addClass("day-sep").prop("outerHTML"),
+            $heading = $("<div/>").addClass("day-heading");
+
+        for (; i < len;) {
+            var h = results[i++];
+
             if (h.date !== last_date) {
                 last_date = h.date;
+                html += $heading.text(h.date).prop("outerHTML");
 
-                if (i !== 0)
-                    $results.append($group);
-
-                $results.append($("<h3/>").addClass("day").text(h.date));
-                $group = $("<ol/>").addClass("day-results");
-
-            // Create another group if items more than an hour apart
-            } else if ((last_time - h.last_visit) > 3600) {
-                $results.append($group);
-                $group = $("<ol/>").addClass("day-results");
-            }
+            } else if ((last_time - h.last_visit) > 3600)
+                html += sep;
 
             last_time = h.last_visit;
-            $group.append(make_history_item(h));
+            html += make_history_item(h);
         }
-        $results.append($group);
 
-        update_buttons(query);
+        update_nav_buttons(query);
+
+        $results.get(0).innerHTML = html;
     }
 
-    var $search_form = $('#search-form').eq(0);
+    /* input field callback */
+    $search.keydown(function(ev) {
+        if (ev.which == 13) { /* Return */
+            reset_mode();
+            page = 1;
+            search();
+            $search.blur();
+        }
+    });
 
-    $search_form.submit(function (e) {
-        e.preventDefault();
-        $search.blur();
-        reset_mode();
-        // We are starting a new query, show page 1
+    $("#clear-button").click(function () {
+        $search.val("");
         page = 1;
-        do_search($search.val());
+        search();
+    });
+
+    $("#search-button").click(function () {
+        page = 1;
+        search();
     });
 
     // Auto search history by domain when clicking on domain
-    $results.on("click", ".entry .domain a", function (e) {
+    $results.on("click", ".item .domain a", function (e) {
         $search.val($(this).text());
-        $search.submit();
+        search();
     });
 
-    $results.on("click", ".entry", function (e) {
+    // Select items & enable/disable clear all selected button
+    $results.on("click", ".item", function (e) {
         var $e = $(this);
         if ($e.hasClass("selected")) {
             $(this).removeClass("selected");
@@ -392,28 +275,40 @@ $(document).ready(function () {
             $results.fadeOut("fast", function () {
                 $results.empty();
                 $results.show();
-                $search_form.submit();
+                search();
             });
             $clear_all.blur();
         }
     });
 
+    $next.click(function () {
+        page++;
+        search();
+    });
+
+    $prev.click(function () {
+        page = Math.max(page-1,1);
+        search();
+    });
+
     function clear_elems($elems) {
-        var ids = [], last_index = $elems.length - 1;
+        var ids = [], last = $elems.length - 1;
+
         $elems.each(function (index) {
             var $e = $(this);
-            ids.push($e.attr("id"));
-            if (index == last_index)
-                $e.fadeOut("fast", function () { $search_form.submit() });
+            ids.push($e.attr("history_id"));
+            if (index == last)
+                $e.fadeOut("fast", function () { search(); });
             else
                 $e.fadeOut("fast");
-            if (ids.length)
-                history_clear_list(ids);
         });
+
+        if (ids.length)
+            history_clear_list(ids);
     };
 
     $clear_results.click(function () {
-        clear_elems($results.find(".entry"));
+        clear_elems($results.find(".item"));
         $clear_results.blur();
     });
 
@@ -422,41 +317,16 @@ $(document).ready(function () {
         $clear_selected.blur();
     });
 
-    function parse_frag() {
-        var frag = document.location.hash.substr(1);
-        var m = /\/(\d+),(\d+)$/.exec(frag) || /\/(\d+)$/.exec(frag);
-        return {
-            limit: m && m.length == 3 ? parseInt(m[1]) : 100,
-            page: m ? parseInt(m[m.length - 1]) : 1,
-            query: decodeURIComponent(
-                m ? frag.substr(0, frag.length - m[0].length) : frag)
-        }
-    }
+    var query = initial_search_term();
+    if (query)
+        $search.val(query);
 
-    $(window).on("hashchange", function () {
-        var frag = parse_frag();
-
-        if ($search.val() === frag.query && limit === frag.limit
-            && page === frag.page)
-            return;
-
-        limit = frag.limit;
-        page = frag.page;
-        $search.val(frag.query);
-        do_search(frag.query);
-    });
-
-    // Get initial query, limit & page num from URI fragment
-    var frag = parse_frag();
-    limit = frag.limit;
-    page = frag.page;
-    $search.val(frag.query);
-
-    // Show initial search results
-    do_search(frag.query);
+    search();
 });
 
 ]=]
+
+local initial_search_term
 
 export_funcs = {
     history_search = function (opts)
@@ -506,9 +376,21 @@ export_funcs = {
         history.db:exec("DELETE FROM history WHERE id IN ("
             .. table.concat(marks, ",") .. " )", ids)
     end,
+
+    initial_search_term = function ()
+        local term = initial_search_term
+        initial_search_term = nil
+        return term
+    end,
 }
 
 chrome.add("history", function (view, meta)
+
+    local html = string.gsub(html, "{%%(%w+)}", {
+        -- Merge common chrome stylesheet and history stylesheet
+        stylesheet = chrome.stylesheet .. stylesheet
+    })
+
     view:load_string(html, meta.uri)
 
     function on_first_visual(_, status)
@@ -551,6 +433,7 @@ end)
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("history", function (w, query)
-        w:new_tab("luakit://history/" .. (query and "#"..query or ""))
+        initial_search_term = query
+        w:new_tab("luakit://history/")
     end),
 })
