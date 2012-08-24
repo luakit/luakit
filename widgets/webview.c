@@ -814,6 +814,12 @@ webview_destructor(widget_t *w)
     g_slice_free(webview_data_t, d);
 }
 
+void
+size_request_cb(GtkWidget *widget, GtkRequisition *r, widget_t *w)
+{
+    gtk_widget_set_size_request(GTK_WIDGET(w->widget), r->width, r->height);
+}
+
 widget_t *
 widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 {
@@ -872,6 +878,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
+      "signal::size-request",                         G_CALLBACK(size_request_cb),      w,
       NULL);
 
     g_object_connect(G_OBJECT(d->inspector),
