@@ -29,12 +29,14 @@ local capi = {
 
 module("bookmarks.chrome")
 
+-- Display the bookmark uri and title.
+show_uri = false
+
 stylesheet = [===[
 .bookmark {
-    font-size: 1.1em;
-    line-height: 1.5em;
-    padding: .5em;
-    margin: 0.2em 0;
+    line-height: 1.6em;
+    padding: 0.4em 0.5em;
+    margin: 0;
     left: 0;
     right: 0;
     border: 1px solid #fff;
@@ -52,7 +54,7 @@ stylesheet = [===[
 }
 
 .bookmark .title a {
-    font-weight: 100;
+    font-weight: normal;
     font-size: 1.4em;
     text-decoration: none;
 }
@@ -96,6 +98,27 @@ stylesheet = [===[
     color: #111;
 }
 
+.bookmark .desc {
+    color: #222;
+    border-left: 0.3em solid #ddd;
+    margin: 0 0 0.2em 0.5em;
+    padding: 0 0 0 0.5em;
+    max-width: 60em;
+}
+
+.bookmark .desc > * {
+    margin-top: 0.2em;
+    margin-bottom: 0.2em;
+}
+
+.bookmark .desc > :first-child {
+    margin-top: 0;
+}
+
+.bookmark .desc > :last-child {
+    margin-bottom: 0;
+}
+
 .bookmark .controls a {
     color: #888;
     padding: 0.1em 0.4em;
@@ -110,6 +133,7 @@ stylesheet = [===[
 
 .bookmark .date {
     color: #444;
+    margin-right: 0.2em;
 }
 
 #templates {
@@ -471,10 +495,13 @@ export_funcs = {
 chrome.add("bookmarks", function (view, meta)
     local uri = "luakit://bookmarks/"
 
-    local html = string.gsub(html, "{%%(%w+)}", {
-        -- Merge common chrome stylesheet and history stylesheet
-        stylesheet = chrome.stylesheet .. stylesheet
-    })
+    local style = chrome.stylesheet .. _M.stylesheet
+
+    if not _M.show_uri then
+        style = style .. " .bookmark .uri { display: none !important; } "
+    end
+
+    local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
 
     view:load_string(html, uri)
 
