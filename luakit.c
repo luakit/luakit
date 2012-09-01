@@ -178,6 +178,11 @@ main(gint argc, gchar *argv[]) {
     init_directories();
     init_lua(uris);
 
+    /* hide command line parameters so process lists don't leak (possibly
+       confidential) URLs */
+    for (gint i = 1; i < argc; i++)
+        memset(argv[i], 0, strlen(argv[i]));
+
     /* parse and run configuration file */
     if(!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
