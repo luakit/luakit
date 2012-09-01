@@ -815,7 +815,7 @@ webview_destructor(widget_t *w)
 }
 
 void
-size_request_cb(GtkWidget *widget, GtkRequisition *r, widget_t *w)
+size_request_cb(GtkWidget *UNUSED(widget), GtkRequisition *r, widget_t *w)
 {
     gtk_widget_set_size_request(GTK_WIDGET(w->widget), r->width, r->height);
 }
