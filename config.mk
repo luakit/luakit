@@ -76,7 +76,7 @@ CFLAGS   := -std=gnu99 -ggdb -W -Wall -Wextra $(INCS) $(CFLAGS)
 
 # Generate linker options
 LIBS     := $(shell pkg-config --libs $(PKGS))
-LDFLAGS  := $(LIBS) $(LDFLAGS) -Wl,--export-dynamic
+LDFLAGS  := $(LIBS) $(LDFLAGS) -Wl
 
 # Building on OSX
 # TODO: These lines have never been tested
