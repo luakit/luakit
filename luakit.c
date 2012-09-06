@@ -73,7 +73,7 @@ init_directories(void)
 
 /* load command line options into luakit and return uris to load */
 gchar**
-parseopts(int argc, gchar *argv[], gboolean **nonblock) {
+parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     GOptionContext *context;
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
@@ -99,9 +99,7 @@ parseopts(int argc, gchar *argv[], gboolean **nonblock) {
     context = g_option_context_new("[URI...]");
     g_option_context_add_main_entries(context, entries, NULL);
     g_option_context_add_group(context, gtk_get_option_group(FALSE));
-    // TODO Passing gtk options (like --sync) to luakit causes a segfault right
-    // here. I'm clueless.
-    g_option_context_parse(context, &argc, &argv, NULL);
+    g_option_context_parse(context, argc, &argv, NULL);
     g_option_context_free(context);
 
     /* print version and exit */
@@ -155,7 +153,7 @@ main(gint argc, gchar *argv[]) {
     setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */
-    uris = parseopts(argc, argv, &nonblock);
+    uris = parseopts(&argc, argv, &nonblock);
 
     /* if non block mode - respawn, detach and continue in child */
     if (nonblock) {
