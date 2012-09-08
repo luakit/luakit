@@ -283,20 +283,11 @@ add_binds("normal", {
         end, {count = 1}),
 
     -- Yanking
-    buf("^yy$", "Yank current URI to primary selection.",
+    key({}, "y", "Yank current URI to primary selection.",
         function (w)
             local uri = string.gsub(w.view.uri or "", " ", "%%20")
             luakit.selection.primary = uri
-            luakit.selection.clipboard = uri
             w:notify("Yanked uri: " .. uri)
-        end),
-
-    buf("^yt$", "Yank current page title to primary selection.",
-        function (w)
-            local title = w.view.title
-            luakit.selection.primary = title
-            luakit.selection.clipboard = uri
-            w:notify("Yanked title: " .. title)
         end),
 
     -- Commands
