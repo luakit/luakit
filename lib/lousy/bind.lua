@@ -14,30 +14,37 @@ local type = type
 local unpack = unpack
 local util = require("lousy.util")
 local join = util.table.join
+local keys = util.table.keys
 local print = print
 
 -- Key, buffer and command binding functions.
 module("lousy.bind")
 
 -- Modifiers to ignore
-ignore_modifiers = { "Mod2", "Mod3", "Mod5", "Lock" }
+ignore_mask = {
+    Mod2 = true, Mod3 = true, Mod5 = true, Lock = true,
+}
 
 -- A table that contains mappings for key names.
 map = {
     ISO_Left_Tab = "Tab",
 }
 
--- Return cloned, sorted & filtered modifier mask table.
-function filter_mods(mods, remove_shift)
-    -- Clone & sort new modifiers table
-    mods = util.table.clone(mods)
-    table.sort(mods)
-    -- Filter out ignored modifiers
-    mods = util.table.difference(mods, ignore_modifiers)
-    if remove_shift then
-        return util.table.difference(mods, {"Shift",})
+function parse_mods(mods, remove_shift)
+    local t = {}
+    for _, mod in ipairs(mods) do
+        if not ignore_mask[mod] then
+            mod = map[mod] or mod
+            t[mod] = true
+        end
     end
-    return mods
+
+    -- For single character bindings shift is not processed as it should
+    -- have already transformed the keycode within gdk.
+    if remove_shift then t.Shift = nil end
+
+    mods = table.concat(keys(t), "-")
+    return mods ~= "" and mods or nil
 end
 
 -- Create new key binding.
@@ -54,7 +61,7 @@ function key(mods, key, desc, func, opts)
 
     return {
         type = "key",
-        mods = filter_mods(mods, #key == 1), -- Remove Shift key for char keys
+        mods = parse_mods(mods, string.wlen(key) == 1),
         key  = key,
         desc = desc,
         func = func,
@@ -76,7 +83,7 @@ function but(mods, button, desc, func, opts)
 
     return {
         type   = "button",
-        mods   = filter_mods(mods), -- Sort modifiers
+        mods   = parse_mods(mods),
         button = button,
         desc   = desc,
         func   = func,
@@ -169,7 +176,7 @@ end
 -- bindings callback function.
 function match_key(object, binds, mods, key, args)
     for _, b in ipairs(binds) do
-        if b.type == "key" and b.key == key and util.table.isclone(b.mods, mods) then
+        if b.type == "key" and b.key == key and b.mods == mods then
             if b.func(object, join(b.opts, args)) ~= false then
                 return true
             end
@@ -182,7 +189,7 @@ end
 -- bindings callback function.
 function match_but(object, binds, mods, button, args)
     for _, b in ipairs(binds) do
-        if b.type == "button" and b.button == button and util.table.isclone(b.mods, mods) then
+        if b.type == "button" and b.button == button and b.mods == mods then
             if b.func(object, join(b.opts, args)) ~= false then
                 return true
             end
@@ -276,9 +283,7 @@ function hit(object, binds, mods, key, args)
     -- Convert keys using map
     key = map[key] or key
 
-    -- Filter modifers table
-    mods = filter_mods(mods, type(key) == "string" and #key == 1)
-    len = string.wlen(key)
+    local len = string.wlen(key)
 
     -- Compile metadata table
     args = join(args or {}, {
@@ -287,6 +292,8 @@ function hit(object, binds, mods, key, args)
         mods   = mods,
         key    = key,
     })
+
+    mods = parse_mods(mods, type(key) == "string" and len == 1)
 
     if match_any(object, binds, args) then
         return true
@@ -299,7 +306,7 @@ function hit(object, binds, mods, key, args)
         return false
 
     -- Match key bindings
-    elseif (not args.buffer or not args.enable_buffer) or #mods ~= 0 or len ~= 1 then
+    elseif (not args.buffer or not args.enable_buffer) or mods or len ~= 1 then
         -- Check if the current buffer affects key bind (I.e. if the key has a
         -- `[count]` prefix)
         if match_key(object, binds, mods, key, args) then
@@ -308,7 +315,7 @@ function hit(object, binds, mods, key, args)
     end
 
     -- Clear buffer
-    if not args.enable_buffer or #mods ~= 0 then
+    if not args.enable_buffer or mods then
         return false
 
     -- Else match buffer
