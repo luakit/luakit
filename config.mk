@@ -1,93 +1,98 @@
-# Get the current version which is either a nearby git tag or a short-hash
-# of the current commit.
-VERSION   ?= $(shell ./build-utils/getversion.sh)
+# === Luakit Makefile Configuration ==========================================
+
+# Compile/link options.
+CC         ?= gcc
+CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra
+LDFLAGS    +=
+CPPFLAGS   +=
+
+# Get current luakit version.
+VERSION    ?= $(shell ./build-utils/getversion.sh)
+CPPFLAGS   += -DVERSION=\"$(VERSION)\"
+
+# === Paths ==================================================================
 
 PREFIX     ?= /usr/local
-INSTALLDIR := $(DESTDIR)$(PREFIX)
-
 MANPREFIX  ?= $(PREFIX)/share/man
-MANPREFIX  := $(DESTDIR)$(MANPREFIX)
-
 DOCDIR     ?= $(PREFIX)/share/luakit/docs
+
+INSTALLDIR := $(DESTDIR)$(PREFIX)
+MANPREFIX  := $(DESTDIR)$(MANPREFIX)
 DOCDIR     := $(DESTDIR)$(DOCDIR)
 
-# Use the Just-In-Time compiler for lua (for faster lua code execution)
-# See http://luajit.org/ & http://luajit.org/performance.html for more
-# information.
-ifeq ($(USE_LUAJIT),1)
-LUA_PKG_NAME = $(shell pkg-config --exists luajit && echo luajit)
-ifeq ($(LUA_PKG_NAME),)
-$(error Unable to determine luajit pkg-config name, specify manually with \
-`LUA_PKG_NAME=<name> make`, use `pkg-config --list-all | grep luajit` to \
-find the correct package name for your system. Please also check that you \
-have luajit installed)
-endif
-endif
-
-# The lua pkg-config name changes from system to system, try autodetect it.
-ifeq ($(LUA_PKG_NAME),)
-LUA_PKG_NAME = $(shell pkg-config --exists lua && echo lua)
-endif
-ifeq ($(LUA_PKG_NAME),)
-LUA_PKG_NAME = $(shell pkg-config --exists lua-5.1 && echo lua-5.1)
-endif
-ifeq ($(LUA_PKG_NAME),)
-LUA_PKG_NAME = $(shell pkg-config --exists lua5.1 && echo lua5.1)
-endif
-ifeq ($(LUA_PKG_NAME),)
-LUA_PKG_NAME = $(shell pkg-config --exists lua51 && echo lua51)
-endif
-
-ifeq ($(LUA_PKG_NAME),)
-$(error Unable to determine lua pkg-config name, specify manually with \
-`LUA_PKG_NAME=<name> make`, use `pkg-config --list-all | grep lua` to \
-find the correct package name for your system. Please also check that you \
-have lua >= 5.1 installed)
-endif
-
-# Packages required to build luakit
-PKGS := gtk+-2.0 gthread-2.0 webkit-1.0 javascriptcoregtk-1.0 sqlite3 $(LUA_PKG_NAME)
-
-# Build luakit with libunqiue bindings (for writing simple single-
-# instance applications using dbus).
-# To disable use `make USE_UNIQUE=0`.
-ifneq ($(USE_UNIQUE),0)
-CPPFLAGS += -DWITH_UNIQUE
-PKGS     += unique-1.0
-endif
-
-# Should we load relative config paths first?
+# Should luakit be built to load relative config paths (./lib ./config) ?
+# (Useful when running luakit from it's source directory, disable otherwise).
 ifneq ($(DEVELOPMENT_PATHS),0)
-CPPFLAGS += -DDEVELOPMENT_PATHS
+	CPPFLAGS += -DDEVELOPMENT_PATHS
 endif
 
-# Check user has the required libs installed.
-ifneq ($(shell pkg-config --print-errors --exists $(PKGS) && echo 1),1)
-$(error Cannot find required libraries to build luakit. Please check you \
-have the above packages installed and try again.)
+# === Platform specific ======================================================
+
+uname_s := $(shell uname -s)
+
+# Mac OSX
+ifeq ($(uname_s),Darwin)
+	LINKER_EXPORT_DYNAMIC = 0
 endif
 
-# Add pre-processor flags
-CPPFLAGS := -DVERSION=\"$(VERSION)\" $(CPPFLAGS)
+# Some systems need the --export-dynamic linker option to load other
+# dynamically linked C Lua modules (for example lua-filesystem).
+ifneq ($(LINKER_EXPORT_DYNAMIC),0)
+	LDFLAGS += -Wl,--export-dynamic
+endif
 
-# Generate compiler options
-INCS     := $(shell pkg-config --cflags $(PKGS)) -I./
-CFLAGS   := -std=gnu99 -ggdb -W -Wall -Wextra $(INCS) $(CFLAGS)
+# === Lua package name detection =============================================
 
-# Generate linker options
-LIBS     := $(shell pkg-config --libs $(PKGS))
-LDFLAGS  := $(LIBS) $(LDFLAGS)
+LUA_PKG_NAMES += lua lua-5.1 lua5.1 lua51
 
-# Building on OSX
-# TODO: These lines have never been tested
-#CFLAGS  += -lgthread-2.0
-#LDFLAGS += -pthread
+# Force linking against Lua's Just-In-Time compiler.
+# See http://luajit.org/ for more information.
+ifeq ($(USE_LUAJIT),1)
+	LUA_PKG_NAME  := luajit
+else
+# User hasn't specificed, use LuaJIT if we can find it.
+ifneq ($(USE_LUAJIT),0)
+	LUA_PKG_NAMES := luajit $(LUA_PKG_NAMES)
+endif
+endif
 
-# Building on FreeBSD (or just use gmake)
-# TODO: These lines have never been tested
-#VERSION != echo `./build-utils/getversion.sh`
-#INCS    != echo -I. -I/usr/include `pkg-config --cflags $(PKGS)`
-#LIBS    != echo -L/usr/lib `pkg-config --libs $(PKGS)`
+# Search for Lua package name if not forced by user.
+ifeq ($(LUA_PKG_NAME),)
+LUA_PKG_NAME = $(shell sh -c '(for name in $(LUA_PKG_NAMES); do \
+	       pkg-config --exists $$name && echo $$name; done) | head -n 1')
+endif
 
-# Custom compiler / linker
-#CC = clang
+# === Required build packages ================================================
+
+# Packages required to build luakit.
+PKGS += gtk+-2.0
+PKGS += gthread-2.0
+PKGS += webkit-1.0
+PKGS += sqlite3
+PKGS += $(LUA_PKG_NAME)
+
+# For systems using older WebKit-GTK versions which bundle JavaScriptCore
+# within the WebKit-GTK package.
+ifneq ($(NO_JAVASCRIPTCORE),1)
+	PKGS += javascriptcoregtk-1.0
+endif
+
+# Build luakit with libunique bindings? (single instance support)
+ifneq ($(USE_UNIQUE),0)
+	CPPFLAGS += -DWITH_UNIQUE
+	PKGS     += unique-1.0
+endif
+
+# Check user has correct packages installed (and found by pkg-config).
+PKGS_OK := $(shell pkg-config --print-errors --exists $(PKGS) && echo 1)
+ifneq ($(PKGS_OK),1)
+	$(error Cannot find required package(s\) to build luakit. Please \
+	check you have the above packages installed and try again.)
+endif
+
+# Add pkg-config options to compile flags.
+CFLAGS  += $(shell pkg-config --cflags $(PKGS))
+CFLAGS  += -I./
+
+# Add pkg-config options to linker flags.
+LDFLAGS += $(shell pkg-config --libs $(PKGS))
