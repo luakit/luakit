@@ -27,6 +27,7 @@
 #include <string.h>
 #include <unistd.h>
 #include <lua.h>
+#include <sys/time.h>
 
 /* ANSI term color codes */
 #define ANSI_COLOR_RESET   "\x1b[0m"
@@ -76,9 +77,9 @@ static inline ssize_t l_strlen(const gchar *s) {
 }
 
 static inline gdouble l_time() {
-    struct timespec ts;
-    clock_gettime(CLOCK_REALTIME, &ts);
-    return ts.tv_sec + (ts.tv_nsec / 1e9);
+    struct timeval tv;
+    gettimeofday(&tv, NULL);
+    return tv.tv_sec + (tv.tv_usec / 1e6);
 }
 
 #define p_clear(p, count)       ((void)memset((p), 0, sizeof(*(p)) * (count)))
