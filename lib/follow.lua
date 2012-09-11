@@ -17,10 +17,15 @@ local lousy = require "lousy"
 local new_mode, add_binds = new_mode, add_binds
 local window = window
 local capi = {
-    luakit = luakit
+    luakit = luakit,
+    timer = timer
 }
 
 module("follow")
+
+-- After each follow ignore all keys pressed by the user to prevent the
+-- accidental activation of other key bindings.
+ignore_delay = 200
 
 follow_js = [=[
 window.luakit_follow = (function (window, document) {
@@ -481,6 +486,21 @@ local eval_format = [=[
 (%s)(window.luakit_follow.focused_element())
 ]=]
 
+local hit_nop = function () return true end
+
+local function ignore_keys(w)
+    local delay = _M.ignore_delay
+    if not delay or delay == 0 then return end
+    -- Replace w:hit(..) with a no-op
+    w.hit = hit_nop
+    local t = capi.timer{ interval = delay }
+    t:add_signal("timeout", function (t)
+        t:stop()
+        w.hit = nil
+    end)
+    t:start()
+end
+
 local function follow(w)
     local state = w.follow_state
     local view, mode = state.view, state.mode
@@ -501,6 +521,8 @@ local function follow(w)
 
     -- Call mode callback to deal with evaluator return
     if mode.func then mode.func(ret) end
+
+    ignore_keys(w)
 end
 
 local eval_all_format = [=[
@@ -538,6 +560,8 @@ local function follow_all_hints(w)
             mode.func(v)
         end
     end
+
+    ignore_keys(w)
 end
 
 new_mode("follow", {
