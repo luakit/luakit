@@ -102,6 +102,7 @@ new_mode("insert", [[When clicking on form fields luakit will enter the insert
     enter = function (w)
         w:set_prompt("-- INSERT --")
         w:set_input()
+        w.view:focus()
     end,
     -- Send key events to webview
     passthrough = true,
