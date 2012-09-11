@@ -719,24 +719,29 @@ evaluators = {
             element.dispatchEvent(mouse_event);
         }
 
-        var tag = element.tag;
+        var tag = element.tagName;
         if (tag === "INPUT" || tag === "TEXTAREA") {
             var t = element.type.toUpperCase();
             if (t === "RADIO" || t == "CHECKBOX")
                 element.checked = !element.checked;
             else if (t === "SUBMIT" || t === "RESET" || t === "BUTTON")
                 click(element);
-            else
+            else {
                 element.focus();
+                return "form-active";
+            }
         } else
             click(element);
 
-        return tag;
+        return "root-active";
     }]=],
 
     focus = [=[function (element) {
         element.focus();
-        return element.tag;
+        var tag = element.tagName;
+        if (tag == "INPUT" || tag == "TEXTAREA")
+            return "form-active";
+        return "root-active";
     }]=],
 
     uri = [=[function (element) {
@@ -764,6 +769,7 @@ add_binds("normal", {
         function (w)
             w:set_mode("follow", {
                 selector = "clickable", evaluator = "click",
+                func = function (s) w:emit_form_root_active_signal(s) end,
             })
         end),
 
@@ -807,6 +813,7 @@ add_binds("ex-follow", {
         function (w)
             w:set_mode("follow", {
                 prompt = "focus", selector = "focus", evaluator = "focus",
+                func = function (s) w:emit_form_root_active_signal(s) end,
             })
         end),
 
