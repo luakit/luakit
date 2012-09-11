@@ -456,11 +456,11 @@ pattern_styles = {
 pattern_maker = pattern_styles.match_label_re_text
 
 local function api(w, frame, action, ...)
-    local mode = w.follow_state.mode
+    local state = w.follow_state
     if action == "mode-options" then
         return {
-            selector = mode.selector,
-            stylesheet = mode.stylesheet or stylesheet
+            selector = state.selector,
+            stylesheet = state.stylesheet or stylesheet
         }
     end
 end
@@ -505,7 +505,10 @@ local function focus(w, step)
     state.focus_frame = nil
 end
 
-local eval_format = [=[(%s)(window.luakit_follow.focused_element())]=]
+local eval_format = [=[
+(%s)(window.luakit_follow.focused_element())
+]=]
+
 local function follow(w)
     local state = w.follow_state
     local view, mode = state.view, state.mode
@@ -514,7 +517,7 @@ local function follow(w)
     local d = assert(state.frames[state.focus_frame],
         "invalid focus frame index")
 
-    local evaluator = string.format(eval_format, mode.evaluator)
+    local evaluator = string.format(eval_format, state.evaluator)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
 
@@ -547,7 +550,7 @@ local function follow_all_hints(w)
     local d = assert(state.frames[state.focus_frame],
         "invalid focus frame index")
 
-    local evaluator = string.format(eval_all_format, mode.evaluator)
+    local evaluator = string.format(eval_all_format, state.evaluator)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
 
@@ -568,24 +571,38 @@ end
 new_mode("follow", {
     enter = function (w, mode)
         assert(type(mode) == "table", "invalid follow mode")
-        -- Check users label_maker function (or valid default)
+
         local label_maker = mode.label_maker or _M.label_maker
         assert(type(label_maker) == "function",
             "invalid label_maker function")
-        -- Check users pattern_maker function (or valid default)
+
         assert(type(mode.pattern_maker or _M.pattern_maker) == "function",
             "invalid pattern_maker function")
 
-        assert(type(mode.evaluator) == "string", "missing mode evaluator")
-        assert(type(mode.selector) == "string", "missing mode selector")
+        local selector = mode.selector_func or _M.selectors[mode.selector]
+        assert(type(selector) == "string", "invalid follow selector")
+
+        local evaluator = mode.evaluator_func or _M.evaluators[mode.evaluator]
+        assert(type(evaluator) == "string", "invalid follow evaluator")
+
+        local stylesheet = mode.stylesheet or _M.stylesheet
+        assert(type(stylesheet) == "string", "invalid stylesheet")
+
+        print("selector", selector)
+        print("evaluator", evaluator)
 
         local view = w.view
         local all_frames, frames = view.frames, {}
-        local state = { mode = mode, view = view, frames = frames,
-            ready_count = 0, time = capi.luakit.time(),
-            persist = not not w.follow_persist }
+
+        local state = {
+            mode = mode, view = view, frames = frames,
+            stylesheet = stylesheet,
+            selector = selector, evaluator = evaluator,
+            persist = not not w.follow_persist
+        }
+
         w.follow_state = state
-        w.follow_persist = false
+        w.follow_persist = nil
 
         local size = 0
         for _, f in ipairs(all_frames) do
@@ -642,7 +659,7 @@ new_mode("follow", {
 
     changed = function (w, text)
         local state = w.follow_state or {}
-        local frames, view, mode = state.frames, state.view, state.mode
+        local frames, mode = state.frames, state.mode
         local active_count = 0
 
         -- Make the hint label/text matching patterns
@@ -653,7 +670,7 @@ new_mode("follow", {
             hint_pat or "", text_pat or "")
 
         for _, d in ipairs(frames) do
-            local count, err = assert(view:eval_js(filter, d))
+            local count, err = assert(state.view:eval_js(filter, d))
             if type(count) == "number" and count > 0 then
                 active_count = active_count + count
             end
@@ -742,7 +759,6 @@ evaluators = {
     }]=]
 }
 
-local s, e = selectors, evaluators
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^f$", [[Start `follow` mode. Hint all clickable elements
@@ -750,7 +766,7 @@ add_binds("normal", {
         selector) and open links in the current tab.]],
         function (w)
             w:set_mode("follow", {
-                selector = s.clickable, evaluator = e.click,
+                selector = "clickable", evaluator = "click",
             })
         end),
 
@@ -759,7 +775,7 @@ add_binds("normal", {
         `follow.selectors.uri` selector) and open links in a new tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "background tab", selector = s.uri, evaluator = e.uri,
+                prompt = "background tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:new_tab(uri, false)
@@ -793,7 +809,7 @@ add_binds("ex-follow", {
         `follow.selectors.focus` selector) and focus the matched element.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "focus", selector = s.focus, evaluator = e.focus,
+                prompt = "focus", selector = "focus", evaluator = "focus",
             })
         end),
 
@@ -802,7 +818,7 @@ add_binds("ex-follow", {
         selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "yank", selector = s.uri, evaluator = e.uri,
+                prompt = "yank", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     uri = string.gsub(uri, " ", "%%20")
@@ -817,7 +833,7 @@ add_binds("ex-follow", {
         selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "yank desc", selector = s.desc, evaluator = e.desc,
+                prompt = "yank desc", selector = "desc", evaluator = "desc",
                 func = function (desc)
                     assert(type(desc) == "string")
                     capi.luakit.selection.primary = desc
@@ -831,7 +847,7 @@ add_binds("ex-follow", {
         selector) and open matching image location in the current tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "open image", selector = s.image, evaluator = e.src,
+                prompt = "open image", selector = "image", evaluator = "src",
                 func = function (src)
                     assert(type(src) == "string")
                     w:navigate(src)
@@ -845,7 +861,7 @@ add_binds("ex-follow", {
         a new tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "tab image", selector = s.image, evaluator = e.src,
+                prompt = "tab image", selector = "image", evaluator = "src",
                 func = function (src)
                     assert(type(src) == "string")
                     w:new_tab(src)
@@ -858,8 +874,8 @@ add_binds("ex-follow", {
         `follow.selectors.thumbnail` selector) and open link in current tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "open image link", selector = s.thumbnail,
-                evaluator = e.parent_href,
+                prompt = "open image link",
+                selector = "thumbnail", evaluator = "parent_href",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:navigate(uri)
@@ -872,8 +888,8 @@ add_binds("ex-follow", {
         `follow.selectors.thumbnail` selector) and open link in a new tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "tab image link", selector = s.thumbnail,
-                evaluator = e.parent_href,
+                prompt = "tab image link", selector = "thumbnail",
+                evaluator = "parent_href",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:new_tab(uri, false)
@@ -886,7 +902,7 @@ add_binds("ex-follow", {
         selector) and open its location in the current tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "open", selector = s.uri, evaluator = e.uri,
+                prompt = "open", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:navigate(uri)
@@ -899,7 +915,7 @@ add_binds("ex-follow", {
         selector) and open its location in a new tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "open tab", selector = s.uri, evaluator = e.uri,
+                prompt = "open tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:new_tab(uri)
@@ -912,8 +928,7 @@ add_binds("ex-follow", {
         selector) and open its location in a background tab.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "background tab",
-                selector = s.uri, evaluator = e.uri,
+                prompt = "background tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:new_tab(uri, false)
@@ -926,7 +941,7 @@ add_binds("ex-follow", {
         selector) and open its location in a new window.]],
         function (w)
             w:set_mode("follow", {
-                prompt = "open window", selector = s.uri, evaluator = e.uri,
+                prompt = "open window", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     window.new{uri}
@@ -939,7 +954,7 @@ add_binds("ex-follow", {
         selector) and generate a `:open` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
-                prompt = ":open", selector = s.uri, evaluator = e.uri,
+                prompt = ":open", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:enter_cmd(":open " .. uri)
@@ -952,7 +967,7 @@ add_binds("ex-follow", {
         selector) and generate a `:tabopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
-                prompt = ":tabopen", selector = s.uri, evaluator = e.uri,
+                prompt = ":tabopen", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:enter_cmd(":tabopen " .. uri)
@@ -965,7 +980,7 @@ add_binds("ex-follow", {
         selector) and generate a `:winopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
-                prompt = ":winopen", selector = s.uri, evaluator = e.uri,
+                prompt = ":winopen", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
                     w:enter_cmd(":winopen " .. uri)
