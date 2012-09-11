@@ -27,10 +27,6 @@ window.luakit_follow = (function (window, document) {
     // Follow session state
     var state = {};
 
-    // Secret squirrel data
-    var api = window.luakit_follow_api;
-    delete window.luakit_follow_api;
-
     // Unlink element from DOM (and return it)
     function unlink(e) {
         if (typeof e === "string")
@@ -146,14 +142,14 @@ window.luakit_follow = (function (window, document) {
         state = {};
     }
 
-    function init() {
-        cleanup();
+    function init(selector, stylesheet) {
+        var head = document.getElementsByTagName('head')[0],
+            hints = eval_selector_make_hints(selector),
+            style = create_stylesheet("luakit_follow_stylesheet", stylesheet);
 
-        var mode = api("mode-options"),
-            hints = eval_selector_make_hints(mode.selector);
-        state.mode = mode;
-        state.hints = hints;
-        state.filtered = hints;
+        head.appendChild(style); // append follow stylesheet to <head>
+        state.stylesheet = style;
+        state.hints = state.filtered = hints;
         return hints.length;
     }
 
@@ -200,21 +196,11 @@ window.luakit_follow = (function (window, document) {
         return i;
     }
 
+    // Give all hints their labels and render the hint overlay.
     function show(labels) {
-        var rules = state.mode.stylesheet,
-            labels = labels.split(" "),
-            head = document.getElementsByTagName('head')[0],
-            style = create_stylesheet("luakit_follow_stylesheet", rules);
-
-        // Create and append follow stylesheet to document's <head>
-        head.appendChild(style);
-        state.stylesheet = style;
-
-        // Give all hints their labels and render hints
-        var html = assign_labels_make_html(state.hints, labels);
+        var html = assign_labels_make_html(state.hints, labels.split(" "));
         show_hints(html);
     }
-
 
     function filter(hint_pat, text_pat) {
         var hpat = hint_pat !== "" && hint_pat,
@@ -302,18 +288,14 @@ window.luakit_follow = (function (window, document) {
         visible_elements: visible_elements,
     }
 })(window, document);
-window.luakit_follow.init();
 ]=]
 
-init_js = [=[
+check_js = [=[
 (function () {
     if (!document.body)
         return;
 
-    if (window.luakit_follow)
-        return window.luakit_follow.init();
-
-    return "first-run";
+    return window.luakit_follow ? "ready" : "first-run";
 })()
 ]=]
 
@@ -455,16 +437,6 @@ pattern_styles = {
 -- Default pattern style
 pattern_maker = pattern_styles.match_label_re_text
 
-local function api(w, frame, action, ...)
-    local state = w.follow_state
-    if action == "mode-options" then
-        return {
-            selector = state.selector,
-            stylesheet = state.stylesheet or stylesheet
-        }
-    end
-end
-
 local function focus(w, step)
     local state = w.follow_state
     local view, frames, i = state.view, state.frames, state.focus_frame
@@ -588,39 +560,40 @@ new_mode("follow", {
         local stylesheet = mode.stylesheet or _M.stylesheet
         assert(type(stylesheet) == "string", "invalid stylesheet")
 
-        print("selector", selector)
-        print("evaluator", evaluator)
-
         local view = w.view
         local all_frames, frames = view.frames, {}
 
         local state = {
             mode = mode, view = view, frames = frames,
-            stylesheet = stylesheet,
-            selector = selector, evaluator = evaluator,
+            evaluator = evaluator,
             persist = not not w.follow_persist
         }
 
         w.follow_state = state
         w.follow_persist = nil
 
+        local init_js = string.format([=[luakit_follow.init(%q, %q)]=],
+            selector, stylesheet)
+
         local size = 0
         for _, f in ipairs(all_frames) do
-            local d = { frame = f }
+            local d, count = { frame = f }, 0
 
             -- Check if document ready and if follow lib already loaded
-            local count, err = view:eval_js(init_js, d)
+            local ret, err = view:eval_js(check_js, d)
             assert(not err, err)
 
-            -- Load follow lib
-            if count == "first-run" then
-                view:register_function("luakit_follow_api", function (...)
-                    return api(w, f, ...)
-                end, f)
-                count = assert(view:eval_js(follow_js, d))
+            if ret == "first-run" then
+                local _, err = view:eval_js(follow_js, d)
+                assert(not err, err)
             end
 
-            if type(count) == "number" and count > 0 then
+            if ret then
+                count, err = view:eval_js(init_js, d)
+                assert(not err, err)
+            end
+
+            if count > 0 then
                 d.count, size = count, size + count
                 table.insert(frames, d)
             end
@@ -639,7 +612,7 @@ new_mode("follow", {
         -- Give each frame its hint labels
         local offset = 0
         for _, d in ipairs(frames) do
-            local show = string.format("luakit_follow.show(%q)",
+            local show = string.format([=[luakit_follow.show(%q)]=],
                 table.concat(labels, " ", offset + 1, offset + d.count))
             local _, err = view:eval_js(show, d)
             assert(not err, err)
