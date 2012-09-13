@@ -303,7 +303,7 @@ $(document).ready(function () {
 local function bind_tostring(b)
     local join = lousy.util.table.join
     local t = b.type
-    local m = b.mods and #b.mods > 0 and table.concat(b.mods, "-")
+    local m = b.mods
 
     if t == "key" then
         if m or string.wlen(b.key) > 1 then
