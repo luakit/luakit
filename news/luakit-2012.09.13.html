@@ -1,0 +1,340 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset='UTF-8'>
+  <title>Luakit 2012.09.13 Release Notes</title>
+  <style type="text/css">
+
+    body {
+      margin-top: 1.0em;
+      background-color: #fff;
+      font-family: Helvetica, Arial, FreeSans, san-serif;
+      color: #000;
+    }
+
+    h1            { font-size: 3.8em; color: #888; }
+    h1 a          { color: #bbb; text-decoration: none }
+
+    h2            { font-size: 1.5em; color: #ff006c; }
+
+    a             { color: #555; }
+    a:hover       { color: #7DC1fF; }
+    pre           { padding: 15px; }
+    pre.clone     { background-color: #000; color: #fff; }
+
+    #container    { margin: 0 auto; width: 700px; }
+    #ld a         { text-decoration: none; color: #000; }
+    #ld a:hover   { text-decoration: underline; color: #7DC1fF; }
+
+    .description  { font-size: 1.2em; margin-bottom: 30px; margin-top: 30px; font-style: italic; }
+    .download     { float: right; }
+    .footer       { text-align:center; padding-top:30px; font-style: italic; }
+
+    .rl a         { color: #000; text-decoration: underline; }
+    .rl a:hover   { color: #7DC1fF; }
+
+    code          { background: #f8f8f8; padding: 2px; }
+
+  </style>
+</head>
+
+<body>
+  <a href="https://github.com/mason-larobina/luakit">
+    <img style="position: absolute; top: 0;right: 0; border: 0;"
+      src="http://s3.amazonaws.com/github/ribbons/forkme_right_darkblue_121621.png"
+      alt="Fork me on GitHub" /></a>
+
+  <div id="container">
+    <div class="download">
+      <a href="https://github.com/mason-larobina/luakit/zipball/2012.09.13">
+        <img border="0" width="90" src="https://github.com/images/modules/download/zip.png"></a>
+      <a href="https://github.com/mason-larobina/luakit/tarball/2012.09.13">
+        <img border="0" width="90" src="https://github.com/images/modules/download/tar.png"></a>
+    </div>
+
+    <h1>
+      <a href="http://mason-larobina.github.com/luakit/">luakit</a> <a
+        href="https://github.com/mason-larobina/luakit/tree/2012.03.25">2012.09.13</a>
+    </h1>
+
+    <div class="description">
+      Fast, small, webkit based browser framework extensible by Lua.
+    </div>
+
+<h2>Overview</h2>
+
+<ul>
+<li>Follow module refactored, ~1200% performance increase (from 250ms to 20ms
+@ 2500 hints).</li>
+<li>First release with <code>:help</code> command (<code>luakit://help</code>) which auto-documents the
+users key bindings. Also shows in which file each binding is defined and
+other goodies (click to open editor at line of bind definition, view
+callback function source in the browser). Also all bindings have been
+decorated with a description.</li>
+<li>Bookmarks moved to sqlite database.</li>
+<li><code>luakit://history</code>, <code>luakit://bookmarks</code>, <code>luakit://downloads</code> pages all
+re-written after updates to the Lua JS API allowing modules to export
+Lua functions in the JavaScript global context.</li>
+<li>Sqlite3 bindings updated to allow binding query arguments.</li>
+<li>By default expire all session cookies after 1 hour (previous behaviour:
+keep all session cookies forever).</li>
+<li>Buttons to clear all history, history search results and selected history items.</li>
+<li>Fixed input field focusing issues.</li>
+<li>Support for Mac OSX.</li>
+</ul>
+
+<h2>Shortlog</h2>
+
+<pre>Bartłomiej Piotrowski (1):
+      Don't mark desktop file as executable.
+
+Ben Armston (9):
+      Command to run given commands in new tab
+      run_cmd function to enter_cmd and activate it
+      tabdo command to run given command on each tab
+      Fix method call
+      window:each_tab iterates over the tabs sensibly
+      Add tabduplicate command
+      Allow tabd as an alias for tabdo
+      tabfirst and tablast commands and bindings
+      tabnext and tabprevious commands
+
+Dmitry Medvinsky (1):
+      Fixes #62 web inspector detaching unexpectedly
+
+Johannes Schilling (1):
+      Overwrite argv after initialization
+
+John Tyree (3):
+      Update webkitgtk properties documentation link.
+      Link directly to WebKitWebSettings page.
+      Add page num to history uri
+
+Mason Larobina (147):
+      Merge pull request #64 from johntyree/develop
+      Eval "javascript:.." links on focused frame
+      Merge pull request #67 from johntyree/develop
+      Merge pull request #72 from Barthalion/develop
+      Use Lua-&gt;C entry point as default JS source
+      Remove useless functions in webview.methods table
+      s/w:stop()/w.view:stop()/
+      Update view:eval_js usage
+      Duplicate history &amp; hist position in `:tabduplicate` command
+      Merge branch 'tab-commands' into develop
+      Add Ben Armston to AUTHORS
+      Add `:stop` command
+      Add first luakit unit tests. Run with `make run-tests`
+      Merge pull request #87 from vain/patch-1
+      Merge pull request #91 from Plaque-fcc/develop
+      Fix locale issues with w:scroll(), use x, xrel, xpage, ... fields
+      Update mouse scroll binds
+      Fix off-by-one error in command completion binds
+      Use second column for cmd descriptions
+      Allow optional lousy.bind.cmd description
+      Re-tabulate cmds in binds.lua
+      Add Jonas Höglund to authors file
+      Merge branch 'cmd-desc' into develop
+      JS can return Lua types and registered Lua functions can take JS args
+      Add unit tests for webview registered functions &amp; eval_js functionality
+      Add missing error message and more registered func tests
+      Update eval_js usage in follow, follow_selected &amp; formfiller libs
+      Make eval_js behave like pcall, returns `nil, err msg` on error
+      Seamless type conversion from Lua tables &lt;-&gt; JS objects / arrays
+      Forgot to free JSPropertyNameArrayRef on error
+      Add eval_js `no_return` opt for loading JS where ret val/type is unknown
+      Rewrite downloads{,_chrome} libs to use jQuery magic
+      Bugfix: lua_next knows best
+      Just emit number of running downloads in "status-tick"
+      Performance edit, reduce amount of data crossing Lua&lt;-&gt;JS boundary
+      Make downloads_chrome lib look in luakit install path for jquery.js
+      Add some simple speed reporting
+      Had the assert_equal args reversed
+      luaH_class_setup can setup classes which can only be created C-side
+      Modify sqlite3 lib to compile SQL statements &amp; bind values from tables
+      Refactor luaH_sqlite3_exec
+      Add new userdata object for compiled sqlite3 statements
+      Use escape not encodeURI for filename anchor
+      Add lunit/ to .gitignore
+      luaH_rawfield returns lua type instead of 1
+      Execute all statements in the SQL query given to db:exec
+      Add some soup tests
+      Refactor cookiejar.c &amp; cookies.lua, remove checktimer, deletes session
+      Missing add_binds after rebase
+      Merge branch 'jquery-and-downloads' into develop
+      Merge pull request #97 from grodzik/develop
+      Refactor lib/history.lua to use compiled statements
+      Allow users to change cookies.db/history.db path in their rc.lua
+      Simplify chrome.lua &amp; use load_string to print chrome func errors
+      Add lousy.load function to load luakit resources from install dir
+      Use lousy.load to load the jquery lib
+      Remove invalid chars from chrome.add() handler names, both broken still
+      Call init manually if idle_add callback hasn't had a chance to run
+      Only need one d.status lookup
+      Render luakit:// handler debug traceback in browser window
+      luakit://history works again, still needs work
+      eval_js calls in userscripts.lua do not return values
+      Style luakit://history &amp; search by domain
+      Make sure cookies db handle open when needed
+      Allow user to change cookies.db path
+      Add simple sqlite bookmarks lib with full tagging support
+      Comment out soup.ssl_ca_file test (highly system dependant)
+      Merge branch 'develop' into chrome-upgrade
+      Auto-delete orphaned tags when untagging/removing bookmark
+      Display history item uri as title if title null
+      find_tag returns tag row from database
+      Add example in rc.lua for opening downloads with xdg-open
+      Comment out 'new-window-decision' in webview.lua
+      Refactor element creation in luakit://history &amp; use em not px in style
+      Remove unused compiled statement from history.lua
+      luakit://bookmarks so far (tags are shown)
+      Merge branch 'ymln/follow-optimization' into develop
+      Readable color debug messages with relative timestamp &amp; signal origin
+      Merge branch 'develop' into chrome-upgrade
+      Ensure luakit:// link has trailing slash in chrome lib
+      Remove instant search, allow hist nav &amp; `:history &lt;term&gt;` works again
+      Prevent luakit://history from being added to the users history.db
+      Add buttons to clear all history, hist results and or selected items
+      Add pagination to luakit://history &amp; custom limits
+      Update buttons &amp; uri fragment correctly in do_search
+      First follow refactor
+      Simplify mode setting
+      Second wave of performance improvements
+      Allow view:register_function to take specific frame argument
+      Add remaining follow functionality from old follow lib
+      Allow arguments to: w:set_mode(name, ...) -&gt; mode.enter(w, ...)
+      Only need to save width/height info
+      Allow different patterns for hint label/text &amp; add ;x, ;X binds
+      No longer need unlink function
+      Initial commit of luakit://help chrome page
+      Probably helps if I add the lib/introspector.lua
+      Update search engines, fix imdb redirect &amp; -sourceforge +github example
+      Remove platform specific debbugs search engine &amp; use https by default
+      Revert "No longer need unlink function" -- turns out we do
+      Comment more bindings
+      Call cleanup() in init() function
+      Optimize follow_selected.lua javascript
+      Forgot to save desc in any binds
+      Format bind &amp; mode descriptions with markdown
+      Show callback function source code in luakit://help
+      Update follow binding comments
+      Fix links inside bind descriptions
+      Merge branch 'develop' into introspector
+      Read users globals.term &amp; globals.editor in open_editor func
+      Add :help command to open luakit://help
+      Merge branch 'introspector' into develop
+      Snaz up bookmarks display, edit bookmarks &amp; markdown bookmark desc
+      Hide all templates, notice some flashing while loading otherwise
+      Refactor go_up.lua into native Lua code (and thanks LokiChaos)
+      Allow complex "this -not -these" bookmark searching &amp; search tags
+      Fixes #117 link hints with absolute positions in non-absolute container
+      Add follow pattern matching style to regex match label &amp; text
+      Only catch navigation policy signal when ignoring request
+      Use parseInt instead of bookmark lookup. closes #122
+      Show error traceback in statusbar
+      KISS - Refactor bookmarks db &amp; source to store keys in bookmark rows
+      New luakit://bookmarks look and all missing functionality back in
+      Default to http:// scheme in bookmark uris
+      `:bookmark` command opens bookmarks page and edit dialog
+      Merge branch 'bookmarks' into develop
+      Forgot to remove hidden tag
+      Update visual style of luakit://history to match bookmarks
+      Simulate mouse clicks in go_next_prev when element doesn't have a href
+      Update history sql query generation code
+      Reduce title font size
+      `:bookmark` with no args bookmarks current page
+      Update history &amp; bookmarks completion
+      Set WebKitWebView size requests on parent scrolled window
+      Add script to migrate bookmarks from old database schema
+      Make luakit://bookmarks more compact, style bookmark desc
+      Mark param unused
+      Bug squash, argc is changed by g_option_context_parse
+      Silence errors in `p` &amp; `P` binds, notify no selection instead
+      Use single `y` yank binding for uri
+      Use strings to represent modifier state in binds.
+      Spruce up config.mk, several more platform specific build options
+      Refer to follow selectors/evaluators by name
+      Stop jumping through hoops in follow JS loading
+      Re-introduce the follow ignore key delay
+      Fix webview focusing, prevent scrolled window from being focused
+      Focus webview when entering insert mode
+      Emit form-active, root-active signals from follow callbacks again
+
+Nathan Gass (3):
+      Use gettimeofday instead of clock_gettime for portability.
+      Remove --export-dynamic flag for Mac OSX.
+      Also remove empty and unnecessary -Wl to compile again on debian.
+
+P. Hofmann (1):
+      follow_selected: eval_js is gone from webview.
+
+Paweł Tomak (2):
+      removed unneeded argument causing error with mutli profiles
+      Removed unneeded 'for' loop in apply_form
+
+Peter Hofmann (1):
+      Fixed typo in new cookie code.
+
+Plaque FCC (1):
+      locale-dependent Lua 'tonumber()' behaviour.
+
+Steven Allen (1):
+      Allow the user to redirect requests.
+
+Yuriy Melnyk (1):
+      Optimize hint following
+
+firefly (1):
+      Add command descriptions.
+
+kongo2002 (15):
+      add commands/bindings for bookmarks
+      modify :bookmark command to add tags
+      adjust bookmark descriptions
+      show bookmark ID in luakit://bookmarks/
+      add basic search to luakit://bookmarks/
+      adjust 'search' button style
+      add 'delete' link to bookmarks chrome
+      add delete functionality to bookmarks chrome
+      remove id from bookmarks chrome
+      refactor bookmark deletion
+      add simple bookmarks completion
+      bookmarks chrome: add tag removal
+      show tag remove links on hover only
+      readd bookmarks search
+      readd bookmark removal in chrome
+</pre>
+
+    <h2>Download</h2>
+    <p>
+      You can download <code>luakit-2012.09.13</code> in either
+      <a href="https://github.com/mason-larobina/luakit/zipball/2012.09.13">zip</a> or
+      <a href="https://github.com/mason-larobina/luakit/tarball/2012.09.13">tar</a> formats.
+    </p>
+
+    <p>You can also clone the project with <a href="http://git-scm.com">Git</a>
+      by running:
+      <pre class="clone">$ git clone git://github.com/mason-larobina/luakit</pre>
+    </p>
+
+    <div class="footer">
+      get the source code on GitHub :
+      <a href="https://github.com/mason-larobina/luakit">mason-larobina/luakit</a>
+    </div>
+
+  </div> <!-- <div id="container"> -->
+
+  <script type="text/javascript">
+    var gaJsHost = (("https:" == document.location.protocol) ? "https://ssl." : "http://www.");
+    document.write(unescape("%3Cscript src='" + gaJsHost +
+      "google-analytics.com/ga.js' type='text/javascript'%3E%3C/script%3E"));
+  </script>
+
+  <script type="text/javascript">
+    try {
+      var pageTracker = _gat._getTracker("UA-18744071-1");
+      pageTracker._trackPageview();
+    } catch(err) {};
+  </script>
+
+</body>
+</html>
