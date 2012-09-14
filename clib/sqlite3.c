@@ -215,7 +215,7 @@ luaH_bind_value(lua_State *L, sqlite3_stmt *stmt, gint bidx, gint idx)
 static gint
 luaH_sqlite3_do_exec(lua_State *L, sqlite3_stmt *stmt)
 {
-    gint ret = sqlite3_step(stmt), rows = 0, ncol;
+    gint ret = sqlite3_step(stmt), rows = 0, ncol = 0;
 
     /* determine if this statement returns rows */
     if (ret == SQLITE_DONE || ret == SQLITE_ROW) {
