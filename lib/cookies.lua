@@ -9,6 +9,8 @@ local ipairs = ipairs
 local pairs = pairs
 local print = print
 local lousy = require "lousy"
+local type = type
+local assert = assert
 local capi = {
     luakit = luakit,
     soup = soup,
@@ -114,7 +116,7 @@ capi.soup.add_signal("request-started", function ()
 end)
 
 capi.soup.add_signal("cookie-changed", function (old, new)
-    if new then
+    if new and new.domain ~= "" then
         if _M.emit_signal("accept-cookie", new) == false then
             new.expires = 0 -- expire cookie
             capi.soup.add_cookies{new}
@@ -159,7 +161,7 @@ end)
 capi.luakit.add_signal("can-close", function ()
     if query_delete_expired then
         local t = time()
-        query_delete_expired:exec{ t, (t - 86400) * 1e6 }
+        query_delete_expired:exec{ t, (t - (60 * 60 * 24)) * 1e6 }
     end
 end)
 
