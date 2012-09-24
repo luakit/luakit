@@ -594,7 +594,7 @@ new_mode("follow", {
         }
 
         w.follow_state = state
-        w.follow_persist = nil
+        w.follow_persist = state.persist
 
         local init_js = string.format([=[luakit_follow.init(%q, %q)]=],
             selector, stylesheet)
