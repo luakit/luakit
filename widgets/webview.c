@@ -367,16 +367,12 @@ navigation_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
     const gchar *uri = webkit_network_request_get_uri(r);
-
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     gint ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
-    gboolean ignore = ret && !lua_toboolean(L, top+1) ? TRUE : FALSE;
-
+    gboolean ignore = ret && !lua_toboolean(L, top + 2);
     if (ignore)
-        /* User responded with false, do not continue navigation request */
         webkit_web_policy_decision_ignore(p);
-
     lua_settop(L, top);
     return ignore;
 }
