@@ -513,7 +513,7 @@ local function follow(w)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
 
-    if state.persist then
+    if mode.persist then
         w:set_mode("follow", mode)
     else
         w:set_mode()
@@ -548,7 +548,7 @@ local function follow_all_hints(w)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
 
-    if state.persist then
+    if mode.persist then
         w:set_mode("follow", mode)
     else
         w:set_mode()
@@ -587,14 +587,15 @@ new_mode("follow", {
         local view = w.view
         local all_frames, frames = view.frames, {}
 
-        local state = {
+        if w.follow_persist then
+            mode.persist = true
+            w.follow_persist = nil
+        end
+
+        w.follow_state = {
             mode = mode, view = view, frames = frames,
             evaluator = evaluator,
-            persist = not not w.follow_persist
         }
-
-        w.follow_state = state
-        w.follow_persist = state.persist
 
         local init_js = string.format([=[luakit_follow.init(%q, %q)]=],
             selector, stylesheet)
