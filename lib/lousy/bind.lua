@@ -283,7 +283,10 @@ function hit(object, binds, mods, key, args)
     -- Convert keys using map
     key = map[key] or key
 
-    local len = string.wlen(key)
+    local len = 0
+    if key then
+        len = string.wlen(key)
+    end
 
     -- Compile metadata table
     args = join(args or {}, {
