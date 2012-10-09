@@ -279,14 +279,15 @@ end
 -- the buffer.
 -- @return The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing).
-function hit(object, binds, mods, key, args)
+function hit(object, binds, mods, key, args)    
+    if key == nil then
+        return false
+    end
+    
     -- Convert keys using map
     key = map[key] or key
-
-    local len = 0
-    if key then
-        len = string.wlen(key)
-    end
+    
+    local len = string.wlen(key)
 
     -- Compile metadata table
     args = join(args or {}, {
