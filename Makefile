@@ -10,7 +10,7 @@ SRCS  = $(filter-out $(TSRC),$(wildcard *.c) $(wildcard common/*.c) $(wildcard c
 HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h) $(wildcard clib/*.h) $(wildcard clib/soup/*.h) $(THEAD) globalconf.h
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-all: options newline luakit luakit.1
+all: options newline luakit luakit.1.gz
 
 options:
 	@echo luakit build options:
@@ -46,8 +46,11 @@ luakit: $(OBJS)
 	@echo $(CC) -o $@ $(OBJS)
 	@$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-luakit.1: luakit
-	help2man -N -o $@ ./$<
+luakit.1: luakit.1.in
+	@sed "s/LUAKITVERSION/$(VERSION)/" $< > $@
+
+luakit.1.gz: luakit.1
+	@gzip -c $< > $@
 
 apidoc: luadoc/luakit.lua
 	mkdir -p apidocs
@@ -80,7 +83,7 @@ install:
 	install -d $(DESTDIR)/usr/share/applications
 	install -m0644 extras/luakit.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(MANPREFIX)/man1/
-	install -m644 luakit.1 $(MANPREFIX)/man1/
+	install -m644 luakit.1.gz $(MANPREFIX)/man1/
 
 uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(MANPREFIX)/man1/luakit.1

@@ -17,7 +17,6 @@ luakit behaves similarly out of the box.
  * libwebkit (webkit-gtk)
  * libunique
  * sqlite3
- * help2man
 
 ## Compiling
 
