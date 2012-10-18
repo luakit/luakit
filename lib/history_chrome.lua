@@ -162,6 +162,7 @@ $(document).ready(function () { 'use strict';
     };
 
     var $search = $('#search').eq(0),
+        $clear_button = $("#clear-button").eq(0),
         $results = $('#results').eq(0),
         $results_header = $("#results-header").eq(0),
         $clear_all = $("#clear-all-button").eq(0),
@@ -239,7 +240,7 @@ $(document).ready(function () { 'use strict';
         }
     });
 
-    $("#clear-button").click(function () {
+    $clear_button.click(function () {
         $search.val("");
         page = 1;
         search();
@@ -310,6 +311,7 @@ $(document).ready(function () { 'use strict';
     $clear_results.click(function () {
         clear_elems($results.find(".item"));
         $clear_results.blur();
+        $clear_button.click();
     });
 
     $clear_selected.click(function () {
