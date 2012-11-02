@@ -28,7 +28,7 @@ module("follow")
 ignore_delay = 200
 
 follow_js = [=[
-window.luakit_follow = (function (window, document) {
+(function(){ window.luakit_follow = (function (window, document) {
     // Follow session state
     var state = {};
 
@@ -293,6 +293,7 @@ window.luakit_follow = (function (window, document) {
         visible_elements: visible_elements,
     }
 })(window, document);
+})();
 ]=]
 
 check_js = [=[
