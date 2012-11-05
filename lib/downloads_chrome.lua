@@ -128,7 +128,7 @@ function make_download(d) {
 
     e += ("<div class='details'>"
         + "<div class='title'><a href='file://" + escape(d.destination) + "'>"
-        + encodeURI(basename(d.destination)) + "</a>"
+        + basename(d.destination) + "</a>"
         + "<div class='status'>waiting</div></div>"
         + "<div class='uri'><a href='" + encodeURI(d.uri) + "'>"
         + encodeURI(d.uri) + "</a></div></div>");
