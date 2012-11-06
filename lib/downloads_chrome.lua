@@ -119,6 +119,42 @@ function basename(url) {
     return url.substring(url.lastIndexOf('/') + 1);
 };
 
+/**
+ * Convert number of bytes into human readable format
+ *
+ * @param integer bytes     Number of bytes to convert
+ * @param integer precision Number of digits after the decimal separator
+ * @return string
+ */
+function bytesToSize(bytes, precision)
+{	
+	var kilobyte = 1024;
+	var megabyte = kilobyte * 1024;
+	var gigabyte = megabyte * 1024;
+	var terabyte = gigabyte * 1024;
+
+	if(typeof(precision)==='undefined') precision = 2
+	
+	if ((bytes >= 0) && (bytes < kilobyte)) {
+		return bytes + ' B';
+
+	} else if ((bytes >= kilobyte) && (bytes < megabyte)) {
+		return (bytes / kilobyte).toFixed(precision) + ' KB';
+
+	} else if ((bytes >= megabyte) && (bytes < gigabyte)) {
+		return (bytes / megabyte).toFixed(precision) + ' MB';
+
+	} else if ((bytes >= gigabyte) && (bytes < terabyte)) {
+		return (bytes / gigabyte).toFixed(precision) + ' GB';
+
+	} else if (bytes >= terabyte) {
+		return (bytes / terabyte).toFixed(precision) + ' TB';
+
+	//} else {
+	//	return bytes + ' B';
+	}
+}
+
 function make_download(d) {
     var e = "<div class='download' id='" + d.id + "' created='" + d.created + "'>";
 
@@ -150,7 +186,7 @@ function getid(that) {
 };
 
 function update_list() {
-    var downloads = downloads_get_all(["status", "speed"]);
+    var downloads = downloads_get_all(["status", "speed", "current_size", "total_size"]);
 
     // return if no downloads to display
     if (downloads.length === "undefined") {
@@ -214,10 +250,15 @@ function update_list() {
         switch (d.status) {
         case "started":
             var speed = Math.round((d.speed || 0) / 1024);
+
+						var csize = bytesToSize(d.current_size);
+						var tsize = bytesToSize(d.total_size);
+						var sizestr = csize + '/' + tsize;
+
             if (speed >= 1024) { // MB/s
-                $st.text("downloading - " + Math.round(speed/10.24)/100 + " MB/s")
+                $st.text("downloading - " + sizestr + " @ " +	Math.round(speed/10.24)/100 + " MB/s");
             } else {
-                $st.text("downloading - " + speed + " KB/s")
+                $st.text("downloading - " + sizestr + " @ " + speed + " KB/s");
             }
             break;
 
