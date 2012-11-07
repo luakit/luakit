@@ -257,9 +257,6 @@ Add current URI to bookmarks.
 .BR gb ", " gB
 Open bookmarks manager. If uppercase, open in new tab.
 .TP
-.BR <Ctrl>D
-Prompt to download current URI.
-.TP
 .BR / ", " ?
 Search / reverse search for a string on current page.
 .TP
