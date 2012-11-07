@@ -113,46 +113,27 @@ local html = [==[
 
 local main_js = [=[
 
-var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+    'Oct', 'Nov', 'Dec'];
 
 function basename(url) {
     return url.substring(url.lastIndexOf('/') + 1);
 };
 
-/**
- * Convert number of bytes into human readable format
- *
- * @param integer bytes     Number of bytes to convert
- * @param integer precision Number of digits after the decimal separator
- * @return string
- */
-function bytesToSize(bytes, precision)
-{	
-	var kilobyte = 1024;
-	var megabyte = kilobyte * 1024;
-	var gigabyte = megabyte * 1024;
-	var terabyte = gigabyte * 1024;
-
-	if(typeof(precision)==='undefined') precision = 2
-	
-	if ((bytes >= 0) && (bytes < kilobyte)) {
-		return bytes + ' B';
-
-	} else if ((bytes >= kilobyte) && (bytes < megabyte)) {
-		return (bytes / kilobyte).toFixed(precision) + ' KB';
-
-	} else if ((bytes >= megabyte) && (bytes < gigabyte)) {
-		return (bytes / megabyte).toFixed(precision) + ' MB';
-
-	} else if ((bytes >= gigabyte) && (bytes < terabyte)) {
-		return (bytes / gigabyte).toFixed(precision) + ' GB';
-
-	} else if (bytes >= terabyte) {
-		return (bytes / terabyte).toFixed(precision) + ' TB';
-
-	//} else {
-	//	return bytes + ' B';
-	}
+function readable_size(bytes, precision) {
+    var bytes = bytes || 0, precision = precision || 2,
+        kb = 1024, mb = kb*1024, gb = mb*1024, tb = gb*1024;
+    if (bytes >= tb) {
+        return (bytes / tb).toFixed(precision) + ' TB';
+    } else if (bytes >= gb) {
+        return (bytes / gb).toFixed(precision) + ' GB';
+    } else if (bytes >= mb) {
+        return (bytes / mb).toFixed(precision) + ' MB';
+    } else if (bytes >= kb) {
+        return (bytes / kb).toFixed(precision) + ' KB';
+    } else {
+        return bytes + ' B';
+    }
 }
 
 function make_download(d) {
@@ -249,17 +230,14 @@ function update_list() {
         var $st = $elem.find(".status").eq(0);
         switch (d.status) {
         case "started":
-            var speed = Math.round((d.speed || 0) / 1024);
+            $st.text("downloading - "
+                + readable_size(d.current_size) + "/"
+                + readable_size(d.total_size) + " @ "
+                + readable_size(d.speed) + "/s");
+            break;
 
-						var csize = bytesToSize(d.current_size);
-						var tsize = bytesToSize(d.total_size);
-						var sizestr = csize + '/' + tsize;
-
-            if (speed >= 1024) { // MB/s
-                $st.text("downloading - " + sizestr + " @ " +	Math.round(speed/10.24)/100 + " MB/s");
-            } else {
-                $st.text("downloading - " + sizestr + " @ " + speed + " KB/s");
-            }
+        case "finished":
+            $st.html("Finished - " + readable_size(d.total_size));
             break;
 
         case "error":
@@ -270,16 +248,10 @@ function update_list() {
             $st.html("Cancelled");
             break;
 
-        case "finished":
-						var csize = bytesToSize(d.current_size);
-						var tsize = bytesToSize(d.total_size);
-						var sizestr = csize + '/' + tsize;
-
-            $st.html("Finished - " + sizestr);
-						break;
         case "created":
             $st.html("Waiting");
             break;
+
         default:
             $st.html("");
             break;
