@@ -113,11 +113,28 @@ local html = [==[
 
 local main_js = [=[
 
-var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+    'Oct', 'Nov', 'Dec'];
 
 function basename(url) {
     return url.substring(url.lastIndexOf('/') + 1);
 };
+
+function readable_size(bytes, precision) {
+    var bytes = bytes || 0, precision = precision || 2,
+        kb = 1024, mb = kb*1024, gb = mb*1024, tb = gb*1024;
+    if (bytes >= tb) {
+        return (bytes / tb).toFixed(precision) + ' TB';
+    } else if (bytes >= gb) {
+        return (bytes / gb).toFixed(precision) + ' GB';
+    } else if (bytes >= mb) {
+        return (bytes / mb).toFixed(precision) + ' MB';
+    } else if (bytes >= kb) {
+        return (bytes / kb).toFixed(precision) + ' KB';
+    } else {
+        return bytes + ' B';
+    }
+}
 
 function make_download(d) {
     var e = "<div class='download' id='" + d.id + "' created='" + d.created + "'>";
@@ -128,7 +145,7 @@ function make_download(d) {
 
     e += ("<div class='details'>"
         + "<div class='title'><a href='file://" + escape(d.destination) + "'>"
-        + encodeURI(basename(d.destination)) + "</a>"
+        + basename(d.destination) + "</a>"
         + "<div class='status'>waiting</div></div>"
         + "<div class='uri'><a href='" + encodeURI(d.uri) + "'>"
         + encodeURI(d.uri) + "</a></div></div>");
@@ -150,7 +167,7 @@ function getid(that) {
 };
 
 function update_list() {
-    var downloads = downloads_get_all(["status", "speed"]);
+    var downloads = downloads_get_all(["status", "speed", "current_size", "total_size"]);
 
     // return if no downloads to display
     if (downloads.length === "undefined") {
@@ -213,12 +230,14 @@ function update_list() {
         var $st = $elem.find(".status").eq(0);
         switch (d.status) {
         case "started":
-            var speed = Math.round((d.speed || 0) / 1024);
-            if (speed >= 1024) { // MB/s
-                $st.text("downloading - " + Math.round(speed/10.24)/100 + " MB/s")
-            } else {
-                $st.text("downloading - " + speed + " KB/s")
-            }
+            $st.text("downloading - "
+                + readable_size(d.current_size) + "/"
+                + readable_size(d.total_size) + " @ "
+                + readable_size(d.speed) + "/s");
+            break;
+
+        case "finished":
+            $st.html("Finished - " + readable_size(d.total_size));
             break;
 
         case "error":
@@ -230,7 +249,9 @@ function update_list() {
             break;
 
         case "created":
-        case "finished":
+            $st.html("Waiting");
+            break;
+
         default:
             $st.html("");
             break;

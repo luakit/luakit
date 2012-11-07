@@ -121,8 +121,8 @@ function add(uri, opts)
             .. "(got %s)", type(d) or "nil"))
 
     -- Emit signal to get initial download location
-    local fn = _M.emit_signal("download-location", d.uri,
-        d.suggested_filename, d.mime_type)
+    local fn = opts.filename or _M.emit_signal("download-location", d.uri,
+        opts.suggested_filename or d.suggested_filename, d.mime_type)
 
     assert(fn == nil or type(fn) == "string" and #fn > 1,
         string.format("invalid filename: %q", tostring(file)))
