@@ -270,8 +270,16 @@ function update_list() {
             $st.html("Cancelled");
             break;
 
-        case "created":
         case "finished":
+						var csize = bytesToSize(d.current_size);
+						var tsize = bytesToSize(d.total_size);
+						var sizestr = csize + '/' + tsize;
+
+            $st.html("Finished - " + sizestr);
+						break;
+        case "created":
+            $st.html("Waiting");
+            break;
         default:
             $st.html("");
             break;
