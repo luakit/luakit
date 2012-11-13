@@ -92,7 +92,7 @@ function init()
 
     query_delete_expired = db:compile [[
         DELETE FROM moz_cookies
-        WHERE expiry < ? AND lastAccessed < ?
+        WHERE expiry >= 0 AND expiry < ? AND lastAccessed < ?
     ]]
 end
 
