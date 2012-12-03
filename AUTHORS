@@ -48,14 +48,13 @@ Inherited authors from the awesomewm project:
   Michael Gehring               <mg@ebfe.org>               2008
   Aldo Cortesi                  <aldo@nullcube.com>         2007-2008
 
-Inherited authors from the uzbl project:
-  Dequis                        <dx@dxzone.com.ar>          2009
+Special thanks to authors from the uzbl & surf projects for
+inspiration and support:
   Dieter Plaetinck  (Dieter@be) <dieter@plaetinck.be>       2009-2010
+  Enno Boland       (tox)       <tox@s01.de>                2009-2010
+  Dequis                        <dx@dxzone.com.ar>          2009
   Robert Manea      (robm)      <rob.manea@gmail.com>       2009-2010
   Simon Lipp        (sloonz)    <sloonz@gmail.com>          2010
-
-Inherited authors from the surf project:
-  Enno Boland       (tox)       <tox@s01.de>                2009-2010
 
 For volumetric graphs on specific contributers "impact" checkout:
   https://github.com/mason-larobina/luakit/graphs/impact
