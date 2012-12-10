@@ -79,7 +79,7 @@ install:
 	install config/*.lua $(DESTDIR)/etc/xdg/luakit/
 	chmod 644 $(DESTDIR)/etc/xdg/luakit/*.lua
 	install -d $(DESTDIR)/usr/share/pixmaps
-	install extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
+	install -m0755 extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
 	install -d $(DESTDIR)/usr/share/applications
 	install -m0644 extras/luakit.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(MANPREFIX)/man1/
