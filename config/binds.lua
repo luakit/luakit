@@ -74,7 +74,10 @@ add_binds("all", {
                     w:new_tab(uri, false)
                 else -- Open selection in current tab
                     uri = luakit.selection.primary
-                    if uri then w:navigate(w:search_open(uri)) end
+                    -- Ignore multi-line selection contents
+                    if uri and not string.match(uri, "\n.+") then
+                        w:navigate(w:search_open(uri))
+                    end
                 end
             end
         end),
