@@ -170,8 +170,6 @@ main(gint argc, gchar *argv[]) {
     }
 
     gtk_init(&argc, &argv);
-    if (!g_thread_supported())
-        g_thread_init(NULL);
 
     init_directories();
     init_lua(uris);
