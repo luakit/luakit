@@ -128,6 +128,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 #include "widgets/webview/javascript.c"
 #include "widgets/webview/frames.c"
 #include "widgets/webview/downloads.c"
+#include "widgets/webview/filechooser.c"
 #include "widgets/webview/history.c"
 #include "widgets/webview/scroll.c"
 #include "widgets/webview/inspector.c"
@@ -287,71 +288,6 @@ new_window_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
 
     /* proceed with default behaviour */
     return FALSE;
-}
-
-// See webview.lua -> run_file_chooser
-static gboolean run_file_chooser_cb(WebKitWebView *UNUSED(v), WebKitFileChooserRequest *request, widget_t *w){
-    lua_State *L = globalconf.L;
-    gboolean multiple, show_dialog = true; //Show webkit's internal file chooser dialog
-    const gchar **files;
-    const gchar * const *mimes;
-    const gchar * const *selected;
-
-    luaH_object_push(L, w->ref);
-
-    //Whether we accept multiple files
-    multiple = webkit_file_chooser_request_get_select_multiple(request);
-    lua_pushboolean(L, multiple);
-
-    //Push the accepted mime types on the stack
-    mimes = webkit_file_chooser_request_get_mime_types(request);
-    luaH_push_char_array(L, mimes); 
-    
-    //Push the selected files on the stack
-    selected = webkit_file_chooser_request_get_selected_files(request);
-    luaH_push_char_array(L, selected); 
-
-    gint ret = luaH_object_emit_signal(L, -4, "run-file-chooser", 3, 1);
-    
-    if(ret){
-        if(lua_isstring(L, -1)){
-            //User responded with a string, meaning a single file was selected 
-            show_dialog = false;
-            files = malloc(2);
-            files[0] = lua_tostring(L, -1);
-            files[1] = NULL;
-            webkit_file_chooser_request_select_files(request, files);
-            free(files);
-        }
-
-        if(lua_istable(L, -1)){
-            //User responded with a table, meaning multiple files have been
-            //selected
-            show_dialog = false;
-            gint len = lua_objlen(L, -1); //Length of the table
-            files = malloc(len+1);
-            //Iterate the table
-            for (gint n = 0; n < len; ++n) {
-                lua_rawgeti(L, -1, n);
-                files[n] = lua_tostring(L, -1); /*Returns null if the value isn't a 
-                                                  string (or number), so it's safe to use here, 
-                                                  because a wrong value would just terminate the 
-                                                  array earlier */
-                lua_pop(L, 1);
-            } 
-            files[len] = NULL;
-            webkit_file_chooser_request_select_files(request, files);
-            free(files);
-        }
-
-        if(lua_isboolean(L, -1) && lua_toboolean(L, -1)){
-            //User responded with true, don't show any dialog
-            show_dialog = false;
-        }
-    }
-
-    lua_pop(L, ret + 1);
-    return !show_dialog;
 }
 
 static WebKitWebView*
@@ -948,7 +884,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
-      "signal::run-file-chooser",                     G_CALLBACK(run_file_chooser_cb),          w,
+      "signal::run-file-chooser",                     G_CALLBACK(run_file_chooser_request_cb),  w,
       NULL);
 
     g_object_connect(G_OBJECT(d->win),

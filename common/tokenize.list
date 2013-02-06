@@ -206,3 +206,6 @@ ymax
 ypage_size
 zoom_level
 zoom_step
+mime_types
+selected_files
+multiple

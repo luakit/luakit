@@ -231,19 +231,15 @@ webview.init_funcs = {
         end)
     end,
 
-    -- File Chooser
-    -- May return one of the following:
-    --  - false or nil to use webkit's built-in file chooser
-    --  - true to not do anything
-    --  - a string containing the selected file
-    --  - a table containing multiple selected files
     run_file_chooser = function (view, w)
-        -- multiple, boolean, if true, more than one file can be selected
-        -- mimes, table containing the accepted mime-types or nil, if all mimes
-        -- are accepted
-        -- selected_files, table containing initially selected files
-        view:add_signal("run-file-chooser", function(v, multiple, mimes, selected_files)
-            return false
+        -- Action to take when a file choose is requested
+        -- Returns:
+        --  - false or nil to use webkit's built-in file chooser
+        --  - true to not use the built-in file chooser
+        -- A file chooser should be closed when the user navigates
+        view:add_signal("run-file-chooser", function(v, request)
+            request:select_files({"/home/lain/.bashrc","/home/lain/.bash_profile"});
+            return true
         end)
     end,
 }
