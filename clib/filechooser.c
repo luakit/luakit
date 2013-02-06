@@ -55,15 +55,6 @@ luaH_filechooser_gc(lua_State *L)
     return luaH_object_gc(L);
 }
 
-static void
-luaH_filechooser_checked_cancel(filechooser_t *filechooser)
-{
-    if(!filechooser->completed){ 
-        //webkit_file_chooser_request_cancel (filechooser->webkit_request);
-        filechooser->completed = TRUE;
-    }
-}
-
 static gint
 luaH_filechooser_select_file(lua_State *L)
 {

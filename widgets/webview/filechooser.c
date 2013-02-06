@@ -1,5 +1,5 @@
 /*
- * widgets/webview/downloads.c - webkit webview download functions
+ * widgets/webview/downloads.c - webkit file chooser request functions
  *
  * Copyright © 2010-2011 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2013 binlain <lainex@gmx.de>
