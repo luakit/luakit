@@ -113,7 +113,7 @@ luaH_filechooser_select_files(lua_State *L)
     }
     
     if(!filechooser->multiple_files){
-        luaL_error(L, "File chooser request does not accept multiple files");
+        luaL_error(L, "File chooser request does not accept multiple files, use select_file(string) instead");
         return 0;
     }
 
@@ -122,7 +122,7 @@ luaH_filechooser_select_files(lua_State *L)
 
     //Iterate the table
     for (gint n = 0; n < len; ++n) {
-        lua_rawgeti(L, 2, n);
+        lua_rawgeti(L, 2, n+1);
         files[n] = lua_tostring(L, -1); 
         lua_pop(L, 1);
     } 

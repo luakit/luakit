@@ -242,8 +242,8 @@ webview.init_funcs = {
             -- print(request.selected_files)
             -- print(request.mime_types)
             -- request:select_files({"path_to_file1", "path_to_file2"});
-            -- request:select_files("path_to_file");
-            return false
+            -- request:select_file("path_to_file");
+            return true
         end)
     end,
 }

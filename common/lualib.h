@@ -47,7 +47,7 @@ static inline void luaH_push_char_array(lua_State *L, const gchar * const * arra
     if(array){
         lua_newtable(L); 
         for(gint n = 0; array[n] != NULL; ++n){
-            lua_pushnumber(L, n);
+            lua_pushnumber(L, n+1);
             lua_pushstring(L, array[n]);
             lua_rawset(L, -3);
         }
