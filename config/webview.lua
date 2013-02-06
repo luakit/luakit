@@ -238,8 +238,12 @@ webview.init_funcs = {
         --  - true to not use the built-in file chooser
         -- A file chooser should be closed when the user navigates
         view:add_signal("run-file-chooser", function(v, request)
-            request:select_files({"/home/lain/.bashrc","/home/lain/.bash_profile"});
-            return true
+            -- print(request.multiple)
+            -- print(request.selected_files)
+            -- print(request.mime_types)
+            -- request:select_files({"path_to_file1", "path_to_file2"});
+            -- request:select_files("path_to_file");
+            return false
         end)
     end,
 }
