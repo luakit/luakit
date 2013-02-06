@@ -230,6 +230,22 @@ webview.init_funcs = {
             -- Return false to cancel the request.
         end)
     end,
+
+    -- File Chooser
+    -- May return one of the following:
+    --  - false or nil to use webkit's built-in file chooser
+    --  - true to not do anything
+    --  - a string containing the selected file
+    --  - a table containing multiple selected files
+    run_file_chooser = function (view, w)
+        -- multiple, boolean, if true, more than one file can be selected
+        -- mimes, table containing the accepted mime-types or nil, if all mimes
+        -- are accepted
+        -- selected_files, table containing initially selected files
+        view:add_signal("run-file-chooser", function(v, multiple, mimes, selected_files)
+            return false
+        end)
+    end,
 }
 
 -- These methods are present when you index a window instance and no window

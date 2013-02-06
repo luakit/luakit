@@ -37,6 +37,25 @@ lua_CFunction lualib_dofunction_on_error;
             luaL_typerror(L, n, "function"); \
     } while(0)
 
+
+/** Push a NULL terminated array of strings on the stack (as lua table) or nil,
+ * if the array is NULL
+ * \param L The Lua stack.
+ * \param array The NULL terminated array of C-style strings
+ */
+static inline void luaH_push_char_array(lua_State *L, const gchar * const * array){
+    if(array){
+        lua_newtable(L); 
+        for(gint n = 0; array[n] != NULL; ++n){
+            lua_pushnumber(L, n);
+            lua_pushstring(L, array[n]);
+            lua_rawset(L, -3);
+        }
+    }else{
+        lua_pushnil(L);
+    }
+}
+
 /** Dump the Lua stack. Useful for debugging.
  * \param L The Lua VM state.
  */
