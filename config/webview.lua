@@ -232,18 +232,13 @@ webview.init_funcs = {
     end,
 
     run_file_chooser = function (view, w)
-        -- Action to take when a file choose is requested
-        -- Returns:
-        --  - false or nil to use webkit's built-in file chooser
-        --  - true to not use the built-in file chooser
-        -- A file chooser should be closed when the user navigates
+        -- Action to take when a file chooser is requested
         view:add_signal("run-file-chooser", function(v, request)
             -- print(request.multiple)
             -- print(request.selected_files)
             -- print(request.mime_types)
-            -- request:select_files({"path_to_file1", "path_to_file2"});
-            -- request:select_file("path_to_file");
-            return true
+            -- request:select_files({"/path/to/file"})
+            return false -- true if you want to handle this request
         end)
     end,
 }

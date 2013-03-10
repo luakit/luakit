@@ -30,18 +30,6 @@
 #include <webkit/webkitfilechooserrequest.h>
 #include <glib/gstdio.h>
 
-/** Internal data structure for webkit's filechooser request. */
-typedef struct {
-    /** Common \ref lua_object_t header. \see LUA_OBJECT_HEADER */
-    LUA_OBJECT_HEADER
-    WebKitFileChooserRequest* webkit_request;
-    gboolean completed, //True if the request was either canceled or fulfilled
-             multiple_files; 
-    const gchar * const * mime_types;
-    const gchar * const * selected_files;
-    gpointer ref;
-} filechooser_t;
-
 static lua_class_t filechooser_class;
 LUA_OBJECT_FUNCS(filechooser_class, filechooser_t, filechooser)
 
@@ -51,40 +39,15 @@ static gint
 luaH_filechooser_gc(lua_State *L)
 {
     filechooser_t *filechooser = luaH_checkfilechooser(L, 1);
-    g_object_unref(G_OBJECT(filechooser->webkit_request));
-    return luaH_object_gc(L);
-}
-
-static gint
-luaH_filechooser_select_file(lua_State *L)
-{
-    const gchar **files;
-    filechooser_t *filechooser = luaH_checkfilechooser(L, 1);
     WebKitFileChooserRequest *request = filechooser->webkit_request;
 
-    if(!lua_isstring(L, 2)){
-        luaL_typerror(L, 2, "string");
-        return 0;
-    }
+	if(filechooser->handled){
+		//If we handled this request we referenced it earlier
+    	g_object_unref(G_OBJECT(request));
+	}
 
-    if(filechooser->completed){
-        luaL_error(L, "File chooser request is completed");
-        return 0;
-    }
-
-    files = malloc(2);
-
-    files[0] = lua_tostring(L, 2);
-    files[1] = NULL;
-
-    webkit_file_chooser_request_select_files(request, files);
-    free(files);
-
-    filechooser->completed = TRUE;
-
-    return 0;
+    return luaH_object_gc(L);
 }
-
 
 static gint
 luaH_filechooser_select_files(lua_State *L)
@@ -97,18 +60,24 @@ luaH_filechooser_select_files(lua_State *L)
         luaL_typerror(L, 2, "table");
         return 0;
     }
+    
+	if(!filechooser->handled){
+        luaL_error(L, "File chooser request isn't handled by lua");
+        return 0;
+    }
 
     if(filechooser->completed){
-        luaL_error(L, "File chooser request is completed");
+        luaL_error(L, "File chooser request is already completed");
         return 0;
     }
     
-    if(!filechooser->multiple_files){
-        luaL_error(L, "File chooser request does not accept multiple files, use select_file(string) instead");
+    gint len = lua_objlen(L, 2); //Length of the table
+    
+    if(!filechooser->multiple_files && len > 1){
+        luaL_error(L, "This file chooser request does not accept multiple files");
         return 0;
     }
 
-    gint len = lua_objlen(L, 2); //Length of the table
     files = malloc(len+1);
 
     //Iterate the table
@@ -123,13 +92,16 @@ luaH_filechooser_select_files(lua_State *L)
     free(files);
 
     filechooser->completed = TRUE;
-
     return 0;
 }
 
 static gint
 luaH_filechooser_get_mime_types(lua_State *L, filechooser_t *filechooser)
 {
+	if(!filechooser->handled){
+        luaL_error(L, "File chooser request isn't handled by lua");
+        return 0;
+    }
     luaH_push_char_array(L, filechooser->mime_types);
     return 1;
 }
@@ -137,6 +109,10 @@ luaH_filechooser_get_mime_types(lua_State *L, filechooser_t *filechooser)
 static gint
 luaH_filechooser_get_selected_files(lua_State *L, filechooser_t *filechooser)
 {
+	if(!filechooser->handled){
+        luaL_error(L, "File chooser request isn't handled by lua");
+        return 0;
+    }
     luaH_push_char_array(L, filechooser->selected_files);
     return 1;
 }
@@ -144,12 +120,15 @@ luaH_filechooser_get_selected_files(lua_State *L, filechooser_t *filechooser)
 static gint
 luaH_filechooser_get_multiple(lua_State *L, filechooser_t *filechooser)
 {
+	if(!filechooser->handled){
+        luaL_error(L, "File chooser request isn't handled by lua");
+        return 0;
+    }
     lua_pushboolean(L, filechooser->multiple_files);
     return 1;
 }
 
-
-gint
+filechooser_t *
 luaH_filechooser_push(lua_State *L, WebKitFileChooserRequest *f)
 {
     filechooser_class.allocator(L);
@@ -159,8 +138,7 @@ luaH_filechooser_push(lua_State *L, WebKitFileChooserRequest *f)
     filechooser->mime_types = webkit_file_chooser_request_get_mime_types(filechooser->webkit_request);
     filechooser->selected_files = webkit_file_chooser_request_get_selected_files(filechooser->webkit_request);
     filechooser->multiple_files = webkit_file_chooser_request_get_select_multiple(filechooser->webkit_request);
-    g_object_ref(G_OBJECT(f));
-    return 1;
+    return filechooser;
 }
 
 void filechooser_class_setup(lua_State *L)
@@ -175,7 +153,6 @@ void filechooser_class_setup(lua_State *L)
     {
         LUA_OBJECT_META(filechooser)
         LUA_CLASS_META
-        { "select_file", luaH_filechooser_select_file },
         { "select_files", luaH_filechooser_select_files },
         { "__gc", luaH_filechooser_gc },
         { NULL, NULL },

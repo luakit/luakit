@@ -27,8 +27,21 @@
 #include <lua.h>
 #include <webkit/webkitfilechooserrequest.h>
 
+/** Internal data structure for webkit's filechooser request. */
+typedef struct {
+    /** Common \ref lua_object_t header. \see LUA_OBJECT_HEADER */
+    LUA_OBJECT_HEADER
+    WebKitFileChooserRequest* webkit_request;
+    gboolean completed, //True if the request was either canceled or fulfilled
+             multiple_files,
+			 handled; //Indicated whether the request is handled by lua code or not
+    const gchar * const * mime_types;
+    const gchar * const * selected_files;
+    gpointer ref;
+} filechooser_t;
+
 void filechooser_class_setup(lua_State*);
-gint luaH_filechooser_push(lua_State*, WebKitFileChooserRequest*);
+filechooser_t * luaH_filechooser_push(lua_State*, WebKitFileChooserRequest*);
 
 #endif
 
