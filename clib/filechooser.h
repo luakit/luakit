@@ -34,7 +34,7 @@ typedef struct {
     WebKitFileChooserRequest* webkit_request;
     gboolean completed, //True if the request was either canceled or fulfilled
              multiple_files,
-			 handled; //Indicated whether the request is handled by lua code or not
+             handled; //Indicated whether the request is handled by lua code or not
     const gchar * const * mime_types;
     const gchar * const * selected_files;
     gpointer ref;

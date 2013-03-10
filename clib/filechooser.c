@@ -41,10 +41,10 @@ luaH_filechooser_gc(lua_State *L)
     filechooser_t *filechooser = luaH_checkfilechooser(L, 1);
     WebKitFileChooserRequest *request = filechooser->webkit_request;
 
-	if(filechooser->handled){
-		//If we handled this request we referenced it earlier
-    	g_object_unref(G_OBJECT(request));
-	}
+    if(filechooser->handled){
+        //If we handled this request we referenced it earlier
+        g_object_unref(G_OBJECT(request));
+    }
 
     return luaH_object_gc(L);
 }
@@ -61,7 +61,7 @@ luaH_filechooser_select_files(lua_State *L)
         return 0;
     }
     
-	if(!filechooser->handled){
+    if(!filechooser->handled){
         luaL_error(L, "File chooser request isn't handled by lua");
         return 0;
     }
@@ -98,7 +98,7 @@ luaH_filechooser_select_files(lua_State *L)
 static gint
 luaH_filechooser_get_mime_types(lua_State *L, filechooser_t *filechooser)
 {
-	if(!filechooser->handled){
+    if(!filechooser->handled){
         luaL_error(L, "File chooser request isn't handled by lua");
         return 0;
     }
@@ -109,7 +109,7 @@ luaH_filechooser_get_mime_types(lua_State *L, filechooser_t *filechooser)
 static gint
 luaH_filechooser_get_selected_files(lua_State *L, filechooser_t *filechooser)
 {
-	if(!filechooser->handled){
+    if(!filechooser->handled){
         luaL_error(L, "File chooser request isn't handled by lua");
         return 0;
     }
@@ -120,7 +120,7 @@ luaH_filechooser_get_selected_files(lua_State *L, filechooser_t *filechooser)
 static gint
 luaH_filechooser_get_multiple(lua_State *L, filechooser_t *filechooser)
 {
-	if(!filechooser->handled){
+    if(!filechooser->handled){
         luaL_error(L, "File chooser request isn't handled by lua");
         return 0;
     }
