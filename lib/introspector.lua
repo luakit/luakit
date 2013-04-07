@@ -332,15 +332,15 @@ end
 
 local source_lines = {}
 local function function_source_range(func, info)
-    local lines = source_lines[info.short_src]
+    local lines = source_lines[info.source]
 
     if not lines then
-        local source = lousy.load(info.short_src)
+        local source = lousy.load(info.source)
         lines = {}
         string.gsub(source, "([^\n]*)\n", function (line)
             table.insert(lines, line)
         end)
-        source_lines[info.short_src] = lines
+        source_lines[info.source] = lines
     end
 
     return dedent(table.concat(lines, "\n", info.linedefined,
@@ -359,12 +359,12 @@ export_funcs = {
             if mode.binds then
                 for i, b in pairs(mode.binds) do
                     local info = debug.getinfo(b.func, "uS")
-
+                    info.source = info.source:sub(2)
                     binds[i] = {
                         type = b.type,
                         key = bind_tostring(b),
                         desc = b.desc and markdown(dedent(b.desc)) or nil,
-                        filename = info.short_src,
+                        filename = info.source,
                         linedefined = info.linedefined,
                         lastlinedefined = info.lastlinedefined,
                         func = function_source_range(b.func, info),
