@@ -16,7 +16,11 @@ globals = {
 }
 
 -- Make useragent
-local _, arch = luakit.spawn_sync("uname -sm")
+local _, arch = luakit.spawn_sync("uname -m")
+-- If luakit doesn't start, try replacing the above line with the output of
+-- `uname -m`, such as:
+-- local arch = 'x86_64'
+
 -- Only use the luakit version if in date format (reduces identifiability)
 local lkv = string.match(luakit.version, "^(%d+.%d+.%d+)")
 globals.useragent = string.format("Mozilla/5.0 (%s) AppleWebKit/%s+ (KHTML, like Gecko) WebKitGTK+/%s luakit%s",
