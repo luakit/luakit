@@ -11,9 +11,6 @@ license=('GPL3')
 depends=('libwebkit' 'lua-filesystem' 'libunique')
 makedepends=('git' 'lua' 'help2man')
 optdepends=('luajit2: Needed if use the luajit option in make')
-# This is for my local build.
-#source=($_gitname.install 'luakit::git+file:///home/robbie/source/lua/luakit/#branch=develop')
-# This is for upstream build. You probably want to use this line.
 source=($_gitname.install 'luakit::git+https://github.com/luakit-crowd/luakit.git#branch=develop')
 provides=(luakit)
 conflicts=('luakit' 'luakit-develop-git')
