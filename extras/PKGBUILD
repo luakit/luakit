@@ -2,7 +2,7 @@
 
 pkgname=luakit-git
 _gitname=luakit
-pkgver=4b78714
+pkgver=20130501.g807dc42
 pkgrel=1
 pkgdesc="A fast, small, webkit-gtk based browser extensible by Lua"
 arch=('i686' 'x86_64')
@@ -11,10 +11,11 @@ license=('GPL3')
 depends=('libwebkit' 'lua-filesystem' 'libunique')
 makedepends=('git' 'lua' 'help2man')
 optdepends=('luajit2: Needed if use the luajit option in make')
-# This is for my local build.
-#source=($_gitname.install 'luakit::git+file:///home/robbie/source/lua/luakit/#branch=develop')
-# This is for upstream build. You probably want to use this line.
+# Luakit crowd fork
 source=($_gitname.install 'luakit::git+https://github.com/luakit-crowd/luakit.git#branch=develop')
+# Mason Larobina’s master
+#source=($_gitname.install 'luakit::git+https://github.com/mason-larobina/luakit.git#branch=develop')
+md5sums=('184069a7264115726f73204d1d708e2c' 'SKIP')
 provides=(luakit)
 conflicts=('luakit' 'luakit-develop-git')
 install=$_gitname.install
@@ -25,14 +26,13 @@ backup=('etc/xdg/luakit/binds.lua'
         'etc/xdg/luakit/rc.lua' 
         'etc/xdg/luakit/theme.lua' 
         'etc/xdg/luakit/webview.lua' 
-        'etc/xdg/luakit/window.lua' 
+        'etc/xdg/luakit/window.lua')
 
 _gitbranch="develop"
 
 # To disable lua’s just-in-time compiler, remove USE_LUAJIT=1 from the below line:
 _makeopts="PREFIX=/usr DEVELOPMENT_PATHS=0 USE_LUAJIT=1"  
 
-md5sums=('184069a7264115726f73204d1d708e2c' 'SKIP')
 
 pkgver() {
   cd $_gitname
@@ -59,4 +59,3 @@ package() {
 }
 
 # vim:set ts=2 sw=2 et:
-
