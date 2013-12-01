@@ -27,8 +27,13 @@ luaH_webview_scroll_newindex(lua_State *L)
     luakit_token_t t = l_tokenize(prop);
 
     GtkAdjustment *a;
+#if GTK_CHECK_VERSION(3,0,0)
+    if (t == L_TK_X)      a = gtk_scrolled_window_get_hadjustment(d->view);
+    else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->view);
+#else
     if (t == L_TK_X)      a = gtk_scrolled_window_get_hadjustment(d->win);
     else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->win);
+#endif
     else return 0;
 
     gdouble value = luaL_checknumber(L, 3);
@@ -46,8 +51,13 @@ luaH_webview_scroll_index(lua_State *L)
     luakit_token_t t = l_tokenize(prop);
 
     GtkAdjustment *a = (*prop == 'x') ?
+#if GTK_CHECK_VERSION(3,0,0)
+              gtk_scrolled_window_get_hadjustment(d->view)
+            : gtk_scrolled_window_get_vadjustment(d->view);
+#else
               gtk_scrolled_window_get_hadjustment(d->win)
             : gtk_scrolled_window_get_vadjustment(d->win);
+#endif
 
     if (t == L_TK_X || t == L_TK_Y) {
         lua_pushnumber(L, gtk_adjustment_get_value(a));
@@ -92,9 +102,9 @@ show_scrollbars(webview_data_t *d, gboolean show)
     GObject *frame = G_OBJECT(webkit_web_view_get_main_frame(d->view));
 
 #if GTK_CHECK_VERSION(3,0,0)
-    GtkStyleContext* scv = gtk_widget_get_style_context(gtk_scrolled_window_get_vscrollbar(d->win));
-    GtkStyleContext* sch = gtk_widget_get_style_context(gtk_scrolled_window_get_hscrollbar(d->win));
-    GtkStyleContext* sc = gtk_widget_get_style_context(GTK_WIDGET(d->win));
+    GtkStyleContext* scv = gtk_widget_get_style_context(gtk_scrolled_window_get_vscrollbar(d->view));
+    GtkStyleContext* sch = gtk_widget_get_style_context(gtk_scrolled_window_get_hscrollbar(d->view));
+    GtkStyleContext* sc = gtk_widget_get_style_context(GTK_WIDGET(d->view));
     GtkStyleProvider* sp = GTK_STYLE_PROVIDER(globalconf.scrollbar_provider);
 #endif
 
