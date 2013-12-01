@@ -179,12 +179,12 @@ position_cb(GtkEntry* UNUSED(e), GParamSpec* UNUSED(ps), widget_t *w)
 static void
 im_key_cb(GtkEntry* e, GdkEventKey* k, widget_t *w)
 {
-    if(gtk_entry_im_context_filter_keypress(e, k)) {
+    //if (gtk_entry_im_context_filter_keypress(e, k)) {
         lua_State *L = globalconf.L;
         luaH_object_push(L, w->ref);
         luaH_object_emit_signal(L, -1, "changed", 0, 0);
         lua_pop(L, 1);
-    }
+    //}
 }
 #endif
 
@@ -199,7 +199,11 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
     w->widget = gtk_entry_new();
 
     /* setup default settings */
+#if GTK_CHECK_VERSION(3,0,0)
+    
+#else
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
+#endif
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
