@@ -248,14 +248,13 @@ follow_js = [=[
             hints = state.hints;
 
         var hint_re = hpat && new RegExp(hpat),
-            text_re = tpat && new RegExp(tpat),
             matches = [], len = hints.length, j = 0, h;
 
         // Filter hints
         for (; i < len;) {
             h = hints[i++];
             if ((hint_re && hint_re.test(h.label)) ||
-                (text_re && text_re.test(h.text))) {
+                (h.text.indexOf(tpat) !== -1)) {
                 matches[j++] = h;
                 html += h.html;
             }
