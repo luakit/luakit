@@ -247,9 +247,18 @@ follow_js = [=[
         if (!hints)
             hints = state.hints;
 
-        var hint_re = hpat && new RegExp(hpat),
-            text_re = tpat && new RegExp(tpat),
-            matches = [], len = hints.length, j = 0, h;
+        // Just fail silently if the regex doesn't compile.
+        // Delete the state so that it will search again next time.
+        try {
+            var hint_re = hpat && new RegExp(hpat);
+            state.last_hpat = hpat;
+        } catch (e) { delete state.last_hpat; }
+        try {
+            var text_re = tpat && new RegExp(tpat);
+            state.last_tpat = tpat;
+        } catch (e) { delete state.last_tpat; }
+
+        var matches = [], len = hints.length, j = 0, h;
 
         // Filter hints
         for (; i < len;) {
@@ -262,8 +271,6 @@ follow_js = [=[
         }
 
         // Save info for next call
-        state.last_hpat = hpat;
-        state.last_tpat = tpat;
         state.filtered = matches;
 
         show_hints(html);
