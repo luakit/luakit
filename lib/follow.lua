@@ -66,20 +66,27 @@ follow_js = [=[
     function eval_selector_make_hints(selector) {
         var elems = document.querySelectorAll(selector), len = elems.length,
             win_h = window.innerHeight, win_w = window.innerWidth,
+            body_r = document.body.getClientRects()[0],
             hints = [], i = 0, j = 0, e, r, top, bottom, left, right;
 
         for (; i < len;) {
             e = elems[i++];
             r = e.getClientRects()[0];
 
+            if (!r) continue;
+
+            top = r.top - body_r.top;
+            left = r.left - body_r.left;
+            bottom = r.bottom + body_r.bottom;
+            right = r.right + body_r.right;
+
             // Check if element outside viewport
-            if (!r || (top  = r.top)  > win_h || (bottom = r.bottom) < 0
-                   || (left = r.left) > win_w || (right  = r.right)  < 0)
+            if (top > win_h || bottom < 0 || left > win_w || right < 0)
                continue;
 
             hints[j++] = { element: e, tag: e.tagName,
                 left: left, top: top,
-                width: right - left, height: bottom - top,
+                width: r.right - r.left, height: r.bottom - r.top,
                 text: e.value || e.textContent };
         }
 
