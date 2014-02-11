@@ -132,10 +132,17 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     GtkWindow *window = GTK_WINDOW(widget);
     GtkDialog *dialog = GTK_DIALOG(widget);
 
+#if GTK_CHECK_VERSION(3,10,0)
+    gtk_dialog_add_buttons(dialog,
+       "_Cancel", GTK_RESPONSE_CANCEL,
+       "_OK", GTK_RESPONSE_OK,
+       NULL);
+#else
     gtk_dialog_add_buttons(dialog,
        GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
        GTK_STOCK_OK, GTK_RESPONSE_OK,
        NULL);
+#endif
 
     /* set dialog properties */
     gtk_dialog_set_has_separator(dialog, FALSE);
@@ -145,7 +152,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_box_set_spacing(GTK_BOX(dialog->action_area), 6);
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
+#if GTK_CHECK_VERSION(3,10,0)
+    gtk_window_set_icon_name(window, "dialog-password");
+#else
     gtk_window_set_icon_name(window, GTK_STOCK_DIALOG_AUTHENTICATION);
+#endif
 
     gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
 
@@ -154,7 +165,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
     gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, TRUE, TRUE, 0);
 
+#if GTK_CHECK_VERSION(3,10,0)
+    GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password", GTK_ICON_SIZE_DIALOG);
+#else
     GtkWidget *icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
+#endif
 
     gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
     gtk_box_pack_start(GTK_BOX(hbox), icon, FALSE, FALSE, 0);

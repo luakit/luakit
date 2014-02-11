@@ -208,12 +208,21 @@ luaH_luakit_save_file(lua_State *L)
     const gchar *default_folder = luaL_checkstring(L, 3);
     const gchar *default_name = luaL_checkstring(L, 4);
 
+#if GTK_CHECK_VERSION(3,10,0)
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
+            parent_window,
+            GTK_FILE_CHOOSER_ACTION_SAVE,
+            "_Cancel", GTK_RESPONSE_CANCEL,
+            "_Save", GTK_RESPONSE_ACCEPT,
+            NULL);
+#else
     GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
             parent_window,
             GTK_FILE_CHOOSER_ACTION_SAVE,
             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
             GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
             NULL);
+#endif
 
     /* set default folder, name and overwrite confirmation policy */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), default_folder);
