@@ -112,6 +112,9 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
 {
     GtkWidget *label = gtk_label_new(label_text);
     gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_widget_set_vexpand(GTK_WIDGET(label), TRUE);
+#endif
 
     GtkWidget *entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
@@ -119,8 +122,16 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
     if (value)
         gtk_entry_set_text(GTK_ENTRY(entry), value);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    // left,top,width,height
+    // TODO GTK_FILL?
+    gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
+    gtk_grid_attach(GTK_GRID(table), entry, 1, row, 1, 1);
+#else
+    // left,right,top,bottom
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1, GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, row, row + 1);
+#endif
 
     return entry;
 }
@@ -195,9 +206,17 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     gtk_box_pack_start(GTK_BOX(vbox), entry_container, FALSE, FALSE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *table = gtk_grid_new();
+    gtk_grid_set_column_homogeneous(GTK_GRID(table), FALSE);
+    gtk_grid_set_row_homogeneous(GTK_GRID(table), FALSE);
+    gtk_grid_set_column_spacing(GTK_GRID(table), 12);
+    gtk_grid_set_row_spacing(GTK_GRID(table), 6);
+#else
     GtkWidget *table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 12);
     gtk_table_set_row_spacings(GTK_TABLE(table), 6);
+#endif
     gtk_container_add(GTK_CONTAINER(entry_container), table);
 
     auth_data->login_entry = table_add_entry(table, 0, "Username:", login, NULL);
