@@ -148,7 +148,10 @@ main(gint argc, gchar *argv[]) {
 
     /* set numeric locale to C (required for compatibility with
        LuaJIT and luakit scripts) */
+#if GTK_CHECK_VERSION(2,2,4)
+#else
     gtk_set_locale();
+#endif
     gtk_disable_setlocale();
     setlocale(LC_NUMERIC, "C");
 
