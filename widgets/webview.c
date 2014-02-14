@@ -853,6 +853,16 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->win = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(d->win));
+    gtk_widget_set_name(GTK_WIDGET(d->win), "scrolled-window");
+    const gchar *scrollbar_css = "#scrolled-window {-GtkScrolledWindow-scrollbar-spacing: 0;}";
+
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(provider, scrollbar_css, strlen(scrollbar_css), NULL);
+
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+#endif
     w->widget = GTK_WIDGET(d->win);
 
     /* add webview to scrolled window */

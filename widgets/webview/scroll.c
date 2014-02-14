@@ -95,15 +95,38 @@ show_scrollbars(webview_data_t *d, gboolean show)
     if (show) {
         if (d->hide_id)
             g_signal_handler_disconnect(frame, d->hide_id);
+#if GTK_CHECK_VERSION(3,0,0)
+        gtk_scrolled_window_set_policy(d->win,
+                GTK_POLICY_ALWAYS, GTK_POLICY_ALWAYS);
+
+        GtkWidget *hscroll = gtk_scrolled_window_get_hscrollbar(d->win);
+        GtkWidget *vscroll = gtk_scrolled_window_get_vscrollbar(d->win);
+
+        gtk_widget_show(hscroll);
+        gtk_widget_show(vscroll);
+#else
         gtk_scrolled_window_set_policy(d->win,
                 GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#endif
         d->hide_id = 0;
 
     /* hide scrollbars */
     } else if (!d->hide_id) {
+#if GTK_CHECK_VERSION(3,0,0)
+        GtkWidget *hscroll = gtk_scrolled_window_get_hscrollbar(d->win);
+        GtkWidget *vscroll = gtk_scrolled_window_get_vscrollbar(d->win);
+
+        gtk_widget_hide(hscroll);
+        gtk_widget_hide(vscroll);
+
+        gtk_scrolled_window_set_shadow_type(d->win, GTK_SHADOW_NONE);
+
+        d->hide_id = 1; // TODO
+#else
         gtk_scrolled_window_set_policy(d->win,
                 GTK_POLICY_NEVER, GTK_POLICY_NEVER);
         d->hide_id = g_signal_connect(frame, "scrollbars-policy-changed",
                 G_CALLBACK(true_cb), NULL);
+#endif
     }
 }
