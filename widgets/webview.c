@@ -596,7 +596,11 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 static gboolean
+#if GTK_CHECK_VERSION(3,0,0)
+expose_cb(GtkWidget* UNUSED(widget), cairo_t *UNUSED(e), widget_t *w)
+#else
 expose_cb(GtkWidget* UNUSED(widget), GdkEventExpose* UNUSED(e), widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -871,7 +875,11 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
+#if GTK_CHECK_VERSION(3,0,0)
+      "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
+#else
       "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
+#endif
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
       "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,
