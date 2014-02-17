@@ -900,7 +900,10 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
+#if GTK_CHECK_VERSION(3,0,0)
+#else
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
+#endif
       NULL);
 
     g_object_connect(G_OBJECT(d->win),
