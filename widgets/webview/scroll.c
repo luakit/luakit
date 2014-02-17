@@ -34,6 +34,8 @@ luaH_webview_scroll_newindex(lua_State *L)
     gdouble value = luaL_checknumber(L, 3);
     gdouble max = gtk_adjustment_get_upper(a) -
             gtk_adjustment_get_page_size(a);
+    // https://git.gnome.org/browse/hyena/commit/?id=0745bfb75809886925dfa49a57c79e5f71565d08
+    max = (max > 0) ? max : 0;
     gtk_adjustment_set_value(a, ((value < 0 ? 0 : value) > max ? max : value));
     return 0;
 }
