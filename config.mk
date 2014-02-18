@@ -65,9 +65,13 @@ endif
 # === Required build packages ================================================
 
 # Packages required to build luakit.
-PKGS += gtk+-2.0
+ifeq ($(USE_GTK3),1)
+	PKGS += gtk+-3.0
+else
+	PKGS += gtk+-2.0
+endif
 PKGS += gthread-2.0
-PKGS += webkit-1.0
+PKGS += webkitgtk-3.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
 
@@ -79,8 +83,10 @@ endif
 
 # Build luakit with libunique bindings? (single instance support)
 ifneq ($(USE_UNIQUE),0)
-	CPPFLAGS += -DWITH_UNIQUE
-	PKGS     += unique-1.0
+	ifneq ($(USE_GTK3),1)
+		CPPFLAGS += -DWITH_UNIQUE
+		PKGS     += unique-3.0
+	endif
 endif
 
 # Check user has correct packages installed (and found by pkg-config).
