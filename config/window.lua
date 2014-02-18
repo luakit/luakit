@@ -80,6 +80,7 @@ function window.build()
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
+    l.layout.homogeneous = false;
     l.layout:pack(l.uri)
     l.layout:pack(l.hist)
     l.layout:pack(l.loaded)
@@ -87,6 +88,7 @@ function window.build()
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
+    r.layout.homogeneous = false;
     r.layout:pack(r.buf)
     r.layout:pack(r.ssl)
     r.layout:pack(r.tabi)
@@ -95,6 +97,7 @@ function window.build()
 
     -- Pack status bar elements
     local s = w.sbar
+    s.layout.homogeneous = false;
     s.layout:pack(l.ebox)
     s.layout:pack(s.sep, { expand = true, fill = true })
     s.layout:pack(r.ebox)
@@ -107,6 +110,7 @@ function window.build()
 
     -- Pack input bar
     local i = w.ibar
+    i.layout.homogeneous = false;
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
     i.ebox.child = i.layout
