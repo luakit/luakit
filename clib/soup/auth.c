@@ -156,11 +156,20 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 #endif
 
     /* set dialog properties */
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     gtk_dialog_set_has_separator(dialog, FALSE);
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
+    gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
+    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_action_area(dialog)), 6);
+#else
     gtk_box_set_spacing(GTK_BOX(dialog->vbox), 2);
     gtk_container_set_border_width(GTK_CONTAINER(dialog->action_area), 5);
     gtk_box_set_spacing(GTK_BOX(dialog->action_area), 6);
+#endif
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
 #if GTK_CHECK_VERSION(3,10,0)
@@ -172,9 +181,16 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
 
     /* build contents */
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *hbox = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(hbox), 12);
+    // TODO border_width 5?
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
+#else
     GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
     gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, TRUE, TRUE, 0);
+#endif
 
 #if GTK_CHECK_VERSION(3,10,0)
     GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password", GTK_ICON_SIZE_DIALOG);
@@ -183,28 +199,49 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 #endif
 
     gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_grid_attach(GTK_GRID(hbox), icon, 0,0,1,2);
+#else
     gtk_box_pack_start(GTK_BOX(hbox), icon, FALSE, FALSE, 0);
+#endif
 
+#if GTK_CHECK_VERSION(3,0,0)
+    // TODO add 12 pixels of padding above and below right side
+    // by adding padding to hbox
+    gtk_grid_set_row_spacing(GTK_GRID(hbox), 6);
+#else
     GtkWidget *main_vbox = gtk_vbox_new(FALSE, 18);
     gtk_box_pack_start(GTK_BOX(hbox), main_vbox, TRUE, TRUE, 0);
+#endif
 
     SoupURI *uri = soup_message_get_uri(auth_data->msg);
-    gchar *msg = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
+    gchar *msg = g_strdup_printf("gtk3_A username and password are being requested by the site %s", uri->host);
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
     gtk_misc_set_alignment(GTK_MISC(msg_label), 0.0, 0.5);
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_grid_attach_next_to(GTK_GRID(hbox), GTK_WIDGET(msg_label), icon, GTK_POS_RIGHT, 1, 1);
+#else
     gtk_box_pack_start(GTK_BOX(main_vbox), GTK_WIDGET(msg_label), FALSE, FALSE, 0);
+#endif
 
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
     gtk_box_pack_start(GTK_BOX(main_vbox), vbox, FALSE, FALSE, 0);
+#endif
 
     /* the table that holds the entries */
     GtkWidget *entry_container = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
 
     gtk_alignment_set_padding(GTK_ALIGNMENT(entry_container), 0, 0, 0, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_grid_attach_next_to(GTK_GRID(hbox), entry_container, GTK_WIDGET(msg_label), GTK_POS_BOTTOM, 1, 1);
+#else
     gtk_box_pack_start(GTK_BOX(vbox), entry_container, FALSE, FALSE, 0);
+#endif
 
 #if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *table = gtk_grid_new();
@@ -224,9 +261,14 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     gtk_entry_set_visibility(GTK_ENTRY(auth_data->password_entry), FALSE);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *remember_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    gtk_grid_attach_next_to(GTK_GRID(hbox), remember_box, entry_container, GTK_POS_BOTTOM, 1, 1);
+#else
     GtkWidget *remember_box = gtk_vbox_new(FALSE, 6);
     gtk_box_pack_start(GTK_BOX(vbox), remember_box,
                         FALSE, FALSE, 0);
+#endif
 
     GtkWidget *checkbutton = gtk_check_button_new_with_label("Store password");
     gtk_label_set_line_wrap(GTK_LABEL(gtk_bin_get_child(GTK_BIN(checkbutton))), TRUE);
