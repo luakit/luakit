@@ -247,11 +247,7 @@ page_removed_cb(GtkNotebook* UNUSED(n), GtkWidget *widget, guint UNUSED(i),
 }
 
 static void
-#if GTK_CHECK_VERSION(3,0,0)
 switch_cb(GtkNotebook *n, GtkWidget* UNUSED(p), guint i, widget_t *w)
-#else
-switch_cb(GtkNotebook *n, GtkNotebookPage* UNUSED(p), guint i, widget_t *w)
-#endif
 {
     GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(n), i);
     widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);

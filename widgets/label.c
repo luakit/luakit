@@ -207,7 +207,9 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
 
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);
+#if GTK_CHECK_VERSION(3,0,0)
     gtk_label_set_ellipsize(GTK_LABEL(w->widget), PANGO_ELLIPSIZE_END);
+#endif
 
     /* setup default settings */
     gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);
