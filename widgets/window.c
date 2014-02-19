@@ -18,9 +18,7 @@
  *
  */
 
-#ifdef GDK_WINDOWING_X11
 #include <gdk/gdkx.h>
-#endif
 #include "luah.h"
 #include "widgets/common.h"
 #include "clib/soup/auth.h"
@@ -88,14 +86,14 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       /* push integer properties */
 
+#if GTK_CHECK_VERSION(3,0,0)
 #ifdef GDK_WINDOWING_X11
       if (GDK_IS_X11_DISPLAY(gtk_widget_get_root_window(GTK_WIDGET(d->win)))) {
-#if GTK_CHECK_VERSION(3,0,0)
       PI_CASE(XID, GDK_WINDOW_XID(gtk_widget_get_root_window(GTK_WIDGET(d->win))))
+      }
+#endif
 #else
       PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
-#endif
-      }
 #endif
 
       case L_TK_SCREEN:
