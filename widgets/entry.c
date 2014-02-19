@@ -207,15 +207,16 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
 
     // Further signal to replace "signal::changed"
 #if GTK_CHECK_VERSION(3,0,0)
-    GValue im_context;
-    g_object_get_property(G_OBJECT(w->widget), "im-module", &im_context);
-    g_object_connect(G_OBJECT(&im_context),
+    // TODO not quite the same
+    g_object_connect(G_OBJECT(w->widget),
+      "swapped-signal::activate", G_CALLBACK(changed_cb), w,
+      NULL);
 #else
     GtkEntry* entry = GTK_ENTRY(w->widget);
     g_object_connect(G_OBJECT(entry->im_context),
-#endif
       "swapped-signal::commit", G_CALLBACK(changed_cb), w,
       NULL);
+#endif
 
     gtk_widget_show(w->widget);
     return w;
