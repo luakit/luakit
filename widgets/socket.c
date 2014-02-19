@@ -67,7 +67,11 @@ luaH_socket_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_ID:
         gtk_socket_add_id(GTK_SOCKET(w->widget),
+#if GTK_CHECK_VERSION(3,0,0)
                 (Window) luaL_checkint(L, 2));
+#else
+                (GdkNativeWindow) luaL_checkint(L, 2));
+#endif
         break;
 
       default:
