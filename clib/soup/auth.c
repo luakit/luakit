@@ -156,10 +156,6 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 #endif
 
     /* set dialog properties */
-#if GTK_CHECK_VERSION(3,0,0)
-#else
-    gtk_dialog_set_has_separator(dialog, FALSE);
-#endif
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
 #if GTK_CHECK_VERSION(3,0,0)
     gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
