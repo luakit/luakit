@@ -87,8 +87,10 @@ endif
 
 # Build luakit with libunique bindings? (single instance support)
 ifneq ($(USE_UNIQUE),0)
-#	CPPFLAGS += -DWITH_UNIQUE
-#	PKGS     += unique-3.0
+ifneq ($(USE_GTK3),1)
+	CPPFLAGS += -DWITH_UNIQUE
+	PKGS     += unique-3.0
+endif
 endif
 
 # Check user has correct packages installed (and found by pkg-config).
