@@ -85,11 +85,11 @@ ifneq ($(NO_JAVASCRIPTCORE),1)
 	PKGS += javascriptcoregtk-1.0
 endif
 
-# Build luakit with libunique bindings? (single instance support)
+# Build luakit with single instance support?
 ifneq ($(USE_UNIQUE),0)
-ifneq ($(USE_GTK3),1)
 	CPPFLAGS += -DWITH_UNIQUE
-	PKGS     += unique-3.0
+ifneq ($(USE_GTK3),1)
+	PKGS     += unique-1.0
 endif
 endif
 
