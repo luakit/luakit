@@ -124,9 +124,17 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
 
 #if GTK_CHECK_VERSION(3,0,0)
     // left,top,width,height
-    // TODO GTK_FILL?
     gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
     gtk_grid_attach(GTK_GRID(table), entry, 1, row, 1, 1);
+
+    /* fill in all directions */
+    gtk_widget_set_halign(label, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(label, GTK_ALIGN_FILL);
+    gtk_widget_set_halign(entry, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(entry, GTK_ALIGN_FILL);
+    /* expand vertically */
+    gtk_widget_set_vexpand(label, TRUE);
+    gtk_widget_set_vexpand(entry, TRUE);
 #else
     // left,right,top,bottom
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1, GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
@@ -179,8 +187,12 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     /* build contents */
 #if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *hbox = gtk_grid_new();
+    GValue margin = G_VALUE_INIT;
+    g_value_init(&margin, G_TYPE_INT);
+    g_value_set_int(&margin, 5);
+    g_object_set_property(G_OBJECT(hbox), "margin", &margin);
+
     gtk_grid_set_column_spacing(GTK_GRID(hbox), 12);
-    // TODO border_width 5?
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
 #else
     GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
@@ -202,8 +214,6 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
-    // TODO add 12 pixels of padding above and below right side
-    // by adding padding to hbox
     gtk_grid_set_row_spacing(GTK_GRID(hbox), 6);
 #else
     GtkWidget *main_vbox = gtk_vbox_new(FALSE, 18);
@@ -211,13 +221,20 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 #endif
 
     SoupURI *uri = soup_message_get_uri(auth_data->msg);
-    gchar *msg = g_strdup_printf("gtk3_A username and password are being requested by the site %s", uri->host);
+    gchar *msg = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
     gtk_misc_set_alignment(GTK_MISC(msg_label), 0.0, 0.5);
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
 #if GTK_CHECK_VERSION(3,0,0)
+    GValue max_width_chars = G_VALUE_INIT;
+    g_value_init(&max_width_chars, G_TYPE_INT);
+    g_value_set_int(&max_width_chars, 32);
+    /* TODO this is a kludge */
+    g_object_set_property(G_OBJECT(msg_label), "max-width-chars", &max_width_chars);
     gtk_grid_attach_next_to(GTK_GRID(hbox), GTK_WIDGET(msg_label), icon, GTK_POS_RIGHT, 1, 1);
+    gtk_widget_set_hexpand(GTK_WIDGET(msg_label), FALSE);
+    gtk_widget_set_vexpand(GTK_WIDGET(msg_label), TRUE);
 #else
     gtk_box_pack_start(GTK_BOX(main_vbox), GTK_WIDGET(msg_label), FALSE, FALSE, 0);
 #endif
@@ -226,31 +243,31 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 #else
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
     gtk_box_pack_start(GTK_BOX(main_vbox), vbox, FALSE, FALSE, 0);
-#endif
 
     /* the table that holds the entries */
     GtkWidget *entry_container = gtk_alignment_new(0.0, 0.0, 1.0, 1.0);
 
     gtk_alignment_set_padding(GTK_ALIGNMENT(entry_container), 0, 0, 0, 0);
 
-#if GTK_CHECK_VERSION(3,0,0)
-    gtk_grid_attach_next_to(GTK_GRID(hbox), entry_container, GTK_WIDGET(msg_label), GTK_POS_BOTTOM, 1, 1);
-#else
     gtk_box_pack_start(GTK_BOX(vbox), entry_container, FALSE, FALSE, 0);
 #endif
 
 #if GTK_CHECK_VERSION(3,0,0)
     GtkWidget *table = gtk_grid_new();
+    gtk_grid_attach_next_to(GTK_GRID(hbox), table, GTK_WIDGET(msg_label), GTK_POS_BOTTOM, 1, 1);
+
     gtk_grid_set_column_homogeneous(GTK_GRID(table), FALSE);
     gtk_grid_set_row_homogeneous(GTK_GRID(table), FALSE);
     gtk_grid_set_column_spacing(GTK_GRID(table), 12);
     gtk_grid_set_row_spacing(GTK_GRID(table), 6);
+    /* default margin of GtkWidgets is 0; no need to set explicitly */
+    /* default hexpand/vexpand value for table is FALSE */
 #else
     GtkWidget *table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 12);
     gtk_table_set_row_spacings(GTK_TABLE(table), 6);
-#endif
     gtk_container_add(GTK_CONTAINER(entry_container), table);
+#endif
 
     auth_data->login_entry = table_add_entry(table, 0, "Username:", login, NULL);
     auth_data->password_entry = table_add_entry(table, 1, "Password:", password, NULL);
@@ -258,8 +275,6 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_entry_set_visibility(GTK_ENTRY(auth_data->password_entry), FALSE);
 
 #if GTK_CHECK_VERSION(3,0,0)
-    GtkWidget *remember_box = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
-    gtk_grid_attach_next_to(GTK_GRID(hbox), remember_box, entry_container, GTK_POS_BOTTOM, 1, 1);
 #else
     GtkWidget *remember_box = gtk_vbox_new(FALSE, 6);
     gtk_box_pack_start(GTK_BOX(vbox), remember_box,
@@ -268,7 +283,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     GtkWidget *checkbutton = gtk_check_button_new_with_label("Store password");
     gtk_label_set_line_wrap(GTK_LABEL(gtk_bin_get_child(GTK_BIN(checkbutton))), TRUE);
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_grid_attach_next_to(GTK_GRID(hbox), checkbutton, table, GTK_POS_BOTTOM, 1, 1);
+#else
     gtk_box_pack_start(GTK_BOX(remember_box), checkbutton, FALSE, FALSE, 0);
+#endif
     auth_data->checkbutton = checkbutton;
 
     g_signal_connect(dialog, "response", G_CALLBACK(response_callback), auth_data);
