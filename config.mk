@@ -2,7 +2,7 @@
 
 # Compile/link options.
 CC         ?= gcc
-CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED
+CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra
 LDFLAGS    +=
 CPPFLAGS   +=
 
@@ -73,6 +73,9 @@ endif
 PKGS += gthread-2.0
 ifeq ($(USE_GTK3),1)
 	PKGS += webkitgtk-3.0
+	ifeq ($(USE_WEBKIT2),1)
+		CPPFLAGS += -DWITH_WEBKIT2
+	endif
 else
 	PKGS += webkit-1.0
 endif

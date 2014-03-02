@@ -23,7 +23,11 @@
 #include "common/signal.h"
 
 #include <libsoup/soup.h>
-#include <webkit/webkit.h>
+#if WITH_WEBKIT2
+# include <webkit2/webkit2.h>
+#else
+# include <webkit/webkit.h>
+#endif
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);

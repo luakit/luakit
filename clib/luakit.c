@@ -28,7 +28,11 @@
 #include <gtk/gtk.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <webkit/webkit.h>
+#if WITH_WEBKIT2
+# include <webkit2/webkit2.h>
+#else
+# include <webkit/webkit.h>
+#endif
 
 /* setup luakit module signals */
 LUA_CLASS_FUNCS(luakit, luakit_class)

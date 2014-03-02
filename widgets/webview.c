@@ -18,7 +18,11 @@
  *
  */
 
-#include <webkit/webkit.h>
+#if WITH_WEBKIT2
+# include <webkit2/webkit2.h>
+#else
+# include <webkit/webkit.h>
+#endif
 #include <libsoup/soup-message.h>
 #include <math.h>
 
