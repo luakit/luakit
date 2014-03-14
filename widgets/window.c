@@ -88,7 +88,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
 #if GTK_CHECK_VERSION(3,0,0)
 #ifdef GDK_WINDOWING_X11
-      if (GDK_IS_X11_DISPLAY(gtk_widget_get_root_window(GTK_WIDGET(d->win)))) {
+      if (GDK_IS_X11_WINDOW(d->win)) {
       PI_CASE(XID, GDK_WINDOW_XID(gtk_widget_get_root_window(GTK_WIDGET(d->win))))
       }
 #endif
