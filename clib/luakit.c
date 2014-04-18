@@ -486,8 +486,8 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
       case L_TK_WEBKIT_USER_AGENT_VERSION:
-        lua_pushfstring(L, "%d.%d", WEBKIT_USER_AGENT_MAJOR_VERSION,
-                WEBKIT_USER_AGENT_MINOR_VERSION);
+        lua_pushfstring(L, "%d.%d", WEBKIT_MAJOR_VERSION,
+                WEBKIT_MINOR_VERSION);
         return 1;
 
       case L_TK_SELECTION:
