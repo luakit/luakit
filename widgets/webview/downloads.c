@@ -20,6 +20,9 @@
 
 #include "clib/download.h"
 
+#if WITH_WEBKIT2
+// moved mime_type_decision_cb() into decide_policy_cb()
+#else
 static gboolean
 mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
         WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,

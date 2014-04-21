@@ -253,6 +253,9 @@ resource_request_starting_cb(WebKitWebView* UNUSED(v),
     return TRUE;
 }
 
+#if WITH_WEBKIT2
+// new_window_decision_cb() functionality moved into decide_policy_cb()
+#else
 static gboolean
 new_window_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
         WebKitNetworkRequest *r, WebKitWebNavigationAction *na,
@@ -298,6 +301,7 @@ new_window_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     /* proceed with default behaviour */
     return FALSE;
 }
+#endif
 
 #if WITH_WEBKIT2
 static GtkWidget*
@@ -367,6 +371,103 @@ link_hover_cb(WebKitWebView* UNUSED(v), const gchar* UNUSED(t),
     lua_pop(L, 1);
 }
 
+#if WITH_WEBKIT2
+static gboolean
+decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
+        WebKitPolicyDecisionType type, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+
+    switch (type) {
+      case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
+      {
+          gint top = lua_gettop(L);
+          WebKitNavigationPolicyDecision *np = WEBKIT_NAVIGATION_POLICY_DECISION(p);
+          WebKitNavigationAction *na = webkit_navigation_policy_decision_get_navigation_action(np);
+          const gchar *uri = webkit_uri_request_get_uri(
+                  webkit_navigation_action_get_request(na));
+          luaH_object_push(L, w->ref);
+          lua_pushstring(L, uri);
+          gint ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
+          gboolean ignore = ret && !lua_toboolean(L, top + 2);
+
+          if (ignore)
+              webkit_policy_decision_ignore(p);
+
+          lua_settop(L, top);
+          return ignore;
+      }
+      case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
+      {
+          WebKitNavigationPolicyDecision *np = WEBKIT_NAVIGATION_POLICY_DECISION(p);
+          WebKitNavigationAction *na = webkit_navigation_policy_decision_get_navigation_action(np);
+          const gchar *uri = webkit_uri_request_get_uri(
+                  webkit_navigation_action_get_request(na));
+          gchar *reason = NULL;
+          gint ret = 0;
+
+          luaH_object_push(L, w->ref);
+          lua_pushstring(L, uri);
+
+          switch (webkit_navigation_action_get_navigation_type(na)) {
+
+# define NR_CASE(a, l) case WEBKIT_NAVIGATION_TYPE_##a: reason = l; break;
+              NR_CASE(LINK_CLICKED,     "link-clicked");
+              NR_CASE(FORM_SUBMITTED,   "form-submitted");
+              NR_CASE(BACK_FORWARD,     "back-forward");
+              NR_CASE(RELOAD,           "reload");
+              NR_CASE(FORM_RESUBMITTED, "form-resubmitted");
+              NR_CASE(OTHER,            "other");
+#undef  NR_CASE
+
+            default:
+              warn("programmer error, unable to get web navigation reason literal");
+              break;
+          }
+
+          lua_pushstring(L, reason);
+          ret = luaH_object_emit_signal(L, -3, "new-window-decision", 2, 1);
+
+          /* User responded with true, meaning a decision was made
+           * and the signal was handled */
+          gboolean ignore = ret && lua_toboolean(L, -1);
+          if (ignore)
+              webkit_policy_decision_ignore(p);
+
+          lua_pop(L, ret + 1);
+          return ignore;
+      }
+      case WEBKIT_POLICY_DECISION_TYPE_RESPONSE:
+      {
+        // replaces mime_type_decision_cb() in widgets/webview/downloads.c
+        WebKitResponsePolicyDecision *rp = WEBKIT_RESPONSE_POLICY_DECISION(p);
+        WebKitURIResponse *r = webkit_response_policy_decision_get_response(rp);
+        const gchar *uri = webkit_uri_response_get_uri(r);
+        const gchar *mime = webkit_uri_response_get_mime_type(r);
+
+        luaH_object_push(L, w->ref);
+        lua_pushstring(L, uri);
+        lua_pushstring(L, mime);
+        gint ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
+
+        gboolean ignore = ret && !lua_toboolean(L, -1);
+        if (ignore)
+            /* User responded with false, ignore request */
+            webkit_policy_decision_ignore(p);
+        else if (!webkit_response_policy_decision_is_mime_type_supported(rp))
+            webkit_policy_decision_download(p);
+        else
+            webkit_policy_decision_use(p);
+
+        lua_pop(L, ret + 1);
+        return TRUE;
+      }
+      default:
+        break;
+    }
+    return FALSE;
+}
+#else
 /* Raises the "navigation-request" signal on a webkit navigation policy
  * decision request. The default action is to load the requested uri.
  *
@@ -395,6 +496,7 @@ navigation_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     lua_settop(L, top);
     return ignore;
 }
+#endif
 
 static gint
 luaH_webview_reload(lua_State *L)
@@ -939,9 +1041,15 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
+#if WITH_WEBKIT2
+      /* {mime-type,navigation,new-window}-policy-decision-requested covered
+       * by decide-policy */
+      "signal::decide-policy",                        G_CALLBACK(decide_policy_cb),             w,
+#else
       "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,
       "signal::navigation-policy-decision-requested", G_CALLBACK(navigation_decision_cb),       w,
       "signal::new-window-policy-decision-requested", G_CALLBACK(new_window_decision_cb),       w,
+#endif
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
       "signal::notify::load-status",                  G_CALLBACK(notify_load_status_cb),        w,
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
