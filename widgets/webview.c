@@ -515,7 +515,11 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PS_CASE(URI,                  d->uri)
 
       /* push boolean properties */
+#if WITH_WEBKIT2
+      PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_mode(d->view))
+#else
       PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_source_mode(d->view))
+#endif
 
 #if !WITH_WEBKIT2
       // TODO
@@ -599,8 +603,15 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         return luaH_object_property_signal(L, 1, token);
 
       case L_TK_VIEW_SOURCE:
+      {
+#if WITH_WEBKIT2
+        webkit_web_view_set_view_mode(d->view, luaH_checkboolean(L, 3));
+
+#else
         webkit_web_view_set_view_source_mode(d->view, luaH_checkboolean(L, 3));
+#endif
         return luaH_object_property_signal(L, 1, token);
+      }
 
       default:
         break;
