@@ -59,7 +59,11 @@ typedef struct {
 
 static struct {
     GSList *refs;
+#if WITH_WEBKIT2
+    GSList *old_refs;
+#else
     GSList *items;
+#endif
 } last_popup = { NULL, NULL };
 
 property_t webview_properties[] = {
@@ -897,22 +901,45 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 }
 
 static void
+#if WITH_WEBKIT2
+menu_item_cb(GtkAction *action, widget_t *w)
+#else
 menu_item_cb(GtkMenuItem *menuitem, widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
+#if WITH_WEBKIT2
+    gpointer ref = g_object_get_data(G_OBJECT(action), "lua_callback");
+#else
     gpointer ref = g_object_get_data(G_OBJECT(menuitem), "lua_callback");
+#endif
     luaH_object_push(L, w->ref);
     luaH_object_push(L, ref);
     luaH_dofunction(L, 1, 0);
 }
 
 static void
+#if WITH_WEBKIT2
+hide_popup_cb(WebKitWebView* UNUSED(v), widget_t* UNUSED(w)) {
+#else
 hide_popup_cb(void) {
+#endif
     GSList *iter;
     lua_State *L = globalconf.L;
 
     /* dereference context menu items callback functions from the last
        context menu */
+#if WITH_WEBKIT2
+    /* context-menu-dismissed callback gets run before menu_item_cb(),
+       causing the lua_callback to not exist if the refs belonging to
+       the current context menu are freed during hide_popup_cb(). */
+    if (last_popup.old_refs) {
+        for (iter = last_popup.old_refs; iter; iter = iter->next)
+            luaH_object_unref(L, iter->data);
+        g_slist_free(last_popup.old_refs);
+        last_popup.old_refs = NULL;
+    }
+#else
     if (last_popup.refs) {
         for (iter = last_popup.refs; iter; iter = iter->next)
             luaH_object_unref(L, iter->data);
@@ -927,12 +954,22 @@ hide_popup_cb(void) {
         g_slist_free(last_popup.items);
         last_popup.items = NULL;
     }
+#endif
 }
 
 static void
+#if WITH_WEBKIT2
+context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
+#else
 populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
+#endif
 {
+#if WITH_WEBKIT2
+    WebKitContextMenuItem *item;
+    WebKitContextMenu *submenu;
+#else
     GtkWidget *item, *submenu;
+#endif
     gpointer ref;
     const gchar *label;
     gint i, len = lua_objlen(L, -1);
@@ -948,6 +985,13 @@ populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
 
             /* add new submenu */
             if(lua_type(L, -1) == LUA_TTABLE) {
+#if WITH_WEBKIT2
+                submenu = webkit_context_menu_new();
+                item = webkit_context_menu_item_new_with_submenu(label,
+                        submenu);
+                webkit_context_menu_append(menu, item);
+                context_menu_from_table(L, submenu, w);
+#else
                 submenu = gtk_menu_new();
                 item = gtk_menu_item_new_with_mnemonic(label);
                 last_popup.items = g_slist_prepend(last_popup.items, item);
@@ -956,47 +1000,83 @@ populate_popup_from_table(lua_State *L, GtkMenu *menu, widget_t *w)
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
                 gtk_widget_show(item);
                 populate_popup_from_table(L, GTK_MENU(submenu), w);
+#endif
                 lua_pop(L, 1);
 
             /* add context menu item */
             } else if(lua_type(L, -1) == LUA_TFUNCTION) {
+#if WITH_WEBKIT2
+                GtkAction *action = gtk_action_new(label, label,
+                        NULL, NULL);
+                item = webkit_context_menu_item_new(action);
+#else
                 item = gtk_menu_item_new_with_mnemonic(label);
                 last_popup.items = g_slist_prepend(last_popup.items, item);
+#endif
                 ref = luaH_object_ref(L, -1);
                 last_popup.refs = g_slist_prepend(last_popup.refs, ref);
+#if WITH_WEBKIT2
+                g_object_set_data(G_OBJECT(action), "lua_callback", ref);
+
+                webkit_context_menu_append(menu, item);
+                g_signal_connect(action, "activate",
+                        G_CALLBACK(menu_item_cb), (gpointer)w);
+#else
                 g_object_set_data(G_OBJECT(item), "lua_callback", ref);
                 gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
                 gtk_widget_show(item);
                 g_signal_connect(item, "activate", G_CALLBACK(menu_item_cb), (gpointer)w);
+#endif
             }
 
         /* add separator if encounters `true` */
         } else if(lua_type(L, -1) == LUA_TBOOLEAN && lua_toboolean(L, -1)) {
+#if WITH_WEBKIT2
+            item = webkit_context_menu_item_new_separator();
+            webkit_context_menu_append(menu, item);
+#else
             item = gtk_separator_menu_item_new();
             last_popup.items = g_slist_prepend(last_popup.items, item);
             gtk_menu_shell_append(GTK_MENU_SHELL(menu), item);
             gtk_widget_show(item);
+#endif
         }
         lua_pop(L, 1);
     }
 }
 
+#if WITH_WEBKIT2
+static gboolean
+context_menu_cb(WebKitWebView* UNUSED(v), WebKitContextMenu *menu,
+        GdkEvent* UNUSED(e), WebKitHitTestResult* UNUSED(htr), widget_t *w)
+#else
 static void
 populate_popup_cb(WebKitWebView* UNUSED(v), GtkMenu *menu, widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
-    gint top = lua_gettop(L);
     luaH_object_push(L, w->ref);
-    gint ret = luaH_object_emit_signal(L, top + 1, "populate-popup", 0, 1);
-    if (ret && lua_istable(L, -1))
-        populate_popup_from_table(L, menu, w);
-    lua_settop(L, top);
-
-    /* destroy all context menu items when we are finished with them */
-#if WEBKIT_CHECK_VERSION(1, 4, 0)
-    g_signal_connect(menu, "unrealize", G_CALLBACK(hide_popup_cb), NULL);
+    gint ret = luaH_object_emit_signal(L, -1, "populate-popup", 0, 1);
+    if (ret && lua_istable(L, -1)) {
+#if WITH_WEBKIT2
+        last_popup.old_refs = last_popup.refs;
+        last_popup.refs = NULL;
+        context_menu_from_table(L, menu, w);
 #else
+        populate_popup_from_table(L, menu, w);
+#endif
+    }
+    lua_pop(L, ret + 1);
+
+#if WITH_WEBKIT2
+    return FALSE;
+#else
+    /* destroy all context menu items when we are finished with them */
+# if WEBKIT_CHECK_VERSION(1, 4, 0)
+    g_signal_connect(menu, "unrealize", G_CALLBACK(hide_popup_cb), NULL);
+# else
     g_signal_connect(menu, "hide", G_CALLBACK(hide_popup_cb), NULL);
+# endif
 #endif
 }
 
@@ -1136,9 +1216,16 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::new-window-policy-decision-requested", G_CALLBACK(new_window_decision_cb),       w,
 #endif
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
+#if WITH_WEBKIT2
+      /* populate-popup -> context-menu */
+      "signal::context-menu",                         G_CALLBACK(context_menu_cb),              w,
+      /* unrealize/hide GtkMenu -> context-menu-dismissed WebKitWebView */
+      "signal::context-menu-dismissed",               G_CALLBACK(hide_popup_cb),                w,
+#else
       "signal::notify::load-status",                  G_CALLBACK(notify_load_status_cb),        w,
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
+#endif
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
 #if GTK_CHECK_VERSION(3,0,0)
 #else
