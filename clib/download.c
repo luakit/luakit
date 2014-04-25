@@ -25,10 +25,14 @@
 #include "luah.h"
 #include "globalconf.h"
 
-#include <webkit/webkitdownload.h>
-#include <webkit/webkitnetworkrequest.h>
-#include <webkit/webkitnetworkresponse.h>
-#include <libsoup/soup-message.h>
+#if WITH_WEBKIT2
+# include <webkit2/webkit2.h>
+#else
+# include <webkit/webkitdownload.h>
+# include <webkit/webkitnetworkrequest.h>
+# include <webkit/webkitnetworkresponse.h>
+# include <libsoup/soup-message.h>
+#endif
 #include <glib/gstdio.h>
 
 /** Internal data structure for luakit's downloads. */
