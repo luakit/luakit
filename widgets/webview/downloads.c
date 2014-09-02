@@ -21,7 +21,7 @@
 #include "clib/download.h"
 
 #if WITH_WEBKIT2
-// moved mime_type_decision_cb() into decide_policy_cb()
+/* moved mime_type_decision_cb() into decide_policy_cb() */
 #else
 static gboolean
 mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
@@ -47,14 +47,25 @@ mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
     lua_pop(L, ret + 1);
     return TRUE;
 }
+#endif
 
 static gboolean
+#if WITH_WEBKIT2
+// TODO this really belongs in widgets/webcontext.c or something
+download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, widget_t *w)
+#else
 download_request_cb(WebKitWebView* UNUSED(v), WebKitDownload *dl, widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_download_push(L, dl);
+
+#if WITH_WEBKIT2
+    gint ret = luaH_object_emit_signal(L, 1, "download-start", 1, 1);
+#else
     gint ret = luaH_object_emit_signal(L, 1, "download-request", 1, 1);
+#endif
     gboolean handled = (ret && lua_toboolean(L, 2));
     lua_pop(L, 1 + ret);
     return handled;

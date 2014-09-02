@@ -112,7 +112,48 @@ status_timer:add_signal("timeout", function ()
     _M.emit_signal("status-tick", running)
 end)
 
-function add(uri, opts)
+function add(uri, opts, view)
+    opts = opts or {}
+    local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
+
+    assert(type(d) == "download",
+        string.format("download.add() expected uri or download object "
+            .. "(got %s)", type(d) or "nil"))
+
+    d:add_signal("decide-destination", function(dd, suggested_filename)
+        -- Emit signal to get initial download location
+        local fn = opts.filename or _M.emit_signal("download-location", dd.uri,
+            opts.suggested_filename or suggested_filename, dd.mime_type)
+        assert(fn == nil or type(fn) == "string" and #fn > 1,
+            string.format("invalid filename: %q", tostring(file)))
+
+        -- Ask the user where we should download the file to
+        if not fn then
+            fn = capi.luakit.save_file("Save file", opts.window, default_dir,
+                suggested_filename)
+        end
+
+        if fn then
+            dd.destination = fn
+            dd:add_signal("created-destination", function(ddd,destination)
+                ddd:start() -- no-op for webkit2
+                local data = {
+                    created = capi.luakit.time(),
+                    id = next_download_id(),
+                }
+                downloads[ddd] = data
+                if not status_timer.started then status_timer:start() end
+                _M.emit_signal("download::status", ddd, downloads[ddd])
+            end)
+            --return true
+        else
+            dd:cancel()
+        end
+        return true
+    end)
+end
+
+function addwk1(uri, opts)
     opts = opts or {}
     local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
 
@@ -144,6 +185,8 @@ function add(uri, opts)
         if not status_timer.started then status_timer:start() end
         _M.emit_signal("download::status", d, downloads[d])
         return true
+    else
+        d:cancel()
     end
 end
 
@@ -198,6 +241,16 @@ end
 webview.init_funcs.download_request = function (view, w)
     view:add_signal("download-request", function (v, d)
         add(d, { window = w.win })
+        return true
+    end)
+end
+
+-- Catch "download-started" webcontext widget signals (webkit2 API)
+-- returned d is a download_t
+webview.init_funcs.download_start = function (view, w)
+    -- v is a widget_t*
+    view:add_signal("download-start", function (v, d)
+        add(d, { window = w.win }, view)
         return true
     end)
 end

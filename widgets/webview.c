@@ -1191,14 +1191,31 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
             g_hash_table_new(g_direct_hash, g_direct_equal));
 #endif
 
+#if WITH_WEBKIT2
+    // TODO belongs in widgets/webcontext.c or something
+    // replaces download-requested signal
+    g_object_connect(G_OBJECT(webkit_web_view_get_context(d->view)),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
+      "signal::download-started",                     G_CALLBACK(download_start_cb),            w,
+      NULL);
+
+#endif
     /* connect webview signals */
     g_object_connect(G_OBJECT(d->view),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
       "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
+#if WITH_WEBKIT2
+      /* create-web-view -> create */
+      "signal::create",                               G_CALLBACK(create_cb),                    w,
+      /* document-load-finished has no analog in webkit2, but load-changed with
+       * the WEBKIT_LOAD_FINISHED event might be what you're looking for. */
+      /* download-requested -> WebKitWebContext download-started */
+#else
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
+#endif
 #if GTK_CHECK_VERSION(3,0,0)
       "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
 #else
