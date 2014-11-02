@@ -14,28 +14,10 @@ add_binds("normal", {
 
     key({}, "n", "Find next search result.", function (w, m)
         for i=1,m.count do w:search(nil, true)  end
-        if w.search_state.ret == false then
-            w:error("Pattern not found: " .. w.search_state.last_search)
-        elseif w.search_state.wrapped then
-            if w.search_state.forward then
-                w:warning("Search hit BOTTOM, continuing at TOP")
-            else
-                w:warning("Search hit TOP, continuing at BOTTOM")
-            end
-        end
     end, {count=1}),
 
     key({}, "N", "Find previous search result.", function (w, m)
         for i=1,m.count do w:search(nil, false) end
-        if w.search_state.ret == false then
-            w:error("Pattern not found: " .. w.search_state.last_search)
-        elseif w.search_state.wrapped then
-            if w.search_state.forward then
-                w:warning("Search hit TOP, continuing at BOTTOM")
-            else
-                w:warning("Search hit BOTTOM, continuing at TOP")
-            end
-        end
     end, {count=1}),
 })
 
@@ -57,23 +39,18 @@ new_mode("search", {
             w:scroll(s.marker)
             s.marker = nil
         end
+        w:clear_search(false)
     end,
 
+    -- TODO this isn't happening at all
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
         if string.match(text, "^[?/]") then
             s = w.search_state
             s.last_search = string.sub(text, 2)
             if #text > 3 then
+                s.event = "changed"
                 w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
-                if s.ret == false then
-                    if s.marker then w:scroll(s.marker) end
-                    w.ibar.input.fg = theme.ibar_error_fg
-                    w.ibar.input.bg = theme.ibar_error_bg
-                else
-                    w.ibar.input.fg = theme.ibar_fg
-                    w.ibar.input.bg = theme.ibar_bg
-                end
             else
                 w:clear_search(false)
             end
@@ -85,17 +62,12 @@ new_mode("search", {
 
     activate = function (w, text)
         w.search_state.marker = nil
+        -- TODO if uncommented this activates twice. Why?
         -- Search if haven't already (won't have for short strings)
-        if not w.search_state.searched then
-            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
-        end
-        -- Ghost the last search term
-        if w.search_state.ret then
-            w:set_mode()
-            w:set_prompt(text)
-        else
-            w:error("Pattern not found: " .. string.sub(text, 2))
-        end
+--        if not w.search_state.searched then
+--            w.search_state.event = "activate"
+--            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+--        end
     end,
 
     history = {maxlen = 50},
@@ -130,6 +102,12 @@ for k, m in pairs({
         if not w.search_state then w.search_state = {} end
         local s = w.search_state
 
+        -- boolean representing whether or not the current term text has
+        -- been searched for or not. If so, need to call search_next() or
+        -- search_previous() rather than search().
+        s.has_searched_before = (s.searched and (text == s.last_search)) or ((not not s.last_search) and (text == nil or #text == 0))
+        --print("has_searched_before:", text, s.last_search, s.has_searched_before, s.searched, text == s.last_search)
+
         -- Check if wrapping should be performed
         if wrap == nil then
             if s.wrap ~= nil then wrap = s.wrap else wrap = true end
@@ -155,11 +133,17 @@ for k, m in pairs({
 
         s.searched = true
         s.wrapped = false
-        s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
-        if not s.ret and wrap then
-            s.wrapped = true
-            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+
+        if s.has_searched_before then
+            if forward then
+                view:search_next()
+            else
+                view:search_previous()
+            end
+        else
+            view:search(text, text ~= string.lower(text), forward, wrap)
         end
+
     end,
 
     clear_search = function (view, w, clear_state)
@@ -174,5 +158,58 @@ for k, m in pairs({
     end,
 
 }) do webview.methods[k] = m end
+
+webview.init_funcs.search_callbacks = function (view, w)
+    view:add_signal("found-text", function (v, d)
+        w.ibar.input.fg = theme.ibar_fg
+        w.ibar.input.bg = theme.ibar_bg
+        if not w.search_state.wrapped then
+            w:set_mode()
+            w:set_prompt(w.search_state.last_search)
+        end
+    end)
+
+    view:add_signal("failed-to-find-text", function (v, d)
+        w.ibar.input.fg = theme.ibar_error_fg
+        w.ibar.input.bg = theme.ibar_error_bg
+        if (not w.search_state.has_searched_before) or (w.search_state.wrap and not w.search_state.wrapped) then
+            w.search_state.wrapped = true
+            if w.search_state.forward then
+                w:warning("Search hit BOTTOM, continuing at TOP")
+            else
+                w:warning("Search hit TOP, continuing at BOTTOM")
+            end
+            view:search(w.search_state.last_search, w.search_state.last_search ~= string.lower(w.search_state.last_search), w.search_state.forward, true);
+        else
+            --print(not w.search_state.has_searched_before, w.search_state.wrap, not w.search_state.wrapped)
+            w:error("Pattern not found: " .. w.search_state.last_search)
+        end
+    end)
+end
+
+---- changed
+--                if s.ret == false then
+--                    if s.marker then w:scroll(s.marker) end
+--                    w.ibar.input.fg = theme.ibar_error_fg
+--                    w.ibar.input.bg = theme.ibar_error_bg
+--                else
+--                    w.ibar.input.fg = theme.ibar_fg
+--                    w.ibar.input.bg = theme.ibar_bg
+--                end
+--
+---- activate
+--        -- Ghost the last search term
+--        if w.search_state.ret then
+--            w:set_mode()
+--            w:set_prompt(text)
+--        else
+--            w:error("Pattern not found: " .. string.sub(text, 2))
+--        end
+---- inside actual search function
+--            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+--            if not s.ret and wrap then
+--                s.wrapped = true
+--                s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+--            end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

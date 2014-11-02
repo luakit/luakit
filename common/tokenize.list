@@ -139,6 +139,8 @@ save_file
 screen
 scroll
 search
+search_next
+search_previous
 secondary
 secure
 selectable

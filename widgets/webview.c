@@ -218,6 +218,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 #include "widgets/webview/history.c"
 #include "widgets/webview/scroll.c"
 #include "widgets/webview/inspector.c"
+#include "widgets/webview/find_controller.c"
 
 static gint
 luaH_webview_load_string(lua_State *L)
@@ -604,6 +605,17 @@ luaH_webview_search(lua_State *L)
     gboolean forward = luaH_checkboolean(L, 4);
     gboolean wrap = luaH_checkboolean(L, 5);
 
+#if WITH_WEBKIT2
+    WebKitFindController *webkit_fc = webkit_web_view_get_find_controller(d->view);
+    webkit_find_controller_search_finish(webkit_fc);
+    webkit_find_controller_search(webkit_fc, text,
+            WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE * case_sensitive ||
+            WEBKIT_FIND_OPTIONS_BACKWARDS * (!forward) ||
+            WEBKIT_FIND_OPTIONS_WRAP_AROUND * wrap,
+            G_MAXUINT);
+    // TODO make this asynchronous on the lua end
+    gboolean ret = TRUE;
+#else
     webkit_web_view_unmark_text_matches(d->view);
     gboolean ret = webkit_web_view_search_text(d->view, text, case_sensitive,
             forward, wrap);
@@ -611,15 +623,40 @@ luaH_webview_search(lua_State *L)
         webkit_web_view_mark_text_matches(d->view, text, case_sensitive, 0);
         webkit_web_view_set_highlight_text_matches(d->view, TRUE);
     }
+#endif
     lua_pushboolean(L, ret);
     return 1;
 }
 
+#if WITH_WEBKIT2
+static gint
+luaH_webview_search_next(lua_State *L)
+{
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    WebKitFindController *webkit_fc = webkit_web_view_get_find_controller(d->view);
+    webkit_find_controller_search_next(webkit_fc);
+    return 0;
+}
+
+static gint
+luaH_webview_search_previous(lua_State *L)
+{
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    WebKitFindController *webkit_fc = webkit_web_view_get_find_controller(d->view);
+    webkit_find_controller_search_previous(webkit_fc);
+    return 0;
+}
+#endif
 static gint
 luaH_webview_clear_search(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
+#if WITH_WEBKIT2
+    WebKitFindController *webkit_fc = webkit_web_view_get_find_controller(d->view);
+    webkit_find_controller_search_finish(webkit_fc);
+#else
     webkit_web_view_unmark_text_matches(d->view);
+#endif
     return 0;
 }
 
@@ -680,6 +717,8 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
       /* push search methods */
       PF_CASE(SEARCH,               luaH_webview_search)
+      PF_CASE(SEARCH_NEXT,          luaH_webview_search_next)
+      PF_CASE(SEARCH_PREVIOUS,      luaH_webview_search_previous)
       /* push history navigation methods */
       PF_CASE(GO_BACK,              luaH_webview_go_back)
       PF_CASE(GO_FORWARD,           luaH_webview_go_forward)
@@ -1250,6 +1289,14 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
       NULL);
 
+#if WITH_WEBKIT2
+    g_object_connect(G_OBJECT(webkit_web_view_get_find_controller(d->view)),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
+      "signal::found-text",                           G_CALLBACK(found_text_cb),                w,
+      "signal::failed-to-find-text",                  G_CALLBACK(failed_to_find_text_cb),       w,
+      NULL);
+
+#endif
 #if WITH_WEBKIT2
     // TODO was this the right thing to do?
     g_object_connect(G_OBJECT(d->view),
