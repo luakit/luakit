@@ -63,6 +63,13 @@ static struct {
 } last_popup = { NULL, NULL };
 
 property_t webview_properties[] = {
+#if WITH_WEBKIT2
+  { L_TK_ESTIMATED_LOAD_PROGRESS, "estimated-load-progress", DOUBLE, FALSE },
+  { L_TK_IS_LOADING,        "is-loading",        BOOL,   FALSE },
+  { L_TK_TITLE,             "title",             CHAR,   FALSE },
+  { L_TK_URI,               "uri",               CHAR,   FALSE }, /* dummy */
+  { L_TK_ZOOM_LEVEL,        "zoom-level",        DOUBLE,  TRUE  },
+#else
   { L_TK_CUSTOM_ENCODING,   "custom-encoding",   CHAR,   TRUE  },
   { L_TK_EDITABLE,          "editable",          BOOL,   TRUE  },
   { L_TK_ENCODING,          "encoding",          CHAR,   FALSE },
@@ -73,6 +80,7 @@ property_t webview_properties[] = {
   { L_TK_TRANSPARENT,       "transparent",       BOOL,   TRUE  },
   { L_TK_URI,               "uri",               CHAR,   FALSE }, /* dummy */
   { L_TK_ZOOM_LEVEL,        "zoom-level",        FLOAT,  TRUE  },
+#endif
   { 0,                      NULL,                0,      0     },
 };
 
@@ -611,6 +619,10 @@ luaH_webview_clear_search(lua_State *L)
     return 0;
 }
 
+#if WITH_WEBKIT2
+/* should use the is_loading property rather than the loading() function
+   in lua code */
+#else
 static gint
 luaH_webview_loading(lua_State *L)
 {
@@ -621,6 +633,7 @@ luaH_webview_loading(lua_State *L)
             s == WEBKIT_LOAD_COMMITTED) ? TRUE : FALSE);
     return 1;
 }
+#endif
 
 static gint
 luaH_webview_stop(lua_State *L)
@@ -672,7 +685,10 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(EVAL_JS,              luaH_webview_eval_js)
       PF_CASE(REGISTER_FUNCTION,    luaH_webview_register_function)
       PF_CASE(LOAD_STRING,          luaH_webview_load_string)
+#if !WITH_WEBKIT2
+      /* use is_loading property instead of this function */
       PF_CASE(LOADING,              luaH_webview_loading)
+#endif
       PF_CASE(RELOAD,               luaH_webview_reload)
       PF_CASE(RELOAD_BYPASS_CACHE,  luaH_webview_reload_bypass_cache)
       PF_CASE(SSL_TRUSTED,          luaH_webview_ssl_trusted)

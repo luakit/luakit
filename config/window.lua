@@ -471,9 +471,9 @@ window.methods = {
     end,
 
     update_progress = function (w)
-        local p = w.view.progress
+        local p = w.view.estimated_load_progress
         local loaded = w.sbar.l.loaded
-        if not w.view:loading() or p == 1 then
+        if not w.view.is_loading or p == 1 then
             loaded:hide()
         else
             loaded:show()
@@ -552,7 +552,7 @@ window.methods = {
         for i, view in ipairs(w.tabs.children) do
             -- Get tab number theme
             local ntheme = nfg
-            if view:loading() then -- Show loading on all tabs
+            if view.is_loading then -- Show loading on all tabs
                 ntheme = lfg
             elseif current == i then -- Show ssl trusted/untrusted on current tab
                 local trusted = view:ssl_trusted()
@@ -607,7 +607,7 @@ window.methods = {
         view = view or w.view
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 1 then
-            if not view:loading() and view.uri == "about:blank" then return end
+            if not view.is_loading and view.uri == "about:blank" then return end
             w:new_tab("about:blank", false)
             w.has_blank = true
         end
