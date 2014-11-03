@@ -20,7 +20,11 @@
  */
 
 static WebKitWebView*
+#if WITH_WEBKIT2
+inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), widget_t *w)
+#else
 inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), WebKitWebView *UNUSED(v), widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
     webview_data_t *d = w->data;

@@ -1307,12 +1307,27 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::focus-in-event",                       G_CALLBACK(swin_focus_cb),                w,
       NULL);
 
+#if WITH_WEBKIT2
+    g_object_connect(G_OBJECT(d->inspector),
+    /* inspect-web-view -> open-window
+       show-window -> bring-to-front
+       close-window -> close
+       attach-window -> attach
+       detach-window -> detach */
+// TODO this was never really working in luakit with webkit1 API either
+      "signal::attach",                               G_CALLBACK(inspector_attach_window_cb),   w,
+      "signal::bring-to-front",                       G_CALLBACK(inspector_show_window_cb),     w,
+      "signal::closed",                               G_CALLBACK(inspector_close_window_cb),    w,
+      "signal::detach",                               G_CALLBACK(inspector_detach_window_cb),   w,
+      "signal::open-window",                          G_CALLBACK(inspect_webview_cb),           w,
+#else
     g_object_connect(G_OBJECT(d->inspector),
       "signal::inspect-web-view",                     G_CALLBACK(inspect_webview_cb),           w,
       "signal::show-window",                          G_CALLBACK(inspector_show_window_cb),     w,
       "signal::close-window",                         G_CALLBACK(inspector_close_window_cb),    w,
       "signal::attach-window",                        G_CALLBACK(inspector_attach_window_cb),   w,
       "signal::detach-window",                        G_CALLBACK(inspector_detach_window_cb),   w,
+#endif
       NULL);
 
     /* show widgets */
