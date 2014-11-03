@@ -233,3 +233,11 @@ media_playback_allows_inline
 media_playback_requires_gesture
 pictograph_font_family
 zoom_text_only
+xrel
+xpage
+xpagerel
+xpct
+yrel
+ypage
+ypagerel
+ypct

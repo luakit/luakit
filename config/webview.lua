@@ -290,28 +290,23 @@ function webview.methods.scroll(view, w, new)
     for _, axis in ipairs{ "x", "y" } do
         -- Relative px movement
         if rawget(new, axis.."rel") then
-            s[axis] = s[axis] + new[axis.."rel"]
+            s[axis.."rel"] = new[axis.."rel"]
 
         -- Relative page movement
         elseif rawget(new, axis .. "pagerel") then
-            s[axis] = s[axis] + math.ceil(s[axis.."page_size"] * new[axis.."pagerel"])
+            s[axis.."pagerel"] = new[axis.."pagerel"]
 
         -- Absolute px movement
         elseif rawget(new, axis) then
-            local n = new[axis]
-            if n == -1 then
-                s[axis] = s[axis.."max"]
-            else
-                s[axis] = n
-            end
+            s[axis] = new[axis]
 
         -- Absolute page movement
         elseif rawget(new, axis.."page") then
-            s[axis] = math.ceil(s[axis.."page_size"] * new[axis.."page"])
+            s[axis.."page"] = new[axis.."page"]
 
         -- Absolute percent movement
         elseif rawget(new, axis .. "pct") then
-            s[axis] = math.ceil(s[axis.."max"] * (new[axis.."pct"]/100))
+            s[axis.."pct"] = math.ceil(new[axis.."pct"])
         end
     end
 end
