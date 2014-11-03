@@ -77,48 +77,117 @@ property_t webview_properties[] = {
 };
 
 property_t webview_settings_properties[] = {
+#if WITH_WEBKIT2
+  { L_TK_ALLOW_MODAL_DIALOGS,                       "allow-modal-dialogs",                       BOOL,  TRUE },
+#endif
   { L_TK_AUTO_LOAD_IMAGES,                          "auto-load-images",                          BOOL,  TRUE },
+#if !WITH_WEBKIT2
   { L_TK_AUTO_RESIZE_WINDOW,                        "auto-resize-window",                        BOOL,  TRUE },
   { L_TK_AUTO_SHRINK_IMAGES,                        "auto-shrink-images",                        BOOL,  TRUE },
+#endif
   { L_TK_CURSIVE_FONT_FAMILY,                       "cursive-font-family",                       CHAR,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_DEFAULT_CHARSET,                           "default-charset",                           CHAR,  TRUE },
+#else
   { L_TK_DEFAULT_ENCODING,                          "default-encoding",                          CHAR,  TRUE },
+#endif
   { L_TK_DEFAULT_FONT_FAMILY,                       "default-font-family",                       CHAR,  TRUE },
   { L_TK_DEFAULT_FONT_SIZE,                         "default-font-size",                         INT,   TRUE },
   { L_TK_DEFAULT_MONOSPACE_FONT_SIZE,               "default-monospace-font-size",               INT,   TRUE },
+#if WITH_WEBKIT2
+  { L_TK_DRAW_COMPOSITING_INDICATORS,               "draw-compositing-indicators",               BOOL,  TRUE },
+  { L_TK_ENABLE_ACCELERATED_2D_CANVAS,              "enable-accelerated-2d-canvas",              BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_CARET_BROWSING,                     "enable-caret-browsing",                     BOOL,  TRUE },
+#if !WITH_WEBKIT2
   { L_TK_ENABLE_DEFAULT_CONTEXT_MENU,               "enable-default-context-menu",               BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_DEVELOPER_EXTRAS,                   "enable-developer-extras",                   BOOL,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_ENABLE_DNS_PREFETCHING,                    "enable-dns-prefetching",                    BOOL,  TRUE },
+  { L_TK_ENABLE_FRAME_FLATTENING,                   "enable-frame-flattening",                   BOOL,  TRUE },
+  { L_TK_ENABLE_FULLSCREEN,                         "enable-fullscreen",                         BOOL,  TRUE },
+#else
   { L_TK_ENABLE_DOM_PASTE,                          "enable-dom-paste",                          BOOL,  TRUE },
   { L_TK_ENABLE_FILE_ACCESS_FROM_FILE_URIS,         "enable-file-access-from-file-uris",         BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_HTML5_DATABASE,                     "enable-html5-database",                     BOOL,  TRUE },
   { L_TK_ENABLE_HTML5_LOCAL_STORAGE,                "enable-html5-local-storage",                BOOL,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_ENABLE_HYPERLINK_AUDITING,                 "enable-hyperlink-auditing",                 BOOL,  TRUE },
+  { L_TK_ENABLE_JAVA,                               "enable-java",                               BOOL,  TRUE },
+  { L_TK_ENABLE_JAVASCRIPT,                         "enable-javascript",                         BOOL,  TRUE },
+  { L_TK_ENABLE_MEDIA_STREAM,                       "enable-media-stream",                       BOOL,  TRUE },
+  { L_TK_ENABLE_MEDIASOURCE,                        "enable-mediasource",                        BOOL,  TRUE },
+#else
   { L_TK_ENABLE_JAVA_APPLET,                        "enable-java-applet",                        BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_OFFLINE_WEB_APPLICATION_CACHE,      "enable-offline-web-application-cache",      BOOL,  TRUE },
   { L_TK_ENABLE_PAGE_CACHE,                         "enable-page-cache",                         BOOL,  TRUE },
   { L_TK_ENABLE_PLUGINS,                            "enable-plugins",                            BOOL,  TRUE },
   { L_TK_ENABLE_PRIVATE_BROWSING,                   "enable-private-browsing",                   BOOL,  TRUE },
+#if WITH_WEBKIT2
+  /* replaces resizable-text-areas */
+  { L_TK_ENABLE_RESIZABLE_TEXT_AREAS,               "enable-resizable-text-areas",               BOOL,  TRUE },
+#else
+  // TODO lib/noscript.lua uses this
   { L_TK_ENABLE_SCRIPTS,                            "enable-scripts",                            BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_SITE_SPECIFIC_QUIRKS,               "enable-site-specific-quirks",               BOOL,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_ENABLE_SMOOTH_SCROLLING,                   "enable-smooth-scrolling",                   BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_SPATIAL_NAVIGATION,                 "enable-spatial-navigation",                 BOOL,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_ENABLE_TABS_TO_LINKS,                      "enable-tabs-to-links",                      BOOL,  TRUE },
+  { L_TK_ENABLE_WEBAUDIO,                           "enable-webaudio",                           BOOL,  TRUE },
+  { L_TK_ENABLE_WEBGL,                              "enable-webgl",                              BOOL,  TRUE },
+  { L_TK_ENABLE_WRITE_CONSOLE_MESSAGES_TO_STDOUT,   "enable-write-console-messages-to-stdout",   BOOL,  TRUE },
+#else
   { L_TK_ENABLE_SPELL_CHECKING,                     "enable-spell-checking",                     BOOL,  TRUE },
   { L_TK_ENABLE_UNIVERSAL_ACCESS_FROM_FILE_URIS,    "enable-universal-access-from-file-uris",    BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_XSS_AUDITOR,                        "enable-xss-auditor",                        BOOL,  TRUE },
+#if !WITH_WEBKIT2
+  // TODO this is set to false in config/webview.lua
   { L_TK_ENFORCE_96_DPI,                            "enforce-96-dpi",                            BOOL,  TRUE },
+#endif
   { L_TK_FANTASY_FONT_FAMILY,                       "fantasy-font-family",                       CHAR,  TRUE },
   { L_TK_JAVASCRIPT_CAN_ACCESS_CLIPBOARD,           "javascript-can-access-clipboard",           BOOL,  TRUE },
   { L_TK_JAVASCRIPT_CAN_OPEN_WINDOWS_AUTOMATICALLY, "javascript-can-open-windows-automatically", BOOL,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_LOAD_ICONS_IGNORING_IMAGE_LOAD_SETTING,    "load-icons-ignoring-image-load-setting",    BOOL,  TRUE },
+  { L_TK_MEDIA_PLAYBACK_ALLOWS_INLINE,              "media-playback-allows-inline",              BOOL,  TRUE },
+  { L_TK_MEDIA_PLAYBACK_REQUIRES_GESTURE,           "media-playback-requires-user-gesture",      BOOL,  TRUE },
+#endif
   { L_TK_MINIMUM_FONT_SIZE,                         "minimum-font-size",                         INT,   TRUE },
+#if !WITH_WEBKIT2
   { L_TK_MINIMUM_LOGICAL_FONT_SIZE,                 "minimum-logical-font-size",                 INT,   TRUE },
+#endif
   { L_TK_MONOSPACE_FONT_FAMILY,                     "monospace-font-family",                     CHAR,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_PICTOGRAPH_FONT_FAMILY,                    "pictograph-font-family",                    CHAR,  TRUE },
+#endif
   { L_TK_PRINT_BACKGROUNDS,                         "print-backgrounds",                         BOOL,  TRUE },
+#if !WITH_WEBKIT2
+  /* replaced by enable-resizable-text-areas */
   { L_TK_RESIZABLE_TEXT_AREAS,                      "resizable-text-areas",                      BOOL,  TRUE },
+#endif
   { L_TK_SANS_SERIF_FONT_FAMILY,                    "sans-serif-font-family",                    CHAR,  TRUE },
   { L_TK_SERIF_FONT_FAMILY,                         "serif-font-family",                         CHAR,  TRUE },
+#if !WITH_WEBKIT2
   { L_TK_SPELL_CHECKING_LANGUAGES,                  "spell-checking-languages",                  CHAR,  TRUE },
   { L_TK_TAB_KEY_CYCLES_THROUGH_ELEMENTS,           "tab-key-cycles-through-elements",           BOOL,  TRUE },
+#endif
   { L_TK_USER_AGENT,                                "user-agent",                                CHAR,  TRUE },
+#if WITH_WEBKIT2
+  { L_TK_ZOOM_TEXT_ONLY,                            "zoom-text-only",                            BOOL, TRUE },
+#else
+  // TODO user-stylesheet-uri is an example in config/globals.lua
   { L_TK_USER_STYLESHEET_URI,                       "user-stylesheet-uri",                       CHAR,  TRUE },
+  // TODO zoom-step used in config/globals.lua
   { L_TK_ZOOM_STEP,                                 "zoom-step",                                 FLOAT, TRUE },
+#endif
   { 0,                                              NULL,                                        0,     0    },
 };
 
