@@ -407,10 +407,26 @@ luaH_webview_register_function(lua_State *L)
 #endif
 
     /* register function */
+#if WITH_WEBKIT2
+    JSGlobalContextRef context = webkit_web_view_get_javascript_global_context(d->view);
+#else
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
+#endif
     luaJS_register_function(context, name, ref);
     return 0;
 }
+#if WITH_WEBKIT2
+
+static void
+run_javascript_finished(GObject *obj, GAsyncResult *r, webview_data_t* UNUSED(d))
+{
+    WebKitJavascriptResult *js_result;
+    GError *error = NULL;
+    js_result = webkit_web_view_run_javascript_finish(WEBKIT_WEB_VIEW(obj), r, &error);
+    if (js_result)
+        webkit_javascript_result_unref(js_result);
+}
+#endif
 
 static gint
 luaH_webview_eval_js(lua_State *L)
@@ -466,12 +482,21 @@ luaH_webview_eval_js(lua_State *L)
 #endif
 
     /* evaluate javascript script and push return result onto lua stack */
+#if WITH_WEBKIT2
+    webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, d);
+    //JSGlobalContextRef context = webkit_web_view_get_javascript_global_context(d->view);
+#else
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
 
     gint ret = luaJS_eval_js(L, context, script,
         usr_source ? usr_source : (const gchar*)source, no_return);
+#endif
 
     g_free(source);
 
+#if WITH_WEBKIT2
+    return FALSE;
+#else
     return ret;
+#endif
 }
