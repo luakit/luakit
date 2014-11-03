@@ -371,7 +371,10 @@ luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script,
 static gint
 luaH_webview_register_function(lua_State *L)
 {
+#if WITH_WEBKIT2
+#else
     WebKitWebFrame *frame = NULL;
+#endif
     webview_data_t *d = luaH_checkwvdata(L, 1);
     const gchar *name = luaL_checkstring(L, 2);
 
@@ -381,17 +384,27 @@ luaH_webview_register_function(lua_State *L)
     gpointer ref = luaH_object_ref(L, -1);
 
     if (lua_gettop(L) >= 4) {
+#if WITH_WEBKIT2
+#else
         if (lua_islightuserdata(L, 4))
             frame = lua_touserdata(L, 4);
-        else if (lua_isstring(L, 4)) {
+        else
+#endif
+        if (lua_isstring(L, 4)) {
+#if WITH_WEBKIT2
+#else
             if (L_TK_FOCUSED == l_tokenize(lua_tostring(L, 4)))
                 frame = webkit_web_view_get_focused_frame(d->view);
+#endif
         }
     }
 
     /* Fall back on main frame */
+#if WITH_WEBKIT2
+#else
     if (!frame)
         frame = webkit_web_view_get_main_frame(d->view);
+#endif
 
     /* register function */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
@@ -402,7 +415,10 @@ luaH_webview_register_function(lua_State *L)
 static gint
 luaH_webview_eval_js(lua_State *L)
 {
+#if WITH_WEBKIT2
+#else
     WebKitWebFrame *frame = NULL;
+#endif
     webview_data_t *d = luaH_checkwvdata(L, 1);
     const gchar *script = luaL_checkstring(L, 2);
     const gchar *usr_source = NULL;
@@ -418,11 +434,18 @@ luaH_webview_eval_js(lua_State *L)
             usr_source = lua_tostring(L, -1);
 
         if (luaH_rawfield(L, 3, "frame")) {
+#if WITH_WEBKIT2
+#else
             if (lua_islightuserdata(L, -1))
                 frame = lua_touserdata(L, -1);
-            else if (lua_isstring(L, -1)) {
+            else
+#endif
+            if (lua_isstring(L, -1)) {
+#if WITH_WEBKIT2
+#else
                 if (L_TK_FOCUSED == l_tokenize(lua_tostring(L, -1)))
                     frame = webkit_web_view_get_focused_frame(d->view);
+#endif
             }
         }
 
@@ -435,9 +458,12 @@ luaH_webview_eval_js(lua_State *L)
     if (!usr_source)
         source = luaH_callerinfo(L);
 
+#if WITH_WEBKIT2
+#else
     /* Fall back on main frame */
     if (!frame)
         frame = webkit_web_view_get_main_frame(d->view);
+#endif
 
     /* evaluate javascript script and push return result onto lua stack */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);

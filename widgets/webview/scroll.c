@@ -91,6 +91,8 @@ luaH_webview_push_scroll_table(lua_State *L)
 void
 show_scrollbars(webview_data_t *d, gboolean show)
 {
+    // TODO
+#if !WITH_WEBKIT2
     GObject *frame = G_OBJECT(webkit_web_view_get_main_frame(d->view));
 
     /* show scrollbars */
@@ -131,4 +133,5 @@ show_scrollbars(webview_data_t *d, gboolean show)
                 G_CALLBACK(true_cb), NULL);
 #endif
     }
+#endif
 }

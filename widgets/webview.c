@@ -37,8 +37,10 @@ typedef struct {
     widget_t *widget;
     /** The webview widget */
     WebKitWebView *view;
+#if !WITH_WEBKIT2
     /** The GtkScrolledWindow for the webview widget */
     GtkScrolledWindow *win;
+#endif
     /** Current webview uri */
     gchar *uri;
     /** Currently hovered uri */
@@ -142,8 +144,12 @@ luaH_webview_load_string(lua_State *L)
     webview_data_t *d = luaH_checkwvdata(L, 1);
     const gchar *string = luaL_checkstring(L, 2);
     const gchar *base_uri = luaL_checkstring(L, 3);
+#if WITH_WEBKIT2
+    webkit_web_view_load_html(d->view, string, base_uri);
+#else
     WebKitWebFrame *frame = webkit_web_view_get_main_frame(d->view);
     webkit_web_frame_load_alternate_string(frame, string, base_uri, base_uri);
+#endif
     return 0;
 }
 
@@ -293,9 +299,14 @@ new_window_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     return FALSE;
 }
 
+#if WITH_WEBKIT2
+static GtkWidget*
+create_cb(WebKitWebView* UNUSED(v), widget_t *w)
+#else
 static WebKitWebView*
 create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
         widget_t *w)
+#endif
 {
     WebKitWebView *view = NULL;
     widget_t *new;
@@ -319,7 +330,11 @@ create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     }
 
     lua_settop(L, top);
+#if WITH_WEBKIT2
+    return GTK_WIDGET(view);
+#else
     return view;
+#endif
 }
 
 static void
@@ -457,6 +472,7 @@ luaH_webview_ssl_trusted(lua_State *L)
         SoupMessage *soup_msg = webkit_network_request_get_message(req);
         lua_pushboolean(L, (soup_msg && (soup_message_get_flags(soup_msg)
             & SOUP_MESSAGE_CERTIFICATE_TRUSTED)) ? TRUE : FALSE);
+#endif
         return 1;
     }
     /* return nil if not viewing https uri */
@@ -501,8 +517,11 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       /* push boolean properties */
       PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_source_mode(d->view))
 
+#if !WITH_WEBKIT2
+      // TODO
       case L_TK_FRAMES:
         return luaH_webview_push_frames(L, d);
+#endif
 
       case L_TK_HISTORY:
         return luaH_webview_push_history(L, d->view);
@@ -811,8 +830,11 @@ webview_destructor(widget_t *w)
 
     g_ptr_array_remove(globalconf.webviews, w);
     gtk_widget_destroy(GTK_WIDGET(d->view));
+#if WITH_WEBKIT2
+#else
     gtk_widget_destroy(GTK_WIDGET(d->win));
     g_hash_table_remove(frames_by_view, d->view);
+#endif
     g_free(d->uri);
     g_free(d->hover);
     g_slice_free(webview_data_t, d);
@@ -847,17 +869,24 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
         globalconf.webviews = g_ptr_array_new();
+#if !WITH_WEBKIT2
 
     if (!frames_by_view)
         frames_by_view = g_hash_table_new_full(g_direct_hash, g_direct_equal,
                 NULL, (GDestroyNotify) g_hash_table_destroy);
+#endif
 
     /* create widgets */
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
     d->inspector = webkit_web_view_get_inspector(d->view);
 
+#if WITH_WEBKIT2
+    // TODO does scrollbar hiding need to happen here?
+
+    w->widget = GTK_WIDGET(d->view);
+#else
     d->win = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
-#if GTK_CHECK_VERSION(3,0,0)
+# if GTK_CHECK_VERSION(3,0,0)
     GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(d->win));
     gtk_widget_set_name(GTK_WIDGET(d->win), "scrolled-window");
     const gchar *scrollbar_css = "#scrolled-window {-GtkScrolledWindow-scrollbar-spacing: 0;}";
@@ -866,20 +895,23 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     gtk_css_provider_load_from_data(provider, scrollbar_css, strlen(scrollbar_css), NULL);
 
     gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-#endif
+# endif
     w->widget = GTK_WIDGET(d->win);
 
     /* add webview to scrolled window */
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));
+#endif
 
     /* set initial scrollbars state */
     show_scrollbars(d, TRUE);
 
     /* insert data into global tables and arrays */
     g_ptr_array_add(globalconf.webviews, w);
+#if !WITH_WEBKIT2
 
     g_hash_table_insert(frames_by_view, d->view,
             g_hash_table_new(g_direct_hash, g_direct_equal));
+#endif
 
     /* connect webview signals */
     g_object_connect(G_OBJECT(d->view),
@@ -910,7 +942,12 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
       NULL);
 
+#if WITH_WEBKIT2
+    // TODO was this the right thing to do?
+    g_object_connect(G_OBJECT(d->view),
+#else
     g_object_connect(G_OBJECT(d->win),
+#endif
       "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
       "signal::focus-in-event",                       G_CALLBACK(swin_focus_cb),                w,
       NULL);
@@ -925,7 +962,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     /* show widgets */
     gtk_widget_show(GTK_WIDGET(d->view));
+#if !WITH_WEBKIT2
     gtk_widget_show(GTK_WIDGET(d->win));
+#endif
 
     return w;
 }
