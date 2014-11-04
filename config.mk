@@ -72,9 +72,11 @@ else
 endif
 PKGS += gthread-2.0
 ifeq ($(USE_GTK3),1)
-	PKGS += webkitgtk-3.0
 	ifeq ($(USE_WEBKIT2),1)
 		CPPFLAGS += -DWITH_WEBKIT2
+		PKGS += webkit2gtk-4.0
+	else
+		PKGS += webkitgtk-4.0
 	endif
 else
 	PKGS += webkit-1.0
