@@ -319,9 +319,16 @@ session_authenticate(SoupSession *session, SoupMessage *msg, SoupAuth *auth,
 }
 
 static void
+#if WITH_WEBKIT2
+attach(SoupSessionFeature* UNUSED(manager), SoupSession* UNUSED(session))
+#else
 attach(SoupSessionFeature *manager, SoupSession *session)
+#endif
 {
+#if !WITH_WEBKIT2
+    // TODO not allowed in webkit2?
     g_signal_connect(session, "authenticate", G_CALLBACK(session_authenticate), manager);
+#endif
 }
 
 static void

@@ -22,13 +22,15 @@
 # include <webkit2/webkit2.h>
 #else
 # include <webkit/webkit.h>
+# include <libsoup/soup-message.h>
 #endif
-#include <libsoup/soup-message.h>
 #include <math.h>
 
 #include "globalconf.h"
 #include "widgets/common.h"
-#include "clib/soup/soup.h"
+#if !WITH_WEBKIT2
+# include "clib/soup/soup.h"
+#endif
 #include "common/property.h"
 #include "luah.h"
 

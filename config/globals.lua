@@ -43,11 +43,13 @@ for _, ca_file in ipairs(ca_files) do
 end
 
 -- Change to stop navigation sites with invalid or expired ssl certificates
-soup.ssl_strict = false
+-- TODO
+-- soup.ssl_strict = false
 
 -- Set cookie acceptance policy
 cookie_policy = { always = 0, never = 1, no_third_party = 2 }
-soup.accept_policy = cookie_policy.always
+-- TODO
+--soup.accept_policy = cookie_policy.always
 
 -- List of search engines. Each item must contain a single %s which is
 -- replaced by URI encoded search terms. All other occurances of the percent
