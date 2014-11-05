@@ -54,7 +54,7 @@ typedef struct {
     WebKitWebInspector *inspector;
     /** Inspector webview widget */
     widget_t *iview;
-
+    gboolean is_committed;
 } webview_data_t;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
@@ -279,22 +279,54 @@ update_uri(widget_t *w, const gchar *uri)
     }
 }
 
+#if WITH_WEBKIT2
+static gboolean
+load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
+        gchar *failing_uri, gpointer error, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, failing_uri);
+    lua_pushstring(L, ((GError*) error)->message);
+    gint ret = luaH_object_emit_signal(L, -3, "load-failed", 2, 1);
+    gboolean ignore = ret && lua_toboolean(L, -1);
+    lua_pop(L, ret + 1);
+    return ignore;
+}
+
+static void
+load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
+#else
 static void
 notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
+#endif
 {
+#if !WITH_WEBKIT2
     /* Get load status */
     WebKitLoadStatus s = webkit_web_view_get_load_status(v);
+#endif
 
     /* get load status literal */
     gchar *name = NULL;
+#if WITH_WEBKIT2
+    switch (e) {
+#else
     switch (s) {
+#endif
 
 #define LT_CASE(a, l) case WEBKIT_LOAD_##a: name = l; break;
+#if WITH_WEBKIT2
+        LT_CASE(STARTED,                         "provisional")
+        LT_CASE(REDIRECTED,                      "redirected")
+        LT_CASE(COMMITTED,                       "committed")
+        LT_CASE(FINISHED,                        "finished")
+#else
         LT_CASE(PROVISIONAL,                     "provisional")
         LT_CASE(COMMITTED,                       "committed")
         LT_CASE(FINISHED,                        "finished")
         LT_CASE(FIRST_VISUALLY_NON_EMPTY_LAYOUT, "first-visual")
         LT_CASE(FAILED,                          "failed")
+#endif
 #undef  LT_CASE
 
       default:
@@ -303,8 +335,15 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
     }
 
     /* update uri after redirects & etc */
-    if (s == WEBKIT_LOAD_COMMITTED || s == WEBKIT_LOAD_FINISHED)
+#if WITH_WEBKIT2
+    if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED) {
+        ((webview_data_t*) w->data)->is_committed = TRUE;
         update_uri(w, NULL);
+    }
+#else
+    if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED)
+        update_uri(w, NULL);
+#endif
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -313,6 +352,8 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
     lua_pop(L, 1);
 }
 
+#if WITH_WEBKIT2
+#else
 static gboolean
 resource_request_starting_cb(WebKitWebView* UNUSED(v),
         WebKitWebFrame* UNUSED(f), WebKitWebResource* UNUSED(we),
@@ -336,6 +377,7 @@ resource_request_starting_cb(WebKitWebView* UNUSED(v),
     lua_pop(L, ret + 1);
     return TRUE;
 }
+#endif
 
 #if WITH_WEBKIT2
 // new_window_decision_cb() functionality moved into decide_policy_cb()
@@ -686,12 +728,26 @@ luaH_webview_stop(lua_State *L)
     return 0;
 }
 
-/* check for trusted ssl certificate */
+/* check for trusted ssl certificate
+* make sure this function is called after WEBKIT_LOAD_COMMITTED
+*/
 static gint
 luaH_webview_ssl_trusted(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
     const gchar *uri = webkit_web_view_get_uri(d->view);
+#if WITH_WEBKIT2
+    GTlsCertificate *cert;
+    GTlsCertificateFlags cert_errors;
+    if (uri && d->is_committed &&
+            webkit_web_view_get_tls_info(d->view, &cert, &cert_errors)) {
+        gboolean is_trusted = (cert_errors == 0);
+        if (is_trusted)
+            luaH_warn(L, "webview_ssl_trusted should return true");
+        else
+            luaH_warn(L, "webview_ssl_trusted should return false");
+        lua_pushboolean(L, is_trusted);
+#else
     if (uri && !strncmp(uri, "https", 5)) {
         WebKitWebFrame *frame = webkit_web_view_get_main_frame(d->view);
         WebKitWebDataSource *src = webkit_web_frame_get_data_source(frame);
@@ -1202,6 +1258,8 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
     d->inspector = webkit_web_view_get_inspector(d->view);
 
+    d->is_committed = FALSE;
+
 #if WITH_WEBKIT2
     // TODO does scrollbar hiding need to happen here?
 
@@ -1278,16 +1336,23 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
 #if WITH_WEBKIT2
+      /* notify::load-status -> load-changed */
+      "signal::load-changed",                         G_CALLBACK(load_changed_cb),              w,
+      "signal::load-failed",                          G_CALLBACK(load_failed_cb),               w,
       /* populate-popup -> context-menu */
       "signal::context-menu",                         G_CALLBACK(context_menu_cb),              w,
       /* unrealize/hide GtkMenu -> context-menu-dismissed WebKitWebView */
       "signal::context-menu-dismissed",               G_CALLBACK(hide_popup_cb),                w,
+      /* resource-request-starting -> resource-load-started, but you are
+       * no longer allowed to modify the request. This was never used in the
+       * original luakit anyway. */
+      //"signal::resource-load-started",                G_CALLBACK(resource_load_started_cb),     w,
 #else
       "signal::notify::load-status",                  G_CALLBACK(notify_load_status_cb),        w,
       "signal::populate-popup",                       G_CALLBACK(populate_popup_cb),            w,
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
-#endif
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
+#endif
 #if GTK_CHECK_VERSION(3,0,0)
 #else
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
