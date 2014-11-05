@@ -807,7 +807,8 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       /* push boolean properties */
 #if WITH_WEBKIT2
-      PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_mode(d->view))
+      // TODO this stopped existing...
+      //PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_mode(d->view))
 #else
       PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_source_mode(d->view))
 #endif
@@ -896,8 +897,8 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_VIEW_SOURCE:
       {
 #if WITH_WEBKIT2
-        webkit_web_view_set_view_mode(d->view, luaH_checkboolean(L, 3));
-
+        // TODO this was removed at some point?
+        //webkit_web_view_set_view_mode(d->view, luaH_checkboolean(L, 3));
 #else
         webkit_web_view_set_view_source_mode(d->view, luaH_checkboolean(L, 3));
 #endif
