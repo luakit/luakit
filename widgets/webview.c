@@ -1119,6 +1119,8 @@ populate_popup_cb(WebKitWebView* UNUSED(v), GtkMenu *menu, widget_t *w)
 #endif
 }
 
+#if !WITH_WEBKIT2
+// TODO was anything relying on this?
 static gboolean
 scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
 {
@@ -1131,6 +1133,7 @@ scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
     lua_pop(L, ret + 1);
     return catch;
 }
+#endif
 
 static void
 webview_destructor(widget_t *w)
