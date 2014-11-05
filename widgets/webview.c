@@ -54,6 +54,7 @@ typedef struct {
     WebKitWebInspector *inspector;
     /** Inspector webview widget */
     widget_t *iview;
+    guint htr_context;
     gboolean is_committed;
 } webview_data_t;
 
@@ -467,6 +468,7 @@ create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
 #endif
 }
 
+#if !WITH_WEBKIT2
 static void
 link_hover_cb(WebKitWebView* UNUSED(v), const gchar* UNUSED(t),
         const gchar *link, widget_t *w)
@@ -496,6 +498,7 @@ link_hover_cb(WebKitWebView* UNUSED(v), const gchar* UNUSED(t),
     luaH_object_emit_signal(L, -1, "property::hovered_uri", 0, 0);
     lua_pop(L, 1);
 }
+#endif
 
 #if WITH_WEBKIT2
 static gboolean
@@ -931,13 +934,58 @@ expose_cb(GtkWidget* UNUSED(widget), GdkEventExpose* UNUSED(e), widget_t *w)
     return FALSE;
 }
 
+#if WITH_WEBKIT2
+static void
+mouse_target_changed_cb(WebKitWebView* UNUSED(v), WebKitHitTestResult *htr,
+        guint UNUSED(modifiers), widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
+    d->htr_context = webkit_hit_test_result_get_context(htr);
+
+    if (webkit_hit_test_result_context_is_link(htr)) {
+        const char *link = webkit_hit_test_result_get_link_uri(htr);
+        /* links are identical, do nothing */
+        if (d->hover && !g_strcmp0(d->hover, link))
+            return;
+
+        luaH_object_push(L, w->ref);
+
+        if (d->hover) {
+            lua_pushstring(L, d->hover);
+            g_free(d->hover);
+            luaH_object_emit_signal(L, -2, "link-unhover", 1, 0);
+        }
+
+        if (link) {
+            d->hover = g_strdup(link);
+            lua_pushstring(L, d->hover);
+            luaH_object_emit_signal(L, -2, "link-hover", 1, 0);
+        } else
+            d->hover = NULL;
+
+        luaH_object_emit_signal(L, -1, "property::hovered_uri", 0, 0);
+        lua_pop(L, 1);
+    }
+    return;
+}
+#endif
+
 static gint
+#if WITH_WEBKIT2
+luaH_push_hit_test(lua_State *L, WebKitWebView* UNUSED(v), widget_t *w)
+#else
 luaH_push_hit_test(lua_State *L, WebKitWebView *v, GdkEventButton *ev)
+#endif
 {
     /* get hit test */
+#if WITH_WEBKIT2
+    guint c = ((webview_data_t*) w->data)->htr_context;
+#else
     WebKitHitTestResult *h = webkit_web_view_get_hit_test_result(v, ev);
     guint c;
     g_object_get(h, "context", &c, NULL);
+#endif
 
     /* create new table to store hit test context data */
     lua_newtable(L);
@@ -956,8 +1004,13 @@ luaH_push_hit_test(lua_State *L, WebKitWebView *v, GdkEventButton *ev)
     HTR_CHECK(LINK,      "link")
     HTR_CHECK(IMAGE,     "image")
     HTR_CHECK(MEDIA,     "media")
+#if WITH_WEBKIT2
+    HTR_CHECK(EDITABLE,  "editable")
+    HTR_CHECK(SCROLLBAR, "scrollbar")
+#else
     HTR_CHECK(SELECTION, "selection")
     HTR_CHECK(EDITABLE,  "editable")
+#endif
 
 #undef HTR_CHECK
 
@@ -973,7 +1026,11 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
     luaH_modifier_table_push(L, ev->state);
     lua_pushinteger(L, ev->button);
     /* push webview hit test context */
+#if WITH_WEBKIT2
+    luaH_push_hit_test(L, WEBKIT_WEB_VIEW(view), w);
+#else
     luaH_push_hit_test(L, WEBKIT_WEB_VIEW(view), ev);
+#endif
 
     switch (ev->type) {
       case GDK_2BUTTON_PRESS:
@@ -1323,7 +1380,12 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #else
       "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
 #endif
+#if WITH_WEBKIT2
+      /* hovering-over-link functionality covered by mouse_target_changed_cb */
+      "signal::mouse-target-changed",                 G_CALLBACK(mouse_target_changed_cb),      w,
+#else
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
+#endif
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
 #if WITH_WEBKIT2
       /* {mime-type,navigation,new-window}-policy-decision-requested covered
