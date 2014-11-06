@@ -403,10 +403,10 @@ chrome.add("history", function (view, meta)
 
     function on_first_visual(_, status)
         -- Wait for new page to be created
-        if status ~= "first-visual" then return end
+        if status ~= "finished" then return end
 
         -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
+        view:remove_signal("load-changed", on_first_visual)
 
         -- Double check that we are where we should be
         if view.uri ~= meta.uri then return end
@@ -430,7 +430,7 @@ chrome.add("history", function (view, meta)
         assert(not err, err)
     end
 
-    view:add_signal("load-status", on_first_visual)
+    view:add_signal("load-changed", on_first_visual)
 end)
 
 -- Prevent history items from turning up in history

@@ -99,7 +99,7 @@ function webview.methods.toggle_remove(view, w)
 end
 
 webview.init_funcs.noscript_load = function (view)
-    view:add_signal("load-status", function (v, status)
+    view:add_signal("load-changed", function (v, status)
         if status ~= "committed" or v.uri == "about:blank" then return end
         local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
         local domain = get_domain(v.uri)

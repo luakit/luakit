@@ -349,7 +349,11 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     lua_pushstring(L, name);
+#if WITH_WEBKIT2
+    luaH_object_emit_signal(L, -2, "load-changed", 1, 0);
+#else
     luaH_object_emit_signal(L, -2, "load-status", 1, 0);
+#endif
     lua_pop(L, 1);
 }
 

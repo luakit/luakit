@@ -42,7 +42,7 @@ webview.init_funcs = {
 
     -- Update history indicator
     hist_update = function (view, w)
-        view:add_signal("load-status", function (v, status)
+        view:add_signal("load-changed", function (v, status)
             if w.view == v then
                 w:update_hist()
             end
@@ -51,8 +51,8 @@ webview.init_funcs = {
 
     -- Update tab titles
     tablist_update = function (view, w)
-        view:add_signal("load-status", function (v, status)
-            if status == "provisional" or status == "finished" or status == "failed" then
+        view:add_signal("load-changed", function (v, status)
+            if status == "provisional" or status == "redirected" or status == "finished" then
                 w:update_tablist()
             end
         end)
@@ -69,7 +69,7 @@ webview.init_funcs = {
 
     -- Update progress widget
     progress_update = function (view, w)
-        for _, sig in ipairs({"load-status", "property::progress"}) do
+        for _, sig in ipairs({"load-changed", "property::progress"}) do
             view:add_signal(sig, function (v)
                 if w.view == v then
                     w:update_progress()
@@ -144,7 +144,7 @@ webview.init_funcs = {
 
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view, w)
-        view:add_signal("load-status", function (v, status)
+        view:add_signal("load-changed", function (v, status)
             if status == "provisional" and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
@@ -155,7 +155,7 @@ webview.init_funcs = {
 
     -- Domain properties
     domain_properties = function (view, w)
-        view:add_signal("load-status", function (v, status)
+        view:add_signal("load-changed", function (v, status)
             if status ~= "committed" or v.uri == "about:blank" then return end
             -- Get domain
             local domain = lousy.uri.parse(v.uri).host
