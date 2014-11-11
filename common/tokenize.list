@@ -102,6 +102,11 @@ left
 loading
 loading_chrome
 load_string
+margin
+margin_top
+margin_bottom
+margin_left
+margin_right
 max_conns
 max_conns_per_host
 maximized
@@ -117,7 +122,6 @@ open
 pack
 pack1
 pack2
-padding
 path
 pictures_dir
 plugged

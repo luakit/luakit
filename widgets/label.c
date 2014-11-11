@@ -21,6 +21,10 @@
 #include "luah.h"
 #include "widgets/common.h"
 
+#if GTK_CHECK_VERSION(3,14,0)
+/* align and padding deprecated. Use margin and alignment properties of
+ * GtkWidgets instead. */
+#else
 static gint
 luaH_label_get_align(lua_State *L, widget_t *w)
 {
@@ -96,6 +100,7 @@ luaH_label_set_padding(lua_State *L, widget_t *w)
     gtk_misc_set_padding(GTK_MISC(w->widget), xpad, ypad);
     return 0;
 }
+#endif
 
 static gint
 luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
@@ -103,11 +108,14 @@ luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
+#if GTK_CHECK_VERSION(3,14,0)
+#else
       case L_TK_PADDING:
         return luaH_label_get_padding(L, w);
 
       case L_TK_ALIGN:
         return luaH_label_get_align(L, w);
+#endif
 
       /* push string properties */
       PS_CASE(FG,               g_object_get_data(G_OBJECT(w->widget), "fg"))
@@ -139,11 +147,14 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
+#if GTK_CHECK_VERSION(3,14,0)
+#else
       case L_TK_PADDING:
         return luaH_label_set_padding(L, w);
 
       case L_TK_ALIGN:
         return luaH_label_set_align(L, w);
+#endif
 
       case L_TK_TEXT:
         gtk_label_set_markup(GTK_LABEL(w->widget),
@@ -214,8 +225,16 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
     /* setup default settings */
     gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);
     gtk_label_set_use_markup(GTK_LABEL(w->widget), TRUE);
+#if GTK_CHECK_VERSION(3,14,0)
+    // TODO does an alignment equivalent need to be specified?
+    GValue margin = G_VALUE_INIT;
+    g_value_init(&margin, G_TYPE_INT);
+    g_value_set_int(&margin, 2);
+    g_object_set_property(G_OBJECT(w->widget), "margin", &margin);
+#else
     gtk_misc_set_alignment(GTK_MISC(w->widget), 0, 0);
     gtk_misc_set_padding(GTK_MISC(w->widget), 2, 2);
+#endif
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
