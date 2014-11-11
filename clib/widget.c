@@ -20,6 +20,16 @@
  */
 
 #include "clib/widget.h"
+#include "common/property.h"
+
+property_t widget_properties[] = {
+  { L_TK_MARGIN,            "margin",            INT,    TRUE  },
+  { L_TK_MARGIN_TOP,        "margin-top",        INT,    TRUE  },
+  { L_TK_MARGIN_BOTTOM,     "margin-bottom",     INT,    TRUE  },
+  { L_TK_MARGIN_LEFT,       "margin-left",       INT,    TRUE  },
+  { L_TK_MARGIN_RIGHT,      "margin-right",      INT,    TRUE  },
+  { 0,                      NULL,                0,      0     },
+};
 
 widget_info_t widgets_list[] = {
   { L_TK_ENTRY,     "entry",    widget_entry    },
@@ -90,7 +100,15 @@ luaH_widget_index(lua_State *L)
         return 1;
 
     /* Then call special widget index */
+    gint ret;
     widget_t *widget = luaH_checkudata(L, 1, &widget_class);
+
+    /* but only if it's not a GtkWidget property */
+    if ((ret = luaH_gobject_index(L, widget_properties, token,
+                    G_OBJECT(widget->widget)))) {
+        return ret;
+    }
+
     return widget->index ? widget->index(L, widget, token) : 0;
 }
 
@@ -109,6 +127,12 @@ luaH_widget_newindex(lua_State *L)
 
     /* Then call special widget newindex */
     widget_t *widget = luaH_checkudata(L, 1, &widget_class);
+
+    /* but only if it's not a GtkWidget property */
+    gboolean emit = luaH_gobject_newindex(L, widget_properties, token, 3,
+            G_OBJECT(widget->widget));
+    if (emit)
+        return luaH_object_property_signal(L, 1, token);
     return widget->newindex ? widget->newindex(L, widget, token) : 0;
 }
 

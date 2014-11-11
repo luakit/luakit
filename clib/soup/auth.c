@@ -111,7 +111,14 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
         const gchar *value, gpointer UNUSED(user_data))
 {
     GtkWidget *label = gtk_label_new(label_text);
+#if GTK_CHECK_VERSION(3,14,0)
+    GValue align = G_VALUE_INIT;
+    g_value_init(&align, G_TYPE_ENUM);
+    g_value_set_int(&align, GTK_ALIGN_CENTER);
+    g_object_set_property(G_OBJECT(label), "halign", &align);
+#else
     gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
+#endif
 #if GTK_CHECK_VERSION(3,0,0)
     gtk_widget_set_vexpand(GTK_WIDGET(label), TRUE);
 #endif
@@ -206,7 +213,15 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     GtkWidget *icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
 #endif
 
+#if GTK_CHECK_VERSION(3,14,0)
+    GValue align = G_VALUE_INIT;
+    g_value_init(&align, G_TYPE_ENUM);
+    g_value_set_int(&align, GTK_ALIGN_CENTER);
+    g_object_set_property(G_OBJECT(hbox), "halign", &align);
+#else
     gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
+#endif
+
 #if GTK_CHECK_VERSION(3,0,0)
     gtk_grid_attach(GTK_GRID(hbox), icon, 0,0,1,2);
 #else
@@ -224,7 +239,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gchar *msg = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
+#if GTK_CHECK_VERSION(3,14,0)
+    g_object_set_property(G_OBJECT(msg_label), "halign", &align);
+#else
     gtk_misc_set_alignment(GTK_MISC(msg_label), 0.0, 0.5);
+#endif
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
 #if GTK_CHECK_VERSION(3,0,0)
     GValue max_width_chars = G_VALUE_INIT;
