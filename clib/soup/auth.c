@@ -172,14 +172,18 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     /* set dialog properties */
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,12,0)
+    // TODO
+#else
+# if GTK_CHECK_VERSION(3,0,0)
     gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
     gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
     gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_action_area(dialog)), 6);
-#else
+# else
     gtk_box_set_spacing(GTK_BOX(dialog->vbox), 2);
     gtk_container_set_border_width(GTK_CONTAINER(dialog->action_area), 5);
     gtk_box_set_spacing(GTK_BOX(dialog->action_area), 6);
+# endif
 #endif
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
