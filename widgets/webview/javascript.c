@@ -326,6 +326,7 @@ luaJS_register_function(JSContextRef context, const gchar *name, gpointer ref)
     JSClassRelease(class);
 }
 
+#if !WITH_WEBKIT2
 static gint
 luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script,
         const gchar *source, bool no_return)
@@ -367,6 +368,7 @@ luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script,
     g_free(error);
     return 2;
 }
+#endif
 
 static gint
 luaH_webview_register_function(lua_State *L)
@@ -481,11 +483,13 @@ luaH_webview_eval_js(lua_State *L)
         frame = webkit_web_view_get_main_frame(d->view);
 #endif
 
-    /* evaluate javascript script and push return result onto lua stack */
 #if WITH_WEBKIT2
+    /* evaluate javascript script */
+    luaH_warn(L, "running javascript...");
     webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, d);
     //JSGlobalContextRef context = webkit_web_view_get_javascript_global_context(d->view);
 #else
+    /* evaluate javascript script and push return result onto lua stack */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
 
     gint ret = luaJS_eval_js(L, context, script,
