@@ -160,7 +160,7 @@ pre { border-top: 1px solid #aaa; border-bottom: 1px solid #aaa;
 
 -- Catch all navigations to the luakit:// scheme
 webview.init_funcs.chrome = function (view, w)
-    view:add_signal("navigation-request", function (_, uri)
+    view:add_signal("luakit-chrome", function (_, uri)
         -- Match "luakit://page/path"
         local page, path = string.match(uri, "^luakit://([^/]+)/?(.*)")
         if not page then return end
@@ -173,23 +173,24 @@ webview.init_funcs.chrome = function (view, w)
 
             -- Render error output in webview with traceback
             local function error_handler(err)
-                view:load_string(string.format(error_html, uri,
-                    debug.traceback(err, 2)), uri)
+                return string.format(error_html, uri,
+                    debug.traceback(err, 2))
             end
 
             -- Call luakit:// page handler
-            local ok, err = xpcall(function () return func(view, meta) end,
+            local ok, html = xpcall(function () return func(view, meta) end,
                 error_handler)
 
-            if not ok or err ~= false then
+            if not ok or not err then
                 -- Stop the navigation request
-                return false
+                return "<p>some error I haven't handled yet TODO fixme</p>"
             end
+            return html
         end
 
         -- Load blank error page
-        view:load_string("<p>No chrome handler for: <big><code>" .. uri
-            .. "</code></big></p>", uri)
+        return "<p>No chrome handler for: <big><code>" .. uri
+            .. "</code></big></p>"
     end)
 end
 

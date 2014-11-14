@@ -366,8 +366,6 @@ downloads.add_signal("status-tick", function (running)
 end)
 
 chrome.add("downloads", function (view, meta)
-    view:load_string(html, "luakit://downloads/")
-
     function on_first_visual(_, status)
         -- Wait for new page to be created
         if status ~= "finished" then return end
@@ -378,6 +376,7 @@ chrome.add("downloads", function (view, meta)
         -- Double check that we are where we should be
         if view.uri ~= "luakit://downloads/" then return end
 
+        -- TODO broken
         -- Export luakit JS<->Lua API functions
         for name, func in pairs(export_funcs) do
             view:register_function(name, func)
@@ -394,6 +393,7 @@ chrome.add("downloads", function (view, meta)
     end
 
     view:add_signal("load-changed", on_first_visual)
+    return html
 end)
 
 local page = "luakit://downloads/"

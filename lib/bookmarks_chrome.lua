@@ -503,8 +503,6 @@ chrome.add("bookmarks", function (view, meta)
 
     local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
 
-    view:load_string(html, uri)
-
     function on_first_visual(_, status)
         -- Wait for new page to be created
         if status ~= "finished" then return end
@@ -515,6 +513,7 @@ chrome.add("bookmarks", function (view, meta)
         -- Double check that we are where we should be
         if view.uri ~= uri then return end
 
+        -- TODO broken
         -- Export luakit JS<->Lua API functions
         for name, func in pairs(export_funcs) do
             view:register_function(name, func)
@@ -529,12 +528,14 @@ chrome.add("bookmarks", function (view, meta)
         local _, err = view:eval_js(jquery, { no_return = true })
         assert(not err, err)
 
-        -- Load main luakit://download/ JavaScript
+        -- Load main luakit://bookmarks/ JavaScript
         local _, err = view:eval_js(main_js, { no_return = true })
         assert(not err, err)
     end
 
     view:add_signal("load-changed", on_first_visual)
+    print("lua side: bookmarks_chrome.lua")
+    return html
 end)
 
 chrome_page = "luakit://bookmarks/"

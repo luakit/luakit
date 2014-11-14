@@ -1294,6 +1294,33 @@ swin_focus_cb(GtkWidget *UNUSED(wi), GdkEventFocus *UNUSED(e), widget_t *w)
     gtk_widget_grab_focus(GTK_WIDGET(d->view));
 }
 
+#if WITH_WEBKIT2
+void
+luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, widget_t *w)
+{
+    const gchar *uri = webkit_uri_scheme_request_get_uri(request);
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushstring(L, uri);
+    gint ret = luaH_object_emit_signal(L, -2, "luakit-chrome", 1, 1);
+    if (ret) {
+        GInputStream *gis;
+        if (lua_isstring(L, -1)) {
+            const gchar *html = lua_tostring(L, -1);
+            gis = g_memory_input_stream_new_from_data(html, -1, NULL);
+            webkit_uri_scheme_request_finish(request, gis, -1, "text/html");
+        } else {
+            luaH_warn(L, "luakit_uri_scheme_request_cb(): no return values");
+            // TODO better GError*?
+            webkit_uri_scheme_request_finish_error(request, NULL);
+        }
+    }
+    lua_pop(L, ret + 1);
+    return;
+}
+#endif
+
 widget_t *
 widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 {
@@ -1323,6 +1350,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->is_committed = FALSE;
 
 #if WITH_WEBKIT2
+    webkit_web_context_register_uri_scheme(webkit_web_view_get_context(d->view),
+            "luakit", (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb, w, NULL);
+
     // TODO does scrollbar hiding need to happen here?
 
     w->widget = GTK_WIDGET(d->view);

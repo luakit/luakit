@@ -392,8 +392,6 @@ export_funcs = {
 }
 
 chrome.add("help", function (view, meta)
-    view:load_string(html, meta.uri)
-
     function on_first_visual(_, status)
         -- Wait for new page to be created
         if status ~= "finished" then return end
@@ -404,6 +402,7 @@ chrome.add("help", function (view, meta)
         -- Double check that we are where we should be
         if view.uri ~= meta.uri then return end
 
+        -- TODO broken
         -- Export luakit JS<->Lua API functions
         for name, func in pairs(export_funcs) do
             view:register_function(name, func)
@@ -414,12 +413,13 @@ chrome.add("help", function (view, meta)
         local _, err = view:eval_js(jquery, { no_return = true })
         assert(not err, err)
 
-        -- Load main luakit://download/ JavaScript
+        -- Load main luakit://help/ JavaScript
         local _, err = view:eval_js(main_js, { no_return = true })
         assert(not err, err)
     end
 
     view:add_signal("load-changed", on_first_visual)
+    return html
 end)
 
 local cmd = lousy.bind.cmd
