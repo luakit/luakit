@@ -512,6 +512,17 @@ decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
     lua_State *L = globalconf.L;
 
     switch (type) {
+/* Raises the "navigation-request" signal on a webkit navigation policy
+ * decision request. The default action is to load the requested uri.
+ *
+ * The signal handler is able to:
+ *  - return true for the handler execution to stop and the request to continue
+ *  - return false for the handler execution to stop and the request to hault
+ *  - do nothing and give the navigation decision to the next signal handler
+ *
+ * This signal is also where you would attach custom scheme handlers to take
+ * over the navigation request by launching an external application.
+ */
       case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
       {
           gint top = lua_gettop(L);
