@@ -1400,7 +1400,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     // TODO belongs in widgets/webcontext.c or something
     // replaces download-requested signal
     g_object_connect(G_OBJECT(webkit_web_view_get_context(d->view)),
-      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::download-started",                     G_CALLBACK(download_start_cb),            w,
       NULL);
 
@@ -1469,7 +1468,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
 #if WITH_WEBKIT2
     g_object_connect(G_OBJECT(webkit_web_view_get_find_controller(d->view)),
-      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::found-text",                           G_CALLBACK(found_text_cb),                w,
       "signal::failed-to-find-text",                  G_CALLBACK(failed_to_find_text_cb),       w,
       NULL);
