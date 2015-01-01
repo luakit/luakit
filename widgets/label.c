@@ -226,11 +226,8 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
     gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);
     gtk_label_set_use_markup(GTK_LABEL(w->widget), TRUE);
 #if GTK_CHECK_VERSION(3,14,0)
-    GValue alignment = G_VALUE_INIT;
-    g_value_init(&alignment, G_TYPE_ENUM);
-    g_value_set_enum(&alignment, GTK_ALIGN_START);
-    g_object_set_property(G_OBJECT(w->widget), "halign", &alignment);
-    g_object_set_property(G_OBJECT(w->widget), "valign", &alignment);
+    gtk_widget_set_halign(GTK_WIDGET(w->widget), GTK_ALIGN_START);
+    gtk_widget_set_valign(GTK_WIDGET(w->widget), GTK_ALIGN_START);
 
     GValue margin = G_VALUE_INIT;
     g_value_init(&margin, G_TYPE_INT);
