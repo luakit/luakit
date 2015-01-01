@@ -187,7 +187,13 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
 
     /* setup default settings */
 #if GTK_CHECK_VERSION(3,4,0)
-    gtk_entry_set_has_frame(GTK_ENTRY(w->widget), FALSE);
+    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
+    const gchar *inputbar_css = "GtkEntry {border: none; padding: 2px;}";
+
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(provider, inputbar_css, strlen(inputbar_css), NULL);
+
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 #else
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
 #endif
