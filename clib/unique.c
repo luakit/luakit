@@ -1,6 +1,7 @@
 /*
  * clib/unique.c - libunique bindings for writing single instance
- * applications
+ * applications if built against GTK2, and the equivalent using
+ * GApplications if built against GTK3.
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -85,13 +86,19 @@ message_cb(UniqueApp* UNUSED(a), gint id, UniqueMessageData *message_data,
 static gint
 luaH_unique_new(lua_State *L)
 {
+#if GTK_CHECK_VERSION(3,0,0)
+    if (application && g_application_get_is_registered(G_APPLICATION(application)))
+        luaL_error(L, "GApplication already setup");
+#else
     if (application)
         luaL_error(L, "unique app already setup");
+#endif
 
     const gchar *name = luaL_checkstring(L, 1);
 #if GTK_CHECK_VERSION(3,0,0)
     GError *error = NULL;
-    application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
+    if (!application)
+        application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
 
     g_application_register(G_APPLICATION(application), NULL, &error);
     if (error != NULL) {
@@ -120,11 +127,12 @@ static gint
 luaH_unique_is_running(lua_State *L)
 {
 #if GTK_CHECK_VERSION(3,0,0)
-    if (!application && g_application_get_is_registered(G_APPLICATION(application)))
+    if (!application || !g_application_get_is_registered(G_APPLICATION(application)))
+        luaL_error(L, "GApplication is not registered");
 #else
     if (!application)
-#endif
         luaL_error(L, "unique app not setup");
+#endif
 
 #if GTK_CHECK_VERSION(3,0,0)
     gboolean running = g_application_get_is_remote(G_APPLICATION(application));
@@ -146,11 +154,12 @@ static gint
 luaH_unique_send_message(lua_State *L)
 {
 #if GTK_CHECK_VERSION(3,0,0)
-    if (!application && g_application_get_is_registered(G_APPLICATION(application)))
+    if (!application || !g_application_get_is_registered(G_APPLICATION(application)))
+        luaL_error(L, "GApplication is not registered");
 #else
     if (!application)
-#endif
         luaL_error(L, "unique app not setup");
+#endif
 
 #if GTK_CHECK_VERSION(3,0,0)
     if (!g_application_get_is_remote(G_APPLICATION(application)))

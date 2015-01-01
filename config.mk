@@ -87,7 +87,11 @@ PKGS += $(LUA_PKG_NAME)
 # For systems using older WebKit-GTK versions which bundle JavaScriptCore
 # within the WebKit-GTK package.
 ifneq ($(NO_JAVASCRIPTCORE),1)
+ifeq ($(USE_GTK3),1)
+	PKGS += javascriptcoregtk-3.0
+else
 	PKGS += javascriptcoregtk-1.0
+endif
 endif
 
 # Build luakit with single instance support?

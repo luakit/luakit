@@ -173,7 +173,10 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     /* set dialog properties */
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
 #if GTK_CHECK_VERSION(3,12,0)
-    // TODO
+    GValue button_spacing = G_VALUE_INIT;
+    g_value_init(&button_spacing, G_TYPE_INT);
+    g_value_set_int(&button_spacing, 6);
+    g_object_set_property(G_OBJECT(dialog), "button-spacing", &button_spacing);
 #else
 # if GTK_CHECK_VERSION(3,0,0)
     gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);

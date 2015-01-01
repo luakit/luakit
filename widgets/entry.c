@@ -187,6 +187,13 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
 
     /* setup default settings */
 #if GTK_CHECK_VERSION(3,4,0)
+    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
+    const gchar *inputbar_css = "GtkEntry {border: none; padding: 2px;}";
+
+    GtkCssProvider *provider = gtk_css_provider_new();
+    gtk_css_provider_load_from_data(provider, inputbar_css, strlen(inputbar_css), NULL);
+
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 #else
     gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
 #endif
@@ -196,20 +203,12 @@ widget_entry(widget_t *w, luakit_token_t UNUSED(token))
       "signal::activate",                          G_CALLBACK(activate_cb),   w,
       "signal::key-press-event",                   G_CALLBACK(key_press_cb),  w,
       "signal::notify::cursor-position",           G_CALLBACK(position_cb),   w,
-      // The following signals replace the old "signal::changed", since that
-      // does not allow for the selection to be changed in it's callback.
-      "swapped-signal-after::backspace",           G_CALLBACK(changed_cb),    w,
-      "swapped-signal-after::delete-from-cursor",  G_CALLBACK(changed_cb),    w,
-      "swapped-signal-after::insert-at-cursor",    G_CALLBACK(changed_cb),    w,
-      "swapped-signal-after::paste-clipboard",     G_CALLBACK(changed_cb),    w,
-      "swapped-signal::button-release-event",      G_CALLBACK(changed_cb),    w,
       NULL);
 
     // Further signal to replace "signal::changed"
 #if GTK_CHECK_VERSION(3,0,0)
-    // TODO not quite the same
     g_object_connect(G_OBJECT(w->widget),
-      "swapped-signal::activate", G_CALLBACK(changed_cb), w,
+      "swapped-signal::changed", G_CALLBACK(changed_cb), w,
       NULL);
 #else
     GtkEntry* entry = GTK_ENTRY(w->widget);
