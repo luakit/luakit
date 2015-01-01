@@ -444,10 +444,9 @@ window.methods = {
         if input.bg ~= bg then input.bg = bg end
         -- Set text or remain hidden
         if text then
-            input.text = ""
+            input.text = text
             input:show()
             input:focus()
-            input.text = text
             input.position = opts.pos or -1
         end
     end,

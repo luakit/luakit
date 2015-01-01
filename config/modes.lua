@@ -47,6 +47,7 @@ window.init_funcs.modes_setup = function (w)
 
         -- Call new modes enter hook.
         if mode.enter then mode.enter(w, ...) end
+        w.last_mode_entered = mode
 
         w:emit_signal("mode-entered", mode)
     end)
@@ -56,7 +57,16 @@ window.init_funcs.modes_setup = function (w)
     -- Calls the changed hook on input widget changed.
     input:add_signal("changed", function ()
         local changed = w.mode.changed
-        if changed then changed(w, input.text) end
+        -- the w:set_input() in normal mode's enter function would create a
+        -- changed signal which would run before the next mode's enter
+        -- function, usually causing a change back to normal mode before the
+        -- next mode's enter function actually ran.
+        -- here, we only run the changed callback if the current mode matches
+        -- the last mode entered.
+        print("changed signal raised with text " .. input.text)
+        if changed and w.last_mode_entered == w.mode then
+            changed(w, input.text)
+        end
     end)
 
     input:add_signal("property::position", function ()
