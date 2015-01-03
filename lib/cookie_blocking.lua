@@ -5,8 +5,8 @@
 
 require "cookies"
 
-cookies.whitelist_path = luakit.config_dir .. "/cookie.whitelist"
-cookies.blacklist_path = luakit.config_dir .. "/cookie.blacklist"
+cookies.whitelist_path = luakit.data_dir .. "/cookie.whitelist"
+cookies.blacklist_path = luakit.data_dir .. "/cookie.blacklist"
 
 local cache = {}
 
