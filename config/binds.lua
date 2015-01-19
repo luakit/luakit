@@ -12,6 +12,7 @@ local strip, split = lousy.util.string.strip, lousy.util.string.split
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
+local page_step = globals.page_step or 1.0
 local zoom_step = globals.zoom_step or 0.1
 
 -- Add binds to a mode
@@ -199,25 +200,25 @@ add_binds("normal", {
         function (w) w:scroll{ ypagerel = -0.5 } end),
 
     key({"Control"}, "f", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
+        function (w) w:scroll{ ypagerel =  page_step } end),
 
     key({"Control"}, "b", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "space", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
+        function (w) w:scroll{ ypagerel =  page_step } end),
 
     key({"Shift"}, "space", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "BackSpace", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "Page_Down", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
+        function (w) w:scroll{ ypagerel =  page_step } end),
 
     key({}, "Page_Up", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "Home", "Go to the end of the document.",
         function (w) w:scroll{ y =  0 } end),
