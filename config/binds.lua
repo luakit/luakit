@@ -269,7 +269,7 @@ add_binds("normal", {
     key({}, "F11", "Toggle fullscreen mode.",
         function (w) w.win.fullscreen = not w.win.fullscreen end),
 
-    -- Clipboard
+    -- Open primary selection contents.
     buf("^pp$", [[Open a URL based on the current primary selection contents
         in the current tab.]],
         function (w)
@@ -294,6 +294,7 @@ add_binds("normal", {
             window.new{w:search_open(uri)}
         end),
 
+    -- Open clipboard contents.
     buf("^PP$", [[Open a URL based on the current clipboard selection contents
         in the current tab.]],
         function (w)
@@ -312,7 +313,7 @@ add_binds("normal", {
 
     buf("^PW$", [[Open a URL based on the current clipboard selection contents
         in a new window.]],
-        function(w, m)
+        function(w)
             local uri = luakit.selection.clipboard
             if not uri then w:notify("Nothing in clipboard...") return end
             window.new{w:search_open(uri)}
