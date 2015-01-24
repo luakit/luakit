@@ -77,10 +77,9 @@ follow_js = [=[
                    || (left = r.left) > win_w || (right  = r.right)  < 0)
                continue;
 
-			var style = window.getComputedStyle(e);
-
-		    if (style.display === 'none' || style.visibility === 'hidden' )
-				continue;
+            var style = window.getComputedStyle(e);
+            if (style.display === 'none' || style.visibility === 'hidden')
+                continue;
 
             hints[j++] = { element: e, tag: e.tagName,
                 left: left, top: top,
