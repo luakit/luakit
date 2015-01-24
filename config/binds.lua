@@ -532,6 +532,16 @@ add_cmds({
             end
         end),
 
+    key({"Control"}, "Return",
+        [[Expand `:[tab,win]open example` to `:[tab,win]open www.example.com`.]],
+        function (w)
+            local tokens = split(w.ibar.input.text, "%s+")
+            if string.match(tokens[1], "^:%w*open$") and #tokens == 2 then
+                w:enter_cmd(string.format("%s www.%s.com", tokens[1], tokens[2]))
+            end
+            w:activate()
+        end),
+
     cmd("c[lose]", "Close current tab.",
         function (w) w:close_tab() end),
 
@@ -627,23 +637,6 @@ add_cmds({
                 w:notify("Dumped HTML to: " .. file)
             end
         end),
-})
-
-add_binds("command", {
-    -- Expand ':[tab,win]open example' to ':[tab,win]open www.example.com'
-    -- when Ctrl+Return is pressed
-    key({"Control"},    "Return",   function (w)
-        local tld = "com" -- The top level domain to be used on completion
-        local input_tokens = split(w.ibar.input.text, "%s+")
-        if string.match(input_tokens[1], "^:%w*open$") and #input_tokens == 2 then 
-            local command = string.format("%s www.%s.%s",
-                input_tokens[1],
-                input_tokens[2],
-                tld)
-            w:enter_cmd(command)
-        end
-        w:activate()
-    end)
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
