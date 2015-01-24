@@ -220,10 +220,10 @@ add_binds("normal", {
     key({}, "Page_Up", "Scroll page up.",
         function (w) w:scroll{ ypagerel = -page_step } end),
 
-    key({}, "Home", "Go to the end of the document.",
+    key({}, "Home", "Go to the top of the document.",
         function (w) w:scroll{ y =  0 } end),
 
-    key({}, "End", "Go to the top of the document.",
+    key({}, "End", "Go to the end of the document.",
         function (w) w:scroll{ y = -1 } end),
 
     -- Specific scroll
