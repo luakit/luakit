@@ -270,7 +270,7 @@ add_binds("normal", {
         function (w) w.win.fullscreen = not w.win.fullscreen end),
 
     -- Clipboard
-    key({}, "p", [[Open a URL based on the current primary selection contents
+    buf("^pp$", [[Open a URL based on the current primary selection contents
         in the current tab.]],
         function (w)
             local uri = luakit.selection.primary
@@ -278,13 +278,45 @@ add_binds("normal", {
             w:navigate(w:search_open(uri))
         end),
 
-    key({}, "P", [[Open a URL based on the current primary selection contents
+    buf("^pt$", [[Open a URL based on the current primary selection contents
         in `[count=1]` new tab(s).]],
-        function (w, m)
+        function (w, b, m)
             local uri = luakit.selection.primary
             if not uri then w:notify("No primary selection...") return end
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
+
+    buf("^pw$", [[Open a URL based on the current primary selection contents in
+        a new window.]],
+        function(w, m)
+            local uri = luakit.selection.primary
+            if not uri then w:notify("No primary selection...") return end
+            window.new{w:search_open(uri)}
+        end),
+
+    buf("^PP$", [[Open a URL based on the current clipboard selection contents
+        in the current tab.]],
+        function (w)
+            local uri = luakit.selection.clipboard
+            if not uri then w:notify("Nothing in clipboard...") return end
+            w:navigate(w:search_open(uri))
+        end),
+
+    buf("^PT$", [[Open a URL based on the current clipboard selection contents
+        in `[count=1]` new tab(s).]],
+        function (w, b, m)
+            local uri = luakit.selection.clipboard
+            if not uri then w:notify("Nothing in clipboard...") return end
+            for i = 1, m.count do w:new_tab(w:search_open(uri)) end
+        end, {count = 1}),
+
+    buf("^PW$", [[Open a URL based on the current clipboard selection contents
+        in a new window.]],
+        function(w, m)
+            local uri = luakit.selection.clipboard
+            if not uri then w:notify("Nothing in clipboard...") return end
+            window.new{w:search_open(uri)}
+        end),
 
     -- Yanking
     key({}, "y", "Yank current URI to primary selection.",
@@ -292,6 +324,13 @@ add_binds("normal", {
             local uri = string.gsub(w.view.uri or "", " ", "%%20")
             luakit.selection.primary = uri
             w:notify("Yanked uri: " .. uri)
+        end),
+
+    key({}, "Y", "Yank current URI to clipboard.",
+        function (w)
+            local uri = string.gsub(w.view.uri or "", " ", "%%20")
+            luakit.selection.clipboard = uri
+            w:notify("Yanked uri (to clipboard): " .. uri)
         end),
 
     -- Commands
