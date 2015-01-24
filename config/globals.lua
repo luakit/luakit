@@ -13,6 +13,8 @@ globals = {
  -- load_etc_hosts      = false,
  -- Disables checking if a filepath exists in search_open function
  -- check_filepath      = false,
+ -- Specify your preferred terminal emulator
+ -- term                = "urxvt",
 }
 
 -- Make useragent
