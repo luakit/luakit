@@ -18,6 +18,20 @@ local function label()    return widget{type="label"}    end
 local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
 
+-- Prepares a GUI sub-layout.
+local function in_layout(sub_gui_elem, layout)
+   local sge = sub_gui_elem
+   sge.layout = layout
+   sge.ebox = eventbox()
+   
+   sge.ebox.child = sge.layout
+   sge.pack = function(...) sge.layout:pack(...) end
+   return sge
+end
+
+local function in_hbox(sge) return in_layout(sge, hbox()) end
+local function in_vbox(sge) return in_layout(sge, vbox()) end
+
 -- Build and pack window widgets
 function window.build()
     -- Create a table for widgets and state variables for a window
@@ -25,45 +39,38 @@ function window.build()
         win    = widget{type="window"},
         ebox   = eventbox(),
         layout = vbox(),
+      
         paned  = widget{type="vpaned"},
         tabs   = notebook(),
         -- Tablist widget
         tablist = lousy.widget.tablist(),
         -- Status bar widgets
-        sbar = {
-            layout = hbox(),
-            ebox   = eventbox(),
+        sbar = in_hbox({
             -- Left aligned widgets
-            l = {
-                layout = hbox(),
-                ebox   = eventbox(),
+            l = in_hbox({
                 uri    = label(),
                 hist   = label(),
                 loaded = label(),
-            },
+            }),
             -- Fills space between the left and right aligned widgets
             sep = eventbox(),
             -- Right aligned widgets
-            r = {
-                layout = hbox(),
-                ebox   = eventbox(),
+            r = in_hbox({
                 buf    = label(),
                 ssl    = label(),
                 tabi   = label(),
                 scroll = label(),
-            },
-        },
+            }),
+        }),
 
         -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
         menu = lousy.widget.menu(),
 
         -- Input bar widgets
-        ibar = {
-            layout  = hbox(),
-            ebox    = eventbox(),
+        ibar = in_hbox({
             prompt  = label(),
             input   = entry(),
-        },
+        }),
         closed_tabs = {}
     }
 
@@ -83,7 +90,6 @@ function window.build()
     l.layout:pack(l.uri)
     l.layout:pack(l.hist)
     l.layout:pack(l.loaded)
-    l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
@@ -91,14 +97,12 @@ function window.build()
     r.layout:pack(r.ssl)
     r.layout:pack(r.tabi)
     r.layout:pack(r.scroll)
-    r.ebox.child = r.layout
 
     -- Pack status bar elements
     local s = w.sbar
     s.layout:pack(l.ebox)
     s.layout:pack(s.sep, { expand = true, fill = true })
     s.layout:pack(r.ebox)
-    s.ebox.child = s.layout
     w.layout:pack(s.ebox)
 
     -- Pack menu widget
@@ -109,7 +113,6 @@ function window.build()
     local i = w.ibar
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
-    i.ebox.child = i.layout
     w.layout:pack(i.ebox)
 
     -- Other settings
