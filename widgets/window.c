@@ -78,7 +78,8 @@ luaH_window_send_key(lua_State *L)
     const gchar *key_name = luaL_checkstring(L, 2);
 
     if (!g_utf8_validate(key_name, -1, NULL)) {
-        luaL_argerror(L, 2, "expected valid utf8 data");
+        lua_pushboolean(L, FALSE);
+        return 1;
     }
 
     guint keyval;
@@ -119,9 +120,17 @@ luaH_window_send_key(lua_State *L)
         lua_pop(L, 1);
     }
 
-    GdkKeymapKey* keys;
+    GdkKeymapKey* keys = NULL;
     gint n_keys;
-    gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys);
+
+    if (!gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys)) {
+        lua_pushboolean(L, FALSE);
+        return 1;
+    }
+
+    g_assert(n_keys == 1);
+    g_assert(keys);
+
     GdkEvent *event = gdk_event_new(GDK_KEY_PRESS);
     GdkEventKey *event_key = (GdkEventKey *) event;
     event_key->window = gtk_widget_get_window(w->widget);
@@ -131,6 +140,8 @@ luaH_window_send_key(lua_State *L)
     event_key->keyval = keyval;
     event_key->hardware_keycode = keys[0].keycode;
     event_key->group = keys[0].group;
+
+    g_free(keys);
 
     gdk_event_put(event);
 
