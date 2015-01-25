@@ -32,6 +32,58 @@ end
 local function in_hbox(sge) return in_layout(sge, hbox()) end
 local function in_vbox(sge) return in_layout(sge, vbox()) end
 
+function window.build_view()
+   local v =in_vbox({
+        tabs   = notebook(),
+        
+        -- Status bar widgets
+        sbar = in_hbox({
+           -- Left aligned widgets
+           l = in_hbox({
+              uri    = label(),
+              hist   = label(),
+              loaded = label(),
+           }),
+           -- Fills space between the left and right aligned widgets
+           sep = eventbox(),
+           -- Right aligned widgets
+           r = in_hbox({
+              buf    = label(),
+              ssl    = label(),
+              tabi   = label(),
+              scroll = label(),
+           }),
+       }),
+   })
+   -- Pack left-aligned statusbar elements
+   local l = v.sbar.l
+   l.layout:pack(l.uri)
+   l.layout:pack(l.hist)
+   l.layout:pack(l.loaded)
+   
+   -- Pack right-aligned statusbar elements
+   local r = v.sbar.r
+   r.layout:pack(r.buf)
+   r.layout:pack(r.ssl)
+   r.layout:pack(r.tabi)
+   r.layout:pack(r.scroll)
+   
+   -- Pack status bar elements
+   local s = v.sbar
+   s.layout:pack(l.ebox)
+   s.layout:pack(s.sep, { expand = true, fill = true })
+   s.layout:pack(r.ebox)
+   v.layout:pack(s.ebox)
+
+   -- Settings
+   l.loaded:hide()
+   l.hist:hide()
+   l.uri.selectable = true
+   r.ssl:hide()
+    
+   return v
+end
+
 -- Build and pack window widgets
 function window.build()
     -- Create a table for widgets and state variables for a window
@@ -41,27 +93,10 @@ function window.build()
         layout = vbox(),
       
         paned  = widget{type="vpaned"},
-        tabs   = notebook(),
         -- Tablist widget
         tablist = lousy.widget.tablist(),
-        -- Status bar widgets
-        sbar = in_hbox({
-            -- Left aligned widgets
-            l = in_hbox({
-                uri    = label(),
-                hist   = label(),
-                loaded = label(),
-            }),
-            -- Fills space between the left and right aligned widgets
-            sep = eventbox(),
-            -- Right aligned widgets
-            r = in_hbox({
-                buf    = label(),
-                ssl    = label(),
-                tabi   = label(),
-                scroll = label(),
-            }),
-        }),
+
+        view = window.build_view(),
 
         -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
         menu = lousy.widget.menu(),
@@ -74,6 +109,9 @@ function window.build()
         closed_tabs = {}
     }
 
+    w.tabs = w.view.tabs -- TODO workarounds
+    w.sbar = w.view.sbar
+    
     -- Assemble window
     w.ebox.child = w.paned
     w.paned:pack1(w.layout)
@@ -82,28 +120,8 @@ function window.build()
     -- Pack tablist
     w.layout:pack(w.tablist.widget)
 
-    -- Pack notebook
+    -- Pack view
     w.layout:pack(w.tabs, { expand = true, fill = true })
-
-    -- Pack left-aligned statusbar elements
-    local l = w.sbar.l
-    l.layout:pack(l.uri)
-    l.layout:pack(l.hist)
-    l.layout:pack(l.loaded)
-
-    -- Pack right-aligned statusbar elements
-    local r = w.sbar.r
-    r.layout:pack(r.buf)
-    r.layout:pack(r.ssl)
-    r.layout:pack(r.tabi)
-    r.layout:pack(r.scroll)
-
-    -- Pack status bar elements
-    local s = w.sbar
-    s.layout:pack(l.ebox)
-    s.layout:pack(s.sep, { expand = true, fill = true })
-    s.layout:pack(r.ebox)
-    w.layout:pack(s.ebox)
 
     -- Pack menu widget
     w.layout:pack(w.menu.widget)
@@ -118,10 +136,6 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.loaded:hide()
-    l.hist:hide()
-    l.uri.selectable = true
-    r.ssl:hide()
 
     -- Allows indexing of window struct by window widget
     window.bywidget[w.win] = w
