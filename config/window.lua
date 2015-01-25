@@ -25,7 +25,7 @@ local function in_layout(sub_gui_elem, layout)
    sge.ebox = eventbox()
    
    sge.ebox.child = sge.layout
-   sge.pack = function(...) sge.layout:pack(...) end
+--   sge.pack = function(...) sge.layout:pack(...) end -- maybe?
    return sge
 end
 
@@ -563,7 +563,7 @@ window.methods = {
                 end
             end
             local title = view.title or view.uri or "(Untitled)"
-            tabs[i] = {
+            tabs[i] = { -- Highlights the current tab.
                 title = string.format(tfmt, ntheme or fg, i, escape(title)),
                 fg = (current == i and theme.tab_selected_fg) or fg,
                 bg = (current == i and theme.tab_selected_bg) or bg,
