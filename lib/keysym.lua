@@ -15,7 +15,9 @@ window.methods.send = function (w, keystring)
     local symbol = nil
     local modifiers = {}
     local keys = {}
-    for char in string.gmatch(keystring, ".") do
+    -- TODO(mason-larobina): This is a terrible terrible hack. I wish lua had
+    -- proper unicode support.
+    for char in string.gfind(keystring, "([%z\1-\127\194-\244][\128-\191]*)") do
         if char == "<" then
             symbol = ""
         elseif char == ">" and symbol then
@@ -58,4 +60,3 @@ window.methods.send = function (w, keystring)
         end
     end
 end
-
