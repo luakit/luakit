@@ -75,12 +75,17 @@ static gint
 luaH_window_send_key(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    const gchar *key = luaL_checkstring(L, 2);
+    const gchar *key_name = luaL_checkstring(L, 2);
 
-    guint keyval = gdk_keyval_from_name(key);
-    if ((!keyval || keyval == GDK_KEY_VoidSymbol) && strlen(key) == 1) {
-        /* try unicode character conversion */
-        keyval = gdk_unicode_to_keyval(key[0]);
+    if (!g_utf8_validate(key_name, -1, NULL)) {
+        luaL_argerror(L, 2, "expected valid utf8 data");
+    }
+
+    guint keyval;
+    if (g_utf8_strlen(key_name, -1) == 1) {
+        keyval = gdk_unicode_to_keyval(g_utf8_get_char(key_name));
+    } else {
+        keyval = gdk_keyval_from_name(key_name);
     }
 
     if (!keyval || keyval == GDK_KEY_VoidSymbol) {
@@ -88,11 +93,10 @@ luaH_window_send_key(lua_State *L)
         return 1;
     }
 
-    guint state = 0x0000;
+    guint state = 0;
     luaH_checktable(L, 3);
-    /* push the first key before iterating */
+
     lua_pushnil(L);
-    /* iterate over the modifiers */
     while(lua_next(L, 3)) {
         const gchar *mod = luaL_checkstring(L, -1);
 
@@ -112,7 +116,6 @@ luaH_window_send_key(lua_State *L)
 
 #undef MODKEY
 
-        /* pop value */
         lua_pop(L, 1);
     }
 
