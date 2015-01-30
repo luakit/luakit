@@ -102,7 +102,7 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
         else
             tmp.c = g_strdup_printf("http://%s", tmp.c);
         u = soup_uri_new(tmp.c);
-        gboolean valid = !u || SOUP_URI_VALID_FOR_HTTP(u);
+        gboolean valid = !u || SOUP_URI_IS_VALID(u);
         if (valid) {
             g_object_set(object, p->name, u, NULL);
             g_free(tmp.c);
