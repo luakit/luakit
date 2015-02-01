@@ -1,0 +1,74 @@
+.day-heading {
+    font-size: 1.6em;
+    font-weight: 100;
+    margin: 1em 0 0.5em 0.5em;
+    -webkit-user-select: none;
+    cursor: default;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.day-sep {
+    height: 1em;
+}
+
+.item {
+    font-size: 1.3em;
+    font-weight: 400;
+    overflow: hidden;
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.item span {
+    padding: 0.2em;
+}
+
+.item .time {
+    -webkit-user-select: none;
+    cursor: default;
+    color: #888;
+    display: inline-block;
+    width: 5em;
+    text-align: right;
+    border-right: 1px solid #ddd;
+    padding-right: 0.5em;
+    margin-right: 0.1em;
+}
+
+.item .visits {
+    -webkit-user-select: none;
+    cursor: default;
+    color: #888;
+    display: inline-block;
+    width: 0.5em;
+    text-align: left;
+    font-size:80%;
+}
+
+.item a {
+    text-decoration: none;
+}
+
+.item .domain a {
+    color: #aaa;
+}
+
+.item .domain a:hover {
+    color: #666;
+}
+
+.item.selected {
+    background-color: #eee;
+}
+
+.nav-button-box {
+    margin: 2em;
+}
+
+.nav-button-box a {
+    display: none;
+    border: 1px solid #aaa;
+    padding: 0.4em 1em;
+}
