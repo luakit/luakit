@@ -718,11 +718,17 @@ selectors = {
 
 evaluators = {
     click = [=[function (element) {
-        function click(element) {
+        function mouseEvent(name, element) {
             var mouse_event = document.createEvent("MouseEvent");
-            mouse_event.initMouseEvent("click", true, true, window,
+            mouse_event.initMouseEvent(name, true, true, window,
                 0, 0, 0, 0, 0, false, false, false, false, 0, null);
             element.dispatchEvent(mouse_event);
+        }
+        function click(ctrl) {
+            mouseEvent("mouseover", ctrl);
+            mouseEvent("mousedown", ctrl);
+            mouseEvent("mouseup", ctrl);
+            mouseEvent("click", ctrl);
         }
 
         var tag = element.tagName;
