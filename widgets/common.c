@@ -227,6 +227,20 @@ luaH_widget_get_visible(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_width(lua_State *L, widget_t *w)
+{
+    lua_pushnumber(L, gtk_widget_get_allocated_width(w->widget));
+    return 1;
+}
+
+gint
+luaH_widget_get_height(lua_State *L, widget_t *w)
+{
+    lua_pushnumber(L, gtk_widget_get_allocated_height(w->widget));
+    return 1;
+}
+
+gint
 luaH_widget_focus(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);

@@ -124,7 +124,7 @@ luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
       /* push boolean properties */
       PB_CASE(SELECTABLE,       gtk_label_get_selectable(GTK_LABEL(w->widget)))
       /* push integer properties */
-      PI_CASE(WIDTH,            gtk_label_get_width_chars(GTK_LABEL(w->widget)))
+      PI_CASE(TEXTWIDTH,        gtk_label_get_width_chars(GTK_LABEL(w->widget)))
 
       default:
         break;
@@ -196,7 +196,7 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         gtk_label_set_selectable(GTK_LABEL(w->widget), luaH_checkboolean(L, 3));
         break;
 
-      case L_TK_WIDTH:
+      case L_TK_TEXTWIDTH:
         gtk_label_set_width_chars(GTK_LABEL(w->widget),
                 (gint)luaL_checknumber(L, 3));
         return 0;
