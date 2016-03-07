@@ -184,10 +184,12 @@ webview_history_go(lua_State *L, gint direction)
 			webkit_web_view_get_back_forward_list(d->view), steps);
 	if (item)
 		webkit_web_view_go_to_back_forward_list_item(d->view, item);
+	lua_pushboolean(L, item != NULL);
 #else
-    webkit_web_view_go_back_or_forward(d->view, steps);
+    gboolean ok = webkit_web_view_go_back_or_forward(d->view, steps);
+	lua_pushboolean(L, ok);
 #endif
-    return 0;
+    return 1;
 }
 
 static gint
