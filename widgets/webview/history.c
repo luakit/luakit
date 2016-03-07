@@ -175,33 +175,29 @@ luaH_webview_can_go_forward(lua_State *L)
 }
 
 static gint
-luaH_webview_go_back(lua_State *L)
+webview_history_go(lua_State *L, gint direction)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
-    gint steps = (gint) luaL_checknumber(L, 2);
+    gint steps = (gint) luaL_checknumber(L, 2) * direction;
 #if WITH_WEBKIT2
-    webkit_web_view_go_to_back_forward_list_item(d->view,
-            webkit_back_forward_list_get_nth_item(
-                    webkit_web_view_get_back_forward_list(d->view),
-                            steps * -1));
+	WebKitBackForwardListItem *item = webkit_back_forward_list_get_nth_item(
+			webkit_web_view_get_back_forward_list(d->view), steps);
+	if (item)
+		webkit_web_view_go_to_back_forward_list_item(d->view, item);
 #else
-    webkit_web_view_go_back_or_forward(d->view, steps * -1);
+    webkit_web_view_go_back_or_forward(d->view, steps);
 #endif
     return 0;
 }
 
 static gint
+luaH_webview_go_back(lua_State *L)
+{
+	return webview_history_go(L, -1);
+}
+
+static gint
 luaH_webview_go_forward(lua_State *L)
 {
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    gint steps = (gint) luaL_checknumber(L, 2);
-#if WITH_WEBKIT2
-    webkit_web_view_go_to_back_forward_list_item(d->view,
-            webkit_back_forward_list_get_nth_item(
-                    webkit_web_view_get_back_forward_list(d->view),
-                            steps));
-#else
-    webkit_web_view_go_back_or_forward(d->view, steps);
-#endif
-    return 0;
+	return webview_history_go(L,  1);
 }
