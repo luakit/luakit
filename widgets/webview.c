@@ -342,7 +342,7 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
         update_uri(w, NULL);
     }
 #else
-    if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED)
+    if (s == WEBKIT_LOAD_COMMITTED || s == WEBKIT_LOAD_FINISHED)
         update_uri(w, NULL);
 #endif
 
@@ -793,8 +793,10 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
       /* push search methods */
       PF_CASE(SEARCH,               luaH_webview_search)
+#if WITH_WEBKIT2
       PF_CASE(SEARCH_NEXT,          luaH_webview_search_next)
       PF_CASE(SEARCH_PREVIOUS,      luaH_webview_search_previous)
+#endif
       /* push history navigation methods */
       PF_CASE(GO_BACK,              luaH_webview_go_back)
       PF_CASE(GO_FORWARD,           luaH_webview_go_forward)
