@@ -742,7 +742,7 @@ LUA_OBJECT_EXPORT_PROPERTY(download, download_t, uri, lua_pushstring)
  * \returns \c TRUE if the download is ready to begin.
  */
 static gboolean
-download_check_prerequisites(lua_State* UNUSED(L), download_t *download)
+download_check_prerequisites(lua_State* L, download_t *download)
 {
     /* clear last download error message */
     if (download->error) {
