@@ -18,23 +18,7 @@
  *
  */
 
-gboolean
-webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w)
-{
-    webview_data_t *d = w->data;
-    guint64 t = gdk_frame_clock_get_frame_time(frame_clock);
-    gboolean done = false;
-
-    GtkAdjustment *ha = gtk_scrolled_window_get_hadjustment(d->win),
-                  *va = gtk_scrolled_window_get_vadjustment(d->win);
-    done |= adjustment_animate_scroll(ha, d->scroll_time_msec, t, &d->hscroll);
-    done |= adjustment_animate_scroll(va, d->scroll_time_msec, t, &d->vscroll);
-
-    if (done)
-        webview_set_smoothscroll(w, false);
-
-    return G_SOURCE_CONTINUE;
-}
+gboolean webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w);
 
 void
 webview_set_smoothscroll(widget_t *w, gboolean scrolling)
@@ -49,30 +33,6 @@ webview_set_smoothscroll(widget_t *w, gboolean scrolling)
         d->scroll_cb_id = gtk_widget_add_tick_callback(w->widget, webview_tick_cb, w, NULL);
     else
         gtk_widget_remove_tick_callback(w->widget, d->scroll_cb_id);
-}
-
-static gint
-luaH_webview_scroll_newindex(lua_State *L)
-{
-    /* get webview widget upvalue */
-    webview_data_t *d = luaH_checkwvdata(L, lua_upvalueindex(1));
-    const gchar *prop = luaL_checkstring(L, 2);
-    luakit_token_t t = l_tokenize(prop);
-
-    /* Get the adjustment for the scroll */
-    GtkAdjustment *a;
-    if (t == L_TK_X)      a = gtk_scrolled_window_get_hadjustment(d->win);
-    else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->win);
-    else return 0;
-
-    webview_scroll_anim_t *anim = t == L_TK_X ? &d->hscroll : &d->vscroll;
-    anim->source = gtk_adjustment_get_value(a);
-    anim->target = luaL_checknumber(L, 3);
-    anim->start_time = 0;
-
-    webview_set_smoothscroll(d->widget, true);
-
-    return 0;
 }
 
 gfloat
@@ -115,6 +75,48 @@ adjustment_animate_scroll(GtkAdjustment *a, guint duration, guint64 t, webview_s
     gtk_adjustment_set_value(a, e);
 
     return elapsed == duration;
+}
+
+gboolean
+webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w)
+{
+    webview_data_t *d = w->data;
+    guint64 t = gdk_frame_clock_get_frame_time(frame_clock);
+    gboolean done = false;
+
+    GtkAdjustment *ha = gtk_scrolled_window_get_hadjustment(d->win),
+                  *va = gtk_scrolled_window_get_vadjustment(d->win);
+    done |= adjustment_animate_scroll(ha, d->scroll_time_msec, t, &d->hscroll);
+    done |= adjustment_animate_scroll(va, d->scroll_time_msec, t, &d->vscroll);
+
+    if (done)
+        webview_set_smoothscroll(w, false);
+
+    return G_SOURCE_CONTINUE;
+}
+
+static gint
+luaH_webview_scroll_newindex(lua_State *L)
+{
+    /* get webview widget upvalue */
+    webview_data_t *d = luaH_checkwvdata(L, lua_upvalueindex(1));
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t t = l_tokenize(prop);
+
+    /* Get the adjustment for the scroll */
+    GtkAdjustment *a;
+    if (t == L_TK_X)      a = gtk_scrolled_window_get_hadjustment(d->win);
+    else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->win);
+    else return 0;
+
+    webview_scroll_anim_t *anim = t == L_TK_X ? &d->hscroll : &d->vscroll;
+    anim->source = gtk_adjustment_get_value(a);
+    anim->target = luaL_checknumber(L, 3);
+    anim->start_time = 0;
+
+    webview_set_smoothscroll(d->widget, true);
+
+    return 0;
 }
 
 void
