@@ -1,4 +1,7 @@
 -- Global variables for luakit
+
+local lousy = require "lousy"
+
 globals = {
     homepage            = "http://luakit.org/",
  -- homepage            = "http://github.com/mason-larobina/luakit",
@@ -85,5 +88,9 @@ domain_props = { --[[
         enable_private_browsing = true,
     }, ]]
 }
+
+-- Clear user stylesheet after we navigate off a page with a custom stylesheet
+-- Otherwise, the stylesheet rules persist on the new page
+domain_props.all = lousy.util.table.join(domain_props.all, { user_stylesheet_uri = "" })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
