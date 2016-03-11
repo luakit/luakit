@@ -18,6 +18,7 @@
  *
  */
 
+#if GTK_CHECK_VERSION(3,8,0)
 gboolean webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w);
 
 void
@@ -94,6 +95,7 @@ webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w)
 
     return G_SOURCE_CONTINUE;
 }
+#endif
 
 static gint
 luaH_webview_scroll_newindex(lua_State *L)
@@ -109,12 +111,21 @@ luaH_webview_scroll_newindex(lua_State *L)
     else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->win);
     else return 0;
 
+#if GTK_CHECK_VERSION(3,8,0)
     webview_scroll_anim_t *anim = t == L_TK_X ? &d->hscroll : &d->vscroll;
     anim->source = gtk_adjustment_get_value(a);
     anim->target = luaL_checknumber(L, 3);
     anim->start_time = 0;
 
     webview_set_smoothscroll(d->widget, true);
+#else
+    gdouble value = luaL_checknumber(L, 3);
+    gdouble max = gtk_adjustment_get_upper(a) -
+            gtk_adjustment_get_page_size(a);
+    // https://git.gnome.org/browse/hyena/commit/?id=0745bfb75809886925dfa49a57c79e5f71565d08
+    max = (max > 0) ? max : 0;
+    gtk_adjustment_set_value(a, ((value < 0 ? 0 : value) > max ? max : value));
+#endif
 
     return 0;
 }

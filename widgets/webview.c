@@ -809,8 +809,10 @@ scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
     gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
     lua_pop(L, ret + 1);
 
+#if GTK_CHECK_VERSION(3,8,0)
     /* Cancel any currently running scrolling animation */
     webview_set_smoothscroll(w, false);
+#endif
 
     return catch;
 }
