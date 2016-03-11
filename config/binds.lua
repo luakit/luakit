@@ -345,6 +345,12 @@ add_binds("normal", {
     key({"Shift","Control"}, "Tab", "Go to previous tab.",
         function (w) w:prev_tab() end),
 
+    key({}, "F1", "Show help.",
+        function (w) w:run_cmd(":help") end),
+
+    key({}, "F12", "Toggle web inspector.",
+        function (w) w:run_cmd(":inspect!") end),
+
     buf("^gT$", "Go to previous tab.",
         function (w) w:prev_tab() end),
 
