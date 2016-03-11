@@ -179,6 +179,7 @@ soup_lib_setup(lua_State *L)
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
         { "add_cookies",   luaH_cookiejar_add_cookies },
+        { "remove_cookies", luaH_cookiejar_remove_cookies },
         { NULL,            NULL },
     };
 

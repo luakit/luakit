@@ -42,6 +42,7 @@ typedef struct {
 LuakitCookieJar *luakit_cookie_jar_new(void);
 
 gint luaH_cookiejar_add_cookies(lua_State *L);
+gint luaH_cookiejar_remove_cookies(lua_State *L);
 
 #endif
 

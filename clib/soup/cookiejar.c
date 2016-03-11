@@ -216,6 +216,36 @@ luaH_cookiejar_add_cookies(lua_State *L)
     return 0;
 }
 
+gint
+luaH_cookiejar_remove_cookies(lua_State *L)
+{
+    SoupCookieJar *sj = SOUP_COOKIE_JAR(soupconf.cookiejar);
+    LuakitCookieJar *j = LUAKIT_COOKIE_JAR(soupconf.cookiejar);
+    GSList *cookies;
+    gboolean silent = TRUE;
+
+    /* cookies table */
+    luaH_checktable(L, 1);
+
+    /* optional silent parameter */
+    if (lua_gettop(L) >= 2)
+        silent = luaH_checkboolean(L, 2);
+
+    /* get cookies from table */
+    if ((cookies = cookies_from_table(L, 1))) {
+        j->silent = silent;
+
+        /* delete cookies */
+        for (GSList *p = cookies; p; p = g_slist_next(p))
+            soup_cookie_jar_delete_cookie(sj, p->data);
+
+        g_slist_free(cookies);
+        j->silent = FALSE;
+    }
+
+    return 0;
+}
+
 static void
 request_started(SoupSessionFeature *feature, SoupSession* UNUSED(session),
         SoupMessage *msg, SoupSocket* UNUSED(socket))
