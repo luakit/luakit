@@ -53,6 +53,8 @@ typedef struct {
      * non-essential data files should be stored.
      * \see http://standards.freedesktop.org/basedir-spec/basedir-spec-latest.html */
     gchar *cache_dir;
+    /** Profile name */
+    gchar *profile;
 
     /** Path to the currently loaded config file. */
     gchar *confpath;
