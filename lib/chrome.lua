@@ -44,6 +44,12 @@ stylesheet = [===[
         white-space: nowrap;
     }
 
+    header > h1 {
+        font-size: 1.3em;
+        margin: 1em;
+        display: inline-block;
+    }
+
     header input {
         font-size: inherit;
         font-weight: 100;
