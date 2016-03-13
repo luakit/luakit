@@ -55,13 +55,6 @@ add_binds("all", {
     key({"Control"}, "[", "Return to `normal` mode.",
         function (w) w:set_mode() end),
 
-    -- Mouse bindings
-    but({}, 8, "Go back.",
-        function (w) w:back() end),
-
-    but({}, 9, "Go forward.",
-        function (w) w:forward() end),
-
     -- Open link in new tab or navigate to selection
     but({}, 2, [[Open link under mouse cursor in new tab or navigate to the
         contents of `luakit.selection.primary`.]],
@@ -351,6 +344,12 @@ add_binds("normal", {
 
     key({"Shift","Control"}, "Tab", "Go to previous tab.",
         function (w) w:prev_tab() end),
+
+    key({}, "F1", "Show help.",
+        function (w) w:run_cmd(":help") end),
+
+    key({}, "F12", "Toggle web inspector.",
+        function (w) w:run_cmd(":inspect!") end),
 
     buf("^gT$", "Go to previous tab.",
         function (w) w:prev_tab() end),
