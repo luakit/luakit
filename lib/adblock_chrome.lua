@@ -32,7 +32,7 @@ list_template_enabled = [==[
         {title}:
         <i>(b{black}/w{white}/i{ignored}), </i>
         <a href="{uri}">{name}</a>
-        <span class="id">{id}</span>
+        <a class=disable href=# onclick="adblock_list_toggle({id}, false)">Disable</a>
     </li>
 ]==]
 
@@ -40,7 +40,7 @@ list_template_disabled = [==[
     <li>
         {title}:
         <a href="{uri}">{name}</a>
-        <span class="id">{id}</span>
+        <a class=enable href=# onclick="adblock_list_toggle({id}, true)">Enable</a>
     </li>
 ]==]
 
@@ -102,6 +102,9 @@ html_style = [===[
     span.id {
         font-size: small;
         color: #333333;
+        float: right;
+    }
+    a.enable, a.disable {
         float: right;
     }
     .tag ul {
@@ -230,6 +233,14 @@ chrome.add("adblock", function (view, meta)
     local export_funcs = {
         adblock_toggle = function (enable)
             meta.w:run_cmd(enable and ":adblock-enable" or ":adblock-disable")
+        end,
+
+        adblock_list_toggle = function (id, enable)
+            if enable then
+                meta.w:run_cmd(":adblock-list-enable " .. id)
+            else
+                meta.w:run_cmd(":adblock-list-disable " .. id)
+            end
         end,
     }
 
