@@ -16,25 +16,56 @@ local window    = window
 module("adblock_chrome")
 
 -- Templates
-header_template         = [==[<div class="header"><h2>AdBlock module: {state}</h2><br>AdBlock is in <b>{mode}</b> mode.{rules}</div><hr>]==]
-rules_template          = [==[ {black} rules blacklisting, {white} rules whitelisting, {ignored} rules ignored.]==]
-block_template          = [==[<div class="tag"><h1>{opt}</h1><ul>{links}</ul></div>]==]
-list_template_enabled   = [==[<li>{title}: <i>(b{black}/w{white}/i{ignored}), </i> <a href="{uri}">{name}</a> <span class="id">{id}</span></li>]==]
-list_template_disabled  = [==[<li>{title}: <a href="{uri}">{name}</a> <span class="id">{id}</span></li>]==]
+header_template = [==[
+    <div class="header">
+        <h2>AdBlock module: {state}</h2>
+        <br>
+        AdBlock is in <b>{mode}</b> mode.{rules}
+    </div>
+    <hr>
+]==]
+
+rules_template = [==[
+    {black} rules blacklisting, {white} rules whitelisting, {ignored} rules ignored.
+]==]
+
+block_template = [==[
+    <div class="tag">
+        <h1>{opt}</h1>
+        <ul>{links}</ul>
+    </div>
+]==]
+
+list_template_enabled = [==[
+    <li>
+        {title}:
+        <i>(b{black}/w{white}/i{ignored}), </i>
+        <a href="{uri}">{name}</a>
+        <span class="id">{id}</span>
+    </li>
+]==]
+
+list_template_disabled = [==[
+    <li>
+        {title}:
+        <a href="{uri}">{name}</a>
+        <span class="id">{id}</span>
+    </li>
+]==]
 
 html_template = [==[
-<html>
-<head>
-    <title>{title}</title>
-    <style type="text/css">
-    {style}
-    </style>
-</head>
-<body>
-{header}
-{opts}
-</body>
-</html>
+    <html>
+    <head>
+        <title>{title}</title>
+        <style type="text/css">
+            {style}
+        </style>
+    </head>
+    <body>
+        {header}
+        {opts}
+    </body>
+    </html>
 ]==]
 
 -- Template subs
