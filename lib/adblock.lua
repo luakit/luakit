@@ -160,7 +160,7 @@ abp_to_pattern = function (s)
     -- Strip filter options
     local opts
     s, opts = get_abp_opts(s)
-    if opts and opts.unknown == true then return nil end -- Skip rules with unknown options
+    if opts and opts.unknown == true then return {} end -- Skip rules with unknown options
 
     if string.len(s) > 0 then
         -- Protect magic characters (^$()%.[]*+-?) not used by ABP (^$()[]*)
@@ -173,15 +173,22 @@ abp_to_pattern = function (s)
         s = string.gsub(s, "%^", "[^%%w%%-%%.%%%%]")
 
         -- Double pipe is domain anchor (beginning only)
-        -- Unfortunately "||example.com" will also match "wexample.com" (lua doesn't do grouping)
-        s = string.gsub(s, "^||", "^https?://[^/]*%%.?")
+        if string.match(s, "^||") then
+            local p = string.sub(s, 3) -- Clip off first two || characters
+            s = { "^https?://" .. p, "^https?://[^/]*%." .. p }
+        else
+            s = { s }
+        end
 
-        -- Pipe is anchor
-        s = string.gsub(s, "^|", "%^")
-        s = string.gsub(s, "|$", "%$")
+        for k, v in ipairs(s) do
+			-- Pipe is anchor
+            v = string.gsub(v, "^|", "%^")
+            v = string.gsub(v, "|$", "%$")
 
-        -- Convert to lowercase ($match-case option is not honoured)
-        s = string.lower(s)
+            -- Convert to lowercase ($match-case option is not honoured)
+            v = string.lower(v)
+            s[k] = v
+        end
     end
 
     return s, opts
@@ -220,36 +227,40 @@ parse_abpfilterlist = function (filename, cache)
 
         -- Check for exceptions (whitelist)
         elseif line:match("^@@") then
-            pat, opts = abp_to_pattern(string.sub(line, 3))
-            if pat and pat ~= "^http://" then
-                if add_unique_cached(pat, opts, white, cache.white) then
-                    wlen = wlen + 1
-                    --***
-                    --f:write("W " .. pat .. "\n")
-                    --***
+            pats, opts = abp_to_pattern(string.sub(line, 3))
+            for _, pat in ipairs(pats) do
+                if pat ~= "^http://" then
+                    if add_unique_cached(pat, opts, white, cache.white) then
+                        wlen = wlen + 1
+                        --***
+                        --f:write("W " .. pat .. "\n")
+                        --***
+                    else
+                        icnt = icnt + 1
+                    end
+                    -- table.insert(white, pat)
                 else
                     icnt = icnt + 1
                 end
-                -- table.insert(white, pat)
-            else
-                icnt = icnt + 1
             end
 
         -- Add everything else to blacklist
         else
-            pat, opts = abp_to_pattern(line)
-            if pat and pat ~= "^http:" and pat ~= ".*" then
-                if add_unique_cached(pat, opts, black, cache.black) then
-                    blen = blen + 1
-                    --***
-                    --f:write("B " .. pat .. "\n")
-                    --***
+            pats, opts = abp_to_pattern(line)
+            for _, pat in ipairs(pats) do
+                if pat ~= "^http:" and pat ~= ".*" then
+                    if add_unique_cached(pat, opts, black, cache.black) then
+                        blen = blen + 1
+                        --***
+                        --f:write("B " .. pat .. "\n")
+                        --***
+                    else
+                        icnt = icnt + 1
+                    end
+                    -- table.insert(black, pat)
                 else
                     icnt = icnt + 1
                 end
-                -- table.insert(black, pat)
-            else
-                icnt = icnt + 1
             end
         end
     end
