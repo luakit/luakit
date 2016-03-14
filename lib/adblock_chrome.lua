@@ -16,12 +16,6 @@ local window    = window
 module("adblock_chrome")
 
 -- Templates
-header_template = [==[
-    <header id="page-header">
-        <h1>AdBlock module: {state}</h1>
-    </header>
-]==]
-
 rules_template = [==[
     {black} rules blacklisting, {white} rules whitelisting, {ignored} rules ignored.
 ]==]
@@ -59,7 +53,10 @@ html_template = [==[
         </style>
     </head>
     <body>
-        {header}
+        <header id="page-header">
+            <h1>AdBlock</h1>
+            <span class=state_{state}>{state}</span>
+        </header>
         <div class="content-margin">
             <div>
                 AdBlock is in <b>{mode}</b> mode.{rules}
@@ -75,6 +72,17 @@ html_template = [==[
 html_page_title = "AdBlock filters"
 
 html_style = [===[
+    header > span {
+        padding: 1em 1em 1em 1em;
+    }
+    span.state_Enabled {
+        color: #799D6A;
+        font-weight: bold;
+    }
+    span.state_Disabled {
+        color: #CF6A4C;
+        font-weight: bold;
+    }
     .content-margin > div {
         font-family: monospace;
         line-height: 1.5em;
@@ -195,17 +203,12 @@ chrome.add("adblock", function (view, meta)
     if rulescount.black + rulescount.white + rulescount.ignored > 0 then
         html_rules = string.gsub(rules_template, "{(%w+)}", rulescount)
     end
-    -- Fill the header
-    local header_subs = {
-        state = adblock.state(),
-    }
-    local html_page_header = string.gsub(header_template, "{(%w+)}", header_subs)
 
     local html_subs = {
         opts   = table.concat(lines, "\n\n"),
         title  = html_page_title,
-        header = html_page_header,
         style  = chrome.stylesheet .. html_style,
+        state = adblock.state(),
         mode  = adblock.mode(),
         rules = html_rules,
     }
