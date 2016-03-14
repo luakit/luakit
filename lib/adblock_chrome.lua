@@ -17,12 +17,9 @@ module("adblock_chrome")
 
 -- Templates
 header_template = [==[
-    <div class="header">
-        <h2>AdBlock module: {state}</h2>
-        <br>
-        AdBlock is in <b>{mode}</b> mode.{rules}
-    </div>
-    <hr>
+    <header id="page-header">
+        <h1>AdBlock module: {state}</h1>
+    </header>
 ]==]
 
 rules_template = [==[
@@ -63,7 +60,13 @@ html_template = [==[
     </head>
     <body>
         {header}
-        {opts}
+        <div class="content-margin">
+            <div>
+                AdBlock is in <b>{mode}</b> mode.{rules}
+                <hr>
+                {opts}
+            </div>
+        </div>
     </body>
     </html>
 ]==]
@@ -72,9 +75,8 @@ html_template = [==[
 html_page_title = "AdBlock filters"
 
 html_style = [===[
-    body {
+    .content-margin > div {
         font-family: monospace;
-        margin: 25px;
         line-height: 1.5em;
         font-size: 12pt;
     }
@@ -196,8 +198,6 @@ chrome.add("adblock", function (view, meta)
     -- Fill the header
     local header_subs = {
         state = adblock.state(),
-        mode  = adblock.mode(),
-        rules = html_rules,
     }
     local html_page_header = string.gsub(header_template, "{(%w+)}", header_subs)
 
@@ -205,7 +205,9 @@ chrome.add("adblock", function (view, meta)
         opts   = table.concat(lines, "\n\n"),
         title  = html_page_title,
         header = html_page_header,
-        style  = html_style,
+        style  = chrome.stylesheet .. html_style,
+        mode  = adblock.mode(),
+        rules = html_rules,
     }
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
