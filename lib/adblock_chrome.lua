@@ -17,7 +17,7 @@ module("adblock_chrome")
 
 -- Templates
 rules_template = [==[
-    {black} rules blacklisting, {white} rules whitelisting, {ignored} rules ignored.
+    b{black}/w{white}/i{ignored}
 ]==]
 
 block_template = [==[
@@ -60,12 +60,12 @@ html_template = [==[
         <header id="page-header">
             <h1>AdBlock</h1>
             <span class=state_{state}>{state}</span>
+            <span>AdBlock is in {mode} mode.</span>
+            <span>{rules}</span>
             <div class="rhs">{toggle}</div>
         </header>
         <div class="content-margin">
             <div>
-                AdBlock is in <b>{mode}</b> mode.{rules}
-                <hr>
                 {opts}
             </div>
         </div>
