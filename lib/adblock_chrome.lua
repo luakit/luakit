@@ -88,15 +88,10 @@ html_style = [===[
         color: #CF6A4C;
         font-weight: bold;
     }
-    .content-margin > div {
-        font-family: monospace;
-        line-height: 1.5em;
-        font-size: 12pt;
-    }
     div.tag {
-        width: 100%;
-        padding: 0px;
-        margin: 0 0 25px 0;
+        padding: 0.4em 0.5em;
+        margin: 0 0 0.5em;
+        font-size: 1.3em;
         clear: both;
     }
     span.id {
@@ -111,6 +106,9 @@ html_style = [===[
         padding: 0;
         margin: 0;
         list-style-type: none;
+    }
+    .tag li {
+        margin: 1em 0;
     }
     .tag h1 {
         font-size: 12pt;
