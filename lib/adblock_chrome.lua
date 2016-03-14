@@ -44,6 +44,10 @@ list_template_disabled = [==[
     </li>
 ]==]
 
+toggle_button_template = [==[
+    <input type="button" class="button" onclick="adblock_toggle({state})" value="{label}" />
+]==]
+
 html_template = [==[
     <html>
     <head>
@@ -56,6 +60,7 @@ html_template = [==[
         <header id="page-header">
             <h1>AdBlock</h1>
             <span class=state_{state}>{state}</span>
+            <div class="rhs">{toggle}</div>
         </header>
         <div class="content-margin">
             <div>
@@ -204,6 +209,11 @@ chrome.add("adblock", function (view, meta)
         html_rules = string.gsub(rules_template, "{(%w+)}", rulescount)
     end
 
+    local toggle_button_subs = {
+        state = adblock.state() == "Disabled" and "true" or "false",
+        label = adblock.state() == "Disabled" and "Enable" or "Disable",
+    }
+
     local html_subs = {
         opts   = table.concat(lines, "\n\n"),
         title  = html_page_title,
@@ -211,10 +221,35 @@ chrome.add("adblock", function (view, meta)
         state = adblock.state(),
         mode  = adblock.mode(),
         rules = html_rules,
+        toggle = string.gsub(toggle_button_template, "{(%w+)}", toggle_button_subs),
     }
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
     view:load_string(html, tostring(uri))
+
+    local export_funcs = {
+        adblock_toggle = function (enable)
+            meta.w:run_cmd(enable and ":adblock-enable" or ":adblock-disable")
+        end,
+    }
+
+    function on_first_visual(_, status)
+        -- Wait for new page to be created
+        if status ~= "first-visual" then return end
+
+        -- Hack to run-once
+        view:remove_signal("load-status", on_first_visual)
+
+        -- Double check that we are where we should be
+        if view.uri ~= meta.uri then return end
+
+        -- Export luakit JS<->Lua API functions
+        for name, func in pairs(export_funcs) do
+            view:register_function(name, func)
+        end
+    end
+
+    view:add_signal("load-status", on_first_visual)
 end)
 
 -- Add chrome binds.
