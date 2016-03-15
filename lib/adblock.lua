@@ -231,7 +231,7 @@ parse_abpfilterlist = function (filename, cache)
     --***
     local pat, opts
     local wlen, blen, icnt = 0, 0, 0
-    local white, black = { patterns = {}, domains = {} }, { patterns = {}, domains = {} }
+    local white, black = { patterns = {}, domains = {} }, { patterns = {}, domains = {}, ad_patterns = {} }
     for line in io.lines(filename) do
         -- Ignore comments, header and blank lines
         if line:match("^[![]") or line:match("^$") then
@@ -276,6 +276,8 @@ parse_abpfilterlist = function (filename, cache)
                     if domain then
                         if not black.domains[domain] then black.domains[domain] = {} end
                         new = add_unique_cached(pat, opts, black.domains[domain], cache.black)
+                    elseif string.find(line, "ad") then
+                        new = add_unique_cached(pat, opts, black.ad_patterns, cache.black)
                     else
                         new = add_unique_cached(pat, opts, black.patterns, cache.black)
                     end
@@ -470,6 +472,18 @@ match = function (uri, signame, page_uri)
                 if third_party_match(page_domain, uri_domain, opts) then
                     if domain_match(page_domain, opts) and string.match(uri, pattern) then
                         info("adblock: blocking %q as domain %q matched to uri %s", signame, domain, uri)
+                        return false
+                    end
+                end
+            end
+        end
+
+        -- If the URI contains "ad", check the ad_patterns blacklist as well
+        if string.find(uri, "ad") then
+            for pattern, opts in pairs(list.blacklist.ad_patterns or {}) do
+                if third_party_match(page_domain, uri_domain, opts) then
+                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                        info("adblock: blocking %q as pattern %q matched to uri %s", signame, pattern, uri)
                         return false
                     end
                 end
