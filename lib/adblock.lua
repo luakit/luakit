@@ -352,7 +352,7 @@ end
 
 local function third_party_match(page_domain, domain2, opts)
     local thp = opts["third-party"]
-    if thp ~= nul then
+    if thp ~= nil then
         if thp == true then return domain1 ~= domain2 end
         return domain1 == domain2
     end
