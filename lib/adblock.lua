@@ -398,6 +398,12 @@ end
 
 -- Tests URI against user-defined filter functions, then whitelist, then blacklist
 match = function (uri, signame, page_uri)
+    -- Always allow data: URIs
+    if string.sub(uri, 1, 5) == "data:" then
+        info("adblock: allowing data URI")
+        return
+    end
+
     -- Matching is not case sensitive
     uri = string.lower(uri)
 
