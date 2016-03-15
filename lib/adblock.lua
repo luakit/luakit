@@ -420,7 +420,12 @@ end
 
 -- Direct requests to match function
 filter = function (v, uri, signame)
-    if enabled then return match(uri, signame or "", v.uri) end
+    -- Don't adblock on local files
+    local file_uri = v.uri and string.sub(v.uri, 1, 7) == "file://"
+
+    if enabled and not file_uri then
+        return match(uri, signame or "", v.uri)
+    end
 end
 
 function table.itemid(t, item)
