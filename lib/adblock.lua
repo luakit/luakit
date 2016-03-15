@@ -162,7 +162,22 @@ abp_to_pattern = function (s)
     s, opts = get_abp_opts(s)
     if opts and opts.unknown == true then return {} end -- Skip rules with unknown options
 
+    local domain = nil
+
     if string.len(s) > 0 then
+        -- Optimize for domain anchor rules
+        if string.match(s, "^||") then
+            -- Extract the domain from the pattern
+            local d = string.sub(s, 3)
+            d = string.gsub(d, "/.*", "")
+            d = string.gsub(d, "%^.*", "")
+
+            -- We don't bother with wildcard domains since they aren't frequent enough
+            if not string.find(d, "*") then
+                domain = d
+            end
+        end
+
         -- Protect magic characters (^$()%.[]*+-?) not used by ABP (^$()[]*)
         s = string.gsub(s, "([%%%.%+%-%?])", "%%%1")
 
@@ -191,7 +206,7 @@ abp_to_pattern = function (s)
         end
     end
 
-    return s, opts
+    return s, opts, domain
 end
 
 add_unique_cached = function (pattern, opts, tab, cache_tab)
@@ -215,7 +230,8 @@ parse_abpfilterlist = function (filename, cache)
     --local f = io.open(filename .. "~", "w")
     --***
     local pat, opts
-    local white, black, wlen, blen, icnt = {}, {}, 0, 0, 0
+    local wlen, blen, icnt = 0, 0, 0
+    local white, black = { patterns = {}, domains = {} }, { patterns = {}, domains = {} }
     for line in io.lines(filename) do
         -- Ignore comments, header and blank lines
         if line:match("^[![]") or line:match("^$") then
@@ -227,10 +243,17 @@ parse_abpfilterlist = function (filename, cache)
 
         -- Check for exceptions (whitelist)
         elseif line:match("^@@") then
-            pats, opts = abp_to_pattern(string.sub(line, 3))
+            pats, opts, domain = abp_to_pattern(string.sub(line, 3))
             for _, pat in ipairs(pats) do
                 if pat ~= "^http://" then
-                    if add_unique_cached(pat, opts, white, cache.white) then
+                    local new
+                    if domain then
+                        if not white.domains[domain] then white.domains[domain] = {} end
+                        new = add_unique_cached(pat, opts, white.domains[domain], cache.white)
+                    else
+                        new = add_unique_cached(pat, opts, white.patterns, cache.white)
+                    end
+                    if new then
                         wlen = wlen + 1
                         --***
                         --f:write("W " .. pat .. "\n")
@@ -246,10 +269,17 @@ parse_abpfilterlist = function (filename, cache)
 
         -- Add everything else to blacklist
         else
-            pats, opts = abp_to_pattern(line)
+            pats, opts, domain = abp_to_pattern(line)
             for _, pat in ipairs(pats) do
                 if pat ~= "^http:" and pat ~= ".*" then
-                    if add_unique_cached(pat, opts, black, cache.black) then
+                    local new
+                    if domain then
+                        if not black.domains[domain] then black.domains[domain] = {} end
+                        new = add_unique_cached(pat, opts, black.domains[domain], cache.black)
+                    else
+                        new = add_unique_cached(pat, opts, black.patterns, cache.black)
+                    end
+                    if new then
                         blen = blen + 1
                         --***
                         --f:write("B " .. pat .. "\n")
@@ -390,11 +420,33 @@ match = function (uri, signame, page_uri)
             return ret
         end
     end
+
+    -- Build a table of all domains this URI falls under
+    local uri_domains = {}
+    do
+        local d = uri_domain
+        while d do
+            uri_domains[d] = true
+            d = string.match(d, "%.(.+)")
+        end
+    end
     
     -- Test against each list's whitelist rules first
     for _, list in pairs(rules) do
+        -- First, check for domain name anchor (||) rules
+        for domain, _ in pairs(uri_domains) do
+            for pattern, opts in pairs(list.whitelist.domains[domain] or {}) do
+                if third_party_match(page_domain, uri_domain, opts) then
+                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                        info("adblock: allowing %q as domain %q matched to uri %s", signame, domain, uri)
+                        return true
+                    end
+                end
+            end
+        end
+
         -- Check for a match to whitelist
-        for pattern, opts in pairs(list.whitelist or {}) do
+        for pattern, opts in pairs(list.whitelist.patterns or {}) do
             if third_party_match(page_domain, uri_domain, opts) then
                 if domain_match(page_domain, opts) and string.match(uri, pattern) then
                     info("adblock: allowing %q as pattern %q matched to uri %s", signame, pattern, uri)
@@ -406,8 +458,20 @@ match = function (uri, signame, page_uri)
     
     -- Test against each list's blacklist rules
     for _, list in pairs(rules) do
+        -- First, check for domain name anchor (||) rules
+        for domain, _ in pairs(uri_domains) do
+            for pattern, opts in pairs(list.blacklist.domains[domain] or {}) do
+                if third_party_match(page_domain, uri_domain, opts) then
+                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                        info("adblock: blocking %q as domain %q matched to uri %s", signame, domain, uri)
+                        return false
+                    end
+                end
+            end
+        end
+
         -- Check for a match to blacklist
-        for pattern, opts in pairs(list.blacklist or {}) do
+        for pattern, opts in pairs(list.blacklist.patterns or {}) do
             if third_party_match(page_domain, uri_domain, opts) then
                 if domain_match(page_domain, opts) and string.match(uri, pattern) then
                     info("adblock: blocking %q as pattern %q matched to uri %s", signame, pattern, uri)
