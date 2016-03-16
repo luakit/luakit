@@ -17,31 +17,42 @@ module("adblock_chrome")
 
 -- Templates
 rules_template = [==[
-    b{black}/w{white}/i{ignored}
+    B: {black} / W: {white} / I: {ignored}
 ]==]
 
 block_template = [==[
     <div class="tag">
         <h1>{opt}</h1>
-        <ul>{links}</ul>
+        <table>
+            <thead>
+                <th>File</th>
+                <th>Rules in use</th>
+                <th>Update URL</th>
+                <th></th>
+            </thead>
+            <tbody>
+                {links}
+            </tbody>
+        </table>
     </div>
 ]==]
 
 list_template_enabled = [==[
-    <li>
-        {title}:
-        <i>(b{black}/w{white}/i{ignored}), </i>
-        <a href="{uri}">{name}</a>
-        <a class=disable href=# onclick="adblock_list_toggle({id}, false)">Disable</a>
-    </li>
+    <tr>
+        <td>{title}</td>
+        <td>{rules}</td>
+        <td><a href="{uri}">{name}</a></td>
+        <td><a class=disable href=# onclick="adblock_list_toggle({id}, false)">Disable</a></td>
+    </tr>
 ]==]
 
 list_template_disabled = [==[
-    <li>
-        {title}:
-        <a href="{uri}">{name}</a>
-        <a class=enable href=# onclick="adblock_list_toggle({id}, true)">Enable</a>
-    </li>
+    <tr>
+        <td>{title}</td>
+        <td></td>
+        <td><a href="{uri}">{name}</a></td>
+        <td><a class=enable href=# onclick="adblock_list_toggle({id}, true)">Enable</a></td>
+    </tr>
 ]==]
 
 toggle_button_template = [==[
@@ -77,6 +88,28 @@ html_template = [==[
 html_page_title = "AdBlock filters"
 
 html_style = [===[
+    body {
+        font-size: 62.5%;
+    }
+    table {
+        width: 100%;
+    }
+    th {
+        text-align: left;
+    }
+    td {
+        width: 1px;
+        white-space: nowrap;
+    }
+    td:nth-child(3) {
+        max-width: 1px;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        white-space: nowrap;
+    }
+    td + td, th + th {
+        padding-left: 1em;
+    }
     header > span {
         padding: 1em 1em 1em 1em;
     }
@@ -91,7 +124,6 @@ html_style = [===[
     div.tag {
         padding: 0.4em 0.5em;
         margin: 0 0 0.5em;
-        font-size: 1.3em;
         clear: both;
     }
     span.id {
@@ -176,9 +208,11 @@ chrome.add("adblock", function (view, meta)
                 id      = list.id,
                 name    = util.escape(list.uri),
                 title   = list.title,
-                white   = list.white,
-                black   = list.black,
-                ignored = list.ignored
+                rules   = string.gsub(rules_template, "{(%w+)}", {
+                    white   = list.white,
+                    black   = list.black,
+                    ignored = list.ignored,
+                }),
             }
             local list_template = list_template_disabled
             -- Show rules count only when enabled this list and have read its rules
