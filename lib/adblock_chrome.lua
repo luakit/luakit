@@ -16,17 +16,13 @@ local window    = window
 module("adblock_chrome")
 
 -- Templates
-rules_template = [==[
-    B: {black} / W: {white} / I: {ignored}
-]==]
-
 block_template = [==[
     <div class="tag">
         <h1>{opt}</h1>
         <table>
             <thead>
                 <th>File</th>
-                <th>Rules in use</th>
+                <th colspan=3>Rules in use</th>
                 <th>Update URL</th>
                 <th></th>
             </thead>
@@ -40,7 +36,7 @@ block_template = [==[
 list_template_enabled = [==[
     <tr>
         <td>{title}</td>
-        <td>{rules}</td>
+        <td>B: {black}</td><td>W: {white}</td><td>I: {ignored}</td>
         <td><a href="{uri}">{name}</a></td>
         <td><a class=disable href=# onclick="adblock_list_toggle({id}, false)">Disable</a></td>
     </tr>
@@ -49,7 +45,7 @@ list_template_enabled = [==[
 list_template_disabled = [==[
     <tr>
         <td>{title}</td>
-        <td></td>
+        <td></td><td></td><td></td>
         <td><a href="{uri}">{name}</a></td>
         <td><a class=enable href=# onclick="adblock_list_toggle({id}, true)">Enable</a></td>
     </tr>
@@ -72,7 +68,7 @@ html_template = [==[
             <h1>AdBlock</h1>
             <span class=state_{state}>{state}</span>
             <span>AdBlock is in {mode} mode.</span>
-            <span>{rules}</span>
+            <span>B: {black} / W: {white} / I: {ignored}</span>
             <div class="rhs">{toggle}</div>
         </header>
         <div class="content-margin">
@@ -88,20 +84,27 @@ html_template = [==[
 html_page_title = "AdBlock filters"
 
 html_style = [===[
-    body {
-        font-size: 62.5%;
-    }
     table {
+        font-size: 1.0em;
         width: 100%;
     }
     th {
         text-align: left;
+        font-size: 1.6em;
+        font-weight: 100;
+        margin: 1em 0 0.5em 0.5em;
+        -webkit-user-select: none;
+        cursor: default;
+        overflow: hidden;
+        white-space: nowrap;
+        text-overflow: ellipsis;
     }
     td {
+        font-size: 1.3em;
         width: 1px;
         white-space: nowrap;
     }
-    td:nth-child(3) {
+    td:nth-last-child(2) {
         max-width: 1px;
         overflow: hidden;
         text-overflow: ellipsis;
@@ -208,11 +211,9 @@ chrome.add("adblock", function (view, meta)
                 id      = list.id,
                 name    = util.escape(list.uri),
                 title   = list.title,
-                rules   = string.gsub(rules_template, "{(%w+)}", {
-                    white   = list.white,
-                    black   = list.black,
-                    ignored = list.ignored,
-                }),
+                white   = list.white,
+                black   = list.black,
+                ignored = list.ignored,
             }
             local list_template = list_template_disabled
             -- Show rules count only when enabled this list and have read its rules
@@ -238,11 +239,6 @@ chrome.add("adblock", function (view, meta)
             rulescount.black, rulescount.white, rulescount.ignored = rulescount.black + list.black, rulescount.white + list.white, rulescount.ignored + list.ignored
         end
     end
-    -- Display rules count only if have them been count
-    local html_rules = ""
-    if rulescount.black + rulescount.white + rulescount.ignored > 0 then
-        html_rules = string.gsub(rules_template, "{(%w+)}", rulescount)
-    end
 
     local toggle_button_subs = {
         state = adblock.state() == "Disabled" and "true" or "false",
@@ -255,7 +251,9 @@ chrome.add("adblock", function (view, meta)
         style  = chrome.stylesheet .. html_style,
         state = adblock.state(),
         mode  = adblock.mode(),
-        rules = html_rules,
+        white   = rulescount.white,
+        black   = rulescount.black,
+        ignored = rulescount.ignored,
         toggle = string.gsub(toggle_button_template, "{(%w+)}", toggle_button_subs),
     }
 
