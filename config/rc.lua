@@ -116,6 +116,9 @@ require "follow"
 -- Match only hint labels
 --follow.pattern_maker = follow.pattern_styles.match_label
 
+-- Uncomment if you want to ignore case when matching
+--follow.ignore_case = true
+
 -- Add command history
 require "cmdhist"
 

@@ -133,7 +133,7 @@ here also, example:
 
 Please use the bug tracker at:
 
-  http://luakit.org/projects/luakit/issues
+  https://github.com/mason-larobina/luakit/issues
 
 ## Community
 

@@ -35,10 +35,13 @@ struct lua_class_property {
 
 static GPtrArray *luaH_classes = NULL;
 
-/* Convert a object to a udata if possible.
- * `ud` is the index.
- * `class` is the wanted class.
- * Returns a pointer to the object, NULL otherwise. */
+/** Convert an object to a userdata if possible.
+ *
+ * \param L The Lua VM state.
+ * \param ud The index of the object to convert.
+ * \param class The to try and convert it to.
+ * \return A pointer to the converted object, NULL otherwise.
+ */
 gpointer
 luaH_toudata(lua_State *L, gint ud, lua_class_t *class) {
     gpointer p = lua_touserdata(L, ud);
@@ -54,10 +57,14 @@ luaH_toudata(lua_State *L, gint ud, lua_class_t *class) {
     return p;
 }
 
-/* Check for a udata class.
- * `ud` is the object index on the stack.
- * `class` is the wanted class.
- * Returns a pointer to the wanted class. */
+/** Checks if the object at the given index is a userdata of the given class.
+ * Raises a Lua type error if it is not.
+ *
+ * \param L The Lua VM state.
+ * \param ud The object index on the stack.
+ * \param class The wanted class.
+ * \return A pointer to the converted object.
+ */
 gpointer
 luaH_checkudata(lua_State *L, gint ud, lua_class_t *class) {
     gpointer p = luaH_toudata(L, ud, class);
@@ -66,8 +73,12 @@ luaH_checkudata(lua_State *L, gint ud, lua_class_t *class) {
     return p;
 }
 
-/* Get an object lua_class.
- * `idx` of the index of the object on the stack. */
+/** Get an object's \ref lua_class_t.
+ *
+ * \param L The Lua VM state.
+ * \param idx The index of the object on the stack.
+ * \return The \ref lua_class_t of the object, if it has one. \c NULL otherwise.
+ */
 lua_class_t *
 luaH_class_get(lua_State *L, gint idx) {
     gint type = lua_type(L, idx);
@@ -84,6 +95,7 @@ luaH_class_get(lua_State *L, gint idx) {
 }
 
 /** Enhanced version of lua_typename that recognizes setup Lua classes.
+ *
  * \param L The Lua VM state.
  * \param idx The index of the object on the stack.
  */
@@ -99,6 +111,13 @@ luaH_typename(lua_State *L, gint idx) {
     return lua_typename(L, type);
 }
 
+/** Registers a library under a global name in Lua.
+ *
+ * \param L The Lua VM state.
+ * \param name The name under which the library should be accessible in Lua.
+ * \param methods The methods of the library.
+ * \param meta The methods of the library's metatable.
+ */
 void
 luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
         const struct luaL_reg meta[]) {
@@ -113,6 +132,17 @@ luaH_openlib(lua_State *L, const gchar *name, const struct luaL_reg methods[],
     lua_pop(L, 2);
 }
 
+/** Adds a property to a \ref lua_class_t.
+ * All callbacks functions can also be NULL, in which case the property either
+ * cannot be initialized, set or read.
+ *
+ * \param lua_class The class to add the property to.
+ * \param token The property's name.
+ * \param cb_new The function to call when the property is set on
+ *          initialization.
+ * \param cb_index The function to call when the property is read.
+ * \param cb_newindex The function to call when the property is set.
+ */
 void
 luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
         lua_class_propfunc_t cb_new,
@@ -133,6 +163,19 @@ luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
             (gpointer) token, prop);
 }
 
+/** Creates a new Lua class.
+ *
+ * \param L The Lua VM state.
+ * \param class The \ref lua_class_t that identifies the class.
+ * \param name The name of the class and it's constructor in Lua.
+ * \param allocator The constructor of the class.
+ * \param index_miss_property The function to call when an unknown property was
+ *          indexed. Can be NULL.
+ * \param newindex_miss_property The function to call when an unknown property was
+ *          set. Can be NULL.
+ * \param methods The methods of the class's objects.
+ * \param meta The methods of the class itself.
+ */
 void
 luaH_class_setup(lua_State *L, lua_class_t *class,
         const gchar *name,
@@ -176,6 +219,14 @@ luaH_class_setup(lua_State *L, lua_class_t *class,
     g_ptr_array_add(luaH_classes, class);
 }
 
+/** Generic wrapper around GTK's \c signal_add.
+ * Will be used to implement the Lua \c add_signal method of a class.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class that handles the signal.
+ * \param name The name of the signal.
+ * \param ud The index of the handler function.
+ */
 void
 luaH_class_add_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint ud) {
@@ -192,6 +243,14 @@ luaH_class_add_signal(lua_State *L, lua_class_t *lua_class,
     signal_add(lua_class->signals, name, luaH_object_ref(L, ud));
 }
 
+/** Generic wrapper around GTK's \c signal_remove.
+ * Will be used to implement the Lua \c remove_signal method of a class.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class that handles the signal.
+ * \param name The name of the signal.
+ * \param ud The index of the handler function.
+ */
 void
 luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint ud) {
@@ -202,6 +261,15 @@ luaH_class_remove_signal(lua_State *L, lua_class_t *lua_class,
     lua_remove(L, ud);
 }
 
+/** Generic wrapper around GTK's \c signal_emit.
+ * Will be used to implement the Lua \c emit_signal method of a class.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class that handles the signal.
+ * \param name The name of the signal.
+ * \param nargs The number of arguments the signal expects.
+ * \param nret The number of return values the signal expects.
+ */
 gint
 luaH_class_emit_signal(lua_State *L, lua_class_t *lua_class,
         const gchar *name, gint nargs, gint nret) {
@@ -218,10 +286,13 @@ luaH_class_property_signal(lua_State *L, lua_class_t *lua_class,
     return 0;
 }
 
-/* Try to use the metatable of an object.
- * `idxobj` is the index of the object.
- * `idxfield` is the index of the field (attribute) to get.
- * Returns the number of element pushed on stack. */
+/** Try to use the metatable of an object.
+ *
+ * \param L The Lua VM state.
+ * \param idxobj The index of the object to index.
+ * \param idxfield The index of the field (attribute) to get.
+ * \return The number of element pushed on the stack.
+ */
 gint
 luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
     /* Get metatable of the object. */
@@ -241,10 +312,13 @@ luaH_usemetatable(lua_State *L, gint idxobj, gint idxfield) {
     return 0;
 }
 
-/* Get a property of a object.
- * `lua_class` is the Lua class.
- * `fieldidx` is the index of the field name.
- * Return is the object property if found, NULL otherwise. */
+/** Get a property of an object.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class of the object.
+ * \param fieldidx The index of the field name.
+ * \return The object property if found, NULL otherwise.
+ */
 static lua_class_property_t *
 luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
     const gchar *attr = luaL_checkstring(L, fieldidx);
@@ -255,7 +329,14 @@ luaH_class_property_get(lua_State *L, lua_class_t *lua_class, gint fieldidx) {
 }
 
 /* Generic index meta function for objects.
- * Return the number of elements pushed on stack. */
+ *
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on the stack.
+ *
+ * \luastack
+ * \lvalue The object to index.
+ * \lvalue The property to get.
+ */
 gint
 luaH_class_index(lua_State *L) {
     /* Try to use metatable first. */
@@ -279,7 +360,15 @@ luaH_class_index(lua_State *L) {
 }
 
 /* Generic newindex meta function for objects.
- * Returns the number of elements pushed on stack. */
+ *
+ * \param L The Lua VM state.
+ * \return The number of elements pushed on the stack.
+ *
+ * \luastack
+ * \lvalue The object to index.
+ * \lvalue The property to set.
+ * \lvalue The value to set it to.
+ */
 gint
 luaH_class_newindex(lua_State *L) {
     /* Try to use metatable first. */
@@ -302,12 +391,22 @@ luaH_class_newindex(lua_State *L) {
     return 0;
 }
 
-/* Generic constructor function for objects.
- * Returns the number of elements pushed on stack. */
+/** Generic constructor function for objects.
+ * Returns the number of elements pushed on stack.
+ *
+ * \param L The Lua VM state.
+ * \param lua_class The class of the new object.
+ *
+ * \luastack
+ * \lvalue A table that contains properties of the new object.
+ * \lreturn A new object derived from the given class.
+ */
 gint
 luaH_class_new(lua_State *L, lua_class_t *lua_class) {
+    gint idx = lua_gettop(L);
+
     /* Check we have a table that should contains some properties */
-    luaH_checktable(L, 2);
+    luaH_checktable(L, idx);
 
     /* Create a new object */
     lua_object_t *object = lua_class->allocator(L);
@@ -315,7 +414,7 @@ luaH_class_new(lua_State *L, lua_class_t *lua_class) {
     /* Push the first key before iterating */
     lua_pushnil(L);
     /* Iterate over the property keys */
-    while(lua_next(L, 2)) {
+    while(lua_next(L, idx)) {
         /* Check that the key is a string.
          * We cannot call tostring blindly or Lua will convert a key that is a
          * number TO A STRING, confusing lua_next() */
