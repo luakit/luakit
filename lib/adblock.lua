@@ -396,6 +396,48 @@ local function domain_from_uri(uri)
     return domain or ""
 end
 
+match_list = function (list, uri, uri_domains, page_domain, uri_domain)
+    -- First, check for domain name anchor (||) rules
+    for domain, _ in pairs(uri_domains) do
+        for pattern, opts in pairs(list.domains[domain] or {}) do
+            if third_party_match(page_domain, uri_domain, opts) then
+                if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                    return true, pattern
+                end
+            end
+        end
+    end
+
+    -- Next, match against plain text strings
+    for pattern, opts in pairs(list.plain or {}) do
+        if third_party_match(page_domain, uri_domain, opts) then
+            if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
+                return true, pattern
+            end
+        end
+    end
+
+    -- If the URI contains "ad", check the ad_patterns
+    if string.find(uri, "ad") then
+        for pattern, opts in pairs(list.ad_patterns or {}) do
+            if third_party_match(page_domain, uri_domain, opts) then
+                if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                    return true, pattern
+                end
+            end
+        end
+    end
+
+    -- Finally, check for a general match
+    for pattern, opts in pairs(list.patterns or {}) do
+        if third_party_match(page_domain, uri_domain, opts) then
+            if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                return true, pattern
+            end
+        end
+    end
+end
+
 -- Tests URI against user-defined filter functions, then whitelist, then blacklist
 match = function (uri, signame, page_uri)
     -- Always allow data: URIs
@@ -436,98 +478,22 @@ match = function (uri, signame, page_uri)
             d = string.match(d, "%.(.+)")
         end
     end
-    
+
     -- Test against each list's whitelist rules first
     for _, list in pairs(rules) do
-        -- First, check for domain name anchor (||) rules
-        for domain, _ in pairs(uri_domains) do
-            for pattern, opts in pairs(list.whitelist.domains[domain] or {}) do
-                if third_party_match(page_domain, uri_domain, opts) then
-                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                        info("adblock: allowing %q as domain %q matched to uri %s", signame, domain, uri)
-                        return true
-                    end
-                end
-            end
-        end
-
-        -- Next, match against plain text strings
-        for pattern, opts in pairs(list.whitelist.plain or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
-                    info("adblock: allowing %q as plain string %q matched to uri %s", signame, pattern, uri)
-                    return true
-                end
-            end
-        end
-
-        -- If the URI contains "ad", check the ad_patterns whitelist as well
-        if string.find(uri, "ad") then
-            for pattern, opts in pairs(list.whitelist.ad_patterns or {}) do
-                if third_party_match(page_domain, uri_domain, opts) then
-                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                        info("adblock: allowing %q as pattern %q matched to uri %s", signame, pattern, uri)
-                        return true
-                    end
-                end
-            end
-        end
-
-        -- Check for a match to whitelist
-        for pattern, opts in pairs(list.whitelist.patterns or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                    info("adblock: allowing %q as pattern %q matched to uri %s", signame, pattern, uri)
-                    return true
-                end
-            end
+        local found, pattern = match_list(list.whitelist, uri, uri_domains, page_domain, uri_domain)
+        if found then
+            info("adblock: allowing %q as pattern %q matched to uri %s", signame, pattern, uri)
+            return true
         end
     end
-    
+
     -- Test against each list's blacklist rules
     for _, list in pairs(rules) do
-        -- First, check for domain name anchor (||) rules
-        for domain, _ in pairs(uri_domains) do
-            for pattern, opts in pairs(list.blacklist.domains[domain] or {}) do
-                if third_party_match(page_domain, uri_domain, opts) then
-                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                        info("adblock: blocking %q as domain %q matched to uri %s", signame, domain, uri)
-                        return false
-                    end
-                end
-            end
-        end
-
-        -- Next, match against plain text strings
-        for pattern, opts in pairs(list.blacklist.plain or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
-                    info("adblock: blocking %q as plain string %q matched to uri %s", signame, pattern, uri)
-                    return false
-                end
-            end
-        end
-
-        -- If the URI contains "ad", check the ad_patterns blacklist as well
-        if string.find(uri, "ad") then
-            for pattern, opts in pairs(list.blacklist.ad_patterns or {}) do
-                if third_party_match(page_domain, uri_domain, opts) then
-                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                        info("adblock: blocking %q as pattern %q matched to uri %s", signame, pattern, uri)
-                        return false
-                    end
-                end
-            end
-        end
-
-        -- Check for a match to blacklist
-        for pattern, opts in pairs(list.blacklist.patterns or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                    info("adblock: blocking %q as pattern %q matched to uri %s", signame, pattern, uri)
-                    return false
-                end
-            end
+        local found, pattern = match_list(list.blacklist, uri, uri_domains, page_domain, uri_domain)
+        if found then
+            info("adblock: blocking %q as pattern %q matched to uri %s", signame, pattern, uri)
+            return false
         end
     end
 end
