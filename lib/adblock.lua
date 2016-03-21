@@ -165,6 +165,14 @@ abp_to_pattern = function (s)
     local domain = nil
 
     if string.len(s) > 0 then
+        -- If this is matchable as a plain string, return early
+        local has_star = string.find(s, "*", 1, true)
+        local has_caret = string.find(s, "^", 1, true)
+        local domain_anchor = string.match(s, "^||")
+        if not has_star and not has_caret and not domain_anchor then
+            return {s}, opts, nil, true
+        end
+
         -- Optimize for domain anchor rules
         if string.match(s, "^||") then
             -- Extract the domain from the pattern
@@ -187,8 +195,7 @@ abp_to_pattern = function (s)
         -- Caret is separator (anything but a letter, a digit, or one of the following:Â - . %)
         s = string.gsub(s, "%^", "[^%%w%%-%%.%%%%]")
 
-        -- Double pipe is domain anchor (beginning only)
-        if string.match(s, "^||") then
+        if domain_anchor then
             local p = string.sub(s, 3) -- Clip off first two || characters
             s = { "^https?://" .. p, "^https?://[^/]*%." .. p }
         else
@@ -206,7 +213,7 @@ abp_to_pattern = function (s)
         end
     end
 
-    return s, opts, domain
+    return s, opts, domain, false
 end
 
 add_unique_cached = function (pattern, opts, tab, cache_tab)
@@ -231,7 +238,7 @@ parse_abpfilterlist = function (filename, cache)
     --***
     local pat, opts
     local wlen, blen, icnt = 0, 0, 0
-    local white, black = { patterns = {}, domains = {} }, { patterns = {}, domains = {}, ad_patterns = {} }
+    local white, black = { patterns = {}, domains = {}, plain = {} }, { patterns = {}, domains = {}, ad_patterns = {}, plain = {} }
     for line in io.lines(filename) do
         -- Ignore comments, header and blank lines
         if line:match("^[![]") or line:match("^$") then
@@ -243,9 +250,12 @@ parse_abpfilterlist = function (filename, cache)
 
         -- Check for exceptions (whitelist)
         elseif line:match("^@@") then
-            pats, opts, domain = abp_to_pattern(string.sub(line, 3))
+            pats, opts, domain, plain  = abp_to_pattern(string.sub(line, 3))
             for _, pat in ipairs(pats) do
-                if pat ~= "^http://" then
+                if plain then
+                    add_unique_cached(pat, opts, white.plain, cache.white)
+                    wlen = wlen + 1
+                elseif pat ~= "^http://" then
                     local new
                     if domain then
                         if not white.domains[domain] then white.domains[domain] = {} end
@@ -269,9 +279,12 @@ parse_abpfilterlist = function (filename, cache)
 
         -- Add everything else to blacklist
         else
-            pats, opts, domain = abp_to_pattern(line)
+            pats, opts, domain, plain = abp_to_pattern(line)
             for _, pat in ipairs(pats) do
-                if pat ~= "^http:" and pat ~= ".*" then
+                if plain then
+                    add_unique_cached(pat, opts, black.plain, cache.black)
+                    blen = blen + 1
+                elseif pat ~= "^http:" and pat ~= ".*" then
                     local new
                     if domain then
                         if not black.domains[domain] then black.domains[domain] = {} end
@@ -453,6 +466,16 @@ match = function (uri, signame, page_uri)
             end
         end
 
+        -- Next, match against plain text strings
+        for pattern, opts in pairs(list.whitelist.plain or {}) do
+            if third_party_match(page_domain, uri_domain, opts) then
+                if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
+                    info("adblock: allowing %q as plain string %q matched to uri %s", signame, pattern, uri)
+                    return true
+                end
+            end
+        end
+
         -- Check for a match to whitelist
         for pattern, opts in pairs(list.whitelist.patterns or {}) do
             if third_party_match(page_domain, uri_domain, opts) then
@@ -474,6 +497,16 @@ match = function (uri, signame, page_uri)
                         info("adblock: blocking %q as domain %q matched to uri %s", signame, domain, uri)
                         return false
                     end
+                end
+            end
+        end
+
+        -- Next, match against plain text strings
+        for pattern, opts in pairs(list.blacklist.plain or {}) do
+            if third_party_match(page_domain, uri_domain, opts) then
+                if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
+                    info("adblock: blocking %q as plain string %q matched to uri %s", signame, pattern, uri)
+                    return false
                 end
             end
         end
