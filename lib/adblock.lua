@@ -226,6 +226,47 @@ add_unique_cached = function (pattern, opts, tab, cache_tab)
     end
 end
 
+list_new = function ()
+    return {
+        patterns    = {},
+        ad_patterns = {},
+        plain       = {},
+        domains     = {},
+        length      = 0,
+        ignored     = 0,
+    }
+end
+
+list_add = function(list, line, cache, pat_exclude)
+    pats, opts, domain, plain = abp_to_pattern(line)
+
+    for _, pat in ipairs(pats) do
+        if plain then
+            add_unique_cached(pat, opts, list.plain, cache)
+            list.length = list.length + 1
+        elseif pat ~= "^http:" and pat ~= pat_exclude then
+            local new
+            if domain then
+                if not list.domains[domain] then
+                    list.domains[domain] = {}
+                end
+                new = add_unique_cached(pat, opts, list.domains[domain], cache)
+            elseif string.find(line, "ad") then
+                new = add_unique_cached(pat, opts, list.ad_patterns, cache)
+            else
+                new = add_unique_cached(pat, opts, list.patterns, cache)
+            end
+            if new then
+                list.length = list.length + 1
+            else
+                list.ignored = list.ignored + 1
+            end
+        else
+            list.ignored = list.ignored + 1
+        end
+    end
+end
+
 -- Parses an Adblock Plus compatible filter list
 parse_abpfilterlist = function (filename, cache)
     if os.exists(filename) then
@@ -237,78 +278,22 @@ parse_abpfilterlist = function (filename, cache)
     --local f = io.open(filename .. "~", "w")
     --***
     local pat, opts
-    local wlen, blen, icnt = 0, 0, 0
-    local white, black = { patterns = {}, domains = {}, plain = {} }, { patterns = {}, domains = {}, ad_patterns = {}, plain = {} }
+    local white, black = list_new(), list_new()
     for line in io.lines(filename) do
         -- Ignore comments, header and blank lines
         if line:match("^[![]") or line:match("^$") then
             -- dammitwhydoesntluahaveacontinuestatement
-
         -- Ignore element hiding
         elseif line:match("#") then
             --icnt = icnt + 1
-
-        -- Check for exceptions (whitelist)
         elseif line:match("^@@") then
-            pats, opts, domain, plain  = abp_to_pattern(string.sub(line, 3))
-            for _, pat in ipairs(pats) do
-                if plain then
-                    add_unique_cached(pat, opts, white.plain, cache.white)
-                    wlen = wlen + 1
-                elseif pat ~= "^http://" then
-                    local new
-                    if domain then
-                        if not white.domains[domain] then white.domains[domain] = {} end
-                        new = add_unique_cached(pat, opts, white.domains[domain], cache.white)
-                    else
-                        new = add_unique_cached(pat, opts, white.patterns, cache.white)
-                    end
-                    if new then
-                        wlen = wlen + 1
-                        --***
-                        --f:write("W " .. pat .. "\n")
-                        --***
-                    else
-                        icnt = icnt + 1
-                    end
-                    -- table.insert(white, pat)
-                else
-                    icnt = icnt + 1
-                end
-            end
-
-        -- Add everything else to blacklist
+            list_add(white, string.sub(line, 3), cache.white)
         else
-            pats, opts, domain, plain = abp_to_pattern(line)
-            for _, pat in ipairs(pats) do
-                if plain then
-                    add_unique_cached(pat, opts, black.plain, cache.black)
-                    blen = blen + 1
-                elseif pat ~= "^http:" and pat ~= ".*" then
-                    local new
-                    if domain then
-                        if not black.domains[domain] then black.domains[domain] = {} end
-                        new = add_unique_cached(pat, opts, black.domains[domain], cache.black)
-                    elseif string.find(line, "ad") then
-                        new = add_unique_cached(pat, opts, black.ad_patterns, cache.black)
-                    else
-                        new = add_unique_cached(pat, opts, black.patterns, cache.black)
-                    end
-                    if new then
-                        blen = blen + 1
-                        --***
-                        --f:write("B " .. pat .. "\n")
-                        --***
-                    else
-                        icnt = icnt + 1
-                    end
-                    -- table.insert(black, pat)
-                else
-                    icnt = icnt + 1
-                end
-            end
+            list_add(black, line, cache.black, ".*")
         end
     end
+
+    local wlen, blen, icnt = white.length, black.length, white.ignored + black.ignored
     --***
     --f:close()
     --***
@@ -472,6 +457,18 @@ match = function (uri, signame, page_uri)
                 if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
                     info("adblock: allowing %q as plain string %q matched to uri %s", signame, pattern, uri)
                     return true
+                end
+            end
+        end
+
+        -- If the URI contains "ad", check the ad_patterns whitelist as well
+        if string.find(uri, "ad") then
+            for pattern, opts in pairs(list.whitelist.ad_patterns or {}) do
+                if third_party_match(page_domain, uri_domain, opts) then
+                    if domain_match(page_domain, opts) and string.match(uri, pattern) then
+                        info("adblock: allowing %q as pattern %q matched to uri %s", signame, pattern, uri)
+                        return true
+                    end
                 end
             end
         end
