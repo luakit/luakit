@@ -231,6 +231,7 @@ list_new = function ()
         patterns    = {},
         ad_patterns = {},
         plain       = {},
+        ad_plain    = {},
         domains     = {},
         length      = 0,
         ignored     = 0,
@@ -239,10 +240,12 @@ end
 
 list_add = function(list, line, cache, pat_exclude)
     pats, opts, domain, plain = abp_to_pattern(line)
+    local contains_ad = string.find(line, "ad", 1, true)
 
     for _, pat in ipairs(pats) do
         if plain then
-            add_unique_cached(pat, opts, list.plain, cache)
+            local bucket = contains_ad and list.ad_plain or list.plain
+            add_unique_cached(pat, opts, bucket, cache)
             list.length = list.length + 1
         elseif pat ~= "^http:" and pat ~= pat_exclude then
             local new
@@ -251,10 +254,9 @@ list_add = function(list, line, cache, pat_exclude)
                     list.domains[domain] = {}
                 end
                 new = add_unique_cached(pat, opts, list.domains[domain], cache)
-            elseif string.find(line, "ad") then
-                new = add_unique_cached(pat, opts, list.ad_patterns, cache)
             else
-                new = add_unique_cached(pat, opts, list.patterns, cache)
+                local bucket = contains_ad and list.ad_patterns or list.patterns
+                new = add_unique_cached(pat, opts, bucket, cache)
             end
             if new then
                 list.length = list.length + 1
@@ -417,8 +419,17 @@ match_list = function (list, uri, uri_domains, page_domain, uri_domain)
         end
     end
 
-    -- If the URI contains "ad", check the ad_patterns
-    if string.find(uri, "ad") then
+    -- If the URI contains "ad", check those buckets as well
+    if string.find(uri, "ad", 1, true) then
+        -- Check plain strings with "ad" in them
+        for pattern, opts in pairs(list.ad_plain or {}) do
+            if third_party_match(page_domain, uri_domain, opts) then
+                if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
+                    return true, pattern
+                end
+            end
+        end
+        -- Check patterns with "ad" in them
         for pattern, opts in pairs(list.ad_patterns or {}) do
             if third_party_match(page_domain, uri_domain, opts) then
                 if domain_match(page_domain, opts) and string.match(uri, pattern) then
