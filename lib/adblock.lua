@@ -243,12 +243,11 @@ list_add = function(list, line, cache, pat_exclude)
     local contains_ad = string.find(line, "ad", 1, true)
 
     for _, pat in ipairs(pats) do
+        local new
         if plain then
             local bucket = contains_ad and list.ad_plain or list.plain
-            add_unique_cached(pat, opts, bucket, cache)
-            list.length = list.length + 1
+            new = add_unique_cached(pat, opts, bucket, cache)
         elseif pat ~= "^http:" and pat ~= pat_exclude then
-            local new
             if domain then
                 if not list.domains[domain] then
                     list.domains[domain] = {}
@@ -258,11 +257,9 @@ list_add = function(list, line, cache, pat_exclude)
                 local bucket = contains_ad and list.ad_patterns or list.patterns
                 new = add_unique_cached(pat, opts, bucket, cache)
             end
-            if new then
-                list.length = list.length + 1
-            else
-                list.ignored = list.ignored + 1
-            end
+        end
+        if new then
+            list.length = list.length + 1
         else
             list.ignored = list.ignored + 1
         end
