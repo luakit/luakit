@@ -204,7 +204,7 @@ chrome.add("cookie-filter", function (view, meta)
         for _, v in pairs(c_for_d) do
             local allowed = cookie_filter_lib.get(d, v.name)
             v.state = allowed and "Allowed" or "Blocked"
-            v.action = "<a href=# onclick='cookie_filter_set(\"".. v.domain .. "\", \"" .. v.name .. "\", " .. (allowed and 0 or 1) .. ")'>" .. (allowed and "Block" or "Allow") .. "</a>"
+            v.action = "<a href=# class=" .. (allowed and "disable" or "enable") .. " onclick='cookie_filter_set(\"".. v.domain .. "\", \"" .. v.name .. "\", " .. (allowed and 0 or 1) .. ")'>" .. (allowed and "Block" or "Allow") .. "</a>"
             cookies[#cookies+1] = string.gsub(cookie_template, "{(%w+)}", v)
         end
     end
