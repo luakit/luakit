@@ -16,28 +16,12 @@ local window    = window
 module("adblock_chrome")
 
 -- Templates
-block_template = [==[
-    <div class="tag">
-        <h1>{opt}</h1>
-        <table>
-            <thead>
-                <th>File</th>
-                <th colspan=3>Rules in use</th>
-                <th>Update URL</th>
-                <th></th>
-            </thead>
-            <tbody>
-                {links}
-            </tbody>
-        </table>
-    </div>
-]==]
-
 list_template_enabled = [==[
     <tr>
         <td>{title}</td>
         <td>B: {black}</td><td>W: {white}</td><td>I: {ignored}</td>
         <td><a href="{uri}">{name}</a></td>
+        <td class="state_{state}">{state}</td>
         <td><a class=disable href=# onclick="adblock_list_toggle({id}, false)">Disable</a></td>
     </tr>
 ]==]
@@ -47,6 +31,7 @@ list_template_disabled = [==[
         <td>{title}</td>
         <td></td><td></td><td></td>
         <td><a href="{uri}">{name}</a></td>
+        <td class="state_{state}">{state}</td>
         <td><a class=enable href=# onclick="adblock_list_toggle({id}, true)">Enable</a></td>
     </tr>
 ]==]
@@ -72,9 +57,18 @@ html_template = [==[
             <div class="rhs">{toggle}</div>
         </header>
         <div class="content-margin">
-            <div>
-                {opts}
-            </div>
+            <table>
+                <thead>
+                    <th>File</th>
+                    <th colspan=3>Rules in use</th>
+                    <th>Update URL</th>
+                    <th>State</th>
+                    <th>Actions</th>
+                </thead>
+                <tbody>
+                    {links}
+                </tbody>
+            </table>
         </div>
     </body>
     </html>
@@ -95,20 +89,23 @@ html_style = [===[
         margin: 1em 0 0.5em 0.5em;
         -webkit-user-select: none;
         cursor: default;
-        overflow: hidden;
-        white-space: nowrap;
-        text-overflow: ellipsis;
     }
     td {
         font-size: 1.3em;
-        width: 1px;
+    }
+    th, td {
         white-space: nowrap;
     }
-    td:nth-last-child(2) {
-        max-width: 1px;
+    th:not(:nth-last-child(3)),
+    td:not(:nth-last-child(3)) {
+        width: 1px;
+    }
+    th:nth-last-child(3),
+    td:nth-last-child(3) {
         overflow: hidden;
         text-overflow: ellipsis;
-        white-space: nowrap;
+        max-width: 100px;
+        width: 100%;
     }
     td + td, th + th {
         padding-left: 1em;
@@ -116,11 +113,11 @@ html_style = [===[
     header > span {
         padding: 1em 1em 1em 1em;
     }
-    span.state_Enabled {
+    .state_Enabled {
         color: #799D6A;
         font-weight: bold;
     }
-    span.state_Disabled {
+    .state_Disabled {
         color: #CF6A4C;
         font-weight: bold;
     }
@@ -187,50 +184,35 @@ chrome_page    = "luakit://adblock/"
 --- Shows the chrome page in the given view.
 chrome.add("adblock", function (view, meta)
     local uri = chrome_page
-    -- Get a list of all the unique tags in all the lists and build a
-    -- relation between a given tag and a list of subscriptions with that tag.
-    local opts = {}
+
     local id = 0
+    local lists = {}
     for _, list in pairs(adblock.subscriptions) do
         id = id + 1
         list['id'] = id
-        for _, opt in ipairs(list.opts) do
-            if not opts[opt] then opts[opt] = {} end
-            opts[opt][list.title] = list
-        end
+        lists[list.title] = list
     end
 
-    -- For each opt build a block
-    local lines = {}
-    for _, opt in ipairs(util.table.keys(opts)) do
-        local links = {}
-        for _, title in ipairs(util.table.keys(opts[opt])) do
-            local list = opts[opt][title]
-            local link_subs = {
-                uri     = list.uri,
-                id      = list.id,
-                name    = util.escape(list.uri),
-                title   = list.title,
-                white   = list.white,
-                black   = list.black,
-                ignored = list.ignored,
-            }
-            local list_template = list_template_disabled
-            -- Show rules count only when enabled this list and have read its rules
-            if util.table.hasitem(list.opts, "Enabled") and list.white and list.black and list.ignored then
-                -- For totals count items only once (protection from multi-tagging by several opts confusion)
-                list_template = list_template_enabled
-            end
-            local link = string.gsub(list_template, "{(%w+)}", link_subs)
-            table.insert(links, link)
-        end
-
-        local block_subs = {
-            opt   = opt,
-            links = table.concat(links, "\n")
+    local links = {}
+    for _, list in pairs(lists) do
+        local link_subs = {
+            uri     = list.uri,
+            id      = list.id,
+            name    = util.escape(list.uri),
+            title   = list.title,
+            white   = list.white,
+            black   = list.black,
+            ignored = list.ignored,
+            state   = util.table.hasitem(list.opts, "Enabled") and "Enabled" or "Disabled"
         }
-        local block = string.gsub(block_template, "{(%w+)}", block_subs)
-        table.insert(lines, block)
+        local list_template = list_template_disabled
+        -- Show rules count only when enabled this list and have read its rules
+        if util.table.hasitem(list.opts, "Enabled") and list.white and list.black and list.ignored then
+            -- For totals count items only once (protection from multi-tagging by several opts confusion)
+            list_template = list_template_enabled
+        end
+        local link = string.gsub(list_template, "{(%w+)}", link_subs)
+        table.insert(links, link)
     end
 
     local rulescount = { black = 0, white = 0, ignored = 0 }
@@ -246,7 +228,7 @@ chrome.add("adblock", function (view, meta)
     }
 
     local html_subs = {
-        opts   = table.concat(lines, "\n\n"),
+        links   = table.concat(links, "\n\n"),
         title  = html_page_title,
         style  = chrome.stylesheet .. html_style,
         state = adblock.state(),
