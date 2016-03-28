@@ -15,7 +15,7 @@ cookie_template = [==[
     <tr>
         <td>{domain}</td>
         <td>{name}</td>
-        <td class="value">{value}</td>
+        <td>{value}</td>
         <td class="state_{state}">{state}</td>
         <td>{action}</td>
     </tr>
@@ -95,59 +95,25 @@ html_style = [===[
     header > span {
         padding: 1em 1em 1em 1em;
     }
+    /* Colours for cookie filtering states */
     .state_Allowed {
         color: #799D6A;
-        font-weight: bold;
     }
     .state_Blocked {
         color: #CF6A4C;
-        font-weight: bold;
     }
     .state_Session {
         color: #FFB964;
-        font-weight: bold;
     }
-    .value {
+    /* Column alignment and text styling */
+    td:nth-child(3) {
         font-family: monospace;
     }
-    div.tag {
-        padding: 0.4em 0.5em;
-        margin: 0 0 0.5em;
-        clear: both;
-    }
-    span.id {
-        font-size: small;
-        color: #333333;
-        float: right;
+    td:nth-child(4) {
+        font-weight: bold;
     }
     th:last-child, td:last-child {
         text-align: right;
-    }
-    .tag ul {
-        padding: 0;
-        margin: 0;
-        list-style-type: none;
-    }
-    .tag li {
-        margin: 1em 0;
-    }
-    .tag h1 {
-        font-size: 12pt;
-        font-weight: bold;
-        font-style: normal;
-        font-variant: small-caps;
-        padding: 0 0 5px 0;
-        margin: 0;
-        color: #CC3333;
-        border-bottom: 1px solid #aaa;
-    }
-    .tag a:link {
-        color: #0077bb;
-        text-decoration: none;
-    }
-    .tag a:hover {
-        color: #0077bb;
-        text-decoration: underline;
     }
 ]===]
 
