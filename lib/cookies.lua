@@ -118,7 +118,8 @@ end)
 
 capi.soup.add_signal("cookie-changed", function (old, new)
     if new and new.domain ~= "" then
-        if _M.emit_signal("accept-cookie", new) == false then
+        local accept = _M.emit_signal("accept-cookie", new)
+        if accept == false then
             new.expires = 0 -- expire cookie
             capi.soup.add_cookies{new}
             return
@@ -133,17 +134,19 @@ capi.soup.add_signal("cookie-changed", function (old, new)
             if not _M.store_session_cookies then return end
         end
 
-        -- Insert new cookie
-        query_insert:exec {
-            new.name,
-            new.value,
-            new.domain,
-            new.path,
-            new.expires,
-            micro(),
-            new.secure,
-            new.http_only
-        }
+        if accept ~= "session-only" then
+            -- Insert new cookie
+            query_insert:exec {
+                new.name,
+                new.value,
+                new.domain,
+                new.path,
+                new.expires,
+                micro(),
+                new.secure,
+                new.http_only
+            }
+        end
         return
     end
 
