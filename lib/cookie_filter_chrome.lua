@@ -21,6 +21,8 @@ cookie_template = [==[
     </tr>
 ]==]
 
+action_link_template = "<a href=# onclick=\"cookie_filter_set('{domain}', '{name}', {allowed})\">{label}</a>"
+
 html_template = [==[
     <html>
     <head>
@@ -101,6 +103,10 @@ html_style = [===[
         color: #CF6A4C;
         font-weight: bold;
     }
+    .state_Session {
+        color: #FFB964;
+        font-weight: bold;
+    }
     .value {
         font-family: monospace;
     }
@@ -114,8 +120,8 @@ html_style = [===[
         color: #333333;
         float: right;
     }
-    a.enable, a.disable {
-        float: right;
+    th:last-child, td:last-child {
+        text-align: right;
     }
     .tag ul {
         padding: 0;
@@ -203,8 +209,31 @@ chrome.add("cookie-filter", function (view, meta)
         c_for_d = cookie_filter_lib.cookies[d] or {}
         for _, v in pairs(c_for_d) do
             local allowed = cookie_filter_lib.get(d, v.name)
-            v.state = allowed and "Allowed" or "Blocked"
-            v.action = "<a href=# class=" .. (allowed and "disable" or "enable") .. " onclick='cookie_filter_set(\"".. v.domain .. "\", \"" .. v.name .. "\", " .. (allowed and 0 or 1) .. ")'>" .. (allowed and "Block" or "Allow") .. "</a>"
+
+            -- Label for current state
+            local states = {
+                [cookie_filter_lib.CF_BLOCK] = "Blocked",
+                [cookie_filter_lib.CF_ALLOW] = "Allowed",
+                [cookie_filter_lib.CF_SESSION_ONLY] = "Session"
+            }
+            v.state = states[allowed]
+
+            -- List of possible actions
+            local actions = {
+                [cookie_filter_lib.CF_BLOCK] = "Block",
+                [cookie_filter_lib.CF_ALLOW] = "Allow",
+                [cookie_filter_lib.CF_SESSION_ONLY] = "Session"
+            }
+            actions[allowed] = nil
+
+            -- Build html for action links
+            local action_links = {}
+            for kk, vv in pairs(actions) do
+                local subs = { domain = v.domain, name = v.name, allowed = kk, label = vv }
+                action_links[#action_links+1] = string.gsub(action_link_template, "{(%w+)}", subs)
+            end
+            v.action = table.concat(action_links, " ")
+
             cookies[#cookies+1] = string.gsub(cookie_template, "{(%w+)}", v)
         end
     end

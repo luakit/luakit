@@ -17,6 +17,12 @@ module("cookie_filter")
 -- cookies.
 cookies = {}
 
+CF_BLOCK = 0
+CF_ALLOW = 1
+CF_SESSION_ONLY = 2
+
+cookie_filter_default = CF_SESSION_ONLY
+
 -- Fitting for cookie_filter_chrome.refresh_views()
 refresh_views = function()
     -- Dummy.
@@ -46,12 +52,18 @@ get = function (domain, name)
     assert(type(name) == "string")
 
     local rows = query_select:exec{domain, name}
-    return rows[1] and rows[1].allow == 1 or false
+    if rows[1] then
+        local allow = rows[1].allow
+        assert(allow == CF_BLOCK or allow == CF_ALLOW or allow == CF_SESSION_ONLY)
+        return allow
+    end
+    return cookie_filter_default
 end
 
 set = function (domain, name, allow)
     assert(type(domain) == "string")
     assert(type(name) == "string")
+    assert(allow == CF_BLOCK or allow == CF_ALLOW or allow == CF_SESSION_ONLY)
 
     local rows = query_select:exec{domain, name}
     if rows[1] then
@@ -73,5 +85,6 @@ end
 
 cookies_lib.add_signal("accept-cookie", function (cookie)
     record_cookie(cookie)
-    return get(cookie.domain, cookie.name)
+    local ret = { CF_BLOCK = false, CF_ALLOW = nil, CF_SESSION_ONLY = "session-only" }
+    return ret[get(cookie.domain, cookie.name)]
 end)
