@@ -85,6 +85,6 @@ end
 
 cookies_lib.add_signal("accept-cookie", function (cookie)
     record_cookie(cookie)
-    local ret = { CF_BLOCK = false, CF_ALLOW = nil, CF_SESSION_ONLY = "session-only" }
+    local ret = { [CF_BLOCK] = false, [CF_ALLOW] = nil, [CF_SESSION_ONLY] = "session-only" }
     return ret[get(cookie.domain, cookie.name)]
 end)
