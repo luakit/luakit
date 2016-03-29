@@ -521,9 +521,18 @@ local function follow(w)
     local d = assert(state.frames[state.focus_frame],
         "invalid focus frame index")
 
+    -- Save javascript new window permission, set to allowed
+    -- Some links have an onclick=window.open() call... ugh
+    -- Only allows follow JS because JS is single-threaded (I think...?)
+    local js_win_allowed = view.javascript_can_open_windows_automatically
+    view.javascript_can_open_windows_automatically = true
+
     local evaluator = string.format(eval_format, state.evaluator)
     local ret, err = view:eval_js(evaluator, d)
     assert(not err, err)
+
+    -- Restore javascript new window permission
+    view.javascript_can_open_windows_automatically = js_win_allowed
 
     if mode.persist then
         w:set_mode("follow", mode)
