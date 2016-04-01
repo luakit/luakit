@@ -21,15 +21,16 @@
 #include "luah.h"
 #include "widgets/common.h"
 
-#if GTK_CHECK_VERSION(3,14,0)
-/* align and padding deprecated. Use margin and alignment properties of
- * GtkWidgets instead. */
-#else
 static gint
 luaH_label_get_align(lua_State *L, widget_t *w)
 {
     gfloat xalign, yalign;
+#if !GTK_CHECK_VERSION(3,14,0)
     gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
+#elif GTK_CHECK_VERSION(3,16,0)
+    xalign = gtk_label_get_xalign(GTK_LABEL(w->widget));
+    yalign = gtk_label_get_yalign(GTK_LABEL(w->widget));
+#endif
     lua_createtable(L, 0, 2);
     /* set align.x */
     lua_pushliteral(L, "x");
@@ -45,24 +46,36 @@ luaH_label_get_align(lua_State *L, widget_t *w)
 static gint
 luaH_label_set_align(lua_State *L, widget_t *w)
 {
-    luaH_checktable(L, 3);
-    /* get old alignment values */
     gfloat xalign, yalign;
+    luaH_checktable(L, 3);
+#if !GTK_CHECK_VERSION(3,14,0)
+    /* get old alignment values */
     gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
+#endif
     /* get align.x */
     if (luaH_rawfield(L, 3, "x")) {
         xalign = (gfloat) lua_tonumber(L, -1);
         lua_pop(L, 1);
+#if GTK_CHECK_VERSION(3,16,0)
+        gtk_label_set_xalign(GTK_LABEL(w->widget), xalign);
+#endif
     }
     /* get align.y */
     if (luaH_rawfield(L, 3, "y")) {
         yalign = (gfloat) lua_tonumber(L, -1);
         lua_pop(L, 1);
+#if GTK_CHECK_VERSION(3,16,0)
+        gtk_label_set_yalign(GTK_LABEL(w->widget), yalign);
+#endif
     }
+#if !GTK_CHECK_VERSION(3,14,0)
     gtk_misc_set_alignment(GTK_MISC(w->widget), xalign, yalign);
+#endif
     return 0;
 }
 
+#if GTK_CHECK_VERSION(3,14,0)
+#else
 static gint
 luaH_label_get_padding(lua_State *L, widget_t *w)
 {
@@ -112,7 +125,9 @@ luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
 #else
       case L_TK_PADDING:
         return luaH_label_get_padding(L, w);
+#endif
 
+#if GTK_CHECK_VERSION(3,16,0) || !GTK_CHECK_VERSION(3,14,0)
       case L_TK_ALIGN:
         return luaH_label_get_align(L, w);
 #endif
@@ -151,7 +166,9 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 #else
       case L_TK_PADDING:
         return luaH_label_set_padding(L, w);
+#endif
 
+#if GTK_CHECK_VERSION(3,16,0) || !GTK_CHECK_VERSION(3,14,0)
       case L_TK_ALIGN:
         return luaH_label_set_align(L, w);
 #endif
