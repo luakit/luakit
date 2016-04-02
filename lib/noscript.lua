@@ -39,8 +39,9 @@ local function btoi(bool) return bool and 1 or 0    end
 local function itob(int)  return tonumber(int) ~= 0 end
 
 local function get_domain(uri)
-    uri = assert(lousy.uri.parse(uri), "invalid uri")
-    return string.lower(uri.host)
+    uri = lousy.uri.parse(uri)
+    -- uri parsing will fail on some URIs, e.g. "about:blank"
+    return uri and string.lower(uri.host) or nil
 end
 
 local function match_domain(domain)
