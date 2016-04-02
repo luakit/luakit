@@ -12,16 +12,13 @@ local warn = warn
 local print, type = print, type
 local pairs, ipairs = pairs, ipairs
 local tostring, tonumber = tostring, tonumber
+local editor = require "editor"
 local capi = {
     luakit = luakit
 }
 
 local new_mode, add_binds = new_mode, add_binds
 local menu_binds = menu_binds
-
-local term       = globals.term   or "xterm"
-local editor     = globals.editor or (os.getenv("EDITOR") or "vim")
-local editor_cmd = string.format("%s -e %s", term, editor)
 
 --- Provides functionaliy to auto-fill forms based on a Lua DSL.
 -- The configuration is stored in $XDG_DATA_DIR/luakit/forms.lua
@@ -251,7 +248,7 @@ end
 
 --- Edits the formfiller rules.
 function edit()
-    capi.luakit.spawn(string.format("%s %q", editor_cmd, file))
+    editor.edit(file)
 end
 
 --- Adds a new entry to the formfiller based on the current webpage.

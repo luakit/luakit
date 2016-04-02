@@ -15,6 +15,7 @@ local os = os
 local error = error
 local package = package
 local debug = debug
+local editor = require "editor"
 
 -- Grab the luakit environment we need
 local lousy = require("lousy")
@@ -384,11 +385,7 @@ export_funcs = {
         return ret
     end,
 
-    open_editor = function (file, line)
-        local cmd = string.format("%s -e %s %q +%d", globals.term or "xterm",
-            globals.editor or "vim", file, line)
-        capi.luakit.spawn(cmd)
-    end,
+    open_editor = editor.edit,
 }
 
 chrome.add("help", function (view, meta)
