@@ -10,7 +10,10 @@ SRCS  = $(filter-out $(TSRC),$(wildcard *.c) $(wildcard common/*.c) $(wildcard c
 HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h) $(wildcard clib/*.h) $(wildcard clib/soup/*.h) $(THEAD) globalconf.h
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-all: options newline luakit luakit.1.gz
+EXT_SRCS = $(wildcard extension/*.c)
+EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
+
+all: options newline luakit luakit.1.gz luakit.so
 
 options:
 	@echo luakit build options:
@@ -36,15 +39,23 @@ globalconf.h: globalconf.h.in
 
 $(OBJS): $(HEADS) config.mk
 
-.c.o:
+$(OBJS) : %.o : %.c
 	@echo $(CC) -c $< -o $@
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
+
+$(EXT_OBJS) : %.o : %.c
+	@echo $(CC) -c $< -o $@
+	@$(CC) -c $(CFLAGS) -fpic $(CPPFLAGS) $< -o $@
 
 widgets/webview.o: $(wildcard widgets/webview/*.c)
 
 luakit: $(OBJS)
 	@echo $(CC) -o $@ $(OBJS)
 	@$(CC) -o $@ $(OBJS) $(LDFLAGS)
+
+luakit.so: $(EXT_OBJS)
+	@echo $(CC) -o $@ $(EXT_OBJS)
+	@$(CC) -o $@ $(EXT_OBJS) -shared $(LDFLAGS)
 
 luakit.1: luakit.1.in
 	@sed "s/LUAKITVERSION/$(VERSION)/" $< > $@
@@ -60,7 +71,7 @@ doc: globalconf.h $(THEAD) $(TSRC)
 	doxygen -s luakit.doxygen
 
 clean:
-	rm -rf apidocs doc luakit $(OBJS) $(TSRC) $(THEAD) globalconf.h luakit.1
+	rm -rf apidocs doc luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) globalconf.h luakit.1
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
@@ -73,6 +84,7 @@ install:
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/*.lua
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/*.lua
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/widget/*.lua
+	install luakit.so $(INSTALLDIR)/share/luakit/luakit.so
 	install -d $(INSTALLDIR)/bin
 	install luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/

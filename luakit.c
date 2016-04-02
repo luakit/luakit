@@ -29,6 +29,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <locale.h>
+#include <webkit2/webkit2.h>
 
 static void sigchld(int sigint);
 
@@ -132,6 +133,12 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
         return argv+1;
 }
 
+static void
+initialize_web_extensions_cb(WebKitWebContext *context, gpointer user_data)
+{
+    webkit_web_context_set_web_extensions_directory(context, "/usr/share/luakit/");
+}
+
 gint
 main(gint argc, gchar *argv[]) {
     gboolean *nonblock = NULL;
@@ -175,6 +182,9 @@ main(gint argc, gchar *argv[]) {
     }
 
     gtk_init(&argc, &argv);
+
+    g_signal_connect(webkit_web_context_get_default(), "initialize-web-extensions",
+            G_CALLBACK (initialize_web_extensions_cb), NULL);
 
     init_directories();
     init_lua(uris);
