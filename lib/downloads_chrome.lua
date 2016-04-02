@@ -27,88 +27,67 @@ local capi = {
 
 module("downloads.chrome")
 
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Downloads</title>
     <style type="text/css">
-        body {
-            background-color: white;
-            color: black;
-            margin: 10px;
-            display: block;
-            font-size: 84%;
-            font-family: sans-serif;
-        }
-
-        div {
-            display: block;
-        }
-
-        #downloads-summary {
-            border-top: 1px solid #888;
-            background-color: #ddd;
-            padding: 3px;
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .download {
-            -webkit-margin-start: 90px;
-            -webkit-padding-start: 10px;
-            position: relative;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .download .date {
-            left: -90px;
-            width: 90px;
-            position: absolute;
-            display: block;
-            color: #888;
-        }
-
-        .download .title a {
-            color: #3F6EC2;
-            padding-right: 16px;
-        }
-
-        .download .status {
-            display: inline;
-            color: #999;
-            white-space: nowrap;
-        }
-
-        .download .uri a {
-            color: #56D;
-            text-overflow: ellipsis;
-            display: inline-block;
-            white-space: nowrap;
-            text-decoration: none;
-            overflow: hidden;
-            max-width: 500px;
-        }
-
-        .download .controls a {
-            color: #777;
-            margin-right: 16px;
-        }
+        {style}
     </style>
 </head>
 <body>
-    <div id="main">
-        <div id="downloads-summary">Downloads</div>
-        <div id="downloads-list">
-        </div>
-    </div>
-    <script>
-    </script>
+    <header id="page-header">
+        <h1>Downloads</h1>
+    </header>
+    <div id="downloads-list" class="content-margin">
 </body>
 </html>
+]==]
+
+local html_style = [==[
+    .download {
+        -webkit-margin-start: 90px;
+        -webkit-padding-start: 10px;
+        position: relative;
+        display: block;
+        margin-bottom: 10px;
+    }
+
+    .download .date {
+        left: -90px;
+        width: 90px;
+        position: absolute;
+        display: block;
+        color: #888;
+    }
+
+    .download .title a {
+        color: #3F6EC2;
+        padding-right: 16px;
+    }
+
+    .download .status {
+        display: inline;
+        color: #999;
+        white-space: nowrap;
+    }
+
+    .download .uri a {
+        color: #56D;
+        text-overflow: ellipsis;
+        display: inline-block;
+        white-space: nowrap;
+        text-decoration: none;
+        overflow: hidden;
+        max-width: 500px;
+    }
+
+    .download .controls a {
+        color: #777;
+        margin-right: 16px;
+    }
 ]==]
 
 local main_js = [=[
@@ -366,6 +345,12 @@ downloads.add_signal("status-tick", function (running)
 end)
 
 chrome.add("downloads", function (view, meta)
+    local html_subs = {
+        style  = chrome.stylesheet .. html_style,
+    }
+
+    local html = string.gsub(html_template, "{(%w+)}", html_subs)
+
     view:load_string(html, "luakit://downloads/")
 
     function on_first_visual(_, status)
