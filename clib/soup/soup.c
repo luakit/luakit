@@ -64,6 +64,15 @@ luaH_soup_uri_tostring(lua_State *L)
     lua_pop(L, 1);
 
     GET_PROP(scheme)
+
+    /* If this is a file:// uri, set a default host of ""
+     * Without host set, a path of "/home/..." will become "file:/home/..."
+     * instead of "file:///home/..."
+     */
+    if (soup_uri_get_scheme(uri) == SOUP_URI_SCHEME_FILE) {
+        soup_uri_set_host(uri, "");
+    }
+
     GET_PROP(user)
     GET_PROP(password)
     GET_PROP(host)
@@ -186,6 +195,7 @@ soup_lib_setup(lua_State *L)
         { "uri_tostring",  luaH_soup_uri_tostring },
 #if !WITH_WEBKIT2
         { "add_cookies",   luaH_cookiejar_add_cookies },
+        { "remove_cookies", luaH_cookiejar_remove_cookies },
 #endif
         { NULL,            NULL },
     };

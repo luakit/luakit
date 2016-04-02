@@ -26,6 +26,10 @@
 #define LUAKIT_WIDGET_INDEX_COMMON(widget)            \
     case L_TK_VISIBLE:                                \
       return luaH_widget_get_visible(L, widget);      \
+    case L_TK_WIDTH:                                  \
+      return luaH_widget_get_width(L, widget);        \
+    case L_TK_HEIGHT:                                 \
+      return luaH_widget_get_height(L, widget);       \
     case L_TK_SHOW:                                   \
       lua_pushcfunction(L, luaH_widget_show);         \
       return 1;                                       \
@@ -79,6 +83,8 @@ gint luaH_widget_remove(lua_State*);
 gint luaH_widget_set_child(lua_State*, widget_t*);
 gint luaH_widget_show(lua_State*);
 gint luaH_widget_get_visible(lua_State *L, widget_t*);
+gint luaH_widget_get_width(lua_State *L, widget_t*);
+gint luaH_widget_get_height(lua_State *L, widget_t*);
 gint luaH_widget_set_visible(lua_State *L, widget_t*);
 
 

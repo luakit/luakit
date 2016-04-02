@@ -34,6 +34,15 @@
 #include "common/property.h"
 #include "luah.h"
 
+typedef struct _webview_scroll_anim_t {
+    /** Smooth scroll offset at animation start */
+    gdouble source;
+    /** Smooth scroll offset at animation end */
+    gdouble target;
+    /** Time at which animation began */
+    guint64 start_time;
+} webview_scroll_anim_t;
+
 typedef struct {
     /** The parent widget_t struct */
     widget_t *widget;
@@ -54,8 +63,20 @@ typedef struct {
     WebKitWebInspector *inspector;
     /** Inspector webview widget */
     widget_t *iview;
+
     guint htr_context;
     gboolean is_committed;
+
+    /** Animation state for horizontal scrolling */
+    webview_scroll_anim_t hscroll;
+    /** Animation state for vertical scrolling */
+    webview_scroll_anim_t vscroll;
+    /** Scroll animation duration */
+    guint scroll_time_msec;
+    /** Whether a smooth scroll is currently occurring */
+    gboolean smooth_scroll;
+    /** Per-frame callback for smooth scrolling */
+    guint scroll_cb_id;
 } webview_data_t;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
@@ -1264,6 +1285,12 @@ scroll_event_cb(GtkWidget* UNUSED(v), GdkEventScroll *ev, widget_t *w)
     gint ret = luaH_object_emit_signal(L, -3, "button-release", 2, 1);
     gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
     lua_pop(L, ret + 1);
+
+#if GTK_CHECK_VERSION(3,8,0)
+    /* Cancel any currently running scrolling animation */
+    webview_set_smoothscroll(w, false);
+#endif
+
     return catch;
 }
 #endif
@@ -1382,6 +1409,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 # endif
     w->widget = GTK_WIDGET(d->win);
+
+    /* Initialize smooth-scrolling */
+    webview_scroll_init(w);
 
     /* add webview to scrolled window */
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));

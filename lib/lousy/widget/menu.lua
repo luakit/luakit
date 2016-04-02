@@ -114,7 +114,7 @@ function update(menu)
                     rw.hbox:pack(cell, { expand = true, fill = true })
                     rw.cols[c] = cell
                     cell.font = font
-                    cell.width = 1
+                    cell.textwidth = 1
 
                 -- Remove row column widget
                 elseif not text and cell then

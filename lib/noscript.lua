@@ -39,8 +39,9 @@ local function btoi(bool) return bool and 1 or 0    end
 local function itob(int)  return tonumber(int) ~= 0 end
 
 local function get_domain(uri)
-    uri = assert(lousy.uri.parse(uri), "invalid uri")
-    return string.lower(uri.host)
+    uri = lousy.uri.parse(uri)
+    -- uri parsing will fail on some URIs, e.g. "about:blank"
+    return uri and string.lower(uri.host) or nil
 end
 
 local function match_domain(domain)
@@ -98,18 +99,57 @@ function webview.methods.toggle_remove(view, w)
     w:notify("Removed rules for domain: " .. domain)
 end
 
-webview.init_funcs.noscript_load = function (view)
-    view:add_signal("load-changed", function (v, status)
-        if status ~= "committed" or v.uri == "about:blank" then return end
-        local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
-        local domain = get_domain(v.uri)
+function string.starts(a, b)
+    return string.sub(a, 1, string.len(b)) == b
+end
+
+local function lookup_domain(uri)
+    local scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
+    local full_match = true
+    local domain = get_domain(uri)
+
+    -- Enable everything for chrome pages; without this, chrome pages which
+    -- depend upon javascript will break
+    if string.starts(uri, "luakit://") then return true, true, true end
+
+    -- Look up this domain and all parent domains, returning the first match
+    -- E.g. querying a.b.com will lookup a.b.com, then b.com, then com
+    while domain do
         local row = match_domain(domain)
         if row then
             enable_scripts = itob(row.enable_scripts)
             enable_plugins = itob(row.enable_plugins)
+            break
         end
-        view.enable_scripts = enable_scripts
-        view.enable_plugins = enable_plugins
+        full_match = false
+        domain = string.match(domain, "%.(.+)")
+    end
+
+    -- full_match is true if the domain of the matched record is equal to the
+    -- full subdomain of the given URI
+    -- E.g. a.b.com matched to b.com will return false, but will return true if
+    -- matched to a.b.com; intended for use in indicators/widgets
+    return enable_scripts, enable_plugins, full_match
+end
+
+function webview.methods.noscript_state(view, w)
+    if view.uri then
+        return lookup_domain(view.uri)
+    end
+end
+
+webview.init_funcs.noscript_load = function (view)
+    view:add_signal("load-changed", function (v, status)
+        if status == "provisional" then
+            view.enable_scripts = enable_scripts
+            view.enable_plugins = enable_plugins
+            return
+        end
+        if status == "committed" and v.uri ~= "about:blank" then
+            local enable_scripts, enable_plugins, _ = lookup_domain(v.uri)
+            view.enable_scripts = enable_scripts
+            view.enable_plugins = enable_plugins
+        end
     end)
 end
 

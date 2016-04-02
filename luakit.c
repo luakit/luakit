@@ -63,9 +63,9 @@ void
 init_directories(void)
 {
     /* create luakit directory */
-    globalconf.cache_dir  = g_build_filename(g_get_user_cache_dir(),  "luakit", NULL);
-    globalconf.config_dir = g_build_filename(g_get_user_config_dir(), "luakit", NULL);
-    globalconf.data_dir   = g_build_filename(g_get_user_data_dir(),   "luakit", NULL);
+    globalconf.cache_dir  = g_build_filename(g_get_user_cache_dir(),  "luakit", globalconf.profile, NULL);
+    globalconf.config_dir = g_build_filename(g_get_user_config_dir(), "luakit", globalconf.profile, NULL);
+    globalconf.data_dir   = g_build_filename(g_get_user_data_dir(),   "luakit", globalconf.profile, NULL);
     g_mkdir_with_parents(globalconf.cache_dir,  0771);
     g_mkdir_with_parents(globalconf.config_dir, 0771);
     g_mkdir_with_parents(globalconf.data_dir,   0771);
@@ -78,6 +78,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
     gchar **uris = NULL;
+    globalconf.profile = NULL;
 
     /* save luakit exec path */
     globalconf.execpath = g_strdup(argv[0]);
@@ -87,6 +88,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     const GOptionEntry entries[] = {
       { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
       { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
+      { "profile",  'p', 0, G_OPTION_ARG_STRING,       &globalconf.profile,  "profile name to use",       "NAME" },
       { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
       { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
       { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },

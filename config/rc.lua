@@ -116,6 +116,9 @@ require "follow"
 -- Match only hint labels
 --follow.pattern_maker = follow.pattern_styles.match_label
 
+-- Uncomment if you want to ignore case when matching
+--follow.ignore_case = true
+
 -- Add command history
 require "cmdhist"
 
@@ -144,6 +147,11 @@ require "follow_selected"
 require "go_input"
 require "go_next_prev"
 require "go_up"
+
+-- Block insecure content on secure pages by default
+-- Add a bind to w:toggle_mixed_content() to temporarily enable mixed content
+-- for the current tab.
+require "mixed_content"
 
 -----------------------------
 -- End user script loading --

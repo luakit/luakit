@@ -12,6 +12,7 @@ local strip, split = lousy.util.string.strip, lousy.util.string.split
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
+local page_step = globals.page_step or 1.0
 local zoom_step = globals.zoom_step or 0.1
 
 -- Add binds to a mode
@@ -54,13 +55,6 @@ add_binds("all", {
 
     key({"Control"}, "[", "Return to `normal` mode.",
         function (w) w:set_mode() end),
-
-    -- Mouse bindings
-    but({}, 8, "Go back.",
-        function (w) w:back() end),
-
-    but({}, 9, "Go forward.",
-        function (w) w:forward() end),
 
     -- Open link in new tab or navigate to selection
     but({}, 2, [[Open link under mouse cursor in new tab or navigate to the
@@ -199,30 +193,30 @@ add_binds("normal", {
         function (w) w:scroll{ ypagerel = -0.5 } end),
 
     key({"Control"}, "f", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
+        function (w) w:scroll{ ypagerel =  page_step } end),
 
     key({"Control"}, "b", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "space", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
+        function (w) w:scroll{ ypagerel =  page_step } end),
 
     key({"Shift"}, "space", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "BackSpace", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
     key({}, "Page_Down", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  1.0 } end),
+        function (w) w:scroll{ ypagerel =  page_step } end),
 
     key({}, "Page_Up", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -1.0 } end),
+        function (w) w:scroll{ ypagerel = -page_step } end),
 
-    key({}, "Home", "Go to the end of the document.",
+    key({}, "Home", "Go to the top of the document.",
         function (w) w:scroll{ y =  0 } end),
 
-    key({}, "End", "Go to the top of the document.",
+    key({}, "End", "Go to the end of the document.",
         function (w) w:scroll{ y = -1 } end),
 
     -- Specific scroll
@@ -268,8 +262,8 @@ add_binds("normal", {
     key({}, "F11", "Toggle fullscreen mode.",
         function (w) w.win.fullscreen = not w.win.fullscreen end),
 
-    -- Clipboard
-    key({}, "p", [[Open a URL based on the current primary selection contents
+    -- Open primary selection contents.
+    buf("^pp$", [[Open a URL based on the current primary selection contents
         in the current tab.]],
         function (w)
             local uri = luakit.selection.primary
@@ -277,13 +271,46 @@ add_binds("normal", {
             w:navigate(w:search_open(uri))
         end),
 
-    key({}, "P", [[Open a URL based on the current primary selection contents
+    buf("^pt$", [[Open a URL based on the current primary selection contents
         in `[count=1]` new tab(s).]],
-        function (w, m)
+        function (w, b, m)
             local uri = luakit.selection.primary
             if not uri then w:notify("No primary selection...") return end
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
+
+    buf("^pw$", [[Open a URL based on the current primary selection contents in
+        a new window.]],
+        function(w, m)
+            local uri = luakit.selection.primary
+            if not uri then w:notify("No primary selection...") return end
+            window.new{w:search_open(uri)}
+        end),
+
+    -- Open clipboard contents.
+    buf("^PP$", [[Open a URL based on the current clipboard selection contents
+        in the current tab.]],
+        function (w)
+            local uri = luakit.selection.clipboard
+            if not uri then w:notify("Nothing in clipboard...") return end
+            w:navigate(w:search_open(uri))
+        end),
+
+    buf("^PT$", [[Open a URL based on the current clipboard selection contents
+        in `[count=1]` new tab(s).]],
+        function (w, b, m)
+            local uri = luakit.selection.clipboard
+            if not uri then w:notify("Nothing in clipboard...") return end
+            for i = 1, m.count do w:new_tab(w:search_open(uri)) end
+        end, {count = 1}),
+
+    buf("^PW$", [[Open a URL based on the current clipboard selection contents
+        in a new window.]],
+        function(w)
+            local uri = luakit.selection.clipboard
+            if not uri then w:notify("Nothing in clipboard...") return end
+            window.new{w:search_open(uri)}
+        end),
 
     -- Yanking
     key({}, "y", "Yank current URI to primary selection.",
@@ -291,6 +318,13 @@ add_binds("normal", {
             local uri = string.gsub(w.view.uri or "", " ", "%%20")
             luakit.selection.primary = uri
             w:notify("Yanked uri: " .. uri)
+        end),
+
+    key({}, "Y", "Yank current URI to clipboard.",
+        function (w)
+            local uri = string.gsub(w.view.uri or "", " ", "%%20")
+            luakit.selection.clipboard = uri
+            w:notify("Yanked uri (to clipboard): " .. uri)
         end),
 
     -- Commands
@@ -351,6 +385,12 @@ add_binds("normal", {
 
     key({"Shift","Control"}, "Tab", "Go to previous tab.",
         function (w) w:prev_tab() end),
+
+    key({}, "F1", "Show help.",
+        function (w) w:run_cmd(":help") end),
+
+    key({}, "F12", "Toggle web inspector.",
+        function (w) w:run_cmd(":inspect!") end),
 
     buf("^gT$", "Go to previous tab.",
         function (w) w:prev_tab() end),
@@ -489,6 +529,16 @@ add_cmds({
                 opts = join(opts, { bang = true })
                 return lousy.bind.match_cmd(w, opts.binds, cmd .. args, opts)
             end
+        end),
+
+    key({"Control"}, "Return",
+        [[Expand `:[tab,win]open example` to `:[tab,win]open www.example.com`.]],
+        function (w)
+            local tokens = split(w.ibar.input.text, "%s+")
+            if string.match(tokens[1], "^:%w*open$") and #tokens == 2 then
+                w:enter_cmd(string.format("%s www.%s.com", tokens[1], tokens[2]))
+            end
+            w:activate()
         end),
 
     cmd("c[lose]", "Close current tab.",

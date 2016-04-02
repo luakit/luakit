@@ -201,6 +201,8 @@ webkit_user_agent_version
 webkit_version
 webview
 width
+height
+textwidth
 window
 windows
 x
