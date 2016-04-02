@@ -17,8 +17,8 @@
  * along with this program.  If not, see <http://www.gnu.org/licenses/>.
  *
  */
-#if WITH_WEBKIT2
 
+#if WITH_WEBKIT2
 static void
 scroll_finished(GObject *obj, GAsyncResult *r, gpointer UNUSED(data))
 {
@@ -30,6 +30,7 @@ scroll_finished(GObject *obj, GAsyncResult *r, gpointer UNUSED(data))
 }
 #endif
 
+#if !WITH_WEBKIT2
 #if GTK_CHECK_VERSION(3,8,0)
 gboolean webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w);
 
@@ -107,6 +108,7 @@ webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w)
 
     return G_SOURCE_CONTINUE;
 }
+#endif
 #endif
 
 static gint
