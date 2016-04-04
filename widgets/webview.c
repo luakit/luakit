@@ -805,11 +805,27 @@ luaH_webview_ssl_trusted(lua_State *L)
     return 0;
 }
 
+static luakit_token_t
+webview_translate_old_token(luakit_token_t token)
+{
+    /* No-op if we're using webkit1 */
+#if !WITH_WEBKIT2
+    return token;
+#endif
+
+    switch(token) {
+      case L_TK_ENABLE_SCRIPTS: return L_TK_ENABLE_JAVASCRIPT;
+      default:                  return token;
+    }
+}
+
 static gint
 luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     webview_data_t *d = w->data;
     gint ret;
+
+    token = webview_translate_old_token(token);
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
@@ -915,6 +931,8 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     size_t len;
     webview_data_t *d = w->data;
     gchar *uri;
+
+    token = webview_translate_old_token(token);
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
