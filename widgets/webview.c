@@ -789,10 +789,6 @@ luaH_webview_ssl_trusted(lua_State *L)
     if (uri && d->is_committed &&
             webkit_web_view_get_tls_info(d->view, &cert, &cert_errors)) {
         gboolean is_trusted = (cert_errors == 0);
-        if (is_trusted)
-            luaH_warn(L, "webview_ssl_trusted should return true");
-        else
-            luaH_warn(L, "webview_ssl_trusted should return false");
         lua_pushboolean(L, is_trusted);
 #else
     if (uri && !strncmp(uri, "https", 5)) {
