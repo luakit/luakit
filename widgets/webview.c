@@ -157,6 +157,7 @@ property_t webview_settings_properties[] = {
   { L_TK_ENABLE_MEDIASOURCE,                        "enable-mediasource",                        BOOL,  TRUE },
 #else
   { L_TK_ENABLE_JAVA_APPLET,                        "enable-java-applet",                        BOOL,  TRUE },
+  { L_TK_ENABLE_SCRIPTS,                            "enable-scripts",                            BOOL,  TRUE },
 #endif
   { L_TK_ENABLE_OFFLINE_WEB_APPLICATION_CACHE,      "enable-offline-web-application-cache",      BOOL,  TRUE },
   { L_TK_ENABLE_PAGE_CACHE,                         "enable-page-cache",                         BOOL,  TRUE },
@@ -165,9 +166,6 @@ property_t webview_settings_properties[] = {
 #if WITH_WEBKIT2
   /* replaces resizable-text-areas */
   { L_TK_ENABLE_RESIZABLE_TEXT_AREAS,               "enable-resizable-text-areas",               BOOL,  TRUE },
-#else
-  // TODO lib/noscript.lua uses this
-  { L_TK_ENABLE_SCRIPTS,                            "enable-scripts",                            BOOL,  TRUE },
 #endif
   { L_TK_ENABLE_SITE_SPECIFIC_QUIRKS,               "enable-site-specific-quirks",               BOOL,  TRUE },
 #if WITH_WEBKIT2
