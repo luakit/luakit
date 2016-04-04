@@ -104,7 +104,7 @@ function string.starts(a, b)
 end
 
 local function lookup_domain(uri)
-    local scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
+    local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
     local full_match = true
     local domain = get_domain(uri)
 
