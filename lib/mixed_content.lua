@@ -2,6 +2,7 @@ local info      = info
 local assert    = assert
 local string    = string
 local webview   = webview
+local setmetatable = setmetatable
 
 module("mixed_content")
 
@@ -9,11 +10,11 @@ module("mixed_content")
 --  nil   -> no mixed content in view
 --  true  -> mixed content allowed to load
 --  false -> mixed content blocked
-local has_mixed = {}
+local has_mixed = setmetatable({}, { __mode = 'k' })
 
 -- Indexed by view
 -- Whether to allow or blocked mixed content for a view
-local allow_mixed = {}
+local allow_mixed = setmetatable({}, { __mode = 'k' })
 
 -- Used to detect resource-request-starting signals in between provisional
 -- and committed load-status signals; these correspond to top level page
