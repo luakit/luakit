@@ -41,7 +41,7 @@ local function itob(int)  return tonumber(int) ~= 0 end
 local function get_domain(uri)
     uri = lousy.uri.parse(uri)
     -- uri parsing will fail on some URIs, e.g. "about:blank"
-    return uri and string.lower(uri.host) or nil
+    return (uri and uri.host) and string.lower(uri.host) or nil
 end
 
 local function match_domain(domain)
