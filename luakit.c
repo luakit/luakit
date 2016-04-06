@@ -30,6 +30,9 @@
 #include <errno.h>
 #include <locale.h>
 #include <webkit2/webkit2.h>
+#include <sys/socket.h>
+#include <sys/types.h>
+#include <sys/un.h>
 
 static void sigchld(int sigint);
 
@@ -133,10 +136,79 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
         return argv+1;
 }
 
-static void
-initialize_web_extensions_cb(WebKitWebContext *context, gpointer user_data)
+gboolean
+msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
 {
-    webkit_web_context_set_web_extensions_directory(context, "/usr/share/luakit/");
+    if (cond & G_IO_HUP) {
+        g_io_channel_unref(channel);
+        return FALSE;
+    }
+
+    if (cond & G_IO_IN) {
+        debug("luakit ui process: message received");
+    }
+
+    return TRUE;
+}
+
+static gpointer
+web_extension_connect(gpointer user_data)
+{
+    const gchar *socket_path = user_data;
+
+    int sock, web_socket;
+    struct sockaddr_un local, remote;
+    local.sun_family = AF_UNIX;
+    strcpy(local.sun_path, socket_path);
+    int len = strlen(local.sun_path) + sizeof(local.sun_family);
+
+    if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+        fatal("Can't open new socket");
+
+    /* Remove any pre-existing socket, before opening */
+    unlink(local.sun_path);
+
+    if (bind(sock, (struct sockaddr *)&local, len) == -1)
+        fatal("Can't bind socket to %s", socket_path);
+
+    if (listen(sock, 5) == -1)
+        fatal("Can't listen on %s", socket_path);
+
+    debug("Waiting for a connection...");
+
+    socklen_t size = sizeof(remote);
+    if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
+        fatal("Can't accept on %s", socket_path);
+
+    close(sock);
+
+    debug("Creating channel...");
+
+    GIOChannel *channel = g_io_channel_unix_new(web_socket);
+    g_io_channel_set_encoding(channel, NULL, NULL);
+    g_io_channel_set_buffered(channel, FALSE);
+    g_io_add_watch(channel, G_IO_IN | G_IO_HUP, msg_recv, NULL);
+
+    return NULL;
+}
+
+static void
+initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_data))
+{
+    const gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
+    const gchar *extension_dir = "/usr/share/luakit/";
+
+    /* Set up connection to web extension process */
+    g_thread_new("accept_thread", web_extension_connect, (void*)socket_path);
+
+    /* There's a potential race condition here; the accept thread might not run
+     * until after the web extension process has already started (and failed to
+     * connect). TODO: add a busy wait */
+
+    GVariant *payload = g_variant_new_string(socket_path);
+    webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
+    webkit_web_context_set_web_extensions_directory(context, extension_dir);
+
 }
 
 gint
