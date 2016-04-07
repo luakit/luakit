@@ -52,6 +52,10 @@ typedef struct {
     /** The GtkScrolledWindow for the webview widget */
     GtkScrolledWindow *win;
 #endif
+#if WITH_WEBKIT2
+    /** The user content manager for the webview */
+    WebKitUserContentManager *user_content;
+#endif
     /** Current webview uri */
     gchar *uri;
     /** Currently hovered uri */
@@ -1402,7 +1406,12 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
 
     /* create widgets */
+#if WITH_WEBKIT2
+    d->user_content = webkit_user_content_manager_new();
+    d->view = WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(d->user_content));
+#else
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+#endif
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
