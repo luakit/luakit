@@ -55,6 +55,8 @@ typedef struct {
 #if WITH_WEBKIT2
     /** The user content manager for the webview */
     WebKitUserContentManager *user_content;
+    /** A list of stylesheets enabled for this user content */
+    GList *stylesheets;
 #endif
     /** Current webview uri */
     gchar *uri;
@@ -245,6 +247,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 #include "widgets/webview/scroll.c"
 #include "widgets/webview/inspector.c"
 #include "widgets/webview/find_controller.c"
+#include "widgets/webview/stylesheets.c"
 
 static gint
 luaH_webview_load_string(lua_State *L)
@@ -871,6 +874,11 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_source_mode(d->view))
 #endif
 
+#if WITH_WEBKIT2
+      case L_TK_STYLESHEETS:
+        return luaH_webview_push_stylesheets_table(L);
+#endif
+
 #if !WITH_WEBKIT2
       // TODO
       case L_TK_FRAMES:
@@ -1402,6 +1410,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #if WITH_WEBKIT2
     if (!globalconf.stylesheets)
         globalconf.stylesheets = g_ptr_array_new();
+    d->stylesheets = NULL;
 #endif
 
 #if !WITH_WEBKIT2
