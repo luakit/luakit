@@ -1398,6 +1398,12 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
         globalconf.webviews = g_ptr_array_new();
+
+#if WITH_WEBKIT2
+    if (!globalconf.stylesheets)
+        globalconf.stylesheets = g_ptr_array_new();
+#endif
+
 #if !WITH_WEBKIT2
 
     if (!frames_by_view)
