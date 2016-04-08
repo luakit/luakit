@@ -379,7 +379,7 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
     lua_State *L = globalconf.L;
 
 #if WITH_WEBKIT2
-    if (e == WEBKIT_LOAD_STARTED)
+    if (e == WEBKIT_LOAD_COMMITTED)
         webview_update_stylesheets(L, w);
 #endif
 
