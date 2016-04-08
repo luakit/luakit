@@ -161,6 +161,7 @@ show_scrollbars
 show_tabs
 socket
 spacing
+source
 spawn
 spawn_sync
 spell_checking_languages

@@ -1,43 +1,52 @@
 #if WITH_WEBKIT2
 
-guint
-stylesheet_add(const gchar *source)
-{
-    WebKitUserStyleSheet *stylesheet = webkit_user_style_sheet_new(source,
-            WEBKIT_USER_CONTENT_INJECT_ALL_FRAMES, WEBKIT_USER_STYLE_LEVEL_USER, NULL, NULL);
-    g_ptr_array_add(globalconf.stylesheets, stylesheet);
-    return globalconf.stylesheets->len - 1;
+#include "clib/stylesheet.h"
+
+void
+webview_stylesheets_regenerate_stylesheet(widget_t *w, lstylesheet_t *stylesheet) {
+    webview_data_t *d = w->data;
+
+    /* If this styleheet was enabled, it needs to be re-added to the user
+     * content manager, since its internal WebKitUserStyleSheet pointer has
+     * changed: mark for refresh */
+    if (g_list_find(d->stylesheets, stylesheet))
+        d->stylesheet_refreshed = TRUE;
+}
+
+void
+webview_stylesheets_regenerate(widget_t *w) {
+    webview_data_t *d = w->data;
+
+    /* Re-add the user content manager stylesheets, if necessary */
+
+    if (d->stylesheet_removed || d->stylesheet_refreshed)
+        webkit_user_content_manager_remove_all_style_sheets(d->user_content);
+
+    if (d->stylesheet_added || d->stylesheet_removed || d->stylesheet_refreshed) {
+        GList *l;
+        for (l = d->stylesheets; l; l = l->next) {
+            lstylesheet_t *stylesheet = l->data;
+            webkit_user_content_manager_add_style_sheet(d->user_content, stylesheet->stylesheet);
+        }
+    }
 }
 
 int
-webview_stylesheet_set_enabled(widget_t *w, guint id, gboolean enable)
+webview_stylesheet_set_enabled(widget_t *w, lstylesheet_t *stylesheet, gboolean enable)
 {
-    if (id >= globalconf.stylesheets->len)
-        return 1;
-
     webview_data_t *d = w->data;
-
-    GList *item = g_list_find(d->stylesheets, GUINT_TO_POINTER(id));
+    GList *item = g_list_find(d->stylesheets, stylesheet);
 
     /* Return early if nothing to do */
     if (enable == (item != NULL))
         return 0;
 
     if (enable) {
-        d->stylesheets = g_list_prepend(d->stylesheets, GUINT_TO_POINTER(id));
-        WebKitUserStyleSheet *stylesheet = globalconf.stylesheets->pdata[id];
-        webkit_user_content_manager_add_style_sheet(d->user_content, stylesheet);
+        d->stylesheets = g_list_prepend(d->stylesheets, stylesheet);
+        d->stylesheet_added = TRUE;
     } else {
         d->stylesheets = g_list_remove_link(d->stylesheets, item);
-
-        webkit_user_content_manager_remove_all_style_sheets(d->user_content);
-
-        GList *l;
-        for (l = d->stylesheets; l; l = l->next) {
-            guint l_id = GPOINTER_TO_UINT(l->data);
-            WebKitUserStyleSheet *stylesheet = globalconf.stylesheets->pdata[l_id];
-            webkit_user_content_manager_add_style_sheet(d->user_content, stylesheet);
-        }
+        d->stylesheet_removed = TRUE;
     }
 
     return 0;
@@ -47,11 +56,9 @@ static gint
 luaH_webview_stylesheets_index(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, lua_upvalueindex(1));
-    guint id = luaL_checknumber(L, 2);
+    lstylesheet_t *stylesheet = luaH_checkstylesheet(L, 2);
 
-    printf("Looking up stylesheet %u status...\n", id);
-
-    gboolean enabled = g_list_find(d->stylesheets, GUINT_TO_POINTER(id)) != NULL;
+    gboolean enabled = g_list_find(d->stylesheets, stylesheet) != NULL;
     lua_pushboolean(L, enabled);
 
     return 1;
@@ -61,10 +68,10 @@ static gint
 luaH_webview_stylesheets_newindex(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, lua_upvalueindex(1));
-    guint id = luaL_checknumber(L, 2);
+    lstylesheet_t *stylesheet = luaH_checkstylesheet(L, 2);
     gboolean enable = lua_toboolean(L, 3);
 
-    webview_stylesheet_set_enabled(d->widget, id,  enable);
+    webview_stylesheet_set_enabled(d->widget, stylesheet,  enable);
 
     return 0;
 }
@@ -88,6 +95,21 @@ luaH_webview_push_stylesheets_table(lua_State *L)
     lua_rawset(L, -3);
     lua_setmetatable(L, -2);
     return 1;
+}
+
+static void
+webview_update_stylesheets(lua_State *L, widget_t *w)
+{
+    webview_data_t *d = w->data;
+
+    d->stylesheet_added   = FALSE;
+    d->stylesheet_removed = FALSE;
+
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "stylesheet", 0, 0);
+    lua_pop(L, 1);
+
+    webview_stylesheets_regenerate(w);
 }
 
 #endif

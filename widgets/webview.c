@@ -57,6 +57,10 @@ typedef struct {
     WebKitUserContentManager *user_content;
     /** A list of stylesheets enabled for this user content */
     GList *stylesheets;
+    /** Helpers for user content manager updating */
+    gboolean stylesheet_added,
+             stylesheet_removed,
+             stylesheet_refreshed;
 #endif
     /** Current webview uri */
     gchar *uri;
@@ -373,6 +377,12 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 #endif
 
     lua_State *L = globalconf.L;
+
+#if WITH_WEBKIT2
+    if (e == WEBKIT_LOAD_STARTED)
+        webview_update_stylesheets(L, w);
+#endif
+
     luaH_object_push(L, w->ref);
     lua_pushstring(L, name);
 #if WITH_WEBKIT2
