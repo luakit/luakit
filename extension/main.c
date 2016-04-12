@@ -4,8 +4,12 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <lauxlib.h>
+#include <lualib.h>
 
 #include "common/util.h"
+
+lua_State *WL;
 
 gboolean
 msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
@@ -58,6 +62,17 @@ fail_socket:
     return 1;
 }
 
+void
+web_lua_init(void)
+{
+    printf("luakit web process: Lua initializing...\n");
+
+    WL = luaL_newstate();
+    luaL_openlibs(WL);
+
+    printf("luakit web process: Lua initialized\n");
+}
+
 G_MODULE_EXPORT void
 webkit_web_extension_initialize_with_user_data(WebKitWebExtension *UNUSED(extension), GVariant *payload)
 {
@@ -67,6 +82,8 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *UNUSED(extens
         printf("luakit web process: connecting to UI thread failed\n");
         exit(EXIT_FAILURE);
     }
+
+    web_lua_init();
 
     printf("luakit web process: ready for messages\n");
 }
