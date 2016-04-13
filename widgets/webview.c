@@ -52,6 +52,16 @@ typedef struct {
     /** The GtkScrolledWindow for the webview widget */
     GtkScrolledWindow *win;
 #endif
+#if WITH_WEBKIT2
+    /** The user content manager for the webview */
+    WebKitUserContentManager *user_content;
+    /** A list of stylesheets enabled for this user content */
+    GList *stylesheets;
+    /** Helpers for user content manager updating */
+    gboolean stylesheet_added,
+             stylesheet_removed,
+             stylesheet_refreshed;
+#endif
     /** Current webview uri */
     gchar *uri;
     /** Currently hovered uri */
@@ -241,6 +251,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 #include "widgets/webview/scroll.c"
 #include "widgets/webview/inspector.c"
 #include "widgets/webview/find_controller.c"
+#include "widgets/webview/stylesheets.c"
 
 static gint
 luaH_webview_load_string(lua_State *L)
@@ -366,6 +377,12 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 #endif
 
     lua_State *L = globalconf.L;
+
+#if WITH_WEBKIT2
+    if (e == WEBKIT_LOAD_COMMITTED)
+        webview_update_stylesheets(L, w);
+#endif
+
     luaH_object_push(L, w->ref);
     lua_pushstring(L, name);
 #if WITH_WEBKIT2
@@ -865,6 +882,11 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       //PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_mode(d->view))
 #else
       PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_source_mode(d->view))
+#endif
+
+#if WITH_WEBKIT2
+      case L_TK_STYLESHEETS:
+        return luaH_webview_push_stylesheets_table(L);
 #endif
 
 #if !WITH_WEBKIT2
@@ -1394,6 +1416,13 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
         globalconf.webviews = g_ptr_array_new();
+
+#if WITH_WEBKIT2
+    if (!globalconf.stylesheets)
+        globalconf.stylesheets = g_ptr_array_new();
+    d->stylesheets = NULL;
+#endif
+
 #if !WITH_WEBKIT2
 
     if (!frames_by_view)
@@ -1402,7 +1431,12 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
 
     /* create widgets */
+#if WITH_WEBKIT2
+    d->user_content = webkit_user_content_manager_new();
+    d->view = WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(d->user_content));
+#else
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
+#endif
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;

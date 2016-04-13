@@ -30,6 +30,7 @@
 #include "clib/unique.h"
 #include "clib/widget.h"
 #include "clib/xdg.h"
+#include "clib/stylesheet.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -332,6 +333,11 @@ luaH_init(void)
 
     /* Export timer */
     timer_class_setup(L);
+
+#if WITH_WEBKIT2
+    /* Export timer */
+    stylesheet_class_setup(L);
+#endif
 
     /* add Lua search paths */
     lua_getglobal(L, "package");
