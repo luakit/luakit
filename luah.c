@@ -259,13 +259,6 @@ luaH_fixups(lua_State *L)
 }
 
 static gint
-luaH_panic(lua_State *L)
-{
-    warn("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
-    return 0;
-}
-
-static gint
 luaH_dofunction_on_error(lua_State *L)
 {
     /* duplicate string error */

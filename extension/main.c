@@ -69,6 +69,10 @@ web_lua_init(void)
     printf("luakit web process: Lua initializing...\n");
 
     WL = luaL_newstate();
+
+    /* Set panic fuction */
+    lua_atpanic(WL, luaH_panic);
+
     luaL_openlibs(WL);
     luaH_object_setup(WL);
 
