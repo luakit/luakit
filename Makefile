@@ -37,7 +37,7 @@ $(THEAD) $(TSRC): $(TLIST)
 globalconf.h: globalconf.h.in
 	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' globalconf.h.in > globalconf.h
 
-$(OBJS): $(HEADS) config.mk
+$(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
 
 $(filter-out $(EXT_OBJS),$(OBJS)) : %.o : %.c
 	@echo $(CC) -c $< -o $@
