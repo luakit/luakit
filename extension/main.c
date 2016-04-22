@@ -8,6 +8,7 @@
 #include <lualib.h>
 
 #include "common/util.h"
+#include "common/luautil.h"
 #include "common/luaobject.h"
 
 lua_State *WL;
@@ -75,6 +76,7 @@ web_lua_init(void)
 
     luaL_openlibs(WL);
     luaH_object_setup(WL);
+    luaH_add_paths(WL, NULL);
 
     printf("luakit web process: Lua initialized\n");
 }
