@@ -156,7 +156,6 @@ luaH_rawfield(lua_State *L, gint idx, const gchar *field)
     return type;
 }
 
-void luaH_add_paths(lua_State *L);
 void luaH_init();
 gboolean luaH_parserc(const gchar *, gboolean);
 gint luaH_mtnext(lua_State *, gint);
