@@ -9,24 +9,10 @@
 
 #include "common/util.h"
 #include "common/luautil.h"
+#include "extension/msg.h"
 #include "common/luaobject.h"
 
 lua_State *WL;
-
-gboolean
-msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
-{
-    if (cond & G_IO_HUP) {
-        g_io_channel_unref(channel);
-        return FALSE;
-    }
-
-    if (cond & G_IO_IN) {
-        printf("luakit web process: message received\n");
-    }
-
-    return TRUE;
-}
 
 static int
 web_extension_connect(const gchar *socket_path)
