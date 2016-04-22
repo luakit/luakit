@@ -280,53 +280,8 @@ luaH_dofunction_on_error(lua_State *L)
 }
 
 void
-luaH_init(void)
+luaH_add_paths(lua_State *L)
 {
-    lua_State *L;
-
-    /* Lua VM init */
-    L = globalconf.L = luaL_newstate();
-
-    /* Set panic fuction */
-    lua_atpanic(L, luaH_panic);
-
-    /* Set error handling function */
-    lualib_dofunction_on_error = luaH_dofunction_on_error;
-
-    luaL_openlibs(L);
-
-    luaH_fixups(L);
-
-    luaH_object_setup(L);
-
-    /* Export luakit lib */
-    luakit_lib_setup(L);
-
-    /* Export xdg lib */
-    xdg_lib_setup(L);
-
-    /* Export soup lib */
-    soup_lib_setup(L);
-
-#if WITH_UNIQUE
-    if (!globalconf.nounique)
-        /* Export unique lib */
-        unique_lib_setup(L);
-#endif
-
-    /* Export widget */
-    widget_class_setup(L);
-
-    /* Export download */
-    download_class_setup(L);
-
-    /* Export sqlite3 */
-    sqlite3_class_setup(L);
-
-    /* Export timer */
-    timer_class_setup(L);
-
-    /* add Lua search paths */
     lua_getglobal(L, "package");
     if(LUA_TTABLE != lua_type(L, 1)) {
         warn("package is not a table");
@@ -383,6 +338,57 @@ luaH_init(void)
 
     /* remove package module from stack */
     lua_pop(L, 1);
+}
+
+void
+luaH_init(void)
+{
+    lua_State *L;
+
+    /* Lua VM init */
+    L = globalconf.L = luaL_newstate();
+
+    /* Set panic fuction */
+    lua_atpanic(L, luaH_panic);
+
+    /* Set error handling function */
+    lualib_dofunction_on_error = luaH_dofunction_on_error;
+
+    luaL_openlibs(L);
+
+    luaH_fixups(L);
+
+    luaH_object_setup(L);
+
+    /* Export luakit lib */
+    luakit_lib_setup(L);
+
+    /* Export xdg lib */
+    xdg_lib_setup(L);
+
+    /* Export soup lib */
+    soup_lib_setup(L);
+
+#if WITH_UNIQUE
+    if (!globalconf.nounique)
+        /* Export unique lib */
+        unique_lib_setup(L);
+#endif
+
+    /* Export widget */
+    widget_class_setup(L);
+
+    /* Export download */
+    download_class_setup(L);
+
+    /* Export sqlite3 */
+    sqlite3_class_setup(L);
+
+    /* Export timer */
+    timer_class_setup(L);
+
+    /* add Lua search paths */
+    luaH_add_paths(L);
 }
 
 gboolean
