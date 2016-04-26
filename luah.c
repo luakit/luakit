@@ -327,6 +327,9 @@ luaH_init(void)
     /* Export timer */
     timer_class_setup(L);
 
+    /* Export web module */
+    web_module_class_setup(L);
+
     /* add Lua search paths */
     luaH_add_paths(L, globalconf.config_dir);
 }

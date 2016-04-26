@@ -1,9 +1,6 @@
 #include <webkit2/webkit-web-extension.h>
 #include <stdlib.h>
 #include <glib.h>
-#include <sys/socket.h>
-#include <sys/types.h>
-#include <sys/un.h>
 #include <lauxlib.h>
 #include <lualib.h>
 
@@ -11,44 +8,9 @@
 #include "common/luautil.h"
 #include "extension/msg.h"
 #include "common/luaobject.h"
+#include "extension/clib/ui_process.h"
 
 lua_State *WL;
-
-static int
-web_extension_connect(const gchar *socket_path)
-{
-    int sock;
-
-    struct sockaddr_un remote;
-    remote.sun_family = AF_UNIX;
-    strcpy(remote.sun_path, socket_path);
-    int len = sizeof(remote.sun_family) + strlen(remote.sun_path);
-
-    printf("luakit web process: connecting to %s\n", socket_path);
-
-    if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
-        perror("socket");
-        goto fail_socket;
-    }
-
-    if (connect(sock, (struct sockaddr *)&remote, len) == -1) {
-        perror("connect");
-        goto fail_connect;
-    }
-
-    printf("luakit web process: connected\n");
-
-    GIOChannel *channel = g_io_channel_unix_new(sock);
-    g_io_channel_set_encoding(channel, NULL, NULL);
-    g_io_channel_set_buffered(channel, FALSE);
-    g_io_add_watch (channel, G_IO_IN | G_IO_HUP, msg_recv, NULL);
-
-    return 0;
-fail_connect:
-    close(sock);
-fail_socket:
-    return 1;
-}
 
 void
 web_lua_init(void)
@@ -63,6 +25,7 @@ web_lua_init(void)
     luaL_openlibs(WL);
     luaH_object_setup(WL);
     luaH_add_paths(WL, NULL);
+    ui_process_class_setup(WL);
 
     printf("luakit web process: Lua initialized\n");
 }

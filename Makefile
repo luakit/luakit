@@ -10,7 +10,7 @@ SRCS  = $(filter-out $(TSRC),$(wildcard *.c) $(wildcard common/*.c) $(wildcard c
 HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard widgets/*.h) $(wildcard clib/*.h) $(wildcard clib/soup/*.h) $(THEAD) globalconf.h
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
-EXT_SRCS = $(wildcard extension/*.c) $(wildcard extension/clib/*.c) $(filter-out $(TSRC),$(wildcard common/*.c))
+EXT_SRCS = $(wildcard extension/*.c) $(wildcard extension/clib/*.c) $(wildcard common/*.c)
 EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
 
 all: options newline luakit luakit.1.gz luakit.so

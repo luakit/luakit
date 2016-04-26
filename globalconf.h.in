@@ -72,6 +72,11 @@ typedef struct {
 
     /** Start time for debug messages */
     gdouble starttime;
+
+    /** Channel for IPC with web process */
+    GIOChannel *web_channel;
+    /** Queued data for when channel is not yet open */
+    GByteArray *web_channel_queue;
 } globalconf_t;
 
 globalconf_t globalconf;
