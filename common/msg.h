@@ -33,4 +33,7 @@ typedef struct _msg_lua_msg_t {
 
 gboolean msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data));
 
+void lua_serialize_range(lua_State *L, GByteArray *out, int start, int end);
+int lua_deserialize_range(lua_State *L, const guint8 *in, guint length);
+
 #endif
