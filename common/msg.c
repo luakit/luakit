@@ -12,7 +12,6 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
         case LUA_TUSERDATA:
         case LUA_TFUNCTION:
         case LUA_TTHREAD:
-        case LUA_TTABLE:
             return luaL_error(L, "cannot serialize variable of type %s", lua_typename(L, type));
         default:
             break;
@@ -38,6 +37,18 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             const char *s = lua_tolstring(L, index, &len);
             g_byte_array_append(out, (guint8*)&len, sizeof(len));
             g_byte_array_append(out, (guint8*)s, len+1);
+            break;
+        }
+        case LUA_TTABLE: {
+            /* Serialize all key-value pairs */
+            lua_pushnil(L);
+            while (lua_next(L, index) != 0) {
+                lua_serialize_range(L, out, -2, -1);
+                lua_pop(L, 1);
+            }
+            /* Finish with a LUA_TNONE sentinel */
+            int end = LUA_TNONE;
+            g_byte_array_append(out, (guint8*)&end, sizeof(end));
             break;
         }
     }
@@ -78,6 +89,17 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
             *bytes += len+1;
             break;
         }
+        case LUA_TTABLE: {
+            lua_newtable(L);
+            /* Deserialize key-value pairs and set them */
+            while (lua_deserialize_value(L, bytes) == 1) {
+                lua_deserialize_value(L, bytes);
+                lua_rawset(L, -3);
+            }
+            break;
+        }
+        case LUA_TNONE:
+            return 0;
     }
 
     assert(lua_gettop(L) - top == 1);
