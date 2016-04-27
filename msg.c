@@ -26,10 +26,8 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 {
     const guint module = msg->module;
     const char *arg = msg->arg;
-    assert(strlen(arg) > 0);
-    assert(sizeof(module) + strlen(arg)+1 == length);
 
-    web_module_recv(globalconf.L, module, arg);
+    web_module_recv(globalconf.L, module, arg, length-sizeof(module));
 }
 
 static gpointer

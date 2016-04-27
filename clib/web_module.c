@@ -50,27 +50,35 @@ static gint
 web_module_send(lua_State *L)
 {
     web_module_t *web_module = luaH_check_web_module(L, 1);
-    const gchar *arg = luaL_checkstring(L, 2);
+    luaL_checkstring(L, 2);
+
+    GByteArray *buf = g_byte_array_new();
+
+    g_byte_array_append(buf, (guint8*)&web_module->module, sizeof(web_module->module));
+    lua_serialize_range(L, buf, 2, lua_gettop(L));
 
     msg_header_t header = {
         .type = MSG_TYPE_lua_msg,
-        .length = sizeof(msg_lua_msg_t) + strlen(arg)+1
+        .length = buf->len
     };
-    msg_lua_msg_t *msg = g_alloca(header.length);
-    msg->module = web_module->module;
-    strcpy(msg->arg, arg);
-    msg_send(&header, msg);
+
+    msg_send(&header, buf->data);
+    g_byte_array_unref(buf);
 
     return 0;
 }
 
 void
-web_module_recv(lua_State *L, const guint module, const gchar *arg)
+web_module_recv(lua_State *L, const guint module, const gchar *arg, guint arglen)
 {
     int ref = g_array_index(module_refs, int, module);
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
     luaH_check_web_module(L, -1);
-    luaH_object_emit_signal(L, -1, arg, 1, 0);
+
+    int n = lua_deserialize_range(L, arg, arglen);
+    const char *signame = lua_tostring(L, -n);
+    lua_remove(L, -n);
+    luaH_object_emit_signal(L, -n, signame, n-1, 0);
 }
 
 void
