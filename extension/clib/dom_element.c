@@ -65,6 +65,20 @@ luaH_dom_element_append(lua_State *L)
     return 0;
 }
 
+static gint
+luaH_dom_element_remove(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    GError *error = NULL;
+
+    webkit_dom_element_remove(element->element, &error);
+
+    if (error)
+        return luaL_error(L, "remove element error: %s", error->message);
+
+    return 0;
+}
+
 static void
 dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
 {
@@ -122,6 +136,7 @@ luaH_dom_element_index(lua_State *L)
         PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
+        PF_CASE(REMOVE, luaH_dom_element_remove)
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L, element);
         default:
             return 0;
