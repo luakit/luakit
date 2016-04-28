@@ -15,13 +15,15 @@ luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
     const char *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
 
-    if(!strcmp(prop, "id")) {
-        lua_pushstring(L, webkit_dom_element_get_attribute((WebKitDOMElement*)(element->element), "id"));
-        return 1;
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+
+    switch(token) {
+        PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
+        default:
+            return 0;
     }
-    
-    return 0;
 }
 
 void

@@ -50,11 +50,13 @@ luaH_dom_document_index(lua_State *L)
 {
     dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
     const char *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
 
-    if(!strcmp(prop, "body"))
-        return luaH_dom_document_push_body(L, document);
-    
-    return 0;
+    switch(token) {
+        case L_TK_BODY: return luaH_dom_document_push_body(L, document);
+        default:
+            return 0;
+    }
 }
 
 void
