@@ -41,6 +41,35 @@ luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 }
 
 static gint
+luaH_dom_document_create_element(lua_State *L)
+{
+    dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
+    const char *tagname = luaL_checkstring(L, 2);
+    GError *error = NULL;
+
+    WebKitDOMElement *elem = webkit_dom_document_create_element(document->document, tagname, &error);
+
+    if (error)
+        return luaL_error(L, "create element error: %s", error->message);
+
+    /* Set all attributes */
+    if (lua_istable(L, 3)) {
+        lua_pushnil(L);
+        while (lua_next(L, 3) != 0) {
+            const char *name = luaL_checkstring(L, -2);
+            const char *value = luaL_checkstring(L, -1);
+            webkit_dom_element_set_attribute(elem, name, value, &error);
+            lua_pop(L, 1);
+
+            if (error)
+                return luaL_error(L, "set new element attribute error: %s", error->message);
+        }
+    }
+
+    return luaH_dom_element_from_node(L, elem);
+}
+
+static gint
 luaH_dom_document_index(lua_State *L)
 {
     dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
@@ -48,6 +77,7 @@ luaH_dom_document_index(lua_State *L)
     luakit_token_t token = l_tokenize(prop);
 
     switch(token) {
+        PF_CASE(CREATE_ELEMENT, luaH_dom_document_create_element);
         case L_TK_BODY: return luaH_dom_document_push_body(L, document);
         default:
             return 0;
