@@ -24,6 +24,31 @@ luaH_dom_element_gc(lua_State *L)
 }
 
 static gint
+luaH_dom_element_query(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    const char *query = luaL_checkstring(L, 2);
+    GError *error = NULL;
+
+    WebKitDOMNodeList *nodes = webkit_dom_element_query_selector_all(elem, query, &error);
+
+    if (error)
+        return luaL_error(L, "query error: %s", error->message);
+
+    gulong n = webkit_dom_node_list_get_length(nodes);
+
+    lua_createtable(L, n, 0);
+    for (gulong i=0; i<n; i++) {
+        WebKitDOMNode *node = webkit_dom_node_list_item(nodes, i);
+        luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node));
+        lua_rawseti(L, 3, i+1);
+    }
+
+    return 1;
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -34,6 +59,7 @@ luaH_dom_element_index(lua_State *L)
 
     switch(token) {
         PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
+        PF_CASE(QUERY, luaH_dom_element_query)
         default:
             return 0;
     }
