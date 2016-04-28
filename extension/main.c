@@ -9,6 +9,8 @@
 #include "extension/msg.h"
 #include "common/luaobject.h"
 #include "extension/clib/ui_process.h"
+#include "extension/clib/dom_document.h"
+#include "extension/clib/dom_element.h"
 
 lua_State *WL;
 WebKitWebExtension *extension;
@@ -30,6 +32,8 @@ web_lua_init(void)
     luaH_object_setup(WL);
     luaH_add_paths(WL, NULL);
     ui_process_class_setup(WL);
+    dom_document_class_setup(WL);
+    dom_element_class_setup(WL);
 
     printf("luakit web process: Lua initialized\n");
 }
