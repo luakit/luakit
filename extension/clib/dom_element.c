@@ -49,6 +49,23 @@ luaH_dom_element_query(lua_State *L)
 }
 
 static gint
+luaH_dom_element_append(lua_State *L)
+{
+    dom_element_t *parent = luaH_checkudata(L, 1, &dom_element_class),
+                  *child = luaH_checkudata(L, 2, &dom_element_class);
+    WebKitDOMNode *p = WEBKIT_DOM_NODE(parent->element),
+                  *c = WEBKIT_DOM_NODE(child->element);
+    GError *error = NULL;
+
+    webkit_dom_node_append_child(p, c, &error);
+
+    if (error)
+        return luaL_error(L, "create element error: %s", error->message);
+
+    return 0;
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -60,6 +77,7 @@ luaH_dom_element_index(lua_State *L)
     switch(token) {
         PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
         PF_CASE(QUERY, luaH_dom_element_query)
+        PF_CASE(APPEND, luaH_dom_element_append)
         default:
             return 0;
     }
