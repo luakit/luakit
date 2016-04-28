@@ -22,6 +22,9 @@ web_lua_init(void)
     /* Set panic fuction */
     lua_atpanic(WL, luaH_panic);
 
+    /* Set error handling function */
+    lualib_dofunction_on_error = luaH_dofunction_on_error;
+
     luaL_openlibs(WL);
     luaH_object_setup(WL);
     luaH_add_paths(WL, NULL);

@@ -259,27 +259,6 @@ luaH_fixups(lua_State *L)
     lua_settable(L, LUA_GLOBALSINDEX);
 }
 
-static gint
-luaH_dofunction_on_error(lua_State *L)
-{
-    /* duplicate string error */
-    lua_pushvalue(L, -1);
-    /* emit error signal */
-    signal_object_emit(L, luakit_class.signals, "debug::error", 1, 0);
-
-    if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
-    {
-        /* Move traceback before error */
-        lua_insert(L, -2);
-        /* Insert sentence */
-        lua_pushliteral(L, "\nerror: ");
-        /* Move it before error */
-        lua_insert(L, -2);
-        lua_concat(L, 3);
-    }
-    return 1;
-}
-
 void
 luaH_init(void)
 {

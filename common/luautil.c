@@ -1,5 +1,27 @@
+#include <lauxlib.h>
+#include <lualib.h>
+
 #include "common/luautil.h"
 #include "globalconf.h"
+
+gint
+luaH_dofunction_on_error(lua_State *L)
+{
+    /* duplicate string error */
+    lua_pushvalue(L, -1);
+
+    if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
+    {
+        /* Move traceback before error */
+        lua_insert(L, -2);
+        /* Insert sentence */
+        lua_pushliteral(L, "\nerror: ");
+        /* Move it before error */
+        lua_insert(L, -2);
+        lua_concat(L, 3);
+    }
+    return 1;
+}
 
 void
 luaH_add_paths(lua_State *L, const gchar *config_dir)
