@@ -27,9 +27,11 @@ options:
 	@echo "DOCDIR       = $(DOCDIR)"
 	@echo
 	@echo build targets:
-	@echo "SRCS  = $(SRCS)"
-	@echo "HEADS = $(HEADS)"
-	@echo "OBJS  = $(OBJS)"
+	@echo "SRCS     = $(SRCS)"
+	@echo "HEADS    = $(HEADS)"
+	@echo "OBJS     = $(OBJS)"
+	@echo "EXT_SRCS = $(EXT_SRCS)"
+	@echo "EXT_OBJS = $(EXT_OBJS)"
 
 $(THEAD) $(TSRC): $(TLIST)
 	./build-utils/gentokens.lua $(TLIST) $@
