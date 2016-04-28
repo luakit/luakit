@@ -11,6 +11,7 @@
 #include "extension/clib/ui_process.h"
 
 lua_State *WL;
+WebKitWebExtension *extension;
 
 void
 web_lua_init(void)
@@ -34,7 +35,7 @@ web_lua_init(void)
 }
 
 G_MODULE_EXPORT void
-webkit_web_extension_initialize_with_user_data(WebKitWebExtension *UNUSED(extension), GVariant *payload)
+webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant *payload)
 {
     const gchar *socket_path = g_variant_get_string(payload, NULL);
 
@@ -42,6 +43,8 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *UNUSED(extens
         printf("luakit web process: connecting to UI thread failed\n");
         exit(EXIT_FAILURE);
     }
+
+    extension = ext;
 
     web_lua_init();
 
