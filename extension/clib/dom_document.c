@@ -9,8 +9,11 @@ luaH_dom_document_from_web_page(lua_State *L, WebKitWebPage *web_page)
 {
     lua_newtable(L);
     luaH_class_new(L, &dom_document_class);
+    lua_remove(L, -2);
+
     dom_document_t *document = luaH_checkudata(L, -1, &dom_document_class);
     document->document = webkit_web_page_get_dom_document(web_page);
+
     return 1;
 }
 
