@@ -66,6 +66,12 @@ luaH_dom_document_create_element(lua_State *L)
         }
     }
 
+    /* Set inner text */
+    if (lua_isstring(L, 4)) {
+        const char *inner_text = lua_tostring(L, 4);
+        webkit_dom_html_element_set_inner_text(WEBKIT_DOM_HTML_ELEMENT(elem), inner_text, NULL);
+    }
+
     return luaH_dom_element_from_node(L, elem);
 }
 
