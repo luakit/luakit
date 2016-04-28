@@ -65,6 +65,50 @@ luaH_dom_element_append(lua_State *L)
     return 0;
 }
 
+static void
+dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
+{
+    if (!elem) {
+        *l = 0;
+        *t = 0;
+    } else {
+        dom_element_get_left_and_top(webkit_dom_element_get_offset_parent(elem), l, t);
+        *l += webkit_dom_element_get_offset_left(elem);
+        *t += webkit_dom_element_get_offset_top(elem);
+    }
+}
+
+static gint
+luaH_dom_element_push_rect_table(lua_State *L, dom_element_t *element)
+{
+    glong left, top, width, height;
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+
+    dom_element_get_left_and_top(elem, &left, &top);
+    width = webkit_dom_element_get_offset_width(elem);
+    height = webkit_dom_element_get_offset_height(elem);
+
+    lua_createtable(L, 0, 4);
+
+    lua_pushstring(L, "left");
+    lua_pushinteger(L, left);
+    lua_rawset(L, -3);
+
+    lua_pushstring(L, "top");
+    lua_pushinteger(L, top);
+    lua_rawset(L, -3);
+
+    lua_pushstring(L, "width");
+    lua_pushinteger(L, width);
+    lua_rawset(L, -3);
+
+    lua_pushstring(L, "height");
+    lua_pushinteger(L, height);
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
 static gint
 luaH_dom_element_index(lua_State *L)
 {
@@ -78,6 +122,7 @@ luaH_dom_element_index(lua_State *L)
         PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
+        case L_TK_RECT: return luaH_dom_element_push_rect_table(L, element);
         default:
             return 0;
     }
