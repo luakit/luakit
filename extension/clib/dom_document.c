@@ -36,13 +36,8 @@ luaH_dom_document_gc(lua_State *L)
 static gint
 luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 {
-    lua_newtable(L);
-    luaH_class_new(L, &dom_element_class);
-    dom_element_t *element = luaH_checkudata(L, -1, &dom_element_class);
-
-    element->element = webkit_dom_document_get_body(document->document);
-
-    return 1;
+    WebKitDOMHTMLElement* node = webkit_dom_document_get_body(document->document);
+    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node));
 }
 
 static gint
