@@ -134,6 +134,7 @@ luaH_dom_element_index(lua_State *L)
 
     switch(token) {
         PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
+        PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
         PF_CASE(REMOVE, luaH_dom_element_remove)
