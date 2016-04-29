@@ -170,6 +170,22 @@ luaH_dom_element_push_attribute_table(lua_State *L)
 }
 
 static gint
+luaH_dom_element_click(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    webkit_dom_html_element_click(WEBKIT_DOM_HTML_ELEMENT(element->element));
+    return 0;
+}
+
+static gint
+luaH_dom_element_focus(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    webkit_dom_element_focus(element->element);
+    return 0;
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -183,6 +199,8 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
         PF_CASE(REMOVE, luaH_dom_element_remove)
+        PF_CASE(CLICK, luaH_dom_element_click)
+        PF_CASE(FOCUS, luaH_dom_element_focus)
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L, element);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         default:
