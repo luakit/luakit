@@ -252,3 +252,4 @@ create_element
 query
 rect
 tag_name
+attr

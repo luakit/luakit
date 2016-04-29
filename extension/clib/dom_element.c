@@ -124,6 +124,52 @@ luaH_dom_element_push_rect_table(lua_State *L, dom_element_t *element)
 }
 
 static gint
+luaH_dom_element_attribute_index(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    const gchar *attr = luaL_checkstring(L, 2);
+    lua_pushstring(L, webkit_dom_element_get_attribute(element->element, attr));
+    return 1;
+}
+
+static gint
+luaH_dom_element_attribute_newindex(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    const gchar *attr = luaL_checkstring(L, 2);
+    const gchar *value = luaL_checkstring(L, 3);
+    GError *error = NULL;
+
+    webkit_dom_element_set_attribute(element->element, attr, value, &error);
+
+    if (error)
+        return luaL_error(L, "attribute error: %s", error->message);
+
+    return 0;
+}
+
+static gint
+luaH_dom_element_push_attribute_table(lua_State *L)
+{
+    /* create attribute table */
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy element userdata */
+    lua_pushcclosure(L, luaH_dom_element_attribute_index, 1);
+    lua_rawset(L, -3);
+    /* push __newindex metafunction */
+    lua_pushliteral(L, "__newindex");
+    lua_pushvalue(L, 1); /* copy element userdata */
+    lua_pushcclosure(L, luaH_dom_element_attribute_newindex, 1);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -133,12 +179,12 @@ luaH_dom_element_index(lua_State *L)
     WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
 
     switch(token) {
-        PS_CASE(ID, webkit_dom_element_get_attribute(elem, "id"))
         PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
         PF_CASE(REMOVE, luaH_dom_element_remove)
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L, element);
+        case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         default:
             return 0;
     }
