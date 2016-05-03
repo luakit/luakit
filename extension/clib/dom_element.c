@@ -93,33 +93,42 @@ dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
 }
 
 static gint
-luaH_dom_element_push_rect_table(lua_State *L, dom_element_t *element)
+luaH_dom_element_rect_index(lua_State *L)
 {
-    glong left, top, width, height;
+    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+
     WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
 
-    dom_element_get_left_and_top(elem, &left, &top);
-    width = webkit_dom_element_get_offset_width(elem);
-    height = webkit_dom_element_get_offset_height(elem);
+    glong left, top;
 
-    lua_createtable(L, 0, 4);
+    switch (token) {
+        PI_CASE(WIDTH, webkit_dom_element_get_offset_width(elem));
+        PI_CASE(HEIGHT, webkit_dom_element_get_offset_height(elem));
+        case L_TK_LEFT:
+        case L_TK_TOP:
+            dom_element_get_left_and_top(elem, &left, &top);
+            lua_pushinteger(L, token == L_TK_LEFT ? left : top);
+            return 1;
+        default:
+            return 0;
+    }
+}
 
-    lua_pushstring(L, "left");
-    lua_pushinteger(L, left);
+static gint
+luaH_dom_element_push_rect_table(lua_State *L)
+{
+    /* create attribute table */
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy element userdata */
+    lua_pushcclosure(L, luaH_dom_element_rect_index, 1);
     lua_rawset(L, -3);
-
-    lua_pushstring(L, "top");
-    lua_pushinteger(L, top);
-    lua_rawset(L, -3);
-
-    lua_pushstring(L, "width");
-    lua_pushinteger(L, width);
-    lua_rawset(L, -3);
-
-    lua_pushstring(L, "height");
-    lua_pushinteger(L, height);
-    lua_rawset(L, -3);
-
+    lua_setmetatable(L, -2);
     return 1;
 }
 
@@ -202,7 +211,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(REMOVE, luaH_dom_element_remove)
         PF_CASE(CLICK, luaH_dom_element_click)
         PF_CASE(FOCUS, luaH_dom_element_focus)
-        case L_TK_RECT: return luaH_dom_element_push_rect_table(L, element);
+        case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         default:
             return 0;
