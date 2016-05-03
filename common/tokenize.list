@@ -255,3 +255,7 @@ tag_name
 attr
 click
 text_content
+scroll_x
+scroll_y
+inner_width
+inner_height

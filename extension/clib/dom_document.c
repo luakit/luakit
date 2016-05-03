@@ -41,6 +41,41 @@ luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 }
 
 static gint
+luaH_dom_document_window_index(lua_State *L)
+{
+    dom_document_t *document = luaH_checkudata(L, lua_upvalueindex(1), &dom_document_class);
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+
+    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document->document);
+
+    switch (token) {
+        PI_CASE(SCROLL_X, webkit_dom_dom_window_get_scroll_x(window));
+        PI_CASE(SCROLL_Y, webkit_dom_dom_window_get_scroll_y(window));
+        PI_CASE(INNER_WIDTH, webkit_dom_dom_window_get_inner_width(window));
+        PI_CASE(INNER_HEIGHT, webkit_dom_dom_window_get_inner_height(window));
+        default:
+            return 0;
+    }
+}
+
+static gint
+luaH_dom_document_push_window_table(lua_State *L)
+{
+    /* create attribute table */
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy element userdata */
+    lua_pushcclosure(L, luaH_dom_document_window_index, 1);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static gint
 luaH_dom_document_create_element(lua_State *L)
 {
     dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
@@ -85,6 +120,7 @@ luaH_dom_document_index(lua_State *L)
     switch(token) {
         PF_CASE(CREATE_ELEMENT, luaH_dom_document_create_element);
         case L_TK_BODY: return luaH_dom_document_push_body(L, document);
+        case L_TK_WINDOW: return luaH_dom_document_push_window_table(L);
         default:
             return 0;
     }
