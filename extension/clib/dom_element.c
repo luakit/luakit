@@ -88,7 +88,9 @@ dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
     } else {
         dom_element_get_left_and_top(webkit_dom_element_get_offset_parent(elem), l, t);
         *l += webkit_dom_element_get_offset_left(elem);
+        *l -= webkit_dom_element_get_scroll_left(elem);
         *t += webkit_dom_element_get_offset_top(elem);
+        *t -= webkit_dom_element_get_scroll_top(elem);
     }
 }
 
