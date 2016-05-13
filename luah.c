@@ -308,7 +308,7 @@ luaH_init(void)
     timer_class_setup(L);
 
 #if WITH_WEBKIT2
-    /* Export timer */
+    /* Export stylesheet */
     stylesheet_class_setup(L);
 #endif
 
