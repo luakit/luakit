@@ -467,6 +467,12 @@ luaH_luakit_index(lua_State *L)
       PB_CASE(VERBOSE,          globalconf.verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
 
+#if WITH_WEBKIT2
+      PB_CASE(WEBKIT2,          true)
+#else
+      PB_CASE(WEBKIT2,          false)
+#endif
+
       case L_TK_WINDOWS:
         lua_newtable(L);
         for (guint i = 0; i < globalconf.windows->len; i++) {
