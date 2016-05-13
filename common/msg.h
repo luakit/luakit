@@ -7,6 +7,7 @@
 #define MSG_TYPES \
 	X(lua_require_module) \
 	X(lua_msg) \
+	X(scroll)
 
 #define X(name) MSG_TYPE_##name,
 typedef enum { MSG_TYPES } msg_type_t;
@@ -30,6 +31,18 @@ typedef struct _msg_lua_msg_t {
 	guint module;
 	gchar arg[0];
 } msg_lua_msg_t;
+
+typedef enum {
+	MSG_SCROLL_TYPE_docresize,
+	MSG_SCROLL_TYPE_winresize,
+	MSG_SCROLL_TYPE_scroll
+} msg_scroll_subtype_t;
+
+typedef struct _msg_scroll_t {
+	gint h, v;
+	guint64 page_id;
+	msg_scroll_subtype_t subtype;
+} msg_scroll_t;
 
 void msg_send(const msg_header_t *header, const void *data);
 gboolean msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data));

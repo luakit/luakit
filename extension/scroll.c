@@ -1,0 +1,82 @@
+#define WEBKIT_DOM_USE_UNSTABLE_API
+#include <webkitdom/WebKitDOMDOMWindowUnstable.h>
+
+#include "extension/extension.h"
+#include "extension/scroll.h"
+#include "extension/msg.h"
+
+static void
+send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, msg_scroll_subtype_t subtype)
+{
+    const msg_scroll_t data = {
+        .h = h, .v = v,.page_id = webkit_web_page_get_id(web_page), .subtype = subtype
+    };
+
+    msg_header_t header = {
+        .type = MSG_TYPE_scroll,
+        .length = sizeof(data)
+    };
+
+    msg_send(&header, &data);
+}
+
+static void
+window_scroll_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
+{
+    gint h = webkit_dom_dom_window_get_scroll_x(window);
+    gint v = webkit_dom_dom_window_get_scroll_y(window);
+    send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_scroll);
+}
+
+static void
+window_resize_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
+{
+    gint h = webkit_dom_dom_window_get_inner_width(window);
+    gint v = webkit_dom_dom_window_get_inner_height(window);
+    send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_winresize);
+}
+
+static void
+document_resize_cb(WebKitDOMElement *html, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
+{
+    gint h = webkit_dom_element_get_scroll_width(html);
+    gint v = webkit_dom_element_get_scroll_height(html);
+    send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_docresize);
+}
+
+static void
+web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    WebKitDOMDocument *document = webkit_web_page_get_dom_document(web_page);
+    WebKitDOMElement *html = webkit_dom_document_get_document_element(document); 
+    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+
+    /* Add event listeners... */
+
+    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
+        "scroll", G_CALLBACK(window_scroll_cb), FALSE, web_page); 
+    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
+        "resize", G_CALLBACK(window_resize_cb), FALSE, web_page); 
+    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(html),
+        "DOMSubtreeModified", G_CALLBACK(document_resize_cb), FALSE, web_page);
+
+    /* ... and make sure initial values are set */
+
+    window_scroll_cb(window, NULL, web_page);
+    window_resize_cb(window, NULL, web_page);
+    document_resize_cb(html, NULL, web_page);
+}
+
+static void
+web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    g_signal_connect(web_page, "document-loaded", G_CALLBACK(web_page_document_loaded_cb), NULL);
+}
+
+void
+web_scroll_init(void)
+{
+    g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
+}
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

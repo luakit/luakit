@@ -9,6 +9,7 @@
 #include "extension/clib/ui_process.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
+#include "extension/scroll.h"
 
 void
 web_lua_init(void)
@@ -46,6 +47,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     extension.ext = ext;
 
     web_lua_init();
+    web_scroll_init();
 
     printf("luakit web process: ready for messages\n");
 }

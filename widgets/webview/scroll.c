@@ -18,6 +18,8 @@
  *
  */
 
+#include "msg.h"
+
 #if WITH_WEBKIT2
 static void
 scroll_finished(GObject *obj, GAsyncResult *r, gpointer UNUSED(data))
@@ -111,6 +113,30 @@ webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w)
 #endif
 #endif
 
+void
+webview_scroll_recv(widget_t *w, const msg_scroll_t *msg)
+{
+    webview_data_t *d = w->data;
+    if (webkit_web_view_get_page_id(d->view) != msg->page_id)
+        return;
+
+    switch (msg->subtype) {
+        case MSG_SCROLL_TYPE_docresize:
+            d->doc_w = msg->h;
+            d->doc_h = msg->v;
+            break;
+        case MSG_SCROLL_TYPE_winresize:
+            d->win_w = msg->h;
+            d->win_h = msg->v;
+            break;
+        case MSG_SCROLL_TYPE_scroll:
+            d->scroll_x = msg->h;
+            d->scroll_y = msg->v;
+        default:
+            break;
+    }
+}
+
 static gint
 luaH_webview_scroll_newindex(lua_State *L)
 {
@@ -199,16 +225,16 @@ luaH_webview_scroll_index(lua_State *L)
 
 #if WITH_WEBKIT2
     // TODO
-    if (t == L_TK_X || t == L_TK_Y) {
-        lua_pushnumber(L, 10);
-    } else if (t == L_TK_XMAX || t == L_TK_YMAX) {
-        lua_pushnumber(L, 50);
-    } else if (t == L_TK_XPAGE_SIZE || t == L_TK_YPAGE_SIZE) {
-        lua_pushnumber(L, 100);
-    } else {
-        return 0;
+    switch (t) {
+        PN_CASE(X, d->scroll_x);
+        PN_CASE(Y, d->scroll_y);
+        PN_CASE(XMAX, d->doc_w - d->win_w);
+        PN_CASE(YMAX, d->doc_h - d->win_h);
+        PN_CASE(XPAGE_SIZE, d->win_w);
+        PN_CASE(YPAGE_SIZE, d->win_h);
+        default:
+            return 0;
     }
-    return 1;
 #else
     GtkAdjustment *a = (*prop == 'x') ?
               gtk_scrolled_window_get_hadjustment(d->win)

@@ -87,6 +87,15 @@ typedef struct {
     gboolean smooth_scroll;
     /** Per-frame callback for smooth scrolling */
     guint scroll_cb_id;
+
+#if WITH_WEBKIT2
+    /** Document size */
+    gint doc_w, doc_h;
+    /** Viewport size */
+    gint win_w, win_h;
+    /** Current scroll position */
+    gint scroll_x, scroll_y;
+#endif
 } webview_data_t;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
