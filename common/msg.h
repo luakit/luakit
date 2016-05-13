@@ -31,6 +31,7 @@ typedef struct _msg_lua_msg_t {
 	gchar arg[0];
 } msg_lua_msg_t;
 
+void msg_send(const msg_header_t *header, const void *data);
 gboolean msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data));
 
 void lua_serialize_range(lua_State *L, GByteArray *out, int start, int end);

@@ -1,6 +1,12 @@
 #include "common/msg.h"
 
 #include <assert.h>
+#include <lauxlib.h>
+
+/* Prototypes for msg_recv_... functions */
+#define X(name) void msg_recv_##name(const msg_lua_require_module_t *msg, guint length);
+    MSG_TYPES
+#undef X
 
 static void
 lua_serialize_value(lua_State *L, GByteArray *out, int index)
@@ -12,7 +18,8 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
         case LUA_TUSERDATA:
         case LUA_TFUNCTION:
         case LUA_TTHREAD:
-            return luaL_error(L, "cannot serialize variable of type %s", lua_typename(L, type));
+            luaL_error(L, "cannot serialize variable of type %s", lua_typename(L, type));
+            return;
         default:
             break;
     }
@@ -85,7 +92,7 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
         case LUA_TSTRING: {
             size_t len;
             TAKE(len, sizeof(len));
-            lua_pushstring(L, *bytes);
+            lua_pushstring(L, (char*)*bytes);
             *bytes += len+1;
             break;
         }
