@@ -481,7 +481,7 @@ new_window_decision_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
 
 #if WITH_WEBKIT2
 static GtkWidget*
-create_cb(WebKitWebView* UNUSED(v), widget_t *w)
+create_cb(WebKitWebView* UNUSED(v), WebKitNavigationAction* UNUSED(a), widget_t *w)
 #else
 static WebKitWebView*
 create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
