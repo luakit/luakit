@@ -1,26 +1,21 @@
-#include <webkit2/webkit-web-extension.h>
 #include <stdlib.h>
 #include <glib.h>
-#include <lauxlib.h>
-#include <lualib.h>
 
 #include "common/util.h"
 #include "common/luautil.h"
 #include "extension/msg.h"
 #include "common/luaobject.h"
+#include "extension/extension.h"
 #include "extension/clib/ui_process.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
-
-lua_State *WL;
-WebKitWebExtension *extension;
 
 void
 web_lua_init(void)
 {
     printf("luakit web process: Lua initializing...\n");
 
-    WL = luaL_newstate();
+    lua_State *WL = extension.WL = luaL_newstate();
 
     /* Set panic fuction */
     lua_atpanic(WL, luaH_panic);
@@ -48,7 +43,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
         exit(EXIT_FAILURE);
     }
 
-    extension = ext;
+    extension.ext = ext;
 
     web_lua_init();
 

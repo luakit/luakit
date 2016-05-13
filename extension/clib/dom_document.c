@@ -1,10 +1,9 @@
+#include "extension/extension.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
 #include "common/tokenize.h"
 
 LUA_OBJECT_FUNCS(dom_document_class, dom_document_t, dom_document);
-
-extern WebKitWebExtension *extension;
 
 gint
 luaH_dom_document_from_web_page(lua_State *L, WebKitWebPage *web_page)
@@ -23,7 +22,7 @@ static int
 luaH_dom_document_new(lua_State *L)
 {
     guint64 page_id = luaL_checknumber(L, -1);
-    WebKitWebPage *page = webkit_web_extension_get_page(extension, page_id);
+    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
     return luaH_dom_document_from_web_page(L, page);
 }
 
