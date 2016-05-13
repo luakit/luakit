@@ -27,7 +27,10 @@ typedef struct {
     widget_t *widget;
     GtkWindow *win;
     GdkWindowState state;
+    guint id;
 } window_data_t;
+
+static int window_id_next = 0;
 
 static widget_t *
 luaH_checkwindow(lua_State *L, gint udx)
@@ -85,6 +88,9 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
+#if WITH_WEBKIT2
+      PN_CASE(ID,           d->id)
+#endif
 
 #if GTK_CHECK_VERSION(3,0,0)
 # ifdef GDK_WINDOWING_X11
@@ -220,6 +226,8 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
       "signal::remove",             G_CALLBACK(remove_cb),       w,
       "signal::window-state-event", G_CALLBACK(window_state_cb), w,
       NULL);
+
+    d->id = ++window_id_next;
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);
