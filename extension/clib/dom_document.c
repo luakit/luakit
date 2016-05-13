@@ -1,3 +1,6 @@
+#define WEBKIT_DOM_USE_UNSTABLE_API
+#include <webkitdom/WebKitDOMDOMWindowUnstable.h>
+
 #include "extension/extension.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"

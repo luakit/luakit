@@ -1,4 +1,6 @@
 #include <webkitdom/webkitdom.h>
+#define WEBKIT_DOM_USE_UNSTABLE_API
+#include <webkitdom/WebKitDOMElementUnstable.h>
 
 #include "extension/clib/dom_element.h"
 
@@ -71,7 +73,7 @@ luaH_dom_element_remove(lua_State *L)
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
     GError *error = NULL;
 
-    webkit_dom_element_remove(element->element, &error);
+    webkit_dom_element_remove(WEBKIT_DOM_ELEMENT(element->element), &error);
 
     if (error)
         return luaL_error(L, "remove element error: %s", error->message);
@@ -138,8 +140,9 @@ static gint
 luaH_dom_element_attribute_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
-    const gchar *attr = luaL_checkstring(L, 2);
-    lua_pushstring(L, webkit_dom_element_get_attribute(element->element, attr));
+    const gchar *name = luaL_checkstring(L, 2);
+    const gchar *attr = webkit_dom_element_get_attribute(WEBKIT_DOM_ELEMENT(element->element), name);
+    lua_pushstring(L, attr);
     return 1;
 }
 
@@ -151,7 +154,7 @@ luaH_dom_element_attribute_newindex(lua_State *L)
     const gchar *value = luaL_checkstring(L, 3);
     GError *error = NULL;
 
-    webkit_dom_element_set_attribute(element->element, attr, value, &error);
+    webkit_dom_element_set_attribute(WEBKIT_DOM_ELEMENT(element->element), attr, value, &error);
 
     if (error)
         return luaL_error(L, "attribute error: %s", error->message);
@@ -192,7 +195,7 @@ static gint
 luaH_dom_element_focus(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    webkit_dom_element_focus(element->element);
+    webkit_dom_element_focus(WEBKIT_DOM_ELEMENT(element->element));
     return 0;
 }
 
