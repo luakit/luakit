@@ -16,6 +16,7 @@ local add_binds = add_binds
 local lousy = require "lousy"
 local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
+local webkit2 = luakit.webkit2
 
 module "noscript"
 
@@ -140,12 +141,12 @@ end
 
 webview.init_funcs.noscript_load = function (view)
     view:add_signal("load-changed", function (v, status)
-        if status == "provisional" then
+        if not webkit2 and status == "provisional" then
             view.enable_scripts = enable_scripts
             view.enable_plugins = enable_plugins
             return
         end
-        if status == "committed" and v.uri ~= "about:blank" then
+        if webkit2 and status == "provisional" or (status == "committed" and v.uri ~= "about:blank") then
             local enable_scripts, enable_plugins, _ = lookup_domain(v.uri)
             view.enable_scripts = enable_scripts
             view.enable_plugins = enable_plugins
