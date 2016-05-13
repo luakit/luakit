@@ -146,6 +146,10 @@ luaH_webview_scroll_newindex(lua_State *L)
     luakit_token_t t = l_tokenize(prop);
 
 #if WITH_WEBKIT2
+    /* Save original enable-javascript setting, and set to enabled */
+    gboolean enable_js = webkit_settings_get_enable_javascript(webkit_web_view_get_settings(d->view));
+    webkit_settings_set_enable_javascript(webkit_web_view_get_settings(d->view), true);
+
     gchar *script;
     gint value = luaL_checknumber(L, 3);
     if (t == L_TK_X) {
@@ -178,6 +182,9 @@ luaH_webview_scroll_newindex(lua_State *L)
         return 0;
     webkit_web_view_run_javascript(d->view, script, NULL, scroll_finished, NULL);
     g_free(script);
+
+    /* Restore original enable-javascript setting */
+    webkit_settings_set_enable_javascript(webkit_web_view_get_settings(d->view), enable_js);
 #else
     /* Get the adjustment for the scroll */
     GtkAdjustment *a;
