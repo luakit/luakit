@@ -7,6 +7,8 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
+void webview_scroll_recv(void *d, const msg_scroll_t *msg);
+
 static gboolean
 msg_hup(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
 {
@@ -28,6 +30,12 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
     const char *arg = msg->arg;
 
     web_module_recv(globalconf.L, module, arg, length-sizeof(module));
+}
+
+void
+msg_recv_scroll(const msg_scroll_t *msg, guint length)
+{
+    g_ptr_array_foreach(globalconf.webviews, webview_scroll_recv, msg);
 }
 
 static gpointer
