@@ -21,6 +21,7 @@
 #include "globalconf.h"
 #include "common/util.h"
 #include "luah.h"
+#include "msg.h"
 
 #include <gtk/gtk.h>
 #include <signal.h>
@@ -29,6 +30,7 @@
 #include <unistd.h>
 #include <errno.h>
 #include <locale.h>
+#include <webkit2/webkit2.h>
 
 static void sigchld(int sigint);
 
@@ -175,6 +177,8 @@ main(gint argc, gchar *argv[]) {
     }
 
     gtk_init(&argc, &argv);
+
+    msg_init();
 
     init_directories();
     init_lua(uris);

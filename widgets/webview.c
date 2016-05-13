@@ -895,6 +895,10 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
         return luaH_webview_push_frames(L, d);
 #endif
 
+#if WITH_WEBKIT2
+        PN_CASE(ID, webkit_web_view_get_page_id(d->view))
+#endif
+
       case L_TK_HISTORY:
         return luaH_webview_push_history(L, d->view);
 
