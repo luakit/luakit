@@ -6,11 +6,11 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
+#include "extension/extension.h"
 #include "extension/msg.h"
 #include "extension/clib/ui_process.h"
 #include "common/util.h"
 
-extern lua_State *WL;
 static GIOChannel *channel;
 
 void
@@ -20,13 +20,13 @@ msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
     assert(strlen(module_name) > 0);
     assert(strlen(module_name) == length-1);
 
-    ui_process_set_module(WL, module_name);
+    ui_process_set_module(extension.WL, module_name);
 
-    lua_getglobal(WL, "require");
-    lua_pushstring(WL, module_name);
-    lua_call(WL, 1, 0);
+    lua_getglobal(extension.WL, "require");
+    lua_pushstring(extension.WL, module_name);
+    lua_call(extension.WL, 1, 0);
 
-    ui_process_set_module(WL, NULL);
+    ui_process_set_module(extension.WL, NULL);
 }
 
 void
@@ -35,7 +35,7 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
     const guint module = msg->module;
     const char *arg = msg->arg;
 
-    ui_process_recv(WL, module, arg, length-sizeof(module));
+    ui_process_recv(extension.WL, module, arg, length-sizeof(module));
 }
 
 int
