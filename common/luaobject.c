@@ -176,6 +176,21 @@ luaH_object_remove_signal(lua_State *L, gint oud,
     lua_remove(L, ud);
 }
 
+/* Remove all signals of a given name to an object.
+ * `oud` is the object index on the stack.
+ * `name` is the name of the signal.
+ */
+void
+luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
+    lua_object_t *obj = lua_touserdata(L, oud);
+    signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
+    for (guint i = 0; i < sigfuncs->len; i++) {
+        gpointer ref = g_ptr_array_index(sigfuncs, i);
+        luaH_object_unref_item(L, oud, ref);
+    }
+    signals_remove(obj->signals, name);
+}
+
 /* Emit a signal from a signals array and return the results of the first
  * handler that returns something.
  * `signals` is the signals array.
@@ -358,6 +373,12 @@ luaH_object_add_signal_simple(lua_State *L) {
 gint
 luaH_object_remove_signal_simple(lua_State *L) {
     luaH_object_remove_signal(L, 1, luaL_checkstring(L, 2), 3);
+    return 0;
+}
+
+gint
+luaH_object_remove_signals_simple(lua_State *L) {
+    luaH_object_remove_signals(L, 1, luaL_checkstring(L, 2));
     return 0;
 }
 

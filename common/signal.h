@@ -89,5 +89,15 @@ signal_remove(signal_t *signals, const gchar *name, gpointer func)
     }
 }
 
+/* remove all signal inside a signal array */
+static inline void
+signals_remove(signal_t *signals, const gchar *name)
+{
+    signal_array_t *sigfuncs = signal_lookup(signals, name);
+    if (sigfuncs) {
+        g_tree_remove((GTree*) signals, (gpointer) name);
+    }
+}
+
 #endif
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
