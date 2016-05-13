@@ -85,7 +85,7 @@ ui_process_recv(lua_State *L, const guint module, const gchar *arg, guint arglen
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
     luaH_check_ui_process(L, -1);
 
-    int n = lua_deserialize_range(L, arg, arglen);
+    int n = lua_deserialize_range(L, (guint8*)arg, arglen);
     const char *signame = lua_tostring(L, -n);
     lua_remove(L, -n);
     luaH_object_emit_signal(L, -n, signame, n-1, 0);
