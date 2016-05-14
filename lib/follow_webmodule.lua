@@ -321,7 +321,6 @@ local function follow(state, all)
         follow_hint(state, hint)
     end
     ui:emit_signal("follow")
-    leave()
 end
 
 ui:add_signal("follow", function(_, wid, all)
