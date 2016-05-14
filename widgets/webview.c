@@ -492,13 +492,13 @@ create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
     widget_t *new;
 
     lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
     gint top = lua_gettop(L);
-    gint ret = luaH_object_emit_signal(L, top, "create-web-view", 0, 1);
+    luaH_object_push(L, w->ref);
+    gint ret = luaH_object_emit_signal(L, -1, "create-web-view", 0, 1);
 
     /* check for new webview widget */
     if (ret) {
-        if ((new = luaH_towidget(L, top + 1))) {
+        if ((new = luaH_towidget(L, -1))) {
             if (new->info->tok == L_TK_WEBVIEW)
                 view = WEBKIT_WEB_VIEW(((webview_data_t*)new->data)->view);
             else
@@ -506,7 +506,7 @@ create_web_view_cb(WebKitWebView* UNUSED(v), WebKitWebFrame* UNUSED(f),
                         new->info->name);
         } else
             warn("invalid signal return object type (expected webview widget, "
-                    "got %s)", lua_typename(L, lua_type(L, top + 1)));
+                    "got %s)", lua_typename(L, lua_type(L, -1)));
     }
 
     lua_settop(L, top);
