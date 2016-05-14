@@ -23,6 +23,7 @@ ui_process_set_module(lua_State *L, const gchar *module_name)
     if (name) {
         lua_newtable(L);
         luaH_class_new(L, &ui_process_class);
+        lua_remove(L, -2);
 
         ui_process_t *ui_process = luaH_check_ui_process(L, -1);
         ui_process->name = name;
@@ -89,6 +90,7 @@ ui_process_recv(lua_State *L, const guint module, const gchar *arg, guint arglen
     const char *signame = lua_tostring(L, -n);
     lua_remove(L, -n);
     luaH_object_emit_signal(L, -n, signame, n-1, 0);
+    lua_pop(L, 1);
 }
 
 void
