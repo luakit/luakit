@@ -36,11 +36,21 @@ window_resize_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebK
     send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_winresize);
 }
 
+static gint scroll_width_prev = -1, scroll_height_prev = -1;
+
 static void
 document_resize_cb(WebKitDOMElement *html, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
 {
     gint h = webkit_dom_element_get_scroll_width(html);
     gint v = webkit_dom_element_get_scroll_height(html);
+
+    /* Only send message if the size changes */
+    /* This still isn't that performant... needs a better solution really */
+    if (h == scroll_width_prev && v == scroll_height_prev)
+        return;
+    scroll_width_prev = h;
+    scroll_height_prev = v;
+
     send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_docresize);
 }
 
