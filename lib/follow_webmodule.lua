@@ -110,19 +110,17 @@ evaluators = {
         end
     end,
     uri = function(element)
-        local attrs = element.attr
-        return attrs.src or attrs.href
+        return element.src or element.href
     end,
     desc = function(element)
         local attrs = element.attr
         return attrs.title or attrs.alt
     end,
     src = function(element)
-        local attrs = element.attr
-        return attrs.src
+        return element.src
     end,
     parent_href = function(element)
-        return element.parent.attrs.src
+        return element.parent.src
     end,
 }
 

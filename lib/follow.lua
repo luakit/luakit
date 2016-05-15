@@ -184,9 +184,6 @@ new_mode("follow", {
             evaluator = evaluator,
         }
 
-        -- Cut func out of mode, since we can't send functions
-        mode.func = nil
-
         if mode.prompt then
             w:set_prompt(string.format("Follow (%s):", mode.prompt))
         else
@@ -199,7 +196,11 @@ new_mode("follow", {
         follow_wm:add_signal("follow", function(_) follow_cb(w) end)
         follow_wm:add_signal("no_matches", function(_) no_matches_cb(w) end)
 
+        -- Cut func out of mode, since we can't send functions
+        local func = mode.func
+        mode.func = nil
         follow_wm:emit_signal("enter", w.win.id, mode, w.view.id, ignore_case)
+        mode.func = func
     end,
 
     changed = function (w, text)
