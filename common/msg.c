@@ -1,6 +1,5 @@
 #include "common/msg.h"
 
-#include <assert.h>
 #include <lauxlib.h>
 
 /* Prototypes for msg_recv_... functions */
@@ -12,6 +11,7 @@ static void
 lua_serialize_value(lua_State *L, GByteArray *out, int index)
 {
     int type = lua_type(L, index);
+    int top = lua_gettop(L);
 
     switch (type) {
         case LUA_TLIGHTUSERDATA:
@@ -60,6 +60,8 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             break;
         }
     }
+
+    g_assert_cmpint(lua_gettop(L), ==, top);
 }
 
 static int
@@ -110,7 +112,7 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
             return 0;
     }
 
-    assert(lua_gettop(L) - top == 1);
+    g_assert_cmpint(lua_gettop(L), ==, top + 1);
 
     return 1;
 }
@@ -139,7 +141,7 @@ lua_deserialize_range(lua_State *L, const guint8 *in, guint length)
 gboolean
 msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
 {
-    assert(cond & G_IO_IN);
+    g_assert(cond & G_IO_IN);
     GIOStatus s;
 
     /* Read the message header */
