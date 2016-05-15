@@ -1389,9 +1389,24 @@ swin_focus_cb(GtkWidget *UNUSED(wi), GdkEventFocus *UNUSED(e), widget_t *w)
 
 #if WITH_WEBKIT2
 void
-luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, widget_t *w)
+luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(user_data))
 {
     const gchar *uri = webkit_uri_scheme_request_get_uri(request);
+
+    WebKitWebView *view = webkit_uri_scheme_request_get_web_view(request);
+    widget_t *w = NULL;
+
+    /* Get the widget corresponding to the web view */
+    /* Linear search for now... */
+    for (unsigned i = 0; i < globalconf.webviews->len; i++) {
+        widget_t *ww = g_ptr_array_index(globalconf.webviews, i);
+        webview_data_t *d = ww->data;
+        if (d->view == view) {
+            w = ww;
+            break;
+        }
+    }
+    g_assert(w);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -1456,7 +1471,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
 #if WITH_WEBKIT2
     webkit_web_context_register_uri_scheme(webkit_web_view_get_context(d->view),
-            "luakit", (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb, w, NULL);
+            "luakit", (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb, NULL, NULL);
 
     // TODO does scrollbar hiding need to happen here?
 
