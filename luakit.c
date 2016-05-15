@@ -192,6 +192,13 @@ main(gint argc, gchar *argv[]) {
     if(!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
+    /* Tell web process that the configuration file has been loaded */
+    msg_header_t header = {
+        .type = MSG_TYPE_rc_loaded,
+        .length = 0
+    };
+    msg_send(&header, NULL);
+
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file, exiting");
 

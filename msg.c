@@ -38,6 +38,12 @@ msg_recv_scroll(const msg_scroll_t *msg, guint length)
     g_ptr_array_foreach(globalconf.webviews, webview_scroll_recv, msg);
 }
 
+void
+msg_recv_rc_loaded(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
+{
+    fatal("UI process should never receive message of this type");
+}
+
 static gpointer
 web_extension_connect(gpointer user_data)
 {

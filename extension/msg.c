@@ -38,6 +38,11 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
     ui_process_recv(extension.WL, module, arg, length-sizeof(module));
 }
 
+void
+msg_recv_rc_loaded(const msg_rc_loaded_t *UNUSED(msg), guint UNUSED(length))
+{
+}
+
 int
 web_extension_connect(const gchar *socket_path)
 {
