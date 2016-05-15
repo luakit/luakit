@@ -134,6 +134,27 @@ local function bounding_boxes_intersect(a, b)
     return true
 end
 
+local function get_element_bb_if_visible(element, wbb)
+    -- Find the element bounding box
+    local r = element.rect
+    local rbb = {
+        x = wbb.x + r.left,
+        y = wbb.y + r.top,
+        w = r.width,
+        h = r.height,
+    }
+
+    if rbb.w == 0 or rbb.h == 0 then return nil end
+
+    local style = element.style
+    local display = style.display
+    local visibility = style.visibility
+
+    if display == 'none' or visibility == 'hidden' then return nil end
+    if not bounding_boxes_intersect(wbb, rbb) then return nil end
+    return rbb
+end
+
 local function frame_find_hints(frame, selector)
     local hints = {}
     local elements = frame.body:query(selector)
@@ -148,18 +169,9 @@ local function frame_find_hints(frame, selector)
     }
 
     for _, element in ipairs(elements) do
-        -- Find the element bounding box
-        local r = element.rect
-        local rbb = {
-            x = w.scroll_x + r.left,
-            y = w.scroll_y + r.top,
-            w = r.width,
-            h = r.height,
-        }
+        local rbb = get_element_bb_if_visible(element,wbb)
 
-        -- TODO: check if element is visible
-
-        if bounding_boxes_intersect(wbb, rbb) then
+        if rbb then
             hints[#hints+1] = { elem = element, bb = rbb, text = element.text_content }
         end
     end
