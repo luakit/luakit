@@ -4,18 +4,24 @@
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
 
 #include "extension/clib/dom_element.h"
+#include "common/luauniq.h"
 
 LUA_OBJECT_FUNCS(dom_element_class, dom_element_t, dom_element);
 
 gint
 luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
 {
+    if (luaH_uniq_get(L, node))
+        return 1;
+
     lua_newtable(L);
     luaH_class_new(L, &dom_element_class);
     lua_remove(L, -2);
 
     dom_element_t *element = luaH_checkudata(L, -1, &dom_element_class);
     element->element = WEBKIT_DOM_HTML_ELEMENT(node);
+
+    luaH_uniq_add(L, node, -1);
 
     return 1;
 }
