@@ -138,45 +138,69 @@ lua_deserialize_range(lua_State *L, const guint8 *in, guint length)
     return i;
 }
 
+typedef struct _msg_recv_state_t {
+    msg_header_t hdr;
+    gpointer payload;
+    gsize bytes_read;
+    gboolean hdr_done;
+} msg_recv_state_t;
+
 gboolean
 msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
 {
     g_assert(cond & G_IO_IN);
+
+    static msg_recv_state_t state;
+
+    gchar *buf = (state.hdr_done ? state.payload : &state.hdr) + state.bytes_read;
+    gsize remaining = (state.hdr_done ? state.hdr.length : sizeof(state.hdr)) - state.bytes_read;
+    gsize bytes_read;
+    GError *error = NULL;
     GIOStatus s;
 
-    /* Read the message header */
-
-    msg_header_t header;
-    switch ((s = g_io_channel_read_chars(channel, (gchar*)&header, sizeof(header), NULL, NULL))) {
+    switch ((s = g_io_channel_read_chars(channel, buf, remaining, &bytes_read, &error))) {
         case G_IO_STATUS_NORMAL:
+        case G_IO_STATUS_AGAIN:
             break;
         default:
             /* TODO: error */
             break;
     }
 
-    /* Read the message body */
+    /* Update msg_recv state */
+    state.bytes_read += bytes_read;
+    remaining -= bytes_read;
 
-    const void *payload = g_alloca(header.length);
-    switch ((s = g_io_channel_read_chars(channel, (gchar*)payload, header.length, NULL, NULL))) {
-        case G_IO_STATUS_NORMAL:
-            break;
-        default:
-            /* TODO: error */
-            break;
+    if (remaining > 0)
+        return TRUE;
+
+    /* If we've just finished downloading the header... */
+    if (!state.hdr_done) {
+        /* ... update state, and try to download payload */
+        state.hdr_done = TRUE;
+        state.bytes_read = 0;
+        state.payload = g_malloc(state.hdr.length);
+        return msg_recv(channel, cond, NULL);
     }
 
-    /* Dispatch the message */
+    /* Otherwise, we finished downloading the message; dispatch it */
 
-    switch (header.type) {
+    switch (state.hdr.type) {
 #define X(name) case MSG_TYPE_##name: \
-    msg_recv_##name(payload, header.length); \
+    msg_recv_##name(state.payload, state.hdr.length); \
     break;
         MSG_TYPES
 #undef X
         default:
             fatal("Web extension received message with an invalid type");
     }
+
+    /* Reset state for the next message */
+
+    g_free(state.payload);
+    state.payload = NULL;
+    state.bytes_read = 0;
+    state.hdr_done = FALSE;
 
     return TRUE;
 }
