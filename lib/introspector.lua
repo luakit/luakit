@@ -21,6 +21,7 @@ local editor = require "editor"
 local lousy = require("lousy")
 local globals = globals
 local dedent = lousy.util.string.dedent
+local escape = lousy.util.escape
 local chrome = require("chrome")
 local history = require("history")
 local markdown = require("markdown")
@@ -203,82 +204,40 @@ local html = [==[
     <header>
         <h1>Luakit Help</h1>
     </header>
-
-    <div id="templates">
-        <div id="mode-section-skelly">
-            <section class="mode">
-                <h3 class="mode-name"></h3>
-                <p class="mode-desc"></p>
-                <pre style="display: none;" class="mode-traceback"></pre>
-                <ol class="binds">
-                </ol>
-            </section>
-        </div>
-        <div id="mode-bind-skelly">
-            <ol class="bind">
-                <div class="link-box">
-                    <a href class="filename"></a>
-                    <a href class="linedefined"></a>
-                </div>
-                <hr class="clear" />
-                <div class="key"></div>
-                <div class="box desc"></div>
-                <div class="box func-source">
-                    <h4>Function source:</h4>
-                    <pre><code></code></pre>
-                </div>
-            </ol>
-        </div>
-    </div>
+    {sections}
 </body>
+]==]
+
+local mode_section_template = [==[
+    <section class="mode" id="mode-{name}">
+        <h3 class="mode-name">{name} mode</h3>
+        <p class="mode-desc">{desc}</p>
+        <pre style="display: none;" class="mode-traceback">{traceback}</pre>
+        <ol class="binds">
+            {binds}
+        </ol>
+    </section>
+]==]
+
+local mode_bind_template = [==[
+    <li class="bind bind_type_{type}">
+        <div class="link-box">
+            <a href class="filename">{filename}</a>
+            <a href class="linedefined">{linedefined}</a>
+        </div>
+        <hr class="clear" />
+        <div class="key">{key}</div>
+        <div class="box desc">{desc}</div>
+        <div class="box func-source">
+            <h4>Function source:</h4>
+            <pre><code>{func}</code></pre>
+        </div>
+    </li>
 ]==]
 
 main_js = [=[
 $(document).ready(function () {
     var $body = $(document.body);
-
-    var mode_section_html = $("#mode-section-skelly").html(),
-        mode_bind_html = $("#mode-bind-skelly").html();
-
-    // Remove all templates
-    $("#templates").remove();
-
-    // Get all modes & sub-data
-    var modes = help_get_modes();
-    for (var i = 0; i < modes.length; i++) {
-        var mode = modes[i];
-        var $mode = $(mode_section_html);
-        $mode.attr("id", "mode-" + mode.name);
-        $mode.find("h3.mode-name").text(mode.name + " mode");
-        $mode.find("p.mode-desc").html(mode.desc);
-        $mode.find("pre.mode-traceback").text(mode.traceback);
-
-        var $binds = $mode.find(".binds");
-
-        var binds = mode.binds;
-        for (var j = 0; j < binds.length; j++) {
-            var b = binds[j];
-            var $bind = $(mode_bind_html);
-            $bind.addClass("bind_type_" + b.type);
-            $bind.find(".key").text(b.key);
-            $bind.find(".func-source code").text(b.func);
-            $bind.find(".filename").text(b.filename);
-
-            var $l = $bind.find(".linedefined");
-            $l.text("#" + b.linedefined);
-            $l.attr("filename", b.filename);
-            $l.attr("line", b.linedefined);
-
-            if (b.desc)
-                $bind.find(".desc").html(b.desc);
-            else
-                $bind.find(".clear").hide();
-
-            $binds.append($bind);
-        }
-
-        $body.append($mode);
-    }
 
     $body.on("click", ".bind .linedefined", function (event) {
         event.preventDefault();
@@ -349,46 +308,71 @@ local function function_source_range(func, info)
 end
 
 export_funcs = {
-    help_get_modes = function ()
-        local ret = {}
-        local modes = lousy.util.table.values(get_modes())
-        table.sort(modes, function (a, b) return a.order < b.order end)
-
-        for _, mode in pairs(modes) do
-            local binds = {}
-
-            if mode.binds then
-                for i, b in pairs(mode.binds) do
-                    local info = debug.getinfo(b.func, "uS")
-                    info.source = info.source:sub(2)
-                    binds[i] = {
-                        type = b.type,
-                        key = bind_tostring(b),
-                        desc = b.desc and markdown(dedent(b.desc)) or nil,
-                        filename = info.source,
-                        linedefined = info.linedefined,
-                        lastlinedefined = info.lastlinedefined,
-                        func = function_source_range(b.func, info),
-                    }
-                end
-            end
-
-            table.insert(ret, {
-                name = mode.name,
-                desc = mode.desc and markdown(dedent(mode.desc)) or nil,
-                binds = binds,
-                traceback = mode.traceback
-            })
-        end
-        -- Clear source file cache
-        source_lines = {}
-        return ret
-    end,
-
     open_editor = editor.edit,
 }
 
+help_get_modes = function ()
+    local ret = {}
+    local modes = lousy.util.table.values(get_modes())
+    table.sort(modes, function (a, b) return a.order < b.order end)
+
+    for _, mode in pairs(modes) do
+        local binds = {}
+
+        if mode.binds then
+            for i, b in pairs(mode.binds) do
+                local info = debug.getinfo(b.func, "uS")
+                info.source = info.source:sub(2)
+                binds[i] = {
+                    type = b.type,
+                    key = bind_tostring(b),
+                    desc = b.desc and markdown(dedent(b.desc)) or nil,
+                    filename = info.source,
+                    linedefined = info.linedefined,
+                    lastlinedefined = info.lastlinedefined,
+                    func = function_source_range(b.func, info),
+                }
+            end
+        end
+
+        table.insert(ret, {
+            name = mode.name,
+            desc = mode.desc and markdown(dedent(mode.desc)) or nil,
+            binds = binds,
+            traceback = mode.traceback
+        })
+    end
+    -- Clear source file cache
+    source_lines = {}
+    return ret
+end
+
 chrome.add("help", function (view, meta)
+    local sections = {}
+    local modes = help_get_modes()
+
+    for _, mode in ipairs(modes) do
+        local binds = {}
+        for _, bind in ipairs(mode.binds) do
+            bind.key = escape(bind.key)
+            bind.desc = bind.desc or ""
+            binds[#binds+1] = string.gsub(mode_bind_template, "{(%w+)}", bind)
+        end
+
+        local section_html_subs = {
+            name = mode.name,
+            desc = mode.desc or "",
+            traceback = mode.traceback,
+            binds = table.concat(binds, "\n")
+        }
+        sections[#sections+1] = string.gsub(mode_section_template, "{(%w+)}", section_html_subs)
+    end
+
+    -- string.gsub(mode_section_template, "{(%w+)}", html_subs)
+
+    local sections_html = table.concat(sections, "\n")
+    local page_html = string.gsub(html, "{(%w+)}", { sections = sections_html })
+
     function on_first_visual(_, status)
         -- Wait for new page to be created
         if status ~= "finished" then return end
@@ -416,7 +400,7 @@ chrome.add("help", function (view, meta)
     end
 
     view:add_signal("load-changed", on_first_visual)
-    return html
+    return page_html
 end)
 
 local cmd = lousy.bind.cmd
