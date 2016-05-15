@@ -48,6 +48,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
         }
         case LUA_TTABLE: {
             /* Serialize all key-value pairs */
+            index = index > 0 ? index : lua_gettop(L) + 1 + index;
             lua_pushnil(L);
             while (lua_next(L, index) != 0) {
                 lua_serialize_range(L, out, -2, -1);
