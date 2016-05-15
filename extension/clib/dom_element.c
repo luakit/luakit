@@ -2,6 +2,15 @@
 #define WEBKIT_DOM_USE_UNSTABLE_API
 #include <webkitdom/WebKitDOMElementUnstable.h>
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
+#include <webkitdom/WebKitDOMLocation.h>
+
+/* HACK: Normally, I'd include WebKitDOMHTMLMediaElement.h here, and that'd work
+ * fine, except that it includes WebKitDOMHTMLElement.h which can only be
+ * included from inside webkitdom.h; the problem is, WebKitDOMHTMLMediaElement.h
+ * isn't actually included in webkitdom.h, so there's basically no way to get
+ * the definitions we need; just copy-paste for now I guess... ugh */
+#define WEBKIT_DOM_TYPE_HTML_MEDIA_ELEMENT            (webkit_dom_html_media_element_get_type())
+#define WEBKIT_DOM_IS_HTML_MEDIA_ELEMENT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj), WEBKIT_DOM_TYPE_HTML_MEDIA_ELEMENT))
 
 #include "extension/clib/dom_element.h"
 #include "common/luauniq.h"
@@ -237,6 +246,82 @@ luaH_dom_element_focus(lua_State *L)
 }
 
 static gint
+luaH_dom_element_push_src(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+
+    /* FIXME: is there a way to use a switch statement? */
+    if (WEBKIT_DOM_IS_HTML_INPUT_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_input_element_get_src(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_FRAME_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_frame_element_get_src(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_MEDIA_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_media_element_get_src(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_IFRAME_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_iframe_element_get_src(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_EMBED_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_embed_element_get_src(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_IMAGE_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_image_element_get_src(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_SCRIPT_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_script_element_get_src(element->element));
+        return 1;
+    }
+
+    return 0;
+}
+
+static gint
+luaH_dom_element_push_href(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+
+    /* FIXME: is there a way to use a switch statement? */
+    if (WEBKIT_DOM_IS_LOCATION(element->element)) {
+        lua_pushstring(L, webkit_dom_location_get_href(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_ANCHOR_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_anchor_element_get_href(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_AREA_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_area_element_get_href(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_HTML_LINK_ELEMENT(element->element)) {
+        lua_pushstring(L, webkit_dom_html_link_element_get_href(element->element));
+        return 1;
+    }
+    if (WEBKIT_DOM_IS_STYLESHEET(element->element)) {
+        lua_pushstring(L, webkit_dom_stylesheet_get_href(element->element));
+        return 1;
+    }
+
+    return 0;
+}
+
+static gint
+luaH_dom_element_push_parent(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMNode *parent = webkit_dom_node_get_parent_node(WEBKIT_DOM_NODE(element->element));
+    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(parent));
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -248,11 +333,16 @@ luaH_dom_element_index(lua_State *L)
     switch(token) {
         PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
         PS_CASE(TEXT_CONTENT, webkit_dom_node_get_text_content(WEBKIT_DOM_NODE(elem)))
+
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
         PF_CASE(REMOVE, luaH_dom_element_remove)
         PF_CASE(CLICK, luaH_dom_element_click)
         PF_CASE(FOCUS, luaH_dom_element_focus)
+
+        case L_TK_SRC: return luaH_dom_element_push_src(L);
+        case L_TK_HREF: return luaH_dom_element_push_href(L);
+        case L_TK_PARENT: return luaH_dom_element_push_parent(L);
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         case L_TK_STYLE: return luaH_dom_element_push_style_table(L);
