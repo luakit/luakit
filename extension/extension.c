@@ -3,12 +3,17 @@
 
 #include "common/util.h"
 #include "common/luautil.h"
+#include "common/luauniq.h"
 #include "extension/msg.h"
 #include "common/luaobject.h"
 #include "extension/extension.h"
+
 #include "extension/clib/ui_process.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
+#include "extension/clib/page.h"
+#include "extension/clib/extension.h"
+
 #include "extension/scroll.h"
 
 void
@@ -26,10 +31,13 @@ web_lua_init(void)
 
     luaL_openlibs(WL);
     luaH_object_setup(WL);
+    luaH_uniq_setup(WL);
     luaH_add_paths(WL, NULL);
     ui_process_class_setup(WL);
     dom_document_class_setup(WL);
     dom_element_class_setup(WL);
+    page_class_setup(WL);
+    extension_class_setup(WL, extension.ext);
 
     printf("luakit web process: Lua initialized\n");
 }

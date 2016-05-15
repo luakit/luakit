@@ -7,6 +7,7 @@
 #include <sys/un.h>
 
 #include "extension/extension.h"
+#include "extension/clib/extension.h"
 #include "extension/msg.h"
 #include "extension/clib/ui_process.h"
 #include "common/util.h"
@@ -41,6 +42,7 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 void
 msg_recv_rc_loaded(const msg_rc_loaded_t *UNUSED(msg), guint UNUSED(length))
 {
+    extension_class_emit_pending_signals(extension.WL);
 }
 
 int
