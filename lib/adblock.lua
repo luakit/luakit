@@ -33,9 +33,12 @@ local capi      = { luakit = luakit }
 local add_binds, add_cmds = add_binds, add_cmds
 local lfs       = require("lfs")
 local window    = window
+local web_module = web_module
 
 
 module("adblock")
+
+local adblock_wm = web_module("adblock_webmodule")
 
 --- Module global variables
 local enabled = true
@@ -64,10 +67,12 @@ end
 -- Enable or disable filtering
 enable = function ()
     enabled = true
+    adblock_wm:emit_signal("enable", enabled)
     refresh_views()
 end
 disable = function ()
     enabled = false
+    adblock_wm:emit_signal("enable", enabled)
     refresh_views()
 end
 
@@ -357,163 +362,8 @@ load = function (reload, single_list)
     
     rules_cache.white, rules_cache.black = nil, nil
     rules_cache = nil
+    adblock_wm:emit_signal("update_rules", rules)
     refresh_views()
-end
-
-local function domain_match(domain, opts)
-    local res = false
-    local cnt = 0
-    local dlist = opts["domain"]
-    if dlist then
-        for _, s in pairs(dlist) do
-            if string.len(s) > 0 then
-                if string.sub(s, 1, 1) == "~" then
-                    if domain == string.sub(s, 2) then return false end
-                else
-                    cnt = cnt + 1
-                    if not res and domain == s then res = true end
-                end
-            end
-        end
-    end
-    return cnt == 0 or res
-end
-
-local function third_party_match(page_domain, domain2, opts)
-    local thp = opts["third-party"]
-    if thp ~= nil then
-        if thp == true then return domain1 ~= domain2 end
-        return domain1 == domain2
-    end
-    return true
-end
-
-local function domain_from_uri(uri)
-    local domain = (uri and string.match(string.lower(uri), "^%a+://([^/]*)/?"))
-    -- Strip leading www. www2. etc
-    domain = string.match(domain or "", "^www%d?%.(.+)") or domain
-    return domain or ""
-end
-
-match_list = function (list, uri, uri_domains, page_domain, uri_domain)
-    -- First, check for domain name anchor (||) rules
-    for domain, _ in pairs(uri_domains) do
-        for pattern, opts in pairs(list.domains[domain] or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                    return true, pattern
-                end
-            end
-        end
-    end
-
-    -- Next, match against plain text strings
-    for pattern, opts in pairs(list.plain or {}) do
-        if third_party_match(page_domain, uri_domain, opts) then
-            if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
-                return true, pattern
-            end
-        end
-    end
-
-    -- If the URI contains "ad", check those buckets as well
-    if string.find(uri, "ad", 1, true) then
-        -- Check plain strings with "ad" in them
-        for pattern, opts in pairs(list.ad_plain or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.find(uri, pattern, 1, true) then
-                    return true, pattern
-                end
-            end
-        end
-        -- Check patterns with "ad" in them
-        for pattern, opts in pairs(list.ad_patterns or {}) do
-            if third_party_match(page_domain, uri_domain, opts) then
-                if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                    return true, pattern
-                end
-            end
-        end
-    end
-
-    -- Finally, check for a general match
-    for pattern, opts in pairs(list.patterns or {}) do
-        if third_party_match(page_domain, uri_domain, opts) then
-            if domain_match(page_domain, opts) and string.match(uri, pattern) then
-                return true, pattern
-            end
-        end
-    end
-end
-
--- Tests URI against user-defined filter functions, then whitelist, then blacklist
-match = function (uri, signame, page_uri)
-    -- Always allow data: URIs
-    if string.sub(uri, 1, 5) == "data:" then
-        info("adblock: allowing data URI")
-        return
-    end
-
-    -- Matching is not case sensitive
-    uri = string.lower(uri)
-
-    signame = signame or ""
-
-    local page_domain, uri_domain
-    if signame ~= "navigation-request" then
-        page_domain = domain_from_uri(page_uri)
-        uri_domain = domain_from_uri(uri)
-    else
-        page_domain = domain_from_uri(uri)
-        uri_domain = page_uri
-    end
-
-    -- Test uri against filterfuncs
-    for _, func in ipairs(filterfuncs) do
-        local ret = func(uri)
-        if ret ~= nil then
-            info("adblock: filter function %s returned %s to uri %s", tostring(func), tostring(ret), uri)
-            return ret
-        end
-    end
-
-    -- Build a table of all domains this URI falls under
-    local uri_domains = {}
-    do
-        local d = uri_domain
-        while d do
-            uri_domains[d] = true
-            d = string.match(d, "%.(.+)")
-        end
-    end
-
-    -- Test against each list's whitelist rules first
-    for _, list in pairs(rules) do
-        local found, pattern = match_list(list.whitelist, uri, uri_domains, page_domain, uri_domain)
-        if found then
-            info("adblock: allowing %q as pattern %q matched to uri %s", signame, pattern, uri)
-            return true
-        end
-    end
-
-    -- Test against each list's blacklist rules
-    for _, list in pairs(rules) do
-        local found, pattern = match_list(list.blacklist, uri, uri_domains, page_domain, uri_domain)
-        if found then
-            info("adblock: blocking %q as pattern %q matched to uri %s", signame, pattern, uri)
-            return false
-        end
-    end
-end
-
--- Direct requests to match function
-filter = function (v, uri, signame)
-    -- Don't adblock on local files
-    local file_uri = v.uri and string.sub(v.uri, 1, 7) == "file://"
-
-    if enabled and not file_uri then
-        return match(uri, signame or "", v.uri)
-    end
 end
 
 function table.itemid(t, item)
@@ -524,12 +374,6 @@ function table.itemid(t, item)
             return pos
         end
     end
-end
-
--- Connect signals to all webview widgets on creation
-webview.init_funcs.adblock_signals = function (view, w)
-    --view:add_signal("navigation-request",        function (v, uri) return filter(v, uri, "navigation-request")        end)
-    view:add_signal("resource-request-starting", function (v, uri) return filter(v, uri, "resource-request-starting") end)
 end
 
 -- Remove options and add new ones to list
@@ -562,6 +406,7 @@ function list_opts_modify(list_index, opt_ex, opt_inc)
         end
     elseif util.table.hasitem(opt_inc, "Disabled") then
         rules[list.title] = nil
+        adblock_wm:emit_signal("update_rules", rules)
     end
     
     list.opts = opts
