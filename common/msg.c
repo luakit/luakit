@@ -10,7 +10,7 @@
 static void
 lua_serialize_value(lua_State *L, GByteArray *out, int index)
 {
-    int type = lua_type(L, index);
+    gint8 type = lua_type(L, index);
     int top = lua_gettop(L);
 
     switch (type) {
@@ -55,7 +55,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
                 lua_pop(L, 1);
             }
             /* Finish with a LUA_TNONE sentinel */
-            int end = LUA_TNONE;
+            gint8 end = LUA_TNONE;
             g_byte_array_append(out, (guint8*)&end, sizeof(end));
             break;
         }
@@ -71,7 +71,7 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
     memcpy(&(dst), *bytes, (length)); \
     *bytes += (length);
 
-    int type;
+    gint8 type;
     TAKE(type, sizeof(type));
 
     int top = lua_gettop(L);
