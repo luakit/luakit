@@ -1,6 +1,7 @@
 #include <webkitdom/webkitdom.h>
 #define WEBKIT_DOM_USE_UNSTABLE_API
 #include <webkitdom/WebKitDOMElementUnstable.h>
+#include <webkitdom/WebKitDOMDOMWindowUnstable.h>
 
 #include "extension/clib/dom_element.h"
 
@@ -184,6 +185,36 @@ luaH_dom_element_push_attribute_table(lua_State *L)
 }
 
 static gint
+luaH_dom_element_style_index(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    WebKitDOMDocument *document = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
+    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+    WebKitDOMCSSStyleDeclaration *style = webkit_dom_dom_window_get_computed_style(window, WEBKIT_DOM_ELEMENT(element->element), "");
+
+    const gchar *name = luaL_checkstring(L, 2);
+    const gchar *value = webkit_dom_css_style_declaration_get_property_value(style, name);
+    lua_pushstring(L, value);
+    return 1;
+}
+
+static gint
+luaH_dom_element_push_style_table(lua_State *L)
+{
+    /* create style table */
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy element userdata */
+    lua_pushcclosure(L, luaH_dom_element_style_index, 1);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+
+static gint
 luaH_dom_element_click(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -218,6 +249,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
+        case L_TK_STYLE: return luaH_dom_element_push_style_table(L);
         default:
             return 0;
     }
