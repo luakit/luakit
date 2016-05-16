@@ -179,12 +179,24 @@ function remove(page)
 end
 
 error_html = [==[
-<html><head><title>Chrome handler error</title><style>
-pre { border-top: 1px solid #aaa; border-bottom: 1px solid #aaa;
-    margin: -5px 5px; padding: 5px; background-color: #f2f2f2; }
-</style></head><body>
-<p>Error in <big><code>%q</code></big> handler function:</p>
-<pre>%s</pre></body></html>
+    <html>
+        <head>
+            <title>Chrome handler error</title>
+            <style>
+                pre {
+                    border-top: 1px solid #aaa;
+                    border-bottom: 1px solid #aaa;
+                    margin: -5px 5px;
+                    padding: 5px;
+                    background-color: #f2f2f2;
+                }
+            </style>
+        </head>
+        <body>
+            <p>Error in <big><code>%q</code></big> handler function:</p>
+            <pre>%s</pre>
+        </body>
+    </html>
 ]==]
 
 -- Catch all navigations to the luakit:// scheme
