@@ -393,43 +393,29 @@ export_funcs = {
 }
 
 chrome.add("history", function (view, meta)
-
-    local html = string.gsub(html, "{%%(%w+)}", {
+    return string.gsub(html, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
         stylesheet = chrome.stylesheet .. stylesheet
     })
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "finished" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-changed", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= meta.uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        view:register_function("reset_mode", function ()
-            meta.w:set_mode() -- HACK to unfocus search box
-        end)
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://history/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
+end,
+function (view, meta)
+    -- Export luakit JS<->Lua API functions
+    for name, func in pairs(export_funcs) do
+        view:register_function(name, func)
     end
 
-    view:add_signal("load-changed", on_first_visual)
-    return html
+    view:register_function("reset_mode", function ()
+        meta.w:set_mode() -- HACK to unfocus search box
+    end)
+
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    local _, err = view:eval_js(jquery, { no_return = true })
+    assert(not err, err)
+
+    -- Load main luakit://history/ JavaScript
+    local _, err = view:eval_js(main_js, { no_return = true })
+    assert(not err, err)
 end)
 
 -- Prevent history items from turning up in history

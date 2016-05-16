@@ -139,7 +139,7 @@ stylesheet = [===[
 -- luakit:// page handlers
 local handlers = {}
 
-function add(page, func)
+function add(page, func, on_first_visual_func)
     -- Do some sanity checking
     assert(type(page) == "string",
         "invalid chrome page name (string expected, got "..type(page)..")")
@@ -148,7 +148,30 @@ function add(page, func)
     assert(type(func) == "function",
         "invalid chrome handler (function expected, got "..type(func)..")")
 
-    handlers[page] = func
+    local wrapper = function(view, meta)
+        -- Call the main function...
+        local ret = func(view, meta)
+        -- Wrap and bind on_first_visual hook, if given
+        if type(on_first_visual_func) == "function" then
+            function visual_wrap(v, status)
+                -- Wait for new page to be created
+                if status ~= "finished" then return end
+
+                -- Hack to run-once
+                view:remove_signal("load-changed", visual_wrap)
+
+                -- Double check that we are where we should be
+                if view.uri ~= meta.uri then return end
+
+                -- Call the supplied handler
+                on_first_visual_func(v, meta)
+            end
+            view:add_signal("load-changed", visual_wrap)
+        end
+        return ret
+    end
+
+    handlers[page] = wrapper
 end
 
 function remove(page)

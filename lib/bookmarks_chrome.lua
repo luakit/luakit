@@ -503,39 +503,28 @@ chrome.add("bookmarks", function (view, meta)
 
     local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
 
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "finished" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-changed", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= uri then return end
-
-        -- TODO broken
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        view:register_function("reset_mode", function ()
-            meta.w:set_mode() -- HACK to unfocus search box
-        end)
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://bookmarks/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
-    end
-
-    view:add_signal("load-changed", on_first_visual)
     print("lua side: bookmarks_chrome.lua")
     return html
+end,
+function (view, meta)
+    -- TODO broken
+    -- Export luakit JS<->Lua API functions
+    for name, func in pairs(export_funcs) do
+        view:register_function(name, func)
+    end
+
+    view:register_function("reset_mode", function ()
+        meta.w:set_mode() -- HACK to unfocus search box
+    end)
+
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    local _, err = view:eval_js(jquery, { no_return = true })
+    assert(not err, err)
+
+    -- Load main luakit://bookmarks/ JavaScript
+    local _, err = view:eval_js(main_js, { no_return = true })
+    assert(not err, err)
 end)
 
 chrome_page = "luakit://bookmarks/"
