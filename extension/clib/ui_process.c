@@ -84,7 +84,6 @@ ui_process_recv(lua_State *L, const guint module, const gchar *arg, guint arglen
 {
     int ref = g_array_index(module_refs, int, module);
     lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-    luaH_check_ui_process(L, -1);
 
     int n = lua_deserialize_range(L, (guint8*)arg, arglen);
     const char *signame = lua_tostring(L, -n);
