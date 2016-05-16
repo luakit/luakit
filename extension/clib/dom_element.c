@@ -333,6 +333,7 @@ luaH_dom_element_index(lua_State *L)
     switch(token) {
         PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
         PS_CASE(TEXT_CONTENT, webkit_dom_node_get_text_content(WEBKIT_DOM_NODE(elem)))
+        PS_CASE(INNER_HTML, webkit_dom_html_element_get_inner_html(element->element))
 
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
@@ -351,6 +352,27 @@ luaH_dom_element_index(lua_State *L)
     }
 }
 
+static gint
+luaH_dom_element_newindex(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    const char *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+
+    GError *error = NULL;
+
+    switch (token) {
+        case L_TK_INNER_HTML:
+            webkit_dom_html_element_set_inner_html(element->element, luaL_checkstring(L, 3), &error);
+            if (error)
+                return luaL_error(L, "set inner html error: %s", error->message);
+        default:
+            break;
+    }
+
+    return 0;
+}
+
 void
 dom_element_class_setup(lua_State *L)
 {
@@ -364,6 +386,7 @@ dom_element_class_setup(lua_State *L)
     {
         LUA_OBJECT_META(dom_element)
         { "__index", luaH_dom_element_index },
+        { "__newindex", luaH_dom_element_newindex },
         { "__gc", luaH_dom_element_gc },
         { NULL, NULL }
     };
