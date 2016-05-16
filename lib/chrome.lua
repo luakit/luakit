@@ -209,11 +209,6 @@ webview.init_funcs.chrome = function (view, w)
             -- Call luakit:// page handler
             local ok, html = xpcall(function () return func(view, meta) end,
                 error_handler)
-
-            if not ok or not err then
-                -- Stop the navigation request
-                return "<p>some error I haven't handled yet TODO fixme</p>"
-            end
             return html
         end
 
