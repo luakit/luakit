@@ -1,3 +1,4 @@
+#include "common/lualib.h"
 #include "common/msg.h"
 
 #include <lauxlib.h>
