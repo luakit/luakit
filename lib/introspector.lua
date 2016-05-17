@@ -205,6 +205,12 @@ local html = [==[
         <h1>Luakit Help</h1>
     </header>
     {sections}
+    <script>
+        {jquery}
+    </script>
+    <script>
+        {javascript}
+    </script>
 </body>
 ]==]
 
@@ -369,7 +375,12 @@ chrome.add("help", function (view, meta)
     end
 
     local sections_html = table.concat(sections, "\n")
-    return string.gsub(html, "{(%w+)}", { sections = sections_html })
+    local html_subs = {
+        sections = sections_html,
+        javascript = main_js,
+        jquery = lousy.load("lib/jquery.min.js")
+    }
+    return string.gsub(html, "{(%w+)}", html_subs)
 end, function (view)
     -- TODO broken
     -- Export luakit JS<->Lua API functions
