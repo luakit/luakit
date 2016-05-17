@@ -75,7 +75,7 @@ luaH_dumpstack(lua_State *L) {
  */
 static inline gint
 luaH_absindex(lua_State *L, gint ud) {
-    return (ud > 0 || ud <= LUA_REGISTRYINDEX) ? ud : lua_gettop(L) + ud + 1;
+    return (ud >= 0 || ud <= LUA_REGISTRYINDEX) ? ud : lua_gettop(L) + ud + 1;
 }
 
 static inline gint
