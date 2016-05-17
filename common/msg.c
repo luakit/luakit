@@ -135,10 +135,10 @@ lua_deserialize_range(lua_State *L, const guint8 *in, guint length)
     const guint8 *bytes = in;
     int i = 0;
 
-    do {
+    while (bytes < in + length) {
         lua_deserialize_value(L, &bytes);
         i++;
-    } while (bytes < in + length);
+    }
 
     return i;
 }
