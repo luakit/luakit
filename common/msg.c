@@ -36,7 +36,7 @@ msg_dispatch(msg_header_t header, gpointer payload)
 }
 
 /* Callback function for channel watch */
-gboolean
+static gboolean
 msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_data))
 {
     g_assert(cond & G_IO_IN);
@@ -56,11 +56,25 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_da
     return TRUE;
 }
 
-void
-msg_setup(GIOChannel *channel)
+static gboolean
+msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer UNUSED(user_data))
 {
-    state.channel = channel;
+    g_io_channel_unref(channel);
+    return FALSE;
+}
+
+GIOChannel *
+msg_setup(int sock)
+{
     state.queued_msgs = g_ptr_array_new();
+
+    state.channel = g_io_channel_unix_new(sock);
+    g_io_channel_set_encoding(state.channel, NULL, NULL);
+    g_io_channel_set_buffered(state.channel, FALSE);
+    g_io_add_watch(state.channel, G_IO_IN, msg_recv, NULL);
+    g_io_add_watch(state.channel, G_IO_HUP, msg_hup, NULL);
+
+    return state.channel;
 }
 
 /* Receive a single message

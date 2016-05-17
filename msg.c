@@ -7,15 +7,10 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
-void webview_scroll_recv(void *d, const msg_scroll_t *msg);
+#include "clib/web_module.h"
+#include "common/luaserialize.h"
 
-static gboolean
-msg_hup(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
-{
-    assert(cond & G_IO_HUP);
-    g_io_channel_unref(channel);
-    return FALSE;
-}
+void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 
 void
 msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
@@ -77,15 +72,7 @@ web_extension_connect(gpointer user_data)
 
     debug("Creating channel...");
 
-    GIOChannel *channel = g_io_channel_unix_new(web_socket);
-    g_io_channel_set_encoding(channel, NULL, NULL);
-    g_io_channel_set_buffered(channel, FALSE);
-    g_io_add_watch(channel, G_IO_IN, msg_recv, NULL);
-    g_io_add_watch(channel, G_IO_HUP, msg_hup, NULL);
-
-    msg_setup(channel);
-
-    globalconf.web_channel = channel;
+    globalconf.web_channel = msg_setup(web_socket);
 
     /* Send all queued messages */
     g_io_channel_write_chars(globalconf.web_channel, (gchar*)globalconf.web_channel_queue->data, globalconf.web_channel_queue->len, NULL, NULL);

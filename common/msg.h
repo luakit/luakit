@@ -55,8 +55,7 @@ typedef struct _msg_scroll_t {
 typedef struct _msg_rc_loaded_t {
 } msg_rc_loaded_t;
 
-void msg_setup(GIOChannel *channel);
-gboolean msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data));
+GIOChannel * msg_setup(int sock);
 gboolean msg_recv_and_dispatch_or_enqueue(int type_mask);
 
 /* Must be defined separately; not defined in common/msg.c */
