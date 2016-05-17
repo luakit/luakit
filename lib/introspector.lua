@@ -229,7 +229,7 @@ local mode_bind_template = [==[
     <li class="bind bind_type_{type}">
         <div class="link-box">
             <a href class="filename">{filename}</a>
-            <a href class="linedefined">{linedefined}</a>
+            <a href class="linedefined" filename="{filename}" line="{linedefined}">{linedefined}</a>
         </div>
         <hr class="clear" />
         <div class="key">{key}</div>
