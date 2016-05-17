@@ -28,9 +28,9 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 }
 
 void
-msg_recv_scroll(const msg_scroll_t *msg, guint length)
+msg_recv_scroll(msg_scroll_t *msg, guint UNUSED(length))
 {
-    g_ptr_array_foreach(globalconf.webviews, webview_scroll_recv, msg);
+    g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
 }
 
 void
