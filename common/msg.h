@@ -10,7 +10,12 @@
 	X(scroll) \
 	X(rc_loaded) \
 
-#define X(name) MSG_TYPE_##name,
+#define X(name) MSG_TYPE_EXPONENT_##name,
+typedef enum { MSG_TYPES } _msg_type_exponent_t;
+#undef X
+
+/* Automatically defines all MSG_TYPE_foo as powers of two */
+#define X(name) MSG_TYPE_##name = (1 << MSG_TYPE_EXPONENT_##name),
 typedef enum { MSG_TYPES } msg_type_t;
 #undef X
 
