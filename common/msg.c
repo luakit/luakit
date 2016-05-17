@@ -51,7 +51,8 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             index = index > 0 ? index : lua_gettop(L) + 1 + index;
             lua_pushnil(L);
             while (lua_next(L, index) != 0) {
-                lua_serialize_range(L, out, -2, -1);
+                lua_serialize_value(L, out, -2);
+                lua_serialize_value(L, out, -1);
                 lua_pop(L, 1);
             }
             /* Finish with a LUA_TNONE sentinel */
@@ -120,6 +121,9 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
 void
 lua_serialize_range(lua_State *L, GByteArray *out, int start, int end)
 {
+    start = luaH_absindex(L, start);
+    end   = luaH_absindex(L, end);
+
     for (int i = start; i <= end; i++)
         lua_serialize_value(L, out, i);
 }
