@@ -19,6 +19,8 @@ typedef enum { MSG_TYPES } _msg_type_exponent_t;
 typedef enum { MSG_TYPES } msg_type_t;
 #undef X
 
+#define MSG_TYPE_ANY (-1)
+
 /** Fixed size header prepended to each message */
 typedef struct _msg_header_t {
 	/** The length of the message in bytes, not including the header */
@@ -53,7 +55,11 @@ typedef struct _msg_scroll_t {
 typedef struct _msg_rc_loaded_t {
 } msg_rc_loaded_t;
 
-void msg_send(const msg_header_t *header, const void *data);
+void msg_setup(GIOChannel *channel);
 gboolean msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data));
+gboolean msg_recv_and_dispatch_or_enqueue(int type_mask);
+
+/* Must be defined separately; not defined in common/msg.c */
+void msg_send(const msg_header_t *header, const void *data);
 
 #endif

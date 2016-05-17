@@ -83,6 +83,8 @@ web_extension_connect(gpointer user_data)
     g_io_add_watch(channel, G_IO_IN, msg_recv, NULL);
     g_io_add_watch(channel, G_IO_HUP, msg_hup, NULL);
 
+    msg_setup(channel);
+
     globalconf.web_channel = channel;
 
     /* Send all queued messages */

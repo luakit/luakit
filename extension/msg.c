@@ -73,6 +73,7 @@ web_extension_connect(const gchar *socket_path)
     g_io_channel_set_encoding(channel, NULL, NULL);
     g_io_channel_set_buffered(channel, FALSE);
     g_io_add_watch (channel, G_IO_IN | G_IO_HUP, msg_recv, NULL);
+    msg_setup(channel);
 
     return 0;
 fail_connect:
