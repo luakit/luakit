@@ -9,6 +9,9 @@
 	X(lua_msg) \
 	X(scroll) \
 	X(rc_loaded) \
+	X(lua_js_call) \
+	X(lua_js_register) \
+	X(lua_js_gc) \
 
 #define X(name) MSG_TYPE_EXPONENT_##name,
 typedef enum { MSG_TYPES } _msg_type_exponent_t;

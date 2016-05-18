@@ -39,6 +39,54 @@ msg_recv_rc_loaded(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(len
     fatal("UI process should never receive message of this type");
 }
 
+void
+msg_recv_lua_js_call(const guint8 *msg, guint length)
+{
+    lua_State *L = globalconf.L;
+    gint top = lua_gettop(L);
+
+    /* Deserialize the Lua we got */
+    int argc = lua_deserialize_range(L, msg, length) - 1;
+    gpointer ref = lua_topointer(L, top + 1);
+    lua_remove(L, top+1);
+
+    /* push Lua callback function into position */
+    luaH_object_push(L, ref);
+    lua_insert(L, -argc-1);
+    /* Call the function; push result/error and ok/error boolean */
+    lua_pushboolean(L, lua_pcall(L, argc, 1, 0));
+
+    /* Serialize the result, and send it back */
+    GByteArray *buf = g_byte_array_new();
+    lua_serialize_range(L, buf, -2, -1);
+
+    msg_header_t header = {
+        .type = MSG_TYPE_lua_js_call,
+        .length = buf->len
+    };
+
+    msg_send(&header, buf->data);
+    g_byte_array_unref(buf);
+    lua_settop(L, top);
+}
+
+void
+msg_recv_lua_js_gc(const guint8 *msg, guint length)
+{
+    lua_State *L = globalconf.L;
+    /* Unref the function reference we got */
+    gint n = lua_deserialize_range(L, msg, length);
+    g_assert_cmpint(n, ==, 1);
+    luaH_object_unref(L, lua_topointer(L, -1));
+    lua_pop(L, 1);
+}
+
+void
+msg_recv_lua_js_register(gpointer UNUSED(msg), guint UNUSED(length))
+{
+    fatal("UI process should never receive message of this type");
+}
+
 static gpointer
 web_extension_connect(gpointer user_data)
 {
