@@ -35,13 +35,9 @@ msg_dispatch(msg_header_t header, gpointer payload)
     }
 }
 
-/* Callback function for channel watch */
 static gboolean
-msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_data))
+msg_dispatch_enqueued(gpointer UNUSED(unused))
 {
-    g_assert(cond & G_IO_IN);
-
-    /* First, search for any queued messages... */
     if (state.queued_msgs->len > 0) {
         queued_msg_t *msg = g_ptr_array_index(state.queued_msgs, 0);
         /* Dispatch and free the message */
@@ -50,8 +46,16 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_da
         g_slice_free1(sizeof(queued_msg_t) + state.hdr.length, state.payload);
         return TRUE;
     }
+    return FALSE;
+}
 
-    msg_recv_and_dispatch_or_enqueue(MSG_TYPE_ANY);
+/* Callback function for channel watch */
+static gboolean
+msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_data))
+{
+    g_assert(cond & G_IO_IN);
+
+    msg_dispatch_enqueued(NULL) || msg_recv_and_dispatch_or_enqueue(MSG_TYPE_ANY);
 
     return TRUE;
 }
@@ -126,6 +130,7 @@ msg_recv_and_dispatch_or_enqueue(int type_mask)
         /* Copy the header into the space at the start of the payload slice */
         memcpy(state.payload, &state.hdr, sizeof(queued_msg_t));
         g_ptr_array_add(state.queued_msgs, state.payload);
+        g_idle_add(msg_dispatch_enqueued, NULL);
     }
 
     /* Reset state for the next message */
