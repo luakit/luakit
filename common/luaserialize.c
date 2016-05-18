@@ -10,7 +10,6 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
     int top = lua_gettop(L);
 
     switch (type) {
-        case LUA_TLIGHTUSERDATA:
         case LUA_TUSERDATA:
         case LUA_TFUNCTION:
         case LUA_TTHREAD:
@@ -54,6 +53,11 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             /* Finish with a LUA_TNONE sentinel */
             gint8 end = LUA_TNONE;
             g_byte_array_append(out, (guint8*)&end, sizeof(end));
+            break;
+        }
+        case LUA_TLIGHTUSERDATA: {
+            gpointer p = lua_topointer(L, index);
+            g_byte_array_append(out, (guint8*)&p, sizeof(p));
             break;
         }
     }
@@ -103,6 +107,12 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
                 lua_deserialize_value(L, bytes);
                 lua_rawset(L, -3);
             }
+            break;
+        }
+        case LUA_TLIGHTUSERDATA: {
+            gpointer p;
+            TAKE(p, sizeof(p));
+            lua_pushlightuserdata(L, p);
             break;
         }
         case LUA_TNONE:
