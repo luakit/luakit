@@ -240,40 +240,18 @@ chrome.add("adblock", function (view, meta)
     }
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
-    view:load_string(html, tostring(uri))
+    return html
+end,
+nil,
+{
+    adblock_toggle = function (enable)
+        if enable then adblock.enable() else adblock.disable() end
+    end,
 
-    local export_funcs = {
-        adblock_toggle = function (enable)
-            meta.w:run_cmd(enable and ":adblock-enable" or ":adblock-disable")
-        end,
-
-        adblock_list_toggle = function (id, enable)
-            if enable then
-                meta.w:run_cmd(":adblock-list-enable " .. id)
-            else
-                meta.w:run_cmd(":adblock-list-disable " .. id)
-            end
-        end,
-    }
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= meta.uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-    end
-
-    view:add_signal("load-status", on_first_visual)
-end)
+    adblock_list_toggle = function (id, enable)
+        adblock.list_set_enabled(id, enable)
+    end,
+})
 
 -- Add chrome binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
