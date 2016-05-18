@@ -10,6 +10,8 @@ local string = string
 local type = type
 local xpcall = xpcall
 local debug = debug
+local pairs = pairs
+local luakit = luakit
 
 -- Get luakit environment
 local webview = webview
@@ -139,7 +141,7 @@ stylesheet = [===[
 -- luakit:// page handlers
 local handlers = {}
 
-function add(page, func, on_first_visual_func)
+function add(page, func, on_first_visual_func, export_funcs)
     -- Do some sanity checking
     assert(type(page) == "string",
         "invalid chrome page name (string expected, got "..type(page)..")")
@@ -169,6 +171,13 @@ function add(page, func, on_first_visual_func)
             view:add_signal("load-changed", visual_wrap)
         end
         return ret
+    end
+
+    for name, func in pairs(export_funcs or {}) do
+        local pattern = "^luakit://" .. page .. "/?(.*)"
+        assert(type(name) == "string")
+        assert(type(func) == "function")
+        luakit.register_function(pattern, name, func)
     end
 
     handlers[page] = wrapper
