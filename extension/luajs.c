@@ -19,14 +19,7 @@ luaJS_pushvalue(lua_State *L, JSContextRef context, JSValueRef value, gchar **er
 static void
 lua_gc_stack_top(lua_State *L)
 {
-    GByteArray *buf = g_byte_array_new();
-    lua_serialize_range(L, buf, -1, -1);
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_js_gc,
-        .length = buf->len
-    };
-    msg_send(&header, buf->data);
-    g_byte_array_unref(buf);
+    msg_send_lua(MSG_TYPE_lua_js_gc, L, -1, -1);
 }
 
 static gchar*
@@ -283,20 +276,9 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     }
 
     /* Notify UI process of function call... */
-
-    GByteArray *buf = g_byte_array_new();
-    lua_serialize_range(L, buf, top + 1, lua_gettop(L));
-
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_js_call,
-        .length = buf->len
-    };
-
-    msg_send(&header, buf->data);
-    g_byte_array_unref(buf);
+    msg_send_lua(MSG_TYPE_lua_js_call, L, top+1, -1);
 
     /* ...and block until it's replied */
-
     do {
         usleep(1);
     } while(!msg_recv_and_dispatch_or_enqueue(MSG_TYPE_lua_js_call));

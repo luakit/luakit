@@ -57,16 +57,7 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
     lua_pushboolean(L, lua_pcall(L, argc, 1, 0));
 
     /* Serialize the result, and send it back */
-    GByteArray *buf = g_byte_array_new();
-    lua_serialize_range(L, buf, -2, -1);
-
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_js_call,
-        .length = buf->len
-    };
-
-    msg_send(&header, buf->data);
-    g_byte_array_unref(buf);
+    msg_send_lua(MSG_TYPE_lua_js_call, L, -2, -1);
     lua_settop(L, top);
 }
 
