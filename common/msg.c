@@ -142,4 +142,14 @@ msg_recv_and_dispatch_or_enqueue(int type_mask)
     return state.hdr.type & type_mask;
 }
 
+void
+msg_send_lua(msg_type_t type, lua_State *L, gint start, gint end)
+{
+    GByteArray *buf = g_byte_array_new();
+    lua_serialize_range(L, buf, start, end);
+    msg_header_t header = { .type = type, .length = buf->len };
+    msg_send(&header, buf->data);
+    g_byte_array_unref(buf);
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
