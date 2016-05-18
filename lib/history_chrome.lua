@@ -399,11 +399,6 @@ chrome.add("history", function (view, meta)
     })
 end,
 function (view, meta)
-    -- Export luakit JS<->Lua API functions
-    for name, func in pairs(export_funcs) do
-        view:register_function(name, func)
-    end
-
     view:register_function("reset_mode", function ()
         meta.w:set_mode() -- HACK to unfocus search box
     end)
@@ -416,7 +411,8 @@ function (view, meta)
     -- Load main luakit://history/ JavaScript
     local _, err = view:eval_js(main_js, { no_return = true })
     assert(not err, err)
-end)
+end,
+export_funcs)
 
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)
