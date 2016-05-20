@@ -12,8 +12,6 @@
 #include "extension/clib/ui_process.h"
 #include "common/util.h"
 
-static GIOChannel *channel;
-
 void
 msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
 {
@@ -69,10 +67,7 @@ web_extension_connect(const gchar *socket_path)
 
     printf("luakit web process: connected\n");
 
-    channel = g_io_channel_unix_new(sock);
-    g_io_channel_set_encoding(channel, NULL, NULL);
-    g_io_channel_set_buffered(channel, FALSE);
-    g_io_add_watch (channel, G_IO_IN | G_IO_HUP, msg_recv, NULL);
+    extension.ui_channel = msg_setup(sock);
 
     return 0;
 fail_connect:
@@ -84,8 +79,8 @@ fail_socket:
 void
 msg_send(const msg_header_t *header, const void *data)
 {
-    g_io_channel_write_chars(channel, (gchar*)header, sizeof(*header), NULL, NULL);
-    g_io_channel_write_chars(channel, (gchar*)data, header->length, NULL, NULL);
+    g_io_channel_write_chars(extension.ui_channel, (gchar*)header, sizeof(*header), NULL, NULL);
+    g_io_channel_write_chars(extension.ui_channel, (gchar*)data, header->length, NULL, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

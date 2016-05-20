@@ -507,12 +507,6 @@ chrome.add("bookmarks", function (view, meta)
     return html
 end,
 function (view, meta)
-    -- TODO broken
-    -- Export luakit JS<->Lua API functions
-    for name, func in pairs(export_funcs) do
-        view:register_function(name, func)
-    end
-
     view:register_function("reset_mode", function ()
         meta.w:set_mode() -- HACK to unfocus search box
     end)
@@ -525,7 +519,8 @@ function (view, meta)
     -- Load main luakit://bookmarks/ JavaScript
     local _, err = view:eval_js(main_js, { no_return = true })
     assert(not err, err)
-end)
+end,
+export_funcs)
 
 chrome_page = "luakit://bookmarks/"
 

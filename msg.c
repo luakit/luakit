@@ -9,15 +9,10 @@
 #include <sys/types.h>
 #include <sys/un.h>
 
-void webview_scroll_recv(void *d, const msg_scroll_t *msg);
+#include "clib/web_module.h"
+#include "common/luaserialize.h"
 
-static gboolean
-msg_hup(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
-{
-    assert(cond & G_IO_HUP);
-    g_io_channel_unref(channel);
-    return FALSE;
-}
+void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 
 void
 msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
@@ -35,13 +30,52 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 }
 
 void
-msg_recv_scroll(const msg_scroll_t *msg, guint length)
+msg_recv_scroll(msg_scroll_t *msg, guint UNUSED(length))
 {
-    g_ptr_array_foreach(globalconf.webviews, webview_scroll_recv, msg);
+    g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
 }
 
 void
 msg_recv_rc_loaded(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
+{
+    fatal("UI process should never receive message of this type");
+}
+
+void
+msg_recv_lua_js_call(const guint8 *msg, guint length)
+{
+    lua_State *L = globalconf.L;
+    gint top = lua_gettop(L);
+
+    /* Deserialize the Lua we got */
+    int argc = lua_deserialize_range(L, msg, length) - 1;
+    gpointer ref = lua_topointer(L, top + 1);
+    lua_remove(L, top+1);
+
+    /* push Lua callback function into position */
+    luaH_object_push(L, ref);
+    lua_insert(L, -argc-1);
+    /* Call the function; push result/error and ok/error boolean */
+    lua_pushboolean(L, lua_pcall(L, argc, 1, 0));
+
+    /* Serialize the result, and send it back */
+    msg_send_lua(MSG_TYPE_lua_js_call, L, -2, -1);
+    lua_settop(L, top);
+}
+
+void
+msg_recv_lua_js_gc(const guint8 *msg, guint length)
+{
+    lua_State *L = globalconf.L;
+    /* Unref the function reference we got */
+    gint n = lua_deserialize_range(L, msg, length);
+    g_assert_cmpint(n, ==, 1);
+    luaH_object_unref(L, lua_topointer(L, -1));
+    lua_pop(L, 1);
+}
+
+void
+msg_recv_lua_js_register(gpointer UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
 }
@@ -79,13 +113,7 @@ web_extension_connect(gpointer user_data)
 
     debug("Creating channel...");
 
-    GIOChannel *channel = g_io_channel_unix_new(web_socket);
-    g_io_channel_set_encoding(channel, NULL, NULL);
-    g_io_channel_set_buffered(channel, FALSE);
-    g_io_add_watch(channel, G_IO_IN, msg_recv, NULL);
-    g_io_add_watch(channel, G_IO_HUP, msg_hup, NULL);
-
-    globalconf.web_channel = channel;
+    globalconf.web_channel = msg_setup(web_socket);
 
     /* Send all queued messages */
     g_io_channel_write_chars(globalconf.web_channel, (gchar*)globalconf.web_channel_queue->data, globalconf.web_channel_queue->len, NULL, NULL);

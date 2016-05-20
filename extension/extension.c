@@ -56,6 +56,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
 
     web_lua_init();
     web_scroll_init();
+    web_luajs_init();
 
     printf("luakit web process: ready for messages\n");
 }

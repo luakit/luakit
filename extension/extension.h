@@ -10,6 +10,8 @@ typedef struct _extension_t {
 	lua_State *WL;
 	/** Handle to the WebKit Web Extension */
 	WebKitWebExtension *ext;
+	/** Channel for IPC with ui process */
+	GIOChannel *ui_channel;
 } extension_t;
 
 extension_t extension;

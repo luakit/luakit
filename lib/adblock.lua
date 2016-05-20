@@ -482,6 +482,13 @@ function read_subscriptions(file, clear_first)
     end
 end
 
+function list_set_enabled(a, enabled)
+    if enabled then
+        list_opts_modify(tonumber(a), "Disabled", "Enabled")
+    else
+        list_opts_modify(tonumber(a), "Enabled", "Disabled")
+    end
+end
 
 -- Add commands.
 local cmd = lousy.bind.cmd
@@ -493,11 +500,11 @@ add_cmds({
     end),
     
     cmd({"adblock-list-enable", "able"}, function (w, a)
-        list_opts_modify(tonumber(a), "Disabled", "Enabled")
+        list_set_enabled(a, true)
     end),
     
     cmd({"adblock-list-disable", "abld"}, function (w, a)
-        list_opts_modify(tonumber(a), "Enabled", "Disabled")
+        list_set_enabled(a, false)
     end),
     cmd({"adblock-enable", "abe"}, function (w)
     enable()

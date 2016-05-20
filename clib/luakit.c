@@ -19,6 +19,7 @@
  */
 
 #include "common/signal.h"
+#include "common/msg.h"
 #include "clib/widget.h"
 #include "clib/luakit.h"
 #include "luah.h"
@@ -614,6 +615,30 @@ luaH_luakit_idle_remove(lua_State *L)
     return 1;
 }
 
+#if WITH_WEBKIT2
+static gint
+luaH_luakit_register_function(lua_State *L)
+{
+    const gchar *pattern = luaL_checkstring(L, 1);
+    const gchar *name = luaL_checkstring(L, 2);
+
+    /* get lua callback function */
+    luaH_checkfunction(L, 3);
+    lua_pushlightuserdata(L, luaH_object_ref(L, 3));
+
+    GByteArray *buf = g_byte_array_new();
+    lua_serialize_range(L, buf, 1, 3);
+    msg_header_t header = {
+        .type = MSG_TYPE_lua_js_register,
+        .length = buf->len
+    };
+    msg_send(&header, buf->data);
+    g_byte_array_unref(buf);
+
+    return 0;
+}
+#endif
+
 /** Setup luakit module.
  *
  * \param L The Lua VM state.
@@ -635,6 +660,9 @@ luakit_lib_setup(lua_State *L)
         { "uri_encode",      luaH_luakit_uri_encode },
         { "idle_add",        luaH_luakit_idle_add },
         { "idle_remove",     luaH_luakit_idle_remove },
+#if WITH_WEBKIT2
+        { "register_function",     luaH_luakit_register_function },
+#endif
         { NULL,              NULL }
     };
 

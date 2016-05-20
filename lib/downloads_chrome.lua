@@ -351,12 +351,6 @@ chrome.add("downloads", function (view, meta)
     return string.gsub(html_template, "{(%w+)}", html_subs)
 end,
 function (view, meta)
-    -- TODO broken
-    -- Export luakit JS<->Lua API functions
-    for name, func in pairs(export_funcs) do
-        view:register_function(name, func)
-    end
-
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     local _, err = view:eval_js(jquery, { no_return = true })
@@ -365,7 +359,8 @@ function (view, meta)
     -- Load main luakit://download/ JavaScript
     local _, err = view:eval_js(main_js, { no_return = true })
     assert(not err, err)
-end)
+end,
+export_funcs)
 
 local page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
