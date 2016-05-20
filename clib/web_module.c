@@ -1,3 +1,5 @@
+#ifdef WITH_WEBKIT2
+
 #include "clib/web_module.h"
 #include "common/tokenize.h"
 #include "extension/msg.h"
@@ -106,5 +108,7 @@ web_module_class_setup(lua_State *L)
 
     module_refs = g_array_new(FALSE, FALSE, sizeof(int));
 }
+
+#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

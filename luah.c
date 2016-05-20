@@ -310,10 +310,10 @@ luaH_init(void)
 #if WITH_WEBKIT2
     /* Export stylesheet */
     stylesheet_class_setup(L);
-#endif
 
     /* Export web module */
     web_module_class_setup(L);
+#endif
 
     /* add Lua search paths */
     luaH_add_paths(L, globalconf.config_dir);
