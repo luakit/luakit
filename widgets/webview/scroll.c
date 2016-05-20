@@ -113,6 +113,7 @@ webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w)
 #endif
 #endif
 
+#if WITH_WEBKIT2
 void
 webview_scroll_recv(widget_t *w, const msg_scroll_t *msg)
 {
@@ -136,6 +137,7 @@ webview_scroll_recv(widget_t *w, const msg_scroll_t *msg)
             break;
     }
 }
+#endif
 
 static gint
 luaH_webview_scroll_newindex(lua_State *L)
