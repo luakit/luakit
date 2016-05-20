@@ -307,10 +307,6 @@ local function function_source_range(func, info)
         info.lastlinedefined), true)
 end
 
-export_funcs = {
-    open_editor = editor.edit,
-}
-
 help_get_modes = function ()
     local ret = {}
     local modes = lousy.util.table.values(get_modes())
@@ -371,12 +367,6 @@ chrome.add("help", function (view, meta)
     local sections_html = table.concat(sections, "\n")
     return string.gsub(html, "{(%w+)}", { sections = sections_html })
 end, function (view)
-    -- TODO broken
-    -- Export luakit JS<->Lua API functions
-    for name, func in pairs(export_funcs) do
-        view:register_function(name, func)
-    end
-
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     local _, err = view:eval_js(jquery, { no_return = true })
@@ -385,7 +375,9 @@ end, function (view)
     -- Load main luakit://help/ JavaScript
     local _, err = view:eval_js(main_js, { no_return = true })
     assert(not err, err)
-end)
+end, {
+    open_editor = editor.edit,
+})
 
 local cmd = lousy.bind.cmd
 add_cmds({
