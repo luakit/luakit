@@ -377,16 +377,7 @@ chrome.add("help", function (view, meta)
         jquery = lousy.load("lib/jquery.min.js")
     }
     return string.gsub(html, "{(%w+)}", html_subs)
-end, function (view)
-    -- Load jQuery JavaScript library
-    local jquery = lousy.load("lib/jquery.min.js")
-    local _, err = view:eval_js(jquery, { no_return = true })
-    assert(not err, err)
-
-    -- Load main luakit://help/ JavaScript
-    local _, err = view:eval_js(main_js, { no_return = true })
-    assert(not err, err)
-end, {
+end, nil, {
     open_editor = editor.edit,
 })
 
