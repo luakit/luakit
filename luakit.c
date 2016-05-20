@@ -178,7 +178,9 @@ main(gint argc, gchar *argv[]) {
 
     gtk_init(&argc, &argv);
 
+#if WITH_WEBKIT2
     msg_init();
+#endif
 
     init_directories();
     init_lua(uris);
@@ -192,12 +194,14 @@ main(gint argc, gchar *argv[]) {
     if(!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
+#if WITH_WEBKIT2
     /* Tell web process that the configuration file has been loaded */
     msg_header_t header = {
         .type = MSG_TYPE_rc_loaded,
         .length = 0
     };
     msg_send(&header, NULL);
+#endif
 
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file, exiting");

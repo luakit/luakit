@@ -1,4 +1,7 @@
+#ifdef WITH_WEBKIT2
+
 #include "common/lualib.h"
+#include "common/luaserialize.h"
 #include "common/msg.h"
 
 #include <lauxlib.h>
@@ -209,5 +212,7 @@ msg_recv(GIOChannel *channel, GIOCondition cond, gpointer UNUSED(user_data))
 
     return TRUE;
 }
+
+#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
