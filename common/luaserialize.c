@@ -30,7 +30,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             break;
         }
         case LUA_TBOOLEAN: {
-            int b = lua_toboolean(L, index);
+            gint8 b = lua_toboolean(L, index);
             g_byte_array_append(out, (guint8*)&b, sizeof(b));
             break;
         }
@@ -88,7 +88,7 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
             break;
         }
         case LUA_TBOOLEAN: {
-            int b;
+            gint8 b;
             TAKE(b, sizeof(b));
             lua_pushboolean(L, b);
             break;
