@@ -191,11 +191,23 @@ luaH_webview_register_function(lua_State *L)
 #if WITH_WEBKIT2
 
 static void
-run_javascript_finished(GObject *obj, GAsyncResult *r, webview_data_t* UNUSED(d))
+run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
 {
     WebKitJavascriptResult *js_result;
     GError *error = NULL;
     js_result = webkit_web_view_run_javascript_finish(WEBKIT_WEB_VIEW(obj), r, &error);
+
+    if (cb) {
+        lua_State *L = globalconf.L;
+        JSGlobalContextRef context = webkit_javascript_result_get_global_context (js_result);
+        JSValueRef value = webkit_javascript_result_get_value(js_result);
+        luaH_object_push(L, cb);
+        luaJS_pushvalue(L, context, value, &error);
+        if (lua_pcall(L, 1, 0, 0))
+            warn("error in javascript callback: %s", lua_tostring(L, -1));
+        luaH_object_unref(L, cb);
+    }
+
     if (js_result)
         webkit_javascript_result_unref(js_result);
 }
@@ -205,6 +217,7 @@ static gint
 luaH_webview_eval_js(lua_State *L)
 {
 #if WITH_WEBKIT2
+    gpointer cb = NULL;
 #else
     WebKitWebFrame *frame = NULL;
 #endif
@@ -215,7 +228,9 @@ luaH_webview_eval_js(lua_State *L)
     bool no_return = false;
 
     gint top = lua_gettop(L);
+#if !WITH_WEBKIT2
     if (top >= 3 && !lua_isnil(L, 3)) {
+#endif
         luaH_checktable(L, 3);
 
         /* source filename to use in error messages and webinspector */
@@ -241,8 +256,18 @@ luaH_webview_eval_js(lua_State *L)
         if (luaH_rawfield(L, 3, "no_return"))
             no_return = lua_toboolean(L, -1);
 
+#if WITH_WEBKIT2
+        if (!no_return) {
+            luaH_rawfield(L, 3, "callback");
+            luaH_checkfunction(L, -1);
+            cb = luaH_object_ref(L, -1);
+        }
+#endif
+
         lua_settop(L, top);
+#if !WITH_WEBKIT2
     }
+#endif
 
     if (!usr_source)
         source = luaH_callerinfo(L);
@@ -255,10 +280,8 @@ luaH_webview_eval_js(lua_State *L)
 #endif
 
 #if WITH_WEBKIT2
-    /* evaluate javascript script */
-    luaH_warn(L, "running javascript...");
-    webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, d);
-    //JSGlobalContextRef context = webkit_web_view_get_javascript_global_context(d->view);
+    g_assert(!no_return != !cb);
+    webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, cb);
 #else
     /* evaluate javascript script and push return result onto lua stack */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
