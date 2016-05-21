@@ -44,34 +44,38 @@ local key = lousy.bind.key
 add_binds("normal", {
     -- Follow selected link
     key({}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        w:navigate(uri)
+        w.view:eval_js(return_selected, { callback = function(uri)
+            if not uri then return false end
+            assert(type(uri) == "string")
+            w:navigate(uri)
+        end})
     end),
 
     -- Follow selected link in new tab
     key({"Control"}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        w:new_tab(uri, false)
+        w.view:eval_js(return_selected, { callback = function(uri)
+            if not uri then return false end
+            assert(type(uri) == "string")
+            w:new_tab(uri, false)
+        end})
     end),
 
     -- Follow selected link in new window
     key({"Shift"}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        window.new({uri})
+        w.view:eval_js(return_selected, { callback = function(uri)
+            if not uri then return false end
+            assert(type(uri) == "string")
+            window.new({uri})
+        end})
     end),
 
     -- Download selected uri
     key({"Mod1"}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        w:download(uri)
+        w.view:eval_js(return_selected, { callback = function(uri)
+            if not uri then return false end
+            assert(type(uri) == "string")
+            w:download(uri)
+        end})
     end),
 })
 -- vim: et:sw=4:ts=8:sts=4:tw=80
