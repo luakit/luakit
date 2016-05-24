@@ -148,45 +148,19 @@ luaH_webview_scroll_newindex(lua_State *L)
     luakit_token_t t = l_tokenize(prop);
 
 #if WITH_WEBKIT2
-    /* Save original enable-javascript setting, and set to enabled */
-    gboolean enable_js = webkit_settings_get_enable_javascript(webkit_web_view_get_settings(d->view));
-    webkit_settings_set_enable_javascript(webkit_web_view_get_settings(d->view), true);
-
-    gchar *script;
-    gint value = luaL_checknumber(L, 3);
-    if (t == L_TK_X) {
-        if (value == -1)
-            script = g_strdup_printf("window.scrollTo(window.document.width, window.scrollY)");
-        else
-            script = g_strdup_printf("window.scrollTo(%d, window.scrollY)", value);
-    } else if (t == L_TK_Y) {
-        if (value == -1)
-            script = g_strdup_printf("window.scrollTo(window.scrollX, window.document.height)");
-        else
-            script = g_strdup_printf("window.scrollTo(window.scrollX, %d)", value);
-    } else if (t == L_TK_XREL)
-        script = g_strdup_printf("window.scrollBy(%d, 0)", value);
-    else if (t == L_TK_YREL)
-        script = g_strdup_printf("window.scrollBy(0, %d)", value);
-    else if (t == L_TK_XPAGE)
-        script = g_strdup_printf("window.scrollTo(window.innerWidth*%d, window.scrollY)", value);
-    else if (t == L_TK_YPAGE)
-        script = g_strdup_printf("window.scrollTo(window.scrollX, window.innerHeight*%d)", value);
-    else if (t == L_TK_XPAGEREL)
-        script = g_strdup_printf("window.scrollBy(window.innerWidth*%d, 0)", value);
-    else if (t == L_TK_YPAGEREL)
-        script = g_strdup_printf("window.scrollBy(0, window.innerHeight*%d)", value);
-    else if (t == L_TK_XPCT)
-        script = g_strdup_printf("window.scrollTo((window.document.width - window.innerWidth)*%d/100, window.scrollY)", value);
-    else if (t == L_TK_YPCT)
-        script = g_strdup_printf("window.scrollTo(window.scrollX, (window.document.height - window.innerHeight)*%d/100)", value);
-    else
+    if (t == L_TK_X)
+        d->scroll_x = luaL_checknumber(L, 3);
+    else if (t == L_TK_Y)
+        d->scroll_y = luaL_checknumber(L, 3);
+    else {
         return 0;
-    webkit_web_view_run_javascript(d->view, script, NULL, scroll_finished, NULL);
-    g_free(script);
+    }
 
-    /* Restore original enable-javascript setting */
-    webkit_settings_set_enable_javascript(webkit_web_view_get_settings(d->view), enable_js);
+    lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
+    lua_pushinteger(L, d->scroll_x);
+    lua_pushinteger(L, d->scroll_y);
+
+    msg_send_lua(MSG_TYPE_scroll, L, 4, 6);
 #else
     /* Get the adjustment for the scroll */
     GtkAdjustment *a;

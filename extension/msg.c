@@ -43,6 +43,22 @@ msg_recv_rc_loaded(const msg_rc_loaded_t *UNUSED(msg), guint UNUSED(length))
     extension_class_emit_pending_signals(extension.WL);
 }
 
+void
+msg_recv_scroll(const guint8 *msg, guint length)
+{
+    lua_State *L = extension.WL;
+    gint n = lua_deserialize_range(L, msg, length);
+    g_assert_cmpint(n, ==, 3);
+
+    guint64 page_id = lua_tointeger(L, -3);
+    gint scroll_x = lua_tointeger(L, -2);
+    gint scroll_y = lua_tointeger(L, -1);
+
+    web_scroll_to(page_id, scroll_x, scroll_y);
+
+    lua_pop(L, 3);
+}
+
 int
 web_extension_connect(const gchar *socket_path)
 {

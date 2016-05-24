@@ -84,6 +84,18 @@ web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gp
 }
 
 void
+web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
+{
+    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitDOMDocument *document = webkit_web_page_get_dom_document(page);
+    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+
+    /* Scroll, then tell UI process what the new scroll position is */
+    webkit_dom_dom_window_scroll_to(window, scroll_x, scroll_y);
+    window_scroll_cb(window, NULL, page);
+}
+
+void
 web_scroll_init(void)
 {
     g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
