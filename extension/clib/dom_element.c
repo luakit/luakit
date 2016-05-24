@@ -250,35 +250,21 @@ luaH_dom_element_push_src(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
 
-    /* FIXME: is there a way to use a switch statement? */
-    if (WEBKIT_DOM_IS_HTML_INPUT_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_input_element_get_src(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_FRAME_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_frame_element_get_src(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_MEDIA_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_media_element_get_src(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_IFRAME_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_iframe_element_get_src(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_EMBED_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_embed_element_get_src(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_IMAGE_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_image_element_get_src(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_SCRIPT_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_script_element_get_src(element->element));
-        return 1;
-    }
+#define CHECK(lower, upper) \
+    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) do { \
+        lua_pushstring(L, webkit_dom_html_##lower##_element_get_src(element->element)); \
+        return 1; \
+    } while (0)
+
+    CHECK(input, INPUT);
+    CHECK(frame, FRAME);
+    CHECK(media, MEDIA);
+    CHECK(iframe, IFRAME);
+    CHECK(embed, EMBED);
+    CHECK(image, IMAGE);
+    CHECK(script, SCRIPT);
+
+#undef CHECK
 
     return 0;
 }
@@ -288,27 +274,19 @@ luaH_dom_element_push_href(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
 
-    /* FIXME: is there a way to use a switch statement? */
-    if (WEBKIT_DOM_IS_LOCATION(element->element)) {
-        lua_pushstring(L, webkit_dom_location_get_href(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_ANCHOR_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_anchor_element_get_href(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_AREA_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_area_element_get_href(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_HTML_LINK_ELEMENT(element->element)) {
-        lua_pushstring(L, webkit_dom_html_link_element_get_href(element->element));
-        return 1;
-    }
-    if (WEBKIT_DOM_IS_STYLESHEET(element->element)) {
-        lua_pushstring(L, webkit_dom_stylesheet_get_href(element->element));
-        return 1;
-    }
+#define CHECK(lower, upper) \
+    if (WEBKIT_DOM_IS_##upper(element->element)) do { \
+        lua_pushstring(L, webkit_dom_##lower##_get_href(element->element)); \
+        return 1; \
+    } while (0)
+
+    CHECK(location, LOCATION);
+    CHECK(html_anchor_element, HTML_ANCHOR_ELEMENT);
+    CHECK(html_area_element, HTML_AREA_ELEMENT);
+    CHECK(html_link_element, HTML_LINK_ELEMENT);
+    CHECK(style_sheet, STYLE_SHEET);
+
+#undef CHECK
 
     return 0;
 }
