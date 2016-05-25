@@ -254,10 +254,10 @@ luaH_dom_element_push_src(lua_State *L)
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
 
 #define CHECK(lower, upper) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) do { \
+    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
         lua_pushstring(L, webkit_dom_html_##lower##_element_get_src(WEBKIT_DOM_HTML_##upper##_ELEMENT(element->element))); \
         return 1; \
-    } while (0)
+    }
 
     CHECK(input, INPUT);
     CHECK(frame, FRAME);
@@ -278,10 +278,10 @@ luaH_dom_element_push_href(lua_State *L)
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
 
 #define CHECK(lower, upper) \
-    if (WEBKIT_DOM_IS_##upper(element->element)) do { \
+    if (WEBKIT_DOM_IS_##upper(element->element)) { \
         lua_pushstring(L, webkit_dom_##lower##_get_href(WEBKIT_DOM_##upper(element->element))); \
         return 1; \
-    } while (0)
+    }
 
     CHECK(location, LOCATION);
     CHECK(html_anchor_element, HTML_ANCHOR_ELEMENT);
