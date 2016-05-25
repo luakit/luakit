@@ -386,6 +386,12 @@ luaH_dom_element_index(lua_State *L)
         case L_TK_VALUE: return luaH_dom_element_push_value(L);
         case L_TK_CHECKED: return webkit_dom_html_input_element_get_checked(
                                    WEBKIT_DOM_HTML_INPUT_ELEMENT(elem));
+        case L_TK_TYPE: {
+            gchar *type;
+            g_object_get(element->element, "type", &type, NULL);
+            lua_pushstring(L, type);
+            return 1;
+        }
         case L_TK_PARENT: return luaH_dom_element_push_parent(L);
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
