@@ -20,18 +20,6 @@
 
 #include "msg.h"
 
-#if WITH_WEBKIT2
-static void
-scroll_finished(GObject *obj, GAsyncResult *r, gpointer UNUSED(data))
-{
-    WebKitJavascriptResult *js_result;
-    GError *e = NULL;
-    js_result = webkit_web_view_run_javascript_finish (WEBKIT_WEB_VIEW(obj), r, &e);
-    if (js_result)
-        webkit_javascript_result_unref(js_result);
-}
-#endif
-
 #if !WITH_WEBKIT2
 #if GTK_CHECK_VERSION(3,8,0)
 gboolean webview_tick_cb(GtkWidget *UNUSED(wi), GdkFrameClock *frame_clock, widget_t *w);
