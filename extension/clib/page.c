@@ -51,7 +51,6 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     return 1;
 }
 
-#if 0
 static int
 luaH_page_new(lua_State *L)
 {
@@ -59,7 +58,6 @@ luaH_page_new(lua_State *L)
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
     return luaH_page_from_web_page(L, page);
 }
-#endif
 
 static gint
 luaH_page_index(lua_State *L)
@@ -86,7 +84,7 @@ page_class_setup(lua_State *L)
     static const struct luaL_reg page_methods[] =
     {
         LUA_CLASS_METHODS(page)
-        /* { "__call", luaH_page_new }, */
+        { "__call", luaH_page_new },
         { NULL, NULL }
     };
 
