@@ -20,6 +20,7 @@
 
 #include "common/signal.h"
 #include "common/msg.h"
+#include "common/luaserialize.h"
 #include "clib/widget.h"
 #include "clib/luakit.h"
 #include "luah.h"
@@ -621,6 +622,11 @@ luaH_luakit_register_function(lua_State *L)
 {
     const gchar *pattern = luaL_checkstring(L, 1);
     const gchar *name = luaL_checkstring(L, 2);
+
+    if (strlen(pattern) == 0)
+        return luaL_error(L, "pattern cannot be empty");
+    if (strlen(name) == 0)
+        return luaL_error(L, "function name cannot be empty");
 
     /* get lua callback function */
     luaH_checkfunction(L, 3);
