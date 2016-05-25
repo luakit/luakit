@@ -17,7 +17,6 @@ static gint
 luaH_stylesheet_new(lua_State *L)
 {
     luaH_class_new(L, &stylesheet_class);
-    lstylesheet_t *stylesheet = luaH_checkstylesheet(L, -1);
     return 1;
 }
 

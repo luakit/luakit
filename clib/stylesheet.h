@@ -18,6 +18,9 @@ typedef struct {
 void stylesheet_class_setup(lua_State *);
 gpointer luaH_checkstylesheet(lua_State *L, gint idx);
 
+/* Declared in widgets/webview/stylesheets.c */
+void webview_stylesheets_regenerate_stylesheet(widget_t *w, lstylesheet_t *stylesheet);
+
 #endif
 
 #endif
