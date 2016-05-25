@@ -49,14 +49,17 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
 
     /* Deserialize the Lua we got */
     int argc = lua_deserialize_range(L, msg, length) - 1;
-    gpointer ref = lua_topointer(L, top + 1);
+    gpointer ref = lua_touserdata(L, top + 1);
     lua_remove(L, top+1);
 
     /* push Lua callback function into position */
     luaH_object_push(L, ref);
     lua_insert(L, -argc-1);
+
     /* Call the function; push result/error and ok/error boolean */
     lua_pushboolean(L, lua_pcall(L, argc, 1, 0));
+    if (lua_toboolean(L, -1))
+        warn("Lua error: %s\n", lua_tostring(L, -2));
 
     /* Serialize the result, and send it back */
     msg_send_lua(MSG_TYPE_lua_js_call, L, -2, -1);
@@ -70,7 +73,7 @@ msg_recv_lua_js_gc(const guint8 *msg, guint length)
     /* Unref the function reference we got */
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, ==, 1);
-    luaH_object_unref(L, lua_topointer(L, -1));
+    luaH_object_unref(L, lua_touserdata(L, -1));
     lua_pop(L, 1);
 }
 
