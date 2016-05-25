@@ -197,12 +197,21 @@ run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
     GError *error = NULL;
     js_result = webkit_web_view_run_javascript_finish(WEBKIT_WEB_VIEW(obj), r, &error);
 
+    if (error) {
+        warn("error in javascript: %s", error->message);
+        g_error_free(error);
+    }
+
     if (cb) {
         lua_State *L = globalconf.L;
+        gchar *error;
         JSGlobalContextRef context = webkit_javascript_result_get_global_context (js_result);
         JSValueRef value = webkit_javascript_result_get_value(js_result);
         luaH_object_push(L, cb);
-        luaJS_pushvalue(L, context, value, &error);
+        if (luaJS_pushvalue(L, context, value, &error)) {
+            warn(error);
+            g_free(error);
+        }
         if (lua_pcall(L, 1, 0, 0))
             warn("error in javascript callback: %s", lua_tostring(L, -1));
         luaH_object_unref(L, cb);
