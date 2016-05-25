@@ -149,7 +149,20 @@ local function get_element_bb_if_visible(element, wbb)
     local visibility = style.visibility
 
     if display == 'none' or visibility == 'hidden' then return nil end
+
+    -- Clip bounding box!
+    if display == "inline" then
+        local parent = element.parent
+        local pd = parent.style.display
+        if pd == "block" or pd == "inline-block" then
+            local w = parent.rect.width
+            w = w - (r.left - parent.rect.left)
+            if rbb.w > w then rbb.w = w end
+        end
+    end
+
     if not bounding_boxes_intersect(wbb, rbb) then return nil end
+
     return rbb
 end
 
