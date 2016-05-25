@@ -16,6 +16,7 @@ local editor = require "editor"
 local capi = {
     luakit = luakit
 }
+local web_module = web_module
 
 local new_mode, add_binds = new_mode, add_binds
 local menu_binds = menu_binds
@@ -80,6 +81,8 @@ local menu_binds = menu_binds
 
 module("formfiller")
 
+local formfiller_wm = web_module("formfiller_webmodule")
+
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/forms.lua"
 
@@ -106,69 +109,8 @@ local formfiller_js = [=[
         },
         forms: [],
         inputs: [],
-        AttributeMatcher: function (tag, attrs, parents) {
-            var documents = formfiller.toA(window.frames).map(function (frame) {
-                return frame.document;
-            });
-            documents.push(document);
-            this.parents = parents || documents;
-            var keys = []
-            for (var k in attrs) {
-                keys.push(k);
-            }
-            this.getAll = function () {
-                var elements = [];
-                this.parents.forEach(function (p) {
-                    try {
-                        formfiller.toA(p.getElementsByTagName(tag)).filter(function (element) {
-                            return keys.every(function (key) {
-                                return new RegExp(attrs[key]).test(element[key]);
-                            });
-                        }).forEach(function (e) {
-                            elements.push(e);
-                        });
-                    } catch (e) {
-                        // ignore errors, is probably cross-domain stuff
-                    }
-                });
-                return elements;
-            };
-        },
     };
 ]=]
-
--- Invokes an AttributeMatcher for the given tag and attributes with the
--- given data on the given parents.
--- Saves all found elements in an array under formfiller.{tag}s
--- @param w The window to fill the forms on
--- @param tag The element tag name to match against
--- @param attributes The attributes to match
--- @param data The attribute data to use for matching
--- @param parents Start the search using formfiller.{parents}
--- @return true iff something matched
-local function match(w, tag, attributes, data, parents)
-    local js_template = [=[
-        var matcher = new formfiller.AttributeMatcher("{tag}", {
-            {attrs}
-        }, {parents});
-        var elements = matcher.getAll();
-        formfiller.{tag}s = elements;
-        (elements.length > 0);
-    ]=]
-    -- ensure all attributes are there
-    local attrs = ""
-    for _, k in ipairs(attributes) do
-        if data[k] then
-            attrs = attrs .. string.format("%s: %q, ", k, data[k])
-        end
-    end
-    local js = string.gsub(js_template, "{(%w+)}", {
-        attrs = attrs,
-        tag = tag,
-        parents = parents and string.format("formfiller.%s", parents) or "null",
-    })
-    return w.view:eval_js(js)
-end
 
 -- The function environment for the formfiller script
 local DSL = {
@@ -244,6 +186,7 @@ function init(w)
     if not success then
         warn("error in " .. file .. ": " .. err)
     end
+    formfiller_wm:emit_signal("init", w.formfiller_state)
 end
 
 --- Edits the formfiller rules.
@@ -255,7 +198,7 @@ end
 -- @param w The window for which to add an entry.
 function add(w)
     -- load JS prerequisites
-    w.view:eval_js(formfiller_js)
+    w.view:eval_js(formfiller_js, { no_return = true })
     local js = [=[
         var addAttr = function (str, elem, attr, indent, tail) {
             if (typeof(elem[attr]) == "string" && elem[attr] !== "") {
@@ -296,50 +239,15 @@ function add(w)
         str += "}\n\n";
         rendered_something ? str : false;
     ]=]
-
-    local ret = w.view:eval_js(js)
-    if not ret then
-        return w:error("no forms with inputs found")
-    end
-    local f = io.open(file, "a")
-    f:write(ret)
-    f:close()
-    edit()
-end
-
--- Matches all rules against the current view's URI.
--- @param w The window on which to fill the forms
--- @param rules The rules to filter
--- @return A new table containing only the rules that matched the URI
-local function filter_rules(w, rules)
-    local filtered = {}
-    for _, rule in ipairs(rules) do
-        -- match page URI in JS so we don't mix JS and Lua regexes in the formfiller config
-        local js_template = [=[
-            (new RegExp({pattern}).test(location.href));
-        ]=]
-        local js = string.gsub(js_template, "{(%w+)}", {
-            pattern = string.format("%q", rule.pattern)
-        })
-        if w.view:eval_js(js) then
-            table.insert(filtered, rule)
+    w.view:eval_js(js, { callback = function(ret)
+        if not ret then
+            return w:error("no forms with inputs found")
         end
-    end
-    return filtered
-end
-
--- Matches all forms against the current view.
--- @param w The window on which to fill the forms
--- @param forms The forms to filter
--- @return A new table containing only the forms that matched the current view
-local function filter_forms(w, forms)
-    local filtered = {}
-    for _, form in ipairs(forms) do
-        if match(w, "form", {"method", "name", "id", "action", "className"}, form) then
-            table.insert(filtered, form)
-        end
-    end
-    return filtered
+        local f = io.open(file, "a")
+        f:write(ret)
+        f:close()
+        edit()
+    end})
 end
 
 -- Shows a menu with all forms that contain a profile if there is more than one.
@@ -363,123 +271,17 @@ local function show_menu(w, forms)
     end
 end
 
--- Fills the currently selected input with the given value
--- @param w The window on which to fill the forms
--- @param val The value to fill the input with
-local function fill_input(w, val)
-    local js_template = [=[
-        if (formfiller.inputs) {
-            var val = {str};
-            formfiller.inputs.forEach(function (i) {
-                if (i.type === "radio" || i.type === "checkbox") {
-                    i.checked = (val && val !== "false");
-                } else {
-                    i.value = val;
-                }
-            });
-        }
-    ]=]
-    local js = string.gsub(js_template, "{(%w+)}", {
-        str = string.format("%q", tostring(val))
-    })
-    w.view:eval_js(js)
-end
-
--- Focuses the currently selected input.
--- @param w The window on which to fill the forms
-local function focus_input(w)
-    local js = [=[
-        if (formfiller.inputs && formfiller.inputs[0]) {
-            formfiller.inputs[0].focus();
-            "true";
-        } else {
-            "false";
-        }
-    ]=]
-    if w.view:eval_js(js) then
-        w:set_mode("insert")
-    end
-end
-
--- Selects all text in the currently selected input.
--- @param w The window on which to fill the forms
-local function select_input(w)
-    local js = [=[
-        if (formfiller.inputs && formfiller.inputs[0]) {
-            formfiller.inputs[0].select();
-        }
-    ]=]
-    w.view:eval_js(js)
-end
-
--- Submits the currently selected form by clicking the nth button or
--- calling form.submit().
--- @param w The window on which to fill the forms
--- @param n The index of the button to click or -1 to use form.submit()
-local function submit_form(w, n)
-    local js = string.format([=[
-        if (formfiller.forms && formfiller.forms[0]) {
-            var inputs = formfiller.forms[0].getElementsByTagName('input');
-            inputs = formfiller.toA(inputs).filter(function (input) {
-                return /submit/i.test(input.type);
-            });
-            var n = %i - 1;
-            if (inputs[n]) {
-                formfiller.click(inputs[n]);
-            } else {
-                formfiller.forms[0].submit();
-            }
-        }
-    ]=], n)
-    w.view:eval_js(js)
-end
-
--- Applies all values to all matching inputs in a form and optionally focuses and selects
--- the inputs or submits the form.
--- @param w The window on which to fill the forms
--- @returns true iff the form matched fully or was submitted
-local function apply_form(w, form)
-    local full_match = true
-    for _, input in ipairs(form.inputs) do
-        if match(w, "input", {"name", "id", "className", "type"}, input, "forms") then
-            local val = input.value or input.checked
-            if val then fill_input(w, val) end
-            if input.focus then focus_input(w) end
-            if input.select then select_input(w) end
-        else
-            full_match = false
-        end
-    end
-    local s = form.submit
-    if s then
-        submit_form(w, type(s) == "number" and s or -1)
-        return true
-    else
-        return full_match
-    end
-end
-
 --- Fills the current page from the formfiller rules.
 -- @param w The window on which to fill the forms
 -- @param fast Prevents any menus from being shown
 function load(w, fast)
     -- reload the DSL
     init(w)
-    -- load JS prerequisites
-    w.view:eval_js(formfiller_js)
-    -- filter out all rules that do not match the current URI
-    local rules = filter_rules(w, w.formfiller_state.rules)
-    for _, rule in ipairs(rules) do
-        -- filter out all forms that do not match the current page
-        local forms = filter_forms(w, rule.forms)
-        -- assemble a list of menu items to display, if any exist
-        if fast or not show_menu(w, forms) then
-            -- apply until the first form submits
-            for _, form in ipairs(forms) do
-                if apply_form(w, form) then return end
-            end
-        end
-    end
+
+    formfiller_wm:add_signal("unimplemented", function(_)
+        w:warning("unimplemented")
+    end)
+    formfiller_wm:emit_signal("load", fast, w.view.id)
 end
 
 -- Add formfiller mode
