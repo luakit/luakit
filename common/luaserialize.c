@@ -56,7 +56,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             break;
         }
         case LUA_TLIGHTUSERDATA: {
-            gpointer p = lua_topointer(L, index);
+            gpointer p = lua_touserdata(L, index);
             g_byte_array_append(out, (guint8*)&p, sizeof(p));
             break;
         }
