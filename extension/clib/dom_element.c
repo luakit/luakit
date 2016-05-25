@@ -249,6 +249,14 @@ luaH_dom_element_focus(lua_State *L)
 }
 
 static gint
+luaH_dom_element_submit(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    webkit_dom_html_form_element_submit(WEBKIT_DOM_HTML_FORM_ELEMENT(element->element));
+    return 0;
+}
+
+static gint
 luaH_dom_element_push_src(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -321,6 +329,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(REMOVE, luaH_dom_element_remove)
         PF_CASE(CLICK, luaH_dom_element_click)
         PF_CASE(FOCUS, luaH_dom_element_focus)
+        PF_CASE(SUBMIT, luaH_dom_element_submit)
 
         case L_TK_SRC: return luaH_dom_element_push_src(L);
         case L_TK_HREF: return luaH_dom_element_push_href(L);
