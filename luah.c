@@ -32,6 +32,7 @@
 #include "clib/widget.h"
 #include "clib/xdg.h"
 #include "clib/stylesheet.h"
+#include "clib/web_module.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>

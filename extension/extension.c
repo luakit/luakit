@@ -15,6 +15,7 @@
 #include "extension/clib/extension.h"
 
 #include "extension/scroll.h"
+#include "extension/luajs.h"
 
 void
 web_lua_init(void)

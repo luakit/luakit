@@ -9,8 +9,10 @@
 #include "extension/extension.h"
 #include "extension/clib/extension.h"
 #include "extension/msg.h"
+#include "extension/scroll.h"
 #include "extension/clib/ui_process.h"
 #include "common/util.h"
+#include "common/luaserialize.h"
 
 void
 msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)

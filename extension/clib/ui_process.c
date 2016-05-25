@@ -3,6 +3,7 @@
 #include "extension/clib/ui_process.h"
 #include "luah.h"
 #include "common/tokenize.h"
+#include "common/luaserialize.h"
 #include "extension/msg.h"
 
 LUA_OBJECT_FUNCS(ui_process_class, ui_process_t, ui_process);
