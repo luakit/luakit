@@ -384,6 +384,8 @@ luaH_dom_element_index(lua_State *L)
         case L_TK_SRC: return luaH_dom_element_push_src(L);
         case L_TK_HREF: return luaH_dom_element_push_href(L);
         case L_TK_VALUE: return luaH_dom_element_push_value(L);
+        case L_TK_CHECKED: return webkit_dom_html_input_element_get_checked(
+                                   WEBKIT_DOM_HTML_INPUT_ELEMENT(elem));
         case L_TK_PARENT: return luaH_dom_element_push_parent(L);
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
@@ -411,6 +413,11 @@ luaH_dom_element_newindex(lua_State *L)
         case L_TK_VALUE:
             if (!dom_html_element_set_value(L, element->element))
                 return luaL_error(L, "set value error: wrong element type");
+        case L_TK_CHECKED:
+            webkit_dom_html_input_element_set_checked(
+                    WEBKIT_DOM_HTML_INPUT_ELEMENT(element->element),
+                    lua_toboolean(L, 3));
+            return 0;
         default:
             break;
     }
