@@ -1,4 +1,4 @@
-local pairs, ipairs = pairs
+local pairs = pairs
 local string = string
 local ui_process = ui_process
 local extension = extension
