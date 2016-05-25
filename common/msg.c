@@ -58,7 +58,7 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_da
 {
     g_assert(cond & G_IO_IN);
 
-    msg_dispatch_enqueued(NULL) || msg_recv_and_dispatch_or_enqueue(MSG_TYPE_ANY);
+    (void) (msg_dispatch_enqueued(NULL) || msg_recv_and_dispatch_or_enqueue(MSG_TYPE_ANY));
 
     return TRUE;
 }
