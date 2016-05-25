@@ -1,10 +1,8 @@
-local print = print
 local pairs, ipairs = pairs, ipairs
 local table, string = table, string
 local assert, type = assert, type
 local floor = math.floor
 local rawset, rawget = rawset, rawget
-local tostring = tostring
 local ui_process = ui_process
 local dom_document = dom_document
 
@@ -291,8 +289,6 @@ local function focus(state, step)
         end
     end
 
-    print("Focus", last, "->", index, "Step: "..tostring(step))
-
     assert(index ~= last)
 
     local new_hint = state.hints[index]
@@ -317,7 +313,6 @@ ui:add_signal("focus", function(_, wid, step)
 end)
 
 local function leave(_, wid)
-    print("FWM: leave")
     local state = window_states[wid]
     for _, frame in ipairs(state.frames) do
         cleanup_frame(frame)
@@ -347,13 +342,11 @@ local function follow(state, all)
 end
 
 ui:add_signal("follow", function(_, wid, all)
-    print("FWM: follow")
     local state = window_states[wid]
     follow(state, all)
 end)
 
 ui:add_signal("enter", function(_, wid, mode, page_id, ignore_case)
-    print("FWM: enter: page " .. tostring(page_id))
     local state = window_states[wid]
 
     local root = dom_document(page_id)
