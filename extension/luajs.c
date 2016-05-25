@@ -4,6 +4,7 @@
 #define LUAKIT_LUAJS_REGISTRY_KEY "luakit.luajs.registry"
 
 #include "extension/extension.h"
+#include "extension/luajs.h"
 #include "common/msg.h"
 #include "common/lualib.h"
 #include "common/luaserialize.h"
@@ -24,11 +25,11 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
 {
     lua_State *L = extension.WL;
     gint top = lua_gettop(L);
+    gchar *error = NULL;
 
     /* Push function ref onto Lua stack */
     lua_pushlightuserdata(L, JSObjectGetPrivate(fun));
 
-    gchar *error = NULL;
     /* push function arguments onto Lua stack */
     for (guint i = 0; i < argc; i++) {
         if (luaJS_pushvalue(L, context, argv[i], &error))
@@ -57,7 +58,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     JSValueRef ret;
 
     if (lua_toboolean(L, -1))
-        error = luaL_checkstring(L, -2);
+        error = g_strdup(luaL_checkstring(L, -2));
     else
         ret = luaJS_tovalue(L, context, -2, &error);
 
@@ -65,6 +66,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     if (error) {
         *exception = luaJS_make_exception(context, error);
         ret = JSValueMakeUndefined(context);
+        g_free(error);
     }
 
     lua_settop(L, top);
@@ -158,7 +160,7 @@ static void register_func(WebKitScriptWorld *world, WebKitFrame *frame, const gc
 }
 
 static void
-window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer user_data)
+window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
     lua_State *L = extension.WL;
     const gchar *uri = webkit_web_page_get_uri(web_page);
@@ -193,7 +195,7 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
                 g_assert(lua_isstring(L, -2));
                 g_assert(lua_islightuserdata(L, -1));
                 /* Register the function */
-                register_func(world, frame, lua_tostring(L, -2), lua_topointer(L, -1));
+                register_func(world, frame, lua_tostring(L, -2), lua_touserdata(L, -1));
                 lua_pop(L, 1);
             }
         }
