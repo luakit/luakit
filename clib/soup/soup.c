@@ -149,6 +149,7 @@ luaH_soup_parse_uri(lua_State *L)
     return uri ? 1 : 0;
 }
 
+#if !WITH_WEBKIT2
 static gint
 luaH_soup_index(lua_State *L)
 {
@@ -180,6 +181,7 @@ luaH_soup_newindex(lua_State *L)
 
     return 0;
 }
+#endif
 
 void
 soup_lib_setup(lua_State *L)
