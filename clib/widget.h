@@ -71,6 +71,10 @@ struct widget_t
     gpointer ref;
     /* Main gtk widget */
     GtkWidget *widget;
+#if GTK_CHECK_VERSION(3,16,0)
+    /* CSS provider for this widget */
+    GtkCssProvider *provider;
+#endif
     /* Misc private data */
     gpointer data;
 };
@@ -94,6 +98,17 @@ luaH_checkwidgetornil(lua_State *L, gint udx)
         return NULL;
     return luaH_checkwidget(L, udx);
 }
+
+#if GTK_CHECK_VERSION(3,16,0)
+static inline void
+widget_set_css(widget_t *w, const gchar *properties)
+{
+    gchar *css;
+    asprintf(&css, "#widget { %s; }", properties);
+    gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
+    g_free(css);
+}
+#endif
 
 #define luaH_towidget(L, udx) luaH_toudata(L, udx, &widget_class)
 
