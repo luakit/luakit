@@ -19,12 +19,20 @@
  *
  */
 
-static WebKitWebView*
 #if WITH_WEBKIT2
-inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), widget_t *w)
+gboolean
+inspector_open_window_cb(WebKitWebInspector *UNUSED(inspector), widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    gint nret = luaH_object_emit_signal(L, -1, "create-inspector-window", 0, 1);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
+}
 #else
+static WebKitWebView*
 inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), WebKitWebView *UNUSED(v), widget_t *w)
-#endif
 {
     lua_State *L = globalconf.L;
     webview_data_t *d = w->data;
@@ -43,6 +51,7 @@ inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), WebKitWebView *UNUSED(
     lua_pop(L, 1);
     return NULL;
 }
+#endif
 
 static gboolean
 inspector_show_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)

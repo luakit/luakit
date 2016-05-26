@@ -1607,7 +1607,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::bring-to-front",                       G_CALLBACK(inspector_show_window_cb),     w,
       "signal::closed",                               G_CALLBACK(inspector_close_window_cb),    w,
       "signal::detach",                               G_CALLBACK(inspector_detach_window_cb),   w,
-      "signal::open-window",                          G_CALLBACK(inspect_webview_cb),           w,
+      "signal::open-window",                          G_CALLBACK(inspector_open_window_cb),     w,
 #else
     g_object_connect(G_OBJECT(d->inspector),
       "signal::inspect-web-view",                     G_CALLBACK(inspect_webview_cb),           w,
