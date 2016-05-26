@@ -58,9 +58,10 @@ inspector_show_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "show-inspector", 0, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    gint nret = luaH_object_emit_signal(L, -1, "show-inspector", 0, 1);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
@@ -69,21 +70,30 @@ inspector_close_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     webview_data_t *d = w->data;
+#if WITH_WEBKIT2
+    lua_pushnil(L);
+    d->inspector_open = FALSE;
+#else
     luaH_object_push(L, d->iview);
     d->iview = NULL;
-    luaH_object_emit_signal(L, -2, "close-inspector", 1, 0);
-    lua_pop(L, 1);
-    return TRUE;
+#endif
+    gint nret = luaH_object_emit_signal(L, -2, "close-inspector", 1, 0);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
 inspector_attach_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
     lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
+    d->inspector_open = TRUE;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "attach-inspector", 0, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    gint nret = luaH_object_emit_signal(L, -1, "attach-inspector", 0, 0);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
@@ -91,9 +101,10 @@ inspector_detach_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "detach-inspector", 0, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    gint nret = luaH_object_emit_signal(L, -1, "detach-inspector", 0, 0);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gint

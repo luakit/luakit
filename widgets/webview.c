@@ -71,8 +71,13 @@ typedef struct {
 
     /** Inspector properties */
     WebKitWebInspector *inspector;
+#if WITH_WEBKIT2
+    /** Whether inspector is open */
+    gboolean inspector_open;
+#else
     /** Inspector webview widget */
     widget_t *iview;
+#endif
 
     guint htr_context;
     gboolean is_committed;
@@ -853,6 +858,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
+      PB_CASE(INSPECTOR,            d->inspector_open);
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -913,12 +919,6 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_SCROLL:
         return luaH_webview_push_scroll_table(L);
-
-      case L_TK_INSPECTOR:
-        if (!d->iview)
-            return 0;
-        luaH_object_push(L, ((widget_t*)d->iview)->ref);
-        return 1;
 
       default:
         break;
@@ -1353,6 +1353,7 @@ webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
 
+#if !WITH_WEBKIT2
     /* close inspector window */
     if (d->iview) {
         webkit_web_inspector_close(d->inspector);
@@ -1360,6 +1361,7 @@ webview_destructor(widget_t *w)
            luakit segfaults */
         while (g_main_context_iteration(NULL, FALSE));
     }
+#endif
 
     g_ptr_array_remove(globalconf.webviews, w);
     gtk_widget_destroy(GTK_WIDGET(d->view));
@@ -1596,13 +1598,12 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       NULL);
 
 #if WITH_WEBKIT2
-    g_object_connect(G_OBJECT(d->inspector),
     /* inspect-web-view -> open-window
        show-window -> bring-to-front
        close-window -> close
        attach-window -> attach
        detach-window -> detach */
-// TODO this was never really working in luakit with webkit1 API either
+    g_object_connect(G_OBJECT(d->inspector),
       "signal::attach",                               G_CALLBACK(inspector_attach_window_cb),   w,
       "signal::bring-to-front",                       G_CALLBACK(inspector_show_window_cb),     w,
       "signal::closed",                               G_CALLBACK(inspector_close_window_cb),    w,
