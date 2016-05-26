@@ -22,6 +22,9 @@
 #include "clib/widget.h"
 #include "common/property.h"
 
+#define _GNU_SOURCE
+#include <stdio.h>
+
 property_t widget_properties[] = {
   { L_TK_MARGIN,            "margin",            INT,    TRUE  },
   { L_TK_MARGIN_TOP,        "margin-top",        INT,    TRUE  },
@@ -215,5 +218,40 @@ widget_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_widget_get_type,
             NULL);
 }
+
+#if GTK_CHECK_VERSION(3,16,0)
+static inline void
+widget_set_css(widget_t *w, const gchar *properties)
+{
+    gchar *css;
+    asprintf(&css, "#widget { %s }", properties);
+    gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
+    g_free(css);
+}
+
+void
+widget_set_css_properties(widget_t *w, ...)
+{
+    va_list argp;
+    va_start(argp, w);
+
+    gchar *css = g_strdup("");
+    const gchar *prop;
+    while ((prop = va_arg(argp, gchar *))) {
+        const gchar *value = va_arg(argp, gchar *);
+        g_assert(strlen(prop) > 0);
+        if (!value || strlen(value) == 0)
+            continue;
+
+        gchar *tmp = css;
+        asprintf(&css, "%s%s: %s;", css, prop, value);
+        g_free(tmp);
+
+    }
+    va_end(argp);
+    widget_set_css(w, css);
+    g_free(css);
+}
+#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
