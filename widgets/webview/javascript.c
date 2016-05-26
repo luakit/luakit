@@ -193,6 +193,7 @@ luaH_webview_register_function(lua_State *L)
 static void
 run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
 {
+    lua_State *L = globalconf.L;
     WebKitJavascriptResult *js_result;
     GError *error = NULL;
     js_result = webkit_web_view_run_javascript_finish(WEBKIT_WEB_VIEW(obj), r, &error);
@@ -200,10 +201,9 @@ run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
     if (error) {
         warn("error in javascript: %s", error->message);
         g_error_free(error);
-    }
-
-    if (cb) {
-        lua_State *L = globalconf.L;
+        if (cb)
+            luaH_object_unref(L, cb);
+    } else if (cb) {
         gchar *error;
         JSGlobalContextRef context = webkit_javascript_result_get_global_context (js_result);
         JSValueRef value = webkit_javascript_result_get_value(js_result);
