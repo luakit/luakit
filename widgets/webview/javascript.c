@@ -208,7 +208,7 @@ run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
         JSGlobalContextRef context = webkit_javascript_result_get_global_context (js_result);
         JSValueRef value = webkit_javascript_result_get_value(js_result);
         luaH_object_push(L, cb);
-        if (luaJS_pushvalue(L, context, value, &error)) {
+        if (!luaJS_pushvalue(L, context, value, &error)) {
             warn(error);
             g_free(error);
         }
