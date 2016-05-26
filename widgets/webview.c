@@ -773,12 +773,10 @@ luaH_webview_clear_search(lua_State *L)
 }
 
 #if WITH_WEBKIT2
-/* should use the is_loading property rather than the loading() function
-   in lua code */
+/* Proxy for the is_loading property; included for compatibility */
 static gint
 luaH_webview_loading(lua_State *L)
 {
-    fprintf(stderr, "view:loading() is deprecated!!! Use view.is_loading instead\n");
     webview_data_t *d = luaH_checkwvdata(L, 1);
     luaH_gobject_index(L, webview_properties, L_TK_IS_LOADING, G_OBJECT(d->view));
     return 1;
