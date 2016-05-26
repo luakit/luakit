@@ -981,9 +981,11 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         show_scrollbars(d, luaH_checkboolean(L, 3));
         return luaH_object_property_signal(L, 1, token);
 
+#if !WITH_WEBKIT2
       case L_TK_HISTORY:
         webview_set_history(L, d->view, 3);
         return luaH_object_property_signal(L, 1, token);
+#endif
 
       case L_TK_VIEW_SOURCE:
       {

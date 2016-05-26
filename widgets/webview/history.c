@@ -84,6 +84,8 @@ luaH_webview_push_history(lua_State *L, WebKitWebView *view)
 // the current webkit2 API does not allow a WebKitView's WebKitBackForwardList
 // to be modified in such a way. Look into an alternative. Perhaps completely
 // ignore webkit's backforward list and maintain own copy of history?
+// Just remove the API for now; doesn't seem to be used in default install
+#if !WITH_WEBKIT2
 static void
 webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
 {
@@ -157,6 +159,7 @@ webview_set_history(lua_State *L, WebKitWebView *view, gint idx)
 
     lua_pop(L, 1);
 }
+#endif
 
 static gint
 luaH_webview_can_go_back(lua_State *L)
