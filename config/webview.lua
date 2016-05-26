@@ -312,7 +312,6 @@ function webview.methods.scroll(view, w, new)
         -- Absolute percent movement
         elseif rawget(new, axis .. "pct") then
             local max = s[axis.."max"]
-            print("max: ", max)
             s[axis] = math.ceil(max * (new[axis.."pct"]/100))
         end
     end
