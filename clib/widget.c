@@ -224,9 +224,11 @@ static inline void
 widget_set_css(widget_t *w, const gchar *properties)
 {
     gchar *css;
-    asprintf(&css, "#widget { %s }", properties);
+    gchar *old_css = gtk_css_provider_to_string(w->provider);
+    asprintf(&css, "%s\n#widget { %s }", old_css, properties);
     gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
     g_free(css);
+    g_free(old_css);
 }
 
 void

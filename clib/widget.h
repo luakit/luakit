@@ -81,8 +81,6 @@ struct widget_t
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
-
-/* This currently *replaces* the css properties */
 void widget_set_css_properties(widget_t *, ...);
 
 static inline widget_t*
