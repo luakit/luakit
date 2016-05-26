@@ -22,9 +22,6 @@
 #include "clib/widget.h"
 #include "common/property.h"
 
-#define _GNU_SOURCE
-#include <stdio.h>
-
 property_t widget_properties[] = {
   { L_TK_MARGIN,            "margin",            INT,    TRUE  },
   { L_TK_MARGIN_TOP,        "margin-top",        INT,    TRUE  },
@@ -223,9 +220,8 @@ widget_class_setup(lua_State *L)
 static inline void
 widget_set_css(widget_t *w, const gchar *properties)
 {
-    gchar *css;
     gchar *old_css = gtk_css_provider_to_string(w->provider);
-    asprintf(&css, "%s\n#widget { %s }", old_css, properties);
+    gchar *css = g_strdup_printf("%s\n#widget { %s }", old_css, properties);
     gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
     g_free(css);
     g_free(old_css);
@@ -246,7 +242,7 @@ widget_set_css_properties(widget_t *w, ...)
             continue;
 
         gchar *tmp = css;
-        asprintf(&css, "%s%s: %s;", css, prop, value);
+        css = g_strdup_printf("%s%s: %s;", css, prop, value);
         g_free(tmp);
 
     }
