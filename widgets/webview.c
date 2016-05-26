@@ -1035,31 +1035,31 @@ mouse_target_changed_cb(WebKitWebView* UNUSED(v), WebKitHitTestResult *htr,
     webview_data_t *d = w->data;
     d->htr_context = webkit_hit_test_result_get_context(htr);
 
-    if (webkit_hit_test_result_context_is_link(htr)) {
-        const char *link = webkit_hit_test_result_get_link_uri(htr);
-        /* links are identical, do nothing */
-        if (d->hover && !g_strcmp0(d->hover, link))
-            return;
+    const char *link = NULL;
+    if (webkit_hit_test_result_context_is_link(htr))
+        link = webkit_hit_test_result_get_link_uri(htr);
 
-        luaH_object_push(L, w->ref);
+    /* links are identical, do nothing */
+    if (d->hover && link && !strcmp(d->hover, link))
+        return;
 
-        if (d->hover) {
-            lua_pushstring(L, d->hover);
-            g_free(d->hover);
-            luaH_object_emit_signal(L, -2, "link-unhover", 1, 0);
-        }
+    luaH_object_push(L, w->ref);
 
-        if (link) {
-            d->hover = g_strdup(link);
-            lua_pushstring(L, d->hover);
-            luaH_object_emit_signal(L, -2, "link-hover", 1, 0);
-        } else
-            d->hover = NULL;
-
-        luaH_object_emit_signal(L, -1, "property::hovered_uri", 0, 0);
-        lua_pop(L, 1);
+    if (d->hover) {
+        lua_pushstring(L, d->hover);
+        g_free(d->hover);
+        luaH_object_emit_signal(L, -2, "link-unhover", 1, 0);
     }
-    return;
+
+    if (link) {
+        d->hover = g_strdup(link);
+        lua_pushstring(L, d->hover);
+        luaH_object_emit_signal(L, -2, "link-hover", 1, 0);
+        luaH_object_emit_signal(L, -1, "property::hovered_uri", 0, 0);
+    } else
+        d->hover = NULL;
+
+    lua_pop(L, 1);
 }
 #endif
 
