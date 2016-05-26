@@ -977,11 +977,11 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         g_free(uri);
         return 0;
 
+#if !WITH_WEBKIT2
       case L_TK_SHOW_SCROLLBARS:
         show_scrollbars(d, luaH_checkboolean(L, 3));
         return luaH_object_property_signal(L, 1, token);
 
-#if !WITH_WEBKIT2
       case L_TK_HISTORY:
         webview_set_history(L, d->view, 3);
         return luaH_object_property_signal(L, 1, token);
@@ -1501,8 +1501,10 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));
 #endif
 
+#if !WITH_WEBKIT2
     /* set initial scrollbars state */
     show_scrollbars(d, TRUE);
+#endif
 
     /* insert data into global tables and arrays */
     g_ptr_array_add(globalconf.webviews, w);
