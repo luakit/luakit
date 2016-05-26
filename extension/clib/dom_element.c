@@ -314,7 +314,7 @@ luaH_dom_element_index(lua_State *L)
     switch(token) {
         PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
         PS_CASE(TEXT_CONTENT, webkit_dom_node_get_text_content(WEBKIT_DOM_NODE(elem)))
-        PS_CASE(INNER_HTML, webkit_dom_html_element_get_inner_html(element->element))
+        PS_CASE(INNER_HTML, webkit_dom_element_get_inner_html(elem))
 
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
@@ -344,7 +344,8 @@ luaH_dom_element_newindex(lua_State *L)
 
     switch (token) {
         case L_TK_INNER_HTML:
-            webkit_dom_html_element_set_inner_html(element->element, luaL_checkstring(L, 3), &error);
+            webkit_dom_element_set_inner_html(WEBKIT_DOM_ELEMENT(element->element),
+                    luaL_checkstring(L, 3), &error);
             if (error)
                 return luaL_error(L, "set inner html error: %s", error->message);
         default:
