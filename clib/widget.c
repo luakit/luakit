@@ -146,6 +146,10 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
     luakit_token_t tok = l_tokenize(type);
     widget_info_t *winfo;
 
+#if GTK_CHECK_VERSION(3,16,0)
+    w->provider = gtk_css_provider_new();
+#endif
+
     for (guint i = 0; i < LENGTH(widgets_list); i++) {
         if (widgets_list[i].tok != tok)
             continue;
@@ -153,6 +157,12 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         winfo = &widgets_list[i];
         w->info = winfo;
         winfo->wc(w, tok);
+
+#if GTK_CHECK_VERSION(3,16,0)
+    gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");
+    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
+    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(w->provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+#endif
 
         /* store pointer to lua widget struct in gobject data */
         g_object_set_data(G_OBJECT(w->widget),
@@ -205,5 +215,41 @@ widget_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_widget_get_type,
             NULL);
 }
+
+#if GTK_CHECK_VERSION(3,16,0)
+static inline void
+widget_set_css(widget_t *w, const gchar *properties)
+{
+    gchar *old_css = gtk_css_provider_to_string(w->provider);
+    gchar *css = g_strdup_printf("%s\n#widget { %s }", old_css, properties);
+    gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
+    g_free(css);
+    g_free(old_css);
+}
+
+void
+widget_set_css_properties(widget_t *w, ...)
+{
+    va_list argp;
+    va_start(argp, w);
+
+    gchar *css = g_strdup("");
+    const gchar *prop;
+    while ((prop = va_arg(argp, gchar *))) {
+        const gchar *value = va_arg(argp, gchar *);
+        g_assert(strlen(prop) > 0);
+        if (!value || strlen(value) == 0)
+            continue;
+
+        gchar *tmp = css;
+        css = g_strdup_printf("%s%s: %s;", css, prop, value);
+        g_free(tmp);
+
+    }
+    va_end(argp);
+    widget_set_css(w, css);
+    g_free(css);
+}
+#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

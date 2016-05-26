@@ -71,12 +71,17 @@ struct widget_t
     gpointer ref;
     /* Main gtk widget */
     GtkWidget *widget;
+#if GTK_CHECK_VERSION(3,16,0)
+    /* CSS provider for this widget */
+    GtkCssProvider *provider;
+#endif
     /* Misc private data */
     gpointer data;
 };
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
+void widget_set_css_properties(widget_t *, ...);
 
 static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)
