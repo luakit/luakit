@@ -86,7 +86,9 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 #else
     GdkColor c;
 #endif
+#if !GTK_CHECK_VERSION(3,16,0)
     PangoFontDescription *font;
+#endif
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
@@ -106,14 +108,18 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 #endif
             luaL_argerror(L, 3, "unable to parse color");
         if (token == L_TK_FG) {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+            widget_set_css_properties(w, "color", tmp, NULL);
+#elif GTK_CHECK_VERSION(3,0,0)
             gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #else
             gtk_widget_modify_text(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
 #endif
             g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
         } else {
-#if GTK_CHECK_VERSION(3,0,0)
+#if GTK_CHECK_VERSION(3,16,0)
+            widget_set_css_properties(w, "background-color", tmp, NULL);
+#elif GTK_CHECK_VERSION(3,0,0)
             gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #else
             gtk_widget_modify_base(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
@@ -132,11 +138,15 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_FONT:
         tmp = luaL_checklstring(L, 3, &len);
-        font = pango_font_description_from_string(tmp);
-#if GTK_CHECK_VERSION(3,0,0)
-        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
+#if GTK_CHECK_VERSION(3,16,0)
+        widget_set_css_properties(w, "font", tmp, NULL);
 #else
+        font = pango_font_description_from_string(tmp);
+# if GTK_CHECK_VERSION(3,0,0)
+        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
+# else
         gtk_widget_modify_font(GTK_WIDGET(w->widget), font);
+# endif
 #endif
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
         break;
