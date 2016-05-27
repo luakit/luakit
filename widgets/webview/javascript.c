@@ -191,15 +191,20 @@ luaH_webview_register_function(lua_State *L)
 #if WITH_WEBKIT2
 
 static void
-run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
+run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer *args)
 {
     lua_State *L = globalconf.L;
     WebKitJavascriptResult *js_result;
     GError *error = NULL;
+    gpointer cb = args[0];
+    gchar *source = args[1];
+    g_slice_free1(sizeof(gpointer)*2, args);
+
     js_result = webkit_web_view_run_javascript_finish(WEBKIT_WEB_VIEW(obj), r, &error);
 
     if (error) {
         warn("error in javascript: %s", error->message);
+        warn("source: %s", source);
         g_error_free(error);
         if (cb)
             luaH_object_unref(L, cb);
@@ -212,10 +217,14 @@ run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer cb)
             warn(error);
             g_free(error);
         }
-        if (lua_pcall(L, 1, 0, 0))
+        if (lua_pcall(L, 1, 0, 0)) {
             warn("error in javascript callback: %s", lua_tostring(L, -1));
+            warn("source: %s", source);
+        }
         luaH_object_unref(L, cb);
     }
+
+    g_free(source);
 
     if (js_result)
         webkit_javascript_result_unref(js_result);
@@ -290,16 +299,19 @@ luaH_webview_eval_js(lua_State *L)
 
 #if WITH_WEBKIT2
     g_assert(!no_return != !cb);
-    webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, cb);
+    gpointer *args = g_slice_alloc(sizeof(gpointer)*2);
+    args[0] = cb;
+    args[1] = usr_source ? g_strdup(usr_source) : source;
+    webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, args);
 #else
     /* evaluate javascript script and push return result onto lua stack */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);
 
     gint ret = luaJS_eval_js(L, context, script,
         usr_source ? usr_source : (const gchar*)source, no_return);
-#endif
 
     g_free(source);
+#endif
 
 #if WITH_WEBKIT2
     return FALSE;
