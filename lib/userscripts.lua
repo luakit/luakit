@@ -267,6 +267,10 @@ webview.init_funcs.userscripts = function (view, w)
 --        elseif status == "first-visual" then
 --            invoke(v, true)
         elseif status == "finished" then
+            -- WebKit2 has no first-visual signal, so we can't inject
+            -- userscripts set to run at document start that way. Just
+            -- inject them all when loading has finished for now.
+            invoke(v, true)
             invoke(v)
         end
     end)
