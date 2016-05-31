@@ -40,6 +40,7 @@ local function btoi(bool) return bool and 1 or 0    end
 local function itob(int)  return tonumber(int) ~= 0 end
 
 local function get_domain(uri)
+    if not uri then return nil end
     uri = lousy.uri.parse(uri)
     -- uri parsing will fail on some URIs, e.g. "about:blank"
     return (uri and uri.host) and string.lower(uri.host) or nil
