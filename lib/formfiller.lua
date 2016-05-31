@@ -158,6 +158,16 @@ local DSL = {
     end,
 }
 
+function pattern_from_js_regex(re)
+    -- TODO: This needs work
+    local special = ".-+*?^$%"
+    re = re:gsub("%%", "%%%%")
+    for c in special:gmatch"." do
+        re = re:gsub("\\%" .. c, "%%" .. c)
+    end
+    return re
+end
+
 --- Reads the rules from the formfiller DSL file
 function init(w)
     w.formfiller_state = {
@@ -185,6 +195,13 @@ function init(w)
     local success, err = pcall(dsl)
     if not success then
         warn("error in " .. file .. ": " .. err)
+    end
+    -- Convert JS regexes to Lua patterns
+    for _, rule in ipairs(w.formfiller_state.rules) do
+        rule.pattern = pattern_from_js_regex(rule.pattern)
+        for _, form in ipairs(rule.forms) do
+            form.action = form.action:gsub("\\", "")
+        end
     end
     formfiller_wm:emit_signal("init", w.formfiller_state)
 end
