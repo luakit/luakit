@@ -212,7 +212,6 @@ chrome.add("cookie-filter", function (view, meta)
     }
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
-    view:load_string(html, meta.uri)
     return html
 end,
 nil,
