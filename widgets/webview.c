@@ -81,6 +81,7 @@ typedef struct {
 
     guint htr_context;
     gboolean is_committed;
+    gboolean is_failed;
 
     /** Animation state for horizontal scrolling */
     webview_scroll_anim_t hscroll;
@@ -330,6 +331,7 @@ load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
         gchar *failing_uri, gpointer error, widget_t *w)
 {
     lua_State *L = globalconf.L;
+    ((webview_data_t*) w->data)->is_failed = TRUE;
     luaH_object_push(L, w->ref);
     lua_pushstring(L, failing_uri);
     lua_pushstring(L, ((GError*) error)->message);
@@ -395,6 +397,12 @@ notify_load_status_cb(WebKitWebView *v, GParamSpec* UNUSED(ps), widget_t *w)
 #if WITH_WEBKIT2
     if (e == WEBKIT_LOAD_COMMITTED)
         webview_update_stylesheets(L, w);
+
+    /* Don't send "finished" signal after "failed" signal */
+    if (e == WEBKIT_LOAD_STARTED)
+        ((webview_data_t*) w->data)->is_failed = FALSE;
+    if (e == WEBKIT_LOAD_FINISHED && ((webview_data_t*) w->data)->is_failed)
+        return;
 #endif
 
     luaH_object_push(L, w->ref);
