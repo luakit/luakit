@@ -111,7 +111,7 @@ html_style = [===[
         padding-left: 1rem;
     }
     header > span {
-        padding: 1em 1em 1em 1em;
+        padding: 1em;
     }
     .state_Enabled {
         color: #799D6A;
@@ -120,45 +120,6 @@ html_style = [===[
     .state_Disabled {
         color: #CF6A4C;
         font-weight: bold;
-    }
-    div.tag {
-        padding: 0.4em 0.5em;
-        margin: 0 0 0.5em;
-        clear: both;
-    }
-    span.id {
-        font-size: small;
-        color: #333333;
-        float: right;
-    }
-    a.enable, a.disable {
-        float: right;
-    }
-    .tag ul {
-        padding: 0;
-        margin: 0;
-        list-style-type: none;
-    }
-    .tag li {
-        margin: 1em 0;
-    }
-    .tag h1 {
-        font-size: 12pt;
-        font-weight: bold;
-        font-style: normal;
-        font-variant: small-caps;
-        padding: 0 0 5px 0;
-        margin: 0;
-        color: #CC3333;
-        border-bottom: 1px solid #aaa;
-    }
-    .tag a:link {
-        color: #0077bb;
-        text-decoration: none;
-    }
-    .tag a:hover {
-        color: #0077bb;
-        text-decoration: underline;
     }
 ]===]
 
