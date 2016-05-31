@@ -87,8 +87,10 @@ static gboolean
 inspector_attach_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
     lua_State *L = globalconf.L;
+#if WITH_WEBKIT2
     webview_data_t *d = w->data;
     d->inspector_open = TRUE;
+#endif
     luaH_object_push(L, w->ref);
     gint nret = luaH_object_emit_signal(L, -1, "attach-inspector", 0, 0);
     gboolean ret = nret && lua_toboolean(L, -1);

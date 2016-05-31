@@ -861,7 +861,9 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
+#if WITH_WEBKIT2
       PB_CASE(INSPECTOR,            d->inspector_open);
+#endif
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
