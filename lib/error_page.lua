@@ -93,6 +93,7 @@ webview.init_funcs.error_page_init = function(view, w)
     view:add_signal("load-status", function(v, status, uri, msg)
         if status ~= "failed" then return end
         if msg == "Load request cancelled" then return end
+        if msg == "Plugin will handle load" then return end
         local subs = { uri = uri, msg = msg, style = style }
         local html = string.gsub(html_template, "{(%w+)}", subs)
         v:add_signal("enable-styles", styles)
