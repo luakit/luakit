@@ -333,9 +333,10 @@ load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
     lua_State *L = globalconf.L;
     ((webview_data_t*) w->data)->is_failed = TRUE;
     luaH_object_push(L, w->ref);
+    lua_pushstring(L, "failed");
     lua_pushstring(L, failing_uri);
     lua_pushstring(L, ((GError*) error)->message);
-    gint ret = luaH_object_emit_signal(L, -3, "load-failed", 2, 1);
+    gint ret = luaH_object_emit_signal(L, -4, "load-status", 3, 1);
     gboolean ignore = ret && lua_toboolean(L, -1);
     lua_pop(L, ret + 1);
     return ignore;
