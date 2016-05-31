@@ -108,7 +108,7 @@ html_style = [===[
         width: 100%;
     }
     td + td, th + th {
-        padding-left: 1em;
+        padding-left: 1rem;
     }
     header > span {
         padding: 1em 1em 1em 1em;
