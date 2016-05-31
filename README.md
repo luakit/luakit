@@ -1,22 +1,22 @@
 # Luakit
 
-luakit is a fast, light and simple to use micro-browser framework exensible
-by Lua using the WebKit web content engine and the GTK+ toolkit.
+luakit is a fast, light and simple to use micro-browser framework exensible by
+Lua using the WebKit web content engine and the GTK+ toolkit.
 
 ## Dont Panic!
 
 You don't have to be a developer to use luakit on a daily basis. If you are
-familiar with vimperator, pentadactyl, jumanji, uzbl & etc you will find
-luakit behaves similarly out of the box.
+familiar with vimperator, pentadactyl, jumanji, uzbl & etc you will find luakit
+behaves similarly out of the box.
 
 ## Requirements
 
- * gtk2
- * Lua (5.1)
- * lfs (lua file system)
- * libwebkit (webkit-gtk)
- * libunique
- * sqlite3
+*   gtk2
+*   Lua (5.1)
+*   lfs (lua file system)
+*   libwebkit (webkit-gtk)
+*   libunique
+*   sqlite3
 
 ## Compiling
 
@@ -40,8 +40,8 @@ Note to packagers: you may wish to build luakit with:
 
     make DEVELOPMENT_PATHS=0
 
-To prevent luakit searching in relative paths (`./config` & `./lib`) for
-user configs.
+To prevent luakit searching in relative paths (`./config` & `./lib`) for user
+configs.
 
 The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`,
 `CC=clang` build options do not conflict. You can use whichever you desire.
@@ -64,8 +64,8 @@ And the luakit libraries to:
 
     /usr/local/share/luakit/lib/
 
-To change the install prefix you will need to re-compile luakit (after a
-`make clean`) with the following option:
+To change the install prefix you will need to re-compile luakit (after a `make
+clean`) with the following option:
 
     make PREFIX=/usr
     sudo make PREFIX=/usr install
@@ -82,18 +82,35 @@ Or to see the full list of luakit launch options run:
 
 ## Configuration
 
-The configuration options are endless, the entire browser is constructed by
-the config files present in `/etc/xdg/luakit`
+The entire browsing experience is controlled by the configs in
+`/etc/xdg/luakit`. Most of it is fine out of the box.
 
-There are several files of interest:
+It is common to fork the configs from `/etc/xdg/luakit` into your home directory
+to make your customizations. It is not necessary to copy and or edit all of the
+files.
+
+Do:
+
+    mkdir -p $XDG_CONFIG_HOME
+    cp -v /etc/xdg/luakit $XDG_CONFIG_HOME
+
+Or:
+
+    mkdir -p ~/.config
+    cp -v /etc/xdg/luakit ~/.config
+
+The several files of interest are explained below.
 
 ### `rc.lua`
 
-This is the main config file which dictates which and in which order different parts of the browser are loaded.
+This is the main config file which dictates which and in which order different
+parts of the browser are loaded.
 
 ### `binds.lua`
 
-Defines every action the browser takes when you press a button or combination of buttons (even mouse buttons, direction key, etc) and the browser commands (I.e. `:quit`, `:restart`, `:open`, `:lua <code>`, etc).
+Defines every action the browser takes when you press a button or combination of
+buttons (even mouse buttons, direction key, etc) and the browser commands (I.e.
+`:quit`, `:restart`, `:open`, `:lua <code>`, etc).
 
 ### `theme.lua`
 
@@ -101,23 +118,26 @@ Change fonts and colours used by the interface widgets.
 
 ### `window.lua`
 
-Is responsible for building the luakit browser window and defining several helper methods (I.e. `w:new_tab(uri)`, `w:close_tab()`, `w:close_win()`, etc).
+Is responsible for building the luakit browser window and defining several
+helper methods (I.e. `w:new_tab(uri)`, `w:close_tab()`, `w:close_win()`, etc).
 
 ### `webview.lua`
 
-Is a wrapper around the webview widget object and is responsible for watching webview signals (I.e. "key-press", "load-status", "resource-request-starting", etc). This file also provides several window methods which operate on the current webview tab (I.e. `w:reload()`, `w:eval_js("code here..")`, `w:back()`, `w:forward()`).
+Is a wrapper around the webview widget object and is responsible for watching
+webview signals (I.e. "key-press", "load-status", "resource-request-starting",
+etc). This file also provides several window methods which operate on the
+current webview tab (I.e. `w:reload()`, `w:eval_js("code here..")`, `w:back()`,
+`w:forward()`).
 
 ### `modes.lua`
 
-Manages the modal aspect of the browser and the actions that occur when switching modes.
+Manages the modal aspect of the browser and the actions that occur when
+switching modes.
 
 ### `globals.lua`
 
-Change global options like scroll/zoom step, default window size, useragent, search engines, etc.
-
-Just copy the files you wish to change (and the rc.lua) into
-`$XDG_CONFIG_HOME/luakit` (defaults to `~/.config/luakit/`) and luakit will
-use those files when you next launch it.
+Change global options like scroll/zoom step, default window size, useragent,
+search engines, etc.
 
 ## Uninstall
 
