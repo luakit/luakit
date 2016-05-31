@@ -167,17 +167,25 @@ function add(page, func, on_first_visual_func, export_funcs)
 
                 -- Call the supplied handler
                 on_first_visual_func(v, meta)
+
+                if not luakit.webkit2 then
+                    for name, func in pairs(export_funcs or {}) do
+                        view:register_function(name, func)
+                    end
+                end
             end
             view:add_signal("load-status", visual_wrap)
         end
         return ret
     end
 
-    for name, func in pairs(export_funcs or {}) do
-        local pattern = "^luakit://" .. page .. "/?(.*)"
-        assert(type(name) == "string")
-        assert(type(func) == "function")
-        luakit.register_function(pattern, name, func)
+    if luakit.webkit2 then
+        for name, func in pairs(export_funcs or {}) do
+            local pattern = "^luakit://" .. page .. "/?(.*)"
+            assert(type(name) == "string")
+            assert(type(func) == "function")
+            luakit.register_function(pattern, name, func)
+        end
     end
 
     handlers[page] = wrapper
