@@ -147,9 +147,15 @@ webview.init_funcs.noscript_load = function (view)
             return
         end
         if webkit2 and status == "provisional" or (status == "committed" and v.uri ~= "about:blank") then
-            local enable_scripts, enable_plugins, _ = lookup_domain(v.uri)
-            view.enable_scripts = enable_scripts
-            view.enable_plugins = enable_plugins
+            local es = v:emit_signal("enable-scripts")
+            local ep = v:emit_signal("enable-plugins")
+            if es == nil or ep == nil then
+                local s, p, _ = lookup_domain(v.uri)
+                if es == nil then es = s end
+                if ep == nil then ep = p end
+            end
+            view.enable_scripts = es
+            view.enable_plugins = ep
         end
     end)
 end
