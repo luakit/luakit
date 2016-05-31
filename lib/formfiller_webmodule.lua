@@ -16,7 +16,7 @@ local ui = ui_process()
 
 local function element_attributes_match(element, attrs)
     for attr, value in pairs(attrs) do
-        if not string.find(value, element.attr[attr] or "") then
+        if not string.find(value, element.attr[attr] or "", 1, true) then
             return false
         end
     end
