@@ -189,7 +189,8 @@ webview_history_go(lua_State *L, gint direction)
 		webkit_web_view_go_to_back_forward_list_item(d->view, item);
 	lua_pushboolean(L, item != NULL);
 #else
-    gboolean ok = webkit_web_view_go_back_or_forward(d->view, steps);
+    gboolean ok = webkit_web_view_can_go_back_or_forward(d->view, steps);
+    webkit_web_view_go_back_or_forward(d->view, steps);
 	lua_pushboolean(L, ok);
 #endif
     return 1;
