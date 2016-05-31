@@ -88,7 +88,7 @@ end
 
 webview.init_funcs.save_hist = function (view)
     -- Add items & update visit count
-    view:add_signal("load-changed", function (_, status)
+    view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
 

@@ -160,7 +160,7 @@ function add(page, func, on_first_visual_func, export_funcs)
                 if status ~= "finished" then return end
 
                 -- Hack to run-once
-                view:remove_signal("load-changed", visual_wrap)
+                view:remove_signal("load-status", visual_wrap)
 
                 -- Double check that we are where we should be
                 if view.uri ~= meta.uri then return end
@@ -168,7 +168,7 @@ function add(page, func, on_first_visual_func, export_funcs)
                 -- Call the supplied handler
                 on_first_visual_func(v, meta)
             end
-            view:add_signal("load-changed", visual_wrap)
+            view:add_signal("load-status", visual_wrap)
         end
         return ret
     end

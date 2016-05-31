@@ -105,7 +105,7 @@ There are several files of interest:
                   `w:close_tab()`, `w:close_win()`, etc).
  * webview.lua -- is a wrapper around the webview widget object and is
                   responsible for watching webview signals (I.e. "key-press",
-                  "load-changed", "resource-load-started", etc). This file
+                  "load-status", "resource-load-started", etc). This file
                   also provides several window methods which operate on the
                   current webview tab (I.e. `w:reload()`,
                   `w:eval_js("code here..")`, `w:back()`, `w:forward()`).

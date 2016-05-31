@@ -140,7 +140,7 @@ function webview.methods.noscript_state(view, w)
 end
 
 webview.init_funcs.noscript_load = function (view)
-    view:add_signal("load-changed", function (v, status)
+    view:add_signal("load-status", function (v, status)
         if not webkit2 and status == "provisional" then
             view.enable_scripts = enable_scripts
             view.enable_plugins = enable_plugins

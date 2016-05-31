@@ -257,9 +257,9 @@ function del(file)
     scripts[file] = nil
 end
 
---- Hook on the webview's load-changed signal to invoke the userscripts.
+--- Hook on the webview's load-status signal to invoke the userscripts.
 webview.init_funcs.userscripts = function (view, w)
-    view:add_signal("load-changed", function (v, status)
+    view:add_signal("load-status", function (v, status)
         if status == "provisional" then
             -- Clear last userscript-loaded state
             lstate[v] = { loaded = {}, gmloaded = false }
