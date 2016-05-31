@@ -407,11 +407,11 @@ function list_opts_modify(list_index, opt_ex, opt_inc)
     elseif util.table.hasitem(opt_inc, "Disabled") then
         rules[list.title] = nil
         adblock_wm:emit_signal("update_rules", rules)
+        refresh_views()
     end
     
     list.opts = opts
     write_subscriptions()
-    refresh_views()
 end
 
 --- Add a list to the in-memory lists table
