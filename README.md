@@ -127,7 +127,7 @@ here also, example:
 
 Please use the bug tracker at:
 
-  https://github.com/mason-larobina/luakit/issues
+  https://github.com/luakit/luakit/issues
 
 ## Community
 
