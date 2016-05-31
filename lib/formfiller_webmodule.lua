@@ -70,7 +70,7 @@ end
 
 local function filter_rules(rules, uri)
     return filter_list(rules, function(rule)
-        return string.find(rule.pattern, uri)
+        return string.find(uri, rule.pattern)
     end)
 end
 
