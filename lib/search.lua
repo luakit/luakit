@@ -15,7 +15,7 @@ add_binds("normal", {
     key({}, "n", "Find next search result.", function (w, m)
         for i=1,m.count do
             if w.search_state.ret == false then
-                w:error("Pattern not found: " .. w.search_state.last_search)
+                w:error("not found: " .. w.search_state.last_search)
                 break
             end
             w:search(nil, true)
@@ -25,7 +25,7 @@ add_binds("normal", {
     key({}, "N", "Find previous search result.", function (w, m)
         for i=1,m.count do
             if w.search_state.ret == false then
-                w:error("Pattern not found: " .. w.search_state.last_search)
+                w:error("not found: " .. w.search_state.last_search)
                 break
             end
             w:search(nil, false)
