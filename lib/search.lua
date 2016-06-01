@@ -51,17 +51,13 @@ new_mode("search", {
             w:scroll(s.marker)
             s.marker = nil
         end
-        w:clear_search(false)
     end,
 
-    -- TODO this isn't happening at all
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
         if string.match(text, "^[?/]") then
             local prefix = string.sub(text, 1, 1)
             local search = string.sub(text, 2)
-            s = w.search_state
-            s.event = "changed"
             w:search(search, (prefix == "/"))
         else
             w:clear_search()
@@ -109,53 +105,45 @@ for k, m in pairs({
     end,
 
     search = function (view, w, text, forward, wrap)
-        if forward == nil then forward = true end
-
         -- Get search state (or new state)
         if not w.search_state then w.search_state = {} end
         local s = w.search_state
 
-        -- boolean representing whether or not the current term text has
-        -- been searched for or not. If so, need to call search_next() or
-        -- search_previous() rather than search().
-        s.has_searched_before = (s.searched and (text == s.last_search)) or ((not not s.last_search) and (text == nil or #text == 0))
+        -- Default values
+        if forward == nil then forward = true end
+        text = text or s.last_search or ""
 
         -- Check if wrapping should be performed
         if wrap == nil then
             if s.wrap ~= nil then wrap = s.wrap else wrap = true end
         end
 
-        -- Get search term
-        text = text or s.last_search
-        if not text or #text == 0 then
+        if text == "" then
             return w:clear_search()
         end
-        s.last_search = text
 
-        if s.forward == nil then
+        if not s.searched then
             -- Haven't searched before, save some state.
             s.forward = forward
             s.wrap = wrap
             local scroll = view.scroll
             s.marker = { x = scroll.x, y = scroll.y }
-        else
-            -- Invert direction if originally searching in reverse
-            forward = (s.forward == forward)
         end
-
         s.searched = true
-        s.wrapped = false
 
-        if s.has_searched_before then
+        -- Invert direction if originally searching in reverse
+        forward = (s.forward == forward)
+
+        if text == s.last_search then
             if forward then
                 view:search_next()
             else
                 view:search_previous()
             end
         else
+            s.last_search = text
             view:search(text, text ~= string.lower(text), forward, wrap)
         end
-
     end,
 
     clear_search = function (view, w, clear_state)
@@ -166,6 +154,7 @@ for k, m in pairs({
             w.search_state = {}
         else
             w.search_state.searched = false
+            w.search_state.last_search = nil
         end
     end,
 
@@ -179,25 +168,12 @@ webview.init_funcs.search_callbacks = function (view, w)
     end)
 
     view:add_signal("failed-to-find-text", function (v, d)
-        local s = w.search_state
-        s.has_searched_before = (s.searched and (text == s.last_search)) or ((not not s.last_search) and (text == nil or #text == 0))
+        w.search_state.ret = false
+        w.ibar.input.fg = theme.ibar_error_fg
+        w.ibar.input.bg = theme.ibar_error_bg
 
-        if (not w.search_state.has_searched_before) or (w.search_state.wrap and not w.search_state.wrapped) then
-            w.search_state.wrapped = true
-            if not w.search_state.searched then
-                if w.search_state.forward then
-                    w:warning("Search hit BOTTOM, continuing at TOP")
-                else
-                    w:warning("Search hit TOP, continuing at BOTTOM")
-                end
-            end
-            view:search(w.search_state.last_search, w.search_state.last_search ~= string.lower(w.search_state.last_search), w.search_state.forward, true);
-        else
-            if s.marker then w:scroll(s.marker) end
-            w.search_state.ret = false
-            w.ibar.input.fg = theme.ibar_error_fg
-            w.ibar.input.bg = theme.ibar_error_bg
-        end
+        local s = w.search_state
+        if s.marker then w:scroll(s.marker) end
     end)
 end
 
