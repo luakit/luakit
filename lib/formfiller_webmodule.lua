@@ -1,14 +1,9 @@
 local pairs, ipairs = pairs, ipairs
 local table, string = table, string
-local assert, type = assert, type
-local floor = math.floor
-local rawset, rawget = rawset, rawget
+local type = type
 local ui_process = ui_process
 local dom_document = dom_document
 local page = page
-local extension = extension
-local os = os
-local socket = require "socket"
 
 module("formfiller_webmodule")
 
