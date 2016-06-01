@@ -174,6 +174,61 @@ local function load(fast, page_id)
     end
 end
 
+function contains(tbl, item)
+    for _, v in ipairs(tbl) do
+        if v == item then return true end
+    end
+    return false
+end
+
+local function add(page_id)
+    local function to_lua_str(str)
+        return "'" .. str:gsub("([\\'])", "\\%1").. "'"
+    end
+    local function add_attr(elem, attr, indent, tail)
+        local a = elem.attr[attr]
+        if type(a) == "string" and a ~= "" then
+            return indent .. attr .. " = " .. to_lua_str(a) .. tail
+        else
+            return ""
+        end
+    end
+
+    local forms = dom_document(page_id).body:query("form")
+    local uri = page(page_id).uri
+    local str = { "on " .. to_lua_str(uri) .. " {\n"}
+    for _, form in ipairs(forms) do
+        local inputs = form:query("input")
+        inputs = filter_list(inputs, function(input)
+            return not contains({"button", "submit", "hidden"}, input.type)
+        end)
+        if #inputs == 0 then
+            return
+        end
+        table.insert(str, "  form {\n")
+        for _, attr in ipairs({"method", "action", "id", "className", "name"}) do
+            table.insert(str, add_attr(form, attr, "    ", ",\n"))
+        end
+        for _, input in ipairs(inputs) do
+            table.insert(str, "    input {\n      ")
+            for _, attr in ipairs({"id", "className", "name", "type"}) do
+                table.insert(str, add_attr(input, attr, "", ", "))
+            end
+            if contains({"radio", "checkbox"}, input.type) then
+                table.insert(str, "\n      checked = " .. (input.checked or "false") .. ",\n")
+            else
+                table.insert(str, "\n      value = " .. to_lua_str(input.value or "") .. ",\n")
+            end
+            table.insert(str, "    },\n")
+        end
+        table.insert(str, "    submit = true,\n")
+        table.insert(str, "  },\n")
+    end
+    table.insert(str, "}\n\n")
+    ui:emit_signal("add", #str > 2 and table.concat(str) or false)
+end
+
 ui:add_signal("init", function(_, s) state = s end)
 ui:add_signal("load", function(_, f, page_id) load(f, page_id) end)
 ui:add_signal("apply_form", function(_, form) apply_form(form) end)
+ui:add_signal("add", function(_, page_id) add(page_id) end)

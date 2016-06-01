@@ -215,48 +215,8 @@ end
 -- @param w The window for which to add an entry.
 function add(w)
     -- load JS prerequisites
-    w.view:eval_js(formfiller_js, { no_return = true })
-    local js = [=[
-        var addAttr = function (str, elem, attr, indent, tail) {
-            if (typeof(elem[attr]) == "string" && elem[attr] !== "") {
-                str += indent + attr + ' = ' + formfiller.toLuaString(formfiller.rexEscape(elem[attr])) + tail;
-            }
-            return str;
-        }
-
-        var rendered_something = false;
-        var str = 'on ' + formfiller.toLuaString(formfiller.rexEscape(location.href)) + ' {\n';
-        formfiller.toA(document.forms).forEach(function (form) {
-            var inputs = formfiller.toA(form.getElementsByTagName("input")).filter(function (input) {
-                return (input.type !== "button" && input.type !== "submit" && input.type !== "hidden");
-            });
-            if (inputs.length === 0) {
-                return;
-            }
-            str += "  form {\n";
-            ["method", "action", "id", "className", "name"].forEach(function (attr) {
-                str = addAttr(str, form, attr, "    ", ",\n");
-            });
-            inputs.forEach(function (input) {
-                str += "    input {\n      ";
-                ["id", "className", "name", "type"].forEach(function (attr) {
-                    str = addAttr(str, input, attr, "", ", ");
-                });
-                if (input.type === "radio" || input.type === "checkbox") {
-                    str += "\n      checked = " + input.checked + ",\n";
-                } else {
-                    str += "\n      value = " + formfiller.toLuaString(input.value) + ",\n";
-                }
-                str += "    },\n";
-            });
-            str += "    submit = true,\n";
-            str += "  },\n";
-            rendered_something = true;
-        });
-        str += "}\n\n";
-        rendered_something ? str : false;
-    ]=]
-    w.view:eval_js(js, { callback = function(ret)
+    local function add(_, ret)
+        formfiller_wm:remove_signal("add", add)
         if not ret then
             return w:error("no forms with inputs found")
         end
@@ -264,7 +224,10 @@ function add(w)
         f:write(ret)
         f:close()
         edit()
-    end})
+    end
+
+    formfiller_wm:add_signal("add", add)
+    formfiller_wm:emit_signal("add", w.view.id)
 end
 
 -- Shows a menu with all forms that contain a profile if there is more than one.
