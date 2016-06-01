@@ -67,12 +67,7 @@ new_mode("search", {
 
     activate = function (w, text)
         w.search_state.marker = nil
-        -- TODO if uncommented this activates twice. Why?
-        -- Search if haven't already (won't have for short strings)
---        if not w.search_state.searched then
---            w.search_state.event = "activate"
---            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
---        end
+        w:set_mode()
     end,
 
     history = {maxlen = 50},
@@ -86,10 +81,6 @@ add_binds("search", {
 
     key({"Control"}, "k", "Select previous result.", function (w)
         w:search(w.search_state.last_search, false)
-    end),
-
-    key({}, "Return", "Leave search mode.", function (w)
-        w:set_mode()
     end),
 })
 
