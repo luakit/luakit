@@ -67,6 +67,9 @@ new_mode("search", {
 
     activate = function (w, text)
         w.search_state.marker = nil
+        if text == "/" or text == "?" then
+            w:clear_search()
+        end
         w:set_mode()
     end,
 
