@@ -149,14 +149,9 @@ end
 local function apply_forms(forms)
     for _, form in ipairs(forms) do
         if apply_form(form) then
-            return
+            return true
         end
     end
-end
-
-local function show_menu()
-    ui:emit_signal("unimplemented")
-    return true
 end
 
 local function load(fast, page_id)
@@ -164,12 +159,21 @@ local function load(fast, page_id)
     local uri = page(page_id).uri
     local rules = filter_rules(state.rules, uri)
     for _, rule in ipairs(rules) do
-        local forms = filter_forms(rule.forms)
-        if fast or not show_menu() then
-            apply_forms(forms)
+        rule.forms = filter_forms(rule.forms)
+    end
+    if fast then
+        for _, rule in ipairs(rules) do
+            if apply_forms(rule.forms) then
+                ui:emit_signal("finished")
+                return
+            end
         end
+    else
+        ui:emit_signal("filtered", rules)
+        ui:emit_signal("finished")
     end
 end
 
 ui:add_signal("init", function(_, s) state = s end)
 ui:add_signal("load", function(_, f, page_id) load(f, page_id) end)
+ui:add_signal("apply_form", function(_, form) apply_form(form) end)

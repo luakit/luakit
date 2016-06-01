@@ -279,7 +279,7 @@ local function show_menu(w, forms)
         end
     end
     -- show menu if necessary
-    if #menu < 2 then
+    if #menu == 0 then
         return false
     else
         w.formfiller_state.menu_cache = menu
@@ -295,9 +295,23 @@ function load(w, fast)
     -- reload the DSL
     init(w)
 
-    formfiller_wm:add_signal("unimplemented", function(_)
-        w:warning("unimplemented")
-    end)
+    local function filtered(_, rules)
+        local forms = {}
+        for _, rule in ipairs(rules) do
+            for _, form in ipairs(rule.forms) do
+                table.insert(forms, form)
+            end
+        end
+        show_menu(w, forms)
+    end
+
+    local function finished(_)
+        formfiller_wm:remove_signal("filtered", filtered)
+        formfiller_wm:remove_signal("finished", finished)
+    end
+
+    formfiller_wm:add_signal("filtered", filtered)
+    formfiller_wm:add_signal("finished", finished)
     formfiller_wm:emit_signal("load", fast, w.view.id)
 end
 
@@ -324,7 +338,7 @@ add_binds("formfiller", lousy.util.table.join({
             local row = w.menu:get()
             local form = row.form
             w:set_mode()
-            if apply_form(w, form) then return end
+            formfiller_wm:emit_signal("apply_form", form)
         end),
 }, menu_binds))
 
