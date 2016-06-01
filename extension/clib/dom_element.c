@@ -249,6 +249,14 @@ luaH_dom_element_focus(lua_State *L)
 }
 
 static gint
+luaH_dom_element_submit(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    webkit_dom_html_form_element_submit(WEBKIT_DOM_HTML_FORM_ELEMENT(element->element));
+    return 0;
+}
+
+static gint
 luaH_dom_element_push_src(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -295,6 +303,56 @@ luaH_dom_element_push_href(lua_State *L)
 }
 
 static gint
+luaH_dom_element_push_value(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+
+#define CHECK(lower, upper, type) \
+    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
+        lua_push##type(L, webkit_dom_html_##lower##_element_get_value( \
+                    WEBKIT_DOM_HTML_##upper##_ELEMENT(element->element))); \
+        return 1; \
+    }
+
+    CHECK(text_area, TEXT_AREA, string);
+    CHECK(input, INPUT, string);
+    CHECK(option, OPTION, string);
+    CHECK(param, PARAM, string);
+    CHECK(li, LI, integer);
+    CHECK(button, BUTTON, string);
+    CHECK(select, SELECT, string);
+
+#undef CHECK
+
+    return 0;
+}
+
+static gint
+dom_html_element_set_value(lua_State *L, WebKitDOMHTMLElement *element)
+{
+
+#define CHECK(lower, upper, type) \
+    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element)) { \
+        webkit_dom_html_##lower##_element_set_value( \
+                WEBKIT_DOM_HTML_##upper##_ELEMENT(element), \
+                luaL_check##type(L, 3)); \
+        return 1; \
+    }
+
+    CHECK(text_area, TEXT_AREA, string);
+    CHECK(input, INPUT, string);
+    CHECK(option, OPTION, string);
+    CHECK(param, PARAM, string);
+    CHECK(li, LI, integer);
+    CHECK(button, BUTTON, string);
+    CHECK(select, SELECT, string);
+
+#undef CHECK
+
+    return 0;
+}
+
+static gint
 luaH_dom_element_push_parent(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -321,9 +379,19 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(REMOVE, luaH_dom_element_remove)
         PF_CASE(CLICK, luaH_dom_element_click)
         PF_CASE(FOCUS, luaH_dom_element_focus)
+        PF_CASE(SUBMIT, luaH_dom_element_submit)
 
         case L_TK_SRC: return luaH_dom_element_push_src(L);
         case L_TK_HREF: return luaH_dom_element_push_href(L);
+        case L_TK_VALUE: return luaH_dom_element_push_value(L);
+        case L_TK_CHECKED: return webkit_dom_html_input_element_get_checked(
+                                   WEBKIT_DOM_HTML_INPUT_ELEMENT(elem));
+        case L_TK_TYPE: {
+            gchar *type;
+            g_object_get(element->element, "type", &type, NULL);
+            lua_pushstring(L, type);
+            return 1;
+        }
         case L_TK_PARENT: return luaH_dom_element_push_parent(L);
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
@@ -348,6 +416,14 @@ luaH_dom_element_newindex(lua_State *L)
                     luaL_checkstring(L, 3), &error);
             if (error)
                 return luaL_error(L, "set inner html error: %s", error->message);
+        case L_TK_VALUE:
+            if (!dom_html_element_set_value(L, element->element))
+                return luaL_error(L, "set value error: wrong element type");
+        case L_TK_CHECKED:
+            webkit_dom_html_input_element_set_checked(
+                    WEBKIT_DOM_HTML_INPUT_ELEMENT(element->element),
+                    lua_toboolean(L, 3));
+            return 0;
         default:
             break;
     }
