@@ -730,8 +730,7 @@ luaH_webview_search(lua_State *L)
             WEBKIT_FIND_OPTIONS_BACKWARDS * (!forward) |
             WEBKIT_FIND_OPTIONS_WRAP_AROUND * wrap,
             G_MAXUINT);
-    // TODO make this asynchronous on the lua end
-    gboolean ret = TRUE;
+    return 0;
 #else
     webkit_web_view_unmark_text_matches(d->view);
     gboolean ret = webkit_web_view_search_text(d->view, text, case_sensitive,
@@ -740,9 +739,9 @@ luaH_webview_search(lua_State *L)
         webkit_web_view_mark_text_matches(d->view, text, case_sensitive, 0);
         webkit_web_view_set_highlight_text_matches(d->view, TRUE);
     }
-#endif
     lua_pushboolean(L, ret);
     return 1;
+#endif
 }
 
 #if WITH_WEBKIT2
