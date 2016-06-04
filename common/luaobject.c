@@ -184,6 +184,8 @@ void
 luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
     lua_object_t *obj = lua_touserdata(L, oud);
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
+    if (!sigfuncs)
+        return;
     for (guint i = 0; i < sigfuncs->len; i++) {
         gpointer ref = g_ptr_array_index(sigfuncs, i);
         luaH_object_unref_item(L, oud, ref);
