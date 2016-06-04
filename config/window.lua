@@ -116,6 +116,7 @@ function window.build()
     i.ebox.child = i.layout
     w.layout:pack(i.ebox)
     i.input.css = "border: 0;"
+    i.layout.css = "transition: 0.2s ease-in-out;"
 
     -- Other settings
     i.input.show_frame = false
@@ -450,6 +451,14 @@ window.methods = {
             input:focus()
             input.position = opts.pos or -1
         end
+    end,
+
+    set_ibar_theme = function (w, name)
+        name = name or "ok"
+        local th = theme[name]
+        w.ibar.input.fg = th.fg
+        w.ibar.prompt.fg = th.fg
+        w.ibar.layout.bg = th.bg
     end,
 
     -- GUI content update functions

@@ -49,7 +49,7 @@ theme.dbar_error_fg   = "#F00"
 
 -- Input bar specific
 theme.ibar_fg           = "#000"
-theme.ibar_bg           = "#fff"
+theme.ibar_bg           = "rgba(0,0,0,0)"
 
 -- Tab label
 theme.tab_fg            = "#888"
@@ -64,6 +64,11 @@ theme.loading_bg        = "#000"
 -- Trusted/untrusted ssl colours
 theme.trust_fg          = "#0F0"
 theme.notrust_fg        = "#F00"
+
+-- General colour pairings
+theme.ok = { fg = "#000", bg = "#FFF" }
+theme.warn = { fg = "#F00", bg = "#FFF" }
+theme.error = { fg = "#FFF", bg = "#F00" }
 
 return theme
 -- vim: et:sw=4:ts=8:sts=4:tw=80
