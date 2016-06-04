@@ -253,9 +253,7 @@ local function filter(state, hint_pat, text_pat)
             hint.label_elem.attr.style = hint.label_style
         end
     end
-    if state.num_visible_hints == 0 then
-        ui:emit_signal("no_matches", ret)
-    end
+    ui:emit_signal("matches", state.num_visible_hints)
 end
 
 local function focus(state, step)

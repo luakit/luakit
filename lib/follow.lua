@@ -148,8 +148,8 @@ local function follow_cb(w)
     ignore_keys(w)
 end
 
-local function no_matches_cb(w)
-    w:notify("No matches...")
+local function matches_cb(w, n)
+    w:set_ibar_theme(n > 0 and "ok" or "error")
 end
 
 new_mode("follow", {
@@ -191,10 +191,11 @@ new_mode("follow", {
         end
 
         w:set_input("")
+        w:set_ibar_theme()
 
         follow_wm:add_signal("follow_func", function(_, ret) follow_func_cb(w, ret) end)
         follow_wm:add_signal("follow", function(_) follow_cb(w) end)
-        follow_wm:add_signal("no_matches", function(_) no_matches_cb(w) end)
+        follow_wm:add_signal("matches", function(_, n) matches_cb(w, n) end)
 
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
@@ -214,10 +215,11 @@ new_mode("follow", {
     end,
 
     leave = function (w)
-        local names = {"follow_func", "follow", "no_matches"}
+        local names = {"follow_func", "follow", "matches"}
         for _, name in ipairs(names) do
             follow_wm:remove_signals(name)
         end
+        w:set_ibar_theme()
         follow_wm:emit_signal("leave", w.win.id)
     end,
 })
