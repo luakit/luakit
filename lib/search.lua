@@ -43,8 +43,7 @@ new_mode("search", {
     end,
 
     leave = function (w)
-        w.ibar.input.fg = theme.ibar_fg
-        w.ibar.input.bg = theme.ibar_bg
+        w:set_ibar_theme()
         -- Check if search was aborted and return to original position
         local s = w.search_state
         if s.marker then
@@ -141,8 +140,7 @@ for k, m in pairs({
     end,
 
     clear_search = function (view, w, clear_state)
-        w.ibar.input.fg = theme.ibar_fg
-        w.ibar.input.bg = theme.ibar_bg
+        w:set_ibar_theme()
         view:clear_search()
         if clear_state ~= false then
             w.search_state = {}
@@ -157,14 +155,12 @@ for k, m in pairs({
 webview.init_funcs.search_callbacks = function (view, w)
     view:add_signal("found-text", function (v, d)
         w.search_state.ret = true
-        w.ibar.input.fg = theme.ibar_fg
-        w.ibar.input.bg = theme.ibar_bg
+        w:set_ibar_theme()
     end)
 
     view:add_signal("failed-to-find-text", function (v, d)
         w.search_state.ret = false
-        w.ibar.input.fg = theme.ibar_error_fg
-        w.ibar.input.bg = theme.ibar_error_bg
+        w:set_ibar_theme("error")
 
         local s = w.search_state
         if s.marker then w:scroll(s.marker) end
