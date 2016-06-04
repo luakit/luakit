@@ -115,6 +115,7 @@ function window.build()
     i.layout:pack(i.input, { expand = true, fill = true })
     i.ebox.child = i.layout
     w.layout:pack(i.ebox)
+    i.input.css = "border: 0;"
 
     -- Other settings
     i.input.show_frame = false
