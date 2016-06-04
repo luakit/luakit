@@ -27,7 +27,6 @@ found_text_cb(WebKitFindController* find_controller, guint match_count,
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     lua_pushinteger(L, match_count);
-    luaH_warn(L, "found_text_cb(): match count %d for string [%s]", match_count, webkit_find_controller_get_search_text(find_controller));
     luaH_object_emit_signal(L, -2, "found-text", 1, 0);
     lua_pop(L, 1);
     return;
@@ -39,7 +38,6 @@ failed_to_find_text_cb(WebKitFindController* UNUSED(find_controller),
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
-    luaH_warn(L, "failed_to_find_text_cb():");
     luaH_object_emit_signal(L, -1, "failed-to-find-text", 0, 0);
     lua_pop(L, 1);
     return;
