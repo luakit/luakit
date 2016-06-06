@@ -197,10 +197,10 @@ property_t webview_settings_properties[] = {
   { L_TK_ENABLE_SMOOTH_SCROLLING,                   "enable-smooth-scrolling",                   BOOL,  TRUE },
 #endif
   { L_TK_ENABLE_SPATIAL_NAVIGATION,                 "enable-spatial-navigation",                 BOOL,  TRUE },
+  { L_TK_ENABLE_WEBGL,                              "enable-webgl",                              BOOL,  TRUE },
 #if WITH_WEBKIT2
   { L_TK_ENABLE_TABS_TO_LINKS,                      "enable-tabs-to-links",                      BOOL,  TRUE },
   { L_TK_ENABLE_WEBAUDIO,                           "enable-webaudio",                           BOOL,  TRUE },
-  { L_TK_ENABLE_WEBGL,                              "enable-webgl",                              BOOL,  TRUE },
   { L_TK_ENABLE_WRITE_CONSOLE_MESSAGES_TO_STDOUT,   "enable-write-console-messages-to-stdout",   BOOL,  TRUE },
 #else
   { L_TK_ENABLE_SPELL_CHECKING,                     "enable-spell-checking",                     BOOL,  TRUE },
