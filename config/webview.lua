@@ -5,11 +5,17 @@
 -- Webview class table
 webview = {}
 
+webview.enable_webgl = true
+
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
     -- Set useragent
     set_useragent = function (view, w)
         view.user_agent = globals.useragent
+    end,
+
+    set_webgl_enabled = function (view, w)
+        view.enable_webgl = webview.enable_webgl
     end,
 
     -- Check if checking ssl certificates
