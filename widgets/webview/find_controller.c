@@ -21,7 +21,7 @@
 
 #if WITH_WEBKIT2
 static void
-found_text_cb(WebKitFindController* find_controller, guint match_count,
+found_text_cb(WebKitFindController* UNUSED(find_controller), guint match_count,
         widget_t *w)
 {
     lua_State *L = globalconf.L;
