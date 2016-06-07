@@ -207,3 +207,23 @@ luaH_webview_go_forward(lua_State *L)
 {
 	return webview_history_go(L,  1);
 }
+
+#if WITH_WEBKIT2
+static void
+webview_set_session_state(webview_data_t *d, gpointer data)
+{
+    WebKitWebViewSessionState *state = webkit_web_view_session_state_new(data);
+    webkit_web_view_restore_session_state(d->view, state);
+
+    WebKitBackForwardList *bfl = webkit_web_view_get_back_forward_list(d->view);
+    WebKitBackForwardListItem *item = webkit_back_forward_list_get_current_item(bfl);
+    webkit_web_view_go_to_back_forward_list_item(d->view, item);
+}
+
+static gpointer
+webview_get_session_state(webview_data_t *d)
+{
+    WebKitWebViewSessionState *state = webkit_web_view_get_session_state(d->view);
+    return webkit_web_view_session_state_serialize(state);
+}
+#endif
