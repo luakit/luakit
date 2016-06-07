@@ -1387,6 +1387,7 @@ size_request_cb(GtkWidget *UNUSED(widget), GtkRequisition *r, widget_t *w)
     gtk_widget_set_size_request(GTK_WIDGET(w->widget), r->width, r->height);
 }
 
+#if !WITH_WEBKIT2
 /* redirect focus on scrolled window to child webview widget */
 void
 swin_focus_cb(GtkWidget *UNUSED(wi), GdkEventFocus *UNUSED(e), widget_t *w)
@@ -1394,6 +1395,7 @@ swin_focus_cb(GtkWidget *UNUSED(wi), GdkEventFocus *UNUSED(e), widget_t *w)
     webview_data_t *d = w->data;
     gtk_widget_grab_focus(GTK_WIDGET(d->view));
 }
+#endif
 
 #if WITH_WEBKIT2
 void
@@ -1602,7 +1604,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     g_object_connect(G_OBJECT(d->win),
 #endif
       "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
+#if !WITH_WEBKIT2
       "signal::focus-in-event",                       G_CALLBACK(swin_focus_cb),                w,
+#endif
       NULL);
 
 #if WITH_WEBKIT2

@@ -244,7 +244,11 @@ gint
 luaH_widget_focus(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_grab_focus(w->widget);
+    /* win:focus() unfocuses anything within that window */
+    if (w->info->tok == L_TK_WINDOW)
+        gtk_window_set_focus(GTK_WINDOW(w->widget), NULL);
+    else
+        gtk_widget_grab_focus(w->widget);
     return 0;
 }
 
