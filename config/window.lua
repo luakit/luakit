@@ -604,6 +604,7 @@ window.methods = {
         end
         -- Load uri or webview history table
         if type(arg) == "string" then view.uri = arg
+        elseif type(arg) == "userdata" then view.session_state = arg
         elseif type(arg) == "table" then view.history = arg end
         -- Update statusbar widgets
         w:update_tab_count()
@@ -621,7 +622,7 @@ window.methods = {
             w.has_blank = true
         end
         -- Save tab history
-        local tab = {hist = view.history,}
+        local tab = { hist = view.history, session_state = view.session_state }
         -- And relative location
         local index = w.tabs:indexof(view)
         if index ~= 1 then tab.after = w.tabs[index-1] end

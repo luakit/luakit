@@ -12,7 +12,7 @@ window.methods.undo_close_tab = function (w, index)
     end
     local tab = table.remove(w.closed_tabs, index)
     if not tab then return end
-    local view = w:new_tab(tab.hist)
+    local view = w:new_tab(tab.session_state or tab.hist)
     -- Attempt to open in last position
     if tab.after then
         local i = w.tabs:indexof(tab.after)
