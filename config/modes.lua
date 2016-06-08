@@ -63,7 +63,6 @@ window.init_funcs.modes_setup = function (w)
         -- next mode's enter function actually ran.
         -- here, we only run the changed callback if the current mode matches
         -- the last mode entered.
-        print("changed signal raised with text " .. input.text)
         if changed and w.last_mode_entered == w.mode then
             changed(w, input.text)
         end
