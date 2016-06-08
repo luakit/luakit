@@ -216,7 +216,6 @@ ymax
 ypage_size
 zoom_level
 zoom_step
-estimated_load_progress
 is_loading
 allow_modal_dialogs
 default_charset

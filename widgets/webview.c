@@ -117,7 +117,7 @@ static struct {
 
 property_t webview_properties[] = {
 #if WITH_WEBKIT2
-  { L_TK_ESTIMATED_LOAD_PROGRESS, "estimated-load-progress", DOUBLE, FALSE },
+  { L_TK_PROGRESS,    "estimated-load-progress", DOUBLE, FALSE },
   { L_TK_IS_LOADING,        "is-loading",        BOOL,   FALSE },
   { L_TK_TITLE,             "title",             CHAR,   FALSE },
   { L_TK_URI,               "uri",               CHAR,   FALSE }, /* dummy */

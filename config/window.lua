@@ -480,7 +480,7 @@ window.methods = {
     end,
 
     update_progress = function (w)
-        local p = w.view.estimated_load_progress
+        local p = w.view.progress
         local loaded = w.sbar.l.loaded
         if not w.view.is_loading or p == 1 then
             loaded:hide()
