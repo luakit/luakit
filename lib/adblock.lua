@@ -493,7 +493,7 @@ end
 adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
     for _, w in pairs(window.bywidget) do
         if w.view.id == id then
-            if not w.view:emit_signal("navigation-blocked", w) then
+            if not w.view:emit_signal("navigation-blocked", w, uri) then
                 w:error("Ad Block: page load for '" .. uri .. "' blocked")
             end
         end

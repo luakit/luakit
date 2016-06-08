@@ -11,6 +11,7 @@ local ipairs    = ipairs
 local string    = string
 local table     = table
 local window    = window
+local webview   = webview
 
 
 module("adblock_chrome")
@@ -213,6 +214,86 @@ nil,
         adblock.list_set_enabled(id, enable)
     end,
 })
+
+-- Error page for navigation blocking
+navigation_blocked_html_tmpl = [==[
+    <html>
+        <head>
+            <title>AdBlock: page blocked</title>
+            <style type="text/css">
+                {style}
+            </style>
+        </head>
+    <body>
+        <div id="errorContainer">
+            <div id="errorTitle">
+                <p id="errorTitleText">Page blocked</p>
+            </div>
+            <div class="errorMessage">
+                <p>AdBlock has prevented the page at {uri} from loading</p>
+            </div>
+        </div>
+    </body>
+    </html>
+]==]
+
+navigation_blocked_css_tmpl = [===[
+    body {
+        background-color: #ddd;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+    }
+
+    #errorContainer {
+        background: #fff;
+        min-width: 35em;
+        max-width: 35em;
+        padding: 2.5em;
+        border: 2px solid #aaa;
+        -webkit-border-radius: 5px;
+    }
+
+    #errorTitleText {
+        font-size: 120%;
+        font-weight: bold;
+        margin-bottom: 1em;
+    }
+
+    .errorMessage {
+        font-size: 90%;
+    }
+
+    p {
+        margin: 0;
+    }
+]===]
+
+local function styles(v, status) return false end
+local function scripts(v, status) return true end
+
+-- Clean up only when error page has finished since sometimes multiple
+-- load-status provisional signals are dispatched
+local function cleanup(v, status)
+    if status == "finished" then
+        v:remove_signal("enable-styles", styles)
+        v:remove_signal("enable-scripts", scripts)
+    end
+end
+
+webview.init_funcs.navigation_blocked_page_init = function(view, w)
+    view:add_signal("navigation-blocked", function(v, w, uri)
+        local subs = { uri = util.escape(uri), style = navigation_blocked_css_tmpl }
+        local html = string.gsub(navigation_blocked_html_tmpl , "{(%w+)}", subs)
+        v:add_signal("enable-styles", styles)
+        v:add_signal("enable-scripts", scripts)
+        v:add_signal("load-status", cleanup)
+        v:load_string(html, uri)
+        return true
+    end)
+end
 
 -- Add chrome binds.
 local key, buf = lousy.bind.key, lousy.bind.buf
