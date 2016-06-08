@@ -490,6 +490,16 @@ function list_set_enabled(a, enabled)
     end
 end
 
+adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == id then
+            if not w.view:emit_signal("navigation-blocked", w) then
+                w:error("Ad Block: page load for '" .. uri .. "' blocked")
+            end
+        end
+    end
+end)
+
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({

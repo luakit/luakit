@@ -158,6 +158,10 @@ end
 
 extension:add_signal("page-created", function(_, page)
     page:add_signal("send-request", function(p, uri)
-        return filter(p.uri, uri)
+        allow = filter(p.uri, uri)
+        if allow == false and p.uri == uri then
+            ui:emit_signal("navigation-blocked", p.id, uri)
+        end
+        if allow ~= nil then return allow end
     end)
 end)
