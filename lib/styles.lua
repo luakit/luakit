@@ -3,7 +3,7 @@ local string        = string
 local webview       = webview
 local lousy         = require "lousy"
 local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
-local add_binds     = add_binds
+local add_binds, add_cmds = add_binds, add_cmds
 local lfs           = require "lfs"
 local print         = print
 local domain_props  = domain_props
@@ -123,15 +123,6 @@ function webview.methods.styles_toggle(view, _)
 	db_set(view.uri, enabled)
 end
 
-add_binds("normal", {
-    key({}, "V", "Edit page user stylesheet", function (w)
-		if string.sub(w.view.uri, 1, 9) == "luakit://" then return end
-		local domain = domain_from_uri(w.view.uri)
-		local file = capi.luakit.data_dir .. "/styles/" .. domain .. ".css"
-		editor.edit(file)
-	end),
-})
-
 local function load_file(path, domain)
     if stylesheet == nil then return end
 
@@ -172,5 +163,23 @@ local detect_files = function()
     end
     lfs.chdir(cwd)
 end
+
+local cmd = lousy.bind.cmd
+add_cmds({
+    cmd({"styles-reload", "sr"}, "Reload user stylesheets.", function (w)
+        w:notify("styles: Reloading files...")
+        detect_files()
+        w:notify("styles: Reloading files complete.")
+    end),
+})
+
+add_binds("normal", {
+    key({}, "V", "Edit page user stylesheet", function (w)
+		if string.sub(w.view.uri, 1, 9) == "luakit://" then return end
+		local domain = domain_from_uri(w.view.uri)
+		local file = capi.luakit.data_dir .. "/styles/" .. domain .. ".css"
+		editor.edit(file)
+	end),
+})
 
 detect_files()
