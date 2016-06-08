@@ -45,7 +45,7 @@ function Pickle:value_(v)
     elseif vtype == "number" then return v
     elseif vtype == "boolean" then return tostring(v)
     elseif vtype == "table" then return "{"..self:ref_(v).."}"
-    else --error("pickle a "..type(v).." is not supported")
+    else error("pickle a "..type(v).." is not supported")
     end
 end
 
