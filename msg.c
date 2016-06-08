@@ -146,6 +146,9 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_dat
     GVariant *payload = g_variant_new_string(socket_path);
     webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
     webkit_web_context_set_web_extensions_directory(context, extension_dir);
+#if DEVELOPMENT_PATHS
+    g_free(extension_dir);
+#endif
 }
 
 void
