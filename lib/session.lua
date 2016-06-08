@@ -20,7 +20,7 @@ session = {
         -- Save tabs from all the given windows
         for wi, w in pairs(wins) do
             local current = w.tabs:current()
-            state[wi] = { open = {}, closed = w.closed_tabs }
+            state[wi] = { open = {}, closed = {} }
             for ti, tab in ipairs(w.tabs.children) do
                 table.insert(state[wi].open, {
                     ti = ti,
@@ -28,6 +28,9 @@ session = {
                     uri = tab.uri,
                     session_state = tab.session_state
                 })
+            end
+            for i, tab in ipairs(w.closed_tabs) do
+                state[wi].closed[i] = { session_state = tab.session_state }
             end
         end
 
