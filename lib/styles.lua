@@ -147,6 +147,7 @@ local function load_file(path, domain)
 end
 
 detect_files = function()
+    local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
 		print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
 		return
@@ -169,4 +170,5 @@ detect_files = function()
 			props.user_stylesheet_uri = "file://" .. styles_dir .. filename
 		end
     end
+    lfs.chdir(cwd)
 end
