@@ -20,9 +20,14 @@ session = {
         -- Save tabs from all the given windows
         for wi, w in pairs(wins) do
             local current = w.tabs:current()
+            state[wi] = { open = {}, closed = w.closed_tabs }
             for ti, tab in ipairs(w.tabs.children) do
-                table.insert(state, {wi = wi, ti = ti, current = (current ==
-                ti), uri = tab.uri, session_state = tab.session_state })
+                table.insert(state[wi].open, {
+                    ti = ti,
+                    current = (current == ti),
+                    uri = tab.uri,
+                    session_state = tab.session_state
+                })
             end
         end
 
@@ -38,7 +43,6 @@ session = {
     -- Load window and tab state from file
     load = function (delete)
         if not os.exists(session.file) then return end
-        local ret = {}
 
         -- Read file
         local fh = io.open(session.file, "rb")
@@ -47,13 +51,7 @@ session = {
         -- Delete file
         if delete ~= false then rm(session.file) end
 
-        -- Parse session file
-        for _, line in ipairs(state) do
-            if not ret[line.wi] then ret[line.wi] = {} end
-            table.insert(ret[line.wi], { uri = line.uri, current = line.current, session_state = line.session_state })
-        end
-
-        return (#ret > 0 and ret) or nil
+        return (#state > 0 and state) or nil
     end,
 
     -- Spawn windows from saved session and return the last window
@@ -63,15 +61,16 @@ session = {
 
         -- Spawn windows
         local w
-        for _, win in ipairs(wins) do
+        for _, win in pairs(wins) do
             w = nil
-            for _, item in ipairs(win) do
+            for _, item in ipairs(win.open) do
                 if not w then
                     w = window.new({{ session_state = item.session_state }})
                 else
                     w:new_tab({ session_state = item.session_state }, item.current)
                 end
             end
+            w.closed_tabs = win.closed
         end
 
         return w
