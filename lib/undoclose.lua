@@ -11,7 +11,10 @@ window.methods.undo_close_tab = function (w, index)
         index = #(w.closed_tabs) + index + 1
     end
     local tab = table.remove(w.closed_tabs, index)
-    if not tab then return end
+    if not tab then
+        w:notify("No closed tabs to reopen")
+        return
+    end
     local view = w:new_tab({ session_state = tab.session_state, hist = tab.hist })
     -- Attempt to open in last position
     if tab.after then
