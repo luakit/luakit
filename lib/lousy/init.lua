@@ -11,6 +11,7 @@ require("lousy.signal")
 require("lousy.widget")
 require("lousy.uri")
 require("lousy.load")
+require("lousy.pickle")
 
 --- Useful functions for luakit.
 module("lousy")
