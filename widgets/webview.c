@@ -277,7 +277,7 @@ luaH_webview_load_string(lua_State *L)
     const gchar *string = luaL_checkstring(L, 2);
     const gchar *base_uri = luaL_checkstring(L, 3);
 #if WITH_WEBKIT2
-    webkit_web_view_load_alternate_html(d->view, string, base_uri, base_uri);
+    webkit_web_view_load_alternate_html(d->view, string, base_uri, NULL);
 #else
     WebKitWebFrame *frame = webkit_web_view_get_main_frame(d->view);
     webkit_web_frame_load_alternate_string(frame, string, base_uri, base_uri);
