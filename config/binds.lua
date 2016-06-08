@@ -175,7 +175,7 @@ add_binds("normal", {
     key({}, "$", "Scroll to the absolute right of the document.",
         function (w) w:scroll{ x = -1 } end),
 
-    key({}, "0", "Scroll to the absolute left of the document.",
+    key({}, "0", "Scroll to the top of the document.",
         function (w, m)
             if not m.count then w:scroll{ y = 0 } else return false end
         end),
@@ -213,10 +213,10 @@ add_binds("normal", {
     key({}, "Page_Up", "Scroll page up.",
         function (w) w:scroll{ ypagerel = -page_step } end),
 
-    key({}, "Home", "Go to the top of the document.",
+    key({}, "Home", "Scroll to the top of the document.",
         function (w) w:scroll{ y =  0 } end),
 
-    key({}, "End", "Go to the end of the document.",
+    key({}, "End", "Scroll to the end of the document.",
         function (w) w:scroll{ y = -1 } end),
 
     -- Specific scroll
