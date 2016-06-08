@@ -152,6 +152,22 @@ local function matches_cb(w, n)
     w:set_ibar_theme(n > 0 and "ok" or "error")
 end
 
+follow_wm:add_signal("follow_func", function(_, wid, ret)
+    for _, w in pairs(window.bywidget) do
+        if w.win.id == wid then follow_func_cb(w, ret) end
+    end
+end)
+follow_wm:add_signal("follow", function(_, wid)
+    for _, w in pairs(window.bywidget) do
+        if w.win.id == wid then follow_cb(w) end
+    end
+end)
+follow_wm:add_signal("matches", function(_, wid, n)
+    for _, w in pairs(window.bywidget) do
+        if w.win.id == wid then matches_cb(w, n) end
+    end
+end)
+
 new_mode("follow", {
     enter = function (w, mode)
         assert(type(mode) == "table", "invalid follow mode")
@@ -193,10 +209,6 @@ new_mode("follow", {
         w:set_input("")
         w:set_ibar_theme()
 
-        follow_wm:add_signal("follow_func", function(_, ret) follow_func_cb(w, ret) end)
-        follow_wm:add_signal("follow", function(_) follow_cb(w) end)
-        follow_wm:add_signal("matches", function(_, n) matches_cb(w, n) end)
-
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
         mode.func = nil
@@ -215,10 +227,6 @@ new_mode("follow", {
     end,
 
     leave = function (w)
-        local names = {"follow_func", "follow", "matches"}
-        for _, name in ipairs(names) do
-            follow_wm:remove_signals(name)
-        end
         w:set_ibar_theme()
         follow_wm:emit_signal("leave", w.win.id)
     end,

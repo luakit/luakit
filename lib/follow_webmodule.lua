@@ -253,7 +253,7 @@ local function filter(state, hint_pat, text_pat)
             hint.label_elem.attr.style = hint.label_style
         end
     end
-    ui:emit_signal("matches", state.num_visible_hints)
+    ui:emit_signal("matches", state.wid, state.num_visible_hints)
 end
 
 local function focus(state, step)
@@ -321,7 +321,7 @@ end
 local function follow_hint(state, hint)
     local evaluator = evaluators[state.evaluator]
     local ret = evaluator(hint.elem)
-    ui:emit_signal("follow_func", ret)
+    ui:emit_signal("follow_func", state.wid, ret)
 end
 
 local function follow(state, all)
@@ -336,7 +336,7 @@ local function follow(state, all)
         assert(not hint.hidden)
         follow_hint(state, hint)
     end
-    ui:emit_signal("follow")
+    ui:emit_signal("follow", state.wid)
 end
 
 ui:add_signal("follow", function(_, wid, all)
@@ -345,13 +345,12 @@ ui:add_signal("follow", function(_, wid, all)
 end)
 
 ui:add_signal("enter", function(_, wid, mode, page_id, ignore_case)
-    local state = window_states[wid]
-
     local root = dom_document(page_id)
     local root_frame = { doc = root, body = root.body }
 
     local state = {}
 
+    state.wid = wid
     state.frames = find_frames(root_frame)
     state.evaluator = mode.evaluator
     state.focused = nil
