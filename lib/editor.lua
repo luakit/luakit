@@ -2,6 +2,7 @@ local string = string
 local globals = globals
 local capi = { luakit = luakit }
 local os = os
+local tostring = tostring
 
 module "editor"
 
@@ -11,9 +12,9 @@ edit = function (file, line)
 		term = globals.term or os.getenv("TERMINAL") or "xterm",
 		editor = globals.editor or os.getenv("EDITOR") or "vim",
 		file = file,
-		line = line or 0,
+		line = line and " +" .. tostring(line) or "",
 	}
-	local cmd_tmpl = "{term} -e '{editor} {file} +{line}'"
+	local cmd_tmpl = "{term} -e '{editor} {file}{line}'"
 	local cmd = string.gsub(cmd_tmpl, "{(%w+)}", subs)
 	capi.luakit.spawn(cmd)
 end
