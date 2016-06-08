@@ -174,7 +174,7 @@ add_cmds({
 })
 
 add_binds("normal", {
-    key({}, "V", "Edit page user stylesheet", function (w)
+    key({}, "V", "Edit page user stylesheet.", function (w)
 		if string.sub(w.view.uri, 1, 9) == "luakit://" then return end
 		local domain = domain_from_uri(w.view.uri)
 		local file = capi.luakit.data_dir .. "/styles/" .. domain .. ".css"
