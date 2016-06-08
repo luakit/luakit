@@ -833,7 +833,7 @@ window.indexes = {
 }
 
 -- Create new window
-function window.new(uris)
+function window.new(args)
     local w = window.build()
 
     -- Set window metatable
@@ -859,8 +859,11 @@ function window.new(uris)
     end
 
     -- Populate notebook with tabs
-    for _, uri in ipairs(uris or {}) do
-        w:new_tab(w:search_open(uri), false)
+    for _, arg in ipairs(args or {}) do
+        if type(arg) == "string" then
+            arg = w:search_open(uri)
+        end
+        w:new_tab(arg, false)
     end
 
     -- Make sure something is loaded
