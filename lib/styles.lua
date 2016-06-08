@@ -146,7 +146,7 @@ local function load_file(path, domain)
     end
 end
 
-detect_files = function()
+local detect_files = function()
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
 		print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
@@ -172,3 +172,5 @@ detect_files = function()
     end
     lfs.chdir(cwd)
 end
+
+detect_files()
