@@ -3,6 +3,8 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local pickle = lousy.pickle
+
 local function rm(file)
     luakit.spawn(string.format("rm %q", file))
 end
@@ -14,19 +16,19 @@ session = {
 
     -- Save all given windows uris to file.
     save = function (wins)
-        local lines = {}
+        local state = {}
         -- Save tabs from all the given windows
         for wi, w in pairs(wins) do
             local current = w.tabs:current()
             for ti, tab in ipairs(w.tabs.children) do
-                table.insert(lines, string.format("%d\t%d\t%s\t%s", wi, ti,
-                    tostring(current == ti), tab.uri))
+                table.insert(state, {wi = wi, ti = ti, current = (current ==
+                ti), uri = tab.uri, session_state = tab.session_state })
             end
         end
 
-        if #lines > 0 then
-            local fh = io.open(session.file, "w")
-            fh:write(table.concat(lines, "\n"))
+        if #state > 0 then
+            local fh = io.open(session.file, "wb")
+            fh:write(pickle.pickle(state))
             io.close(fh)
         else
             rm(session.file)
@@ -39,21 +41,16 @@ session = {
         local ret = {}
 
         -- Read file
-        local lines = {}
-        local fh = io.open(session.file, "r")
-        for line in fh:lines() do table.insert(lines, line) end
+        local fh = io.open(session.file, "rb")
+        local state = pickle.unpickle(fh:read("*all"))
         io.close(fh)
         -- Delete file
         if delete ~= false then rm(session.file) end
 
         -- Parse session file
-        local split = lousy.util.string.split
-        for _, line in ipairs(lines) do
-            local wi, ti, current, uri = unpack(split(line, "\t"))
-            wi = tonumber(wi)
-            current = (current == "true")
-            if not ret[wi] then ret[wi] = {} end
-            table.insert(ret[wi], {uri = uri, current = current})
+        for _, line in ipairs(state) do
+            if not ret[line.wi] then ret[line.wi] = {} end
+            table.insert(ret[line.wi], { uri = line.uri, current = line.current, session_state = line.session_state })
         end
 
         return (#ret > 0 and ret) or nil
@@ -70,9 +67,9 @@ session = {
             w = nil
             for _, item in ipairs(win) do
                 if not w then
-                    w = window.new({item.uri})
+                    w = window.new({{ session_state = item.session_state }})
                 else
-                    w:new_tab(item.uri, item.current)
+                    w:new_tab({ session_state = item.session_state }, item.current)
                 end
             end
         end
