@@ -10,6 +10,14 @@ CPPFLAGS   +=
 VERSION    ?= $(shell ./build-utils/getversion.sh)
 CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
+# === Default build options ==================================================
+
+DEVELOPMENT_PATHS ?= 1
+USE_GTK3          ?= 1
+USE_LUAJIT        ?= 1
+USE_UNIQUE        ?= 1
+USE_WEBKIT2       ?= 1
+
 # === Paths ==================================================================
 
 PREFIX     ?= /usr/local
