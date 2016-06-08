@@ -604,8 +604,15 @@ window.methods = {
         end
         -- Load uri or webview history table
         if type(arg) == "string" then view.uri = arg
-        elseif type(arg) == "userdata" then view.session_state = arg
-        elseif type(arg) == "table" then view.history = arg end
+        elseif type(arg) == "table" then
+            if arg.session_state then
+                view.session_state = arg.session_state
+            elseif arg.hist then
+                view.history = arg.hist
+            else
+                error("Tried to open new tab with invalid table")
+            end
+        end
         -- Update statusbar widgets
         w:update_tab_count()
         w:update_tablist()

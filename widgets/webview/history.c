@@ -210,9 +210,13 @@ luaH_webview_go_forward(lua_State *L)
 
 #if WITH_WEBKIT2
 static void
-webview_set_session_state(webview_data_t *d, gpointer data)
+luaH_webview_set_session_state(lua_State *L, webview_data_t *d)
 {
-    WebKitWebViewSessionState *state = webkit_web_view_session_state_new(data);
+    size_t len;
+    const gchar *str = lua_tolstring(L, 3, &len);
+    GBytes *bytes = g_bytes_new(str, len);
+    WebKitWebViewSessionState *state = webkit_web_view_session_state_new(bytes);
+    g_bytes_unref(bytes);
     webkit_web_view_restore_session_state(d->view, state);
 
     WebKitBackForwardList *bfl = webkit_web_view_get_back_forward_list(d->view);
@@ -221,10 +225,14 @@ webview_set_session_state(webview_data_t *d, gpointer data)
     update_uri(d->widget, webkit_back_forward_list_item_get_uri(item));
 }
 
-static gpointer
-webview_get_session_state(webview_data_t *d)
+static int
+luaH_webview_push_session_state(lua_State *L, webview_data_t *d)
 {
     WebKitWebViewSessionState *state = webkit_web_view_get_session_state(d->view);
-    return webkit_web_view_session_state_serialize(state);
+    GBytes *bytes = webkit_web_view_session_state_serialize(state);
+    gsize len;
+    const gchar *str = g_bytes_get_data(bytes, &len);
+    lua_pushlstring(L, str, len);
+    return 1;
 }
 #endif

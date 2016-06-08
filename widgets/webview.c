@@ -907,7 +907,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
 #if WITH_WEBKIT2
       case L_TK_SESSION_STATE:
-        lua_pushlightuserdata(L, webview_get_session_state(d));
+        return luaH_webview_push_session_state(L, d);
         return 1;
       case L_TK_STYLESHEETS:
         return luaH_webview_push_stylesheets_table(L);
@@ -988,7 +988,7 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
 #if WITH_WEBKIT2
       case L_TK_SESSION_STATE:
-        webview_set_session_state(d, lua_topointer(L, 3));
+        luaH_webview_set_session_state(L, d);
         return 0;
 #else
       case L_TK_SHOW_SCROLLBARS:
