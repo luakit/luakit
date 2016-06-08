@@ -130,7 +130,6 @@ static void
 initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_data))
 {
     const gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
-    /* const gchar *extension_dir = "/home/aidan/Programming/luakit/luakit/"; */
     const gchar *extension_dir = LUAKIT_INSTALL_PATH;
 
     /* Set up connection to web extension process */
