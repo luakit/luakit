@@ -11,6 +11,7 @@
 
 typedef struct _msg_recv_state_t {
     GIOChannel *channel;
+    guint watch_in_id, watch_hup_id;
     GPtrArray *queued_msgs;
 
     msg_header_t hdr;
@@ -66,7 +67,9 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_da
 static gboolean
 msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer UNUSED(user_data))
 {
-    g_io_channel_unref(channel);
+    g_source_remove(state.watch_in_id);
+    g_source_remove(state.watch_hup_id);
+    g_io_channel_shutdown(channel, TRUE, NULL);
     return FALSE;
 }
 
@@ -78,8 +81,8 @@ msg_setup(int sock)
     state.channel = g_io_channel_unix_new(sock);
     g_io_channel_set_encoding(state.channel, NULL, NULL);
     g_io_channel_set_buffered(state.channel, FALSE);
-    g_io_add_watch(state.channel, G_IO_IN, msg_recv, NULL);
-    g_io_add_watch(state.channel, G_IO_HUP, msg_hup, NULL);
+    state.watch_in_id = g_io_add_watch(state.channel, G_IO_IN, msg_recv, NULL);
+    state.watch_hup_id = g_io_add_watch(state.channel, G_IO_HUP, msg_hup, NULL);
 
     return state.channel;
 }
