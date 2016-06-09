@@ -8,6 +8,8 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #include "clib/web_module.h"
 #include "common/luaserialize.h"
@@ -113,6 +115,7 @@ web_extension_connect(gpointer user_data)
         fatal("Can't accept on %s", socket_path);
 
     close(sock);
+    g_unlink(socket_path);
 
     debug("Creating channel...");
 
