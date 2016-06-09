@@ -9,6 +9,7 @@ local pairs = pairs
 local type = type
 local tostring, loadstring = tostring, loadstring
 local table, string = table, string
+local error = error
 
 module("lousy.pickle")
 
