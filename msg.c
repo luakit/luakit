@@ -122,9 +122,13 @@ web_extension_connect(gpointer user_data)
     globalconf.web_channel = msg_setup(web_socket);
 
     /* Send all queued messages */
-    g_io_channel_write_chars(globalconf.web_channel, (gchar*)globalconf.web_channel_queue->data, globalconf.web_channel_queue->len, NULL, NULL);
-    g_byte_array_unref(globalconf.web_channel_queue);
-    globalconf.web_channel_queue = NULL;
+    if (globalconf.web_channel_queue) {
+        g_io_channel_write_chars(globalconf.web_channel,
+                (gchar*)globalconf.web_channel_queue->data,
+                globalconf.web_channel_queue->len, NULL, NULL);
+        g_byte_array_unref(globalconf.web_channel_queue);
+        globalconf.web_channel_queue = NULL;
+    }
 
     return NULL;
 }
