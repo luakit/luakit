@@ -64,6 +64,9 @@ add_binds("undolist", lousy.util.table.join({
                 end
             end
             w.menu:del()
+            if w.menu:nrows() == 1 then
+                w:notify("No closed tabs to display")
+            end
         end
     end),
 
@@ -77,6 +80,9 @@ add_binds("undolist", lousy.util.table.join({
                 end
             end
             w.menu:del()
+            if w.menu:nrows() == 1 then
+                w:notify("No closed tabs to display")
+            end
         end
     end),
 
