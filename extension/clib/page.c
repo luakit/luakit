@@ -15,7 +15,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
     lua_State *L = extension.WL;
     const gchar *uri = webkit_uri_request_get_uri(request);
 
-    luaH_uniq_get(L, REG_KEY, web_page);
+    luaH_uniq_get_ptr(L, REG_KEY, web_page);
     lua_pushstring(L, uri);
     gint ret = luaH_object_emit_signal(L, -2, "send-request", 1, 1);
 
@@ -35,7 +35,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
 gint
 luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
 {
-    if (luaH_uniq_get(L, REG_KEY, web_page))
+    if (luaH_uniq_get_ptr(L, REG_KEY, web_page))
         return 1;
 
     lua_newtable(L);
@@ -48,7 +48,7 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
 
     luaH_bind_gobject_ref(L, web_page, -1);
-    luaH_uniq_add(L, REG_KEY, web_page, -1);
+    luaH_uniq_add_ptr(L, REG_KEY, web_page, -1);
 
     return 1;
 }

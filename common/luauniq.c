@@ -26,20 +26,20 @@ luaH_uniq_setup(lua_State *L, const gchar *reg)
  * The stack is left unmodified,
  * `oud` is the Lua value index on the stack. */
 int
-luaH_uniq_add(lua_State *L, const gchar *reg, const gpointer key, int oud)
+luaH_uniq_add(lua_State *L, const gchar *reg, int k, int oud)
 {
     /* Push the registry */
     lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
 
     /* Assert that the value is not already there */
-    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, k > 0 ? k : k-1);
     lua_rawget(L, -2);
     g_assert(lua_isnil(L, -1));
     lua_pop(L, 1);
 
     /* Add the Lua value */
-    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, k > 0 ? k : k-1);
     lua_pushvalue(L, oud < 0 ? oud - 2 : oud);
     lua_rawset(L, -3);
 
@@ -48,18 +48,27 @@ luaH_uniq_add(lua_State *L, const gchar *reg, const gpointer key, int oud)
     return 0;
 }
 
+int
+luaH_uniq_add_ptr(lua_State *L, const gchar *reg, gpointer key, int oud)
+{
+    lua_pushlightuserdata(L, key);
+    luaH_uniq_add(L, reg, -1, oud > 0 ? oud : oud-1);
+    lua_pop(L, 1);
+    return 0;
+}
+
 /* Given a key, pushes its associated Lua value onto the stack,
  * or pushes nil if no such key/value pair exists; this can happen
  * if all Lua references have been released, for example. */
 int
-luaH_uniq_get(lua_State *L, const gchar *reg, const gpointer key)
+luaH_uniq_get(lua_State *L, const gchar *reg, int k)
 {
     /* Push the registry */
     lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
 
     /* Get the Lua value */
-    lua_pushlightuserdata(L, key);
+    lua_pushvalue(L, k > 0 ? k : k-1);
     lua_rawget(L, -2);
 
     /* Remove the registry */
@@ -71,6 +80,15 @@ luaH_uniq_get(lua_State *L, const gchar *reg, const gpointer key)
     }
 
     return 1;
+}
+
+int
+luaH_uniq_get_ptr(lua_State *L, const gchar *reg, gpointer key)
+{
+    lua_pushlightuserdata(L, key);
+    int n = luaH_uniq_get(L, reg, -1);
+    lua_remove(L, -1-n);
+    return n;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
