@@ -5,10 +5,10 @@
 
 /* Setup the unique object system at startup. */
 void
-luaH_uniq_setup(lua_State *L)
+luaH_uniq_setup(lua_State *L, const gchar *reg)
 {
     /* Push identification string */
-    lua_pushliteral(L, LUAKIT_UNIQ_REGISTRY_KEY);
+    lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
     /* Create an empty table */
     lua_newtable(L);
     /* Set metatable specifying weak-values mode */
@@ -26,10 +26,10 @@ luaH_uniq_setup(lua_State *L)
  * The stack is left unmodified,
  * `oud` is the Lua value index on the stack. */
 int
-luaH_uniq_add(lua_State *L, const gpointer key, int oud)
+luaH_uniq_add(lua_State *L, const gchar *reg, const gpointer key, int oud)
 {
     /* Push the registry */
-    lua_pushliteral(L, LUAKIT_UNIQ_REGISTRY_KEY);
+    lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
 
     /* Assert that the value is not already there */
@@ -52,10 +52,10 @@ luaH_uniq_add(lua_State *L, const gpointer key, int oud)
  * or pushes nil if no such key/value pair exists; this can happen
  * if all Lua references have been released, for example. */
 int
-luaH_uniq_get(lua_State *L, const gpointer key)
+luaH_uniq_get(lua_State *L, const gchar *reg, const gpointer key)
 {
     /* Push the registry */
-    lua_pushliteral(L, LUAKIT_UNIQ_REGISTRY_KEY);
+    lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
 
     /* Get the Lua value */
