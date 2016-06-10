@@ -58,8 +58,7 @@ luaH_uniq_add_ptr(lua_State *L, const gchar *reg, gpointer key, int oud)
 }
 
 /* Given a key, pushes its associated Lua value onto the stack,
- * or pushes nil if no such key/value pair exists; this can happen
- * if all Lua references have been released, for example. */
+ * if it exists */
 int
 luaH_uniq_get(lua_State *L, const gchar *reg, int k)
 {
