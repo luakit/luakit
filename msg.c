@@ -25,10 +25,7 @@ msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint U
 void
 msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 {
-    const guint module = msg->module;
-    const char *arg = msg->arg;
-
-    web_module_recv(globalconf.L, module, arg, length-sizeof(module));
+    web_module_recv(globalconf.L, msg->arg, length);
 }
 
 void

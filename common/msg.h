@@ -39,7 +39,6 @@ typedef struct _msg_lua_require_module_t {
 } msg_lua_require_module_t;
 
 typedef struct _msg_lua_msg_t {
-	guint module;
 	gchar arg[0];
 } msg_lua_msg_t;
 

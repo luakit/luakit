@@ -33,10 +33,7 @@ msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
 void
 msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 {
-    const guint module = msg->module;
-    const char *arg = msg->arg;
-
-    ui_process_recv(extension.WL, module, arg, length-sizeof(module));
+    ui_process_recv(extension.WL, msg->arg, length);
 }
 
 void

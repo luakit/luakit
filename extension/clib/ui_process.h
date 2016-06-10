@@ -11,12 +11,11 @@
 typedef struct _ui_process_t {
     LUA_OBJECT_HEADER
     char *name;
-    int module;
 } ui_process_t;
 
 lua_class_t ui_process_class;
 
-void ui_process_recv(lua_State *L, const guint module, const gchar *arg, guint arglen);
+void ui_process_recv(lua_State *L, const gchar *arg, guint arglen);
 void ui_process_set_module(lua_State *L, const gchar *module_name);
 void ui_process_class_setup(lua_State *);
 
