@@ -118,6 +118,8 @@ web_extension_connect(gpointer user_data)
 
     globalconf.web_channel = msg_setup(web_socket);
 
+    web_module_restart(globalconf.L);
+
     /* Send all queued messages */
     if (globalconf.web_channel_queue) {
         g_io_channel_write_chars(globalconf.web_channel,

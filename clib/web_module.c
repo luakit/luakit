@@ -71,6 +71,29 @@ web_module_recv(lua_State *L, const gchar *arg, guint arglen)
 }
 
 void
+web_module_restart(lua_State *L)
+{
+    static gboolean crashed;
+    if (!crashed) {
+        crashed = TRUE;
+        return;
+    }
+
+    lua_pushstring(L, REG_KEY);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_pushnil(L);
+    while (lua_next(L, -2)) {
+        const gchar *name = lua_tostring(L, -2);
+        msg_header_t header = {
+            .type = MSG_TYPE_lua_require_module,
+            .length = strlen(name)+1
+        };
+        msg_send(&header, name);
+        lua_pop(L, 1);
+    }
+}
+
+void
 web_module_class_setup(lua_State *L)
 {
     static const struct luaL_reg web_module_methods[] =

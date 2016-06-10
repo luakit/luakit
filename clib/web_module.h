@@ -14,6 +14,7 @@ lua_class_t web_module_class;
 
 void web_module_class_setup(lua_State *);
 void web_module_recv(lua_State *L, const gchar *arg, guint arglen);
+void web_module_restart(lua_State *L);
 
 #endif
 
