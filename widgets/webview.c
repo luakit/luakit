@@ -581,37 +581,17 @@ decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
  * over the navigation request by launching an external application.
  */
       case WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION:
+      case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
       {
           gint top = lua_gettop(L);
           WebKitNavigationPolicyDecision *np = WEBKIT_NAVIGATION_POLICY_DECISION(p);
           WebKitNavigationAction *na = webkit_navigation_policy_decision_get_navigation_action(np);
-          const gchar *uri = webkit_uri_request_get_uri(
-                  webkit_navigation_action_get_request(na));
-          luaH_object_push(L, w->ref);
-          lua_pushstring(L, uri);
-          gint ret = luaH_object_emit_signal(L, -2, "navigation-request", 1, 1);
-          gboolean ignore = ret && !lua_toboolean(L, top + 2);
-
-          if (ignore)
-              webkit_policy_decision_ignore(p);
-
-          lua_settop(L, top);
-          return ignore;
-      }
-      case WEBKIT_POLICY_DECISION_TYPE_NEW_WINDOW_ACTION:
-      {
-          WebKitNavigationPolicyDecision *np = WEBKIT_NAVIGATION_POLICY_DECISION(p);
-          WebKitNavigationAction *na = webkit_navigation_policy_decision_get_navigation_action(np);
-          const gchar *uri = webkit_uri_request_get_uri(
-                  webkit_navigation_action_get_request(na));
+          const gchar *signal_name = type == WEBKIT_POLICY_DECISION_TYPE_NAVIGATION_ACTION
+                ? "navigation-request" : "new-window-decision";
+          const gchar *uri = webkit_uri_request_get_uri(webkit_navigation_action_get_request(na));
           gchar *reason = NULL;
-          gint ret = 0;
-
-          luaH_object_push(L, w->ref);
-          lua_pushstring(L, uri);
 
           switch (webkit_navigation_action_get_navigation_type(na)) {
-
 # define NR_CASE(a, l) case WEBKIT_NAVIGATION_TYPE_##a: reason = l; break;
               NR_CASE(LINK_CLICKED,     "link-clicked");
               NR_CASE(FORM_SUBMITTED,   "form-submitted");
@@ -620,22 +600,21 @@ decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
               NR_CASE(FORM_RESUBMITTED, "form-resubmitted");
               NR_CASE(OTHER,            "other");
 #undef  NR_CASE
-
             default:
               warn("programmer error, unable to get web navigation reason literal");
               break;
           }
 
+          luaH_object_push(L, w->ref);
+          lua_pushstring(L, uri);
           lua_pushstring(L, reason);
-          ret = luaH_object_emit_signal(L, -3, "new-window-decision", 2, 1);
-
-          /* User responded with true, meaning a decision was made
-           * and the signal was handled */
+          gint ret = luaH_object_emit_signal(L, -3, signal_name, 2, 1);
           gboolean ignore = ret && lua_toboolean(L, -1);
+
           if (ignore)
               webkit_policy_decision_ignore(p);
 
-          lua_pop(L, ret + 1);
+          lua_settop(L, top);
           return ignore;
       }
       case WEBKIT_POLICY_DECISION_TYPE_RESPONSE:
