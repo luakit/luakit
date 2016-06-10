@@ -37,7 +37,7 @@ msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 }
 
 void
-msg_recv_rc_loaded(const msg_rc_loaded_t *UNUSED(msg), guint UNUSED(length))
+msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 {
     extension_class_emit_pending_signals(extension.WL);
 }

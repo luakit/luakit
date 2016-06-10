@@ -35,7 +35,7 @@ msg_recv_scroll(msg_scroll_t *msg, guint UNUSED(length))
 }
 
 void
-msg_recv_rc_loaded(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
+msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
 }
