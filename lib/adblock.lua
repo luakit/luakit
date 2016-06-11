@@ -306,7 +306,7 @@ parse_abpfilterlist = function (filename, cache)
 end
 
 -- Load filter list files
-load = function (reload, single_list)
+load = function (reload, single_list, no_sync)
     if reload then subscriptions, filterfiles = {}, {} end
     detect_files()
     if not simple_mode and not single_list then
@@ -362,7 +362,9 @@ load = function (reload, single_list)
     
     rules_cache.white, rules_cache.black = nil, nil
     rules_cache = nil
-    adblock_wm:emit_signal("update_rules", rules)
+    if not no_sync then
+        adblock_wm:emit_signal("update_rules", rules)
+    end
     refresh_views()
 end
 
@@ -500,6 +502,10 @@ adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
     end
 end)
 
+adblock_wm:add_signal("loaded", function(_)
+    adblock_wm:emit_signal("update_rules", rules)
+end)
+
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({
@@ -526,4 +532,4 @@ add_cmds({
 })
 
 -- Initialise module
-load()
+load(nil, nil, true)
