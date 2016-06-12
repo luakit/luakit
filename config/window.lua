@@ -151,7 +151,7 @@ window.init_funcs = {
             luakit.idle_add(function ()
                 w:update_tab_count()
                 w:update_win_title()
-                w:update_uri()
+                w:update_uri(w.view.hovered_uri)
                 w:update_progress()
                 w:update_tablist()
                 w:update_buf()
