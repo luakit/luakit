@@ -40,6 +40,9 @@ void
 msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 {
     extension_class_emit_pending_signals(extension.WL);
+
+    msg_header_t header = { .type = MSG_TYPE_web_extension_loaded, .length = 0 };
+    msg_send(&header, NULL);
 }
 
 void

@@ -83,6 +83,12 @@ msg_recv_lua_js_register(gpointer UNUSED(msg), guint UNUSED(length))
     fatal("UI process should never receive message of this type");
 }
 
+void
+msg_recv_web_extension_loaded(gpointer UNUSED(msg), guint UNUSED(length))
+{
+    globalconf.web_extension_loaded = TRUE;
+}
+
 static gpointer
 web_extension_connect(gpointer user_data)
 {
@@ -119,8 +125,12 @@ web_extension_connect(gpointer user_data)
 
     globalconf.web_channel = msg_setup(web_socket);
 
-    web_module_restart(globalconf.L);
-    luaH_reregister_functions(globalconf.L);
+    if (globalconf.web_extension_loaded) {
+        /* If it was previously loaded, we've just crashed */
+        web_module_restart(globalconf.L);
+        luaH_reregister_functions(globalconf.L);
+    }
+    globalconf.web_extension_loaded = FALSE;
 
     /* Send all queued messages */
     if (globalconf.web_channel_queue) {

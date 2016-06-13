@@ -1434,6 +1434,17 @@ webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
     return FALSE;
 }
+
+gboolean
+webview_wait_for_web_extension_cb(widget_t *w)
+{
+    if (!globalconf.web_extension_loaded)
+        return TRUE;
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "web-extension-loaded", 0, 0);
+    return FALSE;
+}
 #endif
 
 widget_t *
@@ -1633,6 +1644,10 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     gtk_widget_show(GTK_WIDGET(d->view));
 #if !WITH_WEBKIT2
     gtk_widget_show(GTK_WIDGET(d->win));
+#endif
+
+#if WITH_WEBKIT2
+    g_idle_add((GSourceFunc)webview_wait_for_web_extension_cb, w);
 #endif
 
     return w;

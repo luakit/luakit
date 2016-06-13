@@ -195,7 +195,7 @@ main(gint argc, gchar *argv[]) {
         fatal("couldn't find rc file");
 
 #if WITH_WEBKIT2
-    /* Releases page-created signals  */
+    /* Releases page-created signals, replies with web-extension-loaded */
     msg_header_t header = {
         .type = MSG_TYPE_web_lua_loaded,
         .length = 0
