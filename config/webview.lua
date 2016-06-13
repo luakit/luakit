@@ -329,10 +329,13 @@ function webview.new(w)
     view.show_scrollbars = false
     view.enforce_96_dpi = false
 
-    -- Call webview init functions
-    for k, func in pairs(webview.init_funcs) do
-        func(view, w)
-    end
+    view:add_signal("web-extension-loaded", function(view)
+        -- Call webview init functions
+        for k, func in pairs(webview.init_funcs) do
+            func(view, w)
+        end
+    end)
+
     return view
 end
 
