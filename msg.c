@@ -12,6 +12,7 @@
 #include <glib/gstdio.h>
 
 #include "clib/web_module.h"
+#include "clib/luakit.h"
 #include "common/luaserialize.h"
 
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
@@ -119,6 +120,7 @@ web_extension_connect(gpointer user_data)
     globalconf.web_channel = msg_setup(web_socket);
 
     web_module_restart(globalconf.L);
+    luaH_reregister_functions(globalconf.L);
 
     /* Send all queued messages */
     if (globalconf.web_channel_queue) {

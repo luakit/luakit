@@ -617,31 +617,62 @@ luaH_luakit_idle_remove(lua_State *L)
 }
 
 #if WITH_WEBKIT2
+
+typedef struct _lua_js_registration_t {
+    gchar *pattern;
+    gchar *name;
+    gpointer ref;
+} lua_js_registration_t;
+
+GArray *registrations;
+
 static gint
 luaH_luakit_register_function(lua_State *L)
 {
-    const gchar *pattern = luaL_checkstring(L, 1);
-    const gchar *name = luaL_checkstring(L, 2);
+    lua_js_registration_t reg = {
+        .pattern = (gchar*)luaL_checkstring(L, 1),
+        .name = (gchar*)luaL_checkstring(L, 2),
+        .ref = NULL
+    };
 
-    if (strlen(pattern) == 0)
+    if (strlen(reg.pattern) == 0)
         return luaL_error(L, "pattern cannot be empty");
-    if (strlen(name) == 0)
+    if (strlen(reg.name) == 0)
         return luaL_error(L, "function name cannot be empty");
 
     /* get lua callback function */
     luaH_checkfunction(L, 3);
-    lua_pushlightuserdata(L, luaH_object_ref(L, 3));
+    reg.ref = luaH_object_ref(L, 3);
+    lua_pushlightuserdata(L, reg.ref);
 
-    GByteArray *buf = g_byte_array_new();
-    lua_serialize_range(L, buf, 1, 3);
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_js_register,
-        .length = buf->len
-    };
-    msg_send(&header, buf->data);
-    g_byte_array_unref(buf);
+    msg_send_lua(MSG_TYPE_lua_js_register, L, 1, 3);
+
+    /* Keep a copy for reregistration */
+    if (!registrations)
+        registrations = g_array_new(FALSE, FALSE, sizeof(lua_js_registration_t));
+    reg.pattern = g_strdup(reg.pattern);
+    reg.name = g_strdup(reg.name);
+    g_array_append_val(registrations, reg);
 
     return 0;
+}
+
+void
+luaH_reregister_functions(lua_State *L)
+{
+    for (guint i = 0; i < registrations->len; ++i) {
+        lua_js_registration_t reg = g_array_index(registrations, lua_js_registration_t, i);
+        lua_pushstring(L, reg.pattern);
+        lua_pushstring(L, reg.name);
+        lua_pushlightuserdata(L, reg.ref);
+
+        /* Incref */
+        luaH_object_push(L, reg.ref);
+        luaH_object_ref(L, -1);
+
+        msg_send_lua(MSG_TYPE_lua_js_register, L, -3, -1);
+        lua_pop(L, 3);
+    }
 }
 #endif
 
