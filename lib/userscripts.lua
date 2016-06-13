@@ -227,6 +227,16 @@ local function load_all()
     end
 end
 
+local function view_has_userscripts(view)
+    local uri = view.uri or "about:blank"
+    for _, script in pairs(scripts) do
+        if script:match(uri) then
+            return true
+        end
+    end
+    return false
+end
+
 -- Invoke all userscripts for a given webviews current uri
 local function invoke(view, on_start)
     local uri = view.uri or "about:blank"
@@ -267,6 +277,11 @@ webview.init_funcs.userscripts = function (view, w)
 --        elseif status == "first-visual" then
 --            invoke(v, true)
         elseif status == "finished" then
+            if view_has_userscripts(view) then
+                if v:emit_signal("enable-userscripts", w) == false then
+                    return
+                end
+            end
             -- WebKit2 has no first-visual signal, so we can't inject
             -- userscripts set to run at document start that way. Just
             -- inject them all when loading has finished for now.
