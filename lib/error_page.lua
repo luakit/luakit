@@ -74,6 +74,7 @@ style = [===[
 
 local function styles(v, status) return false end
 local function scripts(v, status) return true end
+local function userscripts(v, status) return false end
 
 -- Clean up only when error page has finished since sometimes multiple
 -- load-status provisional signals are dispatched
@@ -81,6 +82,7 @@ local function cleanup(v, status)
     if status == "finished" then
         v:remove_signal("enable-styles", styles)
         v:remove_signal("enable-scripts", scripts)
+        v:remove_signal("enable-userscripts", userscripts)
     end
 end
 
@@ -89,6 +91,7 @@ local function load_error_page(v, heading, content)
     local html = string.gsub(html_template, "{(%w+)}", subs)
     v:add_signal("enable-styles", styles)
     v:add_signal("enable-scripts", scripts)
+    v:add_signal("enable-userscripts", userscripts)
     v:add_signal("load-status", cleanup)
     v:load_string(html, v.uri)
 end
