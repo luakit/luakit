@@ -159,6 +159,12 @@ webview.init_funcs.noscript_load = function (view)
             view.enable_plugins = ep
         end
     end)
+    view:add_signal("enable-userscripts", function(v, w)
+        if not v.enable_scripts then
+            w:warning("Cannot run userscripts with JavaScript disabled!")
+            return false
+        end
+    end)
 end
 
 local buf = lousy.bind.buf
