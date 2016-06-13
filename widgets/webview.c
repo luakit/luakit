@@ -1427,7 +1427,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
 }
 
 gboolean
-webview_crashed_cb(WebKitWebView *view, widget_t *w)
+webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
