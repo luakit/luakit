@@ -125,14 +125,14 @@ for k, m in pairs({
             end
         end
 
-        if not s.by_view[view].searched then
+        if not s.searched then
             -- Haven't searched before, save some state.
             s.forward = forward
             s.wrap = wrap
             local scroll = view.scroll
             s.marker = { x = scroll.x, y = scroll.y }
         end
-        s.by_view[view].searched = true
+        s.searched = true
 
         -- Invert direction if originally searching in reverse
         forward = (s.forward == forward)
@@ -156,7 +156,7 @@ for k, m in pairs({
         if clear_state ~= false then
             w.search_state = new_search_state()
         else
-            w.search_state.by_view[view].searched = false
+            w.search_state.searched = false
             w.search_state.last_search = nil
         end
     end,
