@@ -14,30 +14,32 @@ add_binds("normal", {
 
     key({}, "n", "Find next search result.", function (w, m)
         for i=1,m.count do
-            if w.search_state.ret == false then
-                w:error("not found: " .. w.search_state.last_search)
+            w:search(nil, true)
+            if w.search_state.by_view[w.view].ret == false then
                 break
             end
-            w:search(nil, true)
         end
     end, {count=1}),
 
     key({}, "N", "Find previous search result.", function (w, m)
         for i=1,m.count do
-            if w.search_state.ret == false then
-                w:error("not found: " .. w.search_state.last_search)
+            w:search(nil, false)
+            if w.search_state.by_view[w.view].ret == false then
                 break
             end
-            w:search(nil, false)
         end
     end, {count=1}),
 })
+
+local function new_search_state()
+    return { by_view = setmetatable({}, { __mode = "k" }) }
+end
 
 -- Setup search mode
 new_mode("search", {
     enter = function (w)
         -- Clear old search state
-        w.search_state = {}
+        w.search_state = new_search_state()
         w:set_prompt()
         w:set_input("/")
     end,
@@ -99,8 +101,12 @@ for k, m in pairs({
 
     search = function (view, w, text, forward, wrap)
         -- Get search state (or new state)
-        if not w.search_state then w.search_state = {} end
+        if not w.search_state then w.search_state = new_search_state() end
         local s = w.search_state
+
+        if not s.by_view[view] then
+            s.by_view[view] = {}
+        end
 
         -- Default values
         if forward == nil then forward = true end
@@ -112,28 +118,33 @@ for k, m in pairs({
         end
 
         if text == "" then
-            return w:clear_search()
+            if w:is_mode("search") then
+                return w:clear_search()
+            else
+                return w:notify("No search term specified")
+            end
         end
 
-        if not s.searched then
+        if not s.by_view[view].searched then
             -- Haven't searched before, save some state.
             s.forward = forward
             s.wrap = wrap
             local scroll = view.scroll
             s.marker = { x = scroll.x, y = scroll.y }
         end
-        s.searched = true
+        s.by_view[view].searched = true
 
         -- Invert direction if originally searching in reverse
         forward = (s.forward == forward)
 
-        if text == s.last_search then
+        if text == s.by_view[view].last_search then
             if forward then
                 view:search_next()
             else
                 view:search_previous()
             end
         else
+            s.by_view[view].search = text
             s.last_search = text
             view:search(text, text ~= string.lower(text), forward, wrap)
         end
@@ -143,9 +154,9 @@ for k, m in pairs({
         w:set_ibar_theme()
         view:clear_search()
         if clear_state ~= false then
-            w.search_state = {}
+            w.search_state = new_search_state()
         else
-            w.search_state.searched = false
+            w.search_state.by_view[view].searched = false
             w.search_state.last_search = nil
         end
     end,
@@ -154,13 +165,16 @@ for k, m in pairs({
 
 webview.init_funcs.search_callbacks = function (view, w)
     view:add_signal("found-text", function (v, d)
-        w.search_state.ret = true
+        w.search_state.by_view[v].ret = true
         w:set_ibar_theme()
     end)
 
     view:add_signal("failed-to-find-text", function (v, d)
-        w.search_state.ret = false
+        w.search_state.by_view[v].ret = false
         w:set_ibar_theme("error")
+        if not w:is_mode("search") then
+            w:error("not found: " .. w.search_state.last_search)
+        end
 
         local s = w.search_state
         if s.marker then w:scroll(s.marker) end
