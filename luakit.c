@@ -195,9 +195,9 @@ main(gint argc, gchar *argv[]) {
         fatal("couldn't find rc file");
 
 #if WITH_WEBKIT2
-    /* Tell web process that the configuration file has been loaded */
+    /* Releases page-created signals  */
     msg_header_t header = {
-        .type = MSG_TYPE_rc_loaded,
+        .type = MSG_TYPE_web_lua_loaded,
         .length = 0
     };
     msg_send(&header, NULL);

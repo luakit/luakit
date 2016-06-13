@@ -32,7 +32,7 @@ web_lua_init(void)
 
     luaL_openlibs(WL);
     luaH_object_setup(WL);
-    luaH_uniq_setup(WL);
+    luaH_uniq_setup(WL, NULL);
     luaH_add_paths(WL, NULL);
     ui_process_class_setup(WL);
     dom_document_class_setup(WL);

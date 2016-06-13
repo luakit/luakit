@@ -6,12 +6,13 @@
 #include "common/luaserialize.h"
 #include "extension/msg.h"
 
+#define REG_KEY "luakit.registry.ui_process"
+
 LUA_OBJECT_FUNCS(ui_process_class, ui_process_t, ui_process);
 
 #define luaH_check_ui_process(L, idx) luaH_checkudata(L, idx, &(ui_process_class))
 
-GArray *module_refs;
-gchar *name;
+static gchar *name;
 
 void
 ui_process_set_module(lua_State *L, const gchar *module_name)
@@ -22,17 +23,26 @@ ui_process_set_module(lua_State *L, const gchar *module_name)
 
     /* Pre-initialize an instance for this module, and push a ref */
     if (name) {
+        lua_pushstring(L, REG_KEY);
+        lua_rawget(L, LUA_REGISTRYINDEX);
+
+        lua_pushstring(L, name);
+        lua_rawget(L, -2);
+        gboolean already_loaded = !lua_isnil(L, -1);
+        lua_pop(L, 1);
+        if (already_loaded)
+            return;
+
+        lua_pushstring(L, name);
+
         lua_newtable(L);
         luaH_class_new(L, &ui_process_class);
         lua_remove(L, -2);
-
         ui_process_t *ui_process = luaH_check_ui_process(L, -1);
         ui_process->name = name;
 
-        /* Append the reference to the module reference array */
-        int ref = luaL_ref(L, LUA_REGISTRYINDEX);
-        g_array_append_val(module_refs, ref);
-        ui_process->module = module_refs->len - 1;
+        lua_rawset(L, -3);
+        lua_pop(L, 1);
     }
 }
 
@@ -44,9 +54,11 @@ luaH_ui_process_new(lua_State *L)
         return 0;
     }
 
-    int ref = g_array_index(module_refs, int, module_refs->len - 1);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-
+    lua_pushstring(L, REG_KEY);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_pushstring(L, name);
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
     return 1;
 }
 
@@ -63,33 +75,28 @@ ui_process_send(lua_State *L)
 {
     ui_process_t *ui_process = luaH_check_ui_process(L, 1);
     luaL_checkstring(L, 2);
-
-    GByteArray *buf = g_byte_array_new();
-
-    g_byte_array_append(buf, (guint8*)&ui_process->module, sizeof(ui_process->module));
-    lua_serialize_range(L, buf, 2, lua_gettop(L));
-
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_msg,
-        .length = buf->len
-    };
-
-    msg_send(&header, buf->data);
-    g_byte_array_unref(buf);
-
+    lua_pushstring(L, ui_process->name);
+    msg_send_lua(MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
     return 0;
 }
 
 void
-ui_process_recv(lua_State *L, const guint module, const gchar *arg, guint arglen)
+ui_process_recv(lua_State *L, const gchar *arg, guint arglen)
 {
-    int ref = g_array_index(module_refs, int, module);
-    lua_rawgeti(L, LUA_REGISTRYINDEX, ref);
-
     int n = lua_deserialize_range(L, (guint8*)arg, arglen);
     const char *signame = lua_tostring(L, -n);
-    lua_remove(L, -n);
-    luaH_object_emit_signal(L, -n, signame, n-1, 0);
+    const char *module_name = lua_tostring(L, -1);
+
+    lua_pushstring(L, REG_KEY);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+    lua_pushstring(L, module_name);
+    lua_rawget(L, -2);
+    lua_remove(L, -2);
+
+    lua_remove(L, -n-1);
+    lua_insert(L, -n);
+    lua_remove(L, -1);
+    luaH_object_emit_signal(L, -n+1, signame, n-2, 0);
     lua_pop(L, 1);
 }
 
@@ -116,7 +123,9 @@ ui_process_class_setup(lua_State *L)
             NULL, NULL,
             ui_process_methods, ui_process_meta);
 
-    module_refs = g_array_new(FALSE, FALSE, sizeof(int));
+    lua_pushstring(L, REG_KEY);
+    lua_newtable(L);
+    lua_rawset(L, LUA_REGISTRYINDEX);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

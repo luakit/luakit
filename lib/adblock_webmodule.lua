@@ -165,3 +165,5 @@ extension:add_signal("page-created", function(_, page)
         if allow ~= nil then return allow end
     end)
 end)
+
+ui:emit_signal("loaded")

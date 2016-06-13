@@ -1425,6 +1425,15 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     lua_pop(L, ret + 1);
     return;
 }
+
+gboolean
+webview_crashed_cb(WebKitWebView *view, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "crashed", 0, 0);
+    return FALSE;
+}
 #endif
 
 widget_t *
@@ -1527,6 +1536,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       /* document-load-finished has no analog in webkit2, but load-changed with
        * the WEBKIT_LOAD_FINISHED event might be what you're looking for. */
       /* download-requested -> WebKitWebContext download-started */
+      "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
 #else
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,

@@ -8,8 +8,11 @@
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
+#include <glib.h>
+#include <glib/gstdio.h>
 
 #include "clib/web_module.h"
+#include "clib/luakit.h"
 #include "common/luaserialize.h"
 
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
@@ -23,10 +26,7 @@ msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint U
 void
 msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
 {
-    const guint module = msg->module;
-    const char *arg = msg->arg;
-
-    web_module_recv(globalconf.L, module, arg, length-sizeof(module));
+    web_module_recv(globalconf.L, msg->arg, length);
 }
 
 void
@@ -36,7 +36,7 @@ msg_recv_scroll(msg_scroll_t *msg, guint UNUSED(length))
 }
 
 void
-msg_recv_rc_loaded(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
+msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
 }
@@ -113,15 +113,23 @@ web_extension_connect(gpointer user_data)
         fatal("Can't accept on %s", socket_path);
 
     close(sock);
+    g_unlink(socket_path);
 
     debug("Creating channel...");
 
     globalconf.web_channel = msg_setup(web_socket);
 
+    web_module_restart(globalconf.L);
+    luaH_reregister_functions(globalconf.L);
+
     /* Send all queued messages */
-    g_io_channel_write_chars(globalconf.web_channel, (gchar*)globalconf.web_channel_queue->data, globalconf.web_channel_queue->len, NULL, NULL);
-    g_byte_array_unref(globalconf.web_channel_queue);
-    globalconf.web_channel_queue = NULL;
+    if (globalconf.web_channel_queue) {
+        g_io_channel_write_chars(globalconf.web_channel,
+                (gchar*)globalconf.web_channel_queue->data,
+                globalconf.web_channel_queue->len, NULL, NULL);
+        g_byte_array_unref(globalconf.web_channel_queue);
+        globalconf.web_channel_queue = NULL;
+    }
 
     return NULL;
 }

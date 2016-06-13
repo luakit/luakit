@@ -8,7 +8,7 @@
 	X(lua_require_module) \
 	X(lua_msg) \
 	X(scroll) \
-	X(rc_loaded) \
+	X(web_lua_loaded) \
 	X(lua_js_call) \
 	X(lua_js_register) \
 	X(lua_js_gc) \
@@ -39,7 +39,6 @@ typedef struct _msg_lua_require_module_t {
 } msg_lua_require_module_t;
 
 typedef struct _msg_lua_msg_t {
-	guint module;
 	gchar arg[0];
 } msg_lua_msg_t;
 

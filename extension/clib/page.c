@@ -4,6 +4,8 @@
 #include "common/luautil.h"
 #include "common/luauniq.h"
 
+#define REG_KEY "luakit.uniq.registry.page"
+
 LUA_OBJECT_FUNCS(page_class, page_t, page);
 
 static gboolean
@@ -13,7 +15,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
     lua_State *L = extension.WL;
     const gchar *uri = webkit_uri_request_get_uri(request);
 
-    luaH_uniq_get(L, web_page);
+    luaH_uniq_get_ptr(L, REG_KEY, web_page);
     lua_pushstring(L, uri);
     gint ret = luaH_object_emit_signal(L, -2, "send-request", 1, 1);
 
@@ -33,7 +35,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
 gint
 luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
 {
-    if (luaH_uniq_get(L, web_page))
+    if (luaH_uniq_get_ptr(L, REG_KEY, web_page))
         return 1;
 
     lua_newtable(L);
@@ -46,7 +48,7 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
 
     luaH_bind_gobject_ref(L, web_page, -1);
-    luaH_uniq_add(L, web_page, -1);
+    luaH_uniq_add_ptr(L, REG_KEY, web_page, -1);
 
     return 1;
 }
@@ -100,6 +102,8 @@ page_class_setup(lua_State *L)
             (lua_class_allocator_t) page_new,
             NULL, NULL,
             page_methods, page_meta);
+
+    luaH_uniq_setup(L, REG_KEY);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

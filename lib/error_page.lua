@@ -20,14 +20,9 @@ html_template = [==[
     <body>
         <div id="errorContainer">
             <div id="errorTitle">
-                <p id="errorTitleText">Unable to load page</p>
+                <p id="errorTitleText">{heading}</p>
             </div>
-            <div class="errorMessage">
-                <p>A problem occurred while loading the URL {uri}</p>
-            </div>
-            <div class="errorMessage">
-                <p id="errorMessageText">{msg}</p>
-            </div>
+            {content}
             <form name="bl">
                 <input type="button" value="Try again" onclick="javascript:tryagain()" />
             </form>
@@ -89,17 +84,41 @@ local function cleanup(v, status)
     end
 end
 
+local function load_error_page(v, heading, content)
+    local subs = { uri = uri, heading = heading, content = content, style = style }
+    local html = string.gsub(html_template, "{(%w+)}", subs)
+    v:add_signal("enable-styles", styles)
+    v:add_signal("enable-scripts", scripts)
+    v:add_signal("load-status", cleanup)
+    v:load_string(html, v.uri)
+end
+
 webview.init_funcs.error_page_init = function(view, w)
     view:add_signal("load-status", function(v, status, uri, msg)
         if status ~= "failed" then return end
         if msg == "Load request cancelled" then return end
         if msg == "Plugin will handle load" then return end
-        local subs = { uri = uri, msg = msg, style = style }
-        local html = string.gsub(html_template, "{(%w+)}", subs)
-        v:add_signal("enable-styles", styles)
-        v:add_signal("enable-scripts", scripts)
-        v:add_signal("load-status", cleanup)
-        v:load_string(html, uri)
+
+        local error_content_tmpl = [==[
+            <div class="errorMessage">
+                <p>A problem occurred while loading the URL {uri}</p>
+            </div>
+            <div class="errorMessage">
+                <p id="errorMessageText">{msg}</p>
+            </div>
+        ]==]
+        local content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
+        load_error_page(v, "Unable to load page", content)
+
         return true
+    end)
+
+    view:add_signal("crashed", function(v)
+        local content = [==[
+            <div class="errorMessage">
+                <p>Reload the page to continue</p>
+            </div>
+        ]==]
+        load_error_page(v, "Web Process Crashed", content)
     end)
 end
