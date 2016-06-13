@@ -861,7 +861,7 @@ function window.new(args)
     -- Populate notebook with tabs
     for _, arg in ipairs(args or {}) do
         if type(arg) == "string" then
-            arg = w:search_open(uri)
+            arg = w:search_open(arg)
         end
         w:new_tab(arg, false)
     end
