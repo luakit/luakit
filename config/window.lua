@@ -116,7 +116,8 @@ function window.build()
     i.ebox.child = i.layout
     w.layout:pack(i.ebox)
     i.input.css = "border: 0;"
-    i.layout.css = "transition: 0.2s ease-in-out;"
+    i.layout.css = "transition: 0.0s ease-in-out;"
+    i.input.css = "transition: 0.0s ease-in-out;"
 
     -- Other settings
     i.input.show_frame = false
