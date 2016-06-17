@@ -1443,6 +1443,7 @@ webview_wait_for_web_extension_cb(widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "web-extension-loaded", 0, 0);
+    lua_pop(L, 1);
     return FALSE;
 }
 #endif
