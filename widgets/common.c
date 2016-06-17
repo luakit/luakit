@@ -220,6 +220,20 @@ luaH_widget_set_visible(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_set_tooltip(lua_State *L, widget_t *w)
+{
+    gtk_widget_set_tooltip_markup(w->widget, lua_tostring(L, 3) ?: "");
+    return 0;
+}
+
+gint
+luaH_widget_get_tooltip(lua_State *L, widget_t *w)
+{
+    gtk_widget_get_tooltip_markup(w->widget);
+    return 1;
+}
+
+gint
 luaH_widget_get_visible(lua_State *L, widget_t *w)
 {
     lua_pushboolean(L, gtk_widget_get_visible(w->widget));
