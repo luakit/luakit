@@ -424,12 +424,13 @@ window.methods = {
 
     -- Set and display the prompt
     set_prompt = function (w, text, opts)
-        local prompt, ebox, opts = w.ibar.prompt, w.ibar.ebox, opts or {}
+        local input, prompt, layout, opts = w.ibar.input, w.ibar.prompt, w.ibar.layout, opts or {}
         prompt:hide()
         -- Set theme
         fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
+        if input.fg ~= fg then input.fg = fg end
         if prompt.fg ~= fg then prompt.fg = fg end
-        if ebox.bg ~= bg then ebox.bg = bg end
+        if layout.bg ~= bg then layout.bg = bg end
         -- Set text or remain hidden
         if text then
             prompt.text = lousy.util.escape(text)
