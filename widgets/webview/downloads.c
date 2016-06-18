@@ -57,6 +57,12 @@ download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, widget_t *w)
 download_request_cb(WebKitWebView* UNUSED(v), WebKitDownload *dl, widget_t *w)
 #endif
 {
+#if WITH_WEBKIT2
+    webview_data_t *d = w->data;
+    WebKitWebView *dl_view = webkit_download_get_web_view(dl);
+    if (d->view != dl_view)
+        return FALSE;
+#endif
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_download_push(L, dl);
