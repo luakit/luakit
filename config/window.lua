@@ -17,6 +17,7 @@ local function hbox()     return widget{type="hbox"}     end
 local function label()    return widget{type="label"}    end
 local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
+local function overlay()  return widget{type="overlay"}  end
 
 -- Build and pack window widgets
 function window.build()
@@ -56,6 +57,7 @@ function window.build()
 
         -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
         menu = lousy.widget.menu(),
+        menu_tabs = overlay(),
 
         -- Input bar widgets
         ibar = {
@@ -79,7 +81,8 @@ function window.build()
     w.layout:pack(w.tablist.widget)
 
     -- Pack notebook
-    w.layout:pack(w.tabs, { expand = true, fill = true })
+    w.menu_tabs.child = w.tabs
+    w.layout:pack(w.menu_tabs, { expand = true, fill = true })
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
@@ -108,7 +111,7 @@ function window.build()
     w.bar_layout:pack(s.ebox)
 
     -- Pack menu widget
-    w.layout:pack(w.menu.widget)
+    w.menu_tabs:pack(w.menu.widget, { halign = "fill", valign = "end" })
     w.menu:hide()
 
     -- Pack input bar
