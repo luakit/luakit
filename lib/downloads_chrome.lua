@@ -353,12 +353,11 @@ end,
 function (view, meta)
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
-    local _, err = view:eval_js(jquery, { no_return = true })
-    assert(not err, err)
+    print("View: ", view.enable_scripts)
+    view:eval_js(jquery, { no_return = true })
 
     -- Load main luakit://download/ JavaScript
-    local _, err = view:eval_js(main_js, { no_return = true })
-    assert(not err, err)
+    view:eval_js(main_js, { no_return = true })
 end,
 export_funcs)
 
