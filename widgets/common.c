@@ -229,7 +229,7 @@ luaH_widget_set_tooltip(lua_State *L, widget_t *w)
 gint
 luaH_widget_get_tooltip(lua_State *L, widget_t *w)
 {
-    gtk_widget_get_tooltip_markup(w->widget);
+    lua_pushstring(L, gtk_widget_get_tooltip_markup(w->widget));
     return 1;
 }
 
