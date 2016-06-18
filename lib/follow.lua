@@ -141,8 +141,6 @@ local function follow_cb(w)
 
     if mode.persist then
         w:set_mode("follow", mode)
-    else
-        w:set_mode()
     end
 
     ignore_keys(w)
