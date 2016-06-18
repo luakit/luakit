@@ -88,17 +88,14 @@ evaluators = {
             local t = element.attr.type
             if t == "radio" or t == "checkbox" then
                 element.attr.checked = "checked"
-                return "root-active"
             elseif t == "submit" or t == "reset" or t == "button" then
                 element:click()
-                return "root-active"
             else
                 element:focus()
                 return "form-active"
             end
         else
             element:click()
-            return "root-active"
         end
     end,
     focus = function(element)

@@ -134,13 +134,11 @@ local function follow_func_cb(w, ret)
     local mode = w.follow_state.mode
 
     if mode.func then mode.func(ret) end
-end
-
-local function follow_cb(w)
-    local mode = w.follow_state.mode
 
     if mode.persist then
         w:set_mode("follow", mode)
+    elseif ret ~= "form-active" and ret ~= "root-active" then
+        w:set_mode()
     end
 
     ignore_keys(w)
@@ -153,11 +151,6 @@ end
 follow_wm:add_signal("follow_func", function(_, wid, ret)
     for _, w in pairs(window.bywidget) do
         if w.win.id == wid then follow_func_cb(w, ret) end
-    end
-end)
-follow_wm:add_signal("follow", function(_, wid)
-    for _, w in pairs(window.bywidget) do
-        if w.win.id == wid then follow_cb(w) end
     end
 end)
 follow_wm:add_signal("matches", function(_, wid, n)
