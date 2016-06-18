@@ -63,7 +63,10 @@ function window.build()
             ebox    = eventbox(),
             prompt  = label(),
             input   = entry(),
+            prompt_text = "",
+            input_text = "",
         },
+        bar_layout = vbox(),
         closed_tabs = {}
     }
 
@@ -102,7 +105,7 @@ function window.build()
     s.layout:pack(s.sep, { expand = true, fill = true })
     s.layout:pack(r.ebox)
     s.ebox.child = s.layout
-    w.layout:pack(s.ebox)
+    w.bar_layout:pack(s.ebox)
 
     -- Pack menu widget
     w.layout:pack(w.menu.widget)
@@ -114,10 +117,12 @@ function window.build()
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
     i.ebox.child = i.layout
-    w.layout:pack(i.ebox)
+    w.bar_layout:pack(i.ebox)
     i.input.css = "border: 0;"
     i.layout.css = "transition: 0.0s ease-in-out;"
     i.input.css = "transition: 0.0s ease-in-out;"
+
+    w.layout:pack(w.bar_layout)
 
     -- Other settings
     i.input.show_frame = false
@@ -422,6 +427,16 @@ window.methods = {
         w:set_prompt("Error: "..msg, { fg = theme.error_fg, bg = theme.error_bg })
     end,
 
+    update_sbar_visibility = function (w)
+        if w.ibar.prompt_text or w.ibar.input_text then
+            w.ibar.layout:show()
+            w.sbar.layout:hide()
+        else
+            w.ibar.layout:hide()
+            w.sbar.layout:show()
+        end
+    end,
+
     -- Set and display the prompt
     set_prompt = function (w, text, opts)
         local input, prompt, layout, opts = w.ibar.input, w.ibar.prompt, w.ibar.layout, opts or {}
@@ -436,6 +451,8 @@ window.methods = {
             prompt.text = lousy.util.escape(text)
             prompt:show()
         end
+        w.ibar.prompt_text = text
+        w:update_sbar_visibility()
     end,
 
     -- Set display and focus the input bar
@@ -453,6 +470,8 @@ window.methods = {
             input:focus()
             input.position = opts.pos or -1
         end
+        w.ibar.input_text = text
+        w:update_sbar_visibility()
     end,
 
     set_ibar_theme = function (w, name)
