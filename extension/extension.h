@@ -12,6 +12,8 @@ typedef struct _extension_t {
 	WebKitWebExtension *ext;
 	/** Channel for IPC with ui process */
 	GIOChannel *ui_channel;
+	/** Isolated JavaScript context */
+	WebKitScriptWorld *script_world;
 } extension_t;
 
 extension_t extension;
