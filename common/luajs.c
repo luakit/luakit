@@ -225,4 +225,47 @@ luaJS_make_exception(JSContextRef context, const gchar *error)
     return JSValueToObject(context, exception, NULL);
 }
 
+#if WITH_WEBKIT2
+gint
+luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gchar *source, bool no_return)
+{
+
+    JSStringRef js_source, js_script;
+    JSValueRef result, exception = NULL;
+
+    /* evaluate the script and get return value*/
+    js_script = JSStringCreateWithUTF8CString(script);
+    js_source = JSStringCreateWithUTF8CString(source);
+
+    result = JSEvaluateScript(context, js_script, NULL, js_source, 0, &exception);
+
+    /* cleanup */
+    JSStringRelease(js_script);
+    JSStringRelease(js_source);
+
+    /* handle javascript exceptions while running script */
+    if (exception) {
+        lua_pushnil(L);
+        if (!luaJS_pushstring(L, context, exception, NULL))
+            lua_pushliteral(L, "Unknown JavaScript exception (unable to "
+                    "convert thrown exception object into string)");
+        return 2;
+    }
+
+    if (no_return)
+        return 0;
+
+    /* push return value onto lua stack */
+    gchar *error = NULL;
+    if (luaJS_pushvalue(L, context, result, &error))
+        return 1;
+
+    /* handle type conversion errors */
+    lua_pushnil(L);
+    lua_pushstring(L, error);
+    g_free(error);
+    return 2;
+}
+#endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
