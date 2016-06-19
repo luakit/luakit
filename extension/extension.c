@@ -16,6 +16,7 @@
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
+#include "extension/script_world.h"
 
 void
 web_lua_init(void)

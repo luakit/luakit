@@ -35,7 +35,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
 }
 
 static void
-document_loaded_cb(WebKitWebPage *web_page, page_t *page)
+document_loaded_cb(WebKitWebPage *web_page, page_t *UNUSED(page))
 {
     lua_State *L = extension.WL;
     luaH_uniq_get_ptr(L, REG_KEY, web_page);
