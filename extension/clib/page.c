@@ -34,6 +34,15 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
     return FALSE;
 }
 
+static void
+document_loaded_cb(WebKitWebPage *web_page, page_t *page)
+{
+    lua_State *L = extension.WL;
+    luaH_uniq_get_ptr(L, REG_KEY, web_page);
+    luaH_object_emit_signal(L, -1, "document-loaded", 0, 0);
+    lua_pop(L, 1);
+}
+
 static gint
 luaH_page_eval_js(lua_State *L)
 {
@@ -71,6 +80,7 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     page->page = web_page;
 
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
+    g_signal_connect(page->page, "document-loaded", G_CALLBACK(document_loaded_cb), page);
 
     luaH_bind_gobject_ref(L, web_page, -1);
     luaH_uniq_add_ptr(L, REG_KEY, web_page, -1);
