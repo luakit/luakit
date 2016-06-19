@@ -63,7 +63,7 @@ luaH_page_eval_js(lua_State *L)
     WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
     WebKitScriptWorld *world = extension.script_world;
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
-    return luaJS_eval_js(extension.WL, ctx, script, source, true);
+    return luaJS_eval_js(extension.WL, ctx, script, source, false);
 }
 
 gint
