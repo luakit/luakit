@@ -133,6 +133,8 @@ function add(uri, opts, view)
                 suggested_filename)
         end
 
+        dd.allow_overwrite = true
+
         if fn then
             dd.destination = fn
             dd:add_signal("created-destination", function(ddd,destination)
