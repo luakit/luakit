@@ -388,6 +388,22 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
     return 1;
 }
 
+static gint
+luaH_download_set_allow_overwrite(lua_State *L, download_t *download)
+{
+    gboolean allow = lua_toboolean(L, -1);
+    webkit_download_set_allow_overwrite(download->webkit_download, allow);
+    luaH_object_emit_signal(L, -3, "property::allow-overwrite", 0, 0);
+    return 0;
+}
+
+static gint
+luaH_download_get_allow_overwrite(lua_State *L, download_t *download)
+{
+    lua_pushboolean(L, webkit_download_get_allow_overwrite(download->webkit_download));
+    return 1;
+}
+
 /**
  * Sets the destination of a download.
  *
@@ -869,6 +885,11 @@ download_class_setup(lua_State *L)
              (lua_class_allocator_t) download_new,
              NULL, NULL,
              download_methods, download_meta);
+
+    luaH_class_add_property(&download_class, L_TK_ALLOW_OVERWRITE,
+            (lua_class_propfunc_t) luaH_download_set_allow_overwrite,
+            (lua_class_propfunc_t) luaH_download_get_allow_overwrite,
+            (lua_class_propfunc_t) luaH_download_set_allow_overwrite);
 
     luaH_class_add_property(&download_class, L_TK_DESTINATION,
             (lua_class_propfunc_t) luaH_download_set_destination,
