@@ -101,6 +101,7 @@ webview.init_funcs.error_page_init = function(view, w)
         if status ~= "failed" then return end
         if msg == "Load request cancelled" then return end
         if msg == "Plugin will handle load" then return end
+        if msg == "Frame load was interrupted" then return end
 
         local error_content_tmpl = [==[
             <div class="errorMessage">
