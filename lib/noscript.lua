@@ -114,7 +114,7 @@ local function lookup_domain(uri)
 
     -- Enable everything for chrome pages; without this, chrome pages which
     -- depend upon javascript will break
-    if string.starts(uri, "luakit://") then return true, true, true end
+    if string.starts(uri, "luakit://") then return true, true, "luakit://" end
 
     -- Look up this domain and all parent domains, returning the first match
     -- E.g. querying a.b.com will lookup a.b.com, then b.com, then com
