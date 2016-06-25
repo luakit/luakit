@@ -73,12 +73,6 @@ web_module_recv(lua_State *L, const gchar *arg, guint arglen)
 void
 web_module_restart(lua_State *L)
 {
-    static gboolean crashed;
-    if (!crashed) {
-        crashed = TRUE;
-        return;
-    }
-
     lua_pushstring(L, REG_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
     lua_pushnil(L);
