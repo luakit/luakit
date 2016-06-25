@@ -158,6 +158,7 @@ window.init_funcs = {
             w:set_mode()
             -- Update widgets after tab switch
             luakit.idle_add(function ()
+                w.view:emit_signal("switched-page")
                 w:update_tab_count()
                 w:update_win_title()
                 w:update_uri(w.view.hovered_uri)
