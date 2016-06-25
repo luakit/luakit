@@ -181,6 +181,7 @@ webview.init_funcs.noscript_load = function (view, w)
             end
             view.enable_scripts = es
             view.enable_plugins = ep
+            w:noscript_indicator_update()
         end
     end)
     view:add_signal("enable-userscripts", function(v, w)
