@@ -189,7 +189,7 @@ webview.init_funcs.noscript_load = function (view, w)
             return false
         end
     end)
-    view:add_signal("expose", function (v)
+    view:add_signal("switched-page", function (v)
         w:noscript_indicator_update()
     end)
 end
