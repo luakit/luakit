@@ -166,12 +166,7 @@ end
 
 webview.init_funcs.noscript_load = function (view, w)
     view:add_signal("load-status", function (v, status)
-        if not webkit2 and status == "provisional" then
-            view.enable_scripts = enable_scripts
-            view.enable_plugins = enable_plugins
-            return
-        end
-        if (webkit2 and status == "provisional") or (not webkit2 and status == "committed" and v.uri ~= "about:blank") then
+        if status == "committed" then
             local es = v:emit_signal("enable-scripts")
             local ep = v:emit_signal("enable-plugins")
             if es == nil or ep == nil then
