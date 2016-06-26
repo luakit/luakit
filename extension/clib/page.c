@@ -66,6 +66,15 @@ luaH_page_eval_js(lua_State *L)
     return luaJS_eval_js(extension.WL, ctx, script, source, false);
 }
 
+static inline void
+luaH_page_destroy_cb(WebKitWebPage *web_page)
+{
+    lua_State *L = extension.WL;
+    lua_pushlightuserdata(L, web_page);
+    luaH_uniq_del(L, REG_KEY, -1);
+    lua_pop(L, 1);
+}
+
 gint
 luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
 {
@@ -84,6 +93,8 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
 
     luaH_bind_gobject_ref(L, web_page, -1);
     luaH_uniq_add_ptr(L, REG_KEY, web_page, -1);
+    g_object_set_data_full(G_OBJECT(web_page), "page-dummy-destroy-notify", web_page,
+            (GDestroyNotify)luaH_page_destroy_cb);
 
     return 1;
 }
