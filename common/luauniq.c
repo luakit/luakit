@@ -90,4 +90,26 @@ luaH_uniq_get_ptr(lua_State *L, const gchar *reg, gpointer key)
     return n;
 }
 
+void
+luaH_uniq_del(lua_State *L, const gchar *reg, int k)
+{
+    /* Push the registry */
+    lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
+    lua_rawget(L, LUA_REGISTRYINDEX);
+
+    /* Assert that the value is there */
+    lua_pushvalue(L, k > 0 ? k : k-1);
+    lua_rawget(L, -2);
+    g_assert(!lua_isnil(L, -1));
+    lua_pop(L, 1);
+
+    /* Remove the Lua value */
+    lua_pushvalue(L, k > 0 ? k : k-1);
+    lua_pushnil(L);
+    lua_rawset(L, -3);
+
+    /* Remove the registry */
+    lua_pop(L, 1);
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
