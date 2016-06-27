@@ -26,6 +26,7 @@ function update(tlist, tabs, current)
     tlist.widget:hide()
 
     local labels = data[tlist].labels
+    local hbox = data[tlist].hbox
     local theme = get_theme()
 
     -- Make some new tab labels
@@ -36,6 +37,9 @@ function update(tlist, tabs, current)
                          label = capi.widget{type = "label"} }
             tl.label.font = theme.tab_font
             tl.label.textwidth = 1
+            if tlist.min_width  then
+                tl.ebox.min_size = { w = tlist.min_width }
+            end
             tl.ebox.child = tl.label
             tl.ebox:add_signal("button-release", function (e, mods, but)
                 return tlist:emit_signal("tab-clicked", i, mods, but)
@@ -43,7 +47,7 @@ function update(tlist, tabs, current)
             tl.ebox:add_signal("button-double-click", function (e, mods, but)
                 return tlist:emit_signal("tab-double-clicked", i, mods, but)
             end)
-            tlist.widget:pack(tl.ebox, { expand = true, fill = true })
+            hbox:pack(tl.ebox, { expand = true, fill = true })
             labels[i] = tl
         end
     end
@@ -52,7 +56,7 @@ function update(tlist, tabs, current)
     if lcount > tcount then
         for i = tcount+1, lcount do
             local tl = table.remove(labels, tcount+1)
-            tlist.widget:remove(tl.ebox)
+            hbox:remove(tl.ebox)
             tl.label:destroy()
             tl.ebox:destroy()
         end
@@ -90,13 +94,18 @@ end
 function new()
     -- Create tablist widget table
     local tlist = {
-        widget  = capi.widget{type = "hbox"},
-        update  = update,
-        destroy = destroy,
+        widget    = capi.widget{type = "scrolled"},
+        update    = update,
+        destroy   = destroy,
+        min_width = 100,
     }
 
+    local hbox = capi.widget{type = "hbox"}
+    tlist.widget.child = hbox
+    tlist.widget.scrollbars = { h = "external", v = "never" }
+
     -- Save private widget data
-    data[tlist] = { labels = {}, }
+    data[tlist] = { labels = {}, hbox = hbox, }
 
     -- Setup class signals
     signal.setup(tlist)
