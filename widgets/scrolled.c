@@ -2,11 +2,85 @@
 #include "widgets/common.h"
 
 static gint
+gtk_policy_from_string(const gchar *str, GtkPolicyType *out)
+{
+    if (!strcmp(str, "always"))
+        *out = GTK_POLICY_ALWAYS;
+    else if (!strcmp(str, "auto"))
+        *out = GTK_POLICY_AUTOMATIC;
+    else if (!strcmp(str, "never"))
+        *out = GTK_POLICY_NEVER;
+    else if (!strcmp(str, "external"))
+        *out = GTK_POLICY_EXTERNAL;
+    else
+        return 1;
+    return 0;
+}
+
+static const gchar *
+string_from_gtk_policy(GtkPolicyType policy)
+{
+    switch (policy) {
+        case GTK_POLICY_ALWAYS:    return "always";
+        case GTK_POLICY_AUTOMATIC: return "auto";
+        case GTK_POLICY_NEVER:     return "never";
+        case GTK_POLICY_EXTERNAL:  return "external";
+        default: return NULL;
+    }
+}
+
+gint
+luaH_widget_get_scrollbars(lua_State *L, widget_t *w)
+{
+    GtkPolicyType horz, vert;
+    gtk_scrolled_window_get_policy(GTK_SCROLLED_WINDOW(w->widget), &horz, &vert);
+
+    lua_newtable(L);
+
+    lua_pushliteral(L, "h");
+    lua_pushstring(L, string_from_gtk_policy(horz));
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "v");
+    lua_pushstring(L, string_from_gtk_policy(vert));
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
+gint
+luaH_widget_set_scrollbars(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+
+    GtkPolicyType horz, vert;
+    gtk_scrolled_window_get_policy(GTK_SCROLLED_WINDOW(w->widget), &horz, &vert);
+
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 3, "h")) {
+        if (gtk_policy_from_string(lua_tostring(L, -1), &horz))
+            luaL_error(L, "Bad horizontal scrollbar policy");
+    }
+    if (luaH_rawfield(L, 3, "v")) {
+        if (gtk_policy_from_string(lua_tostring(L, -1), &vert))
+            luaL_error(L, "Bad vertical scrollbar policy");
+    }
+    lua_settop(L, top);
+
+    gtk_scrolled_window_set_policy(GTK_SCROLLED_WINDOW(w->widget), horz, vert);
+    return 1;
+}
+
+static gint
 luaH_scrolled_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
+
+      case L_TK_SCROLLBARS:
+        return luaH_widget_get_scrollbars(L, w);
+
       default:
         break;
     }
@@ -19,6 +93,10 @@ luaH_scrolled_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
       LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+
+      case L_TK_SCROLLBARS:
+        return luaH_widget_set_scrollbars(L, w);
+
       default:
         break;;
     }
