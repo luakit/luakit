@@ -16,6 +16,7 @@ WEBKIT_API gchar* webkit_dom_html_media_element_get_src(WebKitDOMHTMLMediaElemen
 WEBKIT_API GType webkit_dom_html_media_element_get_type(void);
 
 #include "extension/clib/dom_element.h"
+#include "extension/clib/dom_document.h"
 #include "common/luauniq.h"
 
 #define REG_KEY "luakit.uniq.registry.dom_element"
@@ -363,6 +364,24 @@ luaH_dom_element_push_parent(lua_State *L)
 }
 
 static gint
+luaH_dom_element_push_document(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMDocument *doc;
+
+    if (WEBKIT_DOM_IS_HTML_FRAME_ELEMENT(element->element)) {
+        doc = webkit_dom_html_frame_element_get_content_document(
+                WEBKIT_DOM_HTML_FRAME_ELEMENT(element->element));
+    } else if (WEBKIT_DOM_IS_HTML_IFRAME_ELEMENT(element->element)) {
+        doc = webkit_dom_html_iframe_element_get_content_document(
+                WEBKIT_DOM_HTML_IFRAME_ELEMENT(element->element));
+    } else
+        return 0;
+
+    return luaH_dom_document_from_webkit_dom_document(L, doc);
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -398,6 +417,7 @@ luaH_dom_element_index(lua_State *L)
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         case L_TK_STYLE: return luaH_dom_element_push_style_table(L);
+        case L_TK_DOCUMENT: return luaH_dom_element_push_document(L);
         default:
             return 0;
     }
