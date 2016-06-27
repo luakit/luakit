@@ -15,7 +15,7 @@ luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc)
     luaH_class_new(L, &dom_document_class);
     lua_remove(L, -2);
 
-    dom_document_t *document = lua_topointer(L, -1);
+    dom_document_t *document = lua_touserdata(L, -1);
     document->document = doc;
 
     return 1;
