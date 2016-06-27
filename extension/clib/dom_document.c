@@ -9,16 +9,23 @@
 LUA_OBJECT_FUNCS(dom_document_class, dom_document_t, dom_document);
 
 gint
-luaH_dom_document_from_web_page(lua_State *L, WebKitWebPage *web_page)
+luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc)
 {
     lua_newtable(L);
     luaH_class_new(L, &dom_document_class);
     lua_remove(L, -2);
 
-    dom_document_t *document = luaH_checkudata(L, -1, &dom_document_class);
-    document->document = webkit_web_page_get_dom_document(web_page);
+    dom_document_t *document = lua_topointer(L, -1);
+    document->document = doc;
 
     return 1;
+}
+
+gint
+luaH_dom_document_from_web_page(lua_State *L, WebKitWebPage *web_page)
+{
+    WebKitDOMDocument *doc = webkit_web_page_get_dom_document(web_page);
+    return luaH_dom_document_from_webkit_dom_document(L, doc);
 }
 
 static int
