@@ -32,6 +32,8 @@
       return luaH_widget_get_width(L, widget);        \
     case L_TK_HEIGHT:                                 \
       return luaH_widget_get_height(L, widget);       \
+    case L_TK_MIN_SIZE:                               \
+      return luaH_widget_get_min_size(L, widget);     \
     case L_TK_SHOW:                                   \
       lua_pushcfunction(L, luaH_widget_show);         \
       return 1;                                       \
@@ -50,6 +52,8 @@
       return luaH_widget_set_visible(L, widget);      \
     case L_TK_TOOLTIP:                                \
       return luaH_widget_set_tooltip(L, widget);      \
+    case L_TK_MIN_SIZE:                               \
+      return luaH_widget_set_min_size(L, widget);     \
 
 #define LUAKIT_WIDGET_BIN_INDEX_COMMON(widget)        \
     case L_TK_CHILD:                                  \
@@ -92,6 +96,8 @@ gint luaH_widget_get_height(lua_State *L, widget_t*);
 gint luaH_widget_set_visible(lua_State *L, widget_t*);
 gint luaH_widget_set_tooltip(lua_State *L, widget_t *w);
 gint luaH_widget_get_tooltip(lua_State *L, widget_t *w);
+gint luaH_widget_set_min_size(lua_State *L, widget_t *w);
+gint luaH_widget_get_min_size(lua_State *L, widget_t *w);
 
 
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);

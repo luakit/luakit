@@ -220,6 +220,44 @@ luaH_widget_set_visible(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_min_size(lua_State *L, widget_t *w)
+{
+    gint width, height;
+    gtk_widget_get_size_request(w->widget, &width, &height);
+
+    lua_newtable(L);
+
+    lua_pushliteral(L, "width");
+    lua_pushinteger(L, width);
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "height");
+    lua_pushinteger(L, height);
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
+gint
+luaH_widget_set_min_size(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+
+    gint width, height;
+    gtk_widget_get_size_request(w->widget, &width, &height);
+
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 3, "w"))
+        width = lua_tonumber(L, -1);
+    if (luaH_rawfield(L, 3, "h"))
+        height = lua_tonumber(L, -1);
+    lua_settop(L, top);
+
+    gtk_widget_set_size_request(w->widget, width, height);
+    return 1;
+}
+
+gint
 luaH_widget_set_tooltip(lua_State *L, widget_t *w)
 {
     gtk_widget_set_tooltip_markup(w->widget, lua_tostring(L, 3) ?: "");
