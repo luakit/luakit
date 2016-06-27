@@ -44,6 +44,7 @@ widget_info_t widgets_list[] = {
   { L_TK_WEBVIEW,   "webview",  widget_webview  },
   { L_TK_WINDOW,    "window",   widget_window   },
   { L_TK_OVERLAY,   "overlay",  widget_overlay  },
+  { L_TK_SCROLLED,  "scrolled", widget_scrolled },
 };
 
 LUA_OBJECT_FUNCS(widget_class, widget_t, widget);
