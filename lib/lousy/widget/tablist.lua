@@ -73,6 +73,22 @@ function update(tlist, tabs, current)
         if e.bg ~= bg then e.bg = bg end
     end
 
+    -- Scroll current tab into view
+    if labels[1] then
+        local tab_delta = labels[1].ebox.width
+        local tab_min = tab_delta * (current-1)
+        local tab_max = tab_min + tab_delta
+        local vp_min = tlist.widget.scroll.x
+        local vp_max = vp_min + tlist.widget.width
+
+        if tab_min < vp_min then -- need to scroll up
+            tlist.widget.scroll = { x = tab_min }
+        end
+        if tab_max > vp_max then -- need to scroll down
+            tlist.widget.scroll = { x = tlist.widget.scroll.x + (tab_max - vp_max) }
+        end
+    end
+
     -- Show tablist
     if tcount > 0 then tlist.widget:show() end
 
