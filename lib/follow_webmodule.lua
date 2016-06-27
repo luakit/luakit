@@ -202,7 +202,19 @@ local function make_labels(num)
 end
 
 local function find_frames(root_frame)
-    return { root_frame }
+    local subframes = root_frame.body:query("frame, iframe")
+    local frames = { root_frame }
+
+    -- For each frame/iframe element, recurse
+    for _, frame in ipairs(subframes) do
+        local f = { doc = frame.document, body = frame.document.body }
+        local s = find_frames(f)
+        for _, sf in ipairs(s) do
+            frames[#frames + 1] = sf
+        end
+    end
+
+    return frames
 end
 
 local window_states = {}
