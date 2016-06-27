@@ -71,6 +71,51 @@ luaH_widget_set_scrollbars(lua_State *L, widget_t *w)
     return 1;
 }
 
+gint
+luaH_scrolled_get_scroll(lua_State *L, widget_t *w)
+{
+    GtkAdjustment *horz = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    GtkAdjustment *vert = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+
+    lua_newtable(L);
+
+    lua_pushliteral(L, "x");
+    lua_pushnumber(L, gtk_adjustment_get_value(horz));
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "y");
+    lua_pushnumber(L, gtk_adjustment_get_value(vert));
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "xmax");
+    lua_pushnumber(L, gtk_adjustment_get_upper(horz));
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "ymax");
+    lua_pushnumber(L, gtk_adjustment_get_upper(vert));
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
+gint
+luaH_scrolled_set_scroll(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+
+    GtkAdjustment *horz = gtk_scrolled_window_get_hadjustment(GTK_SCROLLED_WINDOW(w->widget));
+    GtkAdjustment *vert = gtk_scrolled_window_get_vadjustment(GTK_SCROLLED_WINDOW(w->widget));
+
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 3, "x"))
+        gtk_adjustment_set_value(horz, lua_tonumber(L, -1));
+    if (luaH_rawfield(L, 3, "y"))
+        gtk_adjustment_set_value(vert, lua_tonumber(L, -1));
+    lua_settop(L, top);
+
+    return 0;
+}
+
 static gint
 luaH_scrolled_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
@@ -80,6 +125,9 @@ luaH_scrolled_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_SCROLLBARS:
         return luaH_widget_get_scrollbars(L, w);
+
+      case L_TK_SCROLL:
+        return luaH_scrolled_get_scroll(L, w);
 
       default:
         break;
@@ -96,6 +144,9 @@ luaH_scrolled_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_SCROLLBARS:
         return luaH_widget_set_scrollbars(L, w);
+
+      case L_TK_SCROLL:
+        return luaH_scrolled_set_scroll(L, w);
 
       default:
         break;;
