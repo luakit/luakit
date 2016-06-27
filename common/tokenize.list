@@ -277,3 +277,6 @@ center
 baseline
 allow_overwrite
 document
+scrolled
+scrollbars
+min_size
