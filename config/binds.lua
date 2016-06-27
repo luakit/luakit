@@ -616,9 +616,17 @@ add_cmds({
 
     cmd("lua", "Evaluate Lua snippet.", function (w, a)
         if a then
-            local ret = assert(
-                loadstring("return function(w) return "..a.." end"))()(w)
-            if ret then print(ret) end
+            -- Parse as expression first, then statement
+            -- With this order an error message won't contain the print() wrapper
+            local ret, err = loadstring("print(" .. a .. ")")
+            if err then
+                ret, err = loadstring(a)
+            end
+            if err then
+                error(err)
+            else
+                ret()
+            end
         else
             w:set_mode("lua")
         end
