@@ -16,7 +16,6 @@ DEVELOPMENT_PATHS ?= 1
 USE_GTK3          ?= 1
 USE_LUAJIT        ?= 1
 USE_UNIQUE        ?= 1
-USE_WEBKIT2       ?= 1
 
 # === Paths ==================================================================
 
@@ -51,7 +50,7 @@ endif
 
 # === Lua package name detection =============================================
 
-LUA_PKG_NAMES += lua lua-5.1 lua5.1 lua51
+LUA_PKG_NAMES += lua-5.1 lua5.1 lua51
 
 # Force linking against Lua's Just-In-Time compiler.
 # See http://luajit.org/ for more information.
@@ -80,12 +79,8 @@ else
 endif
 PKGS += gthread-2.0
 ifeq ($(USE_GTK3),1)
-	ifeq ($(USE_WEBKIT2),1)
-		CPPFLAGS += -DWITH_WEBKIT2
-		PKGS += webkit2gtk-4.0
-	else
-		PKGS += webkitgtk-4.0
-	endif
+	CPPFLAGS += -DWITH_WEBKIT2
+	PKGS += webkit2gtk-4.0
 else
 	PKGS += webkit-1.0
 endif
@@ -95,13 +90,7 @@ PKGS += $(LUA_PKG_NAME)
 # For systems using older WebKit-GTK versions which bundle JavaScriptCore
 # within the WebKit-GTK package.
 ifneq ($(NO_JAVASCRIPTCORE),1)
-ifeq ($(USE_WEBKIT2),1)
 	PKGS += javascriptcoregtk-4.0
-else ifeq ($(USE_GTK3),1)
-	PKGS += javascriptcoregtk-3.0
-else
-	PKGS += javascriptcoregtk-1.0
-endif
 endif
 
 # Build luakit with single instance support?

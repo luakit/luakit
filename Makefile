@@ -45,11 +45,9 @@ $(filter-out $(EXT_OBJS),$(OBJS)) : %.o : %.c
 	@echo $(CC) -c $< -o $@
 	@$(CC) -c $(CFLAGS) $(CPPFLAGS) $< -o $@
 
-ifeq ($(USE_WEBKIT2),1)
 $(EXT_OBJS) : %.o : %.c
 	@echo $(CC) -c $< -o $@
 	@$(CC) -c $(CFLAGS) -fpic $(CPPFLAGS) $< -o $@
-endif
 
 widgets/webview.o: $(wildcard widgets/webview/*.c)
 
@@ -57,11 +55,9 @@ luakit: $(OBJS)
 	@echo $(CC) -o $@ $(OBJS)
 	@$(CC) -o $@ $(OBJS) $(LDFLAGS)
 
-ifeq ($(USE_WEBKIT2),1)
 luakit.so: $(EXT_OBJS)
 	@echo $(CC) -o $@ $(EXT_OBJS)
 	@$(CC) -o $@ $(EXT_OBJS) -shared $(LDFLAGS)
-endif
 
 luakit.1: luakit.1.in
 	@sed "s/LUAKITVERSION/$(VERSION)/" $< > $@
