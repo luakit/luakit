@@ -1,5 +1,3 @@
-#ifdef WITH_WEBKIT2
-
 #include "globalconf.h"
 #include "msg.h"
 
@@ -195,7 +193,5 @@ msg_send(const msg_header_t *header, const void *data)
         g_byte_array_append(globalconf.web_channel_queue, (guint8*)data, header->length);
     }
 }
-
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

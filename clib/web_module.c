@@ -1,5 +1,3 @@
-#ifdef WITH_WEBKIT2
-
 #include "clib/web_module.h"
 #include "common/tokenize.h"
 #include "common/luauniq.h"
@@ -118,7 +116,5 @@ web_module_class_setup(lua_State *L)
 
     luaH_uniq_setup(L, REG_KEY);
 }
-
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

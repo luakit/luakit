@@ -88,9 +88,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
-#if WITH_WEBKIT2
       PN_CASE(ID,           d->id)
-#endif
 
 #if GTK_CHECK_VERSION(3,0,0)
 # ifdef GDK_WINDOWING_X11

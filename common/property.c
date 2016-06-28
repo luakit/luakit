@@ -21,11 +21,7 @@
 #include "common/property.h"
 #include "clib/soup/soup.h"
 
-#if WITH_WEBKIT2
-# include <webkit2/webkit2.h>
-#else
-# include <webkit/webkit.h>
-#endif
+#include <webkit2/webkit2.h>
 
 static gint
 luaH_gobject_get(lua_State *L, property_t *p, GObject *object)

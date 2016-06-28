@@ -225,7 +225,6 @@ luaJS_make_exception(JSContextRef context, const gchar *error)
     return JSValueToObject(context, exception, NULL);
 }
 
-#if WITH_WEBKIT2
 gint
 luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gchar *source, bool no_return)
 {
@@ -266,6 +265,5 @@ luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gch
     g_free(error);
     return 2;
 }
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

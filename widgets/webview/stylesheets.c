@@ -1,5 +1,3 @@
-#if WITH_WEBKIT2
-
 #include "clib/stylesheet.h"
 
 void
@@ -111,7 +109,5 @@ webview_update_stylesheets(lua_State *L, widget_t *w)
 
     webview_stylesheets_regenerate(w);
 }
-
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
