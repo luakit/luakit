@@ -181,7 +181,9 @@ local function frame_find_hints(frame, selector)
         local rbb = get_element_bb_if_visible(element,wbb)
 
         if rbb then
-            hints[#hints+1] = { elem = element, bb = rbb, text = element.text_content }
+            local text = element.text_content
+            if text == "" then text = element.value or "" end
+            hints[#hints+1] = { elem = element, bb = rbb, text = text }
         end
     end
 
