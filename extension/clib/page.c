@@ -16,17 +16,56 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
 {
     lua_State *L = extension.WL;
     const gchar *uri = webkit_uri_request_get_uri(request);
+    SoupMessageHeaders *hdrs = webkit_uri_request_get_http_headers(request);
 
     luaH_uniq_get_ptr(L, REG_KEY, web_page);
     lua_pushstring(L, uri);
-    gint ret = luaH_object_emit_signal(L, -2, "send-request", 1, 1);
+
+    lua_newtable(L);
+    if (hdrs) {
+        SoupMessageHeadersIter iter;
+        soup_message_headers_iter_init(&iter, hdrs);
+        const char *name, *value;
+        while (soup_message_headers_iter_next(&iter, &name, &value)) {
+            lua_pushstring(L, name);
+            lua_pushstring(L, value);
+            lua_rawset(L, -3);
+        }
+    }
+
+    gint ret = luaH_object_emit_signal(L, -3, "send-request", 2, 2);
 
     if (ret) {
-        if (lua_isstring(L, -1)) /* redirect */
-            webkit_uri_request_set_uri(request, lua_tostring(L, -1));
-        else if (!lua_toboolean(L, -1)) { /* block request */
+        /* First argument: redirect url or allow/block boolean */
+        if (lua_isstring(L, -2)) /* redirect */
+            webkit_uri_request_set_uri(request, lua_tostring(L, -2));
+        else if (lua_isboolean(L, -2) && !lua_toboolean(L, -2)) { /* block request */
             lua_pop(L, ret + 1);
             return TRUE;
+        }
+
+        /* Second argument: HTTP headers table */
+        if (!lua_isnil(L, -1) && hdrs) {
+            luaH_checktable(L, -1);
+
+            /* Update all values */
+            lua_pushnil(L);
+            while (lua_next(L, -2)) {
+                soup_message_headers_replace(hdrs, luaL_checkstring(L, -2), luaL_checkstring(L, -1));
+                lua_pop(L, 1);
+            }
+
+            /* Remove table values that were removed */
+            SoupMessageHeadersIter iter;
+            soup_message_headers_iter_init(&iter, hdrs);
+            const char *name, *value;
+            while (soup_message_headers_iter_next(&iter, &name, &value)) {
+                lua_pushstring(L, name);
+                lua_rawget(L, -2);
+                if (lua_isnil(L, -1))
+                    soup_message_headers_remove(hdrs, name);
+                lua_pop(L, 1);
+            }
         }
     }
 
