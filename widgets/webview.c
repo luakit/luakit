@@ -263,7 +263,6 @@ luaH_checkwebview(lua_State *L, gint udx)
 static void update_uri(widget_t *w, const gchar *uri);
 
 #include "widgets/webview/javascript.c"
-#include "widgets/webview/frames.c"
 #include "widgets/webview/downloads.c"
 #include "widgets/webview/history.c"
 #include "widgets/webview/scroll.c"
