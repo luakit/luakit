@@ -30,11 +30,7 @@
 #include <gtk/gtk.h>
 #include <sys/wait.h>
 #include <time.h>
-#if WITH_WEBKIT2
-# include <webkit2/webkit2.h>
-#else
-# include <webkit/webkit.h>
-#endif
+#include <webkit2/webkit2.h>
 
 /* setup luakit module signals */
 LUA_CLASS_FUNCS(luakit, luakit_class)
@@ -473,11 +469,7 @@ luaH_luakit_index(lua_State *L)
       PB_CASE(VERBOSE,          globalconf.verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
 
-#if WITH_WEBKIT2
       PB_CASE(WEBKIT2,          true)
-#else
-      PB_CASE(WEBKIT2,          false)
-#endif
 
       case L_TK_WINDOWS:
         lua_newtable(L);
@@ -616,8 +608,6 @@ luaH_luakit_idle_remove(lua_State *L)
     return 1;
 }
 
-#if WITH_WEBKIT2
-
 typedef struct _lua_js_registration_t {
     gchar *pattern;
     gchar *name;
@@ -674,7 +664,6 @@ luaH_reregister_functions(lua_State *L)
         lua_pop(L, 3);
     }
 }
-#endif
 
 /** Setup luakit module.
  *
@@ -686,20 +675,18 @@ luakit_lib_setup(lua_State *L)
     static const struct luaL_reg luakit_lib[] =
     {
         LUA_CLASS_METHODS(luakit)
-        { "__index",         luaH_luakit_index },
-        { "exec",            luaH_luakit_exec },
-        { "quit",            luaH_luakit_quit },
-        { "save_file",       luaH_luakit_save_file },
-        { "spawn",           luaH_luakit_spawn },
-        { "spawn_sync",      luaH_luakit_spawn_sync },
-        { "time",            luaH_luakit_time },
-        { "uri_decode",      luaH_luakit_uri_decode },
-        { "uri_encode",      luaH_luakit_uri_encode },
-        { "idle_add",        luaH_luakit_idle_add },
-        { "idle_remove",     luaH_luakit_idle_remove },
-#if WITH_WEBKIT2
-        { "register_function",     luaH_luakit_register_function },
-#endif
+        { "__index",           luaH_luakit_index },
+        { "exec",              luaH_luakit_exec },
+        { "quit",              luaH_luakit_quit },
+        { "save_file",         luaH_luakit_save_file },
+        { "spawn",             luaH_luakit_spawn },
+        { "spawn_sync",        luaH_luakit_spawn_sync },
+        { "time",              luaH_luakit_time },
+        { "uri_decode",        luaH_luakit_uri_decode },
+        { "uri_encode",        luaH_luakit_uri_encode },
+        { "idle_add",          luaH_luakit_idle_add },
+        { "idle_remove",       luaH_luakit_idle_remove },
+        { "register_function", luaH_luakit_register_function },
         { NULL,              NULL }
     };
 
