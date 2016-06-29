@@ -183,6 +183,7 @@ local function frame_find_hints(frame, selector)
         if rbb then
             local text = element.text_content
             if text == "" then text = element.value or "" end
+            if text == "" then text = element.attr.placeholder or "" end
             hints[#hints+1] = { elem = element, bb = rbb, text = text }
         end
     end
