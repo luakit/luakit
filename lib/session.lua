@@ -22,14 +22,14 @@ local function rm(file)
 end
 
 -- The file which we'll use for session info, $XDG_DATA_HOME/luakit/session
-file = luakit.data_dir .. "/session"
+session_file = luakit.data_dir .. "/session"
 
 -- Crash recovery session file
 recovery_file = luakit.data_dir .. "/recovery_session"
 
 -- Save all given windows uris to file.
 save = function (wins, file)
-    if not file then file = file end
+    if not file then file = session_file end
     local state = {}
     -- Save tabs from all the given windows
     for wi, w in pairs(wins) do
@@ -59,7 +59,7 @@ end
 
 -- Load window and tab state from file
 load = function (delete, file)
-    if not file then file = file end
+    if not file then file = session_file end
     if not os.exists(file) then return end
 
     -- Read file
@@ -96,14 +96,14 @@ end
 
 restore = function(delete)
     return restore_file(recovery_file, delete)
-        or restore_file(file, delete)
+        or restore_file(session_file, delete)
 end
 
 local recovery_save_timer = timer{ interval = 10*1000 }
 
 -- Save current window session helper
 window.methods.save_session = function (w)
-    save({w,}, file)
+    save({w,}, session_file)
 end
 
 local function start_timeout()
