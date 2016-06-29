@@ -399,7 +399,7 @@ chrome.add("history", function (view, meta)
     })
 end,
 function (view, meta)
-    view:register_function("reset_mode", function ()
+    capi.luakit.register_function("^luakit://history/?(.*)", "reset_mode", function ()
         meta.w:set_mode() -- HACK to unfocus search box
     end)
 

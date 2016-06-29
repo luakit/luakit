@@ -507,7 +507,7 @@ chrome.add("bookmarks", function (view, meta)
     return html
 end,
 function (view, meta)
-    view:register_function("reset_mode", function ()
+    capi.luakit.register_function("^luakit://bookmarks/?(.*)", "reset_mode", function ()
         meta.w:set_mode() -- HACK to unfocus search box
     end)
 
