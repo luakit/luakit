@@ -179,12 +179,6 @@ webview.init_funcs.noscript_load = function (view, w)
             w:noscript_indicator_update()
         end
     end)
-    view:add_signal("enable-userscripts", function(v, w)
-        if not v.enable_scripts then
-            w:warning("Cannot run userscripts with JavaScript disabled!")
-            return false
-        end
-    end)
     view:add_signal("switched-page", function (v)
         w:noscript_indicator_update()
     end)
