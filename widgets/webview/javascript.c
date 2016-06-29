@@ -22,6 +22,8 @@
 #include <stdlib.h>
 
 #include "common/luajs.h"
+#include "common/msg.h"
+#include "common/luaserialize.h"
 
 static JSValueRef
 luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
@@ -189,45 +191,34 @@ luaH_webview_register_function(lua_State *L)
     return 0;
 }
 #if WITH_WEBKIT2
-
-static void
-run_javascript_finished(GObject *obj, GAsyncResult *r, gpointer *args)
+void
+run_javascript_finished(const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
-    WebKitJavascriptResult *js_result;
-    GError *error = NULL;
-    gpointer cb = args[0];
-    gchar *source = args[1];
-    g_slice_free1(sizeof(gpointer)*2, args);
+    gint n = lua_deserialize_range(L, msg, length);
+    g_assert_cmpint(n, >=, 2);
+    g_assert_cmpint(n, <=, 4);
 
-    js_result = webkit_web_view_run_javascript_finish(WEBKIT_WEB_VIEW(obj), r, &error);
+    const gchar *source = lua_tostring(L, -n);
+    gpointer cb = lua_touserdata(L, -n + 1);
 
-    if (error) {
-        warn("error in javascript: %s", error->message);
-        warn("source: %s", source);
-        g_error_free(error);
-        if (cb)
-            luaH_object_unref(L, cb);
-    } else if (cb) {
-        gchar *error;
-        JSGlobalContextRef context = webkit_javascript_result_get_global_context (js_result);
-        JSValueRef value = webkit_javascript_result_get_value(js_result);
+    if (n == 4) { /* Nil return value and Error */
+        g_assert(lua_isnil(L, -2));
+        g_assert(lua_isstring(L, -1));
+    }
+
+    if (n >= 3 && cb) {
         luaH_object_push(L, cb);
-        if (!luaJS_pushvalue(L, context, value, &error)) {
-            warn(error);
-            g_free(error);
-        }
-        if (lua_pcall(L, 1, 0, 0)) {
+        lua_insert(L, -n + 1);
+        if (lua_pcall(L, n-2, 0, 0)) {
             warn("error in javascript callback: %s", lua_tostring(L, -1));
             warn("source: %s", source);
+            lua_pop(L, 1);
         }
         luaH_object_unref(L, cb);
     }
 
-    g_free(source);
-
-    if (js_result)
-        webkit_javascript_result_unref(js_result);
+    lua_pop(L, 2);
 }
 #endif
 
@@ -299,10 +290,13 @@ luaH_webview_eval_js(lua_State *L)
 
 #if WITH_WEBKIT2
     g_assert(!no_return != !cb);
-    gpointer *args = g_slice_alloc(sizeof(gpointer)*2);
-    args[0] = cb;
-    args[1] = usr_source ? g_strdup(usr_source) : source;
-    webkit_web_view_run_javascript(d->view, script, NULL, (GAsyncReadyCallback) run_javascript_finished, args);
+
+    lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
+    lua_pushstring(L, script);
+    lua_pushstring(L, usr_source ? g_strdup(usr_source) : source);
+    lua_pushlightuserdata(L, cb);
+    msg_send_lua(MSG_TYPE_eval_js, L, -4, -1);
+    lua_pop(L, 4);
 #else
     /* evaluate javascript script and push return result onto lua stack */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);

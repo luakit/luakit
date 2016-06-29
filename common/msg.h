@@ -13,6 +13,7 @@
 	X(lua_js_register) \
 	X(lua_js_gc) \
 	X(web_extension_loaded) \
+	X(eval_js) \
 
 #define X(name) MSG_TYPE_EXPONENT_##name,
 typedef enum { MSG_TYPES } _msg_type_exponent_t;

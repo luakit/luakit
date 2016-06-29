@@ -16,6 +16,7 @@
 #include "common/luaserialize.h"
 
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
+void run_javascript_finished(const guint8 *msg, guint length);
 
 void
 msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
@@ -39,6 +40,12 @@ void
 msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
+}
+
+void
+msg_recv_eval_js(const guint8 *msg, guint length)
+{
+    run_javascript_finished(msg, length);
 }
 
 void

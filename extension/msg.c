@@ -12,6 +12,7 @@
 #include "extension/scroll.h"
 #include "extension/clib/ui_process.h"
 #include "common/util.h"
+#include "common/luajs.h"
 #include "common/luaserialize.h"
 
 void
@@ -59,6 +60,30 @@ msg_recv_scroll(const guint8 *msg, guint length)
     web_scroll_to(page_id, scroll_x, scroll_y);
 
     lua_pop(L, 3);
+}
+
+void
+msg_recv_eval_js(const guint8 *msg, guint length)
+{
+    lua_State *L = extension.WL;
+    gint n = lua_deserialize_range(L, msg, length);
+    g_assert_cmpint(n, ==, 4);
+
+    guint64 page_id = lua_tointeger(L, -4);
+    const gchar *script = lua_tostring(L, -3);
+    const gchar *source = lua_tostring(L, -2);
+    gboolean no_return = lua_touserdata(L, -1) == NULL;
+
+    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
+    WebKitScriptWorld *world = webkit_script_world_get_default();
+    JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
+
+    n = luaJS_eval_js(L, ctx, script, source, no_return);
+    /* Send source and callback ref back again as well */
+    if (n) /* Don't send if no_return == true and no errors */
+        msg_send_lua(MSG_TYPE_eval_js, L, -n-2, -1);
+    lua_pop(L, 4 + n);
 }
 
 int
