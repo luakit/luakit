@@ -581,7 +581,12 @@ add_cmds({
         function (w, a) window.new{w:search_open(a)} end),
 
     cmd({"javascript", "js"}, "Evaluate JavaScript snippet.",
-        function (w, a) w.view:eval_js(a, { no_return = true }) end),
+        function (w, a) w.view:eval_js(a, {
+            no_return = true,
+            callback = function (_, err)
+                w:error(err)
+            end,
+        }) end),
 
     -- Tab manipulation commands
     cmd("tab", "Execute command and open result in new tab.",
