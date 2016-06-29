@@ -266,8 +266,7 @@ luaH_webview_eval_js(lua_State *L)
             no_return = lua_toboolean(L, -1);
 
 #if WITH_WEBKIT2
-        if (!no_return) {
-            luaH_rawfield(L, 3, "callback");
+        if (luaH_rawfield(L, 3, "callback")) {
             luaH_checkfunction(L, -1);
             cb = luaH_object_ref(L, -1);
         }
@@ -289,14 +288,13 @@ luaH_webview_eval_js(lua_State *L)
 #endif
 
 #if WITH_WEBKIT2
-    g_assert(!no_return != !cb);
-
+    lua_pushboolean(L, no_return);
     lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
     lua_pushstring(L, script);
     lua_pushstring(L, usr_source ? g_strdup(usr_source) : source);
     lua_pushlightuserdata(L, cb);
-    msg_send_lua(MSG_TYPE_eval_js, L, -4, -1);
-    lua_pop(L, 4);
+    msg_send_lua(MSG_TYPE_eval_js, L, -5, -1);
+    lua_pop(L, 5);
 #else
     /* evaluate javascript script and push return result onto lua stack */
     JSGlobalContextRef context = webkit_web_frame_get_global_context(frame);

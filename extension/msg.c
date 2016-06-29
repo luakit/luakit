@@ -67,12 +67,13 @@ msg_recv_eval_js(const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
-    g_assert_cmpint(n, ==, 4);
+    g_assert_cmpint(n, ==, 5);
 
+    gboolean no_return = lua_toboolean(L, -5);
     guint64 page_id = lua_tointeger(L, -4);
     const gchar *script = lua_tostring(L, -3);
     const gchar *source = lua_tostring(L, -2);
-    gboolean no_return = lua_touserdata(L, -1) == NULL;
+    /* cb ref is index -1 */
 
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
     WebKitFrame *frame = webkit_web_page_get_main_frame(page);
@@ -83,7 +84,7 @@ msg_recv_eval_js(const guint8 *msg, guint length)
     /* Send source and callback ref back again as well */
     if (n) /* Don't send if no_return == true and no errors */
         msg_send_lua(MSG_TYPE_eval_js, L, -n-2, -1);
-    lua_pop(L, 4 + n);
+    lua_pop(L, 5 + n);
 }
 
 int
