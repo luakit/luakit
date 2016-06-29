@@ -15,6 +15,7 @@ local string = string
 local table = table
 local warn = warn
 local webview = webview
+local window = window
 local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
@@ -148,7 +149,15 @@ local prototype = {
             view:eval_js(gm_functions, { no_return = true })
             lstate[view].gmloaded = true
         end
-        view:eval_js(s.js, { source = s.file, no_return = true })
+        view:eval_js(s.js, { source = s.file, no_return = true, callback =
+        function (ret, err)
+            for _, w in pairs(window.bywidget) do
+                if w.view == view then
+                    w:error(string.format("running userscript '%s' failed:\n%s",
+                    s.file, err))
+                end
+            end
+        end})
         lstate[view].loaded[s.file] = s
     end,
     -- Check if the given uri matches the userscripts include/exclude patterns
