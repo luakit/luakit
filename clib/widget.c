@@ -71,7 +71,7 @@ luaH_widget_gc(lua_State *L)
  * \lparam A table with at least a type value.
  * \lreturn A brand new widget.
  */
-static gint
+gint
 luaH_widget_new(lua_State *L)
 {
     luaH_class_new(L, &widget_class);

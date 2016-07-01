@@ -33,6 +33,7 @@
 #endif
 #include "common/property.h"
 #include "luah.h"
+#include "clib/widget.h"
 
 typedef struct _webview_scroll_anim_t {
     /** Smooth scroll offset at animation start */
@@ -831,6 +832,43 @@ webview_translate_old_token(luakit_token_t token)
     }
 }
 
+static int
+luaH_webview_push_favicon(lua_State *L, WebKitWebView *view)
+{
+    /* Instantiate a new image widget */
+    lua_createtable(L, 0, 1);
+    lua_pushliteral(L, "image");
+    lua_setfield(L, -2, "type");
+    luaH_widget_new(L);
+    lua_remove(L, -2);
+
+    cairo_surface_t *favicon = webkit_web_view_get_favicon(view);
+    if (!favicon) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    int width = cairo_image_surface_get_width(favicon);
+    int height = cairo_image_surface_get_height(favicon);
+    GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface(favicon, 0, 0, width, height);
+    GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 16, 16, GDK_INTERP_BILINEAR);
+    g_object_unref(pixbuf);
+
+    widget_t *w = luaH_checkwidget(L, -1);
+    gtk_image_set_from_pixbuf(GTK_IMAGE(w->widget), scaled);
+
+    return 1;
+}
+
+static void
+favicon_cb(WebKitWebView* UNUSED(v), GParamSpec *pspec, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "favicon", 0, 0);
+    lua_pop(L, 1);
+}
+
 static gint
 luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
@@ -907,6 +945,9 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_SCROLL:
         return luaH_webview_push_scroll_table(L);
+
+      case L_TK_FAVICON:
+        return luaH_webview_push_favicon(L, d->view);
 
       default:
         break;
@@ -1487,6 +1528,8 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #endif
     d->inspector = webkit_web_view_get_inspector(d->view);
 
+    webkit_web_context_set_favicon_database_directory(webkit_web_view_get_context(d->view), NULL);
+
     d->is_committed = FALSE;
 
 #if WITH_WEBKIT2
@@ -1599,6 +1642,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 #else
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
 #endif
+      "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
       NULL);
 
 #if WITH_WEBKIT2

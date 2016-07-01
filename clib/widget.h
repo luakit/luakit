@@ -85,6 +85,7 @@ struct widget_t
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
 void widget_set_css_properties(widget_t *, ...);
+gint luaH_widget_new(lua_State *L);
 
 static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)
