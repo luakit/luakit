@@ -345,6 +345,46 @@ load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
     return ignore;
 }
 
+static int
+luaH_webview_push_certificate_flags(lua_State *L, GTlsCertificateFlags errors)
+{
+    lua_newtable(L);
+    int n = 1;
+
+#define CASE(err, str) \
+    if (errors & G_TLS_CERTIFICATE_##err) { \
+        lua_pushliteral(L, str); \
+        lua_rawseti(L, -2, n++); \
+    }
+
+    CASE(UNKNOWN_CA, "unknown-ca")
+    CASE(BAD_IDENTITY, "bad-identity")
+    CASE(NOT_ACTIVATED, "not-activated")
+    CASE(EXPIRED, "expired")
+    CASE(REVOKED, "revoked")
+    CASE(INSECURE, "insecure")
+    CASE(GENERIC_ERROR, "generic-error")
+
+    return 1;
+}
+
+static gboolean
+load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
+        GTlsCertificate *UNUSED(certificate), GTlsCertificateFlags errors, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    ((webview_data_t*) w->data)->is_failed = TRUE;
+    luaH_object_push(L, w->ref);
+    lua_pushliteral(L, "failed");
+    lua_pushstring(L, failing_uri);
+    lua_pushliteral(L, "Unacceptable TLS certificate");
+    luaH_webview_push_certificate_flags(L, errors);
+    luaH_dumpstack(L);
+    luaH_object_emit_signal(L, -5, "load-status", 4, 0);
+    lua_pop(L, 1);
+    return TRUE; /* Prevent load-failed signal */
+}
+
 static void
 load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 #else
@@ -1624,6 +1664,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       /* notify::load-status -> load-changed */
       "signal::load-changed",                         G_CALLBACK(load_changed_cb),              w,
       "signal::load-failed",                          G_CALLBACK(load_failed_cb),               w,
+      "signal::load-failed-with-tls-errors",          G_CALLBACK(load_failed_tls_cb),           w,
       /* populate-popup -> context-menu */
       "signal::context-menu",                         G_CALLBACK(context_menu_cb),              w,
       /* unrealize/hide GtkMenu -> context-menu-dismissed WebKitWebView */
