@@ -159,6 +159,14 @@ local function get_element_bb_if_visible(element, wbb)
 
     if not bounding_boxes_intersect(wbb, rbb) then return nil end
 
+    -- If a link element contains one image, use the image dimensions
+    if element.tag_name == "A" and element.child_count == 1 then
+        local child = element.first_child
+        if child.tag_name == "IMG" then
+            return get_element_bb_if_visible(child, wbb) or rbb
+        end
+    end
+
     return rbb
 end
 
