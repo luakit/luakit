@@ -285,3 +285,5 @@ first_child
 last_child
 prev_sibling
 next_sibling
+image
+scale
