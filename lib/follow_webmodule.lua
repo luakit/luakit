@@ -86,9 +86,7 @@ evaluators = {
         local tag = element.tag_name
         if tag == "INPUT" or tag == "TEXTAREA" then
             local t = element.attr.type
-            if t == "radio" or t == "checkbox" then
-                element.attr.checked = "checked"
-            elseif t == "submit" or t == "reset" or t == "button" then
+            if t == "radio" or t == "checkbox" or t == "submit" or t == "reset" or t == "button" then
                 element:click()
             else
                 element:focus()
