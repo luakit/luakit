@@ -4,8 +4,6 @@
 
 require "lfs"
 
-local vertical_tabs = globals.use_vertical_tabs
-
 -- Window class table
 window = {}
 
@@ -28,10 +26,10 @@ function window.build()
         win    = widget{type="window"},
         ebox   = eventbox(),
         layout = vbox(),
-        paned  = widget{type=vertical_tabs and "hpaned" or "vpaned"},
+        paned  = widget{type=vertitabs and "hpaned" or "vpaned"},
         tabs   = notebook(),
         -- Tablist widget
-        tablist = vertical_tabs and vertitabs() or lousy.widget.tablist(),
+        tablist = vertitabs and vertitabs() or lousy.widget.tablist(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -75,7 +73,7 @@ function window.build()
     }
 
     -- Assemble window
-    if vertical_tabs then
+    if vertitabs then
         w.ebox.child = w.layout
 
         w.paned:pack1(w.tablist.widget, { resize = false })
