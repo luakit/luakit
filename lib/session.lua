@@ -95,8 +95,8 @@ local restore_file = function (file, delete)
 end
 
 restore = function(delete)
-    return restore_file(recovery_file, delete)
-        or restore_file(session_file, delete)
+    return restore_file(session_file, delete)
+        or restore_file(recovery_file, delete)
 end
 
 local recovery_save_timer = timer{ interval = 10*1000 }
