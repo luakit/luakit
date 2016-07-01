@@ -3,6 +3,7 @@ local string = string
 local print = print
 local styles = styles
 local pairs = pairs
+local ipairs = ipairs
 
 module("error_page")
 
@@ -97,11 +98,27 @@ local function load_error_page(v, heading, content)
 end
 
 webview.init_funcs.error_page_init = function(view, w)
-    view:add_signal("load-status", function(v, status, uri, msg)
+    view:add_signal("load-status", function(v, status, uri, msg, cert_errors)
         if status ~= "failed" then return end
         if msg == "Load request cancelled" then return end
         if msg == "Plugin will handle load" then return end
         if msg == "Frame load was interrupted" then return end
+
+        if msg == "Unacceptable TLS certificate" then
+            msg = msg .. ": "
+            local strings = {
+                ["unknown-ca"] = "The signing certificate authority is not known.",
+                ["bad-identity"] = "The certificate does not match the expected identity of the site that it was retrieved from.",
+                ["not-activated"] = "The certificate's activation time is still in the future.",
+                expired = "The certificate has expired.",
+                insecure = "The certificate has been revoked.",
+                ["generic-error"] = "Error not specified.",
+            }
+            for _, e in ipairs(cert_errors) do
+                local emsg = strings[e] or "Unknown error."
+                msg = msg .. emsg .. " "
+            end
+        end
 
         local error_content_tmpl = [==[
             <div class="errorMessage">
