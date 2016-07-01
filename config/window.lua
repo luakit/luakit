@@ -4,6 +4,8 @@
 
 require "lfs"
 
+local vertical_tabs = globals.use_vertical_tabs
+
 -- Window class table
 window = {}
 
@@ -26,10 +28,10 @@ function window.build()
         win    = widget{type="window"},
         ebox   = eventbox(),
         layout = vbox(),
-        paned  = widget{type="vpaned"},
+        paned  = widget{type=vertical_tabs and "hpaned" or "vpaned"},
         tabs   = notebook(),
         -- Tablist widget
-        tablist = lousy.widget.tablist(),
+        tablist = vertical_tabs and vertitabs() or lousy.widget.tablist(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -73,15 +75,24 @@ function window.build()
     }
 
     -- Assemble window
-    w.ebox.child = w.paned
-    w.paned:pack1(w.layout)
+    if vertical_tabs then
+        w.ebox.child = w.layout
+
+        w.paned:pack1(w.tablist.widget, { resize = false })
+        w.paned:pack2(w.tabs)
+        w.paned.position = globals.vertical_tab_width or 200
+
+        w.menu_tabs.child = w.paned
+    else
+        w.ebox.child = w.paned
+        w.paned:pack1(w.layout)
+
+        w.layout:pack(w.tablist.widget)
+
+        w.menu_tabs.child = w.tabs
+    end
+
     w.win.child = w.ebox
-
-    -- Pack tablist
-    w.layout:pack(w.tablist.widget)
-
-    -- Pack notebook
-    w.menu_tabs.child = w.tabs
     w.layout:pack(w.menu_tabs, { expand = true, fill = true })
 
     -- Pack left-aligned statusbar elements

@@ -11,6 +11,8 @@ globals = {
     max_srch_history    = 100,
  -- http_proxy          = "http://example.com:3128",
     default_window_size = "800x600",
+    use_vertical_tabs   = false,
+    vertical_tab_width  = 200,
 
  -- Disables loading of hostnames from /etc/hosts (for large host files)
  -- load_etc_hosts      = false,
