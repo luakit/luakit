@@ -364,6 +364,42 @@ luaH_dom_element_push_parent(lua_State *L)
 }
 
 static gint
+luaH_dom_element_push_first_child(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *child = webkit_dom_element_get_first_element_child(elem);
+    return luaH_dom_element_from_node(L, child);
+}
+
+static gint
+luaH_dom_element_push_last_child(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *child = webkit_dom_element_get_last_element_child(elem);
+    return luaH_dom_element_from_node(L, child);
+}
+
+static gint
+luaH_dom_element_push_prev_sibling(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *child = webkit_dom_element_get_previous_element_sibling(elem);
+    return luaH_dom_element_from_node(L, child);
+}
+
+static gint
+luaH_dom_element_push_next_sibling(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *child = webkit_dom_element_get_next_element_sibling(elem);
+    return luaH_dom_element_from_node(L, child);
+}
+
+static gint
 luaH_dom_element_push_document(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -402,6 +438,8 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
 
+        PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
+
         case L_TK_SRC: return luaH_dom_element_push_src(L);
         case L_TK_HREF: return luaH_dom_element_push_href(L);
         case L_TK_VALUE: return luaH_dom_element_push_value(L);
@@ -414,6 +452,10 @@ luaH_dom_element_index(lua_State *L)
             return 1;
         }
         case L_TK_PARENT: return luaH_dom_element_push_parent(L);
+        case L_TK_FIRST_CHILD: return luaH_dom_element_push_first_child(L);
+        case L_TK_LAST_CHILD: return luaH_dom_element_push_last_child(L);
+        case L_TK_PREV_SIBLING: return luaH_dom_element_push_prev_sibling(L);
+        case L_TK_NEXT_SIBLING: return luaH_dom_element_push_next_sibling(L);
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         case L_TK_STYLE: return luaH_dom_element_push_style_table(L);

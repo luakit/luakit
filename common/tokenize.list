@@ -280,3 +280,8 @@ document
 scrolled
 scrollbars
 min_size
+child_count
+first_child
+last_child
+prev_sibling
+next_sibling
