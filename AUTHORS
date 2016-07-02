@@ -15,6 +15,7 @@ Contributors to luakit (A to Z):
   Henrik Hallberg   (halhen)    <halhen@k2h.se>             2010
   Javier Rojas      (jerojasro) <jerojasro@devnull.li>      2011
   Jonas Höglund     (FireFly)   <firefly@firefly.nu>        2012
+  Joshua Tacoma     (jtacoma)   <joshua.tacoma@gmail.com>   2016
   Kumar Appaiah     (kmap)      <a.kumar@alumni.iitm.ac.in> 2010
   LokiChaos                     <loki.chaos@gmail.com>      2012
   Matthew Wild      (MattJ)     <mwild1@gmail.com>          2010
@@ -30,6 +31,7 @@ Contributors to luakit (A to Z):
   Stjujsckij Nickolaj           <sterkrig@home.no>          2011
   Vasuvi                        <vasuvi@inbox.com>          2010-2011
   Walt              (ggVGc)     <>                          2016
+
 
 Author of `lib/markdown.lua`:
   Niklas Frykholm               <niklas@frykholm.se>        2008
