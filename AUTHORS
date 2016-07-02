@@ -1,5 +1,5 @@
 Author of luakit:
-  Mason Larobina    (mason-l)   <mason.larobina@gmail.com>  2010-2012
+  Mason Larobina    (mason-l)   <mason.larobina@gmail.com>  2010-2016
 
 Contributors to luakit (A to Z):
   Alexis Daboville              <alexis.daboville@gmail.com> 2011
@@ -29,6 +29,7 @@ Contributors to luakit (A to Z):
   Stefan Bolte      (portix)    <portix@gmx.net>            2011
   Stjujsckij Nickolaj           <sterkrig@home.no>          2011
   Vasuvi                        <vasuvi@inbox.com>          2010-2011
+  Walt              (ggVGc)     <>                          2016
 
 Author of `lib/markdown.lua`:
   Niklas Frykholm               <niklas@frykholm.se>        2008
