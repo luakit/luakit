@@ -43,7 +43,7 @@ endif
 
 # === Lua package name detection =============================================
 
-LUA_PKG_NAMES += lua lua-5.1 lua5.1 lua51
+LUA_PKG_NAMES += lua51 lua-5.1 lua5.1 lua
 
 # Force linking against Lua's Just-In-Time compiler.
 # See http://luajit.org/ for more information.
