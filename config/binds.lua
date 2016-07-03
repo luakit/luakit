@@ -545,7 +545,7 @@ add_cmds({
         function (w) w:close_tab() end),
 
     cmd("print", "Print current page.",
-        function (w) w.view:eval_js("print()") end),
+        function (w) w.view:eval_js("print()", { no_return = true }) end),
 
     cmd("stop", "Stop loading.",
         function (w) w.view:stop() end),
