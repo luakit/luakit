@@ -13,7 +13,6 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 # === Default build options ==================================================
 
 DEVELOPMENT_PATHS ?= 1
-USE_GTK3          ?= 1
 USE_LUAJIT        ?= 1
 USE_UNIQUE        ?= 1
 
@@ -72,18 +71,10 @@ endif
 # === Required build packages ================================================
 
 # Packages required to build luakit.
-ifeq ($(USE_GTK3),1)
-	PKGS += gtk+-3.0
-else
-	PKGS += gtk+-2.0
-endif
+PKGS += gtk+-3.0
 PKGS += gthread-2.0
-ifeq ($(USE_GTK3),1)
-	CPPFLAGS += -DWITH_WEBKIT2
-	PKGS += webkit2gtk-4.0
-else
-	PKGS += webkit-1.0
-endif
+CPPFLAGS += -DWITH_WEBKIT2
+PKGS += webkit2gtk-4.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
 
@@ -96,9 +87,6 @@ endif
 # Build luakit with single instance support?
 ifneq ($(USE_UNIQUE),0)
 	CPPFLAGS += -DWITH_UNIQUE
-ifneq ($(USE_GTK3),1)
-	PKGS     += unique-1.0
-endif
 endif
 
 # Check user has correct packages installed (and found by pkg-config).
