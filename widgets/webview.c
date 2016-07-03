@@ -900,7 +900,7 @@ luaH_webview_push_favicon(lua_State *L, WebKitWebView *view)
 }
 
 static void
-favicon_cb(WebKitWebView* UNUSED(v), GParamSpec *pspec, widget_t *w)
+favicon_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
