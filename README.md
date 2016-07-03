@@ -11,11 +11,11 @@ luakit behaves similarly out of the box.
 
 ## Requirements
 
- * gtk2
+ * gtk3
  * Lua (5.1)
  * lfs (lua file system)
  * libwebkit (webkit-gtk)
- * libunique
+ * libunique (optional)
  * sqlite3
 
 ## Compiling
@@ -28,12 +28,7 @@ To link against LuaJIT (if you have LuaJIT installed) run:
 
     make USE_LUAJIT=1
 
-To build with GTK3 run:
-
-    make USE_GTK3=1
-
-To build without unique instance support (which uses dbus through either
-libunique if built against GTK2 and GApplications if built against GTK3) run:
+To build without unique instance support (which uses GApplications) run:
 
     make USE_UNIQUE=0
 
@@ -48,7 +43,7 @@ Note to packagers: you may wish to build luakit with:
 To prevent luakit searching in relative paths (`./config` & `./lib`) for
 user configs.
 
-The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `USE_GTK3=1`, `PREFIX=/path`,
+The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `PREFIX=/path`,
 `DEVELOPMENT_PATHS=0`, `CC=clang` build options do not conflict.
 You can use whichever you desire.
 
