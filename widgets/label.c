@@ -152,11 +152,7 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
     const gchar *tmp;
-#if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA c;
-#else
-    GdkColor c;
-#endif
     PangoFontDescription *font;
 
     switch(token) {
@@ -180,21 +176,15 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_FG:
         tmp = luaL_checklstring(L, 3, &len);
-#if GTK_CHECK_VERSION(3,0,0)
         if (!gdk_rgba_parse(&c, tmp)) {
-#else
-        if (!gdk_color_parse(tmp, &c)) {
-#endif
             warn("invalid color: %s", tmp);
             return 0;
         }
 
 #if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "color", tmp, NULL);
-#elif GTK_CHECK_VERSION(3,0,0)
-        gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #else
-        gtk_widget_modify_fg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+        gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #endif
         g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
         break;
@@ -204,10 +194,8 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         font = pango_font_description_from_string(tmp);
 #if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "font", tmp, NULL);
-#elif GTK_CHECK_VERSION(3,0,0)
-        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
 #else
-        gtk_widget_modify_font(GTK_WIDGET(w->widget), font);
+        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
 #endif
         pango_font_description_free(font);
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
@@ -239,9 +227,7 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
 
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);
-#if GTK_CHECK_VERSION(3,0,0)
     gtk_label_set_ellipsize(GTK_LABEL(w->widget), PANGO_ELLIPSIZE_END);
-#endif
 
     /* setup default settings */
     gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);
