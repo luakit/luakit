@@ -171,6 +171,7 @@ static void update_uri(widget_t *w, const gchar *uri);
 #include "widgets/webview/inspector.c"
 #include "widgets/webview/find_controller.c"
 #include "widgets/webview/stylesheets.c"
+#include "widgets/webview/auth.c"
 
 static gint
 luaH_webview_load_string(lua_State *L)
@@ -1079,6 +1080,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
        * original luakit anyway. */
       //"signal::resource-load-started",                G_CALLBACK(resource_load_started_cb),     w,
       "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
+      "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
       NULL);
 
     g_object_connect(G_OBJECT(webkit_web_view_get_find_controller(d->view)),

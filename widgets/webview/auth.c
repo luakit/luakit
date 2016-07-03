@@ -1,5 +1,5 @@
 /*
- * clib/soup/auth.c - authentication management
+ * widgets/webview/auth.c - authentication management
  *
  * Copyright © 2009 Igalia S.L.
  * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
@@ -19,7 +19,6 @@
  *
  */
 
-#include "clib/soup/soup.h"
 #include "luah.h"
 
 #include <gtk/gtk.h>
@@ -27,16 +26,9 @@
 #include <libsoup/soup-session-feature.h>
 #include <libsoup/soup-uri.h>
 
-static void luakit_auth_dialog_session_feature_init(SoupSessionFeatureInterface *interface, gpointer data);
-
-G_DEFINE_TYPE_WITH_CODE(LuakitAuthDialog, luakit_auth_dialog, G_TYPE_OBJECT,
-    G_IMPLEMENT_INTERFACE(SOUP_TYPE_SESSION_FEATURE, luakit_auth_dialog_session_feature_init))
-
 typedef struct {
-    SoupMessage *msg;
-    SoupAuth *auth;
-    SoupSession *session;
-    SoupSessionFeature *manager;
+    WebKitAuthenticationRequest *request;
+    widget_t *w;
     GtkWidget *login_entry;
     GtkWidget *password_entry;
     GtkWidget *checkbutton;
@@ -45,30 +37,30 @@ typedef struct {
 static void
 free_auth_data(LuakitAuthData *auth_data)
 {
-    g_object_unref(auth_data->msg);
+    g_object_unref(auth_data->request);
     g_slice_free(LuakitAuthData, auth_data);
 }
 
 static void
-luakit_store_password(SoupURI *soup_uri, const gchar *login, const gchar *password)
+luakit_store_password(LuakitAuthData *auth_data, const gchar *login, const gchar *password)
 {
     lua_State *L = globalconf.L;
-    gchar *uri = soup_uri_to_string(soup_uri, FALSE);
+    const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(auth_data->w->widget));
+    luaH_object_push(L, auth_data->w->ref);
     lua_pushstring(L, uri);
     lua_pushstring(L, login);
     lua_pushstring(L, password);
-    signal_object_emit(L, soup_class.signals, "store-password", 3, 0);
-    g_free(uri);
+    luaH_object_emit_signal(L, -4, "store-password", 3, 0);
 }
 
 static void
-luakit_find_password(SoupURI *soup_uri, const gchar **login, const gchar **password)
+luakit_find_password(LuakitAuthData *auth_data, const gchar **login, const gchar **password)
 {
     lua_State *L = globalconf.L;
-    gchar *uri = soup_uri_to_string(soup_uri, FALSE);
+    const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(auth_data->w->widget));
+    luaH_object_push(L, auth_data->w->ref);
     lua_pushstring(L, uri);
-    gint ret = signal_object_emit(L, soup_class.signals, "authenticate", 1, LUA_MULTRET);
-    g_free(uri);
+    gint ret = luaH_object_emit_signal(L, -2, "store-password", 1, LUA_MULTRET);
     if (ret >= 2) {
         *password = luaL_checkstring(L, -1);
         *login = luaL_checkstring(L, -2);
@@ -81,27 +73,26 @@ response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data
 {
     const gchar *login;
     const gchar *password;
-    SoupURI *uri;
     gboolean store_password;
+    WebKitCredential *credential;
 
     switch(response_id)
     {
       case GTK_RESPONSE_OK:
         login = gtk_entry_get_text(GTK_ENTRY(auth_data->login_entry));
         password = gtk_entry_get_text(GTK_ENTRY(auth_data->password_entry));
-        soup_auth_authenticate(auth_data->auth, login, password);
+        credential = webkit_credential_new(login, password, WEBKIT_CREDENTIAL_PERSISTENCE_NONE);
+        webkit_authentication_request_authenticate(auth_data->request, credential);
+        webkit_credential_free(credential);
 
         store_password = gtk_toggle_button_get_active(GTK_TOGGLE_BUTTON(auth_data->checkbutton));
-        if (store_password) {
-            uri = soup_message_get_uri(auth_data->msg);
-            luakit_store_password(uri, login, password);
-        }
+        if (store_password)
+            luakit_store_password(auth_data, login, password);
 
       default:
         break;
     }
 
-    soup_session_unpause_message(auth_data->session, auth_data->msg);
     free_auth_data(auth_data);
     gtk_widget_destroy(GTK_WIDGET(dialog));
 }
@@ -209,8 +200,8 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     gtk_grid_set_row_spacing(GTK_GRID(hbox), 6);
 
-    SoupURI *uri = soup_message_get_uri(auth_data->msg);
-    gchar *msg = g_strdup_printf("A username and password are being requested by the site %s", uri->host);
+    gchar *msg = g_strdup_printf("A username and password are being requested by the site %s",
+            webkit_authentication_request_get_host(auth_data->request));
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
 #if GTK_CHECK_VERSION(3,14,0)
@@ -252,71 +243,22 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_widget_show_all(widget);
 }
 
-static void
-session_authenticate(SoupSession *session, SoupMessage *msg, SoupAuth *auth,
-        gboolean UNUSED(retrying), gpointer user_data)
+static gboolean
+session_authenticate(WebKitWebView *UNUSED(web_view), WebKitAuthenticationRequest *request, widget_t *w)
 {
-    SoupSessionFeature *manager = SOUP_SESSION_FEATURE(user_data);
-    soup_session_pause_message(session, msg);
+    g_object_ref(request);
 
-    /* We need to make sure the message sticks around when pausing it */
-    g_object_ref(msg);
-
-    SoupURI *uri = soup_message_get_uri(msg);
     LuakitAuthData *auth_data = g_slice_new(LuakitAuthData);
-    auth_data->msg = msg;
-    auth_data->auth = auth;
-    auth_data->session = session;
-    auth_data->manager = manager;
+    auth_data->request = request;
+    auth_data->w = w;
 
     const gchar *login = NULL;
     const gchar *password = NULL;
-    luakit_find_password(uri, &login, &password);
+    luakit_find_password(auth_data, &login, &password);
     show_auth_dialog(auth_data, login, password);
     /* TODO: g_free login and password? */
-}
 
-static void
-#if WITH_WEBKIT2
-attach(SoupSessionFeature* UNUSED(manager), SoupSession* UNUSED(session))
-#else
-attach(SoupSessionFeature *manager, SoupSession *session)
-#endif
-{
-#if !WITH_WEBKIT2
-    // TODO not allowed in webkit2?
-    g_signal_connect(session, "authenticate", G_CALLBACK(session_authenticate), manager);
-#endif
-}
-
-static void
-detach(SoupSessionFeature *manager, SoupSession *session)
-{
-    g_signal_handlers_disconnect_by_func(session, session_authenticate, manager);
-}
-
-static void
-luakit_auth_dialog_class_init(LuakitAuthDialogClass* UNUSED(klass))
-{
-}
-
-static void
-luakit_auth_dialog_init(LuakitAuthDialog* UNUSED(instance))
-{
-}
-
-static void
-luakit_auth_dialog_session_feature_init(SoupSessionFeatureInterface *interface,
-        gpointer UNUSED(data))
-{
-    interface->attach = attach;
-    interface->detach = detach;
-}
-
-LuakitAuthDialog *
-luakit_auth_dialog_new()
-{
-    return g_object_new(LUAKIT_TYPE_AUTH_DIALOG, NULL);
+    return TRUE;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
