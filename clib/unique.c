@@ -27,75 +27,35 @@
 
 #include <gtk/gtk.h>
 #include <glib.h>
-#if GTK_CHECK_VERSION(3,0,0)
-#else
-#include <unique/unique.h>
-#endif
 
 /* setup unique module signals */
 lua_class_t unique_class;
 LUA_CLASS_FUNCS(unique, unique_class);
 
-#if GTK_CHECK_VERSION(3,0,0)
 static GtkApplication *application = NULL;
-#else
-static UniqueApp *application = NULL;
 
-#define MESSAGE_ID (1)
-#define PING_ID    (2)
-#endif
-
-#if GTK_CHECK_VERSION(3,0,0)
 static void
 message_cb(GSimpleAction* UNUSED(a), GVariant *message_data, lua_State *L)
-#else
-static UniqueResponse
-message_cb(UniqueApp* UNUSED(a), gint id, UniqueMessageData *message_data,
-        guint UNUSED(time), lua_State *L)
-#endif
 {
-#if GTK_CHECK_VERSION(3,0,0)
     if (message_data &&
             g_variant_is_of_type(message_data, G_VARIANT_TYPE_STRING)) {
         const gchar *text = g_variant_get_string (message_data, NULL);
-#else
-    if (id == MESSAGE_ID && message_data) {
-        gchar *text = unique_message_data_get_text(message_data);
-#endif
         lua_pushstring(L, text);
-#if GTK_CHECK_VERSION(3,0,0)
-#else
-        g_free(text);
-#endif
 
-#if GTK_CHECK_VERSION(3,0,0)
         GdkScreen *screen = gtk_window_get_screen(gtk_application_get_active_window(application));
-#else
-        GdkScreen *screen = unique_message_data_get_screen(message_data);
-#endif
         lua_pushlightuserdata(L, screen);
 
         signal_object_emit(L, unique_class.signals, "message", 2, 0);
     }
-#if GTK_CHECK_VERSION(3,0,0)
-#else
-    return UNIQUE_RESPONSE_OK;
-#endif
 }
 
 static gint
 luaH_unique_new(lua_State *L)
 {
-#if GTK_CHECK_VERSION(3,0,0)
     if (application && g_application_get_is_registered(G_APPLICATION(application)))
         luaL_error(L, "GApplication already setup");
-#else
-    if (application)
-        luaL_error(L, "unique app already setup");
-#endif
 
     const gchar *name = luaL_checkstring(L, 1);
-#if GTK_CHECK_VERSION(3,0,0)
     GError *error = NULL;
     if (!application)
         application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
@@ -114,37 +74,16 @@ luaH_unique_new(lua_State *L)
     };
     g_action_map_add_action_entries (G_ACTION_MAP(application),
             entries, G_N_ELEMENTS(entries), L);
-#else
-    application = unique_app_new_with_commands(name, NULL,
-            "message", MESSAGE_ID, "ping", PING_ID, NULL);
-    g_signal_connect(G_OBJECT(application), "message-received",
-            G_CALLBACK(message_cb), L);
-#endif
     return 0;
 }
 
 static gint
 luaH_unique_is_running(lua_State *L)
 {
-#if GTK_CHECK_VERSION(3,0,0)
     if (!application || !g_application_get_is_registered(G_APPLICATION(application)))
         luaL_error(L, "GApplication is not registered");
-#else
-    if (!application)
-        luaL_error(L, "unique app not setup");
-#endif
 
-#if GTK_CHECK_VERSION(3,0,0)
     gboolean running = g_application_get_is_remote(G_APPLICATION(application));
-#else
-    gboolean running = unique_app_is_running(application);
-
-    /* Double-check instance is running, found unique_app_is_running
-     * returning TRUE when luakit wasn't running on some systems. */
-    if (running)
-        running = (unique_app_send_message(application, PING_ID, NULL)
-                   == UNIQUE_RESPONSE_OK);
-#endif
 
     lua_pushboolean(L, running);
     return 1;
@@ -153,33 +92,15 @@ luaH_unique_is_running(lua_State *L)
 static gint
 luaH_unique_send_message(lua_State *L)
 {
-#if GTK_CHECK_VERSION(3,0,0)
     if (!application || !g_application_get_is_registered(G_APPLICATION(application)))
         luaL_error(L, "GApplication is not registered");
-#else
-    if (!application)
-        luaL_error(L, "unique app not setup");
-#endif
 
-#if GTK_CHECK_VERSION(3,0,0)
     if (!g_application_get_is_remote(G_APPLICATION(application)))
-#else
-    if (!unique_app_is_running(application))
-#endif
         luaL_error(L, "no other instances running");
 
-#if GTK_CHECK_VERSION(3,0,0)
     GVariant *text = g_variant_new_string(luaL_checkstring(L, 1));
 
     g_action_group_activate_action(G_ACTION_GROUP(application), "message", text);
-#else
-    const gchar *text = luaL_checkstring(L, 1);
-
-    UniqueMessageData *data = unique_message_data_new();
-    unique_message_data_set_text(data, text, -1);
-    unique_app_send_message(application, MESSAGE_ID, data);
-    unique_message_data_free(data);
-#endif
     return 0;
 }
 
