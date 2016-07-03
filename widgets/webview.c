@@ -379,7 +379,6 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
     lua_pushstring(L, failing_uri);
     lua_pushliteral(L, "Unacceptable TLS certificate");
     luaH_webview_push_certificate_flags(L, errors);
-    luaH_dumpstack(L);
     luaH_object_emit_signal(L, -5, "load-status", 4, 0);
     lua_pop(L, 1);
     return TRUE; /* Prevent load-failed signal */
