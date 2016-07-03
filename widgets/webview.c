@@ -719,11 +719,7 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 static gboolean
-#if GTK_CHECK_VERSION(3,0,0)
 expose_cb(GtkWidget* UNUSED(widget), cairo_t *UNUSED(e), widget_t *w)
-#else
-expose_cb(GtkWidget* UNUSED(widget), GdkEventExpose* UNUSED(e), widget_t *w)
-#endif
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -1062,11 +1058,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
        * the WEBKIT_LOAD_FINISHED event might be what you're looking for. */
       /* download-requested -> WebKitWebContext download-started */
       "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
-#if GTK_CHECK_VERSION(3,0,0)
       "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
-#else
-      "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
-#endif
       /* hovering-over-link functionality covered by mouse_target_changed_cb */
       "signal::mouse-target-changed",                 G_CALLBACK(mouse_target_changed_cb),      w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
@@ -1086,10 +1078,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
        * no longer allowed to modify the request. This was never used in the
        * original luakit anyway. */
       //"signal::resource-load-started",                G_CALLBACK(resource_load_started_cb),     w,
-#if GTK_CHECK_VERSION(3,0,0)
-#else
-      "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
-#endif
       "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
       NULL);
 
