@@ -277,6 +277,19 @@ window.init_funcs = {
             w.win.urgency_hint = false
         end)
     end,
+
+    hide_ui_on_fullscreen = function (w)
+        w.win:add_signal("property::fullscreen", function (win)
+            w.sbar.layout.visible = not win.fullscreen
+            w:update_sbar_visibility()
+            w.tablist.widget.visible = not win.fullscreen
+        end)
+        w.tablist:add_signal("updated", function (tlist)
+            if w.win.fullscreen then
+                tlist.widget:hide()
+            end
+        end)
+    end
 }
 
 -- Helper functions which operate on the window widgets or structure.
@@ -446,7 +459,9 @@ window.methods = {
             w.sbar.layout:hide()
         else
             w.ibar.layout:hide()
-            w.sbar.layout:show()
+            if not w.win.fullscreen then
+                w.sbar.layout:show()
+            end
         end
     end,
 
