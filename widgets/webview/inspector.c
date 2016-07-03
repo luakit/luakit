@@ -19,7 +19,6 @@
  *
  */
 
-#if WITH_WEBKIT2
 gboolean
 inspector_open_window_cb(WebKitWebInspector *UNUSED(inspector), widget_t *w)
 {
@@ -30,28 +29,6 @@ inspector_open_window_cb(WebKitWebInspector *UNUSED(inspector), widget_t *w)
     lua_pop(L, 1 + nret);
     return ret;
 }
-#else
-static WebKitWebView*
-inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), WebKitWebView *UNUSED(v), widget_t *w)
-{
-    lua_State *L = globalconf.L;
-    webview_data_t *d = w->data;
-    luaH_object_push(L, w->ref);
-
-    if (luaH_object_emit_signal(L, -1, "create-inspector-web-view", 0, 1)) {
-        widget_t *new;
-        if (((new = luaH_towidget(L, -1)) && new->info->tok == L_TK_WEBVIEW)) {
-            d->iview = new;
-            lua_pop(L, 2);
-            return ((webview_data_t*)new->data)->view;
-        }
-        warn("invalid signal return type (expected webview widget, got %s)",
-                lua_typename(L, lua_type(L, -1)));
-    }
-    lua_pop(L, 1);
-    return NULL;
-}
-#endif
 
 static gboolean
 inspector_show_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
@@ -70,13 +47,8 @@ inspector_close_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     webview_data_t *d = w->data;
-#if WITH_WEBKIT2
     lua_pushnil(L);
     d->inspector_open = FALSE;
-#else
-    luaH_object_push(L, d->iview);
-    d->iview = NULL;
-#endif
     gint nret = luaH_object_emit_signal(L, -2, "close-inspector", 1, 0);
     gboolean ret = nret && lua_toboolean(L, -1);
     lua_pop(L, 1 + nret);
@@ -87,10 +59,8 @@ static gboolean
 inspector_attach_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
     lua_State *L = globalconf.L;
-#if WITH_WEBKIT2
     webview_data_t *d = w->data;
     d->inspector_open = TRUE;
-#endif
     luaH_object_push(L, w->ref);
     gint nret = luaH_object_emit_signal(L, -1, "attach-inspector", 0, 0);
     gboolean ret = nret && lua_toboolean(L, -1);

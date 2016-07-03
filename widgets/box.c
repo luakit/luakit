@@ -103,11 +103,7 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     size_t len;
     const gchar *tmp;
-#if GTK_CHECK_VERSION(3,0,0)
     GdkRGBA c;
-#else
-    GdkColor c;
-#endif
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
@@ -122,18 +118,12 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_BG:
         tmp = luaL_checklstring(L, 3, &len);
-#if GTK_CHECK_VERSION(3,0,0)
         if (!gdk_rgba_parse(&c, tmp))
-#else
-        if (!gdk_color_parse(tmp, &c))
-#endif
             luaL_argerror(L, 3, "unable to parse colour");
 #if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "background-color", tmp, NULL);
-#elif GTK_CHECK_VERSION(3,0,0)
-        gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #else
-        gtk_widget_modify_bg(GTK_WIDGET(w->widget), GTK_STATE_NORMAL, &c);
+        gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #endif
         g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
         break;
@@ -152,14 +142,9 @@ widget_box(widget_t *w, luakit_token_t token)
     w->newindex = luaH_box_newindex;
     w->destructor = widget_destructor;
 
-#if GTK_CHECK_VERSION(3,0,0)
     w->widget = gtk_box_new((token == L_TK_VBOX) ?
             GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL, 0);
     gtk_box_set_homogeneous(GTK_BOX(w->widget), (token == L_TK_VBOX) ? FALSE : TRUE);
-#else
-    w->widget = (token == L_TK_VBOX) ? gtk_vbox_new(FALSE, 0) :
-            gtk_hbox_new(FALSE, 0);
-#endif
 
     g_object_connect(G_OBJECT(w->widget),
       "signal::add",        G_CALLBACK(add_cb),        w,

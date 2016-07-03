@@ -19,7 +19,6 @@
  *
  */
 
-#if WITH_WEBKIT2
 static void
 found_text_cb(WebKitFindController* UNUSED(find_controller), guint match_count,
         widget_t *w)
@@ -42,6 +41,5 @@ failed_to_find_text_cb(WebKitFindController* UNUSED(find_controller),
     lua_pop(L, 1);
     return;
 }
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

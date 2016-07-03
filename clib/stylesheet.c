@@ -1,5 +1,3 @@
-#if WITH_WEBKIT2
-
 #include "clib/widget.h"
 #include "clib/stylesheet.h"
 #include "globalconf.h"
@@ -88,7 +86,5 @@ stylesheet_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_stylesheet_get_source,
             (lua_class_propfunc_t) luaH_stylesheet_set_source);
 }
-
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

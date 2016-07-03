@@ -88,11 +88,8 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
-#if WITH_WEBKIT2
       PN_CASE(ID,           d->id)
-#endif
 
-#if GTK_CHECK_VERSION(3,0,0)
 # ifdef GDK_WINDOWING_X11
       PI_CASE(XID, GDK_WINDOW_XID(
 #  if GTK_CHECK_VERSION(3,12,0)
@@ -102,9 +99,6 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 #  endif
                   ))
 # endif
-#else
-      PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
-#endif
 
       case L_TK_SCREEN:
         lua_pushlightuserdata(L, gtk_window_get_screen(d->win));

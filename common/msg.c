@@ -1,5 +1,3 @@
-#ifdef WITH_WEBKIT2
-
 #include "common/lualib.h"
 #include "common/luaserialize.h"
 #include "common/msg.h"
@@ -157,7 +155,5 @@ msg_send_lua(msg_type_t type, lua_State *L, gint start, gint end)
     msg_send(&header, buf->data);
     g_byte_array_unref(buf);
 }
-
-#endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
