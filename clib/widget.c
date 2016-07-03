@@ -46,6 +46,7 @@ widget_info_t widgets_list[] = {
   { L_TK_OVERLAY,   "overlay",  widget_overlay  },
   { L_TK_SCROLLED,  "scrolled", widget_scrolled },
   { L_TK_IMAGE,     "image",    widget_image    },
+  { L_TK_SPINNER,   "spinner",  widget_spinner  },
 };
 
 LUA_OBJECT_FUNCS(widget_class, widget_t, widget);

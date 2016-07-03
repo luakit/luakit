@@ -51,6 +51,7 @@ widget_constructor_t widget_socket;
 widget_constructor_t widget_overlay;
 widget_constructor_t widget_scrolled;
 widget_constructor_t widget_image;
+widget_constructor_t widget_spinner;
 
 typedef const struct {
     luakit_token_t tok;
