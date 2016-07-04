@@ -166,7 +166,7 @@ end
 
 webview.init_funcs.noscript_load = function (view, w)
     view:add_signal("load-status", function (v, status)
-        if status == "committed" then
+        if status == "provisional" or status == "redirected" then
             local es = v:emit_signal("enable-scripts")
             local ep = v:emit_signal("enable-plugins")
             if es == nil or ep == nil then
