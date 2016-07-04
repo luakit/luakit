@@ -71,6 +71,7 @@ install:
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/widget/
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/*.lua
+	chmod 755 $(INSTALLDIR)/share/luakit/lib/markdown.lua
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/*.lua
 	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/widget/*.lua
 	install -d $(INSTALLDIR)/bin
