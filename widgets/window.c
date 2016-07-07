@@ -21,7 +21,6 @@
 #include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
-#include "clib/soup/auth.h"
 
 typedef struct {
     widget_t *widget;
