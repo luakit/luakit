@@ -156,6 +156,9 @@ require "go_up"
 -- for the current tab.
 require "mixed_content"
 
+-- Filter Referer HTTP header if page domain does not match Referer domain
+web_module("referer_control_webmodule")
+
 require "error_page"
 
 -- Add userstyles loader
