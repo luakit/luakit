@@ -418,6 +418,14 @@ luaH_dom_element_push_document(lua_State *L)
 }
 
 static gint
+luaH_dom_element_push_owner_document(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
+    return luaH_dom_document_from_webkit_dom_document(L, doc);
+}
+
+static gint
 luaH_dom_element_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
@@ -460,6 +468,7 @@ luaH_dom_element_index(lua_State *L)
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         case L_TK_STYLE: return luaH_dom_element_push_style_table(L);
         case L_TK_DOCUMENT: return luaH_dom_element_push_document(L);
+        case L_TK_OWNER_DOCUMENT: return luaH_dom_element_push_owner_document(L);
         default:
             return 0;
     }
