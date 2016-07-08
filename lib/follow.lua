@@ -35,6 +35,7 @@ stylesheet = [===[
     position: absolute;
     left: 0;
     top: 0;
+    z-index: 2147483647; /* Maximum allowable on WebKit */
 }
 
 #luakit_follow_overlay .hint_overlay {
@@ -43,7 +44,6 @@ stylesheet = [===[
     background-color: #ffff99;
     border: 1px dotted #000;
     opacity: 0.3;
-    z-index: 10001;
 }
 
 #luakit_follow_overlay .hint_label {
@@ -55,7 +55,6 @@ stylesheet = [===[
     font-size: 10px;
     font-family: monospace, courier, sans-serif;
     opacity: 0.4;
-    z-index: 10002;
 }
 
 #luakit_follow_overlay .hint_overlay_body {
