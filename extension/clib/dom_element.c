@@ -239,7 +239,18 @@ static gint
 luaH_dom_element_click(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    webkit_dom_html_element_click(WEBKIT_DOM_HTML_ELEMENT(element->element));
+    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
+    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
+    GError *err = NULL;
+    WebKitDOMEvent *event = webkit_dom_document_create_event(doc, "MouseEvent", &err);
+    if (err)
+        return luaL_error(L, "ERROR A: %s\n", err->message);
+    webkit_dom_event_init_event(event, "click", TRUE, TRUE);
+    webkit_dom_event_target_dispatch_event(target, event, &err);
+    if (err)
+        return luaL_error(L, "ERROR B: %s\n", err->message);
+    /* webkit_dom_html_element_click(WEBKIT_DOM_HTML_ELEMENT(element->element)); */
     return 0;
 }
 
