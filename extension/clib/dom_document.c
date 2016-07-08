@@ -120,6 +120,18 @@ luaH_dom_document_create_element(lua_State *L)
 }
 
 static gint
+luaH_dom_document_element_from_point(lua_State *L)
+{
+    dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
+    glong x = luaL_checknumber(L, 2),
+          y = luaL_checknumber(L, 3);
+
+    WebKitDOMElement *elem = webkit_dom_document_element_from_point(document->document, x, y);
+
+    return luaH_dom_element_from_node(L, elem);
+}
+
+static gint
 luaH_dom_document_index(lua_State *L)
 {
     dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
@@ -128,6 +140,7 @@ luaH_dom_document_index(lua_State *L)
 
     switch(token) {
         PF_CASE(CREATE_ELEMENT, luaH_dom_document_create_element);
+        PF_CASE(ELEMENT_FROM_POINT, luaH_dom_document_element_from_point);
         case L_TK_BODY: return luaH_dom_document_push_body(L, document);
         case L_TK_WINDOW: return luaH_dom_document_push_window_table(L);
         default:
