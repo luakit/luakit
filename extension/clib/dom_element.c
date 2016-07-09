@@ -250,7 +250,6 @@ luaH_dom_element_click(lua_State *L)
     webkit_dom_event_target_dispatch_event(target, event, &err);
     if (err)
         return luaL_error(L, "ERROR B: %s\n", err->message);
-    /* webkit_dom_html_element_click(WEBKIT_DOM_HTML_ELEMENT(element->element)); */
     return 0;
 }
 
