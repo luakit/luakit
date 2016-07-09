@@ -204,7 +204,7 @@ funcs = {
         -- Split into prefix and search term
         local split = string.find(state.left, "%s")
         if not split then return end
-        local prefix = string.sub(state.left, 1, split)
+        local prefix = ":" .. string.sub(state.left, 1, split)
         local term = string.sub(state.left, split+1)
         if not term then return end
 
@@ -234,7 +234,7 @@ funcs = {
         -- Split into prefix and search term
         local split = string.find(state.left, "%s")
         if not split then return end
-        local prefix = string.sub(state.left, 1, split)
+        local prefix = ":" .. string.sub(state.left, 1, split)
         local term = string.sub(state.left, split+1)
         if not term then return end
 
