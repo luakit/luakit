@@ -21,16 +21,6 @@ globals = {
  -- term                = "urxvt",
 }
 
-if not globals.useragent then
-    -- Make useragent
-    local _, arch = luakit.spawn_sync("uname -sm")
-    -- Only use the luakit version if in date format (reduces identifiability)
-    local lkv = string.match(luakit.version, "^(%d+%.%d+%.%d+)")
-    globals.useragent = string.format("Mozilla/5.0 (%s) AppleWebKit/%s+ (KHTML, like Gecko) WebKitGTK+/%s luakit%s",
-        string.sub(arch, 1, -2), luakit.webkit_user_agent_version,
-        luakit.webkit_version, (lkv and ("/" .. lkv)) or "")
-end
-
 -- Search common locations for a ca file which is used for ssl connection validation.
 local ca_files = {
     -- $XDG_DATA_HOME/luakit/ca-certificates.crt
