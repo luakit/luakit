@@ -206,7 +206,7 @@ funcs = {
         if not split then return end
         local prefix = ":" .. string.sub(state.left, 1, split)
         local term = string.sub(state.left, split+1)
-        if not term then return end
+        if not term or term == "" then return end
 
         local sql = [[
             SELECT uri, title, lower(uri||title) AS text
@@ -236,7 +236,7 @@ funcs = {
         if not split then return end
         local prefix = ":" .. string.sub(state.left, 1, split)
         local term = string.sub(state.left, split+1)
-        if not term then return end
+        if not term or term == "" then return end
 
         local sql = [[
             SELECT uri, title, lower(uri||title||tags) AS text
