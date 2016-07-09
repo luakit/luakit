@@ -15,12 +15,14 @@ void
 webview_stylesheets_regenerate(widget_t *w) {
     webview_data_t *d = w->data;
 
-    /* Re-add the user content manager stylesheets, if necessary */
-
-    if (d->stylesheet_removed || d->stylesheet_refreshed)
-        webkit_user_content_manager_remove_all_style_sheets(d->user_content);
+    /* Re-add the user content manager stylesheets, if necessary
+     * Always fully rebuild, because there's no remove_style_sheet(),
+     * it's not currently easy to tell if a stylesheet has already been
+     * added, and a full rebuild is required anyway fairly often */
 
     if (d->stylesheet_added || d->stylesheet_removed || d->stylesheet_refreshed) {
+        webkit_user_content_manager_remove_all_style_sheets(d->user_content);
+
         GList *l;
         for (l = d->stylesheets; l; l = l->next) {
             lstylesheet_t *stylesheet = l->data;
