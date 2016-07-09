@@ -86,17 +86,4 @@ domain_props = { --[[
 -- Otherwise, the stylesheet rules persist on the new page
 domain_props.all = lousy.util.table.join(domain_props.all, { user_stylesheet_uri = "" })
 
--- Accepts a table of domains; prefix domain names with a period for styles to
--- apply to all subdomains as well
-function site_styles(args)
-    for _, site in ipairs(args) do
-        local file = site
-        if string.sub(file, 1, 1) == "." then file = string.sub(file, 2) end
-        domain_props[site] = lousy.util.table.join(
-            domain_props[site],
-            { user_stylesheet_uri = "file://" .. luakit.data_dir .. "/styles/" .. file .. ".css" }
-        )
-    end
-end
-
 -- vim: et:sw=4:ts=8:sts=4:tw=80
