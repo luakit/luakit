@@ -11,7 +11,7 @@
 
 typedef struct _dom_element_t {
     LUA_OBJECT_HEADER
-    WebKitDOMHTMLElement *element;
+    WebKitDOMElement *element;
 } dom_element_t;
 
 lua_class_t dom_element_class;

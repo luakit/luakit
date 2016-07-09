@@ -34,7 +34,7 @@ luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
     lua_remove(L, -2);
 
     dom_element_t *element = luaH_checkudata(L, -1, &dom_element_class);
-    element->element = WEBKIT_DOM_HTML_ELEMENT(node);
+    element->element = WEBKIT_DOM_ELEMENT(node);
 
     luaH_uniq_add_ptr(L, REG_KEY, node, -1);
 
@@ -51,7 +51,7 @@ static gint
 luaH_dom_element_query(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
     const char *query = luaL_checkstring(L, 2);
     GError *error = NULL;
 
@@ -95,7 +95,7 @@ luaH_dom_element_remove(lua_State *L)
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
     GError *error = NULL;
 
-    webkit_dom_element_remove(WEBKIT_DOM_ELEMENT(element->element), &error);
+    webkit_dom_element_remove(element->element, &error);
 
     if (error)
         return luaL_error(L, "remove element error: %s", error->message);
@@ -125,7 +125,7 @@ luaH_dom_element_rect_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
 
     glong left, top;
 
@@ -163,7 +163,7 @@ luaH_dom_element_attribute_index(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
     const gchar *name = luaL_checkstring(L, 2);
-    const gchar *attr = webkit_dom_element_get_attribute(WEBKIT_DOM_ELEMENT(element->element), name);
+    const gchar *attr = webkit_dom_element_get_attribute(element->element, name);
     lua_pushstring(L, attr);
     return 1;
 }
@@ -176,7 +176,7 @@ luaH_dom_element_attribute_newindex(lua_State *L)
     const gchar *value = luaL_checkstring(L, 3);
     GError *error = NULL;
 
-    webkit_dom_element_set_attribute(WEBKIT_DOM_ELEMENT(element->element), attr, value, &error);
+    webkit_dom_element_set_attribute(element->element, attr, value, &error);
 
     if (error)
         return luaL_error(L, "attribute error: %s", error->message);
@@ -211,7 +211,7 @@ luaH_dom_element_style_index(lua_State *L)
     dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
     WebKitDOMDocument *document = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
     WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
-    WebKitDOMCSSStyleDeclaration *style = webkit_dom_dom_window_get_computed_style(window, WEBKIT_DOM_ELEMENT(element->element), "");
+    WebKitDOMCSSStyleDeclaration *style = webkit_dom_dom_window_get_computed_style(window, element->element, "");
 
     const gchar *name = luaL_checkstring(L, 2);
     const gchar *value = webkit_dom_css_style_declaration_get_property_value(style, name);
@@ -239,7 +239,7 @@ static gint
 luaH_dom_element_click(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
     WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
     WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
     GError *err = NULL;
@@ -257,7 +257,7 @@ static gint
 luaH_dom_element_focus(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    webkit_dom_element_focus(WEBKIT_DOM_ELEMENT(element->element));
+    webkit_dom_element_focus(element->element);
     return 0;
 }
 
@@ -377,7 +377,7 @@ static gint
 luaH_dom_element_push_first_child(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_first_element_child(elem);
     return luaH_dom_element_from_node(L, child);
 }
@@ -386,7 +386,7 @@ static gint
 luaH_dom_element_push_last_child(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_last_element_child(elem);
     return luaH_dom_element_from_node(L, child);
 }
@@ -395,7 +395,7 @@ static gint
 luaH_dom_element_push_prev_sibling(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_previous_element_sibling(elem);
     return luaH_dom_element_from_node(L, child);
 }
@@ -404,7 +404,7 @@ static gint
 luaH_dom_element_push_next_sibling(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_next_element_sibling(elem);
     return luaH_dom_element_from_node(L, child);
 }
@@ -442,7 +442,7 @@ luaH_dom_element_index(lua_State *L)
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMElement *elem = WEBKIT_DOM_ELEMENT(element->element);
+    WebKitDOMElement *elem = element->element;
 
     switch(token) {
         PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
@@ -495,12 +495,12 @@ luaH_dom_element_newindex(lua_State *L)
 
     switch (token) {
         case L_TK_INNER_HTML:
-            webkit_dom_element_set_inner_html(WEBKIT_DOM_ELEMENT(element->element),
+            webkit_dom_element_set_inner_html(element->element,
                     luaL_checkstring(L, 3), &error);
             if (error)
                 return luaL_error(L, "set inner html error: %s", error->message);
         case L_TK_VALUE:
-            if (!dom_html_element_set_value(L, element->element))
+            if (!dom_html_element_set_value(L, WEBKIT_DOM_HTML_ELEMENT(element->element)))
                 return luaL_error(L, "set value error: wrong element type");
         case L_TK_CHECKED:
             webkit_dom_html_input_element_set_checked(
