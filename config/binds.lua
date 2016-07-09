@@ -44,6 +44,8 @@ menu_binds = {
     key({},          "k",       function (w) w.menu:move_up()   end),
     key({},          "Down",    function (w) w.menu:move_down() end),
     key({},          "Up",      function (w) w.menu:move_up()   end),
+    key({},          "KP_Down", function (w) w.menu:move_down() end),
+    key({},          "KP_Up",   function (w) w.menu:move_up()   end),
     key({},          "Tab",     function (w) w.menu:move_down() end),
     key({"Shift"},   "Tab",     function (w) w.menu:move_up()   end),
 }
@@ -169,6 +171,18 @@ add_binds("normal", {
     key({}, "Right", "Scroll document right.",
         function (w) w:scroll{ xrel =  scroll_step } end),
 
+    key({}, "KP_Down", "Scroll document down.",
+        function (w) w:scroll{ yrel =  scroll_step } end),
+
+    key({}, "KP_Up",   "Scroll document up.",
+        function (w) w:scroll{ yrel = -scroll_step } end),
+
+    key({}, "KP_Left", "Scroll document left.",
+        function (w) w:scroll{ xrel = -scroll_step } end),
+
+    key({}, "KP_Right", "Scroll document right.",
+        function (w) w:scroll{ xrel =  scroll_step } end),
+
     key({}, "^", "Scroll to the absolute left of the document.",
         function (w) w:scroll{ x =  0 } end),
 
@@ -213,10 +227,22 @@ add_binds("normal", {
     key({}, "Page_Up", "Scroll page up.",
         function (w) w:scroll{ ypagerel = -page_step } end),
 
+    key({}, "KP_Next", "Scroll page down.",
+        function (w) w:scroll{ ypagerel =  page_step } end),
+
+    key({}, "KP_Page_Up", "Scroll page up.",
+        function (w) w:scroll{ ypagerel = -page_step } end),
+
     key({}, "Home", "Scroll to the top of the document.",
         function (w) w:scroll{ y =  0 } end),
 
     key({}, "End", "Scroll to the end of the document.",
+        function (w) w:scroll{ y = -1 } end),
+
+    key({}, "KP_Home", "Scroll to the top of the document.",
+        function (w) w:scroll{ y =  0 } end),
+
+    key({}, "KP_End", "Scroll to the end of the document.",
         function (w) w:scroll{ y = -1 } end),
 
     -- Specific scroll
