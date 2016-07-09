@@ -21,6 +21,8 @@ local function overlay()  return widget{type="overlay"}  end
 
 -- Build and pack window widgets
 function window.build()
+    local vertitabs = true
+
     -- Create a table for widgets and state variables for a window
     local w = {
         win    = widget{type="window"},
@@ -28,8 +30,6 @@ function window.build()
         layout = vbox(),
         paned  = widget{type=vertitabs and "hpaned" or "vpaned"},
         tabs   = notebook(),
-        -- Tablist widget
-        tablist = vertitabs and vertitabs() or lousy.widget.tablist(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
@@ -71,6 +71,9 @@ function window.build()
         bar_layout = vbox(),
         closed_tabs = {}
     }
+
+    -- Tablist widget
+    w.tablist = lousy.widget.tablist(w.tabs, vertitabs and "vertical" or "horizontal")
 
     -- Assemble window
     if vertitabs then
@@ -158,7 +161,6 @@ window.init_funcs = {
         w.tabs:add_signal("page-added", function (nbook, view, idx)
             luakit.idle_add(function ()
                 w:update_tab_count()
-                w:update_tablist()
                 return false
             end)
         end)
@@ -172,7 +174,6 @@ window.init_funcs = {
                 w:update_win_title()
                 w:update_uri(w.view.hovered_uri)
                 w:update_progress()
-                w:update_tablist()
                 w:update_buf()
                 w:update_ssl()
                 w:update_hist()
@@ -181,7 +182,6 @@ window.init_funcs = {
         end)
         w.tabs:add_signal("page-reordered", function (nbook, view, idx)
             w:update_tab_count()
-            w:update_tablist()
         end)
     end,
 
@@ -609,39 +609,6 @@ window.methods = {
         w:update_buf()
     end,
 
-    update_tablist = function (w)
-        local current = w.tabs:current()
-        local fg, bg, nfg, snfg = theme.tab_fg, theme.tab_bg, theme.tab_ntheme, theme.selected_ntheme
-        local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
-        local escape = lousy.util.escape
-        local tabs, tfmt = {}, ' <span foreground="%s">%s</span> %s'
-
-        for i, view in ipairs(w.tabs.children) do
-            -- Get tab number theme
-            local ntheme = nfg
-            if view.is_loading then -- Show loading on all tabs
-                ntheme = lfg
-            elseif current == i then -- Show ssl trusted/untrusted on current tab
-                local trusted = view:ssl_trusted()
-                ntheme = snfg
-                if trusted == false or (trusted ~= nil and not w.checking_ssl) then
-                    ntheme = bfg
-                elseif trusted then
-                    ntheme = gfg
-                end
-            end
-            local title = view.title or view.uri or "(Untitled)"
-            tabs[i] = {
-                title = string.format(tfmt, ntheme or fg, i, escape(title)),
-                fg = (current == i and theme.tab_selected_fg) or fg,
-                bg = (current == i and theme.tab_selected_bg) or bg,
-            }
-        end
-
-        if #tabs < 2 then tabs, current = {}, 0 end
-        w.tablist:update(tabs, current)
-    end,
-
     new_tab = function (w, arg, switch, order)
         local view
         -- Use blank tab first
@@ -675,7 +642,6 @@ window.methods = {
         end)
         -- Update statusbar widgets
         w:update_tab_count()
-        w:update_tablist()
         return view
     end,
 
@@ -696,7 +662,6 @@ window.methods = {
         table.insert(w.closed_tabs, tab)
         view:destroy()
         w:update_tab_count()
-        w:update_tablist()
     end,
 
     close_win = function (w, force)

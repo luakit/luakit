@@ -29,7 +29,6 @@ webview.init_funcs = {
     -- Update window and tab titles
     title_update = function (view, w)
         view:add_signal("property::title", function (v)
-            w:update_tablist()
             if w.view == v then
                 w:update_win_title()
             end
@@ -39,7 +38,6 @@ webview.init_funcs = {
     -- Update uri label in statusbar
     uri_update = function (view, w)
         view:add_signal("property::uri", function (v)
-            w:update_tablist()
             if w.view == v then
                 w:update_uri()
             end
@@ -51,15 +49,6 @@ webview.init_funcs = {
         view:add_signal("load-status", function (v, status)
             if w.view == v then
                 w:update_hist()
-            end
-        end)
-    end,
-
-    -- Update tab titles
-    tablist_update = function (view, w)
-        view:add_signal("load-status", function (v, status)
-            if status == "provisional" or status == "redirected" or status == "finished" then
-                w:update_tablist()
             end
         end)
     end,
