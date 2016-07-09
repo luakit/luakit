@@ -201,8 +201,11 @@ funcs = {
 
     -- Add history completion items to the menu
     history = function (state)
-        -- Find word under cursor (also checks not first word)
-        local term = string.match(state.left, "%s(%S+)$")
+        -- Split into prefix and search term
+        local split = string.find(state.left, "%s")
+        if not split then return end
+        local prefix = string.sub(state.left, 1, split)
+        local term = string.sub(state.left, split+1)
         if not term then return end
 
         local sql = [[
@@ -214,9 +217,8 @@ funcs = {
         local rows = history.db:exec(sql, { string.format("*%s*", term) })
         if not rows[1] then return end
 
-        -- Strip last word (so that we can append the completion uri)
-        local left = ":" .. string.sub(state.left, 1,
-            string.find(state.left, "%s(%S+)$"))
+        -- Strip everything but the prefix (so that we can append the completion uri)
+        local left = prefix
 
         -- Build rows
         local ret = {{ "History", "URI", title = true }}
@@ -229,8 +231,11 @@ funcs = {
 
     -- add bookmarks completion to the menu
     bookmarks = function (state)
-        -- Find word under cursor (also checks not first word)
-        local term = string.match(state.left, "%s(%S+)$")
+        -- Split into prefix and search term
+        local split = string.find(state.left, "%s")
+        if not split then return end
+        local prefix = string.sub(state.left, 1, split)
+        local term = string.sub(state.left, split+1)
         if not term then return end
 
         local sql = [[
@@ -242,9 +247,8 @@ funcs = {
         local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
         if not rows[1] then return end
 
-        -- Strip last word (so that we can append the completion uri)
-        local left = ":" .. string.sub(state.left, 1,
-            string.find(state.left, "%s(%S+)$"))
+        -- Strip everything but the prefix (so that we can append the completion uri)
+        local left = prefix
 
         -- Build rows
         local ret = {{ "Bookmarks", "URI", title = true }}
