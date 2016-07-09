@@ -18,6 +18,7 @@ WEBKIT_API GType webkit_dom_html_media_element_get_type(void);
 #include "extension/clib/dom_element.h"
 #include "extension/clib/dom_document.h"
 #include "common/luauniq.h"
+#include "extension/extension.h"
 
 #define REG_KEY "luakit.uniq.registry.dom_element"
 
@@ -269,6 +270,43 @@ luaH_dom_element_submit(lua_State *L)
     return 0;
 }
 
+static void
+event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointer func)
+{
+    lua_State *L = extension.WL;
+
+    luaH_object_push(L, func);
+
+    lua_createtable(L, 0, 1);
+    lua_pushliteral(L, "target");
+    WebKitDOMEventTarget *target = webkit_dom_event_get_src_element(event);
+    luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
+    lua_rawset(L, -3);
+
+    if (lua_pcall(L, 1, 0, 0)) {
+        warn("error in event listener callback: %s", lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+}
+
+static gint
+luaH_dom_element_add_event_listener(lua_State *L)
+{
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    const gchar *type = luaL_checkstring(L, 2);
+    gboolean capture = lua_toboolean(L, 3);
+    luaH_checkfunction(L, 4);
+    gpointer func = luaH_object_ref(L, 4);
+
+    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
+
+    gboolean ret = webkit_dom_event_target_add_event_listener(target, type,
+            G_CALLBACK(event_listener_cb), capture, func);
+
+    lua_pushboolean(L, ret);
+    return 1;
+}
+
 static gint
 luaH_dom_element_push_src(lua_State *L)
 {
@@ -455,6 +493,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(CLICK, luaH_dom_element_click)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
+        PF_CASE(ADD_EVENT_LISTENER, luaH_dom_element_add_event_listener)
 
         PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
 
