@@ -857,6 +857,35 @@ hide_popup_cb(WebKitWebView* UNUSED(v), widget_t* UNUSED(w)) {
     }
 }
 
+static int
+table_from_context_menu(lua_State *L, WebKitContextMenu *menu, widget_t *w)
+{
+    guint len = webkit_context_menu_get_n_items(menu);
+    lua_createtable(L, len, 0);
+
+    for (guint i = 1; i <= len; i++) {
+        WebKitContextMenuItem *item = webkit_context_menu_get_item_at_position(menu, i-1);
+        if (webkit_context_menu_item_is_separator(item))
+            lua_pushboolean(L, TRUE);
+        else {
+            GtkAction *action = webkit_context_menu_item_get_action(item);
+            WebKitContextMenuAction stock_action = webkit_context_menu_item_get_stock_action(item);
+            WebKitContextMenu *submenu = webkit_context_menu_item_get_submenu(item);
+            lua_createtable(L, 2, 0);
+            lua_pushstring(L, gtk_action_get_label(action));
+            lua_rawseti(L, -2, 1);
+            if (submenu)
+                table_from_context_menu(L, submenu, w);
+            else
+                lua_pushinteger(L, stock_action);
+            lua_rawseti(L, -2, 2);
+        }
+        lua_rawseti(L, -2, i);
+    }
+
+    return 1;
+}
+
 static void
 context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
 {
@@ -896,6 +925,15 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
                 webkit_context_menu_append(menu, item);
                 g_signal_connect(action, "activate",
                         G_CALLBACK(menu_item_cb), (gpointer)w);
+            } else if(lua_type(L, -1) == LUA_TNUMBER) {
+                WebKitContextMenuAction stock_action = lua_tointeger(L, -1);
+                if (stock_action == WEBKIT_CONTEXT_MENU_ACTION_CUSTOM) {
+                    warn("discarding menu item '%s' with custom action", label);
+                } else {
+                    item = webkit_context_menu_item_new_from_stock_action_with_label(stock_action, label);
+                    webkit_context_menu_append(menu, item);
+                }
+                lua_pop(L, 1);
             }
 
         /* add separator if encounters `true` */
@@ -912,14 +950,19 @@ context_menu_cb(WebKitWebView* UNUSED(v), WebKitContextMenu *menu,
         GdkEvent* UNUSED(e), WebKitHitTestResult* UNUSED(htr), widget_t *w)
 {
     lua_State *L = globalconf.L;
+    table_from_context_menu(L, menu, w);
+
     luaH_object_push(L, w->ref);
-    gint ret = luaH_object_emit_signal(L, -1, "populate-popup", 0, 1);
-    if (ret && lua_istable(L, -1)) {
-        last_popup.old_refs = last_popup.refs;
-        last_popup.refs = NULL;
-        context_menu_from_table(L, menu, w);
-    }
-    lua_pop(L, ret + 1);
+    lua_pushvalue(L, -2);
+    luaH_object_emit_signal(L, -2, "populate-popup", 1, 0);
+    lua_pop(L, 1);
+
+    last_popup.old_refs = last_popup.refs;
+    last_popup.refs = NULL;
+    webkit_context_menu_remove_all(menu);
+    context_menu_from_table(L, menu, w);
+
+    lua_pop(L, 1);
 
     return FALSE;
 }
