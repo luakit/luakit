@@ -117,7 +117,7 @@ function detect_files()
     end
     
     if not simple_mode then
-        info( "adblock: Found " .. table.maxn(filterfiles) .. " rules lists.\n" )
+        info( "adblock: Found " .. table.maxn(filterfiles) .. " rules lists." )
     end
     
     return
