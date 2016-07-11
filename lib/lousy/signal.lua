@@ -15,7 +15,7 @@ local table = table
 local tostring = tostring
 local type = type
 local unpack = unpack
-local verbose = luakit.verbose
+local info = msg.info
 
 --- Provides a signal API similar to GTK's signals.
 module("lousy.signal")
@@ -58,10 +58,7 @@ function emit_signal(object, signame, ...)
     local d = get_data(object)
     local sigfuncs = d.signals[signame] or {}
 
-    if verbose then
-        io.stderr:write(string.format("D: lousy.signal: emit_signal: "
-            .. "%q on %s\n", signame, tostring(object)))
-    end
+    info("D: lousy.signal: emit_signal: %q on %s", signame, tostring(object))
 
     for _, sigfunc in ipairs(sigfuncs) do
         local ret
