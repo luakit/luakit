@@ -76,11 +76,6 @@ function update_completions(w, text, pos)
     -- Don't rebuild the menu if the text & cursor position are the same
     if text == state.text and pos == state.pos then return end
 
-    -- Exit completion if cursor outside a word
-    if string.sub(text, pos, pos) == " " then
-        w:enter_cmd(text, { pos = pos })
-    end
-
     -- Update left and right strings
     state.text, state.pos = text, pos
     state.left = string.sub(text, 2, pos)
