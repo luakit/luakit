@@ -28,12 +28,17 @@ void
 _fatal(gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
+    va_fatal(line, fct, fmt, ap);
+    va_end(ap);
+}
+
+void
+va_fatal(gint line, const gchar *fct, const gchar *fmt, va_list ap) {
     gint atty = isatty(STDERR_FILENO);
     if (atty) g_fprintf(stderr, ANSI_COLOR_BG_RED);
     g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
     g_fprintf(stderr, "E: %s:%d: ", fct, line);
     g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
     if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
     g_fprintf(stderr, "\n");
     exit(EXIT_FAILURE);
@@ -44,12 +49,17 @@ void
 _warn(gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
+    va_warn(line, fct, fmt, ap);
+    va_end(ap);
+}
+
+void
+va_warn(gint line, const gchar *fct, const gchar *fmt, va_list ap) {
     gint atty = isatty(STDERR_FILENO);
     if (atty) g_fprintf(stderr, ANSI_COLOR_RED);
     g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
     g_fprintf(stderr, "E: %s:%d: ", fct, line);
     g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
     if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
     g_fprintf(stderr, "\n");
 }
@@ -57,13 +67,18 @@ _warn(gint line, const gchar *fct, const gchar *fmt, ...) {
 /* Print debug message on stderr. */
 void
 _debug(gint line, const gchar *fct, const gchar *fmt, ...) {
+    va_list ap;
+    va_start(ap, fmt);
+    va_debug(line, fct, fmt, ap);
+    va_end(ap);
+}
+
+void
+va_debug(gint line, const gchar *fct, const gchar *fmt, va_list ap) {
     if (globalconf.verbose) {
-        va_list ap;
-        va_start(ap, fmt);
         g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
         g_fprintf(stderr, "D: %s:%d: ", fct, line);
         g_vfprintf(stderr, fmt, ap);
-        va_end(ap);
         g_fprintf(stderr, "\n");
     }
 }

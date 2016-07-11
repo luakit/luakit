@@ -20,6 +20,7 @@
 #define LUAKIT_COMMON_LOG_H
 
 #include <glib.h>
+#include <stdarg.h>
 
 /* ANSI term color codes */
 #define ANSI_COLOR_RESET   "\x1b[0m"
@@ -35,12 +36,15 @@
 
 #define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _fatal(int, const gchar *, const gchar *, ...);
+void va_fatal(int, const gchar *, const gchar *, va_list);
 
 #define warn(string, ...) _warn(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _warn(int, const gchar *, const gchar *, ...);
+void va_warn(int, const gchar *, const gchar *, va_list);
 
 #define debug(string, ...) _debug(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 void _debug(int, const gchar *, const gchar *, ...);
+void va_debug(int, const gchar *, const gchar *, va_list);
 
 #endif
 
