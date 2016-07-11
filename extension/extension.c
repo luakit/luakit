@@ -13,6 +13,7 @@
 #include "extension/clib/dom_element.h"
 #include "extension/clib/page.h"
 #include "extension/clib/extension.h"
+#include "common/clib/msg.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
@@ -40,6 +41,7 @@ web_lua_init(void)
     dom_element_class_setup(WL);
     page_class_setup(WL);
     extension_class_setup(WL, extension.ext);
+    msg_lib_setup(WL);
 
     printf("luakit web process: Lua initialized\n");
 }
