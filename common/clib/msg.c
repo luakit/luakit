@@ -28,32 +28,29 @@
 
 gpointer string_format_ref;
 
-static gint
-luaH_msg_warn(lua_State *L)
+static const gchar *
+luaH_msg_string_from_args(lua_State *L)
 {
     gint nargs = lua_gettop(L);
     luaH_object_push(L, string_format_ref);
     lua_insert(L, 1);
     if (lua_pcall(L, nargs, 1, 0))
-        return luaL_error(L, "failed to format message: %s", lua_tostring(L, -1));
-    const gchar *msg = lua_tostring(L, -1);
-    printf("%s\n", msg);
+        luaL_error(L, "failed to format message: %s", lua_tostring(L, -1));
+    return lua_tostring(L, -1);
+}
+
+static gint
+luaH_msg_warn(lua_State *L)
+{
+    printf("%s\n", luaH_msg_string_from_args(L));
     return 0;
 }
 
 static gint
 luaH_msg_info(lua_State *L)
 {
-    if (!globalconf.verbose)
-        return 0;
-        
-    gint nargs = lua_gettop(L);
-    luaH_object_push(L, string_format_ref);
-    lua_insert(L, 1);
-    if (lua_pcall(L, nargs, 1, 0))
-        return luaL_error(L, "failed to format message: %s", lua_tostring(L, -1));
-    const gchar *msg = lua_tostring(L, -1);
-    printf("%s\n", msg);
+    if (globalconf.verbose)
+        printf("%s\n", luaH_msg_string_from_args(L));
     return 0;
 }
 
