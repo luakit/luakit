@@ -97,7 +97,7 @@ web_extension_connect(const gchar *socket_path)
     strcpy(remote.sun_path, socket_path);
     int len = sizeof(remote.sun_family) + strlen(remote.sun_path);
 
-    printf("luakit web process: connecting to %s\n", socket_path);
+    debug("luakit web process: connecting to %s\n", socket_path);
 
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1) {
         perror("socket");
@@ -109,7 +109,7 @@ web_extension_connect(const gchar *socket_path)
         goto fail_connect;
     }
 
-    printf("luakit web process: connected\n");
+    debug("luakit web process: connected\n");
 
     extension.ui_channel = msg_setup(sock);
 
