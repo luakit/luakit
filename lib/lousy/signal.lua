@@ -58,7 +58,7 @@ function emit_signal(object, signame, ...)
     local d = get_data(object)
     local sigfuncs = d.signals[signame] or {}
 
-    info("D: lousy.signal: emit_signal: %q on %s", signame, tostring(object))
+    info("emit_signal: %q on %s", signame, tostring(object))
 
     for _, sigfunc in ipairs(sigfuncs) do
         local ret
