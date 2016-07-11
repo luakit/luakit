@@ -42,15 +42,20 @@ luaH_msg_string_from_args(lua_State *L)
 static gint
 luaH_msg_warn(lua_State *L)
 {
-    printf("%s\n", luaH_msg_string_from_args(L));
+    lua_Debug ar;
+    lua_getstack(L, 1, &ar);
+    lua_getinfo(L, "Sln", &ar);
+    _warn(ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 
 static gint
 luaH_msg_info(lua_State *L)
 {
-    if (globalconf.verbose)
-        printf("%s\n", luaH_msg_string_from_args(L));
+    lua_Debug ar;
+    lua_getstack(L, 1, &ar);
+    lua_getinfo(L, "Sln", &ar);
+    _debug(ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 
