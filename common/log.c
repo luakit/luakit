@@ -31,7 +31,7 @@ _fatal(gint line, const gchar *fct, const gchar *fmt, ...) {
     gint atty = isatty(STDERR_FILENO);
     if (atty) g_fprintf(stderr, ANSI_COLOR_BG_RED);
     g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
+    g_fprintf(stderr, "E: %s:%d: ", fct, line);
     g_vfprintf(stderr, fmt, ap);
     va_end(ap);
     if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
@@ -47,7 +47,7 @@ _warn(gint line, const gchar *fct, const gchar *fmt, ...) {
     gint atty = isatty(STDERR_FILENO);
     if (atty) g_fprintf(stderr, ANSI_COLOR_RED);
     g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
+    g_fprintf(stderr, "E: %s:%d: ", fct, line);
     g_vfprintf(stderr, fmt, ap);
     va_end(ap);
     if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
@@ -61,7 +61,7 @@ _debug(gint line, const gchar *fct, const gchar *fmt, ...) {
         va_list ap;
         va_start(ap, fmt);
         g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-        g_fprintf(stderr, "D: luakit: %s:%d: ", fct, line);
+        g_fprintf(stderr, "D: %s:%d: ", fct, line);
         g_vfprintf(stderr, fmt, ap);
         va_end(ap);
         g_fprintf(stderr, "\n");
