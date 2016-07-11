@@ -211,7 +211,7 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         return 0;
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
+        luaH_warn(L, "unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
 

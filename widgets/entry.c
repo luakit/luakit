@@ -136,7 +136,7 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         break;
 
       default:
-        warn("unknown property: %s", luaL_checkstring(L, 2));
+        luaH_warn(L, "unknown property: %s", luaL_checkstring(L, 2));
         return 0;
     }
     return luaH_object_property_signal(L, 1, token);
