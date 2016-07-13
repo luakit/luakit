@@ -51,6 +51,23 @@ msg_dispatch_enqueued(gpointer UNUSED(unused))
     return FALSE;
 }
 
+void
+msg_send(const msg_header_t *header, const void *data)
+{
+    if (!send_thread) {
+        send_thread = g_thread_new("send_thread", msg_send_thread, NULL);
+        send_queue = g_async_queue_new();
+    }
+
+    g_assert((header->length == 0) == (data == NULL));
+    gpointer header_dup = g_memdup(header, sizeof(*header));
+    g_async_queue_push(send_queue, header_dup);
+    if (header->length) {
+        gpointer data_dup = g_memdup(data, header->length);
+        g_async_queue_push(send_queue, data_dup);
+    }
+}
+
 /* Callback function for channel watch */
 static gboolean
 msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer UNUSED(user_data))

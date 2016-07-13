@@ -59,8 +59,9 @@ typedef struct _msg_scroll_t {
 GIOChannel * msg_setup(int sock);
 gboolean msg_recv_and_dispatch_or_enqueue(int type_mask);
 void msg_send_lua(msg_type_t type, lua_State *L, gint start, gint end);
+void msg_send(const msg_header_t *header, const void *data);
 
 /* Must be defined separately; not defined in common/msg.c */
-void msg_send(const msg_header_t *header, const void *data);
+void msg_send_impl(const msg_header_t *header, const void *data);
 
 #endif

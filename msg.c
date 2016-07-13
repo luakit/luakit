@@ -190,7 +190,7 @@ msg_init(void)
 }
 
 void
-msg_send(const msg_header_t *header, const void *data)
+msg_send_impl(const msg_header_t *header, const void *data)
 {
     if (globalconf.web_channel) {
         g_io_channel_write_chars(globalconf.web_channel, (gchar*)header, sizeof(*header), NULL, NULL);

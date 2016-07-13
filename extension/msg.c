@@ -121,7 +121,7 @@ fail_socket:
 }
 
 void
-msg_send(const msg_header_t *header, const void *data)
+msg_send_impl(const msg_header_t *header, const void *data)
 {
     g_io_channel_write_chars(extension.ui_channel, (gchar*)header, sizeof(*header), NULL, NULL);
     g_io_channel_write_chars(extension.ui_channel, (gchar*)data, header->length, NULL, NULL);
