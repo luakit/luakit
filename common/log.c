@@ -23,64 +23,37 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Print error and exit with EXIT_FAILURE code. */
 void
-_fatal(gint line, const gchar *fct, const gchar *fmt, ...) {
+_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    va_fatal(line, fct, fmt, ap);
+    va_log(lvl, line, fct, fmt, ap);
     va_end(ap);
 }
 
 void
-va_fatal(gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    gint atty = isatty(STDERR_FILENO);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_BG_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
-    exit(EXIT_FAILURE);
-}
+va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
+    if (lvl <= LOG_LEVEL_debug && !globalconf.verbose)
+        return;
 
-/* Print error message on stderr. */
-void
-_warn(gint line, const gchar *fct, const gchar *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    va_warn(line, fct, fmt, ap);
-    va_end(ap);
-}
-
-void
-va_warn(gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    gint atty = isatty(STDERR_FILENO);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
-}
-
-/* Print debug message on stderr. */
-void
-_debug(gint line, const gchar *fct, const gchar *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    va_debug(line, fct, fmt, ap);
-    va_end(ap);
-}
-
-void
-va_debug(gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    if (globalconf.verbose) {
-        g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-        g_fprintf(stderr, "D: %s:%d: ", fct, line);
-        g_vfprintf(stderr, fmt, ap);
-        g_fprintf(stderr, "\n");
+    gchar prefix_char;
+    switch (lvl) {
+        case LOG_LEVEL_fatal: prefix_char = 'E'; break;
+        case LOG_LEVEL_warn:  prefix_char = 'W'; break;
+        case LOG_LEVEL_debug: prefix_char = 'D'; break;
     }
+
+    gint atty = isatty(STDERR_FILENO);
+    if (atty && lvl == LOG_LEVEL_fatal) g_fprintf(stderr, ANSI_COLOR_BG_RED);
+    if (atty && lvl == LOG_LEVEL_warn) g_fprintf(stderr, ANSI_COLOR_RED);
+    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
+    g_fprintf(stderr, "%c: %s:%d: ", prefix_char, fct, line);
+    g_vfprintf(stderr, fmt, ap);
+    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
+    g_fprintf(stderr, "\n");
+
+    if (lvl == LOG_LEVEL_fatal)
+        exit(EXIT_FAILURE);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

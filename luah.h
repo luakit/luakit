@@ -144,7 +144,7 @@ luaH_warn(lua_State *L, const gchar *fmt, ...) {
 
     va_list ap;
     va_start(ap, fmt);
-    va_warn(ar.currentline, ar.short_src, fmt, ap);
+    va_log(LOG_LEVEL_warn, ar.currentline, ar.short_src, fmt, ap);
     va_end(ap);
 }
 

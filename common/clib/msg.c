@@ -45,7 +45,7 @@ luaH_msg_warn(lua_State *L)
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "Sln", &ar);
-    _warn(ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
+    _log(LOG_LEVEL_warn, ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 
@@ -55,7 +55,7 @@ luaH_msg_info(lua_State *L)
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "Sln", &ar);
-    _debug(ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
+    _log(LOG_LEVEL_debug, ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 

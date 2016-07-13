@@ -22,6 +22,15 @@
 #include <glib.h>
 #include <stdarg.h>
 
+#define LOG_LEVELS \
+    X(fatal) \
+    X(warn) \
+    X(debug) \
+
+#define X(name) LOG_LEVEL_##name,
+typedef enum { LOG_LEVELS } log_level_t;
+#undef X
+
 /* ANSI term color codes */
 #define ANSI_COLOR_RESET   "\x1b[0m"
 
@@ -34,17 +43,13 @@
 
 #define ANSI_COLOR_BG_RED  "\x1b[41m"
 
-#define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _fatal(int, const gchar *, const gchar *, ...);
-void va_fatal(int, const gchar *, const gchar *, va_list);
+#define log(lvl, string, ...) _log(lvl, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+void _log(log_level_t lvl, int, const gchar *, const gchar *, ...);
+void va_log(log_level_t lvl, int, const gchar *, const gchar *, va_list);
 
-#define warn(string, ...) _warn(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _warn(int, const gchar *, const gchar *, ...);
-void va_warn(int, const gchar *, const gchar *, va_list);
-
-#define debug(string, ...) _debug(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _debug(int, const gchar *, const gchar *, ...);
-void va_debug(int, const gchar *, const gchar *, va_list);
+#define fatal(string, ...) _log(LOG_LEVEL_fatal, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+#define warn(string, ...) _log(LOG_LEVEL_warn, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+#define debug(string, ...) _log(LOG_LEVEL_debug, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 
 #endif
 
