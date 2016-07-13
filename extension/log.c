@@ -25,6 +25,14 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+GArray *msg_queue;
+
+typedef struct _queued_log_t {
+    log_level_t lvl;
+    gint line;
+    gchar *fct, *msg;
+} queued_log_t;
+
 void
 _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
@@ -33,16 +41,9 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
     va_end(ap);
 }
 
-void
-va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
+static void
+va_log_string(log_level_t lvl, gint line, const gchar *fct, gchar *msg) {
     lua_State *L = extension.WL;
-
-    gchar *msg = g_strdup_vprintf(fmt, ap);
-
-    if (!L) {
-        printf("LOGGING: %s\n", msg);
-        return;
-    }
 
     lua_pushinteger(L, lvl);
     lua_pushinteger(L, line);
@@ -52,6 +53,35 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
     lua_pop(L, 4);
 
     g_free(msg);
+}
+
+void
+va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
+    lua_State *L = extension.WL;
+    gchar *msg = g_strdup_vprintf(fmt, ap);
+
+    if (!extension.ui_channel || !L) {
+        if (!msg_queue)
+            msg_queue = g_array_sized_new(FALSE, FALSE, sizeof(queued_log_t), 1);
+        queued_log_t item = {
+            .lvl = lvl,
+            .line = line,
+            .fct = g_strdup(fct),
+            .msg = msg
+        };
+        g_array_append_val(msg_queue, item);
+        return;
+    } else if (msg_queue) {
+        for (unsigned i = 0; i < msg_queue->len; ++i) {
+            queued_log_t item = g_array_index(msg_queue, queued_log_t, i);
+            va_log_string(item.lvl, item.line, item.fct, item.msg);
+            g_free(item.fct);
+        }
+        g_array_free(msg_queue, TRUE);
+        msg_queue = NULL;
+    }
+
+    va_log_string(lvl, line, fct, msg);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
