@@ -20,6 +20,9 @@ typedef struct _msg_recv_state_t {
 
 static msg_recv_state_t state;
 
+static GThread *send_thread;
+GAsyncQueue *send_queue;
+
 typedef struct _queued_msg_t {
     msg_header_t header;
     char payload[0];
@@ -49,6 +52,20 @@ msg_dispatch_enqueued(gpointer UNUSED(unused))
         return TRUE;
     }
     return FALSE;
+}
+
+static gpointer
+msg_send_thread(gpointer UNUSED(user_data))
+{
+    while (TRUE) {
+        msg_header_t *header = g_async_queue_pop(send_queue);
+        gpointer data = header->length ? g_async_queue_pop(send_queue) : NULL;
+        msg_send_impl(header, data);
+        g_free(header);
+        g_free(data);
+    }
+
+    return NULL;
 }
 
 void
