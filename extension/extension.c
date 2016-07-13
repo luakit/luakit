@@ -24,7 +24,7 @@ web_lua_init(void)
 {
     debug("luakit web process: Lua initializing...\n");
 
-    lua_State *WL = extension.WL = luaL_newstate();
+    lua_State *WL = extension.WL;
 
     /* Set panic fuction */
     lua_atpanic(WL, luaH_panic);
@@ -50,6 +50,8 @@ G_MODULE_EXPORT void
 webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant *payload)
 {
     const gchar *socket_path = g_variant_get_string(payload, NULL);
+
+    extension.WL = luaL_newstate();
 
     if (web_extension_connect(socket_path)) {
         debug("luakit web process: connecting to UI thread failed\n");
