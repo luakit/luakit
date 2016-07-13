@@ -83,12 +83,6 @@ web_module_restart(lua_State *L)
         msg_send(&header, name);
         lua_pop(L, 1);
     }
-
-    msg_header_t header = {
-        .type = MSG_TYPE_web_lua_loaded,
-        .length = 0
-    };
-    msg_send(&header, NULL);
 }
 
 void

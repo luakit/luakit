@@ -192,13 +192,6 @@ main(gint argc, gchar *argv[]) {
     if(!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
-    /* Releases page-created signals, replies with web-extension-loaded */
-    msg_header_t header = {
-        .type = MSG_TYPE_web_lua_loaded,
-        .length = 0
-    };
-    msg_send(&header, NULL);
-
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file, exiting");
 

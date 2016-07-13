@@ -137,6 +137,13 @@ web_extension_connect(gpointer user_data)
     }
     globalconf.web_extension_loaded = FALSE;
 
+    /* Releases page-created signals, replies with web-extension-loaded */
+    msg_header_t header = {
+        .type = MSG_TYPE_web_lua_loaded,
+        .length = 0
+    };
+    msg_send(&header, NULL);
+
     /* Send all queued messages */
     if (globalconf.web_channel_queue) {
         g_io_channel_write_chars(globalconf.web_channel,
