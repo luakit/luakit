@@ -19,6 +19,7 @@ typedef struct _msg_recv_state_t {
 } msg_recv_state_t;
 
 static msg_recv_state_t state;
+static const char *process_name;
 
 static GThread *send_thread;
 GAsyncQueue *send_queue;
@@ -31,6 +32,7 @@ typedef struct _queued_msg_t {
 static void
 msg_dispatch(msg_header_t header, gpointer payload)
 {
+    debug("Process '%s': recv " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message", process_name, msg_type_name(header.type));
     switch (header.type) {
 #define X(name) case MSG_TYPE_##name: msg_recv_##name(payload, header.length); break;
         MSG_TYPES
@@ -106,9 +108,10 @@ msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer UNUSED(user_dat
 }
 
 GIOChannel *
-msg_setup(int sock)
+msg_setup(int sock, const char *proc_name)
 {
     state.queued_msgs = g_ptr_array_new();
+    process_name = proc_name;
 
     state.channel = g_io_channel_unix_new(sock);
     g_io_channel_set_encoding(state.channel, NULL, NULL);

@@ -56,7 +56,20 @@ typedef struct _msg_scroll_t {
 	msg_scroll_subtype_t subtype;
 } msg_scroll_t;
 
-GIOChannel * msg_setup(int sock);
+/* Message names */
+static inline const char *
+msg_type_name(msg_type_t type)
+{
+    switch (type) {
+#define X(name) case MSG_TYPE_##name: return #name;
+        MSG_TYPES
+#undef X
+        default:
+            return "UNKNOWN";
+    }
+}
+
+GIOChannel * msg_setup(int sock, const char *process_name);
 gboolean msg_recv_and_dispatch_or_enqueue(int type_mask);
 void msg_send_lua(msg_type_t type, lua_State *L, gint start, gint end);
 void msg_send(const msg_header_t *header, const void *data);
