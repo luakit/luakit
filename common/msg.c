@@ -32,7 +32,9 @@ typedef struct _queued_msg_t {
 static void
 msg_dispatch(msg_header_t header, gpointer payload)
 {
-    debug("Process '%s': recv " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message", process_name, msg_type_name(header.type));
+    if (header.type != MSG_TYPE_log)
+        debug("Process '%s': recv " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
+                process_name, msg_type_name(header.type));
     switch (header.type) {
 #define X(name) case MSG_TYPE_##name: msg_recv_##name(payload, header.length); break;
         MSG_TYPES
@@ -77,6 +79,10 @@ msg_send(const msg_header_t *header, const void *data)
         send_thread = g_thread_new("send_thread", msg_send_thread, NULL);
         send_queue = g_async_queue_new();
     }
+
+    if (header->type != MSG_TYPE_log)
+        debug("Process '%s': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
+                process_name, msg_type_name(header->type));
 
     g_assert((header->length == 0) == (data == NULL));
     gpointer header_dup = g_memdup(header, sizeof(*header));

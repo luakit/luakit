@@ -17,7 +17,9 @@
  */
 
 #include "globalconf.h"
+#include "extension/extension.h"
 #include "common/log.h"
+#include "common/msg.h"
 
 #include <glib/gprintf.h>
 #include <stdlib.h>
@@ -33,27 +35,23 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
 
 void
 va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    if (lvl <= LOG_LEVEL_debug && !globalconf.verbose)
-        return;
+    lua_State *L = extension.WL;
 
-    gchar prefix_char;
-    switch (lvl) {
-        case LOG_LEVEL_fatal: prefix_char = 'E'; break;
-        case LOG_LEVEL_warn:  prefix_char = 'W'; break;
-        case LOG_LEVEL_debug: prefix_char = 'D'; break;
+    gchar *msg = g_strdup_vprintf(fmt, ap);
+
+    if (!L) {
+        printf("LOGGING: %s\n", msg);
+        return;
     }
 
-    gint atty = isatty(STDERR_FILENO);
-    if (atty && lvl == LOG_LEVEL_fatal) g_fprintf(stderr, ANSI_COLOR_BG_RED);
-    if (atty && lvl == LOG_LEVEL_warn) g_fprintf(stderr, ANSI_COLOR_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "%c: %s:%d: ", prefix_char, fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
+    lua_pushinteger(L, lvl);
+    lua_pushinteger(L, line);
+    lua_pushstring(L, fct);
+    lua_pushstring(L, msg);
+    msg_send_lua(MSG_TYPE_log, L, -4, -1);
+    lua_pop(L, 4);
 
-    if (lvl == LOG_LEVEL_fatal)
-        exit(EXIT_FAILURE);
+    g_free(msg);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

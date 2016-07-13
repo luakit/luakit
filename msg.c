@@ -192,7 +192,6 @@ msg_init(void)
 void
 msg_send_impl(const msg_header_t *header, const void *data)
 {
-    debug("Process 'UI': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message", msg_type_name(header->type));
     if (globalconf.web_channel) {
         g_io_channel_write_chars(globalconf.web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
         g_io_channel_write_chars(globalconf.web_channel, (gchar*)data, header->length, NULL, NULL);
