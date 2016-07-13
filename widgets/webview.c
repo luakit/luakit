@@ -301,8 +301,9 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 
     update_uri(w, NULL);
 
-    /* update uri after redirects & etc */
-    if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED) {
+    if (e == WEBKIT_LOAD_STARTED) {
+        ((webview_data_t*) w->data)->is_committed = FALSE;
+    } else if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED) {
         ((webview_data_t*) w->data)->is_committed = TRUE;
     }
 
