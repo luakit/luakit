@@ -157,6 +157,7 @@ main(gint argc, gchar *argv[]) {
     gtk_set_locale();
 #endif
     gtk_disable_setlocale();
+    setlocale(LC_ALL, "");
     setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */
