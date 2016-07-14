@@ -123,6 +123,7 @@ GIOChannel *
 msg_setup(int sock, const char *proc_name)
 {
     state.queued_msgs = g_ptr_array_new();
+    g_assert(proc_name && *proc_name);
     process_name = proc_name;
 
     state.channel = g_io_channel_unix_new(sock);
