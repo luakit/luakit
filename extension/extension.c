@@ -22,7 +22,7 @@
 void
 web_lua_init(void)
 {
-    debug("luakit web process: Lua initializing...\n");
+    debug("luakit web process: Lua initializing...");
 
     lua_State *WL = extension.WL;
 
@@ -43,7 +43,7 @@ web_lua_init(void)
     extension_class_setup(WL, extension.ext);
     msg_lib_setup(WL);
 
-    debug("luakit web process: Lua initialized\n");
+    debug("luakit web process: Lua initialized");
 }
 
 G_MODULE_EXPORT void
@@ -54,7 +54,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     extension.WL = luaL_newstate();
 
     if (web_extension_connect(socket_path)) {
-        debug("luakit web process: connecting to UI thread failed\n");
+        debug("luakit web process: connecting to UI thread failed");
         exit(EXIT_FAILURE);
     }
 
@@ -65,7 +65,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     web_luajs_init();
     web_script_world_init();
 
-    debug("luakit web process: ready for messages\n");
+    debug("luakit web process: ready for messages");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
