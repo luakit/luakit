@@ -51,6 +51,10 @@ void va_log(log_level_t lvl, int, const gchar *, const gchar *, va_list);
 #define warn(string, ...) _log(LOG_LEVEL_warn, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 #define debug(string, ...) _log(LOG_LEVEL_debug, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 
+/* Only accessible from main UI process */
+void log_set_verbosity(log_level_t lvl);
+log_level_t log_get_verbosity(void);
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

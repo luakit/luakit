@@ -81,6 +81,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     gboolean *check_only = NULL;
     gchar **uris = NULL;
     globalconf.profile = NULL;
+    gboolean verbose = FALSE;
 
     /* save luakit exec path */
     globalconf.execpath = g_strdup(argv[0]);
@@ -94,7 +95,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
       { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
       { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
       { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
-      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,  "print debugging output",    NULL   },
+      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &verbose,             "print debugging output",    NULL   },
       { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
       { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
     };
@@ -111,6 +112,8 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
         g_printf("luakit %s\n", VERSION);
         exit(EXIT_SUCCESS);
     }
+
+    log_set_verbosity(verbose ? LOG_LEVEL_debug : LOG_LEVEL_warn);
 
     /* check config syntax and exit */
     if (check_only) {

@@ -466,7 +466,7 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
       /* push boolean properties */
-      PB_CASE(VERBOSE,          globalconf.verbose)
+      PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_debug)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
 
       PB_CASE(WEBKIT2,          true)

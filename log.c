@@ -24,6 +24,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static log_level_t verbosity;
+
+void
+log_set_verbosity(log_level_t lvl)
+{
+    verbosity = lvl;
+}
+
+log_level_t
+log_get_verbosity(void)
+{
+    return verbosity;
+}
+
 void
 _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
@@ -34,7 +48,7 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
 
 void
 va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    if (lvl <= LOG_LEVEL_debug && !globalconf.verbose)
+    if (lvl > verbosity)
         return;
 
     gchar prefix_char;
