@@ -19,7 +19,13 @@ typedef struct _msg_recv_state_t {
 } msg_recv_state_t;
 
 static msg_recv_state_t state;
-static const char *process_name;
+/*
+ * Default process name is "UI" because the UI process currently sends IPC
+ * messages before the IPC channel is opened (these messages are queued),
+ * and sending IPC messages writes log messages which include the process
+ * name.
+ */
+static const char *process_name = "UI";
 
 static GThread *send_thread;
 GAsyncQueue *send_queue;
