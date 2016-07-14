@@ -13,6 +13,7 @@
 #include "extension/clib/dom_element.h"
 #include "extension/clib/page.h"
 #include "extension/clib/extension.h"
+#include "common/clib/msg.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
@@ -21,9 +22,9 @@
 void
 web_lua_init(void)
 {
-    printf("luakit web process: Lua initializing...\n");
+    debug("luakit web process: Lua initializing...");
 
-    lua_State *WL = extension.WL = luaL_newstate();
+    lua_State *WL = extension.WL;
 
     /* Set panic fuction */
     lua_atpanic(WL, luaH_panic);
@@ -40,8 +41,9 @@ web_lua_init(void)
     dom_element_class_setup(WL);
     page_class_setup(WL);
     extension_class_setup(WL, extension.ext);
+    msg_lib_setup(WL);
 
-    printf("luakit web process: Lua initialized\n");
+    debug("luakit web process: Lua initialized");
 }
 
 G_MODULE_EXPORT void
@@ -49,8 +51,10 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
 {
     const gchar *socket_path = g_variant_get_string(payload, NULL);
 
+    extension.WL = luaL_newstate();
+
     if (web_extension_connect(socket_path)) {
-        printf("luakit web process: connecting to UI thread failed\n");
+        debug("luakit web process: connecting to UI thread failed");
         exit(EXIT_FAILURE);
     }
 
@@ -61,7 +65,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     web_luajs_init();
     web_script_world_init();
 
-    printf("luakit web process: ready for messages\n");
+    debug("luakit web process: ready for messages");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

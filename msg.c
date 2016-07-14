@@ -128,7 +128,7 @@ web_extension_connect(gpointer user_data)
 
     debug("Creating channel...");
 
-    globalconf.web_channel = msg_setup(web_socket);
+    globalconf.web_channel = msg_setup(web_socket, "UI");
 
     if (globalconf.web_extension_loaded) {
         /* If it was previously loaded, we've just crashed */

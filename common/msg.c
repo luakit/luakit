@@ -19,6 +19,13 @@ typedef struct _msg_recv_state_t {
 } msg_recv_state_t;
 
 static msg_recv_state_t state;
+/*
+ * Default process name is "UI" because the UI process currently sends IPC
+ * messages before the IPC channel is opened (these messages are queued),
+ * and sending IPC messages writes log messages which include the process
+ * name.
+ */
+static const char *process_name = "UI";
 
 static GThread *send_thread;
 GAsyncQueue *send_queue;
@@ -31,6 +38,9 @@ typedef struct _queued_msg_t {
 static void
 msg_dispatch(msg_header_t header, gpointer payload)
 {
+    if (header.type != MSG_TYPE_log)
+        debug("Process '%s': recv " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
+                process_name, msg_type_name(header.type));
     switch (header.type) {
 #define X(name) case MSG_TYPE_##name: msg_recv_##name(payload, header.length); break;
         MSG_TYPES
@@ -76,6 +86,10 @@ msg_send(const msg_header_t *header, const void *data)
         send_queue = g_async_queue_new();
     }
 
+    if (header->type != MSG_TYPE_log)
+        debug("Process '%s': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
+                process_name, msg_type_name(header->type));
+
     g_assert((header->length == 0) == (data == NULL));
     gpointer header_dup = g_memdup(header, sizeof(*header));
     g_async_queue_push(send_queue, header_dup);
@@ -106,9 +120,11 @@ msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer UNUSED(user_dat
 }
 
 GIOChannel *
-msg_setup(int sock)
+msg_setup(int sock, const char *proc_name)
 {
     state.queued_msgs = g_ptr_array_new();
+    g_assert(proc_name && *proc_name);
+    process_name = proc_name;
 
     state.channel = g_io_channel_unix_new(sock);
     g_io_channel_set_encoding(state.channel, NULL, NULL);

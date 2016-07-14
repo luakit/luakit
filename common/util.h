@@ -29,17 +29,7 @@
 #include <lua.h>
 #include <sys/time.h>
 
-/* ANSI term color codes */
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-
-#define ANSI_COLOR_BG_RED  "\x1b[41m"
+#include "common/log.h"
 
 /* Useful macros */
 #define NONULL(x) (x ? x : "")
@@ -60,15 +50,6 @@
 #define PI_CASE(t, i) case L_TK_##t: lua_pushinteger   (L, i); return 1;
 #define PN_CASE(t, n) case L_TK_##t: lua_pushnumber    (L, n); return 1;
 #define PS_CASE(t, s) case L_TK_##t: lua_pushstring    (L, s); return 1;
-
-#define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _fatal(int, const gchar *, const gchar *, ...);
-
-#define warn(string, ...) _warn(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _warn(int, const gchar *, const gchar *, ...);
-
-#define debug(string, ...) _debug(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _debug(int, const gchar *, const gchar *, ...);
 
 /* A NULL resistant strlen. Unlike it's libc sibling, l_strlen returns a
  * ssize_t, and supports its argument being NULL. */

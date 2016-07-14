@@ -2,11 +2,9 @@ local pairs = pairs
 local string = string
 local ui_process = ui_process
 local extension = extension
+local info = msg.info
 
 module("adblock_webmodule")
-
--- FIXME: Temporary hack
-function info(...) if false then io.stdout:write(string.format(...) .. "\n") end end
 
 local ui = ui_process()
 

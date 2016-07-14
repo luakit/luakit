@@ -33,6 +33,7 @@
 #include "clib/xdg.h"
 #include "clib/stylesheet.h"
 #include "clib/web_module.h"
+#include "common/clib/msg.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -314,6 +315,9 @@ luaH_init(void)
     /* Export web module */
     web_module_class_setup(L);
 
+    /* Export web module */
+    msg_lib_setup(L);
+
     /* add Lua search paths */
     luaH_add_paths(L, globalconf.config_dir);
 }
@@ -326,14 +330,14 @@ luaH_loadrc(const gchar *confpath, gboolean run)
     if(!luaL_loadfile(L, confpath)) {
         if(run) {
             if(lua_pcall(L, 0, LUA_MULTRET, 0)) {
-                g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+                warn("Error loading rc file: %s", lua_tostring(L, -1));
             } else
                 return TRUE;
         } else
             lua_pop(L, 1);
         return TRUE;
     } else
-        g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+        warn("Error loading rc file: %s", lua_tostring(L, -1));
     return FALSE;
 }
 
