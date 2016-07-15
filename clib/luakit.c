@@ -388,8 +388,7 @@ luaH_luakit_spawn(lua_State *L)
         goto spawn_error;
 
     /* spawn command */
-    if (!g_spawn_async(NULL, argv, NULL,
-            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
+    if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
             &e))
         goto spawn_error;
 

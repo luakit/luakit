@@ -32,13 +32,6 @@
 #include <locale.h>
 #include <webkit2/webkit2.h>
 
-static void sigchld(int sigint);
-
-void
-sigchld(int UNUSED(signum)) {
-    while(0 < waitpid(-1, NULL, WNOHANG));
-}
-
 void
 init_lua(gchar **uris)
 {
@@ -141,14 +134,6 @@ main(gint argc, gchar *argv[]) {
     pid_t pid, sid;
 
     globalconf.starttime = l_time();
-
-    /* clean up any zombies */
-    struct sigaction sigact;
-    sigact.sa_handler=sigchld;
-    sigemptyset (&sigact.sa_mask);
-    sigact.sa_flags = SA_NOCLDSTOP;
-    if (sigaction(SIGCHLD, &sigact, NULL))
-        fatal("Can't install SIGCHLD handler");
 
     /* set numeric locale to C (required for compatibility with
        LuaJIT and luakit scripts) */
