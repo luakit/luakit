@@ -160,7 +160,6 @@ window.init_funcs.noscript_indicator_load = function (w)
     r.noscript = widget{type="label"}
     r.layout:pack(r.noscript)
     r.layout:reorder(r.noscript, 1)
-    r.noscript.bg = "#00000000"
     r.noscript.font = theme.font
 end
 
