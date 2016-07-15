@@ -38,6 +38,18 @@ log_get_verbosity(void)
     return verbosity;
 }
 
+int
+log_level_from_string(log_level_t *out, const char *str)
+{
+#define X(name) if (!strcmp(#name, str)) { \
+    *out = LOG_LEVEL_##name; \
+    return 0; \
+}
+LOG_LEVELS
+#undef X
+    return 1;
+}
+
 void
 _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;

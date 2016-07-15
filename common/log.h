@@ -52,6 +52,7 @@ void va_log(log_level_t lvl, int, const gchar *, const gchar *, va_list);
 #define debug(string, ...) _log(LOG_LEVEL_debug, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 
 /* Only accessible from main UI process */
+int log_level_from_string(log_level_t *out, const char *str);
 void log_set_verbosity(log_level_t lvl);
 log_level_t log_get_verbosity(void);
 
