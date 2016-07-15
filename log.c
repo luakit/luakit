@@ -65,9 +65,10 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
 
     gchar prefix_char;
     switch (lvl) {
-        case LOG_LEVEL_fatal: prefix_char = 'E'; break;
-        case LOG_LEVEL_warn:  prefix_char = 'W'; break;
-        case LOG_LEVEL_debug: prefix_char = 'D'; break;
+        case LOG_LEVEL_fatal:   prefix_char = 'E'; break;
+        case LOG_LEVEL_warn:    prefix_char = 'W'; break;
+        case LOG_LEVEL_verbose: prefix_char = 'V'; break;
+        case LOG_LEVEL_debug:   prefix_char = 'D'; break;
     }
 
     gint atty = isatty(STDERR_FILENO);
