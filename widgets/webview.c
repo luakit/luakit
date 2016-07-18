@@ -873,7 +873,10 @@ table_from_context_menu(lua_State *L, WebKitContextMenu *menu, widget_t *w)
             WebKitContextMenuAction stock_action = webkit_context_menu_item_get_stock_action(item);
             WebKitContextMenu *submenu = webkit_context_menu_item_get_submenu(item);
             lua_createtable(L, 2, 0);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             lua_pushstring(L, gtk_action_get_label(action));
+#pragma GCC diagnostic pop
             lua_rawseti(L, -2, 1);
             if (submenu)
                 table_from_context_menu(L, submenu, w);
@@ -916,8 +919,11 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
 
             /* add context menu item */
             } else if(lua_type(L, -1) == LUA_TFUNCTION) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
                 GtkAction *action = gtk_action_new(label, label,
                         NULL, NULL);
+#pragma GCC diagnostic pop
                 item = webkit_context_menu_item_new(action);
                 ref = luaH_object_ref(L, -1);
                 last_popup.refs = g_slist_prepend(last_popup.refs, ref);
