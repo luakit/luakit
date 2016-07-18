@@ -86,6 +86,9 @@ typedef struct {
 
     /** Signal tree for script messages */
     signal_t *script_msg_signals;
+
+    /** TLS Certificate, if using HTTPS */
+    GTlsCertificate *cert;
 } webview_data_t;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
@@ -271,10 +274,21 @@ luaH_webview_push_certificate_flags(lua_State *L, GTlsCertificateFlags errors)
 
 static gboolean
 load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
-        GTlsCertificate *UNUSED(certificate), GTlsCertificateFlags errors, widget_t *w)
+        GTlsCertificate *certificate, GTlsCertificateFlags errors, widget_t *w)
 {
     lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
+
     ((webview_data_t*) w->data)->is_failed = TRUE;
+
+    /* Store certificate information */
+    if (d->cert) {
+        g_object_unref(G_OBJECT(d->cert));
+        d->cert = NULL;
+    }
+    d->cert = certificate;
+    g_object_ref(G_OBJECT(d->cert));
+
     luaH_object_push(L, w->ref);
     lua_pushliteral(L, "failed");
     lua_pushstring(L, failing_uri);
@@ -288,6 +302,8 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
 static void
 load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 {
+    webview_data_t *d = w->data;
+
     /* get load status literal */
     gchar *name = NULL;
     switch (e) {
@@ -313,6 +329,19 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
     }
 
     lua_State *L = globalconf.L;
+
+    /* Store certificate information about current page */
+    if (e == WEBKIT_LOAD_STARTED) {
+        if (d->cert) {
+            g_object_unref(G_OBJECT(d->cert));
+            d->cert = NULL;
+        }
+    } else if (e == WEBKIT_LOAD_COMMITTED) {
+        g_assert(!d->cert);
+        webkit_web_view_get_tls_info(d->view, &d->cert, NULL);
+        if (d->cert)
+            g_object_ref(G_OBJECT(d->cert));
+    }
 
     if (e == WEBKIT_LOAD_COMMITTED)
         webview_update_stylesheets(L, w);
@@ -542,6 +571,21 @@ luaH_webview_ssl_trusted(lua_State *L)
     return 0;
 }
 
+static gint
+luaH_webview_push_certificate(lua_State *L, widget_t *w)
+{
+    webview_data_t *d = w->data;
+
+    if (!d->cert)
+        return 0;
+
+    gchar *cert_pem;
+    g_object_get(G_OBJECT(d->cert), "certificate-pem", &cert_pem, NULL);
+    lua_pushstring(L, cert_pem);
+    g_free(cert_pem);
+    return 1;
+}
+
 static luakit_token_t
 webview_translate_old_token(luakit_token_t token)
 {
@@ -652,6 +696,9 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_FAVICON:
         return luaH_webview_push_favicon(L, d->view);
+
+      case L_TK_CERTIFICATE:
+        return luaH_webview_push_certificate(L, w);
 
       default:
         break;
@@ -995,6 +1042,7 @@ webview_destructor(widget_t *w)
     g_slice_free(webview_data_t, d);
     g_object_unref(G_OBJECT(d->user_content));
     signal_destroy(d->script_msg_signals);
+    g_object_unref(G_OBJECT(d->cert));
 }
 
 void
