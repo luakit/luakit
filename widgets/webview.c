@@ -572,6 +572,30 @@ luaH_webview_ssl_trusted(lua_State *L)
 }
 
 static gint
+luaH_webview_allow_certificate(lua_State *L)
+{
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    const gchar *host = luaL_checkstring(L, 2);
+    const gchar *cert_pem = luaL_checkstring(L, 3);
+    GError *err = NULL;
+
+    GTlsCertificate *cert = g_tls_certificate_new_from_pem(cert_pem, strlen(cert_pem), &err);
+
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err->message);
+        return 2;
+    }
+
+    WebKitWebContext *ctx = webkit_web_view_get_context(d->view);
+    webkit_web_context_allow_tls_certificate_for_host(ctx, cert, host);
+    g_object_unref(G_OBJECT(cert));
+
+    lua_pushboolean(L, TRUE);
+    return 1;
+}
+
+static gint
 luaH_webview_push_certificate(lua_State *L, widget_t *w)
 {
     webview_data_t *d = w->data;
@@ -671,6 +695,8 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       /* push script message signalling methods */
       PF_CASE(ADD_SCRIPT_SIGNAL,    luaH_webview_add_script_signal)
       PF_CASE(REMOVE_SCRIPT_SIGNAL, luaH_webview_remove_script_signal)
+
+      PF_CASE(ALLOW_CERTIFICATE,    luaH_webview_allow_certificate)
 
       /* push string properties */
       PS_CASE(HOVERED_URI,          d->hover)
