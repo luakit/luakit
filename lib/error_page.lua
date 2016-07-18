@@ -73,6 +73,21 @@ style = [===[
     }
 ]===]
 
+cert_style = style .. [===[
+    body {
+        background: repeating-linear-gradient(
+            45deg,
+            #c66,
+            #c66 10px,
+            #b55 10px,
+            #b55 20px
+        );
+    }
+    #errorContainer {
+        border: 2px solid #666;
+    }
+]===]
+
 local function styles(v, status) return false end
 local function scripts(v, status) return true end
 local function userscripts(v, status) return false end
@@ -87,7 +102,7 @@ local function cleanup(v, status)
     end
 end
 
-local function load_error_page(v, heading, content)
+local function load_error_page(v, heading, content, style)
     local subs = { uri = uri, heading = heading, content = content, style = style }
     local html = string.gsub(html_template, "{(%w+)}", subs)
     v:add_signal("enable-styles", styles)
@@ -104,6 +119,8 @@ webview.init_funcs.error_page_init = function(view, w)
         if msg == "Plugin will handle load" then return end
         if msg == "Frame load was interrupted" then return end
 
+        local css = style
+
         if msg == "Unacceptable TLS certificate" then
             msg = msg .. ": "
             local strings = {
@@ -118,6 +135,8 @@ webview.init_funcs.error_page_init = function(view, w)
                 local emsg = strings[e] or "Unknown error."
                 msg = msg .. emsg .. " "
             end
+
+            css = cert_style
         end
 
         local error_content_tmpl = [==[
@@ -129,7 +148,7 @@ webview.init_funcs.error_page_init = function(view, w)
             </div>
         ]==]
         local content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
-        load_error_page(v, "Unable to load page", content)
+        load_error_page(v, "Unable to load page", content, css)
 
         return true
     end)
