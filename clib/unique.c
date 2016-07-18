@@ -68,9 +68,8 @@ luaH_unique_new(lua_State *L)
     }
 
     const GActionEntry entries[] = {
-        {"message",
-         (void (*) (GSimpleAction *, GVariant *, gpointer)) message_cb,
-         "s", NULL}
+        {"message", (void (*) (GSimpleAction *, GVariant *, gpointer)) message_cb,
+         "s", NULL, NULL, {0,0,0}}
     };
     g_action_map_add_action_entries (G_ACTION_MAP(application),
             entries, G_N_ELEMENTS(entries), L);
