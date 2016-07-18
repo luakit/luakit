@@ -193,24 +193,13 @@ luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
     signals_remove(obj->signals, name);
 }
 
-/* Emit a signal from a signals array and return the results of the first
- * handler that returns something.
- * `signals` is the signals array.
- * `name` is the name of the signal.
- * `nargs` is the number of arguments to pass to the called functions.
- * `nret` is the number of return values this function pushes onto the stack.
- * A positive number means that any missing values will be padded with nil
- * and any superfluous values will be removed.
- * LUA_MULTRET means that any number of values is returned without any
- * adjustment.
- * 0 means that all return values are removed and that ALL handler functions are
- * executed.
- * Returns the number of return values pushed onto the stack. */
+/* Similar to signal_object_emit(), but allows you to choose the signal array
+ * by name. */
 gint
-signal_object_emit(lua_State *L, signal_t *signals,
-        const gchar *name, gint nargs, gint nret) {
+signal_array_emit(lua_State *L, signal_t *signals,
+        const gchar *array_name, const gchar *name, gint nargs, gint nret) {
 
-    signal_array_t *sigfuncs = signal_lookup(signals, name);
+    signal_array_t *sigfuncs = signal_lookup(signals, array_name);
 
     if (globalconf.verbose) {
         gchar *origin = luaH_callerinfo(L);
@@ -273,6 +262,26 @@ signal_object_emit(lua_State *L, signal_t *signals,
     /* remove args */
     lua_pop(L, nargs);
     return 0;
+}
+
+/* Emit a signal from a signals array and return the results of the first
+ * handler that returns something.
+ * `signals` is the signals array.
+ * `name` is the name of the signal.
+ * `nargs` is the number of arguments to pass to the called functions.
+ * `nret` is the number of return values this function pushes onto the stack.
+ * A positive number means that any missing values will be padded with nil
+ * and any superfluous values will be removed.
+ * LUA_MULTRET means that any number of values is returned without any
+ * adjustment.
+ * 0 means that all return values are removed and that ALL handler functions are
+ * executed.
+ * Returns the number of return values pushed onto the stack. */
+gint
+signal_object_emit(lua_State *L, signal_t *signals,
+        const gchar *name, gint nargs, gint nret) {
+
+    return signal_array_emit(L, signals, name, name, nargs, nret);
 }
 
 /* Emit a signal to an object.
