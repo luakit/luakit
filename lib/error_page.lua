@@ -120,6 +120,7 @@ webview.init_funcs.error_page_init = function(view, w)
         if msg == "Frame load was interrupted" then return end
 
         local css = style
+        local heading = "Unable to load page"
 
         if msg == "Unacceptable TLS certificate" then
             msg = msg .. ": "
@@ -137,6 +138,7 @@ webview.init_funcs.error_page_init = function(view, w)
             end
 
             css = cert_style
+            heading = "Your connection may be insecure!"
         end
 
         local error_content_tmpl = [==[
@@ -148,7 +150,7 @@ webview.init_funcs.error_page_init = function(view, w)
             </div>
         ]==]
         local content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
-        load_error_page(v, "Unable to load page", content, css)
+        load_error_page(v, heading, content, css)
 
         return true
     end)
