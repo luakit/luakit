@@ -984,6 +984,7 @@ webview_destructor(widget_t *w)
     g_free(d->uri);
     g_free(d->hover);
     g_slice_free(webview_data_t, d);
+    g_object_unref(G_OBJECT(d->user_content));
 }
 
 void
