@@ -34,7 +34,7 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
 
 void
 va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    if (lvl <= LOG_LEVEL_debug && !globalconf.verbose)
+    if (lvl >= LOG_LEVEL_debug && !globalconf.verbose)
         return;
 
     gchar prefix_char;
