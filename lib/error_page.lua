@@ -134,9 +134,16 @@ end
 webview.init_funcs.error_page_init = function(view, w)
     view:add_signal("load-status", function(v, status, uri, msg, cert_errors)
         if status ~= "failed" then return end
-        if msg == "Load request cancelled" then return end
-        if msg == "Plugin will handle load" then return end
-        if msg == "Frame load was interrupted" then return end
+
+        local error_category_lut = {
+            ["Load request cancelled"] = "ignore",
+            ["Plugin will handle load"] = "ignore",
+            ["Frame load was interrupted"] = "ignore",
+            ["Unacceptable TLS certificate"] = "security",
+        }
+        local category = error_category_lut[msg]
+
+        if category == "ignore" then return end
 
         local css = style
         local heading = "Unable to load page"
