@@ -1,3 +1,4 @@
+local assert = assert
 local webview = webview
 local string = string
 local print = print
@@ -26,7 +27,7 @@ html_template = [==[
             </div>
             {content}
             <form name="bl">
-                <input type="button" value="Try again" onclick="javascript:tryagain()" />
+                {buttons}
             </form>
         </div>
     </body>
@@ -103,6 +104,18 @@ local function cleanup(v, status)
     end
 end
 
+local function make_button_html(buttons)
+    local html = ""
+    local tmpl = '<input type="button" class="{class}" value="{label}" onclick="{onclick}" />'
+    for _, button in ipairs(buttons) do
+        assert(button.label)
+        assert(button.onclick)
+        button.class = button.class or ""
+        html = html .. string.gsub(tmpl, "{(%w+)}", button)
+    end
+    return html
+end
+
 local function load_error_page(v, error_page_info)
     -- Set default values
     local defaults = {
@@ -116,8 +129,14 @@ local function load_error_page(v, error_page_info)
             </div>
         ]==],
         style = style,
+        buttons = {{
+            label = "Try again",
+            onclick = "javascript: tryagain()",
+        }},
     }
     error_page_info = util.table.join(defaults, error_page_info)
+
+    error_page_info.buttons = make_button_html(error_page_info.buttons)
 
     -- Substitute values recursively
     local html = html_template
