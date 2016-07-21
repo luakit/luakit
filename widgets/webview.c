@@ -26,6 +26,7 @@
 #include "common/property.h"
 #include "luah.h"
 #include "clib/widget.h"
+#include "common/signal.h"
 
 typedef struct _webview_scroll_anim_t {
     /** Smooth scroll offset at animation start */
@@ -82,6 +83,9 @@ typedef struct {
     gint win_w, win_h;
     /** Current scroll position */
     gint scroll_x, scroll_y;
+
+    /** Signal tree for script messages */
+    signal_t *script_msg_signals;
 } webview_data_t;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
@@ -172,6 +176,7 @@ static void update_uri(widget_t *w, const gchar *uri);
 #include "widgets/webview/find_controller.c"
 #include "widgets/webview/stylesheets.c"
 #include "widgets/webview/auth.c"
+#include "widgets/webview/script_messages.c"
 
 static gint
 luaH_webview_load_string(lua_State *L)
@@ -619,6 +624,10 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(SHOW_INSPECTOR,       luaH_webview_show_inspector)
       PF_CASE(CLOSE_INSPECTOR,      luaH_webview_close_inspector)
 
+      /* push script message signalling methods */
+      PF_CASE(ADD_SCRIPT_SIGNAL,    luaH_webview_add_script_signal)
+      PF_CASE(REMOVE_SCRIPT_SIGNAL, luaH_webview_remove_script_signal)
+
       /* push string properties */
       PS_CASE(HOVERED_URI,          d->hover)
       PS_CASE(URI,                  d->uri)
@@ -985,6 +994,7 @@ webview_destructor(widget_t *w)
     g_free(d->hover);
     g_slice_free(webview_data_t, d);
     g_object_unref(G_OBJECT(d->user_content));
+    signal_destroy(d->script_msg_signals);
 }
 
 void
@@ -1157,6 +1167,8 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::detach",                               G_CALLBACK(inspector_detach_window_cb),   w,
       "signal::open-window",                          G_CALLBACK(inspector_open_window_cb),     w,
       NULL);
+
+    d->script_msg_signals = signal_new();
 
     /* show widgets */
     gtk_widget_show(GTK_WIDGET(d->view));
