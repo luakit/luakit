@@ -131,31 +131,36 @@ local function get_cert_error_desc(cert_errors)
     return msg
 end
 
-webview.init_funcs.error_page_init = function(view, w)
-    view:add_signal("load-status", function(v, status, uri, msg, cert_errors)
-        if status ~= "failed" then return end
+local function handle_error(v, uri, msg, cert_errors)
+    local error_category_lut = {
+        ["Load request cancelled"] = "ignore",
+        ["Plugin will handle load"] = "ignore",
+        ["Frame load was interrupted"] = "ignore",
+        ["Unacceptable TLS certificate"] = "security",
+        ["Web process crashed"] = "crash",
+    }
+    local category = error_category_lut[msg]
 
-        local error_category_lut = {
-            ["Load request cancelled"] = "ignore",
-            ["Plugin will handle load"] = "ignore",
-            ["Frame load was interrupted"] = "ignore",
-            ["Unacceptable TLS certificate"] = "security",
-        }
-        local category = error_category_lut[msg]
+    if category == "ignore" then return end
 
-        if category == "ignore" then return end
+    local css = style
+    local heading = "Unable to load page"
 
-        local css = style
-        local heading = "Unable to load page"
+    if category == "security" then
+        msg = msg .. ": " .. get_cert_error_desc(cert_errors)
+        css = cert_style
+        heading = "Your connection may be insecure!"
+    end
 
-        local is_security_error = (msg == "Unacceptable TLS certificate")
+    local content
 
-        if is_security_error then
-            msg = msg .. ": " .. get_cert_error_desc()
-            css = cert_style
-            heading = "Your connection may be insecure!"
-        end
-
+    if category == "crash" then
+        content = [==[
+            <div class="errorMessage">
+                <p>Reload the page to continue</p>
+            </div>
+        ]==]
+    else
         local error_content_tmpl = [==[
             <div class="errorMessage">
                 <p>A problem occurred while loading the URL {uri}</p>
@@ -164,18 +169,20 @@ webview.init_funcs.error_page_init = function(view, w)
                 <p id="errorMessageText">{msg}</p>
             </div>
         ]==]
-        local content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
-        load_error_page(v, heading, content, css)
+        content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
+    end
 
+    load_error_page(v, heading, content, css)
+end
+
+webview.init_funcs.error_page_init = function(view, w)
+    view:add_signal("load-status", function (v, status, ...)
+        if status ~= "failed" then return end
+        handle_error(v, ...)
         return true
     end)
 
-    view:add_signal("crashed", function(v)
-        local content = [==[
-            <div class="errorMessage">
-                <p>Reload the page to continue</p>
-            </div>
-        ]==]
-        load_error_page(v, "Web Process Crashed", content)
+    view:add_signal("crashed", function(v, ...)
+        handle_error(v, v.uri, "Web process crashed")
     end)
 end
