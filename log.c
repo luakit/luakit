@@ -24,6 +24,32 @@
 #include <stdlib.h>
 #include <unistd.h>
 
+static log_level_t verbosity;
+
+void
+log_set_verbosity(log_level_t lvl)
+{
+    verbosity = lvl;
+}
+
+log_level_t
+log_get_verbosity(void)
+{
+    return verbosity;
+}
+
+int
+log_level_from_string(log_level_t *out, const char *str)
+{
+#define X(name) if (!strcmp(#name, str)) { \
+    *out = LOG_LEVEL_##name; \
+    return 0; \
+}
+LOG_LEVELS
+#undef X
+    return 1;
+}
+
 void
 _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
@@ -34,14 +60,15 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
 
 void
 va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
-    if (lvl >= LOG_LEVEL_debug && !globalconf.verbose)
+    if (lvl > verbosity)
         return;
 
     gchar prefix_char;
     switch (lvl) {
-        case LOG_LEVEL_fatal: prefix_char = 'E'; break;
-        case LOG_LEVEL_warn:  prefix_char = 'W'; break;
-        case LOG_LEVEL_debug: prefix_char = 'D'; break;
+        case LOG_LEVEL_fatal:   prefix_char = 'E'; break;
+        case LOG_LEVEL_warn:    prefix_char = 'W'; break;
+        case LOG_LEVEL_verbose: prefix_char = 'V'; break;
+        case LOG_LEVEL_debug:   prefix_char = 'D'; break;
     }
 
     gint atty = isatty(STDERR_FILENO);

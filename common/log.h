@@ -25,6 +25,7 @@
 #define LOG_LEVELS \
     X(fatal) \
     X(warn) \
+    X(verbose) \
     X(debug) \
 
 #define X(name) LOG_LEVEL_##name,
@@ -49,7 +50,13 @@ void va_log(log_level_t lvl, int, const gchar *, const gchar *, va_list);
 
 #define fatal(string, ...) _log(LOG_LEVEL_fatal, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 #define warn(string, ...) _log(LOG_LEVEL_warn, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+#define verbose(string, ...) _log(LOG_LEVEL_verbose, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 #define debug(string, ...) _log(LOG_LEVEL_debug, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+
+/* Only accessible from main UI process */
+int log_level_from_string(log_level_t *out, const char *str);
+void log_set_verbosity(log_level_t lvl);
+log_level_t log_get_verbosity(void);
 
 #endif
 

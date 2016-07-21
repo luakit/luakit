@@ -60,8 +60,6 @@ typedef struct {
     gchar *confpath;
     /** The luakit executable path. */
     gchar *execpath;
-    /** Print verbose output. */
-    gboolean verbose;
     /** Ignore loading libunqiue bindings (for a single instance session) */
     gboolean nounique;
 

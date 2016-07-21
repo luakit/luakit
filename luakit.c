@@ -74,6 +74,8 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     gboolean *check_only = NULL;
     gchar **uris = NULL;
     globalconf.profile = NULL;
+    gboolean verbose = FALSE;
+    gchar *log_lvl = NULL;
 
     /* save luakit exec path */
     globalconf.execpath = g_strdup(argv[0]);
@@ -87,7 +89,8 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
       { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
       { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
       { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
-      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,  "print debugging output",    NULL   },
+      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &verbose,             "print verbose output",      NULL   },
+      { "log",      'l', 0, G_OPTION_ARG_STRING,       &log_lvl,             "specify precise log level", "NAME" },
       { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
       { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
     };
@@ -103,6 +106,19 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     if (version_only) {
         g_printf("luakit %s\n", VERSION);
         exit(EXIT_SUCCESS);
+    }
+
+    if (!log_lvl)
+        log_set_verbosity(verbose ? LOG_LEVEL_debug : LOG_LEVEL_warn);
+    else {
+        log_level_t lvl;
+        int err = log_level_from_string(&lvl, log_lvl);
+        if (err)
+            fatal("invalid log level");
+        log_set_verbosity(lvl);
+
+        if (verbose)
+            warn("invalid mix of -v and -l, ignoring -v...");
     }
 
     /* check config syntax and exit */

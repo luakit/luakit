@@ -149,13 +149,11 @@ luaH_object_add_signal(lua_State *L, gint oud,
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
 
-    if (globalconf.verbose) {
-        gchar *origin = luaH_callerinfo(L);
-        debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-                " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
-                name, obj, origin);
-        g_free(origin);
-    }
+    gchar *origin = luaH_callerinfo(L);
+    debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+            " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
+            name, obj, origin);
+    g_free(origin);
 
     signal_add(obj->signals, name, luaH_object_ref_item(L, oud, ud));
 }
@@ -201,14 +199,12 @@ signal_array_emit(lua_State *L, signal_t *signals,
 
     signal_array_t *sigfuncs = signal_lookup(signals, array_name);
 
-    if (globalconf.verbose) {
-        gchar *origin = luaH_callerinfo(L);
-        debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-                " on %p from "
-                ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
-                name, signals, origin ? origin : "<GTK>", nargs, nret);
-        g_free(origin);
-    }
+    gchar *origin = luaH_callerinfo(L);
+    debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+            " on %p from "
+            ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
+            name, signals, origin ? origin : "<GTK>", nargs, nret);
+    g_free(origin);
 
     if (sigfuncs) {
         gint nbfunc = sigfuncs->len;
@@ -303,14 +299,12 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     gint oud_abs = luaH_absindex(L, oud);
     lua_object_t *obj = lua_touserdata(L, oud);
 
-    if (globalconf.verbose) {
-        gchar *origin = luaH_callerinfo(L);
-        debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-                " on %p from "
-                ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
-                name, obj, origin ? origin : "<GTK>", nargs, nret);
-        g_free(origin);
-    }
+    gchar *origin = luaH_callerinfo(L);
+    debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+            " on %p from "
+            ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
+            name, obj, origin ? origin : "<GTK>", nargs, nret);
+    g_free(origin);
 
     if(!obj)
         luaL_error(L, "trying to emit signal on non-object");
