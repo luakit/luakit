@@ -112,6 +112,25 @@ local function load_error_page(v, heading, content, style)
     v:load_string(html, v.uri)
 end
 
+local function get_cert_error_desc(cert_errors)
+    local strings = {
+        ["unknown-ca"] = "The signing certificate authority is not known.",
+        ["bad-identity"] = "The certificate does not match the expected identity of the site that it was retrieved from.",
+        ["not-activated"] = "The certificate's activation time is still in the future.",
+        expired = "The certificate has expired.",
+        insecure = "The certificate has been revoked.",
+        ["generic-error"] = "Error not specified.",
+    }
+
+    local msg = ""
+    for _, e in ipairs(cert_errors) do
+        local emsg = strings[e] or "Unknown error."
+        msg = msg .. emsg .. " "
+    end
+
+    return msg
+end
+
 webview.init_funcs.error_page_init = function(view, w)
     view:add_signal("load-status", function(v, status, uri, msg, cert_errors)
         if status ~= "failed" then return end
@@ -122,21 +141,10 @@ webview.init_funcs.error_page_init = function(view, w)
         local css = style
         local heading = "Unable to load page"
 
-        if msg == "Unacceptable TLS certificate" then
-            msg = msg .. ": "
-            local strings = {
-                ["unknown-ca"] = "The signing certificate authority is not known.",
-                ["bad-identity"] = "The certificate does not match the expected identity of the site that it was retrieved from.",
-                ["not-activated"] = "The certificate's activation time is still in the future.",
-                expired = "The certificate has expired.",
-                insecure = "The certificate has been revoked.",
-                ["generic-error"] = "Error not specified.",
-            }
-            for _, e in ipairs(cert_errors) do
-                local emsg = strings[e] or "Unknown error."
-                msg = msg .. emsg .. " "
-            end
+        local is_security_error = (msg == "Unacceptable TLS certificate")
 
+        if is_security_error then
+            msg = msg .. ": " .. get_cert_error_desc()
             css = cert_style
             heading = "Your connection may be insecure!"
         end
