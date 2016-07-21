@@ -4,6 +4,7 @@ local print = print
 local styles = styles
 local pairs = pairs
 local ipairs = ipairs
+local util = require "lousy.util"
 
 module("error_page")
 
@@ -102,9 +103,28 @@ local function cleanup(v, status)
     end
 end
 
-local function load_error_page(v, heading, content, style)
-    local subs = { uri = uri, heading = heading, content = content, style = style }
-    local html = string.gsub(html_template, "{(%w+)}", subs)
+local function load_error_page(v, error_page_info)
+    -- Set default values
+    local defaults = {
+        heading = "Unable to load page",
+        content = [==[
+            <div class="errorMessage">
+                <p>A problem occurred while loading the URL {uri}</p>
+            </div>
+            <div class="errorMessage">
+                <p id="errorMessageText">{msg}</p>
+            </div>
+        ]==],
+        style = style,
+    }
+    error_page_info = util.table.join(defaults, error_page_info)
+
+    -- Substitute values recursively
+    local html = html_template
+    repeat
+        html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
+    until nsub == 0
+
     v:add_signal("enable-styles", styles)
     v:add_signal("enable-scripts", scripts)
     v:add_signal("enable-userscripts", userscripts)
@@ -139,40 +159,33 @@ local function handle_error(v, uri, msg, cert_errors)
         ["Unacceptable TLS certificate"] = "security",
         ["Web process crashed"] = "crash",
     }
-    local category = error_category_lut[msg]
+    local category = error_category_lut[msg] or "generic"
 
     if category == "ignore" then return end
 
-    local css = style
-    local heading = "Unable to load page"
-
-    if category == "security" then
-        msg = msg .. ": " .. get_cert_error_desc(cert_errors)
-        css = cert_style
-        heading = "Your connection may be insecure!"
+    local error_page_info
+    if category == "generic" then
+        error_page_info = {
+            msg = msg,
+        }
+    elseif category == "security" then
+        error_page_info = {
+            msg = msg .. ": " .. get_cert_error_desc(cert_errors),
+            style = cert_style,
+            heading = "Your connection may be insecure!",
+        }
+    elseif category == "crash" then
+        error_page_info = {
+            content = [==[
+                <div class="errorMessage">
+                    <p>Reload the page to continue</p>
+                </div>
+            ]==]
+        }
     end
+    error_page_info.uri = uri
 
-    local content
-
-    if category == "crash" then
-        content = [==[
-            <div class="errorMessage">
-                <p>Reload the page to continue</p>
-            </div>
-        ]==]
-    else
-        local error_content_tmpl = [==[
-            <div class="errorMessage">
-                <p>A problem occurred while loading the URL {uri}</p>
-            </div>
-            <div class="errorMessage">
-                <p id="errorMessageText">{msg}</p>
-            </div>
-        ]==]
-        content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
-    end
-
-    load_error_page(v, heading, content, css)
+    load_error_page(v, error_page_info)
 end
 
 webview.init_funcs.error_page_init = function(view, w)
