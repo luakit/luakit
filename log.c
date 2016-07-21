@@ -51,7 +51,8 @@ LOG_LEVELS
 }
 
 void
-_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
+_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...)
+{
     va_list ap;
     va_start(ap, fmt);
     va_log(lvl, line, fct, fmt, ap);
@@ -59,7 +60,8 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
 }
 
 void
-va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
+va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap)
+{
     if (lvl > verbosity)
         return;
 
