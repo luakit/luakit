@@ -241,6 +241,13 @@ local function handle_error(v, uri, msg, cert_errors)
     load_error_page(v, error_page_info)
 end
 
+show_error_page = function(v, error_page_info)
+    if not error_page_info.uri then
+        error_page_info.uri = v.uri
+    end
+    load_error_page(v, error_page_info)
+end
+
 webview.init_funcs.error_page_init = function(view, w)
     view:add_signal("load-status", function (v, status, ...)
         if status ~= "failed" then return end
