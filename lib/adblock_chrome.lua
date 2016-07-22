@@ -12,7 +12,7 @@ local string    = string
 local table     = table
 local window    = window
 local webview   = webview
-
+local error_page = require "error_page"
 
 module("adblock_chrome")
 
@@ -215,28 +215,6 @@ nil,
     end,
 })
 
--- Error page for navigation blocking
-navigation_blocked_html_tmpl = [==[
-    <html>
-        <head>
-            <title>AdBlock: page blocked</title>
-            <style type="text/css">
-                {style}
-            </style>
-        </head>
-    <body>
-        <div id="errorContainer">
-            <div id="errorTitle">
-                <p id="errorTitleText">Page blocked</p>
-            </div>
-            <div class="errorMessage">
-                <p>AdBlock has prevented the page at {uri} from loading</p>
-            </div>
-        </div>
-    </body>
-    </html>
-]==]
-
 navigation_blocked_css_tmpl = [===[
     body {
         background-color: #ddd;
@@ -271,26 +249,19 @@ navigation_blocked_css_tmpl = [===[
     }
 ]===]
 
-local function styles(v, status) return false end
-local function scripts(v, status) return true end
-
--- Clean up only when error page has finished since sometimes multiple
--- load-status provisional signals are dispatched
-local function cleanup(v, status)
-    if status == "finished" then
-        v:remove_signal("enable-styles", styles)
-        v:remove_signal("enable-scripts", scripts)
-    end
-end
-
 webview.init_funcs.navigation_blocked_page_init = function(view, w)
     view:add_signal("navigation-blocked", function(v, w, uri)
-        local subs = { uri = util.escape(uri), style = navigation_blocked_css_tmpl }
-        local html = string.gsub(navigation_blocked_html_tmpl , "{(%w+)}", subs)
-        v:add_signal("enable-styles", styles)
-        v:add_signal("enable-scripts", scripts)
-        v:add_signal("load-status", cleanup)
-        v:load_string(html, uri)
+        error_page.show_error_page(v, {
+            style = navigation_blocked_css_tmpl,
+            heading = "Page blocked",
+            content = [==[
+                <div class="errorMessage">
+                    <p>AdBlock has prevented the page at {uri} from loading</p>
+                </div>
+            ]==],
+            buttons = {},
+            uri = uri,
+        })
         return true
     end)
 end
