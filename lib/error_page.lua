@@ -6,6 +6,7 @@ local styles = styles
 local pairs = pairs
 local ipairs = ipairs
 local util = require "lousy.util"
+local lousy = require "lousy"
 
 module("error_page")
 
@@ -209,10 +210,20 @@ local function handle_error(v, uri, msg, cert_errors)
             msg = msg,
         }
     elseif category == "security" then
+        local cert = v.certificate
+
         error_page_info = {
             msg = msg .. ": " .. get_cert_error_desc(cert_errors),
             style = cert_style,
             heading = "Your connection may be insecure!",
+            buttons = {{
+                label = "Ignore danger",
+                callback = function(v)
+                    local host = lousy.uri.parse(v.uri).host
+                    v:allow_certificate(host, cert)
+                    v:reload()
+                end,
+            }},
         }
     elseif category == "crash" then
         error_page_info = {
