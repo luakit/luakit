@@ -1,9 +1,10 @@
+local assert = assert
 local webview = webview
 local string = string
-local print = print
 local styles = styles
 local pairs = pairs
 local ipairs = ipairs
+local lousy = require "lousy"
 
 module("error_page")
 
@@ -14,9 +15,6 @@ html_template = [==[
             <style type="text/css">
                 {style}
             </style>
-            <script type="text/javascript">
-                function tryagain() { location.reload(); }
-            </script>
         </head>
     <body>
         <div id="errorContainer">
@@ -25,7 +23,7 @@ html_template = [==[
             </div>
             {content}
             <form name="bl">
-                <input type="button" value="Try again" onclick="javascript:tryagain()" />
+                {buttons}
             </form>
         </div>
     </body>
@@ -73,73 +71,191 @@ style = [===[
     }
 ]===]
 
+cert_style = style .. [===[
+    body {
+        background: repeating-linear-gradient(
+            45deg,
+            #c66,
+            #c66 10px,
+            #b55 10px,
+            #b55 20px
+        );
+    }
+    #errorContainer {
+        border: 2px solid #666;
+    }
+]===]
+
 local function styles(v, status) return false end
 local function scripts(v, status) return true end
 local function userscripts(v, status) return false end
 
 -- Clean up only when error page has finished since sometimes multiple
 -- load-status provisional signals are dispatched
-local function cleanup(v, status)
-    if status == "finished" then
-        v:remove_signal("enable-styles", styles)
-        v:remove_signal("enable-scripts", scripts)
-        v:remove_signal("enable-userscripts", userscripts)
+local function on_finish(v, status)
+    if status ~= "finished" then return end
+
+    -- Remove userscripts, stylesheet, javascript overrides
+    v:remove_signal("enable-styles", styles)
+    v:remove_signal("enable-scripts", scripts)
+    v:remove_signal("enable-userscripts", userscripts)
+    v:remove_signal("load-status", on_finish)
+
+    -- Load the javascript for error page button callbacks
+    local bcb = [=[
+        var buttons = document.querySelectorAll("input[type=button]");
+        for (var i=0; i<buttons.length; i++) {
+            buttons[i].addEventListener("click", function () {
+                window.webkit.messageHandlers.error_page_button_cb.postMessage(i);
+            }, false);
+        }
+    ]=]
+    v:eval_js(bcb, {no_return = true})
+end
+
+local function make_button_html(v, buttons)
+    local html = ""
+    local tmpl = '<input type="button" class="{class}" value="{label}" />'
+
+    for i, button in ipairs(buttons) do
+        assert(button.label)
+        assert(button.callback)
+        button.class = button.class or ""
+        html = html .. string.gsub(tmpl, "{(%w+)}", button)
     end
+
+    -- Add signals for button messages
+    local function error_page_button_cb(v, _, i)
+        buttons[i].callback(v)
+    end
+    local function error_page_button_cb_cleanup()
+        v:remove_script_signal("error_page_button_cb", error_page_button_cb)
+        v:remove_signal("navigation-request", error_page_button_cb_cleanup)
+    end
+    v:add_script_signal("error_page_button_cb", error_page_button_cb)
+    v:add_signal("navigation-request", error_page_button_cb_cleanup)
+
+    return html
 end
 
-local function load_error_page(v, heading, content)
-    local subs = { uri = uri, heading = heading, content = content, style = style }
-    local html = string.gsub(html_template, "{(%w+)}", subs)
-    v:add_signal("enable-styles", styles)
-    v:add_signal("enable-scripts", scripts)
-    v:add_signal("enable-userscripts", userscripts)
-    v:add_signal("load-status", cleanup)
-    v:load_string(html, v.uri)
-end
-
-webview.init_funcs.error_page_init = function(view, w)
-    view:add_signal("load-status", function(v, status, uri, msg, cert_errors)
-        if status ~= "failed" then return end
-        if msg == "Load request cancelled" then return end
-        if msg == "Plugin will handle load" then return end
-        if msg == "Frame load was interrupted" then return end
-
-        if msg == "Unacceptable TLS certificate" then
-            msg = msg .. ": "
-            local strings = {
-                ["unknown-ca"] = "The signing certificate authority is not known.",
-                ["bad-identity"] = "The certificate does not match the expected identity of the site that it was retrieved from.",
-                ["not-activated"] = "The certificate's activation time is still in the future.",
-                expired = "The certificate has expired.",
-                insecure = "The certificate has been revoked.",
-                ["generic-error"] = "Error not specified.",
-            }
-            for _, e in ipairs(cert_errors) do
-                local emsg = strings[e] or "Unknown error."
-                msg = msg .. emsg .. " "
-            end
-        end
-
-        local error_content_tmpl = [==[
+local function load_error_page(v, error_page_info)
+    -- Set default values
+    local defaults = {
+        heading = "Unable to load page",
+        content = [==[
             <div class="errorMessage">
                 <p>A problem occurred while loading the URL {uri}</p>
             </div>
             <div class="errorMessage">
                 <p id="errorMessageText">{msg}</p>
             </div>
-        ]==]
-        local content = string.gsub(error_content_tmpl, "{(%w+)}", { uri = uri, msg = msg })
-        load_error_page(v, "Unable to load page", content)
+        ]==],
+        style = style,
+        buttons = {{
+            label = "Try again",
+            callback = function(v)
+                v:reload()
+            end
+        }},
+    }
+    error_page_info = lousy.util.table.join(defaults, error_page_info)
 
+    error_page_info.buttons = make_button_html(v, error_page_info.buttons)
+
+    -- Substitute values recursively
+    local html = html_template
+    repeat
+        html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
+    until nsub == 0
+
+    v:add_signal("enable-styles", styles)
+    v:add_signal("enable-scripts", scripts)
+    v:add_signal("enable-userscripts", userscripts)
+    v:add_signal("load-status", on_finish)
+    v:load_string(html, v.uri)
+end
+
+local function get_cert_error_desc(cert_errors)
+    local strings = {
+        ["unknown-ca"] = "The signing certificate authority is not known.",
+        ["bad-identity"] = "The certificate does not match the expected identity of the site that it was retrieved from.",
+        ["not-activated"] = "The certificate's activation time is still in the future.",
+        expired = "The certificate has expired.",
+        insecure = "The certificate has been revoked.",
+        ["generic-error"] = "Error not specified.",
+    }
+
+    local msg = ""
+    for _, e in ipairs(cert_errors) do
+        local emsg = strings[e] or "Unknown error."
+        msg = msg .. emsg .. " "
+    end
+
+    return msg
+end
+
+local function handle_error(v, uri, msg, cert_errors)
+    local error_category_lut = {
+        ["Load request cancelled"] = "ignore",
+        ["Plugin will handle load"] = "ignore",
+        ["Frame load was interrupted"] = "ignore",
+        ["Unacceptable TLS certificate"] = "security",
+        ["Web process crashed"] = "crash",
+    }
+    local category = error_category_lut[msg] or "generic"
+
+    if category == "ignore" then return end
+
+    local error_page_info
+    if category == "generic" then
+        error_page_info = {
+            msg = msg,
+        }
+    elseif category == "security" then
+        local cert = v.certificate
+
+        error_page_info = {
+            msg = msg .. ": " .. get_cert_error_desc(cert_errors),
+            style = cert_style,
+            heading = "Your connection may be insecure!",
+            buttons = {{
+                label = "Ignore danger",
+                callback = function(v)
+                    local host = lousy.uri.parse(v.uri).host
+                    v:allow_certificate(host, cert)
+                    v:reload()
+                end,
+            }},
+        }
+    elseif category == "crash" then
+        error_page_info = {
+            content = [==[
+                <div class="errorMessage">
+                    <p>Reload the page to continue</p>
+                </div>
+            ]==]
+        }
+    end
+    error_page_info.uri = uri
+
+    load_error_page(v, error_page_info)
+end
+
+show_error_page = function(v, error_page_info)
+    if not error_page_info.uri then
+        error_page_info.uri = v.uri
+    end
+    load_error_page(v, error_page_info)
+end
+
+webview.init_funcs.error_page_init = function(view, w)
+    view:add_signal("load-status", function (v, status, ...)
+        if status ~= "failed" then return end
+        handle_error(v, ...)
         return true
     end)
 
-    view:add_signal("crashed", function(v)
-        local content = [==[
-            <div class="errorMessage">
-                <p>Reload the page to continue</p>
-            </div>
-        ]==]
-        load_error_page(v, "Web Process Crashed", content)
+    view:add_signal("crashed", function(v, ...)
+        handle_error(v, v.uri, "Web process crashed")
     end)
 end
