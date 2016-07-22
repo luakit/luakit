@@ -26,15 +26,6 @@ html_template = [==[
                 {buttons}
             </form>
         </div>
-        <script type="text/javascript">
-            var buttons = document.querySelectorAll("input[type=button]");
-            for (var i=0; i<buttons.length; i++) {
-                console.log("Button", buttons[i])
-                buttons[i].addEventListener("click", function () {
-                    window.webkit.messageHandlers.error_page_button_cb.postMessage(i);
-                }, false);
-            }
-        </script>
     </body>
     </html>
 ]==]
@@ -101,12 +92,25 @@ local function userscripts(v, status) return false end
 
 -- Clean up only when error page has finished since sometimes multiple
 -- load-status provisional signals are dispatched
-local function cleanup(v, status)
-    if status == "finished" then
-        v:remove_signal("enable-styles", styles)
-        v:remove_signal("enable-scripts", scripts)
-        v:remove_signal("enable-userscripts", userscripts)
-    end
+local function on_finish(v, status)
+    if status ~= "finished" then return end
+
+    -- Remove userscripts, stylesheet, javascript overrides
+    v:remove_signal("enable-styles", styles)
+    v:remove_signal("enable-scripts", scripts)
+    v:remove_signal("enable-userscripts", userscripts)
+    v:remove_signal("load-status", on_finish)
+
+    -- Load the javascript for error page button callbacks
+    local bcb = [=[
+        var buttons = document.querySelectorAll("input[type=button]");
+        for (var i=0; i<buttons.length; i++) {
+            buttons[i].addEventListener("click", function () {
+                window.webkit.messageHandlers.error_page_button_cb.postMessage(i);
+            }, false);
+        }
+    ]=]
+    v:eval_js(bcb, {no_return = true})
 end
 
 local function make_button_html(v, buttons)
@@ -167,7 +171,7 @@ local function load_error_page(v, error_page_info)
     v:add_signal("enable-styles", styles)
     v:add_signal("enable-scripts", scripts)
     v:add_signal("enable-userscripts", userscripts)
-    v:add_signal("load-status", cleanup)
+    v:add_signal("load-status", on_finish)
     v:load_string(html, v.uri)
 end
 
