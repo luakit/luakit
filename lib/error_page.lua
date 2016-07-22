@@ -16,9 +16,6 @@ html_template = [==[
             <style type="text/css">
                 {style}
             </style>
-            <script type="text/javascript">
-                function tryagain() { location.reload(); }
-            </script>
         </head>
     <body>
         <div id="errorContainer">
@@ -30,6 +27,15 @@ html_template = [==[
                 {buttons}
             </form>
         </div>
+        <script type="text/javascript">
+            var buttons = document.querySelectorAll("input[type=button]");
+            for (var i=0; i<buttons.length; i++) {
+                console.log("Button", buttons[i])
+                buttons[i].addEventListener("click", function () {
+                    window.webkit.messageHandlers.error_page_button_cb.postMessage(i);
+                }, false);
+            }
+        </script>
     </body>
     </html>
 ]==]
@@ -104,15 +110,28 @@ local function cleanup(v, status)
     end
 end
 
-local function make_button_html(buttons)
+local function make_button_html(v, buttons)
     local html = ""
-    local tmpl = '<input type="button" class="{class}" value="{label}" onclick="{onclick}" />'
-    for _, button in ipairs(buttons) do
+    local tmpl = '<input type="button" class="{class}" value="{label}" />'
+
+    for i, button in ipairs(buttons) do
         assert(button.label)
-        assert(button.onclick)
+        assert(button.callback)
         button.class = button.class or ""
         html = html .. string.gsub(tmpl, "{(%w+)}", button)
     end
+
+    -- Add signals for button messages
+    local function error_page_button_cb(v, _, i)
+        buttons[i].callback(v)
+    end
+    local function error_page_button_cb_cleanup()
+        v:remove_script_signal("error_page_button_cb", error_page_button_cb)
+        v:remove_signal("navigation-request", error_page_button_cb_cleanup)
+    end
+    v:add_script_signal("error_page_button_cb", error_page_button_cb)
+    v:add_signal("navigation-request", error_page_button_cb_cleanup)
+
     return html
 end
 
@@ -131,12 +150,14 @@ local function load_error_page(v, error_page_info)
         style = style,
         buttons = {{
             label = "Try again",
-            onclick = "javascript: tryagain()",
+            callback = function(v)
+                v:reload()
+            end
         }},
     }
     error_page_info = util.table.join(defaults, error_page_info)
 
-    error_page_info.buttons = make_button_html(error_page_info.buttons)
+    error_page_info.buttons = make_button_html(v, error_page_info.buttons)
 
     -- Substitute values recursively
     local html = html_template
