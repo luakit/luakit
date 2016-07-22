@@ -1,11 +1,9 @@
 local assert = assert
 local webview = webview
 local string = string
-local print = print
 local styles = styles
 local pairs = pairs
 local ipairs = ipairs
-local util = require "lousy.util"
 local lousy = require "lousy"
 
 module("error_page")
@@ -156,7 +154,7 @@ local function load_error_page(v, error_page_info)
             end
         }},
     }
-    error_page_info = util.table.join(defaults, error_page_info)
+    error_page_info = lousy.util.table.join(defaults, error_page_info)
 
     error_page_info.buttons = make_button_html(v, error_page_info.buttons)
 
