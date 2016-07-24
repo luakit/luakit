@@ -160,7 +160,7 @@ extension:add_signal("page-created", function(_, page)
         if allow == false and p.uri == uri then
             ui:emit_signal("navigation-blocked", p.id, uri)
         end
-        if allow ~= nil then return allow end
+        if allow == false then return false end
     end)
 end)
 
