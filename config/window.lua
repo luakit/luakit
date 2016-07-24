@@ -561,7 +561,7 @@ window.methods = {
             ssl.fg = theme.trust_fg
             ssl.text = "(trust)"
             ssl:show()
-        elseif string.sub(w.view.uri, 1, 4) == "http" then
+        elseif string.sub(w.view.uri or "", 1, 4) == "http" then
             -- Display (notrust) on http/https URLs
             ssl.fg = theme.notrust_fg
             ssl.text = "(notrust)"
