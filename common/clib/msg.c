@@ -40,24 +40,24 @@ luaH_msg_string_from_args(lua_State *L)
 }
 
 static gint
-luaH_msg_warn(lua_State *L)
+luaH_msg(lua_State *L, log_level_t lvl)
 {
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "Sln", &ar);
-    _log(LOG_LEVEL_warn, ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
+    _log(lvl, ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 
-static gint
-luaH_msg_info(lua_State *L)
-{
-    lua_Debug ar;
-    lua_getstack(L, 1, &ar);
-    lua_getinfo(L, "Sln", &ar);
-    _log(LOG_LEVEL_debug, ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
-    return 0;
-}
+#define X(name) \
+static gint \
+luaH_msg_##name(lua_State *L) \
+{ \
+    return luaH_msg(L, LOG_LEVEL_##name); \
+} \
+
+LOG_LEVELS
+#undef X
 
 /** Setup luakit module.
  *
@@ -68,8 +68,10 @@ msg_lib_setup(lua_State *L)
 {
     static const struct luaL_reg msg_lib[] =
     {
-        { "info",              luaH_msg_info },
-        { "warn",              luaH_msg_warn },
+#define X(name) \
+        { #name, luaH_msg_##name },
+        LOG_LEVELS
+#undef X
         { NULL,              NULL }
     };
 
