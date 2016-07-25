@@ -540,14 +540,24 @@ window.methods = {
     end,
 
     update_scroll = function (w)
-        local scroll, label = w.view.scroll, w.sbar.r.scroll
-        local y, max, text = scroll.y, scroll.ymax
-        if     max == 0   then text = "All"
-        elseif y   == 0   then text = "Top"
-        elseif y   == max then text = "Bot"
-        else text = string.format("%2d%%", (y / max) * 100)
-        end
-        if label.text ~= text then label.text = text end
+        w.view:eval_js([=[
+            (function () {
+                return {
+                    y: window.scrollY,
+                    ymax: Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0)
+                };
+            })()
+        ]=], { callback = function (scroll, err)
+            assert(not err, err)
+            local label = w.sbar.r.scroll
+            local y, max, text = scroll.y, scroll.ymax
+            if     max == 0   then text = "All"
+            elseif y   == 0   then text = "Top"
+            elseif y   == max then text = "Bot"
+            else text = string.format("%2d%%", (y / max) * 100)
+            end
+            if label.text ~= text then label.text = text end
+        end })
     end,
 
     update_ssl = function (w)
