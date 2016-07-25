@@ -1068,7 +1068,8 @@ webview_destructor(widget_t *w)
     g_slice_free(webview_data_t, d);
     g_object_unref(G_OBJECT(d->user_content));
     signal_destroy(d->script_msg_signals);
-    g_object_unref(G_OBJECT(d->cert));
+    if (d->cert)
+        g_object_unref(G_OBJECT(d->cert));
 }
 
 void
