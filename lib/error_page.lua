@@ -234,7 +234,13 @@ local function handle_error(v, uri, msg, cert_errors)
                 <div class="errorMessage">
                     <p>Reload the page to continue</p>
                 </div>
-            ]==]
+            ]==],
+            buttons = {{
+                label = "Reload page",
+                callback = function(v)
+                    v:reload()
+                end
+            }},
         }
     end
     error_page_info.uri = uri
