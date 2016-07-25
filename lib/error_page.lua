@@ -229,6 +229,7 @@ local function handle_error(v, uri, msg, cert_errors)
         }
     elseif category == "crash" then
         error_page_info = {
+            heading = "Web process crashed",
             content = [==[
                 <div class="errorMessage">
                     <p>Reload the page to continue</p>
