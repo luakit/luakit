@@ -79,7 +79,9 @@ local function fill_input(value)
     local inputs = state.matches.input
     for _, input in pairs(inputs) do
         if input.type == "radio" or input.type == "checkbox" then
-            if value and value ~= "false" then
+            -- Click the input if it isn't already in the desired state
+            local checked = input.checked == "checked"
+            if value and value ~= checked then
                 input:click()
             end
         else
