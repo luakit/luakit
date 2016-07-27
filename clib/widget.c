@@ -213,6 +213,8 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         g_object_set_data(G_OBJECT(w->widget),
             GOBJECT_LUAKIT_WIDGET_DATA_KEY, (gpointer)w);
 
+        verbose("created widget of type: %s", w->info->name);
+
         luaH_object_emit_signal(L, -3, "init", 0, 0);
         return 0;
     }
