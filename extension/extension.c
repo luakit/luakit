@@ -1,4 +1,5 @@
 #include <stdlib.h>
+#include <unistd.h>
 #include <glib.h>
 
 #include "common/util.h"
@@ -65,6 +66,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     web_luajs_init();
     web_script_world_init();
 
+    debug("luakit web process: PID %d", getpid());
     debug("luakit web process: ready for messages");
 }
 

@@ -109,7 +109,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     }
 
     if (!log_lvl)
-        log_set_verbosity(verbose ? LOG_LEVEL_debug : LOG_LEVEL_warn);
+        log_set_verbosity(verbose ? LOG_LEVEL_verbose : LOG_LEVEL_info);
     else {
         log_level_t lvl;
         int err = log_level_from_string(&lvl, log_lvl);

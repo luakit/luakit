@@ -15,7 +15,7 @@ local table = table
 local tostring = tostring
 local type = type
 local unpack = unpack
-local info = msg.info
+local msg = msg
 
 --- Provides a signal API similar to GTK's signals.
 module("lousy.signal")
@@ -58,7 +58,7 @@ function emit_signal(object, signame, ...)
     local d = get_data(object)
     local sigfuncs = d.signals[signame] or {}
 
-    info("emit_signal: %q on %s", signame, tostring(object))
+    msg.debug("emit_signal: %q on %s", signame, tostring(object))
 
     for _, sigfunc in ipairs(sigfuncs) do
         local ret
