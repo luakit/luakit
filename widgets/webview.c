@@ -102,7 +102,6 @@ property_t webview_properties[] = {
   { L_TK_PROGRESS,    "estimated-load-progress", DOUBLE, FALSE },
   { L_TK_IS_LOADING,        "is-loading",        BOOL,   FALSE },
   { L_TK_TITLE,             "title",             CHAR,   FALSE },
-  { L_TK_URI,               "uri",               CHAR,   FALSE }, /* dummy */
   { L_TK_ZOOM_LEVEL,        "zoom-level",        DOUBLE,  TRUE },
   { 0,                      NULL,                0,      0     },
 };
@@ -654,6 +653,12 @@ favicon_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "favicon", 0, 0);
     lua_pop(L, 1);
+}
+
+static void
+uri_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
+{
+    update_uri(w, NULL);
 }
 
 static gint
@@ -1217,6 +1222,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
        * original luakit anyway. */
       //"signal::resource-load-started",                G_CALLBACK(resource_load_started_cb),     w,
       "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
+      "signal::notify::uri",                          G_CALLBACK(uri_cb),                       w,
       "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
       NULL);
 
