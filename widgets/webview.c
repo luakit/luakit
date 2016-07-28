@@ -236,6 +236,8 @@ static gboolean
 load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
         gchar *failing_uri, gpointer error, widget_t *w)
 {
+    update_uri(w, failing_uri);
+
     lua_State *L = globalconf.L;
     ((webview_data_t*) w->data)->is_failed = TRUE;
     luaH_object_push(L, w->ref);
@@ -277,6 +279,7 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
 {
     lua_State *L = globalconf.L;
     webview_data_t *d = w->data;
+    update_uri(w, failing_uri);
 
     ((webview_data_t*) w->data)->is_failed = TRUE;
 
