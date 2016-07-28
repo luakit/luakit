@@ -102,7 +102,7 @@ property_t webview_properties[] = {
   { L_TK_PROGRESS,    "estimated-load-progress", DOUBLE, FALSE },
   { L_TK_IS_LOADING,        "is-loading",        BOOL,   FALSE },
   { L_TK_TITLE,             "title",             CHAR,   FALSE },
-  { L_TK_URI,               "uri",               CHAR,   FALSE }, /* Custom setter in webview newindex() */
+  { L_TK_URI,               "uri",               CHAR,   FALSE }, /* dummy */
   { L_TK_ZOOM_LEVEL,        "zoom-level",        DOUBLE,  TRUE },
   { 0,                      NULL,                0,      0     },
 };
@@ -169,6 +169,8 @@ luaH_checkwebview(lua_State *L, gint udx)
     return w;
 }
 
+static void update_uri(widget_t *w, const gchar *uri);
+
 #include "widgets/webview/javascript.c"
 #include "widgets/webview/downloads.c"
 #include "widgets/webview/history.c"
@@ -205,6 +207,28 @@ notify_cb(WebKitWebView* UNUSED(v), GParamSpec *ps, widget_t *w)
         lua_State *L = globalconf.L;
         luaH_object_push(L, w->ref);
         luaH_object_property_signal(L, -1, p->tok);
+        lua_pop(L, 1);
+    }
+}
+
+static void
+update_uri(widget_t *w, const gchar *uri)
+{
+    webview_data_t *d = w->data;
+
+    if (!uri) {
+        uri = webkit_web_view_get_uri(d->view);
+        if (!uri || !uri[0])
+            uri = "about:blank";
+    }
+
+    /* uris are the same, do nothing */
+    if (g_strcmp0(d->uri, uri)) {
+        g_free(d->uri);
+        d->uri = g_strdup(uri);
+        lua_State *L = globalconf.L;
+        luaH_object_push(L, w->ref);
+        luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
         lua_pop(L, 1);
     }
 }
@@ -295,6 +319,8 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
         warn("programmer error, unable to get load status literal");
         break;
     }
+
+    update_uri(w, NULL);
 
     if (e == WEBKIT_LOAD_STARTED) {
         ((webview_data_t*) w->data)->is_committed = FALSE;
@@ -674,6 +700,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       /* push string properties */
       PS_CASE(HOVERED_URI,          d->hover)
+      PS_CASE(URI,                  d->uri)
 
       /* push boolean properties */
       // TODO this stopped existing...
@@ -752,6 +779,7 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_URI:
         uri = parse_uri(luaL_checklstring(L, 3, &len));
         webkit_web_view_load_uri(d->view, uri);
+        update_uri(w, uri);
         g_free(uri);
         return 0;
 
