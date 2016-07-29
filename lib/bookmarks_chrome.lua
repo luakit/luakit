@@ -502,8 +502,6 @@ chrome.add("bookmarks", function (view, meta)
     end
 
     local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
-
-    print("lua side: bookmarks_chrome.lua")
     return html
 end,
 function (view, meta)
