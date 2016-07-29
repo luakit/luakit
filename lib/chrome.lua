@@ -140,6 +140,7 @@ stylesheet = [===[
 
 -- luakit:// page handlers
 local handlers = {}
+local on_first_visual_handlers = {}
 
 function add(page, func, on_first_visual_func, export_funcs)
     -- Do some sanity checking
@@ -149,35 +150,9 @@ function add(page, func, on_first_visual_func, export_funcs)
         "illegal characters in chrome page name: " .. page)
     assert(type(func) == "function",
         "invalid chrome handler (function expected, got "..type(func)..")")
-
-    local wrapper = function(view, meta)
-        -- Call the main function...
-        local ret = func(view, meta)
-        -- Wrap and bind on_first_visual hook, if given
-        if type(on_first_visual_func) == "function" then
-            function visual_wrap(v, status)
-                -- Wait for new page to be created
-                if status ~= "finished" then return end
-
-                -- Hack to run-once
-                view:remove_signal("load-status", visual_wrap)
-
-                -- Double check that we are where we should be
-                if view.uri ~= meta.uri then return end
-
-                -- Call the supplied handler
-                on_first_visual_func(v, meta)
-
-                if not luakit.webkit2 then
-                    for name, func in pairs(export_funcs or {}) do
-                        view:register_function(name, func)
-                    end
-                end
-            end
-            view:add_signal("load-status", visual_wrap)
-        end
-        return ret
-    end
+    assert(type(on_first_visual_func) == "nil"
+        or type(on_first_visual_func) == "function",
+        "invalid chrome handler (function/nil expected, got "..type(on_first_visual_func)..")")
 
     if luakit.webkit2 then
         for name, func in pairs(export_funcs or {}) do
@@ -188,11 +163,13 @@ function add(page, func, on_first_visual_func, export_funcs)
         end
     end
 
-    handlers[page] = wrapper
+    handlers[page] = func
+    on_first_visual_handlers[page] = on_first_visual_func
 end
 
 function remove(page)
     handlers[page] = nil
+    on_first_visual_handlers[page] = nil
 end
 
 error_html = [==[
@@ -244,6 +221,31 @@ webview.init_funcs.chrome = function (view, w)
         -- Load blank error page
         return "<p>No chrome handler for: <big><code>" .. uri
             .. "</code></big></p>"
+    end)
+
+    view:add_signal("load-status", function (_, status)
+        -- Wait for new page to be created
+        if status ~= "finished" then return end
+
+        -- Match "luakit://page/path"
+        local page, path = string.match(view.uri, "^luakit://([^/]+)/?(.*)")
+        if not page then return end
+
+        -- Ensure we have a hook to call
+        local on_first_visual_func = on_first_visual_handlers[page]
+        if not on_first_visual_func then return end
+
+        local meta = { page = page, path = path, w = w,
+            uri = "luakit://" .. page .. "/" .. path }
+
+        -- Call the supplied handler
+        on_first_visual_func(view, meta)
+
+        if not luakit.webkit2 then
+            for name, func in pairs(export_funcs or {}) do
+                view:register_function(name, func)
+            end
+        end
     end)
 end
 
