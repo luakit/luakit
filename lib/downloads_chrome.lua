@@ -294,7 +294,7 @@ local function collate_download_data(d, data, filter)
 end
 
 local export_funcs = {
-    download_get = function (id, filter)
+    download_get = function (view, id, filter)
         local d, data = downloads.get(id)
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -303,7 +303,7 @@ local export_funcs = {
         return collate_download_data(d, data, filter)
     end,
 
-    downloads_get_all = function (filter)
+    downloads_get_all = function (view, filter)
         local ret = {}
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -315,7 +315,7 @@ local export_funcs = {
         return ret
     end,
 
-    download_show = function (id)
+    download_show = function (view, id)
         local d, data = downloads.get(id)
         local dirname = string.gsub(d.destination, "(.*/)(.*)", "%1")
         if downloads.emit_signal("open-file", dirname, "inode/directory") ~= true then

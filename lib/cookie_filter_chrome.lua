@@ -216,7 +216,7 @@ chrome.add("cookie-filter", function (view, meta)
 end,
 nil,
 {
-    cookie_filter_set = function(domain, name, allow)
+    cookie_filter_set = function(view, domain, name, allow)
         cookie_filter_lib.set(domain, name, allow)
     end
 })

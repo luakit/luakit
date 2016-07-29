@@ -11,6 +11,7 @@
 
 #include "clib/web_module.h"
 #include "clib/luakit.h"
+#include "clib/widget.h"
 #include "common/luaserialize.h"
 
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
@@ -52,14 +53,31 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
 
-    /* Deserialize the Lua we got */
     int argc = lua_deserialize_range(L, msg, length) - 1;
-    gpointer ref = lua_touserdata(L, top + 1);
+    g_assert_cmpint(argc, >=, 1);
+
+    /* Retrieve and pop view id and function ref */
+    guint64 view_id = lua_tointeger(L, top + 1);
+    gpointer ref = lua_touserdata(L, top + 2);
+    lua_remove(L, top+1);
     lua_remove(L, top+1);
 
     /* push Lua callback function into position */
     luaH_object_push(L, ref);
-    lua_insert(L, -argc-1);
+    lua_insert(L, top+1);
+
+    /* get webview and push into position */
+    widget_t *w = NULL;
+    for (unsigned i = 0; i < globalconf.webviews->len; i++) {
+        widget_t *ww = g_ptr_array_index(globalconf.webviews, i);
+        if (webkit_web_view_get_page_id((WebKitWebView*)ww->widget) == view_id) {
+            w = ww;
+            break;
+        }
+    }
+    g_assert(w);
+    luaH_object_push(L, w->ref);
+    lua_insert(L, top+2);
 
     /* Call the function; push result/error and ok/error boolean */
     lua_pushboolean(L, lua_pcall(L, argc, 1, 0));

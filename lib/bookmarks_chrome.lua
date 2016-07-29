@@ -430,7 +430,7 @@ $(document).ready(function () { 'use strict'
 local new_bookmark_values
 
 export_funcs = {
-    bookmarks_search = function (opts)
+    bookmarks_search = function (view, opts)
         if not bookmarks.db then bookmarks.init() end
 
         local sql = { "SELECT", "*", "FROM bookmarks" }
@@ -480,11 +480,11 @@ export_funcs = {
         return rows
     end,
 
-    bookmarks_add = bookmarks.add,
-    bookmarks_get = bookmarks.get,
-    bookmarks_remove = bookmarks.remove,
+    bookmarks_add = function (view, ...) return bookmarks.add(...) end,
+    bookmarks_get = function (view, ...) return bookmarks.get(...) end,
+    bookmarks_remove = function (view, ...) return bookmarks.remove(...) end,
 
-    new_bookmark_values = function ()
+    new_bookmark_values = function (_)
         local values = new_bookmark_values
         new_bookmark_values = nil
         return values

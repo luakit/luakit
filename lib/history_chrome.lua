@@ -328,7 +328,7 @@ $(document).ready(function () { 'use strict';
 local initial_search_term
 
 export_funcs = {
-    history_search = function (opts)
+    history_search = function (view, opts)
         local sql = { "SELECT", "*", "FROM history" }
 
         local where, args, argc = {}, {}, 1
@@ -372,11 +372,11 @@ export_funcs = {
         return rows
     end,
 
-    history_clear_all = function ()
+    history_clear_all = function (view)
         history.db:exec [[ DELETE FROM history ]]
     end,
 
-    history_clear_list = function (ids)
+    history_clear_list = function (view, ids)
         if not ids or #ids == 0 then return end
         local marks = {}
         for i=1,#ids do marks[i] = "?" end
@@ -384,7 +384,7 @@ export_funcs = {
             .. table.concat(marks, ",") .. " )", ids)
     end,
 
-    initial_search_term = function ()
+    initial_search_term = function (_)
         local term = initial_search_term
         initial_search_term = nil
         return term

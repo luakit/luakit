@@ -206,11 +206,11 @@ chrome.add("adblock", function (view, meta)
 end,
 nil,
 {
-    adblock_toggle = function (enable)
+    adblock_toggle = function (_, enable)
         if enable then adblock.enable() else adblock.disable() end
     end,
 
-    adblock_list_toggle = function (id, enable)
+    adblock_list_toggle = function (_, id, enable)
         adblock.list_set_enabled(id, enable)
     end,
 })

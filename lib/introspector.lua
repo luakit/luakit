@@ -378,7 +378,7 @@ chrome.add("help", function (view, meta)
     }
     return string.gsub(html, "{(%w+)}", html_subs)
 end, nil, {
-    open_editor = editor.edit,
+    open_editor = function(view, ...) return editor.edit(...) end,
 })
 
 local cmd = lousy.bind.cmd

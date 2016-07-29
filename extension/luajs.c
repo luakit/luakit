@@ -10,13 +10,18 @@
 #include "common/luaserialize.h"
 #include "common/luajs.h"
 
-static void register_func(WebKitScriptWorld *world, WebKitFrame *frame, const gchar *name, gpointer ref);
+static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, const gchar *name, gpointer ref);
 
 static void
 lua_gc_stack_top(lua_State *L)
 {
     msg_send_lua(MSG_TYPE_lua_js_gc, L, -1, -1);
 }
+
+typedef struct _luajs_func_ctx_t {
+    gpointer ref;
+    guint64 page_id;
+} luajs_func_ctx_t;
 
 static JSValueRef
 luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
@@ -27,8 +32,10 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     gint top = lua_gettop(L);
     gchar *error = NULL;
 
-    /* Push function ref onto Lua stack */
-    lua_pushlightuserdata(L, JSObjectGetPrivate(fun));
+    /* Push view id, function ref onto Lua stack */
+    luajs_func_ctx_t *ctx = JSObjectGetPrivate(fun);
+    lua_pushinteger(L, ctx->page_id);
+    lua_pushlightuserdata(L, ctx->ref);
 
     /* push function arguments onto Lua stack */
     for (guint i = 0; i < argc; i++) {
@@ -133,13 +140,11 @@ msg_recv_lua_js_register(const guint8 *msg, guint length)
 static void
 luaJS_registered_function_gc(JSObjectRef obj)
 {
-    lua_State *L = extension.WL;
-    lua_pushlightuserdata(L, obj);
-    lua_gc_stack_top(L);
-    lua_pop(L, 1);
+    luajs_func_ctx_t *ctx = JSObjectGetPrivate(obj);
+    g_slice_free(luajs_func_ctx_t, ctx);
 }
 
-static void register_func(WebKitScriptWorld *world, WebKitFrame *frame, const gchar *name, gpointer ref)
+static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, const gchar *name, gpointer ref)
 {
     JSGlobalContextRef context = webkit_frame_get_javascript_context_for_script_world(frame, world);
 
@@ -150,7 +155,11 @@ static void register_func(WebKitScriptWorld *world, WebKitFrame *frame, const gc
     def.finalize = luaJS_registered_function_gc;
     JSClassRef class = JSClassCreate(&def);
 
-    JSObjectRef fun = JSObjectMake(context, class, ref);
+    luajs_func_ctx_t *ctx = g_slice_new(luajs_func_ctx_t);
+    ctx->page_id = webkit_web_page_get_id(web_page);
+    ctx->ref = ref;
+
+    JSObjectRef fun = JSObjectMake(context, class, ctx);
     JSObjectRef global = JSContextGetGlobalObject(context);
     JSObjectSetProperty(context, global, js_name, fun,
             kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly, NULL);
@@ -195,7 +204,7 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
                 g_assert(lua_isstring(L, -2));
                 g_assert(lua_islightuserdata(L, -1));
                 /* Register the function */
-                register_func(world, frame, lua_tostring(L, -2), lua_touserdata(L, -1));
+                register_func(world, web_page, frame, lua_tostring(L, -2), lua_touserdata(L, -1));
                 lua_pop(L, 1);
             }
         }
