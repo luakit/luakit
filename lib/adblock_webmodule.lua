@@ -2,7 +2,7 @@ local pairs = pairs
 local string = string
 local ui_process = ui_process
 local extension = extension
-local info = msg.info
+local msg = msg
 
 module("adblock_webmodule")
 
@@ -104,7 +104,7 @@ end
 match = function (src, dst)
     -- Always allow data: URIs
     if string.sub(dst, 1, 5) == "data:" then
-        info("adblock: allowing data URI")
+        msg.debug("adblock: allowing data URI")
         return
     end
 
@@ -128,7 +128,7 @@ match = function (src, dst)
     for _, list in pairs(rules) do
         local found, pattern = match_list(list.whitelist, dst, dst_domains, src_domain, dst_domain)
         if found then
-            info("adblock: allowing request as pattern %q matched to uri %s", pattern, dst)
+            msg.debug("adblock: allowing request as pattern %q matched to uri %s", pattern, dst)
             return true
         end
     end
@@ -137,7 +137,7 @@ match = function (src, dst)
     for _, list in pairs(rules) do
         local found, pattern = match_list(list.blacklist, dst, dst_domains, src_domain, dst_domain)
         if found then
-            info("adblock: blocking request as pattern %q matched to uri %s", pattern, dst)
+            msg.debug("adblock: blocking request as pattern %q matched to uri %s", pattern, dst)
             return false
         end
     end

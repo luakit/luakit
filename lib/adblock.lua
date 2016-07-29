@@ -13,7 +13,7 @@
 -- Filterlists need to be updated regularly (~weekly), use cron!      --
 ------------------------------------------------------------------------
 
-local info      = info
+local msg       = msg
 local pairs     = pairs
 local ipairs    = ipairs
 local assert    = assert
@@ -105,7 +105,7 @@ function detect_files()
         lfs.chdir(curdir)
         for filename in lfs.dir(adblock_dir) do
             if string.find(filename, ".txt$") then
-                info("adblock: Found adblock list: " .. filename)
+                msg.verbose("adblock: Found adblock list: " .. filename)
                 table.insert(filterfiles, filename)
             end
         end
@@ -117,7 +117,7 @@ function detect_files()
     end
     
     if not simple_mode then
-        info( "adblock: Found " .. table.maxn(filterfiles) .. " rules lists." )
+        msg.info( "adblock: Found " .. table.maxn(filterfiles) .. " rules lists." )
     end
     
     return
@@ -274,9 +274,9 @@ end
 -- Parses an Adblock Plus compatible filter list
 parse_abpfilterlist = function (filename, cache)
     if os.exists(filename) then
-        info("adblock: loading filterlist %s", filename)
+        msg.verbose("adblock: loading filterlist %s", filename)
     else
-        info("adblock: error loading filter list (%s: No such file or directory)", filename)
+        msg.warn("adblock: error loading filter list (%s: No such file or directory)", filename)
     end
     --***
     --local f = io.open(filename .. "~", "w")
