@@ -12,6 +12,7 @@ local xpcall = xpcall
 local debug = debug
 local pairs = pairs
 local luakit = luakit
+local error_page = require "error_page"
 
 -- Get luakit environment
 local webview = webview
@@ -173,27 +174,6 @@ function remove(page)
     on_first_visual_handlers[page] = nil
 end
 
-error_html = [==[
-    <html>
-        <head>
-            <title>Chrome handler error</title>
-            <style>
-                pre {
-                    border-top: 1px solid #aaa;
-                    border-bottom: 1px solid #aaa;
-                    margin: -5px 5px;
-                    padding: 5px;
-                    background-color: #f2f2f2;
-                }
-            </style>
-        </head>
-        <body>
-            <p>Error in <big><code>%q</code></big> handler function:</p>
-            <pre>%s</pre>
-        </body>
-    </html>
-]==]
-
 -- Catch all navigations to the luakit:// scheme
 webview.init_funcs.chrome = function (view, w)
     view:add_signal("luakit-chrome", function (_, uri)
@@ -209,8 +189,18 @@ webview.init_funcs.chrome = function (view, w)
 
             -- Render error output in webview with traceback
             local function error_handler(err)
-                return string.format(error_html, uri,
-                    debug.traceback(err, 2))
+                error_page.show_error_page(view, {
+                    heading = "Chrome handler error",
+                    content = [==[
+                        <div class="errorMessage">
+                            <p>An error occurred in the <code>luakit://{page}/</code> handler function:
+                            <pre>{traceback}</pre>
+                        </div>
+                    ]==],
+                    buttons = {},
+                    page = page,
+                    traceback = debug.traceback(err, 2),
+                })
             end
 
             -- Call luakit:// page handler
@@ -219,9 +209,18 @@ webview.init_funcs.chrome = function (view, w)
             return html
         end
 
-        -- Load blank error page
-        return "<p>No chrome handler for: <big><code>" .. uri
-            .. "</code></big></p>"
+        -- Load error page
+        error_page.show_error_page(view, {
+            heading = "Chrome handler error",
+            content = [==[
+                <div class="errorMessage">
+                    <p>No chrome handler for <code>luakit://{page}/</code></p>
+                </div>
+            ]==],
+            buttons = {},
+            page = page,
+        })
+        return ""
     end)
 
     view:add_signal("load-status", function (_, status)
