@@ -51,9 +51,12 @@ function set(object, mode, ...)
         return error("attempt to set mode on non-modeable object")
     end
     local mode = mode or default_modes[object] or default_mode
+    local changed = current_modes[object] ~= mode
     current_modes[object] = mode
     -- Raises a mode change signal on the object.
-    object:emit_signal("mode-changed", mode, ...)
+    if changed then
+        object:emit_signal("mode-changed", mode, ...)
+    end
     return mode
 end
 
