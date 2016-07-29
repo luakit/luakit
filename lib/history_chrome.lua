@@ -232,7 +232,6 @@ $(document).ready(function () { 'use strict';
     /* input field callback */
     $search.keydown(function(ev) {
         if (ev.which == 13) { /* Return */
-            reset_mode();
             page = 1;
             search();
             $search.blur();
@@ -399,10 +398,6 @@ chrome.add("history", function (view, meta)
     })
 end,
 function (view, meta)
-    capi.luakit.register_function("^luakit://history/?(.*)", "reset_mode", function ()
-        meta.w:set_mode() -- HACK to unfocus search box
-    end)
-
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     local _, err = view:eval_js(jquery, { no_return = true })

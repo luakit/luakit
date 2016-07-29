@@ -345,7 +345,6 @@ $(document).ready(function () { 'use strict'
         if (ev.which == 13) { /* Return */
             search();
             $search.blur();
-            reset_mode();
         }
     });
 
@@ -507,10 +506,6 @@ chrome.add("bookmarks", function (view, meta)
     return html
 end,
 function (view, meta)
-    capi.luakit.register_function("^luakit://bookmarks/?(.*)", "reset_mode", function ()
-        meta.w:set_mode() -- HACK to unfocus search box
-    end)
-
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     local _, err = view:eval_js(jquery, { no_return = true })
