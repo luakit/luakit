@@ -23,6 +23,11 @@ window.methods.undo_close_tab = function (w, index)
     else
         w.tabs:reorder(view, 1)
     end
+
+    -- Emit 'undo-close' after webview init funcs have run
+    view:add_signal("web-extension-loaded", function(v)
+        v:emit_signal("undo-close")
+    end)
 end
 
 local key = lousy.bind.key
