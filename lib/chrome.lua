@@ -15,6 +15,7 @@ local luakit = luakit
 
 -- Get luakit environment
 local webview = webview
+local window = window
 
 module("chrome")
 
@@ -248,5 +249,13 @@ webview.init_funcs.chrome = function (view, w)
         end
     end)
 end
+
+luakit.register_function("^luakit://(.*)", "reset_mode", function (view)
+    for _, w in pairs(window.bywidget) do
+        if w.view == view then
+            w:set_mode()
+        end
+    end
+end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -232,6 +232,7 @@ $(document).ready(function () { 'use strict';
     /* input field callback */
     $search.keydown(function(ev) {
         if (ev.which == 13) { /* Return */
+            reset_mode();
             page = 1;
             search();
             $search.blur();

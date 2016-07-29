@@ -345,6 +345,7 @@ $(document).ready(function () { 'use strict'
         if (ev.which == 13) { /* Return */
             search();
             $search.blur();
+            reset_mode();
         }
     });
 
