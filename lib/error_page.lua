@@ -23,9 +23,7 @@ html_template = [==[
                 <p id="errorTitleText">{heading}</p>
             </div>
             {content}
-            <form name="bl">
-                {buttons}
-            </form>
+            {buttons}
         </div>
     </body>
     </html>
@@ -73,8 +71,12 @@ style = [===[
         margin: 0;
     }
 
-    #errorContainer > div {
+    #errorContainer > div:not(:last-of-type) {
         margin-bottom: 1em;
+    }
+
+    form {
+        margin-top: 1em;
     }
 ]===]
 
@@ -124,6 +126,8 @@ local function make_button_html(v, buttons)
     local html = ""
     local tmpl = '<input type="button" class="{class}" value="{label}" />'
 
+    if #buttons == 0 then return "" end
+
     for i, button in ipairs(buttons) do
         assert(button.label)
         assert(button.callback)
@@ -142,7 +146,7 @@ local function make_button_html(v, buttons)
     v:add_script_signal("error_page_button_cb", error_page_button_cb)
     v:add_signal("navigation-request", error_page_button_cb_cleanup)
 
-    return html
+    return '<form name="bl">' .. html .. '</form>'
 end
 
 local function load_error_page(v, error_page_info)
