@@ -77,7 +77,7 @@ style = [===[
     }
 ]===]
 
-cert_style = style .. [===[
+cert_style = [===[
     body {
         background: repeating-linear-gradient(
             45deg,
@@ -164,8 +164,11 @@ local function load_error_page(v, error_page_info)
             end
         }},
     }
-    error_page_info = lousy.util.table.join(defaults, error_page_info)
 
+    if error_page_info.style then
+        error_page_info.style = style .. error_page_info.style
+    end
+    error_page_info = lousy.util.table.join(defaults, error_page_info)
     error_page_info.buttons = make_button_html(v, error_page_info.buttons)
 
     -- Substitute values recursively
