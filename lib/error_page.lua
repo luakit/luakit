@@ -32,12 +32,18 @@ html_template = [==[
 
 style = [===[
     body {
-        background-color: #ddd;
         margin: 0;
         padding: 0;
         display: flex;
         align-items: center;
         justify-content: center;
+        background: repeating-linear-gradient(
+            45deg,
+            #ddd,
+            #ddd 10px,
+            #dadada 10px,
+            #dadada 20px
+        );
     }
 
     #errorContainer {
@@ -75,8 +81,8 @@ cert_style = style .. [===[
     body {
         background: repeating-linear-gradient(
             45deg,
-            #c66,
-            #c66 10px,
+            #bf5959,
+            #bf5959 10px,
             #b55 10px,
             #b55 20px
         );
