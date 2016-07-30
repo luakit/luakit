@@ -5,6 +5,7 @@ local styles = styles
 local pairs = pairs
 local ipairs = ipairs
 local lousy = require "lousy"
+local type = type
 
 module("error_page")
 
@@ -258,6 +259,8 @@ local function handle_error(v, uri, msg, cert_errors)
 end
 
 show_error_page = function(v, error_page_info)
+    assert(type(v) == "widget" and v.type == "webview")
+    assert(type(error_page_info) == "table")
     if not error_page_info.uri then
         error_page_info.uri = v.uri
     end
