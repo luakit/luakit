@@ -28,15 +28,6 @@
 #include "clib/widget.h"
 #include "common/signal.h"
 
-typedef struct _webview_scroll_anim_t {
-    /** Smooth scroll offset at animation start */
-    gdouble source;
-    /** Smooth scroll offset at animation end */
-    gdouble target;
-    /** Time at which animation began */
-    guint64 start_time;
-} webview_scroll_anim_t;
-
 typedef struct {
     /** The parent widget_t struct */
     widget_t *widget;
@@ -65,17 +56,6 @@ typedef struct {
     guint htr_context;
     gboolean is_committed;
     gboolean is_failed;
-
-    /** Animation state for horizontal scrolling */
-    webview_scroll_anim_t hscroll;
-    /** Animation state for vertical scrolling */
-    webview_scroll_anim_t vscroll;
-    /** Scroll animation duration */
-    guint scroll_time_msec;
-    /** Whether a smooth scroll is currently occurring */
-    gboolean smooth_scroll;
-    /** Per-frame callback for smooth scrolling */
-    guint scroll_cb_id;
 
     /** Document size */
     gint doc_w, doc_h;

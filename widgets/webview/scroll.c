@@ -68,17 +68,6 @@ luaH_webview_scroll_newindex(lua_State *L)
     return 0;
 }
 
-void
-webview_scroll_init(widget_t *w)
-{
-    /* Load scroll animation duration */
-    webview_data_t *d = w->data;
-    lua_State *L = globalconf.L;
-    lua_getglobal(L, "scroll_duration_msec");
-    d->scroll_time_msec = lua_tonumber(L, -1) ?: 500;
-    lua_pop(L, 1);
-}
-
 static gint
 luaH_webview_scroll_index(lua_State *L)
 {
