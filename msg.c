@@ -13,6 +13,7 @@
 #include "clib/luakit.h"
 #include "clib/widget.h"
 #include "common/luaserialize.h"
+#include "web_context.h"
 
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 void run_javascript_finished(const guint8 *msg, guint length);
@@ -203,7 +204,7 @@ void
 msg_init(void)
 {
     globalconf.web_channel_queue = g_byte_array_new();
-    g_signal_connect(webkit_web_context_get_default(), "initialize-web-extensions",
+    g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), NULL);
 }
 

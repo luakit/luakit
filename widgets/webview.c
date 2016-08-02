@@ -27,6 +27,7 @@
 #include "luah.h"
 #include "clib/widget.h"
 #include "common/signal.h"
+#include "web_context.h"
 
 typedef struct {
     /** The parent widget_t struct */
@@ -1150,15 +1151,13 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     /* create widgets */
     d->user_content = webkit_user_content_manager_new();
-    d->view = WEBKIT_WEB_VIEW(webkit_web_view_new_with_user_content_manager(d->user_content));
+    d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
+                 "web-context", web_context_get(),
+                 "user-content-manager", d->user_content,
+                 NULL);
     d->inspector = webkit_web_view_get_inspector(d->view);
 
-    webkit_web_context_set_favicon_database_directory(webkit_web_view_get_context(d->view), NULL);
-
     d->is_committed = FALSE;
-
-    webkit_web_context_register_uri_scheme(webkit_web_view_get_context(d->view),
-            "luakit", (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb, NULL, NULL);
 
     // TODO does scrollbar hiding need to happen here?
 

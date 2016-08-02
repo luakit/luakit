@@ -22,6 +22,7 @@
 #include "common/util.h"
 #include "luah.h"
 #include "msg.h"
+#include "web_context.h"
 
 #include <gtk/gtk.h>
 #include <signal.h>
@@ -176,9 +177,9 @@ main(gint argc, gchar *argv[]) {
 
     gtk_init(&argc, &argv);
 
-    msg_init();
-
     init_directories();
+    web_context_init();
+    msg_init();
     init_lua(uris);
 
     /* hide command line parameters so process lists don't leak (possibly
