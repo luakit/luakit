@@ -65,23 +65,49 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
     if (lvl > verbosity)
         return;
 
-    gchar prefix_char;
+    gchar *msg = g_strdup_vprintf(fmt, ap);
+    gint log_fd = STDERR_FILENO;
+
+    /* Determine logging style */
+    /* TODO: move to X-macro generated table? */
+
+    gchar prefix_char, *style = "";
     switch (lvl) {
-        case LOG_LEVEL_fatal:   prefix_char = 'E'; break;
-        case LOG_LEVEL_warn:    prefix_char = 'W'; break;
+        case LOG_LEVEL_fatal:   prefix_char = 'E'; style = ANSI_COLOR_BG_RED; break;
+        case LOG_LEVEL_warn:    prefix_char = 'W'; style = ANSI_COLOR_RED; break;
         case LOG_LEVEL_info:    prefix_char = 'I'; break;
         case LOG_LEVEL_verbose: prefix_char = 'V'; break;
         case LOG_LEVEL_debug:   prefix_char = 'D'; break;
     }
 
-    gint atty = isatty(STDERR_FILENO);
-    if (atty && lvl == LOG_LEVEL_fatal) g_fprintf(stderr, ANSI_COLOR_BG_RED);
-    if (atty && lvl == LOG_LEVEL_warn) g_fprintf(stderr, ANSI_COLOR_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "%c: %s:%d: ", prefix_char, fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
+    /* Log format: [timestamp] prefix: fct:line msg */
+#define LOG_FMT "[%#12f] %c: %s:%d: %s"
+
+    if (!isatty(log_fd)) {
+        static GRegex *reg;
+
+        if (!reg) {
+            const gchar *expr = "[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]";
+            GError *err = NULL;
+            reg = g_regex_new(expr, G_REGEX_JAVASCRIPT_COMPAT | G_REGEX_DOTALL | G_REGEX_EXTENDED | G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, &err);
+            g_assert_no_error(err);
+        }
+
+        gchar *stripped = g_regex_replace_literal (reg, msg, -1, 0, "", 0, NULL);
+        g_free(msg);
+        msg = stripped;
+
+        g_fprintf(stderr, LOG_FMT "\n",
+                l_time() - globalconf.starttime,
+                prefix_char, fct, line, msg);
+    } else {
+        g_fprintf(stderr, "%s" LOG_FMT ANSI_COLOR_RESET "\n",
+                style,
+                l_time() - globalconf.starttime,
+                prefix_char, fct, line, msg);
+    }
+
+    g_free(msg);
 
     if (lvl == LOG_LEVEL_fatal)
         exit(EXIT_FAILURE);
