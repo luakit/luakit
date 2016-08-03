@@ -53,7 +53,7 @@ menu_binds = {
 -- Add binds to special mode "all" which adds its binds to all modes.
 add_binds("all", {
     key({}, "Escape", "Return to `normal` mode.",
-        function (w) w:set_mode() end),
+        function (w) w:set_prompt(); w:set_mode() end),
 
     key({"Control"}, "[", "Return to `normal` mode.",
         function (w) w:set_mode() end),
