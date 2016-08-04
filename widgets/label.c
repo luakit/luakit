@@ -25,11 +25,14 @@ static gint
 luaH_label_get_align(lua_State *L, widget_t *w)
 {
     gfloat xalign, yalign;
-#if !GTK_CHECK_VERSION(3,14,0)
-    gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
-#elif GTK_CHECK_VERSION(3,16,0)
+#if GTK_CHECK_VERSION(3,16,0)
     xalign = gtk_label_get_xalign(GTK_LABEL(w->widget));
     yalign = gtk_label_get_yalign(GTK_LABEL(w->widget));
+#else
+#  pragma GCC diagnostic push
+#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
+    gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
+#  pragma GCC diagnostic pop
 #endif
     lua_createtable(L, 0, 2);
     /* set align.x */
@@ -48,7 +51,7 @@ luaH_label_set_align(lua_State *L, widget_t *w)
 {
     gfloat xalign, yalign;
     luaH_checktable(L, 3);
-#if !GTK_CHECK_VERSION(3,14,0)
+#if !GTK_CHECK_VERSION(3,16,0)
     /* get old alignment values */
     gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
 #endif
@@ -68,14 +71,13 @@ luaH_label_set_align(lua_State *L, widget_t *w)
         gtk_label_set_yalign(GTK_LABEL(w->widget), yalign);
 #endif
     }
-#if !GTK_CHECK_VERSION(3,14,0)
+#if !GTK_CHECK_VERSION(3,16,0)
     gtk_misc_set_alignment(GTK_MISC(w->widget), xalign, yalign);
 #endif
     return 0;
 }
 
-#if GTK_CHECK_VERSION(3,14,0)
-#else
+#if !GTK_CHECK_VERSION(3,14,0)
 static gint
 luaH_label_get_padding(lua_State *L, widget_t *w)
 {
@@ -121,16 +123,13 @@ luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
-#if GTK_CHECK_VERSION(3,14,0)
-#else
+#if !GTK_CHECK_VERSION(3,14,0)
       case L_TK_PADDING:
         return luaH_label_get_padding(L, w);
 #endif
 
-#if GTK_CHECK_VERSION(3,16,0) || !GTK_CHECK_VERSION(3,14,0)
       case L_TK_ALIGN:
         return luaH_label_get_align(L, w);
-#endif
 
       /* push string properties */
       PS_CASE(FG,               g_object_get_data(G_OBJECT(w->widget), "fg"))
@@ -158,16 +157,13 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
-#if GTK_CHECK_VERSION(3,14,0)
-#else
+#if !GTK_CHECK_VERSION(3,14,0)
       case L_TK_PADDING:
         return luaH_label_set_padding(L, w);
 #endif
 
-#if GTK_CHECK_VERSION(3,16,0) || !GTK_CHECK_VERSION(3,14,0)
       case L_TK_ALIGN:
         return luaH_label_set_align(L, w);
-#endif
 
       case L_TK_TEXT:
         gtk_label_set_markup(GTK_LABEL(w->widget),
