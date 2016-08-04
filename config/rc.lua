@@ -169,7 +169,7 @@ require "styles"
 -----------------------------
 
 -- Restore last saved session
-local w = (session and session.restore())
+local w = (not luakit.nounique) and (session and session.restore())
 if w then
     for i, uri in ipairs(uris) do
         w:new_tab(uri, i == 1)
