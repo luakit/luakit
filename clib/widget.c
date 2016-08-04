@@ -168,10 +168,12 @@ luaH_widget_newindex(lua_State *L)
     /* Then call special widget newindex */
     widget_t *widget = luaH_checkudata(L, 1, &widget_class);
 
+#if GTK_CHECK_VERSION(3,16,0)
     if (token == L_TK_CSS) {
         widget_set_css(widget, luaL_checkstring(L, 3));
         return 0;
     }
+#endif
 
     /* but only if it's not a GtkWidget property */
     gboolean emit = luaH_gobject_newindex(L, widget_properties, token, 3,
