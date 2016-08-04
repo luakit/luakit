@@ -441,6 +441,22 @@ luaH_luakit_exec(lua_State *L)
     return 0;
 }
 
+/** Pushes the command-line options parsed by luakit
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ */
+static gint
+luaH_luakit_push_options_table(lua_State *L)
+{
+    lua_newtable(L);
+    for (guint i = 0; i < globalconf.argv->len; ++i) {
+        lua_pushstring(L, g_ptr_array_index(globalconf.argv, i));
+        lua_rawseti(L, -2, i+1);
+    }
+    return 1;
+}
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -467,6 +483,8 @@ luaH_luakit_index(lua_State *L)
       /* push boolean properties */
       PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
+      case L_TK_OPTIONS:
+        return luaH_luakit_push_options_table(L);
 
       PB_CASE(WEBKIT2,          true)
 

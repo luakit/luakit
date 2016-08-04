@@ -62,6 +62,8 @@ typedef struct {
     gchar *execpath;
     /** Ignore loading libunqiue bindings (for a single instance session) */
     gboolean nounique;
+    /** Arguments provided to luakit */
+    GPtrArray *argv;
 
     /** Pointer array to all active window userdata objects. */
     GPtrArray *windows;

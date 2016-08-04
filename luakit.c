@@ -96,12 +96,23 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
       { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
     };
 
+    /* Save a copy of argv */
+    globalconf.argv = g_ptr_array_new_with_free_func(g_free);
+    for (gint i = 0; i < *argc; ++i)
+        g_ptr_array_add(globalconf.argv, g_strdup(argv[i]));
+
     /* parse command line options */
     context = g_option_context_new("[URI...]");
     g_option_context_add_main_entries(context, entries, NULL);
     g_option_context_add_group(context, gtk_get_option_group(FALSE));
     g_option_context_parse(context, argc, &argv, NULL);
     g_option_context_free(context);
+
+    /* Trim unparsed arguments off copy of argv */
+    for (gint i = 0; i < *argc; ++i) {
+        while ((unsigned)i < globalconf.argv->len && !strcmp(g_ptr_array_index(globalconf.argv, i), argv[i]))
+            g_ptr_array_remove_index(globalconf.argv, i);
+    }
 
     /* print version and exit */
     if (version_only) {
