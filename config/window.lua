@@ -760,15 +760,14 @@ window.methods = {
     restart = function (w)
         -- Generate luakit launch command.
         local args = {({string.gsub(luakit.execpath, " ", "\\ ")})[1]}
-        if luakit.verbose then table.insert(args, "-v") end
-        -- Relaunch without libunique bindings?
-        if luakit.nounique then table.insert(args, "-U") end
+        for _, arg in ipairs(luakit.options) do
+            table.insert(args, arg)
+        end
 
         -- Get new config path
         local conf
         if luakit.confpath ~= "/etc/xdg/luakit/rc.lua" and os.exists(luakit.confpath) then
             conf = luakit.confpath
-            table.insert(args, string.format("-c %q", conf))
         end
 
         -- Check config has valid syntax
