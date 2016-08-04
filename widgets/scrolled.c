@@ -10,8 +10,10 @@ gtk_policy_from_string(const gchar *str, GtkPolicyType *out)
         *out = GTK_POLICY_AUTOMATIC;
     else if (!strcmp(str, "never"))
         *out = GTK_POLICY_NEVER;
+#if GTK_CHECK_VERSION(3,16,0)
     else if (!strcmp(str, "external"))
         *out = GTK_POLICY_EXTERNAL;
+#endif
     else
         return 1;
     return 0;
@@ -24,7 +26,9 @@ string_from_gtk_policy(GtkPolicyType policy)
         case GTK_POLICY_ALWAYS:    return "always";
         case GTK_POLICY_AUTOMATIC: return "auto";
         case GTK_POLICY_NEVER:     return "never";
+#if GTK_CHECK_VERSION(3,16,0)
         case GTK_POLICY_EXTERNAL:  return "external";
+#endif
         default: return NULL;
     }
 }
