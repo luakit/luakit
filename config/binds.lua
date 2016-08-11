@@ -289,12 +289,20 @@ add_binds("normal", {
         function (w) w.win.fullscreen = not w.win.fullscreen end),
 
     -- Open primary selection contents.
-    buf("^pp$", [[Open a URL based on the current primary selection contents
+    buf("^pp$", [[Open URLs based on the current primary selection contents
         in the current tab.]],
         function (w)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            w:navigate(w:search_open(uri))
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            w:navigate(w:search_open(uris[1]))
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[i]))
+                end
+            end
         end),
 
     buf("^pt$", [[Open a URL based on the current primary selection contents
@@ -305,21 +313,37 @@ add_binds("normal", {
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
 
-    buf("^pw$", [[Open a URL based on the current primary selection contents in
+    buf("^pw$", [[Open URLs based on the current primary selection contents in
         a new window.]],
-        function(w, m)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            window.new{w:search_open(uri)}
+        function(w)
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            w = window.new{w:search_open(uris[1])}
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[i]))
+                end
+            end
         end),
 
     -- Open clipboard contents.
-    buf("^PP$", [[Open a URL based on the current clipboard selection contents
+    buf("^PP$", [[Open URLs based on the current clipboard selection contents
         in the current tab.]],
         function (w)
-            local uri = luakit.selection.clipboard
-            if not uri then w:notify("Nothing in clipboard...") return end
-            w:navigate(w:search_open(uri))
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in clipboard...") return end
+            w:navigate(w:search_open(uris[1]))
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[1]))
+                end
+            end
         end),
 
     buf("^PT$", [[Open a URL based on the current clipboard selection contents
@@ -330,12 +354,20 @@ add_binds("normal", {
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
 
-    buf("^PW$", [[Open a URL based on the current clipboard selection contents
+    buf("^PW$", [[Open URLs based on the current clipboard selection contents
         in a new window.]],
         function(w)
-            local uri = luakit.selection.clipboard
-            if not uri then w:notify("Nothing in clipboard...") return end
-            window.new{w:search_open(uri)}
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in clipboard...") return end
+            w = window.new{w:search_open(uris[1])}
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[i]))
+                end
+            end
         end),
 
     -- Yanking
