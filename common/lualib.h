@@ -28,6 +28,7 @@
 #include <lualib.h>
 
 #include "common/util.h"
+#include "common/luaclass.h"
 
 /** Lua function to call on dofuction() error */
 lua_CFunction lualib_dofunction_on_error;
@@ -57,6 +58,9 @@ luaH_dumpstack(lua_State *L) {
             break;
           case LUA_TNIL:
             g_fprintf(stderr, "%d: nil\n", i);
+            break;
+          case LUA_TUSERDATA:
+            g_fprintf(stderr, "%d: <%s>\t\t%p\n", i, luaH_typename(L, i), lua_topointer(L, i));
             break;
           default:
             g_fprintf(stderr, "%d: %s\t#%d\t%p\n", i, lua_typename(L, t),
