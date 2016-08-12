@@ -18,6 +18,8 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
     const gchar *uri = webkit_uri_request_get_uri(request);
     SoupMessageHeaders *hdrs = webkit_uri_request_get_http_headers(request);
 
+    int top = lua_gettop(L);
+
     /* Build headers table */
     lua_newtable(L);
     if (hdrs) {
@@ -45,7 +47,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
             if (!lua_isboolean(L, -1) || lua_toboolean(L, -1))
                 warn(ANSI_COLOR_BLUE "send-request" ANSI_COLOR_RESET " handler returned %s, should be a string or false",
                         lua_typename(L, lua_type(L, -1)));
-            lua_pop(L, 1);
+            lua_settop(L, top);
             return TRUE;
         }
     }
@@ -74,7 +76,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
         }
     }
 
-    lua_pop(L, 1);
+    lua_settop(L, top);
     return FALSE;
 }
 
