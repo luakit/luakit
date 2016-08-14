@@ -19,9 +19,9 @@
  */
 
 #include "clib/download.h"
+#include "clib/luakit.h"
 
-// TODO this really belongs in widgets/webcontext.c or something
-static gboolean
+gboolean
 download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, gpointer UNUSED(user_data))
 {
     WebKitWebView *dl_view = webkit_download_get_web_view(dl);
@@ -36,15 +36,19 @@ download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, gpointer UNUS
             break;
         }
     }
-    g_assert(w);
 
     lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
+    gint top = lua_gettop(L);
     luaH_download_push(L, dl);
+    if (w)
+        luaH_object_push(L, w->ref);
+    else
+        lua_pushnil(L);
 
-    gint ret = luaH_object_emit_signal(L, 1, "download-start", 1, 1);
+    lua_class_t *luakit_class = luakit_lib_get_luakit_class();
+    gint ret = luaH_class_emit_signal(L, luakit_class, "download-start", 2, 1);
     gboolean handled = (ret && lua_toboolean(L, 2));
-    lua_pop(L, 1 + ret);
+    lua_settop(L, top);
     return handled;
 }
 

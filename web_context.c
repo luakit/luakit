@@ -26,6 +26,8 @@ static WebKitWebContext *web_context;
 
 /** Defined in widgets/webview.c */
 void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
+/** Defined in widgets/webview/downloads.c */
+gboolean download_start_cb(WebKitWebContext *, WebKitDownload *, gpointer);
 
 WebKitWebContext *
 web_context_get(void)
@@ -34,11 +36,9 @@ web_context_get(void)
     return web_context;
 }
 
-void
-web_context_init(void)
+static void
+website_data_dir_init(void)
 {
-    /* Set website data manager directories */
-
     g_assert(globalconf.data_dir);
 
     gchar *indexeddb_dir = g_build_filename(globalconf.data_dir, "indexeddb", NULL);
@@ -68,12 +68,20 @@ web_context_init(void)
     verbose("local_storage_directory:             %s", webkit_website_data_manager_get_local_storage_directory(data_mgr));
     verbose("offline_application_cache_directory: %s", webkit_website_data_manager_get_offline_application_cache_directory(data_mgr));
     verbose("websql_directory:                    %s", webkit_website_data_manager_get_websql_directory(data_mgr));
+}
 
+void
+web_context_init(void)
+{
+    website_data_dir_init();
     /* Misc settings */
 
     webkit_web_context_register_uri_scheme(web_context, "luakit",
             (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb, NULL, NULL);
     webkit_web_context_set_favicon_database_directory(web_context, NULL);
+
+    g_signal_connect(G_OBJECT(web_context), "download-started",
+            G_CALLBACK(download_start_cb), NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

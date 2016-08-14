@@ -1178,12 +1178,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* insert data into global tables and arrays */
     g_ptr_array_add(globalconf.webviews, w);
 
-    // TODO belongs in widgets/webcontext.c or something
-    // replaces download-requested signal
-    g_object_connect(G_OBJECT(webkit_web_view_get_context(d->view)),
-      "signal::download-started",                     G_CALLBACK(download_start_cb),            NULL,
-      NULL);
-
     /* connect webview signals */
     g_object_connect(G_OBJECT(d->view),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
