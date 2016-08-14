@@ -272,6 +272,16 @@ luaH_widget_get_tooltip(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_focused(lua_State *L, widget_t *w)
+{
+    gboolean focused = w->info->tok == L_TK_WINDOW ?
+        gtk_window_has_toplevel_focus(GTK_WINDOW(w->widget)) :
+        gtk_widget_is_focus(w->widget);
+    lua_pushboolean(L, focused);
+    return 1;
+}
+
+gint
 luaH_widget_get_visible(lua_State *L, widget_t *w)
 {
     lua_pushboolean(L, gtk_widget_get_visible(w->widget));

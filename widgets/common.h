@@ -24,6 +24,8 @@
 #include "clib/widget.h"
 
 #define LUAKIT_WIDGET_INDEX_COMMON(widget)            \
+    case L_TK_FOCUSED:                                \
+      return luaH_widget_get_focused(L, widget);      \
     case L_TK_VISIBLE:                                \
       return luaH_widget_get_visible(L, widget);      \
     case L_TK_TOOLTIP:                                \
@@ -90,6 +92,7 @@ gint luaH_widget_hide(lua_State*);
 gint luaH_widget_remove(lua_State*);
 gint luaH_widget_set_child(lua_State*, widget_t*);
 gint luaH_widget_show(lua_State*);
+gint luaH_widget_get_focused(lua_State *L, widget_t*);
 gint luaH_widget_get_visible(lua_State *L, widget_t*);
 gint luaH_widget_get_width(lua_State *L, widget_t*);
 gint luaH_widget_get_height(lua_State *L, widget_t*);
