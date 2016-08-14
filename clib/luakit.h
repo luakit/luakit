@@ -26,6 +26,7 @@ lua_class_t luakit_class;
 
 void luakit_lib_setup(lua_State *L);
 void luaH_reregister_functions(lua_State *L);
+lua_class_t * luakit_lib_get_luakit_class(void);
 
 #endif
 

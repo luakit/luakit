@@ -714,4 +714,10 @@ luakit_lib_setup(lua_State *L)
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
 }
 
+lua_class_t *
+luakit_lib_get_luakit_class(void)
+{
+    return &luakit_class;
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
