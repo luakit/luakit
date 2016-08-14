@@ -637,11 +637,7 @@ static gint
 luaH_download_cancel(lua_State *L)
 {
     download_t *download = luaH_checkdownload(L, 1);
-    if (download_is_started(download))
-        webkit_download_cancel(download->webkit_download);
-    else
-        luaH_warn(L, "trying to cancel download, but download not started");
-
+    webkit_download_cancel(download->webkit_download);
     download->status = LUAKIT_DOWNLOAD_STATUS_CANCELLED;
     return 0;
 }
