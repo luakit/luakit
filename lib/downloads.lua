@@ -249,13 +249,18 @@ end
 
 -- Catch "download-started" webcontext widget signals (webkit2 API)
 -- returned d is a download_t
-webview.init_funcs.download_start = function (view, w)
-    -- v is a widget_t*
-    view:add_signal("download-start", function (v, d)
-        add(d, { window = w.win }, view)
-        return true
-    end)
-end
+capi.luakit.add_signal("download-start", function (d, v)
+    local w
+    -- Find window containing view; fall back to currently focused window
+    for _, ww in pairs(window.bywidget) do
+        if (v and ww.view == v) or (not v and ww.win.focused) then
+            w, v = ww, ww.view
+            break
+        end
+    end
+    add(d, { window = w.win }, v)
+    return true
+end)
 
 window.init_funcs.download_status = function (w)
     local r = w.sbar.r
