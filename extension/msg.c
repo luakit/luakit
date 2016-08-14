@@ -76,6 +76,11 @@ msg_recv_eval_js(const guint8 *msg, guint length)
     /* cb ref is index -1 */
 
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    if (!page) {
+        /* Do nothing if eval'ing on page that's been closed */
+        lua_pop(L, 5);
+        return;
+    }
     WebKitFrame *frame = webkit_web_page_get_main_frame(page);
     WebKitScriptWorld *world = webkit_script_world_get_default();
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
