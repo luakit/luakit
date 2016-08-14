@@ -929,6 +929,8 @@ hide_popup_cb(WebKitWebView* UNUSED(v), widget_t* UNUSED(w)) {
     }
 }
 
+static GSList *context_menu_actions;
+
 static int
 table_from_context_menu(lua_State *L, WebKitContextMenu *menu, widget_t *w)
 {
@@ -951,7 +953,11 @@ table_from_context_menu(lua_State *L, WebKitContextMenu *menu, widget_t *w)
             lua_rawseti(L, -2, 1);
             if (submenu)
                 table_from_context_menu(L, submenu, w);
-            else
+            else if (stock_action == WEBKIT_CONTEXT_MENU_ACTION_CUSTOM) {
+                context_menu_actions = g_slist_prepend(context_menu_actions, action);
+                g_object_ref(G_OBJECT(action));
+                lua_pushlightuserdata(L, action);
+            } else
                 lua_pushinteger(L, stock_action);
             lua_rawseti(L, -2, 2);
         }
@@ -1005,12 +1011,14 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
                         G_CALLBACK(menu_item_cb), (gpointer)w);
             } else if(lua_type(L, -1) == LUA_TNUMBER) {
                 WebKitContextMenuAction stock_action = lua_tointeger(L, -1);
-                if (stock_action == WEBKIT_CONTEXT_MENU_ACTION_CUSTOM) {
-                    warn("discarding menu item '%s' with custom action", label);
-                } else {
-                    item = webkit_context_menu_item_new_from_stock_action_with_label(stock_action, label);
-                    webkit_context_menu_append(menu, item);
-                }
+                g_assert_cmpint(stock_action, !=, WEBKIT_CONTEXT_MENU_ACTION_CUSTOM);
+                item = webkit_context_menu_item_new_from_stock_action_with_label(stock_action, label);
+                webkit_context_menu_append(menu, item);
+                lua_pop(L, 1);
+            } else if(lua_type(L, -1) == LUA_TLIGHTUSERDATA) {
+                GtkAction *action = (void*)lua_topointer(L, -1);
+                item = webkit_context_menu_item_new(action);
+                webkit_context_menu_append(menu, item);
                 lua_pop(L, 1);
             }
 
@@ -1028,6 +1036,7 @@ context_menu_cb(WebKitWebView* UNUSED(v), WebKitContextMenu *menu,
         GdkEvent* UNUSED(e), WebKitHitTestResult* UNUSED(htr), widget_t *w)
 {
     lua_State *L = globalconf.L;
+    g_assert(!context_menu_actions);
     table_from_context_menu(L, menu, w);
 
     luaH_object_push(L, w->ref);
@@ -1039,6 +1048,9 @@ context_menu_cb(WebKitWebView* UNUSED(v), WebKitContextMenu *menu,
     last_popup.refs = NULL;
     webkit_context_menu_remove_all(menu);
     context_menu_from_table(L, menu, w);
+
+    g_slist_free_full(context_menu_actions, g_object_unref);
+    context_menu_actions = NULL;
 
     lua_pop(L, 1);
 
