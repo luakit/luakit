@@ -138,7 +138,6 @@ function add(uri, opts, view)
         if fn then
             dd.destination = fn
             dd:add_signal("created-destination", function(ddd,destination)
-                ddd:start() -- no-op for webkit2
                 local data = {
                     created = capi.luakit.time(),
                     id = next_download_id(),
@@ -153,43 +152,6 @@ function add(uri, opts, view)
         end
         return true
     end)
-end
-
-function addwk1(uri, opts)
-    opts = opts or {}
-    local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
-
-    assert(type(d) == "download",
-        string.format("download.add() expected uri or download object "
-            .. "(got %s)", type(d) or "nil"))
-
-    -- Emit signal to get initial download location
-    local fn = opts.filename or _M.emit_signal("download-location", d.uri,
-        opts.suggested_filename or d.suggested_filename, d.mime_type)
-
-    assert(fn == nil or type(fn) == "string" and #fn > 1,
-        string.format("invalid filename: %q", tostring(file)))
-
-    -- Ask the user where we should download the file to
-    if not fn then
-        fn = capi.luakit.save_file("Save file", opts.window, default_dir,
-            d.suggested_filename)
-    end
-
-    if fn then
-        d.destination = fn
-        d:start()
-        local data = {
-            created = capi.luakit.time(),
-            id = next_download_id(),
-        }
-        downloads[d] = data
-        if not status_timer.started then status_timer:start() end
-        _M.emit_signal("download::status", d, downloads[d])
-        return true
-    else
-        d:cancel()
-    end
 end
 
 function cancel(id)
