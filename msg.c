@@ -107,11 +107,9 @@ msg_recv_web_extension_loaded(gpointer UNUSED(msg), guint UNUSED(length))
     globalconf.web_extension_loaded = TRUE;
 }
 
-static gpointer
-web_extension_connect(gpointer user_data)
+static void
+web_extension_connect(const gchar *socket_path)
 {
-    const gchar *socket_path = user_data;
-
     int sock, web_socket;
     struct sockaddr_un local, remote;
     local.sun_family = AF_UNIX;
@@ -165,22 +163,26 @@ web_extension_connect(gpointer user_data)
         g_byte_array_unref(globalconf.web_channel_queue);
         globalconf.web_channel_queue = NULL;
     }
+}
+
+static gpointer
+web_extension_connect_thread(gpointer socket_path)
+{
+    while (TRUE) {
+        web_extension_connect(socket_path);
+    }
 
     return NULL;
 }
 
 static void
-initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_data))
+initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 {
-    const gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
 #if DEVELOPMENT_PATHS
     gchar *extension_dir = g_get_current_dir();
 #else
     const gchar *extension_dir = LUAKIT_INSTALL_PATH;
 #endif
-
-    /* Set up connection to web extension process */
-    g_thread_new("accept_thread", web_extension_connect, (void*)socket_path);
 
     /* There's a potential race condition here; the accept thread might not run
      * until after the web extension process has already started (and failed to
@@ -197,9 +199,13 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_dat
 void
 msg_init(void)
 {
+    gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
     globalconf.web_channel_queue = g_byte_array_new();
+
+    /* Start web extension connection accept thread */
+    g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
-            G_CALLBACK (initialize_web_extensions_cb), NULL);
+            G_CALLBACK (initialize_web_extensions_cb), socket_path);
 }
 
 void
