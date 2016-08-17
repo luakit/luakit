@@ -21,7 +21,7 @@ local function overlay()  return widget{type="overlay"}  end
 
 -- Build and pack window widgets
 function window.build()
-    local vertitabs = true
+    local vertitabs = false
 
     -- Create a table for widgets and state variables for a window
     local w = {
