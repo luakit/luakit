@@ -97,6 +97,7 @@ function new(notebook, orientation)
         box = box,
         notebook = notebook,
         orientation = orientation,
+        visible = true,
     }
 
     -- Setup class signals
@@ -152,14 +153,28 @@ function new(notebook, orientation)
         scroll_current_tab_into_view(tlist)
     end)
 
+    local function update_tablist_visibility()
+        if tlist.visible and notebook:count() >= 2 then tlist.widget:show() end
+        if not tlist.visible or notebook:count() < 2 then tlist.widget:hide() end
+    end
+
     -- Show tablist widget if there is more than one tab
-    notebook:add_signal("page-added", function (nbook)
-        if nbook:count() >= 2 then tlist.widget:show() end
-    end)
-    notebook:add_signal("page-removed", function (nbook)
-        if nbook:count() < 2 then tlist.widget:hide() end
-    end)
+    notebook:add_signal("page-added", update_tablist_visibility)
+    notebook:add_signal("page-removed", update_tablist_visibility)
     tlist.widget:hide()
+
+    -- Setup metatable interface
+    setmetatable(tlist, {
+        __newindex = function (tbl, key, val)
+            if key == "visible" then
+                data[tbl].visible = val
+                update_tablist_visibility()
+            end
+        end,
+        __index = function (tbl, key, val)
+            if key == "visible" then return data[tbl][key] end
+        end,
+    })
 
     return tlist
 end

@@ -282,12 +282,7 @@ window.init_funcs = {
         w.win:add_signal("property::fullscreen", function (win)
             w.sbar.layout.visible = not win.fullscreen
             w:update_sbar_visibility()
-            w.tablist.widget.visible = not win.fullscreen
-        end)
-        w.tablist:add_signal("updated", function (tlist)
-            if w.win.fullscreen then
-                tlist.widget:hide()
-            end
+            w.tablist.visible = not win.fullscreen
         end)
     end
 }
