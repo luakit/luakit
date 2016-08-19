@@ -18,7 +18,6 @@ typedef struct _msg_recv_state_t {
     gboolean hdr_done;
 } msg_recv_state_t;
 
-static msg_recv_state_t state;
 /*
  * Default process name is "UI" because the UI process currently sends IPC
  * messages before the IPC channel is opened (these messages are queued),
@@ -28,7 +27,8 @@ static msg_recv_state_t state;
 static const char *process_name = "UI";
 
 static GThread *send_thread;
-GAsyncQueue *send_queue;
+static GAsyncQueue *send_queue;
+static GHashTable *endpoint_recv_states;
 
 typedef struct _queued_msg_t {
     msg_header_t header;
@@ -52,14 +52,16 @@ msg_dispatch(msg_endpoint_t *from, msg_header_t header, gpointer payload)
 }
 
 static gboolean
-msg_dispatch_enqueued(gpointer UNUSED(unused))
+msg_dispatch_enqueued(msg_endpoint_t *from)
 {
-    if (state.queued_msgs->len > 0) {
-        queued_msg_t *msg = g_ptr_array_index(state.queued_msgs, 0);
+    msg_recv_state_t *state = g_hash_table_lookup(endpoint_recv_states, from);
+
+    if (state->queued_msgs->len > 0) {
+        queued_msg_t *msg = g_ptr_array_index(state->queued_msgs, 0);
         /* Dispatch and free the message */
         msg_dispatch(msg->from, msg->header, msg->payload);
-        g_ptr_array_remove_index(state.queued_msgs, 0);
-        g_slice_free1(sizeof(queued_msg_t) + state.hdr.length, state.payload);
+        g_ptr_array_remove_index(state->queued_msgs, 0);
+        g_slice_free1(sizeof(queued_msg_t) + state->hdr.length, state->payload);
         return TRUE;
     }
     return FALSE;
@@ -109,16 +111,17 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer from)
 {
     g_assert(cond & G_IO_IN);
 
-    (void) (msg_dispatch_enqueued(NULL) || msg_recv_and_dispatch_or_enqueue(from, MSG_TYPE_ANY));
+    (void) (msg_dispatch_enqueued(from) || msg_recv_and_dispatch_or_enqueue(from, MSG_TYPE_ANY));
 
     return TRUE;
 }
 
 static gboolean
-msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer UNUSED(user_data))
+msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer from)
 {
-    g_source_remove(state.watch_in_id);
-    g_source_remove(state.watch_hup_id);
+    msg_recv_state_t *state = g_hash_table_lookup(endpoint_recv_states, from);
+    g_source_remove(state->watch_in_id);
+    g_source_remove(state->watch_hup_id);
     g_io_channel_shutdown(channel, TRUE, NULL);
     return FALSE;
 }
@@ -128,17 +131,23 @@ msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *proc_n
 {
     g_assert(ipc);
 
-    state.queued_msgs = g_ptr_array_new();
+    if (!endpoint_recv_states)
+        endpoint_recv_states = g_hash_table_new(g_direct_hash, g_direct_equal);
+
+    msg_recv_state_t *state = g_slice_new0(msg_recv_state_t);
+    g_hash_table_insert(endpoint_recv_states, ipc, state);
+
+    state->queued_msgs = g_ptr_array_new();
     g_assert(proc_name && *proc_name);
     process_name = proc_name;
 
-    state.channel = g_io_channel_unix_new(sock);
-    g_io_channel_set_encoding(state.channel, NULL, NULL);
-    g_io_channel_set_buffered(state.channel, FALSE);
-    state.watch_in_id = g_io_add_watch(state.channel, G_IO_IN, msg_recv, ipc);
-    state.watch_hup_id = g_io_add_watch(state.channel, G_IO_HUP, msg_hup, ipc);
+    state->channel = g_io_channel_unix_new(sock);
+    g_io_channel_set_encoding(state->channel, NULL, NULL);
+    g_io_channel_set_buffered(state->channel, FALSE);
+    state->watch_in_id = g_io_add_watch(state->channel, G_IO_IN, msg_recv, ipc);
+    state->watch_hup_id = g_io_add_watch(state->channel, G_IO_HUP, msg_hup, ipc);
 
-    return state.channel;
+    return state->channel;
 }
 
 /* Receive a single message
@@ -147,12 +156,15 @@ msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *proc_n
 gboolean
 msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *from, int type_mask)
 {
+    g_assert(from);
     g_assert(type_mask != 0);
 
-    GIOChannel *channel = state.channel;
+    msg_recv_state_t *state = g_hash_table_lookup(endpoint_recv_states, from);
 
-    gchar *buf = (state.hdr_done ? state.payload+sizeof(queued_msg_t) : &state.hdr) + state.bytes_read;
-    gsize remaining = (state.hdr_done ? state.hdr.length : sizeof(state.hdr)) - state.bytes_read;
+    GIOChannel *channel = state->channel;
+
+    gchar *buf = (state->hdr_done ? state->payload+sizeof(queued_msg_t) : &state->hdr) + state->bytes_read;
+    gsize remaining = (state->hdr_done ? state->hdr.length : sizeof(state->hdr)) - state->bytes_read;
     gsize bytes_read;
     GError *error = NULL;
     GIOStatus s;
@@ -167,39 +179,39 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *from, int type_mask)
     }
 
     /* Update msg_recv state */
-    state.bytes_read += bytes_read;
+    state->bytes_read += bytes_read;
     remaining -= bytes_read;
 
     if (remaining > 0)
         return FALSE;
 
     /* If we've just finished downloading the header... */
-    if (!state.hdr_done) {
+    if (!state->hdr_done) {
         /* ... update state, and try to download payload */
-        state.hdr_done = TRUE;
-        state.bytes_read = 0;
-        state.payload = g_slice_alloc(sizeof(queued_msg_t) + state.hdr.length);
+        state->hdr_done = TRUE;
+        state->bytes_read = 0;
+        state->payload = g_slice_alloc(sizeof(queued_msg_t) + state->hdr.length);
         return msg_recv_and_dispatch_or_enqueue(from, type_mask);
     }
 
     /* Otherwise, we finished downloading the message */
-    if (state.hdr.type & type_mask) {
-        msg_dispatch(from, state.hdr, state.payload+sizeof(queued_msg_t));
-        g_slice_free1(sizeof(queued_msg_t) + state.hdr.length, state.payload);
+    if (state->hdr.type & type_mask) {
+        msg_dispatch(from, state->hdr, state->payload+sizeof(queued_msg_t));
+        g_slice_free1(sizeof(queued_msg_t) + state->hdr.length, state->payload);
     } else {
         /* Copy the header into the space at the start of the payload slice */
-        memcpy(state.payload, &state.hdr, sizeof(queued_msg_t));
-        g_ptr_array_add(state.queued_msgs, state.payload);
-        g_idle_add(msg_dispatch_enqueued, NULL);
+        memcpy(state->payload, &state->hdr, sizeof(queued_msg_t));
+        g_ptr_array_add(state->queued_msgs, state->payload);
+        g_idle_add((GSourceFunc)msg_dispatch_enqueued, from);
     }
 
     /* Reset state for the next message */
-    state.payload = NULL;
-    state.bytes_read = 0;
-    state.hdr_done = FALSE;
+    state->payload = NULL;
+    state->bytes_read = 0;
+    state->hdr_done = FALSE;
 
     /* Return true if we dispatched it */
-    return state.hdr.type & type_mask;
+    return state->hdr.type & type_mask;
 }
 
 void
