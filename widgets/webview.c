@@ -29,6 +29,7 @@
 #include "clib/widget.h"
 #include "common/signal.h"
 #include "web_context.h"
+#include "common/msg.h"
 
 typedef struct {
     /** The parent widget_t struct */
@@ -75,6 +76,8 @@ typedef struct {
 
     /** TLS Certificate, if using HTTPS */
     GTlsCertificate *cert;
+
+    msg_endpoint_t *ipc;
 } webview_data_t;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
@@ -1210,6 +1213,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
+
+    d->ipc = g_slice_new(msg_endpoint_t);
+    msg_endpoint_init(d->ipc, "UI");
 
     // TODO does scrollbar hiding need to happen here?
 
