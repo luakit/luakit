@@ -53,14 +53,13 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     const gchar *socket_path = g_variant_get_string(payload, NULL);
 
     extension.WL = luaL_newstate();
+    extension.ext = ext;
 
     msg_endpoint_init(&extension.ipc, "Web");
     if (web_extension_connect(socket_path)) {
         debug("luakit web process: connecting to UI thread failed");
         exit(EXIT_FAILURE);
     }
-
-    extension.ext = ext;
 
     web_lua_init();
     web_scroll_init();

@@ -100,6 +100,12 @@ msg_recv_web_extension_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg),
     globalconf.web_extension_loaded = TRUE;
 }
 
+void
+msg_recv_page_created(msg_endpoint_t *UNUSED(ipc), const guint64 *page_id, guint length)
+{
+    g_assert(length == sizeof(*page_id));
+}
+
 static void
 web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
 {

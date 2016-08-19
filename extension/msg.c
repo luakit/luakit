@@ -92,6 +92,15 @@ msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     lua_pop(L, 5 + n);
 }
 
+static void
+web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    guint64 page_id = webkit_web_page_get_id(web_page);
+
+    msg_header_t header = { .type = MSG_TYPE_page_created, .length = sizeof(page_id) };
+    msg_send(&extension.ipc, &header, &page_id);
+}
+
 int
 web_extension_connect(const gchar *socket_path)
 {
@@ -117,6 +126,8 @@ web_extension_connect(const gchar *socket_path)
     debug("luakit web process: connected");
 
     msg_endpoint_connect_to_socket(&extension.ipc, sock);
+
+    g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
 
     return 0;
 fail_connect:
