@@ -7,17 +7,6 @@
     MSG_TYPES
 #undef X
 
-typedef struct _msg_recv_state_t {
-    GIOChannel *channel;
-    guint watch_in_id, watch_hup_id;
-    GPtrArray *queued_msgs;
-
-    msg_header_t hdr;
-    gpointer payload;
-    gsize bytes_read;
-    gboolean hdr_done;
-} msg_recv_state_t;
-
 /*
  * Default process name is "UI" because the UI process currently sends IPC
  * messages before the IPC channel is opened (these messages are queued),
@@ -28,7 +17,6 @@ static const char *process_name = "UI";
 
 static GThread *send_thread;
 static GAsyncQueue *send_queue;
-static GHashTable *endpoint_recv_states;
 
 typedef struct _queued_msg_t {
     msg_header_t header;
@@ -54,7 +42,7 @@ msg_dispatch(msg_endpoint_t *from, msg_header_t header, gpointer payload)
 static gboolean
 msg_dispatch_enqueued(msg_endpoint_t *from)
 {
-    msg_recv_state_t *state = g_hash_table_lookup(endpoint_recv_states, from);
+    msg_recv_state_t *state = &from->recv_state;
 
     if (state->queued_msgs->len > 0) {
         queued_msg_t *msg = g_ptr_array_index(state->queued_msgs, 0);
@@ -115,7 +103,7 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 
 /* Callback function for channel watch */
 static gboolean
-msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer from)
+msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, msg_endpoint_t *from)
 {
     g_assert(cond & G_IO_IN);
 
@@ -125,9 +113,9 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, gpointer from)
 }
 
 static gboolean
-msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer from)
+msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), msg_endpoint_t *from)
 {
-    msg_recv_state_t *state = g_hash_table_lookup(endpoint_recv_states, from);
+    msg_recv_state_t *state = &from->recv_state;
     g_source_remove(state->watch_in_id);
     g_source_remove(state->watch_hup_id);
     g_io_channel_shutdown(channel, TRUE, NULL);
@@ -139,23 +127,18 @@ msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *proc_n
 {
     g_assert(ipc);
 
-    if (!endpoint_recv_states)
-        endpoint_recv_states = g_hash_table_new(g_direct_hash, g_direct_equal);
-
-    msg_recv_state_t *state = g_slice_new0(msg_recv_state_t);
-    g_hash_table_insert(endpoint_recv_states, ipc, state);
-
+    msg_recv_state_t *state = &ipc->recv_state;
     state->queued_msgs = g_ptr_array_new();
     g_assert(proc_name && *proc_name);
     process_name = proc_name;
 
-    state->channel = g_io_channel_unix_new(sock);
-    g_io_channel_set_encoding(state->channel, NULL, NULL);
-    g_io_channel_set_buffered(state->channel, FALSE);
-    state->watch_in_id = g_io_add_watch(state->channel, G_IO_IN, msg_recv, ipc);
-    state->watch_hup_id = g_io_add_watch(state->channel, G_IO_HUP, msg_hup, ipc);
+    ipc->channel = g_io_channel_unix_new(sock);
+    g_io_channel_set_encoding(ipc->channel, NULL, NULL);
+    g_io_channel_set_buffered(ipc->channel, FALSE);
+    state->watch_in_id = g_io_add_watch(ipc->channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
+    state->watch_hup_id = g_io_add_watch(ipc->channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
 
-    return state->channel;
+    return ipc->channel;
 }
 
 /* Receive a single message
@@ -167,9 +150,8 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *from, int type_mask)
     g_assert(from);
     g_assert(type_mask != 0);
 
-    msg_recv_state_t *state = g_hash_table_lookup(endpoint_recv_states, from);
-
-    GIOChannel *channel = state->channel;
+    msg_recv_state_t *state = &from->recv_state;
+    GIOChannel *channel = from->channel;
 
     gchar *buf = (state->hdr_done ? state->payload+sizeof(queued_msg_t) : &state->hdr) + state->bytes_read;
     gsize remaining = (state->hdr_done ? state->hdr.length : sizeof(state->hdr)) - state->bytes_read;

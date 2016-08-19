@@ -70,11 +70,23 @@ msg_type_name(msg_type_t type)
     }
 }
 
+typedef struct _msg_recv_state_t {
+    guint watch_in_id, watch_hup_id;
+    GPtrArray *queued_msgs;
+
+    msg_header_t hdr;
+    gpointer payload;
+    gsize bytes_read;
+    gboolean hdr_done;
+} msg_recv_state_t;
+
 typedef struct _msg_endpoint_t {
     /** Channel for IPC with web process */
     GIOChannel *channel;
     /** Queued data for when channel is not yet open */
     GByteArray *queue;
+    /** Incoming message bookkeeping data */
+    msg_recv_state_t recv_state;
 } msg_endpoint_t;
 
 GIOChannel * msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *process_name);
