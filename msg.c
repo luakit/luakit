@@ -19,11 +19,16 @@
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 void run_javascript_finished(const guint8 *msg, guint length);
 
-void
-msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
-{
-    fatal("UI process should never receive message of this type");
-}
+#define NO_HANDLER(type) \
+void \
+msg_recv_##type(msg_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint UNUSED(length)) \
+{ \
+    fatal("UI process should never receive message of type %s", #type); \
+} \
+
+NO_HANDLER(lua_require_module)
+NO_HANDLER(web_lua_loaded)
+NO_HANDLER(lua_js_register)
 
 void
 msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
@@ -35,12 +40,6 @@ void
 msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), msg_scroll_t *msg, guint UNUSED(length))
 {
     g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
-}
-
-void
-msg_recv_web_lua_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
-{
-    fatal("UI process should never receive message of this type");
 }
 
 void
@@ -93,12 +92,6 @@ msg_recv_lua_js_gc(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     g_assert_cmpint(n, ==, 1);
     luaH_object_unref(L, lua_touserdata(L, -1));
     lua_pop(L, 1);
-}
-
-void
-msg_recv_lua_js_register(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
-{
-    fatal("UI process should never receive message of this type");
 }
 
 void
