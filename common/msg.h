@@ -70,7 +70,12 @@ msg_type_name(msg_type_t type)
     }
 }
 
-typedef struct _msg_endpoint_t msg_endpoint_t;
+typedef struct _msg_endpoint_t {
+    /** Channel for IPC with web process */
+    GIOChannel *channel;
+    /** Queued data for when channel is not yet open */
+    GByteArray *queue;
+} msg_endpoint_t;
 
 GIOChannel * msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *process_name);
 gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);

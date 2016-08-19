@@ -104,7 +104,7 @@ msg_recv_lua_js_register(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guin
 void
 msg_recv_web_extension_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
-    globalconf.ipc.web_extension_loaded = TRUE;
+    globalconf.web_extension_loaded = TRUE;
 }
 
 static void
@@ -139,14 +139,15 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
 
     debug("Creating channel...");
 
-    ipc->web_channel = msg_create_channel_from_socket(ipc, web_socket, "UI");
+    ipc->channel = msg_create_channel_from_socket(ipc, web_socket, "UI");
 
-    if (ipc->web_extension_loaded) {
+    /* FIXME TODO: Need to move this stuff somewhere else... */
+    if (globalconf.web_extension_loaded) {
         /* If it was previously loaded, we've just crashed */
         web_module_restart(globalconf.L);
         luaH_reregister_functions(globalconf.L);
     }
-    ipc->web_extension_loaded = FALSE;
+    globalconf.web_extension_loaded = FALSE;
 
     /* Releases page-created signals, replies with web-extension-loaded */
     msg_header_t header = {
@@ -156,12 +157,12 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
     msg_send(ipc, &header, NULL);
 
     /* Send all queued messages */
-    if (ipc->web_channel_queue) {
-        g_io_channel_write_chars(ipc->web_channel,
-                (gchar*)ipc->web_channel_queue->data,
-                ipc->web_channel_queue->len, NULL, NULL);
-        g_byte_array_unref(ipc->web_channel_queue);
-        ipc->web_channel_queue = NULL;
+    if (ipc->queue) {
+        g_io_channel_write_chars(ipc->channel,
+                (gchar*)ipc->queue->data,
+                ipc->queue->len, NULL, NULL);
+        g_byte_array_unref(ipc->queue);
+        ipc->queue = NULL;
     }
 }
 
@@ -209,18 +210,18 @@ msg_init(void)
 void
 msg_endpoint_init(msg_endpoint_t *ipc)
 {
-    ipc->web_channel_queue = g_byte_array_new();
+    ipc->queue = g_byte_array_new();
 }
 
 void
 msg_send_impl(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 {
-    if (ipc->web_channel) {
-        g_io_channel_write_chars(ipc->web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
-        g_io_channel_write_chars(ipc->web_channel, (gchar*)data, header->length, NULL, NULL);
+    if (ipc->channel) {
+        g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
+        g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
     } else {
-        g_byte_array_append(ipc->web_channel_queue, (guint8*)header, sizeof(*header));
-        g_byte_array_append(ipc->web_channel_queue, (guint8*)data, header->length);
+        g_byte_array_append(ipc->queue, (guint8*)header, sizeof(*header));
+        g_byte_array_append(ipc->queue, (guint8*)data, header->length);
     }
 }
 

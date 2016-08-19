@@ -80,6 +80,8 @@ typedef struct {
 #ifndef LUAKIT_WEB_EXTENSION
     /** IPC endpoint */
     msg_endpoint_t ipc;
+    /** Whether the web extension is loaded */
+    gboolean web_extension_loaded;
 #endif
 } globalconf_t;
 
