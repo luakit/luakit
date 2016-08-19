@@ -72,8 +72,8 @@ msg_type_name(msg_type_t type)
 
 typedef struct _msg_endpoint_t msg_endpoint_t;
 
-GIOChannel * msg_create_channel_from_socket(int sock, const char *process_name);
-gboolean msg_recv_and_dispatch_or_enqueue(int type_mask);
+GIOChannel * msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *process_name);
+gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
 void msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end);
 void msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data);
 

@@ -20,37 +20,37 @@ void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 void run_javascript_finished(const guint8 *msg, guint length);
 
 void
-msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
+msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
 }
 
 void
-msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
+msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
     web_module_recv(globalconf.L, msg->arg, length);
 }
 
 void
-msg_recv_scroll(msg_scroll_t *msg, guint UNUSED(length))
+msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), msg_scroll_t *msg, guint UNUSED(length))
 {
     g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
 }
 
 void
-msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_web_lua_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
 }
 
 void
-msg_recv_eval_js(const guint8 *msg, guint length)
+msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     run_javascript_finished(msg, length);
 }
 
 void
-msg_recv_lua_js_call(const guint8 *msg, guint length)
+msg_recv_lua_js_call(msg_endpoint_t *from, const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
@@ -80,12 +80,12 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
         warn("Lua error: %s\n", lua_tostring(L, -2));
 
     /* Serialize the result, and send it back */
-    msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_js_call, L, -2, -1);
+    msg_send_lua(from, MSG_TYPE_lua_js_call, L, -2, -1);
     lua_settop(L, top);
 }
 
 void
-msg_recv_lua_js_gc(const guint8 *msg, guint length)
+msg_recv_lua_js_gc(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
     /* Unref the function reference we got */
@@ -96,13 +96,13 @@ msg_recv_lua_js_gc(const guint8 *msg, guint length)
 }
 
 void
-msg_recv_lua_js_register(gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_lua_js_register(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     fatal("UI process should never receive message of this type");
 }
 
 void
-msg_recv_web_extension_loaded(gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_web_extension_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     globalconf.ipc.web_extension_loaded = TRUE;
 }
@@ -139,7 +139,7 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
 
     debug("Creating channel...");
 
-    ipc->web_channel = msg_create_channel_from_socket(web_socket, "UI");
+    ipc->web_channel = msg_create_channel_from_socket(ipc, web_socket, "UI");
 
     if (ipc->web_extension_loaded) {
         /* If it was previously loaded, we've just crashed */

@@ -58,7 +58,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     /* ...and block until it's replied */
     do {
         usleep(1);
-    } while(!msg_recv_and_dispatch_or_enqueue(MSG_TYPE_lua_js_call));
+    } while(!msg_recv_and_dispatch_or_enqueue(&extension.ipc, MSG_TYPE_lua_js_call));
 
     /* At this point, reply was just handled in msg_recv_lua_js_call() below */
 
@@ -81,7 +81,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
 }
 
 void
-msg_recv_lua_js_call(const guint8 *msg, guint length)
+msg_recv_lua_js_call(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     int n = lua_deserialize_range(L, msg, length);
@@ -91,7 +91,7 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
 }
 
 void
-msg_recv_lua_js_register(const guint8 *msg, guint length)
+msg_recv_lua_js_register(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
 

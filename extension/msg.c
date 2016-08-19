@@ -16,7 +16,7 @@
 #include "common/luaserialize.h"
 
 void
-msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
+msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_module_t *msg, guint length)
 {
     const char *module_name = msg->module_name;
     assert(strlen(module_name) > 0);
@@ -32,13 +32,13 @@ msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
 }
 
 void
-msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
+msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
     ui_process_recv(extension.WL, msg->arg, length);
 }
 
 void
-msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_web_lua_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     extension_class_emit_pending_signals(extension.WL);
 
@@ -47,7 +47,7 @@ msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 }
 
 void
-msg_recv_scroll(const guint8 *msg, guint length)
+msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
@@ -63,7 +63,7 @@ msg_recv_scroll(const guint8 *msg, guint length)
 }
 
 void
-msg_recv_eval_js(const guint8 *msg, guint length)
+msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
@@ -116,7 +116,7 @@ web_extension_connect(const gchar *socket_path)
 
     debug("luakit web process: connected");
 
-    extension.ipc.channel = msg_create_channel_from_socket(sock, "Web");
+    extension.ipc.channel = msg_create_channel_from_socket(&extension.ipc, sock, "Web");
 
     return 0;
 fail_connect:
