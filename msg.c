@@ -104,11 +104,11 @@ msg_recv_lua_js_register(gpointer UNUSED(msg), guint UNUSED(length))
 void
 msg_recv_web_extension_loaded(gpointer UNUSED(msg), guint UNUSED(length))
 {
-    globalconf.web_extension_loaded = TRUE;
+    globalconf.ipc.web_extension_loaded = TRUE;
 }
 
 static void
-web_extension_connect(const gchar *socket_path)
+web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
 {
     int sock, web_socket;
     struct sockaddr_un local, remote;
@@ -139,14 +139,14 @@ web_extension_connect(const gchar *socket_path)
 
     debug("Creating channel...");
 
-    globalconf.web_channel = msg_create_channel_from_socket(web_socket, "UI");
+    ipc->web_channel = msg_create_channel_from_socket(web_socket, "UI");
 
-    if (globalconf.web_extension_loaded) {
+    if (ipc->web_extension_loaded) {
         /* If it was previously loaded, we've just crashed */
         web_module_restart(globalconf.L);
         luaH_reregister_functions(globalconf.L);
     }
-    globalconf.web_extension_loaded = FALSE;
+    ipc->web_extension_loaded = FALSE;
 
     /* Releases page-created signals, replies with web-extension-loaded */
     msg_header_t header = {
@@ -156,12 +156,12 @@ web_extension_connect(const gchar *socket_path)
     msg_send(&header, NULL);
 
     /* Send all queued messages */
-    if (globalconf.web_channel_queue) {
-        g_io_channel_write_chars(globalconf.web_channel,
-                (gchar*)globalconf.web_channel_queue->data,
-                globalconf.web_channel_queue->len, NULL, NULL);
-        g_byte_array_unref(globalconf.web_channel_queue);
-        globalconf.web_channel_queue = NULL;
+    if (ipc->web_channel_queue) {
+        g_io_channel_write_chars(ipc->web_channel,
+                (gchar*)ipc->web_channel_queue->data,
+                ipc->web_channel_queue->len, NULL, NULL);
+        g_byte_array_unref(ipc->web_channel_queue);
+        ipc->web_channel_queue = NULL;
     }
 }
 
@@ -169,7 +169,7 @@ static gpointer
 web_extension_connect_thread(gpointer socket_path)
 {
     while (TRUE) {
-        web_extension_connect(socket_path);
+        web_extension_connect(&globalconf.ipc, socket_path);
     }
 
     return NULL;
@@ -200,7 +200,7 @@ void
 msg_init(void)
 {
     gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
-    globalconf.web_channel_queue = g_byte_array_new();
+    globalconf.ipc.web_channel_queue = g_byte_array_new();
 
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
@@ -211,12 +211,12 @@ msg_init(void)
 void
 msg_send_impl(const msg_header_t *header, const void *data)
 {
-    if (globalconf.web_channel) {
-        g_io_channel_write_chars(globalconf.web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
-        g_io_channel_write_chars(globalconf.web_channel, (gchar*)data, header->length, NULL, NULL);
+    if (globalconf.ipc.web_channel) {
+        g_io_channel_write_chars(globalconf.ipc.web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
+        g_io_channel_write_chars(globalconf.ipc.web_channel, (gchar*)data, header->length, NULL, NULL);
     } else {
-        g_byte_array_append(globalconf.web_channel_queue, (guint8*)header, sizeof(*header));
-        g_byte_array_append(globalconf.web_channel_queue, (guint8*)data, header->length);
+        g_byte_array_append(globalconf.ipc.web_channel_queue, (guint8*)header, sizeof(*header));
+        g_byte_array_append(globalconf.ipc.web_channel_queue, (guint8*)data, header->length);
     }
 }
 

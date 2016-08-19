@@ -33,6 +33,7 @@
 
 #include <glib.h>
 #include <lua.h>
+#include "msg.h"
 #include "common/signal.h"
 
 /** Global luakit state struct. */
@@ -75,12 +76,8 @@ typedef struct {
     /** Start time for debug messages */
     gdouble starttime;
 
-    /** Channel for IPC with web process */
-    GIOChannel *web_channel;
-    /** Queued data for when channel is not yet open */
-    GByteArray *web_channel_queue;
-    /** Whether the web extension is loaded */
-    gboolean web_extension_loaded;
+    /** IPC endpoint */
+    msg_endpoint_t ipc;
 } globalconf_t;
 
 globalconf_t globalconf;

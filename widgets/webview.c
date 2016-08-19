@@ -1171,7 +1171,7 @@ webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 gboolean
 webview_wait_for_web_extension_cb(widget_t *w)
 {
-    if (!globalconf.web_extension_loaded)
+    if (!globalconf.ipc.web_extension_loaded)
         return TRUE;
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
