@@ -5,6 +5,7 @@
 #include "common/tokenize.h"
 #include "common/luaserialize.h"
 #include "extension/msg.h"
+#include "extension/extension.h"
 
 #define REG_KEY "luakit.registry.ui_process"
 
@@ -76,7 +77,7 @@ ui_process_send(lua_State *L)
     ui_process_t *ui_process = luaH_check_ui_process(L, 1);
     luaL_checkstring(L, 2);
     lua_pushstring(L, ui_process->name);
-    msg_send_lua(MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    msg_send_lua(&extension.ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
     return 0;
 }
 

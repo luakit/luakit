@@ -80,7 +80,7 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
         warn("Lua error: %s\n", lua_tostring(L, -2));
 
     /* Serialize the result, and send it back */
-    msg_send_lua(MSG_TYPE_lua_js_call, L, -2, -1);
+    msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_js_call, L, -2, -1);
     lua_settop(L, top);
 }
 
@@ -153,7 +153,7 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
         .type = MSG_TYPE_web_lua_loaded,
         .length = 0
     };
-    msg_send(&header, NULL);
+    msg_send(ipc, &header, NULL);
 
     /* Send all queued messages */
     if (ipc->web_channel_queue) {
@@ -209,14 +209,14 @@ msg_init(void)
 }
 
 void
-msg_send_impl(const msg_header_t *header, const void *data)
+msg_send_impl(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 {
-    if (globalconf.ipc.web_channel) {
-        g_io_channel_write_chars(globalconf.ipc.web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
-        g_io_channel_write_chars(globalconf.ipc.web_channel, (gchar*)data, header->length, NULL, NULL);
+    if (ipc->web_channel) {
+        g_io_channel_write_chars(ipc->web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
+        g_io_channel_write_chars(ipc->web_channel, (gchar*)data, header->length, NULL, NULL);
     } else {
-        g_byte_array_append(globalconf.ipc.web_channel_queue, (guint8*)header, sizeof(*header));
-        g_byte_array_append(globalconf.ipc.web_channel_queue, (guint8*)data, header->length);
+        g_byte_array_append(ipc->web_channel_queue, (guint8*)header, sizeof(*header));
+        g_byte_array_append(ipc->web_channel_queue, (guint8*)data, header->length);
     }
 }
 

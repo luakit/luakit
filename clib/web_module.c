@@ -2,8 +2,6 @@
 #include "common/tokenize.h"
 #include "common/luauniq.h"
 #include "common/luaserialize.h"
-#include "extension/msg.h"
-#include "msg.h"
 
 #define REG_KEY "luakit.uniq.registry.web_module"
 
@@ -31,7 +29,7 @@ luaH_web_module_new(lua_State *L)
         .type = MSG_TYPE_lua_require_module,
         .length = strlen(name)+1
     };
-    msg_send(&header, name);
+    msg_send(&globalconf.ipc, &header, name);
 
     return 1;
 }
@@ -50,7 +48,7 @@ web_module_send(lua_State *L)
     web_module_t *web_module = luaH_check_web_module(L, 1);
     luaL_checkstring(L, 2);
     lua_pushstring(L, web_module->name);
-    msg_send_lua(MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
     return 0;
 }
 
@@ -80,7 +78,7 @@ web_module_restart(lua_State *L)
             .type = MSG_TYPE_lua_require_module,
             .length = strlen(name)+1
         };
-        msg_send(&header, name);
+        msg_send(&globalconf.ipc, &header, name);
         lua_pop(L, 1);
     }
 }

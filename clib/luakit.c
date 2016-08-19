@@ -655,7 +655,7 @@ luaH_luakit_register_function(lua_State *L)
     reg.ref = luaH_object_ref(L, 3);
     lua_pushlightuserdata(L, reg.ref);
 
-    msg_send_lua(MSG_TYPE_lua_js_register, L, 1, 3);
+    msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_js_register, L, 1, 3);
 
     /* Keep a copy for reregistration */
     if (!registrations)
@@ -680,7 +680,7 @@ luaH_reregister_functions(lua_State *L)
         luaH_object_push(L, reg.ref);
         luaH_object_ref(L, -1);
 
-        msg_send_lua(MSG_TYPE_lua_js_register, L, -3, -1);
+        msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_js_register, L, -3, -1);
         lua_pop(L, 3);
     }
 }

@@ -43,7 +43,7 @@ msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
     extension_class_emit_pending_signals(extension.WL);
 
     msg_header_t header = { .type = MSG_TYPE_web_extension_loaded, .length = 0 };
-    msg_send(&header, NULL);
+    msg_send(&extension.ipc, &header, NULL);
 }
 
 void
@@ -88,7 +88,7 @@ msg_recv_eval_js(const guint8 *msg, guint length)
     n = luaJS_eval_js(L, ctx, script, source, no_return);
     /* Send source and callback ref back again as well */
     if (n) /* Don't send if no_return == true and no errors */
-        msg_send_lua(MSG_TYPE_eval_js, L, -n-2, -1);
+        msg_send_lua(&extension.ipc, MSG_TYPE_eval_js, L, -n-2, -1);
     lua_pop(L, 5 + n);
 }
 
@@ -116,7 +116,7 @@ web_extension_connect(const gchar *socket_path)
 
     debug("luakit web process: connected");
 
-    extension.ui_channel = msg_create_channel_from_socket(sock, "Web");
+    extension.ipc.channel = msg_create_channel_from_socket(sock, "Web");
 
     return 0;
 fail_connect:
@@ -126,10 +126,10 @@ fail_socket:
 }
 
 void
-msg_send_impl(const msg_header_t *header, const void *data)
+msg_send_impl(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 {
-    g_io_channel_write_chars(extension.ui_channel, (gchar*)header, sizeof(*header), NULL, NULL);
-    g_io_channel_write_chars(extension.ui_channel, (gchar*)data, header->length, NULL, NULL);
+    g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
+    g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

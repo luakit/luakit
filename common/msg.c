@@ -68,9 +68,10 @@ static gpointer
 msg_send_thread(gpointer UNUSED(user_data))
 {
     while (TRUE) {
+        msg_endpoint_t *ipc = g_async_queue_pop(send_queue);
         msg_header_t *header = g_async_queue_pop(send_queue);
         gpointer data = header->length ? g_async_queue_pop(send_queue) : NULL;
-        msg_send_impl(header, data);
+        msg_send_impl(ipc, header, data);
         g_free(header);
         g_free(data);
     }
@@ -79,7 +80,7 @@ msg_send_thread(gpointer UNUSED(user_data))
 }
 
 void
-msg_send(const msg_header_t *header, const void *data)
+msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 {
     if (!send_thread) {
         send_queue = g_async_queue_new();
@@ -90,8 +91,10 @@ msg_send(const msg_header_t *header, const void *data)
         debug("Process '%s': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
                 process_name, msg_type_name(header->type));
 
+    g_assert(ipc);
     g_assert((header->length == 0) == (data == NULL));
     gpointer header_dup = g_memdup(header, sizeof(*header));
+    g_async_queue_push(send_queue, ipc);
     g_async_queue_push(send_queue, header_dup);
     if (header->length) {
         gpointer data_dup = g_memdup(data, header->length);
@@ -197,12 +200,12 @@ msg_recv_and_dispatch_or_enqueue(int type_mask)
 }
 
 void
-msg_send_lua(msg_type_t type, lua_State *L, gint start, gint end)
+msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end)
 {
     GByteArray *buf = g_byte_array_new();
     lua_serialize_range(L, buf, start, end);
     msg_header_t header = { .type = type, .length = buf->len };
-    msg_send(&header, buf->data);
+    msg_send(ipc, &header, buf->data);
     g_byte_array_unref(buf);
 }
 
