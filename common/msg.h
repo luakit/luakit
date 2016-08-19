@@ -81,9 +81,16 @@ typedef struct _msg_recv_state_t {
     gboolean hdr_done;
 } msg_recv_state_t;
 
+typedef enum {
+    MSG_ENDPOINT_DISCONNECTED,
+    MSG_ENDPOINT_CONNECTED
+} msg_endpoint_status_t;
+
 typedef struct _msg_endpoint_t {
     /** Statically-allocated endpoint name; used for debugging */
     gchar *name;
+    /* Endpoint status */
+    msg_endpoint_status_t status;
     /** Channel for IPC with web process */
     GIOChannel *channel;
     /** Queued data for when channel is not yet open */
@@ -94,6 +101,8 @@ typedef struct _msg_endpoint_t {
 
 void msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name);
 void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
+msg_endpoint_t * msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new);
+
 gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
 void msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end);
 void msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data);

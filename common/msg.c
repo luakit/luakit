@@ -117,6 +117,7 @@ msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), msg_endpoint_t *from)
     g_source_remove(state->watch_in_id);
     g_source_remove(state->watch_hup_id);
     g_io_channel_shutdown(channel, TRUE, NULL);
+    from->status = MSG_ENDPOINT_DISCONNECTED;
     return FALSE;
 }
 
@@ -199,12 +200,14 @@ msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name)
     memset(ipc, 0, sizeof(*ipc));
     ipc->name = (gchar*)name;
     ipc->queue = g_byte_array_new();
+    ipc->status = MSG_ENDPOINT_DISCONNECTED;
 }
 
 void
 msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
 {
     g_assert(ipc);
+    g_assert(ipc->status == MSG_ENDPOINT_DISCONNECTED);
 
     msg_recv_state_t *state = &ipc->recv_state;
     state->queued_msgs = g_ptr_array_new();
@@ -214,6 +217,28 @@ msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
     g_io_channel_set_buffered(ipc->channel, FALSE);
     state->watch_in_id = g_io_add_watch(ipc->channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
     state->watch_hup_id = g_io_add_watch(ipc->channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
+
+    ipc->status = MSG_ENDPOINT_CONNECTED;
+}
+
+msg_endpoint_t *
+msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
+{
+    g_assert(orig);
+    g_assert(new);
+    g_assert(orig->status == MSG_ENDPOINT_DISCONNECTED);
+    g_assert(new->status == MSG_ENDPOINT_CONNECTED);
+
+    /* Send all queued messages */
+    g_assert(orig->queue);
+    g_io_channel_write_chars(new->channel,
+            (gchar*)orig->queue->data,
+            orig->queue->len, NULL, NULL);
+    g_byte_array_unref(orig->queue);
+    orig->queue = NULL;
+
+    g_slice_free(msg_endpoint_t, orig);
+    return new;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

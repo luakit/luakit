@@ -154,15 +154,6 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
         .length = 0
     };
     msg_send(ipc, &header, NULL);
-
-    /* Send all queued messages */
-    if (ipc->queue) {
-        g_io_channel_write_chars(ipc->channel,
-                (gchar*)ipc->queue->data,
-                ipc->queue->len, NULL, NULL);
-        g_byte_array_unref(ipc->queue);
-        ipc->queue = NULL;
-    }
 }
 
 static gpointer
