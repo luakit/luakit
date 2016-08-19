@@ -81,6 +81,8 @@ typedef struct _msg_recv_state_t {
 } msg_recv_state_t;
 
 typedef struct _msg_endpoint_t {
+    /** Statically-allocated endpoint name; used for debugging */
+    gchar *name;
     /** Channel for IPC with web process */
     GIOChannel *channel;
     /** Queued data for when channel is not yet open */
@@ -89,7 +91,8 @@ typedef struct _msg_endpoint_t {
     msg_recv_state_t recv_state;
 } msg_endpoint_t;
 
-GIOChannel * msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *process_name);
+void msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name);
+void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
 gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
 void msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end);
 void msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data);

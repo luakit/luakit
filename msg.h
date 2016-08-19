@@ -4,7 +4,6 @@
 #include "common/msg.h"
 
 void msg_init(void);
-void msg_endpoint_init(msg_endpoint_t *ipc);
 
 #endif
 

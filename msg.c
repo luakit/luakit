@@ -139,7 +139,7 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
 
     debug("Creating channel...");
 
-    ipc->channel = msg_create_channel_from_socket(ipc, web_socket, "UI");
+    msg_endpoint_connect_to_socket(ipc, web_socket);
 
     /* FIXME TODO: Need to move this stuff somewhere else... */
     if (globalconf.web_extension_loaded) {
@@ -205,12 +205,6 @@ msg_init(void)
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
-}
-
-void
-msg_endpoint_init(msg_endpoint_t *ipc)
-{
-    ipc->queue = g_byte_array_new();
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -116,7 +116,7 @@ web_extension_connect(const gchar *socket_path)
 
     debug("luakit web process: connected");
 
-    extension.ipc.channel = msg_create_channel_from_socket(&extension.ipc, sock, "Web");
+    msg_endpoint_connect_to_socket(&extension.ipc, sock);
 
     return 0;
 fail_connect:

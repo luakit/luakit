@@ -13,8 +13,6 @@
  * and sending IPC messages writes log messages which include the process
  * name.
  */
-static const char *process_name = "UI";
-
 static GThread *send_thread;
 static GAsyncQueue *send_queue;
 
@@ -29,7 +27,7 @@ msg_dispatch(msg_endpoint_t *from, msg_header_t header, gpointer payload)
 {
     if (header.type != MSG_TYPE_log)
         debug("Process '%s': recv " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
-                process_name, msg_type_name(header.type));
+                from->name, msg_type_name(header.type));
     switch (header.type) {
 #define X(name) case MSG_TYPE_##name: msg_recv_##name(from, payload, header.length); break;
         MSG_TYPES
@@ -88,7 +86,7 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 
     if (header->type != MSG_TYPE_log)
         debug("Process '%s': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
-                process_name, msg_type_name(header->type));
+                ipc->name, msg_type_name(header->type));
 
     g_assert(ipc);
     g_assert((header->length == 0) == (data == NULL));
@@ -120,25 +118,6 @@ msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), msg_endpoint_t *from)
     g_source_remove(state->watch_hup_id);
     g_io_channel_shutdown(channel, TRUE, NULL);
     return FALSE;
-}
-
-GIOChannel *
-msg_create_channel_from_socket(msg_endpoint_t *ipc, int sock, const char *proc_name)
-{
-    g_assert(ipc);
-
-    msg_recv_state_t *state = &ipc->recv_state;
-    state->queued_msgs = g_ptr_array_new();
-    g_assert(proc_name && *proc_name);
-    process_name = proc_name;
-
-    ipc->channel = g_io_channel_unix_new(sock);
-    g_io_channel_set_encoding(ipc->channel, NULL, NULL);
-    g_io_channel_set_buffered(ipc->channel, FALSE);
-    state->watch_in_id = g_io_add_watch(ipc->channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
-    state->watch_hup_id = g_io_add_watch(ipc->channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
-
-    return ipc->channel;
 }
 
 /* Receive a single message
@@ -212,6 +191,29 @@ msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gin
     msg_header_t header = { .type = type, .length = buf->len };
     msg_send(ipc, &header, buf->data);
     g_byte_array_unref(buf);
+}
+
+void
+msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name)
+{
+    memset(ipc, 0, sizeof(*ipc));
+    ipc->name = (gchar*)name;
+    ipc->queue = g_byte_array_new();
+}
+
+void
+msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
+{
+    g_assert(ipc);
+
+    msg_recv_state_t *state = &ipc->recv_state;
+    state->queued_msgs = g_ptr_array_new();
+
+    ipc->channel = g_io_channel_unix_new(sock);
+    g_io_channel_set_encoding(ipc->channel, NULL, NULL);
+    g_io_channel_set_buffered(ipc->channel, FALSE);
+    state->watch_in_id = g_io_add_watch(ipc->channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
+    state->watch_hup_id = g_io_add_watch(ipc->channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
