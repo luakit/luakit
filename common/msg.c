@@ -120,7 +120,7 @@ msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), gpointer UNUSED(user_dat
 }
 
 GIOChannel *
-msg_setup(int sock, const char *proc_name)
+msg_create_channel_from_socket(int sock, const char *proc_name)
 {
     state.queued_msgs = g_ptr_array_new();
     g_assert(proc_name && *proc_name);

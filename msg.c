@@ -139,7 +139,7 @@ web_extension_connect(const gchar *socket_path)
 
     debug("Creating channel...");
 
-    globalconf.web_channel = msg_setup(web_socket, "UI");
+    globalconf.web_channel = msg_create_channel_from_socket(web_socket, "UI");
 
     if (globalconf.web_extension_loaded) {
         /* If it was previously loaded, we've just crashed */

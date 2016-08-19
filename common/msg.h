@@ -70,7 +70,7 @@ msg_type_name(msg_type_t type)
     }
 }
 
-GIOChannel * msg_setup(int sock, const char *process_name);
+GIOChannel * msg_create_channel_from_socket(int sock, const char *process_name);
 gboolean msg_recv_and_dispatch_or_enqueue(int type_mask);
 void msg_send_lua(msg_type_t type, lua_State *L, gint start, gint end);
 void msg_send(const msg_header_t *header, const void *data);
