@@ -213,16 +213,4 @@ msg_endpoint_init(msg_endpoint_t *ipc)
     ipc->queue = g_byte_array_new();
 }
 
-void
-msg_send_impl(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
-{
-    if (ipc->channel) {
-        g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
-        g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
-    } else {
-        g_byte_array_append(ipc->queue, (guint8*)header, sizeof(*header));
-        g_byte_array_append(ipc->queue, (guint8*)data, header->length);
-    }
-}
-
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

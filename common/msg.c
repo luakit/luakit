@@ -74,7 +74,15 @@ msg_send_thread(gpointer UNUSED(user_data))
         msg_endpoint_t *ipc = g_async_queue_pop(send_queue);
         msg_header_t *header = g_async_queue_pop(send_queue);
         gpointer data = header->length ? g_async_queue_pop(send_queue) : NULL;
-        msg_send_impl(ipc, header, data);
+
+        if (ipc->channel) {
+            g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
+            g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
+        } else {
+            g_byte_array_append(ipc->queue, (guint8*)header, sizeof(*header));
+            g_byte_array_append(ipc->queue, (guint8*)data, header->length);
+        }
+
         g_free(header);
         g_free(data);
     }

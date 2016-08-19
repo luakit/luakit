@@ -82,9 +82,6 @@ gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
 void msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end);
 void msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data);
 
-/* Must be defined separately; not defined in common/msg.c */
-void msg_send_impl(msg_endpoint_t *ipc, const msg_header_t *header, const void *data);
-
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

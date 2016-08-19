@@ -125,11 +125,4 @@ fail_socket:
     return 1;
 }
 
-void
-msg_send_impl(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
-{
-    g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
-    g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
-}
-
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
