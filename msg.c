@@ -200,12 +200,16 @@ void
 msg_init(void)
 {
     gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
-    globalconf.ipc.web_channel_queue = g_byte_array_new();
-
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
+}
+
+void
+msg_endpoint_init(msg_endpoint_t *ipc)
+{
+    ipc->web_channel_queue = g_byte_array_new();
 }
 
 void
