@@ -1,7 +1,9 @@
 #include "clib/web_module.h"
+#include "clib/widget.h"
 #include "common/tokenize.h"
 #include "common/luauniq.h"
 #include "common/luaserialize.h"
+#include "widgets/webview.h"
 
 #define REG_KEY "luakit.uniq.registry.web_module"
 
@@ -17,6 +19,7 @@ luaH_web_module_new(lua_State *L)
     if (luaH_uniq_get(L, REG_KEY, -1))
         return 1;
 
+    /* Add a new web module object to the registry */
     lua_newtable(L);
     luaH_class_new(L, &web_module_class);
     lua_remove(L, -2);
@@ -24,12 +27,6 @@ luaH_web_module_new(lua_State *L)
     web_module->name = g_strdup(name);
 
     luaH_uniq_add(L, REG_KEY, -2, -1);
-
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_require_module,
-        .length = strlen(name)+1
-    };
-    msg_send(&globalconf.ipc, &header, name);
 
     return 1;
 }
@@ -46,9 +43,14 @@ static gint
 web_module_send(lua_State *L)
 {
     web_module_t *web_module = luaH_check_web_module(L, 1);
+
+    warn("Lua IPC interface is currently unimplemented!");
+    return 0;
+
+    msg_endpoint_t *ipc = NULL;
     luaL_checkstring(L, 2);
     lua_pushstring(L, web_module->name);
-    msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
     return 0;
 }
 

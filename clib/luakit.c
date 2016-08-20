@@ -653,9 +653,6 @@ luaH_luakit_register_function(lua_State *L)
     /* get lua callback function */
     luaH_checkfunction(L, 3);
     reg.ref = luaH_object_ref(L, 3);
-    lua_pushlightuserdata(L, reg.ref);
-
-    msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_js_register, L, 1, 3);
 
     /* Keep a copy for reregistration */
     if (!registrations)

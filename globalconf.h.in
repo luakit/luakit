@@ -74,15 +74,11 @@ typedef struct {
     GPtrArray *webviews;
     /** Pointer array to all user stylesheets. */
     GPtrArray *stylesheets;
+    /** IPC endpoints for all webviews */
+    GPtrArray *endpoints;
 
     /** Start time for debug messages */
     gdouble starttime;
-#ifndef LUAKIT_WEB_EXTENSION
-    /** IPC endpoint */
-    msg_endpoint_t ipc;
-    /** Whether the web extension is loaded */
-    gboolean web_extension_loaded;
-#endif
 } globalconf_t;
 
 globalconf_t globalconf;

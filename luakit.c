@@ -192,7 +192,6 @@ main(gint argc, gchar *argv[])
 
     init_directories();
     web_context_init();
-    msg_endpoint_init(&globalconf.ipc, "UI");
     msg_init();
     init_lua(uris);
 

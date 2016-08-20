@@ -29,6 +29,7 @@ msg_recv_##type(msg_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint U
 NO_HANDLER(lua_require_module)
 NO_HANDLER(web_lua_loaded)
 NO_HANDLER(lua_js_register)
+NO_HANDLER(web_extension_loaded)
 
 void
 msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
@@ -95,15 +96,17 @@ msg_recv_lua_js_gc(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 }
 
 void
-msg_recv_web_extension_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
-{
-    globalconf.web_extension_loaded = TRUE;
-}
-
-void
-msg_recv_page_created(msg_endpoint_t *UNUSED(ipc), const guint64 *page_id, guint length)
+msg_recv_page_created(msg_endpoint_t *ipc, const guint64 *page_id, guint length)
 {
     g_assert(length == sizeof(*page_id));
+    widget_t *w = webview_get_by_id(*page_id);
+    g_assert(w);
+
+    g_ptr_array_remove_fast(globalconf.endpoints, ipc);
+    g_ptr_array_add(globalconf.endpoints, ipc);
+    web_module_load_modules_on_endpoint(ipc, globalconf.L);
+    luaH_register_functions_on_endpoint(ipc, globalconf.L);
+    webview_connect_to_endpoint(w, ipc);
 }
 
 static void
@@ -139,28 +142,15 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
     debug("Creating channel...");
 
     msg_endpoint_connect_to_socket(ipc, web_socket);
-
-    /* FIXME TODO: Need to move this stuff somewhere else... */
-    if (globalconf.web_extension_loaded) {
-        /* If it was previously loaded, we've just crashed */
-        web_module_load_modules_on_endpoint(&globalconf.ipc, globalconf.L);
-        luaH_register_functions_on_endpoint(&globalconf.ipc, globalconf.L);
-    }
-    globalconf.web_extension_loaded = FALSE;
-
-    /* Releases page-created signals, replies with web-extension-loaded */
-    msg_header_t header = {
-        .type = MSG_TYPE_web_lua_loaded,
-        .length = 0
-    };
-    msg_send(ipc, &header, NULL);
 }
 
 static gpointer
 web_extension_connect_thread(gpointer socket_path)
 {
     while (TRUE) {
-        web_extension_connect(&globalconf.ipc, socket_path);
+        msg_endpoint_t *ipc = g_slice_new(msg_endpoint_t);
+        msg_endpoint_init(ipc, "UI");
+        web_extension_connect(ipc, socket_path);
     }
 
     return NULL;
@@ -195,6 +185,7 @@ msg_init(void)
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
+    globalconf.endpoints = g_ptr_array_sized_new(1);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

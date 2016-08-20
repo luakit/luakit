@@ -22,6 +22,7 @@
 #include <glib.h>
 #include "clib/widget.h"
 
+widget_t* luaH_checkwebview(lua_State *L, gint udx);
 widget_t* webview_get_by_id(guint64 view_id);
 void webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc);
 msg_endpoint_t * webview_get_endpoint(widget_t *w);
