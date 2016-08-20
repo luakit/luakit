@@ -143,7 +143,7 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
     /* FIXME TODO: Need to move this stuff somewhere else... */
     if (globalconf.web_extension_loaded) {
         /* If it was previously loaded, we've just crashed */
-        web_module_restart(globalconf.L);
+        web_module_load_modules_on_endpoint(&globalconf.ipc, globalconf.L);
         luaH_reregister_functions(globalconf.L);
     }
     globalconf.web_extension_loaded = FALSE;

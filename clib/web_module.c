@@ -67,7 +67,7 @@ web_module_recv(lua_State *L, const gchar *arg, guint arglen)
 }
 
 void
-web_module_restart(lua_State *L)
+web_module_load_modules_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
 {
     lua_pushstring(L, REG_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
@@ -78,7 +78,7 @@ web_module_restart(lua_State *L)
             .type = MSG_TYPE_lua_require_module,
             .length = strlen(name)+1
         };
-        msg_send(&globalconf.ipc, &header, name);
+        msg_send(ipc, &header, name);
         lua_pop(L, 1);
     }
 }
