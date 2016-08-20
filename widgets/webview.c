@@ -1184,6 +1184,39 @@ webview_wait_for_web_extension_cb(widget_t *w)
     return FALSE;
 }
 
+void
+webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc)
+{
+    g_assert(w->info->tok == L_TK_WEBVIEW);
+    g_assert(ipc);
+
+    /* Replace old endpoint with new, sendinq queued data */
+    webview_data_t *d = w->data;
+    d->ipc = msg_endpoint_replace(d->ipc, ipc);
+
+    /* Emit 'web-extension-loaded' signal on webview */
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    if (!lua_isnil(L, -1))
+        luaH_object_emit_signal(L, -1, "web-extension-loaded", 0, 0);
+    lua_pop(L, 1);
+
+    /* Notify web extension that pending signals can be released */
+    msg_header_t header = {
+        .type = MSG_TYPE_web_lua_loaded,
+        .length = 0
+    };
+    msg_send(ipc, &header, NULL);
+}
+
+msg_endpoint_t *
+webview_get_endpoint(widget_t *w)
+{
+    g_assert(w->info->tok == L_TK_WEBVIEW);
+    webview_data_t *d = w->data;
+    return d->ipc;
+}
+
 widget_t *
 widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 {
