@@ -668,7 +668,7 @@ luaH_luakit_register_function(lua_State *L)
 }
 
 void
-luaH_reregister_functions(lua_State *L)
+luaH_register_functions_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
 {
     for (guint i = 0; i < registrations->len; ++i) {
         lua_js_registration_t reg = g_array_index(registrations, lua_js_registration_t, i);
@@ -680,7 +680,7 @@ luaH_reregister_functions(lua_State *L)
         luaH_object_push(L, reg.ref);
         luaH_object_ref(L, -1);
 
-        msg_send_lua(&globalconf.ipc, MSG_TYPE_lua_js_register, L, -3, -1);
+        msg_send_lua(ipc, MSG_TYPE_lua_js_register, L, -3, -1);
         lua_pop(L, 3);
     }
 }
