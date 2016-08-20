@@ -1,6 +1,7 @@
 #include <assert.h>
 
 #include "extension/clib/ui_process.h"
+#include "extension/clib/page.h"
 #include "luah.h"
 #include "common/tokenize.h"
 #include "common/luaserialize.h"
@@ -85,19 +86,35 @@ void
 ui_process_recv(lua_State *L, const gchar *arg, guint arglen)
 {
     int n = lua_deserialize_range(L, (guint8*)arg, arglen);
-    const char *signame = lua_tostring(L, -n);
-    const char *module_name = lua_tostring(L, -1);
 
+    /* Remove signal name, module_name and page_id from the stack */
+    const char *signame = lua_tostring(L, -n);
+    lua_remove(L, -n);
+    const char *module_name = lua_tostring(L, -2);
+    guint64 page_id = lua_tointeger(L, -1);
+    lua_pop(L, 2);
+    n -= 3;
+
+    /* Prepend the page object, or nil */
+    if (page_id) {
+        WebKitWebPage *web_page = webkit_web_extension_get_page(extension.ext, page_id);
+        g_assert(web_page);
+        luaH_page_from_web_page(L, web_page);
+    } else
+        lua_pushnil(L);
+    lua_insert(L, -n-1);
+    n++;
+
+    /* Push the right module object onto the stack */
     lua_pushstring(L, REG_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
     lua_pushstring(L, module_name);
     lua_rawget(L, -2);
     lua_remove(L, -2);
 
-    lua_remove(L, -n-1);
-    lua_insert(L, -n);
-    lua_remove(L, -1);
-    luaH_object_emit_signal(L, -n+1, signame, n-2, 0);
+    /* Move the module before arguments, and emit signal */
+    lua_insert(L, -n-1);
+    luaH_object_emit_signal(L, -n-1, signame, n, 0);
     lua_pop(L, 1);
 }
 

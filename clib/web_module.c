@@ -1,3 +1,5 @@
+#include <webkit2/webkit2.h>
+
 #include "clib/web_module.h"
 #include "clib/widget.h"
 #include "common/tokenize.h"
@@ -43,14 +45,30 @@ static gint
 web_module_send(lua_State *L)
 {
     web_module_t *web_module = luaH_check_web_module(L, 1);
-
-    warn("Lua IPC interface is currently unimplemented!");
-    return 0;
-
+    guint64 page_id = 0;
     msg_endpoint_t *ipc = NULL;
+
+    /* Optional first argument: view to send message to */
+    if (lua_isuserdata(L, 2)) {
+        widget_t *w = luaH_checkwebview(L, 2);
+        page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
+        ipc = webview_get_endpoint(w);
+        lua_remove(L, 2);
+    }
+
     luaL_checkstring(L, 2);
     lua_pushstring(L, web_module->name);
-    msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    lua_pushinteger(L, page_id);
+
+    if (ipc)
+        msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    else {
+        for (unsigned i = 0; i < globalconf.endpoints->len; i++) {
+            msg_endpoint_t *ipc = g_ptr_array_index(globalconf.endpoints, i);
+            msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+        }
+    }
+
     return 0;
 }
 
