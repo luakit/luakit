@@ -23,6 +23,7 @@
 
 #include "globalconf.h"
 #include "widgets/common.h"
+#include "widgets/webview.h"
 #include "common/property.h"
 #include "luah.h"
 #include "clib/widget.h"
@@ -147,6 +148,17 @@ luaH_checkwebview(lua_State *L, gint udx)
     if (w->info->tok != L_TK_WEBVIEW)
         luaL_argerror(L, udx, "incorrect widget type (expected webview)");
     return w;
+}
+
+widget_t*
+webview_get_by_id(guint64 view_id)
+{
+    for (unsigned i = 0; i < globalconf.webviews->len; i++) {
+        widget_t *w = g_ptr_array_index(globalconf.webviews, i);
+        if (webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget)) == view_id)
+            return w;
+    }
+    return NULL;
 }
 
 static void update_uri(widget_t *w, const gchar *uri);
@@ -1085,18 +1097,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     const gchar *uri = webkit_uri_scheme_request_get_uri(request);
 
     WebKitWebView *view = webkit_uri_scheme_request_get_web_view(request);
-    widget_t *w = NULL;
-
-    /* Get the widget corresponding to the web view */
-    /* Linear search for now... */
-    for (unsigned i = 0; i < globalconf.webviews->len; i++) {
-        widget_t *ww = g_ptr_array_index(globalconf.webviews, i);
-        webview_data_t *d = ww->data;
-        if (d->view == view) {
-            w = ww;
-            break;
-        }
-    }
+    widget_t *w = webview_get_by_id(webkit_web_view_get_page_id(view));
     g_assert(w);
 
     lua_State *L = globalconf.L;

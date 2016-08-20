@@ -14,6 +14,7 @@
 #include "clib/widget.h"
 #include "common/luaserialize.h"
 #include "web_context.h"
+#include "widgets/webview.h"
 
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 void run_javascript_finished(const guint8 *msg, guint length);
@@ -68,14 +69,7 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
     lua_insert(L, top+1);
 
     /* get webview and push into position */
-    widget_t *w = NULL;
-    for (unsigned i = 0; i < globalconf.webviews->len; i++) {
-        widget_t *ww = g_ptr_array_index(globalconf.webviews, i);
-        if (webkit_web_view_get_page_id((WebKitWebView*)ww->widget) == view_id) {
-            w = ww;
-            break;
-        }
-    }
+    widget_t *w = webview_get_by_id(view_id);
     g_assert(w);
     luaH_object_push(L, w->ref);
     lua_insert(L, top+2);
