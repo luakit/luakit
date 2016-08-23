@@ -63,7 +63,7 @@ end
 local function update_title_and_label(tl)
     local view = data[tl].view
     assert(type(view) == "widget" and view.type == "webview")
-    local new_title = (view.title ~= "" and view.title)
+    local new_title = (not data[tl].no_title and view.title ~= "" and view.title)
                       or view.uri
                       or (view.is_loading and "Loading,,," or "(Untitled)")
     if new_title == tl.title then return end
@@ -84,6 +84,7 @@ function new(view, index)
         view = view,
         index = index,
         current = false,
+        no_title = false,
     }
 
     local theme = get_theme()
@@ -93,9 +94,18 @@ function new(view, index)
     label.align = { x = 0 }
 
     -- Bind signals to associated view
-    view:add_signal("property::title", function () update_title_and_label(tl) end)
-    view:add_signal("property::uri",   function () update_title_and_label(tl) end)
-    view:add_signal("load-status",     function () update_label(tl) end)
+    view:add_signal("property::title", function (v)
+        data[tl].no_title = false
+        update_title_and_label(tl)
+    end)
+    view:add_signal("property::uri",   function (v)
+        update_title_and_label(tl)
+    end)
+    view:add_signal("load-status",     function (v, status)
+        if status == "provisional" then data[tl].no_title = true end
+        update_title_and_label(tl)
+        update_label(tl)
+    end)
 
     -- Set new title
     update_title_and_label(tl)
