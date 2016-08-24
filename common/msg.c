@@ -115,16 +115,12 @@ void msg_endpoint_remove_from_endpoints(msg_endpoint_t *);
 #endif
 
 static gboolean
-msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), msg_endpoint_t *from)
+msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *from)
 {
-    msg_recv_state_t *state = &from->recv_state;
-    g_source_remove(state->watch_in_id);
-    g_source_remove(state->watch_hup_id);
-    g_io_channel_shutdown(channel, TRUE, NULL);
-    from->status = MSG_ENDPOINT_DISCONNECTED;
 #ifndef LUAKIT_WEB_EXTENSION
     msg_endpoint_remove_from_endpoints(from);
 #endif
+    msg_endpoint_disconnect(from);
     return FALSE;
 }
 
@@ -244,8 +240,29 @@ msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
     g_byte_array_unref(orig->queue);
     orig->queue = NULL;
 
-    g_slice_free(msg_endpoint_t, orig);
+    msg_endpoint_free(orig);
     return new;
+}
+
+void
+msg_endpoint_disconnect(msg_endpoint_t *ipc)
+{
+    /* Remove watches */
+    msg_recv_state_t *state = &ipc->recv_state;
+    g_source_remove(state->watch_in_id);
+    g_source_remove(state->watch_hup_id);
+
+    /* Close channel */
+    g_io_channel_shutdown(ipc->channel, TRUE, NULL);
+    ipc->status = MSG_ENDPOINT_DISCONNECTED;
+    ipc->channel = NULL;
+}
+
+void
+msg_endpoint_free(msg_endpoint_t *ipc)
+{
+    ipc->status = MSG_ENDPOINT_FREED;
+    g_slice_free(msg_endpoint_t, ipc);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

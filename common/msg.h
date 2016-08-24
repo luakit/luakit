@@ -84,7 +84,8 @@ typedef struct _msg_recv_state_t {
 
 typedef enum {
     MSG_ENDPOINT_DISCONNECTED,
-    MSG_ENDPOINT_CONNECTED
+    MSG_ENDPOINT_CONNECTED,
+    MSG_ENDPOINT_FREED,
 } msg_endpoint_status_t;
 
 typedef struct _msg_endpoint_t {
@@ -103,6 +104,8 @@ typedef struct _msg_endpoint_t {
 void msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name);
 void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
 msg_endpoint_t * msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new);
+void msg_endpoint_disconnect(msg_endpoint_t *ipc);
+void msg_endpoint_free(msg_endpoint_t *ipc);
 
 gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
 void msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end);
