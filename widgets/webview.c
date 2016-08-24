@@ -1136,6 +1136,11 @@ webview_destructor(widget_t *w)
     if (d->cert)
         g_object_unref(G_OBJECT(d->cert));
 
+    msg_endpoint_remove_from_endpoints(d->ipc);
+    msg_endpoint_disconnect(d->ipc);
+    msg_endpoint_free(d->ipc);
+    d->ipc = NULL;
+
     if (d->source)
         g_free(d->source);
 }
@@ -1179,8 +1184,10 @@ gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
     lua_State *L = globalconf.L;
+    webview_data_t *d = w->data;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
+    msg_endpoint_remove_from_endpoints(d->ipc);
     return FALSE;
 }
 
