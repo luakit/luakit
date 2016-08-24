@@ -189,4 +189,10 @@ msg_init(void)
     globalconf.endpoints = g_ptr_array_sized_new(1);
 }
 
+void
+msg_endpoint_remove_from_endpoints(msg_endpoint_t *ipc)
+{
+    g_ptr_array_remove_fast(globalconf.endpoints, ipc);
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

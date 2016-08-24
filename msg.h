@@ -4,6 +4,7 @@
 #include "common/msg.h"
 
 void msg_init(void);
+void msg_endpoint_remove_from_endpoints(msg_endpoint_t *);
 
 #endif
 

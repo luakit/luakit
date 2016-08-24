@@ -110,6 +110,10 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, msg_endpoint_t *from)
     return TRUE;
 }
 
+#ifndef LUAKIT_WEB_EXTENSION
+void msg_endpoint_remove_from_endpoints(msg_endpoint_t *);
+#endif
+
 static gboolean
 msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), msg_endpoint_t *from)
 {
@@ -118,6 +122,9 @@ msg_hup(GIOChannel *channel, GIOCondition UNUSED(cond), msg_endpoint_t *from)
     g_source_remove(state->watch_hup_id);
     g_io_channel_shutdown(channel, TRUE, NULL);
     from->status = MSG_ENDPOINT_DISCONNECTED;
+#ifndef LUAKIT_WEB_EXTENSION
+    msg_endpoint_remove_from_endpoints(from);
+#endif
     return FALSE;
 }
 
