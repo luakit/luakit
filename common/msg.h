@@ -16,6 +16,7 @@
     X(eval_js) \
     X(log) \
     X(page_created) \
+    X(crash) \
 
 #define X(name) MSG_TYPE_EXPONENT_##name,
 typedef enum { MSG_TYPES } _msg_type_exponent_t;

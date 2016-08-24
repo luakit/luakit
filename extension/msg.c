@@ -89,6 +89,21 @@ msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     lua_pop(L, 5 + n);
 }
 
+static gboolean
+do_crash(gpointer UNUSED(user_data))
+{
+    /* Force the web process to crash by dereferencing a NULL pointer */
+    void **nul = NULL;
+    void *foo = *nul;
+    return !foo;
+}
+
+void
+msg_recv_crash(msg_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNUSED(length))
+{
+    g_idle_add(do_crash, NULL);
+}
+
 static void
 web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {

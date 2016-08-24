@@ -30,6 +30,7 @@ NO_HANDLER(lua_require_module)
 NO_HANDLER(web_lua_loaded)
 NO_HANDLER(lua_js_register)
 NO_HANDLER(web_extension_loaded)
+NO_HANDLER(crash)
 
 void
 msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)

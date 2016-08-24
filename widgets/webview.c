@@ -574,6 +574,18 @@ luaH_webview_stop(lua_State *L)
     return 0;
 }
 
+static gint
+luaH_webview_crash(lua_State *L)
+{
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    msg_header_t header = {
+        .type = MSG_TYPE_crash,
+        .length = 0
+    };
+    msg_send(d->ipc, &header, NULL);
+    return 0;
+}
+
 /* check for trusted ssl certificate
 * make sure this function is called after WEBKIT_LOAD_COMMITTED
 */
@@ -727,6 +739,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(RELOAD_BYPASS_CACHE,  luaH_webview_reload_bypass_cache)
       PF_CASE(SSL_TRUSTED,          luaH_webview_ssl_trusted)
       PF_CASE(STOP,                 luaH_webview_stop)
+      PF_CASE(CRASH,                luaH_webview_crash)
       /* push inspector webview methods */
       PF_CASE(SHOW_INSPECTOR,       luaH_webview_show_inspector)
       PF_CASE(CLOSE_INSPECTOR,      luaH_webview_close_inspector)
