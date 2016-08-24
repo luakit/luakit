@@ -38,6 +38,20 @@ lua_CFunction lualib_dofunction_on_error;
             luaL_typerror(L, n, "function"); \
     } while(0)
 
+/** Dump the Lua function call stack. Useful for debugging.
+ * \param L The Lua VM state.
+ */
+static inline void
+luaH_traceback(lua_State *L)
+{
+    g_fprintf(stderr, "--------- Lua traceback ---------\n");
+    luaL_loadstring(L, "return debug.traceback()");
+    lua_pcall(L, 0, 1, 0);
+    g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+    lua_pop(L, 1);
+    g_fprintf(stderr, "-------- Lua traceback end ------\n");
+}
+
 /** Dump the Lua stack. Useful for debugging.
  * \param L The Lua VM state.
  */
