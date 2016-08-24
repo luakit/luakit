@@ -49,6 +49,10 @@ typedef struct {
     gchar *hover;
     /** Scrollbar hide signal id */
     gulong hide_id;
+    /** Current webview source HTML: not null terminated */
+    gchar *source;
+    /** Length in bytes of source array */
+    gsize source_length;
 
     /** Inspector properties */
     WebKitWebInspector *inspector;
@@ -294,10 +298,22 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
     return TRUE; /* Prevent load-failed signal */
 }
 
+static void webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res, widget_t *w)
+{
+    webview_data_t *d = w->data;
+    gsize length;
+    guchar *source = webkit_web_resource_get_data_finish (main_resource, res, &length, NULL);
+    if (d->source)
+        g_free(d->source);
+    d->source = (gchar*)source;
+    d->source_length = length;
+}
+
 static void
 load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 {
     webview_data_t *d = w->data;
+    lua_State *L = globalconf.L;
 
     /* get load status literal */
     gchar *name = NULL;
@@ -323,7 +339,14 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
         ((webview_data_t*) w->data)->is_committed = TRUE;
     }
 
-    lua_State *L = globalconf.L;
+    if (e == WEBKIT_LOAD_STARTED && d->source) {
+        g_free(d->source);
+        d->source = NULL;
+    } else if (e == WEBKIT_LOAD_FINISHED) {
+        WebKitWebResource * main_resource = webkit_web_view_get_main_resource(d->view);
+        g_assert(main_resource);
+        webkit_web_resource_get_data(main_resource, NULL, (GAsyncReadyCallback) webview_get_source_finished, w);
+    }
 
     /* Store certificate information about current page */
     if (e == WEBKIT_LOAD_STARTED) {
@@ -658,6 +681,16 @@ uri_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
 }
 
 static gint
+luaH_webview_push_source(lua_State *L, webview_data_t *d)
+{
+    if (d->source)
+        lua_pushlstring(L, d->source, (size_t)d->source_length);
+    else
+        lua_pushnil(L);
+    return 1;
+}
+
+static gint
 luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     webview_data_t *d = w->data;
@@ -707,6 +740,8 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       // TODO this stopped existing...
       //PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_mode(d->view))
 
+      case L_TK_SOURCE:
+        return luaH_webview_push_source(L, d);
       case L_TK_SESSION_STATE:
         return luaH_webview_push_session_state(L, d);
         return 1;
@@ -1083,6 +1118,9 @@ webview_destructor(widget_t *w)
     signal_destroy(d->script_msg_signals);
     if (d->cert)
         g_object_unref(G_OBJECT(d->cert));
+
+    if (d->source)
+        g_free(d->source);
 }
 
 void
