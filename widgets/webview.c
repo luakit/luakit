@@ -344,8 +344,10 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
         d->source = NULL;
     } else if (e == WEBKIT_LOAD_FINISHED) {
         WebKitWebResource * main_resource = webkit_web_view_get_main_resource(d->view);
-        g_assert(main_resource);
-        webkit_web_resource_get_data(main_resource, NULL, (GAsyncReadyCallback) webview_get_source_finished, w);
+        if (main_resource) {
+            webkit_web_resource_get_data(main_resource, NULL,
+                    (GAsyncReadyCallback) webview_get_source_finished, w);
+        }
     }
 
     /* Store certificate information about current page */
