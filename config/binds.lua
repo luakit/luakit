@@ -707,6 +707,13 @@ add_cmds({
                 w:notify("Dumped HTML to: " .. file)
             end
         end),
+
+    cmd("view-source", "Show current tab's source",
+        function (w)
+            local v = w.view
+            local source = lousy.util.escape(v.source or "")
+            v:load_string('<pre><code>' .. source .. '</code></pre>', v.uri)
+        end),
 })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
