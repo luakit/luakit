@@ -82,6 +82,8 @@ widget_eventbox(widget_t *w, luakit_token_t UNUSED(token))
       "signal::add",                  G_CALLBACK(add_cb),        w,
       "signal::button-press-event",   G_CALLBACK(button_cb),     w,
       "signal::button-release-event", G_CALLBACK(button_cb),     w,
+      "signal::enter-notify-event",   G_CALLBACK(mouse_cb),      w,
+      "signal::leave-notify-event",   G_CALLBACK(mouse_cb),      w,
       "signal::parent-set",           G_CALLBACK(parent_set_cb), w,
       "signal::remove",               G_CALLBACK(remove_cb),     w,
       NULL);

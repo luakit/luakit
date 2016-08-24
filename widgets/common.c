@@ -66,6 +66,22 @@ button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 }
 
 gboolean
+mouse_cb(GtkWidget* UNUSED(win), GdkEventCrossing *ev, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
+
+    GdkEventType type = ev->type;
+    g_assert(type == GDK_ENTER_NOTIFY || type == GDK_LEAVE_NOTIFY);
+    gint ret = luaH_object_emit_signal(L, -2, type == GDK_ENTER_NOTIFY ? "mouse-enter" : "mouse-leave", 1, 1);
+
+    gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
+    lua_pop(L, ret + 1);
+    return catch;
+}
+
+gboolean
 focus_cb(GtkWidget* UNUSED(win), GdkEventFocus *ev, widget_t *w)
 {
     lua_State *L = globalconf.L;
