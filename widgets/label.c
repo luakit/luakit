@@ -204,7 +204,7 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_TEXTWIDTH:
         gtk_label_set_width_chars(GTK_LABEL(w->widget),
                 (gint)luaL_checknumber(L, 3));
-        return 0;
+        break;
 
       default:
         luaH_warn(L, "unknown property: %s", luaL_checkstring(L, 2));
