@@ -55,3 +55,5 @@ gboolean luaH_gobject_newindex(lua_State *, property_t *, luakit_token_t,
         gint, GObject *);
 
 #endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

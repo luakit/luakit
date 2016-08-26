@@ -128,3 +128,5 @@ luaH_webview_push_session_state(lua_State *L, webview_data_t *d)
     lua_pushlstring(L, str, len);
     return 1;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

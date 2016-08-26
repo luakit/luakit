@@ -5,16 +5,16 @@
 #include "common/util.h"
 
 #define MSG_TYPES \
-	X(lua_require_module) \
-	X(lua_msg) \
-	X(scroll) \
-	X(web_lua_loaded) \
-	X(lua_js_call) \
-	X(lua_js_register) \
-	X(lua_js_gc) \
-	X(web_extension_loaded) \
-	X(eval_js) \
-	X(log) \
+    X(lua_require_module) \
+    X(lua_msg) \
+    X(scroll) \
+    X(web_lua_loaded) \
+    X(lua_js_call) \
+    X(lua_js_register) \
+    X(lua_js_gc) \
+    X(web_extension_loaded) \
+    X(eval_js) \
+    X(log) \
 
 #define X(name) MSG_TYPE_EXPONENT_##name,
 typedef enum { MSG_TYPES } _msg_type_exponent_t;
@@ -29,32 +29,32 @@ typedef enum { MSG_TYPES } msg_type_t;
 
 /** Fixed size header prepended to each message */
 typedef struct _msg_header_t {
-	/** The length of the message in bytes, not including the header */
+    /** The length of the message in bytes, not including the header */
     guint length;
-	/** The type of the message, fairly self-explanatory... */
-	msg_type_t type;
+    /** The type of the message, fairly self-explanatory... */
+    msg_type_t type;
 } msg_header_t;
 
 /* Structure of messages for all message types */
 
 typedef struct _msg_lua_require_module_t {
-	gchar module_name[0];
+    gchar module_name[0];
 } msg_lua_require_module_t;
 
 typedef struct _msg_lua_msg_t {
-	gchar arg[0];
+    gchar arg[0];
 } msg_lua_msg_t;
 
 typedef enum {
-	MSG_SCROLL_TYPE_docresize,
-	MSG_SCROLL_TYPE_winresize,
-	MSG_SCROLL_TYPE_scroll
+    MSG_SCROLL_TYPE_docresize,
+    MSG_SCROLL_TYPE_winresize,
+    MSG_SCROLL_TYPE_scroll
 } msg_scroll_subtype_t;
 
 typedef struct _msg_scroll_t {
-	gint h, v;
-	guint64 page_id;
-	msg_scroll_subtype_t subtype;
+    gint h, v;
+    guint64 page_id;
+    msg_scroll_subtype_t subtype;
 } msg_scroll_t;
 
 /* Message names */
@@ -79,3 +79,5 @@ void msg_send(const msg_header_t *header, const void *data);
 void msg_send_impl(const msg_header_t *header, const void *data);
 
 #endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

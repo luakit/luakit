@@ -19,3 +19,5 @@ typedef struct _extension_t {
 extension_t extension;
 
 #endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

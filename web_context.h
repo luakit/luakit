@@ -25,4 +25,5 @@ void web_context_init(void);
 WebKitWebContext *web_context_get(void);
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

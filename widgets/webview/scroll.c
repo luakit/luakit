@@ -107,3 +107,5 @@ luaH_webview_push_scroll_table(lua_State *L)
     lua_setmetatable(L, -2);
     return 1;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

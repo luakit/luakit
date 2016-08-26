@@ -147,3 +147,5 @@ luaH_gobject_newindex(lua_State *L, property_t *props, luakit_token_t tok,
     }
     return FALSE;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

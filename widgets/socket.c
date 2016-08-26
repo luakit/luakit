@@ -90,3 +90,5 @@ widget_socket(widget_t *w, luakit_token_t UNUSED(token))
       NULL);
     return w;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

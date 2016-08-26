@@ -18,3 +18,5 @@ int luaH_uniq_get_ptr(lua_State *L, const gchar *reg, gpointer key);
 void luaH_uniq_del(lua_State *L, const gchar *reg, int k);
 
 #endif /* end of include guard: LUAKIT_COMMON_LUAUNIQ_H */
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

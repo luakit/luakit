@@ -100,4 +100,5 @@ signals_remove(signal_t *signals, const gchar *name)
 }
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

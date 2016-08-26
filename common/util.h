@@ -71,4 +71,5 @@ gchar *luaH_callerinfo(lua_State*);
 gint luaH_panic(lua_State *L);
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

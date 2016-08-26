@@ -94,3 +94,5 @@ luaH_webview_close_inspector(lua_State *L)
     webkit_web_inspector_close(d->inspector);
     return 0;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -55,3 +55,5 @@ luaH_panic(lua_State *L)
     warn("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
     return 0;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -95,3 +95,5 @@ luaH_webview_eval_js(lua_State *L)
 
     return FALSE;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

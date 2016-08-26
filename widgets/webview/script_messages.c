@@ -96,3 +96,5 @@ luaH_webview_remove_script_signal(lua_State *L)
 
     return 0;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

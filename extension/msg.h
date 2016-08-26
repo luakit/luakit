@@ -9,3 +9,5 @@ void msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint leng
 void msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length);
 
 #endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

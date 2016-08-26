@@ -110,4 +110,5 @@ void remove_cb(GtkContainer*, GtkWidget*, widget_t*);
 void widget_destructor(widget_t*);
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
