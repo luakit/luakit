@@ -107,6 +107,13 @@ function new(view, index)
         update_label(tl)
     end)
 
+    tl.widget:add_signal("mouse-enter", function (t)
+        t.bg = theme.tab_hover_bg
+    end)
+    tl.widget:add_signal("mouse-leave", function (t)
+        t.bg = (data[tl].current and theme.tab_selected_bg) or theme.tab_bg
+    end)
+
     -- Set new title
     update_title_and_label(tl)
     set_current(tl, false)
