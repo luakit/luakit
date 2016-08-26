@@ -746,7 +746,6 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
         return luaH_webview_push_source(L, d);
       case L_TK_SESSION_STATE:
         return luaH_webview_push_session_state(L, d);
-        return 1;
       case L_TK_STYLESHEETS:
         return luaH_webview_push_stylesheets_table(L);
 
