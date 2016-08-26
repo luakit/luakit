@@ -18,8 +18,8 @@ static GAsyncQueue *send_queue;
 
 typedef struct _queued_msg_t {
     msg_header_t header;
-    char payload[0];
     msg_endpoint_t *from;
+    char payload[0];
 } queued_msg_t;
 
 static void
@@ -173,7 +173,9 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *from, int type_mask)
         g_slice_free1(sizeof(queued_msg_t) + state->hdr.length, state->payload);
     } else {
         /* Copy the header into the space at the start of the payload slice */
-        memcpy(state->payload, &state->hdr, sizeof(queued_msg_t));
+        queued_msg_t *queued_msg = state->payload;
+        queued_msg->header = state->hdr;
+        queued_msg->from = from;
         g_ptr_array_add(state->queued_msgs, state->payload);
         g_idle_add((GSourceFunc)msg_dispatch_enqueued, from);
     }
