@@ -101,6 +101,7 @@ web_module_load_modules_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
         msg_send(ipc, &header, name);
         lua_pop(L, 1);
     }
+    lua_pop(L, 1);
 }
 
 void
