@@ -130,7 +130,7 @@ html_style = [===[
 function refresh_views()
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs.children) do
-            if string.match(v.uri, "^luakit://adblock/?") then
+            if string.match(v.uri or "", "^luakit://adblock/?") then
                 v:reload()
             end
         end
