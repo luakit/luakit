@@ -510,9 +510,9 @@ end)
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd({"adblock-reload", "abr"}, function (w)
-        info("adblock: Reloading filters.")
+        msg.info("adblock: Reloading filters.")
         load(true)
-        info("adblock: Reloading filters complete.")
+        msg.info("adblock: Reloading filters complete.")
     end),
     
     cmd({"adblock-list-enable", "able"}, function (w, a)
