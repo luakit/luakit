@@ -6,6 +6,7 @@ local pairs = pairs
 local ipairs = ipairs
 local lousy = require "lousy"
 local type = type
+local setmetatable = setmetatable
 
 module("error_page")
 
@@ -95,19 +96,26 @@ cert_style = [===[
     }
 ]===]
 
-local function styles(v, status) return false end
-local function scripts(v, status) return true end
-local function userscripts(v, status) return false end
+local function false_cb(v, status) return false end
+local function true_cb(v, status) return true end
+
+local view_finished = setmetatable({}, { __mode = "k" })
 
 -- Clean up only when error page has finished since sometimes multiple
 -- load-status provisional signals are dispatched
 local function on_finish(v, status)
     if status ~= "finished" then return end
 
+    -- Skip the appropriate number of signals
+    assert(type(view_finished[v]) == "number")
+    view_finished[v] = view_finished[v] - 1
+    if view_finished[v] > 0 then return end
+    view_finished[v] = nil
+
     -- Remove userscripts, stylesheet, javascript overrides
-    v:remove_signal("enable-styles", styles)
-    v:remove_signal("enable-scripts", scripts)
-    v:remove_signal("enable-userscripts", userscripts)
+    v:remove_signal("enable-styles", false_cb)
+    v:remove_signal("enable-scripts", true_cb)
+    v:remove_signal("enable-userscripts", false_cb)
     v:remove_signal("load-status", on_finish)
 
     -- Load the javascript for error page button callbacks
@@ -182,11 +190,12 @@ local function load_error_page(v, error_page_info)
         html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
     until nsub == 0
 
-    v:add_signal("enable-styles", styles)
-    v:add_signal("enable-scripts", scripts)
-    v:add_signal("enable-userscripts", userscripts)
+    v:add_signal("enable-styles", false_cb)
+    v:add_signal("enable-scripts", true_cb)
+    v:add_signal("enable-userscripts", false_cb)
+    view_finished[v] = v.is_loading and 2 or 1
     v:add_signal("load-status", on_finish)
-    v:load_string(html, v.uri)
+    v:load_string(html, error_page_info.uri)
 end
 
 local function get_cert_error_desc(cert_errors)
