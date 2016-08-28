@@ -164,12 +164,12 @@ funcs = {
         -- We are only interested in the first word
         if string.match(state.left, "%s") then return end
         -- Check each command binding for matches
-        local pat = "^" .. state.left
+        local pat = state.left
         local cmds = {}
         for _, b in ipairs(get_mode("command").binds) do
             if b.cmds then
                 for i, cmd in ipairs(b.cmds) do
-                    if string.match(cmd, pat) then
+                    if string.find(cmd, pat, 1, true) == 1 then
                         if i == 1 then
                             cmd = ":" .. cmd
                         else
