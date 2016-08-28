@@ -628,6 +628,9 @@ window.methods = {
             elseif type(arg) == "table" then
                 if arg.session_state then
                     v.session_state = arg.session_state
+                    if v.uri == "about:blank" and arg.uri then
+                        v.uri = arg.uri
+                    end
                 elseif arg.hist then
                     v.history = arg.hist
                 else
