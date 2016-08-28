@@ -623,7 +623,7 @@ window.methods = {
             if switch ~= false then w.tabs:switch(pos) end
         end
         -- Load uri or webview history table
-        view:add_signal("web-extension-loaded", function(v)
+        local function set_location (v)
             if type(arg) == "string" then v.uri = arg
             elseif type(arg) == "table" then
                 if arg.session_state then
@@ -637,7 +637,9 @@ window.methods = {
                     error("Tried to open new tab with invalid table")
                 end
             end
-        end)
+            view:remove_signal("web-extension-loaded", set_location)
+        end
+        view:add_signal("web-extension-loaded", set_location)
         -- Update statusbar widgets
         w:update_tab_count()
         return view
