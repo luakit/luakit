@@ -103,7 +103,7 @@ pattern_maker = pattern_styles.match_label_re_text
 ignore_case = true
 
 local function focus(w, step)
-    follow_wm:emit_signal("focus", w.win.id, step)
+    follow_wm:emit_signal(w.view, "focus", w.win.id, step)
 end
 
 local hit_nop = function () return true end
@@ -122,7 +122,7 @@ local function ignore_keys(w)
 end
 
 local function follow(w, all)
-    follow_wm:emit_signal("follow", w.win.id, all)
+    follow_wm:emit_signal(w.view, "follow", w.win.id, all)
 end
 
 local function follow_all_hints(w)
@@ -202,7 +202,7 @@ new_mode("follow", {
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
         mode.func = nil
-        follow_wm:emit_signal("enter", w.win.id, mode, w.view.id, ignore_case)
+        follow_wm:emit_signal(w.view, "enter", w.win.id, mode, w.view.id, ignore_case)
         mode.func = func
     end,
 
@@ -213,12 +213,12 @@ new_mode("follow", {
         local pattern_maker = mode.pattern_maker or _M.pattern_maker
         local hint_pat, text_pat = pattern_maker(text)
 
-        follow_wm:emit_signal("changed", w.win.id, hint_pat, text_pat, text)
+        follow_wm:emit_signal(w.view, "changed", w.win.id, hint_pat, text_pat, text)
     end,
 
     leave = function (w)
         w:set_ibar_theme()
-        follow_wm:emit_signal("leave", w.win.id)
+        follow_wm:emit_signal(w.view, "leave", w.win.id)
     end,
 })
 

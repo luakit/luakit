@@ -439,9 +439,9 @@ adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
     end
 end)
 
-adblock_wm:add_signal("loaded", function(_)
-    adblock_wm:emit_signal("update_rules", rules)
-end)
+webview.init_funcs.adblock_load = function (view, w)
+    adblock_wm:emit_signal(view, "update_rules", rules)
+end
 
 -- Add commands.
 local cmd = lousy.bind.cmd

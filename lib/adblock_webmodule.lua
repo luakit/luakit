@@ -11,8 +11,8 @@ local ui = ui_process()
 local enabled = true
 rules = {}
 
-ui:add_signal("enable", function(_, e) enabled = e end)
-ui:add_signal("update_rules", function(_, r) rules = r end)
+ui:add_signal("enable", function(_, _, e) enabled = e end)
+ui:add_signal("update_rules", function(_, _, r) rules = r end)
 
 local function domain_match(domain, opts)
     local res = false

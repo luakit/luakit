@@ -203,7 +203,7 @@ function init(w)
             form.action = form.action:gsub("\\", "")
         end
     end
-    formfiller_wm:emit_signal("init", w.formfiller_state)
+    formfiller_wm:emit_signal(w.view, "init", w.formfiller_state)
 end
 
 --- Edits the formfiller rules.
@@ -227,7 +227,7 @@ function add(w)
     end
 
     formfiller_wm:add_signal("add", add)
-    formfiller_wm:emit_signal("add", w.view.id)
+    formfiller_wm:emit_signal(w.view, "add", w.view.id)
 end
 
 -- Shows a menu with all forms that contain a profile if there is more than one.
@@ -275,7 +275,7 @@ function load(w, fast)
 
     formfiller_wm:add_signal("filtered", filtered)
     formfiller_wm:add_signal("finished", finished)
-    formfiller_wm:emit_signal("load", fast, w.view.id)
+    formfiller_wm:emit_signal(w.view, "load", fast, w.view.id)
 end
 
 -- Add formfiller mode
@@ -301,7 +301,7 @@ add_binds("formfiller", lousy.util.table.join({
             local row = w.menu:get()
             local form = row.form
             w:set_mode()
-            formfiller_wm:emit_signal("apply_form", form)
+            formfiller_wm:emit_signal(w.view, "apply_form", form)
         end),
 }, menu_binds))
 

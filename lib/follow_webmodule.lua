@@ -333,12 +333,12 @@ local function focus(state, step)
     state.focused = index
 end
 
-ui:add_signal("focus", function(_, wid, step)
+ui:add_signal("focus", function(_, page, wid, step)
     local state = window_states[wid]
     focus(state, step)
 end)
 
-local function leave(_, wid)
+local function leave(_, page, wid)
     local state = window_states[wid]
     for _, frame in ipairs(state.frames) do
         cleanup_frame(frame)
@@ -372,12 +372,12 @@ local function follow(state, all)
     ui:emit_signal("follow", state.wid)
 end
 
-ui:add_signal("follow", function(_, wid, all)
+ui:add_signal("follow", function(_, page, wid, all)
     local state = window_states[wid]
     follow(state, all)
 end)
 
-ui:add_signal("enter", function(_, wid, mode, page_id, ignore_case)
+ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
     local root = dom_document(page_id)
     local root_frame = { doc = root, body = root.body }
 
@@ -433,7 +433,7 @@ ui:add_signal("enter", function(_, wid, mode, page_id, ignore_case)
     window_states[wid] = state
 end)
 
-ui:add_signal("changed", function(_, wid, hint_pat, text_pat, text)
+ui:add_signal("changed", function(_, page, wid, hint_pat, text_pat, text)
     local state = window_states[wid]
     if state.ignore_case then
         local convert = function(pat)

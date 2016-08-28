@@ -227,7 +227,7 @@ local function add(page_id)
     ui:emit_signal("add", #str > 2 and table.concat(str) or false)
 end
 
-ui:add_signal("init", function(_, s) state = s end)
-ui:add_signal("load", function(_, f, page_id) load(f, page_id) end)
-ui:add_signal("apply_form", function(_, form) apply_form(form) end)
-ui:add_signal("add", function(_, page_id) add(page_id) end)
+ui:add_signal("init", function(_, _, s) state = s end)
+ui:add_signal("load", function(_, _, f, page_id) load(f, page_id) end)
+ui:add_signal("apply_form", function(_, _, form) apply_form(form) end)
+ui:add_signal("add", function(_, _, page_id) add(page_id) end)
