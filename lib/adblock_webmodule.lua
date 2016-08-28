@@ -33,7 +33,7 @@ local function domain_match(domain, opts)
     return cnt == 0 or res
 end
 
-local function third_party_match(page_domain, domain2, opts)
+local function third_party_match(domain1, domain2, opts)
     local thp = opts["third-party"]
     if thp ~= nil then
         if thp == true then return domain1 ~= domain2 end
