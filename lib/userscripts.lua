@@ -116,7 +116,8 @@ local gm_functions = [=[
       var oStyle = document.createElement("style");
       oStyle.setAttribute("type", "text\/css");
       oStyle.appendChild(document.createTextNode(styles));
-      document.getElementsByTagName("head")[0].appendChild(oStyle);
+      var parent = document.getElementsByTagName("head")[0] || document.getElementsByTagName("body")[0];
+      parent.appendChild(oStyle);
     }
   }
 
