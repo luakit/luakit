@@ -392,6 +392,7 @@ end
 -- @param file The destination file or the default location if nil.
 function write_subscriptions(file)
     if not file then file = subscriptions_file end
+    assert(file and file ~= "", "Cannot write subscriptions to empty path")
 
     local lines = {}
     for _, list in pairs(subscriptions) do
@@ -411,7 +412,7 @@ end
 function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end
-    if not os.exists(file) then return end
+    assert(os.exists(file), "Cannot read subscriptions from non-existent file")
 
     -- Read lines into subscriptions data table
     for line in io.lines(file) do
