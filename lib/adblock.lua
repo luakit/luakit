@@ -55,10 +55,6 @@ subscriptions = {}
 -- String patterns to filter URI's with
 rules = {}
 
--- Functions to filter URI's by
--- Return true or false to allow or block respectively, nil to continue matching
-local filterfuncs = {}
-
 -- Fitting for adblock.chrome.refresh_views()
 refresh_views = function()
     -- Dummy.
