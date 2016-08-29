@@ -286,7 +286,7 @@ load = function (reload, single_list, no_sync)
             if list and util.table.hasitem(list.opts, "Enabled") then
                 table.insert(files_list, filename)
             else
-                add_list("", filename, "Disabled", true, false)
+                add_list(list.uri or "", filename, "Disabled", true, false)
             end
         end
         filterfiles = files_list
