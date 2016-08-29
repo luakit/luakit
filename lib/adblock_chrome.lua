@@ -53,7 +53,6 @@ html_template = [==[
         <header id="page-header">
             <h1>AdBlock</h1>
             <span class=state_{state}>{state}</span>
-            <span>AdBlock is in {mode} mode.</span>
             <span>B: {black} / W: {white} / I: {ignored}</span>
             <div class="rhs">{toggle}</div>
         </header>
@@ -194,7 +193,6 @@ chrome.add("adblock", function (view, meta)
         title  = html_page_title,
         style  = chrome.stylesheet .. html_style,
         state = adblock.state(),
-        mode  = adblock.mode(),
         white   = rulescount.white,
         black   = rulescount.black,
         ignored = rulescount.ignored,
