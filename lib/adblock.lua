@@ -370,8 +370,8 @@ function add_list(uri, title, opts, replace, save_lists)
     -- Create tags table from string
     if type(opts) == "string" then opts = util.string.split(opts) end
     if table.maxn(opts) == 0 then table.insert(opts, "Disabled") end
-    if not replace and ( subscriptions[title] or subscriptions[uri] ) then
-        local list = subscriptions[title] or subscriptions[uri]
+    if not replace and subscriptions[title] then
+        local list = subscriptions[title]
         -- Merge tags
         for _, opts in ipairs(opts) do
             if not util.table.hasitem(list, opts) then table.insert(list, opts) end
@@ -379,9 +379,6 @@ function add_list(uri, title, opts, replace, save_lists)
     else
         -- Insert new adblock list
         local list = { uri = uri, title = title, opts = opts }
-        if not (uri == "" or uri == nil) then
-            subscriptions[uri] = list
-        end
         if not (title == "" or title == nil) then
             subscriptions[title] = list
         end
@@ -397,14 +394,10 @@ function write_subscriptions(file)
     if not file then file = subscriptions_file end
 
     local lines = {}
-    local added = {}
     for _, list in pairs(subscriptions) do
-        if not util.table.hasitem(added, list) then
-            local subs = { uri = list.uri, title = list.title, opts = table.concat(list.opts or {}, " "), }
-            local line = string.gsub("{title}\t{uri}\t{opts}", "{(%w+)}", subs)
-            table.insert(added, list)
-            table.insert(lines, line)
-        end
+        local subs = { uri = list.uri, title = list.title, opts = table.concat(list.opts or {}, " "), }
+        local line = string.gsub("{title}\t{uri}\t{opts}", "{(%w+)}", subs)
+        table.insert(lines, line)
     end
 
     -- Write table to disk
