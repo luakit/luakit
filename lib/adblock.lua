@@ -278,9 +278,7 @@ parse_abpfilterlist = function (filename, cache)
     else
         msg.warn("adblock: error loading filter list (%s: No such file or directory)", filename)
     end
-    --***
-    --local f = io.open(filename .. "~", "w")
-    --***
+
     local pat, opts
     local white, black = list_new(), list_new()
     for line in io.lines(filename) do
@@ -298,9 +296,6 @@ parse_abpfilterlist = function (filename, cache)
     end
 
     local wlen, blen, icnt = white.length, black.length, white.ignored + black.ignored
-    --***
-    --f:close()
-    --***
 
     return white, black, wlen, blen, icnt
 end
@@ -347,11 +342,8 @@ load = function (reload, single_list, no_sync)
         local list = {}
         if not simple_mode then
             list = subscriptions[filename]
-        else
-            local list_found = rules[filename]
-            if list_found then
-                list = list_found
-            end
+        elseif rules[filename] then
+            list = rules[filename]
         end
         if not util.table.hasitem(rules, list) then
             rules[filename] = list
