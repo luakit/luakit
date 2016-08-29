@@ -285,10 +285,10 @@ parse_abpfilterlist = function (filename, cache)
     local white, black = list_new(), list_new()
     for line in io.lines(filename) do
         -- Ignore comments, header and blank lines
-        if line:match("^[![]") or line:match("^$") then
+        if line:match("^[![]") or line:match("^$") or line:match("^# ") or line:match("^#$") then
             -- dammitwhydoesntluahaveacontinuestatement
         -- Ignore element hiding
-        elseif line:match("#") then
+        elseif line:match("##") or line:match("#@#") then
             --icnt = icnt + 1
         elseif line:match("^@@") then
             list_add(white, string.sub(line, 3), cache.white)
