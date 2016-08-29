@@ -414,7 +414,7 @@ function read_subscriptions(file)
     if not os.exists(file) then return end
 
     -- Read lines into subscriptions data table
-    for line in io.lines(file or subscriptions_file) do
+    for line in io.lines(file) do
         local title, uri, opts = unpack(util.string.split(line, "\t"))
         if title ~= "" then add_list(uri, title, opts, false, false) end
     end
