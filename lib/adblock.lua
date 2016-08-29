@@ -7,9 +7,10 @@
 -- Mason Larobina taken by Plaque FCC.                                --
 --                                                                    --
 -- Download an Adblock Plus compatible filter lists to luakit data    --
--- dir into "/adblock/" directory for multiple lists support or into  --
--- data dir root to use single file. EasyList is the most popular     --
--- Adblock Plus filter list: http://easylist.adblockplus.org/         --
+-- dir into "/adblock/" directory. Multiple lists are supported.      --
+-- EasyList is the most popular Adblock Plus filter list, and can be  --
+-- downloaded from http://easylist.adblockplus.org/                   --
+--                                                                    --
 -- Filterlists need to be updated regularly (~weekly), use cron!      --
 ------------------------------------------------------------------------
 
@@ -46,7 +47,6 @@ local enabled = true
 local adblock_dir = capi.luakit.data_dir .. "/adblock/"
 
 local filterfiles = {}
-local simple_mode = true
 local subscriptions_file = adblock_dir .. "/subscriptions"
 subscriptions = {}
 
@@ -85,42 +85,25 @@ state = function()
     end
 end
 
-mode = function()
-    if simple_mode then
-        return "simple"
-    else
-        return "normal"
-    end
-end
-
 -- Detect files to read rules from
 function detect_files()
+    -- Create adblock directory if it doesn't exist
     local curdir = lfs.currentdir()
-    -- Try to find subscriptions directory:
     if not lfs.chdir(adblock_dir) then
         lfs.mkdir(adblock_dir)
     else
-        simple_mode = false
-        -- Look for filters lists:
         lfs.chdir(curdir)
-        for filename in lfs.dir(adblock_dir) do
-            if string.find(filename, ".txt$") then
-                msg.verbose("adblock: Found adblock list: " .. filename)
-                table.insert(filterfiles, filename)
-            end
+    end
+
+    -- Look for filters lists:
+    for filename in lfs.dir(adblock_dir) do
+        if string.find(filename, "%.txt$") then
+            msg.verbose("adblock: Found adblock list: " .. filename)
+            table.insert(filterfiles, filename)
         end
     end
     
-    if table.maxn(filterfiles) < 1 then
-        simple_mode = true
-        filterfiles = { "/easylist.txt" }
-    end
-    
-    if not simple_mode then
-        msg.info( "adblock: Found " .. table.maxn(filterfiles) .. " rules lists." )
-    end
-    
-    return
+    msg.info("adblock: Found " .. #filterfiles .. " rules lists")
 end
 
 local function get_abp_opts(s)
@@ -304,7 +287,7 @@ end
 load = function (reload, single_list, no_sync)
     if reload then subscriptions, filterfiles = {}, {} end
     detect_files()
-    if not simple_mode and not single_list then
+    if not single_list then
         read_subscriptions()
         local files_list = {}
         for _, filename in ipairs(filterfiles) do
@@ -323,9 +306,6 @@ load = function (reload, single_list, no_sync)
     -- [re-]loading:
     if reload then rules = {} end
     local filters_dir = adblock_dir
-    if simple_mode then
-        filters_dir = capi.luakit.data_dir
-    end
     local filterfiles_loading = {}
     if single_list and not reload then
         filterfiles_loading = { single_list }
@@ -339,12 +319,7 @@ load = function (reload, single_list, no_sync)
     
     for _, filename in ipairs(filterfiles_loading) do
         local white, black, wlen, blen, icnt = parse_abpfilterlist(filters_dir .. filename, rules_cache)
-        local list = {}
-        if not simple_mode then
-            list = subscriptions[filename]
-        elseif rules[filename] then
-            list = rules[filename]
-        end
+        local list = subscriptions[filename]
         if not util.table.hasitem(rules, list) then
             rules[filename] = list
         end
@@ -375,7 +350,6 @@ end
 -- @param opt_ex Options to exclude
 -- @param opt_inc Options to include
 function list_opts_modify(list_index, opt_ex, opt_inc)
-    assert( simple_mode == false, "adblock list management: not supported in simple mode" )
     assert(type(list_index) == "number", "list options modify: invalid list index")
     assert(list_index > 0, "list options modify: index has to be > 0")
     if not opt_ex then opt_ex = {} end
