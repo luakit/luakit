@@ -477,12 +477,13 @@ add_cmds({
     cmd({"adblock-list-disable", "abld"}, function (w, a)
         list_set_enabled(a, false)
     end),
+
     cmd({"adblock-enable", "abe"}, function (w)
-    enable()
+        enable()
     end),
     
     cmd({"adblock-disable", "abd"}, function (w)
-    disable()
+        disable()
     end),
 })
 
