@@ -29,7 +29,6 @@ local tonumber  = tonumber
 local webview   = webview
 local lousy     = require("lousy")
 local util      = lousy.util
-local chrome    = require("chrome")
 local capi      = { luakit = luakit }
 local add_binds, add_cmds = add_binds, add_cmds
 local lfs       = require("lfs")
