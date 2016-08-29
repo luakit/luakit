@@ -72,12 +72,8 @@ disable = function ()
 end
 
 -- Report AdBlock state: «Enabled» or «Disabled»
-state = function()
-    if enabled then
-        return "Enabled"
-    else
-        return "Disabled"
-    end
+state = function ()
+    return enabled and "Enabled" or "Disabled"
 end
 
 -- Detect files to read rules from
