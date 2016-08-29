@@ -335,16 +335,6 @@ load = function (reload, single_list, no_sync)
     refresh_views()
 end
 
-function table.itemid(t, item)
-    local pos = 0
-    for id, v in pairs(t) do
-        pos = pos + 1
-        if v == item then
-            return pos
-        end
-    end
-end
-
 -- Remove options and add new ones to list
 -- @param list_index Index of the list to modify
 -- @param opt_ex Options to exclude
@@ -367,9 +357,8 @@ function list_opts_modify(list_index, opt_ex, opt_inc)
     end
     
     -- Manage list's rules
-    local listIDfound = table.itemid(rules, list)
     if util.table.hasitem(opt_inc, "Enabled") then
-        if not listIDfound then
+        if not lousy.util.table.hasitem(rules, list) then
             load(false, list.title)
         end
     elseif util.table.hasitem(opt_inc, "Disabled") then
