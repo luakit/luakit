@@ -424,10 +424,7 @@ end
 
 --- Load subscriptions from a flatfile to memory.
 -- @param file The subscriptions file or the default subscriptions location if nil.
--- @param clear_first Should the subscriptions in memory be dumped before loading.
-function read_subscriptions(file, clear_first)
-    if clear_first then clear() end
-
+function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end
     if not os.exists(file) then return end
