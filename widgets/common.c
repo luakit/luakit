@@ -288,6 +288,19 @@ luaH_widget_get_tooltip(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_parent(lua_State *L, widget_t *w)
+{
+    GtkWidget *widget = gtk_widget_get_parent(GTK_WIDGET(w->widget));
+
+    if (!widget)
+        return 0;
+
+    widget_t *parent = GOBJECT_TO_LUAKIT_WIDGET(widget);
+    luaH_object_push(L, parent->ref);
+    return 1;
+}
+
+gint
 luaH_widget_get_focused(lua_State *L, widget_t *w)
 {
     gboolean focused = w->info->tok == L_TK_WINDOW ?
