@@ -33,8 +33,11 @@ typedef struct {
     widget_t *widget;
     /** The webview widget */
     WebKitWebView *view;
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     /** The GtkScrolledWindow for the webview widget */
     GtkScrolledWindow *win;
+#endif
     /** Current webview uri */
     gchar *uri;
     /** Currently hovered uri */
@@ -596,7 +599,11 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 static gboolean
+#if GTK_CHECK_VERSION(3,0,0)
+expose_cb(GtkWidget* UNUSED(widget), cairo_t* UNUSED(cr), widget_t *w)
+#else
 expose_cb(GtkWidget* UNUSED(widget), GdkEventExpose* UNUSED(e), widget_t *w)
+#endif
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
@@ -803,7 +810,10 @@ webview_destructor(widget_t *w)
 
     g_ptr_array_remove(globalconf.webviews, w);
     gtk_widget_destroy(GTK_WIDGET(d->view));
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     gtk_widget_destroy(GTK_WIDGET(d->win));
+#endif
     g_hash_table_remove(frames_by_view, d->view);
     g_free(d->uri);
     g_free(d->hover);
@@ -848,11 +858,25 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->view = WEBKIT_WEB_VIEW(webkit_web_view_new());
     d->inspector = webkit_web_view_get_inspector(d->view);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    /* We do not neet create scrolled window, due to scrollability of
+     * WebKitWebView */
+    w->widget = GTK_WIDGET(d->view);
+#else
     d->win = GTK_SCROLLED_WINDOW(gtk_scrolled_window_new(NULL, NULL));
     w->widget = GTK_WIDGET(d->win);
+#endif
 
+#if GTK_CHECK_VERSION(3,0,0)
+    // with GTK_POLICY_NEVER webview allocates size of whole content
+    // we'll use GTK_POLICY_AUTOMATIC everywhere. We can hide scrollbars by using css
+    // gtk_scrolled_window_set_policy(d->win, GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
+#endif
+
+#if GTK_CHECK_VERSION(3,0,0)
     /* add webview to scrolled window */
     gtk_container_add(GTK_CONTAINER(d->win), GTK_WIDGET(d->view));
+#endif
 
     /* set initial scrollbars state */
     show_scrollbars(d, TRUE);
@@ -871,7 +895,11 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::create-web-view",                      G_CALLBACK(create_web_view_cb),           w,
       "signal::document-load-finished",               G_CALLBACK(document_load_finished_cb),    w,
       "signal::download-requested",                   G_CALLBACK(download_request_cb),          w,
+#if GTK_CHECK_VERSION(3,0,0)
+      "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
+#else
       "signal::expose-event",                         G_CALLBACK(expose_cb),                    w,
+#endif
       "signal::hovering-over-link",                   G_CALLBACK(link_hover_cb),                w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
       "signal::mime-type-policy-decision-requested",  G_CALLBACK(mime_type_decision_cb),        w,
@@ -883,12 +911,15 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
-      NULL);
+     NULL);
 
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     g_object_connect(G_OBJECT(d->win),
       "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
       "signal::focus-in-event",                       G_CALLBACK(swin_focus_cb),                w,
       NULL);
+#endif
 
     g_object_connect(G_OBJECT(d->inspector),
       "signal::inspect-web-view",                     G_CALLBACK(inspect_webview_cb),           w,
@@ -900,7 +931,10 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     /* show widgets */
     gtk_widget_show(GTK_WIDGET(d->view));
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     gtk_widget_show(GTK_WIDGET(d->win));
+#endif
 
     return w;
 }

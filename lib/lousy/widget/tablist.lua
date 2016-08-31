@@ -95,6 +95,7 @@ function new()
         destroy = destroy,
     }
 
+    tlist.widget.homogeneous = true
     -- Save private widget data
     data[tlist] = { labels = {}, }
 

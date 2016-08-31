@@ -119,8 +119,13 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
     if (value)
         gtk_entry_set_text(GTK_ENTRY(entry), value);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_grid_attach(GTK_GRID(table), label, 0, 1, row, row + 1);
+    gtk_grid_attach(GTK_GRID(table), entry, 1, 2, row, row + 1);
+#else
     gtk_table_attach(GTK_TABLE(table), label, 0, 1, row, row + 1, GTK_FILL, GTK_EXPAND | GTK_FILL, 0, 0);
     gtk_table_attach_defaults(GTK_TABLE(table), entry, 1, 2, row, row + 1);
+#endif
 
     return entry;
 }
@@ -138,11 +143,15 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
        NULL);
 
     /* set dialog properties */
+#if GTK_CHECK_VERSION(3,0,0)
+#else
     gtk_dialog_set_has_separator(dialog, FALSE);
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
-    gtk_box_set_spacing(GTK_BOX(dialog->vbox), 2);
-    gtk_container_set_border_width(GTK_CONTAINER(dialog->action_area), 5);
-    gtk_box_set_spacing(GTK_BOX(dialog->action_area), 6);
+    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
+    gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
+    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_action_area(dialog)), 6);
+
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
     gtk_window_set_icon_name(window, GTK_STOCK_DIALOG_AUTHENTICATION);
@@ -150,16 +159,24 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
 
     /* build contents */
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *hbox = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 12);
+#else
     GtkWidget *hbox = gtk_hbox_new(FALSE, 12);
+#endif
     gtk_container_set_border_width(GTK_CONTAINER(hbox), 5);
-    gtk_box_pack_start(GTK_BOX(dialog->vbox), hbox, TRUE, TRUE, 0);
+    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
 
     GtkWidget *icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
 
     gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
     gtk_box_pack_start(GTK_BOX(hbox), icon, FALSE, FALSE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *main_vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 18);
+#else
     GtkWidget *main_vbox = gtk_vbox_new(FALSE, 18);
+#endif
     gtk_box_pack_start(GTK_BOX(hbox), main_vbox, TRUE, TRUE, 0);
 
     SoupURI *uri = soup_message_get_uri(auth_data->msg);
@@ -170,7 +187,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
     gtk_box_pack_start(GTK_BOX(main_vbox), GTK_WIDGET(msg_label), FALSE, FALSE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *vbox = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+#else
     GtkWidget *vbox = gtk_vbox_new(FALSE, 6);
+#endif
     gtk_box_pack_start(GTK_BOX(main_vbox), vbox, FALSE, FALSE, 0);
 
     /* the table that holds the entries */
@@ -180,9 +201,15 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     gtk_box_pack_start(GTK_BOX(vbox), entry_container, FALSE, FALSE, 0);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *table = gtk_grid_new();
+    gtk_grid_set_column_spacing(GTK_GRID(table), 12);
+    gtk_grid_set_row_spacing(GTK_GRID(table), 6);
+#else
     GtkWidget *table = gtk_table_new(2, 2, FALSE);
     gtk_table_set_col_spacings(GTK_TABLE(table), 12);
     gtk_table_set_row_spacings(GTK_TABLE(table), 6);
+#endif
     gtk_container_add(GTK_CONTAINER(entry_container), table);
 
     auth_data->login_entry = table_add_entry(table, 0, "Username:", login, NULL);
@@ -190,7 +217,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     gtk_entry_set_visibility(GTK_ENTRY(auth_data->password_entry), FALSE);
 
+#if GTK_CHECK_VERSION(3,0,0)
+    GtkWidget *remember_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 6);
+#else
     GtkWidget *remember_box = gtk_vbox_new(FALSE, 6);
+#endif
     gtk_box_pack_start(GTK_BOX(vbox), remember_box,
                         FALSE, FALSE, 0);
 

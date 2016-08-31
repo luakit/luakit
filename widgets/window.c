@@ -41,7 +41,7 @@ luaH_checkwindow(lua_State *L, gint udx)
 #define luaH_checkwindata(L, udx) ((window_data_t*)(luaH_checkwindow(L, udx)->data))
 
 static void
-destroy_cb(GtkObject* UNUSED(win), widget_t *w)
+destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
 {
     /* remove window from global windows list */
     g_ptr_array_remove(globalconf.windows, w);
@@ -85,7 +85,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
-      PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
+      PI_CASE(XID, GDK_WINDOW_XID(gtk_widget_get_window(GTK_WIDGET(d->win))))
 
       case L_TK_SCREEN:
         lua_pushlightuserdata(L, gtk_window_get_screen(d->win));
@@ -193,6 +193,9 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     gtk_window_set_wmclass(d->win, "luakit", "luakit");
     gtk_window_set_default_size(d->win, 800, 600);
     gtk_window_set_title(d->win, "luakit");
+#if GTK_CHECK_VERSION(3,0,0)
+    gtk_window_set_has_resize_grip(d->win, FALSE);
+#endif
 
     GdkGeometry hints;
     hints.min_width = 1;

@@ -1,0 +1,12 @@
+post_install() {
+  
+echo -e "\n Configs are located in /etc/xdg/luakit/*.lua  \n Copy to ~/.config/luakit/ (this folder is created on 1st start of Luakit) for local config. \n Or edit in place for global changes. \n There are now SEVERAL files.. not just the one rc.lua \n \n If you want to link against the Just-In-Time compiler you can build using  'USE_LUAJIT=1 makepkg' Or add 'USE_LUAJIT=1' to the  makeopts variable line in PKGBUILD. \n \n See also PKGBUILD comments for use case"
+
+}
+ 
+post_upgrade() {  
+echo -e "\n Configs are located in /etc/xdg/luakit/*.lua  \n Copy to ~/.config/luakit/ (this folder is created on 1st start of Luakit) for local config. \n Or edit in place for global changes. \n There are now SEVERAL files.. not just the one rc.lua \n \n If you want to link against the Just-In-Time compiler you can build using  'USE_LUAJIT=1 makepkg' Or add 'USE_LUAJIT=1' to the  makeopts variable line in PKGBUILD. \n \n See also PKGBUILD comments for use case"
+
+}
+
+# vim:set ts=2 sw=2 et:
