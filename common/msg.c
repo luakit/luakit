@@ -82,8 +82,8 @@ void
 msg_send(const msg_header_t *header, const void *data)
 {
     if (!send_thread) {
-        send_thread = g_thread_new("send_thread", msg_send_thread, NULL);
         send_queue = g_async_queue_new();
+        send_thread = g_thread_new("send_thread", msg_send_thread, NULL);
     }
 
     if (header->type != MSG_TYPE_log)
