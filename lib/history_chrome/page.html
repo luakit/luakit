@@ -1,0 +1,34 @@
+<!doctype html>
+<html>
+<head>
+    <meta charset="utf-8">
+    <title>History</title>
+    <style type="text/css">
+        {%stylesheet}
+    </style>
+</head>
+<body>
+    <header id="page-header">
+        <span id="search-box">
+            <input type="text" id="search" placeholder="Search history..." />
+            <input type="button" id="clear-button" value="X" />
+        </span>
+        <input type="button" id="search-button" class="button" value="Search" />
+        <div class="rhs">
+            <input type="button" class="button" disabled id="clear-selected-button" value="Clear selected" />
+            <input type="button" class="button" disabled id="clear-results-button" value="Clear results" />
+            <input type="button" class="button" id="clear-all-button" value="Clear all" />
+        </div>
+    </header>
+
+    <div id="results" class="content-margin"></div>
+
+    <div class="nav-button-box">
+        <a id="nav-prev">prev</a>
+        <a id="nav-next">next</a>
+    </div>
+
+    <div id="templates" class="hidden">
+        {%itemSkelly}
+    </div>
+</body>
