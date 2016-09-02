@@ -1,6 +1,6 @@
 # Luakit
 
-luakit is a fast, light and simple to use micro-browser framework exensible
+luakit is a fast, light and simple to use micro-browser framework extensible
 by Lua using the WebKit web content engine and the GTK+ toolkit.
 
 ## Dont Panic!
