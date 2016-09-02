@@ -128,6 +128,7 @@ luaH_checkwebview(lua_State *L, gint udx)
 #include "widgets/webview/javascript.c"
 #include "widgets/webview/frames.c"
 #include "widgets/webview/downloads.c"
+#include "widgets/webview/filechooser.c"
 #include "widgets/webview/history.c"
 #include "widgets/webview/scroll.c"
 #include "widgets/webview/inspector.c"
@@ -883,6 +884,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::resource-request-starting",            G_CALLBACK(resource_request_starting_cb), w,
       "signal::scroll-event",                         G_CALLBACK(scroll_event_cb),              w,
       "signal::size-request",                         G_CALLBACK(size_request_cb),              w,
+      "signal::run-file-chooser",                     G_CALLBACK(run_file_chooser_request_cb),  w,
       NULL);
 
     g_object_connect(G_OBJECT(d->win),
