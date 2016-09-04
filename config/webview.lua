@@ -345,6 +345,15 @@ function webview.new(w)
     return view
 end
 
+function webview.window(view)
+    assert(type(view) == "widget" and view.type == "webview")
+    local w = view
+    repeat
+        w = w.parent
+    until w == nil or w.type == "window"
+    return window.bywidget[w]
+end
+
 -- Insert webview method lookup on window structure
 table.insert(window.indexes, 1, function (w, k)
     if k == "view" then
