@@ -1,5 +1,7 @@
 #include "clib/stylesheet.h"
 
+static gboolean inside_stylesheet_cb = FALSE;
+
 void
 webview_stylesheets_regenerate_stylesheet(widget_t *w, lstylesheet_t *stylesheet) {
     webview_data_t *d = w->data;
@@ -28,6 +30,9 @@ webview_stylesheets_regenerate(widget_t *w) {
             lstylesheet_t *stylesheet = l->data;
             webkit_user_content_manager_add_style_sheet(d->user_content, stylesheet->stylesheet);
         }
+
+        d->stylesheet_added   = FALSE;
+        d->stylesheet_removed = FALSE;
     }
 }
 
@@ -48,6 +53,9 @@ webview_stylesheet_set_enabled(widget_t *w, lstylesheet_t *stylesheet, gboolean 
         d->stylesheets = g_list_remove_link(d->stylesheets, item);
         d->stylesheet_removed = TRUE;
     }
+
+    if (!inside_stylesheet_cb)
+        webview_stylesheets_regenerate(w);
 
     return 0;
 }
@@ -105,9 +113,11 @@ webview_update_stylesheets(lua_State *L, widget_t *w)
     d->stylesheet_added   = FALSE;
     d->stylesheet_removed = FALSE;
 
+    inside_stylesheet_cb = TRUE;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "stylesheet", 0, 0);
     lua_pop(L, 1);
+    inside_stylesheet_cb = FALSE;
 
     webview_stylesheets_regenerate(w);
 }
