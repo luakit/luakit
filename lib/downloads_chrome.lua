@@ -319,7 +319,8 @@ local export_funcs = {
         local d, data = downloads.get(id)
         local dirname = string.gsub(d.destination, "(.*/)(.*)", "%1")
         if downloads.emit_signal("open-file", dirname, "inode/directory") ~= true then
-            error("Couldn't show download directory (no inode/directory handler)")
+            local w = webview.window(view)
+            w:error("Couldn't show download directory (no inode/directory handler)")
         end
     end,
 
