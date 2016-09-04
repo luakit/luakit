@@ -323,11 +323,11 @@ local export_funcs = {
         end
     end,
 
-    download_cancel = downloads.cancel,
-    download_restart = downloads.restart,
-    download_open = downloads.open,
-    download_remove = downloads.remove,
-    downloads_clear = downloads.clear,
+    download_cancel  = function (_, id) return downloads.cancel(id) end,
+    download_restart = function (_, id) return downloads.restart(id) end,
+    download_open    = function (_, id) return downloads.open(id) end,
+    download_remove  = function (_, id) return downloads.remove(id) end,
+    downloads_clear  = function (_, id) return downloads.clear(id) end,
 }
 
 downloads.add_signal("status-tick", function (running)
