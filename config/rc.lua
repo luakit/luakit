@@ -101,13 +101,13 @@ require "downloads"
 require "downloads_chrome"
 
 -- Add automatic PDF downloading and opening
--- require "viewpdf"
+require "viewpdf"
 
 -- Example using xdg-open for opening downloads / showing download folders
---downloads.add_signal("open-file", function (file, mime)
---    luakit.spawn(string.format("xdg-open %q", file))
---    return true
---end)
+downloads.add_signal("open-file", function (file, mime)
+    luakit.spawn(string.format("xdg-open %q", file))
+    return true
+end)
 
 -- Add vimperator-like link hinting & following
 require "follow"
