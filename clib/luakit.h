@@ -21,6 +21,8 @@
 #ifndef LUAKIT_CLIB_LUAKIT_H
 #define LUAKIT_CLIB_LUAKIT_H
 
+#include "common/luaclass.h"
+
 /* lua luakit class for signals */
 lua_class_t luakit_class;
 

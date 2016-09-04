@@ -18,16 +18,16 @@
  *
  */
 
-#include "common/signal.h"
-#include "common/msg.h"
-#include "common/luaserialize.h"
-#include "clib/widget.h"
 #include "clib/luakit.h"
+#include "clib/widget.h"
+#include "common/luaserialize.h"
+#include "common/msg.h"
+#include "common/signal.h"
 #include "luah.h"
 
-#include <stdlib.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <time.h>
 #include <webkit2/webkit2.h>
@@ -35,7 +35,7 @@
 /* setup luakit module signals */
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
-GtkClipboard*
+GtkClipboard *
 luaH_clipboard_get(lua_State *L, gint idx)
 {
 #define CB_CASE(t) case L_TK_##t: return gtk_clipboard_get(GDK_SELECTION_##t);
@@ -270,9 +270,9 @@ luaH_luakit_spawn_sync(lua_State *L)
 
     /* Note: we have to temporarily clear the SIGCHLD handler. Otherwise
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
-    sigact.sa_handler=SIG_DFL;
-    sigemptyset (&sigact.sa_mask);
-    sigact.sa_flags=0;
+    sigact.sa_handler = SIG_DFL;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = 0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
 
@@ -283,7 +283,7 @@ luaH_luakit_spawn_sync(lua_State *L)
         fatal("Can't restore SIGCHLD handler");
 
     /* raise error on spawn function error */
-    if(e) {
+    if (e) {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
@@ -305,7 +305,8 @@ luaH_luakit_spawn_sync(lua_State *L)
  * Exit number: When normal exit happened, the exit code of the process. When
  *              finished by a signal, the signal number. -1 otherwise.
  */
-void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
+void
+async_callback_handler(GPid pid, gint status, gpointer cb_ref)
 {
     g_spawn_close_pid(pid);
     if (!cb_ref)
@@ -391,9 +392,8 @@ luaH_luakit_spawn(lua_State *L)
         goto spawn_error;
 
     /* spawn command */
-    if (!g_spawn_async(NULL, argv, NULL,
-            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
-            &e))
+    if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
+            NULL, &pid, &e))
         goto spawn_error;
 
     /* call Lua callback (if present), and free GLib resources */
@@ -455,7 +455,7 @@ luaH_luakit_push_options_table(lua_State *L)
     lua_newtable(L);
     for (guint i = 0; i < globalconf.argv->len; ++i) {
         lua_pushstring(L, g_ptr_array_index(globalconf.argv, i));
-        lua_rawseti(L, -2, i+1);
+        lua_rawseti(L, -2, i + 1);
     }
     return 1;
 }
@@ -468,14 +468,14 @@ luaH_luakit_push_options_table(lua_State *L)
 static gint
 luaH_luakit_index(lua_State *L)
 {
-    if(luaH_usemetatable(L, 1, 2))
+    if (luaH_usemetatable(L, 1, 2))
         return 1;
 
     widget_t *w;
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    switch(token) {
+    switch (token) {
 
       /* push string properties */
       PS_CASE(CACHE_DIR,        globalconf.cache_dir)
@@ -496,7 +496,7 @@ luaH_luakit_index(lua_State *L)
         for (guint i = 0; i < globalconf.windows->len; i++) {
             w = globalconf.windows->pdata[i];
             luaH_object_push(L, w->ref);
-            lua_rawseti(L, -2, i+1);
+            lua_rawseti(L, -2, i + 1);
         }
         return 1;
 
@@ -542,7 +542,7 @@ luaH_luakit_index(lua_State *L)
  * \return   The number of elements pushed on stack.
  */
 static gint
-luaH_luakit_quit(lua_State* UNUSED(L))
+luaH_luakit_quit(lua_State *UNUSED(L))
 {
     if (gtk_main_level())
         gtk_main_quit();
