@@ -307,6 +307,10 @@ luaH_luakit_spawn_sync(lua_State *L)
  */
 void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
 {
+    g_spawn_close_pid(pid);
+    if (!cb_ref)
+        return;
+
     lua_State *L = globalconf.L;
     /* push callback function onto stack */
     luaH_object_push(L, cb_ref);
@@ -329,7 +333,6 @@ void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
     }
 
     luaH_object_unref(L, cb_ref);
-    g_spawn_close_pid(pid);
 }
 
 /** Executes a child program asynchronously (your program will not block waiting
@@ -393,9 +396,8 @@ luaH_luakit_spawn(lua_State *L)
             &e))
         goto spawn_error;
 
-    /* attach users Lua callback */
-    if (cb_ref)
-        g_child_watch_add(pid, async_callback_handler, cb_ref);
+    /* call Lua callback (if present), and free GLib resources */
+    g_child_watch_add(pid, async_callback_handler, cb_ref);
 
     g_strfreev(argv);
     lua_pushnumber(L, pid);
