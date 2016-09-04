@@ -671,9 +671,6 @@ add_cmds({
     cmd("q[uit]", "Close the current window.",
         function (w, a, o) w:close_win(o.bang) end),
 
-    cmd({"viewsource", "vs"}, "View the source code of the current document.",
-        function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
-
     cmd({"wqall", "wq"}, "Save the session and quit.",
         function (w, a, o) w:save_session() w:close_win(o.bang) end),
 
@@ -708,7 +705,7 @@ add_cmds({
             end
         end),
 
-    cmd("view-source", "Show current tab's source",
+    cmd({"view-source", "vs"}, "View the source code of the current document.",
         function (w)
             local v = w.view
             local source = lousy.util.escape(v.source or "")
