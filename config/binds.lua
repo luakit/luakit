@@ -566,13 +566,15 @@ readline_bindings = {
 add_binds({"command", "search"}, readline_bindings)
 
 -- Switching tabs with Mod1+{1,2,3,...}
-mod1binds = {}
-for i=1,10 do
-    table.insert(mod1binds,
-        key({"Mod1"}, tostring(i % 10), "Jump to tab at index "..i..".",
-            function (w) w.tabs:switch(i) end))
+do
+    mod1binds = {}
+    for i=1,10 do
+        table.insert(mod1binds,
+            key({"Mod1"}, tostring(i % 10), "Jump to tab at index "..i..".",
+                function (w) w.tabs:switch(i) end))
+    end
+    add_binds("normal", mod1binds)
 end
-add_binds("normal", mod1binds)
 
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
