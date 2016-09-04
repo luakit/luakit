@@ -18,19 +18,19 @@
  *
  */
 
-#include "globalconf.h"
 #include "common/util.h"
+#include "globalconf.h"
 #include "luah.h"
 #include "msg.h"
 #include "web_context.h"
 
+#include <errno.h>
 #include <gtk/gtk.h>
+#include <locale.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <errno.h>
-#include <locale.h>
 #include <webkit2/webkit2.h>
 
 void
@@ -68,8 +68,9 @@ init_directories(void)
 }
 
 /* load command line options into luakit and return uris to load */
-gchar**
-parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
+gchar **
+parseopts(int *argc, gchar *argv[], gboolean **nonblock)
+{
     GOptionContext *context;
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
@@ -84,16 +85,16 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
 
     /* define command line options */
     const GOptionEntry entries[] = {
-      { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
-      { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
-      { "profile",  'p', 0, G_OPTION_ARG_STRING,       &globalconf.profile,  "profile name to use",       "NAME" },
-      { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
-      { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
-      { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
-      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &verbose,             "print verbose output",      NULL   },
-      { "log",      'l', 0, G_OPTION_ARG_STRING,       &log_lvl,             "specify precise log level", "NAME" },
-      { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
-      { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
+        { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
+        { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
+        { "profile",  'p', 0, G_OPTION_ARG_STRING,       &globalconf.profile,  "profile name to use",       "NAME" },
+        { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
+        { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
+        { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
+        { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &verbose,             "print verbose output",      NULL   },
+        { "log",      'l', 0, G_OPTION_ARG_STRING,       &log_lvl,             "specify precise log level", "NAME" },
+        { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
+        { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
     };
 
     /* Save a copy of argv */
@@ -152,11 +153,12 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     if (uris)
         return uris;
     else
-        return argv+1;
+        return argv + 1;
 }
 
 gint
-main(gint argc, gchar *argv[]) {
+main(gint argc, gchar *argv[])
+{
     gboolean *nonblock = NULL;
     gchar **uris = NULL;
     pid_t pid, sid;
@@ -199,7 +201,7 @@ main(gint argc, gchar *argv[]) {
         memset(argv[i], 0, strlen(argv[i]));
 
     /* parse and run configuration file */
-    if(!luaH_parserc(globalconf.confpath, TRUE))
+    if (!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
     if (!globalconf.windows->len)
