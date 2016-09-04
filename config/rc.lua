@@ -168,6 +168,9 @@ require "error_page"
 -- Add userstyles loader
 require "styles"
 
+-- Hide scrollbars on all pages
+require "hide_scrollbars"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
