@@ -140,6 +140,10 @@ require "introspector"
 -- Add command completion
 require "completion"
 
+-- Press Control-E while in insert mode to edit the contents of the currently
+-- focused <textarea> or <input> element, using `xdg-open`
+require "open_editor"
+
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
 -- Remove all "enable_scripts" & "enable_plugins" lines from your
