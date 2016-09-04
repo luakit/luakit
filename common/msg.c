@@ -3,7 +3,7 @@
 #include "common/msg.h"
 
 /* Prototypes for msg_recv_... functions */
-#define X(name) void msg_recv_##name(const msg_lua_require_module_t *msg, guint length);
+#define X(name) void msg_recv_##name(const void *msg, guint length);
     MSG_TYPES
 #undef X
 

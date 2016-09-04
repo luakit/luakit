@@ -2,7 +2,7 @@
 
 # Compile/link options.
 CC         ?= gcc
-CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra
+CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra -flto
 LDFLAGS    +=
 CPPFLAGS   +=
 
