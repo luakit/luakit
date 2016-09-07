@@ -1131,6 +1131,14 @@ webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
 
+    /* Disconnect IPC before destroying view to prevent race condition */
+    msg_endpoint_remove_from_endpoints(d->ipc);
+    /* TODO: May already be disconnected due to HUP... */
+    if (d->ipc->status == MSG_ENDPOINT_CONNECTED)
+        msg_endpoint_disconnect(d->ipc);
+    msg_endpoint_free(d->ipc);
+    d->ipc = NULL;
+
     g_ptr_array_remove(globalconf.webviews, w);
     gtk_widget_destroy(GTK_WIDGET(d->view));
     g_free(d->uri);
@@ -1140,11 +1148,6 @@ webview_destructor(widget_t *w)
     signal_destroy(d->script_msg_signals);
     if (d->cert)
         g_object_unref(G_OBJECT(d->cert));
-
-    msg_endpoint_remove_from_endpoints(d->ipc);
-    msg_endpoint_disconnect(d->ipc);
-    msg_endpoint_free(d->ipc);
-    d->ipc = NULL;
 
     if (d->source)
         g_free(d->source);
