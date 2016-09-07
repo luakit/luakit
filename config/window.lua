@@ -450,12 +450,12 @@ window.methods = {
 
     update_sbar_visibility = function (w)
         if w.ibar.prompt_text or w.ibar.input_text then
-            w.ibar.layout:show()
-            w.sbar.layout:hide()
+            w.ibar.ebox:show()
+            w.sbar.ebox:hide()
         else
-            w.ibar.layout:hide()
+            w.ibar.ebox:hide()
             if not w.win.fullscreen then
-                w.sbar.layout:show()
+                w.sbar.ebox:show()
             end
         end
     end,
