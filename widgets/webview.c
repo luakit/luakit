@@ -1191,11 +1191,13 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
 gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
+    /* d->ipc is already disconnected by channel hup handler */
+    /* Emit 'crashed' signal on web view */
+
     lua_State *L = globalconf.L;
-    webview_data_t *d = w->data;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
-    msg_endpoint_remove_from_endpoints(d->ipc);
+
     return FALSE;
 }
 
