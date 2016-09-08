@@ -213,13 +213,19 @@ end
 -- returned d is a download_t
 capi.luakit.add_signal("download-start", function (d, v)
     local w
-    -- Find window containing view; fall back to currently focused window
-    for _, ww in pairs(window.bywidget) do
-        if (v and ww.view == v) or (not v and ww.win.focused) then
-            w, v = ww, ww.view
-            break
+
+    if v then
+        w = webview.window(v)
+    else
+        -- Fall back to currently focused window
+        for _, ww in pairs(window.bywidget) do
+            if ww.win.focused then
+                w, v = ww, ww.view
+                break
+            end
         end
     end
+
     add(d, { window = w.win }, v)
     return true
 end)
