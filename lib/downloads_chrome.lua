@@ -2,7 +2,6 @@
 local table = table
 local string = string
 local io = io
-local print = print
 local pairs = pairs
 local ipairs = ipairs
 local math = math
@@ -363,7 +362,6 @@ end,
 function (view, meta)
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
-    print("View: ", view.enable_scripts)
     view:eval_js(jquery, { no_return = true })
 
     -- Load main luakit://download/ JavaScript
