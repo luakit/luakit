@@ -18,7 +18,7 @@ static GAsyncQueue *send_queue;
 
 typedef struct _queued_msg_t {
     msg_header_t header;
-    msg_endpoint_t *from;
+    msg_endpoint_t *ipc;
     char payload[0];
 } queued_msg_t;
 
@@ -45,7 +45,7 @@ msg_dispatch_enqueued(msg_endpoint_t *from)
     if (state->queued_msgs->len > 0) {
         queued_msg_t *msg = g_ptr_array_index(state->queued_msgs, 0);
         /* Dispatch and free the message */
-        msg_dispatch(msg->from, msg->header, msg->payload);
+        msg_dispatch(msg->ipc, msg->header, msg->payload);
         g_ptr_array_remove_index(state->queued_msgs, 0);
         g_slice_free1(sizeof(queued_msg_t) + state->hdr.length, state->payload);
         return TRUE;
@@ -57,9 +57,10 @@ static gpointer
 msg_send_thread(gpointer UNUSED(user_data))
 {
     while (TRUE) {
-        msg_endpoint_t *ipc = g_async_queue_pop(send_queue);
-        msg_header_t *header = g_async_queue_pop(send_queue);
-        gpointer data = header->length ? g_async_queue_pop(send_queue) : NULL;
+        queued_msg_t *out = g_async_queue_pop(send_queue);
+        msg_endpoint_t *ipc = out->ipc;
+        msg_header_t *header = &out->header;
+        gpointer data = out->payload;
 
         if (ipc->channel) {
             g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
@@ -69,8 +70,7 @@ msg_send_thread(gpointer UNUSED(user_data))
             g_byte_array_append(ipc->queue, (guint8*)data, header->length);
         }
 
-        g_free(header);
-        g_free(data);
+        g_free(out);
     }
 
     return NULL;
@@ -90,13 +90,14 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 
     g_assert(ipc);
     g_assert((header->length == 0) == (data == NULL));
-    gpointer header_dup = g_memdup(header, sizeof(*header));
-    g_async_queue_push(send_queue, ipc);
-    g_async_queue_push(send_queue, header_dup);
-    if (header->length) {
-        gpointer data_dup = g_memdup(data, header->length);
-        g_async_queue_push(send_queue, data_dup);
-    }
+
+    /* Alloc and push a queued message; the send thread frees it */
+    queued_msg_t *msg = g_malloc(sizeof(*msg) + header->length);
+    msg->ipc = ipc;
+    msg->header = *header;
+    if (header->length)
+        memcpy(msg->payload, data, header->length);
+    g_async_queue_push(send_queue, msg);
 }
 
 /* Callback function for channel watch */
@@ -175,7 +176,7 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *from, int type_mask)
         /* Copy the header into the space at the start of the payload slice */
         queued_msg_t *queued_msg = state->payload;
         queued_msg->header = state->hdr;
-        queued_msg->from = from;
+        queued_msg->ipc = from;
         g_ptr_array_add(state->queued_msgs, state->payload);
         g_idle_add((GSourceFunc)msg_dispatch_enqueued, from);
     }
