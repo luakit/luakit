@@ -21,12 +21,15 @@
  */
 
 #include "common/luaobject.h"
+#include "common/luauniq.h"
 #include "clib/download.h"
 #include "luah.h"
 #include "globalconf.h"
 
 #include <webkit2/webkit2.h>
 #include <glib/gstdio.h>
+
+#define REG_KEY "luakit.uniq.registry.download"
 
 /** Internal data structure for luakit's downloads. */
 typedef struct {
@@ -111,6 +114,7 @@ static gint
 luaH_download_gc(lua_State *L)
 {
     download_t *download = luaH_checkdownload(L, 1);
+    luaH_uniq_del_ptr(L, REG_KEY, download->webkit_download);
     g_object_unref(G_OBJECT(download->webkit_download));
 
     if (download->destination)
@@ -232,6 +236,9 @@ finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
 gint
 luaH_download_push(lua_State *L, WebKitDownload *d)
 {
+    if (luaH_uniq_get_ptr(L, REG_KEY, d))
+        return 1;
+
     download_class.allocator(L);
     download_t *download = luaH_checkdownload(L, -1);
 
@@ -268,6 +275,8 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
     // TODO confirm that it's okay to put this here
     /* line below assumes this function is only called in download_start_cb() */
     download->status = LUAKIT_DOWNLOAD_STATUS_STARTED;
+
+    luaH_uniq_add_ptr(L, REG_KEY, d, -1);
 
     /* return download */
     return 1;
@@ -681,6 +690,8 @@ download_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_download_set_uri,
             (lua_class_propfunc_t) luaH_download_get_uri,
             (lua_class_propfunc_t) NULL);
+
+    luaH_uniq_setup(L, REG_KEY);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
