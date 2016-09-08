@@ -21,6 +21,7 @@ local chrome = require("chrome")
 local add_binds = add_binds
 local add_cmds = add_cmds
 local webview = webview
+local window = window
 local capi = {
     luakit = luakit
 }
@@ -236,8 +237,6 @@ function update_list() {
             break;
         }
     }
-
-    setTimeout(update_list, 1000);
 };
 
 $(document).ready(function () {
@@ -270,6 +269,8 @@ $(document).ready(function () {
     update_list();
 });
 ]=]
+
+local update_list_js = [=[update_list();]=]
 
 -- default filter
 local default_filter = { destination = true, status = true, created = true,
@@ -334,13 +335,21 @@ local export_funcs = {
 downloads.add_signal("status-tick", function (running)
     if running == 0 then
         for _, data in pairs(downloads.get_all()) do data.speed = nil end
-        return
     end
     for d, data in pairs(downloads.get_all()) do
         if d.status == "started" then
             local last, curr = rawget(data, "last_size") or 0, d.current_size
             rawset(data, "speed", curr - last)
             rawset(data, "last_size", curr)
+        end
+    end
+
+    -- Update all download pages when a change occurrs
+    for _, w in pairs(window.bywidget) do
+        for _, v in ipairs(w.tabs.children) do
+            if string.match(v.uri or "", "^luakit://downloads/?") then
+                v:eval_js(update_list_js, { no_return = true })
+            end
         end
     end
 end)
