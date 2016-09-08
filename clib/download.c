@@ -21,12 +21,16 @@
  */
 
 #include "common/luaobject.h"
+#include "common/luauniq.h"
 #include "clib/download.h"
 #include "luah.h"
 #include "globalconf.h"
+#include "web_context.h"
 
 #include <webkit2/webkit2.h>
 #include <glib/gstdio.h>
+
+#define REG_KEY "luakit.uniq.registry.download"
 
 /** Internal data structure for luakit's downloads. */
 typedef struct {
@@ -46,7 +50,6 @@ typedef struct {
     gchar *destination;
     /** The error message in case of a download failure. */
     gchar *error;
-    gboolean is_started;
     enum luakit_download_status_t {
         LUAKIT_DOWNLOAD_STATUS_FINISHED,
         LUAKIT_DOWNLOAD_STATUS_CREATED,
@@ -58,6 +61,8 @@ typedef struct {
 
 static lua_class_t download_class;
 LUA_OBJECT_FUNCS(download_class, download_t, download)
+
+static download_t *current_destination_cb;
 
 #define luaH_checkdownload(L, idx) luaH_checkudata(L, idx, &(download_class))
 
@@ -86,19 +91,6 @@ luaH_download_unref(lua_State *L, download_t *download)
 }
 
 /**
- * Returns true if the download is currently in progress.
- * "Started" here means that a response has been received, and a destination
- * has been decided
- *
- * \param download The \ref download_t whose progress to check.
- */
-static gboolean
-download_is_started(download_t *download)
-{
-    return download->is_started;
-}
-
-/**
  * Frees all data associated with the download and disposes
  * of the Lua object.
  *
@@ -111,6 +103,7 @@ static gint
 luaH_download_gc(lua_State *L)
 {
     download_t *download = luaH_checkdownload(L, 1);
+    luaH_uniq_del_ptr(L, REG_KEY, download->webkit_download);
     g_object_unref(G_OBJECT(download->webkit_download));
 
     if (download->destination)
@@ -137,9 +130,11 @@ decide_destination_cb(WebKitDownload* UNUSED(dl), gchar *suggested_filename, dow
     luaH_object_push(L, download->ref);
     lua_pushstring(L, suggested_filename);
 
+    current_destination_cb = download;
     gint ret = luaH_object_emit_signal(L, -2, "decide-destination", 1, 1);
     gboolean handled = (ret && lua_toboolean(L, -1));
     lua_pop(L, 1 + ret);
+    current_destination_cb = NULL;
     return handled;
 }
 
@@ -155,7 +150,6 @@ created_destination_cb(WebKitDownload* UNUSED(dl), gchar *destination, download_
     lua_pushstring(L, destination);
 
     download->status = LUAKIT_DOWNLOAD_STATUS_CREATED;
-    download->is_started = TRUE;
 
     /* clear last download error message */
     if (download->error) {
@@ -199,6 +193,12 @@ failed_cb(WebKitDownload* UNUSED(d), GError *error, download_t *download)
     }
 }
 
+static void
+progress_cb(WebKitDownload *UNUSED(dl), GParamSpec *UNUSED(ps), download_t *download)
+{
+    download->status = LUAKIT_DOWNLOAD_STATUS_STARTED;
+}
+
 /**
  * Callback from the \c WebKitDownload once the download is complete
  * and after the failed callback (if there is a failure)
@@ -208,59 +208,33 @@ finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
     lua_State *L = globalconf.L;
     luaH_object_push(L, download->ref);
 
-    if (download->status == LUAKIT_DOWNLOAD_STATUS_CREATED)
+    if (download->status != LUAKIT_DOWNLOAD_STATUS_CANCELLED &&
+        download->status != LUAKIT_DOWNLOAD_STATUS_FAILED)
         download->status = LUAKIT_DOWNLOAD_STATUS_FINISHED;
 
-    gint ret = luaH_object_emit_signal(L, 1, "finished", 0, 0);
+    gint ret = luaH_object_emit_signal(L, -1, "finished", 0, 0);
     lua_pop(L, 1 + ret);
 
     luaH_download_unref(L, download);
     return;
 }
 
-/**
- * Creates a new download on the stack.
- *
- * \param L The Lua VM state.
- *
- * \luastack
- * \lvalue A table containing properties to set on the download.
- * \lreturn A new \c download object.
- */
-static gint
+gint
 luaH_download_new(lua_State *L)
 {
-    luaH_class_new(L, &download_class);
-    download_t *download = luaH_checkdownload(L, -1);
+    luaH_checktable(L, 2);
+    const gchar *uri = NULL;
 
-    /* create download from constructor properties */
-    download->is_started = FALSE;
-    g_object_ref(G_OBJECT(download->webkit_download));
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 2, "uri") && lua_isstring(L, -1))
+        uri = lua_tostring(L, -1);
+    lua_settop(L, top);
 
-    /* raise corresponding luakit signals when the webkit signals are
-     * emitted
-     */
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "decide-destination",
-            G_CALLBACK(decide_destination_cb), download);
+    if (!uri)
+        return luaL_error(L, "download requires a URI");
 
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "created-destination",
-            G_CALLBACK(created_destination_cb), download);
-
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "finished", G_CALLBACK(finished_cb), download);
-
-    /* raise failed signal on failure or cancellation */
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "failed", G_CALLBACK(failed_cb), download);
-
-    /* save ref to the lua class instance */
-    lua_pushvalue(L, -1);
-    download->ref = luaH_object_ref_class(L, -1, &download_class);
-
-    /* return download */
-    return 1;
+    WebKitDownload *d = webkit_web_context_download_uri(web_context_get(), uri);
+    return luaH_download_push(L, d);
 }
 
 /**
@@ -277,11 +251,11 @@ luaH_download_new(lua_State *L)
 gint
 luaH_download_push(lua_State *L, WebKitDownload *d)
 {
+    if (luaH_uniq_get_ptr(L, REG_KEY, d))
+        return 1;
+
     download_class.allocator(L);
     download_t *download = luaH_checkdownload(L, -1);
-
-    /* steal webkit download */
-    download->is_started = FALSE;
 
     WebKitURIRequest *r = webkit_download_get_request(d);
     download->uri = g_strdup(webkit_uri_request_get_uri(r));
@@ -300,6 +274,10 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
             G_CALLBACK(created_destination_cb), download);
 
     g_signal_connect(G_OBJECT(download->webkit_download),
+            "notify::estimated-progress",
+            G_CALLBACK(progress_cb), download);
+
+    g_signal_connect(G_OBJECT(download->webkit_download),
             "finished", G_CALLBACK(finished_cb), download);
 
     /* raise failed signal on failure or cancellation */
@@ -310,9 +288,7 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
     lua_pushvalue(L, -1);
     download->ref = luaH_object_ref_class(L, -1, &download_class);
 
-    // TODO confirm that it's okay to put this here
-    /* line below assumes this function is only called in download_start_cb() */
-    download->status = LUAKIT_DOWNLOAD_STATUS_STARTED;
+    luaH_uniq_add_ptr(L, REG_KEY, d, -1);
 
     /* return download */
     return 1;
@@ -349,8 +325,8 @@ luaH_download_get_allow_overwrite(lua_State *L, download_t *download)
 static gint
 luaH_download_set_destination(lua_State *L, download_t *download)
 {
-    if (download_is_started(download)) {
-        luaH_warn(L, "cannot change destination while download %p is running", download);
+    if (download != current_destination_cb) {
+        luaH_warn(L, "cannot set destination outside decide-destination handler");
         return 0;
     }
 
@@ -727,6 +703,8 @@ download_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_download_set_uri,
             (lua_class_propfunc_t) luaH_download_get_uri,
             (lua_class_propfunc_t) NULL);
+
+    luaH_uniq_setup(L, REG_KEY);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -112,4 +112,12 @@ luaH_uniq_del(lua_State *L, const gchar *reg, int k)
     lua_pop(L, 1);
 }
 
+void
+luaH_uniq_del_ptr(lua_State *L, const gchar *reg, gpointer key)
+{
+    lua_pushlightuserdata(L, key);
+    luaH_uniq_del(L, reg, -1);
+    lua_pop(L, 1);
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
