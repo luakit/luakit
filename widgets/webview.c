@@ -1266,8 +1266,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->ipc = g_slice_new(msg_endpoint_t);
     msg_endpoint_init(d->ipc, "UI");
 
-    // TODO does scrollbar hiding need to happen here?
-
     w->widget = GTK_WIDGET(d->view);
 
     /* insert data into global tables and arrays */
