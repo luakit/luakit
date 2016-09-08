@@ -163,7 +163,7 @@ function update_list() {
         // create new download element
         if ($elem.length === 0) {
             // get some more information
-            d = download_get(d.id, ["status", "destination", "created", "uri"]);
+            d = download_get(d.id, ["status", "destination", "created", "uri", "total_size"]);
             var elem_html = make_download(d);
 
             // ordered insert
