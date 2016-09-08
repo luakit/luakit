@@ -15,7 +15,7 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
 static void
 lua_gc_stack_top(lua_State *L)
 {
-    msg_send_lua(&extension.ipc, MSG_TYPE_lua_js_gc, L, -1, -1);
+    msg_send_lua(extension.ipc, MSG_TYPE_lua_js_gc, L, -1, -1);
 }
 
 typedef struct _luajs_func_ctx_t {
@@ -53,12 +53,12 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     }
 
     /* Notify UI process of function call... */
-    msg_send_lua(&extension.ipc, MSG_TYPE_lua_js_call, L, top+1, -1);
+    msg_send_lua(extension.ipc, MSG_TYPE_lua_js_call, L, top+1, -1);
 
     /* ...and block until it's replied */
     do {
         usleep(1);
-    } while(!msg_recv_and_dispatch_or_enqueue(&extension.ipc, MSG_TYPE_lua_js_call));
+    } while(!msg_recv_and_dispatch_or_enqueue(extension.ipc, MSG_TYPE_lua_js_call));
 
     /* At this point, reply was just handled in msg_recv_lua_js_call() below */
 

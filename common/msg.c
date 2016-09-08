@@ -203,13 +203,16 @@ msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gin
     g_byte_array_unref(buf);
 }
 
-void
-msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name)
+msg_endpoint_t *
+msg_endpoint_new(const gchar *name)
 {
-    memset(ipc, 0, sizeof(*ipc));
+    msg_endpoint_t *ipc = g_slice_new0(msg_endpoint_t);
+
     ipc->name = (gchar*)name;
     ipc->queue = g_byte_array_new();
     ipc->status = MSG_ENDPOINT_DISCONNECTED;
+
+    return ipc;
 }
 
 void

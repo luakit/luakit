@@ -147,8 +147,7 @@ static gpointer
 web_extension_connect_thread(gpointer socket_path)
 {
     while (TRUE) {
-        msg_endpoint_t *ipc = g_slice_new(msg_endpoint_t);
-        msg_endpoint_init(ipc, "UI");
+        msg_endpoint_t *ipc = msg_endpoint_new("UI");
         web_extension_connect(ipc, socket_path);
     }
 

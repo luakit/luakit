@@ -1263,8 +1263,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     d->is_committed = FALSE;
 
-    d->ipc = g_slice_new(msg_endpoint_t);
-    msg_endpoint_init(d->ipc, "UI");
+    d->ipc = msg_endpoint_new("UI");
 
     w->widget = GTK_WIDGET(d->view);
 

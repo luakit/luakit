@@ -101,7 +101,7 @@ typedef struct _msg_endpoint_t {
     msg_recv_state_t recv_state;
 } msg_endpoint_t;
 
-void msg_endpoint_init(msg_endpoint_t *ipc, const gchar *name);
+msg_endpoint_t *msg_endpoint_new(const gchar *name);
 void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
 msg_endpoint_t * msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new);
 void msg_endpoint_disconnect(msg_endpoint_t *ipc);
