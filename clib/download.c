@@ -25,6 +25,7 @@
 #include "clib/download.h"
 #include "luah.h"
 #include "globalconf.h"
+#include "web_context.h"
 
 #include <webkit2/webkit2.h>
 #include <glib/gstdio.h>
@@ -216,6 +217,24 @@ finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
 
     luaH_download_unref(L, download);
     return;
+}
+
+gint
+luaH_download_new(lua_State *L)
+{
+    luaH_checktable(L, 2);
+    const gchar *uri = NULL;
+
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 2, "uri") && lua_isstring(L, -1))
+        uri = lua_tostring(L, -1);
+    lua_settop(L, top);
+
+    if (!uri)
+        return luaL_error(L, "download requires a URI");
+
+    WebKitDownload *d = webkit_web_context_download_uri(web_context_get(), uri);
+    return luaH_download_push(L, d);
 }
 
 /**
@@ -610,6 +629,7 @@ download_class_setup(lua_State *L)
     static const struct luaL_reg download_methods[] =
     {
         LUA_CLASS_METHODS(download)
+        { "__call", luaH_download_new },
         { NULL, NULL }
     };
 
