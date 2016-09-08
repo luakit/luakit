@@ -192,6 +192,12 @@ failed_cb(WebKitDownload* UNUSED(d), GError *error, download_t *download)
     }
 }
 
+static void
+progress_cb(WebKitDownload *UNUSED(dl), GParamSpec *UNUSED(ps), download_t *download)
+{
+    download->status = LUAKIT_DOWNLOAD_STATUS_STARTED;
+}
+
 /**
  * Callback from the \c WebKitDownload once the download is complete
  * and after the failed callback (if there is a failure)
@@ -201,7 +207,8 @@ finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
     lua_State *L = globalconf.L;
     luaH_object_push(L, download->ref);
 
-    if (download->status == LUAKIT_DOWNLOAD_STATUS_CREATED)
+    if (download->status != LUAKIT_DOWNLOAD_STATUS_CANCELLED &&
+        download->status != LUAKIT_DOWNLOAD_STATUS_FAILED)
         download->status = LUAKIT_DOWNLOAD_STATUS_FINISHED;
 
     gint ret = luaH_object_emit_signal(L, -1, "finished", 0, 0);
@@ -246,6 +253,10 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
     g_signal_connect(G_OBJECT(download->webkit_download),
             "created-destination",
             G_CALLBACK(created_destination_cb), download);
+
+    g_signal_connect(G_OBJECT(download->webkit_download),
+            "notify::estimated-progress",
+            G_CALLBACK(progress_cb), download);
 
     g_signal_connect(G_OBJECT(download->webkit_download),
             "finished", G_CALLBACK(finished_cb), download);
