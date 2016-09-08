@@ -219,51 +219,6 @@ finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
 }
 
 /**
- * Creates a new download on the stack.
- *
- * \param L The Lua VM state.
- *
- * \luastack
- * \lvalue A table containing properties to set on the download.
- * \lreturn A new \c download object.
- */
-static gint
-luaH_download_new(lua_State *L)
-{
-    luaH_class_new(L, &download_class);
-    download_t *download = luaH_checkdownload(L, -1);
-
-    /* create download from constructor properties */
-    download->is_started = FALSE;
-    g_object_ref(G_OBJECT(download->webkit_download));
-
-    /* raise corresponding luakit signals when the webkit signals are
-     * emitted
-     */
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "decide-destination",
-            G_CALLBACK(decide_destination_cb), download);
-
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "created-destination",
-            G_CALLBACK(created_destination_cb), download);
-
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "finished", G_CALLBACK(finished_cb), download);
-
-    /* raise failed signal on failure or cancellation */
-    g_signal_connect(G_OBJECT(download->webkit_download),
-            "failed", G_CALLBACK(failed_cb), download);
-
-    /* save ref to the lua class instance */
-    lua_pushvalue(L, -1);
-    download->ref = luaH_object_ref_class(L, -1, &download_class);
-
-    /* return download */
-    return 1;
-}
-
-/**
  * Pushes the given download onto the Lua stack.
  *
  * Obtains a GTK reference on the \c WebKitDownload.
@@ -653,7 +608,6 @@ download_class_setup(lua_State *L)
     static const struct luaL_reg download_methods[] =
     {
         LUA_CLASS_METHODS(download)
-        { "__call", luaH_download_new },
         { NULL, NULL }
     };
 
