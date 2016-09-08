@@ -201,14 +201,6 @@ function clear()
     _M.emit_signal("cleared-downloads")
 end
 
--- Catch "download-request" webview widget signals
-webview.init_funcs.download_request = function (view, w)
-    view:add_signal("download-request", function (v, d)
-        add(d, { window = w.win })
-        return true
-    end)
-end
-
 -- Catch "download-started" webcontext widget signals (webkit2 API)
 -- returned d is a download_t
 capi.luakit.add_signal("download-start", function (d, v)
