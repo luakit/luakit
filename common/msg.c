@@ -13,14 +13,23 @@
  * and sending IPC messages writes log messages which include the process
  * name.
  */
+
 static GThread *send_thread;
 static GAsyncQueue *send_queue;
+/** IPC endpoints for all webviews */
+static GPtrArray *endpoints;
 
 typedef struct _queued_msg_t {
     msg_header_t header;
     msg_endpoint_t *ipc;
     char payload[0];
 } queued_msg_t;
+
+const GPtrArray *
+msg_endpoints_get(void)
+{
+    return endpoints;
+}
 
 static void
 msg_dispatch(msg_endpoint_t *from, msg_header_t header, gpointer payload)
@@ -111,16 +120,10 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, msg_endpoint_t *from)
     return TRUE;
 }
 
-#ifndef LUAKIT_WEB_EXTENSION
-void msg_endpoint_remove_from_endpoints(msg_endpoint_t *);
-#endif
-
 static gboolean
 msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *from)
 {
-#ifndef LUAKIT_WEB_EXTENSION
-    msg_endpoint_remove_from_endpoints(from);
-#endif
+    g_ptr_array_remove_fast(endpoints, from);
     msg_endpoint_disconnect(from);
     return FALSE;
 }
@@ -225,6 +228,13 @@ msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
     state->watch_hup_id = g_io_add_watch(ipc->channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
 
     ipc->status = MSG_ENDPOINT_CONNECTED;
+
+    if (!endpoints)
+        endpoints = g_ptr_array_sized_new(1);
+
+    /* Add the endpoint; it should never be present already */
+    g_assert(!g_ptr_array_remove_fast(endpoints, ipc));
+    g_ptr_array_add(endpoints, ipc);
 }
 
 msg_endpoint_t *
@@ -250,6 +260,11 @@ msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
 void
 msg_endpoint_disconnect(msg_endpoint_t *ipc)
 {
+    g_assert(ipc->status == MSG_ENDPOINT_CONNECTED);
+    g_assert(ipc->channel);
+
+    g_ptr_array_remove_fast(endpoints, ipc);
+
     /* Remove watches */
     msg_recv_state_t *state = &ipc->recv_state;
     g_source_remove(state->watch_in_id);

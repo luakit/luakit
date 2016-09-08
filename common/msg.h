@@ -106,6 +106,7 @@ void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
 msg_endpoint_t * msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new);
 void msg_endpoint_disconnect(msg_endpoint_t *ipc);
 void msg_endpoint_free(msg_endpoint_t *ipc);
+const GPtrArray *msg_endpoints_get(void);
 
 gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
 void msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end);

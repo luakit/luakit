@@ -63,8 +63,9 @@ web_module_send(lua_State *L)
     if (ipc)
         msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
     else {
-        for (unsigned i = 0; i < globalconf.endpoints->len; i++) {
-            msg_endpoint_t *ipc = g_ptr_array_index(globalconf.endpoints, i);
+        const GPtrArray *endpoints = msg_endpoints_get();
+        for (unsigned i = 0; i < endpoints->len; i++) {
+            msg_endpoint_t *ipc = g_ptr_array_index(endpoints, i);
             msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
         }
     }

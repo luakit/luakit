@@ -33,9 +33,6 @@
 
 #include <glib.h>
 #include <lua.h>
-#ifndef LUAKIT_WEB_EXTENSION
-#include "msg.h"
-#endif
 #include "common/signal.h"
 
 /** Global luakit state struct. */
@@ -74,8 +71,6 @@ typedef struct {
     GPtrArray *webviews;
     /** Pointer array to all user stylesheets. */
     GPtrArray *stylesheets;
-    /** IPC endpoints for all webviews */
-    GPtrArray *endpoints;
 
     /** Start time for debug messages */
     gdouble starttime;

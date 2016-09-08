@@ -103,8 +103,6 @@ msg_recv_page_created(msg_endpoint_t *ipc, const guint64 *page_id, guint length)
     widget_t *w = webview_get_by_id(*page_id);
     g_assert(w);
 
-    g_ptr_array_remove_fast(globalconf.endpoints, ipc);
-    g_ptr_array_add(globalconf.endpoints, ipc);
     web_module_load_modules_on_endpoint(ipc, globalconf.L);
     luaH_register_functions_on_endpoint(ipc, globalconf.L);
     webview_connect_to_endpoint(w, ipc);
@@ -186,13 +184,6 @@ msg_init(void)
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
-    globalconf.endpoints = g_ptr_array_sized_new(1);
-}
-
-void
-msg_endpoint_remove_from_endpoints(msg_endpoint_t *ipc)
-{
-    g_ptr_array_remove_fast(globalconf.endpoints, ipc);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

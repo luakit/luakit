@@ -19,6 +19,7 @@
 #include "globalconf.h"
 #include "common/log.h"
 #include "common/luaserialize.h"
+#include "common/msg.h"
 
 #include <glib/gprintf.h>
 #include <stdlib.h>

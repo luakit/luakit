@@ -21,6 +21,7 @@
 
 #include <glib.h>
 #include "clib/widget.h"
+#include "common/msg.h"
 
 widget_t* luaH_checkwebview(lua_State *L, gint udx);
 widget_t* webview_get_by_id(guint64 view_id);

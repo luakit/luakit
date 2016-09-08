@@ -1131,8 +1131,6 @@ webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
 
-    /* Disconnect IPC before destroying view to prevent race condition */
-    msg_endpoint_remove_from_endpoints(d->ipc);
     /* TODO: May already be disconnected due to HUP... */
     if (d->ipc->status == MSG_ENDPOINT_CONNECTED)
         msg_endpoint_disconnect(d->ipc);
