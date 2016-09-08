@@ -211,7 +211,7 @@ finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
     if (download->status == LUAKIT_DOWNLOAD_STATUS_CREATED)
         download->status = LUAKIT_DOWNLOAD_STATUS_FINISHED;
 
-    gint ret = luaH_object_emit_signal(L, 1, "finished", 0, 0);
+    gint ret = luaH_object_emit_signal(L, -1, "finished", 0, 0);
     lua_pop(L, 1 + ret);
 
     luaH_download_unref(L, download);
