@@ -19,38 +19,39 @@
 void webview_scroll_recv(void *d, const msg_scroll_t *msg);
 void run_javascript_finished(const guint8 *msg, guint length);
 
-void
-msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length))
-{
-    fatal("UI process should never receive message of this type");
-}
+#define NO_HANDLER(type) \
+void \
+msg_recv_##type(msg_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint UNUSED(length)) \
+{ \
+    fatal("UI process should never receive message of type %s", #type); \
+} \
+
+NO_HANDLER(lua_require_module)
+NO_HANDLER(web_lua_loaded)
+NO_HANDLER(lua_js_register)
+NO_HANDLER(web_extension_loaded)
+NO_HANDLER(crash)
 
 void
-msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
+msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
     web_module_recv(globalconf.L, msg->arg, length);
 }
 
 void
-msg_recv_scroll(msg_scroll_t *msg, guint UNUSED(length))
+msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), msg_scroll_t *msg, guint UNUSED(length))
 {
     g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
 }
 
 void
-msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
-{
-    fatal("UI process should never receive message of this type");
-}
-
-void
-msg_recv_eval_js(const guint8 *msg, guint length)
+msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     run_javascript_finished(msg, length);
 }
 
 void
-msg_recv_lua_js_call(const guint8 *msg, guint length)
+msg_recv_lua_js_call(msg_endpoint_t *from, const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
@@ -80,12 +81,12 @@ msg_recv_lua_js_call(const guint8 *msg, guint length)
         warn("Lua error: %s\n", lua_tostring(L, -2));
 
     /* Serialize the result, and send it back */
-    msg_send_lua(MSG_TYPE_lua_js_call, L, -2, -1);
+    msg_send_lua(from, MSG_TYPE_lua_js_call, L, -2, -1);
     lua_settop(L, top);
 }
 
 void
-msg_recv_lua_js_gc(const guint8 *msg, guint length)
+msg_recv_lua_js_gc(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
     /* Unref the function reference we got */
@@ -96,22 +97,20 @@ msg_recv_lua_js_gc(const guint8 *msg, guint length)
 }
 
 void
-msg_recv_lua_js_register(gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_page_created(msg_endpoint_t *ipc, const guint64 *page_id, guint length)
 {
-    fatal("UI process should never receive message of this type");
+    g_assert(length == sizeof(*page_id));
+    widget_t *w = webview_get_by_id(*page_id);
+    g_assert(w);
+
+    web_module_load_modules_on_endpoint(ipc, globalconf.L);
+    luaH_register_functions_on_endpoint(ipc, globalconf.L);
+    webview_connect_to_endpoint(w, ipc);
 }
 
-void
-msg_recv_web_extension_loaded(gpointer UNUSED(msg), guint UNUSED(length))
+static void
+web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
 {
-    globalconf.web_extension_loaded = TRUE;
-}
-
-static gpointer
-web_extension_connect(gpointer user_data)
-{
-    const gchar *socket_path = user_data;
-
     int sock, web_socket;
     struct sockaddr_un local, remote;
     local.sun_family = AF_UNIX;
@@ -141,46 +140,28 @@ web_extension_connect(gpointer user_data)
 
     debug("Creating channel...");
 
-    globalconf.web_channel = msg_setup(web_socket, "UI");
+    msg_endpoint_connect_to_socket(ipc, web_socket);
+}
 
-    if (globalconf.web_extension_loaded) {
-        /* If it was previously loaded, we've just crashed */
-        web_module_restart(globalconf.L);
-        luaH_reregister_functions(globalconf.L);
-    }
-    globalconf.web_extension_loaded = FALSE;
-
-    /* Releases page-created signals, replies with web-extension-loaded */
-    msg_header_t header = {
-        .type = MSG_TYPE_web_lua_loaded,
-        .length = 0
-    };
-    msg_send(&header, NULL);
-
-    /* Send all queued messages */
-    if (globalconf.web_channel_queue) {
-        g_io_channel_write_chars(globalconf.web_channel,
-                (gchar*)globalconf.web_channel_queue->data,
-                globalconf.web_channel_queue->len, NULL, NULL);
-        g_byte_array_unref(globalconf.web_channel_queue);
-        globalconf.web_channel_queue = NULL;
+static gpointer
+web_extension_connect_thread(gpointer socket_path)
+{
+    while (TRUE) {
+        msg_endpoint_t *ipc = msg_endpoint_new("UI");
+        web_extension_connect(ipc, socket_path);
     }
 
     return NULL;
 }
 
 static void
-initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_data))
+initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 {
-    const gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
 #if DEVELOPMENT_PATHS
     gchar *extension_dir = g_get_current_dir();
 #else
     const gchar *extension_dir = LUAKIT_INSTALL_PATH;
 #endif
-
-    /* Set up connection to web extension process */
-    g_thread_new("accept_thread", web_extension_connect, (void*)socket_path);
 
     /* There's a potential race condition here; the accept thread might not run
      * until after the web extension process has already started (and failed to
@@ -197,21 +178,11 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(user_dat
 void
 msg_init(void)
 {
-    globalconf.web_channel_queue = g_byte_array_new();
+    gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
+    /* Start web extension connection accept thread */
+    g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
-            G_CALLBACK (initialize_web_extensions_cb), NULL);
-}
-
-void
-msg_send_impl(const msg_header_t *header, const void *data)
-{
-    if (globalconf.web_channel) {
-        g_io_channel_write_chars(globalconf.web_channel, (gchar*)header, sizeof(*header), NULL, NULL);
-        g_io_channel_write_chars(globalconf.web_channel, (gchar*)data, header->length, NULL, NULL);
-    } else {
-        g_byte_array_append(globalconf.web_channel_queue, (guint8*)header, sizeof(*header));
-        g_byte_array_append(globalconf.web_channel_queue, (guint8*)data, header->length);
-    }
+            G_CALLBACK (initialize_web_extensions_cb), socket_path);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

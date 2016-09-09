@@ -16,7 +16,7 @@
 #include "common/luaserialize.h"
 
 void
-msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
+msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_module_t *msg, guint length)
 {
     const char *module_name = msg->module_name;
     assert(strlen(module_name) > 0);
@@ -32,22 +32,19 @@ msg_recv_lua_require_module(const msg_lua_require_module_t *msg, guint length)
 }
 
 void
-msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length)
+msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
     ui_process_recv(extension.WL, msg->arg, length);
 }
 
 void
-msg_recv_web_lua_loaded(gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_web_lua_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     extension_class_emit_pending_signals(extension.WL);
-
-    msg_header_t header = { .type = MSG_TYPE_web_extension_loaded, .length = 0 };
-    msg_send(&header, NULL);
 }
 
 void
-msg_recv_scroll(const guint8 *msg, guint length)
+msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
@@ -63,7 +60,7 @@ msg_recv_scroll(const guint8 *msg, guint length)
 }
 
 void
-msg_recv_eval_js(const guint8 *msg, guint length)
+msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
@@ -88,8 +85,32 @@ msg_recv_eval_js(const guint8 *msg, guint length)
     n = luaJS_eval_js(L, ctx, script, source, no_return);
     /* Send source and callback ref back again as well */
     if (n) /* Don't send if no_return == true and no errors */
-        msg_send_lua(MSG_TYPE_eval_js, L, -n-2, -1);
+        msg_send_lua(extension.ipc, MSG_TYPE_eval_js, L, -n-2, -1);
     lua_pop(L, 5 + n);
+}
+
+static gboolean
+do_crash(gpointer UNUSED(user_data))
+{
+    /* Force the web process to crash by dereferencing a NULL pointer */
+    void **nul = NULL;
+    void *foo = *nul;
+    return !foo;
+}
+
+void
+msg_recv_crash(msg_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNUSED(length))
+{
+    g_idle_add(do_crash, NULL);
+}
+
+static void
+web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    guint64 page_id = webkit_web_page_get_id(web_page);
+
+    msg_header_t header = { .type = MSG_TYPE_page_created, .length = sizeof(page_id) };
+    msg_send(extension.ipc, &header, &page_id);
 }
 
 int
@@ -116,20 +137,15 @@ web_extension_connect(const gchar *socket_path)
 
     debug("luakit web process: connected");
 
-    extension.ui_channel = msg_setup(sock, "Web");
+    msg_endpoint_connect_to_socket(extension.ipc, sock);
+
+    g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
 
     return 0;
 fail_connect:
     close(sock);
 fail_socket:
     return 1;
-}
-
-void
-msg_send_impl(const msg_header_t *header, const void *data)
-{
-    g_io_channel_write_chars(extension.ui_channel, (gchar*)header, sizeof(*header), NULL, NULL);
-    g_io_channel_write_chars(extension.ui_channel, (gchar*)data, header->length, NULL, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

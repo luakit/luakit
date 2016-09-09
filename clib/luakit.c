@@ -634,7 +634,7 @@ typedef struct _lua_js_registration_t {
     gpointer ref;
 } lua_js_registration_t;
 
-GArray *registrations;
+static GArray *registrations;
 
 static gint
 luaH_luakit_register_function(lua_State *L)
@@ -653,9 +653,6 @@ luaH_luakit_register_function(lua_State *L)
     /* get lua callback function */
     luaH_checkfunction(L, 3);
     reg.ref = luaH_object_ref(L, 3);
-    lua_pushlightuserdata(L, reg.ref);
-
-    msg_send_lua(MSG_TYPE_lua_js_register, L, 1, 3);
 
     /* Keep a copy for reregistration */
     if (!registrations)
@@ -668,8 +665,11 @@ luaH_luakit_register_function(lua_State *L)
 }
 
 void
-luaH_reregister_functions(lua_State *L)
+luaH_register_functions_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
 {
+    if (!registrations)
+        return;
+
     for (guint i = 0; i < registrations->len; ++i) {
         lua_js_registration_t reg = g_array_index(registrations, lua_js_registration_t, i);
         lua_pushstring(L, reg.pattern);
@@ -680,7 +680,7 @@ luaH_reregister_functions(lua_State *L)
         luaH_object_push(L, reg.ref);
         luaH_object_ref(L, -1);
 
-        msg_send_lua(MSG_TYPE_lua_js_register, L, -3, -1);
+        msg_send_lua(ipc, MSG_TYPE_lua_js_register, L, -3, -1);
         lua_pop(L, 3);
     }
 }

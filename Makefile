@@ -47,7 +47,7 @@ $(filter-out $(EXT_OBJS),$(OBJS)) : %.o : %.c
 
 $(EXT_OBJS) : %.o : %.c
 	@echo $(CC) -c $< -o $@
-	@$(CC) -c $(CFLAGS) -fpic $(CPPFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) -DLUAKIT_WEB_EXTENSION -fpic $(CPPFLAGS) $< -o $@
 
 widgets/webview.o: $(wildcard widgets/webview/*.c)
 

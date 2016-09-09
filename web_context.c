@@ -82,6 +82,9 @@ web_context_init(void)
 
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
+
+    webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
+    webkit_web_context_set_web_process_count_limit(web_context, 0);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

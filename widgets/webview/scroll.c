@@ -63,7 +63,7 @@ luaH_webview_scroll_newindex(lua_State *L)
     lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
     lua_pushinteger(L, d->scroll_x);
     lua_pushinteger(L, d->scroll_y);
-    msg_send_lua(MSG_TYPE_scroll, L, 4, 6);
+    msg_send_lua(d->ipc, MSG_TYPE_scroll, L, 4, 6);
 
     return 0;
 }

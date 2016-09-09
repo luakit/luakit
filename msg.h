@@ -4,9 +4,7 @@
 #include "common/msg.h"
 
 void msg_init(void);
-
-void msg_recv_lua_require_module(const msg_lua_require_module_t *UNUSED(msg), guint UNUSED(length));
-void msg_recv_lua_msg(const msg_lua_msg_t *msg, guint length);
+void msg_endpoint_remove_from_endpoints(msg_endpoint_t *);
 
 #endif
 

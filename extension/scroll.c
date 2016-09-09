@@ -17,7 +17,7 @@ send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, msg_scroll_subtype_t su
         .length = sizeof(data)
     };
 
-    msg_send(&header, &data);
+    msg_send(extension.ipc, &header, &data);
 }
 
 static void

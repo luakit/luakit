@@ -40,9 +40,9 @@ end)
 
 -- Add binding to normal mode to follow selected link
 add_binds("normal", {
-    key({},          "Return", function (w) wm:emit_signal("follow_selected", "navigate", w.view.id) end),
-    key({"Control"}, "Return", function (w) wm:emit_signal("follow_selected", "new_tab", w.view.id) end),
-    key({"Shift"},   "Return", function (w) wm:emit_signal("follow_selected", "new_window", w.view.id) end),
-    key({"Mod1"},    "Return", function (w) wm:emit_signal("follow_selected", "download", w.view.id) end),
+    key({},          "Return", function (w) wm:emit_signal(w.view, "follow_selected", "navigate", w.view.id) end),
+    key({"Control"}, "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_tab", w.view.id) end),
+    key({"Shift"},   "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end),
+    key({"Mod1"},    "Return", function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end),
 })
 -- vim: et:sw=4:ts=8:sts=4:tw=80

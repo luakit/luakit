@@ -29,6 +29,7 @@
 #include "clib/widget.h"
 #include "common/signal.h"
 #include "web_context.h"
+#include "common/msg.h"
 
 typedef struct {
     /** The parent widget_t struct */
@@ -75,7 +76,11 @@ typedef struct {
 
     /** TLS Certificate, if using HTTPS */
     GTlsCertificate *cert;
+
+    msg_endpoint_t *ipc;
 } webview_data_t;
+
+static WebKitWebView *related_view;
 
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
 
@@ -145,7 +150,7 @@ property_t webview_settings_properties[] = {
   { 0,                                              NULL,                                        0,     0    },
 };
 
-static widget_t*
+widget_t*
 luaH_checkwebview(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkwidget(L, udx);
@@ -380,15 +385,18 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 
 
 static GtkWidget*
-create_cb(WebKitWebView* UNUSED(v), WebKitNavigationAction* UNUSED(a), widget_t *w)
+create_cb(WebKitWebView* v, WebKitNavigationAction* UNUSED(a), widget_t *w)
 {
     WebKitWebView *view = NULL;
     widget_t *new;
 
+    g_assert(!related_view);
+    related_view = v;
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
     luaH_object_push(L, w->ref);
     gint ret = luaH_object_emit_signal(L, -1, "create-web-view", 0, 1);
+    related_view = NULL;
 
     /* check for new webview widget */
     if (ret) {
@@ -571,6 +579,18 @@ luaH_webview_stop(lua_State *L)
     return 0;
 }
 
+static gint
+luaH_webview_crash(lua_State *L)
+{
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    msg_header_t header = {
+        .type = MSG_TYPE_crash,
+        .length = 0
+    };
+    msg_send(d->ipc, &header, NULL);
+    return 0;
+}
+
 /* check for trusted ssl certificate
 * make sure this function is called after WEBKIT_LOAD_COMMITTED
 */
@@ -724,6 +744,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(RELOAD_BYPASS_CACHE,  luaH_webview_reload_bypass_cache)
       PF_CASE(SSL_TRUSTED,          luaH_webview_ssl_trusted)
       PF_CASE(STOP,                 luaH_webview_stop)
+      PF_CASE(CRASH,                luaH_webview_crash)
       /* push inspector webview methods */
       PF_CASE(SHOW_INSPECTOR,       luaH_webview_show_inspector)
       PF_CASE(CLOSE_INSPECTOR,      luaH_webview_close_inspector)
@@ -1110,11 +1131,14 @@ webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
 
+    g_assert(d->ipc);
+    msg_endpoint_decref(d->ipc);
+    d->ipc = NULL;
+
     g_ptr_array_remove(globalconf.webviews, w);
     gtk_widget_destroy(GTK_WIDGET(d->view));
     g_free(d->uri);
     g_free(d->hover);
-    g_slice_free(webview_data_t, d);
     g_object_unref(G_OBJECT(d->user_content));
     signal_destroy(d->script_msg_signals);
     if (d->cert)
@@ -1122,6 +1146,8 @@ webview_destructor(widget_t *w)
 
     if (d->source)
         g_free(d->source);
+
+    g_slice_free(webview_data_t, d);
 }
 
 void
@@ -1162,23 +1188,45 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
 gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
+    /* Emit 'crashed' signal on web view */
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
+
     return FALSE;
 }
 
-gboolean
-webview_wait_for_web_extension_cb(widget_t *w)
+void
+webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc)
 {
-    if (!globalconf.web_extension_loaded)
-        return TRUE;
+    g_assert(w->info->tok == L_TK_WEBVIEW);
+    g_assert(ipc);
+
+    /* Replace old endpoint with new, sendinq queued data */
+    webview_data_t *d = w->data;
+    d->ipc = msg_endpoint_replace(d->ipc, ipc);
+
+    /* Emit 'web-extension-loaded' signal on webview */
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     if (!lua_isnil(L, -1))
         luaH_object_emit_signal(L, -1, "web-extension-loaded", 0, 0);
     lua_pop(L, 1);
-    return FALSE;
+
+    /* Notify web extension that pending signals can be released */
+    msg_header_t header = {
+        .type = MSG_TYPE_web_lua_loaded,
+        .length = 0
+    };
+    msg_send(ipc, &header, NULL);
+}
+
+msg_endpoint_t *
+webview_get_endpoint(widget_t *w)
+{
+    g_assert(w->info->tok == L_TK_WEBVIEW);
+    webview_data_t *d = w->data;
+    return d->ipc;
 }
 
 widget_t *
@@ -1206,12 +1254,14 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
                  "web-context", web_context_get(),
                  "user-content-manager", d->user_content,
+                 related_view ? "related-view" : NULL, related_view,
                  NULL);
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
 
-    // TODO does scrollbar hiding need to happen here?
+    /* Create a new endpoint with one ref (this webview) */
+    d->ipc = msg_endpoint_new("UI");
 
     w->widget = GTK_WIDGET(d->view);
 
@@ -1281,8 +1331,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     /* show widgets */
     gtk_widget_show(GTK_WIDGET(d->view));
-
-    g_idle_add((GSourceFunc)webview_wait_for_web_extension_cb, w);
 
     return w;
 }

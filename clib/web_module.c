@@ -1,9 +1,11 @@
+#include <webkit2/webkit2.h>
+
 #include "clib/web_module.h"
+#include "clib/widget.h"
 #include "common/tokenize.h"
 #include "common/luauniq.h"
 #include "common/luaserialize.h"
-#include "extension/msg.h"
-#include "msg.h"
+#include "widgets/webview.h"
 
 #define REG_KEY "luakit.uniq.registry.web_module"
 
@@ -19,6 +21,7 @@ luaH_web_module_new(lua_State *L)
     if (luaH_uniq_get(L, REG_KEY, -1))
         return 1;
 
+    /* Add a new web module object to the registry */
     lua_newtable(L);
     luaH_class_new(L, &web_module_class);
     lua_remove(L, -2);
@@ -26,12 +29,6 @@ luaH_web_module_new(lua_State *L)
     web_module->name = g_strdup(name);
 
     luaH_uniq_add(L, REG_KEY, -2, -1);
-
-    msg_header_t header = {
-        .type = MSG_TYPE_lua_require_module,
-        .length = strlen(name)+1
-    };
-    msg_send(&header, name);
 
     return 1;
 }
@@ -48,9 +45,31 @@ static gint
 web_module_send(lua_State *L)
 {
     web_module_t *web_module = luaH_check_web_module(L, 1);
+    guint64 page_id = 0;
+    msg_endpoint_t *ipc = NULL;
+
+    /* Optional first argument: view to send message to */
+    if (lua_isuserdata(L, 2)) {
+        widget_t *w = luaH_checkwebview(L, 2);
+        page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
+        ipc = webview_get_endpoint(w);
+        lua_remove(L, 2);
+    }
+
     luaL_checkstring(L, 2);
     lua_pushstring(L, web_module->name);
-    msg_send_lua(MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    lua_pushinteger(L, page_id);
+
+    if (ipc)
+        msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    else {
+        const GPtrArray *endpoints = msg_endpoints_get();
+        for (unsigned i = 0; i < endpoints->len; i++) {
+            msg_endpoint_t *ipc = g_ptr_array_index(endpoints, i);
+            msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+        }
+    }
+
     return 0;
 }
 
@@ -69,7 +88,7 @@ web_module_recv(lua_State *L, const gchar *arg, guint arglen)
 }
 
 void
-web_module_restart(lua_State *L)
+web_module_load_modules_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
 {
     lua_pushstring(L, REG_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
@@ -80,9 +99,10 @@ web_module_restart(lua_State *L)
             .type = MSG_TYPE_lua_require_module,
             .length = strlen(name)+1
         };
-        msg_send(&header, name);
+        msg_send(ipc, &header, name);
         lua_pop(L, 1);
     }
+    lua_pop(L, 1);
 }
 
 void

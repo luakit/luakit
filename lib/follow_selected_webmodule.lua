@@ -40,7 +40,7 @@ local return_selected = [=[
 })(document);
 ]=]
 
-ui:add_signal("follow_selected", function(_, action, view_id)
+ui:add_signal("follow_selected", function(_, _, action, view_id)
     local p = page(view_id)
     local uri = p:eval_js(return_selected)
     if not uri then return end

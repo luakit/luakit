@@ -297,3 +297,4 @@ remove_script_signal
 certificate
 allow_certificate
 options
+crash
