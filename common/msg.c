@@ -1,3 +1,5 @@
+#include <stdlib.h>
+
 #include "common/lualib.h"
 #include "common/luaserialize.h"
 #include "common/msg.h"
@@ -125,6 +127,9 @@ msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *
 {
     g_ptr_array_remove_fast(endpoints, from);
     msg_endpoint_disconnect(from);
+    msg_endpoint_decref(from);
+    if (!strcmp(from->name, "Web"))
+        exit(0);
     return FALSE;
 }
 
@@ -211,8 +216,26 @@ msg_endpoint_new(const gchar *name)
     ipc->name = (gchar*)name;
     ipc->queue = g_byte_array_new();
     ipc->status = MSG_ENDPOINT_DISCONNECTED;
+    ipc->refcount = 1;
 
     return ipc;
+}
+
+void
+msg_endpoint_incref(msg_endpoint_t *ipc)
+{
+    g_atomic_int_inc(&ipc->refcount);
+}
+
+void
+msg_endpoint_decref(msg_endpoint_t *ipc)
+{
+    if (!g_atomic_int_dec_and_test(&ipc->refcount))
+        return;
+    if (ipc->status == MSG_ENDPOINT_CONNECTED)
+        msg_endpoint_disconnect(ipc);
+    ipc->status = MSG_ENDPOINT_FREED;
+    g_slice_free(msg_endpoint_t, ipc);
 }
 
 void
@@ -248,15 +271,18 @@ msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
     g_assert(orig->status == MSG_ENDPOINT_DISCONNECTED);
     g_assert(new->status == MSG_ENDPOINT_CONNECTED);
 
+    msg_endpoint_incref(new);
+
     /* Send all queued messages */
-    g_assert(orig->queue);
-    g_io_channel_write_chars(new->channel,
-            (gchar*)orig->queue->data,
-            orig->queue->len, NULL, NULL);
-    g_byte_array_unref(orig->queue);
+    if (orig->queue) {
+        g_io_channel_write_chars(new->channel,
+                (gchar*)orig->queue->data,
+                orig->queue->len, NULL, NULL);
+        g_byte_array_unref(orig->queue);
+    }
     orig->queue = NULL;
 
-    msg_endpoint_free(orig);
+    msg_endpoint_decref(orig);
     return new;
 }
 
@@ -277,13 +303,6 @@ msg_endpoint_disconnect(msg_endpoint_t *ipc)
     g_io_channel_shutdown(ipc->channel, TRUE, NULL);
     ipc->status = MSG_ENDPOINT_DISCONNECTED;
     ipc->channel = NULL;
-}
-
-void
-msg_endpoint_free(msg_endpoint_t *ipc)
-{
-    ipc->status = MSG_ENDPOINT_FREED;
-    g_slice_free(msg_endpoint_t, ipc);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

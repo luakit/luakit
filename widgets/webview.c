@@ -1131,10 +1131,8 @@ webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
 
-    /* TODO: May already be disconnected due to HUP... */
-    if (d->ipc->status == MSG_ENDPOINT_CONNECTED)
-        msg_endpoint_disconnect(d->ipc);
-    msg_endpoint_free(d->ipc);
+    g_assert(d->ipc);
+    msg_endpoint_decref(d->ipc);
     d->ipc = NULL;
 
     g_ptr_array_remove(globalconf.webviews, w);
@@ -1189,9 +1187,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
 gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
-    /* d->ipc is already disconnected by channel hup handler */
     /* Emit 'crashed' signal on web view */
-
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
@@ -1263,6 +1259,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
 
     d->is_committed = FALSE;
 
+    /* Create a new endpoint with one ref (this webview) */
     d->ipc = msg_endpoint_new("UI");
 
     w->widget = GTK_WIDGET(d->view);

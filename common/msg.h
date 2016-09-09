@@ -99,13 +99,18 @@ typedef struct _msg_endpoint_t {
     GByteArray *queue;
     /** Incoming message bookkeeping data */
     msg_recv_state_t recv_state;
+    /** Refcount: number of webviews + number of unsent messages */
+    gint refcount;
 } msg_endpoint_t;
 
 msg_endpoint_t *msg_endpoint_new(const gchar *name);
 void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
 msg_endpoint_t * msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new);
 void msg_endpoint_disconnect(msg_endpoint_t *ipc);
-void msg_endpoint_free(msg_endpoint_t *ipc);
+
+void msg_endpoint_incref(msg_endpoint_t *ipc);
+void msg_endpoint_decref(msg_endpoint_t *ipc);
+
 const GPtrArray *msg_endpoints_get(void);
 
 gboolean msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask);
