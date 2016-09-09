@@ -1139,7 +1139,6 @@ webview_destructor(widget_t *w)
     gtk_widget_destroy(GTK_WIDGET(d->view));
     g_free(d->uri);
     g_free(d->hover);
-    g_slice_free(webview_data_t, d);
     g_object_unref(G_OBJECT(d->user_content));
     signal_destroy(d->script_msg_signals);
     if (d->cert)
@@ -1147,6 +1146,8 @@ webview_destructor(widget_t *w)
 
     if (d->source)
         g_free(d->source);
+
+    g_slice_free(webview_data_t, d);
 }
 
 void
