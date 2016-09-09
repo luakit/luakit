@@ -81,6 +81,8 @@ msg_send_thread(gpointer UNUSED(user_data))
             g_byte_array_append(ipc->queue, (guint8*)data, header->length);
         }
 
+        /* Message is sent; endpoint can be freed now */
+        msg_endpoint_decref(ipc);
         g_free(out);
     }
 
@@ -100,6 +102,8 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
                 ipc->name, msg_type_name(header->type));
 
     g_assert(ipc);
+    /* Keep the endpoint alive while the message is being sent */
+    msg_endpoint_incref(ipc);
     g_assert((header->length == 0) == (data == NULL));
 
     /* Alloc and push a queued message; the send thread frees it */
