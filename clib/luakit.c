@@ -634,7 +634,7 @@ typedef struct _lua_js_registration_t {
     gpointer ref;
 } lua_js_registration_t;
 
-GArray *registrations;
+static GArray *registrations;
 
 static gint
 luaH_luakit_register_function(lua_State *L)
