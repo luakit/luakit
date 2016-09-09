@@ -667,6 +667,9 @@ luaH_luakit_register_function(lua_State *L)
 void
 luaH_register_functions_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
 {
+    if (!registrations)
+        return;
+
     for (guint i = 0; i < registrations->len; ++i) {
         lua_js_registration_t reg = g_array_index(registrations, lua_js_registration_t, i);
         lua_pushstring(L, reg.pattern);
