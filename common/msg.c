@@ -129,6 +129,9 @@ msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, msg_endpoint_t *ipc)
 static gboolean
 msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *ipc)
 {
+    g_assert(ipc->status == MSG_ENDPOINT_CONNECTED);
+    g_assert(ipc->channel);
+
     g_ptr_array_remove_fast(endpoints, ipc);
     msg_endpoint_disconnect(ipc);
     msg_endpoint_decref(ipc);
