@@ -165,7 +165,7 @@ webview.init_funcs = {
             until not domain
             -- Join all property tables
             for k, v in pairs(lousy.util.table.join(unpack(props))) do
-                info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
+                msg.info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
                 view[k] = v
             end
         end)
@@ -175,7 +175,7 @@ webview.init_funcs = {
     mime_decision = function (view, w)
         -- Return true to accept or false to reject from this signal.
         view:add_signal("mime-type-decision", function (v, uri, mime)
-            info("Requested link: %s (%s)", uri, mime)
+            msg.info("Requested link: %s (%s)", uri, mime)
             -- i.e. block binary files like *.exe
             --if mime == "application/octet-stream" then
             --    return false
@@ -231,7 +231,7 @@ webview.init_funcs = {
     -- Action to take on resource request.
     resource_request_decision = function (view, w)
         view:add_signal("resource-request-starting", function(v, uri)
-            info("Requesting: %s", uri)
+            msg.info("Requesting: %s", uri)
             -- Return false to cancel the request.
         end)
     end,

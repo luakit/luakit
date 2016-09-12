@@ -5,7 +5,7 @@
 ------------------------------------------------------------
 
 -- Get Lua environ
-local print = print
+local msg = msg
 local pairs, ipairs = pairs, ipairs
 local table, string = table, string
 local assert, type = assert, type
@@ -163,7 +163,7 @@ new_mode("follow", {
         assert(type(mode) == "table", "invalid follow mode")
 
         if mode.label_maker then
-            warn("Custom label maker not yet implemented!")
+            msg.warn("Custom label maker not yet implemented!")
         end
 
         assert(type(mode.pattern_maker or _M.pattern_maker) == "function",

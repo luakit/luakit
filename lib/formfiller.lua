@@ -8,7 +8,7 @@ local lousy = require("lousy")
 local string, table, io = string, table, io
 local loadstring, pcall = loadstring, pcall
 local setfenv = setfenv
-local warn = warn
+local msg = msg
 local print, type = print, type
 local pairs, ipairs = pairs, ipairs
 local tostring, tonumber = tostring, tonumber
@@ -182,7 +182,7 @@ function init(w)
     f:close()
     local dsl, message = loadstring(code)
     if not dsl then
-        warn(string.format("loading formfiller data failed: %s", message))
+        msg.warn(string.format("loading formfiller data failed: %s", message))
         return
     end
     -- execute in sandbox
@@ -194,7 +194,7 @@ function init(w)
     setfenv(dsl, env)
     local success, err = pcall(dsl)
     if not success then
-        warn("error in " .. file .. ": " .. err)
+        msg.warn("error in " .. file .. ": " .. err)
     end
     -- Convert JS regexes to Lua patterns
     for _, rule in ipairs(w.formfiller_state.rules) do

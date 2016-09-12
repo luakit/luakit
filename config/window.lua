@@ -262,7 +262,7 @@ window.init_funcs = {
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
-            warn("E: window.lua: invalid window size: %q", size)
+            msg.warn("E: window.lua: invalid window size: %q", size)
         end
     end,
 

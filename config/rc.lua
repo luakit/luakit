@@ -23,10 +23,6 @@ end
 -- Load library of useful functions for luakit
 require "lousy"
 
--- Small util functions to print output (info prints only when luakit.verbose is true)
-function warn(...) io.stderr:write(string.format(...) .. "\n") end
-function info(...) if luakit.verbose then io.stdout:write(string.format(...) .. "\n") end end
-
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
 require "globals"

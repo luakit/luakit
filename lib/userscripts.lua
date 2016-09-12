@@ -13,7 +13,7 @@ local pairs = pairs
 local setmetatable = setmetatable
 local string = string
 local table = table
-local warn = warn
+local msg = msg
 local webview = webview
 local window = window
 local bind = require("lousy.bind")
@@ -223,7 +223,7 @@ local function load_js(file)
         script.file = file
         scripts[file] = setmetatable(script, { __index = prototype })
     else
-        warn("(userscripts.lua): Invalid userscript header in file: %s", file)
+        msg.warn("(userscripts.lua): Invalid userscript header in file: %s", file)
     end
 end
 
