@@ -132,10 +132,13 @@ msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *
     g_assert(ipc->status == MSG_ENDPOINT_CONNECTED);
     g_assert(ipc->channel);
 
+    gboolean should_exit = !strcmp(ipc->name, "Web");
+
     g_ptr_array_remove_fast(endpoints, ipc);
     msg_endpoint_disconnect(ipc);
     msg_endpoint_decref(ipc);
-    if (!strcmp(ipc->name, "Web"))
+
+    if (should_exit)
         exit(0);
     return FALSE;
 }
