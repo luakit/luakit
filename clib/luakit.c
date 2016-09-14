@@ -24,6 +24,7 @@
 #include "common/msg.h"
 #include "common/signal.h"
 #include "luah.h"
+#include "web_context.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -486,6 +487,8 @@ luaH_luakit_index(lua_State *L)
       /* push boolean properties */
       PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
+      /* push integer properties */
+      PI_CASE(PROCESS_LIMIT,    web_context_process_limit_get())
       case L_TK_OPTIONS:
         return luaH_luakit_push_options_table(L);
 
@@ -532,6 +535,30 @@ luaH_luakit_index(lua_State *L)
       default:
         break;
     }
+    return 0;
+}
+
+/** luakit module newindex metamethod.
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ */
+static gint
+luaH_luakit_newindex(lua_State *L)
+{
+    if (!lua_isstring(L, 2))
+        return 0;
+    luakit_token_t token = l_tokenize(lua_tostring(L, 2));
+
+    switch (token) {
+        case L_TK_PROCESS_LIMIT:
+            if (!web_context_process_limit_set(lua_tointeger(L, 3)))
+                return luaL_error(L, "Too late to set WebKit process limit");
+            break;
+        default:
+            break;
+    }
+
     return 0;
 }
 
@@ -696,6 +723,7 @@ luakit_lib_setup(lua_State *L)
     {
         LUA_CLASS_METHODS(luakit)
         { "__index",           luaH_luakit_index },
+        { "__newindex",        luaH_luakit_newindex },
         { "exec",              luaH_luakit_exec },
         { "quit",              luaH_luakit_quit },
         { "save_file",         luaH_luakit_save_file },

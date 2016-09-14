@@ -298,3 +298,4 @@ certificate
 allow_certificate
 options
 crash
+process_limit
