@@ -23,6 +23,8 @@
 
 /** WebKit context common to all web views */
 static WebKitWebContext *web_context;
+/** WebKit process count; default to unlimited */
+static guint process_limit = 0;
 
 /** Defined in widgets/webview.c */
 void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
@@ -84,7 +86,7 @@ web_context_init(void)
             G_CALLBACK(download_start_cb), NULL);
 
     webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
-    webkit_web_context_set_web_process_count_limit(web_context, 0);
+    webkit_web_context_set_web_process_count_limit(web_context, process_limit);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
