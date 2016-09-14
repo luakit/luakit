@@ -86,6 +86,7 @@ web_context_init(void)
             G_CALLBACK(download_start_cb), NULL);
 
     webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
+    info("Web process count: %d", process_limit);
     webkit_web_context_set_web_process_count_limit(web_context, process_limit);
 }
 
