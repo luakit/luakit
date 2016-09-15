@@ -307,7 +307,7 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     g_free(origin);
 
     if(!obj)
-        luaL_error(L, "trying to emit signal on non-object");
+        return luaL_error(L, "trying to emit signal on non-object");
 
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if (sigfuncs) {

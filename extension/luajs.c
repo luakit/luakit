@@ -62,7 +62,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
 
     /* At this point, reply was just handled in msg_recv_lua_js_call() below */
 
-    JSValueRef ret;
+    JSValueRef ret = NULL;
 
     if (lua_toboolean(L, -1))
         error = g_strdup(luaL_checkstring(L, -2));

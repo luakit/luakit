@@ -52,7 +52,6 @@ luaH_image_scale(lua_State *L)
     g_object_unref(pixbuf);
     gtk_image_set_from_pixbuf(GTK_IMAGE(w->widget), scaled_pixbuf);
     g_object_unref(scaled_pixbuf);
-    pixbuf = scaled_pixbuf;
 
     return 0;
 }
