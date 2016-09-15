@@ -105,12 +105,9 @@ luaH_download_gc(lua_State *L)
     download_t *download = luaH_checkdownload(L, 1);
     g_object_unref(G_OBJECT(download->webkit_download));
 
-    if (download->destination)
-        g_free(download->destination);
-    if (download->uri)
-        g_free(download->uri);
-    if (download->error)
-        g_free(download->error);
+    g_free(download->destination);
+    g_free(download->uri);
+    g_free(download->error);
 
     return luaH_object_gc(L);
 }
@@ -177,7 +174,7 @@ failed_cb(WebKitDownload* UNUSED(d), GError *error, download_t *download)
     if (error->code == WEBKIT_DOWNLOAD_ERROR_CANCELLED_BY_USER) {
         download->status = LUAKIT_DOWNLOAD_STATUS_CANCELLED;
     } else {
-        luaH_warn(globalconf.L, "download %p failed: %s", download, error->message);
+        warn("download %p failed: %s", download, error->message);
         download->status = LUAKIT_DOWNLOAD_STATUS_FAILED;
 
         /* emit error signal if able */
@@ -285,7 +282,7 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
 
     /* save ref to the lua class instance */
     lua_pushvalue(L, -1);
-    download->ref = luaH_object_ref_class(L, -1, &download_class);
+    download->ref = luaH_object_ref(L, -1);
 
     /* uniq mapping is weak-valued, so no need to manually delete */
     luaH_uniq_add_ptr(L, REG_KEY, d, -1);
