@@ -103,7 +103,6 @@ static gint
 luaH_download_gc(lua_State *L)
 {
     download_t *download = luaH_checkdownload(L, 1);
-    luaH_uniq_del_ptr(L, REG_KEY, download->webkit_download);
     g_object_unref(G_OBJECT(download->webkit_download));
 
     if (download->destination)
@@ -288,6 +287,7 @@ luaH_download_push(lua_State *L, WebKitDownload *d)
     lua_pushvalue(L, -1);
     download->ref = luaH_object_ref_class(L, -1, &download_class);
 
+    /* uniq mapping is weak-valued, so no need to manually delete */
     luaH_uniq_add_ptr(L, REG_KEY, d, -1);
 
     /* return download */
