@@ -171,6 +171,9 @@ require "hide_scrollbars"
 -- End user script loading --
 -----------------------------
 
+-- Set the number of web processes to use. A value of 0 means 'no limit'.
+luakit.process_limit = 0
+
 -- Restore last saved session
 local w = (not luakit.nounique) and (session and session.restore())
 if w then

@@ -23,6 +23,10 @@
 
 /** WebKit context common to all web views */
 static WebKitWebContext *web_context;
+/** WebKit process count; default to unlimited */
+static guint process_limit = 0;
+/** Whether the web context startup function has been run */
+static gboolean web_context_started = FALSE;
 
 /** Defined in widgets/webview.c */
 void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
@@ -34,6 +38,21 @@ web_context_get(void)
 {
     g_assert(web_context);
     return web_context;
+}
+
+guint
+web_context_process_limit_get(void)
+{
+    return process_limit;
+}
+
+gboolean
+web_context_process_limit_set(guint limit)
+{
+    if (web_context_started)
+        return FALSE;
+    process_limit = limit;
+    return TRUE;
 }
 
 static void
@@ -82,9 +101,19 @@ web_context_init(void)
 
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
+}
+
+void
+web_context_init_finish(void)
+{
+    if (web_context_started)
+        return;
 
     webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
-    webkit_web_context_set_web_process_count_limit(web_context, 0);
+    info("Web process count: %d", process_limit);
+    webkit_web_context_set_web_process_count_limit(web_context, process_limit);
+
+    web_context_started = TRUE;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
