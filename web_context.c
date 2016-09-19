@@ -101,6 +101,13 @@ web_context_init(void)
 
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
+}
+
+void
+web_context_init_finish(void)
+{
+    if (web_context_started)
+        return;
 
     webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
     info("Web process count: %d", process_limit);

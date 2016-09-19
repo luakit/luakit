@@ -1249,6 +1249,9 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
         globalconf.stylesheets = g_ptr_array_new();
     d->stylesheets = NULL;
 
+    /* Set web process limits if not already set */
+    web_context_init_finish();
+
     /* create widgets */
     d->user_content = webkit_user_content_manager_new();
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
