@@ -153,7 +153,7 @@ created_destination_cb(WebKitDownload* UNUSED(dl), gchar *destination, download_
         download->error = NULL;
     }
 
-    luaH_object_emit_signal(L, 1, "created-destination", 1, 0);
+    luaH_object_emit_signal(L, -2, "created-destination", 1, 0);
     lua_pop(L, 1);
     return;
 }
