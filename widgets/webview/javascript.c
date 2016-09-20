@@ -29,6 +29,7 @@ void
 run_javascript_finished(const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
+    gint top = lua_gettop(L);
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, >=, 2);
     g_assert_cmpint(n, <=, 4);
@@ -46,7 +47,7 @@ run_javascript_finished(const guint8 *msg, guint length)
         luaH_object_unref(L, cb);
     }
 
-    lua_pop(L, 2);
+    lua_settop(L, top);
 }
 
 static gint
