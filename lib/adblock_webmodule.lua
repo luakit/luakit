@@ -12,7 +12,13 @@ local enabled = true
 rules = {}
 
 ui:add_signal("enable", function(_, _, e) enabled = e end)
-ui:add_signal("update_rules", function(_, _, r) rules = r end)
+ui:add_signal("update_rules", function(_, _, r, list)
+    if list then
+        rules[list] = r
+    else
+        rules = r
+    end
+end)
 
 local function domain_match(domain, opts)
     local res = false

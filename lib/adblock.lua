@@ -321,7 +321,11 @@ load = function (reload, single_list, no_sync)
     rules_cache.white, rules_cache.black = nil, nil
     rules_cache = nil
     if not no_sync then
-        adblock_wm:emit_signal("update_rules", rules)
+        if single_list then
+            adblock_wm:emit_signal("update_rules", rules[single_list], single_list)
+        else
+            adblock_wm:emit_signal("update_rules", rules)
+        end
     end
     refresh_views()
 end
@@ -354,7 +358,7 @@ function list_opts_modify(list_index, opt_ex, opt_inc)
         end
     elseif util.table.hasitem(opt_inc, "Disabled") then
         rules[list.title] = nil
-        adblock_wm:emit_signal("update_rules", rules)
+        adblock_wm:emit_signal("update_rules", nil, list.title)
         refresh_views()
     end
     
