@@ -275,18 +275,14 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
 {
     lua_State *L = extension.WL;
 
-    luaH_object_push(L, func);
-
     lua_createtable(L, 0, 1);
     lua_pushliteral(L, "target");
     WebKitDOMEventTarget *target = webkit_dom_event_get_src_element(event);
     luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
     lua_rawset(L, -3);
 
-    if (lua_pcall(L, 1, 0, 0)) {
-        warn("error in event listener callback: %s", lua_tostring(L, -1));
-        lua_pop(L, 1);
-    }
+    luaH_object_push(L, func);
+    luaH_dofunction(L, 1, 0);
 }
 
 static gint

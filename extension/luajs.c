@@ -3,6 +3,7 @@
 
 #define LUAKIT_LUAJS_REGISTRY_KEY "luakit.luajs.registry"
 
+#include "luah.h"
 #include "extension/extension.h"
 #include "extension/luajs.h"
 #include "common/msg.h"
@@ -22,6 +23,8 @@ typedef struct _luajs_func_ctx_t {
     gpointer ref;
     guint64 page_id;
 } luajs_func_ctx_t;
+
+static gint lua_string_find_ref = LUA_REFNIL;
 
 static JSValueRef
 luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
@@ -174,11 +177,6 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
     lua_State *L = extension.WL;
     const gchar *uri = webkit_web_page_get_uri(web_page);
 
-    /* Push string.find() */
-    lua_getglobal(L, "string");
-    lua_getfield(L, -1, "find");
-    lua_replace(L, -2);
-
     /* Push pattern -> funclist table */
     lua_pushliteral(L, LUAKIT_LUAJS_REGISTRY_KEY);
     lua_rawget(L, LUA_REGISTRYINDEX);
@@ -191,10 +189,9 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
         g_assert(lua_istable(L, -1));
 
         /* Call string.find(uri, pattern) */
-        lua_pushvalue(L, -4);
         lua_pushstring(L, uri);
-        lua_pushvalue(L, -4);
-        lua_pcall(L, 2, 1, 0);
+        lua_pushvalue(L, -3);
+        luaH_dofunction_from_registry(L, lua_string_find_ref, 2, 1);
 
         if (!lua_isnil(L, -1)) {
             /* got a match: iterate over all functions */
@@ -214,7 +211,7 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
     }
 
     /* Pop off table and string.find() */
-    lua_pop(L, 2);
+    lua_pop(L, 1);
 }
 
 void
@@ -228,6 +225,12 @@ web_luajs_init(void)
     lua_pushliteral(L, LUAKIT_LUAJS_REGISTRY_KEY);
     lua_newtable(L);
     lua_rawset(L, LUA_REGISTRYINDEX);
+
+    /* Save reference to string.find() */
+    lua_getglobal(L, "string");
+    lua_getfield(L, -1, "find");
+    luaH_registerfct(L, -1, &lua_string_find_ref);
+    lua_pop(L, 2);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

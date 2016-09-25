@@ -65,20 +65,15 @@ msg_recv_lua_js_call(msg_endpoint_t *from, const guint8 *msg, guint length)
     lua_remove(L, top+1);
     lua_remove(L, top+1);
 
-    /* push Lua callback function into position */
-    luaH_object_push(L, ref);
-    lua_insert(L, top+1);
-
     /* get webview and push into position */
     widget_t *w = webview_get_by_id(view_id);
     g_assert(w);
     luaH_object_push(L, w->ref);
-    lua_insert(L, top+2);
+    lua_insert(L, top+1);
 
     /* Call the function; push result/error and ok/error boolean */
-    lua_pushboolean(L, lua_pcall(L, argc, 1, 0));
-    if (lua_toboolean(L, -1))
-        warn("Lua error: %s\n", lua_tostring(L, -2));
+    luaH_object_push(L, ref);
+    lua_pushboolean(L, !luaH_dofunction(L, argc, 1));
 
     /* Serialize the result, and send it back */
     msg_send_lua(from, MSG_TYPE_lua_js_call, L, -2, -1);

@@ -314,8 +314,6 @@ async_callback_handler(GPid pid, gint status, gpointer cb_ref)
         return;
 
     lua_State *L = globalconf.L;
-    /* push callback function onto stack */
-    luaH_object_push(L, cb_ref);
 
     /* push exit reason & exit status onto lua stack */
     if (WIFEXITED(status)) {
@@ -329,11 +327,9 @@ async_callback_handler(GPid pid, gint status, gpointer cb_ref)
         lua_pushinteger(L, -1);
     }
 
-    if (lua_pcall(L, 2, 0, 0)) {
-        warn("error in callback function: %s", lua_tostring(L, -1));
-        lua_pop(L, 1);
-    }
-
+    /* push callback function onto stack */
+    luaH_object_push(L, cb_ref);
+    luaH_dofunction(L, 2, 0);
     luaH_object_unref(L, cb_ref);
 }
 
@@ -593,16 +589,13 @@ idle_cb(gpointer func)
 
     /* get original stack size */
     gint top = lua_gettop(L);
-    gboolean keep = FALSE;
 
     /* call function */
     luaH_object_push(L, func);
-    if (lua_pcall(L, 0, 1, 0))
-        /* remove idle source if error in callback */
-        warn("error in idle callback: %s", lua_tostring(L, -1));
-    else
-        /* keep the source alive? */
-        keep = lua_toboolean(L, -1);
+    luaH_dofunction(L, 0, 1);
+
+    /* keep the source alive? */
+    gboolean keep = lua_toboolean(L, -1);
 
     /* allow collection of idle callback func */
     if (!keep)

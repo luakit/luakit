@@ -29,11 +29,11 @@ void
 run_javascript_finished(const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
+    gint top = lua_gettop(L);
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, >=, 2);
     g_assert_cmpint(n, <=, 4);
 
-    const gchar *source = lua_tostring(L, -n);
     gpointer cb = lua_touserdata(L, -n + 1);
 
     if (n == 4) { /* Nil return value and Error */
@@ -43,16 +43,11 @@ run_javascript_finished(const guint8 *msg, guint length)
 
     if (n >= 3 && cb) {
         luaH_object_push(L, cb);
-        lua_insert(L, -n + 1);
-        if (lua_pcall(L, n-2, 0, 0)) {
-            warn("error in javascript callback: %s", lua_tostring(L, -1));
-            warn("source: %s", source);
-            lua_pop(L, 1);
-        }
+        luaH_dofunction(L, n-2, 0);
         luaH_object_unref(L, cb);
     }
 
-    lua_pop(L, 2);
+    lua_settop(L, top);
 }
 
 static gint
