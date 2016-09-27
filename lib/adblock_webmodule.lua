@@ -9,15 +9,13 @@ module("adblock_webmodule")
 local ui = ui_process()
 
 local enabled = true
-rules = {}
+local rules = {}
+local enabled_rules = {}
 
 ui:add_signal("enable", function(_, _, e) enabled = e end)
-ui:add_signal("update_rules", function(_, _, r, list)
-    if list then
-        rules[list] = r
-    else
-        rules = r
-    end
+ui:add_signal("update_rules", function(_, _, r) rules = r end)
+ui:add_signal("list_set_enabled", function(_, _, list, enabled)
+    enabled_rules[list] = enabled and rules[list] or nil
 end)
 
 local function domain_match(domain, opts)
@@ -131,7 +129,7 @@ match = function (src, dst)
     end
 
     -- Test against each list's whitelist rules first
-    for _, list in pairs(rules) do
+    for _, list in pairs(enabled_rules) do
         local found, pattern = match_list(list.whitelist, dst, dst_domains, src_domain, dst_domain)
         if found then
             msg.debug("adblock: allowing request as pattern %q matched to uri %s", pattern, dst)
@@ -140,7 +138,7 @@ match = function (src, dst)
     end
 
     -- Test against each list's blacklist rules
-    for _, list in pairs(rules) do
+    for _, list in pairs(enabled_rules) do
         local found, pattern = match_list(list.blacklist, dst, dst_domains, src_domain, dst_domain)
         if found then
             msg.debug("adblock: blocking request as pattern %q matched to uri %s", pattern, dst)

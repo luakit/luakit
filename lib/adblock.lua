@@ -320,12 +320,8 @@ load = function (reload, single_list, no_sync)
     
     rules_cache.white, rules_cache.black = nil, nil
     rules_cache = nil
-    if not no_sync then
-        if single_list then
-            adblock_wm:emit_signal("update_rules", rules[single_list], single_list)
-        else
-            adblock_wm:emit_signal("update_rules", rules)
-        end
+    if not no_sync and not single_list then
+        adblock_wm:emit_signal("update_rules", rules)
     end
     refresh_views()
 end
@@ -353,12 +349,10 @@ function list_opts_modify(list_index, opt_ex, opt_inc)
     
     -- Manage list's rules
     if util.table.hasitem(opt_inc, "Enabled") then
-        if not lousy.util.table.hasitem(rules, list) then
-            load(false, list.title)
-        end
+        adblock_wm:emit_signal("list_set_enabled", list.title, true)
+        refresh_views()
     elseif util.table.hasitem(opt_inc, "Disabled") then
-        rules[list.title] = nil
-        adblock_wm:emit_signal("update_rules", nil, list.title)
+        adblock_wm:emit_signal("list_set_enabled", list.title, false)
         refresh_views()
     end
     
@@ -445,6 +439,10 @@ end)
 
 webview.init_funcs.adblock_load = function (view, w)
     adblock_wm:emit_signal(view, "update_rules", rules)
+    for name, list in pairs(rules) do
+        local enabled = util.table.hasitem(list.opts, "Enabled")
+        adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
+    end
 end
 
 -- Add commands.
