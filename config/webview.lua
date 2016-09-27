@@ -205,8 +205,9 @@ webview.init_funcs = {
     popup_fix_open_link_label = function (view, w)
         view:add_signal("populate-popup", function (v, menu)
             for i, v in ipairs(menu) do
-                if type(v) == "table" and v[1] == "Open Link in New _Window" then
-                    v[1] = "Open Link in New _Tab"
+                if type(v) == "table" then
+                    -- Optional underscore represents alt-key shortcut letter
+                    v[1] = string.gsub(v[1], "New (_?)Window", "New %1Tab")
                 end
             end
         end)
