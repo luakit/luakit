@@ -147,6 +147,10 @@ function window.build()
     l.uri.selectable = true
     r.ssl:hide()
 
+    -- Allow error messages to be copied
+    -- TODO: *only* allow copying when showing an error
+    w.ibar.prompt.selectable = true
+
     -- Allows indexing of window struct by window widget
     window.bywidget[w.win] = w
 
