@@ -306,9 +306,9 @@ Display the quickmarks list.
 .B :tabhistory
 Display the tab history.
 .TP
-.B :viewsource
+.B :view-source
 Display page source code.
-Use \fB:viewsource!\fR to toggle off.
+Use \fB:view-source!\fR to toggle off.
 .
 .\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
 .SH FILES
