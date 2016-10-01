@@ -17,7 +17,7 @@ new_mode("tabhistory", {
         local h = w.view.history
         local rows = {{"Title", "URI", title = true},}
         for i, hi in ipairs(h.items) do
-            local title, uri = util.escape(hi.title), util.escape(hi.uri)
+            local title, uri = util.escape(hi.title) or "", util.escape(hi.uri)
             local marker = (i == h.index and "* " or "  ")
             table.insert(rows, 2, { (marker..title), uri, index=i})
         end

@@ -44,7 +44,7 @@ new_mode("undolist", {
         for uid, tab in ipairs(w.closed_tabs) do
             tab.uid = uid
             local item = tab.hist.items[tab.hist.index]
-            local title, uri = escape(item.title), escape(item.uri)
+            local title, uri = escape(item.title) or "", escape(item.uri)
             table.insert(rows, 2, { "  " .. title, " " .. uri, uid = uid })
         end
         w.menu:build(rows)
