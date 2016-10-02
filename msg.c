@@ -96,7 +96,9 @@ msg_recv_page_created(msg_endpoint_t *ipc, const guint64 *page_id, guint length)
 {
     g_assert(length == sizeof(*page_id));
     widget_t *w = webview_get_by_id(*page_id);
-    g_assert(w);
+
+    /* Page may already have been closed */
+    if (!w) return;
 
     web_module_load_modules_on_endpoint(ipc, globalconf.L);
     luaH_register_functions_on_endpoint(ipc, globalconf.L);
