@@ -175,7 +175,7 @@ static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
     lua_State *L = extension.WL;
-    const gchar *uri = webkit_web_page_get_uri(web_page);
+    const gchar *uri = webkit_web_page_get_uri(web_page) ?: "about:blank";
 
     /* Push pattern -> funclist table */
     lua_pushliteral(L, LUAKIT_LUAJS_REGISTRY_KEY);
