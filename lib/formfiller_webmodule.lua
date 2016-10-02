@@ -175,8 +175,8 @@ local function load(fast, page_id)
         ui:emit_signal("failed", msg)
     else
         ui:emit_signal("filtered", rules)
-        ui:emit_signal("finished")
     end
+    ui:emit_signal("finished")
 end
 
 function contains(tbl, item)
