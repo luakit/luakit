@@ -268,12 +268,18 @@ function load(w, fast)
         show_menu(w, forms)
     end
 
+    local function failed(_, msg)
+        w:error(msg)
+    end
+
     local function finished(_)
         formfiller_wm:remove_signal("filtered", filtered)
+        formfiller_wm:remove_signal("failed", failed)
         formfiller_wm:remove_signal("finished", finished)
     end
 
     formfiller_wm:add_signal("filtered", filtered)
+    formfiller_wm:add_signal("failed", failed)
     formfiller_wm:add_signal("finished", finished)
     formfiller_wm:emit_signal(w.view, "load", fast, w.view.id)
 end

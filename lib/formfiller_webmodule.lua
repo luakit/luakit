@@ -157,6 +157,10 @@ local function load(fast, page_id)
     state.documents = { dom_document(page_id).body }
     local uri = page(page_id).uri
     local rules = filter_rules(state.rules, uri)
+    if #rules == 0 then
+        ui:emit_signal("failed", "formfiller: no rules matched")
+        return
+    end
     for _, rule in ipairs(rules) do
         rule.forms = filter_forms(rule.forms)
     end
@@ -167,6 +171,8 @@ local function load(fast, page_id)
                 return
             end
         end
+        local msg = string.format("formfiller: no forms matched (rules matched: %d)", #rules)
+        ui:emit_signal("failed", msg)
     else
         ui:emit_signal("filtered", rules)
         ui:emit_signal("finished")
