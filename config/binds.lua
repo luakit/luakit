@@ -670,6 +670,9 @@ add_cmds({
     cmd("tabp[revious]", "Switch to the previous tab.",
         function (w) w:prev_tab() end),
 
+    cmd("tabde[tach]", "Move the current tab tab into a new window",
+        function (w) window.new({w.view}) end),
+
     cmd("q[uit]", "Close the current window.",
         function (w, a, o) w:close_win(o.bang) end),
 

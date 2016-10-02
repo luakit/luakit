@@ -611,15 +611,16 @@ window.methods = {
         -- Close and remove the blank page, if present
         if w.has_blank then w.has_blank:destroy() end
         w.has_blank = nil
-        -- Make new webview widget
-        local view = webview.new(w)
-        -- Get tab order function
-        if not order and taborder then
-            order = (switch == false and taborder.default_bg)
-                or taborder.default
+
+        local view
+        if type(arg) == "widget" and arg.type == "webview" then
+            view = arg
+            local ww = webview.window(view)
+            ww:detach_tab(view)
+        else
+            -- Make new webview widget
+            view = webview.new(w)
         end
-        local pos = w.tabs:insert((order and order(w, view)) or -1, view)
-        if switch ~= false then w.tabs:switch(pos) end
 
         -- Load uri or webview history table
         local function set_location (v)
@@ -638,26 +639,43 @@ window.methods = {
             end
             view:remove_signal("web-extension-loaded", set_location)
         end
-        view:add_signal("web-extension-loaded", set_location)
-        -- Update statusbar widgets
-        w:update_tab_count()
+        if not (type(arg) == "widget" and arg.type == "webview") then
+            view:add_signal("web-extension-loaded", set_location)
+        end
+
+        w:attach_tab(view, switch, order)
         return view
     end,
 
     -- close the current tab
     close_tab = function (w, view, blank_last)
-        view = view or w.view
-
         -- Don't close the blank page
-        if w.has_blank then return end
+        if blank_last ~= false and w.has_blank then return end
 
+        view = view or w.view
+        w:emit_signal("close-tab", view)
+        w:detach_tab(view, blank_last)
+        view:destroy()
+    end,
+
+    attach_tab = function (w, view, switch, order)
+        -- Get tab order function
+        if not order and taborder then
+            order = (switch == false and taborder.default_bg)
+                or taborder.default
+        end
+        local pos = w.tabs:insert((order and order(w, view)) or -1, view)
+        if switch ~= false then w.tabs:switch(pos) end
+        w:update_tab_count()
+    end,
+
+    detach_tab = function (w, view, blank_last)
+        view = view or w.view
+        view.parent:remove(view)
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
-        if blank_last ~= false and w.tabs:count() == 1 then
+        if blank_last ~= false and w.tabs:count() == 0 then
             w.has_blank = w:new_tab("about:blank", false)
         end
-
-        w:emit_signal("close-tab", view)
-        view:destroy()
         w:update_tab_count()
     end,
 
