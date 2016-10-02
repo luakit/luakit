@@ -137,7 +137,7 @@ function new(notebook, orientation)
 
         if prev_view then
             local prev_tl = data[tlist].tabs[prev_view]
-            prev_tl.current = false
+            if prev_tl then prev_tl.current = false end
         end
         local tl = data[tlist].tabs[view]
         tl.current = true
