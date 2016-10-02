@@ -4,6 +4,15 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local on_tab_close = function (w, view)
+    -- Save tab history
+    local tab = { hist = view.history, session_state = view.session_state }
+    -- And relative location
+    local index = w.tabs:indexof(view)
+    if index ~= 1 then tab.after = w.tabs[index-1] end
+    table.insert(w.closed_tabs, tab)
+end
+
 -- Undo a closed tab (with complete tab history)
 window.methods.undo_close_tab = function (w, index)
     -- Convert negative indexes
@@ -28,6 +37,11 @@ window.methods.undo_close_tab = function (w, index)
     view:add_signal("web-extension-loaded", function(v)
         v:emit_signal("undo-close")
     end)
+end
+
+window.init_funcs.undo_close_tab = function (w)
+    w.closed_tabs = {}
+    w:add_signal("close-tab", on_tab_close)
 end
 
 local key = lousy.bind.key

@@ -69,7 +69,6 @@ function window.build()
             input_text = "",
         },
         bar_layout = vbox(),
-        closed_tabs = {}
     }
 
     -- Tablist widget
@@ -657,12 +656,7 @@ window.methods = {
             w.has_blank = w:new_tab("about:blank", false)
         end
 
-        -- Save tab history
-        local tab = { hist = view.history, session_state = view.session_state }
-        -- And relative location
-        local index = w.tabs:indexof(view)
-        if index ~= 1 then tab.after = w.tabs[index-1] end
-        table.insert(w.closed_tabs, tab)
+        w:emit_signal("close-tab", view)
         view:destroy()
         w:update_tab_count()
     end,
