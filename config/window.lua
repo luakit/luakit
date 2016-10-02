@@ -609,23 +609,19 @@ window.methods = {
     end,
 
     new_tab = function (w, arg, switch, order)
-        local view
-        -- Use blank tab first
-        if w.has_blank and w.tabs:count() == 1 and w.tabs[1].uri == "about:blank" then
-            view = w.tabs[1]
-        end
+        -- Close and remove the blank page, if present
+        if w.has_blank then w.has_blank:destroy() end
         w.has_blank = nil
         -- Make new webview widget
-        if not view then
-            view = webview.new(w)
-            -- Get tab order function
-            if not order and taborder then
-                order = (switch == false and taborder.default_bg)
-                    or taborder.default
-            end
-            local pos = w.tabs:insert((order and order(w, view)) or -1, view)
-            if switch ~= false then w.tabs:switch(pos) end
+        local view = webview.new(w)
+        -- Get tab order function
+        if not order and taborder then
+            order = (switch == false and taborder.default_bg)
+                or taborder.default
         end
+        local pos = w.tabs:insert((order and order(w, view)) or -1, view)
+        if switch ~= false then w.tabs:switch(pos) end
+
         -- Load uri or webview history table
         local function set_location (v)
             if type(arg) == "string" then v.uri = arg
@@ -652,12 +648,15 @@ window.methods = {
     -- close the current tab
     close_tab = function (w, view, blank_last)
         view = view or w.view
+
+        -- Don't close the blank page
+        if w.has_blank then return end
+
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 1 then
-            if not view.is_loading and view.uri == "about:blank" then return end
-            w:new_tab("about:blank", false)
-            w.has_blank = true
+            w.has_blank = w:new_tab("about:blank", false)
         end
+
         -- Save tab history
         local tab = { hist = view.history, session_state = view.session_state }
         -- And relative location
