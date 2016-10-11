@@ -592,19 +592,19 @@ idle_cb(gpointer func)
 
     /* call function */
     luaH_object_push(L, func);
-    luaH_dofunction(L, 0, 1);
+    gboolean ok = luaH_dofunction(L, 0, 1);
 
     /* keep the source alive? */
     gboolean keep = lua_toboolean(L, -1);
 
     /* allow collection of idle callback func */
-    if (!keep)
+    if (!keep || !ok)
         luaH_object_unref(L, func);
 
     /* leave stack how we found it */
     lua_settop(L, top);
 
-    return keep;
+    return keep && ok;
 }
 
 /** Adds a function to be called whenever there are no higher priority GTK
