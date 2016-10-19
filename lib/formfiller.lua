@@ -473,6 +473,8 @@ function load(w, fast)
     -- filter out all rules that do not match the current URI
     local rules = filter_rules(w, w.formfiller_state.rules)
     for _, rule in ipairs(rules) do
+        print(rule.pattern)
+        print(#rule.forms)
         -- filter out all forms that do not match the current page
         local forms = filter_forms(w, rule.forms)
         -- assemble a list of menu items to display, if any exist
