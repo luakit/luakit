@@ -227,6 +227,7 @@ msg_endpoint_new(const gchar *name)
     ipc->queue = g_byte_array_new();
     ipc->status = MSG_ENDPOINT_DISCONNECTED;
     ipc->refcount = 1;
+    ipc->creation_notified = FALSE;
 
     return ipc;
 }

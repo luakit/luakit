@@ -101,6 +101,8 @@ typedef struct _msg_endpoint_t {
     msg_recv_state_t recv_state;
     /** Refcount: number of webviews + number of unsent messages */
     gint refcount;
+    /** Whether the endpoint creation signal has been emitted */
+    gboolean creation_notified;
 } msg_endpoint_t;
 
 msg_endpoint_t *msg_endpoint_new(const gchar *name);

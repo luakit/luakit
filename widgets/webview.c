@@ -1206,8 +1206,21 @@ webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc)
     webview_data_t *d = w->data;
     d->ipc = msg_endpoint_replace(d->ipc, ipc);
 
-    /* Emit 'web-extension-loaded' signal on webview */
     lua_State *L = globalconf.L;
+
+    /* Emit 'web-extension-created' signal on luakit if necessary */
+    /* TODO: move signal emission to somewhere else */
+    if (!ipc->creation_notified) {
+        ipc->creation_notified = TRUE;
+
+        gint top = lua_gettop(L);
+        luaH_object_push(L, w->ref);
+        lua_class_t *luakit_class = luakit_lib_get_luakit_class();
+        luaH_class_emit_signal(L, luakit_class, "web-extension-created", 1, 0);
+        lua_settop(L, top);
+    }
+
+    /* Emit 'web-extension-loaded' signal on webview */
     luaH_object_push(L, w->ref);
     if (!lua_isnil(L, -1))
         luaH_object_emit_signal(L, -1, "web-extension-loaded", 0, 0);
