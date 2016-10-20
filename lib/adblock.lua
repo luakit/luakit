@@ -437,8 +437,11 @@ adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
     end
 end)
 
-webview.init_funcs.adblock_load = function (view, w)
+capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", rules)
+end)
+
+webview.init_funcs.adblock_load = function (view, w)
     for name, list in pairs(rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
         adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
