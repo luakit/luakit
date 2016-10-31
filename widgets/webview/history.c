@@ -110,6 +110,8 @@ luaH_webview_set_session_state(lua_State *L, webview_data_t *d)
     GBytes *bytes = g_bytes_new(str, len);
     WebKitWebViewSessionState *state = webkit_web_view_session_state_new(bytes);
     g_bytes_unref(bytes);
+    if (!state)
+        luaL_error(L, "Invalid session state");
     webkit_web_view_restore_session_state(d->view, state);
 
     WebKitBackForwardList *bfl = webkit_web_view_get_back_forward_list(d->view);
