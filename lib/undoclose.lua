@@ -4,9 +4,19 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local reopening = {}
+
 local on_tab_close = function (w, view)
+    local tab
     -- Save tab history
-    local tab = { hist = view.history, session_state = view.session_state }
+    if reopening[view] then
+        -- If we're still reopening the tab we're closing, then we haven't yet
+        -- initialized it; reuse the restoration data for this tab
+        tab = reopening[view]
+        reopening[view] = nil
+    else
+        tab = { hist = view.history, session_state = view.session_state }
+    end
     -- And relative location
     local index = w.tabs:indexof(view)
     if index ~= 1 then tab.after = w.tabs[index-1] end
@@ -25,6 +35,7 @@ window.methods.undo_close_tab = function (w, index)
         return
     end
     local view = w:new_tab({ session_state = tab.session_state, hist = tab.hist })
+    reopening[view] = tab
     -- Attempt to open in last position
     if tab.after then
         local i = w.tabs:indexof(tab.after)
@@ -36,6 +47,7 @@ window.methods.undo_close_tab = function (w, index)
     -- Emit 'undo-close' after webview init funcs have run
     view:add_signal("web-extension-loaded", function(v)
         v:emit_signal("undo-close")
+        reopening[view] = nil
     end)
 end
 
