@@ -116,8 +116,10 @@ luaH_webview_set_session_state(lua_State *L, webview_data_t *d)
 
     WebKitBackForwardList *bfl = webkit_web_view_get_back_forward_list(d->view);
     WebKitBackForwardListItem *item = webkit_back_forward_list_get_current_item(bfl);
-    webkit_web_view_go_to_back_forward_list_item(d->view, item);
-    update_uri(d->widget, webkit_back_forward_list_item_get_uri(item));
+    if (item) {
+        webkit_web_view_go_to_back_forward_list_item(d->view, item);
+        update_uri(d->widget, webkit_back_forward_list_item_get_uri(item));
+    }
 }
 
 static int
