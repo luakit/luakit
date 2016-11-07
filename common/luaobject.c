@@ -307,7 +307,7 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     g_free(origin);
 
     if(!obj)
-        return luaL_error(L, "trying to emit signal on non-object");
+        return luaL_error(L, "trying to emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET " on non-object", name);
 
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if (sigfuncs) {
