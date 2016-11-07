@@ -14,7 +14,6 @@ local string = string
 local table = table
 local type = type
 local tostring = tostring
-local print = print
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
