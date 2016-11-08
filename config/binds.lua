@@ -475,7 +475,8 @@ add_binds("normal", {
 
     key({}, "<", "Reorder tab left `[count=1]` positions.",
         function (w, m)
-            w.tabs:reorder(w.view, w.tabs:current() - m.count)
+            w.tabs:reorder(w.view,
+                (w.tabs:current() - m.count) % w.tabs:count())
         end, {count=1}),
 
     key({}, ">", "Reorder tab right `[count=1]` positions.",
