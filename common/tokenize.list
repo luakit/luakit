@@ -299,3 +299,4 @@ allow_certificate
 options
 crash
 process_limit
+wrap_js

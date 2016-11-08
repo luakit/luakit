@@ -112,6 +112,44 @@ luaH_page_eval_js(lua_State *L)
     return luaJS_eval_js(extension.WL, ctx, script, source, false);
 }
 
+static gint
+luaH_page_wrap_js(lua_State *L)
+{
+    page_t *page = luaH_checkudata(L, 1, &page_class);
+    const gchar *script = luaL_checkstring(L, 2);
+    if (!lua_isnil(L, 3))
+        luaH_checktable(L, 3);
+
+    /* Get the page JS context */
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
+
+    /* Construct argument names array */
+    int argc = lua_objlen(L, 3), i = 0;
+    JSStringRef *args = argc > 0 ? g_alloca(sizeof(*args)*argc) : NULL;
+
+    /* {}, index, tbl val */
+    if (argc > 0) {
+        while (lua_pushnumber(L, ++i), lua_rawget(L, -2), !lua_isnil(L, -1)) {
+            luaL_checktype(L, -1, LUA_TSTRING);
+            const char *name = lua_tostring(L, -1);
+            args[i-1] = JSStringCreateWithUTF8CString(name);
+            lua_pop(L, 1);
+        }
+    }
+
+    /* Convert script to a JS function */
+    JSStringRef body = JSStringCreateWithUTF8CString(script);
+    JSObjectRef func = JSObjectMakeFunction(ctx, NULL, argc, args, body, NULL, 1, NULL);
+
+    lua_pushlightuserdata(L, ctx);
+    lua_pushlightuserdata(L, func);
+    lua_pushcclosure(L, luaH_page_js_func, 2);
+
+    return 1;
+}
+
 static inline void
 luaH_page_destroy_cb(WebKitWebPage *web_page)
 {
@@ -168,6 +206,7 @@ luaH_page_index(lua_State *L)
         PS_CASE(URI, webkit_web_page_get_uri(page->page));
         PI_CASE(ID, webkit_web_page_get_id(page->page));
         PF_CASE(EVAL_JS, luaH_page_eval_js)
+        PF_CASE(WRAP_JS, luaH_page_wrap_js)
         default:
             return 0;
     }
