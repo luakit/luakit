@@ -308,6 +308,7 @@ static void webview_get_source_finished(WebKitWebResource *main_resource, GAsync
     webview_data_t *d = w->data;
     gsize length;
     guchar *source = webkit_web_resource_get_data_finish (main_resource, res, &length, NULL);
+    g_object_unref(main_resource);
     if (d->source)
         g_free(d->source);
     d->source = (gchar*)source;
@@ -350,6 +351,7 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
     } else if (e == WEBKIT_LOAD_FINISHED) {
         WebKitWebResource * main_resource = webkit_web_view_get_main_resource(d->view);
         if (main_resource) {
+            g_object_ref(main_resource);
             webkit_web_resource_get_data(main_resource, NULL,
                     (GAsyncReadyCallback) webview_get_source_finished, w);
         }
