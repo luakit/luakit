@@ -69,6 +69,8 @@ function add(uri, title, update_visits)
 
     -- Ignore blank uris
     if not uri or uri == "" or uri == "about:blank" then return end
+    -- Ignore luakit:// urls
+    if string.find(uri, "^luakit://") then return end
     -- Ask user if we should ignore uri
     if _M.emit_signal("add", uri, title) == false then return end
 

@@ -21,7 +21,7 @@
 #include "common/property.h"
 #include "clib/soup/soup.h"
 
-#include <webkit/webkit.h>
+#include <webkit2/webkit2.h>
 
 static gint
 luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
@@ -147,3 +147,5 @@ luaH_gobject_newindex(lua_State *L, property_t *props, luakit_token_t tok,
     }
     return FALSE;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

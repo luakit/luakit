@@ -329,7 +329,7 @@ $(document).ready(function () { 'use strict';
 local initial_search_term
 
 export_funcs = {
-    history_search = function (opts)
+    history_search = function (view, opts)
         local sql = { "SELECT", "*", "FROM history" }
 
         local where, args, argc = {}, {}, 1
@@ -373,11 +373,11 @@ export_funcs = {
         return rows
     end,
 
-    history_clear_all = function ()
+    history_clear_all = function (view)
         history.db:exec [[ DELETE FROM history ]]
     end,
 
-    history_clear_list = function (ids)
+    history_clear_list = function (view, ids)
         if not ids or #ids == 0 then return end
         local marks = {}
         for i=1,#ids do marks[i] = "?" end
@@ -385,7 +385,7 @@ export_funcs = {
             .. table.concat(marks, ",") .. " )", ids)
     end,
 
-    initial_search_term = function ()
+    initial_search_term = function (_)
         local term = initial_search_term
         initial_search_term = nil
         return term
@@ -393,45 +393,22 @@ export_funcs = {
 }
 
 chrome.add("history", function (view, meta)
-
-    local html = string.gsub(html, "{%%(%w+)}", {
+    return string.gsub(html, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
         stylesheet = chrome.stylesheet .. stylesheet
     })
+end,
+function (view, meta)
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    local _, err = view:eval_js(jquery, { no_return = true })
+    assert(not err, err)
 
-    view:load_string(html, meta.uri)
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= meta.uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        view:register_function("reset_mode", function ()
-            meta.w:set_mode() -- HACK to unfocus search box
-        end)
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://download/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
-    end
-
-    view:add_signal("load-status", on_first_visual)
-end)
+    -- Load main luakit://history/ JavaScript
+    local _, err = view:eval_js(main_js, { no_return = true })
+    assert(not err, err)
+end,
+export_funcs)
 
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)

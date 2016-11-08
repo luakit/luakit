@@ -18,24 +18,20 @@
  *
  */
 
-#include "globalconf.h"
 #include "common/util.h"
+#include "globalconf.h"
 #include "luah.h"
+#include "msg.h"
+#include "web_context.h"
 
+#include <errno.h>
 #include <gtk/gtk.h>
+#include <locale.h>
 #include <signal.h>
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <errno.h>
-#include <locale.h>
-
-static void sigchld(int sigint);
-
-void
-sigchld(int UNUSED(signum)) {
-    while(0 < waitpid(-1, NULL, WNOHANG));
-}
+#include <webkit2/webkit2.h>
 
 void
 init_lua(gchar **uris)
@@ -72,13 +68,16 @@ init_directories(void)
 }
 
 /* load command line options into luakit and return uris to load */
-gchar**
-parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
+gchar **
+parseopts(int *argc, gchar *argv[], gboolean **nonblock)
+{
     GOptionContext *context;
     gboolean *version_only = NULL;
     gboolean *check_only = NULL;
     gchar **uris = NULL;
     globalconf.profile = NULL;
+    gboolean verbose = FALSE;
+    gchar *log_lvl = NULL;
 
     /* save luakit exec path */
     globalconf.execpath = g_strdup(argv[0]);
@@ -86,16 +85,22 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
 
     /* define command line options */
     const GOptionEntry entries[] = {
-      { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
-      { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
-      { "profile",  'p', 0, G_OPTION_ARG_STRING,       &globalconf.profile,  "profile name to use",       "NAME" },
-      { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
-      { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
-      { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
-      { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &globalconf.verbose,  "print debugging output",    NULL   },
-      { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
-      { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
+        { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
+        { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
+        { "profile",  'p', 0, G_OPTION_ARG_STRING,       &globalconf.profile,  "profile name to use",       "NAME" },
+        { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
+        { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
+        { "uri",      'u', 0, G_OPTION_ARG_STRING_ARRAY, &uris,                "uri(s) to load at startup", "URI"  },
+        { "verbose",  'v', 0, G_OPTION_ARG_NONE,         &verbose,             "print verbose output",      NULL   },
+        { "log",      'l', 0, G_OPTION_ARG_STRING,       &log_lvl,             "specify precise log level", "NAME" },
+        { "version",  'V', 0, G_OPTION_ARG_NONE,         &version_only,        "print version and exit",    NULL   },
+        { NULL,       0,   0, 0,                         NULL,                 NULL,                        NULL   },
     };
+
+    /* Save a copy of argv */
+    globalconf.argv = g_ptr_array_new_with_free_func(g_free);
+    for (gint i = 0; i < *argc; ++i)
+        g_ptr_array_add(globalconf.argv, g_strdup(argv[i]));
 
     /* parse command line options */
     context = g_option_context_new("[URI...]");
@@ -104,10 +109,29 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     g_option_context_parse(context, argc, &argv, NULL);
     g_option_context_free(context);
 
+    /* Trim unparsed arguments off copy of argv */
+    for (gint i = 0; i < *argc; ++i) {
+        while ((unsigned)i < globalconf.argv->len && !strcmp(g_ptr_array_index(globalconf.argv, i), argv[i]))
+            g_ptr_array_remove_index(globalconf.argv, i);
+    }
+
     /* print version and exit */
     if (version_only) {
         g_printf("luakit %s\n", VERSION);
         exit(EXIT_SUCCESS);
+    }
+
+    if (!log_lvl)
+        log_set_verbosity(verbose ? LOG_LEVEL_verbose : LOG_LEVEL_info);
+    else {
+        log_level_t lvl;
+        int err = log_level_from_string(&lvl, log_lvl);
+        if (err)
+            fatal("invalid log level");
+        log_set_verbosity(lvl);
+
+        if (verbose)
+            warn("invalid mix of -v and -l, ignoring -v...");
     }
 
     /* check config syntax and exit */
@@ -129,32 +153,22 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock) {
     if (uris)
         return uris;
     else
-        return argv+1;
+        return argv + 1;
 }
 
 gint
-main(gint argc, gchar *argv[]) {
+main(gint argc, gchar *argv[])
+{
     gboolean *nonblock = NULL;
     gchar **uris = NULL;
     pid_t pid, sid;
 
     globalconf.starttime = l_time();
 
-    /* clean up any zombies */
-    struct sigaction sigact;
-    sigact.sa_handler=sigchld;
-    sigemptyset (&sigact.sa_mask);
-    sigact.sa_flags = SA_NOCLDSTOP;
-    if (sigaction(SIGCHLD, &sigact, NULL))
-        fatal("Can't install SIGCHLD handler");
-
     /* set numeric locale to C (required for compatibility with
        LuaJIT and luakit scripts) */
-#if GTK_CHECK_VERSION(2,2,4)
-#else
-    gtk_set_locale();
-#endif
     gtk_disable_setlocale();
+    setlocale(LC_ALL, "");
     setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */
@@ -177,6 +191,8 @@ main(gint argc, gchar *argv[]) {
     gtk_init(&argc, &argv);
 
     init_directories();
+    web_context_init();
+    msg_init();
     init_lua(uris);
 
     /* hide command line parameters so process lists don't leak (possibly
@@ -185,7 +201,7 @@ main(gint argc, gchar *argv[]) {
         memset(argv[i], 0, strlen(argv[i]));
 
     /* parse and run configuration file */
-    if(!luaH_parserc(globalconf.confpath, TRUE))
+    if (!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
     if (!globalconf.windows->len)

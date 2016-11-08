@@ -11,7 +11,8 @@ local ipairs    = ipairs
 local string    = string
 local table     = table
 local window    = window
-
+local webview   = webview
+local error_page = require "error_page"
 
 module("adblock_chrome")
 
@@ -52,7 +53,6 @@ html_template = [==[
         <header id="page-header">
             <h1>AdBlock</h1>
             <span class=state_{state}>{state}</span>
-            <span>AdBlock is in {mode} mode.</span>
             <span>B: {black} / W: {white} / I: {ignored}</span>
             <div class="rhs">{toggle}</div>
         </header>
@@ -108,10 +108,10 @@ html_style = [===[
         width: 100%;
     }
     td + td, th + th {
-        padding-left: 1em;
+        padding-left: 1rem;
     }
     header > span {
-        padding: 1em 1em 1em 1em;
+        padding: 1em;
     }
     .state_Enabled {
         color: #799D6A;
@@ -121,45 +121,6 @@ html_style = [===[
         color: #CF6A4C;
         font-weight: bold;
     }
-    div.tag {
-        padding: 0.4em 0.5em;
-        margin: 0 0 0.5em;
-        clear: both;
-    }
-    span.id {
-        font-size: small;
-        color: #333333;
-        float: right;
-    }
-    a.enable, a.disable {
-        float: right;
-    }
-    .tag ul {
-        padding: 0;
-        margin: 0;
-        list-style-type: none;
-    }
-    .tag li {
-        margin: 1em 0;
-    }
-    .tag h1 {
-        font-size: 12pt;
-        font-weight: bold;
-        font-style: normal;
-        font-variant: small-caps;
-        padding: 0 0 5px 0;
-        margin: 0;
-        color: #CC3333;
-        border-bottom: 1px solid #aaa;
-    }
-    .tag a:link {
-        color: #0077bb;
-        text-decoration: none;
-    }
-    .tag a:hover {
-        color: #0077bb;
-        text-decoration: underline;
-    }
 ]===]
 
 
@@ -168,7 +129,7 @@ html_style = [===[
 function refresh_views()
     for _, w in pairs(window.bywidget) do
         for _, v in ipairs(w.tabs.children) do
-            if string.match(v.uri, "^luakit://adblock/?") then
+            if string.match(v.uri or "", "^luakit://adblock/?") then
                 v:reload()
             end
         end
@@ -232,7 +193,6 @@ chrome.add("adblock", function (view, meta)
         title  = html_page_title,
         style  = chrome.stylesheet .. html_style,
         state = adblock.state(),
-        mode  = adblock.mode(),
         white   = rulescount.white,
         black   = rulescount.black,
         ignored = rulescount.ignored,
@@ -240,40 +200,69 @@ chrome.add("adblock", function (view, meta)
     }
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
-    view:load_string(html, tostring(uri))
+    return html
+end,
+nil,
+{
+    adblock_toggle = function (_, enable)
+        if enable then adblock.enable() else adblock.disable() end
+    end,
 
-    local export_funcs = {
-        adblock_toggle = function (enable)
-            meta.w:run_cmd(enable and ":adblock-enable" or ":adblock-disable")
-        end,
+    adblock_list_toggle = function (_, id, enable)
+        adblock.list_set_enabled(id, enable)
+    end,
+})
 
-        adblock_list_toggle = function (id, enable)
-            if enable then
-                meta.w:run_cmd(":adblock-list-enable " .. id)
-            else
-                meta.w:run_cmd(":adblock-list-disable " .. id)
-            end
-        end,
+navigation_blocked_css_tmpl = [===[
+    body {
+        background-color: #ddd;
+        margin: 0;
+        padding: 0;
+        display: flex;
+        align-items: center;
+        justify-content: center;
     }
 
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
+    #errorContainer {
+        background: #fff;
+        min-width: 35em;
+        max-width: 35em;
+        padding: 2.5em;
+        border: 2px solid #aaa;
+        -webkit-border-radius: 5px;
+    }
 
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
+    #errorTitleText {
+        font-size: 120%;
+        font-weight: bold;
+        margin-bottom: 1em;
+    }
 
-        -- Double check that we are where we should be
-        if view.uri ~= meta.uri then return end
+    .errorMessage {
+        font-size: 90%;
+    }
 
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-    end
+    p {
+        margin: 0;
+    }
+]===]
 
-    view:add_signal("load-status", on_first_visual)
-end)
+webview.init_funcs.navigation_blocked_page_init = function(view, w)
+    view:add_signal("navigation-blocked", function(v, w, uri)
+        error_page.show_error_page(v, {
+            style = navigation_blocked_css_tmpl,
+            heading = "Page blocked",
+            content = [==[
+                <div class="errorMessage">
+                    <p>AdBlock has prevented the page at {uri} from loading</p>
+                </div>
+            ]==],
+            buttons = {},
+            uri = uri,
+        })
+        return true
+    end)
+end
 
 -- Add chrome binds.
 local key, buf = lousy.bind.key, lousy.bind.buf

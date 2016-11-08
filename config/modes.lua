@@ -63,7 +63,6 @@ window.init_funcs.modes_setup = function (w)
         -- next mode's enter function actually ran.
         -- here, we only run the changed callback if the current mode matches
         -- the last mode entered.
-        print("changed signal raised with text " .. input.text)
         if changed and w.last_mode_entered == w.mode then
             changed(w, input.text)
         end
@@ -114,6 +113,9 @@ new_mode("insert", [[When clicking on form fields luakit will enter the insert
         w:set_input()
         w.view:focus()
     end,
+    leave = function (w)
+        w.win:focus()
+    end,
     -- Send key events to webview
     passthrough = true,
 })
@@ -123,6 +125,9 @@ new_mode("passthrough", [[Luakit will pass every key event to the WebView
     enter = function (w)
         w:set_prompt("-- PASS THROUGH --")
         w:set_input()
+    end,
+    leave = function (w)
+        w.win:focus()
     end,
     -- Send key events to webview
     passthrough = true,

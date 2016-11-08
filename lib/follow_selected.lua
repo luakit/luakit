@@ -6,72 +6,43 @@
 -- © 2009 israellevin                                                       --
 ------------------------------------------------------------------------------
 
--- Return selected uri or first uri in selection
-local return_selected = [=[
-(function(document) {
-    var selection = window.getSelection(),
-        container = document.createElement('div'),
-        range, elements, i = 0;
+local web_module = web_module
+local window = window
+local assert = assert
+local pairs = pairs
+local key = lousy.bind.key
+local add_binds = add_binds
 
-    if (selection.toString() !== "") {
-        range = selection.getRangeAt(0);
-        // Check for links contained within the selection
-        container.appendChild(range.cloneContents());
+module("follow_selected")
 
-        var elements = container.getElementsByTagName('a'),
-            len = elements.length, i = 0, href;
+local wm = web_module("follow_selected_webmodule")
 
-        for (; i < len;)
-            if ((href = elements[i++].href))
-                return href;
+local function get_w_by_view_id(view_id)
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == view_id then
+            return w
+        end
+    end
+end
 
-        // Check for links which contain the selection
-        container = range.startContainer;
-        while (container !== document) {
-            if ((href = container.href))
-                return href;
-            container = container.parentNode;
-        }
-    }
-    // Check for active links
-    var element = document.activeElement;
-    return element.src || element.href;
-})(document);
-]=]
+wm:add_signal("navigate", function(_, uri, view_id)
+    get_w_by_view_id(view_id):navigate(uri)
+end)
+wm:add_signal("new_tab", function(_, uri, view_id)
+    get_w_by_view_id(view_id):new_tab(uri)
+end)
+wm:add_signal("new_window", function(_, uri, view_id)
+    window.new({uri})
+end)
+wm:add_signal("download", function(_, uri, view_id)
+    get_w_by_view_id(view_id):download(uri)
+end)
 
 -- Add binding to normal mode to follow selected link
-local key = lousy.bind.key
 add_binds("normal", {
-    -- Follow selected link
-    key({}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        w:navigate(uri)
-    end),
-
-    -- Follow selected link in new tab
-    key({"Control"}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        w:new_tab(uri, false)
-    end),
-
-    -- Follow selected link in new window
-    key({"Shift"}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        window.new({uri})
-    end),
-
-    -- Download selected uri
-    key({"Mod1"}, "Return", function (w)
-        local uri = w.view:eval_js(return_selected)
-        if not uri then return false end
-        assert(type(uri) == "string")
-        w:download(uri)
-    end),
+    key({},          "Return", function (w) wm:emit_signal(w.view, "follow_selected", "navigate", w.view.id) end),
+    key({"Control"}, "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_tab", w.view.id) end),
+    key({"Shift"},   "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end),
+    key({"Mod1"},    "Return", function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end),
 })
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -431,7 +431,7 @@ $(document).ready(function () { 'use strict'
 local new_bookmark_values
 
 export_funcs = {
-    bookmarks_search = function (opts)
+    bookmarks_search = function (view, opts)
         if not bookmarks.db then bookmarks.init() end
 
         local sql = { "SELECT", "*", "FROM bookmarks" }
@@ -481,11 +481,11 @@ export_funcs = {
         return rows
     end,
 
-    bookmarks_add = bookmarks.add,
-    bookmarks_get = bookmarks.get,
-    bookmarks_remove = bookmarks.remove,
+    bookmarks_add = function (view, ...) return bookmarks.add(...) end,
+    bookmarks_get = function (view, ...) return bookmarks.get(...) end,
+    bookmarks_remove = function (view, ...) return bookmarks.remove(...) end,
 
-    new_bookmark_values = function ()
+    new_bookmark_values = function (_)
         local values = new_bookmark_values
         new_bookmark_values = nil
         return values
@@ -502,40 +502,19 @@ chrome.add("bookmarks", function (view, meta)
     end
 
     local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
+    return html
+end,
+function (view, meta)
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    local _, err = view:eval_js(jquery, { no_return = true })
+    assert(not err, err)
 
-    view:load_string(html, uri)
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        view:register_function("reset_mode", function ()
-            meta.w:set_mode() -- HACK to unfocus search box
-        end)
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://download/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
-    end
-
-    view:add_signal("load-status", on_first_visual)
-end)
+    -- Load main luakit://bookmarks/ JavaScript
+    local _, err = view:eval_js(main_js, { no_return = true })
+    assert(not err, err)
+end,
+export_funcs)
 
 chrome_page = "luakit://bookmarks/"
 

@@ -23,10 +23,6 @@ end
 -- Load library of useful functions for luakit
 require "lousy"
 
--- Small util functions to print output (info prints only when luakit.verbose is true)
-function warn(...) io.stderr:write(string.format(...) .. "\n") end
-function info(...) if luakit.verbose then io.stdout:write(string.format(...) .. "\n") end end
-
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
 require "globals"
@@ -100,11 +96,14 @@ require "bookmarks_chrome"
 require "downloads"
 require "downloads_chrome"
 
+-- Add automatic PDF downloading and opening
+require "viewpdf"
+
 -- Example using xdg-open for opening downloads / showing download folders
---downloads.add_signal("open-file", function (file, mime)
---    luakit.spawn(string.format("xdg-open %q", file))
---    return true
---end)
+downloads.add_signal("open-file", function (file, mime)
+    luakit.spawn(string.format("xdg-open %q", file))
+    return true
+end)
 
 -- Add vimperator-like link hinting & following
 require "follow"
@@ -137,6 +136,10 @@ require "introspector"
 -- Add command completion
 require "completion"
 
+-- Press Control-E while in insert mode to edit the contents of the currently
+-- focused <textarea> or <input> element, using `xdg-open`
+require "open_editor"
+
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
 -- Remove all "enable_scripts" & "enable_plugins" lines from your
@@ -153,12 +156,26 @@ require "go_up"
 -- for the current tab.
 require "mixed_content"
 
+-- Filter Referer HTTP header if page domain does not match Referer domain
+web_module("referer_control_webmodule")
+
+require "error_page"
+
+-- Add userstyles loader
+require "styles"
+
+-- Hide scrollbars on all pages
+require "hide_scrollbars"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
 
+-- Set the number of web processes to use. A value of 0 means 'no limit'.
+luakit.process_limit = 0
+
 -- Restore last saved session
-local w = (session and session.restore())
+local w = (not luakit.nounique) and (session and session.restore())
 if w then
     for i, uri in ipairs(uris) do
         w:new_tab(uri, i == 1)

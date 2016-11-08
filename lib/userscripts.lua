@@ -13,8 +13,9 @@ local pairs = pairs
 local setmetatable = setmetatable
 local string = string
 local table = table
-local warn = warn
+local msg = msg
 local webview = webview
+local window = window
 local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
@@ -115,7 +116,8 @@ local gm_functions = [=[
       var oStyle = document.createElement("style");
       oStyle.setAttribute("type", "text\/css");
       oStyle.appendChild(document.createTextNode(styles));
-      document.getElementsByTagName("head")[0].appendChild(oStyle);
+      var parent = document.getElementsByTagName("head")[0] || document.getElementsByTagName("body")[0];
+      parent.appendChild(oStyle);
     }
   }
 
@@ -148,7 +150,15 @@ local prototype = {
             view:eval_js(gm_functions, { no_return = true })
             lstate[view].gmloaded = true
         end
-        view:eval_js(s.js, { source = s.file, no_return = true })
+        view:eval_js(s.js, { source = s.file, no_return = true, callback =
+        function (ret, err)
+            for _, w in pairs(window.bywidget) do
+                if w.view == view then
+                    w:error(string.format("running userscript '%s' failed:\n%s",
+                    s.file, err))
+                end
+            end
+        end})
         lstate[view].loaded[s.file] = s
     end,
     -- Check if the given uri matches the userscripts include/exclude patterns
@@ -213,7 +223,7 @@ local function load_js(file)
         script.file = file
         scripts[file] = setmetatable(script, { __index = prototype })
     else
-        warn("(userscripts.lua): Invalid userscript header in file: %s", file)
+        msg.warn("(userscripts.lua): Invalid userscript header in file: %s", file)
     end
 end
 
@@ -225,6 +235,16 @@ local function load_all()
             load_js(dir .. "/" .. file)
         end
     end
+end
+
+local function view_has_userscripts(view)
+    local uri = view.uri or "about:blank"
+    for _, script in pairs(scripts) do
+        if script:match(uri) then
+            return true
+        end
+    end
+    return false
 end
 
 -- Invoke all userscripts for a given webviews current uri
@@ -263,9 +283,19 @@ webview.init_funcs.userscripts = function (view, w)
         if status == "provisional" then
             -- Clear last userscript-loaded state
             lstate[v] = { loaded = {}, gmloaded = false }
-        elseif status == "first-visual" then
-            invoke(v, true)
+-- TODO
+--        elseif status == "first-visual" then
+--            invoke(v, true)
         elseif status == "finished" then
+            if view_has_userscripts(view) then
+                if v:emit_signal("enable-userscripts", w) == false then
+                    return
+                end
+            end
+            -- WebKit2 has no first-visual signal, so we can't inject
+            -- userscripts set to run at document start that way. Just
+            -- inject them all when loading has finished for now.
+            invoke(v, true)
             invoke(v)
         end
     end)
@@ -280,11 +310,14 @@ add_cmds({
         local file = string.match(view.uri, "/([^/]+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
         if view:loading() then w:error("Wait for script to finish loading first.") end
-        local js = util.unescape(view:eval_js("document.body.getElementsByTagName('pre')[0].innerHTML"))
-        local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
-        if not header then return w:error("Could not find userscript header") end
-        save(file, js)
-        w:notify("Installed userscript to: " .. dir .. "/" .. file)
+        local js = "document.body.getElementsByTagName('pre')[0].innerHTML"
+        view:eval_js(js, { callback = function(ret)
+            local js = util.unescape(ret)
+            local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
+            if not header then return w:error("Could not find userscript header") end
+            save(file, js)
+            w:notify("Installed userscript to: " .. dir .. "/" .. file)
+        end})
     end),
 
     cmd({"userscripts", "uscripts"}, "list userscripts",

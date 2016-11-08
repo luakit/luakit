@@ -1,4 +1,4 @@
-local info      = info
+local msg       = msg
 local assert    = assert
 local string    = string
 local webview   = webview
@@ -45,11 +45,11 @@ function resource_request_starting(v, uri)
 
     if starts_with(v.uri, "https://") and starts_with(uri, "http://") then
         if allow_mixed[v] then
-            info("Allowed mixed request from %s to %s", v.uri, uri)
+            msg.info("Allowed mixed request from %s to %s", v.uri, uri)
             has_mixed[v] = true
             return
         else
-            info("Blocked mixed request from %s to %s", v.uri, uri)
+            msg.info("Blocked mixed request from %s to %s", v.uri, uri)
             has_mixed[v] = false
             return false
         end

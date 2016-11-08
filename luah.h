@@ -24,6 +24,7 @@
 
 #include "common/luaobject.h"
 #include "common/lualib.h"
+#include "common/log.h"
 #include "globalconf.h"
 
 #include <lua.h>
@@ -135,14 +136,16 @@ luaH_dofunction_from_registry(lua_State *L, gint ref, gint nargs, gint nret) {
  */
 static inline void __attribute__ ((format(printf, 2, 3)))
 luaH_warn(lua_State *L, const gchar *fmt, ...) {
+    gint top = lua_gettop(L);
+    lua_Debug ar;
+    lua_getstack(L, 1, &ar);
+    lua_getinfo(L, "Sln", &ar);
+    g_assert_cmpint(top, ==, lua_gettop(L));
+
     va_list ap;
-    luaL_where(L, 1);
-    fprintf(stderr, "%sW: ", lua_tostring(L, -1));
-    lua_pop(L, 1);
     va_start(ap, fmt);
-    vfprintf(stderr, fmt, ap);
+    va_log(LOG_LEVEL_warn, ar.currentline, ar.short_src, fmt, ap);
     va_end(ap);
-    fprintf(stderr, "\n");
 }
 
 static inline gint
@@ -166,4 +169,5 @@ void luaH_modifier_table_push(lua_State *, guint);
 void luaH_keystr_push(lua_State *, guint);
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

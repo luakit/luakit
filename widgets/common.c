@@ -66,6 +66,22 @@ button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 }
 
 gboolean
+mouse_cb(GtkWidget* UNUSED(win), GdkEventCrossing *ev, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
+
+    GdkEventType type = ev->type;
+    g_assert(type == GDK_ENTER_NOTIFY || type == GDK_LEAVE_NOTIFY);
+    gint ret = luaH_object_emit_signal(L, -2, type == GDK_ENTER_NOTIFY ? "mouse-enter" : "mouse-leave", 1, 1);
+
+    gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
+    lua_pop(L, ret + 1);
+    return catch;
+}
+
+gboolean
 focus_cb(GtkWidget* UNUSED(win), GdkEventFocus *ev, widget_t *w)
 {
     lua_State *L = globalconf.L;
@@ -220,6 +236,81 @@ luaH_widget_set_visible(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_min_size(lua_State *L, widget_t *w)
+{
+    gint width, height;
+    gtk_widget_get_size_request(w->widget, &width, &height);
+
+    lua_newtable(L);
+
+    lua_pushliteral(L, "width");
+    lua_pushinteger(L, width);
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "height");
+    lua_pushinteger(L, height);
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
+gint
+luaH_widget_set_min_size(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+
+    gint width, height;
+    gtk_widget_get_size_request(w->widget, &width, &height);
+
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 3, "w"))
+        width = lua_tonumber(L, -1);
+    if (luaH_rawfield(L, 3, "h"))
+        height = lua_tonumber(L, -1);
+    lua_settop(L, top);
+
+    gtk_widget_set_size_request(w->widget, width, height);
+    return 1;
+}
+
+gint
+luaH_widget_set_tooltip(lua_State *L, widget_t *w)
+{
+    gtk_widget_set_tooltip_markup(w->widget, lua_tostring(L, 3) ?: "");
+    return 0;
+}
+
+gint
+luaH_widget_get_tooltip(lua_State *L, widget_t *w)
+{
+    lua_pushstring(L, gtk_widget_get_tooltip_markup(w->widget));
+    return 1;
+}
+
+gint
+luaH_widget_get_parent(lua_State *L, widget_t *w)
+{
+    GtkWidget *widget = gtk_widget_get_parent(GTK_WIDGET(w->widget));
+
+    if (!widget)
+        return 0;
+
+    widget_t *parent = GOBJECT_TO_LUAKIT_WIDGET(widget);
+    luaH_object_push(L, parent->ref);
+    return 1;
+}
+
+gint
+luaH_widget_get_focused(lua_State *L, widget_t *w)
+{
+    gboolean focused = w->info->tok == L_TK_WINDOW ?
+        gtk_window_has_toplevel_focus(GTK_WINDOW(w->widget)) :
+        gtk_widget_is_focus(w->widget);
+    lua_pushboolean(L, focused);
+    return 1;
+}
+
+gint
 luaH_widget_get_visible(lua_State *L, widget_t *w)
 {
     lua_pushboolean(L, gtk_widget_get_visible(w->widget));
@@ -244,7 +335,20 @@ gint
 luaH_widget_focus(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_grab_focus(w->widget);
+
+    switch (w->info->tok) {
+        case L_TK_WINDOW:
+            /* win:focus() unfocuses anything within that window */
+            gtk_window_set_focus(GTK_WINDOW(w->widget), NULL);
+            break;
+        case L_TK_ENTRY:
+            gtk_entry_grab_focus_without_selecting(GTK_ENTRY(w->widget));
+            break;
+        default:
+            gtk_widget_grab_focus(w->widget);
+            break;
+    }
+
     return 0;
 }
 

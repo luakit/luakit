@@ -76,11 +76,6 @@ function update_completions(w, text, pos)
     -- Don't rebuild the menu if the text & cursor position are the same
     if text == state.text and pos == state.pos then return end
 
-    -- Exit completion if cursor outside a word
-    if string.sub(text, pos, pos) == " " then
-        w:enter_cmd(text, { pos = pos })
-    end
-
     -- Update left and right strings
     state.text, state.pos = text, pos
     state.left = string.sub(text, 2, pos)
@@ -169,12 +164,12 @@ funcs = {
         -- We are only interested in the first word
         if string.match(state.left, "%s") then return end
         -- Check each command binding for matches
-        local pat = "^" .. state.left
+        local pat = state.left
         local cmds = {}
         for _, b in ipairs(get_mode("command").binds) do
             if b.cmds then
                 for i, cmd in ipairs(b.cmds) do
-                    if string.match(cmd, pat) then
+                    if string.find(cmd, pat, 1, true) == 1 then
                         if i == 1 then
                             cmd = ":" .. cmd
                         else
@@ -201,9 +196,12 @@ funcs = {
 
     -- Add history completion items to the menu
     history = function (state)
-        -- Find word under cursor (also checks not first word)
-        local term = string.match(state.left, "%s(%S+)$")
-        if not term then return end
+        -- Split into prefix and search term
+        local split = string.find(state.left, "%s")
+        if not split then return end
+        local prefix = ":" .. string.sub(state.left, 1, split)
+        local term = string.sub(state.left, split+1)
+        if not term or term == "" then return end
 
         local sql = [[
             SELECT uri, title, lower(uri||title) AS text
@@ -214,9 +212,8 @@ funcs = {
         local rows = history.db:exec(sql, { string.format("*%s*", term) })
         if not rows[1] then return end
 
-        -- Strip last word (so that we can append the completion uri)
-        local left = ":" .. string.sub(state.left, 1,
-            string.find(state.left, "%s(%S+)$"))
+        -- Strip everything but the prefix (so that we can append the completion uri)
+        local left = prefix
 
         -- Build rows
         local ret = {{ "History", "URI", title = true }}
@@ -229,9 +226,12 @@ funcs = {
 
     -- add bookmarks completion to the menu
     bookmarks = function (state)
-        -- Find word under cursor (also checks not first word)
-        local term = string.match(state.left, "%s(%S+)$")
-        if not term then return end
+        -- Split into prefix and search term
+        local split = string.find(state.left, "%s")
+        if not split then return end
+        local prefix = ":" .. string.sub(state.left, 1, split)
+        local term = string.sub(state.left, split+1)
+        if not term or term == "" then return end
 
         local sql = [[
             SELECT uri, title, lower(uri||title||tags) AS text
@@ -242,9 +242,8 @@ funcs = {
         local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
         if not rows[1] then return end
 
-        -- Strip last word (so that we can append the completion uri)
-        local left = ":" .. string.sub(state.left, 1,
-            string.find(state.left, "%s(%S+)$"))
+        -- Strip everything but the prefix (so that we can append the completion uri)
+        local left = prefix
 
         -- Build rows
         local ret = {{ "Bookmarks", "URI", title = true }}

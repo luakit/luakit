@@ -23,7 +23,11 @@
 #include "common/signal.h"
 
 #include <libsoup/soup.h>
-#include <webkit/webkit.h>
+#if WITH_WEBKIT2
+# include <webkit2/webkit2.h>
+#else
+# include <webkit/webkit.h>
+#endif
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
@@ -145,6 +149,7 @@ luaH_soup_parse_uri(lua_State *L)
     return uri ? 1 : 0;
 }
 
+#if !WITH_WEBKIT2
 static gint
 luaH_soup_index(lua_State *L)
 {
@@ -176,6 +181,7 @@ luaH_soup_newindex(lua_State *L)
 
     return 0;
 }
+#endif
 
 void
 soup_lib_setup(lua_State *L)
@@ -183,18 +189,25 @@ soup_lib_setup(lua_State *L)
     static const struct luaL_reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
+#if !WITH_WEBKIT2
         { "__index",       luaH_soup_index },
         { "__newindex",    luaH_soup_newindex },
+#endif
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
+#if !WITH_WEBKIT2
         { "add_cookies",   luaH_cookiejar_add_cookies },
         { "remove_cookies", luaH_cookiejar_remove_cookies },
+#endif
         { NULL,            NULL },
     };
 
     /* create signals array */
     soup_class.signals = signal_new();
 
+#if WITH_WEBKIT2
+    /* webkit2 API does not expose soup session */
+#else
     /* init soup struct */
     soupconf.cookiejar = luakit_cookie_jar_new();
     soupconf.session = webkit_get_default_session();
@@ -206,6 +219,7 @@ soup_lib_setup(lua_State *L)
             WEBKIT_TYPE_SOUP_AUTH_DIALOG);
     soup_session_add_feature(soupconf.session,
             (SoupSessionFeature*) luakit_auth_dialog_new());
+#endif
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);

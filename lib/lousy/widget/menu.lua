@@ -258,6 +258,11 @@ function del(menu, index)
     menu:emit_signal("changed", menu:get())
 end
 
+function nrows(menu)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
+    return data[menu].nrows
+end
+
 function new(args)
     args = args or {}
 
@@ -272,6 +277,7 @@ function new(args)
         move_down = move_down,
         hide      = function(menu) menu.widget:hide() end,
         show      = function(menu) menu.widget:show() end,
+        nrows     = nrows,
     }
 
     -- Save private widget data

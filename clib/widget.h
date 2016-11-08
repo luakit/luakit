@@ -48,6 +48,10 @@ widget_constructor_t widget_paned;
 widget_constructor_t widget_webview;
 widget_constructor_t widget_window;
 widget_constructor_t widget_socket;
+widget_constructor_t widget_overlay;
+widget_constructor_t widget_scrolled;
+widget_constructor_t widget_image;
+widget_constructor_t widget_spinner;
 
 typedef const struct {
     luakit_token_t tok;
@@ -71,12 +75,18 @@ struct widget_t
     gpointer ref;
     /* Main gtk widget */
     GtkWidget *widget;
+#if GTK_CHECK_VERSION(3,16,0)
+    /* CSS provider for this widget */
+    GtkCssProvider *provider;
+#endif
     /* Misc private data */
     gpointer data;
 };
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
+void widget_set_css_properties(widget_t *, ...);
+gint luaH_widget_new(lua_State *L);
 
 static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)

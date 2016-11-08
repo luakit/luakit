@@ -14,7 +14,6 @@ local string = string
 local table = table
 local type = type
 local tostring = tostring
-local print = print
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
@@ -112,7 +111,7 @@ status_timer:add_signal("timeout", function ()
     _M.emit_signal("status-tick", running)
 end)
 
-function add(uri, opts)
+function add(uri, opts, view)
     opts = opts or {}
     local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
 
@@ -120,31 +119,38 @@ function add(uri, opts)
         string.format("download.add() expected uri or download object "
             .. "(got %s)", type(d) or "nil"))
 
-    -- Emit signal to get initial download location
-    local fn = opts.filename or _M.emit_signal("download-location", d.uri,
-        opts.suggested_filename or d.suggested_filename, d.mime_type)
+    d:add_signal("decide-destination", function(dd, suggested_filename)
+        -- Emit signal to get initial download location
+        local fn = opts.filename or _M.emit_signal("download-location", dd.uri,
+            opts.suggested_filename or suggested_filename, dd.mime_type)
+        assert(fn == nil or type(fn) == "string" and #fn > 1,
+            string.format("invalid filename: %q", tostring(file)))
 
-    assert(fn == nil or type(fn) == "string" and #fn > 1,
-        string.format("invalid filename: %q", tostring(file)))
+        -- Ask the user where we should download the file to
+        if not fn then
+            fn = capi.luakit.save_file("Save file", opts.window, default_dir,
+                suggested_filename)
+        end
 
-    -- Ask the user where we should download the file to
-    if not fn then
-        fn = capi.luakit.save_file("Save file", opts.window, default_dir,
-            d.suggested_filename)
-    end
+        dd.allow_overwrite = true
 
-    if fn then
-        d.destination = fn
-        d:start()
-        local data = {
-            created = capi.luakit.time(),
-            id = next_download_id(),
-        }
-        downloads[d] = data
-        if not status_timer.started then status_timer:start() end
-        _M.emit_signal("download::status", d, downloads[d])
+        if fn then
+            dd.destination = fn
+            dd:add_signal("created-destination", function(ddd,destination)
+                local data = {
+                    created = capi.luakit.time(),
+                    id = next_download_id(),
+                }
+                downloads[ddd] = data
+                if not status_timer.started then status_timer:start() end
+                _M.emit_signal("download::status", ddd, downloads[ddd])
+            end)
+            --return true
+        else
+            dd:cancel()
+        end
         return true
-    end
+    end)
 end
 
 function cancel(id)
@@ -194,13 +200,26 @@ function clear()
     _M.emit_signal("cleared-downloads")
 end
 
--- Catch "download-request" webview widget signals
-webview.init_funcs.download_request = function (view, w)
-    view:add_signal("download-request", function (v, d)
-        add(d, { window = w.win })
-        return true
-    end)
-end
+-- Catch "download-started" webcontext widget signals (webkit2 API)
+-- returned d is a download_t
+capi.luakit.add_signal("download-start", function (d, v)
+    local w
+
+    if v then
+        w = webview.window(v)
+    else
+        -- Fall back to currently focused window
+        for _, ww in pairs(window.bywidget) do
+            if ww.win.focused then
+                w, v = ww, ww.view
+                break
+            end
+        end
+    end
+
+    add(d, { window = w.win }, v)
+    return true
+end)
 
 window.init_funcs.download_status = function (w)
     local r = w.sbar.r

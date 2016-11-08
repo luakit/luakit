@@ -28,51 +28,6 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-/* Print error and exit with EXIT_FAILURE code. */
-void
-_fatal(gint line, const gchar *fct, const gchar *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    gint atty = isatty(STDERR_FILENO);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_BG_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
-    exit(EXIT_FAILURE);
-}
-
-/* Print error message on stderr. */
-void
-_warn(gint line, const gchar *fct, const gchar *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    gint atty = isatty(STDERR_FILENO);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
-}
-
-/* Print debug message on stderr. */
-void
-_debug(gint line, const gchar *fct, const gchar *fmt, ...) {
-    if (globalconf.verbose) {
-        va_list ap;
-        va_start(ap, fmt);
-        g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-        g_fprintf(stderr, "D: luakit: %s:%d: ", fct, line);
-        g_vfprintf(stderr, fmt, ap);
-        va_end(ap);
-        g_fprintf(stderr, "\n");
-    }
-}
-
 gboolean
 file_exists(const gchar *filename)
 {
@@ -93,3 +48,12 @@ luaH_callerinfo(lua_State *L)
 
     return NULL;
 }
+
+gint
+luaH_panic(lua_State *L)
+{
+    warn("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
+    return 0;
+}
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

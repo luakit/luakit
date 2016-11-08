@@ -2,7 +2,6 @@
 local table = table
 local string = string
 local io = io
-local print = print
 local pairs = pairs
 local ipairs = ipairs
 local math = math
@@ -21,6 +20,7 @@ local chrome = require("chrome")
 local add_binds = add_binds
 local add_cmds = add_cmds
 local webview = webview
+local window = window
 local capi = {
     luakit = luakit
 }
@@ -162,7 +162,7 @@ function update_list() {
         // create new download element
         if ($elem.length === 0) {
             // get some more information
-            d = download_get(d.id, ["status", "destination", "created", "uri"]);
+            d = download_get(d.id, ["status", "destination", "created", "uri", "total_size"]);
             var elem_html = make_download(d);
 
             // ordered insert
@@ -236,8 +236,6 @@ function update_list() {
             break;
         }
     }
-
-    setTimeout(update_list, 1000);
 };
 
 $(document).ready(function () {
@@ -271,6 +269,8 @@ $(document).ready(function () {
 });
 ]=]
 
+local update_list_js = [=[update_list();]=]
+
 -- default filter
 local default_filter = { destination = true, status = true, created = true,
     current_size = true, total_size = true, mime_type = true, uri = true,
@@ -294,7 +294,7 @@ local function collate_download_data(d, data, filter)
 end
 
 local export_funcs = {
-    download_get = function (id, filter)
+    download_get = function (view, id, filter)
         local d, data = downloads.get(id)
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -303,7 +303,7 @@ local export_funcs = {
         return collate_download_data(d, data, filter)
     end,
 
-    downloads_get_all = function (filter)
+    downloads_get_all = function (view, filter)
         local ret = {}
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -315,25 +315,25 @@ local export_funcs = {
         return ret
     end,
 
-    download_show = function (id)
+    download_show = function (view, id)
         local d, data = downloads.get(id)
         local dirname = string.gsub(d.destination, "(.*/)(.*)", "%1")
         if downloads.emit_signal("open-file", dirname, "inode/directory") ~= true then
-            error("Couldn't show download directory (no inode/directory handler)")
+            local w = webview.window(view)
+            w:error("Couldn't show download directory (no inode/directory handler)")
         end
     end,
 
-    download_cancel = downloads.cancel,
-    download_restart = downloads.restart,
-    download_open = downloads.open,
-    download_remove = downloads.remove,
-    downloads_clear = downloads.clear,
+    download_cancel  = function (_, id) return downloads.cancel(id) end,
+    download_restart = function (_, id) return downloads.restart(id) end,
+    download_open    = function (_, id) return downloads.open(id) end,
+    download_remove  = function (_, id) return downloads.remove(id) end,
+    downloads_clear  = function (_, id) return downloads.clear(id) end,
 }
 
 downloads.add_signal("status-tick", function (running)
     if running == 0 then
         for _, data in pairs(downloads.get_all()) do data.speed = nil end
-        return
     end
     for d, data in pairs(downloads.get_all()) do
         if d.status == "started" then
@@ -342,44 +342,32 @@ downloads.add_signal("status-tick", function (running)
             rawset(data, "last_size", curr)
         end
     end
+
+    -- Update all download pages when a change occurrs
+    for _, w in pairs(window.bywidget) do
+        for _, v in ipairs(w.tabs.children) do
+            if string.match(v.uri or "", "^luakit://downloads/?") then
+                v:eval_js(update_list_js, { no_return = true })
+            end
+        end
+    end
 end)
 
 chrome.add("downloads", function (view, meta)
     local html_subs = {
         style  = chrome.stylesheet .. html_style,
     }
+    return string.gsub(html_template, "{(%w+)}", html_subs)
+end,
+function (view, meta)
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    view:eval_js(jquery, { no_return = true })
 
-    local html = string.gsub(html_template, "{(%w+)}", html_subs)
-
-    view:load_string(html, "luakit://downloads/")
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= "luakit://downloads/" then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://download/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
-    end
-
-    view:add_signal("load-status", on_first_visual)
-end)
+    -- Load main luakit://download/ JavaScript
+    view:eval_js(main_js, { no_return = true })
+end,
+export_funcs)
 
 local page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd

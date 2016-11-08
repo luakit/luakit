@@ -18,22 +18,25 @@
  *
  */
 
-#include "common/signal.h"
-#include "clib/widget.h"
 #include "clib/luakit.h"
+#include "clib/widget.h"
+#include "common/luaserialize.h"
+#include "common/msg.h"
+#include "common/signal.h"
 #include "luah.h"
+#include "web_context.h"
 
-#include <stdlib.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <webkit/webkit.h>
+#include <webkit2/webkit2.h>
 
 /* setup luakit module signals */
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
-GtkClipboard*
+GtkClipboard *
 luaH_clipboard_get(lua_State *L, gint idx)
 {
 #define CB_CASE(t) case L_TK_##t: return gtk_clipboard_get(GDK_SELECTION_##t);
@@ -268,9 +271,9 @@ luaH_luakit_spawn_sync(lua_State *L)
 
     /* Note: we have to temporarily clear the SIGCHLD handler. Otherwise
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
-    sigact.sa_handler=SIG_DFL;
-    sigemptyset (&sigact.sa_mask);
-    sigact.sa_flags=0;
+    sigact.sa_handler = SIG_DFL;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = 0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
 
@@ -281,7 +284,7 @@ luaH_luakit_spawn_sync(lua_State *L)
         fatal("Can't restore SIGCHLD handler");
 
     /* raise error on spawn function error */
-    if(e) {
+    if (e) {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
@@ -303,11 +306,14 @@ luaH_luakit_spawn_sync(lua_State *L)
  * Exit number: When normal exit happened, the exit code of the process. When
  *              finished by a signal, the signal number. -1 otherwise.
  */
-void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
+void
+async_callback_handler(GPid pid, gint status, gpointer cb_ref)
 {
+    g_spawn_close_pid(pid);
+    if (!cb_ref)
+        return;
+
     lua_State *L = globalconf.L;
-    /* push callback function onto stack */
-    luaH_object_push(L, cb_ref);
 
     /* push exit reason & exit status onto lua stack */
     if (WIFEXITED(status)) {
@@ -321,13 +327,10 @@ void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
         lua_pushinteger(L, -1);
     }
 
-    if (lua_pcall(L, 2, 0, 0)) {
-        warn("error in callback function: %s", lua_tostring(L, -1));
-        lua_pop(L, 1);
-    }
-
+    /* push callback function onto stack */
+    luaH_object_push(L, cb_ref);
+    luaH_dofunction(L, 2, 0);
     luaH_object_unref(L, cb_ref);
-    g_spawn_close_pid(pid);
 }
 
 /** Executes a child program asynchronously (your program will not block waiting
@@ -386,14 +389,12 @@ luaH_luakit_spawn(lua_State *L)
         goto spawn_error;
 
     /* spawn command */
-    if (!g_spawn_async(NULL, argv, NULL,
-            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
-            &e))
+    if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
+            NULL, &pid, &e))
         goto spawn_error;
 
-    /* attach users Lua callback */
-    if (cb_ref)
-        g_child_watch_add(pid, async_callback_handler, cb_ref);
+    /* call Lua callback (if present), and free GLib resources */
+    g_child_watch_add(pid, async_callback_handler, cb_ref);
 
     g_strfreev(argv);
     lua_pushnumber(L, pid);
@@ -440,6 +441,22 @@ luaH_luakit_exec(lua_State *L)
     return 0;
 }
 
+/** Pushes the command-line options parsed by luakit
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ */
+static gint
+luaH_luakit_push_options_table(lua_State *L)
+{
+    lua_newtable(L);
+    for (guint i = 0; i < globalconf.argv->len; ++i) {
+        lua_pushstring(L, g_ptr_array_index(globalconf.argv, i));
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -448,14 +465,14 @@ luaH_luakit_exec(lua_State *L)
 static gint
 luaH_luakit_index(lua_State *L)
 {
-    if(luaH_usemetatable(L, 1, 2))
+    if (luaH_usemetatable(L, 1, 2))
         return 1;
 
     widget_t *w;
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    switch(token) {
+    switch (token) {
 
       /* push string properties */
       PS_CASE(CACHE_DIR,        globalconf.cache_dir)
@@ -464,21 +481,21 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
       /* push boolean properties */
-      PB_CASE(VERBOSE,          globalconf.verbose)
+      PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
+      /* push integer properties */
+      PI_CASE(PROCESS_LIMIT,    web_context_process_limit_get())
+      case L_TK_OPTIONS:
+        return luaH_luakit_push_options_table(L);
 
-#if WITH_WEBKIT2
       PB_CASE(WEBKIT2,          true)
-#else
-      PB_CASE(WEBKIT2,          false)
-#endif
 
       case L_TK_WINDOWS:
         lua_newtable(L);
         for (guint i = 0; i < globalconf.windows->len; i++) {
             w = globalconf.windows->pdata[i];
             luaH_object_push(L, w->ref);
-            lua_rawseti(L, -2, i+1);
+            lua_rawseti(L, -2, i + 1);
         }
         return 1;
 
@@ -488,8 +505,8 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
       case L_TK_WEBKIT_USER_AGENT_VERSION:
-        lua_pushfstring(L, "%d.%d", WEBKIT_USER_AGENT_MAJOR_VERSION,
-                WEBKIT_USER_AGENT_MINOR_VERSION);
+        lua_pushfstring(L, "%d.%d", WEBKIT_MAJOR_VERSION,
+                WEBKIT_MINOR_VERSION);
         return 1;
 
       case L_TK_SELECTION:
@@ -517,6 +534,30 @@ luaH_luakit_index(lua_State *L)
     return 0;
 }
 
+/** luakit module newindex metamethod.
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ */
+static gint
+luaH_luakit_newindex(lua_State *L)
+{
+    if (!lua_isstring(L, 2))
+        return 0;
+    luakit_token_t token = l_tokenize(lua_tostring(L, 2));
+
+    switch (token) {
+        case L_TK_PROCESS_LIMIT:
+            if (!web_context_process_limit_set(lua_tointeger(L, 3)))
+                return luaL_error(L, "Too late to set WebKit process limit");
+            break;
+        default:
+            break;
+    }
+
+    return 0;
+}
+
 /** Quit the main GTK loop.
  * \see http://developer.gnome.org/gtk/stable/gtk-General.html#gtk-main-quit
  *
@@ -524,7 +565,7 @@ luaH_luakit_index(lua_State *L)
  * \return   The number of elements pushed on stack.
  */
 static gint
-luaH_luakit_quit(lua_State* UNUSED(L))
+luaH_luakit_quit(lua_State *UNUSED(L))
 {
     if (gtk_main_level())
         gtk_main_quit();
@@ -548,25 +589,22 @@ idle_cb(gpointer func)
 
     /* get original stack size */
     gint top = lua_gettop(L);
-    gboolean keep = FALSE;
 
     /* call function */
     luaH_object_push(L, func);
-    if (lua_pcall(L, 0, 1, 0))
-        /* remove idle source if error in callback */
-        warn("error in idle callback: %s", lua_tostring(L, -1));
-    else
-        /* keep the source alive? */
-        keep = lua_toboolean(L, -1);
+    gboolean ok = luaH_dofunction(L, 0, 1);
+
+    /* keep the source alive? */
+    gboolean keep = lua_toboolean(L, -1);
 
     /* allow collection of idle callback func */
-    if (!keep)
+    if (!keep || !ok)
         luaH_object_unref(L, func);
 
     /* leave stack how we found it */
     lua_settop(L, top);
 
-    return keep;
+    return keep && ok;
 }
 
 /** Adds a function to be called whenever there are no higher priority GTK
@@ -610,6 +648,63 @@ luaH_luakit_idle_remove(lua_State *L)
     return 1;
 }
 
+typedef struct _lua_js_registration_t {
+    gchar *pattern;
+    gchar *name;
+    gpointer ref;
+} lua_js_registration_t;
+
+static GArray *registrations;
+
+static gint
+luaH_luakit_register_function(lua_State *L)
+{
+    lua_js_registration_t reg = {
+        .pattern = (gchar*)luaL_checkstring(L, 1),
+        .name = (gchar*)luaL_checkstring(L, 2),
+        .ref = NULL
+    };
+
+    if (strlen(reg.pattern) == 0)
+        return luaL_error(L, "pattern cannot be empty");
+    if (strlen(reg.name) == 0)
+        return luaL_error(L, "function name cannot be empty");
+
+    /* get lua callback function */
+    luaH_checkfunction(L, 3);
+    reg.ref = luaH_object_ref(L, 3);
+
+    /* Keep a copy for reregistration */
+    if (!registrations)
+        registrations = g_array_new(FALSE, FALSE, sizeof(lua_js_registration_t));
+    reg.pattern = g_strdup(reg.pattern);
+    reg.name = g_strdup(reg.name);
+    g_array_append_val(registrations, reg);
+
+    return 0;
+}
+
+void
+luaH_register_functions_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
+{
+    if (!registrations)
+        return;
+
+    for (guint i = 0; i < registrations->len; ++i) {
+        lua_js_registration_t reg = g_array_index(registrations, lua_js_registration_t, i);
+        lua_pushstring(L, reg.pattern);
+        lua_pushstring(L, reg.name);
+        lua_pushlightuserdata(L, reg.ref);
+
+        /* Incref */
+        luaH_object_push(L, reg.ref);
+        luaH_object_ref(L, -1);
+
+        msg_send_lua(ipc, MSG_TYPE_lua_js_register, L, -3, -1);
+        lua_pop(L, 3);
+    }
+}
+
 /** Setup luakit module.
  *
  * \param L The Lua VM state.
@@ -620,17 +715,19 @@ luakit_lib_setup(lua_State *L)
     static const struct luaL_reg luakit_lib[] =
     {
         LUA_CLASS_METHODS(luakit)
-        { "__index",         luaH_luakit_index },
-        { "exec",            luaH_luakit_exec },
-        { "quit",            luaH_luakit_quit },
-        { "save_file",       luaH_luakit_save_file },
-        { "spawn",           luaH_luakit_spawn },
-        { "spawn_sync",      luaH_luakit_spawn_sync },
-        { "time",            luaH_luakit_time },
-        { "uri_decode",      luaH_luakit_uri_decode },
-        { "uri_encode",      luaH_luakit_uri_encode },
-        { "idle_add",        luaH_luakit_idle_add },
-        { "idle_remove",     luaH_luakit_idle_remove },
+        { "__index",           luaH_luakit_index },
+        { "__newindex",        luaH_luakit_newindex },
+        { "exec",              luaH_luakit_exec },
+        { "quit",              luaH_luakit_quit },
+        { "save_file",         luaH_luakit_save_file },
+        { "spawn",             luaH_luakit_spawn },
+        { "spawn_sync",        luaH_luakit_spawn_sync },
+        { "time",              luaH_luakit_time },
+        { "uri_decode",        luaH_luakit_uri_decode },
+        { "uri_encode",        luaH_luakit_uri_encode },
+        { "idle_add",          luaH_luakit_idle_add },
+        { "idle_remove",       luaH_luakit_idle_remove },
+        { "register_function", luaH_luakit_register_function },
         { NULL,              NULL }
     };
 
@@ -639,6 +736,12 @@ luakit_lib_setup(lua_State *L)
 
     /* export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
+}
+
+lua_class_t *
+luakit_lib_get_luakit_class(void)
+{
+    return &luakit_class;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

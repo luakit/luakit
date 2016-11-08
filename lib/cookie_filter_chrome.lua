@@ -212,32 +212,14 @@ chrome.add("cookie-filter", function (view, meta)
     }
 
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
-    view:load_string(html, meta.uri)
-
-    local export_funcs = {
-        cookie_filter_set = function(domain, name, allow)
-            cookie_filter_lib.set(domain, name, allow)
-        end
-    }
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= meta.uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
+    return html
+end,
+nil,
+{
+    cookie_filter_set = function(view, domain, name, allow)
+        cookie_filter_lib.set(domain, name, allow)
     end
-
-    view:add_signal("load-status", on_first_visual)
-end)
+})
 
 local function domain_from_uri(uri)
     local domain = (uri and string.match(string.lower(uri), "^%a+://([^/]*)/?"))

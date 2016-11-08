@@ -149,13 +149,11 @@ luaH_object_add_signal(lua_State *L, gint oud,
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
 
-    if (globalconf.verbose) {
-        gchar *origin = luaH_callerinfo(L);
-        debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-                " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
-                name, obj, origin);
-        g_free(origin);
-    }
+    gchar *origin = luaH_callerinfo(L);
+    debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+            " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
+            name, obj, origin);
+    g_free(origin);
 
     signal_add(obj->signals, name, luaH_object_ref_item(L, oud, ud));
 }
@@ -184,6 +182,8 @@ void
 luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
     lua_object_t *obj = lua_touserdata(L, oud);
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
+    if (!sigfuncs)
+        return;
     for (guint i = 0; i < sigfuncs->len; i++) {
         gpointer ref = g_ptr_array_index(sigfuncs, i);
         luaH_object_unref_item(L, oud, ref);
@@ -191,33 +191,20 @@ luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
     signals_remove(obj->signals, name);
 }
 
-/* Emit a signal from a signals array and return the results of the first
- * handler that returns something.
- * `signals` is the signals array.
- * `name` is the name of the signal.
- * `nargs` is the number of arguments to pass to the called functions.
- * `nret` is the number of return values this function pushes onto the stack.
- * A positive number means that any missing values will be padded with nil
- * and any superfluous values will be removed.
- * LUA_MULTRET means that any number of values is returned without any
- * adjustment.
- * 0 means that all return values are removed and that ALL handler functions are
- * executed.
- * Returns the number of return values pushed onto the stack. */
+/* Similar to signal_object_emit(), but allows you to choose the signal array
+ * by name. */
 gint
-signal_object_emit(lua_State *L, signal_t *signals,
-        const gchar *name, gint nargs, gint nret) {
+signal_array_emit(lua_State *L, signal_t *signals,
+        const gchar *array_name, const gchar *name, gint nargs, gint nret) {
 
-    signal_array_t *sigfuncs = signal_lookup(signals, name);
+    signal_array_t *sigfuncs = signal_lookup(signals, array_name);
 
-    if (globalconf.verbose) {
-        gchar *origin = luaH_callerinfo(L);
-        debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-                " on %p from "
-                ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
-                name, signals, origin ? origin : "<GTK>", nargs, nret);
-        g_free(origin);
-    }
+    gchar *origin = luaH_callerinfo(L);
+    debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+            " on %p from "
+            ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
+            name, signals, origin ? origin : "<GTK>", nargs, nret);
+    g_free(origin);
 
     if (sigfuncs) {
         gint nbfunc = sigfuncs->len;
@@ -273,6 +260,26 @@ signal_object_emit(lua_State *L, signal_t *signals,
     return 0;
 }
 
+/* Emit a signal from a signals array and return the results of the first
+ * handler that returns something.
+ * `signals` is the signals array.
+ * `name` is the name of the signal.
+ * `nargs` is the number of arguments to pass to the called functions.
+ * `nret` is the number of return values this function pushes onto the stack.
+ * A positive number means that any missing values will be padded with nil
+ * and any superfluous values will be removed.
+ * LUA_MULTRET means that any number of values is returned without any
+ * adjustment.
+ * 0 means that all return values are removed and that ALL handler functions are
+ * executed.
+ * Returns the number of return values pushed onto the stack. */
+gint
+signal_object_emit(lua_State *L, signal_t *signals,
+        const gchar *name, gint nargs, gint nret) {
+
+    return signal_array_emit(L, signals, name, name, nargs, nret);
+}
+
 /* Emit a signal to an object.
  * `oud` is the object index on the stack.
  * `name` is the name of the signal.
@@ -292,17 +299,15 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     gint oud_abs = luaH_absindex(L, oud);
     lua_object_t *obj = lua_touserdata(L, oud);
 
-    if (globalconf.verbose) {
-        gchar *origin = luaH_callerinfo(L);
-        debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-                " on %p from "
-                ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
-                name, obj, origin ? origin : "<GTK>", nargs, nret);
-        g_free(origin);
-    }
+    gchar *origin = luaH_callerinfo(L);
+    debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
+            " on %p from "
+            ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
+            name, obj, origin ? origin : "<GTK>", nargs, nret);
+    g_free(origin);
 
     if(!obj)
-        luaL_error(L, "trying to emit signal on non-object");
+        return luaL_error(L, "trying to emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET " on non-object", name);
 
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if (sigfuncs) {

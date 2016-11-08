@@ -21,13 +21,15 @@
 #include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
-#include "clib/soup/auth.h"
 
 typedef struct {
     widget_t *widget;
     GtkWindow *win;
     GdkWindowState state;
+    guint id;
 } window_data_t;
+
+static int window_id_next = 0;
 
 static widget_t *
 luaH_checkwindow(lua_State *L, gint udx)
@@ -85,8 +87,8 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
+      PN_CASE(ID,           d->id)
 
-#if GTK_CHECK_VERSION(3,0,0)
 # ifdef GDK_WINDOWING_X11
       PI_CASE(XID, GDK_WINDOW_XID(
 #  if GTK_CHECK_VERSION(3,12,0)
@@ -96,9 +98,6 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 #  endif
                   ))
 # endif
-#else
-      PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
-#endif
 
       case L_TK_SCREEN:
         lua_pushlightuserdata(L, gtk_window_get_screen(d->win));
@@ -203,7 +202,6 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     /* create and setup window widget */
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     d->win = GTK_WINDOW(w->widget);
-    gtk_window_set_wmclass(d->win, "luakit", "luakit");
     gtk_window_set_default_size(d->win, 800, 600);
     gtk_window_set_title(d->win, "luakit");
 
@@ -220,6 +218,8 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
       "signal::remove",             G_CALLBACK(remove_cb),       w,
       "signal::window-state-event", G_CALLBACK(window_state_cb), w,
       NULL);
+
+    d->id = ++window_id_next;
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);

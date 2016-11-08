@@ -10,9 +10,13 @@ local string = string
 local type = type
 local xpcall = xpcall
 local debug = debug
+local pairs = pairs
+local luakit = luakit
+local error_page = require "error_page"
 
 -- Get luakit environment
 local webview = webview
+local window = window
 
 module("chrome")
 
@@ -138,8 +142,9 @@ stylesheet = [===[
 
 -- luakit:// page handlers
 local handlers = {}
+local on_first_visual_handlers = {}
 
-function add(page, func)
+function add(page, func, on_first_visual_func, export_funcs)
     -- Do some sanity checking
     assert(type(page) == "string",
         "invalid chrome page name (string expected, got "..type(page)..")")
@@ -147,26 +152,31 @@ function add(page, func)
         "illegal characters in chrome page name: " .. page)
     assert(type(func) == "function",
         "invalid chrome handler (function expected, got "..type(func)..")")
+    assert(type(on_first_visual_func) == "nil"
+        or type(on_first_visual_func) == "function",
+        "invalid chrome handler (function/nil expected, got "..type(on_first_visual_func)..")")
+
+    if luakit.webkit2 then
+        for name, func in pairs(export_funcs or {}) do
+            local pattern = "^luakit://" .. page .. "/?(.*)"
+            assert(type(name) == "string")
+            assert(type(func) == "function")
+            luakit.register_function(pattern, name, func)
+        end
+    end
 
     handlers[page] = func
+    on_first_visual_handlers[page] = on_first_visual_func
 end
 
 function remove(page)
     handlers[page] = nil
+    on_first_visual_handlers[page] = nil
 end
-
-error_html = [==[
-<html><head><title>Chrome handler error</title><style>
-pre { border-top: 1px solid #aaa; border-bottom: 1px solid #aaa;
-    margin: -5px 5px; padding: 5px; background-color: #f2f2f2; }
-</style></head><body>
-<p>Error in <big><code>%q</code></big> handler function:</p>
-<pre>%s</pre></body></html>
-]==]
 
 -- Catch all navigations to the luakit:// scheme
 webview.init_funcs.chrome = function (view, w)
-    view:add_signal("navigation-request", function (_, uri)
+    view:add_signal("luakit-chrome", function (_, uri)
         -- Match "luakit://page/path"
         local page, path = string.match(uri, "^luakit://([^/]+)/?(.*)")
         if not page then return end
@@ -179,24 +189,72 @@ webview.init_funcs.chrome = function (view, w)
 
             -- Render error output in webview with traceback
             local function error_handler(err)
-                view:load_string(string.format(error_html, uri,
-                    debug.traceback(err, 2)), uri)
+                error_page.show_error_page(view, {
+                    heading = "Chrome handler error",
+                    content = [==[
+                        <div class="errorMessage">
+                            <p>An error occurred in the <code>luakit://{page}/</code> handler function:
+                            <pre>{traceback}</pre>
+                        </div>
+                    ]==],
+                    buttons = {},
+                    page = page,
+                    traceback = debug.traceback(err, 2),
+                })
             end
 
             -- Call luakit:// page handler
-            local ok, err = xpcall(function () return func(view, meta) end,
+            local ok, html = xpcall(function () return func(view, meta) end,
                 error_handler)
-
-            if not ok or err ~= false then
-                -- Stop the navigation request
-                return false
-            end
+            return html
         end
 
-        -- Load blank error page
-        view:load_string("<p>No chrome handler for: <big><code>" .. uri
-            .. "</code></big></p>", uri)
+        -- Load error page
+        error_page.show_error_page(view, {
+            heading = "Chrome handler error",
+            content = [==[
+                <div class="errorMessage">
+                    <p>No chrome handler for <code>luakit://{page}/</code></p>
+                </div>
+            ]==],
+            buttons = {},
+            page = page,
+        })
+        return ""
+    end)
+
+    view:add_signal("load-status", function (_, status)
+        -- Wait for new page to be created
+        if status ~= "finished" then return end
+
+        -- Match "luakit://page/path"
+        local page, path = string.match(view.uri, "^luakit://([^/]+)/?(.*)")
+        if not page then return end
+
+        -- Ensure we have a hook to call
+        local on_first_visual_func = on_first_visual_handlers[page]
+        if not on_first_visual_func then return end
+
+        local meta = { page = page, path = path, w = w,
+            uri = "luakit://" .. page .. "/" .. path }
+
+        -- Call the supplied handler
+        on_first_visual_func(view, meta)
+
+        if not luakit.webkit2 then
+            for name, func in pairs(export_funcs or {}) do
+                view:register_function(name, func)
+            end
+        end
     end)
 end
+
+luakit.register_function("^luakit://(.*)", "reset_mode", function (view)
+    for _, w in pairs(window.bywidget) do
+        if w.view == view then
+            w:set_mode()
+        end
+    end
+end)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

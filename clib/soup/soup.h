@@ -22,7 +22,6 @@
 #define LUAKIT_CLIB_SOUP_H
 
 #include "clib/soup/cookiejar.h"
-#include "clib/soup/auth.h"
 #include "luah.h"
 
 #include <libsoup/soup-session.h>

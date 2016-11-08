@@ -20,6 +20,7 @@
  */
 
 #include "luah.h"
+#include "common/luautil.h"
 
 /* include clib headers */
 #include "clib/download.h"
@@ -30,6 +31,9 @@
 #include "clib/unique.h"
 #include "clib/widget.h"
 #include "clib/xdg.h"
+#include "clib/stylesheet.h"
+#include "clib/web_module.h"
+#include "common/clib/msg.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -258,34 +262,6 @@ luaH_fixups(lua_State *L)
     lua_settable(L, LUA_GLOBALSINDEX);
 }
 
-static gint
-luaH_panic(lua_State *L)
-{
-    warn("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
-    return 0;
-}
-
-static gint
-luaH_dofunction_on_error(lua_State *L)
-{
-    /* duplicate string error */
-    lua_pushvalue(L, -1);
-    /* emit error signal */
-    signal_object_emit(L, luakit_class.signals, "debug::error", 1, 0);
-
-    if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
-    {
-        /* Move traceback before error */
-        lua_insert(L, -2);
-        /* Insert sentence */
-        lua_pushliteral(L, "\nerror: ");
-        /* Move it before error */
-        lua_insert(L, -2);
-        lua_concat(L, 3);
-    }
-    return 1;
-}
-
 void
 luaH_init(void)
 {
@@ -333,63 +309,17 @@ luaH_init(void)
     /* Export timer */
     timer_class_setup(L);
 
+    /* Export stylesheet */
+    stylesheet_class_setup(L);
+
+    /* Export web module */
+    web_module_class_setup(L);
+
+    /* Export web module */
+    msg_lib_setup(L);
+
     /* add Lua search paths */
-    lua_getglobal(L, "package");
-    if(LUA_TTABLE != lua_type(L, 1)) {
-        warn("package is not a table");
-        return;
-    }
-    lua_getfield(L, 1, "path");
-    if(LUA_TSTRING != lua_type(L, 2)) {
-        warn("package.path is not a string");
-        lua_pop(L, 1);
-        return;
-    }
-
-    /* compile list of package search paths */
-    GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
-
-#if DEVELOPMENT_PATHS
-    /* allows for testing luakit in the project directory */
-    g_ptr_array_add(paths, g_strdup("./lib"));
-    g_ptr_array_add(paths, g_strdup("./config"));
-#endif
-
-    /* add users config dir (see: XDG_CONFIG_DIR) */
-    g_ptr_array_add(paths, g_strdup(globalconf.config_dir));
-
-    /* add system config dirs (see: XDG_CONFIG_DIRS) */
-    const gchar* const *config_dirs = g_get_system_config_dirs();
-    for (; *config_dirs; config_dirs++)
-        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", NULL));
-
-    /* add luakit install path */
-    g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
-
-    const gchar *path;
-    for (guint i = 0; i < paths->len; i++) {
-        path = paths->pdata[i];
-        /* Search for file */
-        lua_pushliteral(L, ";");
-        lua_pushstring(L, path);
-        lua_pushliteral(L, "/?.lua");
-        lua_concat(L, 3);
-        /* Search for lib */
-        lua_pushliteral(L, ";");
-        lua_pushstring(L, path);
-        lua_pushliteral(L, "/?/init.lua");
-        lua_concat(L, 3);
-        /* concat with package.path */
-        lua_concat(L, 3);
-    }
-
-    g_ptr_array_free(paths, TRUE);
-
-    /* package.path = "concatenated string" */
-    lua_setfield(L, 1, "path");
-
-    /* remove package module from stack */
-    lua_pop(L, 1);
+    luaH_add_paths(L, globalconf.config_dir);
 }
 
 gboolean
@@ -400,14 +330,15 @@ luaH_loadrc(const gchar *confpath, gboolean run)
     if(!luaL_loadfile(L, confpath)) {
         if(run) {
             if(lua_pcall(L, 0, LUA_MULTRET, 0)) {
-                g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+                warn("Error loading rc file: %s", lua_tostring(L, -1));
+                lua_settop(L, 0);
             } else
                 return TRUE;
         } else
             lua_pop(L, 1);
         return TRUE;
     } else
-        g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+        warn("Error loading rc file: %s", lua_tostring(L, -1));
     return FALSE;
 }
 

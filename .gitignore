@@ -4,6 +4,7 @@
 *.1
 apidocs
 luakit
+luakit.so
 common/tokenize.h
 common/tokenize.c
 globalconf.h

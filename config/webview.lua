@@ -5,11 +5,17 @@
 -- Webview class table
 webview = {}
 
+webview.enable_webgl = true
+
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
     -- Set useragent
     set_useragent = function (view, w)
         view.user_agent = globals.useragent
+    end,
+
+    set_webgl_enabled = function (view, w)
+        view.enable_webgl = webview.enable_webgl
     end,
 
     -- Check if checking ssl certificates
@@ -23,7 +29,6 @@ webview.init_funcs = {
     -- Update window and tab titles
     title_update = function (view, w)
         view:add_signal("property::title", function (v)
-            w:update_tablist()
             if w.view == v then
                 w:update_win_title()
             end
@@ -33,7 +38,6 @@ webview.init_funcs = {
     -- Update uri label in statusbar
     uri_update = function (view, w)
         view:add_signal("property::uri", function (v)
-            w:update_tablist()
             if w.view == v then
                 w:update_uri()
             end
@@ -45,15 +49,6 @@ webview.init_funcs = {
         view:add_signal("load-status", function (v, status)
             if w.view == v then
                 w:update_hist()
-            end
-        end)
-    end,
-
-    -- Update tab titles
-    tablist_update = function (view, w)
-        view:add_signal("load-status", function (v, status)
-            if status == "provisional" or status == "finished" or status == "failed" then
-                w:update_tablist()
             end
         end)
     end,
@@ -170,7 +165,7 @@ webview.init_funcs = {
             until not domain
             -- Join all property tables
             for k, v in pairs(lousy.util.table.join(unpack(props))) do
-                info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
+                msg.info("Domain prop: %s = %s (%s)", k, tostring(v), domain)
                 view[k] = v
             end
         end)
@@ -180,7 +175,7 @@ webview.init_funcs = {
     mime_decision = function (view, w)
         -- Return true to accept or false to reject from this signal.
         view:add_signal("mime-type-decision", function (v, uri, mime)
-            info("Requested link: %s (%s)", uri, mime)
+            msg.info("Requested link: %s (%s)", uri, mime)
             -- i.e. block binary files like *.exe
             --if mime == "application/octet-stream" then
             --    return false
@@ -207,6 +202,17 @@ webview.init_funcs = {
         end)
     end,
 
+    popup_fix_open_link_label = function (view, w)
+        view:add_signal("populate-popup", function (v, menu)
+            for i, v in ipairs(menu) do
+                if type(v) == "table" then
+                    -- Optional underscore represents alt-key shortcut letter
+                    v[1] = string.gsub(v[1], "New (_?)Window", "New %1Tab")
+                end
+            end
+        end)
+    end,
+
     -- Creates context menu popup from table (and nested tables).
     -- Use `true` for menu separators.
     --populate_popup = function (view, w)
@@ -226,7 +232,7 @@ webview.init_funcs = {
     -- Action to take on resource request.
     resource_request_decision = function (view, w)
         view:add_signal("resource-request-starting", function(v, uri)
-            info("Requesting: %s", uri)
+            msg.info("Requesting: %s", uri)
             -- Return false to cancel the request.
         end)
     end,
@@ -300,7 +306,11 @@ function webview.methods.scroll(view, w, new)
         elseif rawget(new, axis) then
             local n = new[axis]
             if n == -1 then
-                s[axis] = s[axis.."max"]
+                local dir = axis == "x" and "Width" or "Height"
+                local js = string.format([=[Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)]=], dir, dir)
+                w.view:eval_js(js, { callback = function (max)
+                    s[axis] = max
+                end})
             else
                 s[axis] = n
             end
@@ -311,7 +321,11 @@ function webview.methods.scroll(view, w, new)
 
         -- Absolute percent movement
         elseif rawget(new, axis .. "pct") then
-            s[axis] = math.ceil(s[axis.."max"] * (new[axis.."pct"]/100))
+            local dir = axis == "x" and "Width" or "Height"
+            local js = string.format([=[Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)]=], dir, dir)
+            w.view:eval_js(js, { callback = function (max)
+                s[axis] = math.ceil(max * (new[axis.."pct"]/100))
+            end})
         end
     end
 end
@@ -322,11 +336,25 @@ function webview.new(w)
     view.show_scrollbars = false
     view.enforce_96_dpi = false
 
-    -- Call webview init functions
-    for k, func in pairs(webview.init_funcs) do
-        func(view, w)
+    local function call_init_funcs (v)
+        -- Call webview init functions
+        for k, func in pairs(webview.init_funcs) do
+            func(view, w)
+        end
+        view:remove_signal("web-extension-loaded", call_init_funcs)
     end
+    view:add_signal("web-extension-loaded", call_init_funcs)
+
     return view
+end
+
+function webview.window(view)
+    assert(type(view) == "widget" and view.type == "webview")
+    local w = view
+    repeat
+        w = w.parent
+    until w == nil or w.type == "window"
+    return window.bywidget[w]
 end
 
 -- Insert webview method lookup on window structure

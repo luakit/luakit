@@ -11,6 +11,7 @@ globals = {
     max_srch_history    = 100,
  -- http_proxy          = "http://example.com:3128",
     default_window_size = "800x600",
+    vertical_tab_width  = 200,
 
  -- Disables loading of hostnames from /etc/hosts (for large host files)
  -- load_etc_hosts      = false,
@@ -19,16 +20,6 @@ globals = {
  -- Specify your preferred terminal emulator
  -- term                = "urxvt",
 }
-
-if not globals.useragent then
-    -- Make useragent
-    local _, arch = luakit.spawn_sync("uname -sm")
-    -- Only use the luakit version if in date format (reduces identifiability)
-    local lkv = string.match(luakit.version, "^(%d+%.%d+%.%d+)")
-    globals.useragent = string.format("Mozilla/5.0 (%s) AppleWebKit/%s+ (KHTML, like Gecko) WebKitGTK+/%s luakit%s",
-        string.sub(arch, 1, -2), luakit.webkit_user_agent_version,
-        luakit.webkit_version, (lkv and ("/" .. lkv)) or "")
-end
 
 -- Search common locations for a ca file which is used for ssl connection validation.
 local ca_files = {
@@ -46,11 +37,13 @@ for _, ca_file in ipairs(ca_files) do
 end
 
 -- Change to stop navigation sites with invalid or expired ssl certificates
-soup.ssl_strict = false
+-- TODO
+-- soup.ssl_strict = false
 
 -- Set cookie acceptance policy
 cookie_policy = { always = 0, never = 1, no_third_party = 2 }
-soup.accept_policy = cookie_policy.always
+-- TODO
+--soup.accept_policy = cookie_policy.always
 
 -- List of search engines. Each item must contain a single %s which is
 -- replaced by URI encoded search terms. All other occurances of the percent
@@ -92,18 +85,5 @@ domain_props = { --[[
 -- Clear user stylesheet after we navigate off a page with a custom stylesheet
 -- Otherwise, the stylesheet rules persist on the new page
 domain_props.all = lousy.util.table.join(domain_props.all, { user_stylesheet_uri = "" })
-
--- Accepts a table of domains; prefix domain names with a period for styles to
--- apply to all subdomains as well
-function site_styles(args)
-    for _, site in ipairs(args) do
-        local file = site
-        if string.sub(file, 1, 1) == "." then file = string.sub(file, 2) end
-        domain_props[site] = lousy.util.table.join(
-            domain_props[site],
-            { user_stylesheet_uri = "file://" .. luakit.data_dir .. "/styles/" .. file .. ".css" }
-        )
-    end
-end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

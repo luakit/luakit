@@ -44,6 +44,8 @@ menu_binds = {
     key({},          "k",       function (w) w.menu:move_up()   end),
     key({},          "Down",    function (w) w.menu:move_down() end),
     key({},          "Up",      function (w) w.menu:move_up()   end),
+    key({},          "KP_Down", function (w) w.menu:move_down() end),
+    key({},          "KP_Up",   function (w) w.menu:move_up()   end),
     key({},          "Tab",     function (w) w.menu:move_down() end),
     key({"Shift"},   "Tab",     function (w) w.menu:move_up()   end),
 }
@@ -51,7 +53,7 @@ menu_binds = {
 -- Add binds to special mode "all" which adds its binds to all modes.
 add_binds("all", {
     key({}, "Escape", "Return to `normal` mode.",
-        function (w) w:set_mode() end),
+        function (w) w:set_prompt(); w:set_mode() end),
 
     key({"Control"}, "[", "Return to `normal` mode.",
         function (w) w:set_mode() end),
@@ -169,13 +171,25 @@ add_binds("normal", {
     key({}, "Right", "Scroll document right.",
         function (w) w:scroll{ xrel =  scroll_step } end),
 
+    key({}, "KP_Down", "Scroll document down.",
+        function (w) w:scroll{ yrel =  scroll_step } end),
+
+    key({}, "KP_Up",   "Scroll document up.",
+        function (w) w:scroll{ yrel = -scroll_step } end),
+
+    key({}, "KP_Left", "Scroll document left.",
+        function (w) w:scroll{ xrel = -scroll_step } end),
+
+    key({}, "KP_Right", "Scroll document right.",
+        function (w) w:scroll{ xrel =  scroll_step } end),
+
     key({}, "^", "Scroll to the absolute left of the document.",
         function (w) w:scroll{ x =  0 } end),
 
     key({}, "$", "Scroll to the absolute right of the document.",
         function (w) w:scroll{ x = -1 } end),
 
-    key({}, "0", "Scroll to the absolute left of the document.",
+    key({}, "0", "Scroll to the top of the document.",
         function (w, m)
             if not m.count then w:scroll{ y = 0 } else return false end
         end),
@@ -213,10 +227,22 @@ add_binds("normal", {
     key({}, "Page_Up", "Scroll page up.",
         function (w) w:scroll{ ypagerel = -page_step } end),
 
-    key({}, "Home", "Go to the top of the document.",
+    key({}, "KP_Next", "Scroll page down.",
+        function (w) w:scroll{ ypagerel =  page_step } end),
+
+    key({}, "KP_Page_Up", "Scroll page up.",
+        function (w) w:scroll{ ypagerel = -page_step } end),
+
+    key({}, "Home", "Scroll to the top of the document.",
         function (w) w:scroll{ y =  0 } end),
 
-    key({}, "End", "Go to the end of the document.",
+    key({}, "End", "Scroll to the end of the document.",
+        function (w) w:scroll{ y = -1 } end),
+
+    key({}, "KP_Home", "Scroll to the top of the document.",
+        function (w) w:scroll{ y =  0 } end),
+
+    key({}, "KP_End", "Scroll to the end of the document.",
         function (w) w:scroll{ y = -1 } end),
 
     -- Specific scroll
@@ -263,12 +289,20 @@ add_binds("normal", {
         function (w) w.win.fullscreen = not w.win.fullscreen end),
 
     -- Open primary selection contents.
-    buf("^pp$", [[Open a URL based on the current primary selection contents
+    buf("^pp$", [[Open URLs based on the current primary selection contents
         in the current tab.]],
         function (w)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            w:navigate(w:search_open(uri))
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            w:navigate(w:search_open(uris[1]))
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[i]))
+                end
+            end
         end),
 
     buf("^pt$", [[Open a URL based on the current primary selection contents
@@ -279,21 +313,37 @@ add_binds("normal", {
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
 
-    buf("^pw$", [[Open a URL based on the current primary selection contents in
+    buf("^pw$", [[Open URLs based on the current primary selection contents in
         a new window.]],
-        function(w, m)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            window.new{w:search_open(uri)}
+        function(w)
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            w = window.new{w:search_open(uris[1])}
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[i]))
+                end
+            end
         end),
 
     -- Open clipboard contents.
-    buf("^PP$", [[Open a URL based on the current clipboard selection contents
+    buf("^PP$", [[Open URLs based on the current clipboard selection contents
         in the current tab.]],
         function (w)
-            local uri = luakit.selection.clipboard
-            if not uri then w:notify("Nothing in clipboard...") return end
-            w:navigate(w:search_open(uri))
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in clipboard...") return end
+            w:navigate(w:search_open(uris[1]))
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[1]))
+                end
+            end
         end),
 
     buf("^PT$", [[Open a URL based on the current clipboard selection contents
@@ -304,12 +354,20 @@ add_binds("normal", {
             for i = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
 
-    buf("^PW$", [[Open a URL based on the current clipboard selection contents
+    buf("^PW$", [[Open URLs based on the current clipboard selection contents
         in a new window.]],
         function(w)
-            local uri = luakit.selection.clipboard
-            if not uri then w:notify("Nothing in clipboard...") return end
-            window.new{w:search_open(uri)}
+            local uris = {}
+            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
+                table.insert(uris, uri)
+            end
+            if #uris == 0 then w:notify("Nothing in clipboard...") return end
+            w = window.new{w:search_open(uris[1])}
+            if #uris > 1 then
+                for i=2,#uris do
+                    w:new_tab(w:search_open(uris[i]))
+                end
+            end
         end),
 
     -- Yanking
@@ -508,13 +566,15 @@ readline_bindings = {
 add_binds({"command", "search"}, readline_bindings)
 
 -- Switching tabs with Mod1+{1,2,3,...}
-mod1binds = {}
-for i=1,10 do
-    table.insert(mod1binds,
-        key({"Mod1"}, tostring(i % 10), "Jump to tab at index "..i..".",
-            function (w) w.tabs:switch(i) end))
+do
+    mod1binds = {}
+    for i=1,10 do
+        table.insert(mod1binds,
+            key({"Mod1"}, tostring(i % 10), "Jump to tab at index "..i..".",
+                function (w) w.tabs:switch(i) end))
+    end
+    add_binds("normal", mod1binds)
 end
-add_binds("normal", mod1binds)
 
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
@@ -545,7 +605,7 @@ add_cmds({
         function (w) w:close_tab() end),
 
     cmd("print", "Print current page.",
-        function (w) w.view:eval_js("print()") end),
+        function (w) w.view:eval_js("print()", { no_return = true }) end),
 
     cmd("stop", "Stop loading.",
         function (w) w.view:stop() end),
@@ -581,7 +641,12 @@ add_cmds({
         function (w, a) window.new{w:search_open(a)} end),
 
     cmd({"javascript", "js"}, "Evaluate JavaScript snippet.",
-        function (w, a) w.view:eval_js(a) end),
+        function (w, a) w.view:eval_js(a, {
+            no_return = true,
+            callback = function (_, err)
+                w:error(err)
+            end,
+        }) end),
 
     -- Tab manipulation commands
     cmd("tab", "Execute command and open result in new tab.",
@@ -605,20 +670,28 @@ add_cmds({
     cmd("tabp[revious]", "Switch to the previous tab.",
         function (w) w:prev_tab() end),
 
+    cmd("tabde[tach]", "Move the current tab tab into a new window",
+        function (w) window.new({w.view}) end),
+
     cmd("q[uit]", "Close the current window.",
         function (w, a, o) w:close_win(o.bang) end),
-
-    cmd({"viewsource", "vs"}, "View the source code of the current document.",
-        function (w, a, o) w:toggle_source(not o.bang and true or nil) end),
 
     cmd({"wqall", "wq"}, "Save the session and quit.",
         function (w, a, o) w:save_session() w:close_win(o.bang) end),
 
     cmd("lua", "Evaluate Lua snippet.", function (w, a)
         if a then
-            local ret = assert(
-                loadstring("return function(w) return "..a.." end"))()(w)
-            if ret then print(ret) end
+            -- Parse as expression first, then statement
+            -- With this order an error message won't contain the print() wrapper
+            local ret, err = loadstring("print(" .. a .. ")")
+            if err then
+                ret, err = loadstring(a)
+            end
+            if err then
+                error(err)
+            else
+                ret()
+            end
         else
             w:set_mode("lua")
         end
@@ -635,6 +708,13 @@ add_cmds({
                 io.close(fd)
                 w:notify("Dumped HTML to: " .. file)
             end
+        end),
+
+    cmd({"view-source", "vs"}, "View the source code of the current document.",
+        function (w)
+            local v = w.view
+            local source = lousy.util.escape(v.source or "")
+            v:load_string('<pre><code>' .. source .. '</code></pre>', v.uri)
         end),
 })
 

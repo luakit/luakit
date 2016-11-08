@@ -4,6 +4,25 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local reopening = {}
+
+local on_tab_close = function (w, view)
+    local tab
+    -- Save tab history
+    if reopening[view] then
+        -- If we're still reopening the tab we're closing, then we haven't yet
+        -- initialized it; reuse the restoration data for this tab
+        tab = reopening[view]
+        reopening[view] = nil
+    else
+        tab = { hist = view.history, session_state = view.session_state }
+    end
+    -- And relative location
+    local index = w.tabs:indexof(view)
+    if index ~= 1 then tab.after = w.tabs[index-1] end
+    table.insert(w.closed_tabs, tab)
+end
+
 -- Undo a closed tab (with complete tab history)
 window.methods.undo_close_tab = function (w, index)
     -- Convert negative indexes
@@ -11,8 +30,12 @@ window.methods.undo_close_tab = function (w, index)
         index = #(w.closed_tabs) + index + 1
     end
     local tab = table.remove(w.closed_tabs, index)
-    if not tab then return end
-    local view = w:new_tab(tab.hist)
+    if not tab then
+        w:notify("No closed tabs to reopen")
+        return
+    end
+    local view = w:new_tab({ session_state = tab.session_state, hist = tab.hist })
+    reopening[view] = tab
     -- Attempt to open in last position
     if tab.after then
         local i = w.tabs:indexof(tab.after)
@@ -20,6 +43,17 @@ window.methods.undo_close_tab = function (w, index)
     else
         w.tabs:reorder(view, 1)
     end
+
+    -- Emit 'undo-close' after webview init funcs have run
+    view:add_signal("web-extension-loaded", function(v)
+        v:emit_signal("undo-close")
+        reopening[view] = nil
+    end)
+end
+
+window.init_funcs.undo_close_tab = function (w)
+    w.closed_tabs = {}
+    w:add_signal("close-tab", on_tab_close)
 end
 
 local key = lousy.bind.key
@@ -36,7 +70,7 @@ new_mode("undolist", {
         for uid, tab in ipairs(w.closed_tabs) do
             tab.uid = uid
             local item = tab.hist.items[tab.hist.index]
-            local title, uri = escape(item.title), escape(item.uri)
+            local title, uri = escape(item.title) or "", escape(item.uri)
             table.insert(rows, 2, { "  " .. title, " " .. uri, uid = uid })
         end
         w.menu:build(rows)
@@ -61,6 +95,9 @@ add_binds("undolist", lousy.util.table.join({
                 end
             end
             w.menu:del()
+            if w.menu:nrows() == 1 then
+                w:notify("No closed tabs to display")
+            end
         end
     end),
 
@@ -69,11 +106,14 @@ add_binds("undolist", lousy.util.table.join({
         if row and row.uid then
             for i, tab in ipairs(w.closed_tabs) do
                 if tab.uid == row.uid then
-                    w:new_tab(table.remove(w.closed_tabs, i).hist, false)
+                    w:new_tab(table.remove(w.closed_tabs, i), false)
                     break
                 end
             end
             w.menu:del()
+            if w.menu:nrows() == 1 then
+                w:notify("No closed tabs to display")
+            end
         end
     end),
 
@@ -84,7 +124,7 @@ add_binds("undolist", lousy.util.table.join({
         if row and row.uid then
             for i, tab in ipairs(w.closed_tabs) do
                 if tab.uid == row.uid then
-                    window.new({table.remove(w.closed_tabs, i).hist})
+                    window.new({table.remove(w.closed_tabs, i)})
                     return
                 end
             end

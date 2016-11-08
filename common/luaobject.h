@@ -130,6 +130,8 @@ luaH_object_push(lua_State *L, gpointer p) {
     return 1;
 }
 
+gint signal_array_emit(lua_State *L, signal_t *signals,
+        const gchar *array_name, const gchar *name, gint nargs, gint nret);
 gint signal_object_emit(lua_State *, signal_t *signals,
         const gchar *name, gint nargs, gint nret);
 void luaH_object_add_signal(lua_State *L, gint oud,

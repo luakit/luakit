@@ -36,7 +36,7 @@ end
 
 local function search_load(path, memorize)
     assert(type(path) == "string", "invalid path")
-    memorize = not not memorise
+    memorize = not not memorize
 
     if string.sub(path, 1, 1) ~= "/" then
         -- Can we search relative paths?

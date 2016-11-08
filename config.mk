@@ -2,13 +2,19 @@
 
 # Compile/link options.
 CC         ?= gcc
-CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra -DGDK_DISABLE_DEPRECATED -DGTK_DISABLE_DEPRECATED
+CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra -flto
 LDFLAGS    +=
 CPPFLAGS   +=
 
 # Get current luakit version.
 VERSION    ?= $(shell ./build-utils/getversion.sh)
 CPPFLAGS   += -DVERSION=\"$(VERSION)\"
+
+# === Default build options ==================================================
+
+DEVELOPMENT_PATHS ?= 1
+USE_LUAJIT        ?= 1
+USE_UNIQUE        ?= 1
 
 # === Paths ==================================================================
 
@@ -43,7 +49,7 @@ endif
 
 # === Lua package name detection =============================================
 
-LUA_PKG_NAMES += lua lua-5.1 lua5.1 lua51
+LUA_PKG_NAMES += lua-5.1 lua5.1 lua51
 
 # Force linking against Lua's Just-In-Time compiler.
 # See http://luajit.org/ for more information.
@@ -65,36 +71,22 @@ endif
 # === Required build packages ================================================
 
 # Packages required to build luakit.
-ifeq ($(USE_GTK3),1)
-	PKGS += gtk+-3.0
-else
-	PKGS += gtk+-2.0
-endif
+PKGS += gtk+-3.0
 PKGS += gthread-2.0
-ifeq ($(USE_GTK3),1)
-	PKGS += webkitgtk-3.0
-else
-	PKGS += webkit-1.0
-endif
+CPPFLAGS += -DWITH_WEBKIT2
+PKGS += webkit2gtk-4.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
 
 # For systems using older WebKit-GTK versions which bundle JavaScriptCore
 # within the WebKit-GTK package.
 ifneq ($(NO_JAVASCRIPTCORE),1)
-ifeq ($(USE_GTK3),1)
-	PKGS += javascriptcoregtk-3.0
-else
-	PKGS += javascriptcoregtk-1.0
-endif
+	PKGS += javascriptcoregtk-4.0
 endif
 
 # Build luakit with single instance support?
 ifneq ($(USE_UNIQUE),0)
 	CPPFLAGS += -DWITH_UNIQUE
-ifneq ($(USE_GTK3),1)
-	PKGS     += unique-1.0
-endif
 endif
 
 # Check user has correct packages installed (and found by pkg-config).

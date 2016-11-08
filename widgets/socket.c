@@ -21,9 +21,7 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include <stdlib.h>
-#if GTK_CHECK_VERSION(3,0,0)
 #include <gtk/gtkx.h>
-#endif
 
 static void
 plug_added_cb(GtkSocket* UNUSED(socket), widget_t *w)
@@ -67,11 +65,7 @@ luaH_socket_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_ID:
         gtk_socket_add_id(GTK_SOCKET(w->widget),
-#if GTK_CHECK_VERSION(3,0,0)
                 (Window) luaL_checkint(L, 2));
-#else
-                (GdkNativeWindow) luaL_checkint(L, 2));
-#endif
         break;
 
       default:
@@ -96,3 +90,5 @@ widget_socket(widget_t *w, luakit_token_t UNUSED(token))
       NULL);
     return w;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

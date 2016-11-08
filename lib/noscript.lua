@@ -11,11 +11,15 @@ local table = table
 local string = string
 
 -- Get luakit environment
+local window = window
 local webview = webview
 local add_binds = add_binds
 local lousy = require "lousy"
+local widget = widget
 local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
+local webkit2 = luakit.webkit2
+local theme = theme
 
 module "noscript"
 
@@ -104,32 +108,25 @@ function string.starts(a, b)
 end
 
 local function lookup_domain(uri)
+    if not uri then uri = "" end
     local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
-    local full_match = true
     local domain = get_domain(uri)
 
     -- Enable everything for chrome pages; without this, chrome pages which
     -- depend upon javascript will break
-    if string.starts(uri, "luakit://") then return true, true, true end
+    if string.starts(uri, "luakit://") then return true, true, "luakit://" end
 
     -- Look up this domain and all parent domains, returning the first match
     -- E.g. querying a.b.com will lookup a.b.com, then b.com, then com
     while domain do
         local row = match_domain(domain)
         if row then
-            enable_scripts = itob(row.enable_scripts)
-            enable_plugins = itob(row.enable_plugins)
-            break
+            return itob(row.enable_scripts), itob(row.enable_plugins), row.domain
         end
-        full_match = false
         domain = string.match(domain, "%.(.+)")
     end
 
-    -- full_match is true if the domain of the matched record is equal to the
-    -- full subdomain of the given URI
-    -- E.g. a.b.com matched to b.com will return false, but will return true if
-    -- matched to a.b.com; intended for use in indicators/widgets
-    return enable_scripts, enable_plugins, full_match
+    return enable_scripts, enable_plugins, nil
 end
 
 function webview.methods.noscript_state(view, w)
@@ -138,18 +135,51 @@ function webview.methods.noscript_state(view, w)
     end
 end
 
-webview.init_funcs.noscript_load = function (view)
+function window.methods.noscript_indicator_update(w)
+    local ns = w.sbar.r.noscript
+    local es, ep, matched_domain = lookup_domain(w.view.uri)
+    local state = es and "enabled" or "disabled"
+
+    if es then
+        ns.text = "S" or "<s>S</s>"
+        ns.fg = theme.trust_fg
+    else
+        ns.text = "<s>S</s>"
+        ns.fg = theme.notrust_fg
+    end
+
+    if matched_domain then
+        ns.tooltip = "JavaScript " .. state .. ": URI matched domain '" .. matched_domain .. "'"
+    else
+        ns.tooltip = "JavaScript " .. state .. ": default setting"
+    end
+end
+
+window.init_funcs.noscript_indicator_load = function (w)
+    local r = w.sbar.r
+    r.noscript = widget{type="label"}
+    r.layout:pack(r.noscript)
+    r.layout:reorder(r.noscript, 1)
+    r.noscript.font = theme.font
+end
+
+webview.init_funcs.noscript_load = function (view, w)
     view:add_signal("load-status", function (v, status)
-        if status == "provisional" then
-            view.enable_scripts = enable_scripts
-            view.enable_plugins = enable_plugins
-            return
+        if status == "provisional" or status == "redirected" then
+            local es = v:emit_signal("enable-scripts")
+            local ep = v:emit_signal("enable-plugins")
+            if es == nil or ep == nil then
+                local s, p, _ = lookup_domain(v.uri)
+                if es == nil then es = s end
+                if ep == nil then ep = p end
+            end
+            view.enable_scripts = es
+            view.enable_plugins = ep
+            w:noscript_indicator_update()
         end
-        if status == "committed" and v.uri ~= "about:blank" then
-            local enable_scripts, enable_plugins, _ = lookup_domain(v.uri)
-            view.enable_scripts = enable_scripts
-            view.enable_plugins = enable_plugins
-        end
+    end)
+    view:add_signal("switched-page", function (v)
+        w:noscript_indicator_update()
     end)
 end
 
