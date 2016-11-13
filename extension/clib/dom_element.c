@@ -48,6 +48,12 @@ luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
     return 1;
 }
 
+dom_element_t *
+luaH_to_dom_element(lua_State *L, gint idx)
+{
+    return luaH_toudata(L, idx, &dom_element_class);
+}
+
 JSValueRef
 dom_element_js_ref(dom_element_t *element)
 {
