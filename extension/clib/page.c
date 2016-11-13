@@ -1,5 +1,6 @@
 #include "extension/extension.h"
 #include "extension/clib/page.h"
+#include "extension/clib/dom_element.h"
 #include "common/tokenize.h"
 #include "common/luautil.h"
 #include "common/luauniq.h"
@@ -110,6 +111,31 @@ luaH_page_eval_js(lua_State *L)
     WebKitScriptWorld *world = extension.script_world;
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
     return luaJS_eval_js(extension.WL, ctx, script, source, false);
+}
+
+static gint
+luaH_page_js_func(lua_State *L)
+{
+    const void *ctx = lua_topointer(L, lua_upvalueindex(1));
+    const void *func = lua_topointer(L, lua_upvalueindex(2));
+
+    gint argc = lua_gettop(L);
+    JSValueRef *args = argc > 0 ? g_alloca(sizeof(*args)*argc) : NULL;
+    for (gint i = 0; i < argc; i++) {
+        dom_element_t *elem = luaH_to_dom_element(L, i+1);
+        /* Custom handling of dom_element_t objects here because luaJS_tovalue()
+         * is defined in common/, which is shared in the main process, and the
+         * main process is not aware of the extension/clib/ stuff */
+        if (elem)
+            args[i] = dom_element_js_ref(elem);
+        else
+            args[i] = luaJS_tovalue(L, ctx, i+1, NULL);
+    }
+
+    /* Call the function */
+    JSValueRef ret = JSObjectCallAsFunction(ctx, (JSObjectRef)func, NULL, argc, args, NULL);
+    luaJS_pushvalue(L, ctx, ret, NULL);
+    return 1;
 }
 
 static gint
