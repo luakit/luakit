@@ -118,6 +118,7 @@ luaH_page_js_func(lua_State *L)
 {
     const void *ctx = lua_topointer(L, lua_upvalueindex(1));
     const void *func = lua_topointer(L, lua_upvalueindex(2));
+    page_t *page = luaH_checkudata(L, lua_upvalueindex(3), &page_class);
 
     gint argc = lua_gettop(L);
     JSValueRef *args = argc > 0 ? g_alloca(sizeof(*args)*argc) : NULL;
@@ -127,7 +128,7 @@ luaH_page_js_func(lua_State *L)
          * is defined in common/, which is shared in the main process, and the
          * main process is not aware of the extension/clib/ stuff */
         if (elem)
-            args[i] = dom_element_js_ref(elem);
+            args[i] = dom_element_js_ref(page, elem);
         else
             args[i] = luaJS_tovalue(L, ctx, i+1, NULL);
     }
@@ -171,7 +172,8 @@ luaH_page_wrap_js(lua_State *L)
 
     lua_pushlightuserdata(L, ctx);
     lua_pushlightuserdata(L, func);
-    lua_pushcclosure(L, luaH_page_js_func, 2);
+    lua_pushvalue(L, 1);
+    lua_pushcclosure(L, luaH_page_js_func, 3);
 
     return 1;
 }

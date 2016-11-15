@@ -55,7 +55,7 @@ luaH_to_dom_element(lua_State *L, gint idx)
 }
 
 JSValueRef
-dom_element_js_ref(dom_element_t *element)
+dom_element_js_ref(page_t *page, dom_element_t *element)
 {
     WebKitDOMElement *elem = element->element;
 
@@ -70,7 +70,7 @@ dom_element_js_ref(dom_element_t *element)
     g_assert(strcmp(id, old_id ?: ""));
 
     /* Get JSValueRef to document.getElementById() */
-    WebKitFrame *frame = webkit_web_page_get_main_frame(webkit_web_extension_get_page(extension.ext, 1));
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
     WebKitScriptWorld *world = extension.script_world;
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
 
