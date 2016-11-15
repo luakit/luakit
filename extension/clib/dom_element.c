@@ -27,6 +27,11 @@ LUA_OBJECT_FUNCS(dom_element_class, dom_element_t, dom_element);
 gint
 luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
 {
+    if (!node) {
+        lua_pushnil(L);
+        return 1;
+    }
+
     if (luaH_uniq_get_ptr(L, REG_KEY, node))
         return 1;
 
