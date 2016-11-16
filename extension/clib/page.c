@@ -190,6 +190,11 @@ luaH_page_destroy_cb(WebKitWebPage *web_page)
 gint
 luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
 {
+    if (!web_page) {
+        lua_pushnil(L);
+        return 1;
+    }
+
     if (luaH_uniq_get_ptr(L, REG_KEY, web_page))
         return 1;
 
