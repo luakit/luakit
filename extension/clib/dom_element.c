@@ -54,6 +54,46 @@ luaH_to_dom_element(lua_State *L, gint idx)
     return luaH_toudata(L, idx, &dom_element_class);
 }
 
+static char *
+dom_element_selector(dom_element_t *element)
+{
+    WebKitDOMNode *elem = WEBKIT_DOM_NODE(element->element), *parent;
+    GPtrArray *parts = g_ptr_array_new_full(10, g_free);
+
+    while ((parent = webkit_dom_node_get_parent_node(elem))) {
+        char *id = webkit_dom_element_get_id(WEBKIT_DOM_ELEMENT(elem));
+        char *tag = webkit_dom_element_get_tag_name(WEBKIT_DOM_ELEMENT(elem));
+        if (!strcmp(tag, "BODY") || !strcmp(tag, "HEAD")) {
+            g_ptr_array_add(parts, g_strdup(tag));
+            break;
+        } else if (id) {
+            g_ptr_array_add(parts, g_strdup_printf("#%s", id));
+            break;
+        } else {
+            int c = 1;
+            WebKitDOMElement *e = WEBKIT_DOM_ELEMENT(elem), *ps;
+            while ((ps = webkit_dom_element_get_previous_element_sibling(e))) {
+                e = ps;
+                c++;
+            }
+            g_ptr_array_add(parts, g_strdup_printf("%s:nth-child(%d)", tag, c));
+        }
+        elem = parent;
+    }
+
+    /* Reverse array and add null terminator for g_strjoinv() */
+    for (guint i = 0, j = parts->len-1; i < j; i++, j--) {
+        char *tmp = parts->pdata[i];
+        parts->pdata[i] = parts->pdata[j];
+        parts->pdata[j] = tmp;
+    }
+    g_ptr_array_add(parts, NULL);
+
+    char *sel = g_strjoinv(" > ", (char **)parts->pdata);
+    g_ptr_array_free(parts, TRUE);
+    return sel;
+}
+
 JSValueRef
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
