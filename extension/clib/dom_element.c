@@ -97,17 +97,7 @@ dom_element_selector(dom_element_t *element)
 JSValueRef
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
-    WebKitDOMElement *elem = element->element;
-
-    /* Bit of a nasty hack */
-    const gchar *id = "luakit-dom-element-id";
-    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
-    g_assert(!webkit_dom_document_query_selector(doc, "#luakit-dom-element-id", NULL));
-
-    /* Give the element a unique id */
-    gchar *old_id = g_strdup(webkit_dom_element_get_id(elem) ?: "");
-    webkit_dom_element_set_id(elem, id);
-    g_assert(strcmp(id, old_id ?: ""));
+    gchar *sel = dom_element_selector(element);
 
     /* Get JSValueRef to document.getElementById() */
     WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
@@ -116,21 +106,18 @@ dom_element_js_ref(page_t *page, dom_element_t *element)
 
     JSObjectRef js_global = JSContextGetGlobalObject(ctx);
     JSStringRef doc_key = JSStringCreateWithUTF8CString("document");
-    JSStringRef get_elem_key = JSStringCreateWithUTF8CString("getElementById");
-    JSStringRef id_key = JSStringCreateWithUTF8CString(id);
-    JSValueRef id_val = JSValueMakeString(ctx, id_key);
+    JSStringRef query_key = JSStringCreateWithUTF8CString("querySelector");
+    JSStringRef sel_key = JSStringCreateWithUTF8CString(sel);
+    JSValueRef sel_val = JSValueMakeString(ctx, sel_key);
 
     JSValueRef js_doc = JSObjectGetProperty(ctx, js_global, doc_key, NULL);
-    JSValueRef js_get_elem = JSObjectGetProperty(ctx, (JSObjectRef)js_doc, get_elem_key, NULL);
-    JSValueRef ret = JSObjectCallAsFunction(ctx, (JSObjectRef)js_get_elem, (JSObjectRef)js_doc, 1, &id_val, NULL);
+    JSValueRef js_get_elem = JSObjectGetProperty(ctx, (JSObjectRef)js_doc, query_key, NULL);
+    JSValueRef ret = JSObjectCallAsFunction(ctx, (JSObjectRef)js_get_elem, (JSObjectRef)js_doc, 1, &sel_val, NULL);
 
     JSStringRelease(doc_key);
-    JSStringRelease(get_elem_key);
-    JSStringRelease(id_key);
-
-    /* Restore the element's original id, if any */
-    webkit_dom_element_set_id(elem, old_id);
-    g_free(old_id);
+    JSStringRelease(query_key);
+    JSStringRelease(sel_key);
+    g_free(sel);
 
     return ret;
 }
