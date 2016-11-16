@@ -6,6 +6,7 @@
 #include "common/util.h"
 #include "common/luaclass.h"
 #include "common/luaobject.h"
+#include "extension/clib/page.h"
 
 #include <gtk/gtk.h>
 
@@ -18,6 +19,8 @@ lua_class_t dom_element_class;
 
 void dom_element_class_setup(lua_State *);
 gint luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node);
+JSValueRef dom_element_js_ref(page_t *page, dom_element_t *element);
+dom_element_t * luaH_to_dom_element(lua_State *L, gint idx);
 
 #endif
 

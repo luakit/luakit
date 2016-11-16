@@ -3,6 +3,7 @@
 #include <webkitdom/WebKitDOMElementUnstable.h>
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
 #include <webkitdom/WebKitDOMLocation.h>
+#include <JavaScriptCore/JavaScript.h>
 
 /* HACK: Normally, I'd include WebKitDOMHTMLMediaElement.h here, and that'd work
  * fine, except that it includes WebKitDOMHTMLElement.h which can only be
@@ -45,6 +46,80 @@ luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
     luaH_uniq_add_ptr(L, REG_KEY, node, -1);
 
     return 1;
+}
+
+dom_element_t *
+luaH_to_dom_element(lua_State *L, gint idx)
+{
+    return luaH_toudata(L, idx, &dom_element_class);
+}
+
+static char *
+dom_element_selector(dom_element_t *element)
+{
+    WebKitDOMNode *elem = WEBKIT_DOM_NODE(element->element), *parent;
+    GPtrArray *parts = g_ptr_array_new_full(10, g_free);
+
+    while ((parent = webkit_dom_node_get_parent_node(elem))) {
+        char *id = webkit_dom_element_get_id(WEBKIT_DOM_ELEMENT(elem));
+        char *tag = webkit_dom_element_get_tag_name(WEBKIT_DOM_ELEMENT(elem));
+        if (!strcmp(tag, "BODY") || !strcmp(tag, "HEAD")) {
+            g_ptr_array_add(parts, g_strdup(tag));
+            break;
+        } else if (id) {
+            g_ptr_array_add(parts, g_strdup_printf("#%s", id));
+            break;
+        } else {
+            int c = 1;
+            WebKitDOMElement *e = WEBKIT_DOM_ELEMENT(elem), *ps;
+            while ((ps = webkit_dom_element_get_previous_element_sibling(e))) {
+                e = ps;
+                c++;
+            }
+            g_ptr_array_add(parts, g_strdup_printf("%s:nth-child(%d)", tag, c));
+        }
+        elem = parent;
+    }
+
+    /* Reverse array and add null terminator for g_strjoinv() */
+    for (guint i = 0, j = parts->len-1; i < j; i++, j--) {
+        char *tmp = parts->pdata[i];
+        parts->pdata[i] = parts->pdata[j];
+        parts->pdata[j] = tmp;
+    }
+    g_ptr_array_add(parts, NULL);
+
+    char *sel = g_strjoinv(" > ", (char **)parts->pdata);
+    g_ptr_array_free(parts, TRUE);
+    return sel;
+}
+
+JSValueRef
+dom_element_js_ref(page_t *page, dom_element_t *element)
+{
+    gchar *sel = dom_element_selector(element);
+
+    /* Get JSValueRef to document.getElementById() */
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
+
+    JSObjectRef js_global = JSContextGetGlobalObject(ctx);
+    JSStringRef doc_key = JSStringCreateWithUTF8CString("document");
+    JSStringRef query_key = JSStringCreateWithUTF8CString("querySelector");
+    JSStringRef sel_key = JSStringCreateWithUTF8CString(sel);
+    JSValueRef sel_val = JSValueMakeString(ctx, sel_key);
+
+    JSValueRef js_doc = JSObjectGetProperty(ctx, js_global, doc_key, NULL);
+    JSValueRef js_get_elem = JSObjectGetProperty(ctx, (JSObjectRef)js_doc, query_key, NULL);
+    JSValueRef ret = JSObjectCallAsFunction(ctx, (JSObjectRef)js_get_elem, (JSObjectRef)js_doc, 1, &sel_val, NULL);
+
+    JSStringRelease(doc_key);
+    JSStringRelease(query_key);
+    JSStringRelease(sel_key);
+    g_free(sel);
+
+    return ret;
 }
 
 static gint

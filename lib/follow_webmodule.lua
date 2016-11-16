@@ -135,9 +135,16 @@ local function bounding_boxes_intersect(a, b)
     return true
 end
 
-local function get_element_bb_if_visible(element, wbb)
+local function get_element_bb_if_visible(element, wbb, page)
     -- Find the element bounding box
-    local r = element.rect
+    local client_rects = page:wrap_js([=[
+        var rects = element.getClientRects();
+        if (rects.length >= 1)
+            return rects[0];
+        else
+            return undefined;
+    ]=], {"element"})
+    local r = client_rects(element) or element.rect
     local rbb = {
         x = wbb.x + r.left,
         y = wbb.y + r.top,
@@ -177,7 +184,7 @@ local function get_element_bb_if_visible(element, wbb)
     return rbb
 end
 
-local function frame_find_hints(frame, selector)
+local function frame_find_hints(page, frame, selector)
     local hints = {}
     local elements = frame.body:query(selector)
 
@@ -191,7 +198,7 @@ local function frame_find_hints(frame, selector)
     }
 
     for _, element in ipairs(elements) do
-        local rbb = get_element_bb_if_visible(element,wbb)
+        local rbb = get_element_bb_if_visible(element,wbb, page)
 
         if rbb then
             local text = element.text_content
@@ -394,7 +401,7 @@ ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
     for i, frame in ipairs(state.frames) do
         -- Set up the frame, and find hints
         init_frame(frame, mode.stylesheet)
-        frame.hints = frame_find_hints(frame, mode.selector)
+        frame.hints = frame_find_hints(page, frame, mode.selector)
         -- Build an array of all hints
         for _, hint in ipairs(frame.hints) do
             state.hints[#state.hints+1] = hint
