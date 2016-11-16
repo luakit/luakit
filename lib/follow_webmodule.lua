@@ -1,7 +1,7 @@
 local pairs, ipairs = pairs, ipairs
 local table, string = table, string
 local assert, type = assert, type
-local floor = math.floor
+local floor, max = math.floor, math.max
 local rawset, rawget = rawset, rawget
 local ui_process = ui_process
 local dom_document = dom_document
@@ -425,7 +425,7 @@ ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
             local r = hint.bb
 
             local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
-            local label_style = string.format("left: %dpx; top: %dpx;", r.x-10, r.y-10, r.w, r.h)
+            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, 0), max(r.y-10, 0), r.w, r.h)
 
             hint.overlay_elem = frame.doc:create_element("span", {class = "hint_overlay hint_overlay_" .. e.tag_name, style = overlay_style})
             hint.label_elem = frame.doc:create_element("span", {class = "hint_label hint_label_" .. e.tag_name, style = label_style}, hint.label)
