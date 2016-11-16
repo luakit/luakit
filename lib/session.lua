@@ -131,6 +131,10 @@ window.init_funcs.session_init = function(w)
             rm(recovery_file)
         end
     end)
+
+    w.tabs:add_signal("page-reordered", function ()
+        start_timeout()
+    end)
 end
 
 webview.init_funcs.session_init = function(view, w)
