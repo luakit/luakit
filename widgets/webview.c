@@ -313,8 +313,7 @@ static void webview_get_source_finished(WebKitWebResource *main_resource, GAsync
     gsize length;
     guchar *source = webkit_web_resource_get_data_finish (main_resource, res, &length, NULL);
     g_object_unref(main_resource);
-    if (d->source)
-        g_free(d->source);
+    g_free(d->source);
     d->source = (gchar*)source;
     d->source_length = length;
 }
@@ -1150,9 +1149,7 @@ webview_destructor(widget_t *w)
     signal_destroy(d->script_msg_signals);
     if (d->cert)
         g_object_unref(G_OBJECT(d->cert));
-
-    if (d->source)
-        g_free(d->source);
+    g_free(d->source);
 
     g_slice_free(webview_data_t, d);
 }
