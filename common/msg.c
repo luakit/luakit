@@ -258,11 +258,17 @@ msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
     msg_recv_state_t *state = &ipc->recv_state;
     state->queued_msgs = g_ptr_array_new();
 
-    ipc->channel = g_io_channel_unix_new(sock);
-    g_io_channel_set_encoding(ipc->channel, NULL, NULL);
-    g_io_channel_set_buffered(ipc->channel, FALSE);
-    state->watch_in_id = g_io_add_watch(ipc->channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
-    state->watch_hup_id = g_io_add_watch(ipc->channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
+    GIOChannel *channel = g_io_channel_unix_new(sock);
+    g_io_channel_set_encoding(channel, NULL, NULL);
+    g_io_channel_set_buffered(channel, FALSE);
+    state->watch_in_id = g_io_add_watch(channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
+    state->watch_hup_id = g_io_add_watch(channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
+
+    /* Atomically update ipc->channel. This is done because on the web extension
+     * thread, logging spawns a message send thread, which may attempt to write
+     * to the uninitialized channel after it has been created with
+     * g_io_channel_unix_new(), but before it has been set up fully */
+    g_atomic_pointer_set(&ipc->channel, channel);
 
     ipc->status = MSG_ENDPOINT_CONNECTED;
 
