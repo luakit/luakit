@@ -1166,8 +1166,9 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     const gchar *uri = webkit_uri_scheme_request_get_uri(request);
 
     WebKitWebView *view = webkit_uri_scheme_request_get_web_view(request);
+    if (!view)
+        return;
     widget_t *w = webview_get_by_id(webkit_web_view_get_page_id(view));
-    g_assert(w);
 
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
