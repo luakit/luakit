@@ -63,6 +63,7 @@ typedef struct {
     guint htr_context;
     gboolean is_committed;
     gboolean is_failed;
+    gboolean is_alive;
 
     /** Document size */
     gint doc_w, doc_h;
@@ -306,6 +307,9 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
 static void webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res, widget_t *w)
 {
     webview_data_t *d = w->data;
+    if (!d->is_alive)
+        return;
+
     gsize length;
     guchar *source = webkit_web_resource_get_data_finish (main_resource, res, &length, NULL);
     g_object_unref(main_resource);
@@ -1132,6 +1136,7 @@ static void
 webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
+    d->is_alive = FALSE;
 
     g_assert(d->ipc);
     msg_endpoint_decref(d->ipc);
@@ -1277,6 +1282,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
+    d->is_alive = TRUE;
 
     /* Create a new endpoint with one ref (this webview) */
     d->ipc = msg_endpoint_new("UI");
