@@ -147,7 +147,6 @@ $(document).ready(function () { 'use strict';
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     var item_html = $("#item-skelly").html();
-    $("#templates").remove();
 
     function make_history_item(h) {
         var $e = $(item_html);
