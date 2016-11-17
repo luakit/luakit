@@ -134,12 +134,11 @@ msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *
 
     gboolean should_exit = !strcmp(ipc->name, "Web");
 
-    msg_endpoint_disconnect(ipc);
     msg_endpoint_decref(ipc);
 
     if (should_exit)
         exit(0);
-    return FALSE;
+    return TRUE;
 }
 
 /* Receive a single message
