@@ -295,8 +295,8 @@ msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
                 (gchar*)orig->queue->data,
                 orig->queue->len, NULL, NULL);
         g_byte_array_unref(orig->queue);
+        orig->queue = NULL;
     }
-    orig->queue = NULL;
 
     msg_endpoint_decref(orig);
     return new;
