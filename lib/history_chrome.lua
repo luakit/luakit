@@ -110,6 +110,7 @@ local html = [==[
         <span id="search-box">
             <input type="text" id="search" placeholder="Search history..." />
             <input type="button" id="clear-button" value="X" />
+            <input type="hidden" id="page" />
         </span>
         <input type="button" id="search-button" class="button" value="Search" />
         <div class="rhs">
@@ -141,7 +142,7 @@ local html = [==[
 local main_js = [=[
 $(document).ready(function () { 'use strict';
 
-    var limit = 100, page = 1, results_len = 0;
+    var limit = 100, results_len = 0;
 
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
@@ -167,7 +168,11 @@ $(document).ready(function () { 'use strict';
         $clear_results = $("#clear-results-button").eq(0),
         $clear_selected = $("#clear-selected-button").eq(0),
         $next = $("#nav-next").eq(0),
-        $prev = $("#nav-prev").eq(0);
+        $prev = $("#nav-prev").eq(0),
+        $page = $("#page").eq(0);
+
+    if ($page.val() == "")
+        $page.val(1);
 
     function update_clear_buttons(all, results, selected) {
         $clear_all.attr("disabled", !!all);
@@ -180,7 +185,7 @@ $(document).ready(function () { 'use strict';
             $next.show();
         else
             $next.hide();
-        if (page > 1)
+        if (parseInt($page.val(), 10) > 1)
             $prev.show();
         else
             $prev.hide();
@@ -189,7 +194,7 @@ $(document).ready(function () { 'use strict';
     function search() {
         var query = $search.val(),
             results = history_search({
-                query: query, limit: limit, page: page });
+                query: query, limit: limit, page: parseInt($page.val(), 10) });
 
         // Used to trigger hiding of next nav button when results_len < limit
         results_len = results.length || 0;
@@ -232,7 +237,7 @@ $(document).ready(function () { 'use strict';
     $search.keydown(function(ev) {
         if (ev.which == 13) { /* Return */
             reset_mode();
-            page = 1;
+            $page.val(1);
             search();
             $search.blur();
         }
@@ -240,12 +245,12 @@ $(document).ready(function () { 'use strict';
 
     $("#clear-button").click(function () {
         $search.val("");
-        page = 1;
+        $page.val(1);
         search();
     });
 
     $("#search-button").click(function () {
-        page = 1;
+        $page.val(1);
         search();
     });
 
@@ -281,12 +286,14 @@ $(document).ready(function () { 'use strict';
     });
 
     $next.click(function () {
-        page++;
+        var page = parseInt($page.val(), 10);
+        $page.val(page + 1);
         search();
     });
 
     $prev.click(function () {
-        page = Math.max(page-1,1);
+        var page = parseInt($page.val(), 10);
+        $page.val(Math.max(page - 1,1));
         search();
     });
 
