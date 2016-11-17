@@ -55,6 +55,17 @@ destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
 }
 
 static gint
+can_close_cb(GtkWidget* UNUSED(win), GdkEvent *event, widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    gint ret = luaH_object_emit_signal(L, -1, "can-close", 0, 1);
+    gboolean keep_open = ret && !lua_toboolean(L, -1);
+    lua_pop(L, ret + 1);
+    return keep_open;
+}
+
+static gint
 luaH_window_set_default_size(lua_State *L)
 {
     window_data_t *d = luaH_checkwindata(L, 1);
@@ -214,6 +225,7 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",                G_CALLBACK(add_cb),          w,
       "signal::destroy",            G_CALLBACK(destroy_cb),      w,
+      "signal::delete-event",       G_CALLBACK(can_close_cb),    w,
       "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
       "signal::remove",             G_CALLBACK(remove_cb),       w,
       "signal::window-state-event", G_CALLBACK(window_state_cb), w,

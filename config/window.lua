@@ -287,7 +287,13 @@ window.init_funcs = {
             w:update_sbar_visibility()
             w.tablist.visible = not win.fullscreen
         end)
-    end
+    end,
+
+    check_before_closing_last_window = function (w)
+        w.win:add_signal("can-close", function ()
+            return w:close_win() == nil and true or false
+        end)
+    end,
 }
 
 -- Helper functions which operate on the window widgets or structure.
