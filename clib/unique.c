@@ -32,8 +32,6 @@
 lua_class_t unique_class;
 LUA_CLASS_FUNCS(unique, unique_class);
 
-static GtkApplication *application = NULL;
-
 static void
 message_cb(GSimpleAction* UNUSED(a), GVariant *message_data, lua_State *L)
 {
@@ -42,25 +40,38 @@ message_cb(GSimpleAction* UNUSED(a), GVariant *message_data, lua_State *L)
         const gchar *text = g_variant_get_string (message_data, NULL);
         lua_pushstring(L, text);
 
-        GdkScreen *screen = gtk_window_get_screen(gtk_application_get_active_window(application));
+        GtkWindow *window = gtk_application_get_active_window(globalconf.application);
+        if (!window)
+            warn("It's not a window!!!");
+        GdkScreen *screen = gtk_window_get_screen(window);
         lua_pushlightuserdata(L, screen);
 
         signal_object_emit(L, unique_class.signals, "message", 2, 0);
     }
 }
 
+static gboolean
+unique_is_registered(void)
+{
+    if (!globalconf.application)
+        return FALSE;
+    if (!g_application_get_is_registered(G_APPLICATION(globalconf.application)))
+        return FALSE;
+    return TRUE;
+}
+
 static gint
 luaH_unique_new(lua_State *L)
 {
-    if (application && g_application_get_is_registered(G_APPLICATION(application)))
+    if (unique_is_registered())
         luaL_error(L, "GApplication already setup");
 
     const gchar *name = luaL_checkstring(L, 1);
     GError *error = NULL;
-    if (!application)
-        application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
+    if (!globalconf.application)
+        globalconf.application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
 
-    g_application_register(G_APPLICATION(application), NULL, &error);
+    g_application_register(G_APPLICATION(globalconf.application), NULL, &error);
     if (error != NULL) {
         luaL_error(L, "unable to register GApplication");
         g_error_free(error);
@@ -72,7 +83,7 @@ luaH_unique_new(lua_State *L)
         .activate = (void (*) (GSimpleAction *, GVariant *, gpointer)) message_cb,
         .parameter_type = "s"
     }};
-    g_action_map_add_action_entries (G_ACTION_MAP(application),
+    g_action_map_add_action_entries (G_ACTION_MAP(globalconf.application),
             entries, G_N_ELEMENTS(entries), L);
     return 0;
 }
@@ -80,10 +91,10 @@ luaH_unique_new(lua_State *L)
 static gint
 luaH_unique_is_running(lua_State *L)
 {
-    if (!application || !g_application_get_is_registered(G_APPLICATION(application)))
+    if (!unique_is_registered())
         luaL_error(L, "GApplication is not registered");
 
-    gboolean running = g_application_get_is_remote(G_APPLICATION(application));
+    gboolean running = g_application_get_is_remote(G_APPLICATION(globalconf.application));
 
     lua_pushboolean(L, running);
     return 1;
@@ -92,15 +103,15 @@ luaH_unique_is_running(lua_State *L)
 static gint
 luaH_unique_send_message(lua_State *L)
 {
-    if (!application || !g_application_get_is_registered(G_APPLICATION(application)))
+    if (!unique_is_registered())
         luaL_error(L, "GApplication is not registered");
 
-    if (!g_application_get_is_remote(G_APPLICATION(application)))
+    if (!g_application_get_is_remote(G_APPLICATION(globalconf.application)))
         luaL_error(L, "no other instances running");
 
     GVariant *text = g_variant_new_string(luaL_checkstring(L, 1));
 
-    g_action_group_activate_action(G_ACTION_GROUP(application), "message", text);
+    g_action_group_activate_action(G_ACTION_GROUP(globalconf.application), "message", text);
     return 0;
 }
 

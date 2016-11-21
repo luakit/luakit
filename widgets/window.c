@@ -215,6 +215,8 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     d->win = GTK_WINDOW(w->widget);
     gtk_window_set_default_size(d->win, 800, 600);
     gtk_window_set_title(d->win, "luakit");
+    if (globalconf.application)
+        gtk_window_set_application(d->win, globalconf.application);
 
     GdkGeometry hints;
     hints.min_width = 1;

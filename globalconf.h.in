@@ -32,6 +32,7 @@
 #define LUAKIT_OBJECT_REGISTRY_KEY "luakit.object.registry"
 
 #include <glib.h>
+#include <gtk/gtk.h>
 #include <lua.h>
 #include "common/signal.h"
 
@@ -40,6 +41,9 @@ typedef struct {
     /** Main Lua VM state.
      * \see http://www.lua.org/manual/5.1/manual.html#lua_State */
     lua_State *L;
+
+    /** GTK application */
+    GtkApplication *application;
 
     /** User path $XDG_CONFIG_DIR/luakit/ (defaults to ~/.config/luakit/) where
      * configuration files should be stored.
