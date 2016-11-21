@@ -55,7 +55,7 @@ destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
 }
 
 static gint
-can_close_cb(GtkWidget* UNUSED(win), GdkEvent *event, widget_t *w)
+can_close_cb(GtkWidget* UNUSED(win), GdkEvent *UNUSED(event), widget_t *w)
 {
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
