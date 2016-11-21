@@ -175,7 +175,9 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 void
 msg_init(void)
 {
-    gchar *socket_path = g_build_filename(globalconf.cache_dir, "socket", NULL);
+    gchar *socket_name = g_strdup_printf("socket.%d", getpid());
+    gchar *socket_path = g_build_filename(globalconf.cache_dir, socket_name, NULL);
+    g_free(socket_name);
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
