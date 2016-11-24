@@ -7,6 +7,17 @@ webview = {}
 
 webview.enable_webgl = true
 
+local web_module = web_module("webview_webmodule")
+
+web_module:add_signal("form-active", function (_, page_id)
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == page_id then
+            w.view:emit_signal("form-active")
+        end
+    end
+end)
+webview.wm = web_module
+
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
     -- Set useragent
@@ -90,11 +101,6 @@ webview.init_funcs = {
 
     -- Clicking a form field automatically enters insert mode.
     form_insert_mode = function (view, w)
-        view:add_signal("button-press", function (v, mods, button, context)
-            if button == 1 and context.editable then
-                view:emit_signal("form-active")
-            end
-        end)
         -- Emit root-active event in button release to prevent "missing"
         -- buttons or links when the input bar hides.
         view:add_signal("button-release", function (v, mods, button, context)
