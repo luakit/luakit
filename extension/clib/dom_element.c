@@ -361,6 +361,13 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
     luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
     lua_rawset(L, -3);
 
+    if (WEBKIT_DOM_IS_MOUSE_EVENT(event)) {
+        lua_pushliteral(L, "button");
+        gushort button = webkit_dom_mouse_event_get_button(WEBKIT_DOM_MOUSE_EVENT(event));
+        lua_pushinteger(L, button);
+        lua_rawset(L, -3);
+    }
+
     luaH_object_push(L, func);
     luaH_dofunction(L, 1, 0);
 }
