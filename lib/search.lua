@@ -179,6 +179,13 @@ webview.init_funcs.search_callbacks = function (view, w)
         local s = w.search_state
         if s.marker then w:scroll(s.marker) end
     end)
+
+    -- Clear start search marker on button press/release
+    local clear_start_search_marker = function ()
+        (w.search_state or {}).marker = nil
+    end
+    view:add_signal("button-press", clear_start_search_marker)
+    view:add_signal("button-release", clear_start_search_marker)
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

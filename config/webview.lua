@@ -91,9 +91,6 @@ webview.init_funcs = {
     -- Clicking a form field automatically enters insert mode.
     form_insert_mode = function (view, w)
         view:add_signal("button-press", function (v, mods, button, context)
-            -- Clear start search marker
-            (w.search_state or {}).marker = nil
-
             if button == 1 and context.editable then
                 view:emit_signal("form-active")
             end
@@ -130,7 +127,6 @@ webview.init_funcs = {
     -- press hit the webview.
     button_bind_match = function (view, w)
         view:add_signal("button-release", function (v, mods, button, context)
-            (w.search_state or {}).marker = nil
             if w:hit(mods, button, { context = context }) then
                 return true
             end
