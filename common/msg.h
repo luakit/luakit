@@ -12,7 +12,6 @@
     X(lua_js_call) \
     X(lua_js_register) \
     X(lua_js_gc) \
-    X(web_extension_loaded) \
     X(eval_js) \
     X(log) \
     X(page_created) \
