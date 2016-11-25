@@ -8,7 +8,7 @@
     X(lua_require_module) \
     X(lua_msg) \
     X(scroll) \
-    X(web_lua_loaded) \
+    X(extension_init) \
     X(lua_js_call) \
     X(lua_js_register) \
     X(lua_js_gc) \

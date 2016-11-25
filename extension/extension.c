@@ -68,6 +68,9 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
 
     debug("luakit web process: PID %d", getpid());
     debug("luakit web process: ready for messages");
+
+    msg_header_t header = { .type = MSG_TYPE_extension_init, .length = 0 };
+    msg_send(extension.ipc, &header, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

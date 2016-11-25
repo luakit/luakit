@@ -1230,13 +1230,6 @@ webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc)
     if (!lua_isnil(L, -1))
         luaH_object_emit_signal(L, -1, "web-extension-loaded", 0, 0);
     lua_pop(L, 1);
-
-    /* Notify web extension that pending signals can be released */
-    msg_header_t header = {
-        .type = MSG_TYPE_web_lua_loaded,
-        .length = 0
-    };
-    msg_send(ipc, &header, NULL);
 }
 
 msg_endpoint_t *
