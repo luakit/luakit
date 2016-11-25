@@ -22,13 +22,16 @@ emit_page_created_signal(WebKitWebPage *web_page, lua_State *L)
 }
 
 static void
-page_created_cb(WebKitWebExtension *UNUSED(extension), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+page_created_cb(WebKitWebExtension *UNUSED(extension), WebKitWebPage *web_page, lua_State *L)
 {
     /* Since web modules are loaded after the first web page is created, signal
      * handlers bound to the page-created signal will not be called for the
      * first web page... unless we queue the signal and emit it later, when the
      * configuration file (and therefore all modules) has been loaded */
-    g_ptr_array_add(queued_emissions, web_page);
+    if (queued_emissions)
+        g_ptr_array_add(queued_emissions, web_page);
+    else
+        emit_page_created_signal(web_page, L);
 }
 
 static int
@@ -66,14 +69,15 @@ extension_class_setup(lua_State *L, WebKitWebExtension *extension)
     lua_setglobal(L, "extension");
     lua_getglobal(L, "extension");
     extension_ref = luaL_ref(L, LUA_REGISTRYINDEX);
-    g_signal_connect(extension, "page-created", G_CALLBACK(page_created_cb), NULL);
+    g_signal_connect(extension, "page-created", G_CALLBACK(page_created_cb), L);
 }
 
 void
 extension_class_emit_pending_signals(lua_State *L)
 {
     g_ptr_array_foreach(queued_emissions, (GFunc)emit_page_created_signal, L);
-    g_ptr_array_set_size(queued_emissions, 0);
+    g_ptr_array_free(queued_emissions, TRUE);
+    queued_emissions = NULL;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
