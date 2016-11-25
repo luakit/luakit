@@ -15,6 +15,8 @@
 #include "common/luajs.h"
 #include "common/luaserialize.h"
 
+static GPtrArray *queued_page_ipc;
+
 void
 msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_module_t *msg, guint length)
 {
@@ -38,8 +40,9 @@ msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint le
 }
 
 void
-msg_recv_web_lua_loaded(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
+msg_recv_extension_init(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
+    emit_pending_page_creation_ipc();
     extension_class_emit_pending_signals(extension.WL);
 }
 
@@ -105,12 +108,32 @@ msg_recv_crash(msg_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNU
 }
 
 static void
-web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+emit_page_created_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     guint64 page_id = webkit_web_page_get_id(web_page);
 
     msg_header_t header = { .type = MSG_TYPE_page_created, .length = sizeof(page_id) };
     msg_send(extension.ipc, &header, &page_id);
+}
+
+void
+emit_pending_page_creation_ipc(void)
+{
+    if (queued_page_ipc) {
+        g_ptr_array_foreach(queued_page_ipc, (GFunc)emit_page_created_ipc, NULL);
+        g_ptr_array_free(queued_page_ipc, TRUE);
+        queued_page_ipc = NULL;
+    }
+}
+
+static void
+web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    /* QUEUE until we've fully loaded web modules */
+    if (queued_page_ipc)
+        g_ptr_array_add(queued_page_ipc, web_page);
+    else
+        emit_page_created_ipc(web_page, NULL);
 }
 
 int
@@ -140,6 +163,7 @@ web_extension_connect(const gchar *socket_path)
     msg_endpoint_connect_to_socket(extension.ipc, sock);
 
     g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
+    queued_page_ipc = g_ptr_array_sized_new(1);
 
     return 0;
 fail_connect:
