@@ -96,6 +96,9 @@ require "userscripts"
 require "bookmarks"
 require "bookmarks_chrome"
 
+-- Add bookmarklets support
+require "bookmarklets"
+
 -- Add download support
 require "downloads"
 require "downloads_chrome"
