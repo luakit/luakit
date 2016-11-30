@@ -7,8 +7,11 @@ local ipairs = ipairs
 local lousy = require "lousy"
 local type = type
 local setmetatable = setmetatable
+local web_module = web_module
 
 module("error_page")
+
+local error_page_wm = web_module("error_page_webmodule")
 
 html_template = [==[
     <html>
@@ -106,6 +109,9 @@ local view_finished = setmetatable({}, { __mode = "k" })
 local function on_finish(v, status)
     if status ~= "finished" then return end
 
+    -- Start listening for button clicks
+    error_page_wm:emit_signal(v, "listen")
+
     -- Skip the appropriate number of signals
     assert(type(view_finished[v]) == "number")
     view_finished[v] = view_finished[v] - 1
@@ -117,17 +123,6 @@ local function on_finish(v, status)
     v:remove_signal("enable-scripts", true_cb)
     v:remove_signal("enable-userscripts", false_cb)
     v:remove_signal("load-status", on_finish)
-
-    -- Load the javascript for error page button callbacks
-    local bcb = [=[
-        var buttons = document.querySelectorAll("input[type=button]");
-        for (var i=0; i<buttons.length; i++) {
-            buttons[i].addEventListener("click", function () {
-                window.webkit.messageHandlers.error_page_button_cb.postMessage(i);
-            }, false);
-        }
-    ]=]
-    v:eval_js(bcb, {no_return = true})
 end
 
 local function make_button_html(v, buttons)
@@ -144,14 +139,14 @@ local function make_button_html(v, buttons)
     end
 
     -- Add signals for button messages
-    local function error_page_button_cb(v, _, i)
+    local function error_page_button_cb(_, i)
         buttons[i].callback(v)
     end
     local function error_page_button_cb_cleanup()
-        v:remove_script_signal("error_page_button_cb", error_page_button_cb)
+        error_page_wm:remove_signal("click", error_page_button_cb)
         v:remove_signal("navigation-request", error_page_button_cb_cleanup)
     end
-    v:add_script_signal("error_page_button_cb", error_page_button_cb)
+    error_page_wm:add_signal("click", error_page_button_cb)
     v:add_signal("navigation-request", error_page_button_cb_cleanup)
 
     return '<form name="bl">' .. html .. '</form>'

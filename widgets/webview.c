@@ -181,7 +181,6 @@ static void update_uri(widget_t *w, const gchar *uri);
 #include "widgets/webview/find_controller.c"
 #include "widgets/webview/stylesheets.c"
 #include "widgets/webview/auth.c"
-#include "widgets/webview/script_messages.c"
 
 static gint
 luaH_webview_load_string(lua_State *L)
@@ -753,10 +752,6 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       /* push inspector webview methods */
       PF_CASE(SHOW_INSPECTOR,       luaH_webview_show_inspector)
       PF_CASE(CLOSE_INSPECTOR,      luaH_webview_close_inspector)
-
-      /* push script message signalling methods */
-      PF_CASE(ADD_SCRIPT_SIGNAL,    luaH_webview_add_script_signal)
-      PF_CASE(REMOVE_SCRIPT_SIGNAL, luaH_webview_remove_script_signal)
 
       PF_CASE(ALLOW_CERTIFICATE,    luaH_webview_allow_certificate)
 
