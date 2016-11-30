@@ -292,8 +292,6 @@ spinner
 element_from_point
 owner_document
 add_event_listener
-add_script_signal
-remove_script_signal
 certificate
 allow_certificate
 options
