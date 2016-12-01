@@ -156,6 +156,38 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
         return argv + 1;
 }
 
+static GLogWriterOutput
+glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n_fields, gpointer UNUSED(user_data))
+{
+    const gchar *log_domain = "(unknown)",
+                *message = "(empty)",
+                *code_file = "(unknown)",
+                *code_line = "(unknown)";
+
+    for (gsize i = 0; i < n_fields; ++i) {
+        if (!strcmp(fields[i].key, "GLIB_DOMAIN")) log_domain = fields[i].value;
+        if (!strcmp(fields[i].key, "MESSAGE")) message = fields[i].value;
+        if (!strcmp(fields[i].key, "CODE_FILE")) code_file = fields[i].value;
+        if (!strcmp(fields[i].key, "CODE_LINE")) code_line = fields[i].value;
+    }
+
+    /* Probably not necessary, but just in case... */
+    if (!(G_LOG_LEVEL_MASK & log_level_flags))
+        return G_LOG_WRITER_UNHANDLED;
+
+    log_level_t log_level = ((log_level_t[]){
+        [G_LOG_LEVEL_ERROR]    = LOG_LEVEL_fatal,
+        [G_LOG_LEVEL_CRITICAL] = LOG_LEVEL_warn,
+        [G_LOG_LEVEL_WARNING]  = LOG_LEVEL_warn,
+        [G_LOG_LEVEL_MESSAGE]  = LOG_LEVEL_info,
+        [G_LOG_LEVEL_INFO]     = LOG_LEVEL_verbose,
+        [G_LOG_LEVEL_DEBUG]    = LOG_LEVEL_debug,
+    })[log_level_flags];
+
+    _log(log_level, code_line, code_file, "%s: %s", log_domain, message);
+    return G_LOG_WRITER_HANDLED;
+}
+
 gint
 main(gint argc, gchar *argv[])
 {
@@ -190,6 +222,7 @@ main(gint argc, gchar *argv[])
 
     gtk_init(&argc, &argv);
 
+    g_log_set_writer_func(glib_log_writer, NULL, NULL);
     init_directories();
     web_context_init();
     ipc_init();
