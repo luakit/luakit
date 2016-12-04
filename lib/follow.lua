@@ -66,15 +66,22 @@ follow_js = [=[
     function eval_selector_make_hints(selector) {
         var elems = document.querySelectorAll(selector), len = elems.length,
             win_h = window.innerHeight, win_w = window.innerWidth,
+            body_r = document.body.getClientRects()[0],
             hints = [], i = 0, j = 0, e, r, top, bottom, left, right;
 
         for (; i < len;) {
             e = elems[i++];
             r = e.getClientRects()[0];
 
+            if (!r) continue;
+
+            top = r.top - body_r.top;
+            left = r.left - body_r.left;
+            bottom = r.bottom + body_r.bottom;
+            right = r.right + body_r.right;
+
             // Check if element outside viewport
-            if (!r || (top  = r.top)  > win_h || (bottom = r.bottom) < 0
-                   || (left = r.left) > win_w || (right  = r.right)  < 0)
+            if (top > win_h || bottom < 0 || left > win_w || right < 0)
                continue;
 
             var style = window.getComputedStyle(e);
@@ -83,7 +90,7 @@ follow_js = [=[
 
             hints[j++] = { element: e, tag: e.tagName,
                 left: left, top: top,
-                width: right - left, height: bottom - top,
+                width: r.right - r.left, height: r.bottom - r.top,
                 text: e.value || e.textContent };
         }
 
@@ -251,9 +258,18 @@ follow_js = [=[
         if (!hints)
             hints = state.hints;
 
-        var hint_re = hpat && new RegExp(hpat),
-            text_re = tpat && new RegExp(tpat),
-            matches = [], len = hints.length, j = 0, h;
+        // Just fail silently if the regex doesn't compile.
+        // Delete the state so that it will search again next time.
+        try {
+            var hint_re = hpat && new RegExp(hpat);
+            state.last_hpat = hpat;
+        } catch (e) { delete state.last_hpat; }
+        try {
+            var text_re = tpat && new RegExp(tpat);
+            state.last_tpat = tpat;
+        } catch (e) { delete state.last_tpat; }
+
+        var matches = [], len = hints.length, j = 0, h;
 
         // Filter hints
         for (; i < len;) {
@@ -266,8 +282,6 @@ follow_js = [=[
         }
 
         // Save info for next call
-        state.last_hpat = hpat;
-        state.last_tpat = tpat;
         state.filtered = matches;
 
         show_hints(html);
