@@ -18,6 +18,72 @@ local function label()    return widget{type="label"}    end
 local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
 
+-- Prepares a GUI sub-layout.
+local function in_layout(sub_gui_elem, layout)
+   local sge = sub_gui_elem
+   sge.layout = layout
+   sge.ebox = eventbox()
+   
+   sge.ebox.child = sge.layout
+--   sge.pack = function(...) sge.layout:pack(...) end -- maybe?
+   return sge
+end
+
+local function in_hbox(sge) return in_layout(sge, hbox()) end
+local function in_vbox(sge) return in_layout(sge, vbox()) end
+
+function window.build_view()
+   local v =in_vbox({
+        tabs   = notebook(),
+        
+        -- Status bar widgets
+        sbar = in_hbox({
+           -- Left aligned widgets
+           l = in_hbox({
+              uri    = label(),
+              hist   = label(),
+              loaded = label(),
+           }),
+           -- Fills space between the left and right aligned widgets
+           sep = eventbox(),
+           -- Right aligned widgets
+           r = in_hbox({
+              buf    = label(),
+              ssl    = label(),
+              tabi   = label(),
+              scroll = label(),
+           }),
+       }),
+   })
+   -- Pack left-aligned statusbar elements
+   local l = v.sbar.l
+   l.layout:pack(l.uri)
+   l.layout:pack(l.hist)
+   l.layout:pack(l.loaded)
+   
+   -- Pack right-aligned statusbar elements
+   local r = v.sbar.r
+   r.layout:pack(r.buf)
+   r.layout:pack(r.ssl)
+   r.layout:pack(r.tabi)
+   r.layout:pack(r.scroll)
+   
+   -- Pack status bar elements
+   local s = v.sbar
+   s.layout:pack(l.ebox)
+   s.layout:pack(s.sep, { expand = true, fill = true })
+   s.layout:pack(r.ebox)
+   v.layout:pack(s.ebox)
+
+   -- Settings
+   l.loaded:hide()
+   l.hist:hide()
+   l.uri.selectable = true
+   r.ssl:hide()
+    
+   return v
+end
+
 -- Build and pack window widgets
 function window.build()
     -- Create a table for widgets and state variables for a window
@@ -25,48 +91,27 @@ function window.build()
         win    = widget{type="window"},
         ebox   = eventbox(),
         layout = vbox(),
+      
         paned  = widget{type="vpaned"},
-        tabs   = notebook(),
         -- Tablist widget
         tablist = lousy.widget.tablist(),
-        -- Status bar widgets
-        sbar = {
-            layout = hbox(),
-            ebox   = eventbox(),
-            -- Left aligned widgets
-            l = {
-                layout = hbox(),
-                ebox   = eventbox(),
-                uri    = label(),
-                hist   = label(),
-                loaded = label(),
-            },
-            -- Fills space between the left and right aligned widgets
-            sep = eventbox(),
-            -- Right aligned widgets
-            r = {
-                layout = hbox(),
-                ebox   = eventbox(),
-                buf    = label(),
-                ssl    = label(),
-                tabi   = label(),
-                scroll = label(),
-            },
-        },
+
+        view = window.build_view(),
 
         -- Vertical menu window widget (completion results, bookmarks, qmarks, ..)
         menu = lousy.widget.menu(),
 
         -- Input bar widgets
-        ibar = {
-            layout  = hbox(),
-            ebox    = eventbox(),
+        ibar = in_hbox({
             prompt  = label(),
             input   = entry(),
-        },
+        }),
         closed_tabs = {}
     }
 
+    w.tabs = w.view.tabs -- TODO workarounds
+    w.sbar = w.view.sbar
+    
     -- Assemble window
     w.ebox.child = w.paned
     w.paned:pack1(w.layout)
@@ -75,31 +120,8 @@ function window.build()
     -- Pack tablist
     w.layout:pack(w.tablist.widget)
 
-    -- Pack notebook
+    -- Pack view
     w.layout:pack(w.tabs, { expand = true, fill = true })
-
-    -- Pack left-aligned statusbar elements
-    local l = w.sbar.l
-    l.layout:pack(l.uri)
-    l.layout:pack(l.hist)
-    l.layout:pack(l.loaded)
-    l.ebox.child = l.layout
-
-    -- Pack right-aligned statusbar elements
-    local r = w.sbar.r
-    r.layout:pack(r.buf)
-    r.layout:pack(r.ssl)
-    r.layout:pack(r.tabi)
-    r.layout:pack(r.scroll)
-    r.ebox.child = r.layout
-
-    -- Pack status bar elements
-    local s = w.sbar
-    s.layout:pack(l.ebox)
-    s.layout:pack(s.sep, { expand = true, fill = true })
-    s.layout:pack(r.ebox)
-    s.ebox.child = s.layout
-    w.layout:pack(s.ebox)
 
     -- Pack menu widget
     w.layout:pack(w.menu.widget)
@@ -109,16 +131,11 @@ function window.build()
     local i = w.ibar
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
-    i.ebox.child = i.layout
     w.layout:pack(i.ebox)
 
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.loaded:hide()
-    l.hist:hide()
-    l.uri.selectable = true
-    r.ssl:hide()
 
     -- Allows indexing of window struct by window widget
     window.bywidget[w.win] = w
@@ -560,7 +577,7 @@ window.methods = {
                 end
             end
             local title = view.title or view.uri or "(Untitled)"
-            tabs[i] = {
+            tabs[i] = { -- Highlights the current tab.
                 title = string.format(tfmt, ntheme or fg, i, escape(title)),
                 fg = (current == i and theme.tab_selected_fg) or fg,
                 bg = (current == i and theme.tab_selected_bg) or bg,
