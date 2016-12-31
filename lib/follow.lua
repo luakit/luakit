@@ -211,9 +211,13 @@ follow_js = [=[
         show_hints(html);
     }
 
-    function filter(hint_pat, text_pat) {
+    function filter(hint_pat, text_pat, ignore_case) {
         var hpat = hint_pat !== "" && hint_pat,
-            tpat = text_pat !== "" && text_pat, i = 0, html = "";
+            tpat = text_pat !== "" && text_pat, i = 0, html = "",
+            regex_params = "";
+
+        if(ignore_case)
+            regex_params = "i";
 
         // No filter patterns given, render all hints
         if (!hpat && !tpat) {
@@ -251,8 +255,8 @@ follow_js = [=[
         if (!hints)
             hints = state.hints;
 
-        var hint_re = hpat && new RegExp(hpat),
-            text_re = tpat && new RegExp(tpat),
+        var hint_re = hpat && new RegExp(hpat, regex_params),
+            text_re = tpat && new RegExp(tpat, regex_params),
             matches = [], len = hints.length, j = 0, h;
 
         // Filter hints
@@ -446,6 +450,9 @@ pattern_styles = {
 
 -- Default pattern style
 pattern_maker = pattern_styles.match_label_re_text
+
+-- Ignore case in follow mode by default
+ignore_case = false
 
 local function focus(w, step)
     local state = w.follow_state
@@ -669,8 +676,8 @@ new_mode("follow", {
         local pattern_maker = mode.pattern_maker or _M.pattern_maker
         local hint_pat, text_pat = pattern_maker(text)
 
-        local filter = string.format("luakit_follow.filter(%q, %q)",
-            hint_pat or "", text_pat or "")
+        local filter = string.format("luakit_follow.filter(%q, %q, %s)",
+            hint_pat or "", text_pat or "", ignore_case and "true" or "false")
 
         for _, d in ipairs(frames) do
             local count, err = assert(state.view:eval_js(filter, d))
