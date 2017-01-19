@@ -16,7 +16,7 @@ function mousedown_cb (event, page_id)
     local elem = event.target
     local tag = elem.tag_name
     if tag ~= "INPUT" and tag ~= "TEXTAREA" then return end
-    if tag == "INPUT" and elem.attr.type:lower() == "button" then return end
+    if tag == "INPUT" and (elem.attr.type or ""):lower() == "button" then return end
     if elem.attr.disabled or elem.attr.readonly then return end
 
     ui:emit_signal("form-active", page_id)
