@@ -96,7 +96,7 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
         case LUA_TSTRING: {
             size_t len;
             TAKE(len, sizeof(len));
-            lua_pushstring(L, (char*)*bytes);
+            lua_pushlstring(L, (char*)*bytes, len);
             *bytes += len+1;
             break;
         }
