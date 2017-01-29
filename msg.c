@@ -76,8 +76,9 @@ msg_recv_lua_js_call(msg_endpoint_t *from, const guint8 *msg, guint length)
     lua_remove(L, top+1);
 
     /* get webview and push into position */
+    /* Page may already have been closed */
     widget_t *w = webview_get_by_id(view_id);
-    g_assert(w);
+    if (!w) return;
     luaH_object_push(L, w->ref);
     lua_insert(L, top+1);
 
