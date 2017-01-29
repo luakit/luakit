@@ -44,6 +44,8 @@
 # define UNUSED(x) x
 #endif
 
+#define WARN_UNUSED __attribute__ ((warn_unused_result))
+
 /* stack pushing macros */
 #define PB_CASE(t, b) case L_TK_##t: lua_pushboolean   (L, b); return 1;
 #define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction (L, f); return 1;

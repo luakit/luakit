@@ -109,7 +109,7 @@ void msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock);
 msg_endpoint_t * msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new);
 void msg_endpoint_disconnect(msg_endpoint_t *ipc);
 
-void msg_endpoint_incref(msg_endpoint_t *ipc);
+WARN_UNUSED gboolean msg_endpoint_incref(msg_endpoint_t *ipc);
 void msg_endpoint_decref(msg_endpoint_t *ipc);
 
 const GPtrArray *msg_endpoints_get(void);

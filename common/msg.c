@@ -97,13 +97,14 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
         send_thread = g_thread_new("send_thread", msg_send_thread, NULL);
     }
 
+    /* Keep the endpoint alive while the message is being sent */
+    if (!msg_endpoint_incref(ipc))
+        return;
+
     if (header->type != MSG_TYPE_log)
         debug("Process '%s': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
                 ipc->name, msg_type_name(header->type));
 
-    g_assert(ipc);
-    /* Keep the endpoint alive while the message is being sent */
-    msg_endpoint_incref(ipc);
     g_assert((header->length == 0) == (data == NULL));
 
     /* Alloc and push a queued message; the send thread frees it */
@@ -117,12 +118,14 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 
 /* Callback function for channel watch */
 static gboolean
-msg_recv(GIOChannel *UNUSED(channel), GIOCondition cond, msg_endpoint_t *ipc)
+msg_recv(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *ipc)
 {
-    g_assert(cond & G_IO_IN);
+    if (!msg_endpoint_incref(ipc))
+        return TRUE;
 
     (void) (msg_dispatch_enqueued(ipc) || msg_recv_and_dispatch_or_enqueue(ipc, MSG_TYPE_ANY));
 
+    msg_endpoint_decref(ipc);
     return TRUE;
 }
 
@@ -230,8 +233,21 @@ msg_endpoint_new(const gchar *name)
     return ipc;
 }
 
-void
+WARN_UNUSED gboolean
 msg_endpoint_incref(msg_endpoint_t *ipc)
+{
+    /* Prevents incref/decref race */
+    int old;
+    do {
+        old = g_atomic_int_get(&ipc->refcount);
+        if (old < 1)
+            return FALSE;
+    } while (!g_atomic_int_compare_and_exchange(&ipc->refcount, old, old+1));
+    return TRUE;
+}
+
+static void
+msg_endpoint_incref_no_check(msg_endpoint_t *ipc)
 {
     g_atomic_int_inc(&ipc->refcount);
 }
@@ -286,7 +302,9 @@ msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
     g_assert(orig->status == MSG_ENDPOINT_DISCONNECTED);
     g_assert(new->status == MSG_ENDPOINT_CONNECTED);
 
-    msg_endpoint_incref(new);
+    /* Incref always succeeds because this is called from a message
+     * handler, which holds a temporary ref to the ipc channel  */
+    msg_endpoint_incref_no_check(new);
 
     /* Send all queued messages */
     if (orig->queue) {
