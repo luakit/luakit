@@ -329,8 +329,7 @@ luaH_loadrc(const gchar *confpath, gboolean run)
     lua_State *L = globalconf.L;
     if(!luaL_loadfile(L, confpath)) {
         if(run) {
-            if(lua_pcall(L, 0, LUA_MULTRET, 0)) {
-                warn("Error loading rc file: %s", lua_tostring(L, -1));
+            if (!luaH_dofunction(L, 0, LUA_MULTRET)) {
                 lua_settop(L, 0);
             } else
                 return TRUE;
