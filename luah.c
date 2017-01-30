@@ -376,6 +376,8 @@ luaH_parserc(const gchar *confpath, gboolean run)
     for (guint i = 0; i < paths->len; i++) {
         path = paths->pdata[i];
         if (file_exists(path)) {
+            if (i > 0)
+                warn("Falling back to rc file: %s", path);
             if(luaH_loadrc(path, run)) {
                 globalconf.confpath = g_strdup(path);
                 ret = TRUE;
