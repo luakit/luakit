@@ -14,6 +14,7 @@ local ipairs = ipairs
 local table = table
 local window = window
 local webview = webview
+local pcall = pcall
 
 module("session")
 
@@ -60,7 +61,7 @@ end
 -- Load window and tab state from file
 load = function (delete, file)
     if not file then file = session_file end
-    if not os.exists(file) then return end
+    if not os.exists(file) then return {} end
 
     -- Read file
     local fh = io.open(file, "rb")
@@ -69,13 +70,13 @@ load = function (delete, file)
     -- Delete file
     if delete ~= false then rm(file) end
 
-    return (#state > 0 and state) or nil
+    return state
 end
 
 -- Spawn windows from saved session and return the last window
 local restore_file = function (file, delete)
-    wins = load(delete, file)
-    if not wins or #wins == 0 then return end
+    local ok, wins = pcall(load, delete, file)
+    if not ok or #wins == 0 then return end
 
     -- Spawn windows
     local w
