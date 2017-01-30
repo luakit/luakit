@@ -44,7 +44,7 @@ save = function (wins, file)
             })
         end
         for i, tab in ipairs(w.closed_tabs) do
-            state[wi].closed[i] = { session_state = tab.session_state }
+            state[wi].closed[i] = { session_state = tab.session_state, hist = tab.hist }
         end
     end
 
