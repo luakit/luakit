@@ -3,7 +3,7 @@
 --------------------------
 
 -- Webview class table
-webview = {}
+local webview = {}
 
 webview.enable_webgl = true
 
@@ -376,5 +376,7 @@ table.insert(window.indexes, 1, function (w, k)
         return function (_, ...) return func(view, w, ...) end
     end
 end)
+
+return webview
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

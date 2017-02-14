@@ -4,7 +4,7 @@
 -----------------------------------------------------------
 
 local os = require "os"
-local webview = webview
+local webview = require("webview")
 local table = table
 local string = string
 local lousy = require "lousy"

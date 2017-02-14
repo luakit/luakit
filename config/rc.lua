@@ -38,7 +38,7 @@ require "window"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
-require "webview"
+local webview = require "webview"
 
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")

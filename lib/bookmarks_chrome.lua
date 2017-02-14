@@ -22,7 +22,7 @@ local markdown = require("markdown")
 local sql_escape = lousy.util.sql_escape
 local add_binds = add_binds
 local add_cmds = add_cmds
-local webview = webview
+local webview = require("webview")
 local capi = {
     luakit = luakit
 }

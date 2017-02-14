@@ -13,7 +13,7 @@ local pairs = pairs
 local ipairs = ipairs
 local table = table
 local window = window
-local webview = webview
+local webview = require("webview")
 local pcall = pcall
 
 module("session")

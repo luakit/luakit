@@ -11,7 +11,7 @@ local ipairs    = ipairs
 local string    = string
 local table     = table
 local window    = window
-local webview   = webview
+local webview   = require("webview")
 local error_page = require "error_page"
 
 module("adblock_chrome")

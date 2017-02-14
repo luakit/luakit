@@ -26,7 +26,7 @@ local string    = string
 local table     = table
 local tostring  = tostring
 local tonumber  = tonumber
-local webview   = webview
+local webview   = require("webview")
 local lousy     = require("lousy")
 local util      = lousy.util
 local capi      = { luakit = luakit }

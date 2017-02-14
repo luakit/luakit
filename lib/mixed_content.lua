@@ -1,7 +1,7 @@
 local msg       = msg
 local assert    = assert
 local string    = string
-local webview   = webview
+local webview   = require("webview")
 local setmetatable = setmetatable
 
 module("mixed_content")

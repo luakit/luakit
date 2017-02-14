@@ -1,6 +1,6 @@
 local assert        = assert
 local string        = string
-local webview       = webview
+local webview       = require("webview")
 local lousy         = require "lousy"
 local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
 local add_binds, add_cmds = add_binds, add_cmds

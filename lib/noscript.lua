@@ -12,7 +12,7 @@ local string = string
 
 -- Get luakit environment
 local window = window
-local webview = webview
+local webview = require("webview")
 local add_binds = add_binds
 local lousy = require "lousy"
 local widget = widget

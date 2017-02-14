@@ -1,5 +1,5 @@
 local assert = assert
-local webview = webview
+local webview = require("webview")
 local string = string
 local styles = styles
 local pairs = pairs

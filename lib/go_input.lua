@@ -4,6 +4,8 @@
 -- © 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
 -----------------------------------------------------------
 
+local webview = require("webview")
+
 local go_input = [=[
 (function (count) {
     var elements = document.querySelectorAll("textarea, input" + [

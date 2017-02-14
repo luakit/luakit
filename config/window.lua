@@ -618,6 +618,9 @@ window.methods = {
         if w.has_blank then w.has_blank:destroy() end
         w.has_blank = nil
 
+        -- Bit of a hack
+        local webview = require("webview")
+
         local view
         if type(arg) == "widget" and arg.type == "webview" then
             view = arg

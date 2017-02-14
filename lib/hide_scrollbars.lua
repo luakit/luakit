@@ -1,4 +1,4 @@
-local webview = webview
+local webview = require("webview")
 local stylesheet = stylesheet
 
 module("hide_scrollbars")
