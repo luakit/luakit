@@ -4,7 +4,7 @@ local assert = assert
 local setmetatable = setmetatable
 local capi = { widget = widget }
 local get_theme = require("lousy.theme").get
-local escape = lousy.util.escape
+local escape = require("lousy.util").escape
 local msg = msg
 
 module "lousy.widget.tab"

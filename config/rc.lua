@@ -21,7 +21,7 @@ if unique then
 end
 
 -- Load library of useful functions for luakit
-require "lousy"
+local lousy = require "lousy"
 
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
