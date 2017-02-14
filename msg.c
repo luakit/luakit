@@ -8,6 +8,7 @@
 #include <sys/un.h>
 #include <glib.h>
 #include <glib/gstdio.h>
+#include <errno.h>
 
 #include "clib/web_module.h"
 #include "clib/luakit.h"
@@ -168,6 +169,10 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 #else
     const gchar *extension_dir = LUAKIT_INSTALL_PATH;
 #endif
+
+    char *extension_file = g_build_filename(extension_dir,  "luakit.so", NULL);
+    if (access(extension_file, R_OK | X_OK))
+        fatal("Cannot access luakit extension '%s': %s", extension_file, strerror(errno));
 
     /* There's a potential race condition here; the accept thread might not run
      * until after the web extension process has already started (and failed to
