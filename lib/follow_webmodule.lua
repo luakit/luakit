@@ -1,13 +1,4 @@
-local pairs, ipairs = pairs, ipairs
-local table, string = table, string
-local assert, type = assert, type
 local floor, max = math.floor, math.max
-local rawset, rawget = rawset, rawget
-local ui_process = ui_process
-local dom_document = dom_document
-
-module("follow_webmodule")
-
 local ui = ui_process()
 
 -- Label making
@@ -45,7 +36,7 @@ local function charset(seq, size)
 end
 
 -- Different hint label styles
-label_styles = {
+local label_styles = {
     charset = function (seq)
         assert(type(seq) == "string" and #seq > 0, "invalid sequence")
         return function (size) return charset(seq, size) end
@@ -81,7 +72,7 @@ label_styles = {
 local s = label_styles
 local label_maker = s.sort(s.reverse(s.numbers()))
 
-evaluators = {
+local evaluators = {
     click = function(element)
         local tag = element.tag_name
         if tag == "INPUT" or tag == "TEXTAREA" then
