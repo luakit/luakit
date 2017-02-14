@@ -4,6 +4,7 @@ local type = type
 local ui_process = ui_process
 local dom_document = dom_document
 local page = page
+local msg = msg
 
 module("formfiller_webmodule")
 
@@ -200,16 +201,24 @@ local function add(page_id)
     end
 
     local forms = dom_document(page_id).body:query("form")
+    msg.info("Found forms: %d", #forms)
+
+    -- Filter forms to those with valid inputs
+    local form_inputs = {}
+    forms = filter_list(forms, function(form)
+        local inputs = form:query("input")
+        form_inputs[form] = filter_list(inputs, function(input)
+            return not contains({"button", "submit", "hidden"}, input.type)
+        end)
+        return #form_inputs[form] > 0
+    end)
+    msg.info("Found forms with inputs: %d", #forms)
+
+    -- Build formfiller config for each form with inputs
     local uri = page(page_id).uri
     local str = { "on " .. to_lua_str(uri) .. " {\n"}
     for _, form in ipairs(forms) do
-        local inputs = form:query("input")
-        inputs = filter_list(inputs, function(input)
-            return not contains({"button", "submit", "hidden"}, input.type)
-        end)
-        if #inputs == 0 then
-            return
-        end
+        local inputs = form_inputs[form]
         table.insert(str, "  form {\n")
         for _, attr in ipairs({"method", "action", "id", "className", "name"}) do
             table.insert(str, add_attr(form, attr, "    ", ",\n"))
@@ -229,6 +238,7 @@ local function add(page_id)
         table.insert(str, "    submit = true,\n")
         table.insert(str, "  },\n")
     end
+
     table.insert(str, "}\n\n")
     ui:emit_signal("add", #str > 2 and table.concat(str) or false)
 end
