@@ -1,17 +1,6 @@
--- Get lua environment
-local io = require "io"
-local assert = assert
-local string = string
-local print = print
-local setmetatable = setmetatable
-local type = type
-
--- Get luakit environment
 local capi = {
     luakit = luakit
 }
-
-module("lousy.load")
 
 -- Keep loaded resources in memory
 local data = {}
@@ -51,4 +40,4 @@ local function search_load(path, memorize)
         "unable to load resource: " .. path)
 end
 
-setmetatable(_M, { __call = function (_, ...) return search_load(...) end })
+return setmetatable({}, { __call = function (_, ...) return search_load(...) end })
