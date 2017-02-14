@@ -6,15 +6,9 @@
 -- © 2009 israellevin                                                       --
 ------------------------------------------------------------------------------
 
-local web_module = web_module
 local window = require("window")
-local assert = assert
-local pairs = pairs
 local lousy = require("lousy")
 local key = lousy.bind.key
-local add_binds = add_binds
-
-module("follow_selected")
 
 local wm = web_module("follow_selected_webmodule")
 

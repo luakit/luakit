@@ -1,10 +1,3 @@
-local ui_process = ui_process
-local page = page
-local type = type
-local assert = assert
-
-module("follow_selected_webmodule")
-
 local ui = ui_process()
 
 -- Return selected uri or first uri in selection
