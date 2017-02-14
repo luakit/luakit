@@ -77,7 +77,7 @@ require "proxy"
 require "quickmarks"
 
 -- Add session saving/loading support
-require "session"
+local session = require "session"
 
 -- Add command to list closed tabs & bind to open closed tabs
 require "undoclose"
