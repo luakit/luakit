@@ -1,21 +1,15 @@
-local assert = assert
-local setmetatable = setmetatable
-local table = table
-local type = type
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 local capi = { widget = widget, luakit = luakit, }
 local tab = require "lousy.widget.tab"
-local pairs = pairs
-local math = math
 
-module "lousy.widget.tablist"
+local tablist = {}
 
-min_width = 100
+tablist.min_width = 100
 
 local data = setmetatable({}, { __mode = "k" })
 
-function destroy(tlist)
+local function destroy(tlist)
     -- Destroy tablist container widget
     tlist.widget:destroy()
     -- Destroy private widget data
@@ -71,7 +65,7 @@ local function regenerate_tab_indices(tlist, a, b)
     end
 end
 
-function new(notebook, orientation)
+function tablist.new(notebook, orientation)
     assert(type(notebook) == "widget" and notebook.type == "notebook")
     assert(orientation == "horizontal" or orientation == "vertical")
 
@@ -108,8 +102,8 @@ function new(notebook, orientation)
         local tl = tab(view, idx)
         data[tlist].tabs[view] = tl
 
-        if min_width and min_width > 0 and orientation == "horizontal" then
-            tl.widget.min_size = { w = min_width }
+        if tablist.min_width and tablist.min_width > 0 and orientation == "horizontal" then
+            tl.widget.min_size = { w = tablist.min_width }
         end
         box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
         box:reorder(tl.widget, idx-1)
@@ -179,4 +173,4 @@ function new(notebook, orientation)
     return tlist
 end
 
-setmetatable(_M, { __call = function(_, ...) return new(...) end })
+return setmetatable(tablist, { __call = function(_, ...) return tablist.new(...) end })
