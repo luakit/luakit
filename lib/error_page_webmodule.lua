@@ -1,9 +1,3 @@
-local ui_process = ui_process
-local dom_document = dom_document
-local ipairs = ipairs
-
-module("error_page_webmodule")
-
 local ui = ui_process()
 
 ui:add_signal("listen", function(_, page)
