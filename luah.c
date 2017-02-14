@@ -37,6 +37,7 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <libgen.h>
 
 void
 luaH_modifier_table_push(lua_State *L, guint state) {
@@ -360,8 +361,10 @@ luaH_parserc(const gchar *confpath, gboolean run)
     paths = g_ptr_array_new_with_free_func(g_free);
 
 #if DEVELOPMENT_PATHS
+    char *execdir = dirname(g_strdup(globalconf.execpath));
     /* allows for testing luakit in the project directory */
-    g_ptr_array_add(paths, g_strdup("./config/rc.lua"));
+    g_ptr_array_add(paths, g_build_filename(execdir, "config", "rc.lua", NULL));
+    g_free(execdir);
 #endif
 
     /* search users config dir (see: XDG_CONFIG_HOME) */

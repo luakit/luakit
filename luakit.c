@@ -80,7 +80,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     gchar *log_lvl = NULL;
 
     /* save luakit exec path */
-    globalconf.execpath = g_strdup(argv[0]);
+    globalconf.execpath = realpath(argv[0], NULL);
     globalconf.nounique = FALSE;
 
     /* define command line options */
