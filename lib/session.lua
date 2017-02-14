@@ -14,6 +14,7 @@ local ipairs = ipairs
 local table = table
 local window = require("window")
 local webview = require("webview")
+local lousy = require("lousy")
 local pcall = pcall
 
 module("session")

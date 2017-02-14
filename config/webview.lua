@@ -3,6 +3,7 @@
 --------------------------
 
 local window = require("window")
+local lousy = require("lousy")
 
 -- Webview class table
 local webview = {}

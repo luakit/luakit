@@ -3,6 +3,8 @@
 -- © 2010 Henrik Hallberg <henrik@k2h.se> --
 --------------------------------------------
 
+local lousy = require("lousy")
+
 -- When a new tab is opened in a window, a tab order function is called to
 -- determine where in the tab list it should be placed. window.new_tab()
 -- accepts a tab order function as parameter. If this is not sent,
