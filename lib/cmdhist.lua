@@ -3,6 +3,8 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local window = require("window")
+
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when
 -- a mode contains a `history` table item (with history settings therein).

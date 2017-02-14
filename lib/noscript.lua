@@ -11,7 +11,7 @@ local table = table
 local string = string
 
 -- Get luakit environment
-local window = window
+local window = require("window")
 local webview = require("webview")
 local add_binds = add_binds
 local lousy = require "lousy"

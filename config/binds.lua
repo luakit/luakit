@@ -2,6 +2,8 @@
 -- Keybindings --
 -----------------
 
+local window = require("window")
+
 -- Binding aliases
 local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
 local cmd, any = lousy.bind.cmd, lousy.bind.any

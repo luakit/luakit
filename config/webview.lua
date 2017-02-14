@@ -2,6 +2,8 @@
 -- WebKit WebView class --
 --------------------------
 
+local window = require("window")
+
 -- Webview class table
 local webview = {}
 

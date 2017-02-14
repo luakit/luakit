@@ -15,7 +15,7 @@ local rawset, rawget = rawset, rawget
 -- Get luakit environ
 local lousy = require "lousy"
 local new_mode, add_binds = new_mode, add_binds
-local window = window
+local window = require("window")
 local web_module = web_module
 local capi = {
     luakit = luakit,

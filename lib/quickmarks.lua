@@ -17,7 +17,7 @@ local table = table
 
 -- Get luakit environment
 local lousy = require "lousy"
-local window = window
+local window = require("window")
 local add_binds, add_cmds = add_binds, add_cmds
 local new_mode, menu_binds = new_mode, menu_binds
 local capi = { luakit = luakit }

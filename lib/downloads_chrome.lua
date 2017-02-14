@@ -20,7 +20,7 @@ local chrome = require("chrome")
 local add_binds = add_binds
 local add_cmds = add_cmds
 local webview = require("webview")
-local window = window
+local window = require("window")
 local capi = {
     luakit = luakit
 }

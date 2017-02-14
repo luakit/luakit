@@ -6,7 +6,7 @@ local pairs     = pairs
 local ipairs    = ipairs
 local string    = string
 local table     = table
-local window    = window
+local window    = require("window")
 
 module("cookie_filter_chrome")
 

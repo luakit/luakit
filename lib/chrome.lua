@@ -16,7 +16,7 @@ local error_page = require "error_page"
 
 -- Get luakit environment
 local webview = require("webview")
-local window = window
+local window = require("window")
 
 module("chrome")
 

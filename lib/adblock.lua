@@ -32,7 +32,7 @@ local util      = lousy.util
 local capi      = { luakit = luakit }
 local add_binds, add_cmds = add_binds, add_cmds
 local lfs       = require("lfs")
-local window    = window
+local window    = require("window")
 local web_module = web_module
 
 

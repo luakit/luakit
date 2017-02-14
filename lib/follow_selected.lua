@@ -7,7 +7,7 @@
 ------------------------------------------------------------------------------
 
 local web_module = web_module
-local window = window
+local window = require("window")
 local assert = assert
 local pairs = pairs
 local key = lousy.bind.key

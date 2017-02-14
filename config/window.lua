@@ -5,7 +5,7 @@
 require "lfs"
 
 -- Window class table
-window = {}
+local window = {}
 
 -- List of active windows by window widget
 window.bywidget = setmetatable({}, { __mode = "k" })
@@ -927,5 +927,7 @@ function window.new(args)
 
     return w
 end
+
+return window
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -17,7 +17,7 @@ local table = table
 local capi = { luakit = luakit, soup = soup }
 local webview = require("webview")
 local widget = widget
-local window = window
+local window = require("window")
 -- Check for mode/bind functions
 local add_binds, add_cmds = add_binds, add_cmds
 local new_mode, menu_binds = new_mode, menu_binds

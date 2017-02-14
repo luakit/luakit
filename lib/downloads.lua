@@ -18,7 +18,7 @@ local tostring = tostring
 -- Grab environment from luakit libs
 local lousy = require("lousy")
 local webview = require("webview")
-local window = window
+local window = require("window")
 local add_cmds = add_cmds
 local add_binds = add_binds
 

@@ -34,7 +34,7 @@ theme = assert(lousy.theme.get(), "failed to load theme")
 
 -- Load users window class
 -- ("$XDG_CONFIG_HOME/luakit/window.lua" or "/etc/xdg/luakit/window.lua")
-require "window"
+local window = require "window"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")

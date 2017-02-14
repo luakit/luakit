@@ -4,6 +4,8 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com>  --
 --------------------------------------------------------
 
+local window = require("window")
+
 local util = require("lousy.util")
 local join = util.table.join
 

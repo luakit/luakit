@@ -12,7 +12,7 @@ local string = string
 local pairs = pairs
 local ipairs = ipairs
 local table = table
-local window = window
+local window = require("window")
 local webview = require("webview")
 local pcall = pcall
 
