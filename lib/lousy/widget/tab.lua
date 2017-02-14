@@ -1,13 +1,6 @@
-local type = type
-local string = string
-local assert = assert
-local setmetatable = setmetatable
 local capi = { widget = widget }
 local get_theme = require("lousy.theme").get
 local escape = require("lousy.util").escape
-local msg = msg
-
-module "lousy.widget.tab"
 
 local data = setmetatable({}, { __mode = "k" })
 
@@ -71,7 +64,7 @@ local function update_title_and_label(tl)
     update_label(tl)
 end
 
-function new(view, index)
+local function new(view, index)
     assert(type(view) == "widget" and view.type == "webview")
     assert(type(index) == "number")
 
@@ -136,6 +129,6 @@ function new(view, index)
     return tl
 end
 
-setmetatable(_M, { __call = function(_, ...) return new(...) end })
+return setmetatable({}, { __call = function(_, ...) return new(...) end })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
