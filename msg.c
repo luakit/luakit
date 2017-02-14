@@ -172,8 +172,15 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 #endif
 
     char *extension_file = g_build_filename(extension_dir,  "luakit.so", NULL);
-    if (access(extension_file, R_OK | X_OK))
-        fatal("Cannot access luakit extension '%s': %s", extension_file, strerror(errno));
+    if (access(extension_file, R_OK | X_OK)) {
+#if DEVELOPMENT_PATHS
+#  define DEVPATHS "\nLuakit was built with DEVELOPMENT_PATHS=1; are you running luakit correctly?"
+#else
+#  define DEVPATHS ""
+#endif
+        fatal("Cannot access luakit extension '%s': %s" DEVPATHS, extension_file, strerror(errno));
+#undef DEVPATHS
+    }
 
     /* There's a potential race condition here; the accept thread might not run
      * until after the web extension process has already started (and failed to
