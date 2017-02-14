@@ -52,7 +52,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
 {
     const gchar **v = g_variant_get_strv(payload, NULL);
     const gchar *socket_path = v[0];
-    globalconf.execpath = v[1];
+    globalconf.execpath = (gchar *)v[1];
     g_free(v);
 
     extension.WL = luaL_newstate();
