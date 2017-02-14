@@ -1,14 +1,6 @@
-local ui_process = ui_process
-local extension = extension
-local dom_document = dom_document
-local type = type
-local pairs = pairs
-
-module("webview_webmodule")
-
 local ui = ui_process()
 
-function mousedown_cb (event, page_id)
+local mousedown_cb = function (event, page_id)
     -- Only consider left-click
     if event.button ~= 0 then return end
 
