@@ -4,6 +4,8 @@
 -- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
 ----------------------------------------------------------------
 
+local lousy = require("lousy")
+
 local go_next = [=[
 (function() {
     function click(e) {

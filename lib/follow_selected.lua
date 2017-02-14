@@ -10,6 +10,7 @@ local web_module = web_module
 local window = require("window")
 local assert = assert
 local pairs = pairs
+local lousy = require("lousy")
 local key = lousy.bind.key
 local add_binds = add_binds
 

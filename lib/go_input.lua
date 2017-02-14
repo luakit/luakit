@@ -5,6 +5,7 @@
 -----------------------------------------------------------
 
 local webview = require("webview")
+local lousy = require("lousy")
 
 local go_input = [=[
 (function (count) {

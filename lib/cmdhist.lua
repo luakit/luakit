@@ -4,6 +4,7 @@
 ------------------------------------------------------
 
 local window = require("window")
+local lousy = require("lousy")
 
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when

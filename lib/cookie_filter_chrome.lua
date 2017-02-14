@@ -1,5 +1,5 @@
 local cookie_filter_lib = require("cookie_filter")
-local lousy     = lousy
+local lousy     = require("lousy")
 local add_binds, add_cmds = add_binds, add_cmds
 local chrome    = chrome
 local pairs     = pairs

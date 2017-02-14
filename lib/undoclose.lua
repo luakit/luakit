@@ -5,6 +5,7 @@
 ------------------------------------------------------
 
 local window = require("window")
+local lousy = require("lousy")
 
 local reopening = {}
 

@@ -3,7 +3,9 @@
 -- (C) 2012 Fabian Streitel <karottenreibe@gmail.com> --
 -- (C) 2012 Mason Larobina <mason.larobina@gmail.com> --
 --------------------------------------------------------
+
 local webview = require("webview")
+local lousy = require("lousy")
 
 webview.init_funcs.inspector_setup = function (view, w)
     view.enable_developer_extras = true

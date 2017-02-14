@@ -1,4 +1,4 @@
-local lousy     = lousy
+local lousy     = require "lousy"
 local os        = os
 local io        = io
 local string    = string

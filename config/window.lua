@@ -3,6 +3,7 @@
 ------------------
 
 require "lfs"
+local lousy = require("lousy")
 
 -- Window class table
 local window = {}

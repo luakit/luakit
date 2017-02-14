@@ -1,5 +1,5 @@
 local adblock   = require("adblock")
-local lousy     = lousy
+local lousy     = require("lousy")
 local util      = lousy.util
 local add_binds, add_cmds = add_binds, add_cmds
 local chrome    = chrome

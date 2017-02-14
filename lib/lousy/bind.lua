@@ -3,38 +3,28 @@
 -- @copyright 2010 Mason Larobina
 ---------------------------------------------------------------------------
 
--- Grab environment we need
-local assert = assert
-local ipairs = ipairs
-local pairs = pairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local type = type
-local unpack = unpack
 local util = require("lousy.util")
 local join = util.table.join
 local keys = util.table.keys
-local print = print
 
 -- Key, buffer and command binding functions.
-module("lousy.bind")
+local bind = {}
 
 -- Modifiers to ignore
-ignore_mask = {
+bind.ignore_mask = {
     Mod2 = true, Mod3 = true, Mod5 = true, Lock = true,
 }
 
 -- A table that contains mappings for key names.
-map = {
+bind.map = {
     ISO_Left_Tab = "Tab",
 }
 
-function parse_mods(mods, remove_shift)
+function bind.parse_mods(mods, remove_shift)
     local t = {}
     for _, mod in ipairs(mods) do
-        if not ignore_mask[mod] then
-            mod = map[mod] or mod
+        if not bind.ignore_mask[mod] then
+            mod = bind.map[mod] or mod
             t[mod] = true
         end
     end
@@ -48,7 +38,7 @@ function parse_mods(mods, remove_shift)
 end
 
 -- Create new key binding.
-function key(mods, key, desc, func, opts)
+function bind.key(mods, key, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
         desc, func, opts = nil, desc, func
@@ -61,7 +51,7 @@ function key(mods, key, desc, func, opts)
 
     return {
         type = "key",
-        mods = parse_mods(mods, string.wlen(key) == 1),
+        mods = bind.parse_mods(mods, string.wlen(key) == 1),
         key  = key,
         desc = desc,
         func = func,
@@ -70,7 +60,7 @@ function key(mods, key, desc, func, opts)
 end
 
 -- Create new button binding.
-function but(mods, button, desc, func, opts)
+function bind.but(mods, button, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
         desc, func, opts = nil, desc, func
@@ -83,7 +73,7 @@ function but(mods, button, desc, func, opts)
 
     return {
         type   = "button",
-        mods   = parse_mods(mods),
+        mods   = bind.parse_mods(mods),
         button = button,
         desc   = desc,
         func   = func,
@@ -92,7 +82,7 @@ function but(mods, button, desc, func, opts)
 end
 
 -- Create new buffer binding.
-function buf(pattern, desc, func, opts)
+function bind.buf(pattern, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
         desc, func, opts = nil, desc, func
@@ -112,7 +102,7 @@ function buf(pattern, desc, func, opts)
 end
 
 -- Create new command binding.
-function cmd(cmds, desc, func, opts)
+function bind.cmd(cmds, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
         desc, func, opts = nil, desc, func
@@ -143,7 +133,7 @@ function cmd(cmds, desc, func, opts)
 end
 
 -- Create a binding which is always called.
-function any(desc, func, opts)
+function bind.any(desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
         desc, func, opts = nil, desc, func
@@ -161,7 +151,7 @@ function any(desc, func, opts)
 end
 
 -- Try and match an any binding.
-function match_any(object, binds, args)
+function bind.match_any(object, binds, args)
     for _, b in ipairs(binds) do
         if b.type == "any" then
             if b.func(object, join(b.opts, args)) ~= false then
@@ -174,7 +164,7 @@ end
 
 -- Try and match a key binding in a given table of bindings and call that
 -- bindings callback function.
-function match_key(object, binds, mods, key, args)
+function bind.match_key(object, binds, mods, key, args)
     for _, b in ipairs(binds) do
         if b.type == "key" and b.key == key and b.mods == mods then
             if b.func(object, join(b.opts, args)) ~= false then
@@ -187,7 +177,7 @@ end
 
 -- Try and match a button binding in a given table of bindings and call that
 -- bindings callback function.
-function match_but(object, binds, mods, button, args)
+function bind.match_but(object, binds, mods, button, args)
     for _, b in ipairs(binds) do
         if b.type == "button" and b.button == button and b.mods == mods then
             if b.func(object, join(b.opts, args)) ~= false then
@@ -206,7 +196,7 @@ end
 -- @param args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
 -- @return True if a binding was matched and called.
-function match_buf(object, binds, buffer, args)
+function bind.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
     for _, b in ipairs(binds) do
@@ -231,7 +221,7 @@ end
 -- @param args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
 -- @return True if either type of binding was matched and called.
-function match_cmd(object, binds, buffer, args)
+function bind.match_cmd(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
     -- The command is the first word in the buffer string
@@ -279,9 +269,9 @@ end
 -- the buffer.
 -- @return The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing).
-function hit(object, binds, mods, key, args)
+function bind.hit(object, binds, mods, key, args)
     -- Convert keys using map
-    key = map[key] or key
+    key = bind.map[key] or key
 
     if not key then return false end
     local len = string.wlen(key)
@@ -294,14 +284,14 @@ function hit(object, binds, mods, key, args)
         key    = key,
     })
 
-    mods = parse_mods(mods, type(key) == "string" and len == 1)
+    mods = bind.parse_mods(mods, type(key) == "string" and len == 1)
 
-    if match_any(object, binds, args) then
+    if bind.match_any(object, binds, args) then
         return true
 
     -- Match button bindings
     elseif type(key) == "number" then
-        if match_but(object, binds, mods, key, args) then
+        if bind.match_but(object, binds, mods, key, args) then
             return true
         end
         return false
@@ -310,7 +300,7 @@ function hit(object, binds, mods, key, args)
     elseif (not args.buffer or not args.enable_buffer) or mods or len ~= 1 then
         -- Check if the current buffer affects key bind (I.e. if the key has a
         -- `[count]` prefix)
-        if match_key(object, binds, mods, key, args) then
+        if bind.match_key(object, binds, mods, key, args) then
             return true
         end
     end
@@ -325,7 +315,7 @@ function hit(object, binds, mods, key, args)
             args.buffer = (args.buffer or "") .. key
             args.updated_buf = true
         end
-        if match_buf(object, binds, args.buffer, args) then
+        if bind.match_buf(object, binds, args.buffer, args) then
             return true
         end
     end
@@ -336,5 +326,7 @@ function hit(object, binds, mods, key, args)
     end
     return false
 end
+
+return bind
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
