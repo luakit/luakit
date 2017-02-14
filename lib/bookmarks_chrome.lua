@@ -1,38 +1,20 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local print = print
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
-
 -- Grab the luakit environment we need
 local bookmarks = require("bookmarks")
 local lousy = require("lousy")
 local chrome = require("chrome")
 local markdown = require("markdown")
 local sql_escape = lousy.util.sql_escape
-local add_binds = add_binds
-local add_cmds = add_cmds
 local webview = require("webview")
 local capi = {
     luakit = luakit
 }
 
-module("bookmarks.chrome")
+local bookmarks_chrome = {}
 
 -- Display the bookmark uri and title.
-show_uri = false
+bookmarks_chrome.show_uri = false
 
-stylesheet = [===[
+bookmarks_chrome.stylesheet = [===[
 .bookmark {
     line-height: 1.6em;
     padding: 0.4em 0.5em;
@@ -430,7 +412,7 @@ $(document).ready(function () { 'use strict'
 
 local new_bookmark_values
 
-export_funcs = {
+local export_funcs = {
     bookmarks_search = function (view, opts)
         if not bookmarks.db then bookmarks.init() end
 
@@ -495,9 +477,9 @@ export_funcs = {
 chrome.add("bookmarks", function (view, meta)
     local uri = "luakit://bookmarks/"
 
-    local style = chrome.stylesheet .. _M.stylesheet
+    local style = chrome.stylesheet .. bookmarks_chrome.stylesheet
 
-    if not _M.show_uri then
+    if not bookmarks_chrome.show_uri then
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
@@ -516,24 +498,24 @@ function (view, meta)
 end,
 export_funcs)
 
-chrome_page = "luakit://bookmarks/"
+bookmarks_chrome.chrome_page = "luakit://bookmarks/"
 
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({}, "B", "Shortcut to add a bookmark to the current URL",
         function(w)
             new_bookmark_values = { uri = w.view.uri, title = w.view.title }
-            w:new_tab(chrome_page)
+            w:new_tab(bookmarks_chrome.chrome_page)
         end),
 
     buf("^gb$", "Open bookmarks manager in the current tab.",
         function(w)
-            w:navigate(chrome_page)
+            w:navigate(bookmarks_chrome.chrome_page)
         end),
 
     buf("^gB$", "Open bookmarks manager in a new tab.",
         function(w)
-            w:new_tab(chrome_page)
+            w:new_tab(bookmarks_chrome.chrome_page)
         end)
 })
 
@@ -541,7 +523,7 @@ local cmd = lousy.bind.cmd
 add_cmds({
     cmd("bookmarks", "Open bookmarks manager in a new tab.",
         function (w)
-            w:new_tab(chrome_page)
+            w:new_tab(bookmarks_chrome.chrome_page)
         end),
 
     cmd("bookmark", "Add bookmark",
@@ -556,6 +538,8 @@ add_cmds({
                     uri = a[1], tags = table.concat(a, " ", 2)
                 }
             end
-            w:new_tab(chrome_page)
+            w:new_tab(bookmarks_chrome.chrome_page)
         end),
 })
+
+return bookmarks_chrome
