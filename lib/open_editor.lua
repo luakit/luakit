@@ -1,13 +1,6 @@
-local lousy     = require "lousy"
-local os        = os
-local io        = io
-local string    = string
-local luakit    = luakit
-local add_binds = add_binds
+local lousy = require "lousy"
 
-module("external_editor")
-
-function edit_externally(w)
+local function edit_externally(w)
 	local time = os.time()
 	local marker = "luakit_extedit_" .. time
 	local file = luakit.cache_dir .. "/" .. marker .. ".txt"
