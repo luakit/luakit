@@ -5,20 +5,7 @@
 -- @copyright 2010 Fabian Streitel, Mason Larobina          --
 --------------------------------------------------------------
 
--- Grab environment we need
-local assert = assert
-local io = io
-local ipairs = ipairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local tostring = tostring
-local type = type
-local unpack = unpack
-local msg = msg
-
---- Provides a signal API similar to GTK's signals.
-module("lousy.signal")
+local signal = {}
 
 -- Private signal data for objects
 local data = setmetatable({}, { __mode = "k" })
@@ -36,7 +23,7 @@ local function get_data(object)
     return d
 end
 
-function add_signal(object, signame, func)
+function signal.add_signal(object, signame, func)
     local signals = get_data(object).signals
 
     -- Check signal name
@@ -54,7 +41,7 @@ function add_signal(object, signame, func)
     end
 end
 
-function emit_signal(object, signame, ...)
+function signal.emit_signal(object, signame, ...)
     local d = get_data(object)
     local sigfuncs = d.signals[signame] or {}
 
@@ -74,7 +61,7 @@ function emit_signal(object, signame, ...)
 end
 
 -- Remove a signame & function pair.
-function remove_signal(object, signame, func)
+function signal.remove_signal(object, signame, func)
     local signals = get_data(object).signals
     local sigfuncs = signals[signame] or {}
 
@@ -91,12 +78,12 @@ function remove_signal(object, signame, func)
 end
 
 -- Remove all signal handlers with the given signame.
-function remove_signals(object, signame)
+function signal.remove_signals(object, signame)
     local signals = get_data(object).signals
     signals[signame] = nil
 end
 
-function setup(object, module)
+function signal.setup(object, module)
     assert(not data[object], "given object already setup for signals")
 
     data[object] = { signals = {}, module = module }
@@ -104,14 +91,16 @@ function setup(object, module)
     for _, fn in ipairs(methods) do
         assert(not object[fn], "signal object method conflict: " .. fn)
         if module then
-            local func = _M[fn]
+            local func = signal[fn]
             object[fn] = function (...) return func(object, ...) end
         else
-            object[fn] = _M[fn]
+            object[fn] = signal[fn]
         end
     end
 
     return object
 end
+
+return signal
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
