@@ -1,13 +1,3 @@
-local pairs, ipairs = pairs, ipairs
-local table, string = table, string
-local type = type
-local ui_process = ui_process
-local dom_document = dom_document
-local page = page
-local msg = msg
-
-module("formfiller_webmodule")
-
 local ui = ui_process()
 
 local function element_attributes_match(element, attrs)
@@ -180,7 +170,7 @@ local function load(fast, page_id)
     ui:emit_signal("finished")
 end
 
-function contains(tbl, item)
+local function contains(tbl, item)
     for _, v in ipairs(tbl) do
         if v == item then return true end
     end
