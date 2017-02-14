@@ -5,21 +5,14 @@
 
 -- Grab environment we need
 local capi = { widget = widget }
-local setmetatable = setmetatable
 local math = require "math"
 local signal = require "lousy.signal"
-local type = type
-local assert = assert
-local ipairs = ipairs
-local table = table
 local util = require "lousy.util"
 local get_theme = require("lousy.theme").get
 
-module "lousy.widget.menu"
-
 local data = setmetatable({}, { __mode = "k" })
 
-function update(menu)
+local function update(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -140,7 +133,7 @@ function update(menu)
     menu.widget:show()
 end
 
-function build(menu, rows)
+local function build(menu, rows)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -174,7 +167,7 @@ local function calc_offset(menu)
     end
 end
 
-function move_up(menu)
+local function move_up(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -199,7 +192,7 @@ function move_up(menu)
     menu:emit_signal("changed", menu:get())
 end
 
-function move_down(menu)
+local function move_down(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -224,7 +217,7 @@ function move_down(menu)
     menu:emit_signal("changed", menu:get())
 end
 
-function get(menu, index)
+local function get(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -234,7 +227,7 @@ function get(menu, index)
     return d.rows[index or d.cursor]
 end
 
-function del(menu, index)
+local function del(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -258,12 +251,12 @@ function del(menu, index)
     menu:emit_signal("changed", menu:get())
 end
 
-function nrows(menu)
+local function nrows(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
     return data[menu].nrows
 end
 
-function new(args)
+local function new(args)
     args = args or {}
 
     local menu = {
@@ -296,4 +289,4 @@ function new(args)
     return menu
 end
 
-setmetatable(_M, { __call = function(_, ...) return new(...) end })
+return setmetatable({}, { __call = function(_, ...) return new(...) end })
