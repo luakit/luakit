@@ -5,7 +5,6 @@
 
 local os = os
 local io = io
-local pickle = lousy.pickle
 local luakit = luakit
 local timer = timer
 local string = string
@@ -15,6 +14,7 @@ local table = table
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")
+local pickle = lousy.pickle
 local pcall = pcall
 
 module("session")

@@ -5,14 +5,6 @@
 -- Freeware
 --------------------------------------------------
 
-local pairs = pairs
-local type = type
-local tostring, loadstring = tostring, loadstring
-local table, string = table, string
-local error = error
-
-module("lousy.pickle")
-
 local Pickle = {
     clone = function (t) local nt={}; for i, v in pairs(t) do nt[i]=v end return nt end
 }
@@ -61,11 +53,13 @@ function Pickle:ref_(t)
     return ref
 end
 
-pickle = function(t)
+local pickle = {}
+
+pickle.pickle = function(t)
     return Pickle:clone():pickle_(t)
 end
 
-unpickle = function(s)
+pickle.unpickle = function(s)
     if type(s) ~= "string" then
         error("can't unpickle a "..type(s)..", only strings")
     end
@@ -85,3 +79,5 @@ unpickle = function(s)
     end
     return tables[1]
 end
+
+return pickle
