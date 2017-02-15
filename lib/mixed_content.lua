@@ -1,10 +1,4 @@
-local msg       = msg
-local assert    = assert
-local string    = string
-local webview   = require("webview")
-local setmetatable = setmetatable
-
-module("mixed_content")
+local webview = require("webview")
 
 -- Indexed by view:
 --  nil   -> no mixed content in view
@@ -21,7 +15,7 @@ local allow_mixed = setmetatable({}, { __mode = 'k' })
 -- navigation requests and redirects, not sub-resource fetch requests
 local top_level = {}
 
-function load_status(v, status)
+local function load_status(v, status)
     if status == "provisional" then
         top_level[v] = true
         has_mixed[v] = nil
@@ -31,7 +25,7 @@ function load_status(v, status)
 end
 
 -- Request interception
-function resource_request_starting(v, uri)
+local function resource_request_starting(v, uri)
     -- Don't block requests to top-level requests (page changes)
     if top_level[v] then return end
 
