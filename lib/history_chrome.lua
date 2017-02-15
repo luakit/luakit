@@ -1,33 +1,11 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local print = print
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
-
 -- Grab the luakit environment we need
 local history = require("history")
 local lousy = require("lousy")
 local chrome = require("chrome")
-local add_binds = add_binds
-local add_cmds = add_cmds
-local webview = require("webview")
-local capi = {
-    luakit = luakit
-}
 
-module("history.chrome")
+local history_chrome = {}
 
-stylesheet = [===[
+history_chrome.stylesheet = [===[
 .day-heading {
     font-size: 1.6em;
     font-weight: 100;
@@ -334,8 +312,8 @@ $(document).ready(function () { 'use strict';
 
 local initial_search_term
 
-export_funcs = {
-    history_search = function (view, opts)
+local export_funcs = {
+    history_search = function (_, opts)
         local sql = { "SELECT", "*", "FROM history" }
 
         local where, args, argc = {}, {}, 1
@@ -379,11 +357,11 @@ export_funcs = {
         return rows
     end,
 
-    history_clear_all = function (view)
+    history_clear_all = function (_)
         history.db:exec [[ DELETE FROM history ]]
     end,
 
-    history_clear_list = function (view, ids)
+    history_clear_list = function (_, ids)
         if not ids or #ids == 0 then return end
         local marks = {}
         for i=1,#ids do marks[i] = "?" end
@@ -401,7 +379,7 @@ export_funcs = {
 chrome.add("history", function (view, meta)
     return string.gsub(html, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
-        stylesheet = chrome.stylesheet .. stylesheet
+        stylesheet = chrome.stylesheet .. history_chrome.stylesheet
     })
 end,
 function (view, meta)
@@ -411,7 +389,7 @@ function (view, meta)
     assert(not err, err)
 
     -- Load main luakit://history/ JavaScript
-    local _, err = view:eval_js(main_js, { no_return = true })
+    _, err = view:eval_js(main_js, { no_return = true })
     assert(not err, err)
 end,
 export_funcs)
@@ -428,3 +406,5 @@ add_cmds({
         w:new_tab("luakit://history/")
     end),
 })
+
+return history_chrome
