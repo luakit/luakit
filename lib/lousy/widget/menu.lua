@@ -228,14 +228,17 @@ end
 
 local function del(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
+    assert(not index or type(index) == "number", "invalid index")
 
     -- Get private menu widget data
     local d = data[menu]
+    index = index or d.cursor
 
     -- Unable to delete this index, return
-    if d.cursor < 1 then return end
+    if index < 1 then return end
 
-    table.remove(d.rows, d.cursor)
+    table.remove(d.rows, index)
+    if index < d.cursor then d.cursor = d.cursor - 1 end
 
     -- Update rows count
     d.nrows = #(d.rows)
