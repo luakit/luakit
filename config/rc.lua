@@ -93,7 +93,7 @@ require "bookmarks"
 require "bookmarks_chrome"
 
 -- Add download support
-require "downloads"
+downloads = require "downloads"
 require "downloads_chrome"
 
 -- Add automatic PDF downloading and opening

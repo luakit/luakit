@@ -1,3 +1,5 @@
+local downloads = require("downloads")
+
 downloads.add_signal("download-location", function(uri, filename, mime)
     if mime == "application/pdf" then
         local dir = luakit.cache_dir .. "/viewpdf/"

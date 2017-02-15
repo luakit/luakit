@@ -1,18 +1,3 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
-
 -- Grab the luakit environment we need
 local downloads = require("downloads")
 local lousy = require("lousy")
@@ -21,11 +6,8 @@ local add_binds = add_binds
 local add_cmds = add_cmds
 local webview = require("webview")
 local window = require("window")
-local capi = {
-    luakit = luakit
-}
 
-module("downloads.chrome")
+local downloads_chrome = {}
 
 local html_template = [==[
 <!doctype html>
@@ -46,7 +28,7 @@ local html_template = [==[
 </html>
 ]==]
 
-local html_style = [==[
+downloads_chrome.stylesheet = [==[
     .download {
         -webkit-margin-start: 90px;
         -webkit-padding-start: 10px;
@@ -316,7 +298,7 @@ local export_funcs = {
     end,
 
     download_show = function (view, id)
-        local d, data = downloads.get(id)
+        local d = downloads.get(id)
         local dirname = string.gsub(d.destination, "(.*/)(.*)", "%1")
         if downloads.emit_signal("open-file", dirname, "inode/directory") ~= true then
             local w = webview.window(view)
@@ -355,7 +337,7 @@ end)
 
 chrome.add("downloads", function (view, meta)
     local html_subs = {
-        style  = chrome.stylesheet .. html_style,
+        style  = chrome.stylesheet .. downloads_chrome.stylesheet,
     }
     return string.gsub(html_template, "{(%w+)}", html_subs)
 end,
@@ -369,21 +351,23 @@ function (view, meta)
 end,
 export_funcs)
 
-local page = "luakit://downloads/"
+downloads_chrome.chrome_page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
 add_binds("normal", {
     buf("^gd$",
         [[Open [luakit://downloads](luakit://downloads/) in current tab.]],
-        function (w) w:navigate(page) end),
+        function (w) w:navigate(downloads_chrome.chrome_page) end),
 
     buf("^gD$",
         [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
-        function (w) w:new_tab(page) end),
+        function (w) w:new_tab(downloads_chrome.chrome_page) end),
 })
 
 add_cmds({
     cmd("downloads",
         [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
-        function (w) w:new_tab(page) end),
+        function (w) w:new_tab(downloads_chrome.chrome_page) end),
 })
+
+return downloads_chrome
