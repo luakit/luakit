@@ -1,19 +1,10 @@
-local assert = assert
 local webview = require("webview")
-local string = string
-local styles = styles
-local pairs = pairs
-local ipairs = ipairs
-local lousy = require "lousy"
-local type = type
-local setmetatable = setmetatable
-local web_module = web_module
+local lousy = require("lousy")
 
-module("error_page")
-
+local error_page = {}
 local error_page_wm = web_module("error_page_webmodule")
 
-html_template = [==[
+error_page.html_template = [==[
     <html>
         <head>
             <title>Error</title>
@@ -33,7 +24,7 @@ html_template = [==[
     </html>
 ]==]
 
-style = [===[
+error_page.style = [===[
     body {
         margin: 0;
         padding: 0;
@@ -84,7 +75,7 @@ style = [===[
     }
 ]===]
 
-cert_style = [===[
+error_page.cert_style = [===[
     body {
         background: repeating-linear-gradient(
             45deg,
@@ -99,8 +90,8 @@ cert_style = [===[
     }
 ]===]
 
-local function false_cb(v, status) return false end
-local function true_cb(v, status) return true end
+local function false_cb() return false end
+local function true_cb() return true end
 
 local view_finished = setmetatable({}, { __mode = "k" })
 
@@ -131,7 +122,7 @@ local function make_button_html(v, buttons)
 
     if #buttons == 0 then return "" end
 
-    for i, button in ipairs(buttons) do
+    for _, button in ipairs(buttons) do
         assert(button.label)
         assert(button.callback)
         button.class = button.class or ""
@@ -164,7 +155,7 @@ local function load_error_page(v, error_page_info)
                 <p id="errorMessageText">{msg}</p>
             </div>
         ]==],
-        style = style,
+        style = error_page.style,
         buttons = {{
             label = "Try again",
             callback = function(v)
@@ -174,13 +165,13 @@ local function load_error_page(v, error_page_info)
     }
 
     if error_page_info.style then
-        error_page_info.style = style .. error_page_info.style
+        error_page_info.style = error_page.style .. error_page_info.style
     end
     error_page_info = lousy.util.table.join(defaults, error_page_info)
     error_page_info.buttons = make_button_html(v, error_page_info.buttons)
 
     -- Substitute values recursively
-    local html = html_template
+    local html, nsub = error_page.html_template
     repeat
         html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
     until nsub == 0
@@ -234,7 +225,7 @@ local function handle_error(v, uri, msg, cert_errors)
 
         error_page_info = {
             msg = msg .. ": " .. get_cert_error_desc(cert_errors),
-            style = cert_style,
+            style = error_page.cert_style,
             heading = "Your connection may be insecure!",
             buttons = {{
                 label = "Ignore danger",
@@ -266,7 +257,7 @@ local function handle_error(v, uri, msg, cert_errors)
     load_error_page(v, error_page_info)
 end
 
-show_error_page = function(v, error_page_info)
+error_page.show_error_page = function(v, error_page_info)
     assert(type(v) == "widget" and v.type == "webview")
     assert(type(error_page_info) == "table")
     if not error_page_info.uri then
@@ -282,7 +273,9 @@ webview.init_funcs.error_page_init = function(view, w)
         return true
     end)
 
-    view:add_signal("crashed", function(v, ...)
+    view:add_signal("crashed", function(v)
         handle_error(v, v.uri, "Web process crashed")
     end)
 end
+
+return error_page
