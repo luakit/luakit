@@ -88,9 +88,9 @@ local uri_metatable = {
         for k, v in pairs(op2) do
             assert(uri_allowed[k], "invalid property: " .. k)
             if k == "query" and type(v) == "string" then
-                uri.opts = u.parse_query(v)
+                ret.opts = u.parse_query(v)
             else
-                uri[k] = v
+                ret[k] = v
             end
         end
         return ret
