@@ -200,7 +200,7 @@ end
 -- @return True if the file exists and is readable.
 function os.exists(f)
     assert(type(f) == "string", "invalid path")
-    fh, err = io.open(f)
+    local fh, err = io.open(f)
     if fh then
         fh:close()
         return f
