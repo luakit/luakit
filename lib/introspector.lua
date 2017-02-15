@@ -1,40 +1,10 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local print = print
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
-local package = package
-local debug = debug
-local editor = require "editor"
-
--- Grab the luakit environment we need
 local lousy = require("lousy")
-local globals = globals
 local dedent = lousy.util.string.dedent
 local escape = lousy.util.escape
 local chrome = require("chrome")
 local history = require("history")
 local markdown = require("markdown")
-local get_modes = get_modes
-local get_mode = get_mode
-local add_binds = add_binds
-local add_cmds = add_cmds
-local webview = require("webview")
-local capi = {
-    luakit = luakit
-}
-
-module("introspector")
+local editor = require("editor")
 
 local html = [==[
 <!doctype html>
@@ -241,7 +211,7 @@ local mode_bind_template = [==[
     </li>
 ]==]
 
-main_js = [=[
+local main_js = [=[
 $(document).ready(function () {
     var $body = $(document.body);
 
@@ -267,7 +237,6 @@ $(document).ready(function () {
 ]=]
 
 local function bind_tostring(b)
-    local join = lousy.util.table.join
     local t = b.type
     local m = b.mods
 
@@ -297,7 +266,7 @@ local function bind_tostring(b)
 end
 
 local source_lines = {}
-local function function_source_range(func, info)
+local function function_source_range(_, info)
     local lines = source_lines[info.source]
 
     if not lines then
@@ -313,7 +282,7 @@ local function function_source_range(func, info)
         info.lastlinedefined), true)
 end
 
-help_get_modes = function ()
+local help_get_modes = function ()
     local ret = {}
     local modes = lousy.util.table.values(get_modes())
     table.sort(modes, function (a, b) return a.order < b.order end)
