@@ -4,33 +4,22 @@
 -- © 2010-2011 Fabian Streitel <karottenreibe@gmail.com>  --
 ------------------------------------------------------------
 
--- Get Lua environ
-local msg = msg
-local pairs, ipairs = pairs, ipairs
-local table, string = table, string
-local assert, type = assert, type
-local floor = math.floor
-local rawset, rawget = rawset, rawget
-
--- Get luakit environ
 local lousy = require "lousy"
-local new_mode, add_binds = new_mode, add_binds
 local window = require("window")
-local web_module = web_module
 local capi = {
     luakit = luakit,
     timer = timer
 }
 
-module("follow")
+local follow = {}
 
 local follow_wm = web_module("follow_webmodule")
 
 -- After each follow ignore all keys pressed by the user to prevent the
 -- accidental activation of other key bindings.
-ignore_delay = 200
+follow.ignore_delay = 200
 
-stylesheet = [===[
+follow.stylesheet = [===[
 #luakit_follow_overlay {
     position: absolute;
     left: 0;
@@ -74,7 +63,7 @@ local function regex_escape(s)
 end
 
 -- Different hint matching styles
-pattern_styles = {
+follow.pattern_styles = {
     -- Regex match target text only
     re_match_text = function (text)
         return "", text
@@ -97,10 +86,10 @@ pattern_styles = {
 }
 
 -- Default pattern style
-pattern_maker = pattern_styles.match_label_re_text
+follow.pattern_maker = follow.pattern_styles.match_label_re_text
 
 -- Ignore case in follow mode by default
-ignore_case = true
+follow.ignore_case = true
 
 local function focus(w, step)
     follow_wm:emit_signal(w.view, "focus", w.win.id, step)
@@ -109,7 +98,7 @@ end
 local hit_nop = function () return true end
 
 local function ignore_keys(w)
-    local delay = _M.ignore_delay
+    local delay = follow.ignore_delay
     if not delay or delay == 0 then return end
     -- Replace w:hit(..) with a no-op
     w.hit = hit_nop
@@ -121,12 +110,12 @@ local function ignore_keys(w)
     t:start()
 end
 
-local function follow(w, all)
+local function do_follow(w, all)
     follow_wm:emit_signal(w.view, "follow", w.win.id, all)
 end
 
 local function follow_all_hints(w)
-    follow(w, true)
+    do_follow(w, true)
 end
 
 local function follow_func_cb(w, ret)
@@ -166,19 +155,18 @@ new_mode("follow", {
             msg.warn("Custom label maker not yet implemented!")
         end
 
-        assert(type(mode.pattern_maker or _M.pattern_maker) == "function",
+        assert(type(mode.pattern_maker or follow.pattern_maker) == "function",
             "invalid pattern_maker function")
 
-        local selector = mode.selector_func or _M.selectors[mode.selector]
+        local selector = mode.selector_func or follow.selectors[mode.selector]
         assert(type(selector) == "string", "invalid follow selector")
         mode.selector = selector
 
-        local stylesheet = mode.stylesheet or _M.stylesheet
+        local stylesheet = mode.stylesheet or follow.stylesheet
         assert(type(stylesheet) == "string", "invalid stylesheet")
         mode.stylesheet = stylesheet
 
         local view = w.view
-        local all_frames, frames = view.frames, {}
 
         if w.follow_persist then
             mode.persist = true
@@ -186,8 +174,8 @@ new_mode("follow", {
         end
 
         w.follow_state = {
-            mode = mode, view = view, frames = frames,
-            evaluator = evaluator,
+            mode = mode, view = view,
+            evaluator = mode.evaluator,
         }
 
         if mode.prompt then
@@ -202,7 +190,7 @@ new_mode("follow", {
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
         mode.func = nil
-        follow_wm:emit_signal(w.view, "enter", w.win.id, mode, w.view.id, ignore_case)
+        follow_wm:emit_signal(w.view, "enter", w.win.id, mode, w.view.id, follow.ignore_case)
         mode.func = func
     end,
 
@@ -210,7 +198,7 @@ new_mode("follow", {
         local mode = w.follow_state.mode
 
         -- Make the hint label/text matching patterns
-        local pattern_maker = mode.pattern_maker or _M.pattern_maker
+        local pattern_maker = mode.pattern_maker or follow.pattern_maker
         local hint_pat, text_pat = pattern_maker(text)
 
         follow_wm:emit_signal(w.view, "changed", w.win.id, hint_pat, text_pat, text)
@@ -226,11 +214,11 @@ local key = lousy.bind.key
 add_binds("follow", {
     key({},          "Tab",    function (w) focus(w,  1)        end),
     key({"Shift"},   "Tab",    function (w) focus(w, -1)        end),
-    key({},          "Return", function (w) follow(w)           end),
+    key({},          "Return", function (w) do_follow(w)        end),
     key({"Shift"},   "Return", function (w) follow_all_hints(w) end),
 })
 
-selectors = {
+follow.selectors = {
     clickable = 'a, area, textarea, select, input:not([type=hidden]), button',
     focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
     uri = 'a, area',
@@ -470,3 +458,5 @@ add_binds("ex-follow", {
             })
         end),
 })
+
+return follow
