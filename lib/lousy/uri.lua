@@ -100,7 +100,7 @@ local uri_metatable = {
 -- Parse uri string and return uri table
 function u.parse(uri)
     -- Get uri table
-    local uri = capi.soup.parse_uri(uri)
+    uri = capi.soup.parse_uri(uri)
     if not uri then return end
     -- Parse uri.query and set uri.opts
     uri.opts = u.parse_query(uri.query)
