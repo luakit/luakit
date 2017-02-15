@@ -6,14 +6,13 @@ local ui = ui_process()
 -- Calculates the minimum number of characters needed in a hint given a
 -- charset of a certain length (I.e. the base)
 local function max_hint_len(size, base)
-    local floor, len = floor, 0
+    local len = 0
     while size > 0 do size, len = floor(size / base), len + 1 end
     return len
 end
 
 local function charset(seq, size)
-    local floor, sub, reverse = floor, string.sub, string.reverse
-    local insert, concat = table.insert, table.concat
+    local sub, reverse, concat = string.sub, string.reverse, table.concat
 
     local base, digits, labels = #seq, {}, {}
     for i = 1, base do rawset(digits, i, sub(seq, i, i)) end
@@ -389,7 +388,7 @@ ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
     state.ignore_case = ignore_case or false
 
     -- Find all hints in the viewport
-    for i, frame in ipairs(state.frames) do
+    for _, frame in ipairs(state.frames) do
         -- Set up the frame, and find hints
         init_frame(frame, mode.stylesheet)
         frame.hints = frame_find_hints(page, frame, mode.selector)
@@ -410,7 +409,7 @@ ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
     end
 
     for _, frame in ipairs(state.frames) do
-        for i, hint in ipairs(frame.hints) do
+        for _, hint in ipairs(frame.hints) do
             -- Append hint elements to overlay
             local e = hint.elem
             local r = hint.bb

@@ -1,4 +1,5 @@
 local ui = ui_process()
+local state
 
 local function element_attributes_match(element, attrs)
     for attr, value in pairs(attrs) do
@@ -27,7 +28,7 @@ end
 
 local function match(tag, attrs, form, parents)
     local attr_table = {}
-    for k, v in ipairs(attrs) do
+    for _, v in ipairs(attrs) do
         if form[v] then
             attr_table[v] = form[v]
         end
@@ -46,7 +47,7 @@ end
 
 local function filter_list(tbl, fn)
     local ret = {}
-    for k, v in ipairs(tbl) do
+    for _, v in ipairs(tbl) do
         if fn(v) then
             ret[#ret+1] = v
         end

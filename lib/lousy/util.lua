@@ -167,7 +167,7 @@ end
 -- @return True if both tables are identical.
 function util.table.isclone(a, b)
     if #a ~= #b then return false end
-    for k, v in pairs(a) do
+    for k, _ in pairs(a) do
         if a[k] ~= b[k] then return false end
     end
     return true
@@ -200,7 +200,7 @@ end
 -- @return True if the file exists and is readable.
 function os.exists(f)
     assert(type(f) == "string", "invalid path")
-    local fh, err = io.open(f)
+    local fh = io.open(f)
     if fh then
         fh:close()
         return f

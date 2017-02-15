@@ -7,7 +7,6 @@
 local capi = { widget = widget }
 local math = require "math"
 local signal = require "lousy.signal"
-local util = require "lousy.util"
 local get_theme = require("lousy.theme").get
 
 local data = setmetatable({}, { __mode = "k" })
@@ -83,7 +82,7 @@ local function update(menu)
             end
 
             -- Is this the selected row?
-            selected = not row.title and index == d.cursor
+            local selected = not row.title and index == d.cursor
 
             -- Set row bg
             local rbg
@@ -119,12 +118,12 @@ local function update(menu)
                 -- Set cell props
                 if text and cell and row.title then
                     cell.text = text
-                    local fg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
-                    if cell.fg ~= fg then cell.fg = fg end
+                    local cfg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
+                    if cell.fg ~= cfg then cell.fg = cfg end
                 elseif text and cell then
                     cell.text = text
-                    local fg = (selected and (row.selected_fg or sfg)) or row.fg or fg
-                    if cell.fg ~= fg then cell.fg = fg end
+                    local cfg = (selected and (row.selected_fg or sfg)) or row.fg or fg
+                    if cell.fg ~= cfg then cell.fg = cfg end
                 end
             end
         end
@@ -140,7 +139,7 @@ local function build(menu, rows)
     local d = data[menu]
 
     -- Check rows
-    for i, row in ipairs(rows) do
+    for _, row in ipairs(rows) do
         assert(type(row) == "table", "invalid row in rows table")
         assert(#row >= 1, "empty row")
         row.ncols = #row

@@ -17,7 +17,7 @@ local function update_label(tl)
     local label = priv.label
     assert(view.type == "webview")
     local theme = get_theme()
-    local fg, bg, nfg, snfg = theme.tab_fg, theme.tab_bg, theme.tab_ntheme, theme.selected_ntheme
+    local fg, nfg, snfg = theme.tab_fg, theme.tab_ntheme, theme.selected_ntheme
     local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
 
     local ntheme = nfg
@@ -87,14 +87,14 @@ local function new(view, index)
     label.align = { x = 0 }
 
     -- Bind signals to associated view
-    view:add_signal("property::title", function (v)
+    view:add_signal("property::title", function (_)
         data[tl].no_title = false
         update_title_and_label(tl)
     end)
-    view:add_signal("property::uri",   function (v)
+    view:add_signal("property::uri",   function (_)
         update_title_and_label(tl)
     end)
-    view:add_signal("load-status",     function (v, status)
+    view:add_signal("load-status",     function (_, status)
         if status == "provisional" then data[tl].no_title = true end
         update_title_and_label(tl)
         update_label(tl)
@@ -119,7 +119,7 @@ local function new(view, index)
                 index = set_index,
             })[key](tbl, val)
         end,
-        __index = function (tbl, key, val)
+        __index = function (tbl, key)
             if key == "current" or key == "index" then
                 return data[tbl][key]
             end
