@@ -5,21 +5,8 @@
 ------------------------------------------------------------------
 
 local lousy = require("lousy")
-local string, table, io = string, table, io
-local loadstring, pcall = loadstring, pcall
-local setfenv = setfenv
-local msg = msg
-local print, type = print, type
-local pairs, ipairs = pairs, ipairs
-local tostring, tonumber = tostring, tonumber
-local editor = require "editor"
-local capi = {
-    luakit = luakit
-}
-local web_module = web_module
-
-local new_mode, add_binds = new_mode, add_binds
-local menu_binds = menu_binds
+local editor = require("editor")
+local capi = { luakit = luakit }
 
 --- Provides functionaliy to auto-fill forms based on a Lua DSL.
 -- The configuration is stored in $XDG_DATA_DIR/luakit/forms.lua
@@ -79,38 +66,10 @@ local menu_binds = menu_binds
 -- see the converter script under <code>extras/convert_formfiller.rb</code>
 --
 
-module("formfiller")
-
 local formfiller_wm = web_module("formfiller_webmodule")
 
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/forms.lua"
-
--- The global formfiller JS code
-local formfiller_js = [=[
-    var formfiller = {
-        toA: function (arr) {
-            var ret = [];
-            for (var i = 0; i < arr.length; ++i) {
-                ret.push(arr[i]);
-            }
-            return ret;
-        },
-        rexEscape: function (str) {
-            return str.replace(/[-[\]{}()*+?.,\\^$|#]/g, "\\$&");
-        },
-        toLuaString: function (str) {
-            return "'" + str.replace(/[\\'']/g, "\\$&") + "'";
-        },
-        click: function (element) {
-            var mouseEvent = document.createEvent("MouseEvent");
-            mouseEvent.initMouseEvent("click", true, true, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
-            element.dispatchEvent(mouseEvent);
-        },
-        forms: [],
-        inputs: [],
-    };
-]=]
 
 -- The function environment for the formfiller script
 local DSL = {
@@ -158,7 +117,7 @@ local DSL = {
     end,
 }
 
-function pattern_from_js_regex(re)
+local function pattern_from_js_regex(re)
     -- TODO: This needs work
     local special = ".-+*?^$%"
     re = re:gsub("%%", "%%%%")
@@ -169,7 +128,7 @@ function pattern_from_js_regex(re)
 end
 
 --- Reads the rules from the formfiller DSL file
-function init(w)
+local function init(w)
     w.formfiller_state = {
         rules = {},
         menu_cache = {},
@@ -188,7 +147,7 @@ function init(w)
     -- execute in sandbox
     local env = {}
     -- wrap the DSL functions so they can access the state
-    for k, fun in pairs(DSL) do
+    for k in pairs(DSL) do
         env[k] = function (...) return DSL[k](w.formfiller_state, ...) end
     end
     setfenv(dsl, env)
@@ -207,13 +166,13 @@ function init(w)
 end
 
 --- Edits the formfiller rules.
-function edit()
+local function edit()
     editor.edit(file)
 end
 
 --- Adds a new entry to the formfiller based on the current webpage.
 -- @param w The window for which to add an entry.
-function add(w)
+local function add(w)
     -- load JS prerequisites
     local function add(_, ret)
         formfiller_wm:remove_signal("add", add)
@@ -254,7 +213,7 @@ end
 --- Fills the current page from the formfiller rules.
 -- @param w The window on which to fill the forms
 -- @param fast Prevents any menus from being shown
-function load(w, fast)
+local function load(w, fast)
     -- reload the DSL
     init(w)
 
