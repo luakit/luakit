@@ -630,6 +630,13 @@ window.methods = {
             end
         end
 
+        if globals.save_on_exit then
+            -- Save session.
+            local wins = {}
+            for _, w in pairs(window.bywidget) do table.insert(wins, w) end
+            session.save(wins)
+        end
+
         w:emit_signal("close")
 
         -- Close all tabs
