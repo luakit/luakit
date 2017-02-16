@@ -6,8 +6,8 @@ local function edit_externally(w)
 	local file = luakit.cache_dir .. "/" .. marker .. ".txt"
 
 	local function editor_callback(exit_reason, exit_status)
-		f = io.open(file, "r")
-		s = f:read("*all")
+		local f = io.open(file, "r")
+		local s = f:read("*all")
 		f:close()
         os.remove(file)
 		-- Strip the string

@@ -33,7 +33,7 @@ local function resource_request_starting(v, uri)
     assert(v.uri ~= nil)
     assert(uri ~= nil)
 
-    function starts_with(a, b)
+    local function starts_with(a, b)
         return string.sub(a, 1, string.len(b)) == b
     end
 
