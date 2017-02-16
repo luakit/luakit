@@ -39,7 +39,7 @@ end
 local default_theme = {
     fg   = "#fff",
     bg   = "#000",
-    font = "monospace normal 9",
+    font = "9px monospace",
 }
 
 --- Load the theme table from file.
