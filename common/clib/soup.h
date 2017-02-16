@@ -21,20 +21,9 @@
 #ifndef LUAKIT_CLIB_SOUP_H
 #define LUAKIT_CLIB_SOUP_H
 
-#include "clib/soup/cookiejar.h"
 #include "luah.h"
 
-#include <libsoup/soup-session.h>
 #include <libsoup/soup-uri.h>
-
-typedef struct {
-    /* shared libsoup session */
-    SoupSession *session;
-    /* shared custom cookie jar */
-    LuakitCookieJar *cookiejar;
-} soup_t;
-
-soup_t soupconf;
 
 /* lua soup class for signals */
 lua_class_t soup_class;
