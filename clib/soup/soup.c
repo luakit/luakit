@@ -23,27 +23,10 @@
 #include "common/signal.h"
 
 #include <libsoup/soup.h>
-#if WITH_WEBKIT2
-# include <webkit2/webkit2.h>
-#else
-# include <webkit/webkit.h>
-#endif
+#include <webkit2/webkit2.h>
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
-
-property_t soup_properties[] = {
-  { L_TK_ACCEPT_LANGUAGE,      "accept-language",      CHAR, TRUE },
-  { L_TK_ACCEPT_LANGUAGE_AUTO, "accept-language-auto", BOOL, TRUE },
-  { L_TK_IDLE_TIMEOUT,         "idle-timeout",         INT,  TRUE },
-  { L_TK_MAX_CONNS,            "max-conns",            INT,  TRUE },
-  { L_TK_MAX_CONNS_PER_HOST,   "max-conns-per-host",   INT,  TRUE },
-  { L_TK_PROXY_URI,            "proxy-uri",            URI,  TRUE },
-  { L_TK_SSL_CA_FILE,          "ssl-ca-file",          CHAR, TRUE },
-  { L_TK_SSL_STRICT,           "ssl-strict",           BOOL, TRUE },
-  { L_TK_TIMEOUT,              "timeout",              INT,  TRUE },
-  { 0,                         NULL,                   0,    0    },
-};
 
 static gint
 luaH_soup_uri_tostring(lua_State *L)
@@ -149,77 +132,19 @@ luaH_soup_parse_uri(lua_State *L)
     return uri ? 1 : 0;
 }
 
-#if !WITH_WEBKIT2
-static gint
-luaH_soup_index(lua_State *L)
-{
-    if (!lua_isstring(L, 2))
-        return 0;
-
-    return luaH_gobject_index(L, soup_properties,
-            l_tokenize(lua_tostring(L, 2)),
-            G_OBJECT(soupconf.session));
-}
-
-static gint
-luaH_soup_newindex(lua_State *L)
-{
-    if (!lua_isstring(L, 2))
-        return 0;
-
-    luakit_token_t token = l_tokenize(lua_tostring(L, 2));
-
-    if (token == L_TK_ACCEPT_POLICY) {
-        g_object_set(G_OBJECT(soupconf.cookiejar), "accept-policy",
-                (gint)luaL_checknumber(L, 3), NULL);
-        return luaH_class_property_signal(L, &soup_class, token);
-    }
-
-    if (luaH_gobject_newindex(L, soup_properties, token, 3,
-                G_OBJECT(soupconf.session)))
-        return luaH_class_property_signal(L, &soup_class, token);
-
-    return 0;
-}
-#endif
-
 void
 soup_lib_setup(lua_State *L)
 {
     static const struct luaL_reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
-#if !WITH_WEBKIT2
-        { "__index",       luaH_soup_index },
-        { "__newindex",    luaH_soup_newindex },
-#endif
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
-#if !WITH_WEBKIT2
-        { "add_cookies",   luaH_cookiejar_add_cookies },
-        { "remove_cookies", luaH_cookiejar_remove_cookies },
-#endif
         { NULL,            NULL },
     };
 
     /* create signals array */
     soup_class.signals = signal_new();
-
-#if WITH_WEBKIT2
-    /* webkit2 API does not expose soup session */
-#else
-    /* init soup struct */
-    soupconf.cookiejar = luakit_cookie_jar_new();
-    soupconf.session = webkit_get_default_session();
-    soup_session_add_feature(soupconf.session,
-            (SoupSessionFeature*) soupconf.cookiejar);
-
-    /* remove old auth dialog and add luakit's auth feature instead */
-    soup_session_remove_feature_by_type(soupconf.session,
-            WEBKIT_TYPE_SOUP_AUTH_DIALOG);
-    soup_session_add_feature(soupconf.session,
-            (SoupSessionFeature*) luakit_auth_dialog_new());
-#endif
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
