@@ -4,23 +4,12 @@
 -- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
 ------------------------------------------------------------
 
--- Get Lua environment
-local ipairs = ipairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local unpack = unpack
-
--- Get luakit environment
-local lousy = require "lousy"
-local history = require "history"
-local bookmarks = require "bookmarks"
+local lousy = require("lousy")
+local history = require("history")
+local bookmarks = require("bookmarks")
 local escape = lousy.util.escape
-local new_mode, get_mode = new_mode, get_mode
-local add_binds = add_binds
-local capi = { luakit = luakit }
 
-module "completion"
+local completion = {}
 
 -- Store completion state (indexed by window)
 local data = setmetatable({}, { __mode = "k" })
@@ -32,7 +21,7 @@ add_binds("command", {
 })
 
 -- Return to command mode with original text and with original cursor position
-function exit_completion(w)
+function completion.exit_completion(w)
     local state = data[w]
     w:enter_cmd(state.orig_text, { pos = state.orig_pos })
 end
@@ -58,20 +47,20 @@ add_binds("completion", {
         function (w) w.menu:move_up() end),
 
     key({}, "Escape", "Stop completion and restore original command.",
-        exit_completion),
+        completion.exit_completion),
 
     key({"Control"}, "[", "Stop completion and restore original command.",
-        exit_completion),
+        completion.exit_completion),
 })
 
-function update_completions(w, text, pos)
+function completion.update_completions(w, text, pos)
     local state = data[w]
 
     -- Other parts of the code are triggering input changed events
     if state.lock then return end
 
     local input = w.ibar.input
-    local text, pos = text or input.text, pos or input.position
+    text, pos = text or input.text, pos or input.position
 
     -- Don't rebuild the menu if the text & cursor position are the same
     if text == state.text and pos == state.pos then return end
@@ -83,11 +72,11 @@ function update_completions(w, text, pos)
 
     -- Call each completion function
     local groups = {}
-    for _, func in ipairs(_M.order) do
+    for _, func in ipairs(completion.order) do
         table.insert(groups, func(state) or {})
     end
     -- Join all result tables
-    rows = lousy.util.table.join(unpack(groups))
+    local rows = lousy.util.table.join(unpack(groups))
 
     if rows[1] then
         -- Prevent callbacks triggering recursive updates.
@@ -100,7 +89,7 @@ function update_completions(w, text, pos)
         end
         state.lock = false
     elseif not state.built then
-        exit_completion(w)
+        completion.exit_completion(w)
     else
         w.menu:hide()
     end
@@ -118,7 +107,7 @@ new_mode("completion", {
         state.orig_pos = input.position
 
         -- Update input text when scrolling through completion menu items
-        w.menu:add_signal("changed", function (m, row)
+        w.menu:add_signal("changed", function (_, row)
             state.lock = true
             if row then
                 input.text = row.left .. " " .. state.right
@@ -130,18 +119,18 @@ new_mode("completion", {
             state.lock = false
         end)
 
-        update_completions(w)
+        completion.update_completions(w)
     end,
 
     changed = function (w, text)
         if not data[w].lock then
-            update_completions(w, text)
+            completion.update_completions(w, text)
         end
     end,
 
     move_cursor = function (w, pos)
         if not data[w].lock then
-            update_completions(w, nil, pos)
+            completion.update_completions(w, nil, pos)
         end
     end,
 
@@ -158,7 +147,7 @@ new_mode("completion", {
 })
 
 -- Completion functions
-funcs = {
+completion.funcs = {
     -- Add command completion items to the menu
     command = function (state)
         -- We are only interested in the first word
@@ -257,10 +246,12 @@ funcs = {
 }
 
 -- Order of completion items
-order = {
-    funcs.command,
-    funcs.history,
-    funcs.bookmarks,
+completion.order = {
+    completion.funcs.command,
+    completion.funcs.history,
+    completion.funcs.bookmarks,
 }
+
+return completion
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
