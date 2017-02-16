@@ -3,6 +3,12 @@
 luakit is a fast, light and simple to use micro-browser framework extensible
 by Lua using the WebKit web content engine and the GTK+ toolkit.
 
+This is a fork of the original luakit based on the newer WebKit2 web
+engine, which is under active development. Note that the older WebKit1
+and web browsers based upon WebKit1 are insecure and will not be fixed: see
+[here](https://blogs.gnome.org/mcatanzaro/2016/02/01/on-webkit-security-updates/)
+for more details.
+
 ## Dont Panic!
 
 You don't have to be a developer to use luakit on a daily basis. If you are
@@ -11,11 +17,10 @@ luakit behaves similarly out of the box.
 
 ## Requirements
 
- * gtk3
- * Lua (5.1)
+ * GTK+ 3
+ * Lua 5.1 or LuaJIT 2
  * lfs (lua file system)
- * libwebkit (webkit-gtk)
- * libunique (optional)
+ * webkit2gtk
  * sqlite3
 
 ## Compiling
@@ -28,10 +33,6 @@ To link against LuaJIT (if you have LuaJIT installed) run:
 
     make USE_LUAJIT=1
 
-To build without unique instance support (which uses GApplications) run:
-
-    make USE_UNIQUE=0
-
 To build with a custom compiler run:
 
     make CC=clang
@@ -43,9 +44,8 @@ Note to packagers: you may wish to build luakit with:
 To prevent luakit searching in relative paths (`./config` & `./lib`) for
 user configs.
 
-The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `PREFIX=/path`,
-`DEVELOPMENT_PATHS=0`, `CC=clang` build options do not conflict.
-You can use whichever you desire.
+The `USE_LUAJIT=1`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`, `CC=clang`
+build options do not conflict. You can use whichever you desire.
 
 ## Installing
 
@@ -128,9 +128,9 @@ here also, example:
 
 Please use the bug tracker at:
 
-  https://github.com/mason-larobina/luakit/issues
+  https://github.com/aidanholm/luakit/issues
 
-## Community
+## Community for the original luakit
 
 ### Mailing list
 
