@@ -292,11 +292,9 @@ luaH_init(void)
     /* Export soup lib */
     soup_lib_setup(L);
 
-#if WITH_UNIQUE
     if (!globalconf.nounique)
         /* Export unique lib */
         unique_lib_setup(L);
-#endif
 
     /* Export widget */
     widget_class_setup(L);

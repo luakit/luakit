@@ -14,7 +14,6 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
 DEVELOPMENT_PATHS ?= 1
 USE_LUAJIT        ?= 1
-USE_UNIQUE        ?= 1
 
 # === Paths ==================================================================
 
@@ -82,11 +81,6 @@ PKGS += $(LUA_PKG_NAME)
 # within the WebKit-GTK package.
 ifneq ($(NO_JAVASCRIPTCORE),1)
 	PKGS += javascriptcoregtk-4.0
-endif
-
-# Build luakit with single instance support?
-ifneq ($(USE_UNIQUE),0)
-	CPPFLAGS += -DWITH_UNIQUE
 endif
 
 # Check user has correct packages installed (and found by pkg-config).
