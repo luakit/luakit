@@ -19,7 +19,7 @@
  */
 
 #include "common/property.h"
-#include "clib/soup/soup.h"
+#include "common/clib/soup.h"
 
 #include <webkit2/webkit2.h>
 

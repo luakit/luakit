@@ -1,5 +1,5 @@
 /*
- * clib/soup/soup.h - soup library
+ * extension/clib/luakit.h - Generic functions for Lua scripts
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,29 +18,13 @@
  *
  */
 
-#ifndef LUAKIT_CLIB_SOUP_H
-#define LUAKIT_CLIB_SOUP_H
+#ifndef LUAKIT_EXTENSION_CLIB_LUAKIT_H
+#define LUAKIT_EXTENSION_CLIB_LUAKIT_H
 
-#include "clib/soup/cookiejar.h"
-#include "luah.h"
+#include "common/luaclass.h"
+#include "common/msg.h"
 
-#include <libsoup/soup-session.h>
-#include <libsoup/soup-uri.h>
-
-typedef struct {
-    /* shared libsoup session */
-    SoupSession *session;
-    /* shared custom cookie jar */
-    LuakitCookieJar *cookiejar;
-} soup_t;
-
-soup_t soupconf;
-
-/* lua soup class for signals */
-lua_class_t soup_class;
-
-void soup_lib_setup(lua_State *L);
-gint luaH_soup_push_uri(lua_State *L, SoupURI *uri);
+void luakit_lib_setup(lua_State *L);
 
 #endif
 
