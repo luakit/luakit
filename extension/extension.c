@@ -16,6 +16,7 @@
 #include "extension/clib/page.h"
 #include "extension/clib/extension.h"
 #include "common/clib/msg.h"
+#include "common/clib/soup.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
@@ -39,6 +40,7 @@ web_lua_init(void)
     luaH_uniq_setup(WL, NULL);
     luaH_add_paths(WL, NULL);
     luakit_lib_setup(WL);
+    soup_lib_setup(WL);
     ui_process_class_setup(WL);
     dom_document_class_setup(WL);
     dom_element_class_setup(WL);

@@ -19,7 +19,7 @@
  *
  */
 
-#include "clib/soup/soup.h"
+#include "common/clib/soup.h"
 #include "luah.h"
 
 #include <libsoup/soup-cookie.h>

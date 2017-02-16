@@ -25,7 +25,6 @@
 /* include clib headers */
 #include "clib/download.h"
 #include "clib/luakit.h"
-#include "clib/soup/soup.h"
 #include "clib/sqlite3.h"
 #include "clib/timer.h"
 #include "clib/unique.h"
@@ -34,6 +33,7 @@
 #include "clib/stylesheet.h"
 #include "clib/web_module.h"
 #include "common/clib/msg.h"
+#include "common/clib/soup.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>

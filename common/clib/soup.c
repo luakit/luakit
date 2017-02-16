@@ -18,7 +18,7 @@
  *
  */
 
-#include "clib/soup/soup.h"
+#include "common/clib/soup.h"
 #include "common/property.h"
 #include "common/signal.h"
 
