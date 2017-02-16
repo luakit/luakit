@@ -17,6 +17,7 @@
 #include "extension/clib/extension.h"
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
+#include "common/clib/ipc.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"

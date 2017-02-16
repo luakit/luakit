@@ -14,6 +14,7 @@
 #include "clib/luakit.h"
 #include "clib/widget.h"
 #include "common/luaserialize.h"
+#include "common/clib/ipc.h"
 #include "web_context.h"
 #include "widgets/webview.h"
 
@@ -46,7 +47,7 @@ msg_recv_extension_init(msg_endpoint_t *ipc, const gpointer UNUSED(msg), guint U
 void
 msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
-    web_module_recv(globalconf.L, msg->arg, length);
+    ipc_channel_recv(globalconf.L, msg->arg, length);
 }
 
 void

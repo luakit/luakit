@@ -14,6 +14,7 @@
 #include "common/util.h"
 #include "common/luajs.h"
 #include "common/luaserialize.h"
+#include "common/clib/ipc.h"
 
 static GPtrArray *queued_page_ipc;
 
@@ -36,7 +37,7 @@ msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_m
 void
 msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
-    ui_process_recv(extension.WL, msg->arg, length);
+    ipc_channel_recv(extension.WL, msg->arg, length);
 }
 
 void
