@@ -15,7 +15,7 @@ local lousy = require("lousy")
 -- opened as parameters. In return, it gives the index at which the new tab
 -- should be put.
 
-taborder = {
+local taborder = {
     first = function()
         return 1
     end,
@@ -31,49 +31,49 @@ taborder = {
     before_current = function (w)
         return w.tabs:current()
     end,
+}
 
-    -- Put new child tab next to the parent after unbroken chain of descendants
-    -- Logical way to use when one "queues" background-followed links
-    by_origin = function(w, newview)
-        local newindex = 0
-        local currentview = w.view
-        if not currentview then return 1 end
+-- Put new child tab next to the parent after unbroken chain of descendants
+-- Logical way to use when one "queues" background-followed links
+taborder.by_origin = function(w, newview)
+    local newindex = 0
+    local currentview = w.view
+    if not currentview then return 1 end
 
-        local kids = taborder.kidsof
-        local views = w.tabs.children
+    local kids = taborder.kidsof
+    local views = w.tabs.children
 
-        if kids[currentview] then
-            -- Collect all descendants
-            local desc = { currentview }
-            local i = 1
-            repeat
-                desc = lousy.util.table.join(desc, kids[desc[i]])
-                i = i + 1
-            until i > #desc
+    if kids[currentview] then
+        -- Collect all descendants
+        local desc = { currentview }
+        local i = 1
+        repeat
+            desc = lousy.util.table.join(desc, kids[desc[i]])
+            i = i + 1
+        until i > #desc
 
-            -- Find the non-descendant closest after current. This is where
-            -- the new tab should be put.
-            for i = #views, 1, -1 do
-                if not lousy.util.table.hasitem(desc, views[i]) then
-                    newindex = i
-                end
-                if views[i] == currentview then
-                    break
-                end
+        -- Find the non-descendant closest after current. This is where
+        -- the new tab should be put.
+        for i = #views, 1, -1 do
+            if not lousy.util.table.hasitem(desc, views[i]) then
+                newindex = i
             end
-
-            -- There were no non-descendants after current. Put new tab last.
-            if newindex == 0 then newindex = taborder.last(w, newview) end
-        else
-            kids[currentview] = {}
-            newindex = taborder.after_current(w, newview)
+            if views[i] == currentview then
+                break
+            end
         end
 
-        table.insert(kids[currentview], newview)
+        -- There were no non-descendants after current. Put new tab last.
+        if newindex == 0 then newindex = taborder.last(w, newview) end
+    else
+        kids[currentview] = {}
+        newindex = taborder.after_current(w, newview)
+    end
 
-        return newindex
-    end,
-}
+    table.insert(kids[currentview], newview)
+
+    return newindex
+end
 
 -- Default: open regular tabs last
 taborder.default = taborder.last
@@ -85,5 +85,7 @@ taborder.default_bg = taborder.by_origin
 -- family rules, e.g. from by_origin. Tabs created elsewhere are orphans.
 taborder.kidsof = {}
 setmetatable(taborder.kidsof, { __mode = "k" })
+
+return taborder
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

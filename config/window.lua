@@ -669,6 +669,7 @@ window.methods = {
     end,
 
     attach_tab = function (w, view, switch, order)
+        local taborder = package.loaded.taborder
         -- Get tab order function
         if not order and taborder then
             order = (switch == false and taborder.default_bg)
