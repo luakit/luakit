@@ -56,6 +56,15 @@ local opts_metatable = {
         end
         return ret
     end,
+    __sub = function (op1, op2)
+        assert(type(op1) == "table" and type(op2) == "table",
+            "non-table operands")
+        local ret = util.table.copy(op1)
+        for _, k in ipairs(op2) do
+            ret[k] = nil
+        end
+        return ret
+    end,
 }
 
 --- Parse uri query
