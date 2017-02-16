@@ -43,7 +43,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
     if (ret) {
         /* First argument: redirect url or false to block */
         if (lua_isstring(L, -1)) /* redirect */
-            webkit_uri_request_set_uri(request, lua_tostring(L, -2));
+            webkit_uri_request_set_uri(request, lua_tostring(L, -1));
         else { /* block request */
             if (!lua_isboolean(L, -1) || lua_toboolean(L, -1))
                 warn(ANSI_COLOR_BLUE "send-request" ANSI_COLOR_RESET " handler returned %s, should be a string or false",
@@ -51,6 +51,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
             lua_settop(L, top);
             return TRUE;
         }
+        lua_pop(L, ret);
     }
 
     lua_pop(L, 1);
