@@ -50,7 +50,8 @@ luaH_msg(lua_State *L, log_level_t lvl)
     /* Make source path relative to execdir */
     char *execdir = dirname(g_strdup(globalconf.execpath));
     unsigned execdir_len = strlen(execdir);
-    const char *src = ar.short_src;
+    /* Use .source if it's a file, since short_src is truncated for long paths */
+    const char *src = ar.source[0] == '@' ? ar.source+1 : ar.short_src;
     if (!strncmp(src, execdir, execdir_len))
         src += execdir_len+1; /* Plus trailing slash */
 
