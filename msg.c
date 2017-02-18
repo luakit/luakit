@@ -9,7 +9,6 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <errno.h>
-#include <libgen.h>
 
 #include "clib/web_module.h"
 #include "clib/luakit.h"
@@ -166,7 +165,7 @@ static void
 initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 {
 #if DEVELOPMENT_PATHS
-    gchar *extension_dir = dirname(g_strdup(globalconf.execpath));
+    gchar *extension_dir = g_get_current_dir();
 #else
     const gchar *extension_dir = LUAKIT_INSTALL_PATH;
 #endif
@@ -186,8 +185,7 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
      * until after the web extension process has already started (and failed to
      * connect). TODO: add a busy wait */
 
-    const gchar *const args[] = {socket_path, globalconf.execpath, NULL};
-    GVariant *payload = g_variant_new_strv(args, -1);
+    GVariant *payload = g_variant_new_string(socket_path);
     webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
     webkit_web_context_set_web_extensions_directory(context, extension_dir);
 #if DEVELOPMENT_PATHS

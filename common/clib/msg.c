@@ -24,7 +24,6 @@
 #include <gtk/gtk.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <libgen.h>
 #include <webkit2/webkit2.h>
 
 gpointer string_format_ref;
@@ -46,17 +45,7 @@ luaH_msg(lua_State *L, log_level_t lvl)
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "Sln", &ar);
-
-    /* Make source path relative to execdir */
-    char *execdir = dirname(g_strdup(globalconf.execpath));
-    unsigned execdir_len = strlen(execdir);
-    /* Use .source if it's a file, since short_src is truncated for long paths */
-    const char *src = ar.source[0] == '@' ? ar.source+1 : ar.short_src;
-    if (!strncmp(src, execdir, execdir_len))
-        src += execdir_len+1; /* Plus trailing slash */
-
-    _log(lvl, ar.currentline, src, "%s", luaH_msg_string_from_args(L));
-    g_free(execdir);
+    _log(lvl, ar.currentline, ar.short_src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 

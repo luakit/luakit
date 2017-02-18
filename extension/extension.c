@@ -54,10 +54,7 @@ web_lua_init(void)
 G_MODULE_EXPORT void
 webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant *payload)
 {
-    const gchar **v = g_variant_get_strv(payload, NULL);
-    const gchar *socket_path = v[0];
-    globalconf.execpath = (gchar *)v[1];
-    g_free(v);
+    const gchar *socket_path = g_variant_get_string(payload, NULL);
 
     extension.WL = luaL_newstate();
     extension.ext = ext;
