@@ -71,7 +71,7 @@ function u.parse_query(query)
 end
 
 -- Allowed URI table properties
-local uri_allowed = { scheme = true, user = true, password = true,
+local uri_allowed = { scheme = true, user = true, password = true, port = true,
     host = true, path = true, query = true, fragment = true, opts = true }
 
 -- URI table metatable
