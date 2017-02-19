@@ -14,30 +14,14 @@
 -- Filterlists need to be updated regularly (~weekly), use cron!      --
 ------------------------------------------------------------------------
 
-local msg       = msg
-local pairs     = pairs
-local ipairs    = ipairs
-local assert    = assert
-local unpack    = unpack
-local type      = type
-local io        = io
-local os        = os
-local string    = string
-local table     = table
-local tostring  = tostring
-local tonumber  = tonumber
-local webview   = webview
+local webview   = require("webview")
 local lousy     = require("lousy")
 local util      = lousy.util
 local capi      = { luakit = luakit }
-local add_binds, add_cmds = add_binds, add_cmds
 local lfs       = require("lfs")
-local window    = window
-local web_module = web_module
+local window    = require("window")
 
-
-module("adblock")
-
+local adblock = {}
 local adblock_wm = web_module("adblock_webmodule")
 
 --- Module global variables
@@ -47,37 +31,35 @@ local adblock_dir = capi.luakit.data_dir .. "/adblock/"
 
 local filterfiles = {}
 local subscriptions_file = adblock_dir .. "/subscriptions"
-subscriptions = {}
-
-
+adblock.subscriptions = {}
 
 -- String patterns to filter URI's with
-rules = {}
+adblock.rules = {}
 
 -- Fitting for adblock.chrome.refresh_views()
-refresh_views = function()
+adblock.refresh_views = function()
     -- Dummy.
 end
 
 -- Enable or disable filtering
-enable = function ()
+adblock.enable = function ()
     enabled = true
     adblock_wm:emit_signal("enable", enabled)
-    refresh_views()
+    adblock.refresh_views()
 end
-disable = function ()
+adblock.disable = function ()
     enabled = false
     adblock_wm:emit_signal("enable", enabled)
-    refresh_views()
+    adblock.refresh_views()
 end
 
 -- Report AdBlock state: «Enabled» or «Disabled»
-state = function ()
+adblock.state = function ()
     return enabled and "Enabled" or "Disabled"
 end
 
 -- Detect files to read rules from
-function detect_files()
+local function detect_files()
     -- Create adblock directory if it doesn't exist
     local curdir = lfs.currentdir()
     if not lfs.chdir(adblock_dir) then
@@ -93,7 +75,7 @@ function detect_files()
             table.insert(filterfiles, filename)
         end
     end
-    
+
     msg.info("adblock: Found " .. #filterfiles .. " rules lists")
 end
 
@@ -135,7 +117,7 @@ end
 
 -- Convert Adblock Plus filter description to lua string pattern
 -- See http://adblockplus.org/en/filters for more information
-abp_to_pattern = function (s)
+local abp_to_pattern = function (s)
     -- Strip filter options
     local opts
     s, opts = get_abp_opts(s)
@@ -195,7 +177,7 @@ abp_to_pattern = function (s)
     return s, opts, domain, false
 end
 
-add_unique_cached = function (pattern, opts, tab, cache_tab)
+local add_unique_cached = function (pattern, opts, tab, cache_tab)
     if cache_tab[pattern] then
         return false
     else
@@ -205,7 +187,7 @@ add_unique_cached = function (pattern, opts, tab, cache_tab)
     end
 end
 
-list_new = function ()
+local list_new = function ()
     return {
         patterns    = {},
         ad_patterns = {},
@@ -217,8 +199,8 @@ list_new = function ()
     }
 end
 
-list_add = function(list, line, cache, pat_exclude)
-    pats, opts, domain, plain = abp_to_pattern(line)
+local list_add = function(list, line, cache, pat_exclude)
+    local pats, opts, domain, plain = abp_to_pattern(line)
     local contains_ad = string.find(line, "ad", 1, true)
 
     for _, pat in ipairs(pats) do
@@ -246,7 +228,7 @@ list_add = function(list, line, cache, pat_exclude)
 end
 
 -- Parses an Adblock Plus compatible filter list
-parse_abpfilterlist = function (filename, cache)
+local parse_abpfilterlist = function (filename, cache)
     if os.exists(filename) then
         msg.verbose("adblock: loading filterlist %s", filename)
     else
@@ -274,15 +256,108 @@ parse_abpfilterlist = function (filename, cache)
     return white, black, wlen, blen, icnt
 end
 
+--- Save the in-memory subscriptions to flatfile.
+-- @param file The destination file or the default location if nil.
+local function write_subscriptions(file)
+    if not file then file = subscriptions_file end
+    assert(file and file ~= "", "Cannot write subscriptions to empty path")
+
+    local lines = {}
+    for _, list in pairs(adblock.subscriptions) do
+        local subs = { uri = list.uri, title = list.title, opts = table.concat(list.opts or {}, " "), }
+        local line = string.gsub("{title}\t{uri}\t{opts}", "{(%w+)}", subs)
+        table.insert(lines, line)
+    end
+
+    -- Write table to disk
+    local fh = io.open(file, "w")
+    fh:write(table.concat(lines, "\n"))
+    io.close(fh)
+end
+
+-- Remove options and add new ones to list
+-- @param list_index Index of the list to modify
+-- @param opt_ex Options to exclude
+-- @param opt_inc Options to include
+local function list_opts_modify(list_index, opt_ex, opt_inc)
+    assert(type(list_index) == "number", "list options modify: invalid list index")
+    assert(list_index > 0, "list options modify: index has to be > 0")
+    if not opt_ex then opt_ex = {} end
+    if not opt_inc then opt_inc = {} end
+
+    if type(opt_ex) == "string" then opt_ex = util.string.split(opt_ex) end
+    if type(opt_inc) == "string" then opt_inc = util.string.split(opt_inc) end
+
+    local list = util.table.values(adblock.subscriptions)[list_index]
+    local opts = opt_inc
+    for _, opt in ipairs(list.opts) do
+        if not util.table.hasitem(opt_ex, opt) then
+            table.insert(opts, opt)
+        end
+    end
+
+    -- Manage list's rules
+    if util.table.hasitem(opt_inc, "Enabled") then
+        adblock_wm:emit_signal("list_set_enabled", list.title, true)
+        adblock.refresh_views()
+    elseif util.table.hasitem(opt_inc, "Disabled") then
+        adblock_wm:emit_signal("list_set_enabled", list.title, false)
+        adblock.refresh_views()
+    end
+
+    list.opts = opts
+    write_subscriptions()
+end
+
+--- Add a list to the in-memory lists table
+local function add_list(uri, title, opts, replace, save_lists)
+    assert( (title ~= nil) and (title ~= ""), "adblock list add: no title given")
+    if not opts then opts = {} end
+
+    -- Create tags table from string
+    if type(opts) == "string" then opts = util.string.split(opts) end
+    if table.maxn(opts) == 0 then table.insert(opts, "Disabled") end
+    if not replace and adblock.subscriptions[title] then
+        local list = adblock.subscriptions[title]
+        -- Merge tags
+        for _, opts in ipairs(opts) do
+            if not util.table.hasitem(list, opts) then table.insert(list, opts) end
+        end
+    else
+        -- Insert new adblock list
+        local list = { uri = uri, title = title, opts = opts }
+        if not (title == "" or title == nil) then
+            adblock.subscriptions[title] = list
+        end
+    end
+
+    -- Save by default
+    if save_lists ~= false then write_subscriptions() end
+end
+
+--- Load subscriptions from a flatfile to memory.
+-- @param file The subscriptions file or the default subscriptions location if nil.
+local function read_subscriptions(file)
+    -- Find a subscriptions file
+    if not file then file = subscriptions_file end
+    assert(os.exists(file), "Cannot read subscriptions from non-existent file")
+
+    -- Read lines into subscriptions data table
+    for line in io.lines(file) do
+        local title, uri, opts = unpack(util.string.split(line, "\t"))
+        if title ~= "" then add_list(uri, title, opts, false, false) end
+    end
+end
+
 -- Load filter list files
-load = function (reload, single_list, no_sync)
-    if reload then subscriptions, filterfiles = {}, {} end
+adblock.load = function (reload, single_list, no_sync)
+    if reload then adblock.subscriptions, filterfiles = {}, {} end
     detect_files()
     if not single_list then
         read_subscriptions()
         local files_list = {}
         for _, filename in ipairs(filterfiles) do
-            local list = subscriptions[filename]
+            local list = adblock.subscriptions[filename]
             if list and util.table.hasitem(list.opts, "Enabled") then
                 table.insert(files_list, filename)
             else
@@ -295,7 +370,7 @@ load = function (reload, single_list, no_sync)
     end
 
     -- [re-]loading:
-    if reload then rules = {} end
+    if reload then adblock.rules = {} end
     local filters_dir = adblock_dir
     local filterfiles_loading = {}
     if single_list and not reload then
@@ -307,119 +382,26 @@ load = function (reload, single_list, no_sync)
         black = {},
         white = {}
     } -- This cache should let us avoid unnecessary filters duplication.
-    
+
     for _, filename in ipairs(filterfiles_loading) do
         local white, black, wlen, blen, icnt = parse_abpfilterlist(filters_dir .. filename, rules_cache)
-        local list = subscriptions[filename]
-        if not util.table.hasitem(rules, list) then
-            rules[filename] = list
+        local list = adblock.subscriptions[filename]
+        if not util.table.hasitem(adblock.rules, list) then
+            adblock.rules[filename] = list
         end
         list.title, list.white, list.black, list.ignored = filename, wlen or 0, blen or 0, icnt or 0
         list.whitelist, list.blacklist = white or {}, black or {}
     end
-    
+
     rules_cache.white, rules_cache.black = nil, nil
     rules_cache = nil
     if not no_sync and not single_list then
-        adblock_wm:emit_signal("update_rules", rules)
+        adblock_wm:emit_signal("update_rules", adblock.rules)
     end
-    refresh_views()
+    adblock.refresh_views()
 end
 
--- Remove options and add new ones to list
--- @param list_index Index of the list to modify
--- @param opt_ex Options to exclude
--- @param opt_inc Options to include
-function list_opts_modify(list_index, opt_ex, opt_inc)
-    assert(type(list_index) == "number", "list options modify: invalid list index")
-    assert(list_index > 0, "list options modify: index has to be > 0")
-    if not opt_ex then opt_ex = {} end
-    if not opt_inc then opt_inc = {} end
-    
-    if type(opt_ex) == "string" then opt_ex = util.string.split(opt_ex) end
-    if type(opt_inc) == "string" then opt_inc = util.string.split(opt_inc) end
-    
-    local list = util.table.values(subscriptions)[list_index]
-    local opts = opt_inc
-    for _, opt in ipairs(list.opts) do
-        if not util.table.hasitem(opt_ex, opt) then
-            table.insert(opts, opt)
-        end
-    end
-    
-    -- Manage list's rules
-    if util.table.hasitem(opt_inc, "Enabled") then
-        adblock_wm:emit_signal("list_set_enabled", list.title, true)
-        refresh_views()
-    elseif util.table.hasitem(opt_inc, "Disabled") then
-        adblock_wm:emit_signal("list_set_enabled", list.title, false)
-        refresh_views()
-    end
-    
-    list.opts = opts
-    write_subscriptions()
-end
-
---- Add a list to the in-memory lists table
-function add_list(uri, title, opts, replace, save_lists)
-    assert( (title ~= nil) and (title ~= ""), "adblock list add: no title given")
-    if not opts then opts = {} end
-
-    -- Create tags table from string
-    if type(opts) == "string" then opts = util.string.split(opts) end
-    if table.maxn(opts) == 0 then table.insert(opts, "Disabled") end
-    if not replace and subscriptions[title] then
-        local list = subscriptions[title]
-        -- Merge tags
-        for _, opts in ipairs(opts) do
-            if not util.table.hasitem(list, opts) then table.insert(list, opts) end
-        end
-    else
-        -- Insert new adblock list
-        local list = { uri = uri, title = title, opts = opts }
-        if not (title == "" or title == nil) then
-            subscriptions[title] = list
-        end
-    end
-
-    -- Save by default
-    if save_lists ~= false then write_subscriptions() end
-end
-
---- Save the in-memory subscriptions to flatfile.
--- @param file The destination file or the default location if nil.
-function write_subscriptions(file)
-    if not file then file = subscriptions_file end
-    assert(file and file ~= "", "Cannot write subscriptions to empty path")
-
-    local lines = {}
-    for _, list in pairs(subscriptions) do
-        local subs = { uri = list.uri, title = list.title, opts = table.concat(list.opts or {}, " "), }
-        local line = string.gsub("{title}\t{uri}\t{opts}", "{(%w+)}", subs)
-        table.insert(lines, line)
-    end
-
-    -- Write table to disk
-    local fh = io.open(file, "w")
-    fh:write(table.concat(lines, "\n"))
-    io.close(fh)
-end
-
---- Load subscriptions from a flatfile to memory.
--- @param file The subscriptions file or the default subscriptions location if nil.
-function read_subscriptions(file)
-    -- Find a subscriptions file
-    if not file then file = subscriptions_file end
-    assert(os.exists(file), "Cannot read subscriptions from non-existent file")
-
-    -- Read lines into subscriptions data table
-    for line in io.lines(file) do
-        local title, uri, opts = unpack(util.string.split(line, "\t"))
-        if title ~= "" then add_list(uri, title, opts, false, false) end
-    end
-end
-
-function list_set_enabled(a, enabled)
+function adblock.list_set_enabled(a, enabled)
     if enabled then
         list_opts_modify(tonumber(a), "Disabled", "Enabled")
     else
@@ -438,11 +420,11 @@ adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
 end)
 
 capi.luakit.add_signal("web-extension-created", function (view)
-    adblock_wm:emit_signal(view, "update_rules", rules)
+    adblock_wm:emit_signal(view, "update_rules", adblock.rules)
 end)
 
 webview.init_funcs.adblock_load = function (view, w)
-    for name, list in pairs(rules) do
+    for name, list in pairs(adblock.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
         adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
     end
@@ -456,11 +438,11 @@ add_cmds({
         load(true)
         msg.info("adblock: Reloading filters complete.")
     end),
-    
+
     cmd({"adblock-list-enable", "able"}, function (w, a)
         list_set_enabled(a, true)
     end),
-    
+
     cmd({"adblock-list-disable", "abld"}, function (w, a)
         list_set_enabled(a, false)
     end),
@@ -468,11 +450,13 @@ add_cmds({
     cmd({"adblock-enable", "abe"}, function (w)
         enable()
     end),
-    
+
     cmd({"adblock-disable", "abd"}, function (w)
         disable()
     end),
 })
 
 -- Initialise module
-load(nil, nil, true)
+adblock.load(nil, nil, true)
+
+return adblock

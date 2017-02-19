@@ -3,25 +3,13 @@
 -- © 2011 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
--- Get lua environment
-local table = table
-local string = string
-local ipairs = ipairs
-local pairs = pairs
-local tostring = tostring
-local type = type
-local setmetatable = setmetatable
-local getmetatable = getmetatable
-local assert = assert
-local rawset = rawset
-
 -- Get luakit environment
 local util = require "lousy.util"
 local capi = { soup = soup }
 local uri_encode = luakit.uri_encode
 local uri_decode = luakit.uri_decode
 
-module "lousy.uri"
+local u = {}
 
 local opts_metatable = {
     __tostring = function (opts)
@@ -70,7 +58,7 @@ local opts_metatable = {
 --- Parse uri query
 --@param query the query component of a uri
 --@return table of options
-function parse_query(query)
+function u.parse_query(query)
     local opts, order = {}, {}
     string.gsub(query or "", "&*([^&=]+)=([^&]+)", function (k, v)
         opts[k] = uri_decode(v)
@@ -100,9 +88,9 @@ local uri_metatable = {
         for k, v in pairs(op2) do
             assert(uri_allowed[k], "invalid property: " .. k)
             if k == "query" and type(v) == "string" then
-                uri.opts = parse_query(v)
+                ret.opts = u.parse_query(v)
             else
-                uri[k] = v
+                ret[k] = v
             end
         end
         return ret
@@ -110,20 +98,22 @@ local uri_metatable = {
 }
 
 -- Parse uri string and return uri table
-function parse(uri)
+function u.parse(uri)
     -- Get uri table
-    local uri = capi.soup.parse_uri(uri)
+    uri = capi.soup.parse_uri(uri)
     if not uri then return end
     -- Parse uri.query and set uri.opts
-    uri.opts = parse_query(uri.query)
+    uri.opts = u.parse_query(uri.query)
     uri.query = nil
     return setmetatable(uri, uri_metatable)
 end
 
 -- Duplicate uri object
-function copy(uri)
+function u.copy(uri)
     assert(type(uri) == "table", "not a table")
-    return parse(tostring(uri))
+    return u.parse(tostring(uri))
 end
+
+return u
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

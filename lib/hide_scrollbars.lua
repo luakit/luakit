@@ -1,7 +1,4 @@
-local webview = webview
-local stylesheet = stylesheet
-
-module("hide_scrollbars")
+local webview = require("webview")
 
 local disable_scrollbar_ss = stylesheet{ source = [===[
     ::-webkit-scrollbar {

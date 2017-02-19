@@ -1,9 +1,3 @@
-local extension = extension
-local string = string
-local msg = msg
-
-module("referer_control_webmodule")
-
 local function domain_from_uri(uri)
     local domain = (uri and string.match(string.lower(uri), "^%a+://([^/]*)/?"))
     -- Strip leading www. www2. etc

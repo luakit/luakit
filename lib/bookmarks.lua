@@ -4,26 +4,19 @@
 -----------------------------------------------------------
 
 local lousy = require "lousy"
-local string = string
-local table = table
-local type = type
-local assert = assert
-local ipairs = ipairs
-local os = os
-local error = error
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
 local keys = lousy.util.table.keys
 
-module("bookmarks")
+local bookmarks = {}
 
-lousy.signal.setup(_M, true)
+lousy.signal.setup(bookmarks, true)
 
 -- Path to users bookmarks database
-db_path = capi.luakit.data_dir .. "/bookmarks.db"
+bookmarks.db_path = capi.luakit.data_dir .. "/bookmarks.db"
 
-function init()
-    db = capi.sqlite3{ filename = _M.db_path }
-    db:exec [[
+function bookmarks.init()
+    bookmarks.db = capi.sqlite3{ filename = bookmarks.db_path }
+    bookmarks.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
 
@@ -39,25 +32,25 @@ function init()
     ]]
 end
 
-capi.luakit.idle_add(init)
+capi.luakit.idle_add(bookmarks.init)
 
 -- Validate tag name
 local function valid_tag_name(name)
     return not not string.match(name, "^%w[%w-]*$")
 end
 
-function get(id)
+function bookmarks.get(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
-    local rows = db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
+    local rows = bookmarks.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
     return rows[1]
 end
 
-function remove(id)
+function bookmarks.remove(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
 
-    _M.emit_signal("remove", id)
+    bookmarks.emit_signal("remove", id)
 
-    db:exec([[ DELETE FROM bookmarks WHERE id = ? ]], { id })
+    bookmarks.db:exec([[ DELETE FROM bookmarks WHERE id = ? ]], { id })
 end
 
 local function parse_tags(tags)
@@ -70,13 +63,13 @@ end
 local function update_tags(b, tags)
     table.sort(tags)
     tags = table.concat(tags, " ")
-    db:exec([[ UPDATE bookmarks SET tags = ?, modified = ? WHERE id = ? ]],
+    bookmarks.db:exec([[ UPDATE bookmarks SET tags = ?, modified = ? WHERE id = ? ]],
         { tags, os.time(), b.id })
-    _M.emit_signal("update", id)
+    bookmarks.emit_signal("update", id)
 end
 
-function tag(id, new_tags, replace)
-    local b = assert(get(id), "bookmark not found")
+function bookmarks.tag(id, new_tags, replace)
+    local b = assert(bookmarks.get(id), "bookmark not found")
 
     if type(new_tags) == "table" then
         new_tags = table.concat(new_tags, " ")
@@ -94,8 +87,8 @@ function tag(id, new_tags, replace)
     update_tags(b, keys(tags))
 end
 
-function untag(id, name)
-    local b = assert(get(id), "bookmark not found")
+function bookmarks.untag(id, name)
+    local b = assert(bookmarks.get(id), "bookmark not found")
     if b.tags then
         local tags = parse_tags(b.tags)
         tags[name] = nil
@@ -104,7 +97,7 @@ function untag(id, name)
 end
 
 -- Add new bookmark
-function add(uri, opts)
+function bookmarks.add(uri, opts)
     opts = opts or {}
 
     assert(type(uri) == "string" and #uri > 0, "invalid bookmark uri")
@@ -120,18 +113,20 @@ function add(uri, opts)
         uri = "http://" .. uri
     end
 
-    db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?, ?)", {
+    bookmarks.db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?, ?)", {
         uri, opts.title or "", opts.desc or "", "", opts.created or os.time(),
         os.time() -- modified time (now)
     })
 
-    local id = db:exec("SELECT last_insert_rowid() AS id")[1].id
-    _M.emit_signal("add", id)
+    local id = bookmarks.db:exec("SELECT last_insert_rowid() AS id")[1].id
+    bookmarks.emit_signal("add", id)
 
     -- Add bookmark tags
-    if opts.tags then tag(id, opts.tags) end
+    if opts.tags then bookmarks.tag(id, opts.tags) end
 
     return id
 end
+
+return bookmarks
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

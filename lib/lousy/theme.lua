@@ -5,20 +5,10 @@
 -- @copyright 2008-2009 Damien Leone, Julien Danjou, 2010 Mason Larobina
 ---------------------------------------------------------------------------
 
---- Get environment we need
-local setmetatable = setmetatable
-local string = string
 local util = require "lousy.util"
-local error = error
-local rawget = rawget
-local pcall = pcall
-local dofile = dofile
-local type = type
-
---- Theme library for lousy.
-module "lousy.theme"
 
 local theme
+local theme_lib = {}
 
 -- Searches recursively for theme value.
 -- (I.e. `w.bg = theme.some_thing_bg` ->
@@ -44,7 +34,7 @@ local default_theme = {
 
 --- Load the theme table from file.
 -- @param path The filepath of the theme.
-function init(path)
+function theme_lib.init(path)
     if not path then return error("error loading theme: no path specified") end
     -- Load theme table
     local success
@@ -63,8 +53,10 @@ end
 
 --- Get the current theme.
 -- @return The current theme table.
-function get()
+function theme_lib.get()
     return theme
 end
+
+return theme_lib
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -2,6 +2,8 @@
 -- luakit mode configuration --
 -------------------------------
 
+local window = require("window")
+
 -- Table of modes and their callback hooks
 local modes = {}
 local lousy = require "lousy"

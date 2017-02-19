@@ -3,27 +3,30 @@
 -- © 2010-2011 Mason Larobina <mason.larobina@gmail.com> --
 -----------------------------------------------------------
 
-local os = require "os"
-local webview = webview
-local table = table
-local string = string
-local lousy = require "lousy"
+local os = require("os")
+local webview = require("webview")
+local lousy = require("lousy")
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
-module "history"
+local history = {}
 
 -- Path of history sqlite database to open/create/update
-db_path = capi.luakit.data_dir .. "/history.db"
+history.db_path = capi.luakit.data_dir .. "/history.db"
+
+local query_find_last
+local query_insert
+local query_update_visits
+local query_update_title
 
 -- Setup signals on history module
-lousy.signal.setup(_M, true)
+lousy.signal.setup(history, true)
 
-function init()
+function history.init()
     -- Return if database handle already open
-    if db then return end
+    if history.db then return end
 
-    db = capi.sqlite3{ filename = _M.db_path }
-    db:exec [[
+    history.db = capi.sqlite3{ filename = history.db_path }
+    history.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
 
@@ -36,7 +39,7 @@ function init()
         );
     ]]
 
-    query_find_last = db:compile [[
+    query_find_last = history.db:compile [[
         SELECT id
         FROM history
         WHERE uri = ?
@@ -44,35 +47,35 @@ function init()
         LIMIT 1
     ]]
 
-    query_insert = db:compile [[
+    query_insert = history.db:compile [[
         INSERT INTO history
         VALUES (NULL, ?, ?, ?, ?)
     ]]
 
-    query_update_visits = db:compile [[
+    query_update_visits = history.db:compile [[
         UPDATE history
         SET visits = visits + 1, last_visit = ?
         WHERE id = ?
     ]]
 
-    query_update_title = db:compile [[
+    query_update_title = history.db:compile [[
         UPDATE history
         SET title = ?
         WHERE id = ?
     ]]
 end
 
-capi.luakit.idle_add(init)
+capi.luakit.idle_add(history.init)
 
-function add(uri, title, update_visits)
-    if not db then init() end
+function history.add(uri, title, update_visits)
+    if not history.db then history.init() end
 
     -- Ignore blank uris
     if not uri or uri == "" or uri == "about:blank" then return end
     -- Ignore luakit:// urls
     if string.find(uri, "^luakit://") then return end
     -- Ask user if we should ignore uri
-    if _M.emit_signal("add", uri, title) == false then return end
+    if history.emit_signal("add", uri, title) == false then return end
 
     -- Find existing item
     local item = (query_find_last:exec{uri})[1]
@@ -95,7 +98,7 @@ webview.init_funcs.save_hist = function (view)
         if view.enable_private_browsing then return end
 
         if status == "committed" then
-            add(view.uri)
+            history.add(view.uri)
         end
     end)
     -- Update titles
@@ -105,9 +108,11 @@ webview.init_funcs.save_hist = function (view)
 
         local title = view.title
         if title and title ~= "" then
-            add(view.uri, title, false)
+            history.add(view.uri, title, false)
         end
     end)
 end
+
+return history
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

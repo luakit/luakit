@@ -5,21 +5,13 @@
 
 -- Grab environment we need
 local capi = { widget = widget }
-local setmetatable = setmetatable
 local math = require "math"
 local signal = require "lousy.signal"
-local type = type
-local assert = assert
-local ipairs = ipairs
-local table = table
-local util = require "lousy.util"
 local get_theme = require("lousy.theme").get
-
-module "lousy.widget.menu"
 
 local data = setmetatable({}, { __mode = "k" })
 
-function update(menu)
+local function update(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -90,7 +82,7 @@ function update(menu)
             end
 
             -- Is this the selected row?
-            selected = not row.title and index == d.cursor
+            local selected = not row.title and index == d.cursor
 
             -- Set row bg
             local rbg
@@ -126,12 +118,12 @@ function update(menu)
                 -- Set cell props
                 if text and cell and row.title then
                     cell.text = text
-                    local fg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
-                    if cell.fg ~= fg then cell.fg = fg end
+                    local cfg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
+                    if cell.fg ~= cfg then cell.fg = cfg end
                 elseif text and cell then
                     cell.text = text
-                    local fg = (selected and (row.selected_fg or sfg)) or row.fg or fg
-                    if cell.fg ~= fg then cell.fg = fg end
+                    local cfg = (selected and (row.selected_fg or sfg)) or row.fg or fg
+                    if cell.fg ~= cfg then cell.fg = cfg end
                 end
             end
         end
@@ -140,14 +132,14 @@ function update(menu)
     menu.widget:show()
 end
 
-function build(menu, rows)
+local function build(menu, rows)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
     local d = data[menu]
 
     -- Check rows
-    for i, row in ipairs(rows) do
+    for _, row in ipairs(rows) do
         assert(type(row) == "table", "invalid row in rows table")
         assert(#row >= 1, "empty row")
         row.ncols = #row
@@ -174,7 +166,7 @@ local function calc_offset(menu)
     end
 end
 
-function move_up(menu)
+local function move_up(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -199,7 +191,7 @@ function move_up(menu)
     menu:emit_signal("changed", menu:get())
 end
 
-function move_down(menu)
+local function move_down(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -224,7 +216,7 @@ function move_down(menu)
     menu:emit_signal("changed", menu:get())
 end
 
-function get(menu, index)
+local function get(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -234,16 +226,19 @@ function get(menu, index)
     return d.rows[index or d.cursor]
 end
 
-function del(menu, index)
+local function del(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
+    assert(not index or type(index) == "number", "invalid index")
 
     -- Get private menu widget data
     local d = data[menu]
+    index = index or d.cursor
 
     -- Unable to delete this index, return
-    if d.cursor < 1 then return end
+    if index < 1 then return end
 
-    table.remove(d.rows, d.cursor)
+    table.remove(d.rows, index)
+    if index < d.cursor then d.cursor = d.cursor - 1 end
 
     -- Update rows count
     d.nrows = #(d.rows)
@@ -258,12 +253,12 @@ function del(menu, index)
     menu:emit_signal("changed", menu:get())
 end
 
-function nrows(menu)
+local function nrows(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
     return data[menu].nrows
 end
 
-function new(args)
+local function new(args)
     args = args or {}
 
     local menu = {
@@ -296,4 +291,4 @@ function new(args)
     return menu
 end
 
-setmetatable(_M, { __call = function(_, ...) return new(...) end })
+return setmetatable({}, { __call = function(_, ...) return new(...) end })

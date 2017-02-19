@@ -1,14 +1,5 @@
-local pairs, ipairs = pairs, ipairs
-local table, string = table, string
-local type = type
-local ui_process = ui_process
-local dom_document = dom_document
-local page = page
-local msg = msg
-
-module("formfiller_webmodule")
-
 local ui = ui_process()
+local state
 
 local function element_attributes_match(element, attrs)
     for attr, value in pairs(attrs) do
@@ -37,7 +28,7 @@ end
 
 local function match(tag, attrs, form, parents)
     local attr_table = {}
-    for k, v in ipairs(attrs) do
+    for _, v in ipairs(attrs) do
         if form[v] then
             attr_table[v] = form[v]
         end
@@ -56,7 +47,7 @@ end
 
 local function filter_list(tbl, fn)
     local ret = {}
-    for k, v in ipairs(tbl) do
+    for _, v in ipairs(tbl) do
         if fn(v) then
             ret[#ret+1] = v
         end
@@ -180,7 +171,7 @@ local function load(fast, page_id)
     ui:emit_signal("finished")
 end
 
-function contains(tbl, item)
+local function contains(tbl, item)
     for _, v in ipairs(tbl) do
         if v == item then return true end
     end

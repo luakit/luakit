@@ -1,24 +1,15 @@
-local assert        = assert
-local string        = string
-local webview       = webview
-local lousy         = require "lousy"
-local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
-local add_binds, add_cmds = add_binds, add_cmds
-local lfs           = require "lfs"
-local print         = print
-local domain_props  = domain_props
-local editor        = require "editor"
-local io            = io
-local pairs         = pairs
-local ipairs        = ipairs
-local stylesheet    = stylesheet
+local webview = require("webview")
+local lousy   = require("lousy")
+local lfs     = require("lfs")
+local editor  = require("editor")
+local key     = lousy.bind.key
 
 local capi = {
 	luakit = luakit,
 	sqlite3 = sqlite3 
 }
 
-module("styles")
+local styles = {}
 
 local styles_dir = capi.luakit.data_dir .. "/styles/"
 
@@ -26,10 +17,10 @@ local default_enabled = 1
 
 local stylesheets = {}
 
-db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
+local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 
-query_create = db:compile [[
+local query_create = db:compile [[
 	CREATE TABLE IF NOT EXISTS by_domain (
 		id INTEGER PRIMARY KEY,
 		domain TEXT,
@@ -42,7 +33,7 @@ local query_insert = db:compile [[ INSERT INTO by_domain VALUES (NULL, ?, ?) ]]
 local query_update = db:compile [[ UPDATE by_domain SET enabled = ? WHERE id == ?  ]]
 local query_select = db:compile [[ SELECT * FROM by_domain WHERE domain == ?  ]]
 
-function string.starts(str, prefix)
+local function string_starts(str, prefix)
    return string.sub(str, 1, string.len(prefix)) == prefix
 end
 
@@ -51,10 +42,10 @@ local function domain_from_uri(uri)
 		return nil
 	elseif uri == "about:blank" then
 		return "about:blank"
-	elseif string.starts(uri, "file://") then
+	elseif string_starts(uri, "file://") then
 		return "file"
 	else
-		local uri = assert(lousy.uri.parse(uri), "invalid uri")
+		uri = assert(lousy.uri.parse(uri), "invalid uri")
 		return string.lower(uri.host)
 	end
 end
@@ -89,8 +80,8 @@ local function domains_from_uri(uri)
     return domains
 end
 
-webview.init_funcs.style_toggle_load = function(view)
-    view:add_signal("stylesheet", function (v, status)
+webview.init_funcs.styles_load = function(view)
+    view:add_signal("stylesheet", function (v)
         local domains = domains_from_uri(v.uri)
         local enabled = v:emit_signal("enable-styles")
         if enabled == nil then enabled = db_get(v.uri) ~= 0 end
@@ -123,11 +114,11 @@ function webview.methods.styles_toggle(view, _)
 	db_set(view.uri, enabled)
 end
 
-local function load_file(path, domain)
+styles.load_file = function (path, domain)
     if stylesheet == nil then return end
 
-    file = io.open(path, "r")
-    source = file:read("*all")
+    local file = io.open(path, "r")
+    local source = file:read("*all")
     file:close()
 
     if stylesheets[domain] then
@@ -137,7 +128,7 @@ local function load_file(path, domain)
     end
 end
 
-local detect_files = function()
+styles.detect_files = function ()
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
 		print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
@@ -157,7 +148,7 @@ local detect_files = function()
 			if props.user_stylesheet_uri then
 				print("Replacing user stylesheet for domain " .. domain)
 			end
-            load_file(filename, domain)
+            styles.load_file(filename, domain)
 			props.user_stylesheet_uri = "file://" .. styles_dir .. filename
 		end
     end
@@ -168,7 +159,7 @@ local cmd = lousy.bind.cmd
 add_cmds({
     cmd({"styles-reload", "sr"}, "Reload user stylesheets.", function (w)
         w:notify("styles: Reloading files...")
-        detect_files()
+        styles.detect_files()
         w:notify("styles: Reloading files complete.")
     end),
 })
@@ -182,4 +173,6 @@ add_binds("normal", {
 	end),
 })
 
-detect_files()
+styles.detect_files()
+
+return styles

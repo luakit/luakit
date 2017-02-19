@@ -4,25 +4,15 @@
 -- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
 ------------------------------------------------------------
 
--- Get lua environment
-local assert = assert
-local string = string
-local type = type
-local xpcall = xpcall
-local debug = debug
-local pairs = pairs
-local luakit = luakit
-local error_page = require "error_page"
+local error_page = require("error_page")
+local webview = require("webview")
+local window = require("window")
 
--- Get luakit environment
-local webview = webview
-local window = window
-
-module("chrome")
+local chrome = {}
 
 -- Common stylesheet that can be sourced from several chrome modules for a
 -- consitent looking theme.
-stylesheet = [===[
+chrome.stylesheet = [===[
     body {
         background-color: white;
         color: black;
@@ -144,7 +134,7 @@ stylesheet = [===[
 local handlers = {}
 local on_first_visual_handlers = {}
 
-function add(page, func, on_first_visual_func, export_funcs)
+function chrome.add(page, func, on_first_visual_func, export_funcs)
     -- Do some sanity checking
     assert(type(page) == "string",
         "invalid chrome page name (string expected, got "..type(page)..")")
@@ -156,20 +146,18 @@ function add(page, func, on_first_visual_func, export_funcs)
         or type(on_first_visual_func) == "function",
         "invalid chrome handler (function/nil expected, got "..type(on_first_visual_func)..")")
 
-    if luakit.webkit2 then
-        for name, func in pairs(export_funcs or {}) do
-            local pattern = "^luakit://" .. page .. "/?(.*)"
-            assert(type(name) == "string")
-            assert(type(func) == "function")
-            luakit.register_function(pattern, name, func)
-        end
+    for name, func in pairs(export_funcs or {}) do
+        local pattern = "^luakit://" .. page .. "/?(.*)"
+        assert(type(name) == "string")
+        assert(type(func) == "function")
+        luakit.register_function(pattern, name, func)
     end
 
     handlers[page] = func
     on_first_visual_handlers[page] = on_first_visual_func
 end
 
-function remove(page)
+function chrome.remove(page)
     handlers[page] = nil
     on_first_visual_handlers[page] = nil
 end
@@ -240,12 +228,6 @@ webview.init_funcs.chrome = function (view, w)
 
         -- Call the supplied handler
         on_first_visual_func(view, meta)
-
-        if not luakit.webkit2 then
-            for name, func in pairs(export_funcs or {}) do
-                view:register_function(name, func)
-            end
-        end
     end)
 end
 
@@ -256,5 +238,7 @@ luakit.register_function("^luakit://(.*)", "reset_mode", function (view)
         end
     end
 end)
+
+return chrome
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

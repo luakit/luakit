@@ -5,27 +5,16 @@
 -- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
 -------------------------------------------------------
 
--- Grab environment we need
-local io = io
-local ipairs = ipairs
-local os = os
-local pairs = pairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local msg = msg
-local webview = webview
-local window = window
+local webview = require("webview")
+local window = require("window")
 local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
-local add_binds, add_cmds = add_binds, add_cmds
-local new_mode, menu_binds = new_mode, menu_binds
 local capi = { luakit = luakit }
 
 --- Evaluates and manages userscripts.
 -- JavaScript userscripts must end in <code>.user.js</code>
-module("userscripts")
+local userscripts = {}
 
 -- Pure JavaScript implementation of greasemonkey methods commonly used
 -- in chome/firefox userscripts.
@@ -139,7 +128,7 @@ local lstate = setmetatable({}, { __mode = "k" })
 
 --- The directory, in which to search for userscripts.
 -- By default, this is $XDG_DATA_HOME/luakit/scripts
-dir = capi.luakit.data_dir .. "/scripts"
+userscripts.dir = capi.luakit.data_dir .. "/scripts"
 
 -- Userscript class methods
 local prototype = {
@@ -151,7 +140,7 @@ local prototype = {
             lstate[view].gmloaded = true
         end
         view:eval_js(s.js, { source = s.file, no_return = true, callback =
-        function (ret, err)
+        function (_, err)
             for _, w in pairs(window.bywidget) do
                 if w.view == view then
                     w:error(string.format("running userscript '%s' failed:\n%s",
@@ -229,10 +218,10 @@ end
 
 --- Loads all userscripts from the <code>userscripts.dir</code>.
 local function load_all()
-    if not os.exists(dir) then return end
-    for file in lfs.dir(dir) do
+    if not os.exists(userscripts.dir) then return end
+    for file in lfs.dir(userscripts.dir) do
         if string.match(file, "%.user%.js$") then
-            load_js(dir .. "/" .. file)
+            load_js(userscripts.dir .. "/" .. file)
         end
     end
 end
@@ -260,18 +249,18 @@ local function invoke(view, on_start)
 end
 
 -- Saves an userscript
-function save(file, js)
-    if not os.exists(dir) then
-        util.mkdir(dir)
+function userscripts.save(file, js)
+    if not os.exists(userscripts.dir) then
+        util.mkdir(userscripts.dir)
     end
-    local f = io.open(dir .. "/" .. file, "w")
+    local f = io.open(userscripts.dir .. "/" .. file, "w")
     f:write(js)
     f:close()
-    load_js(dir .. "/" .. file)
+    load_js(userscripts.dir .. "/" .. file)
 end
 
 -- Deletes an userscript
-function del(file)
+function userscripts.del(file)
     if not scripts[file] then return end
     os.remove(file)
     scripts[file] = nil
@@ -315,8 +304,8 @@ add_cmds({
             local js = util.unescape(ret)
             local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
             if not header then return w:error("Could not find userscript header") end
-            save(file, js)
-            w:notify("Installed userscript to: " .. dir .. "/" .. file)
+            userscripts.save(file, js)
+            w:notify("Installed userscript to: " .. userscripts.dir .. "/" .. file)
         end})
     end),
 
@@ -335,7 +324,7 @@ new_mode("uscriptlist", {
         end
         if #rows == 1 then
             w:notify(string.format("No userscripts installed. Use `:usinstall`"
-                .. "or place .user.js files in %q manually.", dir))
+                .. "or place .user.js files in %q manually.", userscripts.dir))
             return
         end
         w.menu:build(rows)
@@ -353,7 +342,7 @@ add_binds("uscriptlist", util.table.join({
     key({}, "d", function (w)
         local row = w.menu:get()
         if row and row.script then
-            del(row.script.file)
+            userscripts.del(row.script.file)
             w.menu:del()
         end
     end),
@@ -389,5 +378,7 @@ add_binds("uscriptlist", util.table.join({
 
 -- Initialize the userscripts
 load_all()
+
+return userscripts
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

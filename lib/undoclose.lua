@@ -4,6 +4,9 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local window = require("window")
+local lousy = require("lousy")
+
 local reopening = {}
 
 local on_tab_close = function (w, view)

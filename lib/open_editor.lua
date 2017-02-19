@@ -1,20 +1,13 @@
-local lousy     = lousy
-local os        = os
-local io        = io
-local string    = string
-local luakit    = luakit
-local add_binds = add_binds
+local lousy = require "lousy"
 
-module("external_editor")
-
-function edit_externally(w)
+local function edit_externally(w)
 	local time = os.time()
 	local marker = "luakit_extedit_" .. time
 	local file = luakit.cache_dir .. "/" .. marker .. ".txt"
 
 	local function editor_callback(exit_reason, exit_status)
-		f = io.open(file, "r")
-		s = f:read("*all")
+		local f = io.open(file, "r")
+		local s = f:read("*all")
 		f:close()
         os.remove(file)
 		-- Strip the string

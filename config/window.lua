@@ -3,9 +3,10 @@
 ------------------
 
 require "lfs"
+local lousy = require("lousy")
 
 -- Window class table
-window = {}
+local window = {}
 
 -- List of active windows by window widget
 window.bywidget = setmetatable({}, { __mode = "k" })
@@ -618,6 +619,9 @@ window.methods = {
         if w.has_blank then w.has_blank:destroy() end
         w.has_blank = nil
 
+        -- Bit of a hack
+        local webview = require("webview")
+
         local view
         if type(arg) == "widget" and arg.type == "webview" then
             view = arg
@@ -665,6 +669,7 @@ window.methods = {
     end,
 
     attach_tab = function (w, view, switch, order)
+        local taborder = package.loaded.taborder
         -- Get tab order function
         if not order and taborder then
             order = (switch == false and taborder.default_bg)
@@ -765,7 +770,7 @@ window.methods = {
         -- Save session.
         local wins = {}
         for _, w in pairs(window.bywidget) do table.insert(wins, w) end
-        session.save(wins)
+        require("session").save(wins)
 
         -- Replace current process with new luakit instance.
         luakit.exec(cmd)
@@ -924,5 +929,7 @@ function window.new(args)
 
     return w
 end
+
+return window
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

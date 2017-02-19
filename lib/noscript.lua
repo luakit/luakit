@@ -3,31 +3,21 @@
 -- (C) 2011 Mason Larobina <mason.larobina@gmail.com> --
 --------------------------------------------------------
 
--- Get Lua environment
-local os = require "os"
-local tonumber = tonumber
-local assert = assert
-local table = table
-local string = string
-
--- Get luakit environment
-local window = window
-local webview = webview
+local window = require("window")
+local webview = require("webview")
 local add_binds = add_binds
-local lousy = require "lousy"
-local widget = widget
+local lousy = require("lousy")
 local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
-local webkit2 = luakit.webkit2
-local theme = theme
+local theme = require("theme")
 
-module "noscript"
+local noscript = {}
 
 -- Default blocking values
-enable_scripts = true
-enable_plugins = true
+noscript.enable_scripts = true
+noscript.enable_plugins = true
 
-create_table = [[
+local create_table = [[
 CREATE TABLE IF NOT EXISTS by_domain (
     id INTEGER PRIMARY KEY,
     domain TEXT,
@@ -35,7 +25,7 @@ CREATE TABLE IF NOT EXISTS by_domain (
     enable_plugins INTEGER
 );]]
 
-db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/noscript.db" }
+local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/noscript.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 db:exec(create_table)
 
@@ -66,14 +56,14 @@ end
 
 function webview.methods.toggle_scripts(view, w)
     local domain = get_domain(view.uri)
-    local enable_scripts = _M.enable_scripts
+    local enable_scripts = noscript.enable_scripts
     local row = match_domain(domain)
 
     if row then
         enable_scripts = itob(row.enable_scripts)
         update(row.id, "enable_scripts", not enable_scripts)
     else
-        insert(domain, not enable_scripts, _M.enable_plugins)
+        insert(domain, not enable_scripts, noscript.enable_plugins)
     end
 
     w:notify(string.format("%sabled scripts for domain: %s",
@@ -82,14 +72,14 @@ end
 
 function webview.methods.toggle_plugins(view, w)
     local domain = get_domain(view.uri)
-    local enable_plugins = _M.enable_plugins
+    local enable_plugins = noscript.enable_plugins
     local row = match_domain(domain)
 
     if row then
         enable_plugins = itob(row.enable_plugins)
         update(row.id, "enable_plugins", not enable_plugins)
     else
-        insert(domain, _M.enable_scripts, not enable_plugins)
+        insert(domain, noscript.enable_scripts, not enable_plugins)
     end
 
     w:notify(string.format("%sabled plugins for domain: %s",
@@ -103,18 +93,18 @@ function webview.methods.toggle_remove(view, w)
     w:notify("Removed rules for domain: " .. domain)
 end
 
-function string.starts(a, b)
+local function string_starts(a, b)
     return string.sub(a, 1, string.len(b)) == b
 end
 
 local function lookup_domain(uri)
     if not uri then uri = "" end
-    local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
+    local enable_scripts, enable_plugins = noscript.enable_scripts, noscript.enable_plugins
     local domain = get_domain(uri)
 
     -- Enable everything for chrome pages; without this, chrome pages which
     -- depend upon javascript will break
-    if string.starts(uri, "luakit://") then return true, true, "luakit://" end
+    if string_starts(uri, "luakit://") then return true, true, "luakit://" end
 
     -- Look up this domain and all parent domains, returning the first match
     -- E.g. querying a.b.com will lookup a.b.com, then b.com, then com
@@ -129,7 +119,7 @@ local function lookup_domain(uri)
     return enable_scripts, enable_plugins, nil
 end
 
-function webview.methods.noscript_state(view, w)
+function webview.methods.noscript_state(view)
     if view.uri then
         return lookup_domain(view.uri)
     end
@@ -178,7 +168,7 @@ webview.init_funcs.noscript_load = function (view, w)
             w:noscript_indicator_update()
         end
     end)
-    view:add_signal("switched-page", function (v)
+    view:add_signal("switched-page", function ()
         w:noscript_indicator_update()
     end)
 end
@@ -189,3 +179,5 @@ add_binds("normal", {
     buf("^,tp$", function (w) w:toggle_plugins() end),
     buf("^,tr$", function (w) w:toggle_remove()  end),
 })
+
+return noscript

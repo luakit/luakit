@@ -1,13 +1,4 @@
-local pairs, ipairs = pairs, ipairs
-local table, string = table, string
-local assert, type = assert, type
 local floor, max = math.floor, math.max
-local rawset, rawget = rawset, rawget
-local ui_process = ui_process
-local dom_document = dom_document
-
-module("follow_webmodule")
-
 local ui = ui_process()
 
 -- Label making
@@ -15,14 +6,13 @@ local ui = ui_process()
 -- Calculates the minimum number of characters needed in a hint given a
 -- charset of a certain length (I.e. the base)
 local function max_hint_len(size, base)
-    local floor, len = floor, 0
+    local len = 0
     while size > 0 do size, len = floor(size / base), len + 1 end
     return len
 end
 
 local function charset(seq, size)
-    local floor, sub, reverse = floor, string.sub, string.reverse
-    local insert, concat = table.insert, table.concat
+    local sub, reverse, concat = string.sub, string.reverse, table.concat
 
     local base, digits, labels = #seq, {}, {}
     for i = 1, base do rawset(digits, i, sub(seq, i, i)) end
@@ -45,7 +35,7 @@ local function charset(seq, size)
 end
 
 -- Different hint label styles
-label_styles = {
+local label_styles = {
     charset = function (seq)
         assert(type(seq) == "string" and #seq > 0, "invalid sequence")
         return function (size) return charset(seq, size) end
@@ -81,7 +71,7 @@ label_styles = {
 local s = label_styles
 local label_maker = s.sort(s.reverse(s.numbers()))
 
-evaluators = {
+local evaluators = {
     click = function(element)
         local tag = element.tag_name
         if tag == "INPUT" or tag == "TEXTAREA" then
@@ -398,7 +388,7 @@ ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
     state.ignore_case = ignore_case or false
 
     -- Find all hints in the viewport
-    for i, frame in ipairs(state.frames) do
+    for _, frame in ipairs(state.frames) do
         -- Set up the frame, and find hints
         init_frame(frame, mode.stylesheet)
         frame.hints = frame_find_hints(page, frame, mode.selector)
@@ -419,7 +409,7 @@ ui:add_signal("enter", function(_, page, wid, mode, page_id, ignore_case)
     end
 
     for _, frame in ipairs(state.frames) do
-        for i, hint in ipairs(frame.hints) do
+        for _, hint in ipairs(frame.hints) do
             -- Append hint elements to overlay
             local e = hint.elem
             local r = hint.bb

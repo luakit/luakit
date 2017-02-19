@@ -1,21 +1,15 @@
-local assert = assert
-local setmetatable = setmetatable
-local table = table
-local type = type
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 local capi = { widget = widget, luakit = luakit, }
 local tab = require "lousy.widget.tab"
-local pairs = pairs
-local math = math
 
-module "lousy.widget.tablist"
+local tablist = {}
 
-min_width = 100
+tablist.min_width = 100
 
 local data = setmetatable({}, { __mode = "k" })
 
-function destroy(tlist)
+local function destroy(tlist)
     -- Destroy tablist container widget
     tlist.widget:destroy()
     -- Destroy private widget data
@@ -35,7 +29,7 @@ local function scroll_current_tab_into_view(tlist)
         -- Get the currently selected tab
         local notebook = data[tlist].notebook
         local view = notebook[notebook:current()]
-        tl = data[tlist].tabs[view]
+        local tl = data[tlist].tabs[view]
         if not tl then return end
 
         local axis = data[tlist].orientation == "horizontal" and "x" or "y"
@@ -71,7 +65,7 @@ local function regenerate_tab_indices(tlist, a, b)
     end
 end
 
-function new(notebook, orientation)
+function tablist.new(notebook, orientation)
     assert(type(notebook) == "widget" and notebook.type == "notebook")
     assert(orientation == "horizontal" or orientation == "vertical")
 
@@ -104,26 +98,26 @@ function new(notebook, orientation)
     signal.setup(tlist)
 
     -- Attach notebook signal handlers
-    notebook:add_signal("page-added", function (nbook, view, idx)
+    notebook:add_signal("page-added", function (_, view, idx)
         local tl = tab(view, idx)
         data[tlist].tabs[view] = tl
 
-        if min_width and min_width > 0 and orientation == "horizontal" then
-            tl.widget.min_size = { w = min_width }
+        if tablist.min_width and tablist.min_width > 0 and orientation == "horizontal" then
+            tl.widget.min_size = { w = tablist.min_width }
         end
         box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
         box:reorder(tl.widget, idx-1)
         regenerate_tab_indices(tlist, idx)
 
-        tl.widget:add_signal("button-release", function (e, mods, but)
+        tl.widget:add_signal("button-release", function (_, mods, but)
             return tlist:emit_signal("tab-clicked", tl.index, mods, but)
         end)
-        tl.widget:add_signal("button-double-click", function (e, mods, but)
+        tl.widget:add_signal("button-double-click", function (_, mods, but)
             return tlist:emit_signal("tab-double-clicked", tl.index, mods, but)
         end)
     end)
 
-    notebook:add_signal("page-removed", function (nbook, view, idx)
+    notebook:add_signal("page-removed", function (_, view, idx)
         local tl = data[tlist].tabs[view]
         box:remove(tl.widget)
         tl.widget:destroy()
@@ -131,7 +125,7 @@ function new(notebook, orientation)
         data[tlist].tabs[view] = nil
     end)
 
-    notebook:add_signal("switch-page", function (nbook, view, idx)
+    notebook:add_signal("switch-page", function (_, view)
         local prev_view = data[tlist].prev_view
         data[tlist].prev_view = view
 
@@ -145,7 +139,7 @@ function new(notebook, orientation)
         scroll_current_tab_into_view(tlist)
     end)
 
-    notebook:add_signal("page-reordered", function (nbook, view, idx)
+    notebook:add_signal("page-reordered", function (_, view, idx)
         local tl = data[tlist].tabs[view]
         local old_idx = tl.index
         box:reorder(tl.widget, idx-1)
@@ -171,7 +165,7 @@ function new(notebook, orientation)
                 update_tablist_visibility()
             end
         end,
-        __index = function (tbl, key, val)
+        __index = function (tbl, key)
             if key == "visible" then return data[tbl][key] end
         end,
     })
@@ -179,4 +173,4 @@ function new(notebook, orientation)
     return tlist
 end
 
-setmetatable(_M, { __call = function(_, ...) return new(...) end })
+return setmetatable(tablist, { __call = function(_, ...) return tablist.new(...) end })

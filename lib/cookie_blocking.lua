@@ -4,6 +4,7 @@
 ------------------------------------------------------
 
 require "cookies"
+local lousy = require("lousy")
 
 cookies.whitelist_path = luakit.data_dir .. "/cookie.whitelist"
 cookies.blacklist_path = luakit.data_dir .. "/cookie.blacklist"

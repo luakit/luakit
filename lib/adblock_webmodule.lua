@@ -1,11 +1,3 @@
-local pairs = pairs
-local string = string
-local ui_process = ui_process
-local extension = extension
-local msg = msg
-
-module("adblock_webmodule")
-
 local ui = ui_process()
 
 local enabled = true
@@ -53,7 +45,7 @@ local function domain_from_uri(uri)
     return domain or ""
 end
 
-match_list = function (list, uri, uri_domains, page_domain, uri_domain)
+local match_list = function (list, uri, uri_domains, page_domain, uri_domain)
     -- First, check for domain name anchor (||) rules
     for domain, _ in pairs(uri_domains) do
         for pattern, opts in pairs(list.domains[domain] or {}) do
@@ -105,7 +97,7 @@ match_list = function (list, uri, uri_domains, page_domain, uri_domain)
 end
 
 -- Tests URI against user-defined filter functions, then whitelist, then blacklist
-match = function (src, dst)
+local match = function (src, dst)
     -- Always allow data: URIs
     if string.sub(dst, 1, 5) == "data:" then
         msg.debug("adblock: allowing data URI")
@@ -149,7 +141,7 @@ end
 
 
 -- Direct requests to match function
-filter = function (src, dst)
+local filter = function (src, dst)
     -- Don't adblock on local files
     local file_uri = src and string.sub(src, 1, 7) == "file://"
 
@@ -160,7 +152,7 @@ end
 
 extension:add_signal("page-created", function(_, page)
     page:add_signal("send-request", function(p, uri)
-        allow = filter(p.uri, uri)
+        local allow = filter(p.uri, uri)
         if allow == false and p.uri == uri then
             ui:emit_signal("navigation-blocked", p.id, uri)
         end

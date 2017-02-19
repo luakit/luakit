@@ -3,6 +3,9 @@
 -- © 2010 Mason Larobina <mason.larobina@gmail.com> --
 ------------------------------------------------------
 
+local webview = require("webview")
+local lousy = require("lousy")
+
 -- Add searching binds to normal mode
 local key = lousy.bind.key
 add_binds("normal", {

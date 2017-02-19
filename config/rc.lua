@@ -21,7 +21,7 @@ if unique then
 end
 
 -- Load library of useful functions for luakit
-require "lousy"
+local lousy = require "lousy"
 
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
@@ -34,11 +34,11 @@ theme = assert(lousy.theme.get(), "failed to load theme")
 
 -- Load users window class
 -- ("$XDG_CONFIG_HOME/luakit/window.lua" or "/etc/xdg/luakit/window.lua")
-require "window"
+local window = require "window"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
-require "webview"
+local webview = require "webview"
 
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
@@ -77,7 +77,7 @@ require "proxy"
 require "quickmarks"
 
 -- Add session saving/loading support
-require "session"
+local session = require "session"
 
 -- Add command to list closed tabs & bind to open closed tabs
 require "undoclose"
@@ -93,7 +93,7 @@ require "bookmarks"
 require "bookmarks_chrome"
 
 -- Add download support
-require "downloads"
+downloads = require "downloads"
 require "downloads_chrome"
 
 -- Add automatic PDF downloading and opening

@@ -7,6 +7,7 @@
 -- TODO check host against public TLD list to prevent returning only
 -- top-level domain.
 
+local lousy = require("lousy")
 local parse_uri, uri_tostring = soup.parse_uri, soup.uri_tostring
 local match = string.match
 

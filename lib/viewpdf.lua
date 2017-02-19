@@ -1,11 +1,4 @@
-local downloads = downloads
-local luakit = luakit
-local string = string
-local print = print
-local assert = assert
-local lfs = require "lfs"
-
-module("viewpdf")
+local downloads = require("downloads")
 
 downloads.add_signal("download-location", function(uri, filename, mime)
     if mime == "application/pdf" then
