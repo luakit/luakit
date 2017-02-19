@@ -37,3 +37,5 @@ gint luaH_luakit_idle_add(lua_State *L);
 gint luaH_luakit_idle_remove(lua_State *L);
 
 #endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
