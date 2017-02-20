@@ -52,3 +52,30 @@ function test_vim_modeline ()
         fail("Some files do not have modelines")
     end
 end
+
+function test_include_guard ()
+    local include_guard_pat = "#ifndef LUAKIT_%s\n#define LUAKIT_%s\n\n"
+    local missing = {}
+
+    for file in files(".", "%.h$") do
+        -- Get file contents
+        local f = assert(io.open(file, "r"))
+        local contents = f:read("*all")
+        f:close()
+
+        local s = file:sub(3):gsub("[%.%/]", "_"):upper()
+        local pat = include_guard_pat:format(s, s)
+        if not contents:match(pat) then
+            table.insert(missing, file)
+        end
+    end
+
+    if #missing > 0 then
+        for _, file in ipairs(missing) do
+            local s = file:sub(3):gsub("[%.%/]", "_"):upper()
+            print("File does not have include guard: " .. file)
+            print("Expected: LUAKIT_" .. s)
+        end
+        fail("Some files do not have include guards")
+    end
+end
