@@ -1,3 +1,9 @@
+msg.warn("================================================================================")
+msg.warn("This library is non-functional and will be removed in a future version")
+msg.warn("To avoid startup errors, remove any require('" .. ({...})[1] .. "') lines from your configuration")
+msg.warn("This file was required by %s", debug.getinfo(3).short_src)
+msg.warn("================================================================================")
+
 local cookie_filter_lib = require("cookie_filter")
 local lousy     = require("lousy")
 local add_binds, add_cmds = add_binds, add_cmds
