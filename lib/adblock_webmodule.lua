@@ -1,4 +1,4 @@
-local ui = ui_process()
+local ui = ipc_channel("adblock_webmodule")
 
 local enabled = true
 local rules = {}

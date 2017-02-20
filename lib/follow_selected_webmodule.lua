@@ -1,4 +1,4 @@
-local ui = ui_process()
+local ui = ipc_channel("follow_selected_webmodule")
 
 -- Return selected uri or first uri in selection
 local return_selected = [=[

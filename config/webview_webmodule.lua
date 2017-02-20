@@ -1,4 +1,4 @@
-local ui = ui_process()
+local ui = ipc_channel("webview_webmodule")
 
 local mousedown_cb = function (event, page_id)
     -- Only consider left-click

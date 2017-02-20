@@ -10,7 +10,6 @@
 #include "extension/extension.h"
 
 #include "extension/clib/luakit.h"
-#include "extension/clib/ui_process.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
 #include "extension/clib/page.h"
@@ -42,7 +41,6 @@ web_lua_init(void)
     luaH_add_paths(WL, NULL);
     luakit_lib_setup(WL);
     soup_lib_setup(WL);
-    ui_process_class_setup(WL);
     ipc_channel_class_setup(WL);
     dom_document_class_setup(WL);
     dom_element_class_setup(WL);

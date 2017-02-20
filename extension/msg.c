@@ -10,7 +10,6 @@
 #include "extension/clib/extension.h"
 #include "extension/msg.h"
 #include "extension/scroll.h"
-#include "extension/clib/ui_process.h"
 #include "common/util.h"
 #include "common/luajs.h"
 #include "common/luaserialize.h"
@@ -25,13 +24,9 @@ msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_m
     assert(strlen(module_name) > 0);
     assert(strlen(module_name) == length-1);
 
-    ui_process_set_module(extension.WL, module_name);
-
     lua_getglobal(extension.WL, "require");
     lua_pushstring(extension.WL, module_name);
     lua_call(extension.WL, 1, 0);
-
-    ui_process_set_module(extension.WL, NULL);
 }
 
 void
