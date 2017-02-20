@@ -10,7 +10,7 @@ local webview = {}
 
 webview.enable_webgl = true
 
-local web_module = require_web_module("webview_webmodule")
+local web_module = require_web_module("webview_wm")
 
 web_module:add_signal("form-active", function (_, page_id)
     for _, w in pairs(window.bywidget) do

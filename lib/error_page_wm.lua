@@ -1,4 +1,4 @@
-local ui = ipc_channel("error_page_webmodule")
+local ui = ipc_channel("error_page_wm")
 
 ui:add_signal("listen", function(_, page)
     local doc = dom_document(page.id)

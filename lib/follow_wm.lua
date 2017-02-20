@@ -1,5 +1,5 @@
 local floor, max = math.floor, math.max
-local ui = ipc_channel("follow_webmodule")
+local ui = ipc_channel("follow_wm")
 
 -- Label making
 

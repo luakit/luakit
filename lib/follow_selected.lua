@@ -10,7 +10,7 @@ local window = require("window")
 local lousy = require("lousy")
 local key = lousy.bind.key
 
-local wm = require_web_module("follow_selected_webmodule")
+local wm = require_web_module("follow_selected_wm")
 
 local function get_w_by_view_id(view_id)
     for _, w in pairs(window.bywidget) do

@@ -1,4 +1,4 @@
-local ui = ipc_channel("adblock_webmodule")
+local ui = ipc_channel("adblock_wm")
 
 local enabled = true
 local rules = {}
