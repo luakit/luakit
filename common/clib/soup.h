@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef LUAKIT_CLIB_SOUP_H
-#define LUAKIT_CLIB_SOUP_H
+#ifndef LUAKIT_COMMON_CLIB_SOUP_H
+#define LUAKIT_COMMON_CLIB_SOUP_H
 
 #include "luah.h"
 

@@ -1,5 +1,5 @@
-#ifndef LUAKIT_CLIB_DOM_DOCUMENT_H
-#define LUAKIT_CLIB_DOM_DOCUMENT_H
+#ifndef LUAKIT_EXTENSION_CLIB_DOM_DOCUMENT_H
+#define LUAKIT_EXTENSION_CLIB_DOM_DOCUMENT_H
 
 #include <webkit2/webkit-web-extension.h>
 

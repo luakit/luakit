@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_COMMON_SIGNAL
-#define LUAKIT_COMMON_SIGNAL
+#ifndef LUAKIT_COMMON_SIGNAL_H
+#define LUAKIT_COMMON_SIGNAL_H
 
 #include <glib.h>
 

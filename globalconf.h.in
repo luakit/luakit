@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef LUAKIT_GLOBALCONF
-#define LUAKIT_GLOBALCONF
+#ifndef LUAKIT_GLOBALCONF_H
+#define LUAKIT_GLOBALCONF_H
 
 /** Install location of luakit shared files. This serves as the base path for
  * all system Lua module loading paths. */

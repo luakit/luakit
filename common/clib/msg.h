@@ -16,8 +16,8 @@
  *
  */
 
-#ifndef LUAKIT_CLIB_MSG_H
-#define LUAKIT_CLIB_MSG_H
+#ifndef LUAKIT_COMMON_CLIB_MSG_H
+#define LUAKIT_COMMON_CLIB_MSG_H
 
 #include <lua.h>
 
