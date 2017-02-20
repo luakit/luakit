@@ -46,10 +46,11 @@ function test_vim_modeline ()
     end
 
     if #missing > 0 then
+        local err = {}
         for _, file in ipairs(missing) do
-            print("File does not have vim modeline: " .. file)
+            err[#err+1] = "  " .. file:sub(3)
         end
-        fail("Some files do not have modelines")
+        fail("Some files do not have modelines:\n" .. table.concat(err, "\n"))
     end
 end
 
@@ -71,11 +72,16 @@ function test_include_guard ()
     end
 
     if #missing > 0 then
+        local align = 0
+        for _, file in ipairs(missing) do
+            align = math.max(align, file:len())
+        end
+
+        local err = {}
         for _, file in ipairs(missing) do
             local s = file:sub(3):gsub("[%.%/]", "_"):upper()
-            print("File does not have include guard: " .. file)
-            print("Expected: LUAKIT_" .. s)
+            err[#err+1] = string.format("  %-" .. tostring(align-1) .. "sexpected LUAKIT_%s", file:sub(3), s)
         end
-        fail("Some files do not have include guards")
+        fail("Some files do not have include guards:\n" .. table.concat(err, "\n"))
     end
 end
