@@ -57,9 +57,6 @@ require "webinspector"
 -- Add uzbl-like form filling
 require "formfiller"
 
--- Add proxy support & manager
-require "proxy"
-
 -- Add quickmarks support & manager
 require "quickmarks"
 
