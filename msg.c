@@ -36,7 +36,7 @@ NO_HANDLER(crash)
 void
 msg_recv_extension_init(msg_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length))
 {
-    web_module_load_modules_on_endpoint(ipc, globalconf.L);
+    web_module_load_modules_on_endpoint(ipc);
     luaH_register_functions_on_endpoint(ipc, globalconf.L);
 
     /* Notify web extension that pending signals can be released */

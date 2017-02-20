@@ -15,7 +15,7 @@ lua_class_t web_module_class;
 
 void web_module_class_setup(lua_State *);
 void web_module_recv(lua_State *L, const gchar *arg, guint arglen);
-void web_module_load_modules_on_endpoint(msg_endpoint_t *ipc, lua_State *L);
+void web_module_load_modules_on_endpoint(msg_endpoint_t *ipc);
 
 #endif
 

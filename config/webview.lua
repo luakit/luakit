@@ -19,7 +19,6 @@ web_module:add_signal("form-active", function (_, page_id)
         end
     end
 end)
-webview.wm = web_module
 
 -- Table of functions which are called on new webview widgets.
 webview.init_funcs = {
