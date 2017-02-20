@@ -22,7 +22,7 @@ local lfs       = require("lfs")
 local window    = require("window")
 
 local adblock = {}
-local adblock_wm = web_module("adblock_webmodule")
+local adblock_wm = require_web_module("adblock_webmodule")
 
 --- Module global variables
 local enabled = true

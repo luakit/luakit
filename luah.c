@@ -312,7 +312,7 @@ luaH_init(void)
     stylesheet_class_setup(L);
 
     /* Export web module */
-    web_module_class_setup(L);
+    web_module_lib_setup(L);
     ipc_channel_class_setup(L);
 
     /* Export web module */

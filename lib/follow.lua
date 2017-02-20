@@ -13,7 +13,7 @@ local capi = {
 
 local follow = {}
 
-local follow_wm = web_module("follow_webmodule")
+local follow_wm = require_web_module("follow_webmodule")
 
 -- After each follow ignore all keys pressed by the user to prevent the
 -- accidental activation of other key bindings.

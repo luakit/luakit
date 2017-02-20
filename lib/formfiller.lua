@@ -66,7 +66,7 @@ local capi = { luakit = luakit }
 -- see the converter script under <code>extras/convert_formfiller.rb</code>
 --
 
-local formfiller_wm = web_module("formfiller_webmodule")
+local formfiller_wm = require_web_module("formfiller_webmodule")
 
 -- The Lua DSL file containing the formfiller rules
 local file = capi.luakit.data_dir .. "/forms.lua"
