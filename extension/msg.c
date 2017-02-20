@@ -10,10 +10,10 @@
 #include "extension/clib/extension.h"
 #include "extension/msg.h"
 #include "extension/scroll.h"
-#include "extension/clib/ui_process.h"
 #include "common/util.h"
 #include "common/luajs.h"
 #include "common/luaserialize.h"
+#include "common/clib/ipc.h"
 
 static GPtrArray *queued_page_ipc;
 
@@ -24,19 +24,15 @@ msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_m
     assert(strlen(module_name) > 0);
     assert(strlen(module_name) == length-1);
 
-    ui_process_set_module(extension.WL, module_name);
-
     lua_getglobal(extension.WL, "require");
     lua_pushstring(extension.WL, module_name);
     lua_call(extension.WL, 1, 0);
-
-    ui_process_set_module(extension.WL, NULL);
 }
 
 void
 msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
 {
-    ui_process_recv(extension.WL, msg->arg, length);
+    ipc_channel_recv(extension.WL, msg->arg, length);
 }
 
 void

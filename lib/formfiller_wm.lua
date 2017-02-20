@@ -1,4 +1,4 @@
-local ui = ui_process()
+local ui = ipc_channel("formfiller_wm")
 local state
 
 local function element_attributes_match(element, attrs)

@@ -32,6 +32,7 @@
 #include "clib/xdg.h"
 #include "clib/stylesheet.h"
 #include "clib/web_module.h"
+#include "common/clib/ipc.h"
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
 
@@ -311,7 +312,8 @@ luaH_init(void)
     stylesheet_class_setup(L);
 
     /* Export web module */
-    web_module_class_setup(L);
+    web_module_lib_setup(L);
+    ipc_channel_class_setup(L);
 
     /* Export web module */
     msg_lib_setup(L);

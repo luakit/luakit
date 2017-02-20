@@ -2,7 +2,7 @@ local webview = require("webview")
 local lousy = require("lousy")
 
 local error_page = {}
-local error_page_wm = web_module("error_page_webmodule")
+local error_page_wm = require_web_module("error_page_wm")
 
 error_page.html_template = [==[
     <html>
