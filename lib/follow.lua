@@ -20,14 +20,14 @@ local follow_wm = require_web_module("follow_wm")
 follow.ignore_delay = 200
 
 follow.stylesheet = [===[
-#luakit_follow_overlay {
+#luakit_select_overlay {
     position: absolute;
     left: 0;
     top: 0;
     z-index: 2147483647; /* Maximum allowable on WebKit */
 }
 
-#luakit_follow_overlay .hint_overlay {
+#luakit_select_overlay .hint_overlay {
     display: block;
     position: absolute;
     background-color: #ffff99;
@@ -35,7 +35,7 @@ follow.stylesheet = [===[
     opacity: 0.3;
 }
 
-#luakit_follow_overlay .hint_label {
+#luakit_select_overlay .hint_label {
     display: block;
     position: absolute;
     background-color: #000088;
@@ -46,11 +46,11 @@ follow.stylesheet = [===[
     opacity: 0.4;
 }
 
-#luakit_follow_overlay .hint_overlay_body {
+#luakit_select_overlay .hint_overlay_body {
     background-color: #ff0000;
 }
 
-#luakit_follow_overlay .hint_selected {
+#luakit_select_overlay .hint_selected {
     background-color: #00ff00 !important;
 }
 ]===]
@@ -92,7 +92,7 @@ follow.pattern_maker = follow.pattern_styles.match_label_re_text
 follow.ignore_case = true
 
 local function focus(w, step)
-    follow_wm:emit_signal(w.view, "focus", w.win.id, step)
+    follow_wm:emit_signal(w.view, "focus", step)
 end
 
 local hit_nop = function () return true end
@@ -111,7 +111,7 @@ local function ignore_keys(w)
 end
 
 local function do_follow(w, all)
-    follow_wm:emit_signal(w.view, "follow", w.win.id, all)
+    follow_wm:emit_signal(w.view, "follow", all)
 end
 
 local function follow_all_hints(w)
@@ -136,14 +136,14 @@ local function matches_cb(w, n)
     w:set_ibar_theme(n > 0 and "ok" or "error")
 end
 
-follow_wm:add_signal("follow_func", function(_, wid, ret)
+follow_wm:add_signal("follow_func", function(_, page_id, ret)
     for _, w in pairs(window.bywidget) do
-        if w.win.id == wid then follow_func_cb(w, ret) end
+        if w.view.id == page_id then follow_func_cb(w, ret) end
     end
 end)
-follow_wm:add_signal("matches", function(_, wid, n)
+follow_wm:add_signal("matches", function(_, page_id, n)
     for _, w in pairs(window.bywidget) do
-        if w.win.id == wid then matches_cb(w, n) end
+        if w.view.id == page_id then matches_cb(w, n) end
     end
 end)
 
@@ -190,7 +190,7 @@ new_mode("follow", {
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
         mode.func = nil
-        follow_wm:emit_signal(w.view, "enter", w.win.id, mode, w.view.id, follow.ignore_case)
+        follow_wm:emit_signal(w.view, "enter", mode, follow.ignore_case)
         mode.func = func
     end,
 
@@ -201,12 +201,12 @@ new_mode("follow", {
         local pattern_maker = mode.pattern_maker or follow.pattern_maker
         local hint_pat, text_pat = pattern_maker(text)
 
-        follow_wm:emit_signal(w.view, "changed", w.win.id, hint_pat, text_pat, text)
+        follow_wm:emit_signal(w.view, "changed", hint_pat, text_pat, text)
     end,
 
     leave = function (w)
         w:set_ibar_theme()
-        follow_wm:emit_signal(w.view, "leave", w.win.id)
+        follow_wm:emit_signal(w.view, "leave")
     end,
 })
 
