@@ -71,13 +71,36 @@ local label_styles = {
             return labels
         end
     end,
+
+    trim = function (make_labels)
+        return function (size)
+            local labels = make_labels(size)
+            local maxlen = #(rawget(labels, 1))
+            for n = 1, #labels do
+                local cur, nxt = rawget(labels, n), rawget(labels, n+1)
+                local rep = cur:sub(1, #cur-1)
+
+                local is_prefix = false
+                for nn = 1, #labels do
+                    if nn ~= n and rawget(labels, nn):find(rep, 1, true) == 1 then
+                        is_prefix = true
+                        break
+                    end
+                end
+                if not is_prefix then
+                    rawset(labels, n, cur:sub(1, #cur-1))
+                end
+            end
+            return labels
+        end
+    end,
 }
 
 -- Default label style
 local label_maker
 do
     local s = label_styles
-    label_maker = s.sort(s.reverse(s.numbers()))
+    label_maker = s.trim(s.sort(s.reverse(s.numbers())))
 end
 
 local function bounding_boxes_intersect(a, b)
