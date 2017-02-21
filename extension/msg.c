@@ -24,9 +24,9 @@ msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_m
     assert(strlen(module_name) > 0);
     assert(strlen(module_name) == length-1);
 
-    lua_getglobal(extension.WL, "require");
     lua_pushstring(extension.WL, module_name);
-    lua_call(extension.WL, 1, 0);
+    lua_getglobal(extension.WL, "require");
+    luaH_dofunction(extension.WL, 1, 0);
 }
 
 void
