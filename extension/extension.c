@@ -3,6 +3,7 @@
 #include <glib.h>
 
 #include "common/util.h"
+#include "common/luah.h"
 #include "common/luautil.h"
 #include "common/luauniq.h"
 #include "extension/msg.h"
@@ -36,6 +37,7 @@ web_lua_init(void)
     lualib_dofunction_on_error = luaH_dofunction_on_error;
 
     luaL_openlibs(WL);
+    luaH_fixups(WL);
     luaH_object_setup(WL);
     luaH_uniq_setup(WL, NULL);
     luaH_add_paths(WL, NULL);
