@@ -195,6 +195,22 @@ function util.table.toarray(t)
     return ret
 end
 
+--- Filters an array with a predicate function. Element indices are shifted down
+-- to fill gaps
+-- @param t The array to filter
+-- @param pred The predicate function: called with (key, value); return true to
+-- keep element, false to remove.
+-- @return The filtered array.
+function util.table.filter_array(t, pred)
+    local ret = {}
+    for i, v in ipairs(t) do
+        if pred(i, v) then
+            ret[#ret+1] = v
+        end
+    end
+    return ret
+end
+
 --- Check if a file exists and is readable.
 -- @param f The file path.
 -- @return True if the file exists and is readable.

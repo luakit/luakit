@@ -55,3 +55,16 @@ function test_lousy_util_table_copy_clone()
     assert_true(lousy.util.table.isclone(a, c))
     assert_equal(nil, getmetatable(c), mt)
 end
+
+function test_lousy_util_table_filter_array()
+    local a = { "I", "IV", x="foo","IX", "XVI", y="bar" }
+
+    -- Non-array items are dropped
+    local b = lousy.util.table.filter_array(a, function () return true end)
+    assert_true(lousy.util.table.isclone(b, { "I", "IV", "IX", "XVI" }))
+
+    local c = lousy.util.table.filter_array(a, function (i, _) return i % 2 == 0 end)
+    assert_true(lousy.util.table.isclone(c, { "IV", "XVI" }))
+    local d = lousy.util.table.filter_array(a, function (_, v) return v:len() == 2 end)
+    assert_true(lousy.util.table.isclone(d, { "IV", "IX" }))
+end
