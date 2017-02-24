@@ -19,6 +19,7 @@ ipc_channel_send(lua_State *L)
 void
 ipc_channel_recv(lua_State *L, const gchar *arg, guint arglen)
 {
+    gint top = lua_gettop(L);
     int n = lua_deserialize_range(L, (guint8*)arg, arglen);
 
     /* Remove signal name, module_name and page_id from the stack */
@@ -46,9 +47,11 @@ ipc_channel_recv(lua_State *L, const gchar *arg, guint arglen)
     lua_remove(L, -2);
 
     /* Move the module before arguments, and emit signal */
-    lua_insert(L, -n-1);
-    luaH_object_emit_signal(L, -n-1, signame, n, 0);
-    lua_pop(L, 1);
+    if (!lua_isnil(L, -1)) {
+        lua_insert(L, -n-1);
+        luaH_object_emit_signal(L, -n-1, signame, n, 0);
+    }
+    lua_settop(L, top);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
