@@ -277,8 +277,6 @@ local function focus(state, step)
         end
     end
 
-    assert(index ~= last)
-
     local new_hint = state.hints[index]
 
     -- Save and update class for the new hint
