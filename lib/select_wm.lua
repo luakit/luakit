@@ -129,9 +129,20 @@ local function get_element_bb_if_visible(element, wbb, page)
     return rbb
 end
 
-local function frame_find_hints(page, frame, selector)
+local function frame_find_hints(page, frame, elements)
     local hints = {}
-    local elements = frame.body:query(selector)
+
+    if type(elements) == "string" then
+        elements = frame.body:query(elements)
+    else
+        local elems = {}
+        for _, e in ipairs(elements) do
+            if e.owner_document == frame.doc then
+                elems[#elems + 1] = e
+            end
+        end
+        elements = elems
+    end
 
     -- Find the visible bounding box
     local w = frame.doc.window
@@ -286,9 +297,9 @@ local function focus(state, step)
     return new_hint
 end
 
-function select.enter(page, selector, stylesheet, ignore_case)
+function select.enter(page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
-    assert(type(selector) == "string")
+    assert(type(elements) == "string" or type(elements) == "table")
     assert(type(stylesheet) == "string")
     local page_id = page.id
     assert(page_states[page_id] == nil)
@@ -308,7 +319,7 @@ function select.enter(page, selector, stylesheet, ignore_case)
     for _, frame in ipairs(state.frames) do
         -- Set up the frame, and find hints
         init_frame(frame, stylesheet)
-        frame.hints = frame_find_hints(page, frame, selector)
+        frame.hints = frame_find_hints(page, frame, elements)
         -- Build an array of all hints
         for _, hint in ipairs(frame.hints) do
             state.hints[#state.hints+1] = hint
