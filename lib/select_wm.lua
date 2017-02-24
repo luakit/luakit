@@ -367,14 +367,15 @@ end
 
 function select.changed(page, hint_pat, text_pat, text)
     assert(type(page) == "page")
-    assert(type(hint_pat) == "string")
-    assert(type(text_pat) == "string")
+    assert(hint_pat == nil or type(hint_pat) == "string")
+    assert(text_pat == nil or type(text_pat) == "string")
     assert(type(text) == "string")
 
     local state = assert(page_states[page.id])
 
     if state.ignore_case then
         local convert = function(pat)
+            if pat == nil then return nil end
             local converter = function (ch) return '[' .. string.upper(ch) .. string.lower(ch) .. ']' end
             return string.gsub(pat, '(%a)', converter)
         end
