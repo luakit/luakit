@@ -5,6 +5,7 @@
 ------------------------------------------------------------------
 
 local lousy = require("lousy")
+local window = require("window")
 local editor = require("editor")
 local capi = { luakit = luakit }
 
@@ -73,7 +74,7 @@ local file = capi.luakit.data_dir .. "/forms.lua"
 
 -- The function environment for the formfiller script
 local DSL = {
-    print = function (s, ...) print(...) end,
+    print = function (_, ...) print(...) end,
 
     -- DSL method to match a page by its URI
     on = function (s, pattern)
@@ -86,7 +87,7 @@ local DSL = {
     end,
 
     -- DSL method to match a form by its attributes
-    form = function (s, data)
+    form = function (_, data)
         local transform = function (inputs, profile)
             local form = {
                 profile = profile,
@@ -112,7 +113,7 @@ local DSL = {
     end,
 
     -- DSL method to match an input element by its attributes
-    input = function (s, attrs)
+    input = function (_, attrs)
         return attrs
     end,
 }
@@ -128,10 +129,9 @@ local function pattern_from_js_regex(re)
 end
 
 --- Reads the rules from the formfiller DSL file
-local function init(w)
-    w.formfiller_state = {
+local function read_formfiller_rules_from_file(w)
+    local state = {
         rules = {},
-        menu_cache = {},
     }
     -- the environment of the DSL script
     -- load the script
@@ -148,7 +148,7 @@ local function init(w)
     local env = {}
     -- wrap the DSL functions so they can access the state
     for k in pairs(DSL) do
-        env[k] = function (...) return DSL[k](w.formfiller_state, ...) end
+        env[k] = function (...) return DSL[k](state, ...) end
     end
     setfenv(dsl, env)
     local success, err = pcall(dsl)
@@ -156,13 +156,30 @@ local function init(w)
         msg.warn("error in " .. file .. ": " .. err)
     end
     -- Convert JS regexes to Lua patterns
-    for _, rule in ipairs(w.formfiller_state.rules) do
+    for _, rule in ipairs(state.rules) do
         rule.pattern = pattern_from_js_regex(rule.pattern)
         for _, form in ipairs(rule.forms) do
             form.action = form.action:gsub("\\", "")
         end
     end
-    formfiller_wm:emit_signal(w.view, "init", w.formfiller_state)
+    return state.rules
+end
+
+local function form_specs_for_uri (all_rules, uri)
+    -- Filter rules to the given uri
+    local rules = lousy.util.table.filter_array(all_rules, function(_, rule)
+        return string.find(uri, rule.pattern)
+    end)
+
+    -- Get list of all form specs that can be matched
+    local form_specs = {}
+    for _, rule in ipairs(rules) do
+        for _, form in ipairs(rule.forms) do
+            form_specs[#form_specs + 1] = form
+        end
+    end
+
+    return form_specs
 end
 
 --- Edits the formfiller rules.
@@ -170,84 +187,72 @@ local function edit()
     editor.edit(file)
 end
 
---- Adds a new entry to the formfiller based on the current webpage.
--- @param w The window for which to add an entry.
-local function add(w)
-    -- load JS prerequisites
-    local function add(_, ret)
-        formfiller_wm:remove_signal("add", add)
-        if not ret then
-            return w:error("no forms with inputs found")
-        end
-        local f = io.open(file, "a")
-        f:write(ret)
-        f:close()
-        edit()
+local function w_from_view_id(view_id)
+    assert(type(view_id) == "number", type(view_id))
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == view_id then return w end
     end
-
-    formfiller_wm:add_signal("add", add)
-    formfiller_wm:emit_signal(w.view, "add", w.view.id)
 end
 
--- Shows a menu with all forms that contain a profile if there is more than one.
+formfiller_wm:add_signal("failed", function (_, view_id, msg)
+    local w = w_from_view_id(view_id)
+    w:error(msg)
+    w:set_mode()
+end)
+formfiller_wm:add_signal("add", function (_, view_id, str)
+    local w = w_from_view_id(view_id)
+    w:set_mode()
+    local f = io.open(file, "a")
+    f:write(str)
+    f:close()
+    edit()
+end)
+
+--- Fills the current page from the formfiller rules.
 -- @param w The window on which to fill the forms
--- @param forms The forms to search for profiles
--- @return true iff the menu was shown
-local function show_menu(w, forms)
+local function fill_form_fast(w)
+    local rules = read_formfiller_rules_from_file(w)
+    local form_specs = form_specs_for_uri(rules, w.view.uri)
+    if #form_specs == 0 then
+        w:error("no rules matched")
+        return
+    end
+    formfiller_wm:emit_signal(w.view, "fill-fast", form_specs)
+end
+
+-- Support for choosing a form with a menu
+local function fill_form_menu(w)
+    local rules = read_formfiller_rules_from_file(w)
+    local form_specs = form_specs_for_uri(rules, w.view.uri)
+    if #form_specs == 0 then
+        w:error("no rules matched")
+        return
+    end
+    formfiller_wm:emit_signal(w.view, "filter", form_specs)
+end
+
+formfiller_wm:add_signal("filter", function (_, view_id, form_specs)
+    local w = w_from_view_id(view_id)
+    -- Build menu
     local menu = {}
-    for _, form in ipairs(forms) do
+    for _, form in ipairs(form_specs) do
         if form.profile then
             table.insert(menu, { form.profile, form = form })
         end
     end
     -- show menu if necessary
     if #menu == 0 then
-        return false
+        w:error("no forms with profile names found")
     else
-        w.formfiller_state.menu_cache = menu
-        w:set_mode("formfiller")
-        return true
+        w:set_mode("formfiller-menu", menu)
     end
-end
+end)
 
---- Fills the current page from the formfiller rules.
--- @param w The window on which to fill the forms
--- @param fast Prevents any menus from being shown
-local function load(w, fast)
-    -- reload the DSL
-    init(w)
-
-    local function filtered(_, rules)
-        local forms = {}
-        for _, rule in ipairs(rules) do
-            for _, form in ipairs(rule.forms) do
-                table.insert(forms, form)
-            end
-        end
-        show_menu(w, forms)
-    end
-
-    local function failed(_, msg)
-        w:error(msg)
-    end
-
-    local function finished(_)
-        formfiller_wm:remove_signal("filtered", filtered)
-        formfiller_wm:remove_signal("failed", failed)
-        formfiller_wm:remove_signal("finished", finished)
-    end
-
-    formfiller_wm:add_signal("filtered", filtered)
-    formfiller_wm:add_signal("failed", failed)
-    formfiller_wm:add_signal("finished", finished)
-    formfiller_wm:emit_signal(w.view, "load", fast, w.view.id)
-end
-
--- Add formfiller mode
-new_mode("formfiller", {
-    enter = function (w)
+-- Add formfiller menu mode
+new_mode("formfiller-menu", {
+    enter = function (w, menu)
         local rows = {{ "Profile", title = true }}
-        for _, m in ipairs(w.formfiller_state.menu_cache) do
+        for _, m in ipairs(menu) do
             table.insert(rows, m)
         end
         w.menu:build(rows)
@@ -259,7 +264,7 @@ new_mode("formfiller", {
 })
 
 local key = lousy.bind.key
-add_binds("formfiller", lousy.util.table.join({
+add_binds("formfiller-menu", lousy.util.table.join({
     -- use profile
     key({}, "Return", "Select formfiller profile.",
         function (w)
@@ -270,18 +275,43 @@ add_binds("formfiller", lousy.util.table.join({
         end),
 }, menu_binds))
 
+-- Visual form selection for adding a form
+new_mode("formfiller-add", {
+    enter = function (w)
+        w:set_prompt("Add form:")
+        w:set_input("")
+        w:set_ibar_theme()
+
+        formfiller_wm:emit_signal(w.view, "enter")
+    end,
+
+    changed = function (w, text)
+        formfiller_wm:emit_signal(w.view, "changed", text)
+    end,
+
+    leave = function (w)
+        w:set_ibar_theme()
+        formfiller_wm:emit_signal(w.view, "leave")
+    end,
+})
+add_binds("formfiller-add", {
+    key({},          "Tab",    function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end),
+    key({"Shift"},   "Tab",    function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end),
+    key({},          "Return", function (w) formfiller_wm:emit_signal(w.view, "select") end),
+})
+
 -- Setup formfiller binds
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^za$", "Add formfiller form.",
-        function (w) add(w) end),
+        function (w) w:set_mode("formfiller-add") end),
 
     buf("^ze$", "Edit formfiller forms for current domain.",
-        function (w) edit() end),
+        function (_) edit() end),
 
     buf("^zl$", "Load formfiller form (use first profile).",
-        function (w) load(w, true) end),
+        fill_form_fast),
 
     buf("^zL$", "Load formfiller form.",
-        function (w) load(w) end),
+        fill_form_menu),
 })
