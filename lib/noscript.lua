@@ -106,6 +106,9 @@ local function lookup_domain(uri)
     -- depend upon javascript will break
     if string_starts(uri, "luakit://") then return true, true, "luakit://" end
 
+    -- Enable everything for local pages
+    if string_starts(uri, "file://") then return true, true, "file://" end
+
     -- Look up this domain and all parent domains, returning the first match
     -- E.g. querying a.b.com will lookup a.b.com, then b.com, then com
     while domain do
