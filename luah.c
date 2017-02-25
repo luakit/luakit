@@ -36,6 +36,7 @@
 #include "common/clib/ipc.h"
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
+#include "globalconf.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>

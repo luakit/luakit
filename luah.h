@@ -25,7 +25,6 @@
 #include "common/luaobject.h"
 #include "common/lualib.h"
 #include "common/log.h"
-#include "globalconf.h"
 
 #include <lua.h>
 

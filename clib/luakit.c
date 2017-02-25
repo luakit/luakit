@@ -26,6 +26,7 @@
 #include "common/signal.h"
 #include "luah.h"
 #include "web_context.h"
+#include "globalconf.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>

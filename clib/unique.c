@@ -21,6 +21,7 @@
  */
 
 #include "clib/unique.h"
+#include "globalconf.h"
 #include "luah.h"
 
 #include <gtk/gtk.h>
