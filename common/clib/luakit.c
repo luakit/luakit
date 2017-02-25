@@ -81,6 +81,8 @@ luaH_luakit_uri_decode(lua_State *L)
     return 1;
 }
 
+static lua_State *idle_cb_L;
+
 /** Calls the idle callback function. If the callback function returns false the
  * idle source is removed, the Lua function is unreffed and will not be called
  * again.
@@ -92,7 +94,7 @@ luaH_luakit_uri_decode(lua_State *L)
 gboolean
 idle_cb(gpointer func)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = idle_cb_L;
 
     /* get original stack size */
     gint top = lua_gettop(L);
@@ -130,6 +132,7 @@ gint
 luaH_luakit_idle_add(lua_State *L)
 {
     luaH_checkfunction(L, 1);
+    idle_cb_L = L;
     gpointer func = luaH_object_ref(L, 1);
     g_idle_add(idle_cb, func);
     return 0;
