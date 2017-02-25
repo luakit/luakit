@@ -4,22 +4,18 @@
 #include "common/luautil.h"
 #include "buildopts.h"
 
+static gpointer debug_traceback_ref;
+
 gint
 luaH_dofunction_on_error(lua_State *L)
 {
-    /* duplicate string error */
-    lua_pushvalue(L, -1);
-
-    if(!luaL_dostring(L, "return debug.traceback(\"error while running function\", 3)"))
-    {
-        /* Move traceback before error */
-        lua_insert(L, -2);
-        /* Insert sentence */
-        lua_pushliteral(L, "\nerror: ");
-        /* Move it before error */
-        lua_insert(L, -2);
-        lua_concat(L, 3);
-    }
+    lua_pushliteral(L, "error in ");
+    lua_pushvalue(L, -2);
+    luaH_object_push(L, debug_traceback_ref);
+    lua_pushliteral(L, "");
+    lua_pushinteger(L, 3);
+    lua_pcall(L, 2, 1, 0);
+    lua_concat(L, 3);
     return 1;
 }
 
@@ -82,6 +78,12 @@ luaH_add_paths(lua_State *L, const gchar *config_dir)
     lua_setfield(L, 1, "path");
 
     /* remove package module from stack */
+    lua_pop(L, 1);
+
+    /* Store ref to debug.traceback() */
+    lua_getglobal(L, "debug");
+    lua_getfield(L, -1, "traceback");
+    debug_traceback_ref = luaH_object_ref(L, -1);
     lua_pop(L, 1);
 }
 
