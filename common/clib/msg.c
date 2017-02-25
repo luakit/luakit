@@ -26,12 +26,25 @@
 #include <time.h>
 #include <webkit2/webkit2.h>
 
-gpointer string_format_ref;
+static gpointer string_format_ref;
+static gpointer tostring_ref;
 
 static const gchar *
 luaH_msg_string_from_args(lua_State *L)
 {
     gint nargs = lua_gettop(L);
+    /* Pre-convert all non-numerical arguments to strings */
+    for (gint i = 0; i < nargs; ++i) {
+        if (lua_type(L, i) != LUA_TNUMBER) {
+            /* Convert to a string with tostring() ... */
+            luaH_object_push(L, tostring_ref);
+            lua_pushvalue(L, i);
+            lua_pcall(L, 1, 1, 0);
+            /* ... And replace the original value */
+            lua_remove(L, i);
+            lua_insert(L, i);
+        }
+    }
     luaH_object_push(L, string_format_ref);
     lua_insert(L, 1);
     if (lua_pcall(L, nargs, 1, 0))
@@ -85,6 +98,10 @@ msg_lib_setup(lua_State *L)
     lua_getfield(L, -1, "format");
     string_format_ref = luaH_object_ref(L, -1);
     lua_pop(L, 1);
+
+    /* Store ref to tostring() */
+    lua_getglobal(L, "tostring");
+    tostring_ref = luaH_object_ref(L, -1);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
