@@ -228,12 +228,13 @@ local list_add = function(list, line, cache, pat_exclude)
 end
 
 -- Parses an Adblock Plus compatible filter list
-local parse_abpfilterlist = function (filename, cache)
-    if os.exists(filename) then
+local parse_abpfilterlist = function (filters_dir, filename, cache)
+    if os.exists(filters_dir .. filename) then
         msg.verbose("adblock: loading filterlist %s", filename)
     else
         msg.warn("adblock: error loading filter list (%s: No such file or directory)", filename)
     end
+    filename = filters_dir .. filename
 
     local pat, opts
     local white, black = list_new(), list_new()
@@ -384,7 +385,7 @@ adblock.load = function (reload, single_list, no_sync)
     } -- This cache should let us avoid unnecessary filters duplication.
 
     for _, filename in ipairs(filterfiles_loading) do
-        local white, black, wlen, blen, icnt = parse_abpfilterlist(filters_dir .. filename, rules_cache)
+        local white, black, wlen, blen, icnt = parse_abpfilterlist(filters_dir, filename, rules_cache)
         local list = adblock.subscriptions[filename]
         if not util.table.hasitem(adblock.rules, list) then
             adblock.rules[filename] = list
