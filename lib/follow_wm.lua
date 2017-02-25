@@ -1,4 +1,5 @@
 local select = require("select_wm")
+local lousy = require("lousy")
 local ui = ipc_channel("follow_wm")
 
 local evaluators = {
@@ -49,8 +50,8 @@ local evaluators = {
 
 local page_mode = {}
 
-local function follow_hint(page, hint)
-    local evaluator = evaluators[page_mode[page].evaluator]
+local function follow_hint(page, mode, hint)
+    local evaluator = evaluators[mode.evaluator]
 
     local overlay_style = hint.overlay_elem.attr.style
     hint.overlay_elem.attr.style = "display: none;"
@@ -61,19 +62,25 @@ local function follow_hint(page, hint)
 end
 
 local function follow(page, all)
-    local hints = select.hints(page)
-    if all then
-        for _, hint in pairs(hints) do
-            if not hint.hidden then
-                follow_hint(page, hint)
-            end
-        end
-    else
-        local hint = select.focused_hint(page)
-        assert(not hint.hidden)
-        follow_hint(page, hint)
+    -- Build array of hints to follow
+    local hints = all and select.hints(page) or { select.focused_hint(page) }
+    hints = lousy.util.table.filter_array(hints, function (_, hint)
+        return not hint.hidden
+    end)
+
+    -- Close hint select UI first if not persisting in follow mode
+    local mode = page_mode[page]
+    if not mode.persist then
+        select.leave(page)
+        page_mode[page] = nil
     end
-    ui:emit_signal("follow", page.id)
+
+    -- Follow hints in idle cb to ensure select UI is closed if necessary
+    luakit.idle_add(function ()
+        for _, hint in pairs(hints) do
+            follow_hint(page, mode, hint)
+        end
+    end)
 end
 
 ui:add_signal("follow", function(_, page, all)
@@ -101,6 +108,8 @@ ui:add_signal("changed", function(_, page, hint_pat, text_pat, text)
 end)
 
 ui:add_signal("leave", function (_, page)
-    page_mode[page] = nil
-    select.leave(page)
+    if page_mode[page] then
+        page_mode[page] = nil
+        select.leave(page)
+    end
 end)
