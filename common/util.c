@@ -21,7 +21,6 @@
  */
 
 #include "common/util.h"
-#include "globalconf.h"
 
 #include <glib/gprintf.h>
 #include <stdarg.h>

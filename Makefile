@@ -7,7 +7,7 @@ THEAD = common/tokenize.h
 TSRC  = common/tokenize.c
 
 SRCS  = $(filter-out $(TSRC),$(wildcard *.c) $(wildcard common/*.c) $(wildcard common/clib/*.c) $(wildcard clib/*.c) $(wildcard clib/soup/*.c) $(wildcard widgets/*.c)) $(TSRC)
-HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard common/clib/*.h) $(wildcard widgets/*.h) $(wildcard clib/*.h) $(wildcard clib/soup/*.h) $(THEAD) globalconf.h
+HEADS = $(wildcard *.h) $(wildcard common/*.h) $(wildcard common/clib/*.h) $(wildcard widgets/*.h) $(wildcard clib/*.h) $(wildcard clib/soup/*.h) $(THEAD) buildopts.h
 OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 
 EXT_SRCS = $(filter-out $(TSRC),$(wildcard extension/*.c) $(wildcard extension/clib/*.c) $(wildcard common/*.c)) $(wildcard common/clib/*.c) $(TSRC)
@@ -36,8 +36,8 @@ options:
 $(THEAD) $(TSRC): $(TLIST)
 	./build-utils/gentokens.lua $(TLIST) $@
 
-globalconf.h: globalconf.h.in
-	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' globalconf.h.in > globalconf.h
+buildopts.h: buildopts.h.in
+	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' buildopts.h.in > buildopts.h
 
 $(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
 
@@ -69,11 +69,11 @@ apidoc: luadoc/luakit.lua
 	mkdir -p apidocs
 	luadoc --nofiles -d apidocs luadoc/* lib/*
 
-doc: globalconf.h $(THEAD) $(TSRC)
+doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s luakit.doxygen
 
 clean:
-	rm -rf apidocs doc luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) globalconf.h luakit.1
+	rm -rf apidocs doc luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/

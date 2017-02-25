@@ -7,6 +7,6 @@ luakit
 luakit.so
 common/tokenize.h
 common/tokenize.c
-globalconf.h
+buildopts.h
 lunit
 luakit.1.gz

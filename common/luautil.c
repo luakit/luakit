@@ -2,7 +2,7 @@
 #include <lualib.h>
 
 #include "common/luautil.h"
-#include "globalconf.h"
+#include "buildopts.h"
 
 gint
 luaH_dofunction_on_error(lua_State *L)

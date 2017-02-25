@@ -21,15 +21,7 @@
 #ifndef LUAKIT_GLOBALCONF_H
 #define LUAKIT_GLOBALCONF_H
 
-/** Install location of luakit shared files. This serves as the base path for
- * all system Lua module loading paths. */
-#define LUAKIT_INSTALL_PATH "/usr/local/share/luakit"
-
-/** Registry key for the Lua registry API to store a private reference counting
- * table. This table prevents garbage collection of objects (userdata or
- * tables) while in use by C functions or objects.
- * \see http://www.lua.org/manual/5.1/manual.html#3.5 */
-#define LUAKIT_OBJECT_REGISTRY_KEY "luakit.object.registry"
+#include "buildopts.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>

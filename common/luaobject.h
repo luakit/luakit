@@ -25,7 +25,12 @@
 #include "common/luaclass.h"
 #include "common/lualib.h"
 #include "common/signal.h"
-#include "globalconf.h"
+
+/** Registry key for the Lua registry API to store a private reference counting
+ * table. This table prevents garbage collection of objects (userdata or
+ * tables) while in use by C functions or objects.
+ * \see http://www.lua.org/manual/5.1/manual.html#3.5 */
+#define LUAKIT_OBJECT_REGISTRY_KEY "luakit.object.registry"
 
 gint luaH_settype(lua_State *L, lua_class_t *lua_class);
 void luaH_object_setup(lua_State *L);

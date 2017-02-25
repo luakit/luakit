@@ -1,0 +1,10 @@
+#ifndef LUAKIT_BUILDOPTS_H
+#define LUAKIT_BUILDOPTS_H
+
+/** Install location of luakit shared files. This serves as the base path for
+ * all system Lua module loading paths. */
+#define LUAKIT_INSTALL_PATH "/usr/local/share/luakit"
+
+#endif
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
