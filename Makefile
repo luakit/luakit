@@ -106,7 +106,7 @@ uninstall:
 lunit:
 	git clone git://repo.or.cz/lunit.git
 
-run-tests: luakit lunit
+run-tests: luakit luakit.so lunit
 	@./luakit -c tests/lunit-run.lua tests/test_*.lua
 
 newline: options;@echo
