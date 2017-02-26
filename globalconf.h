@@ -26,7 +26,6 @@
 #include <glib.h>
 #include <gtk/gtk.h>
 #include <lua.h>
-#include "common/signal.h"
 
 /** Global luakit state struct. */
 typedef struct {

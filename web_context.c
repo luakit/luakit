@@ -17,6 +17,7 @@
  */
 
 #include "globalconf.h"
+#include "common/log.h"
 #include "web_context.h"
 
 #include <webkit2/webkit2.h>
