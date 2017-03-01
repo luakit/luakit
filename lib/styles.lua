@@ -83,6 +83,7 @@ end
 webview.init_funcs.styles_load = function(view)
     view:add_signal("stylesheet", function (v)
         local domains = domains_from_uri(v.uri)
+        domains[#domains + 1] = "all"
         local enabled = v:emit_signal("enable-styles")
         if enabled == nil then enabled = db_get(v.uri) ~= 0 end
 
