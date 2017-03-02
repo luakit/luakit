@@ -137,15 +137,7 @@ styles.detect_files = function ()
 			if string.sub(domain, 1, 1) == "*" then
 				domain = "." .. string.sub(domain, 2)
 			end
-			-- Get the domain_props for that domain
-			if not domain_props[domain] then domain_props[domain] = {} end
-			local props = domain_props[domain]
-			-- Set the user stylesheet
-			if props.user_stylesheet_uri then
-				print("Replacing user stylesheet for domain " .. domain)
-			end
             styles.load_file(filename, domain)
-			props.user_stylesheet_uri = "file://" .. styles_dir .. filename
 		end
     end
     lfs.chdir(cwd)
