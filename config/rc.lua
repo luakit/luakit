@@ -40,6 +40,7 @@ local window = require "window"
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
 local webview = require "webview"
 
+require "widget.uri"
 require "widget.progress"
 require "widget.ssl"
 require "widget.scroll"

@@ -50,34 +50,11 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Update uri label in statusbar
-    uri_update = function (view, w)
-        view:add_signal("property::uri", function (v)
-            if w.view == v then
-                w:update_uri()
-            end
-        end)
-    end,
-
     -- Update history indicator
     hist_update = function (view, w)
         view:add_signal("load-status", function (v, status)
             if w.view == v then
                 w:update_hist()
-            end
-        end)
-    end,
-
-    -- Display hovered link in statusbar
-    link_hover_display = function (view, w)
-        view:add_signal("link-hover", function (v, link)
-            if w.view == v and link then
-                w:update_uri(link)
-            end
-        end)
-        view:add_signal("link-unhover", function (v)
-            if w.view == v then
-                w:update_uri()
             end
         end)
     end,

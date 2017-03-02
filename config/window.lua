@@ -41,7 +41,6 @@ function window.build()
             l = {
                 layout = hbox(),
                 ebox   = eventbox(),
-                uri    = label(),
                 hist   = label(),
             },
             -- Fills space between the left and right aligned widgets
@@ -98,7 +97,6 @@ function window.build()
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout.homogeneous = false;
-    l.layout:pack(l.uri)
     l.layout:pack(l.hist)
     l.ebox.child = l.layout
 
@@ -139,7 +137,6 @@ function window.build()
     i.input.show_frame = false
     w.tabs.show_tabs = false
     l.hist:hide()
-    l.uri.selectable = true
 
     -- Allow error messages to be copied
     -- TODO: *only* allow copying when showing an error
@@ -170,7 +167,6 @@ window.init_funcs = {
                 w.view:emit_signal("switched-page")
                 w:update_tab_count()
                 w:update_win_title()
-                w:update_uri(w.view.hovered_uri)
                 w:update_buf()
                 w:update_hist()
                 return false
@@ -219,7 +215,6 @@ window.init_funcs = {
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_sbar_fg,
             [s.l.hist]   = theme.hist_sbar_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
@@ -239,7 +234,6 @@ window.init_funcs = {
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_sbar_font,
             [s.l.hist]   = theme.hist_sbar_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
@@ -513,11 +507,6 @@ window.methods = {
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
-    end,
-
-    update_uri = function (w, link)
-        w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
-            or (w.view and w.view.uri) or "about:blank")
     end,
 
     update_hist = function (w)
