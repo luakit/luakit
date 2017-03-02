@@ -45,6 +45,7 @@ require "widget.hist"
 require "widget.progress"
 require "widget.ssl"
 require "widget.scroll"
+require "widget.buf"
 
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")

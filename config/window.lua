@@ -48,7 +48,6 @@ function window.build()
             r = {
                 layout = hbox(),
                 ebox   = eventbox(),
-                buf    = label(),
                 tabi   = label(),
             },
         },
@@ -101,7 +100,6 @@ function window.build()
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout.homogeneous = false;
-    r.layout:pack(r.buf)
     r.layout:pack(r.tabi)
     r.ebox.child = r.layout
 
@@ -164,7 +162,6 @@ window.init_funcs = {
                 w.view:emit_signal("switched-page")
                 w:update_tab_count()
                 w:update_win_title()
-                w:update_buf()
                 return false
             end)
         end)
@@ -211,7 +208,6 @@ window.init_funcs = {
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
             [i.input]    = theme.input_ibar_fg,
@@ -229,7 +225,6 @@ window.init_funcs = {
 
         -- Set fonts
         for wi, v in pairs({
-            [s.r.buf]    = theme.buf_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
@@ -503,15 +498,7 @@ window.methods = {
         w.win.title = title
     end,
 
-    update_buf = function (w)
-        local buf = w.sbar.r.buf
-        if w.buffer then
-            buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
-            buf:show()
-        else
-            buf:hide()
-        end
-    end,
+    update_buf = function (w) end,
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
