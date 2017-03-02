@@ -34,11 +34,6 @@ end
 
 capi.luakit.idle_add(bookmarks.init)
 
--- Validate tag name
-local function valid_tag_name(name)
-    return not not string.match(name, "^%w[%w-]*$")
-end
-
 function bookmarks.get(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
     local rows = bookmarks.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
