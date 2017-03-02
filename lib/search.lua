@@ -5,6 +5,7 @@
 
 local webview = require("webview")
 local lousy = require("lousy")
+local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds = binds.add_binds
 

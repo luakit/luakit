@@ -7,6 +7,7 @@
 local lousy = require("lousy")
 local window = require("window")
 local editor = require("editor")
+local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds = binds.add_binds
 local menu_binds = binds.menu_binds

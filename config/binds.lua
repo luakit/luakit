@@ -8,6 +8,8 @@ local window = require("window")
 local lousy = require("lousy")
 local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
 local cmd, any = lousy.bind.cmd, lousy.bind.any
+local modes = require("modes")
+local new_mode, get_mode = modes.new_mode, modes.get_mode
 
 -- Util aliases
 local match, join = string.match, lousy.util.table.join

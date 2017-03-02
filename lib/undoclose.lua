@@ -9,6 +9,7 @@ local lousy = require("lousy")
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
+local new_mode = require("modes").new_mode
 
 local reopening = {}
 

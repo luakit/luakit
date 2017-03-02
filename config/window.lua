@@ -271,6 +271,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
+        local get_mode = require("modes").get_mode
         return lousy.bind.match_cmd(w, get_mode("command").binds, buffer)
     end,
 
@@ -482,6 +483,7 @@ window.methods = {
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
+        local get_mode = require("modes").get_mode
         w.binds = lousy.util.table.join((get_mode(mode) or {}).binds or {}, get_mode('all').binds or {})
         -- Clear & hide buffer
         w.buffer = nil

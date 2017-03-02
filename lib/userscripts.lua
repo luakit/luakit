@@ -10,6 +10,7 @@ local window = require("window")
 local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
+local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds

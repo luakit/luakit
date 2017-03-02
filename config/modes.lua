@@ -11,7 +11,7 @@ local join = lousy.util.table.join
 local order = 0
 
 -- Add new mode table (optionally merges with original mode)
-function new_mode(name, desc, mode, replace)
+local function new_mode(name, desc, mode, replace)
     assert(string.match(name, "^[%w-_]+$"), "invalid mode name: " .. name)
     -- Detect optional description
     if type(desc) == "table" then
@@ -25,9 +25,9 @@ function new_mode(name, desc, mode, replace)
 end
 
 -- Get mode table
-function get_mode(name) return modes[name] end
+local function get_mode(name) return modes[name] end
 
-function get_modes() return lousy.util.table.clone(modes) end
+local function get_modes() return lousy.util.table.clone(modes) end
 
 -- Attach window & input bar signals for mode hooks
 window.init_funcs.modes_setup = function (w)
@@ -178,3 +178,9 @@ new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     end,
     history = {maxlen = 50},
 })
+
+return {
+    new_mode = new_mode,
+    get_mode = get_mode,
+    get_modes = get_modes,
+}

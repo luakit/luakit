@@ -5,6 +5,7 @@ local chrome = require("chrome")
 local history = require("history")
 local markdown = require("markdown")
 local editor = require("editor")
+local get_modes = require("modes").get_modes
 local add_cmds = require("binds").add_cmds
 
 local html = [==[

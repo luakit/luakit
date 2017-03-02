@@ -7,6 +7,7 @@
 -- Get luakit environment
 local lousy = require("lousy")
 local window = require("window")
+local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds

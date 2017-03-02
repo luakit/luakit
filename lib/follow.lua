@@ -6,6 +6,7 @@
 
 local lousy = require "lousy"
 local window = require("window")
+local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds = binds.add_binds
 local capi = {
