@@ -40,6 +40,17 @@ local window = require "window"
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
 local webview = require "webview"
 
+-- Left-aligned status bar widgets
+require "widget.uri"
+require "widget.hist"
+require "widget.progress"
+
+-- Right-aligned status bar widgets
+require "widget.buf"
+require "widget.ssl"
+require "widget.tabi"
+require "widget.scroll"
+
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
 require "modes"

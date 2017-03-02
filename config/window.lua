@@ -41,9 +41,6 @@ function window.build()
             l = {
                 layout = hbox(),
                 ebox   = eventbox(),
-                uri    = label(),
-                hist   = label(),
-                loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
             sep = eventbox(),
@@ -51,10 +48,6 @@ function window.build()
             r = {
                 layout = hbox(),
                 ebox   = eventbox(),
-                buf    = label(),
-                ssl    = label(),
-                tabi   = label(),
-                scroll = label(),
             },
         },
 
@@ -101,18 +94,11 @@ function window.build()
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout.homogeneous = false;
-    l.layout:pack(l.uri)
-    l.layout:pack(l.hist)
-    l.layout:pack(l.loaded)
     l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout.homogeneous = false;
-    r.layout:pack(r.buf)
-    r.layout:pack(r.ssl)
-    r.layout:pack(r.tabi)
-    r.layout:pack(r.scroll)
     r.ebox.child = r.layout
 
     -- Pack status bar elements
@@ -144,10 +130,6 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.loaded:hide()
-    l.hist:hide()
-    l.uri.selectable = true
-    r.ssl:hide()
 
     -- Allow error messages to be copied
     -- TODO: *only* allow copying when showing an error
@@ -164,30 +146,14 @@ end
 window.init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
-        w.tabs:add_signal("page-added", function (nbook, view, idx)
-            luakit.idle_add(function ()
-                w:update_tab_count()
-                return false
-            end)
-        end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
             w.view = nil
             w:set_mode()
             -- Update widgets after tab switch
             luakit.idle_add(function ()
                 w.view:emit_signal("switched-page")
-                w:update_tab_count()
                 w:update_win_title()
-                w:update_uri(w.view.hovered_uri)
-                w:update_progress()
-                w:update_buf()
-                w:update_ssl()
-                w:update_hist()
-                return false
             end)
-        end)
-        w.tabs:add_signal("page-reordered", function (nbook, view, idx)
-            w:update_tab_count()
         end)
     end,
 
@@ -229,12 +195,6 @@ window.init_funcs = {
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_sbar_fg,
-            [s.l.hist]   = theme.hist_sbar_fg,
-            [s.l.loaded] = theme.sbar_loaded_fg,
-            [s.r.buf]    = theme.buf_sbar_fg,
-            [s.r.tabi]   = theme.tabi_sbar_fg,
-            [s.r.scroll] = theme.scroll_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
             [i.input]    = theme.input_ibar_fg,
         }) do wi.fg = v end
@@ -251,13 +211,6 @@ window.init_funcs = {
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.uri]    = theme.uri_sbar_font,
-            [s.l.hist]   = theme.hist_sbar_font,
-            [s.l.loaded] = theme.sbar_loaded_font,
-            [s.r.buf]    = theme.buf_sbar_font,
-            [s.r.ssl]    = theme.ssl_sbar_font,
-            [s.r.tabi]   = theme.tabi_sbar_font,
-            [s.r.scroll] = theme.scroll_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
         }) do wi.font = v end
@@ -517,11 +470,6 @@ window.methods = {
         w.ibar.layout.bg = th.bg
     end,
 
-    -- GUI content update functions
-    update_tab_count = function (w)
-        w.sbar.r.tabi.text = string.format("[%d/%d]", w.tabs:current(), w.tabs:count())
-    end,
-
     update_win_title = function (w)
         local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
@@ -530,83 +478,7 @@ window.methods = {
         w.win.title = title
     end,
 
-    update_uri = function (w, link)
-        w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
-            or (w.view and w.view.uri) or "about:blank")
-    end,
-
-    update_progress = function (w)
-        local p = w.view.progress
-        local loaded = w.sbar.l.loaded
-        if not w.view.is_loading or p == 1 then
-            loaded:hide()
-        else
-            loaded:show()
-            loaded.text = string.format("(%d%%)", p * 100)
-        end
-    end,
-
-    update_scroll = function (w)
-        w.view:eval_js([=[
-            (function () {
-                return {
-                    y: window.scrollY,
-                    ymax: Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0)
-                };
-            })()
-        ]=], { callback = function (scroll, err)
-            assert(not err, err)
-            local label = w.sbar.r.scroll
-            local y, max, text = scroll.y, scroll.ymax
-            if     max == 0   then text = "All"
-            elseif y   == 0   then text = "Top"
-            elseif y   == max then text = "Bot"
-            else text = string.format("%2d%%", (y / max) * 100)
-            end
-            if label.text ~= text then label.text = text end
-        end })
-    end,
-
-    update_ssl = function (w)
-        local trusted = w.view:ssl_trusted()
-        local ssl = w.sbar.r.ssl
-        if trusted ~= nil and not w.checking_ssl then
-            ssl.fg = theme.notrust_fg
-            ssl.text = "(nocheck)"
-            ssl:show()
-        elseif trusted == true then
-            ssl.fg = theme.trust_fg
-            ssl.text = "(trust)"
-            ssl:show()
-        elseif string.sub(w.view.uri or "", 1, 4) == "http" then
-            -- Display (notrust) on http/https URLs
-            ssl.fg = theme.notrust_fg
-            ssl.text = "(notrust)"
-            ssl:show()
-        end
-    end,
-
-    update_hist = function (w)
-        local hist = w.sbar.l.hist
-        local back, forward = w.view:can_go_back(), w.view:can_go_forward()
-        local s = (back and "+" or "") .. (forward and "-" or "")
-        if s ~= "" then
-            hist.text = '['..s..']'
-            hist:show()
-        else
-            hist:hide()
-        end
-    end,
-
-    update_buf = function (w)
-        local buf = w.sbar.r.buf
-        if w.buffer then
-            buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
-            buf:show()
-        else
-            buf:hide()
-        end
-    end,
+    update_buf = function (w) end,
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
@@ -679,7 +551,6 @@ window.methods = {
         end
         local pos = w.tabs:insert((order and order(w, view)) or -1, view)
         if switch ~= false then w.tabs:switch(pos) end
-        w:update_tab_count()
     end,
 
     detach_tab = function (w, view, blank_last)
@@ -689,7 +560,6 @@ window.methods = {
         if blank_last ~= false and w.tabs:count() == 0 then
             w.has_blank = w:new_tab("about:blank", false)
         end
-        w:update_tab_count()
     end,
 
     close_win = function (w, force)
