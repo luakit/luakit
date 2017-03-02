@@ -8,6 +8,8 @@ local lousy = require("lousy")
 -- Webview class table
 local webview = {}
 
+lousy.signal.setup(webview, true)
+
 webview.enable_webgl = true
 
 local web_module = require_web_module("webview_wm")
@@ -337,12 +339,15 @@ end
 function webview.new(w)
     local view = widget{type = "webview"}
 
+    webview.emit_signal("init", view)
+
     view.show_scrollbars = false
     view.enforce_96_dpi = false
 
     local function call_init_funcs (v)
         -- Call webview init functions
         for k, func in pairs(webview.init_funcs) do
+            msg.verbose("Calling webview init function '%s'", k)
             func(view, w)
         end
         view:remove_signal("web-extension-loaded", call_init_funcs)

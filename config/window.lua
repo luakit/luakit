@@ -8,6 +8,8 @@ local lousy = require("lousy")
 -- Window class table
 local window = {}
 
+lousy.signal.setup(window, true)
+
 -- List of active windows by window widget
 window.bywidget = setmetatable({}, { __mode = "k" })
 
@@ -904,7 +906,9 @@ function window.new(args)
     lousy.signal.setup(w)
 
     -- Call window init functions
-    for _, func in pairs(window.init_funcs) do
+    window.emit_signal("init", w)
+    for k, func in pairs(window.init_funcs) do
+        msg.verbose("Calling window init function '%s'", k)
         func(w)
     end
 
