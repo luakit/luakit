@@ -43,7 +43,6 @@ function window.build()
                 ebox   = eventbox(),
                 uri    = label(),
                 hist   = label(),
-                loaded = label(),
             },
             -- Fills space between the left and right aligned widgets
             sep = eventbox(),
@@ -103,7 +102,6 @@ function window.build()
     l.layout.homogeneous = false;
     l.layout:pack(l.uri)
     l.layout:pack(l.hist)
-    l.layout:pack(l.loaded)
     l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
@@ -144,7 +142,6 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.loaded:hide()
     l.hist:hide()
     l.uri.selectable = true
     r.ssl:hide()
@@ -179,7 +176,6 @@ window.init_funcs = {
                 w:update_tab_count()
                 w:update_win_title()
                 w:update_uri(w.view.hovered_uri)
-                w:update_progress()
                 w:update_buf()
                 w:update_ssl()
                 w:update_hist()
@@ -231,7 +227,6 @@ window.init_funcs = {
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_fg,
             [s.l.hist]   = theme.hist_sbar_fg,
-            [s.l.loaded] = theme.sbar_loaded_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [s.r.scroll] = theme.scroll_sbar_fg,
@@ -253,7 +248,6 @@ window.init_funcs = {
         for wi, v in pairs({
             [s.l.uri]    = theme.uri_sbar_font,
             [s.l.hist]   = theme.hist_sbar_font,
-            [s.l.loaded] = theme.sbar_loaded_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
@@ -533,17 +527,6 @@ window.methods = {
     update_uri = function (w, link)
         w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
             or (w.view and w.view.uri) or "about:blank")
-    end,
-
-    update_progress = function (w)
-        local p = w.view.progress
-        local loaded = w.sbar.l.loaded
-        if not w.view.is_loading or p == 1 then
-            loaded:hide()
-        else
-            loaded:show()
-            loaded.text = string.format("(%d%%)", p * 100)
-        end
     end,
 
     update_scroll = function (w)

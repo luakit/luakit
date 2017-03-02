@@ -77,12 +77,11 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Update progress widget
+    -- Update ssl widget
     progress_update = function (view, w)
         for _, sig in ipairs({"load-status", "property::progress"}) do
             view:add_signal(sig, function (v)
                 if w.view == v then
-                    w:update_progress()
                     w:update_ssl()
                 end
             end)

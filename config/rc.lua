@@ -40,6 +40,8 @@ local window = require "window"
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
 local webview = require "webview"
 
+require "widget.progress"
+
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
 require "modes"
