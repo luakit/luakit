@@ -9,7 +9,7 @@ and web browsers based upon WebKit1 are insecure and will not be fixed: see
 [here](https://blogs.gnome.org/mcatanzaro/2016/02/01/on-webkit-security-updates/)
 for more details.
 
-## Dont Panic!
+## Don't Panic!
 
 You don't have to be a developer to use luakit on a daily basis. If you are
 familiar with vimperator, pentadactyl, jumanji, uzbl & etc you will find
