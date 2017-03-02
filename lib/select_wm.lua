@@ -69,8 +69,11 @@ local label_styles = {
 }
 
 -- Default label style
-local s = label_styles
-local label_maker = s.sort(s.reverse(s.numbers()))
+local label_maker
+do
+    local s = label_styles
+    label_maker = s.sort(s.reverse(s.numbers()))
+end
 
 local function bounding_boxes_intersect(a, b)
     if a.x + a.w < b.x then return false end
