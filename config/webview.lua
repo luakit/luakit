@@ -33,14 +33,6 @@ webview.init_funcs = {
         view.enable_webgl = webview.enable_webgl
     end,
 
-    -- Check if checking ssl certificates
-    checking_ssl = function (view, w)
-        local ca_file = soup.ssl_ca_file
-        if ca_file and os.exists(ca_file) then
-            w.checking_ssl = true
-        end
-    end,
-
     -- Update window and tab titles
     title_update = function (view, w)
         view:add_signal("property::title", function (v)

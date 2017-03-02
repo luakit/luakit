@@ -163,7 +163,6 @@ source
 spawn
 spawn_sync
 spell_checking_languages
-ssl_ca_file
 ssl_strict
 ssl_trusted
 start
