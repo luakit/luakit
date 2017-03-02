@@ -792,8 +792,12 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
             G_OBJECT(d->view))))
         return ret;
 
-    return luaH_gobject_index(L, webview_settings_properties, token,
-            G_OBJECT(webkit_web_view_get_settings(d->view)));
+    if ((ret = luaH_gobject_index(L, webview_settings_properties, token,
+            G_OBJECT(webkit_web_view_get_settings(d->view)))))
+        return ret;
+
+    warn("Accessing unknown webview property '%s'", token_tostring(token));
+    return 0;
 }
 
 static gchar*
@@ -858,7 +862,11 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         emit = luaH_gobject_newindex(L, webview_settings_properties, token, 3,
             G_OBJECT(webkit_web_view_get_settings(d->view)));
 
-    return emit ? luaH_object_property_signal(L, 1, token) : 0;
+    if (emit)
+        return luaH_object_property_signal(L, 1, token);
+
+    warn("Accessing unknown webview property '%s'", token_tostring(token));
+    return 0;
 }
 
 static gboolean
