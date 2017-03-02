@@ -77,17 +77,6 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Update ssl widget
-    progress_update = function (view, w)
-        for _, sig in ipairs({"load-status", "property::progress"}) do
-            view:add_signal(sig, function (v)
-                if w.view == v then
-                    w:update_ssl()
-                end
-            end)
-        end
-    end,
-
     -- Display hovered link in statusbar
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)

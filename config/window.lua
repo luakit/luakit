@@ -51,7 +51,6 @@ function window.build()
                 layout = hbox(),
                 ebox   = eventbox(),
                 buf    = label(),
-                ssl    = label(),
                 tabi   = label(),
                 scroll = label(),
             },
@@ -108,7 +107,6 @@ function window.build()
     local r = w.sbar.r
     r.layout.homogeneous = false;
     r.layout:pack(r.buf)
-    r.layout:pack(r.ssl)
     r.layout:pack(r.tabi)
     r.layout:pack(r.scroll)
     r.ebox.child = r.layout
@@ -144,7 +142,6 @@ function window.build()
     w.tabs.show_tabs = false
     l.hist:hide()
     l.uri.selectable = true
-    r.ssl:hide()
 
     -- Allow error messages to be copied
     -- TODO: *only* allow copying when showing an error
@@ -177,7 +174,6 @@ window.init_funcs = {
                 w:update_win_title()
                 w:update_uri(w.view.hovered_uri)
                 w:update_buf()
-                w:update_ssl()
                 w:update_hist()
                 return false
             end)
@@ -249,7 +245,6 @@ window.init_funcs = {
             [s.l.uri]    = theme.uri_sbar_font,
             [s.l.hist]   = theme.hist_sbar_font,
             [s.r.buf]    = theme.buf_sbar_font,
-            [s.r.ssl]    = theme.ssl_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
             [s.r.scroll] = theme.scroll_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
@@ -548,25 +543,6 @@ window.methods = {
             end
             if label.text ~= text then label.text = text end
         end })
-    end,
-
-    update_ssl = function (w)
-        local trusted = w.view:ssl_trusted()
-        local ssl = w.sbar.r.ssl
-        if trusted ~= nil and not w.checking_ssl then
-            ssl.fg = theme.notrust_fg
-            ssl.text = "(nocheck)"
-            ssl:show()
-        elseif trusted == true then
-            ssl.fg = theme.trust_fg
-            ssl.text = "(trust)"
-            ssl:show()
-        elseif string.sub(w.view.uri or "", 1, 4) == "http" then
-            -- Display (notrust) on http/https URLs
-            ssl.fg = theme.notrust_fg
-            ssl.text = "(notrust)"
-            ssl:show()
-        end
     end,
 
     update_hist = function (w)
