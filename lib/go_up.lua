@@ -10,7 +10,6 @@
 local lousy = require("lousy")
 local binds = require("binds")
 local add_binds = binds.add_binds
-local parse_uri, uri_tostring = soup.parse_uri, soup.uri_tostring
 local match = string.match
 
 local M = {}
@@ -48,7 +47,7 @@ end
 function M.go_up(uri, n)
     local u = soup.parse_uri(uri)
     if not u then error("invalid uri: " .. tostring(uri)) end
-    for i = 1, (n or 1) do
+    for _ = 1, (n or 1) do
         go_up_step(u)
     end
     return soup.uri_tostring(u)

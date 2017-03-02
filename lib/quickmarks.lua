@@ -181,7 +181,7 @@ add_cmds({
     cmd("qmarks", "List all quickmarks.", function (w) w:set_mode("qmarklist") end),
 
     -- Delete all quickmarks
-    cmd({"delqmarks!", "delqm!"}, "Delete all quickmarks.", function (w) quickmarks.delall() end),
+    cmd({"delqmarks!", "delqm!"}, "Delete all quickmarks.", function () quickmarks.delall() end),
 })
 
 -- Add mode to display all quickmarks in an interactive menu

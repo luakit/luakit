@@ -7,7 +7,7 @@ local function edit_externally(w)
 	local marker = "luakit_extedit_" .. time
 	local file = luakit.cache_dir .. "/" .. marker .. ".txt"
 
-	local function editor_callback(exit_reason, exit_status)
+	local function editor_callback()
 		local f = io.open(file, "r")
 		local s = f:read("*all")
 		f:close()

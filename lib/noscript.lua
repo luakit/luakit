@@ -131,7 +131,7 @@ end
 
 function window.methods.noscript_indicator_update(w)
     local ns = w.sbar.r.noscript
-    local es, ep, matched_domain = lookup_domain(w.view.uri)
+    local es, _, matched_domain = lookup_domain(w.view.uri)
     local state = es and "enabled" or "disabled"
 
     if es then
