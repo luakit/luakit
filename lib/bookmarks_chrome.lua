@@ -478,18 +478,15 @@ chrome.add("bookmarks", function ()
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
-    local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
-    return html
+    return string.gsub(html, "{%%(%w+)}", { stylesheet = style })
 end,
 function (view)
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
-    local _, err = view:eval_js(jquery, { no_return = true })
-    assert(not err, err)
+    view:eval_js(jquery, { no_return = true })
 
     -- Load main luakit://bookmarks/ JavaScript
-    local _, err = view:eval_js(main_js, { no_return = true })
-    assert(not err, err)
+    view:eval_js(main_js, { no_return = true })
 end,
 export_funcs)
 
