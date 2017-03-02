@@ -42,6 +42,7 @@ local webview = require "webview"
 
 require "widget.progress"
 require "widget.ssl"
+require "widget.scroll"
 
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")

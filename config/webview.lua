@@ -68,15 +68,6 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Update scroll widget
-    scroll_update = function (view, w)
-        view:add_signal("expose", function (v)
-            if w.view == v then
-                w:update_scroll()
-            end
-        end)
-    end,
-
     -- Display hovered link in statusbar
     link_hover_display = function (view, w)
         view:add_signal("link-hover", function (v, link)

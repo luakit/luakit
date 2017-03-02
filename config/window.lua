@@ -52,7 +52,6 @@ function window.build()
                 ebox   = eventbox(),
                 buf    = label(),
                 tabi   = label(),
-                scroll = label(),
             },
         },
 
@@ -108,7 +107,6 @@ function window.build()
     r.layout.homogeneous = false;
     r.layout:pack(r.buf)
     r.layout:pack(r.tabi)
-    r.layout:pack(r.scroll)
     r.ebox.child = r.layout
 
     -- Pack status bar elements
@@ -225,7 +223,6 @@ window.init_funcs = {
             [s.l.hist]   = theme.hist_sbar_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
-            [s.r.scroll] = theme.scroll_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
             [i.input]    = theme.input_ibar_fg,
         }) do wi.fg = v end
@@ -246,7 +243,6 @@ window.init_funcs = {
             [s.l.hist]   = theme.hist_sbar_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
-            [s.r.scroll] = theme.scroll_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
         }) do wi.font = v end
@@ -522,27 +518,6 @@ window.methods = {
     update_uri = function (w, link)
         w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
             or (w.view and w.view.uri) or "about:blank")
-    end,
-
-    update_scroll = function (w)
-        w.view:eval_js([=[
-            (function () {
-                return {
-                    y: window.scrollY,
-                    ymax: Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0)
-                };
-            })()
-        ]=], { callback = function (scroll, err)
-            assert(not err, err)
-            local label = w.sbar.r.scroll
-            local y, max, text = scroll.y, scroll.ymax
-            if     max == 0   then text = "All"
-            elseif y   == 0   then text = "Top"
-            elseif y   == max then text = "Bot"
-            else text = string.format("%2d%%", (y / max) * 100)
-            end
-            if label.text ~= text then label.text = text end
-        end })
     end,
 
     update_hist = function (w)
