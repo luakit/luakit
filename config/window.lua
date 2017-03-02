@@ -48,7 +48,6 @@ function window.build()
             r = {
                 layout = hbox(),
                 ebox   = eventbox(),
-                tabi   = label(),
             },
         },
 
@@ -100,7 +99,6 @@ function window.build()
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout.homogeneous = false;
-    r.layout:pack(r.tabi)
     r.ebox.child = r.layout
 
     -- Pack status bar elements
@@ -148,25 +146,14 @@ end
 window.init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
-        w.tabs:add_signal("page-added", function (nbook, view, idx)
-            luakit.idle_add(function ()
-                w:update_tab_count()
-                return false
-            end)
-        end)
         w.tabs:add_signal("switch-page", function (nbook, view, idx)
             w.view = nil
             w:set_mode()
             -- Update widgets after tab switch
             luakit.idle_add(function ()
                 w.view:emit_signal("switched-page")
-                w:update_tab_count()
                 w:update_win_title()
-                return false
             end)
-        end)
-        w.tabs:add_signal("page-reordered", function (nbook, view, idx)
-            w:update_tab_count()
         end)
     end,
 
@@ -208,7 +195,6 @@ window.init_funcs = {
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.r.tabi]   = theme.tabi_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
             [i.input]    = theme.input_ibar_fg,
         }) do wi.fg = v end
@@ -225,7 +211,6 @@ window.init_funcs = {
 
         -- Set fonts
         for wi, v in pairs({
-            [s.r.tabi]   = theme.tabi_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
         }) do wi.font = v end
@@ -485,11 +470,6 @@ window.methods = {
         w.ibar.layout.bg = th.bg
     end,
 
-    -- GUI content update functions
-    update_tab_count = function (w)
-        w.sbar.r.tabi.text = string.format("[%d/%d]", w.tabs:current(), w.tabs:count())
-    end,
-
     update_win_title = function (w)
         local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
@@ -571,7 +551,6 @@ window.methods = {
         end
         local pos = w.tabs:insert((order and order(w, view)) or -1, view)
         if switch ~= false then w.tabs:switch(pos) end
-        w:update_tab_count()
     end,
 
     detach_tab = function (w, view, blank_last)
@@ -581,7 +560,6 @@ window.methods = {
         if blank_last ~= false and w.tabs:count() == 0 then
             w.has_blank = w:new_tab("about:blank", false)
         end
-        w:update_tab_count()
     end,
 
     close_win = function (w, force)
