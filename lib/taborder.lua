@@ -46,11 +46,11 @@ taborder.by_origin = function(w, newview)
     if kids[currentview] then
         -- Collect all descendants
         local desc = { currentview }
-        local i = 1
+        local ii = 1
         repeat
-            desc = lousy.util.table.join(desc, kids[desc[i]])
-            i = i + 1
-        until i > #desc
+            desc = lousy.util.table.join(desc, kids[desc[ii]])
+            ii = ii + 1
+        until ii > #desc
 
         -- Find the non-descendant closest after current. This is where
         -- the new tab should be put.
