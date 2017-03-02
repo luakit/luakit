@@ -41,6 +41,7 @@ local window = require "window"
 local webview = require "webview"
 
 require "widget.uri"
+require "widget.hist"
 require "widget.progress"
 require "widget.ssl"
 require "widget.scroll"

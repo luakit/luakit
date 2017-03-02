@@ -50,15 +50,6 @@ webview.init_funcs = {
         end)
     end,
 
-    -- Update history indicator
-    hist_update = function (view, w)
-        view:add_signal("load-status", function (v, status)
-            if w.view == v then
-                w:update_hist()
-            end
-        end)
-    end,
-
     -- Clicking a form field automatically enters insert mode.
     form_insert_mode = function (view, w)
         -- Emit root-active event in button release to prevent "missing"

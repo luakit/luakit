@@ -41,7 +41,6 @@ function window.build()
             l = {
                 layout = hbox(),
                 ebox   = eventbox(),
-                hist   = label(),
             },
             -- Fills space between the left and right aligned widgets
             sep = eventbox(),
@@ -97,7 +96,6 @@ function window.build()
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout.homogeneous = false;
-    l.layout:pack(l.hist)
     l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
@@ -136,7 +134,6 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
-    l.hist:hide()
 
     -- Allow error messages to be copied
     -- TODO: *only* allow copying when showing an error
@@ -168,7 +165,6 @@ window.init_funcs = {
                 w:update_tab_count()
                 w:update_win_title()
                 w:update_buf()
-                w:update_hist()
                 return false
             end)
         end)
@@ -215,7 +211,6 @@ window.init_funcs = {
 
         -- Set foregrounds
         for wi, v in pairs({
-            [s.l.hist]   = theme.hist_sbar_fg,
             [s.r.buf]    = theme.buf_sbar_fg,
             [s.r.tabi]   = theme.tabi_sbar_fg,
             [i.prompt]   = theme.prompt_ibar_fg,
@@ -234,7 +229,6 @@ window.init_funcs = {
 
         -- Set fonts
         for wi, v in pairs({
-            [s.l.hist]   = theme.hist_sbar_font,
             [s.r.buf]    = theme.buf_sbar_font,
             [s.r.tabi]   = theme.tabi_sbar_font,
             [i.prompt]   = theme.prompt_ibar_font,
@@ -507,18 +501,6 @@ window.methods = {
         local max = globals.max_title_len or 80
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
-    end,
-
-    update_hist = function (w)
-        local hist = w.sbar.l.hist
-        local back, forward = w.view:can_go_back(), w.view:can_go_forward()
-        local s = (back and "+" or "") .. (forward and "-" or "")
-        if s ~= "" then
-            hist.text = '['..s..']'
-            hist:show()
-        else
-            hist:hide()
-        end
     end,
 
     update_buf = function (w)
