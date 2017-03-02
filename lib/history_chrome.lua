@@ -2,6 +2,8 @@
 local history = require("history")
 local lousy = require("lousy")
 local chrome = require("chrome")
+local binds = require("binds")
+local add_cmds = binds.add_cmds
 
 local history_chrome = {}
 

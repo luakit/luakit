@@ -19,7 +19,7 @@ local page_step = globals.page_step or 1.0
 local zoom_step = globals.zoom_step or 0.1
 
 -- Add binds to a mode
-function add_binds(mode, binds, before)
+local function add_binds(mode, binds, before)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
     mode = type(mode) ~= "table" and {mode} or mode
     for _, m in ipairs(mode) do
@@ -36,12 +36,12 @@ function add_binds(mode, binds, before)
 end
 
 -- Add commands to command mode
-function add_cmds(cmds, before)
+local function add_cmds(cmds, before)
     add_binds("command", cmds, before)
 end
 
 -- Adds the default menu widget bindings to a mode
-menu_binds = {
+local menu_binds = {
     -- Navigate items
     key({},          "j",       function (w) w.menu:move_down() end),
     key({},          "k",       function (w) w.menu:move_up()   end),
@@ -531,7 +531,7 @@ add_binds("insert", {
         function (w) w:set_mode("passthrough") end),
 })
 
-readline_bindings = {
+local readline_bindings = {
     key({"Shift"}, "Insert",
         "Insert contents of primary selection at cursor position.",
         function (w) w:insert_cmd(luakit.selection.primary) end),
@@ -721,5 +721,12 @@ add_cmds({
             v:load_string('<pre><code>' .. source .. '</code></pre>', v.uri)
         end),
 })
+
+return {
+    add_binds = add_binds,
+    add_cmds = add_cmds,
+    menu_binds = menu_binds,
+    readline_bindings = readline_bindings,
+}
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

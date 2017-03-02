@@ -20,6 +20,8 @@ local util      = lousy.util
 local capi      = { luakit = luakit }
 local lfs       = require("lfs")
 local window    = require("window")
+local binds     = require("binds")
+local add_cmds  = binds.add_cmds
 
 local adblock = {}
 local adblock_wm = require_web_module("adblock_wm")

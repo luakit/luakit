@@ -8,6 +8,8 @@
 
 local window = require("window")
 local lousy = require("lousy")
+local binds = require("binds")
+local add_binds = binds.add_binds
 local key = lousy.bind.key
 
 local wm = require_web_module("follow_selected_wm")

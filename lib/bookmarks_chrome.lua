@@ -5,6 +5,8 @@ local chrome = require("chrome")
 local markdown = require("markdown")
 local sql_escape = lousy.util.sql_escape
 local webview = require("webview")
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local capi = {
     luakit = luakit
 }

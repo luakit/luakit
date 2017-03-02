@@ -1,4 +1,6 @@
 local lousy = require "lousy"
+local binds = require("binds")
+local add_binds = binds.add_binds
 
 local function edit_externally(w)
 	local time = os.time()

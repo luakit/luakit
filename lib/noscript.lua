@@ -5,7 +5,8 @@
 
 local window = require("window")
 local webview = require("webview")
-local add_binds = add_binds
+local binds = require("binds")
+local add_binds = binds.add_binds
 local lousy = require("lousy")
 local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }

@@ -8,6 +8,8 @@
 -- top-level domain.
 
 local lousy = require("lousy")
+local binds = require("binds")
+local add_binds = binds.add_binds
 local parse_uri, uri_tostring = soup.parse_uri, soup.uri_tostring
 local match = string.match
 

@@ -7,6 +7,8 @@
 local lousy = require("lousy")
 local history = require("history")
 local bookmarks = require("bookmarks")
+local binds = require("binds")
+local add_binds = binds.add_binds
 local escape = lousy.util.escape
 
 local completion = {}

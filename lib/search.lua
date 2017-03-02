@@ -5,6 +5,8 @@
 
 local webview = require("webview")
 local lousy = require("lousy")
+local binds = require("binds")
+local add_binds = binds.add_binds
 
 -- Add searching binds to normal mode
 local key = lousy.bind.key

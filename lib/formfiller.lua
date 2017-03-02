@@ -7,6 +7,9 @@
 local lousy = require("lousy")
 local window = require("window")
 local editor = require("editor")
+local binds = require("binds")
+local add_binds = binds.add_binds
+local menu_binds = binds.menu_binds
 local capi = { luakit = luakit }
 
 --- Provides functionaliy to auto-fill forms based on a Lua DSL.

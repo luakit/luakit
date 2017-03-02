@@ -4,6 +4,8 @@ local chrome     = require("chrome")
 local window     = require("window")
 local webview    = require("webview")
 local error_page = require("error_page")
+local binds      = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
 local adblock_chrome = {}
 

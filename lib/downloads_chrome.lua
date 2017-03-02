@@ -2,8 +2,8 @@
 local downloads = require("downloads")
 local lousy = require("lousy")
 local chrome = require("chrome")
-local add_binds = add_binds
-local add_cmds = add_cmds
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local webview = require("webview")
 local window = require("window")
 

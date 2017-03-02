@@ -8,6 +8,8 @@
 local lousy = require("lousy")
 local webview = require("webview")
 local window = require("window")
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
 local capi = {
     download = download,
