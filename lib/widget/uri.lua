@@ -1,6 +1,7 @@
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")
+local theme = lousy.theme.get()
 
 local function update (w, link)
     w.sbar.l.uri.text = lousy.util.escape((link and "Link: " .. link)
