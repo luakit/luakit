@@ -74,7 +74,6 @@ focus
 focused
 font
 frames
-full_content_zoom
 fullscreen
 get_title
 go_back
@@ -157,7 +156,6 @@ show
 show_border
 show_frame
 show_inspector
-show_scrollbars
 show_tabs
 socket
 spacing
@@ -190,7 +188,6 @@ uri
 uri_decode
 uri_encode
 user_agent
-user_stylesheet_uri
 value
 vbox
 verbose

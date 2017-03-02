@@ -271,20 +271,20 @@ add_binds("normal", {
     buf("^z[iI]$", [[Enlarge text zoom of current page with `zi` or `zI` to
         reduce full zoom.]],
         function (w, b, m)
-            w:zoom_in(zoom_step  * m.count, b == "zI")
+            w:zoom_in(zoom_step  * m.count)
         end, {count=1}),
 
     buf("^z[oO]$", [[Reduce text zoom of current page with `zo` or `zO` to
         reduce full zoom.]],
         function (w, b, m)
-            w:zoom_out(zoom_step * m.count, b == "zO")
+            w:zoom_out(zoom_step * m.count)
         end, {count=1}),
 
     -- Zoom reset or specific zoom ([count]zZ for full content zoom)
     buf("^z[zZ]$", [[Set current page zoom to `[count]` percent with
         `[count]zz`, use `[count]zZ` to set full zoom percent.]],
         function (w, b, m)
-            w:zoom_set(m.count/100, b == "zZ")
+            w:zoom_set(m.count/100)
         end, {count=100}),
 
     -- Fullscreen

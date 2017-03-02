@@ -270,20 +270,17 @@ webview.methods = {
     end,
 
     -- Zoom functions
-    zoom_in = function (view, w, step, full_zoom)
-        view.full_content_zoom = not not full_zoom
+    zoom_in = function (view, w, step)
         step = step or globals.zoom_step or 0.1
         view.zoom_level = view.zoom_level + step
     end,
 
-    zoom_out = function (view, w, step, full_zoom)
-        view.full_content_zoom = not not full_zoom
+    zoom_out = function (view, w, step)
         step = step or globals.zoom_step or 0.1
         view.zoom_level = math.max(0.01, view.zoom_level) - step
     end,
 
-    zoom_set = function (view, w, level, full_zoom)
-        view.full_content_zoom = not not full_zoom
+    zoom_set = function (view, w, level)
         view.zoom_level = level or 1.0
     end,
 
@@ -340,9 +337,6 @@ function webview.new(w)
     local view = widget{type = "webview"}
 
     webview.emit_signal("init", view)
-
-    view.show_scrollbars = false
-    view.enforce_96_dpi = false
 
     local function call_init_funcs (v)
         -- Call webview init functions

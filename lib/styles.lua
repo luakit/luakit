@@ -95,11 +95,6 @@ webview.init_funcs.styles_load = function(view)
             v.stylesheets[s] = match ~= nil and enabled
         end
     end)
-	view:add_signal("load-status", function (v, status)
-		if status == "committed" and db_get(v.uri) == 0 then
-			v["user_stylesheet_uri"] = nil
-		end
-	end)
 end
 
 function webview.methods.styles_enabled_get(view, _)
