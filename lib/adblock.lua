@@ -238,7 +238,6 @@ local parse_abpfilterlist = function (filters_dir, filename, cache)
     end
     filename = filters_dir .. filename
 
-    local pat, opts
     local white, black = list_new(), list_new()
     for line in io.lines(filename) do
         -- Ignore comments, header and blank lines
@@ -375,7 +374,7 @@ adblock.load = function (reload, single_list, no_sync)
     -- [re-]loading:
     if reload then adblock.rules = {} end
     local filters_dir = adblock_dir
-    local filterfiles_loading = {}
+    local filterfiles_loading
     if single_list and not reload then
         filterfiles_loading = { single_list }
     else
@@ -396,8 +395,6 @@ adblock.load = function (reload, single_list, no_sync)
         list.whitelist, list.blacklist = white or {}, black or {}
     end
 
-    rules_cache.white, rules_cache.black = nil, nil
-    rules_cache = nil
     if not no_sync and not single_list then
         adblock_wm:emit_signal("update_rules", adblock.rules)
     end
@@ -426,7 +423,7 @@ capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", adblock.rules)
 end)
 
-webview.init_funcs.adblock_load = function (view, w)
+webview.init_funcs.adblock_load = function (view)
     for name, list in pairs(adblock.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
         adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
@@ -436,25 +433,25 @@ end
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"adblock-reload", "abr"}, function (w)
+    cmd({"adblock-reload", "abr"}, function ()
         msg.info("adblock: Reloading filters.")
         load(true)
         msg.info("adblock: Reloading filters complete.")
     end),
 
-    cmd({"adblock-list-enable", "able"}, function (w, a)
+    cmd({"adblock-list-enable", "able"}, function (_, a)
         list_set_enabled(a, true)
     end),
 
-    cmd({"adblock-list-disable", "abld"}, function (w, a)
+    cmd({"adblock-list-disable", "abld"}, function (_, a)
         list_set_enabled(a, false)
     end),
 
-    cmd({"adblock-enable", "abe"}, function (w)
+    cmd({"adblock-enable", "abe"}, function ()
         enable()
     end),
 
-    cmd({"adblock-disable", "abd"}, function (w)
+    cmd({"adblock-disable", "abd"}, function ()
         disable()
     end),
 })
