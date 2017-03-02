@@ -276,7 +276,7 @@ local function collate_download_data(d, data, filter)
 end
 
 local export_funcs = {
-    download_get = function (view, id, filter)
+    download_get = function (_, id, filter)
         local d, data = downloads.get(id)
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -285,7 +285,7 @@ local export_funcs = {
         return collate_download_data(d, data, filter)
     end,
 
-    downloads_get_all = function (view, filter)
+    downloads_get_all = function (_, filter)
         local ret = {}
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -335,13 +335,13 @@ downloads.add_signal("status-tick", function (running)
     end
 end)
 
-chrome.add("downloads", function (view, meta)
+chrome.add("downloads", function ()
     local html_subs = {
         style  = chrome.stylesheet .. downloads_chrome.stylesheet,
     }
     return string.gsub(html_template, "{(%w+)}", html_subs)
 end,
-function (view, meta)
+function (view)
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     view:eval_js(jquery, { no_return = true })

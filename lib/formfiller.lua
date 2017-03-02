@@ -133,7 +133,7 @@ local function pattern_from_js_regex(re)
 end
 
 --- Reads the rules from the formfiller DSL file
-local function read_formfiller_rules_from_file(w)
+local function read_formfiller_rules_from_file()
     local state = {
         rules = {},
     }

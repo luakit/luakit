@@ -3,13 +3,8 @@ local bookmarks = require("bookmarks")
 local lousy = require("lousy")
 local chrome = require("chrome")
 local markdown = require("markdown")
-local sql_escape = lousy.util.sql_escape
-local webview = require("webview")
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
-local capi = {
-    luakit = luakit
-}
 
 local bookmarks_chrome = {}
 
@@ -415,7 +410,7 @@ $(document).ready(function () { 'use strict'
 local new_bookmark_values
 
 local export_funcs = {
-    bookmarks_search = function (view, opts)
+    bookmarks_search = function (_, opts)
         if not bookmarks.db then bookmarks.init() end
 
         local sql = { "SELECT", "*", "FROM bookmarks" }
@@ -465,9 +460,9 @@ local export_funcs = {
         return rows
     end,
 
-    bookmarks_add = function (view, ...) return bookmarks.add(...) end,
-    bookmarks_get = function (view, ...) return bookmarks.get(...) end,
-    bookmarks_remove = function (view, ...) return bookmarks.remove(...) end,
+    bookmarks_add = function (_, ...) return bookmarks.add(...) end,
+    bookmarks_get = function (_, ...) return bookmarks.get(...) end,
+    bookmarks_remove = function (_, ...) return bookmarks.remove(...) end,
 
     new_bookmark_values = function (_)
         local values = new_bookmark_values
@@ -476,9 +471,7 @@ local export_funcs = {
     end,
 }
 
-chrome.add("bookmarks", function (view, meta)
-    local uri = "luakit://bookmarks/"
-
+chrome.add("bookmarks", function ()
     local style = chrome.stylesheet .. bookmarks_chrome.stylesheet
 
     if not bookmarks_chrome.show_uri then
@@ -488,7 +481,7 @@ chrome.add("bookmarks", function (view, meta)
     local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
     return html
 end,
-function (view, meta)
+function (view)
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     local _, err = view:eval_js(jquery, { no_return = true })

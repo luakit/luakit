@@ -37,7 +37,7 @@ local go_input = [=[
 })]=]
 
 -- Add `w:go_input()` webview method
-webview.methods.go_input = function(view, w, count)
+webview.methods.go_input = function(_, w, count)
     local js = string.format("%s(%d);", go_input, count or 1)
     w.view:eval_js(js, { callback = function(ret)
         w:emit_form_root_active_signal(ret)
@@ -47,7 +47,7 @@ end
 -- Add `gi` binding to normal mode
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^gi$", function (w, b, m)
+    buf("^gi$", function (w, _, m)
         w:go_input(m.count)
     end, {count=1})
 })

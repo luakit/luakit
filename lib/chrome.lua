@@ -192,7 +192,7 @@ webview.init_funcs.chrome = function (view, w)
             end
 
             -- Call luakit:// page handler
-            local ok, html = xpcall(function () return func(view, meta) end,
+            local _, html = xpcall(function () return func(view, meta) end,
                 error_handler)
             return html
         end

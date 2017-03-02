@@ -266,7 +266,7 @@ error_page.show_error_page = function(v, error_page_info)
     load_error_page(v, error_page_info)
 end
 
-webview.init_funcs.error_page_init = function(view, w)
+webview.init_funcs.error_page_init = function(view)
     view:add_signal("load-status", function (v, status, ...)
         if status ~= "failed" then return end
         handle_error(v, ...)

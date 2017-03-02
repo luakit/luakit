@@ -320,7 +320,7 @@ local help_get_modes = function ()
     return ret
 end
 
-chrome.add("help", function (view, meta)
+chrome.add("help", function ()
     local sections = {}
     local modes = help_get_modes()
 
@@ -349,7 +349,7 @@ chrome.add("help", function (view, meta)
     }
     return string.gsub(html, "{(%w+)}", html_subs)
 end, nil, {
-    open_editor = function(view, ...) return editor.edit(...) end,
+    open_editor = function(_, ...) return editor.edit(...) end,
 })
 
 local cmd = lousy.bind.cmd
