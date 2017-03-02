@@ -27,7 +27,7 @@ local adblock = {}
 local adblock_wm = require_web_module("adblock_wm")
 
 --- Module global variables
-local enabled = true
+adblock.enabled = true
 -- Adblock Plus compatible filter lists
 local adblock_dir = capi.luakit.data_dir .. "/adblock/"
 
@@ -45,19 +45,19 @@ end
 
 -- Enable or disable filtering
 adblock.enable = function ()
-    enabled = true
-    adblock_wm:emit_signal("enable", enabled)
+    adblock.enabled = true
+    adblock_wm:emit_signal("enable", true)
     adblock.refresh_views()
 end
 adblock.disable = function ()
-    enabled = false
-    adblock_wm:emit_signal("enable", enabled)
+    adblock.enabled = false
+    adblock_wm:emit_signal("enable", false)
     adblock.refresh_views()
 end
 
 -- Report AdBlock state: «Enabled» or «Disabled»
 adblock.state = function ()
-    return enabled and "Enabled" or "Disabled"
+    return adblock.enabled and "Enabled" or "Disabled"
 end
 
 -- Detect files to read rules from
@@ -440,19 +440,19 @@ add_cmds({
     end),
 
     cmd({"adblock-list-enable", "able"}, function (_, a)
-        list_set_enabled(a, true)
+        adblock.list_set_enabled(a, true)
     end),
 
     cmd({"adblock-list-disable", "abld"}, function (_, a)
-        list_set_enabled(a, false)
+        adblock.list_set_enabled(a, false)
     end),
 
     cmd({"adblock-enable", "abe"}, function ()
-        enable()
+        adblock.enable()
     end),
 
     cmd({"adblock-disable", "abd"}, function ()
-        disable()
+        adblock.disable()
     end),
 })
 
