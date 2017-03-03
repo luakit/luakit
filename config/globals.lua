@@ -1,6 +1,6 @@
 -- Global variables for luakit
 
-globals = {
+local globals = {
     homepage            = "http://luakit.org/",
     scroll_step         = 40,
     zoom_step           = 0.1,
@@ -22,7 +22,7 @@ globals = {
 -- character (%) may need to be escaped by placing another % before or after
 -- it to avoid collisions with lua's string.format characters.
 -- See: http://www.lua.org/manual/5.1/manual.html#pdf-string.format
-search_engines = {
+globals.search_engines = {
     duckduckgo  = "https://duckduckgo.com/?q=%s",
     github      = "https://github.com/search?q=%s",
     google      = "https://google.com/search?q=%s",
@@ -31,14 +31,14 @@ search_engines = {
 }
 
 -- Set google as fallback search engine
-search_engines.default = search_engines.google
+globals.search_engines.default = globals.search_engines.google
 -- Use this instead to disable auto-searching
 --search_engines.default = "%s"
 
 -- Per-domain webview properties
 -- https://webkitgtk.org/reference/webkit2gtk/stable/WebKitWebView.html
 -- https://webkitgtk.org/reference/webkit2gtk/stable/WebKitSettings.html
-domain_props = {
+globals.domain_props = {
     ["all"] = {
         -- enable_scripts          = false,
         -- enable_plugins          = false,
@@ -49,5 +49,7 @@ domain_props = {
         enable_plugins = true,
     }, ]]
 }
+
+return globals
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

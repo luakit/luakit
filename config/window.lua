@@ -4,6 +4,8 @@
 
 require "lfs"
 local lousy = require("lousy")
+local globals = require("globals")
+local search_engines = globals.search_engines
 
 -- Window class table
 local window = {}

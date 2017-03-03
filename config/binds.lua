@@ -3,6 +3,7 @@
 -----------------
 
 local window = require("window")
+local globals = require("globals")
 
 -- Binding aliases
 local lousy = require("lousy")

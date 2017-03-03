@@ -4,6 +4,8 @@
 
 local window = require("window")
 local lousy = require("lousy")
+local globals = require("globals")
+local domain_props = globals.domain_props
 
 -- Webview class table
 local webview = {}
