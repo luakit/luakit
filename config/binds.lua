@@ -13,8 +13,7 @@ local modes = require("modes")
 local new_mode, get_mode = modes.new_mode, modes.get_mode
 
 -- Util aliases
-local match, join = string.match, lousy.util.table.join
-local strip, split = lousy.util.string.strip, lousy.util.string.split
+local join, split = lousy.util.table.join, lousy.util.string.split
 
 -- Globals or defaults that are used in binds
 local scroll_step = globals.scroll_step or 20
@@ -86,7 +85,7 @@ add_binds("all", {
 
     -- Open link in new tab when Ctrl-clicked.
     but({"Control"}, 1, "Open link under mouse cursor in new tab.",
-        function (w, m)
+        function (w)
             local uri = w.view.hovered_uri
             if uri then
                 w:new_tab(uri, false)
@@ -95,17 +94,17 @@ add_binds("all", {
 
     -- Zoom binds
     but({"Control"}, 4, "Increase text zoom level.",
-        function (w, m) w:zoom_in() end),
+        function (w) w:zoom_in() end),
 
     but({"Control"}, 5, "Reduce text zoom level.",
-        function (w, m) w:zoom_out() end),
+        function (w) w:zoom_out() end),
 
     -- Horizontal mouse scroll binds
     but({"Shift"}, 4, "Scroll left.",
-        function (w, m) w:scroll{ xrel = -scroll_step } end),
+        function (w) w:scroll{ xrel = -scroll_step } end),
 
     but({"Shift"}, 5, "Scroll right.",
-        function (w, m) w:scroll{ xrel =  scroll_step } end),
+        function (w) w:scroll{ xrel =  scroll_step } end),
 })
 
 add_binds("normal", {
@@ -131,14 +130,14 @@ add_binds("normal", {
         everywhere and or using a `^(%d*)` pattern prefix on every binding which
         would like to make use of the `[count]` syntax.]],
         function (w, m)
-            local count, buf
+            local count, buffer
             if m.buffer then
                 count = string.match(m.buffer, "^(%d+)")
             end
             if count then
-                buf = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
+                buffer = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
                 local opts = join(m, {count = tonumber(count)})
-                opts.buffer = (#buf > 0 and buf) or nil
+                opts.buffer = (#buf > 0 and buffer) or nil
                 if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
                     return true
                 end
@@ -253,13 +252,13 @@ add_binds("normal", {
 
     -- Specific scroll
     buf("^gg$", "Go to the top of the document.",
-        function (w, b, m) w:scroll{ ypct = m.count } end, {count=0}),
+        function (w, _, m) w:scroll{ ypct = m.count } end, {count=0}),
 
     buf("^G$", "Go to the bottom of the document.",
-        function (w, b, m) w:scroll{ ypct = m.count } end, {count=100}),
+        function (w, _, m) w:scroll{ ypct = m.count } end, {count=100}),
 
     buf("^%%$", "Go to `[count]` percent of the document.",
-        function (w, b, m) w:scroll{ ypct = m.count } end),
+        function (w, _, m) w:scroll{ ypct = m.count } end),
 
     -- Zooming
     key({}, "+", "Enlarge text zoom of the current page.",
@@ -269,24 +268,24 @@ add_binds("normal", {
         function (w, m) w:zoom_out(zoom_step * m.count) end, {count=1}),
 
     key({}, "=", "Reset zoom level.",
-        function (w, m) w:zoom_set() end),
+        function (w, _) w:zoom_set() end),
 
     buf("^z[iI]$", [[Enlarge text zoom of current page with `zi` or `zI` to
         reduce full zoom.]],
-        function (w, b, m)
+        function (w, _, m)
             w:zoom_in(zoom_step  * m.count)
         end, {count=1}),
 
     buf("^z[oO]$", [[Reduce text zoom of current page with `zo` or `zO` to
         reduce full zoom.]],
-        function (w, b, m)
+        function (w, _, m)
             w:zoom_out(zoom_step * m.count)
         end, {count=1}),
 
     -- Zoom reset or specific zoom ([count]zZ for full content zoom)
     buf("^z[zZ]$", [[Set current page zoom to `[count]` percent with
         `[count]zz`, use `[count]zZ` to set full zoom percent.]],
-        function (w, b, m)
+        function (w, _, m)
             w:zoom_set(m.count/100)
         end, {count=100}),
 
@@ -313,10 +312,10 @@ add_binds("normal", {
 
     buf("^pt$", [[Open a URL based on the current primary selection contents
         in `[count=1]` new tab(s).]],
-        function (w, b, m)
+        function (w, _, m)
             local uri = luakit.selection.primary
             if not uri then w:notify("No primary selection...") return end
-            for i = 1, m.count do w:new_tab(w:search_open(uri)) end
+            for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
 
     buf("^pw$", [[Open URLs based on the current primary selection contents in
@@ -346,7 +345,7 @@ add_binds("normal", {
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
             w:navigate(w:search_open(uris[1]))
             if #uris > 1 then
-                for i=2,#uris do
+                for _=2,#uris do
                     w:new_tab(w:search_open(uris[1]))
                 end
             end
@@ -354,10 +353,10 @@ add_binds("normal", {
 
     buf("^PT$", [[Open a URL based on the current clipboard selection contents
         in `[count=1]` new tab(s).]],
-        function (w, b, m)
+        function (w, _, m)
             local uri = luakit.selection.clipboard
             if not uri then w:notify("Nothing in clipboard...") return end
-            for i = 1, m.count do w:new_tab(w:search_open(uri)) end
+            for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
         end, {count = 1}),
 
     buf("^PW$", [[Open URLs based on the current clipboard selection contents
@@ -460,7 +459,7 @@ add_binds("normal", {
         function (w) w:prev_tab() end),
 
     buf("^gt$", "Go to next tab (or `[count]` nth tab).",
-        function (w, b, m)
+        function (w, _, m)
             if not w:goto_tab(m.count) then w:next_tab() end
         end, {count=0}),
 
@@ -477,7 +476,7 @@ add_binds("normal", {
         function (w) w:close_tab() end),
 
     key({}, "d", "Close current tab (or `[count]` tabs).",
-        function (w, m) for i=1,m.count do w:close_tab() end end, {count=1}),
+        function (w, m) for _=1,m.count do w:close_tab() end end, {count=1}),
 
     key({}, "<", "Reorder tab left `[count=1]` positions.",
         function (w, m)
@@ -574,7 +573,7 @@ add_binds({"command", "search"}, readline_bindings)
 
 -- Switching tabs with Mod1+{1,2,3,...}
 do
-    mod1binds = {}
+    local mod1binds = {}
     for i=1,10 do
         table.insert(mod1binds,
             key({"Mod1"}, tostring(i % 10), "Jump to tab at index "..i..".",
@@ -590,11 +589,12 @@ add_cmds({
         [[Detect bang syntax in `:command!` and recursively calls
         `lousy.bind.match_cmd(..)` removing the bang from the command string
         and setting `bang = true` in the bind opts table.]],
-        function (w, cmd, opts)
-            local cmd, args = string.match(cmd, "^(%S+)!+(.*)")
-            if cmd then
+        function (w, command, opts)
+            local args
+            command, args = string.match(command, "^(%S+)!+(.*)")
+            if command then
                 opts = join(opts, { bang = true })
-                return lousy.bind.match_cmd(w, opts.binds, cmd .. args, opts)
+                return lousy.bind.match_cmd(w, opts.binds, command .. args, opts)
             end
         end),
 
@@ -660,7 +660,7 @@ add_cmds({
         function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
 
     cmd("tabd[o]", "Execute command in each tab.",
-        function (w, a) w:each_tab(function (v) w:run_cmd(":" .. a) end) end),
+        function (w, a) w:each_tab(function () w:run_cmd(":" .. a) end) end),
 
     cmd("tabdu[plicate]", "Duplicate current tab.",
         function (w) w:new_tab(w.view.history) end),
@@ -681,10 +681,10 @@ add_cmds({
         function (w) window.new({w.view}) end),
 
     cmd("q[uit]", "Close the current window.",
-        function (w, a, o) w:close_win(o.bang) end),
+        function (w, _, o) w:close_win(o.bang) end),
 
     cmd({"wqall", "wq"}, "Save the session and quit.",
-        function (w, a, o) w:save_session() w:close_win(o.bang) end),
+        function (w, _, o) w:save_session() w:close_win(o.bang) end),
 
     cmd("lua", "Evaluate Lua snippet.", function (w, a)
         if a then
