@@ -105,12 +105,12 @@ local function ignore_keys(w)
     if not delay or delay == 0 then return end
     -- Replace w:hit(..) with a no-op
     w.hit = hit_nop
-    local t = capi.timer{ interval = delay }
-    t:add_signal("timeout", function (t)
+    local timer = capi.timer{ interval = delay }
+    timer:add_signal("timeout", function (t)
         t:stop()
         w.hit = nil
     end)
-    t:start()
+    timer:start()
 end
 
 local function do_follow(w, all)

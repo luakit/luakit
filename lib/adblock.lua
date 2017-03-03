@@ -89,10 +89,10 @@ local function get_abp_opts(s)
         s = string.sub(s, 1, pos-1)
         for key in string.gmatch(op, "[^,]+") do
             local val
-            local pos = string.find(key, "=")
-            if pos then
-                val = string.sub(key, pos+1)
-                key = string.sub(key, 1, pos-1)
+            local p = string.find(key, "=")
+            if p then
+                val = string.sub(key, p+1)
+                key = string.sub(key, 1, p-1)
             end
 
             local negative = false
@@ -322,8 +322,8 @@ local function add_list(uri, title, opts, replace, save_lists)
     if not replace and adblock.subscriptions[title] then
         local list = adblock.subscriptions[title]
         -- Merge tags
-        for _, opts in ipairs(opts) do
-            if not util.table.hasitem(list, opts) then table.insert(list, opts) end
+        for _, opt in ipairs(opts) do
+            if not util.table.hasitem(list, opt) then table.insert(list, opt) end
         end
     else
         -- Insert new adblock list

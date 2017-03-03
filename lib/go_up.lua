@@ -81,4 +81,4 @@ add_binds("normal", {
 })
 
 -- Return module table
-return setmetatable(M, { __call = function (M, ...) return M.go_up(...) end })
+return setmetatable(M, { __call = function (MM, ...) return MM.go_up(...) end })

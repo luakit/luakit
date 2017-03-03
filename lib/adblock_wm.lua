@@ -6,8 +6,8 @@ local enabled_rules = {}
 
 ui:add_signal("enable", function(_, _, e) enabled = e end)
 ui:add_signal("update_rules", function(_, _, r) rules = r end)
-ui:add_signal("list_set_enabled", function(_, _, list, enabled)
-    enabled_rules[list] = enabled and rules[list] or nil
+ui:add_signal("list_set_enabled", function(_, _, list, enable)
+    enabled_rules[list] = enable and rules[list] or nil
 end)
 
 local function domain_match(domain, opts)
