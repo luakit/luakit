@@ -38,7 +38,7 @@ local window = require "window"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
-local webview = require "webview"
+require "webview"
 
 -- Left-aligned status bar widgets
 require "widget.uri"
@@ -88,14 +88,14 @@ require "bookmarks"
 require "bookmarks_chrome"
 
 -- Add download support
-downloads = require "downloads"
+local downloads = require "downloads"
 require "downloads_chrome"
 
 -- Add automatic PDF downloading and opening
 require "viewpdf"
 
 -- Example using xdg-open for opening downloads / showing download folders
-downloads.add_signal("open-file", function (file, mime)
+downloads.add_signal("open-file", function (file)
     luakit.spawn(string.format("xdg-open %q", file))
     return true
 end)
@@ -187,14 +187,14 @@ end
 if unique then
     unique.add_signal("message", function (msg, screen)
         local cmd, arg = string.match(msg, "^(%S+)%s*(.*)")
-        local w = lousy.util.table.values(window.bywidget)[1]
+        local ww = lousy.util.table.values(window.bywidget)[1]
         if cmd == "tabopen" then
-            w:new_tab(arg)
+            ww:new_tab(arg)
         elseif cmd == "winopen" then
-            w = window.new((arg ~= "") and { arg } or {})
+            ww = window.new((arg ~= "") and { arg } or {})
         end
-        w.win.screen = screen
-        w.win.urgency_hint = true
+        ww.win.screen = screen
+        ww.win.urgency_hint = true
     end)
 end
 
