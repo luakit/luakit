@@ -91,8 +91,10 @@ static struct {
 } last_popup = { NULL, NULL };
 
 property_t webview_properties[] = {
+  { L_TK_EDITABLE,           "editable",         BOOL,    TRUE },
   { L_TK_PROGRESS,    "estimated-load-progress", DOUBLE, FALSE },
   { L_TK_IS_LOADING,        "is-loading",        BOOL,   FALSE },
+  { L_TK_IS_PLAYING_AUDIO,  "is-playing-audio",  BOOL,   FALSE },
   { L_TK_TITLE,             "title",             CHAR,   FALSE },
   { L_TK_ZOOM_LEVEL,        "zoom-level",        DOUBLE,  TRUE },
   { 0,                      NULL,                0,      0     },

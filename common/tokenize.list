@@ -295,3 +295,5 @@ options
 crash
 process_limit
 wrap_js
+editable
+is_playing_audio
