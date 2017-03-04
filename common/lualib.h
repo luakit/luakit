@@ -1,5 +1,5 @@
 /*
- * lualib.h - useful functions and type for Lua
+ * common/lualib.h - useful functions and type for Lua
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>

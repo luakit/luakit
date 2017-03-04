@@ -1,5 +1,5 @@
 /*
- * clib/soup/soup.h - soup library
+ * common/clib/soup.h - soup library
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *

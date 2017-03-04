@@ -1,5 +1,5 @@
 /*
- * signal.h - Signal handling functions
+ * common/signal.h - Signal handling functions
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>

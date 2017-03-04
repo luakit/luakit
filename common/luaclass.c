@@ -1,5 +1,5 @@
 /*
- * luaclass.c - useful functions for handling Lua classes
+ * common/luaclass.c - useful functions for handling Lua classes
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
