@@ -2,6 +2,8 @@
 local history = require("history")
 local lousy = require("lousy")
 local chrome = require("chrome")
+local binds = require("binds")
+local add_cmds = binds.add_cmds
 
 local history_chrome = {}
 
@@ -348,7 +350,7 @@ local export_funcs = {
 
         local rows = history.db:exec(sql, args)
 
-        for i, row in ipairs(rows) do
+        for _, row in ipairs(rows) do
             local time = rawget(row, "last_visit")
             rawset(row, "date", os.date("%A, %d %B %Y", time))
             rawset(row, "time", os.date("%H:%M", time))
@@ -376,13 +378,13 @@ local export_funcs = {
     end,
 }
 
-chrome.add("history", function (view, meta)
+chrome.add("history", function ()
     return string.gsub(html, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
         stylesheet = chrome.stylesheet .. history_chrome.stylesheet
     })
 end,
-function (view, meta)
+function (view)
     -- Load jQuery JavaScript library
     local jquery = lousy.load("lib/jquery.min.js")
     local _, err = view:eval_js(jquery, { no_return = true })

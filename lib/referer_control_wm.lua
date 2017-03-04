@@ -6,7 +6,7 @@ local function domain_from_uri(uri)
 end
 
 extension:add_signal("page-created", function(_, page)
-    page:add_signal("send-request", function(p, uri, headers)
+    page:add_signal("send-request", function(p, _, headers)
         if not headers.Referer then return end
         if domain_from_uri(p.uri) ~= domain_from_uri(headers.Referer) then
             msg.verbose("Removing referer '%s'", headers.Referer)

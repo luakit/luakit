@@ -1,5 +1,6 @@
 local window = require("window")
 local lousy = require("lousy")
+local theme = lousy.theme.get()
 
 local function update (w)
     local buf = w.sbar.r.buf

@@ -107,7 +107,7 @@ local function start_timeout()
     recovery_save_timer:start()
 end
 
-recovery_save_timer:add_signal("timeout", function (t)
+recovery_save_timer:add_signal("timeout", function ()
     recovery_save_timer:stop()
     local wins = {}
     for _, w in pairs(window.bywidget) do table.insert(wins, w) end
@@ -115,7 +115,7 @@ recovery_save_timer:add_signal("timeout", function (t)
 end)
 
 window.init_funcs.session_init = function(w)
-    w.win:add_signal("destroy", function (w)
+    w.win:add_signal("destroy", function ()
         -- Hack: should add a luakit shutdown hook...
         local num_windows = 0
         for _, _ in pairs(window.bywidget) do num_windows = num_windows + 1 end
@@ -130,7 +130,7 @@ window.init_funcs.session_init = function(w)
     end)
 end
 
-webview.init_funcs.session_init = function(view, w)
+webview.init_funcs.session_init = function(view)
     -- Save session state after page navigation
     view:add_signal("load-status", function (_, status)
         if status == "committed" then

@@ -2,6 +2,8 @@ local webview = require("webview")
 local lousy   = require("lousy")
 local lfs     = require("lfs")
 local editor  = require("editor")
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local key     = lousy.bind.key
 
 local capi = {

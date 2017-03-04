@@ -7,6 +7,10 @@
 local lousy = require("lousy")
 local window = require("window")
 local editor = require("editor")
+local new_mode = require("modes").new_mode
+local binds = require("binds")
+local add_binds = binds.add_binds
+local menu_binds = binds.menu_binds
 local capi = { luakit = luakit }
 
 --- Provides functionaliy to auto-fill forms based on a Lua DSL.
@@ -129,7 +133,7 @@ local function pattern_from_js_regex(re)
 end
 
 --- Reads the rules from the formfiller DSL file
-local function read_formfiller_rules_from_file(w)
+local function read_formfiller_rules_from_file()
     local state = {
         rules = {},
     }

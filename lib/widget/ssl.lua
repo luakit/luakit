@@ -1,14 +1,12 @@
 local window = require("window")
 local webview = require("webview")
+local lousy = require("lousy")
+local theme = lousy.theme.get()
 
 local function update (w)
     local trusted = w.view:ssl_trusted()
     local ssl = w.sbar.r.ssl
-    if trusted ~= nil and not w.checking_ssl then
-        ssl.fg = theme.notrust_fg
-        ssl.text = "(nocheck)"
-        ssl:show()
-    elseif trusted == true then
+    if trusted == true then
         ssl.fg = theme.trust_fg
         ssl.text = "(trust)"
         ssl:show()

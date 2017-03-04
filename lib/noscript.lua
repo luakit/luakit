@@ -5,7 +5,8 @@
 
 local window = require("window")
 local webview = require("webview")
-local add_binds = add_binds
+local binds = require("binds")
+local add_binds = binds.add_binds
 local lousy = require("lousy")
 local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
@@ -130,7 +131,7 @@ end
 
 function window.methods.noscript_indicator_update(w)
     local ns = w.sbar.r.noscript
-    local es, ep, matched_domain = lookup_domain(w.view.uri)
+    local es, _, matched_domain = lookup_domain(w.view.uri)
     local state = es and "enabled" or "disabled"
 
     if es then

@@ -51,16 +51,16 @@ local function resource_request_starting(v, uri)
 end
 
 -- Hooks
-webview.init_funcs.mixed_content_signals = function (view, w)
+webview.init_funcs.mixed_content_signals = function (view)
     view:add_signal("resource-request-starting", resource_request_starting)
     view:add_signal("load-status", load_status)
 end
 
 -- API
-webview.methods.has_mixed = function (view, w)
+webview.methods.has_mixed = function (view)
     return has_mixed[view]
 end
 
-webview.methods.toggle_mixed_content = function (view, w)
+webview.methods.toggle_mixed_content = function (view)
     allow_mixed[view] = not allow_mixed[view]
 end

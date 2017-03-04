@@ -4,6 +4,8 @@ local chrome     = require("chrome")
 local window     = require("window")
 local webview    = require("webview")
 local error_page = require("error_page")
+local binds      = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
 local adblock_chrome = {}
 
@@ -133,9 +135,7 @@ adblock.refresh_views = refresh_views
 adblock_chrome.chrome_page = "luakit://adblock/"
 
 --- Shows the chrome page in the given view.
-chrome.add("adblock", function (view, meta)
-    local uri = adblock_chrome.chrome_page
-
+chrome.add("adblock", function ()
     local id = 0
     local lists = {}
     for _, list in pairs(adblock.subscriptions) do
@@ -237,8 +237,8 @@ adblock_chrome.navigation_blocked_css_tmpl = [===[
     }
 ]===]
 
-webview.init_funcs.navigation_blocked_page_init = function(view, w)
-    view:add_signal("navigation-blocked", function(v, w, uri)
+webview.init_funcs.navigation_blocked_page_init = function(view)
+    view:add_signal("navigation-blocked", function(v, _, uri)
         error_page.show_error_page(v, {
             style = adblock_chrome.navigation_blocked_css_tmpl,
             heading = "Page blocked",
@@ -261,8 +261,8 @@ add_binds("normal", {
         w:navigate(adblock_chrome.chrome_page)
     end),
 
-    buf("^gA$", function (w, b, m)
-        for i=1, m.count do
+    buf("^gA$", function (w, _, m)
+        for _=1, m.count do
             w:new_tab(adblock_chrome.chrome_page)
         end
     end, {count=1}),

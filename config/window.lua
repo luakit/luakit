@@ -4,6 +4,9 @@
 
 require "lfs"
 local lousy = require("lousy")
+local globals = require("globals")
+local search_engines = globals.search_engines
+local theme = lousy.theme.get()
 
 -- Window class table
 local window = {}
@@ -146,7 +149,7 @@ end
 window.init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
-        w.tabs:add_signal("switch-page", function (nbook, view, idx)
+        w.tabs:add_signal("switch-page", function ()
             w.view = nil
             w:set_mode()
             -- Update widgets after tab switch
@@ -179,7 +182,7 @@ window.init_funcs = {
     end,
 
     tablist_tab_click = function (w)
-        w.tablist:add_signal("tab-clicked", function (_, index, mods, button)
+        w.tablist:add_signal("tab-clicked", function (_, index, _, button)
             if button == 1 then
                 w.tabs:switch(index)
                 return true
@@ -256,7 +259,7 @@ window.init_funcs = {
 window.methods = {
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
-        local opts = lousy.util.table.join(opts or {}, {
+        opts = lousy.util.table.join(opts or {}, {
             enable_buffer = w:is_mode("normal"),
             buffer = w.buffer,
         })
@@ -271,6 +274,7 @@ window.methods = {
 
     -- Wrapper around the bind plugin's match_cmd method
     match_cmd = function (w, buffer)
+        local get_mode = require("modes").get_mode
         return lousy.bind.match_cmd(w, get_mode("command").binds, buffer)
     end,
 
@@ -427,7 +431,8 @@ window.methods = {
 
     -- Set and display the prompt
     set_prompt = function (w, text, opts)
-        local input, prompt, layout, opts = w.ibar.input, w.ibar.prompt, w.ibar.layout, opts or {}
+        local input, prompt, layout = w.ibar.input, w.ibar.prompt, w.ibar.layout
+        opts = opts or {}
         prompt:hide()
         -- Set theme
         local fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
@@ -445,7 +450,8 @@ window.methods = {
 
     -- Set display and focus the input bar
     set_input = function (w, text, opts)
-        local input, opts = w.ibar.input, opts or {}
+        local input = w.ibar.input
+        opts = opts or {}
         input:hide()
         -- Set theme
         local fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
@@ -478,10 +484,11 @@ window.methods = {
         w.win.title = title
     end,
 
-    update_buf = function (w) end,
+    update_buf = function () end,
 
     update_binds = function (w, mode)
         -- Generate the list of active key & buffer binds for this mode
+        local get_mode = require("modes").get_mode
         w.binds = lousy.util.table.join((get_mode(mode) or {}).binds or {}, get_mode('all').binds or {})
         -- Clear & hide buffer
         w.buffer = nil
@@ -593,7 +600,7 @@ window.methods = {
         -- Recursively remove widgets from window
         local children = lousy.util.recursive_remove(w.win)
         -- Destroy all widgets
-        for i, c in ipairs(lousy.util.table.join(children, {w.win})) do
+        for _, c in ipairs(lousy.util.table.join(children, {w.win})) do
             if c.hide then c:hide() end
             c:destroy()
         end
@@ -641,7 +648,7 @@ window.methods = {
 
         -- Save session.
         local wins = {}
-        for _, w in pairs(window.bywidget) do table.insert(wins, w) end
+        for _, ww in pairs(window.bywidget) do table.insert(wins, ww) end
         require("session").save(wins)
 
         -- Replace current process with new luakit instance.
@@ -649,7 +656,7 @@ window.methods = {
     end,
 
     -- Intelligent open command which can detect a uri or search argument.
-    search_open = function (w, arg)
+    search_open = function (_, arg)
         local lstring = lousy.util.string
         local match, find = string.match, string.find
 
@@ -751,7 +758,7 @@ window.methods = {
 -- to add their own index functions to this list.
 window.indexes = {
     -- Find function in window.methods first
-    function (w, k) return window.methods[k] end
+    function (_, k) return window.methods[k] end
 }
 
 -- Create new window

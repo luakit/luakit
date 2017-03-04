@@ -34,11 +34,6 @@ end
 
 capi.luakit.idle_add(bookmarks.init)
 
--- Validate tag name
-local function valid_tag_name(name)
-    return not not string.match(name, "^%w[%w-]*$")
-end
-
 function bookmarks.get(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
     local rows = bookmarks.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
@@ -65,7 +60,7 @@ local function update_tags(b, tags)
     tags = table.concat(tags, " ")
     bookmarks.db:exec([[ UPDATE bookmarks SET tags = ?, modified = ? WHERE id = ? ]],
         { tags, os.time(), b.id })
-    bookmarks.emit_signal("update", id)
+    bookmarks.emit_signal("update", b.id)
 end
 
 function bookmarks.tag(id, new_tags, replace)

@@ -1,11 +1,13 @@
 local lousy = require "lousy"
+local binds = require("binds")
+local add_binds = binds.add_binds
 
 local function edit_externally(w)
 	local time = os.time()
 	local marker = "luakit_extedit_" .. time
 	local file = luakit.cache_dir .. "/" .. marker .. ".txt"
 
-	local function editor_callback(exit_reason, exit_status)
+	local function editor_callback()
 		local f = io.open(file, "r")
 		local s = f:read("*all")
 		f:close()

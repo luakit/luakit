@@ -8,6 +8,8 @@
 
 local window = require("window")
 local lousy = require("lousy")
+local binds = require("binds")
+local add_binds = binds.add_binds
 local key = lousy.bind.key
 
 local wm = require_web_module("follow_selected_wm")
@@ -26,7 +28,7 @@ end)
 wm:add_signal("new_tab", function(_, uri, view_id)
     get_w_by_view_id(view_id):new_tab(uri)
 end)
-wm:add_signal("new_window", function(_, uri, view_id)
+wm:add_signal("new_window", function(_, uri)
     window.new({uri})
 end)
 wm:add_signal("download", function(_, uri, view_id)

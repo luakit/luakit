@@ -5,6 +5,8 @@ local chrome = require("chrome")
 local history = require("history")
 local markdown = require("markdown")
 local editor = require("editor")
+local get_modes = require("modes").get_modes
+local add_cmds = require("binds").add_cmds
 
 local html = [==[
 <!doctype html>
@@ -318,7 +320,7 @@ local help_get_modes = function ()
     return ret
 end
 
-chrome.add("help", function (view, meta)
+chrome.add("help", function ()
     local sections = {}
     local modes = help_get_modes()
 
@@ -347,7 +349,7 @@ chrome.add("help", function (view, meta)
     }
     return string.gsub(html, "{(%w+)}", html_subs)
 end, nil, {
-    open_editor = function(view, ...) return editor.edit(...) end,
+    open_editor = function(_, ...) return editor.edit(...) end,
 })
 
 local cmd = lousy.bind.cmd

@@ -5,6 +5,8 @@
 ----------------------------------------------------------------
 
 local lousy = require("lousy")
+local binds = require("binds")
+local add_binds = binds.add_binds
 
 local go_next = [=[
 (function() {

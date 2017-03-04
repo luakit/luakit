@@ -8,7 +8,8 @@
 -- top-level domain.
 
 local lousy = require("lousy")
-local parse_uri, uri_tostring = soup.parse_uri, soup.uri_tostring
+local binds = require("binds")
+local add_binds = binds.add_binds
 local match = string.match
 
 local M = {}
@@ -46,7 +47,7 @@ end
 function M.go_up(uri, n)
     local u = soup.parse_uri(uri)
     if not u then error("invalid uri: " .. tostring(uri)) end
-    for i = 1, (n or 1) do
+    for _ = 1, (n or 1) do
         go_up_step(u)
     end
     return soup.uri_tostring(u)
@@ -80,4 +81,4 @@ add_binds("normal", {
 })
 
 -- Return module table
-return setmetatable(M, { __call = function (M, ...) return M.go_up(...) end })
+return setmetatable(M, { __call = function (MM, ...) return MM.go_up(...) end })

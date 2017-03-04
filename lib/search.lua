@@ -5,6 +5,9 @@
 
 local webview = require("webview")
 local lousy = require("lousy")
+local new_mode = require("modes").new_mode
+local binds = require("binds")
+local add_binds = binds.add_binds
 
 -- Add searching binds to normal mode
 local key = lousy.bind.key
@@ -16,7 +19,7 @@ add_binds("normal", {
         function (w) w:start_search("?") end),
 
     key({}, "n", "Find next search result.", function (w, m)
-        for i=1,m.count do
+        for _=1,m.count do
             w:search(nil, true)
             if w.search_state.by_view[w.view].ret == false then
                 break
@@ -25,7 +28,7 @@ add_binds("normal", {
     end, {count=1}),
 
     key({}, "N", "Find previous search result.", function (w, m)
-        for i=1,m.count do
+        for _=1,m.count do
             w:search(nil, false)
             if w.search_state.by_view[w.view].ret == false then
                 break
@@ -93,7 +96,7 @@ add_binds("search", {
 
 -- Add search functions to webview
 for k, m in pairs({
-    start_search = function (view, w, text)
+    start_search = function (_, w, text)
         if string.match(text, "^[?/]") then
             w:set_mode("search")
             if not string.match(text, "^/$") then w:set_input(text) end
@@ -167,12 +170,12 @@ for k, m in pairs({
 }) do webview.methods[k] = m end
 
 webview.init_funcs.search_callbacks = function (view, w)
-    view:add_signal("found-text", function (v, d)
+    view:add_signal("found-text", function (v)
         w.search_state.by_view[v].ret = true
         w:set_ibar_theme()
     end)
 
-    view:add_signal("failed-to-find-text", function (v, d)
+    view:add_signal("failed-to-find-text", function (v)
         w.search_state.by_view[v].ret = false
         w:set_ibar_theme("error")
         if not w:is_mode("search") then

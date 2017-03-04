@@ -158,8 +158,8 @@ local function load_error_page(v, error_page_info)
         style = error_page.style,
         buttons = {{
             label = "Try again",
-            callback = function(v)
-                v:reload()
+            callback = function(vv)
+                vv:reload()
             end
         }},
     }
@@ -229,10 +229,10 @@ local function handle_error(v, uri, msg, cert_errors)
             heading = "Your connection may be insecure!",
             buttons = {{
                 label = "Ignore danger",
-                callback = function(v)
-                    local host = lousy.uri.parse(v.uri).host
-                    v:allow_certificate(host, cert)
-                    v:reload()
+                callback = function(vv)
+                    local host = lousy.uri.parse(vv.uri).host
+                    vv:allow_certificate(host, cert)
+                    vv:reload()
                 end,
             }},
         }
@@ -246,8 +246,8 @@ local function handle_error(v, uri, msg, cert_errors)
             ]==],
             buttons = {{
                 label = "Reload page",
-                callback = function(v)
-                    v:reload()
+                callback = function(vv)
+                    vv:reload()
                 end
             }},
         }
@@ -266,7 +266,7 @@ error_page.show_error_page = function(v, error_page_info)
     load_error_page(v, error_page_info)
 end
 
-webview.init_funcs.error_page_init = function(view, w)
+webview.init_funcs.error_page_init = function(view)
     view:add_signal("load-status", function (v, status, ...)
         if status ~= "failed" then return end
         handle_error(v, ...)

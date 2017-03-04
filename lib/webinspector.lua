@@ -6,8 +6,10 @@
 
 local webview = require("webview")
 local lousy = require("lousy")
+local binds = require("binds")
+local add_cmds = binds.add_cmds
 
-webview.init_funcs.inspector_setup = function (view, w)
+webview.init_funcs.inspector_setup = function (view)
     view.enable_developer_extras = true
 end
 

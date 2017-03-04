@@ -8,6 +8,8 @@
 local lousy = require("lousy")
 local webview = require("webview")
 local window = require("window")
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
 local capi = {
     download = download,
@@ -96,7 +98,7 @@ status_timer:add_signal("timeout", function ()
     downloads.emit_signal("status-tick", running)
 end)
 
-function downloads.add(uri, opts, view)
+function downloads.add(uri, opts)
     opts = opts or {}
     local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
 
@@ -121,7 +123,7 @@ function downloads.add(uri, opts, view)
 
         if fn then
             dd.destination = fn
-            dd:add_signal("created-destination", function(ddd,destination)
+            dd:add_signal("created-destination", function(ddd)
                 local data = {
                     created = capi.luakit.time(),
                     id = next_download_id(),

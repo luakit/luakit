@@ -1,6 +1,6 @@
 local downloads = require("downloads")
 
-downloads.add_signal("download-location", function(uri, filename, mime)
+downloads.add_signal("download-location", function(_, filename, mime)
     if mime == "application/pdf" then
         local dir = luakit.cache_dir .. "/viewpdf/"
 
@@ -15,7 +15,7 @@ downloads.add_signal("download-location", function(uri, filename, mime)
     end
 end)
 
-downloads.add_signal("download::status", function(dl, dldata)
+downloads.add_signal("download::status", function(dl)
     if dl.mime_type == "application/pdf" and dl.status == "finished" then
         downloads.do_open(dl)
     end

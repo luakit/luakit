@@ -146,11 +146,11 @@ function chrome.add(page, func, on_first_visual_func, export_funcs)
         or type(on_first_visual_func) == "function",
         "invalid chrome handler (function/nil expected, got "..type(on_first_visual_func)..")")
 
-    for name, func in pairs(export_funcs or {}) do
+    for name, export_func in pairs(export_funcs or {}) do
         local pattern = "^luakit://" .. page .. "/?(.*)"
         assert(type(name) == "string")
-        assert(type(func) == "function")
-        luakit.register_function(pattern, name, func)
+        assert(type(export_func) == "function")
+        luakit.register_function(pattern, name, export_func)
     end
 
     handlers[page] = func
@@ -192,7 +192,7 @@ webview.init_funcs.chrome = function (view, w)
             end
 
             -- Call luakit:// page handler
-            local ok, html = xpcall(function () return func(view, meta) end,
+            local _, html = xpcall(function () return func(view, meta) end,
                 error_handler)
             return html
         end

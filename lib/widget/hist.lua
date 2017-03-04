@@ -1,5 +1,7 @@
 local window = require("window")
 local webview = require("webview")
+local lousy = require("lousy")
+local theme = lousy.theme.get()
 
 local function update (w)
     local hist = w.sbar.l.hist

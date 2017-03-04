@@ -10,6 +10,10 @@ local window = require("window")
 local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
+local new_mode = require("modes").new_mode
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local menu_binds = binds.menu_binds
 local capi = { luakit = luakit }
 
 --- Evaluates and manages userscripts.
@@ -177,7 +181,7 @@ end
 
 local function parse_header(header, file)
     local ret = { file = file, include = {}, exclude = {} }
-    for i, line in ipairs(util.string.split(header, "\n")) do
+    for _, line in ipairs(util.string.split(header, "\n")) do
         local singles = { name = true, description = true,
             version = true, homepage = true }
         -- Parse `// @key value` lines in header.
@@ -294,17 +298,17 @@ end
 local cmd = bind.cmd
 add_cmds({
     -- Saves the content of the open view as an userscript
-    cmd({"userscriptinstall", "usi", "usinstall"}, "install userscript", function (w, a)
+    cmd({"userscriptinstall", "usi", "usinstall"}, "install userscript", function (w)
         local view = w.view
         local file = string.match(view.uri, "/([^/]+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
         if view:loading() then w:error("Wait for script to finish loading first.") end
         local js = "document.body.getElementsByTagName('pre')[0].innerHTML"
         view:eval_js(js, { callback = function(ret)
-            local js = util.unescape(ret)
-            local header = string.match(js, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
+            local script = util.unescape(ret)
+            local header = string.match(script, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
             if not header then return w:error("Could not find userscript header") end
-            userscripts.save(file, js)
+            userscripts.save(file, script)
             w:notify("Installed userscript to: " .. userscripts.dir .. "/" .. file)
         end})
     end),
