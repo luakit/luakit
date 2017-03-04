@@ -1,4 +1,5 @@
 Author of luakit:
+  Aidan Holm        (aidanholm) <aidanholm@gmail.com>       2016-2017
   Mason Larobina    (mason-l)   <mason.larobina@gmail.com>  2010-2012
 
 Contributors to luakit (A to Z):
@@ -57,8 +58,8 @@ inspiration and support:
   Simon Lipp        (sloonz)    <sloonz@gmail.com>          2010
 
 For volumetric graphs on specific contributers "impact" checkout:
-  https://github.com/mason-larobina/luakit/graphs/impact
+  https://github.com/aidanholm/luakit/graphs/contributors
 
 If you believe you should be in this file or notice that I have missed an
-attribution to somebody else please contact me (Mason) or email me a patch
-for his file with your/his/her name or names inserted.
+attribution to somebody else, please contact me (Aidan) or email me a patch
+for this file with your/their name or names inserted.

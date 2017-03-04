@@ -1,5 +1,5 @@
 /*
- * util.c - useful functions
+ * common/util.c - useful functions
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2007-2008 Julien Danjou <julien@danjou.info>

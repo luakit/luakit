@@ -1,5 +1,5 @@
 /*
- * luaobject.h - useful functions for handling Lua objects
+ * common/luaobject.h - useful functions for handling Lua objects
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
