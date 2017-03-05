@@ -1,8 +1,8 @@
 file = {
 	"luadoc",
-	"lib",
+	"../lib",
 	exclude = {
-		"lib/markdown.lua"
+		"../lib/markdown.lua"
 	}
 }
 dir = "apidocs"
