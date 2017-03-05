@@ -1,8 +1,7 @@
-------------------------------------------------------------
--- Add custom luakit:// scheme rendering functions        --
--- © 2010-2012 Mason Larobina  <mason.larobina@gmail.com> --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
-------------------------------------------------------------
+--- Add custom luakit:// scheme rendering functions.
+-- @module chrome
+-- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
+-- @copyright 2010 Fabian Streitel (karottenreibe@gmail.com)
 
 local error_page = require("error_page")
 local webview = require("webview")

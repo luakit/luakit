@@ -1,8 +1,9 @@
----------------------------------------------------------------------------
+--- lousy.util library.
+--
+-- @module lousy.util
 -- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
 -- @author Julien Danjou &lt;julien@danjou.info&gt;
 -- @copyright 2010 Mason Larobina, 2008 Julien Danjou
----------------------------------------------------------------------------
 
 --- Grab environment we need
 local rstring = string

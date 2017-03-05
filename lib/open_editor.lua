@@ -1,3 +1,7 @@
+--- Edit the contents of text inputs in an external editor.
+--
+-- @module open_editor
+
 local lousy = require "lousy"
 local binds = require("binds")
 local add_binds = binds.add_binds

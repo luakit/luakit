@@ -1,9 +1,9 @@
--------------------------------------------------------
--- Userscript support for luakit                     --
--- © 2011 Constantin Schomburg <me@xconstruct.net>   --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>  --
--- © 2010 Mason Larobina  <mason.larobina@gmail.com> --
--------------------------------------------------------
+--- Userscript support for luakit.
+--
+-- @module userscripts
+-- @copyright 2011 Constantin Schomburg <me@xconstruct.net>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
+-- @copyright 2010 Mason Larobina  <mason.larobina@gmail.com>
 
 local webview = require("webview")
 local window = require("window")

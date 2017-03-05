@@ -1,3 +1,8 @@
+--- Error pages.
+--
+-- @module error_page
+-- @copyright 2016 Aidan Holm
+
 local webview = require("webview")
 local lousy = require("lousy")
 

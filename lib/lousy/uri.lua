@@ -1,7 +1,9 @@
-------------------------------------------------------
--- URI parsing functions                            --
--- © 2011 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- lousy.uri library.
+--
+-- URI parsing functions
+--
+-- @module lousy.uri
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 -- Get luakit environment
 local util = require "lousy.util"

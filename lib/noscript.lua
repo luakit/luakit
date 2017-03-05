@@ -1,7 +1,7 @@
---------------------------------------------------------
--- NoScript plugin for luakit                         --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+--- NoScript plugin for luakit.
+--
+-- @module noscript
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local webview = require("webview")

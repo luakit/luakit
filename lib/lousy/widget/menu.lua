@@ -1,7 +1,8 @@
--------------------------------------------------------------
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt; --
--- @copyright 2010 Mason Larobina                          --
--------------------------------------------------------------
+--- Luakit menu widget.
+--
+-- @module lousy.widget.menu
+-- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
+-- @copyright 2010 Mason Larobina
 
 -- Grab environment we need
 local capi = { widget = widget }

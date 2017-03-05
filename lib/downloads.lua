@@ -1,8 +1,8 @@
------------------------------------------------------------
--- Downloads for luakit                                  --
--- © 2010-2012 Mason Larobina <mason.larobina@gmail.com> --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>      --
------------------------------------------------------------
+--- Downloads for luakit.
+--
+-- @module downloads
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")

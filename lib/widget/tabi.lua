@@ -1,3 +1,12 @@
+--- Tab position - status bar widget.
+--
+-- Shows the number of the current tab, as well as the total number of
+-- tabs in the window.
+--
+-- @module widget.tabi
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")

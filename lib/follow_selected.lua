@@ -1,10 +1,10 @@
-------------------------------------------------------------------------------
--- Add {A,C,S,}-Return binds to follow selected link (or link in selection) --
--- © 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>                    --
--- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>               --
--- © 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>                   --
--- © 2009 israellevin                                                       --
-------------------------------------------------------------------------------
+--- Add {A,C,S,}-Return binds to follow selected link (or link in selection).
+--
+-- @module follow_selected
+-- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>
+-- @copyright 2009 israellevin
 
 local window = require("window")
 local lousy = require("lousy")

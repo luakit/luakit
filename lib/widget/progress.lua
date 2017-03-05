@@ -1,3 +1,11 @@
+--- Web page load progress - status bar widget.
+--
+-- Shows the load progress of the current web page as a percentage.
+--
+-- @module widget.progress
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")

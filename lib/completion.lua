@@ -1,8 +1,8 @@
-------------------------------------------------------------
--- Command completion                                     --
--- © 2010-2011 Mason Larobina  <mason.larobina@gmail.com> --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
-------------------------------------------------------------
+--- Command completion.
+--
+-- @module completion
+-- @copyright 2010-2011 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 local lousy = require("lousy")
 local history = require("history")

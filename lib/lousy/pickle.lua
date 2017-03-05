@@ -1,9 +1,11 @@
---------------------------------------------------
--- Pickle.lua
--- A table serialization utility for lua
--- Steve Dekorte, http://www.dekorte.com, Apr 2000
--- Freeware
---------------------------------------------------
+--- lousy.pickle library.
+--
+-- A table serialization utility for lua. Freeware.
+--
+-- @module lousy.pickle
+-- @author Steve Dekorte, http://www.dekorte.com
+-- @copyright 2000 Steve Dekorte
+
 
 local Pickle = {
     clone = function (t) local nt={}; for i, v in pairs(t) do nt[i]=v end return nt end

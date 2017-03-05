@@ -1,3 +1,8 @@
+--- Hide scrollbars.
+--
+-- @module hide_scrollbars
+-- @copyright 2016 Aidan Holm
+
 local webview = require("webview")
 
 local disable_scrollbar_ss = stylesheet{ source = [===[

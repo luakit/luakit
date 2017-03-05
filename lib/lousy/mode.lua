@@ -1,7 +1,8 @@
----------------------------------------------------------------------------
+--- lousy.mode library.
+--
+-- @module lousy.mode
 -- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
 -- @copyright 2010 Mason Larobina
----------------------------------------------------------------------------
 
 --- Mode setting and getting operations for objects.
 local m = {}

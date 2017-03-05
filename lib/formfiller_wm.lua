@@ -1,3 +1,8 @@
+-- Luakit formfiller - web module.
+--
+-- @submodule formfiller_wm
+-- @copyright 2016 Aidan Holm
+
 local select = require("select_wm")
 local lousy = require("lousy")
 local ui = ipc_channel("formfiller_wm")

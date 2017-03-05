@@ -1,3 +1,11 @@
+--- Web page history - status bar widget.
+--
+-- Indicates whether the current page can go back or go forward.
+--
+-- @module widget.hist
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")

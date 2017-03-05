@@ -1,7 +1,7 @@
-------------------------------------------------------
--- Search for a string in the current webview       --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- Search for a string in the current webview.
+--
+-- @module search
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
 local lousy = require("lousy")

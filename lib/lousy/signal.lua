@@ -1,9 +1,11 @@
---------------------------------------------------------------
--- Mimic the luakit signal api functions for tables         --
--- @author Fabian Streitel &lt;karottenreibe@gmail.com&gt;  --
--- @author Mason Larobina  &lt;mason.larobina@gmail.com&gt; --
--- @copyright 2010 Fabian Streitel, Mason Larobina          --
---------------------------------------------------------------
+--- lousy.signal library.
+--
+-- Mimic the luakit signal api functions for tables.
+--
+-- @module lousy.signal
+-- @author Fabian Streitel &lt;karottenreibe@gmail.com&gt;
+-- @author Mason Larobina  &lt;mason.larobina@gmail.com&gt;
+-- @copyright 2010 Fabian Streitel, Mason Larobina
 
 local signal = {}
 

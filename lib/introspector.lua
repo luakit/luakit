@@ -1,3 +1,9 @@
+--- Provides luakit://help/ page.
+--
+-- @module introspector
+-- @copyright 2016 Aidan Holm
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
+
 local lousy = require("lousy")
 local dedent = lousy.util.string.dedent
 local escape = lousy.util.escape

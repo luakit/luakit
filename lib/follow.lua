@@ -1,8 +1,8 @@
-------------------------------------------------------------
--- Link hinting for luakit                                --
--- © 2010-2012 Mason Larobina  <mason.larobina@gmail.com> --
--- © 2010-2011 Fabian Streitel <karottenreibe@gmail.com>  --
-------------------------------------------------------------
+--- Link hinting for luakit.
+--
+-- @module follow
+-- @copyright 2010-2012 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
 
 local lousy = require "lousy"
 local window = require("window")

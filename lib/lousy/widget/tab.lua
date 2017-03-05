@@ -1,3 +1,8 @@
+--- Luakit tab widget.
+--
+-- @module lousy.widget.tab
+-- @copyright 2016 Aidan Holm
+
 local capi = { widget = widget }
 local get_theme = require("lousy.theme").get
 local escape = require("lousy.util").escape

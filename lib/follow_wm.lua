@@ -1,3 +1,8 @@
+-- Link hinting for luakit - web module.
+--
+-- @submodule follow_wm
+-- @copyright 2016 Aidan Holm
+
 local select = require("select_wm")
 local lousy = require("lousy")
 local ui = ipc_channel("follow_wm")

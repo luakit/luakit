@@ -1,7 +1,8 @@
----------------------------------------------------------------------------
+--- lousy.bind library.
+--
+-- @module lousy.bind
 -- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
 -- @copyright 2010 Mason Larobina
----------------------------------------------------------------------------
 
 local util = require("lousy.util")
 local join = util.table.join

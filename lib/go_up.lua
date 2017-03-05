@@ -1,8 +1,8 @@
----------------------------------------------------------------------
--- Go one step upward in the URI path structure.                   --
--- © 2010-2012 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
--- © 2012 LokiChaos <loki.chaos@gmail.com>                         --
----------------------------------------------------------------------
+--- Go one step upward in the URI path structure.
+--
+-- @module go_up
+-- @copyright 2010-2012 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2012 LokiChaos <loki.chaos@gmail.com>
 
 -- TODO check host against public TLD list to prevent returning only
 -- top-level domain.
