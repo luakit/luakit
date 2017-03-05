@@ -7,6 +7,8 @@ local capi = { widget = widget }
 local get_theme = require("lousy.theme").get
 local escape = require("lousy.util").escape
 
+local _M = {}
+
 local data = setmetatable({}, { __mode = "k" })
 
 local function destroy(tl)
@@ -134,6 +136,6 @@ local function new(view, index)
     return tl
 end
 
-return setmetatable({}, { __call = function(_, ...) return new(...) end })
+return setmetatable(_M, { __call = function(_, ...) return new(...) end })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -7,11 +7,11 @@ local error_page = require("error_page")
 local webview = require("webview")
 local window = require("window")
 
-local chrome = {}
+local _M = {}
 
 -- Common stylesheet that can be sourced from several chrome modules for a
 -- consitent looking theme.
-chrome.stylesheet = [===[
+_M.stylesheet = [===[
     body {
         background-color: white;
         color: black;
@@ -133,7 +133,7 @@ chrome.stylesheet = [===[
 local handlers = {}
 local on_first_visual_handlers = {}
 
-function chrome.add(page, func, on_first_visual_func, export_funcs)
+function _M.add(page, func, on_first_visual_func, export_funcs)
     -- Do some sanity checking
     assert(type(page) == "string",
         "invalid chrome page name (string expected, got "..type(page)..")")
@@ -156,7 +156,7 @@ function chrome.add(page, func, on_first_visual_func, export_funcs)
     on_first_visual_handlers[page] = on_first_visual_func
 end
 
-function chrome.remove(page)
+function _M.remove(page)
     handlers[page] = nil
     on_first_visual_handlers[page] = nil
 end
@@ -238,6 +238,6 @@ luakit.register_function("^luakit://(.*)", "reset_mode", function (view)
     end
 end)
 
-return chrome
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

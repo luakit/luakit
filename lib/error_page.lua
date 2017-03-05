@@ -6,10 +6,11 @@
 local webview = require("webview")
 local lousy = require("lousy")
 
-local error_page = {}
+local _M = {}
+
 local error_page_wm = require_web_module("error_page_wm")
 
-error_page.html_template = [==[
+_M.html_template = [==[
     <html>
         <head>
             <title>Error</title>
@@ -29,7 +30,7 @@ error_page.html_template = [==[
     </html>
 ]==]
 
-error_page.style = [===[
+_M.style = [===[
     body {
         margin: 0;
         padding: 0;
@@ -80,7 +81,7 @@ error_page.style = [===[
     }
 ]===]
 
-error_page.cert_style = [===[
+_M.cert_style = [===[
     body {
         background: repeating-linear-gradient(
             45deg,
@@ -160,7 +161,7 @@ local function load_error_page(v, error_page_info)
                 <p id="errorMessageText">{msg}</p>
             </div>
         ]==],
-        style = error_page.style,
+        style = _M.style,
         buttons = {{
             label = "Try again",
             callback = function(vv)
@@ -170,13 +171,13 @@ local function load_error_page(v, error_page_info)
     }
 
     if error_page_info.style then
-        error_page_info.style = error_page.style .. error_page_info.style
+        error_page_info.style = _M.style .. error_page_info.style
     end
     error_page_info = lousy.util.table.join(defaults, error_page_info)
     error_page_info.buttons = make_button_html(v, error_page_info.buttons)
 
     -- Substitute values recursively
-    local html, nsub = error_page.html_template
+    local html, nsub = _M.html_template
     repeat
         html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
     until nsub == 0
@@ -230,7 +231,7 @@ local function handle_error(v, uri, msg, cert_errors)
 
         error_page_info = {
             msg = msg .. ": " .. get_cert_error_desc(cert_errors),
-            style = error_page.cert_style,
+            style = _M.cert_style,
             heading = "Your connection may be insecure!",
             buttons = {{
                 label = "Ignore danger",
@@ -262,7 +263,7 @@ local function handle_error(v, uri, msg, cert_errors)
     load_error_page(v, error_page_info)
 end
 
-error_page.show_error_page = function(v, error_page_info)
+_M.show_error_page = function(v, error_page_info)
     assert(type(v) == "widget" and v.type == "webview")
     assert(type(error_page_info) == "table")
     if not error_page_info.uri then
@@ -283,4 +284,4 @@ webview.init_funcs.error_page_init = function(view)
     end)
 end
 
-return error_page
+return _M

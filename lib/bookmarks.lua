@@ -8,16 +8,16 @@ local lousy = require "lousy"
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
 local keys = lousy.util.table.keys
 
-local bookmarks = {}
+local _M = {}
 
-lousy.signal.setup(bookmarks, true)
+lousy.signal.setup(_M, true)
 
 -- Path to users bookmarks database
-bookmarks.db_path = capi.luakit.data_dir .. "/bookmarks.db"
+_M.db_path = capi.luakit.data_dir .. "/bookmarks.db"
 
-function bookmarks.init()
-    bookmarks.db = capi.sqlite3{ filename = bookmarks.db_path }
-    bookmarks.db:exec [[
+function _M.init()
+    _M.db = capi.sqlite3{ filename = _M.db_path }
+    _M.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
 
@@ -33,20 +33,20 @@ function bookmarks.init()
     ]]
 end
 
-capi.luakit.idle_add(bookmarks.init)
+capi.luakit.idle_add(_M.init)
 
-function bookmarks.get(id)
+function _M.get(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
-    local rows = bookmarks.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
+    local rows = _M.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
     return rows[1]
 end
 
-function bookmarks.remove(id)
+function _M.remove(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
 
-    bookmarks.emit_signal("remove", id)
+    _M.emit_signal("remove", id)
 
-    bookmarks.db:exec([[ DELETE FROM bookmarks WHERE id = ? ]], { id })
+    _M.db:exec([[ DELETE FROM bookmarks WHERE id = ? ]], { id })
 end
 
 local function parse_tags(tags)
@@ -59,13 +59,13 @@ end
 local function update_tags(b, tags)
     table.sort(tags)
     tags = table.concat(tags, " ")
-    bookmarks.db:exec([[ UPDATE bookmarks SET tags = ?, modified = ? WHERE id = ? ]],
+    _M.db:exec([[ UPDATE bookmarks SET tags = ?, modified = ? WHERE id = ? ]],
         { tags, os.time(), b.id })
-    bookmarks.emit_signal("update", b.id)
+    _M.emit_signal("update", b.id)
 end
 
-function bookmarks.tag(id, new_tags, replace)
-    local b = assert(bookmarks.get(id), "bookmark not found")
+function _M.tag(id, new_tags, replace)
+    local b = assert(_M.get(id), "bookmark not found")
 
     if type(new_tags) == "table" then
         new_tags = table.concat(new_tags, " ")
@@ -83,8 +83,8 @@ function bookmarks.tag(id, new_tags, replace)
     update_tags(b, keys(tags))
 end
 
-function bookmarks.untag(id, name)
-    local b = assert(bookmarks.get(id), "bookmark not found")
+function _M.untag(id, name)
+    local b = assert(_M.get(id), "bookmark not found")
     if b.tags then
         local tags = parse_tags(b.tags)
         tags[name] = nil
@@ -93,7 +93,7 @@ function bookmarks.untag(id, name)
 end
 
 -- Add new bookmark
-function bookmarks.add(uri, opts)
+function _M.add(uri, opts)
     opts = opts or {}
 
     assert(type(uri) == "string" and #uri > 0, "invalid bookmark uri")
@@ -109,20 +109,20 @@ function bookmarks.add(uri, opts)
         uri = "http://" .. uri
     end
 
-    bookmarks.db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?, ?)", {
+    _M.db:exec("INSERT INTO bookmarks VALUES (NULL, ?, ?, ?, ?, ?, ?)", {
         uri, opts.title or "", opts.desc or "", "", opts.created or os.time(),
         os.time() -- modified time (now)
     })
 
-    local id = bookmarks.db:exec("SELECT last_insert_rowid() AS id")[1].id
-    bookmarks.emit_signal("add", id)
+    local id = _M.db:exec("SELECT last_insert_rowid() AS id")[1].id
+    _M.emit_signal("add", id)
 
     -- Add bookmark tags
-    if opts.tags then bookmarks.tag(id, opts.tags) end
+    if opts.tags then _M.tag(id, opts.tags) end
 
     return id
 end
 
-return bookmarks
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

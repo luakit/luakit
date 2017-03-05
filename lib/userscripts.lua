@@ -1,5 +1,8 @@
 --- Userscript support for luakit.
 --
+-- Evaluates and manages userscripts.
+-- JavaScript userscripts must end in <code>.user.js</code>
+--
 -- @module userscripts
 -- @copyright 2011 Constantin Schomburg <me@xconstruct.net>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
@@ -16,9 +19,7 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
 local capi = { luakit = luakit }
 
---- Evaluates and manages userscripts.
--- JavaScript userscripts must end in <code>.user.js</code>
-local userscripts = {}
+local _M = {}
 
 -- Pure JavaScript implementation of greasemonkey methods commonly used
 -- in chome/firefox userscripts.
@@ -132,7 +133,7 @@ local lstate = setmetatable({}, { __mode = "k" })
 
 --- The directory, in which to search for userscripts.
 -- By default, this is $XDG_DATA_HOME/luakit/scripts
-userscripts.dir = capi.luakit.data_dir .. "/scripts"
+_M.dir = capi.luakit.data_dir .. "/scripts"
 
 -- Userscript class methods
 local prototype = {
@@ -220,12 +221,12 @@ local function load_js(file)
     end
 end
 
---- Loads all userscripts from the <code>userscripts.dir</code>.
+--- Loads all userscripts from the <code>_M.dir</code>.
 local function load_all()
-    if not os.exists(userscripts.dir) then return end
-    for file in lfs.dir(userscripts.dir) do
+    if not os.exists(_M.dir) then return end
+    for file in lfs.dir(_M.dir) do
         if string.match(file, "%.user%.js$") then
-            load_js(userscripts.dir .. "/" .. file)
+            load_js(_M.dir .. "/" .. file)
         end
     end
 end
@@ -253,18 +254,18 @@ local function invoke(view, on_start)
 end
 
 -- Saves an userscript
-function userscripts.save(file, js)
-    if not os.exists(userscripts.dir) then
-        util.mkdir(userscripts.dir)
+function _M.save(file, js)
+    if not os.exists(_M.dir) then
+        util.mkdir(_M.dir)
     end
-    local f = io.open(userscripts.dir .. "/" .. file, "w")
+    local f = io.open(_M.dir .. "/" .. file, "w")
     f:write(js)
     f:close()
-    load_js(userscripts.dir .. "/" .. file)
+    load_js(_M.dir .. "/" .. file)
 end
 
 -- Deletes an userscript
-function userscripts.del(file)
+function _M.del(file)
     if not scripts[file] then return end
     os.remove(file)
     scripts[file] = nil
@@ -308,8 +309,8 @@ add_cmds({
             local script = util.unescape(ret)
             local header = string.match(script, "//%s*==UserScript==%s*\n(.*)\n//%s*==/UserScript==")
             if not header then return w:error("Could not find userscript header") end
-            userscripts.save(file, script)
-            w:notify("Installed userscript to: " .. userscripts.dir .. "/" .. file)
+            _M.save(file, script)
+            w:notify("Installed userscript to: " .. _M.dir .. "/" .. file)
         end})
     end),
 
@@ -328,7 +329,7 @@ new_mode("uscriptlist", {
         end
         if #rows == 1 then
             w:notify(string.format("No userscripts installed. Use `:usinstall`"
-                .. "or place .user.js files in %q manually.", userscripts.dir))
+                .. "or place .user.js files in %q manually.", _M.dir))
             return
         end
         w.menu:build(rows)
@@ -346,7 +347,7 @@ add_binds("uscriptlist", util.table.join({
     key({}, "d", function (w)
         local row = w.menu:get()
         if row and row.script then
-            userscripts.del(row.script.file)
+            _M.del(row.script.file)
             w.menu:del()
         end
     end),
@@ -383,6 +384,6 @@ add_binds("uscriptlist", util.table.join({
 -- Initialize the userscripts
 load_all()
 
-return userscripts
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

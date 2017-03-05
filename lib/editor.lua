@@ -5,10 +5,10 @@
 local globals = require("globals")
 local capi = { luakit = luakit }
 
-local editor = {}
+local _M = {}
 
 -- Can't yet handle files with special characters in their name
-editor.edit = function (file, line)
+_M.edit = function (file, line)
 	local subs = {
 		term = globals.term or os.getenv("TERMINAL") or "xterm",
 		editor = globals.editor or os.getenv("EDITOR") or "vim",
@@ -20,4 +20,4 @@ editor.edit = function (file, line)
 	capi.luakit.spawn(cmd)
 end
 
-return editor
+return _M

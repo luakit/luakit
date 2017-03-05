@@ -11,6 +11,8 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
 local new_mode = require("modes").new_mode
 
+local _M = {}
+
 local reopening = {}
 
 local on_tab_close = function (w, view)
@@ -168,5 +170,7 @@ add_cmds({
         end
     end),
 })
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

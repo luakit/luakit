@@ -5,7 +5,7 @@
 
 local floor, max = math.floor, math.max
 
-local select = {}
+local _M = {}
 
 -- Label making
 
@@ -316,7 +316,7 @@ local function focus(state, step)
     return new_hint
 end
 
-function select.enter(page, elements, stylesheet, ignore_case)
+function _M.enter(page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
     assert(type(stylesheet) == "string")
@@ -376,7 +376,7 @@ function select.enter(page, elements, stylesheet, ignore_case)
     return focus(state, 0), state.num_visible_hints
 end
 
-function select.leave(page)
+function _M.leave(page)
     assert(type(page) == "page")
 
     local state = assert(page_states[page.id])
@@ -386,7 +386,7 @@ function select.leave(page)
     page_states[page.id] = nil
 end
 
-function select.changed(page, hint_pat, text_pat, text)
+function _M.changed(page, hint_pat, text_pat, text)
     assert(type(page) == "page")
     assert(hint_pat == nil or type(hint_pat) == "string")
     assert(text_pat == nil or type(text_pat) == "string")
@@ -408,23 +408,23 @@ function select.changed(page, hint_pat, text_pat, text)
     return focus(state, 0), state.num_visible_hints
 end
 
-function select.focus(page, step)
+function _M.focus(page, step)
     assert(type(page) == "page")
     assert(type(step) == "number")
     local state = assert(page_states[page.id])
     return focus(state, step), state.num_visible_hints
 end
 
-function select.hints(page)
+function _M.hints(page)
     assert(type(page) == "page")
     local state = assert(page_states[page.id])
     return state.hints
 end
 
-function select.focused_hint(page)
+function _M.focused_hint(page)
     assert(type(page) == "page")
     local state = assert(page_states[page.id])
     return state.hints[state.focused]
 end
 
-return select
+return _M

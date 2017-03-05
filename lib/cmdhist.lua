@@ -6,6 +6,8 @@
 local window = require("window")
 local lousy = require("lousy")
 
+local _M = {}
+
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when
 -- a mode contains a `history` table item (with history settings therein).
@@ -66,5 +68,7 @@ window.init_funcs.add_hist_binds = function (w)
         end
     end)
 end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

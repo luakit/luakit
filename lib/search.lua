@@ -9,6 +9,8 @@ local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds = binds.add_binds
 
+local _M = {}
+
 -- Add searching binds to normal mode
 local key = lousy.bind.key
 add_binds("normal", {
@@ -193,5 +195,7 @@ webview.init_funcs.search_callbacks = function (view, w)
     view:add_signal("button-press", clear_start_search_marker)
     view:add_signal("button-release", clear_start_search_marker)
 end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

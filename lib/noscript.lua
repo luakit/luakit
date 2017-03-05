@@ -12,11 +12,11 @@ local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
 local theme = require("theme")
 
-local noscript = {}
+local _M = {}
 
 -- Default blocking values
-noscript.enable_scripts = true
-noscript.enable_plugins = true
+_M.enable_scripts = true
+_M.enable_plugins = true
 
 local create_table = [[
 CREATE TABLE IF NOT EXISTS by_domain (
@@ -57,14 +57,14 @@ end
 
 function webview.methods.toggle_scripts(view, w)
     local domain = get_domain(view.uri)
-    local enable_scripts = noscript.enable_scripts
+    local enable_scripts = _M.enable_scripts
     local row = match_domain(domain)
 
     if row then
         enable_scripts = itob(row.enable_scripts)
         update(row.id, "enable_scripts", not enable_scripts)
     else
-        insert(domain, not enable_scripts, noscript.enable_plugins)
+        insert(domain, not enable_scripts, _M.enable_plugins)
     end
 
     w:notify(string.format("%sabled scripts for domain: %s",
@@ -73,14 +73,14 @@ end
 
 function webview.methods.toggle_plugins(view, w)
     local domain = get_domain(view.uri)
-    local enable_plugins = noscript.enable_plugins
+    local enable_plugins = _M.enable_plugins
     local row = match_domain(domain)
 
     if row then
         enable_plugins = itob(row.enable_plugins)
         update(row.id, "enable_plugins", not enable_plugins)
     else
-        insert(domain, noscript.enable_scripts, not enable_plugins)
+        insert(domain, _M.enable_scripts, not enable_plugins)
     end
 
     w:notify(string.format("%sabled plugins for domain: %s",
@@ -100,7 +100,7 @@ end
 
 local function lookup_domain(uri)
     if not uri then uri = "" end
-    local enable_scripts, enable_plugins = noscript.enable_scripts, noscript.enable_plugins
+    local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
     local domain = get_domain(uri)
 
     -- Enable everything for chrome pages; without this, chrome pages which
@@ -184,4 +184,4 @@ add_binds("normal", {
     buf("^,tr$", function (w) w:toggle_remove()  end),
 })
 
-return noscript
+return _M

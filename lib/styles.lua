@@ -16,7 +16,7 @@ local capi = {
 	sqlite3 = sqlite3 
 }
 
-local styles = {}
+local _M = {}
 
 local styles_dir = capi.luakit.data_dir .. "/styles/"
 
@@ -117,7 +117,7 @@ function webview.methods.styles_toggle(view, _)
 	db_set(view.uri, enabled)
 end
 
-styles.load_file = function (path, domain)
+_M.load_file = function (path, domain)
     if stylesheet == nil then return end
 
     local file = io.open(path, "r")
@@ -131,7 +131,7 @@ styles.load_file = function (path, domain)
     end
 end
 
-styles.detect_files = function ()
+_M.detect_files = function ()
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
 		print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
@@ -144,7 +144,7 @@ styles.detect_files = function ()
 			if string.sub(domain, 1, 1) == "*" then
 				domain = "." .. string.sub(domain, 2)
 			end
-            styles.load_file(filename, domain)
+            _M.load_file(filename, domain)
 		end
     end
     lfs.chdir(cwd)
@@ -154,7 +154,7 @@ local cmd = lousy.bind.cmd
 add_cmds({
     cmd({"styles-reload", "sr"}, "Reload user stylesheets.", function (w)
         w:notify("styles: Reloading files...")
-        styles.detect_files()
+        _M.detect_files()
         w:notify("styles: Reloading files complete.")
     end),
 })
@@ -168,6 +168,6 @@ add_binds("normal", {
 	end),
 })
 
-styles.detect_files()
+_M.detect_files()
 
-return styles
+return _M

@@ -7,7 +7,7 @@
 -- @author Mason Larobina  &lt;mason.larobina@gmail.com&gt;
 -- @copyright 2010 Fabian Streitel, Mason Larobina
 
-local signal = {}
+local _M = {}
 
 -- Private signal data for objects
 local data = setmetatable({}, { __mode = "k" })
@@ -25,7 +25,7 @@ local function get_data(object)
     return d
 end
 
-function signal.add_signal(object, signame, func)
+function _M.add_signal(object, signame, func)
     local signals = get_data(object).signals
 
     -- Check signal name
@@ -43,7 +43,7 @@ function signal.add_signal(object, signame, func)
     end
 end
 
-function signal.emit_signal(object, signame, ...)
+function _M.emit_signal(object, signame, ...)
     local d = get_data(object)
     local sigfuncs = d.signals[signame] or {}
 
@@ -63,7 +63,7 @@ function signal.emit_signal(object, signame, ...)
 end
 
 -- Remove a signame & function pair.
-function signal.remove_signal(object, signame, func)
+function _M.remove_signal(object, signame, func)
     local signals = get_data(object).signals
     local sigfuncs = signals[signame] or {}
 
@@ -80,12 +80,12 @@ function signal.remove_signal(object, signame, func)
 end
 
 -- Remove all signal handlers with the given signame.
-function signal.remove_signals(object, signame)
+function _M.remove_signals(object, signame)
     local signals = get_data(object).signals
     signals[signame] = nil
 end
 
-function signal.setup(object, module)
+function _M.setup(object, module)
     assert(not data[object], "given object already setup for signals")
 
     data[object] = { signals = {}, module = module }
@@ -93,16 +93,16 @@ function signal.setup(object, module)
     for _, fn in ipairs(methods) do
         assert(not object[fn], "signal object method conflict: " .. fn)
         if module then
-            local func = signal[fn]
+            local func = _M[fn]
             object[fn] = function (...) return func(object, ...) end
         else
-            object[fn] = signal[fn]
+            object[fn] = _M[fn]
         end
     end
 
     return object
 end
 
-return signal
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

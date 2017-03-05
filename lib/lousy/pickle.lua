@@ -55,13 +55,13 @@ function Pickle:ref_(t)
     return ref
 end
 
-local pickle = {}
+local _M = {}
 
-pickle.pickle = function(t)
+_M.pickle = function(t)
     return Pickle:clone():pickle_(t)
 end
 
-pickle.unpickle = function(s)
+_M.unpickle = function(s)
     if type(s) ~= "string" then
         error("can't unpickle a "..type(s)..", only strings")
     end
@@ -82,4 +82,4 @@ pickle.unpickle = function(s)
     return tables[1]
 end
 
-return pickle
+return _M

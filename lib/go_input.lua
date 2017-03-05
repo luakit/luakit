@@ -9,6 +9,8 @@ local lousy = require("lousy")
 local binds = require("binds")
 local add_binds = binds.add_binds
 
+local _M = {}
+
 local go_input = [=[
 (function (count) {
     var elements = document.querySelectorAll("textarea, input" + [
@@ -51,5 +53,7 @@ add_binds("normal", {
         w:go_input(m.count)
     end, {count=1})
 })
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

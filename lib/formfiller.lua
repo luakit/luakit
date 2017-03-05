@@ -71,6 +71,8 @@ local capi = { luakit = luakit }
 -- see the converter script under <code>extras/convert_formfiller.rb</code>
 --
 
+local _M = {}
+
 local formfiller_wm = require_web_module("formfiller_wm")
 
 -- The Lua DSL file containing the formfiller rules
@@ -319,3 +321,5 @@ add_binds("normal", {
     buf("^zL$", "Load formfiller form.",
         fill_form_menu),
 })
+
+return _M

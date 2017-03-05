@@ -1,5 +1,7 @@
 --- lousy.util library.
 --
+--- Utility functions for lousy.
+--
 -- @module lousy.util
 -- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
 -- @author Julien Danjou &lt;julien@danjou.info&gt;
@@ -11,10 +13,12 @@ local rtable = table
 local math = require "math"
 local capi = { luakit = luakit }
 
---- Utility functions for lousy.
+local _M = {}
+
 local table = {}
 local string = {}
-local util = { table = table, string = string }
+_M.table = table
+_M.string = string
 
 local xml_entity_names = { ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;" };
 local xml_entity_chars = { lt = "<", gt = ">", nbsp = " ", quot = "\"", apos = "'", ndash = "-", mdash = "-", amp = "&" };
@@ -22,27 +26,27 @@ local xml_entity_chars = { lt = "<", gt = ">", nbsp = " ", quot = "\"", apos = "
 --- Escape a string from XML characters.
 -- @param text The text to escape.
 -- @return A string with all XML characters escaped.
-function util.escape(text)
+function _M.escape(text)
     return text and text:gsub("['&<>\"]", xml_entity_names) or nil
 end
 
 --- Unescape a string from XML entities.
 -- @param text The text to un-escape.
 -- @return A string with all the XML entities un-escaped.
-function util.unescape(text)
+function _M.unescape(text)
     return text and text:gsub("&(%a+);", xml_entity_chars) or nil
 end
 
 --- Create a directory
 -- @param dir The directory.
 -- @return mkdir return code
-function util.mkdir(dir)
+function _M.mkdir(dir)
     return os.execute(rstring.format("mkdir -p %q",  dir))
 end
 
 --- Eval Lua code.
 -- @return The return value of Lua code.
-function util.eval(s)
+function _M.eval(s)
     return assert(loadstring(s))()
 end
 
@@ -51,7 +55,7 @@ end
 -- @param path The file path.
 -- @return A function if everything is alright, a string with the error
 -- otherwise.
-function util.checkfile(path)
+function _M.checkfile(path)
     local f, e = loadfile(path)
     -- Return function if function, otherwise return error.
     if f then return f end
@@ -62,7 +66,7 @@ end
 -- @param t The original table.
 -- @param other The table to perform the difference against.
 -- @return All elements in the first table that are not in the other table.
-function util.table.difference(t, other)
+function table.difference(t, other)
     local ret = {}
     for k, v in pairs(t) do
         if type(k) == "number" then
@@ -85,7 +89,7 @@ end
 -- This will iterate all tables and insert all their keys into a new table.
 -- @param args A list of tables to join
 -- @return A new table containing all keys from the arguments.
-function util.table.join(...)
+function table.join(...)
     local ret = {}
     for _, t in pairs({...}) do
         for k, v in pairs(t) do
@@ -103,7 +107,7 @@ end
 -- @param t The table.
 -- @param item The item to look for in values of the table.
 -- @return The key were the item is found, or nil if not found.
-function util.table.hasitem(t, item)
+function table.hasitem(t, item)
     for k, v in pairs(t) do
         if v == item then
             return k
@@ -114,7 +118,7 @@ end
 --- Get a sorted table with all integer keys from a table
 -- @param t the table for which the keys to get
 -- @return A table with keys
-function util.table.keys(t)
+function table.keys(t)
     local keys = { }
     for k, _ in pairs(t) do
         rtable.insert(keys, k)
@@ -128,7 +132,7 @@ end
 --- Reverse a table
 -- @param t the table to reverse
 -- @return the reversed table
-function util.table.reverse(t)
+function table.reverse(t)
     local tr = { }
     -- reverse all elements with integer keys
     for _, v in ipairs(t) do
@@ -146,7 +150,7 @@ end
 --- Clone a table
 -- @param t the table to clone
 -- @return a clone of t
-function util.table.clone(t)
+function table.clone(t)
     local c = { }
     for k, v in pairs(t) do
         c[k] = v
@@ -157,7 +161,7 @@ end
 --- Clone table and set metatable
 -- @param t the table to clone
 -- @return a clone of t with t's metatable
-function util.table.copy(t)
+function table.copy(t)
     local c = table.clone(t)
     return setmetatable(c, getmetatable(t))
 end
@@ -166,7 +170,7 @@ end
 -- @param a The first table.
 -- @param b The second table.
 -- @return True if both tables are identical.
-function util.table.isclone(a, b)
+function table.isclone(a, b)
     if #a ~= #b then return false end
     for k, _ in pairs(a) do
         if a[k] ~= b[k] then return false end
@@ -177,7 +181,7 @@ end
 --- Clone a table with all values as array items.
 -- @param t the table to clone
 -- @return all values in t
-function util.table.values(t)
+function table.values(t)
     local ret = {}
     for _, v in pairs(t) do
         rtable.insert(ret, v)
@@ -188,7 +192,7 @@ end
 --- Convert a table to an array by removing all keys that are not sequential numbers.
 -- @param t the table to converts
 -- @return a new table with all non-number keys removed
-function util.table.toarray(t)
+function table.toarray(t)
     local ret = {}
     for k, v in ipairs(t) do
         ret[k] = v
@@ -202,7 +206,7 @@ end
 -- @param pred The predicate function: called with (key, value); return true to
 -- keep element, false to remove.
 -- @return The filtered array.
-function util.table.filter_array(t, pred)
+function table.filter_array(t, pred)
     local ret = {}
     for i, v in ipairs(t) do
         if pred(i, v) then
@@ -230,7 +234,7 @@ end
 -- whitespace characters).
 -- @param ret The table to insert the split items in to or a new table if nil.
 -- @return A table of the string split by the pattern.
-function util.string.split(s, pattern, ret)
+function string.split(s, pattern, ret)
     if not pattern then pattern = "%s+" end
     if not ret then ret = {} end
     local pos = 1
@@ -249,7 +253,7 @@ end
 -- @param pattern The pattern to strip from the left-most and right-most of the
 -- string.
 -- @return The inner string segment.
-function util.string.strip(s, pattern)
+function string.strip(s, pattern)
     local p = pattern or "%s*"
     local sub_start, sub_end
 
@@ -264,7 +268,7 @@ function util.string.strip(s, pattern)
     return rstring.sub(s, sub_start or 1, sub_end or #s)
 end
 
-function util.string.dedent(text, first)
+function string.dedent(text, first)
     local min = first and #rstring.match(text, "^(%s*)") or nil
     rstring.gsub(text, "\n(%s*)", function (spaces)
         local len = #spaces
@@ -288,7 +292,7 @@ end
 -- or $XDG_CONFIG_HOME/luakit/ or /etc/xdg/luakit/.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
-function util.find_config(f)
+function _M.find_config(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
     local paths = { "config/"..f, capi.luakit.config_dir.."/"..f, "/etc/xdg/luakit/"..f }
@@ -299,7 +303,7 @@ end
 -- in the users $XDG_DATA_HOME/luakit/ or the luakit install dir.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
-function util.find_data(f)
+function _M.find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
     local paths = { f, capi.luakit.data_dir.."/"..f, capi.luakit.install_path.."/"..f }
@@ -310,7 +314,7 @@ end
 -- or in the users $XDG_CACHE_HOME/luakit/
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
-function util.find_cache(f)
+function _M.find_cache(f)
     -- Ignore absolute paths
     if rstring.match(f, "^/") then return f end
     -- Search locations
@@ -320,13 +324,13 @@ end
 
 --- Recursively traverse widget tree and return all widgets.
 -- @param wi The widget.
-function util.recursive_remove(wi)
+function _M.recursive_remove(wi)
     local ret = {}
     -- Empty other container widgets
     for _, child in ipairs(wi.children or {}) do
         wi:remove(child)
         rtable.insert(ret, child)
-        for _, c in ipairs(util.recursive_remove(child)) do
+        for _, c in ipairs(_M.recursive_remove(child)) do
             rtable.insert(ret, c)
         end
     end
@@ -337,7 +341,7 @@ end
 -- @param num A number.
 -- @param sigs Signifigant figures (if float).
 -- @return The string representation of the number.
-function util.ntos(num, sigs)
+function _M.ntos(num, sigs)
     local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
     num = tostring(math.floor(num))
     return (#dec == 0 and num) or (num .. "." .. dec)
@@ -348,7 +352,7 @@ end
 -- quotes ('). A single quote within the string can be encoded by putting two
 -- single quotes in a row - as in Pascal."
 -- Read: http://sqlite.org/lang_expr.html
-function util.sql_escape(s)
+function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
 
@@ -356,7 +360,7 @@ end
 -- @param Force re-load of /etc/hosts
 -- @return Table of all hostnames in /etc/hosts
 local etc_hosts
-function util.get_etc_hosts(force)
+function _M.get_etc_hosts(force)
     -- Unless forced return previous hostnames
     if not force and etc_hosts then
         return etc_hosts
@@ -376,6 +380,6 @@ function util.get_etc_hosts(force)
     return etc_hosts
 end
 
-return util
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -12,7 +12,7 @@ local binds = require("binds")
 local add_binds = binds.add_binds
 local match = string.match
 
-local M = {}
+local _M = {}
 
 local function go_up_step(u)
     -- Step 1: remove fragment
@@ -44,7 +44,7 @@ local function go_up_step(u)
     end
 end
 
-function M.go_up(uri, n)
+function _M.go_up(uri, n)
     local u = soup.parse_uri(uri)
     if not u then error("invalid uri: " .. tostring(uri)) end
     for _ = 1, (n or 1) do
@@ -53,7 +53,7 @@ function M.go_up(uri, n)
     return soup.uri_tostring(u)
 end
 
-function M.go_upmost(uri)
+function _M.go_upmost(uri)
     local u = soup.parse_uri(uri)
     if not u then error("invalid uri: " .. tostring(uri)) end
     u.path = "/"
@@ -69,16 +69,16 @@ add_binds("normal", {
         function (w, _, m)
             local uri = w.view.uri
             if not uri or uri == "about:blank" then return end
-            w.view.uri = M.go_up(uri, m.count or 1)
+            w.view.uri = _M.go_up(uri, m.count or 1)
         end),
 
     buf("^gU$", "Go to up-most URI (maintains host).",
         function (w)
             local uri = w.view.uri
             if not uri or uri == "about:blank" then return end
-            w.view.uri = M.go_upmost(uri)
+            w.view.uri = _M.go_upmost(uri)
         end),
 })
 
 -- Return module table
-return setmetatable(M, { __call = function (MM, ...) return MM.go_up(...) end })
+return setmetatable(_M, { __call = function (_, ...) return _M.go_up(...) end })
