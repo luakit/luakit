@@ -1,7 +1,7 @@
-------------------------------------------------------------
--- Dynamic proxy settings                                 --
--- Copyright © Piotr Husiatyński <phusiatynski@gmail.com> --
-------------------------------------------------------------
+--- Dynamic proxy settings.
+--
+-- @module proxy
+-- @copyright Piotr Husiatyński <phusiatynski@gmail.com>
 
 -- Grab environment we need
 local io = io

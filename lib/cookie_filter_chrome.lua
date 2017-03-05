@@ -1,3 +1,8 @@
+--- Cookie filtering by name/domain - chrome page.
+--
+-- @module cookie_filter_chrome
+-- @copyright 2016 Aidan Holm
+
 msg.warn("================================================================================")
 msg.warn("This library is non-functional and will be removed in a future version")
 msg.warn("To avoid startup errors, remove any require('" .. ({...})[1] .. "') lines from your configuration")
@@ -166,7 +171,7 @@ local function build_domain_set(domain)
     return domains
 end
 
---- Shows the chrome page in the given view.
+-- Shows the chrome page in the given view.
 chrome.add("cookie-filter", function (view, meta)
     local domain = meta.path
     -- Strip off trailing # if it exists

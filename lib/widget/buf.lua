@@ -1,3 +1,11 @@
+--- Input buffer - status bar widget.
+--
+-- Shows the current contents of the input buffer in the status bar.
+--
+-- @module widget.buf
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local lousy = require("lousy")
 local theme = lousy.theme.get()

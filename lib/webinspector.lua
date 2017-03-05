@@ -1,8 +1,8 @@
---------------------------------------------------------
--- Bindings for the web inspector                     --
--- (C) 2012 Fabian Streitel <karottenreibe@gmail.com> --
--- (C) 2012 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+--- Bindings for the web inspector.
+--
+-- @module webinspector
+-- @copyright 2012 Fabian Streitel <karottenreibe@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
 local lousy = require("lousy")

@@ -2,7 +2,7 @@
 -- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
 -- @author Paweł Zuzelski &lt;pawelz&lt;AT&gt;pld-linux.org&gt;
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
-module("luakit")
+-- @module luakit
 
 --- Luakit global table
 -- @field config_dir config directory path (default: XDG_CONFIG_HOME)
@@ -22,7 +22,6 @@ module("luakit")
 -- @name windows
 
 --- Quit luakit
--- @param -
 -- @name quit
 -- @class function
 

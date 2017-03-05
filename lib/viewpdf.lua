@@ -1,3 +1,8 @@
+--- Automatic PDF viewing.
+--
+-- @module viewpdf
+-- @copyright 2016 Aidan Holm
+
 local downloads = require("downloads")
 
 downloads.add_signal("download-location", function(_, filename, mime)

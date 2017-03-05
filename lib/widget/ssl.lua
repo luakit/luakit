@@ -1,3 +1,12 @@
+--- Web page security - ssl status bar widget.
+--
+-- Indicates whether the connection used to load the current web page
+-- was secure.
+--
+-- @module widget.ssl
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")

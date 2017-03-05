@@ -1,8 +1,8 @@
------------------------------------------------------------
--- Go to the first input on a page and enter insert mode --
--- © 2009 Aldrik Dunbar  (n30n)                          --
--- © 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
------------------------------------------------------------
+--- Go to the first input on a page and enter insert mode.
+--
+-- @module go_input
+-- @copyright 2009 Aldrik Dunbar  (n30n)
+-- @copyright 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org>
 
 local webview = require("webview")
 local lousy = require("lousy")

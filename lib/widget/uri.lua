@@ -1,3 +1,12 @@
+--- Web page URI - status bar widget.
+--
+-- Shows the URI of the current web page. If a link is hovered over with
+-- the mouse, the target URI of that link will be shown temporarily.
+--
+-- @module widget.uri
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")

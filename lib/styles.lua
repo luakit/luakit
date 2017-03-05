@@ -1,3 +1,8 @@
+--- User styles.
+--
+-- @module styles
+-- @copyright 2016 Aidan Holm
+
 local webview = require("webview")
 local lousy   = require("lousy")
 local lfs     = require("lfs")

@@ -1,3 +1,8 @@
+--- Cookie filtering by name/domain.
+--
+-- @module cookie_filter
+-- @copyright 2016 Aidan Holm
+
 msg.warn("================================================================================")
 msg.warn("This library is non-functional and will be removed in a future version")
 msg.warn("To avoid startup errors, remove any require('" .. ({...})[1] .. "') lines from your configuration")

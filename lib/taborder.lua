@@ -1,7 +1,7 @@
---------------------------------------------
--- Rules for where to put new tabs        --
--- © 2010 Henrik Hallberg <henrik@k2h.se> --
---------------------------------------------
+--- Rules for where to put new tabs.
+--
+-- @module taborder
+-- @copyright 2010 Henrik Hallberg <henrik@k2h.se>
 
 local lousy = require("lousy")
 

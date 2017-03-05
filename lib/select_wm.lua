@@ -1,3 +1,8 @@
+--- Select a page element with a visual interface.
+--
+-- @module select_wm
+-- @copyright 2017 Aidan Holm
+
 local floor, max = math.floor, math.max
 
 local select = {}

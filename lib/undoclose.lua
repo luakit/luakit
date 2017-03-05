@@ -1,8 +1,8 @@
-------------------------------------------------------
--- View and undo closed tabs in an interactive menu --
--- © 2010 Chris van Dijk <quigybo@hotmail.com>      --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- View and undo closed tabs in an interactive menu.
+--
+-- @module undoclose
+-- @copyright 2010 Chris van Dijk <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local lousy = require("lousy")

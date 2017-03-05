@@ -1,3 +1,8 @@
+--- Only send Referer header if coming from the same domain - web module.
+--
+-- @module referer_control_wm
+-- @copyright 2016 Aidan Holm
+
 local function domain_from_uri(uri)
     local domain = (uri and string.match(string.lower(uri), "^%a+://([^/]*)/?"))
     -- Strip leading www. www2. etc

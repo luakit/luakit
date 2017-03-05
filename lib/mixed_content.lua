@@ -1,3 +1,8 @@
+--- Blocks insecure content on secure (HTTPS) pages.
+--
+-- @module mixed_content
+-- @copyright 2016 Aidan Holm
+
 local webview = require("webview")
 
 -- Indexed by view:

@@ -1,3 +1,11 @@
+--- Web page scroll position - status bar widget.
+--
+-- Shows the current scroll position of the web page as a percentage.
+--
+-- @module widget.scroll
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")

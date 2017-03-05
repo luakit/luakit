@@ -1,8 +1,8 @@
-----------------------------------------------------------------
--- Follow "next" or "prev" links on a page                    --
--- © 2009 Aldrik Dunbar  (n30n)                               --
--- © 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com> --
-----------------------------------------------------------------
+--- Follow "next" or "prev" links on a page.
+--
+-- @module go_next_prev
+-- @copyright 2009 Aldrik Dunbar  (n30n)
+-- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
 local binds = require("binds")

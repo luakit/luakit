@@ -1,3 +1,7 @@
+--- Text editor launching functionality.
+--
+-- @module editor
+
 local globals = require("globals")
 local capi = { luakit = luakit }
 

@@ -1,3 +1,8 @@
+--- Save history in sqlite3 database - chrome page.
+--
+-- @module history_chrome
+-- @copyright 2010-2011 Mason Larobina <mason.larobina@gmail.com>
+
 -- Grab the luakit environment we need
 local history = require("history")
 local lousy = require("lousy")

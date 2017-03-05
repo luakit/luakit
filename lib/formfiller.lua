@@ -1,8 +1,8 @@
-------------------------------------------------------------------
--- Luakit formfiller                                            --
--- © 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be> --
--- © 2011 Mason Larobina  (mason-l) <mason.larobina@gmail.com>  --
-------------------------------------------------------------------
+--- Luakit formfiller.
+--
+-- @module formfiller
+-- @copyright 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be>
+-- @copyright 2011 Mason Larobina  (mason-l) <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
 local window = require("window")

@@ -1,7 +1,7 @@
-------------------------------------------------------
--- Session saving / loading functions               --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- Session saving / loading functions.
+--
+-- @module session
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local webview = require("webview")

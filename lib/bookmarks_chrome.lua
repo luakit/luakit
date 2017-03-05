@@ -1,3 +1,9 @@
+--- Simple sqlite3 bookmarks - chrome page.
+--
+-- @module bookmarks_chrome
+-- @author Mason Larobina (mason.larobina@gmail.com)
+-- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
+
 -- Grab the luakit environment we need
 local bookmarks = require("bookmarks")
 local lousy = require("lousy")

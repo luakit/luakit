@@ -1,7 +1,8 @@
------------------------------------------------------------
--- Simple sqlite3 bookmarks                              --
--- © 2010-2012 Mason Larobina <mason.larobina@gmail.com> --
------------------------------------------------------------
+--- Simple sqlite3 bookmarks.
+--
+-- @module bookmarks
+-- @author Mason Larobina (mason.larobina@gmail.com)
+-- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
 
 local lousy = require "lousy"
 local capi = { luakit = luakit, sqlite3 = sqlite3 }

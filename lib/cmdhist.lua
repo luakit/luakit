@@ -1,7 +1,7 @@
-------------------------------------------------------
--- Enables command history in modes that support it --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- Enables command history in modes that support it.
+--
+-- @module cmdhist
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com> 
 
 local window = require("window")
 local lousy = require("lousy")

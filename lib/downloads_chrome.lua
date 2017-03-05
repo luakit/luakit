@@ -1,3 +1,9 @@
+--- Downloads for luakit - chrome page.
+--
+-- @module downloads_chrome
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
+
 -- Grab the luakit environment we need
 local downloads = require("downloads")
 local lousy = require("lousy")

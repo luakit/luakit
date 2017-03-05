@@ -1,3 +1,8 @@
+--- lousy.load library.
+--
+-- @module lousy.load
+-- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
+-- @copyright 2010 Mason Larobina
 local capi = {
     luakit = luakit
 }

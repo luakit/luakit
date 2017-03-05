@@ -1,18 +1,19 @@
-------------------------------------------------------------------------
--- Simple URI-based content filter v0.3.1a                            --
--- (C) 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>            --
--- (C) 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>       --
--- © 2012 Plaque FCC <Reslayer@ya.ru>                                 --
--- © 2010 adblock chromepage from bookmarks.lua by Henning Hasemann & --
--- Mason Larobina taken by Plaque FCC.                                --
---                                                                    --
--- Download an Adblock Plus compatible filter lists to luakit data    --
--- dir into "/adblock/" directory. Multiple lists are supported.      --
--- EasyList is the most popular Adblock Plus filter list, and can be  --
--- downloaded from http://easylist.adblockplus.org/                   --
---                                                                    --
--- Filterlists need to be updated regularly (~weekly), use cron!      --
-------------------------------------------------------------------------
+--- Simple URI-based content filter v0.3.1a.
+--
+-- Download an Adblock Plus compatible filter lists to luakit data
+-- dir into "/adblock/" directory. Multiple lists are supported.
+-- EasyList is the most popular Adblock Plus filter list, and can be
+-- downloaded from http://easylist.adblockplus.org/
+--
+-- Filterlists need to be updated regularly (~weekly), use cron!
+--
+-- @module adblock
+-- @author Chris van Dijk (quigybo) (quigybo@hotmail.com)
+-- @author Mason Larobina (mason-l) (mason.larobina@gmail.com)
+-- @author Plaque FCC (Reslayer@ya.ru)
+-- @copyright 2010 Chris van Dijk (quigybo) (quigybo@hotmail.com)
+-- @copyright 2010 Mason Larobina (mason-l) (mason.larobina@gmail.com)
+-- @copyright 2012 Plaque FCC (Reslayer@ya.ru)
 
 local webview   = require("webview")
 local lousy     = require("lousy")
@@ -26,7 +27,7 @@ local add_cmds  = binds.add_cmds
 local adblock = {}
 local adblock_wm = require_web_module("adblock_wm")
 
---- Module global variables
+-- Module global variables
 adblock.enabled = true
 -- Adblock Plus compatible filter lists
 local adblock_dir = capi.luakit.data_dir .. "/adblock/"

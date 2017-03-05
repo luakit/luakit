@@ -1,3 +1,13 @@
+--- Simple URI-based content filter - chrome page.
+--
+-- @module adblock_chrome
+-- @author Henning Hasemann
+-- @author Mason Larobina
+-- @author Plaque FCC
+-- @copyright 2010 Henning Hasemann
+-- @copyright 2010 Mason Larobina (mason-l) (mason.larobina@gmail.com)
+-- @copyright 2010 Plaque FCC (Reslayer@ya.ru)
+
 local adblock    = require("adblock")
 local lousy      = require("lousy")
 local chrome     = require("chrome")
@@ -134,7 +144,7 @@ adblock.refresh_views = refresh_views
 -- URI of the chrome page
 adblock_chrome.chrome_page = "luakit://adblock/"
 
---- Shows the chrome page in the given view.
+-- Shows the chrome page in the given view.
 chrome.add("adblock", function ()
     local id = 0
     local lists = {}

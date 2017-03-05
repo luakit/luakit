@@ -1,8 +1,8 @@
---------------------------------------------------------
--- View and open history items in an interactive menu --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>   --
--- © 2010 Mason Larobina  <mason.larobina@gmail.com>  --
---------------------------------------------------------
+--- View and open history items in an interactive menu.
+--
+-- @module tabhistory
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
+-- @copyright 2010 Mason Larobina  <mason.larobina@gmail.com>
 
 local window = require("window")
 local lousy = require("lousy")
