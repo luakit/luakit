@@ -157,3 +157,36 @@ function test_lua_header ()
         fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
+
+function test_lua_module_uses_M ()
+    local exclude_files = {
+        "lib/markdown%.lua",   -- External file
+        "lib/cookie.*%.lua",   -- Cookie handling is broken anyway
+        "lib/.*/init%.lua$",   -- Module groupings
+        "lib/widget/%S*%.lua", -- Status bar widgets
+    }
+
+    local errors = {}
+
+    local file_list = util.find_files("lib", "%.lua$", exclude_files)
+    for _, file in ipairs(file_list) do
+        -- Get file contents
+        local f = assert(io.open(file, "r"))
+        local contents = f:read("*all")
+        f:close()
+
+        -- Check for 'local _M = {}' in modules
+        local module_pat = "\n%-%- @module ([a-z_.]+)\n"
+        local is_module = not not contents:find(module_pat)
+        if is_module then
+            local _M_text = "\n\nlocal _M = {}\n\n"
+            if not contents:find(_M_text, 1, true) then
+                add_file_error(errors, file, "Missing/malformed module table declaration")
+            end
+        end
+    end
+
+    if #errors > 0 then
+        fail("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
+    end
+end
