@@ -125,3 +125,51 @@ function test_header_comment ()
         fail("Some files have header comment errors:\n" .. table.concat(err, "\n"))
     end
 end
+
+function test_lua_header ()
+    local summary_pat = "^%-%-%- [^\n]*%.\n"
+    local module_pat = "\n%-%- @module ([a-z_.]+)\n"
+    local missing = {}
+    local exclude_files = { "lib/markdown%.lua", "lib/cookie.*%.lua" }
+
+    local file_list = util.find_files("lib", "%.lua$", exclude_files)
+    for _, file in ipairs(file_list) do
+        -- Get first paragraph of file
+        local f = assert(io.open(file, "r"))
+        local lines = {}
+        for line in f:lines() do
+            lines[#lines + 1] = line
+            if line == "" then break end
+        end
+        local contents = table.concat(lines, "\n") .. "\n"
+        f:close()
+
+        local no_summary = not contents:find(summary_pat)
+        local module_name = contents:match(module_pat)
+        local expected_module_name = file:match("lib/(.*).lua"):gsub("/", "."):gsub(".init$","")
+        local bad_module = module_name and module_name ~= expected_module_name
+
+        if no_summary or bad_module then
+            local errors = {}
+            if no_summary then errors[#errors+1] = "summary line" end
+            if bad_module then errors[#errors+1] = "module line" end
+            table.insert(missing, {
+                file = file,
+                err = table.concat(errors, ", ")
+            })
+        end
+    end
+
+    if #missing > 0 then
+        local align = 0
+        for _, entry in ipairs(missing) do
+            align = math.max(align, entry.file:len())
+        end
+
+        local err = {}
+        for _, entry in ipairs(missing) do
+            err[#err+1] = string.format("  %-" .. tostring(align) .. "s bad/missing %s", entry.file, entry.err)
+        end
+        fail("Some Lua files have header comment errors:\n" .. table.concat(err, "\n"))
+    end
+end
