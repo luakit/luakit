@@ -53,3 +53,5 @@ window.add_signal("init", function (w)
     r.ssl.fg = theme.ssl_sbar_fg
     r.ssl.font = theme.ssl_sbar_font
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

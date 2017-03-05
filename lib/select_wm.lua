@@ -428,3 +428,5 @@ function _M.focused_hint(page)
 end
 
 return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

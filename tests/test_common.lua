@@ -24,3 +24,5 @@ function test_no_globalconf_in_common()
         fail("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
     end
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

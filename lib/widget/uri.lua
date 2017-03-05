@@ -52,3 +52,5 @@ window.add_signal("init", function (w)
     l.uri.fg = theme.uri_sbar_fg
     l.uri.font = theme.uri_sbar_font
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

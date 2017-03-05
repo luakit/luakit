@@ -19,3 +19,5 @@ webview.init_funcs.hide_scrollbars = function (v)
 end
 
 return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

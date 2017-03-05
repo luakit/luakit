@@ -99,3 +99,5 @@ cookies_lib.add_signal("accept-cookie", function (cookie)
     local ret = { [CF_BLOCK] = false, [CF_ALLOW] = nil, [CF_SESSION_ONLY] = "session-only" }
     return ret[get(cookie.domain, cookie.name)]
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

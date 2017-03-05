@@ -295,3 +295,5 @@ local function new(args)
 end
 
 return setmetatable(_M, { __call = function(_, ...) return new(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

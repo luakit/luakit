@@ -285,3 +285,5 @@ webview.init_funcs.error_page_init = function(view)
 end
 
 return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

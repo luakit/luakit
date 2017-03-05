@@ -294,3 +294,5 @@ ui:add_signal("filter", function (_, page, form_specs)
     end
     ui:emit_signal("filter", page.id, matching_form_specs)
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -124,3 +124,5 @@ elseif string.match(arg[2], "%.c$") then
 else
     error("Unknown action for file: " .. arg[2])
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

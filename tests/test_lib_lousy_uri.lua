@@ -65,3 +65,5 @@ function test_lousy_uri_parse()
     props_uri = "luakit://baz@random-domain.com:888/"
     assert_equal(tostring(parsed + props + {query = ""}), props_uri)
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

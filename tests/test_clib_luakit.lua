@@ -65,3 +65,5 @@ function test_idle_add_del()
     assert_false(luakit.idle_remove(f),
         "idle_remove removed incorrect number of callbacks.")
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

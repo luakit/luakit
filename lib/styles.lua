@@ -171,3 +171,5 @@ add_binds("normal", {
 _M.detect_files()
 
 return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

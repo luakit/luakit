@@ -61,3 +61,5 @@
 -- @return An unescaped string.
 -- @name uri-decode
 -- @class function
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

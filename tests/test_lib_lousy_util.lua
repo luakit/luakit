@@ -68,3 +68,5 @@ function test_lousy_util_table_filter_array()
     local d = lousy.util.table.filter_array(a, function (_, v) return v:len() == 2 end)
     assert_true(lousy.util.table.isclone(d, { "IV", "IX" }))
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

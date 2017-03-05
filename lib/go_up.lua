@@ -82,3 +82,5 @@ add_binds("normal", {
 
 -- Return module table
 return setmetatable(_M, { __call = function (_, ...) return _M.go_up(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

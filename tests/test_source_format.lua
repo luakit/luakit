@@ -206,3 +206,5 @@ function test_lua_module_uses_M ()
         fail("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
     end
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

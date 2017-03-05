@@ -48,3 +48,5 @@ local function search_load(path, memorize)
 end
 
 return setmetatable(_M, { __call = function (_, ...) return search_load(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

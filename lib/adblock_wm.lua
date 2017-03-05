@@ -167,3 +167,5 @@ extension:add_signal("page-created", function(_, page)
 end)
 
 ui:emit_signal("loaded")
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

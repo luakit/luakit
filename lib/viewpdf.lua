@@ -36,3 +36,5 @@ downloads.add_signal("open-file", function (file, mime_type)
 end)
 
 return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

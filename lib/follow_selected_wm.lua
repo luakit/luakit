@@ -49,3 +49,5 @@ ui:add_signal("follow_selected", function(_, _, action, view_id)
     assert(type(uri) == "string")
     ui:emit_signal(action, uri, view_id)
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
