@@ -1,6 +1,6 @@
---- Add {A,C,S,}-Return binds to follow selected link (or link in selection) - web module.
+-- Add {A,C,S,}-Return binds to follow selected link (or link in selection) - web module.
 --
--- @module follow_selected_wm
+-- @submodule follow_selected_wm
 -- @copyright 2016 Aidan Holm
 -- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
 -- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>

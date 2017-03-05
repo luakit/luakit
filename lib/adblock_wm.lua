@@ -1,6 +1,6 @@
---- Simple URI-based content filter - web module.
+-- Simple URI-based content filter - web module.
 --
--- @module adblock_wm
+-- @submodule adblock_wm
 -- @copyright 2016 Aidan Holm
 -- @author Aidan Holm (aidanholm@gmail.com)
 

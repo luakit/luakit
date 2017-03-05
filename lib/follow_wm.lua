@@ -1,6 +1,6 @@
---- Link hinting for luakit - web module.
+-- Link hinting for luakit - web module.
 --
--- @module follow_wm
+-- @submodule follow_wm
 -- @copyright 2016 Aidan Holm
 
 local select = require("select_wm")
