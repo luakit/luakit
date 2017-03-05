@@ -1,36 +1,9 @@
 require "lunit"
+local util = require "tests.util"
 local luacheck = require "luacheck"
 local lousy = require "lousy"
 
 module("test_luacheck", lunit.testcase, package.seeall)
-
--- Modification of code by David Kastrup
--- From: http://lua-users.org/wiki/DirTreeIterator
-
-local function files(dir, pattern)
-    assert(dir and dir ~= "", "directory parameter is missing or empty")
-    if string.sub(dir, -1) == "/" then
-        dir = string.sub(dir, 1, -2)
-    end
-
-    local ignore = { ["."] = true, [".."] = true, [".git"] = true, ["tokenize.h"] = true, ["tokenize.c"] = true }
-
-    local function yieldtree(dir)
-        for entry in lfs.dir(dir) do
-            if not ignore[entry] then
-                entry = dir.."/"..entry
-                local attr = lfs.attributes(entry)
-                if attr.mode == "directory" then
-                    yieldtree(entry)
-                elseif attr.mode == "file" and entry:match(pattern) then
-                    coroutine.yield(entry, attr)
-                end
-            end
-        end
-    end
-
-    return coroutine.wrap(function() yieldtree(dir) end)
-end
 
 function test_luacheck ()
     local lua_dirs = {"lib", "config"}
@@ -76,27 +49,7 @@ function test_luacheck ()
     wm_globals = lousy.util.table.join(shared_globals, wm_globals)
     ui_globals = lousy.util.table.join(shared_globals, ui_globals)
 
-    -- Build list of all lua files in lua_dirs
-    local file_list = {}
-    for _, dir in ipairs(lua_dirs) do
-        for file in files(dir, "%.lua$") do
-            file_list[#file_list+1] = file
-        end
-    end
-
-    -- Remove all files not tracked by git
-    file_list = lousy.util.table.filter_array(file_list, function (_, file)
-        local result = os.execute("git ls-files "..file.." --error-unmatch >/dev/null 2>&1")
-        return result == 0
-    end)
-
-    -- Remove all files in exclude_files
-    file_list = lousy.util.table.filter_array(file_list, function (_, file)
-        for _, pattern in ipairs(exclude_files) do
-            if string.find(file, pattern) then return false end
-        end
-        return true
-    end)
+    local file_list = util.find_files(lua_dirs, "%.lua$", exclude_files)
 
     local warnings, errors, fatals = 0, 0, 0
     local issues = {}
