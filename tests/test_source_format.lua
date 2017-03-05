@@ -15,16 +15,12 @@ function test_vim_modeline ()
         local contents = f:read("*all")
         f:close()
         if not contents:match(modeline_pat) then
-            table.insert(missing, file)
+            table.insert(missing, { file = file, err = "Bad/missing modeline" })
         end
     end
 
     if #missing > 0 then
-        local err = {}
-        for _, file in ipairs(missing) do
-            err[#err+1] = "  " .. file
-        end
-        fail("Some files do not have modelines:\n" .. table.concat(err, "\n"))
+        fail("Some files do not have modelines:\n" .. util.format_file_errors(missing))
     end
 end
 
@@ -42,22 +38,12 @@ function test_include_guard ()
         local s = file:gsub("[%.%/]", "_"):upper()
         local pat = include_guard_pat:format(s, s)
         if not contents:match(pat) then
-            table.insert(missing, file)
+            table.insert(missing, { file = file, err = "Bad/missing include guard" })
         end
     end
 
     if #missing > 0 then
-        local align = 0
-        for _, file in ipairs(missing) do
-            align = math.max(align, file:len())
-        end
-
-        local err = {}
-        for _, file in ipairs(missing) do
-            local s = file:gsub("[%.%/]", "_"):upper()
-            err[#err+1] = string.format("  %-" .. tostring(align-1) .. "sexpected LUAKIT_%s", file, s)
-        end
-        fail("Some files do not have include guards:\n" .. table.concat(err, "\n"))
+        fail("Some files do not have include guards:\n" .. util.format_file_errors(missing))
     end
 end
 
@@ -100,7 +86,7 @@ function test_header_comment ()
         local no_copyright = not contents:find(copyright_pat)
         local no_gpl_text = not contents:find(gpl_text, 1, true)
 
-        if bad_file_desc or no_copyright or no_gpl then
+        if bad_file_desc or no_copyright or no_gpl_text then
             local errors = {}
             if bad_file_desc then errors[#errors+1] = "file description" end
             if no_copyright then errors[#errors+1] = "copyright line" end
@@ -113,16 +99,7 @@ function test_header_comment ()
     end
 
     if #missing > 0 then
-        local align = 0
-        for _, entry in ipairs(missing) do
-            align = math.max(align, entry.file:len())
-        end
-
-        local err = {}
-        for _, entry in ipairs(missing) do
-            err[#err+1] = string.format("  %-" .. tostring(align-1) .. "s bad/missing %s", entry.file, entry.err)
-        end
-        fail("Some files have header comment errors:\n" .. table.concat(err, "\n"))
+        fail("Some files have header comment errors:\n" .. util.format_file_errors(missing))
     end
 end
 
@@ -155,21 +132,12 @@ function test_lua_header ()
             if bad_module then errors[#errors+1] = "module line" end
             table.insert(missing, {
                 file = file,
-                err = table.concat(errors, ", ")
+                err = "bad/missing " .. table.concat(errors, ", ")
             })
         end
     end
 
     if #missing > 0 then
-        local align = 0
-        for _, entry in ipairs(missing) do
-            align = math.max(align, entry.file:len())
-        end
-
-        local err = {}
-        for _, entry in ipairs(missing) do
-            err[#err+1] = string.format("  %-" .. tostring(align) .. "s bad/missing %s", entry.file, entry.err)
-        end
-        fail("Some Lua files have header comment errors:\n" .. table.concat(err, "\n"))
+        fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(missing))
     end
 end

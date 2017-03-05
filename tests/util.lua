@@ -12,6 +12,22 @@ local function path_is_in_directory(path, dir)
     return string.find(path, "^"..dir)
 end
 
+local git_files
+
+local function get_git_files ()
+    if not git_files then
+        git_files = {}
+        local f = io.popen("git ls-files")
+        for line in f:lines() do
+            table.insert(git_files, line)
+        end
+        local v = f:read("*all"):gsub("\n"," ")
+        f:close()
+    end
+
+    return git_files
+end
+
 function M.find_files(dirs, pattern, excludes)
     assert(type(dirs) == "string" or type(dirs) == "table",
         "Bad search location: expected string or table")
@@ -26,13 +42,7 @@ function M.find_files(dirs, pattern, excludes)
     if excludes == nil then excludes = {} end
 
     -- Get list of files tracked by git
-    local git_files = {}
-    local f = io.popen("git ls-files")
-    for line in f:lines() do
-        table.insert(git_files, line)
-    end
-    local v = f:read("*all"):gsub("\n"," ")
-    f:close()
+    local git_files = get_git_files()
 
     -- Filter to those inside the given directories
     local file_list = {}
@@ -59,6 +69,27 @@ function M.find_files(dirs, pattern, excludes)
 
     -- Return filtered list
     return file_list
+end
+
+function M.format_file_errors(entries)
+    assert(type(entries) == "table")
+
+    local sep = "    "
+
+    -- Find file alignment length
+    local align = 0
+    local git_files = get_git_files()
+    for _, file in ipairs(git_files) do
+        align = math.max(align, file:len())
+    end
+
+    -- Build output
+    local lines = {}
+    for _, entry in ipairs(entries) do
+        local line = string.format("  %-" .. tostring(align) .. "s%s%s", entry.file, sep, entry.err)
+        table.insert(lines, line)
+    end
+    return table.concat(lines, "\n")
 end
 
 return M
