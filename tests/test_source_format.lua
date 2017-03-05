@@ -9,15 +9,31 @@ local function add_file_error(errors, file, error)
 end
 
 function test_vim_modeline ()
-    local modeline_pat = "[^\n]\n\n// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80\n?$"
     local errors = {}
 
+    -- Test all C and H files
     local file_list = util.find_files(".", "%.[ch]$")
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
         local contents = f:read("*all")
         f:close()
+
+        local modeline_pat = "[^\n]\n\n// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80\n?$"
+        if not contents:match(modeline_pat) then
+            add_file_error(errors, file, "Missing/malformed modeline")
+        end
+    end
+
+    -- Test all lua files
+    local file_list = util.find_files(".", "%.lua$", {"lib/markdown.lua"})
+    for _, file in ipairs(file_list) do
+        -- Get file contents
+        local f = assert(io.open(file, "r"))
+        local contents = f:read("*all")
+        f:close()
+
+        local modeline_pat = "[^\n]\n\n%-%- vim: et:sw=4:ts=8:sts=4:tw=80\n?$"
         if not contents:match(modeline_pat) then
             add_file_error(errors, file, "Missing/malformed modeline")
         end
