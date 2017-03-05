@@ -356,10 +356,11 @@ function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
 
---- Get all hostnames in /etc/hosts
--- @param Force re-load of /etc/hosts
--- @return Table of all hostnames in /etc/hosts
 local etc_hosts
+
+--- Get all hostnames in /etc/hosts
+-- @param force Force re-load of /etc/hosts
+-- @return Table of all hostnames in /etc/hosts
 function _M.get_etc_hosts(force)
     -- Unless forced return previous hostnames
     if not force and etc_hosts then
