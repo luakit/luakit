@@ -4,9 +4,13 @@ local util = require "tests.util"
 
 module("test_source_format", lunit.testcase, package.seeall)
 
+local function add_file_error(errors, file, error)
+    table.insert(errors, { file = file, err = error })
+end
+
 function test_vim_modeline ()
     local modeline_pat = "[^\n]\n\n// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80\n?$"
-    local missing = {}
+    local errors = {}
 
     local file_list = util.find_files(".", "%.[ch]$")
     for _, file in ipairs(file_list) do
@@ -15,18 +19,18 @@ function test_vim_modeline ()
         local contents = f:read("*all")
         f:close()
         if not contents:match(modeline_pat) then
-            table.insert(missing, { file = file, err = "Bad/missing modeline" })
+            add_file_error(errors, file, "Missing/malformed modeline")
         end
     end
 
-    if #missing > 0 then
-        fail("Some files do not have modelines:\n" .. util.format_file_errors(missing))
+    if #errors > 0 then
+        fail("Some files do not have modelines:\n" .. util.format_file_errors(errors))
     end
 end
 
 function test_include_guard ()
     local include_guard_pat = "#ifndef LUAKIT_%s\n#define LUAKIT_%s\n\n"
-    local missing = {}
+    local errors = {}
 
     local file_list = util.find_files(".", "%.h$")
     for _, file in ipairs(file_list) do
@@ -38,12 +42,12 @@ function test_include_guard ()
         local s = file:gsub("[%.%/]", "_"):upper()
         local pat = include_guard_pat:format(s, s)
         if not contents:match(pat) then
-            table.insert(missing, { file = file, err = "Bad/missing include guard" })
+            add_file_error(errors, file, "Missing/malformed include guard")
         end
     end
 
-    if #missing > 0 then
-        fail("Some files do not have include guards:\n" .. util.format_file_errors(missing))
+    if #errors > 0 then
+        fail("Some files do not have include guards:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -80,7 +84,7 @@ function test_header_comment ()
  */
 
 ]]
-    local missing = {}
+    local errors = {}
 
     local file_list = util.find_files(".", "%.[ch]$")
     for _, file in ipairs(file_list) do
@@ -88,53 +92,68 @@ function test_header_comment ()
 
         local file_desc_name = contents:match(file_desc_pat)
         local bad_file_desc = file_desc_name and file_desc_name ~= file
-        local no_copyright = not contents:find(copyright_pat)
-        local no_gpl_text = not contents:find(gpl_text, 1, true)
 
-        if bad_file_desc or no_copyright or no_gpl_text then
-            local errors = {}
-            if bad_file_desc then errors[#errors+1] = "file description" end
-            if no_copyright then errors[#errors+1] = "copyright line" end
-            if no_gpl_text then errors[#errors+1] = "GPL license text" end
-            table.insert(missing, {
-                file = file,
-                err = table.concat(errors, ", ")
-            })
+        if bad_file_desc then
+            local err = ("File description must match file name (expected %s, got %s)"):format(file, file_desc_name)
+            add_file_error(errors, file, err)
+        end
+        if not contents:find(copyright_pat) then
+            add_file_error(errors, file, "missing/malformed copyright line")
+        end
+        if not contents:find(gpl_text, 1, true) then
+            add_file_error(errors, file, "missing/malformed GPL license text")
         end
     end
 
-    if #missing > 0 then
-        fail("Some files have header comment errors:\n" .. util.format_file_errors(missing))
+    if #errors > 0 then
+        fail("Some files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
 
 function test_lua_header ()
-    local summary_pat = "^%-%-%- [^\n]*%.\n"
-    local module_pat = "\n%-%- @module ([a-z_.]+)\n"
-    local missing = {}
     local exclude_files = { "lib/markdown%.lua", "lib/cookie.*%.lua" }
+
+    local errors = {}
 
     local file_list = util.find_files("lib", "%.lua$", exclude_files)
     for _, file in ipairs(file_list) do
         local contents = get_first_paragraph_of_file(file)
 
-        local no_summary = not contents:find(summary_pat)
-        local module_name = contents:match(module_pat)
-        local expected_module_name = file:match("lib/(.*).lua"):gsub("/", "."):gsub(".init$","")
-        local bad_module = module_name and module_name ~= expected_module_name
+        -- Check for module or submodule documentation tag
+        local module_pat = "\n%-%- @module ([a-z_.]+)\n"
+        local submodule_pat = "\n%-%- @submodule [a-z_.]+\n"
+        local is_module = not not contents:find(module_pat)
+        local is_submodule = not not contents:find(submodule_pat)
+        if not is_module and not is_submodule then
+            add_file_error(errors, file, "Must have a @module or @submodule line")
+        elseif is_module and is_submodule then
+            add_file_error(errors, file, "Cannot have both @module and @submodule lines")
+        end
 
-        if no_summary or bad_module then
-            local errors = {}
-            if no_summary then errors[#errors+1] = "summary line" end
-            if bad_module then errors[#errors+1] = "module line" end
-            table.insert(missing, {
-                file = file,
-                err = "bad/missing " .. table.concat(errors, ", ")
-            })
+        -- Check for correct module name
+        local module_name = contents:match(module_pat)
+        if module_name then
+            local expected_module_name = file:match("lib/(.*).lua"):gsub("/", "."):gsub(".init$","")
+            if module_name ~= expected_module_name then
+                local err = ("Module name must match file name (expected %s, got %s)"):format(expected_module_name, module_name)
+                add_file_error(errors, file, err)
+            end
+        end
+
+        -- Check summary line
+        local summary_pat = "^%-%-%-? [^\n]*%.\n"
+        if not contents:find(summary_pat) then
+            add_file_error(errors, file, "Missing/malformed summary line")
+        end
+        if is_module and not contents:match("^%-%-%- ") then
+            add_file_error(errors, file, "Files with @module must start with ---")
+        end
+        if is_submodule and not contents:match("^%-%- ") then
+            add_file_error(errors, file, "Files with @submodule must start with --")
         end
     end
 
-    if #missing > 0 then
-        fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(missing))
+    if #errors > 0 then
+        fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
