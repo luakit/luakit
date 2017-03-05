@@ -47,6 +47,19 @@ function test_include_guard ()
     end
 end
 
+local function get_first_paragraph_of_file(file)
+    -- Get first paragraph of file
+    local f = assert(io.open(file, "r"))
+    local lines = {}
+    for line in f:lines() do
+        lines[#lines + 1] = line
+        if line == "" then break end
+    end
+    local contents = table.concat(lines, "\n") .. "\n"
+    f:close()
+    return contents
+end
+
 function test_header_comment ()
     local file_desc_pat = "^%/%*\n %* (%S+) %- [^\n]*\n %*\n"
     local copyright_pat = " %* Copyright © [^\n]*\n"
@@ -71,15 +84,7 @@ function test_header_comment ()
 
     local file_list = util.find_files(".", "%.[ch]$")
     for _, file in ipairs(file_list) do
-        -- Get first paragraph of file
-        local f = assert(io.open(file, "r"))
-        local lines = {}
-        for line in f:lines() do
-            lines[#lines + 1] = line
-            if line == "" then break end
-        end
-        local contents = table.concat(lines, "\n") .. "\n"
-        f:close()
+        local contents = get_first_paragraph_of_file(file)
 
         local file_desc_name = contents:match(file_desc_pat)
         local bad_file_desc = file_desc_name and file_desc_name ~= file
@@ -111,15 +116,7 @@ function test_lua_header ()
 
     local file_list = util.find_files("lib", "%.lua$", exclude_files)
     for _, file in ipairs(file_list) do
-        -- Get first paragraph of file
-        local f = assert(io.open(file, "r"))
-        local lines = {}
-        for line in f:lines() do
-            lines[#lines + 1] = line
-            if line == "" then break end
-        end
-        local contents = table.concat(lines, "\n") .. "\n"
-        f:close()
+        local contents = get_first_paragraph_of_file(file)
 
         local no_summary = not contents:find(summary_pat)
         local module_name = contents:match(module_pat)
