@@ -66,8 +66,12 @@ luakit.1.gz: luakit.1
 	@gzip -c $< > $@
 
 apidoc: luadoc/luakit.lua
-	mkdir -p apidocs
-	luadoc --nofiles -d apidocs luadoc/* lib/*
+	rm -rf apidocs
+	mkdir apidocs
+	ldoc -c luakit.ldoc .
+	@# Seems to be necessary to prevent WebKitNetworkProcess from crashing - hilarious
+	@echo "Replacing DOCTYPE..."
+	@find apidocs -iname '*.html' | xargs sed -i -e '1,2d' -e '3s/^/<!DOCTYPE html>\n/'
 
 doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s luakit.doxygen
