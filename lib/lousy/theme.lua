@@ -9,7 +9,8 @@
 local util = require "lousy.util"
 
 local theme
-local theme_lib = {}
+
+local _M = {}
 
 -- Searches recursively for theme value.
 -- (I.e. `w.bg = theme.some_thing_bg` ->
@@ -35,7 +36,7 @@ local default_theme = {
 
 --- Load the theme table from file.
 -- @param path The filepath of the theme.
-function theme_lib.init(path)
+function _M.init(path)
     if not path then return error("error loading theme: no path specified") end
     -- Load theme table
     local success
@@ -54,10 +55,10 @@ end
 
 --- Get the current theme.
 -- @return The current theme table.
-function theme_lib.get()
+function _M.get()
     return theme
 end
 
-return theme_lib
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

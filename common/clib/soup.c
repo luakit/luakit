@@ -18,6 +18,10 @@
  *
  */
 
+/***
+ * @module soup
+ */
+
 #include "common/clib/soup.h"
 #include "common/property.h"
 #include "common/signal.h"
@@ -28,6 +32,12 @@
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
 
+/***
+ * Convert a table of URI components to a string.
+ * @function soup.uri_tostring
+ * @tparam table uri A table of URI components.
+ * @treturn string The URI string.
+ */
 static gint
 luaH_soup_uri_tostring(lua_State *L)
 {
@@ -107,6 +117,12 @@ luaH_soup_push_uri(lua_State *L, SoupURI *uri)
     return 1;
 }
 
+/***
+ * Parse a URI.
+ * @function soup.parse_uri
+ * @tparam string uri The URI to parse.
+ * @treturn table A table of URI components.
+ */
 static gint
 luaH_soup_parse_uri(lua_State *L)
 {

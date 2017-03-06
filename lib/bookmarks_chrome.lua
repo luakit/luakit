@@ -12,12 +12,12 @@ local markdown = require("markdown")
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
-local bookmarks_chrome = {}
+local _M = {}
 
 -- Display the bookmark uri and title.
-bookmarks_chrome.show_uri = false
+_M.show_uri = false
 
-bookmarks_chrome.stylesheet = [===[
+_M.stylesheet = [===[
 .bookmark {
     line-height: 1.6em;
     padding: 0.4em 0.5em;
@@ -478,9 +478,9 @@ local export_funcs = {
 }
 
 chrome.add("bookmarks", function ()
-    local style = chrome.stylesheet .. bookmarks_chrome.stylesheet
+    local style = chrome.stylesheet .. _M.stylesheet
 
-    if not bookmarks_chrome.show_uri then
+    if not _M.show_uri then
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
@@ -496,24 +496,24 @@ function (view)
 end,
 export_funcs)
 
-bookmarks_chrome.chrome_page = "luakit://bookmarks/"
+_M.chrome_page = "luakit://bookmarks/"
 
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
     key({}, "B", "Shortcut to add a bookmark to the current URL",
         function(w)
             new_bookmark_values = { uri = w.view.uri, title = w.view.title }
-            w:new_tab(bookmarks_chrome.chrome_page)
+            w:new_tab(_M.chrome_page)
         end),
 
     buf("^gb$", "Open bookmarks manager in the current tab.",
         function(w)
-            w:navigate(bookmarks_chrome.chrome_page)
+            w:navigate(_M.chrome_page)
         end),
 
     buf("^gB$", "Open bookmarks manager in a new tab.",
         function(w)
-            w:new_tab(bookmarks_chrome.chrome_page)
+            w:new_tab(_M.chrome_page)
         end)
 })
 
@@ -521,7 +521,7 @@ local cmd = lousy.bind.cmd
 add_cmds({
     cmd("bookmarks", "Open bookmarks manager in a new tab.",
         function (w)
-            w:new_tab(bookmarks_chrome.chrome_page)
+            w:new_tab(_M.chrome_page)
         end),
 
     cmd("bookmark", "Add bookmark",
@@ -536,8 +536,10 @@ add_cmds({
                     uri = a[1], tags = table.concat(a, " ", 2)
                 }
             end
-            w:new_tab(bookmarks_chrome.chrome_page)
+            w:new_tab(_M.chrome_page)
         end),
 })
 
-return bookmarks_chrome
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

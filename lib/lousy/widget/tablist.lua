@@ -9,9 +9,10 @@ local get_theme = require("lousy.theme").get
 local capi = { widget = widget, luakit = luakit, }
 local tab = require "lousy.widget.tab"
 
-local tablist = {}
+local _M = {}
 
-tablist.min_width = 100
+--- Width that tabs will shrink to before scrolling starts
+_M.min_width = 100
 
 local data = setmetatable({}, { __mode = "k" })
 
@@ -71,7 +72,7 @@ local function regenerate_tab_indices(tlist, a, b)
     end
 end
 
-function tablist.new(notebook, orientation)
+function _M.new(notebook, orientation)
     assert(type(notebook) == "widget" and notebook.type == "notebook")
     assert(orientation == "horizontal" or orientation == "vertical")
 
@@ -108,8 +109,8 @@ function tablist.new(notebook, orientation)
         local tl = tab(view, idx)
         data[tlist].tabs[view] = tl
 
-        if tablist.min_width and tablist.min_width > 0 and orientation == "horizontal" then
-            tl.widget.min_size = { w = tablist.min_width }
+        if _M.min_width and _M.min_width > 0 and orientation == "horizontal" then
+            tl.widget.min_size = { w = _M.min_width }
         end
         box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
         box:reorder(tl.widget, idx-1)
@@ -179,4 +180,6 @@ function tablist.new(notebook, orientation)
     return tlist
 end
 
-return setmetatable(tablist, { __call = function(_, ...) return tablist.new(...) end })
+return setmetatable(_M, { __call = function(_, ...) return _M.new(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

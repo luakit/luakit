@@ -10,9 +10,9 @@ local chrome = require("chrome")
 local binds = require("binds")
 local add_cmds = binds.add_cmds
 
-local history_chrome = {}
+local _M = {}
 
-history_chrome.stylesheet = [===[
+_M.stylesheet = [===[
 .day-heading {
     font-size: 1.6em;
     font-weight: 100;
@@ -386,7 +386,7 @@ local export_funcs = {
 chrome.add("history", function ()
     return string.gsub(html, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
-        stylesheet = chrome.stylesheet .. history_chrome.stylesheet
+        stylesheet = chrome.stylesheet .. _M.stylesheet
     })
 end,
 function (view)
@@ -414,4 +414,6 @@ add_cmds({
     end),
 })
 
-return history_chrome
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

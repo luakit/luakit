@@ -96,3 +96,5 @@ function M.format_file_errors(entries)
 end
 
 return M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

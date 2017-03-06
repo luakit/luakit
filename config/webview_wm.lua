@@ -22,3 +22,5 @@ extension:add_signal("page-created", function(_, page)
         end)
     end)
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

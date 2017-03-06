@@ -54,3 +54,5 @@ window.add_signal("init", function (w)
     r.scroll.fg = theme.scroll_sbar_fg
     r.scroll.font = theme.scroll_sbar_font
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

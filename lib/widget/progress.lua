@@ -48,3 +48,5 @@ window.add_signal("init", function (w)
     l.progress.fg = theme.sbar_loaded_fg
     l.progress.font = theme.sbar_loaded_font
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

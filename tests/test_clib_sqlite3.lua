@@ -114,3 +114,5 @@ function test_compile_statement()
     assert_equal("reddit.com", ret[3].uri)
     assert_equal(12.34, ret[3].created)
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

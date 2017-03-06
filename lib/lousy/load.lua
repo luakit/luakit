@@ -7,6 +7,8 @@ local capi = {
     luakit = luakit
 }
 
+local _M = {}
+
 -- Keep loaded resources in memory
 local data = {}
 
@@ -45,4 +47,6 @@ local function search_load(path, memorize)
         "unable to load resource: " .. path)
 end
 
-return setmetatable({}, { __call = function (_, ...) return search_load(...) end })
+return setmetatable(_M, { __call = function (_, ...) return search_load(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

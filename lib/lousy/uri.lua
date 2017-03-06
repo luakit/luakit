@@ -11,7 +11,7 @@ local capi = { soup = soup }
 local uri_encode = luakit.uri_encode
 local uri_decode = luakit.uri_decode
 
-local u = {}
+local _M = {}
 
 local opts_metatable = {
     __tostring = function (opts)
@@ -60,7 +60,7 @@ local opts_metatable = {
 --- Parse uri query
 --@param query the query component of a uri
 --@return table of options
-function u.parse_query(query)
+function _M.parse_query(query)
     local opts, order = {}, {}
     string.gsub(query or "", "&*([^&=]+)=([^&]+)", function (k, v)
         opts[k] = uri_decode(v)
@@ -90,7 +90,7 @@ local uri_metatable = {
         for k, v in pairs(op2) do
             assert(uri_allowed[k], "invalid property: " .. k)
             if k == "query" and type(v) == "string" then
-                ret.opts = u.parse_query(v)
+                ret.opts = _M.parse_query(v)
             else
                 ret[k] = v
             end
@@ -100,22 +100,22 @@ local uri_metatable = {
 }
 
 -- Parse uri string and return uri table
-function u.parse(uri)
+function _M.parse(uri)
     -- Get uri table
     uri = capi.soup.parse_uri(uri)
     if not uri then return end
     -- Parse uri.query and set uri.opts
-    uri.opts = u.parse_query(uri.query)
+    uri.opts = _M.parse_query(uri.query)
     uri.query = nil
     return setmetatable(uri, uri_metatable)
 end
 
 -- Duplicate uri object
-function u.copy(uri)
+function _M.copy(uri)
     assert(type(uri) == "table", "not a table")
-    return u.parse(tostring(uri))
+    return _M.parse(tostring(uri))
 end
 
-return u
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

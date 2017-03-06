@@ -43,3 +43,5 @@ window.add_signal("init", function (w)
         update(w)
     end)
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

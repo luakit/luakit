@@ -8,21 +8,21 @@ local webview = require("webview")
 local lousy = require("lousy")
 local pickle = lousy.pickle
 
-local session = {}
+local _M = {}
 
 local function rm(file)
     luakit.spawn(string.format("rm %q", file))
 end
 
 -- The file which we'll use for session info, $XDG_DATA_HOME/luakit/session
-session.session_file = luakit.data_dir .. "/session"
+_M.session_file = luakit.data_dir .. "/session"
 
 -- Crash recovery session file
-session.recovery_file = luakit.data_dir .. "/recovery_session"
+_M.recovery_file = luakit.data_dir .. "/recovery_session"
 
 -- Save all given windows uris to file.
-session.save = function (wins, file)
-    if not file then file = session.session_file end
+_M.save = function (wins, file)
+    if not file then file = _M.session_file end
     local state = {}
     -- Save tabs from all the given windows
     for wi, w in pairs(wins) do
@@ -51,8 +51,8 @@ session.save = function (wins, file)
 end
 
 -- Load window and tab state from file
-session.load = function (delete, file)
-    if not file then file = session.session_file end
+_M.load = function (delete, file)
+    if not file then file = _M.session_file end
     if not os.exists(file) then return {} end
 
     -- Read file
@@ -67,7 +67,7 @@ end
 
 -- Spawn windows from saved session and return the last window
 local restore_file = function (file, delete)
-    local ok, wins = pcall(session.load, delete, file)
+    local ok, wins = pcall(_M.load, delete, file)
     if not ok or #wins == 0 then return end
 
     -- Spawn windows
@@ -87,16 +87,16 @@ local restore_file = function (file, delete)
     return w
 end
 
-session.restore = function(delete)
-    return restore_file(session.session_file, delete)
-        or restore_file(session.recovery_file, delete)
+_M.restore = function(delete)
+    return restore_file(_M.session_file, delete)
+        or restore_file(_M.recovery_file, delete)
 end
 
 local recovery_save_timer = timer{ interval = 10*1000 }
 
 -- Save current window session helper
 window.methods.save_session = function (w)
-    session.save({w,}, session.session_file)
+    _M.save({w,}, _M.session_file)
 end
 
 local function start_timeout()
@@ -111,7 +111,7 @@ recovery_save_timer:add_signal("timeout", function ()
     recovery_save_timer:stop()
     local wins = {}
     for _, w in pairs(window.bywidget) do table.insert(wins, w) end
-    session.save(wins, session.recovery_file)
+    _M.save(wins, _M.recovery_file)
 end)
 
 window.init_funcs.session_init = function(w)
@@ -120,8 +120,8 @@ window.init_funcs.session_init = function(w)
         local num_windows = 0
         for _, _ in pairs(window.bywidget) do num_windows = num_windows + 1 end
         -- Remove the recovery session on a successful exit
-        if num_windows == 0 and os.exists(session.recovery_file) then
-            rm(session.recovery_file)
+        if num_windows == 0 and os.exists(_M.recovery_file) then
+            rm(_M.recovery_file)
         end
     end)
 
@@ -143,6 +143,6 @@ webview.init_funcs.session_init = function(view)
     end)
 end
 
-return session
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

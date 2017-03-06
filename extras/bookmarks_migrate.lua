@@ -73,3 +73,5 @@ new_db:exec "VACUUM"
 print("Vacuum done.")
 
 luakit.quit(0)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

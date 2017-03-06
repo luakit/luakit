@@ -33,3 +33,5 @@ window.add_signal("init", function (w)
 end)
 
 window.methods.update_buf = update
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -6,6 +6,8 @@ local lousy = require "lousy"
 local binds = require("binds")
 local add_binds = binds.add_binds
 
+local _M = {}
+
 local function edit_externally(w)
 	local time = os.time()
 	local marker = "luakit_extedit_" .. time
@@ -58,3 +60,7 @@ local key = lousy.bind.key
 add_binds("insert", {
     key({"Control"}, "e", "Edit currently focused input in external editor.", edit_externally),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

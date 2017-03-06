@@ -5,6 +5,8 @@
 
 local webview = require("webview")
 
+local _M = {}
+
 -- Indexed by view:
 --  nil   -> no mixed content in view
 --  true  -> mixed content allowed to load
@@ -69,3 +71,7 @@ end
 webview.methods.toggle_mixed_content = function (view)
     allow_mixed[view] = not allow_mixed[view]
 end
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -118,3 +118,5 @@ ui:add_signal("leave", function (_, page)
         select.leave(page)
     end
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -10,7 +10,6 @@ function test_luacheck ()
     local exclude_files = {
         "lib/markdown.lua",
         "lib/cookie.*.lua",
-        "lib/proxy.lua",
     }
     local options =  {
         std = "luajit",
@@ -97,3 +96,5 @@ function test_luacheck ()
         fail("Luacheck messages:\n" .. table.concat(output, "\n"))
     end
 end
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

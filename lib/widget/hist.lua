@@ -47,3 +47,5 @@ window.add_signal("init", function (w)
     l.hist.fg = theme.hist_sbar_fg
     l.hist.font = theme.hist_sbar_font
 end)
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

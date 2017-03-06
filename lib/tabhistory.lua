@@ -10,9 +10,10 @@ local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
-
 local util = require("lousy.util")
 local join = util.table.join
+
+local _M = {}
 
 -- View history items in an interactive menu.
 new_mode("tabhistory", {
@@ -88,5 +89,7 @@ local cmd = lousy.bind.cmd
 add_cmds({
     cmd("tabhistory", "list history for tab", window.methods.tab_history),
 })
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

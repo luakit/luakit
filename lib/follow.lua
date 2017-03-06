@@ -14,15 +14,15 @@ local capi = {
     timer = timer
 }
 
-local follow = {}
+local _M = {}
 
 local follow_wm = require_web_module("follow_wm")
 
 -- After each follow ignore all keys pressed by the user to prevent the
 -- accidental activation of other key bindings.
-follow.ignore_delay = 200
+_M.ignore_delay = 200
 
-follow.stylesheet = [===[
+_M.stylesheet = [===[
 #luakit_select_overlay {
     position: absolute;
     left: 0;
@@ -66,7 +66,7 @@ local function regex_escape(s)
 end
 
 -- Different hint matching styles
-follow.pattern_styles = {
+_M.pattern_styles = {
     -- Regex match target text only
     re_match_text = function (text)
         return "", text
@@ -89,10 +89,10 @@ follow.pattern_styles = {
 }
 
 -- Default pattern style
-follow.pattern_maker = follow.pattern_styles.match_label_re_text
+_M.pattern_maker = _M.pattern_styles.match_label_re_text
 
 -- Ignore case in follow mode by default
-follow.ignore_case = true
+_M.ignore_case = true
 
 local function focus(w, step)
     follow_wm:emit_signal(w.view, "focus", step)
@@ -101,7 +101,7 @@ end
 local hit_nop = function () return true end
 
 local function ignore_keys(w)
-    local delay = follow.ignore_delay
+    local delay = _M.ignore_delay
     if not delay or delay == 0 then return end
     -- Replace w:hit(..) with a no-op
     w.hit = hit_nop
@@ -159,14 +159,14 @@ new_mode("follow", {
             msg.warn("Custom label maker not yet implemented!")
         end
 
-        assert(type(mode.pattern_maker or follow.pattern_maker) == "function",
+        assert(type(mode.pattern_maker or _M.pattern_maker) == "function",
             "invalid pattern_maker function")
 
-        local selector = mode.selector_func or follow.selectors[mode.selector]
+        local selector = mode.selector_func or _M.selectors[mode.selector]
         assert(type(selector) == "string", "invalid follow selector")
         mode.selector = selector
 
-        local stylesheet = mode.stylesheet or follow.stylesheet
+        local stylesheet = mode.stylesheet or _M.stylesheet
         assert(type(stylesheet) == "string", "invalid stylesheet")
         mode.stylesheet = stylesheet
 
@@ -194,7 +194,7 @@ new_mode("follow", {
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
         mode.func = nil
-        follow_wm:emit_signal(w.view, "enter", mode, follow.ignore_case)
+        follow_wm:emit_signal(w.view, "enter", mode, _M.ignore_case)
         mode.func = func
     end,
 
@@ -202,7 +202,7 @@ new_mode("follow", {
         local mode = w.follow_state.mode
 
         -- Make the hint label/text matching patterns
-        local pattern_maker = mode.pattern_maker or follow.pattern_maker
+        local pattern_maker = mode.pattern_maker or _M.pattern_maker
         local hint_pat, text_pat = pattern_maker(text)
 
         follow_wm:emit_signal(w.view, "changed", hint_pat, text_pat, text)
@@ -222,7 +222,7 @@ add_binds("follow", {
     key({"Shift"},   "Return", function (w) follow_all_hints(w) end),
 })
 
-follow.selectors = {
+_M.selectors = {
     clickable = 'a, area, textarea, select, input:not([type=hidden]), button',
     focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
     uri = 'a, area',
@@ -463,4 +463,6 @@ add_binds("ex-follow", {
         end),
 })
 
-return follow
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

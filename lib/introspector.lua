@@ -14,6 +14,8 @@ local editor = require("editor")
 local get_modes = require("modes").get_modes
 local add_cmds = require("binds").add_cmds
 
+local _M = {}
+
 local html = [==[
 <!doctype html>
 <html>
@@ -368,3 +370,7 @@ add_cmds({
 history.add_signal("add", function (uri)
     if string.match(uri, "^luakit://help/") then return false end
 end)
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

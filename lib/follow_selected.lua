@@ -12,6 +12,8 @@ local binds = require("binds")
 local add_binds = binds.add_binds
 local key = lousy.bind.key
 
+local _M = {}
+
 local wm = require_web_module("follow_selected_wm")
 
 local function get_w_by_view_id(view_id)
@@ -42,4 +44,7 @@ add_binds("normal", {
     key({"Shift"},   "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end),
     key({"Mod1"},    "Return", function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end),
 })
+
+return _M
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

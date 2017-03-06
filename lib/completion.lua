@@ -13,7 +13,7 @@ local binds = require("binds")
 local add_binds = binds.add_binds
 local escape = lousy.util.escape
 
-local completion = {}
+local _M = {}
 
 -- Store completion state (indexed by window)
 local data = setmetatable({}, { __mode = "k" })
@@ -25,7 +25,7 @@ add_binds("command", {
 })
 
 -- Return to command mode with original text and with original cursor position
-function completion.exit_completion(w)
+function _M.exit_completion(w)
     local state = data[w]
     w:enter_cmd(state.orig_text, { pos = state.orig_pos })
 end
@@ -51,13 +51,13 @@ add_binds("completion", {
         function (w) w.menu:move_up() end),
 
     key({}, "Escape", "Stop completion and restore original command.",
-        completion.exit_completion),
+        _M.exit_completion),
 
     key({"Control"}, "[", "Stop completion and restore original command.",
-        completion.exit_completion),
+        _M.exit_completion),
 })
 
-function completion.update_completions(w, text, pos)
+function _M.update_completions(w, text, pos)
     local state = data[w]
 
     -- Other parts of the code are triggering input changed events
@@ -76,7 +76,7 @@ function completion.update_completions(w, text, pos)
 
     -- Call each completion function
     local groups = {}
-    for _, func in ipairs(completion.order) do
+    for _, func in ipairs(_M.order) do
         table.insert(groups, func(state) or {})
     end
     -- Join all result tables
@@ -93,7 +93,7 @@ function completion.update_completions(w, text, pos)
         end
         state.lock = false
     elseif not state.built then
-        completion.exit_completion(w)
+        _M.exit_completion(w)
     else
         w.menu:hide()
     end
@@ -123,18 +123,18 @@ new_mode("completion", {
             state.lock = false
         end)
 
-        completion.update_completions(w)
+        _M.update_completions(w)
     end,
 
     changed = function (w, text)
         if not data[w].lock then
-            completion.update_completions(w, text)
+            _M.update_completions(w, text)
         end
     end,
 
     move_cursor = function (w, pos)
         if not data[w].lock then
-            completion.update_completions(w, nil, pos)
+            _M.update_completions(w, nil, pos)
         end
     end,
 
@@ -151,7 +151,7 @@ new_mode("completion", {
 })
 
 -- Completion functions
-completion.funcs = {
+_M.funcs = {
     -- Add command completion items to the menu
     command = function (state)
         -- We are only interested in the first word
@@ -250,12 +250,12 @@ completion.funcs = {
 }
 
 -- Order of completion items
-completion.order = {
-    completion.funcs.command,
-    completion.funcs.history,
-    completion.funcs.bookmarks,
+_M.order = {
+    _M.funcs.command,
+    _M.funcs.history,
+    _M.funcs.bookmarks,
 }
 
-return completion
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

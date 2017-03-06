@@ -8,6 +8,8 @@ local lousy = require("lousy")
 local binds = require("binds")
 local add_binds = binds.add_binds
 
+local _M = {}
+
 local go_next = [=[
 (function() {
     function click(e) {
@@ -70,5 +72,7 @@ add_binds("normal", {
     buf("^%]%]$", function (w) w.view:eval_js(go_next, { no_return = true }) end),
     buf("^%[%[$", function (w) w.view:eval_js(go_prev, { no_return = true }) end),
 })
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

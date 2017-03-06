@@ -9,6 +9,8 @@ local lousy = require("lousy")
 local binds = require("binds")
 local add_cmds = binds.add_cmds
 
+local _M = {}
+
 webview.init_funcs.inspector_setup = function (view)
     view.enable_developer_extras = true
 end
@@ -24,3 +26,7 @@ add_cmds({
         end
     end),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

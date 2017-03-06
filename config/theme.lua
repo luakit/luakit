@@ -72,4 +72,5 @@ theme.warn = { fg = "#F00", bg = "#FFF" }
 theme.error = { fg = "#FFF", bg = "#F00" }
 
 return theme
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

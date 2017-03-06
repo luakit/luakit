@@ -10,6 +10,8 @@ local math = require "math"
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 
+local _M = {}
+
 local data = setmetatable({}, { __mode = "k" })
 
 local function update(menu)
@@ -292,4 +294,6 @@ local function new(args)
     return menu
 end
 
-return setmetatable({}, { __call = function(_, ...) return new(...) end })
+return setmetatable(_M, { __call = function(_, ...) return new(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

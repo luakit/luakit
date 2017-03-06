@@ -1,4 +1,10 @@
---- luakit core API
+---
+-- Luakit core API
+--
+-- _This library is available from both UI and web process Lua states._
+--
+-- _Some functions and fields are not available on the web process._
+--
 -- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
 -- @author Paweł Zuzelski &lt;pawelz&lt;AT&gt;pld-linux.org&gt;
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
@@ -50,14 +56,4 @@
 -- @name spawn_sync
 -- @class function
 
---- Escape a string for use in a URI.
--- @param string A string to encode.
--- @return A percent-encoded string.
--- @name uri-encode
--- @class function
-
---- Unescape a whole escaped string.
--- @param string A percent-encoded string.
--- @return An unescaped string.
--- @name uri-decode
--- @class function
+-- vim: et:sw=4:ts=8:sts=4:tw=80

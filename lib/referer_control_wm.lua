@@ -3,6 +3,8 @@
 -- @module referer_control_wm
 -- @copyright 2016 Aidan Holm
 
+local _M = {}
+
 local function domain_from_uri(uri)
     local domain = (uri and string.match(string.lower(uri), "^%a+://([^/]*)/?"))
     -- Strip leading www. www2. etc
@@ -19,3 +21,7 @@ extension:add_signal("page-created", function(_, page)
         end
     end)
 end)
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

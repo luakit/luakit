@@ -13,7 +13,7 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
 local capi = { luakit = luakit }
 
-local quickmarks = {}
+local _M = {}
 
 local qmarks
 local quickmarks_file = capi.luakit.data_dir .. '/quickmarks'
@@ -25,7 +25,7 @@ end
 
 --- Load quick bookmarks from storage file into memory
 -- @param fd_name bookmarks storage file path of nil to use default one
-function quickmarks.load(fd_name)
+function _M.load(fd_name)
     if not qmarks then qmarks = {} end
 
     fd_name = fd_name or quickmarks_file
@@ -41,9 +41,9 @@ end
 
 --- Save quick bookmarks to file
 -- @param fd_name bookmarks storage file path of nil to use default one
-function quickmarks.save(fd_name)
+function _M.save(fd_name)
     -- Quickmarks init check
-    if not qmarks then quickmarks.load() end
+    if not qmarks then _M.load() end
 
     local fd = io.open(fd_name or quickmarks_file, "w")
     for _, token in ipairs(lousy.util.table.keys(qmarks )) do
@@ -56,16 +56,16 @@ end
 --- Return url related to given key or nil if does not exist
 -- @param token quick bookmarks mapping token
 -- @param load_file Call quickmark.load() before get
-function quickmarks.get(token, load_file)
+function _M.get(token, load_file)
     -- Load quickmarks from other sessions
-    if not qmarks or load_file ~= false then quickmarks.load() end
+    if not qmarks or load_file ~= false then _M.load() end
 
     return qmarks[check_token(token)]
 end
 
 --- Return a list of all the tokens in the quickmarks table
-function quickmarks.get_tokens()
-    if not qmarks then quickmarks.load() end
+function _M.get_tokens()
+    if not qmarks then _M.load() end
     return lousy.util.table.keys(qmarks )
 end
 
@@ -74,9 +74,9 @@ end
 -- @param uris List of locations to quickmark
 -- @param load_file Call quickmark.load() before set
 -- @param save_file Call quickmark.save() after set
-function quickmarks.set(token, uris, load_file, save_file)
+function _M.set(token, uris, load_file, save_file)
     -- Load quickmarks from other sessions
-    if not qmarks or load_file ~= false then quickmarks.load() end
+    if not qmarks or load_file ~= false then _M.load() end
 
     -- Parse uris: "http://forum1.com, google.com, imdb some artist"
     if uris and type(uris) == "string" then
@@ -88,26 +88,26 @@ function quickmarks.set(token, uris, load_file, save_file)
     qmarks[check_token(token)] = uris
 
     -- By default, setting new quickmark saves them to
-    if save_file ~= false then quickmarks.save() end
+    if save_file ~= false then _M.save() end
 end
 
 --- Delete a quickmark
 -- @param token The quickmark token
 -- @param load_file Call quickmark.load() before deletion
 -- @param save_file Call quickmark.save() after deletion
-function quickmarks.del(token, load_file, save_file)
+function _M.del(token, load_file, save_file)
     -- Load quickmarks from other sessions
-    if not qmarks or load_file ~= false then quickmarks.load() end
+    if not qmarks or load_file ~= false then _M.load() end
 
     qmarks[check_token(token)] = nil
-    if save_file ~= false then quickmarks.save() end
+    if save_file ~= false then _M.save() end
 end
 
 --- Delete all quickmarks
 -- @param save_file Call quickmark.save() function.
-function quickmarks.delall(save_file)
+function _M.delall(save_file)
     qmarks = {}
-    if save_file ~= false then quickmarks.save() end
+    if save_file ~= false then _M.save() end
 end
 
 -- Add quickmarking binds to normal mode
@@ -119,7 +119,7 @@ add_binds("normal", {
         quickmark in a new window.]],
         function (w, b, m)
             local mode, token = string.match(b, "^g(.)(.)$")
-            local uris = lousy.util.table.clone(quickmarks.get(token) or {})
+            local uris = lousy.util.table.clone(_M.get(token) or {})
             for i, uri in ipairs(uris) do uris[i] = w:search_open(uri) end
             for c=1,m.count do
                 if mode == "w" then
@@ -138,7 +138,7 @@ add_binds("normal", {
         function (w, b)
             local token = string.match(b, "^M(.)$")
             local uri = w.view.uri
-            quickmarks.set(token, {uri})
+            _M.set(token, {uri})
             w:notify(string.format("Quickmarked %q: %s", token, uri))
         end),
 })
@@ -151,7 +151,7 @@ add_cmds({
         local token, uris = string.match(lousy.util.string.strip(a), "^(%w)%s+(.+)$")
         assert(token, "invalid token")
         uris = lousy.util.string.split(uris, ",%s+")
-        quickmarks.set(token, uris)
+        _M.set(token, uris)
         w:notify(string.format("Quickmarked %q: %s", token, table.concat(uris, ", ")))
     end),
 
@@ -159,7 +159,7 @@ add_cmds({
     cmd({"qmarkedit", "qme"}, "Edit a quickmark.", function (w, a)
         local token = lousy.util.string.strip(a)
         assert(#token == 1, "invalid token length: " .. token)
-        local uris = quickmarks.get(token)
+        local uris = _M.get(token)
         w:enter_cmd(string.format(":qmark %s %s", token, table.concat(uris or {}, ", ")))
     end),
 
@@ -168,28 +168,28 @@ add_cmds({
         -- Find and del all range specifiers
         string.gsub(a, "(%w%-%w)", function (range)
             range = "["..range.."]"
-            for _, token in ipairs(quickmarks.get_tokens()) do
-                if string.match(token, range) then quickmarks.del(token, false) end
+            for _, token in ipairs(_M.get_tokens()) do
+                if string.match(token, range) then _M.del(token, false) end
             end
         end)
         -- Delete lone tokens
-        string.gsub(a, "(%w)", function (token) quickmarks.del(token, false) end)
-        quickmarks.save()
+        string.gsub(a, "(%w)", function (token) _M.del(token, false) end)
+        _M.save()
     end),
 
     -- View all quickmarks in an interactive menu
     cmd("qmarks", "List all quickmarks.", function (w) w:set_mode("qmarklist") end),
 
     -- Delete all quickmarks
-    cmd({"delqmarks!", "delqm!"}, "Delete all quickmarks.", function () quickmarks.delall() end),
+    cmd({"delqmarks!", "delqm!"}, "Delete all quickmarks.", function () _M.delall() end),
 })
 
 -- Add mode to display all quickmarks in an interactive menu
 new_mode("qmarklist", {
     enter = function (w)
         local rows = {{ "Quickmarks", " URI(s)", title = true }}
-        for _, qmark in ipairs(quickmarks.get_tokens()) do
-            local uris = lousy.util.escape(table.concat(quickmarks.get(qmark, false), ", "))
+        for _, qmark in ipairs(_M.get_tokens()) do
+            local uris = lousy.util.escape(table.concat(_M.get(qmark, false), ", "))
             table.insert(rows, { "  " .. qmark, " " .. uris, qmark = qmark })
         end
         w.menu:build(rows)
@@ -208,7 +208,7 @@ add_binds("qmarklist", lousy.util.table.join({
     key({}, "d", function (w)
         local row = w.menu:get()
         if row and row.qmark then
-            quickmarks.del(row.qmark)
+            _M.del(row.qmark)
             w.menu:del()
         end
     end),
@@ -217,7 +217,7 @@ add_binds("qmarklist", lousy.util.table.join({
     key({}, "e", function (w)
         local row = w.menu:get()
         if row and row.qmark then
-            local uris = quickmarks.get(row.qmark)
+            local uris = _M.get(row.qmark)
             w:enter_cmd(string.format(":qmark %s %s",
                 row.qmark, table.concat(uris or {}, ", ")))
         end
@@ -227,7 +227,7 @@ add_binds("qmarklist", lousy.util.table.join({
     key({}, "Return", function (w)
         local row = w.menu:get()
         if row and row.qmark then
-            for i, uri in ipairs(quickmarks.get(row.qmark) or {}) do
+            for i, uri in ipairs(_M.get(row.qmark) or {}) do
                 uri = w:search_open(uri)
                 if i == 1 then w:navigate(uri) else w:new_tab(uri, false) end
             end
@@ -238,7 +238,7 @@ add_binds("qmarklist", lousy.util.table.join({
     key({}, "t", function (w)
         local row = w.menu:get()
         if row and row.qmark then
-            for _, uri in ipairs(quickmarks.get(row.qmark) or {}) do
+            for _, uri in ipairs(_M.get(row.qmark) or {}) do
                 w:new_tab(w:search_open(uri), false)
             end
         end
@@ -249,7 +249,7 @@ add_binds("qmarklist", lousy.util.table.join({
         local row = w.menu:get()
         w:set_mode()
         if row and row.qmark then
-            window.new(quickmarks.get(row.qmark) or {})
+            window.new(_M.get(row.qmark) or {})
         end
     end),
 
@@ -258,6 +258,6 @@ add_binds("qmarklist", lousy.util.table.join({
 
 }, menu_binds))
 
-return quickmarks
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

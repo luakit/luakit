@@ -17,10 +17,10 @@ local error_page = require("error_page")
 local binds      = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
-local adblock_chrome = {}
+local _M = {}
 
 -- Templates
-adblock_chrome.list_template_enabled = [==[
+_M.list_template_enabled = [==[
     <tr>
         <td>{title}</td>
         <td>B: {black}</td><td>W: {white}</td><td>I: {ignored}</td>
@@ -30,7 +30,7 @@ adblock_chrome.list_template_enabled = [==[
     </tr>
 ]==]
 
-adblock_chrome.list_template_disabled = [==[
+_M.list_template_disabled = [==[
     <tr>
         <td>{title}</td>
         <td></td><td></td><td></td>
@@ -40,11 +40,11 @@ adblock_chrome.list_template_disabled = [==[
     </tr>
 ]==]
 
-adblock_chrome.toggle_button_template = [==[
+_M.toggle_button_template = [==[
     <input type="button" class="button" onclick="adblock_toggle({state})" value="{label}" />
 ]==]
 
-adblock_chrome.html_template = [==[
+_M.html_template = [==[
     <html>
     <head>
         <title>{title}</title>
@@ -78,9 +78,9 @@ adblock_chrome.html_template = [==[
 ]==]
 
 -- Template subs
-adblock_chrome.html_page_title = "AdBlock filters"
+_M.html_page_title = "AdBlock filters"
 
-adblock_chrome.html_style = [===[
+_M.html_style = [===[
     table {
         font-size: 1.0em;
         width: 100%;
@@ -142,7 +142,7 @@ end
 adblock.refresh_views = refresh_views
 
 -- URI of the chrome page
-adblock_chrome.chrome_page = "luakit://adblock/"
+_M.chrome_page = "luakit://adblock/"
 
 -- Shows the chrome page in the given view.
 chrome.add("adblock", function ()
@@ -166,11 +166,11 @@ chrome.add("adblock", function ()
             ignored = list.ignored,
             state   = lousy.util.table.hasitem(list.opts, "Enabled") and "Enabled" or "Disabled"
         }
-        local list_template = adblock_chrome.list_template_disabled
+        local list_template = _M.list_template_disabled
         -- Show rules count only when enabled this list and have read its rules
         if lousy.util.table.hasitem(list.opts, "Enabled") and list.white and list.black and list.ignored then
             -- For totals count items only once (protection from multi-tagging by several opts confusion)
-            list_template = adblock_chrome.list_template_enabled
+            list_template = _M.list_template_enabled
         end
         local link = string.gsub(list_template, "{(%w+)}", link_subs)
         table.insert(links, link)
@@ -190,16 +190,16 @@ chrome.add("adblock", function ()
 
     local html_subs = {
         links   = table.concat(links, "\n\n"),
-        title  = adblock_chrome.html_page_title,
-        style  = chrome.stylesheet .. adblock_chrome.html_style,
+        title  = _M.html_page_title,
+        style  = chrome.stylesheet .. _M.html_style,
         state = adblock.state(),
         white   = rulescount.white,
         black   = rulescount.black,
         ignored = rulescount.ignored,
-        toggle = string.gsub(adblock_chrome.toggle_button_template, "{(%w+)}", toggle_button_subs),
+        toggle = string.gsub(_M.toggle_button_template, "{(%w+)}", toggle_button_subs),
     }
 
-    local html = string.gsub(adblock_chrome.html_template, "{(%w+)}", html_subs)
+    local html = string.gsub(_M.html_template, "{(%w+)}", html_subs)
     return html
 end,
 nil,
@@ -213,7 +213,7 @@ nil,
     end,
 })
 
-adblock_chrome.navigation_blocked_css_tmpl = [===[
+_M.navigation_blocked_css_tmpl = [===[
     body {
         background-color: #ddd;
         margin: 0;
@@ -250,7 +250,7 @@ adblock_chrome.navigation_blocked_css_tmpl = [===[
 webview.init_funcs.navigation_blocked_page_init = function(view)
     view:add_signal("navigation-blocked", function(v, _, uri)
         error_page.show_error_page(v, {
-            style = adblock_chrome.navigation_blocked_css_tmpl,
+            style = _M.navigation_blocked_css_tmpl,
             heading = "Page blocked",
             content = [==[
                 <div class="errorMessage">
@@ -268,12 +268,12 @@ end
 local buf = lousy.bind.buf
 add_binds("normal", {
     buf("^ga$", function (w)
-        w:navigate(adblock_chrome.chrome_page)
+        w:navigate(_M.chrome_page)
     end),
 
     buf("^gA$", function (w, _, m)
         for _=1, m.count do
-            w:new_tab(adblock_chrome.chrome_page)
+            w:new_tab(_M.chrome_page)
         end
     end, {count=1}),
 })
@@ -282,8 +282,10 @@ add_binds("normal", {
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("adblock", function (w)
-        w:navigate(adblock_chrome.chrome_page)
+        w:navigate(_M.chrome_page)
     end),
 })
 
-return adblock_chrome
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

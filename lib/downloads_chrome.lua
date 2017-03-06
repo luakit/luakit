@@ -13,7 +13,7 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local webview = require("webview")
 local window = require("window")
 
-local downloads_chrome = {}
+local _M = {}
 
 local html_template = [==[
 <!doctype html>
@@ -34,7 +34,7 @@ local html_template = [==[
 </html>
 ]==]
 
-downloads_chrome.stylesheet = [==[
+_M.stylesheet = [==[
     .download {
         -webkit-margin-start: 90px;
         -webkit-padding-start: 10px;
@@ -343,7 +343,7 @@ end)
 
 chrome.add("downloads", function ()
     local html_subs = {
-        style  = chrome.stylesheet .. downloads_chrome.stylesheet,
+        style  = chrome.stylesheet .. _M.stylesheet,
     }
     return string.gsub(html_template, "{(%w+)}", html_subs)
 end,
@@ -357,23 +357,25 @@ function (view)
 end,
 export_funcs)
 
-downloads_chrome.chrome_page = "luakit://downloads/"
+_M.chrome_page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
 add_binds("normal", {
     buf("^gd$",
         [[Open [luakit://downloads](luakit://downloads/) in current tab.]],
-        function (w) w:navigate(downloads_chrome.chrome_page) end),
+        function (w) w:navigate(_M.chrome_page) end),
 
     buf("^gD$",
         [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
-        function (w) w:new_tab(downloads_chrome.chrome_page) end),
+        function (w) w:new_tab(_M.chrome_page) end),
 })
 
 add_cmds({
     cmd("downloads",
         [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
-        function (w) w:new_tab(downloads_chrome.chrome_page) end),
+        function (w) w:new_tab(_M.chrome_page) end),
 })
 
-return downloads_chrome
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

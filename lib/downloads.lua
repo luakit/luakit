@@ -19,8 +19,9 @@ local capi = {
     xdg = xdg
 }
 
-local downloads = {}
-lousy.signal.setup(downloads, true)
+local _M = {}
+
+lousy.signal.setup(_M, true)
 
 -- Unique ids for downloads in this luakit instance
 local id_count = 0
@@ -30,25 +31,25 @@ local function next_download_id()
 end
 
 -- Default download directory
-downloads.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
+_M.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)
 local dls = {}
 
-function downloads.get_all()
+function _M.get_all()
     return lousy.util.table.clone(dls)
 end
 
 -- Get download object from id (passthrough if already given download object)
-function downloads.to_download(id)
+function _M.to_download(id)
     if type(id) == "download" then return id end
     for d, data in pairs(dls) do
         if id == data.id then return d end
     end
 end
 
-function downloads.get(id)
-    local d = assert(downloads.to_download(id),
+function _M.get(id)
+    local d = assert(_M.to_download(id),
         "download.get() expected valid download object or id")
     return d, dls[d]
 end
@@ -58,8 +59,8 @@ local function is_running(d)
     return status == "created" or status == "started"
 end
 
-function downloads.do_open(d, w)
-    if downloads.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
+function _M.do_open(d, w)
+    if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
         if w then
             w:error(string.format("Couldn't open: %q (%s)", d.destination,
                 d.mime_type))
@@ -78,11 +79,11 @@ status_timer:add_signal("timeout", function ()
         local status = d.status
         if status ~= data.last_status then
             data.last_status = status
-            downloads.emit_signal("download::status", d, data)
+            _M.emit_signal("download::status", d, data)
 
             -- Open download
             if status == "finished" and data.opening then
-                downloads.do_open(d)
+                _M.do_open(d)
             end
         end
     end
@@ -95,10 +96,10 @@ status_timer:add_signal("timeout", function ()
         w.sbar.r.downloads.text = (running == 0 and "") or running.."↓"
     end
 
-    downloads.emit_signal("status-tick", running)
+    _M.emit_signal("status-tick", running)
 end)
 
-function downloads.add(uri, opts)
+function _M.add(uri, opts)
     opts = opts or {}
     local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
 
@@ -108,14 +109,14 @@ function downloads.add(uri, opts)
 
     d:add_signal("decide-destination", function(dd, suggested_filename)
         -- Emit signal to get initial download location
-        local fn = opts.filename or downloads.emit_signal("download-location", dd.uri,
+        local fn = opts.filename or _M.emit_signal("download-location", dd.uri,
             opts.suggested_filename or suggested_filename, dd.mime_type)
         assert(fn == nil or type(fn) == "string" and #fn > 1,
             string.format("invalid filename: %q", tostring(fn)))
 
         -- Ask the user where we should download the file to
         if not fn then
-            fn = capi.luakit.save_file("Save file", opts.window, downloads.default_dir,
+            fn = capi.luakit.save_file("Save file", opts.window, _M.default_dir,
                 suggested_filename)
         end
 
@@ -130,7 +131,7 @@ function downloads.add(uri, opts)
                 }
                 dls[ddd] = data
                 if not status_timer.started then status_timer:start() end
-                downloads.emit_signal("download::status", ddd, dls[ddd])
+                _M.emit_signal("download::status", ddd, dls[ddd])
             end)
             --return true
         else
@@ -140,37 +141,37 @@ function downloads.add(uri, opts)
     end)
 end
 
-function downloads.cancel(id)
-    local d = assert(downloads.to_download(id),
+function _M.cancel(id)
+    local d = assert(_M.to_download(id),
         "download.cancel() expected valid download object or id")
     d:cancel()
-    downloads.emit_signal("download::status", d, dls[d])
+    _M.emit_signal("download::status", d, dls[d])
 end
 
-function downloads.remove(id)
-    local d = assert(downloads.to_download(id),
+function _M.remove(id)
+    local d = assert(_M.to_download(id),
         "download.remove() expected valid download object or id")
-    if is_running(d) then downloads.cancel(d) end
-    downloads.emit_signal("removed-download", d, dls[d])
+    if is_running(d) then _M.cancel(d) end
+    _M.emit_signal("removed-download", d, dls[d])
     dls[d] = nil
 end
 
-function downloads.restart(id)
-    local d = assert(downloads.to_download(id),
+function _M.restart(id)
+    local d = assert(_M.to_download(id),
         "download.restart() expected valid download object or id")
-    local new_d = downloads.add(d.uri) -- TODO use soup message from old download
-    if new_d then downloads.remove(d) end
+    local new_d = _M.add(d.uri) -- TODO use soup message from old download
+    if new_d then _M.remove(d) end
     return new_d
 end
 
-function downloads.open(id, w)
-    local d = assert(downloads.to_download(id),
+function _M.open(id, w)
+    local d = assert(_M.to_download(id),
         "download.open() expected valid download object or id")
     local data = assert(dls[d], "download removed")
 
     if d.status == "finished" then
         data.opening = false
-        downloads.do_open(d, w)
+        _M.do_open(d, w)
     else
         -- Set open flag to open file when download finishes
         data.opening = true
@@ -178,13 +179,13 @@ function downloads.open(id, w)
 end
 
 -- Clear all finished, cancelled or aborted downloads
-function downloads.clear()
+function _M.clear()
     for d, _ in pairs(dls) do
         if not is_running(d) then
             dls[d] = nil
         end
     end
-    downloads.emit_signal("cleared-downloads")
+    _M.emit_signal("cleared-downloads")
 end
 
 -- Catch "download-started" webcontext widget signals (webkit2 API)
@@ -204,7 +205,7 @@ capi.luakit.add_signal("download-start", function (d, v)
         end
     end
 
-    downloads.add(d, { window = w.win }, v)
+    _M.add(d, { window = w.win }, v)
     return true
 end)
 
@@ -246,8 +247,10 @@ add_binds("normal", {
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("down[load]", "Download the given URI.", function (w, a)
-        downloads.add(a, { window = w.win })
+        _M.add(a, { window = w.win })
     end),
 })
 
-return downloads
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
