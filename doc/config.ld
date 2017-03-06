@@ -19,4 +19,4 @@ topics = {
     "00-authors.md",
 }
 
--- vim: et:sw=4:ts=8:sts=4:tw=80
+-- vim: et:sw=4:ts=8:sts=4:tw=80:ft=lua
