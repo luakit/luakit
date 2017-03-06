@@ -316,6 +316,16 @@ local function focus(state, step)
     return new_hint
 end
 
+--- Enter element selection mode on a web page
+--
+-- The web page must not already be in element selection mode
+--
+-- @param[type=page] page The web page in which to enter element selection
+-- @param elements A selector to filter elements, or an array of elements
+-- @param[type=string] stylesheet The stylesheet to apply
+-- @param[type=boolean] ignore_case Whether text case should be ignored
+-- @return[type=table] The currently focused hint
+-- @return[type=number] The number of currently visible hints
 function _M.enter(page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
@@ -376,6 +386,11 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     return focus(state, 0), state.num_visible_hints
 end
 
+--- Leave element selection mode on a web page
+--
+-- The web page must be in element selection mode
+--
+-- @param[type=page] page The web page in which to leave element selection
 function _M.leave(page)
     assert(type(page) == "page")
 
@@ -386,6 +401,16 @@ function _M.leave(page)
     page_states[page.id] = nil
 end
 
+--- Update the element selection interface when user selection text changes
+--
+-- The web page must be in element selection mode
+--
+-- @param[type=page] page The web page
+-- @param[type=string] hint_pat The hint pattern filter
+-- @param[type=string] text_pat The text pattern filter
+-- @param[type=string] text The full text
+-- @return[type=table] The currently focused hint
+-- @return[type=number] The number of currently visible hints
 function _M.changed(page, hint_pat, text_pat, text)
     assert(type(page) == "page")
     assert(hint_pat == nil or type(hint_pat) == "string")
@@ -408,6 +433,22 @@ function _M.changed(page, hint_pat, text_pat, text)
     return focus(state, 0), state.num_visible_hints
 end
 
+--- Update the element selection interface when the user moves the focus.
+--
+-- The web page must be in element selection mode
+--
+-- @usage
+-- function handle_next (page)
+--     select_wm.focus(page, 1)
+-- end
+-- function handle_prev (page)
+--     select_wm.focus(page, -1)
+-- end
+--
+-- @param[type=page] page The web page
+-- @param[type=number] step Relative amount to shift focus by
+-- @return[type=table] The currently focused hint
+-- @return[type=number] The number of currently visible hints
 function _M.focus(page, step)
     assert(type(page) == "page")
     assert(type(step) == "number")
@@ -415,12 +456,24 @@ function _M.focus(page, step)
     return focus(state, step), state.num_visible_hints
 end
 
+--- Get the current state of element hints on a web page
+--
+-- The web page must be in element selection mode
+--
+-- @param[type=page] page The web page
+-- @treturn table The current hint state for `page`
 function _M.hints(page)
     assert(type(page) == "page")
     local state = assert(page_states[page.id])
     return state.hints
 end
 
+--- Get the currently focused element hint on a web page
+--
+-- The web page must be in element selection mode
+--
+-- @param[type=page] page The web page
+-- @treturn table The currently focused hint
 function _M.focused_hint(page)
     assert(type(page) == "page")
     local state = assert(page_states[page.id])
