@@ -1,9 +1,9 @@
 file = {
-	"luadoc",
-	"../lib",
-	exclude = {
-		"../lib/markdown.lua"
-	}
+    "luadoc",
+    "../lib",
+    exclude = {
+        "../lib/markdown.lua"
+    },
 }
 format='discount'
 dir = "apidocs"
@@ -18,4 +18,4 @@ topics = {
     "00-authors.md",
 }
 
--- vim: set ft=lua :
+-- vim: et:sw=4:ts=8:sts=4:tw=80
