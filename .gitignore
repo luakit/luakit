@@ -2,7 +2,8 @@
 *.swp
 *~
 *.1
-apidocs
+doc/apidocs
+doc/html
 luakit
 luakit.so
 common/tokenize.h
