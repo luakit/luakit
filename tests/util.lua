@@ -3,7 +3,7 @@
 -- @module tests.util
 -- @copyright 2017 Aidan Holm
 
-local lousy = require "lousy"
+local filter_array = require("lib.lousy.util").table.filter_array
 
 local M = {}
 
@@ -59,7 +59,7 @@ function M.find_files(dirs, pattern, excludes)
 
     -- Remove all files in excludes
     if excludes then
-        file_list = lousy.util.table.filter_array(file_list, function (_, file)
+        file_list = filter_array(file_list, function (_, file)
             for _, pattern in ipairs(excludes) do
                 if string.find(file, pattern) then return false end
             end
