@@ -25,7 +25,7 @@ function T.test_vim_modeline ()
     end
 
     -- Test all lua files
-    local file_list = util.find_files(".", "%.lua$", {"lib/markdown.lua"})
+    file_list = util.find_files(".", "%.lua$", {"lib/markdown.lua"})
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))

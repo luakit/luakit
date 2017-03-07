@@ -39,6 +39,8 @@ local function update_test_status(test_file, test_name, status)
 end
 
 local function log_test_output(test_file, test_name, msg)
+    assert(type(test_file) == "string" and test_file:sub(1, 6) == "tests/")
+    assert(type(test_name) == "string")
     prev_test_name = nil
     print("  " .. msg)
 end

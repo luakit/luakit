@@ -93,7 +93,7 @@ function T.test_luacheck ()
         for _, issue in ipairs(issues) do
             output[#output + 1] = string.format("  %-" .. tostring(align+10) .. "s %s", issue.src, issue.msg)
         end
-        fail("Luacheck messages:\n" .. table.concat(output, "\n"))
+        test.fail("Luacheck messages:\n" .. table.concat(output, "\n"))
     end
 end
 

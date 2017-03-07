@@ -6,12 +6,12 @@ local T = {}
 
 T.test_about_blank_loads_successfully = function ()
     local lousy = require "lousy"
-    local globals = require "globals"
+    require "globals"
     lousy.theme.init(lousy.util.find_config("theme.lua"))
     assert(lousy.theme.get(), "failed to load theme")
-    local window = require("window")
-    local webview = require("window")
-    local modes = require "modes"
+    local window = require "window"
+    require "window"
+    require "modes"
     local w = window.new({"about:blank"})
     local view = w.view
 
