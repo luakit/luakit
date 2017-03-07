@@ -1,14 +1,13 @@
-require "lunit"
-require "lfs"
+local test = require "tests.lib"
 local util = require "tests.util"
 
-module("test_source_format", lunit.testcase, package.seeall)
+local T = {}
 
 local function add_file_error(errors, file, error)
     table.insert(errors, { file = file, err = error })
 end
 
-function test_vim_modeline ()
+function T.test_vim_modeline ()
     local errors = {}
 
     -- Test all C and H files
@@ -26,7 +25,7 @@ function test_vim_modeline ()
     end
 
     -- Test all lua files
-    local file_list = util.find_files(".", "%.lua$", {"lib/markdown.lua"})
+    file_list = util.find_files(".", "%.lua$", {"lib/markdown.lua"})
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -40,11 +39,11 @@ function test_vim_modeline ()
     end
 
     if #errors > 0 then
-        fail("Some files do not have modelines:\n" .. util.format_file_errors(errors))
+        test.fail("Some files do not have modelines:\n" .. util.format_file_errors(errors))
     end
 end
 
-function test_include_guard ()
+function T.test_include_guard ()
     local include_guard_pat = "#ifndef LUAKIT_%s\n#define LUAKIT_%s\n\n"
     local errors = {}
 
@@ -63,7 +62,7 @@ function test_include_guard ()
     end
 
     if #errors > 0 then
-        fail("Some files do not have include guards:\n" .. util.format_file_errors(errors))
+        test.fail("Some files do not have include guards:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -80,7 +79,7 @@ local function get_first_paragraph_of_file(file)
     return contents
 end
 
-function test_header_comment ()
+function T.test_header_comment ()
     local file_desc_pat = "^%/%*\n %* (%S+) %- [^\n]*\n %*\n"
     local copyright_pat = " %* Copyright © [^\n]*\n"
     local gpl_text = [[
@@ -122,11 +121,11 @@ function test_header_comment ()
     end
 
     if #errors > 0 then
-        fail("Some files have header comment errors:\n" .. util.format_file_errors(errors))
+        test.fail("Some files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
 
-function test_lua_header ()
+function T.test_lua_header ()
     local exclude_files = { "lib/markdown%.lua", "lib/cookie.*%.lua" }
 
     local errors = {}
@@ -170,11 +169,11 @@ function test_lua_header ()
     end
 
     if #errors > 0 then
-        fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
+        test.fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
 
-function test_lua_module_uses_M ()
+function T.test_lua_module_uses_M ()
     local exclude_files = {
         "lib/markdown%.lua",   -- External file
         "lib/cookie.*%.lua",   -- Cookie handling is broken anyway
@@ -203,8 +202,10 @@ function test_lua_module_uses_M ()
     end
 
     if #errors > 0 then
-        fail("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
+        test.fail("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
     end
 end
+
+return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,15 +1,16 @@
-require "lunit"
+local test = require "tests.lib"
 local util = require "tests.util"
 local luacheck = require "luacheck"
-local lousy = require "lousy"
+local lousy = { util = require("lousy.util") }
 
-module("test_luacheck", lunit.testcase, package.seeall)
+local T = {}
 
-function test_luacheck ()
-    local lua_dirs = {"lib", "config"}
+function T.test_luacheck ()
+    local lua_dirs = {"lib", "config", "tests"}
     local exclude_files = {
         "lib/markdown.lua",
         "lib/cookie.*.lua",
+        "tests/lunit/",
     }
     local options =  {
         std = "luajit",
@@ -93,8 +94,10 @@ function test_luacheck ()
         for _, issue in ipairs(issues) do
             output[#output + 1] = string.format("  %-" .. tostring(align+10) .. "s %s", issue.src, issue.msg)
         end
-        fail("Luacheck messages:\n" .. table.concat(output, "\n"))
+        test.fail("Luacheck messages:\n" .. table.concat(output, "\n"))
     end
 end
+
+return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
