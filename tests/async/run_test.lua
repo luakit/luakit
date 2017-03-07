@@ -40,11 +40,11 @@ local function do_test_file(test_file)
         local state = coroutine.status(func)
 
         if not ok then
-            print("FAIL: " .. current_test)
+            print("__fail__ " .. current_test)
             print("  " .. tostring(ret))
             return "fail"
         elseif state == "suspended" then
-            print("WAIT: " .. current_test)
+            print("__wait__ " .. current_test)
 
             -- Start timer
             local interval = ret.timeout * 1000
@@ -63,7 +63,7 @@ local function do_test_file(test_file)
             -- Return to luakit
             return "wait"
         else
-            print("PASS: " .. current_test)
+            print("__pass__ " .. current_test)
             return "pass"
         end
     end
@@ -90,7 +90,7 @@ local function do_test_file(test_file)
         -- Stop the timeout timer
         wait_timer:stop()
         -- Continue the test
-        print("CONT: " .. current_test)
+        print("__cont__ " .. current_test)
         local test_status = begin_or_continue_test(test_name, func, ...)
         -- If the test finished, do the next one
         if test_status ~= "wait" then
@@ -103,7 +103,7 @@ local function do_test_file(test_file)
 
     wait_timer:add_signal("timeout", function ()
         wait_timer:stop()
-        print("FAIL: " .. current_test)
+        print("__fail__ " .. current_test)
         print("  Timed out waiting for signal '" .. waiting_signal .. "'")
         do_next_test()
     end)

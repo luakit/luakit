@@ -17,9 +17,40 @@ test = {
     end,
 }
 
-local function do_style_tests()
-    -- Load and run all style tests
-    local test_files = util.find_files("tests/style/", "/test_[a-z_]*%.lua$")
+local prev_test_name
+local function update_test_status(test_file, test_name, status)
+    assert(type(test_file) == "string" and test_file:sub(1, 6) == "tests/")
+    assert(type(test_name) == "string")
+    assert(type(status) == "string")
+
+    local esc = string.char(27)
+    local c_red   = esc .. "[0;31m"
+    local c_green = esc .. "[0;32m"
+    local c_grey  = esc .. "[0;37m"
+    local c_reset = esc .. "[0;0m"
+
+    local status_color = ({
+        pass = c_green,
+        fail = c_red,
+        wait = c_grey,
+        cont = c_grey,
+    })[status] or ""
+
+    -- Overwrite the previous status line if it's for the same test
+    if prev_test_name == test_name then
+	io.write(esc .. "[1A" .. esc .. "[K")
+    end
+    prev_test_name = test_name
+
+    print(status_color .. status:upper() .. c_reset .. " " .. test_name)
+end
+
+local function log_test_output(test_file, test_name, msg)
+    prev_test_name = nil
+    print("  " .. msg)
+end
+
+local function do_style_tests(test_files)
     for _, test_file in ipairs(test_files) do
         -- Load test table
         local chunk, err = loadfile(test_file)
@@ -32,25 +63,28 @@ local function do_style_tests()
             assert(type(func) == "function")
 
             local ok, ret = pcall(func)
-            print((ok and "PASS" or "FAIL") .. ": " .. test_name)
-            if not ok then
-                print(ret)
+            update_test_status(test_file, test_name, ok and "pass" or "fail")
+            if not ok and ret then
+                log_test_output(test_file, test_name, ret)
             end
         end
     end
 end
 
-local function do_async_tests()
+local function do_async_tests(test_files)
     -- Launch Xvfb
     local pid_xvfb = util.spawn({"Xvfb", ":1", "-screen", "0", "800x600x8"})
 
-    -- Load and run all async tests
-    local test_files = util.find_files("tests/async/", "/test_[a-z_]*%.lua$")
     for _, test_file in ipairs(test_files) do
         local command = "DISPLAY=:1 ./luakit -U --log=fatal -c tests/async/run_test.lua " .. test_file .. " 2>&1"
         local f = io.popen(command)
         for line in f:lines() do
-            print(line)
+            local status, test_name = line:match("^__(%a%a%a%a)__ ([%a_]+)$")
+            if status and test_name then
+                update_test_status(test_file, test_name, status)
+            else
+                log_test_output(test_file, test_name, line)
+            end
         end
         f:close()
     end
@@ -58,16 +92,22 @@ local function do_async_tests()
     posix.kill(pid_xvfb)
 end
 
-local function do_lunit_tests()
+local function do_lunit_tests(test_files)
     print("Running legacy tests...")
-    local test_files = util.find_files("tests/lunit/", "/test_[a-z_]*%.lua$")
     local command = "./luakit --log=fatal -c tests/lunit-run.lua " .. table.concat(test_files, " ")
     os.execute(command)
 end
 
-do_style_tests()
-do_async_tests()
-do_lunit_tests()
+local test_file_pat = "/test_[a-z_]*%.lua$"
+local test_files = {
+    style = util.find_files("tests/style/", test_file_pat),
+    async = util.find_files("tests/async/", test_file_pat),
+    lunit = util.find_files("tests/lunit/", test_file_pat),
+}
+
+do_style_tests(test_files.style)
+do_async_tests(test_files.async)
+do_lunit_tests(test_files.lunit)
 
 util.cleanup()
 
