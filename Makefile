@@ -111,7 +111,7 @@ lunit:
 	git clone git://repo.or.cz/lunit.git
 
 run-tests: luakit luakit.so lunit
-	@./luakit -c tests/lunit-run.lua tests/test_*.lua
+	@luajit tests/run_test.lua
 
 newline: options;@echo
 .PHONY: all clean options install newline apidoc doc
