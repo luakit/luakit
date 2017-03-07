@@ -111,6 +111,8 @@ local function do_test_file(test_file)
     do_next_test()
 end
 
+io.stdout:setvbuf("line")
+
 local test_file = uris[1]
 assert(type(test_file) == "string")
 

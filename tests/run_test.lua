@@ -48,7 +48,11 @@ local function do_async_tests()
     local test_files = util.find_files("tests/async/", "/test_[a-z_]*%.lua$")
     for _, test_file in ipairs(test_files) do
         local command = "DISPLAY=:1 ./luakit -U --log=fatal -c tests/async/run_test.lua " .. test_file .. " 2>&1"
-        os.execute(command)
+        local f = io.popen(command)
+        for line in f:lines() do
+            print(line)
+        end
+        f:close()
     end
 
     posix.kill(pid_xvfb)
