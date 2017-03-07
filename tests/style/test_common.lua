@@ -1,9 +1,9 @@
-require "lunit"
+local test = require "tests.lib"
 local util = require "tests.util"
 
-module("test_common", lunit.testcase, package.seeall)
+local T = {}
 
-function test_no_globalconf_in_common()
+function T.test_no_globalconf_in_common()
     local has_globalconf = {}
     local file_list = util.find_files("common", "%.[ch]$")
     for _, file in ipairs(file_list) do
@@ -21,8 +21,10 @@ function test_no_globalconf_in_common()
         for _, file in ipairs(has_globalconf) do
             err[#err+1] = "  " .. file
         end
-        fail("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
+        test.fail("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
     end
 end
+
+return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
