@@ -3,6 +3,8 @@
 -- @module tests.util
 -- @copyright 2017 Aidan Holm
 
+local posix = require('posix')
+local os = require('os')
 local filter_array = require("lib.lousy.util").table.filter_array
 
 local M = {}
@@ -15,11 +17,8 @@ end
 local children = {}
 function M.spawn(args)
     assert(type(args) == "table" and #args > 0)
-    local posix = require('posix')
-    local os = require('os')
-    local io = require('io')
 
-    child = posix.fork()
+    local child = posix.fork()
     if child == 0 then
         local _, err = posix.execx(args)
         print("execx:", err)
@@ -30,7 +29,6 @@ function M.spawn(args)
 end
 
 function M.cleanup()
-    local posix = require('posix')
     for _, child in ipairs(children) do
         posix.wait(child)
     end
@@ -45,7 +43,6 @@ local function get_git_files ()
         for line in f:lines() do
             table.insert(git_files, line)
         end
-        local v = f:read("*all"):gsub("\n"," ")
         f:close()
     end
 
@@ -66,16 +63,16 @@ function M.find_files(dirs, pattern, excludes)
     if excludes == nil then excludes = {} end
 
     -- Get list of files tracked by git
-    local git_files = get_git_files()
+    get_git_files()
 
     -- Filter to those inside the given directories
     local file_list = {}
     for _, file in ipairs(git_files) do
-        local dir_match, pat_match = false, false
+        local dir_match = false
         for _, dir in ipairs(dirs) do
             dir_match = dir_match or path_is_in_directory(file, dir)
         end
-        pat_match = string.find(file, pattern)
+        local pat_match = string.find(file, pattern)
         if dir_match and pat_match then
             table.insert(file_list, file)
         end
@@ -84,8 +81,8 @@ function M.find_files(dirs, pattern, excludes)
     -- Remove all files in excludes
     if excludes then
         file_list = filter_array(file_list, function (_, file)
-            for _, pattern in ipairs(excludes) do
-                if string.find(file, pattern) then return false end
+            for _, exclude_pat in ipairs(excludes) do
+                if string.find(file, exclude_pat) then return false end
             end
             return true
         end)
@@ -102,7 +99,7 @@ function M.format_file_errors(entries)
 
     -- Find file alignment length
     local align = 0
-    local git_files = get_git_files()
+    get_git_files()
     for _, file in ipairs(git_files) do
         align = math.max(align, file:len())
     end
