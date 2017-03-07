@@ -3,6 +3,10 @@
 -- @script async.run_test
 -- @copyright 2017 Aidan Holm
 
+local shared_lib = {}
+local test = require("tests.lib")
+test.init(shared_lib)
+
 --- Launched as the init script of a luakit instance
 --
 -- Loads test_file and runs all tests in it in order
@@ -36,6 +40,7 @@ local function do_test_file(test_file)
         assert(type(func) == "thread")
 
         -- Run test until it finishes, pauses, or fails
+        shared_lib.current_coroutine = func
         local ok, ret = coroutine.resume(func, ...)
         local state = coroutine.status(func)
 

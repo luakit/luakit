@@ -3,6 +3,7 @@
 -- @copyright Aidan Holm 2017
 
 local T = {}
+local test = require "tests.lib"
 
 T.test_about_blank_loads_successfully = function ()
     local lousy = require "lousy"
@@ -16,7 +17,7 @@ T.test_about_blank_loads_successfully = function ()
     local view = w.view
 
     repeat
-        local _, status = coroutine.yield({view, "load-status", timeout=1})
+        local _, status = test.wait_for_signal(view, "load-status", 1)
         assert(status ~= "failed")
     until status == "finished"
 end
