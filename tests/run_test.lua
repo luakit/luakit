@@ -10,10 +10,9 @@ package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 local util = require "tests.util"
 local posix = require "posix"
 
+local current_test_name
 local prev_test_name
-local function update_test_status(test_file, test_name, status)
-    assert(type(test_file) == "string" and test_file:sub(1, 6) == "tests/")
-    assert(type(test_name) == "string")
+local function update_test_status(status, test_name)
     assert(type(status) == "string")
 
     local esc = string.char(27)
@@ -27,7 +26,15 @@ local function update_test_status(test_file, test_name, status)
         fail = c_red,
         wait = c_grey,
         cont = c_grey,
+        run  = c_grey,
     })[status] or ""
+
+    if status == "run" then
+        status = "run "
+        current_test_name = test_name
+    else
+        test_name = current_test_name
+    end
 
     -- Overwrite the previous status line if it's for the same test
     if prev_test_name == test_name then
@@ -38,9 +45,7 @@ local function update_test_status(test_file, test_name, status)
     print(status_color .. status:upper() .. c_reset .. " " .. test_name)
 end
 
-local function log_test_output(test_file, test_name, msg)
-    assert(type(test_file) == "string" and test_file:sub(1, 6) == "tests/")
-    assert(type(test_name) == "string")
+local function log_test_output(msg)
     prev_test_name = nil
     local indent = "  "
     print("  " .. msg:gsub("\n", "\n" .. indent))
@@ -58,10 +63,11 @@ local function do_style_tests(test_files)
             assert(type(test_name) == "string")
             assert(type(func) == "function")
 
+            update_test_status("run", test_name)
             local ok, ret = pcall(func)
-            update_test_status(test_file, test_name, ok and "pass" or "fail")
+            update_test_status(ok and "pass" or "fail")
             if not ok and ret then
-                log_test_output(test_file, test_name, ret)
+                log_test_output(ret)
             end
         end
     end
@@ -74,12 +80,13 @@ local function do_async_tests(test_files)
     for _, test_file in ipairs(test_files) do
         local command = "DISPLAY=:1 ./luakit -U --log=fatal -c tests/async/run_test.lua " .. test_file .. " 2>&1"
         local f = io.popen(command)
+        local status, test_name
         for line in f:lines() do
-            local status, test_name = line:match("^__(%a%a%a%a)__ ([%a_]+)$")
+            status, test_name = line:match("^__(%a+)__ ([%a_]+)$")
             if status and test_name then
-                update_test_status(test_file, test_name, status)
+                update_test_status(status, test_name)
             else
-                log_test_output(test_file, test_name, line)
+                log_test_output(line)
             end
         end
         f:close()

@@ -39,8 +39,12 @@ local function do_test_file(test_file)
         assert(type(test_name) == "string")
         assert(type(func) == "thread")
 
-        -- Run test until it finishes, pauses, or fails
+        if shared_lib.current_coroutine ~= func then
+            print("__run__ " .. current_test)
+        end
         shared_lib.current_coroutine = func
+
+        -- Run test until it finishes, pauses, or fails
         local ok, ret = coroutine.resume(func, ...)
         local state = coroutine.status(func)
 
