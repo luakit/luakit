@@ -110,7 +110,7 @@ function M.format_file_errors(entries)
     for _, entry in ipairs(entries) do
         local file = entry.file ~= prev_file and entry.file or ""
         prev_file = entry.file
-        local line = string.format("  %-" .. tostring(align) .. "s%s%s", file, sep, entry.err)
+        local line = string.format("%-" .. tostring(align) .. "s%s%s", file, sep, entry.err)
         table.insert(lines, line)
     end
     return table.concat(lines, "\n")
