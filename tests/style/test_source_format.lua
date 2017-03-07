@@ -1,3 +1,4 @@
+local test = require "tests.lib"
 local util = require "tests.util"
 
 local T = {}

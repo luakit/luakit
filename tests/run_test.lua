@@ -10,13 +10,6 @@ package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 local util = require "tests.util"
 local posix = require "posix"
 
---- Global testing library
-test = {
-    fail = function (msg)
-        error(msg, 0)
-    end,
-}
-
 local prev_test_name
 local function update_test_status(test_file, test_name, status)
     assert(type(test_file) == "string" and test_file:sub(1, 6) == "tests/")
