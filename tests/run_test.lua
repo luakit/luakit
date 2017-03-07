@@ -10,8 +10,8 @@ local util = require "tests.util"
 local posix = require "posix"
 
 local function do_async_tests()
-    -- Launch Xephyr
-    local pid_xephyr = util.spawn({"Xephyr", ":1", "-ac", "-screen", "800x600"})
+    -- Launch Xvfb
+    local pid_xvfb = util.spawn({"Xvfb", ":1", "-screen", "0", "800x600x8"})
 
     -- Load and run all async tests
     local test_files = util.find_files("tests/async/", "/test_[a-z_]*%.lua$")
@@ -20,7 +20,7 @@ local function do_async_tests()
         os.execute(command)
     end
 
-    posix.kill(pid_xephyr)
+    posix.kill(pid_xvfb)
 end
 
 do_async_tests()
