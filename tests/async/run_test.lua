@@ -14,6 +14,7 @@ local function do_test_file(test_file)
     assert(chunk, err)
     local T = chunk()
     local current_test
+    local waiting_signal = "foo"
 
     -- Type checks
     assert(type(T) == "table")
@@ -57,6 +58,7 @@ local function do_test_file(test_file)
                 test_object_signal_handler(test_name, func, ...)
             end
             obj:add_signal(sig, wrapper)
+            waiting_signal = sig
 
             -- Return to luakit
             return "wait"
@@ -100,7 +102,9 @@ local function do_test_file(test_file)
     end
 
     wait_timer:add_signal("timeout", function ()
-        print("Timed out: " .. current_test)
+        wait_timer:stop()
+        print("FAIL: " .. current_test)
+        print("  Timed out waiting for signal '" .. waiting_signal .. "'")
         do_next_test()
     end)
 
