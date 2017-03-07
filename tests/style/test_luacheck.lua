@@ -6,10 +6,11 @@ local lousy = { util = require("lousy.util") }
 local T = {}
 
 function T.test_luacheck ()
-    local lua_dirs = {"lib", "config"}
+    local lua_dirs = {"lib", "config", "tests"}
     local exclude_files = {
         "lib/markdown.lua",
         "lib/cookie.*.lua",
+        "tests/lunit/",
     }
     local options =  {
         std = "luajit",
