@@ -12,6 +12,30 @@ local function path_is_in_directory(path, dir)
     return string.find(path, "^"..dir)
 end
 
+local children = {}
+function M.spawn(args)
+    assert(type(args) == "table" and #args > 0)
+    local posix = require('posix')
+    local os = require('os')
+    local io = require('io')
+
+    child = posix.fork()
+    if child == 0 then
+        local _, err = posix.execx(args)
+        print("execx:", err)
+        os.exit(0)
+    end
+    table.insert(children, child)
+    return child
+end
+
+function M.cleanup()
+    local posix = require('posix')
+    for _, child in ipairs(children) do
+        posix.wait(child)
+    end
+end
+
 local git_files
 
 local function get_git_files ()
