@@ -5,6 +5,7 @@
 
 -- Add ./tests to package.path
 package.path = package.path .. ';./tests/?.lua'
+package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 
 local util = require "tests.util"
 local posix = require "posix"

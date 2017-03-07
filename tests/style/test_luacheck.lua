@@ -1,11 +1,10 @@
-require "lunit"
 local util = require "tests.util"
 local luacheck = require "luacheck"
-local lousy = require "lousy"
+local lousy = { util = require("lousy.util") }
 
-module("test_luacheck", lunit.testcase, package.seeall)
+local T = {}
 
-function test_luacheck ()
+function T.test_luacheck ()
     local lua_dirs = {"lib", "config"}
     local exclude_files = {
         "lib/markdown.lua",
@@ -96,5 +95,7 @@ function test_luacheck ()
         fail("Luacheck messages:\n" .. table.concat(output, "\n"))
     end
 end
+
+return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
