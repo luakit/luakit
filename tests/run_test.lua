@@ -54,8 +54,17 @@ local function do_async_tests()
     posix.kill(pid_xvfb)
 end
 
+local function do_lunit_tests()
+    print("Running legacy tests...")
+    local test_files = util.find_files("tests/lunit/", "/test_[a-z_]*%.lua$")
+    local command = "./luakit --log=fatal -c tests/lunit-run.lua " .. table.concat(test_files, " ")
+    os.execute(command)
+end
+
 do_style_tests()
 do_async_tests()
+do_lunit_tests()
+
 util.cleanup()
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
