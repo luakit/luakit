@@ -38,7 +38,7 @@ local function update_test_status(status, test_name)
 
     -- Overwrite the previous status line if it's for the same test
     if prev_test_name == test_name then
-	io.write(esc .. "[1A" .. esc .. "[K")
+        io.write(esc .. "[1A" .. esc .. "[K")
     end
     prev_test_name = test_name
 

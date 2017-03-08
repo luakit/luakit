@@ -82,24 +82,24 @@ webview_history_go(lua_State *L, gint direction)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
     gint steps = (gint) luaL_checknumber(L, 2) * direction;
-	WebKitBackForwardListItem *item = webkit_back_forward_list_get_nth_item(
-			webkit_web_view_get_back_forward_list(d->view), steps);
-	if (item)
-		webkit_web_view_go_to_back_forward_list_item(d->view, item);
-	lua_pushboolean(L, item != NULL);
+    WebKitBackForwardListItem *item = webkit_back_forward_list_get_nth_item(
+            webkit_web_view_get_back_forward_list(d->view), steps);
+    if (item)
+        webkit_web_view_go_to_back_forward_list_item(d->view, item);
+    lua_pushboolean(L, item != NULL);
     return 1;
 }
 
 static gint
 luaH_webview_go_back(lua_State *L)
 {
-	return webview_history_go(L, -1);
+    return webview_history_go(L, -1);
 }
 
 static gint
 luaH_webview_go_forward(lua_State *L)
 {
-	return webview_history_go(L,  1);
+    return webview_history_go(L,  1);
 }
 
 static void
