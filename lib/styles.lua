@@ -7,6 +7,7 @@ local webview = require("webview")
 local lousy   = require("lousy")
 local lfs     = require("lfs")
 local editor  = require("editor")
+local globals = require("globals")
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local key     = lousy.bind.key
@@ -169,6 +170,23 @@ add_binds("normal", {
 })
 
 _M.detect_files()
+
+-- Warn about domain_props being broken
+local domains = {}
+for domain, prop in pairs(globals.domain_props) do
+    if type(prop) == "table" and prop.user_stylesheet_uri then
+        domains[#domains+1] = domain
+    end
+end
+
+if #domains > 0 then
+    msg.warn("Using domain_props for user stylesheets is non-functional")
+    for _, domain in ipairs(domains) do
+        msg.warn("Found user_stylesheet_uri property for domain '%s'", domain)
+    end
+    msg.warn("Instead, add an appropriately-named CSS file to %s", luakit.data_dir .. "/styles/")
+    msg.warn("See https://github.com/aidanholm/luakit/issues/189")
+end
 
 return _M
 
