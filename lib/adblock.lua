@@ -168,7 +168,7 @@ local abp_to_pattern = function (s)
         end
 
         for k, v in ipairs(s) do
-			-- Pipe is anchor
+            -- Pipe is anchor
             v = string.gsub(v, "^|", "%^")
             v = string.gsub(v, "|$", "%$")
 

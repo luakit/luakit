@@ -18,7 +18,7 @@ local capi = {
     luakit = luakit,
     soup = soup,
     timer = timer,
-    sqlite3 = sqlite3 
+    sqlite3 = sqlite3
 }
 
 module("cookie_filter")

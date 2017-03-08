@@ -12,8 +12,8 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local key     = lousy.bind.key
 
 local capi = {
-	luakit = luakit,
-	sqlite3 = sqlite3 
+    luakit = luakit,
+    sqlite3 = sqlite3
 }
 
 local _M = {}
@@ -28,11 +28,11 @@ local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 
 local query_create = db:compile [[
-	CREATE TABLE IF NOT EXISTS by_domain (
-		id INTEGER PRIMARY KEY,
-		domain TEXT,
-		enabled INTEGER
-	);]]
+    CREATE TABLE IF NOT EXISTS by_domain (
+        id INTEGER PRIMARY KEY,
+        domain TEXT,
+        enabled INTEGER
+    );]]
 
 query_create:exec()
 
@@ -45,36 +45,36 @@ local function string_starts(str, prefix)
 end
 
 local function domain_from_uri(uri)
-	if not uri then
-		return nil
-	elseif uri == "about:blank" then
-		return "about:blank"
-	elseif string_starts(uri, "file://") then
-		return "file"
-	else
-		uri = assert(lousy.uri.parse(uri), "invalid uri")
-		return string.lower(uri.host)
-	end
+    if not uri then
+        return nil
+    elseif uri == "about:blank" then
+        return "about:blank"
+    elseif string_starts(uri, "file://") then
+        return "file"
+    else
+        uri = assert(lousy.uri.parse(uri), "invalid uri")
+        return string.lower(uri.host)
+    end
 end
 
 local function db_get(uri)
-	local domain = domain_from_uri(uri)
-	if not domain then
-		return default_enabled
-	else
-		local rows = query_select:exec{domain}
-		return rows[1] and rows[1].enabled or default_enabled
-	end
+    local domain = domain_from_uri(uri)
+    if not domain then
+        return default_enabled
+    else
+        local rows = query_select:exec{domain}
+        return rows[1] and rows[1].enabled or default_enabled
+    end
 end
 
 local function db_set(uri, enabled)
-	local domain = domain_from_uri(uri)
+    local domain = domain_from_uri(uri)
     local rows = query_select:exec{domain}
-	if rows[1] then
-		query_update:exec{enabled, rows[1].id}
-	else
-		query_insert:exec{domain, enabled}
-	end
+    if rows[1] then
+        query_update:exec{enabled, rows[1].id}
+    else
+        query_insert:exec{domain, enabled}
+    end
 end
 
 local function domains_from_uri(uri)
@@ -105,16 +105,16 @@ webview.init_funcs.styles_load = function(view)
 end
 
 function webview.methods.styles_enabled_get(view, _)
-	return db_get(view.uri) == 1 and true or false
+    return db_get(view.uri) == 1 and true or false
 end
 
 function webview.methods.styles_enabled_set(view, _, enabled)
-	db_set(view.uri, enabled and 1 or 0)
+    db_set(view.uri, enabled and 1 or 0)
 end
 
 function webview.methods.styles_toggle(view, _)
-	local enabled = 1 - db_get(view.uri)
-	db_set(view.uri, enabled)
+    local enabled = 1 - db_get(view.uri)
+    db_set(view.uri, enabled)
 end
 
 _M.load_file = function (path, domain)
@@ -134,18 +134,18 @@ end
 _M.detect_files = function ()
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
-		print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
-		return
-	end
-	for filename in lfs.dir(styles_dir) do
-		if string.find(filename, ".css$") then
-			-- Get the domain name from the filename
-			local domain = string.sub(filename, 1, #filename - 4)
-			if string.sub(domain, 1, 1) == "*" then
-				domain = "." .. string.sub(domain, 2)
-			end
+        print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
+        return
+    end
+    for filename in lfs.dir(styles_dir) do
+        if string.find(filename, ".css$") then
+            -- Get the domain name from the filename
+            local domain = string.sub(filename, 1, #filename - 4)
+            if string.sub(domain, 1, 1) == "*" then
+                domain = "." .. string.sub(domain, 2)
+            end
             _M.load_file(filename, domain)
-		end
+        end
     end
     lfs.chdir(cwd)
 end
@@ -161,11 +161,11 @@ add_cmds({
 
 add_binds("normal", {
     key({}, "V", "Edit page user stylesheet.", function (w)
-		if string.sub(w.view.uri, 1, 9) == "luakit://" then return end
-		local domain = domain_from_uri(w.view.uri)
-		local file = capi.luakit.data_dir .. "/styles/" .. domain .. ".css"
-		editor.edit(file)
-	end),
+        if string.sub(w.view.uri, 1, 9) == "luakit://" then return end
+        local domain = domain_from_uri(w.view.uri)
+        local file = capi.luakit.data_dir .. "/styles/" .. domain .. ".css"
+        editor.edit(file)
+    end),
 })
 
 _M.detect_files()

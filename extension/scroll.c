@@ -76,15 +76,15 @@ static void
 web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     WebKitDOMDocument *document = webkit_web_page_get_dom_document(web_page);
-    WebKitDOMElement *html = webkit_dom_document_get_document_element(document); 
+    WebKitDOMElement *html = webkit_dom_document_get_document_element(document);
     WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
 
     /* Add event listeners... */
 
     webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
-        "scroll", G_CALLBACK(window_scroll_cb), FALSE, web_page); 
+        "scroll", G_CALLBACK(window_scroll_cb), FALSE, web_page);
     webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
-        "resize", G_CALLBACK(window_resize_cb), FALSE, web_page); 
+        "resize", G_CALLBACK(window_resize_cb), FALSE, web_page);
     webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(html),
         "DOMSubtreeModified", G_CALLBACK(document_resize_cb), FALSE, web_page);
 
