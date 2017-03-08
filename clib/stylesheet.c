@@ -24,7 +24,7 @@
 static lua_class_t stylesheet_class;
 LUA_OBJECT_FUNCS(stylesheet_class, lstylesheet_t, stylesheet)
 
-gpointer 
+gpointer
 luaH_checkstylesheet(lua_State *L, gint idx) {
     return luaH_checkudata(L, idx, &(stylesheet_class));
 }

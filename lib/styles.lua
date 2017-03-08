@@ -13,7 +13,7 @@ local key     = lousy.bind.key
 
 local capi = {
     luakit = luakit,
-    sqlite3 = sqlite3 
+    sqlite3 = sqlite3
 }
 
 local _M = {}
