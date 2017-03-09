@@ -137,7 +137,7 @@ add_binds("normal", {
             if count then
                 buffer = string.sub(m.buffer, #count + 1, (m.updated_buf and -2) or -1)
                 local opts = join(m, {count = tonumber(count)})
-                opts.buffer = (#buf > 0 and buffer) or nil
+                opts.buffer = (#buffer > 0 and buffer) or nil
                 if lousy.bind.hit(w, m.binds, m.mods, m.key, opts) then
                     return true
                 end
