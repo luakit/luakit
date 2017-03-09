@@ -14,7 +14,6 @@ local function path_is_in_directory(path, dir)
     return string.find(path, "^"..dir)
 end
 
-local children = {}
 function M.spawn(args)
     assert(type(args) == "table" and #args > 0)
 
@@ -24,14 +23,7 @@ function M.spawn(args)
         print("execx:", err)
         os.exit(0)
     end
-    table.insert(children, child)
     return child
-end
-
-function M.cleanup()
-    for _, child in ipairs(children) do
-        posix.wait(child)
-    end
 end
 
 local git_files
