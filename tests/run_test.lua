@@ -166,6 +166,15 @@ getmetatable(xvfb_prx).__gc = function ()
     posix.kill(pid_xvfb)
 end
 
+-- Launch a test HTTP server
+print("Starting HTTP server")
+local pid_httpd = util.spawn({"luajit", "tests/httpd.lua"})
+local httpd_prx = newproxy(true)
+getmetatable(httpd_prx).__gc = function ()
+    print("Stopping HTTP server")
+    posix.kill(pid_httpd)
+end
+
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
 do_lunit_tests(test_files.lunit)
