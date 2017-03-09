@@ -38,7 +38,7 @@ local window = require "window"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
-require "webview"
+local webview = require "webview"
 
 -- Left-aligned status bar widgets
 require "widget.uri"
