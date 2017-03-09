@@ -9,6 +9,7 @@ package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 
 local util = require "tests.util"
 local posix = require "posix"
+local lfs = require "lfs"
 
 local xvfb_display
 
@@ -92,6 +93,15 @@ local function spawn_luakit_instance(config, ...)
         XDG_CONFIG_DIRS = "",
         DISPLAY = xvfb_display
     }
+
+    -- HACK: make GStreamer shut up about not finding random .so files
+    -- when it rebuilds its registry, which it does with every single
+    -- luakit instance spawned this way
+    local gst_dir = posix.getenv("XDG_CACHE_HOME") .. "/gstreamer-1.0"
+    if lfs.attributes(gst_dir, "mode") == "directory" then
+        os.execute("mkdir -p " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0/")
+        os.execute("cp "..gst_dir.."/registry.x86_64.bin " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0")
+    end
 
     -- Build env prefix
     local cmd = "env --ignore-environment - "
