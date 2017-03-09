@@ -9,6 +9,9 @@ package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 
 local util = require "tests.util"
 local posix = require "posix"
+local lfs = require "lfs"
+
+local xvfb_display
 
 local current_test_name
 local prev_test_name
@@ -73,13 +76,57 @@ local function do_style_tests(test_files)
     end
 end
 
-local function do_async_tests(test_files)
-    -- Launch Xvfb
-    local pid_xvfb = util.spawn({"Xvfb", ":1", "-screen", "0", "800x600x8"})
+local luakit_tmp_dirs = {}
 
+local function spawn_luakit_instance(config, ...)
+    -- Create a temporary directory, hopefully on a ramdisk
+    local dir = posix.mkdtemp("/tmp/luakit_test_XXXXXX")
+    table.insert(luakit_tmp_dirs, dir)
+
+    -- Cheap version of a chroot that doesn't require special permissions
+    local env = {
+        HOME            = dir,
+        XDG_CACHE_HOME  = dir .. "/cache",
+        XDG_DATA_HOME   = dir .. "/data",
+        XDG_CONFIG_HOME = dir .. "/config",
+        XDG_RUNTIME_DIR = dir .. "/runtime",
+        XDG_CONFIG_DIRS = "",
+        DISPLAY = xvfb_display
+    }
+
+    -- HACK: make GStreamer shut up about not finding random .so files
+    -- when it rebuilds its registry, which it does with every single
+    -- luakit instance spawned this way
+    local gst_dir = posix.getenv("XDG_CACHE_HOME") .. "/gstreamer-1.0"
+    if lfs.attributes(gst_dir, "mode") == "directory" then
+        os.execute("mkdir -p " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0/")
+        os.execute("cp "..gst_dir.."/registry.x86_64.bin " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0")
+    end
+
+    -- Build env prefix
+    local cmd = "env --ignore-environment - "
+    for k, v in pairs(env) do
+        cmd = cmd .. k .."=" .. v .. " "
+    end
+
+    cmd = cmd .. "./luakit -U --log=fatal -c " .. config .. " " .. table.concat({...}, " ")  .. " 2>&1"
+    return assert(io.popen(cmd))
+end
+
+-- Automatically clean up test directories
+local luakit_tmp_dirs_prx = newproxy(true)
+getmetatable(luakit_tmp_dirs_prx).__gc = function ()
+    print("Removing temporary directories")
+    for _, dir in ipairs(luakit_tmp_dirs) do
+        assert(dir:match("^/tmp/luakit_test_"))
+        os.execute("rm -r " .. dir)
+    end
+end
+
+local function do_async_tests(test_files)
     for _, test_file in ipairs(test_files) do
-        local command = "DISPLAY=:1 ./luakit -U --log=fatal -c tests/async/run_test.lua " .. test_file .. " 2>&1"
-        local f = io.popen(command)
+        local f = spawn_luakit_instance("tests/async/run_test.lua", test_file)
+
         local status, test_name
         for line in f:lines() do
             status, test_name = line:match("^__(%a+)__ ([%a_]+)$")
@@ -91,14 +138,15 @@ local function do_async_tests(test_files)
         end
         f:close()
     end
-
-    posix.kill(pid_xvfb)
 end
 
 local function do_lunit_tests(test_files)
     print("Running legacy tests...")
-    local command = "./luakit --log=fatal -c tests/lunit-run.lua " .. table.concat(test_files, " ")
-    os.execute(command)
+    local f = spawn_luakit_instance("tests/lunit-run.lua", unpack(test_files))
+    for line in f:lines() do
+        print(line)
+    end
+    f:close()
 end
 
 local test_file_pat = "/test_[a-z_]*%.lua$"
@@ -108,10 +156,37 @@ local test_files = {
     lunit = util.find_files("tests/lunit/", test_file_pat),
 }
 
+-- Find a free server number
+-- Does have a race condition...
+for i=0,math.huge do
+    local f = io.open(("/tmp/.X%d-lock"):format(i))
+    if not f then
+        xvfb_display = ":" .. tostring(i)
+        break
+    end
+    f:close()
+end
+
+-- Launch Xvfb for lifetime of test runner
+print("Starting Xvfb")
+local pid_xvfb = util.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
+local xvfb_prx = newproxy(true)
+getmetatable(xvfb_prx).__gc = function ()
+    print("Stopping Xvfb")
+    posix.kill(pid_xvfb)
+end
+
+-- Launch a test HTTP server
+print("Starting HTTP server")
+local pid_httpd = util.spawn({"luajit", "tests/httpd.lua"})
+local httpd_prx = newproxy(true)
+getmetatable(httpd_prx).__gc = function ()
+    print("Stopping HTTP server")
+    posix.kill(pid_httpd)
+end
+
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
 do_lunit_tests(test_files.lunit)
-
-util.cleanup()
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

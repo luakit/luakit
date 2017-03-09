@@ -25,6 +25,10 @@ function _M.wait_for_signal(object, signal, timeout)
     return coroutine.yield({object, signal, timeout=timeout})
 end
 
+function _M.http_server()
+    return "http://127.0.0.1:8888/"
+end
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
