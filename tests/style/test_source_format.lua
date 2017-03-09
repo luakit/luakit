@@ -206,6 +206,64 @@ function T.test_lua_module_uses_M ()
     end
 end
 
+local function test_lua_module_function_documentation (errors, file, lines, A, B)
+    local func = lines[B]:match("^function _M%.([^ %(]+)%(") or lines[B]:match("^_M%.(%S+) %= ")
+    if lines[A] ~= "" then
+        add_file_error(errors, file .. ":" .. tostring(A),
+            "Blank line required before export")
+        return
+    end
+    A = A + 1
+    if A == B then
+        add_file_error(errors, file .. ":" .. tostring(A), ("Undocumented export '%s'"):format(func))
+        return
+    end
+    if not lines[A]:match("^%-%-%- ") then
+        add_file_error(errors, file .. ":" .. tostring(A), "Documentation must start with '--- '")
+    end
+end
+
+function T.test_lua_module_functions_are_documented ()
+    local exclude_files = {
+        "lib/markdown%.lua",   -- External file
+        "lib/cookie.*%.lua",   -- Cookie handling is broken anyway
+    }
+
+    local errors = {}
+
+    local file_list = util.find_files("lib", "%.lua$", exclude_files)
+    for _, file in ipairs(file_list) do
+        -- Get file contents
+        local f = assert(io.open(file, "r"))
+        local lines = {}
+        for line in f:lines() do
+            lines[#lines + 1] = line
+        end
+        f:close()
+
+        -- Find all lines with ^function _M.foo lines
+        local func_lines = {}
+        for i, line in ipairs(lines) do
+            if line:match("^function _M%.") or line:match("^_M%.%S+ %= ")then
+                func_lines[#func_lines+1] = i
+            end
+        end
+
+        -- Find the bounds of the comment section
+        for _, i in ipairs(func_lines) do
+            local j = i
+            repeat
+                j = j - 1
+            until j == 1 or not lines[j]:match("^%-%-")
+            test_lua_module_function_documentation(errors, file, lines, j, i)
+        end
+    end
+
+    if #errors > 0 then
+        test.fail("Some Lua modules have documentation issues:\n" .. util.format_file_errors(errors))
+    end
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
