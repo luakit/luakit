@@ -190,6 +190,27 @@ function _M.match_but(object, binds, mods, button, args)
     return false
 end
 
+--- Determine if a string is a partial match for a Lua pattern
+-- Only a restricted subset of patterns are allowed; it's assumed the
+-- pattern should match the entire string (^$ is implied) and *+? are not
+-- permitted.
+-- @tparam string str The possible partial match
+-- @tparam string pat The pattern to match against
+local function is_partial_match(str, pat)
+    if str == "" then return true end
+
+    pat = pat:match("^%^?(.+)%$?$")
+    local first_char_pat = pat:match("^(%[[^%]]+%])") or pat:match("^(%%.)") or pat:sub(1,1)
+    local remainder = pat:sub(first_char_pat:len()+1)
+    assert(not remainder:match("^[%+%*%?]"), "+*? not supported!")
+
+    if not str:sub(1,1):find("^" .. first_char_pat) then
+        return false
+    else
+        return is_partial_match(str:sub(2), remainder)
+    end
+end
+
 --- Try and match a buffer binding in a given table of bindings and call that
 -- bindings callback function.
 -- @param object The first argument of the bind callback function.
@@ -198,21 +219,28 @@ end
 -- @param args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
 -- @return True if a binding was matched and called.
+-- @return True if a partial match exists.
 function _M.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
+    local has_partial_match = false
     for _, b in ipairs(binds) do
         if b.type == "buffer" and string.match(buffer, b.pattern) then
             if b.func(object, buffer, join(b.opts, args)) ~= false then
-                return true
+                return true, true
             end
         --elseif b.type == "any" then
         --    if b.func(object, join(b.opts, args)) ~= false then
         --        return true
         --    end
         end
+        if b.type == "buffer" then
+            if is_partial_match(buffer, b.pattern) then
+                has_partial_match = true
+            end
+        end
     end
-    return false
+    return false, has_partial_match
 end
 
 --- Try and match a command or buffer binding in a given table of bindings
@@ -270,7 +298,8 @@ end
 -- @return True if a key or buffer binding was matched or if a key was added to
 -- the buffer.
 -- @return The new buffer truncated to 10 characters (if you need more buffer
--- then use the input bar for whatever you are doing).
+-- then use the input bar for whatever you are doing). If no buffer binding
+-- could be matched, the returned buffer will be the empty string.
 function _M.hit(object, binds, mods, key, args)
     -- Convert keys using map
     key = _M.map[key] or key
@@ -317,8 +346,13 @@ function _M.hit(object, binds, mods, key, args)
             args.buffer = (args.buffer or "") .. key
             args.updated_buf = true
         end
-        if _M.match_buf(object, binds, args.buffer, args) then
+        local matched, partial = _M.match_buf(object, binds, args.buffer, args)
+        if matched then
             return true
+        end
+        -- If no partial match, clear the buffer
+        if not partial then
+            args.buffer = ""
         end
     end
 
