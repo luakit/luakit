@@ -27,6 +27,7 @@
 #include <glib.h>
 #include <glib/gstdio.h>
 #include <errno.h>
+#include <stdlib.h>
 
 #include "clib/web_module.h"
 #include "clib/luakit.h"
@@ -212,16 +213,33 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 #endif
 }
 
-void
-msg_init(void)
+static gchar *
+build_socket_path(void)
 {
     gchar *socket_name = g_strdup_printf("socket.%d", getpid());
     gchar *socket_path = g_build_filename(globalconf.cache_dir, socket_name, NULL);
     g_free(socket_name);
+    return socket_path;
+}
+
+static void
+remove_socket_file(void)
+{
+    gchar *socket_path = build_socket_path();
+    g_unlink(socket_path);
+    g_free(socket_path);
+}
+
+void
+msg_init(void)
+{
+    gchar *socket_path = build_socket_path();
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
+    /* Remove socket file at exit */
+    atexit(remove_socket_file);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
