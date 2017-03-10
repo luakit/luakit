@@ -43,6 +43,15 @@ WEBKIT_API GType webkit_dom_html_media_element_get_type(void);
 
 LUA_OBJECT_FUNCS(dom_element_class, dom_element_t, dom_element);
 
+static dom_element_t*
+luaH_check_dom_element(lua_State *L, gint udx)
+{
+    dom_element_t *element = luaH_checkudata(L, udx, &dom_element_class);
+    if (!WEBKIT_DOM_IS_ELEMENT(element->element))
+        luaL_argerror(L, udx, "DOM element no longer valid");
+    return element;
+}
+
 gint
 luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
 {
@@ -149,7 +158,7 @@ luaH_dom_element_gc(lua_State *L)
 static gint
 luaH_dom_element_query(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     const char *query = luaL_checkstring(L, 2);
     GError *error = NULL;
@@ -174,8 +183,8 @@ luaH_dom_element_query(lua_State *L)
 static gint
 luaH_dom_element_append(lua_State *L)
 {
-    dom_element_t *parent = luaH_checkudata(L, 1, &dom_element_class),
-                  *child = luaH_checkudata(L, 2, &dom_element_class);
+    dom_element_t *parent = luaH_check_dom_element(L, 1),
+                  *child = luaH_check_dom_element(L, 2);
     WebKitDOMNode *p = WEBKIT_DOM_NODE(parent->element),
                   *c = WEBKIT_DOM_NODE(child->element);
     GError *error = NULL;
@@ -191,15 +200,10 @@ luaH_dom_element_append(lua_State *L)
 static gint
 luaH_dom_element_remove(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    WebKitDOMElement *elem = luaH_check_dom_element(L, 1)->element;
     GError *error = NULL;
-
-    webkit_dom_element_remove(element->element, &error);
-
-    if (error)
-        return luaL_error(L, "remove element error: %s", error->message);
-
-    return 0;
+    webkit_dom_element_remove(elem, &error);
+    return error ? luaL_error(L, "remove element error: %s", error->message) : 0;
 }
 
 static void
@@ -220,7 +224,7 @@ dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
 static gint
 luaH_dom_element_rect_index(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
@@ -260,7 +264,7 @@ luaH_dom_element_push_rect_table(lua_State *L)
 static gint
 luaH_dom_element_attribute_index(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *name = luaL_checkstring(L, 2);
     const gchar *attr = webkit_dom_element_get_attribute(element->element, name);
     lua_pushstring(L, attr);
@@ -270,7 +274,7 @@ luaH_dom_element_attribute_index(lua_State *L)
 static gint
 luaH_dom_element_attribute_newindex(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *attr = luaL_checkstring(L, 2);
     const gchar *value = luaL_checkstring(L, 3);
     GError *error = NULL;
@@ -307,7 +311,7 @@ luaH_dom_element_push_attribute_table(lua_State *L)
 static gint
 luaH_dom_element_style_index(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, lua_upvalueindex(1), &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     WebKitDOMDocument *document = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
     WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
     WebKitDOMCSSStyleDeclaration *style = webkit_dom_dom_window_get_computed_style(window, element->element, "");
@@ -337,7 +341,7 @@ luaH_dom_element_push_style_table(lua_State *L)
 static gint
 luaH_dom_element_click(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
     WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
@@ -355,7 +359,7 @@ luaH_dom_element_click(lua_State *L)
 static gint
 luaH_dom_element_focus(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     webkit_dom_element_focus(element->element);
     return 0;
 }
@@ -363,7 +367,7 @@ luaH_dom_element_focus(lua_State *L)
 static gint
 luaH_dom_element_submit(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     webkit_dom_html_form_element_submit(WEBKIT_DOM_HTML_FORM_ELEMENT(element->element));
     return 0;
 }
@@ -393,7 +397,7 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
 static gint
 luaH_dom_element_add_event_listener(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     const gchar *type = luaL_checkstring(L, 2);
     gboolean capture = lua_toboolean(L, 3);
     luaH_checkfunction(L, 4);
@@ -411,7 +415,7 @@ luaH_dom_element_add_event_listener(lua_State *L)
 static gint
 luaH_dom_element_push_src(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
 
 #define CHECK(lower, upper) \
     if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
@@ -435,7 +439,7 @@ luaH_dom_element_push_src(lua_State *L)
 static gint
 luaH_dom_element_push_href(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
 
 #define CHECK(lower, upper) \
     if (WEBKIT_DOM_IS_##upper(element->element)) { \
@@ -457,7 +461,7 @@ luaH_dom_element_push_href(lua_State *L)
 static gint
 luaH_dom_element_push_value(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
 
 #define CHECK(lower, upper, type) \
     if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
@@ -507,7 +511,7 @@ dom_html_element_set_value(lua_State *L, WebKitDOMHTMLElement *element)
 static gint
 luaH_dom_element_push_parent(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMNode *parent = webkit_dom_node_get_parent_node(WEBKIT_DOM_NODE(element->element));
     return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(parent));
 }
@@ -515,7 +519,7 @@ luaH_dom_element_push_parent(lua_State *L)
 static gint
 luaH_dom_element_push_first_child(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_first_element_child(elem);
     return luaH_dom_element_from_node(L, child);
@@ -524,7 +528,7 @@ luaH_dom_element_push_first_child(lua_State *L)
 static gint
 luaH_dom_element_push_last_child(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_last_element_child(elem);
     return luaH_dom_element_from_node(L, child);
@@ -533,7 +537,7 @@ luaH_dom_element_push_last_child(lua_State *L)
 static gint
 luaH_dom_element_push_prev_sibling(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_previous_element_sibling(elem);
     return luaH_dom_element_from_node(L, child);
@@ -542,7 +546,7 @@ luaH_dom_element_push_prev_sibling(lua_State *L)
 static gint
 luaH_dom_element_push_next_sibling(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_next_element_sibling(elem);
     return luaH_dom_element_from_node(L, child);
@@ -551,7 +555,7 @@ luaH_dom_element_push_next_sibling(lua_State *L)
 static gint
 luaH_dom_element_push_document(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMDocument *doc;
 
     if (WEBKIT_DOM_IS_HTML_FRAME_ELEMENT(element->element)) {
@@ -569,7 +573,7 @@ luaH_dom_element_push_document(lua_State *L)
 static gint
 luaH_dom_element_push_owner_document(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
     return luaH_dom_document_from_webkit_dom_document(L, doc);
 }
@@ -577,7 +581,7 @@ luaH_dom_element_push_owner_document(lua_State *L)
 static gint
 luaH_dom_element_index(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
@@ -627,7 +631,7 @@ luaH_dom_element_index(lua_State *L)
 static gint
 luaH_dom_element_newindex(lua_State *L)
 {
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    dom_element_t *element = luaH_check_dom_element(L, 1);
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
