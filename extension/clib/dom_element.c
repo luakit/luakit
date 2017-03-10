@@ -188,13 +188,8 @@ luaH_dom_element_append(lua_State *L)
     WebKitDOMNode *p = WEBKIT_DOM_NODE(parent->element),
                   *c = WEBKIT_DOM_NODE(child->element);
     GError *error = NULL;
-
     webkit_dom_node_append_child(p, c, &error);
-
-    if (error)
-        return luaL_error(L, "create element error: %s", error->message);
-
-    return 0;
+    return error ? luaL_error(L, "append element error: %s", error->message) : 0;
 }
 
 static gint
@@ -278,13 +273,8 @@ luaH_dom_element_attribute_newindex(lua_State *L)
     const gchar *attr = luaL_checkstring(L, 2);
     const gchar *value = luaL_checkstring(L, 3);
     GError *error = NULL;
-
     webkit_dom_element_set_attribute(element->element, attr, value, &error);
-
-    if (error)
-        return luaL_error(L, "attribute error: %s", error->message);
-
-    return 0;
+    return error ? luaL_error(L, "attribute error: %s", error->message) : 0;
 }
 
 static gint
@@ -345,14 +335,14 @@ luaH_dom_element_click(lua_State *L)
     WebKitDOMElement *elem = element->element;
     WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
     WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
-    GError *err = NULL;
-    WebKitDOMEvent *event = webkit_dom_document_create_event(doc, "MouseEvent", &err);
-    if (err)
-        return luaL_error(L, "ERROR A: %s\n", err->message);
+    GError *error = NULL;
+    WebKitDOMEvent *event = webkit_dom_document_create_event(doc, "MouseEvent", &error);
+    if (error)
+        return luaL_error(L, "create event error: %s", error->message);
     webkit_dom_event_init_event(event, "click", TRUE, TRUE);
-    webkit_dom_event_target_dispatch_event(target, event, &err);
-    if (err)
-        return luaL_error(L, "ERROR B: %s\n", err->message);
+    webkit_dom_event_target_dispatch_event(target, event, &error);
+    if (error)
+        return luaL_error(L, "dispatch event error: %s", error->message);
     return 0;
 }
 
@@ -643,9 +633,11 @@ luaH_dom_element_newindex(lua_State *L)
                     luaL_checkstring(L, 3), &error);
             if (error)
                 return luaL_error(L, "set inner html error: %s", error->message);
+            break;
         case L_TK_VALUE:
             if (!dom_html_element_set_value(L, WEBKIT_DOM_HTML_ELEMENT(element->element)))
                 return luaL_error(L, "set value error: wrong element type");
+            break;
         case L_TK_CHECKED:
             webkit_dom_html_input_element_set_checked(
                     WEBKIT_DOM_HTML_INPUT_ELEMENT(element->element),
