@@ -67,9 +67,13 @@ local function submit_form(form, n)
     assert(type(form) == "dom_element" and form.tag_name == "FORM")
     assert(type(n) == "number")
 
-    if n > 0 then
-        local submits = form:query("input[type=submit]")
-        submits:click()
+    local submits = form:query("input[type=submit]")
+    local submit = submits[n == 0 and 1 or n]
+    assert(submit)
+
+    -- Fall back to clicking if submit input has onclick handler
+    if n > 0 or submit.attr.onclick then
+        submit:click()
     else
         form:submit()
     end
