@@ -29,6 +29,15 @@
 
 LUA_OBJECT_FUNCS(page_class, page_t, page);
 
+static page_t*
+luaH_check_page(lua_State *L, gint udx)
+{
+    page_t *page = luaH_checkudata(L, udx, &page_class);
+    if (!WEBKIT_IS_WEB_PAGE(page->page))
+        luaL_argerror(L, udx, "page no longer valid");
+    return page;
+}
+
 static gboolean
 send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
         WebKitURIResponse *UNUSED(redirected_response), page_t *UNUSED(page))
@@ -112,7 +121,7 @@ document_loaded_cb(WebKitWebPage *web_page, page_t *UNUSED(page))
 static gint
 luaH_page_eval_js(lua_State *L)
 {
-    page_t *page = luaH_checkudata(L, 1, &page_class);
+    page_t *page = luaH_check_page(L, 1);
     const gchar *script = luaL_checkstring(L, 2);
     const gchar *source = NULL;
 
@@ -137,7 +146,7 @@ luaH_page_js_func(lua_State *L)
 {
     const void *ctx = lua_topointer(L, lua_upvalueindex(1));
     const void *func = lua_topointer(L, lua_upvalueindex(2));
-    page_t *page = luaH_checkudata(L, lua_upvalueindex(3), &page_class);
+    page_t *page = luaH_check_page(L, lua_upvalueindex(3));
 
     gint argc = lua_gettop(L);
     JSValueRef *args = argc > 0 ? g_alloca(sizeof(*args)*argc) : NULL;
@@ -161,7 +170,7 @@ luaH_page_js_func(lua_State *L)
 static gint
 luaH_page_wrap_js(lua_State *L)
 {
-    page_t *page = luaH_checkudata(L, 1, &page_class);
+    page_t *page = luaH_check_page(L, 1);
     const gchar *script = luaL_checkstring(L, 2);
     if (!lua_isnil(L, 3))
         luaH_checktable(L, 3);
@@ -251,7 +260,7 @@ luaH_page_index(lua_State *L)
     if(luaH_usemetatable(L, 1, 2))
         return 1;
 
-    page_t *page = luaH_checkudata(L, 1, &page_class);
+    page_t *page = luaH_check_page(L, 1);
     luakit_token_t token = l_tokenize(prop);
 
     switch(token) {
