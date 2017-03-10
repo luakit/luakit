@@ -296,3 +296,5 @@ process_limit
 wrap_js
 editable
 is_playing_audio
+drawing_area
+invalidate
