@@ -77,7 +77,7 @@ gint
 luaH_widget_new(lua_State *L)
 {
     luaH_class_new(L, &widget_class);
-    widget_t *w = luaH_checkudata(L, -1, &widget_class);
+    widget_t *w = lua_touserdata(L, -1);
 
     /* save ref to the lua class instance */
     lua_pushvalue(L, -1);

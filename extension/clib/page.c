@@ -221,7 +221,7 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     luaH_class_new(L, &page_class);
     lua_remove(L, -2);
 
-    page_t *page = luaH_checkudata(L, -1, &page_class);
+    page_t *page = lua_touserdata(L, -1);
     page->page = web_page;
 
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
