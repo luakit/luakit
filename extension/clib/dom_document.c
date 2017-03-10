@@ -29,6 +29,15 @@
 
 LUA_OBJECT_FUNCS(dom_document_class, dom_document_t, dom_document);
 
+static dom_document_t*
+luaH_check_dom_document(lua_State *L, gint udx)
+{
+    dom_document_t *document = luaH_checkudata(L, udx, &dom_document_class);
+    if (!WEBKIT_DOM_IS_DOCUMENT(document->document))
+        luaL_argerror(L, udx, "DOM document no longer valid");
+    return document;
+}
+
 gint
 luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc)
 {
@@ -78,7 +87,7 @@ luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 static gint
 luaH_dom_document_window_index(lua_State *L)
 {
-    dom_document_t *document = luaH_checkudata(L, lua_upvalueindex(1), &dom_document_class);
+    dom_document_t *document = luaH_check_dom_document(L, lua_upvalueindex(1));
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
@@ -113,7 +122,7 @@ luaH_dom_document_push_window_table(lua_State *L)
 static gint
 luaH_dom_document_create_element(lua_State *L)
 {
-    dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
+    dom_document_t *document = luaH_check_dom_document(L, 1);
     const char *tagname = luaL_checkstring(L, 2);
     GError *error = NULL;
 
@@ -148,7 +157,7 @@ luaH_dom_document_create_element(lua_State *L)
 static gint
 luaH_dom_document_element_from_point(lua_State *L)
 {
-    dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
+    dom_document_t *document = luaH_check_dom_document(L, 1);
     glong x = luaL_checknumber(L, 2),
           y = luaL_checknumber(L, 3);
 
@@ -160,7 +169,7 @@ luaH_dom_document_element_from_point(lua_State *L)
 static gint
 luaH_dom_document_index(lua_State *L)
 {
-    dom_document_t *document = luaH_checkudata(L, 1, &dom_document_class);
+    dom_document_t *document = luaH_check_dom_document(L, 1);
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
