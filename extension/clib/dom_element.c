@@ -195,9 +195,11 @@ luaH_dom_element_append(lua_State *L)
 static gint
 luaH_dom_element_remove(lua_State *L)
 {
-    WebKitDOMElement *elem = luaH_check_dom_element(L, 1)->element;
+    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
+    if (!WEBKIT_DOM_IS_ELEMENT(element->element))
+        return 0;
     GError *error = NULL;
-    webkit_dom_element_remove(elem, &error);
+    webkit_dom_element_remove(element->element, &error);
     return error ? luaL_error(L, "remove element error: %s", error->message) : 0;
 }
 
