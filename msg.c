@@ -135,8 +135,8 @@ msg_recv_page_created(msg_endpoint_t *ipc, const guint64 *page_id, guint length)
     webview_connect_to_endpoint(w, ipc);
 }
 
-static void
-web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
+static gpointer
+web_extension_connect_thread(const gchar *socket_path)
 {
     int sock, web_socket;
     struct sockaddr_un local, remote;
@@ -145,37 +145,26 @@ web_extension_connect(msg_endpoint_t *ipc, const gchar *socket_path)
     int len = strlen(local.sun_path) + sizeof(local.sun_family);
 
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
-        fatal("Can't open new socket");
+        fatal("Error calling socket(): %s", strerror(errno));
 
     /* Remove any pre-existing socket, before opening */
     unlink(local.sun_path);
 
     if (bind(sock, (struct sockaddr *)&local, len) == -1)
-        fatal("Can't bind socket to %s", socket_path);
+        fatal("Error calling bind(): %s", strerror(errno));
 
     if (listen(sock, 5) == -1)
-        fatal("Can't listen on %s", socket_path);
+        fatal("Error calling listen(): %s", strerror(errno));
 
-    debug("Waiting for a connection...");
-
-    socklen_t size = sizeof(remote);
-    if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
-        fatal("Can't accept on %s", socket_path);
-
-    close(sock);
-    g_unlink(socket_path);
-
-    debug("Creating channel...");
-
-    msg_endpoint_connect_to_socket(ipc, web_socket);
-}
-
-static gpointer
-web_extension_connect_thread(gpointer socket_path)
-{
     while (TRUE) {
+        debug("Waiting for a connection...");
+
+        socklen_t size = sizeof(remote);
+        if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
+            fatal("Error calling accept(): %s", strerror(errno));
+
         msg_endpoint_t *ipc = msg_endpoint_new("UI");
-        web_extension_connect(ipc, socket_path);
+        msg_endpoint_connect_to_socket(ipc, web_socket);
     }
 
     return NULL;
@@ -235,7 +224,7 @@ msg_init(void)
 {
     gchar *socket_path = build_socket_path();
     /* Start web extension connection accept thread */
-    g_thread_new("accept_thread", web_extension_connect_thread, socket_path);
+    g_thread_new("accept_thread", (GThreadFunc) web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
     /* Remove socket file at exit */
