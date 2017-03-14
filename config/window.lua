@@ -633,7 +633,11 @@ window.methods = {
     end,
 
     -- Save, restart luakit and reload session.
-    restart = function (w)
+    restart = function (w, force)
+        if not force and not w:can_quit() then
+            return false
+        end
+
         -- Generate luakit launch command.
         local args = {({string.gsub(luakit.execpath, " ", "\\ ")})[1]}
         for _, arg in ipairs(luakit.options) do

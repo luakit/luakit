@@ -621,7 +621,7 @@ add_cmds({
         function (w) w:reload() end),
 
     cmd("restart", "Restart browser (reload config files).",
-        function (w) w:restart() end),
+        function (w, _, o) w:restart(o.bang) end),
 
     cmd("write", "Save current session.",
         function (w) w:save_session() end),
