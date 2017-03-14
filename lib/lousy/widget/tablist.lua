@@ -33,6 +33,9 @@ local function scroll_current_tab_into_view(tlist)
     -- When opening a new webview, the new tab widget's size is not yet allocated
     -- Queueing the scroll op avoids a lot of nasty hacks
     capi.luakit.idle_add(function()
+        -- Cancel if tlist already destroyed
+        if not data[tlist] then return end
+
         -- Get the currently selected tab
         local notebook = data[tlist].notebook
         local view = notebook[notebook:current()]

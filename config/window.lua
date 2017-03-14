@@ -154,6 +154,8 @@ window.init_funcs = {
             w:set_mode()
             -- Update widgets after tab switch
             luakit.idle_add(function ()
+                -- Cancel if window already destroyed
+                if not w.win then return end
                 w.view:emit_signal("switched-page")
                 w:update_win_title()
             end)
