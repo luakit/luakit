@@ -683,8 +683,14 @@ add_cmds({
     cmd("q[uit]", "Close the current window.",
         function (w, _, o) w:close_win(o.bang) end),
 
-    cmd({"wqall", "wq"}, "Save the session and quit.",
-        function (w, _, o) w:save_session() w:close_win(o.bang) end),
+    cmd({"wqall", "wq"}, "Save the session and quit.", function (w, _, o)
+        local force = o.bang
+        if not force and not w:can_quit() then return end
+        w:save_session()
+        for _, ww in pairs(window.bywidget) do
+            ww:close_win(true)
+        end
+    end),
 
     cmd("lua", "Evaluate Lua snippet.", function (w, a)
         if a then
