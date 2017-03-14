@@ -569,16 +569,22 @@ window.methods = {
         end
     end,
 
-    close_win = function (w, force)
+    can_quit = function (w)
         -- Ask plugins if it's OK to close last window
-        if not force and (#luakit.windows == 1) then
-            local emsg = luakit.emit_signal("can-close", w)
-            if emsg then
-                assert(type(emsg) == "string", "invalid exit error message")
-                w:error(string.format("Can't close luakit: %s (force close "
-                    .. "with :q! or :wq!)", emsg))
-                return false
-            end
+        local emsg = luakit.emit_signal("can-close")
+        if emsg then
+            assert(type(emsg) == "string", "invalid exit error message")
+            w:error(string.format("Can't close luakit: %s (force close "
+                .. "with :q! or :wq!)", emsg))
+            return false
+        else
+            return true
+        end
+    end,
+
+    close_win = function (w, force)
+        if not force and (#luakit.windows == 1) and not w:can_quit() then
+            return false
         end
 
         w:emit_signal("close")
