@@ -10,6 +10,8 @@ local pickle = lousy.pickle
 
 local _M = {}
 
+lousy.signal.setup(_M, true)
+
 local function rm(file)
     luakit.spawn(string.format("rm %q", file))
 end
@@ -21,25 +23,32 @@ _M.session_file = luakit.data_dir .. "/session"
 _M.recovery_file = luakit.data_dir .. "/recovery_session"
 
 -- Save all given windows uris to file.
-_M.save = function (wins, file)
+_M.save = function (file)
     if not file then file = _M.session_file end
     local state = {}
-    -- Save tabs from all the given windows
-    for wi, w in pairs(wins) do
+    local wins = lousy.util.table.values(window.bywidget)
+    -- Save tabs from all windows
+    for _, w in ipairs(wins) do
         local current = w.tabs:current()
-        state[wi] = { open = {}, closed = {} }
+        state[w] = { open = {} }
         for ti, tab in ipairs(w.tabs.children) do
-            table.insert(state[wi].open, {
+            table.insert(state[w].open, {
                 ti = ti,
                 current = (current == ti),
                 uri = tab.uri,
                 session_state = tab.session_state
             })
         end
-        for i, tab in ipairs(w.closed_tabs) do
-            state[wi].closed[i] = { session_state = tab.session_state, hist = tab.hist }
-        end
     end
+    _M.emit_signal("save", state)
+
+    -- Convert state keys from w to an index
+    local istate = {}
+    for i, w in ipairs(wins) do
+        assert(type(state[w]) == "table")
+        istate[i] = state[w]
+    end
+    state = istate
 
     if #state > 0 then
         local fh = io.open(file, "wb")
@@ -70,9 +79,10 @@ local restore_file = function (file, delete)
     local ok, wins = pcall(_M.load, delete, file)
     if not ok or #wins == 0 then return end
 
+    local state = {}
     -- Spawn windows
     local w
-    for _, win in pairs(wins) do
+    for _, win in ipairs(wins) do
         w = nil
         for _, item in ipairs(win.open) do
             if not w then
@@ -81,8 +91,10 @@ local restore_file = function (file, delete)
                 w:new_tab({ session_state = item.session_state, uri = item.uri  }, item.current)
             end
         end
-        w.closed_tabs = win.closed
+        -- Convert state keys from index to w table
+        state[w] = win
     end
+    _M.emit_signal("restore", state)
 
     return w
 end
@@ -95,8 +107,8 @@ end
 local recovery_save_timer = timer{ interval = 10*1000 }
 
 -- Save current window session helper
-window.methods.save_session = function (w)
-    _M.save({w,}, _M.session_file)
+window.methods.save_session = function ()
+    _M.save(_M.session_file)
 end
 
 local function start_timeout()
@@ -109,9 +121,7 @@ end
 
 recovery_save_timer:add_signal("timeout", function ()
     recovery_save_timer:stop()
-    local wins = {}
-    for _, w in pairs(window.bywidget) do table.insert(wins, w) end
-    _M.save(wins, _M.recovery_file)
+    _M.save(_M.recovery_file)
 end)
 
 window.init_funcs.session_init = function(w)

@@ -647,9 +647,7 @@ window.methods = {
         end
 
         -- Save session.
-        local wins = {}
-        for _, ww in pairs(window.bywidget) do table.insert(wins, ww) end
-        require("session").save(wins)
+        require("session").save()
 
         -- Replace current process with new luakit instance.
         luakit.exec(cmd)

@@ -10,6 +10,7 @@ local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
 local new_mode = require("modes").new_mode
+local session = require("session")
 
 local _M = {}
 
@@ -59,6 +60,23 @@ window.methods.undo_close_tab = function (w, index)
         reopening[view] = nil
     end)
 end
+
+session.add_signal("save", function (state)
+    for _, w in pairs(window.bywidget) do
+        assert(state[w])
+        assert(not state[w].closed)
+        state[w].closed = {}
+        for i, tab in ipairs(w.closed_tabs) do
+            state[w].closed[i] = { session_state = tab.session_state, hist = tab.hist }
+        end
+    end
+end)
+
+session.add_signal("restore", function (state)
+    for w, win in pairs(state) do
+        w.closed_tabs = win.closed
+    end
+end)
 
 window.init_funcs.undo_close_tab = function (w)
     w.closed_tabs = {}
