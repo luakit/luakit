@@ -16,6 +16,34 @@ local _M = {}
 
 local reopening = {}
 
+-- Map of view widgets to UIDs that are restored after reopening a web view
+local view_uids = setmetatable({}, { __mode = "k" })
+
+--- Returns a webview widget's UID, creating one if necessary.
+-- @tparam widget The webview.
+-- @treturn number The UID for the webview.
+local uid_from_view = function (view)
+    assert(type(view) == "widget" and view.type == "webview")
+    local uid = view_uids[view]
+    if not uid then
+        uid = view_uids.next or 0
+        view_uids.next = uid + 1
+        view_uids[view] = uid
+    end
+    return uid
+end
+
+--- Returns a webview with the given UID, if one exists.
+-- @tparam number The UID.
+-- @treturn widget The webview widget.
+local view_from_uid = function (uid)
+    if not uid then return end
+    assert(type(uid) == "number" and uid >= 0)
+    for v, u in pairs(view_uids) do
+        if u == uid and type(v) == "widget" then return v end
+    end
+end
+
 local on_tab_close = function (w, view)
     local tab
     -- Save tab history
@@ -25,11 +53,15 @@ local on_tab_close = function (w, view)
         tab = reopening[view]
         reopening[view] = nil
     else
-        tab = { hist = view.history, session_state = view.session_state }
+        tab = {
+            hist = view.history,
+            session_state = view.session_state,
+            self_uid = uid_from_view(view),
+        }
+        -- Save relative location
+        local index = w.tabs:indexof(view)
+        if index ~= 1 then tab.after_uid = uid_from_view(w.tabs[index-1]) end
     end
-    -- And relative location
-    local index = w.tabs:indexof(view)
-    if index ~= 1 then tab.after = w.tabs[index-1] end
     table.insert(w.closed_tabs, tab)
 end
 
@@ -46,9 +78,12 @@ window.methods.undo_close_tab = function (w, index)
     end
     local view = w:new_tab({ session_state = tab.session_state, hist = tab.hist })
     reopening[view] = tab
+    -- Restore saved view uid
+    view_uids[view] = tab.self_uid
     -- Attempt to open in last position
-    if tab.after then
-        local i = w.tabs:indexof(tab.after)
+    local after = view_from_uid(tab.after_uid)
+    if after then
+        local i = w.tabs:indexof(after)
         w.tabs:reorder(view, (i and i+1) or -1)
     else
         w.tabs:reorder(view, 1)
@@ -63,18 +98,34 @@ end
 
 session.add_signal("save", function (state)
     for _, w in pairs(window.bywidget) do
+        -- Save closed tabs for each window
         assert(state[w])
         assert(not state[w].closed)
         state[w].closed = {}
         for i, tab in ipairs(w.closed_tabs) do
-            state[w].closed[i] = { session_state = tab.session_state, hist = tab.hist }
+            state[w].closed[i] = tab
+        end
+        -- Save view uids for each view
+        -- HACK: This is rather brittle; need a better API for session stuff
+        for i, v in ipairs(w.tabs.children) do
+            state[w].open[i].view_uid = view_uids[v]
         end
     end
 end)
 
 session.add_signal("restore", function (state)
+    view_uids.next = 0
     for w, win in pairs(state) do
+        -- Restore closed tabs for each window
         w.closed_tabs = win.closed
+        -- Save view uids for each view, reconstruct view_uids.next
+        for i, v in ipairs(w.tabs.children) do
+            local uid = win.open[i].view_uid
+            view_uids[v] = uid
+            if uid and uid >= view_uids.next then
+                view_uids.next = uid + 1
+            end
+        end
     end
 end)
 
