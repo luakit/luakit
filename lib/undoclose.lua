@@ -20,7 +20,7 @@ local reopening = {}
 local view_uids = setmetatable({}, { __mode = "k" })
 
 --- Returns a webview widget's UID, creating one if necessary.
--- @tparam widget The webview.
+-- @tparam widget view The webview.
 -- @treturn number The UID for the webview.
 local uid_from_view = function (view)
     assert(type(view) == "widget" and view.type == "webview")
@@ -34,7 +34,7 @@ local uid_from_view = function (view)
 end
 
 --- Returns a webview with the given UID, if one exists.
--- @tparam number The UID.
+-- @tparam number uid The UID.
 -- @treturn widget The webview widget.
 local view_from_uid = function (uid)
     if not uid then return end
