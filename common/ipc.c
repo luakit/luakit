@@ -20,11 +20,11 @@
 
 #include "common/lualib.h"
 #include "common/luaserialize.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 
-/* Prototypes for msg_recv_... functions */
-#define X(name) void msg_recv_##name(msg_endpoint_t *ipc, const void *msg, guint length);
-    MSG_TYPES
+/* Prototypes for ipc_recv_... functions */
+#define X(name) void ipc_recv_##name(ipc_endpoint_t *ipc, const void *msg, guint length);
+    IPC_TYPES
 #undef X
 
 /*
@@ -39,27 +39,27 @@ static GAsyncQueue *send_queue;
 /** IPC endpoints for all webviews */
 static GPtrArray *endpoints;
 
-typedef struct _queued_msg_t {
-    msg_header_t header;
-    msg_endpoint_t *ipc;
+typedef struct _queued_ipc_t {
+    ipc_header_t header;
+    ipc_endpoint_t *ipc;
     char payload[0];
-} queued_msg_t;
+} queued_ipc_t;
 
 const GPtrArray *
-msg_endpoints_get(void)
+ipc_endpoints_get(void)
 {
     return endpoints;
 }
 
 static void
-msg_dispatch(msg_endpoint_t *ipc, msg_header_t header, gpointer payload)
+ipc_dispatch(ipc_endpoint_t *ipc, ipc_header_t header, gpointer payload)
 {
-    if (header.type != MSG_TYPE_log)
+    if (header.type != IPC_TYPE_log)
         debug("Process '%s': recv " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
-                ipc->name, msg_type_name(header.type));
+                ipc->name, ipc_type_name(header.type));
     switch (header.type) {
-#define X(name) case MSG_TYPE_##name: msg_recv_##name(ipc, payload, header.length); break;
-        MSG_TYPES
+#define X(name) case IPC_TYPE_##name: ipc_recv_##name(ipc, payload, header.length); break;
+        IPC_TYPES
 #undef X
         default:
             fatal("Received message with invalid type 0x%x", header.type);
@@ -67,28 +67,28 @@ msg_dispatch(msg_endpoint_t *ipc, msg_header_t header, gpointer payload)
 }
 
 static gboolean
-msg_dispatch_enqueued(msg_endpoint_t *ipc)
+ipc_dispatch_enqueued(ipc_endpoint_t *ipc)
 {
-    msg_recv_state_t *state = &ipc->recv_state;
+    ipc_recv_state_t *state = &ipc->recv_state;
 
-    if (state->queued_msgs->len > 0) {
-        queued_msg_t *msg = g_ptr_array_index(state->queued_msgs, 0);
+    if (state->queued_ipcs->len > 0) {
+        queued_ipc_t *msg = g_ptr_array_index(state->queued_ipcs, 0);
         /* Dispatch and free the message */
-        msg_dispatch(msg->ipc, msg->header, msg->payload);
-        g_ptr_array_remove_index(state->queued_msgs, 0);
-        g_slice_free1(sizeof(queued_msg_t) + state->hdr.length, state->payload);
+        ipc_dispatch(msg->ipc, msg->header, msg->payload);
+        g_ptr_array_remove_index(state->queued_ipcs, 0);
+        g_slice_free1(sizeof(queued_ipc_t) + state->hdr.length, state->payload);
         return TRUE;
     }
     return FALSE;
 }
 
 static gpointer
-msg_send_thread(gpointer UNUSED(user_data))
+ipc_send_thread(gpointer UNUSED(user_data))
 {
     while (TRUE) {
-        queued_msg_t *out = g_async_queue_pop(send_queue);
-        msg_endpoint_t *ipc = out->ipc;
-        msg_header_t *header = &out->header;
+        queued_ipc_t *out = g_async_queue_pop(send_queue);
+        ipc_endpoint_t *ipc = out->ipc;
+        ipc_header_t *header = &out->header;
         gpointer data = out->payload;
 
         if (ipc->channel) {
@@ -100,7 +100,7 @@ msg_send_thread(gpointer UNUSED(user_data))
         }
 
         /* Message is sent; endpoint can be freed now */
-        msg_endpoint_decref(ipc);
+        ipc_endpoint_decref(ipc);
         g_free(out);
     }
 
@@ -108,25 +108,25 @@ msg_send_thread(gpointer UNUSED(user_data))
 }
 
 void
-msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
+ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data)
 {
     if (!send_thread) {
         send_queue = g_async_queue_new();
-        send_thread = g_thread_new("send_thread", msg_send_thread, NULL);
+        send_thread = g_thread_new("send_thread", ipc_send_thread, NULL);
     }
 
     /* Keep the endpoint alive while the message is being sent */
-    if (!msg_endpoint_incref(ipc))
+    if (!ipc_endpoint_incref(ipc))
         return;
 
-    if (header->type != MSG_TYPE_log)
+    if (header->type != IPC_TYPE_log)
         debug("Process '%s': send " ANSI_COLOR_BLUE "%s" ANSI_COLOR_RESET " message",
-                ipc->name, msg_type_name(header->type));
+                ipc->name, ipc_type_name(header->type));
 
     g_assert((header->length == 0) == (data == NULL));
 
     /* Alloc and push a queued message; the send thread frees it */
-    queued_msg_t *msg = g_malloc(sizeof(*msg) + header->length);
+    queued_ipc_t *msg = g_malloc(sizeof(*msg) + header->length);
     msg->ipc = ipc;
     msg->header = *header;
     if (header->length)
@@ -136,26 +136,26 @@ msg_send(msg_endpoint_t *ipc, const msg_header_t *header, const void *data)
 
 /* Callback function for channel watch */
 static gboolean
-msg_recv(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *ipc)
+ipc_recv(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *ipc)
 {
-    if (!msg_endpoint_incref(ipc))
+    if (!ipc_endpoint_incref(ipc))
         return TRUE;
 
-    (void) (msg_dispatch_enqueued(ipc) || msg_recv_and_dispatch_or_enqueue(ipc, MSG_TYPE_ANY));
+    (void) (ipc_dispatch_enqueued(ipc) || ipc_recv_and_dispatch_or_enqueue(ipc, IPC_TYPE_ANY));
 
-    msg_endpoint_decref(ipc);
+    ipc_endpoint_decref(ipc);
     return TRUE;
 }
 
 static gboolean
-msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *ipc)
+ipc_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *ipc)
 {
-    g_assert(ipc->status == MSG_ENDPOINT_CONNECTED);
+    g_assert(ipc->status == IPC_ENDPOINT_CONNECTED);
     g_assert(ipc->channel);
 
     gboolean should_exit = !strcmp(ipc->name, "Web");
 
-    msg_endpoint_decref(ipc);
+    ipc_endpoint_decref(ipc);
 
     if (should_exit)
         exit(0);
@@ -166,15 +166,15 @@ msg_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), msg_endpoint_t *
  * If the message matches the type mask, dispatch it; otherwise, enqueue it
  * Return true if a message was dispatched */
 gboolean
-msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask)
+ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask)
 {
     g_assert(ipc);
     g_assert(type_mask != 0);
 
-    msg_recv_state_t *state = &ipc->recv_state;
+    ipc_recv_state_t *state = &ipc->recv_state;
     GIOChannel *channel = ipc->channel;
 
-    gchar *buf = (state->hdr_done ? state->payload+sizeof(queued_msg_t) : &state->hdr) + state->bytes_read;
+    gchar *buf = (state->hdr_done ? state->payload+sizeof(queued_ipc_t) : &state->hdr) + state->bytes_read;
     gsize remaining = (state->hdr_done ? state->hdr.length : sizeof(state->hdr)) - state->bytes_read;
     gsize bytes_read;
     GError *error = NULL;
@@ -189,7 +189,7 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask)
             break;
     }
 
-    /* Update msg_recv state */
+    /* Update ipc_recv state */
     state->bytes_read += bytes_read;
     remaining -= bytes_read;
 
@@ -201,21 +201,21 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask)
         /* ... update state, and try to download payload */
         state->hdr_done = TRUE;
         state->bytes_read = 0;
-        state->payload = g_slice_alloc(sizeof(queued_msg_t) + state->hdr.length);
-        return msg_recv_and_dispatch_or_enqueue(ipc, type_mask);
+        state->payload = g_slice_alloc(sizeof(queued_ipc_t) + state->hdr.length);
+        return ipc_recv_and_dispatch_or_enqueue(ipc, type_mask);
     }
 
     /* Otherwise, we finished downloading the message */
     if (state->hdr.type & type_mask) {
-        msg_dispatch(ipc, state->hdr, state->payload+sizeof(queued_msg_t));
-        g_slice_free1(sizeof(queued_msg_t) + state->hdr.length, state->payload);
+        ipc_dispatch(ipc, state->hdr, state->payload+sizeof(queued_ipc_t));
+        g_slice_free1(sizeof(queued_ipc_t) + state->hdr.length, state->payload);
     } else {
         /* Copy the header into the space at the start of the payload slice */
-        queued_msg_t *queued_msg = state->payload;
-        queued_msg->header = state->hdr;
-        queued_msg->ipc = ipc;
-        g_ptr_array_add(state->queued_msgs, state->payload);
-        g_idle_add((GSourceFunc)msg_dispatch_enqueued, ipc);
+        queued_ipc_t *msg = state->payload;
+        msg->header = state->hdr;
+        msg->ipc = ipc;
+        g_ptr_array_add(state->queued_ipcs, state->payload);
+        g_idle_add((GSourceFunc)ipc_dispatch_enqueued, ipc);
     }
 
     /* Reset state for the next message */
@@ -228,23 +228,23 @@ msg_recv_and_dispatch_or_enqueue(msg_endpoint_t *ipc, int type_mask)
 }
 
 void
-msg_send_lua(msg_endpoint_t *ipc, msg_type_t type, lua_State *L, gint start, gint end)
+ipc_send_lua(ipc_endpoint_t *ipc, ipc_type_t type, lua_State *L, gint start, gint end)
 {
     GByteArray *buf = g_byte_array_new();
     lua_serialize_range(L, buf, start, end);
-    msg_header_t header = { .type = type, .length = buf->len };
-    msg_send(ipc, &header, buf->data);
+    ipc_header_t header = { .type = type, .length = buf->len };
+    ipc_send(ipc, &header, buf->data);
     g_byte_array_unref(buf);
 }
 
-msg_endpoint_t *
-msg_endpoint_new(const gchar *name)
+ipc_endpoint_t *
+ipc_endpoint_new(const gchar *name)
 {
-    msg_endpoint_t *ipc = g_slice_new0(msg_endpoint_t);
+    ipc_endpoint_t *ipc = g_slice_new0(ipc_endpoint_t);
 
     ipc->name = (gchar*)name;
     ipc->queue = g_byte_array_new();
-    ipc->status = MSG_ENDPOINT_DISCONNECTED;
+    ipc->status = IPC_ENDPOINT_DISCONNECTED;
     ipc->refcount = 1;
     ipc->creation_notified = FALSE;
 
@@ -252,7 +252,7 @@ msg_endpoint_new(const gchar *name)
 }
 
 WARN_UNUSED gboolean
-msg_endpoint_incref(msg_endpoint_t *ipc)
+ipc_endpoint_incref(ipc_endpoint_t *ipc)
 {
     /* Prevents incref/decref race */
     int old;
@@ -265,36 +265,36 @@ msg_endpoint_incref(msg_endpoint_t *ipc)
 }
 
 static void
-msg_endpoint_incref_no_check(msg_endpoint_t *ipc)
+ipc_endpoint_incref_no_check(ipc_endpoint_t *ipc)
 {
     g_atomic_int_inc(&ipc->refcount);
 }
 
 void
-msg_endpoint_decref(msg_endpoint_t *ipc)
+ipc_endpoint_decref(ipc_endpoint_t *ipc)
 {
     if (!g_atomic_int_dec_and_test(&ipc->refcount))
         return;
-    if (ipc->status == MSG_ENDPOINT_CONNECTED)
-        msg_endpoint_disconnect(ipc);
-    ipc->status = MSG_ENDPOINT_FREED;
-    g_slice_free(msg_endpoint_t, ipc);
+    if (ipc->status == IPC_ENDPOINT_CONNECTED)
+        ipc_endpoint_disconnect(ipc);
+    ipc->status = IPC_ENDPOINT_FREED;
+    g_slice_free(ipc_endpoint_t, ipc);
 }
 
 void
-msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
+ipc_endpoint_connect_to_socket(ipc_endpoint_t *ipc, int sock)
 {
     g_assert(ipc);
-    g_assert(ipc->status == MSG_ENDPOINT_DISCONNECTED);
+    g_assert(ipc->status == IPC_ENDPOINT_DISCONNECTED);
 
-    msg_recv_state_t *state = &ipc->recv_state;
-    state->queued_msgs = g_ptr_array_new();
+    ipc_recv_state_t *state = &ipc->recv_state;
+    state->queued_ipcs = g_ptr_array_new();
 
     GIOChannel *channel = g_io_channel_unix_new(sock);
     g_io_channel_set_encoding(channel, NULL, NULL);
     g_io_channel_set_buffered(channel, FALSE);
-    state->watch_in_id = g_io_add_watch(channel, G_IO_IN, (GIOFunc)msg_recv, ipc);
-    state->watch_hup_id = g_io_add_watch(channel, G_IO_HUP, (GIOFunc)msg_hup, ipc);
+    state->watch_in_id = g_io_add_watch(channel, G_IO_IN, (GIOFunc)ipc_recv, ipc);
+    state->watch_hup_id = g_io_add_watch(channel, G_IO_HUP, (GIOFunc)ipc_hup, ipc);
 
     /* Atomically update ipc->channel. This is done because on the web extension
      * thread, logging spawns a message send thread, which may attempt to write
@@ -302,7 +302,7 @@ msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
      * g_io_channel_unix_new(), but before it has been set up fully */
     g_atomic_pointer_set(&ipc->channel, channel);
 
-    ipc->status = MSG_ENDPOINT_CONNECTED;
+    ipc->status = IPC_ENDPOINT_CONNECTED;
 
     if (!endpoints)
         endpoints = g_ptr_array_sized_new(1);
@@ -312,17 +312,17 @@ msg_endpoint_connect_to_socket(msg_endpoint_t *ipc, int sock)
     g_ptr_array_add(endpoints, ipc);
 }
 
-msg_endpoint_t *
-msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
+ipc_endpoint_t *
+ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
 {
     g_assert(orig);
     g_assert(new);
-    g_assert(orig->status == MSG_ENDPOINT_DISCONNECTED);
-    g_assert(new->status == MSG_ENDPOINT_CONNECTED);
+    g_assert(orig->status == IPC_ENDPOINT_DISCONNECTED);
+    g_assert(new->status == IPC_ENDPOINT_CONNECTED);
 
     /* Incref always succeeds because this is called from a message
      * handler, which holds a temporary ref to the ipc channel  */
-    msg_endpoint_incref_no_check(new);
+    ipc_endpoint_incref_no_check(new);
 
     /* Send all queued messages */
     if (orig->queue) {
@@ -333,26 +333,26 @@ msg_endpoint_replace(msg_endpoint_t *orig, msg_endpoint_t *new)
         orig->queue = NULL;
     }
 
-    msg_endpoint_decref(orig);
+    ipc_endpoint_decref(orig);
     return new;
 }
 
 void
-msg_endpoint_disconnect(msg_endpoint_t *ipc)
+ipc_endpoint_disconnect(ipc_endpoint_t *ipc)
 {
-    g_assert(ipc->status == MSG_ENDPOINT_CONNECTED);
+    g_assert(ipc->status == IPC_ENDPOINT_CONNECTED);
     g_assert(ipc->channel);
 
     g_ptr_array_remove_fast(endpoints, ipc);
 
     /* Remove watches */
-    msg_recv_state_t *state = &ipc->recv_state;
+    ipc_recv_state_t *state = &ipc->recv_state;
     g_source_remove(state->watch_in_id);
     g_source_remove(state->watch_hup_id);
 
     /* Close channel */
     g_io_channel_shutdown(ipc->channel, TRUE, NULL);
-    ipc->status = MSG_ENDPOINT_DISCONNECTED;
+    ipc->status = IPC_ENDPOINT_DISCONNECTED;
     ipc->channel = NULL;
 }
 

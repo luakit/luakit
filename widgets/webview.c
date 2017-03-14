@@ -29,7 +29,7 @@
 #include "clib/widget.h"
 #include "common/signal.h"
 #include "web_context.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 
 typedef struct {
     /** The parent widget_t struct */
@@ -78,7 +78,7 @@ typedef struct {
     /** TLS Certificate, if using HTTPS */
     GTlsCertificate *cert;
 
-    msg_endpoint_t *ipc;
+    ipc_endpoint_t *ipc;
 } webview_data_t;
 
 static WebKitWebView *related_view;
@@ -589,11 +589,11 @@ static gint
 luaH_webview_crash(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
-    msg_header_t header = {
-        .type = MSG_TYPE_crash,
+    ipc_header_t header = {
+        .type = IPC_TYPE_crash,
         .length = 0
     };
-    msg_send(d->ipc, &header, NULL);
+    ipc_send(d->ipc, &header, NULL);
     return 0;
 }
 
@@ -1143,7 +1143,7 @@ webview_destructor(widget_t *w)
     d->is_alive = FALSE;
 
     g_assert(d->ipc);
-    msg_endpoint_decref(d->ipc);
+    ipc_endpoint_decref(d->ipc);
     d->ipc = NULL;
 
     g_ptr_array_remove(globalconf.webviews, w);
@@ -1200,7 +1200,7 @@ webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
     /* Give webview a new disconnected IPC endpoint */
     webview_data_t *d = w->data;
-    d->ipc = msg_endpoint_new("UI");
+    d->ipc = ipc_endpoint_new("UI");
 
     /* Emit 'crashed' signal on web view */
     lua_State *L = globalconf.L;
@@ -1211,14 +1211,14 @@ webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 }
 
 void
-webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc)
+webview_connect_to_endpoint(widget_t *w, ipc_endpoint_t *ipc)
 {
     g_assert(w->info->tok == L_TK_WEBVIEW);
     g_assert(ipc);
 
     /* Replace old endpoint with new, sendinq queued data */
     webview_data_t *d = w->data;
-    d->ipc = msg_endpoint_replace(d->ipc, ipc);
+    d->ipc = ipc_endpoint_replace(d->ipc, ipc);
 
     lua_State *L = globalconf.L;
 
@@ -1241,7 +1241,7 @@ webview_connect_to_endpoint(widget_t *w, msg_endpoint_t *ipc)
     lua_pop(L, 1);
 }
 
-msg_endpoint_t *
+ipc_endpoint_t *
 webview_get_endpoint(widget_t *w)
 {
     g_assert(w->info->tok == L_TK_WEBVIEW);
@@ -1285,7 +1285,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     d->is_alive = TRUE;
 
     /* Create a new endpoint with one ref (this webview) */
-    d->ipc = msg_endpoint_new("UI");
+    d->ipc = ipc_endpoint_new("UI");
 
     w->widget = GTK_WIDGET(d->view);
 

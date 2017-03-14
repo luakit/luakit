@@ -22,7 +22,7 @@
 #define LUAKIT_EXTENSION_CLIB_LUAKIT_H
 
 #include "common/luaclass.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 
 void luakit_lib_setup(lua_State *L);
 

@@ -32,15 +32,15 @@ luaH_require_web_module(lua_State *L)
 }
 
 void
-web_module_load_modules_on_endpoint(msg_endpoint_t *ipc)
+web_module_load_modules_on_endpoint(ipc_endpoint_t *ipc)
 {
     for (unsigned i = 0; i < required_web_modules->len; i++) {
         const gchar *module_name = required_web_modules->pdata[i];
-        msg_header_t header = {
-            .type = MSG_TYPE_lua_require_module,
+        ipc_header_t header = {
+            .type = IPC_TYPE_lua_require_module,
             .length = strlen(module_name)+1
         };
-        msg_send(ipc, &header, module_name);
+        ipc_send(ipc, &header, module_name);
     }
 }
 

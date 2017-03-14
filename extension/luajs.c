@@ -24,7 +24,7 @@
 #include "luah.h"
 #include "extension/extension.h"
 #include "extension/luajs.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 #include "common/lualib.h"
 #include "common/luaserialize.h"
 #include "common/luajs.h"
@@ -34,7 +34,7 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
 static void
 lua_gc_stack_top(lua_State *L)
 {
-    msg_send_lua(extension.ipc, MSG_TYPE_lua_js_gc, L, -1, -1);
+    ipc_send_lua(extension.ipc, IPC_TYPE_lua_js_gc, L, -1, -1);
 }
 
 typedef struct _luajs_func_ctx_t {
@@ -74,14 +74,14 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
     }
 
     /* Notify UI process of function call... */
-    msg_send_lua(extension.ipc, MSG_TYPE_lua_js_call, L, top+1, -1);
+    ipc_send_lua(extension.ipc, IPC_TYPE_lua_js_call, L, top+1, -1);
 
     /* ...and block until it's replied */
     do {
         usleep(1);
-    } while(!msg_recv_and_dispatch_or_enqueue(extension.ipc, MSG_TYPE_lua_js_call));
+    } while(!ipc_recv_and_dispatch_or_enqueue(extension.ipc, IPC_TYPE_lua_js_call));
 
-    /* At this point, reply was just handled in msg_recv_lua_js_call() below */
+    /* At this point, reply was just handled in ipc_recv_lua_js_call() below */
 
     JSValueRef ret = NULL;
 
@@ -102,7 +102,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
 }
 
 void
-msg_recv_lua_js_call(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+ipc_recv_lua_js_call(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     int n = lua_deserialize_range(L, msg, length);
@@ -112,7 +112,7 @@ msg_recv_lua_js_call(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint lengt
 }
 
 void
-msg_recv_lua_js_register(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+ipc_recv_lua_js_register(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
 

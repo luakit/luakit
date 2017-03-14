@@ -21,21 +21,21 @@
 
 #include "extension/extension.h"
 #include "extension/scroll.h"
-#include "extension/msg.h"
+#include "extension/ipc.h"
 
 static void
-send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, msg_scroll_subtype_t subtype)
+send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t subtype)
 {
-    const msg_scroll_t data = {
+    const ipc_scroll_t data = {
         .h = h, .v = v,.page_id = webkit_web_page_get_id(web_page), .subtype = subtype
     };
 
-    msg_header_t header = {
-        .type = MSG_TYPE_scroll,
+    ipc_header_t header = {
+        .type = IPC_TYPE_scroll,
         .length = sizeof(data)
     };
 
-    msg_send(extension.ipc, &header, &data);
+    ipc_send(extension.ipc, &header, &data);
 }
 
 static void
@@ -43,7 +43,7 @@ window_scroll_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebK
 {
     gint h = webkit_dom_dom_window_get_scroll_x(window);
     gint v = webkit_dom_dom_window_get_scroll_y(window);
-    send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_scroll);
+    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_scroll);
 }
 
 static void
@@ -51,7 +51,7 @@ window_resize_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebK
 {
     gint h = webkit_dom_dom_window_get_inner_width(window);
     gint v = webkit_dom_dom_window_get_inner_height(window);
-    send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_winresize);
+    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_winresize);
 }
 
 static gint scroll_width_prev = -1, scroll_height_prev = -1;
@@ -69,7 +69,7 @@ document_resize_cb(WebKitDOMElement *html, WebKitDOMEvent *UNUSED(event), WebKit
     scroll_width_prev = h;
     scroll_height_prev = v;
 
-    send_scroll_msg(h, v, web_page, MSG_SCROLL_TYPE_docresize);
+    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_docresize);
 }
 
 static void

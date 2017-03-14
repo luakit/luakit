@@ -22,7 +22,7 @@
 #include <stdlib.h>
 
 #include "common/luajs.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 #include "common/luaserialize.h"
 
 void
@@ -85,7 +85,7 @@ luaH_webview_eval_js(lua_State *L)
     lua_pushstring(L, script);
     lua_pushstring(L, usr_source ? g_strdup(usr_source) : source);
     lua_pushlightuserdata(L, cb);
-    msg_send_lua(d->ipc, MSG_TYPE_eval_js, L, -5, -1);
+    ipc_send_lua(d->ipc, IPC_TYPE_eval_js, L, -5, -1);
     lua_pop(L, 5);
 
     return FALSE;

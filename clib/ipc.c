@@ -18,7 +18,7 @@
 
 #include <webkit2/webkit2.h>
 #include "clib/widget.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 #include "widgets/webview.h"
 #include "common/luauniq.h"
 
@@ -32,7 +32,7 @@ ipc_channel_send(lua_State *L)
 {
     ipc_channel_t *ipc_channel = luaH_check_ipc_channel(L, 1);
     guint64 page_id = 0;
-    msg_endpoint_t *ipc = NULL;
+    ipc_endpoint_t *ipc = NULL;
 
     /* Optional first argument: view to send message to */
     if (lua_isuserdata(L, 2)) {
@@ -47,12 +47,12 @@ ipc_channel_send(lua_State *L)
     lua_pushinteger(L, page_id);
 
     if (ipc)
-        msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+        ipc_send_lua(ipc, IPC_TYPE_lua_ipc, L, 2, lua_gettop(L));
     else {
-        const GPtrArray *endpoints = msg_endpoints_get();
+        const GPtrArray *endpoints = ipc_endpoints_get();
         for (unsigned i = 0; i < endpoints->len; i++) {
-            msg_endpoint_t *ipc = g_ptr_array_index(endpoints, i);
-            msg_send_lua(ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+            ipc_endpoint_t *ipc = g_ptr_array_index(endpoints, i);
+            ipc_send_lua(ipc, IPC_TYPE_lua_ipc, L, 2, lua_gettop(L));
         }
     }
 

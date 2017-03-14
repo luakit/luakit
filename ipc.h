@@ -16,13 +16,13 @@
  *
  */
 
-#ifndef LUAKIT_MSG_H
-#define LUAKIT_MSG_H
+#ifndef LUAKIT_IPC_H
+#define LUAKIT_IPC_H
 
-#include "common/msg.h"
+#include "common/ipc.h"
 
-void msg_init(void);
-void msg_endpoint_remove_from_endpoints(msg_endpoint_t *);
+void ipc_init(void);
+void ipc_endpoint_remove_from_endpoints(ipc_endpoint_t *);
 
 #endif
 

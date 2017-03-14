@@ -18,25 +18,25 @@
  *
  */
 
-#include "msg.h"
+#include "ipc.h"
 
 void
-webview_scroll_recv(widget_t *w, const msg_scroll_t *msg)
+webview_scroll_recv(widget_t *w, const ipc_scroll_t *msg)
 {
     webview_data_t *d = w->data;
     if (webkit_web_view_get_page_id(d->view) != msg->page_id)
         return;
 
     switch (msg->subtype) {
-        case MSG_SCROLL_TYPE_docresize:
+        case IPC_SCROLL_TYPE_docresize:
             d->doc_w = msg->h;
             d->doc_h = msg->v;
             break;
-        case MSG_SCROLL_TYPE_winresize:
+        case IPC_SCROLL_TYPE_winresize:
             d->win_w = msg->h;
             d->win_h = msg->v;
             break;
-        case MSG_SCROLL_TYPE_scroll:
+        case IPC_SCROLL_TYPE_scroll:
             d->scroll_x = msg->h;
             d->scroll_y = msg->v;
         default:
@@ -63,7 +63,7 @@ luaH_webview_scroll_newindex(lua_State *L)
     lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
     lua_pushinteger(L, d->scroll_x);
     lua_pushinteger(L, d->scroll_y);
-    msg_send_lua(d->ipc, MSG_TYPE_scroll, L, 4, 6);
+    ipc_send_lua(d->ipc, IPC_TYPE_scroll, L, 4, 6);
 
     return 0;
 }

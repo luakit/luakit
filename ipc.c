@@ -17,7 +17,7 @@
  */
 
 #include "globalconf.h"
-#include "msg.h"
+#include "ipc.h"
 
 #include <assert.h>
 #include <webkit2/webkit2.h>
@@ -37,12 +37,12 @@
 #include "web_context.h"
 #include "widgets/webview.h"
 
-void webview_scroll_recv(void *d, const msg_scroll_t *msg);
+void webview_scroll_recv(void *d, const ipc_scroll_t *ipc);
 void run_javascript_finished(const guint8 *msg, guint length);
 
 #define NO_HANDLER(type) \
 void \
-msg_recv_##type(msg_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint UNUSED(length)) \
+ipc_recv_##type(ipc_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint UNUSED(length)) \
 { \
     fatal("UI process should never receive message of type %s", #type); \
 } \
@@ -53,36 +53,36 @@ NO_HANDLER(web_extension_loaded)
 NO_HANDLER(crash)
 
 void
-msg_recv_extension_init(msg_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length))
+ipc_recv_extension_init(ipc_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length))
 {
     web_module_load_modules_on_endpoint(ipc);
     luaH_register_functions_on_endpoint(ipc, globalconf.L);
 
     /* Notify web extension that pending signals can be released */
-    msg_header_t header = { .type = MSG_TYPE_extension_init, .length = 0 };
-    msg_send(ipc, &header, NULL);
+    ipc_header_t header = { .type = IPC_TYPE_extension_init, .length = 0 };
+    ipc_send(ipc, &header, NULL);
 }
 
 void
-msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
+ipc_recv_lua_ipc(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_ipc_t *msg, guint length)
 {
     ipc_channel_recv(globalconf.L, msg->arg, length);
 }
 
 void
-msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), msg_scroll_t *msg, guint UNUSED(length))
+ipc_recv_scroll(ipc_endpoint_t *UNUSED(ipc), ipc_scroll_t *msg, guint UNUSED(length))
 {
     g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
 }
 
 void
-msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     run_javascript_finished(msg, length);
 }
 
 void
-msg_recv_lua_js_call(msg_endpoint_t *from, const guint8 *msg, guint length)
+ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
@@ -108,12 +108,12 @@ msg_recv_lua_js_call(msg_endpoint_t *from, const guint8 *msg, guint length)
     lua_pushboolean(L, !luaH_dofunction(L, argc, 1));
 
     /* Serialize the result, and send it back */
-    msg_send_lua(from, MSG_TYPE_lua_js_call, L, -2, -1);
+    ipc_send_lua(from, IPC_TYPE_lua_js_call, L, -2, -1);
     lua_settop(L, top);
 }
 
 void
-msg_recv_lua_js_gc(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+ipc_recv_lua_js_gc(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = globalconf.L;
     /* Unref the function reference we got */
@@ -124,7 +124,7 @@ msg_recv_lua_js_gc(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 }
 
 void
-msg_recv_page_created(msg_endpoint_t *ipc, const guint64 *page_id, guint length)
+ipc_recv_page_created(ipc_endpoint_t *ipc, const guint64 *page_id, guint length)
 {
     g_assert(length == sizeof(*page_id));
     widget_t *w = webview_get_by_id(*page_id);
@@ -163,8 +163,8 @@ web_extension_connect_thread(const gchar *socket_path)
         if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
             fatal("Error calling accept(): %s", strerror(errno));
 
-        msg_endpoint_t *ipc = msg_endpoint_new("UI");
-        msg_endpoint_connect_to_socket(ipc, web_socket);
+        ipc_endpoint_t *ipc = ipc_endpoint_new("UI");
+        ipc_endpoint_connect_to_socket(ipc, web_socket);
     }
 
     return NULL;
@@ -220,7 +220,7 @@ remove_socket_file(void)
 }
 
 void
-msg_init(void)
+ipc_init(void)
 {
     gchar *socket_path = build_socket_path();
     /* Start web extension connection accept thread */

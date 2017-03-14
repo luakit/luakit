@@ -26,7 +26,7 @@
 
 #include "extension/extension.h"
 #include "extension/clib/extension.h"
-#include "extension/msg.h"
+#include "extension/ipc.h"
 #include "extension/scroll.h"
 #include "common/util.h"
 #include "common/luajs.h"
@@ -36,7 +36,7 @@
 static GPtrArray *queued_page_ipc;
 
 void
-msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_module_t *msg, guint length)
+ipc_recv_lua_require_module(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_require_module_t *msg, guint length)
 {
     const char *module_name = msg->module_name;
     assert(strlen(module_name) > 0);
@@ -48,20 +48,20 @@ msg_recv_lua_require_module(msg_endpoint_t *UNUSED(ipc), const msg_lua_require_m
 }
 
 void
-msg_recv_lua_msg(msg_endpoint_t *UNUSED(ipc), const msg_lua_msg_t *msg, guint length)
+ipc_recv_lua_ipc(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_ipc_t *msg, guint length)
 {
     ipc_channel_recv(extension.WL, msg->arg, length);
 }
 
 void
-msg_recv_extension_init(msg_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
+ipc_recv_extension_init(ipc_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     emit_pending_page_creation_ipc();
     extension_class_emit_pending_signals(extension.WL);
 }
 
 void
-msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+ipc_recv_scroll(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
@@ -77,7 +77,7 @@ msg_recv_scroll(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 }
 
 void
-msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = extension.WL;
     gint n = lua_deserialize_range(L, msg, length);
@@ -102,7 +102,7 @@ msg_recv_eval_js(msg_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     n = luaJS_eval_js(L, ctx, script, source, no_return);
     /* Send source and callback ref back again as well */
     if (n) /* Don't send if no_return == true and no errors */
-        msg_send_lua(extension.ipc, MSG_TYPE_eval_js, L, -n-2, -1);
+        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -n-2, -1);
     lua_pop(L, 5 + n);
 }
 
@@ -116,7 +116,7 @@ do_crash(gpointer UNUSED(user_data))
 }
 
 void
-msg_recv_crash(msg_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNUSED(length))
+ipc_recv_crash(ipc_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNUSED(length))
 {
     g_idle_add(do_crash, NULL);
 }
@@ -126,8 +126,8 @@ emit_page_created_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     guint64 page_id = webkit_web_page_get_id(web_page);
 
-    msg_header_t header = { .type = MSG_TYPE_page_created, .length = sizeof(page_id) };
-    msg_send(extension.ipc, &header, &page_id);
+    ipc_header_t header = { .type = IPC_TYPE_page_created, .length = sizeof(page_id) };
+    ipc_send(extension.ipc, &header, &page_id);
 }
 
 void
@@ -174,7 +174,7 @@ web_extension_connect(const gchar *socket_path)
 
     debug("luakit web process: connected");
 
-    msg_endpoint_connect_to_socket(extension.ipc, sock);
+    ipc_endpoint_connect_to_socket(extension.ipc, sock);
 
     g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
     queued_page_ipc = g_ptr_array_sized_new(1);

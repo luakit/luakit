@@ -21,7 +21,7 @@
 #include "common/util.h"
 #include "globalconf.h"
 #include "luah.h"
-#include "msg.h"
+#include "ipc.h"
 #include "web_context.h"
 
 #include <errno.h>
@@ -192,7 +192,7 @@ main(gint argc, gchar *argv[])
 
     init_directories();
     web_context_init();
-    msg_init();
+    ipc_init();
     init_lua(uris);
 
     /* hide command line parameters so process lists don't leak (possibly

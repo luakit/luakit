@@ -22,7 +22,7 @@
 #include "common/clib/luakit.h"
 #include "clib/widget.h"
 #include "common/luaserialize.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 #include "common/signal.h"
 #include "luah.h"
 #include "web_context.h"
@@ -540,7 +540,7 @@ luaH_luakit_register_function(lua_State *L)
 }
 
 void
-luaH_register_functions_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
+luaH_register_functions_on_endpoint(ipc_endpoint_t *ipc, lua_State *L)
 {
     if (!registrations)
         return;
@@ -555,7 +555,7 @@ luaH_register_functions_on_endpoint(msg_endpoint_t *ipc, lua_State *L)
         luaH_object_push(L, reg.ref);
         luaH_object_ref(L, -1);
 
-        msg_send_lua(ipc, MSG_TYPE_lua_js_register, L, -3, -1);
+        ipc_send_lua(ipc, IPC_TYPE_lua_js_register, L, -3, -1);
         lua_pop(L, 3);
     }
 }

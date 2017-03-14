@@ -21,7 +21,7 @@
 #include "globalconf.h"
 #include "common/log.h"
 #include "common/luaserialize.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 
 #include <glib/gprintf.h>
 #include <stdlib.h>
@@ -117,7 +117,7 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
 }
 
 void
-msg_recv_log(msg_endpoint_t *UNUSED(ipc), const guint8 *lua_msg, guint length)
+ipc_recv_log(ipc_endpoint_t *UNUSED(ipc), const guint8 *lua_msg, guint length)
 {
     lua_State *L = globalconf.L;
     gint n = lua_deserialize_range(L, lua_msg, length);

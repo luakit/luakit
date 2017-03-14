@@ -16,7 +16,7 @@
  *
  */
 
-#include "extension/msg.h"
+#include "extension/ipc.h"
 #include "extension/extension.h"
 #include "extension/clib/page.h"
 #include "common/clib/ipc.h"
@@ -30,7 +30,7 @@ ipc_channel_send(lua_State *L)
     ipc_channel_t *ipc_channel = luaH_check_ipc_channel(L, 1);
     luaL_checkstring(L, 2);
     lua_pushstring(L, ipc_channel->name);
-    msg_send_lua(extension.ipc, MSG_TYPE_lua_msg, L, 2, lua_gettop(L));
+    ipc_send_lua(extension.ipc, IPC_TYPE_lua_ipc, L, 2, lua_gettop(L));
     return 0;
 }
 

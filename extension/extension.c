@@ -24,7 +24,7 @@
 #include "common/luah.h"
 #include "common/luautil.h"
 #include "common/luauniq.h"
-#include "extension/msg.h"
+#include "extension/ipc.h"
 #include "common/luaobject.h"
 #include "extension/extension.h"
 
@@ -78,7 +78,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
 
     extension.WL = luaL_newstate();
     extension.ext = ext;
-    extension.ipc = msg_endpoint_new("Web");
+    extension.ipc = ipc_endpoint_new("Web");
 
     if (web_extension_connect(socket_path)) {
         debug("luakit web process: connecting to UI thread failed");
@@ -93,8 +93,8 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     debug("luakit web process: PID %d", getpid());
     debug("luakit web process: ready for messages");
 
-    msg_header_t header = { .type = MSG_TYPE_extension_init, .length = 0 };
-    msg_send(extension.ipc, &header, NULL);
+    ipc_header_t header = { .type = IPC_TYPE_extension_init, .length = 0 };
+    ipc_send(extension.ipc, &header, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

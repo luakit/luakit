@@ -19,10 +19,10 @@
 #ifndef LUAKIT_CLIB_WEB_MODULE_H
 #define LUAKIT_CLIB_WEB_MODULE_H
 
-#include "common/msg.h"
+#include "common/ipc.h"
 
 void web_module_lib_setup(lua_State *);
-void web_module_load_modules_on_endpoint(msg_endpoint_t *ipc);
+void web_module_load_modules_on_endpoint(ipc_endpoint_t *ipc);
 
 #endif
 

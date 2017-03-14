@@ -20,7 +20,7 @@
 
 #include "extension/extension.h"
 #include "common/log.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 
 #include <glib/gprintf.h>
 
@@ -41,7 +41,7 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
     lua_pushinteger(L, line);
     lua_pushstring(L, fct);
     lua_pushstring(L, msg);
-    msg_send_lua(extension.ipc, MSG_TYPE_log, L, -4, -1);
+    ipc_send_lua(extension.ipc, IPC_TYPE_log, L, -4, -1);
     lua_pop(L, 4);
 
     g_free(msg);

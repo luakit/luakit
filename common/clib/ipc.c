@@ -46,7 +46,7 @@
 #include <assert.h>
 
 #include "common/clib/ipc.h"
-#include "common/msg.h"
+#include "common/ipc.h"
 #include "luah.h"
 #include "common/tokenize.h"
 #include "common/luaserialize.h"
