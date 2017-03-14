@@ -197,6 +197,8 @@ end
 -- @tparam string str The possible partial match
 -- @tparam string pat The pattern to match against
 local function is_partial_match(str, pat)
+    -- Strip off any numerical prefix to the buffer; allows count syntax to work
+    str = str:match("^%d*(%D.*)$") or ""
     if str == "" then return true end
 
     pat = pat:match("^%^?(.+)%$?$")
