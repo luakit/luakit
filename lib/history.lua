@@ -10,7 +10,7 @@ local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
 local _M = {}
 
--- Path of history sqlite database to open/create/update
+--- Path to history database.
 _M.db_path = capi.luakit.data_dir .. "/history.db"
 
 local query_find_last
@@ -21,6 +21,7 @@ local query_update_title
 -- Setup signals on history module
 lousy.signal.setup(_M, true)
 
+--- Connect to and initialize the history database.
 function _M.init()
     -- Return if database handle already open
     if _M.db then return end
@@ -67,6 +68,11 @@ end
 
 capi.luakit.idle_add(_M.init)
 
+--- Add a URI to the user's history.
+-- @tparam string uri The URI to add to the user's history.
+-- @tparam string title The title to associate with the URI.
+-- @tparam[opt] boolean update_visits False if the last visit time for this URI
+-- should not be updated.
 function _M.add(uri, title, update_visits)
     if not _M.db then _M.init() end
 

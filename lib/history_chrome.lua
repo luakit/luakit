@@ -12,6 +12,7 @@ local add_cmds = binds.add_cmds
 
 local _M = {}
 
+--- CSS applied to the history chrome page.
 _M.stylesheet = [===[
 .day-heading {
     font-size: 1.6em;
