@@ -1,4 +1,56 @@
---- Luakit formfiller.
+--- Provides functionaliy to auto-fill forms based on a Lua DSL.
+--
+-- The configuration is stored in `$XDG_DATA_DIR/luakit/forms.lua`
+--
+-- The following is an example for a formfiller definition:
+--
+--       on "luakit.org" {
+--         form "profile1" {
+--           method = "post",
+--           action = "/login",
+--           className = "someFormClass",
+--           id = "form_id",
+--           input {
+--             name = "username",
+--             type = "text",
+--             className = "someClass",
+--             id = "username_field",
+--             value = "myUsername",
+--           },
+--           input {
+--             name = "password",
+--             value = "myPassword",
+--           },
+--           input {
+--             name = "autologin",
+--             type = "checkbox",
+--             checked = true,
+--           },
+--           submit = true,
+--         },
+--       }
+--
+-- * The <code>form</code> function's string argument is optional.
+--   It allows you to define multiple profiles for use with the
+--   <code>zL</code> binding.
+-- * All entries are matched top to bottom, until one fully matches
+--   or calls <code>submit()</code>.
+-- * The <code>submit</code> attribute of a form can also be a number, which
+--   gives index of the submit button to click (starting with <code>1</code>).
+--   If there is no such button ore the argument is <code>true</code>,
+--   <code>form.submit()</code> will be called instead.
+-- * Instead of <code>submit</code>, you can also use <code>focus = true</code>
+--   inside an <code>input</code> to focus that element or <code>select = true</code>
+--   to select the text inside it.
+--   <code>focus</code> will trigger input mode.
+-- * The string argument to the <code>on</code> function and all of
+--   the attributes of the <code>form</code> and <code>input</code>
+--   tables take JavaScript regular expressions.
+--   BEWARE their escaping!
+--
+-- There is a conversion script in the luakit repository that converts
+-- from the old formfiller format to the new one. For more information,
+-- see the converter script under <code>extras/convert_formfiller.rb</code>
 --
 -- @module formfiller
 -- @copyright 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be>
@@ -12,64 +64,6 @@ local binds = require("binds")
 local add_binds = binds.add_binds
 local menu_binds = binds.menu_binds
 local capi = { luakit = luakit }
-
---- Provides functionaliy to auto-fill forms based on a Lua DSL.
--- The configuration is stored in $XDG_DATA_DIR/luakit/forms.lua
---
--- The following is an example for a formfiller definition:
---
--- <pre>
--- <br>  on "luakit.org" {
--- <br>    form "profile1" {
--- <br>      method = "post",
--- <br>      action = "/login",
--- <br>      className = "someFormClass",
--- <br>      id = "form_id",
--- <br>      input {
--- <br>        name = "username",
--- <br>        type = "text",
--- <br>        className = "someClass",
--- <br>        id = "username_field",
--- <br>        value = "myUsername",
--- <br>      },
--- <br>      input {
--- <br>        name = "password",
--- <br>        value = "myPassword",
--- <br>      },
--- <br>      input {
--- <br>        name = "autologin",
--- <br>        type = "checkbox",
--- <br>        checked = true,
--- <br>      },
--- <br>      submit = true,
--- <br>    },
--- <br>  }
--- </pre>
---
--- <ul>
--- <li> The <code>form</code> function's string argument is optional.
---      It allows you to define multiple profiles for use with the
---      <code>zL</code> binding.
--- <li> All entries are matched top to bottom, until one fully matches
---      or calls <code>submit()</code>.
--- <li> The <code>submit</code> attribute of a form can also be a number, which
---      gives index of the submit button to click (starting with <code>1</code>).
---      If there is no such button ore the argument is <code>true</code>,
---      <code>form.submit()</code> will be called instead.
--- <li> Instead of <code>submit</code>, you can also use <code>focus = true</code>
---      inside an <code>input</code> to focus that element or <code>select = true</code>
---      to select the text inside it.
---      <code>focus</code> will trigger input mode.
--- <li> The string argument to the <code>on</code> function and all of
---      the attributes of the <code>form</code> and <code>input</code>
---      tables take JavaScript regular expressions.
---      BEWARE their escaping!
--- </ul>
---
--- There is a conversion script in the luakit repository that converts
--- from the old formfiller format to the new one. For more information,
--- see the converter script under <code>extras/convert_formfiller.rb</code>
---
 
 local _M = {}
 
