@@ -11,7 +11,7 @@ local tab = require "lousy.widget.tab"
 
 local _M = {}
 
---- Width that tabs will shrink to before scrolling starts
+--- Width that tabs will shrink to before scrolling starts.
 _M.min_width = 100
 
 local data = setmetatable({}, { __mode = "k" })
@@ -75,6 +75,13 @@ local function regenerate_tab_indices(tlist, a, b)
     end
 end
 
+--- Create a new tablist widget connected to a given notebook widget.
+--
+-- `orientation` should be one of `"horizontal"` or `"vertical"`.
+--
+-- @tparam widget notebook The notebook widget to connect to.
+-- @tparam string orientation The orientation of the new tablist widget.
+-- @treturn table A table containing the new widget and its interface.
 function _M.new(notebook, orientation)
     assert(type(notebook) == "widget" and notebook.type == "notebook")
     assert(orientation == "horizontal" or orientation == "vertical")

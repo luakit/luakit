@@ -2,6 +2,9 @@
 --
 -- A table serialization utility for lua. Freeware.
 --
+-- *Note: The serialization format may change without notice. This
+-- should be treated as an opaque interface.*
+--
 -- @module lousy.pickle
 -- @author Steve Dekorte, http://www.dekorte.com
 -- @copyright 2000 Steve Dekorte
@@ -57,10 +60,16 @@ end
 
 local _M = {}
 
+--- Convert a table into a string that can be saved to disk.
+-- @tparam table t The table to serialize.
+-- @treturn string The string representing the table contents.
 _M.pickle = function(t)
     return Pickle:clone():pickle_(t)
 end
 
+--- Convert a string previously created with `pickle()` to a table.
+-- @tparam string s The string previously created with `pickle()`.
+-- @treturn table A table corresponding to the given string.
 _M.unpickle = function(s)
     if type(s) ~= "string" then
         error("can't unpickle a "..type(s)..", only strings")

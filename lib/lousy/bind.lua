@@ -12,16 +12,21 @@ local keys = util.table.keys
 
 local _M = {}
 
--- Modifiers to ignore
+--- Set of modifiers to ignore.
 _M.ignore_mask = {
     Mod2 = true, Mod3 = true, Mod5 = true, Lock = true,
 }
 
--- A table that contains mappings for key names.
+--- A table that contains mappings for key names.
 _M.map = {
     ISO_Left_Tab = "Tab",
 }
 
+--- Parse a table of modifier keys into a string.
+-- @tparam table mods The table of modifier keys.
+-- @tparam[opt] boolean remove_shift Remove the shift key from the modifier
+-- table.
+-- @treturn string A string of key names, separated by hyphens (-).
 function _M.parse_mods(mods, remove_shift)
     local t = {}
     for _, mod in ipairs(mods) do
@@ -39,7 +44,13 @@ function _M.parse_mods(mods, remove_shift)
     return mods ~= "" and mods or nil
 end
 
--- Create new key binding.
+--- Create a new key binding.
+-- @tparam table mods The table of modifier keys.
+-- @tparam string key The key name.
+-- @tparam[opt] string desc A description for this key binding.
+-- @tparam function func The callback function for this key binding.
+-- @tparam[opt] table opts The table of key binding options.
+-- @treturn table A table representing the new key binding.
 function _M.key(mods, key, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
@@ -61,7 +72,13 @@ function _M.key(mods, key, desc, func, opts)
     }
 end
 
--- Create new button binding.
+--- Create a new button binding.
+-- @tparam table mods The table of modifier keys.
+-- @tparam string button The button name.
+-- @tparam[opt] string desc A description for this button binding.
+-- @tparam function func The callback function for this button binding.
+-- @tparam[opt] table opts The table of button binding options.
+-- @treturn table A table representing the new button binding.
 function _M.but(mods, button, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
@@ -83,7 +100,12 @@ function _M.but(mods, button, desc, func, opts)
     }
 end
 
--- Create new buffer binding.
+--- Create a new buffer binding.
+-- @tparam string pattern The text pattern to match.
+-- @tparam[opt] string desc A description for this buffer binding.
+-- @tparam function func The callback function for this buffer binding.
+-- @tparam[opt] table opts The table of buffer binding options.
+-- @treturn table A table representing the new buffer binding.
 function _M.buf(pattern, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
@@ -103,7 +125,12 @@ function _M.buf(pattern, desc, func, opts)
     }
 end
 
--- Create new command binding.
+--- Create a new command binding.
+-- @tparam string|table cmds One or more text patterns to match.
+-- @tparam[opt] string desc A description for this buffer binding.
+-- @tparam function func The callback function for this buffer binding.
+-- @tparam[opt] table opts The table of buffer binding options.
+-- @treturn table A table representing the new buffer binding.
 function _M.cmd(cmds, desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
@@ -134,7 +161,11 @@ function _M.cmd(cmds, desc, func, opts)
     }
 end
 
--- Create a binding which is always called.
+--- Create a binding which is always called.
+-- @tparam[opt] string desc A description for this binding.
+-- @tparam function func The callback function for this binding.
+-- @tparam[opt] table opts The table of binding options.
+-- @treturn table A table representing the new binding.
 function _M.any(desc, func, opts)
     -- Detect optional description & adjust argument positions
     if type(desc) == "function" then
@@ -152,7 +183,19 @@ function _M.any(desc, func, opts)
     }
 end
 
--- Try and match an any binding.
+--- Match any 'any' bindings in a given table of bindings.
+--
+-- The bindings' callback functions are called in the order that they
+-- occur in the given table of bindings. If any callback function
+-- returns a value other than `false`, then matching stops and this
+-- function immediately returns `true`. Otherwise, if the callback
+-- returns `false`, matching continues.
+--
+-- @param object An object passed through to any 'any' bindings called.
+-- @tparam table binds A table of bindings to search.
+-- @tparam table args A table of arguments passed through to any 'any' bindings
+-- called.
+-- @treturn boolean True if an 'any' binding was ran successfully.
 function _M.match_any(object, binds, args)
     for _, b in ipairs(binds) do
         if b.type == "any" then
@@ -164,8 +207,21 @@ function _M.match_any(object, binds, args)
     return false
 end
 
--- Try and match a key binding in a given table of bindings and call that
--- bindings callback function.
+--- Match any key binding in a given table of bindings.
+--
+-- The bindings' callback functions are called in the order that they
+-- occur in the given table of bindings. If any callback function
+-- returns a value other than `false`, then matching stops and this
+-- function immediately returns `true`. Otherwise, if the callback
+-- returns `false`, matching continues.
+--
+-- @param object An object passed through to any key bindings called.
+-- @tparam table binds A table of bindings to search.
+-- @tparam table mods The table of modifier keys.
+-- @tparam string key The key name.
+-- @tparam table args A table of arguments passed through to any key bindings
+-- called.
+-- @treturn boolean True if a key binding was ran successfully.
 function _M.match_key(object, binds, mods, key, args)
     for _, b in ipairs(binds) do
         if b.type == "key" and b.key == key and b.mods == mods then
@@ -177,8 +233,21 @@ function _M.match_key(object, binds, mods, key, args)
     return false
 end
 
--- Try and match a button binding in a given table of bindings and call that
--- bindings callback function.
+--- Match any button binding in a given table of bindings.
+--
+-- The bindings' callback functions are called in the order that they
+-- occur in the given table of bindings. If any callback function
+-- returns a value other than `false`, then matching stops and this
+-- function immediately returns `true`. Otherwise, if the callback
+-- returns `false`, matching continues.
+--
+-- @param object An object passed through to any key bindings called.
+-- @tparam table binds A table of bindings to search.
+-- @tparam table mods The table of modifier keys.
+-- @tparam string button The button name.
+-- @tparam table args A table of arguments passed through to any button bindings
+-- called.
+-- @treturn boolean True if a key binding was ran successfully.
 function _M.match_but(object, binds, mods, button, args)
     for _, b in ipairs(binds) do
         if b.type == "button" and b.button == button and b.mods == mods then

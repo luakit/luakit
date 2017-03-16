@@ -57,9 +57,9 @@ local opts_metatable = {
     end,
 }
 
---- Parse uri query
---@param query the query component of a uri
---@return table of options
+--- Parse the query component of a URI and return it as a table.
+-- @tparam string query The query component of a URI.
+-- @treturn table The parsed table of query options.
 function _M.parse_query(query)
     local opts, order = {}, {}
     string.gsub(query or "", "&*([^&=]+)=([^&]+)", function (k, v)
@@ -99,7 +99,9 @@ local uri_metatable = {
     end,
 }
 
--- Parse uri string and return uri table
+--- Parse a URI string and return a URI table.
+-- @tparam string uri The URI as a string.
+-- @treturn table The URI as a table.
 function _M.parse(uri)
     -- Get uri table
     uri = capi.soup.parse_uri(uri)
@@ -110,7 +112,9 @@ function _M.parse(uri)
     return setmetatable(uri, uri_metatable)
 end
 
--- Duplicate uri object
+--- Duplicate a URI table.
+-- @tparam table uri The URI as a table.
+-- @treturn table A new copy of the URI table.
 function _M.copy(uri)
     assert(type(uri) == "table", "not a table")
     return _M.parse(tostring(uri))

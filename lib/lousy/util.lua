@@ -17,7 +17,11 @@ local _M = {}
 
 local table = {}
 local string = {}
+
+--- @local
 _M.table = table
+
+--- @local
 _M.string = string
 
 local xml_entity_names = { ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;" };
@@ -289,7 +293,7 @@ local function find_file(paths)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- or $XDG_CONFIG_HOME/luakit/ or /etc/xdg/luakit/.
+-- `$XDG_CONFIG_HOME/luakit/`, or `/etc/xdg/luakit/`.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
 function _M.find_config(f)
@@ -300,7 +304,7 @@ function _M.find_config(f)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- in the users $XDG_DATA_HOME/luakit/ or the luakit install dir.
+-- `$XDG_DATA_HOME/luakit/`, or the luakit install dir.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
 function _M.find_data(f)
@@ -311,7 +315,7 @@ function _M.find_data(f)
 end
 
 --- Search and return the filepath of a file in the current working directory
--- or in the users $XDG_CACHE_HOME/luakit/
+-- or `$XDG_CACHE_HOME/luakit/`.
 -- @param f The relative filepath.
 -- @return The first valid filepath or an error.
 function _M.find_cache(f)
@@ -351,7 +355,7 @@ end
 -- In sqlite3: "A string constant is formed by enclosing the string in single
 -- quotes ('). A single quote within the string can be encoded by putting two
 -- single quotes in a row - as in Pascal."
--- Read: http://sqlite.org/lang_expr.html
+-- Read: <http://sqlite.org/lang_expr.html>
 function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
