@@ -9,8 +9,8 @@ local window = require("window")
 
 local _M = {}
 
--- Common stylesheet that can be sourced from several chrome modules for a
--- consitent looking theme.
+--- Common stylesheet that can be sourced from several chrome modules
+-- for a consitent looking theme.
 _M.stylesheet = [===[
     body {
         background-color: white;
@@ -133,6 +133,13 @@ _M.stylesheet = [===[
 local handlers = {}
 local on_first_visual_handlers = {}
 
+--- Register a chrome page URI with an associated handler function.
+-- @tparam string page The name of the chrome page to register.
+-- @tparam function func The handler function for the chrome page.
+-- @tparam function on_first_visual_func An optional handler function
+-- for the chrome page, called when the page first finishes loading.
+-- @tparam table export_funcs An optional table of functions to
+-- export to JavaScript.
 function _M.add(page, func, on_first_visual_func, export_funcs)
     -- Do some sanity checking
     assert(type(page) == "string",
@@ -156,6 +163,8 @@ function _M.add(page, func, on_first_visual_func, export_funcs)
     on_first_visual_handlers[page] = on_first_visual_func
 end
 
+--- Remove a regeistered chrome page.
+-- @tparam string page The name of the chrome page to remove.
 function _M.remove(page)
     handlers[page] = nil
     on_first_visual_handlers[page] = nil
