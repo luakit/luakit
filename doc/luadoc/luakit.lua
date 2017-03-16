@@ -11,9 +11,9 @@
 -- @module luakit
 
 --- Luakit global table
--- @field config_dir config directory path (default: XDG_CONFIG_HOME)
--- @field data_dir data directory path (default: XDG_DATA_HOME)
--- @field cache_dir cache directory path (default: XDG_CACHE_HOME)
+-- @field config_dir config directory path (default: `$XDG_CONFIG_HOME`)
+-- @field data_dir data directory path (default: `$XDG_DATA_HOME`)
+-- @field cache_dir cache directory path (default: `$XDG_CACHE_HOME`)
 -- @field verbose verbosity (boolean value)
 -- @field install_path luakit installation path (read only property)
 -- @field version luakit version (read only property)
