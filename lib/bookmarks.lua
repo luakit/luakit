@@ -12,9 +12,10 @@ local _M = {}
 
 lousy.signal.setup(_M, true)
 
--- Path to users bookmarks database
+--- Path to bookmarks database.
 _M.db_path = capi.luakit.data_dir .. "/bookmarks.db"
 
+--- Connect to and initialize the bookmarks database.
 function _M.init()
     _M.db = capi.sqlite3{ filename = _M.db_path }
     _M.db:exec [[
@@ -35,12 +36,17 @@ end
 
 capi.luakit.idle_add(_M.init)
 
+--- Get a bookmark entry by its ID number.
+-- @tparam number id The ID of the bookmark entry to get
+-- @treturn table The bookmark entry
 function _M.get(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
     local rows = _M.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
     return rows[1]
 end
 
+--- Remove a bookmark entry by its ID number.
+-- @tparam number id The ID of the bookmark entry to remove
 function _M.remove(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
 
@@ -64,6 +70,11 @@ local function update_tags(b, tags)
     _M.emit_signal("update", b.id)
 end
 
+--- Update the tags on a bookmark entry.
+-- @tparam number id The ID of the bookmark entry to update
+-- @tparam table|string new_tags The tags to add to the bookmark entry
+-- @tparam boolean replace True if the new tags should replace all existing
+-- tags.
 function _M.tag(id, new_tags, replace)
     local b = assert(_M.get(id), "bookmark not found")
 
@@ -83,6 +94,9 @@ function _M.tag(id, new_tags, replace)
     update_tags(b, keys(tags))
 end
 
+--- Remove a tag from a bookmark entry.
+-- @tparam number id The ID of the bookmark entry to update
+-- @tparam string name The tag to remove from the bookmark entry
 function _M.untag(id, name)
     local b = assert(_M.get(id), "bookmark not found")
     if b.tags then
@@ -92,7 +106,10 @@ function _M.untag(id, name)
     end
 end
 
--- Add new bookmark
+--- Add a new bookmark entry.
+-- @tparam string uri The URI to bookmark.
+-- @tparam table opts A table of options.
+-- @treturn number The ID of the new bookmark entry.
 function _M.add(uri, opts)
     opts = opts or {}
 
