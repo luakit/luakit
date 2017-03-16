@@ -28,36 +28,44 @@ local _M = {}
 
 local adblock_wm = require_web_module("adblock_wm")
 
--- Module global variables
+--- Whether ad blocking is enabled.
+-- Type: boolean
 _M.enabled = true
--- Adblock Plus compatible filter lists
-local adblock_dir = capi.luakit.data_dir .. "/adblock/"
 
+-- Adblock Plus compatible filter lists.
+local adblock_dir = capi.luakit.data_dir .. "/adblock/"
 local filterfiles = {}
 local subscriptions_file = adblock_dir .. "/subscriptions"
+
+--- The set of ad blocking subscriptions that are active.
 _M.subscriptions = {}
 
--- String patterns to filter URI's with
+--- String patterns to filter URIs with.
 _M.rules = {}
 
--- Fitting for adblock.chrome.refresh_views()
+--- Fitting for adblock.chrome.refresh_views()
+-- @local
 _M.refresh_views = function()
     -- Dummy.
 end
 
--- Enable or disable filtering
+--- Enable ad blocking.
 _M.enable = function ()
     _M.enabled = true
     adblock_wm:emit_signal("enable", true)
     _M.refresh_views()
 end
+
+--- Disable ad blocking.
 _M.disable = function ()
     _M.enabled = false
     adblock_wm:emit_signal("enable", false)
     _M.refresh_views()
 end
 
--- Report AdBlock state: «Enabled» or «Disabled»
+--- Report AdBlock state.
+-- @treturn[1] string "Enabled" if ad blocking is enabled
+-- @treturn[2] string "Disabled" if ad blocking is disabled
 _M.state = function ()
     return _M.enabled and "Enabled" or "Disabled"
 end
@@ -353,7 +361,12 @@ local function read_subscriptions(file)
     end
 end
 
--- Load filter list files
+--- Load filter list files, and refresh any adblock pages that are open.
+-- @tparam boolean reload True if all subscriptions already loaded
+-- should be fully reloaded.
+-- @tparam string single_list Single list file.
+-- @tparam boolean no_sync True if subscriptions should not be synchronized to
+-- the web process.
 _M.load = function (reload, single_list, no_sync)
     if reload then _M.subscriptions, filterfiles = {}, {} end
     detect_files()
@@ -403,6 +416,9 @@ _M.load = function (reload, single_list, no_sync)
     _M.refresh_views()
 end
 
+--- Enable or disable an adblock filter list.
+-- @tparam number|string a The number of the list to enable or disable.
+-- @tparam boolean enabled True to enable, false to disable.
 function _M.list_set_enabled(a, enabled)
     if enabled then
         list_opts_modify(tonumber(a), "Disabled", "Enabled")
