@@ -30,17 +30,22 @@ local function next_download_id()
     return tostring(id_count)
 end
 
--- Default download directory
+--- Default download directory.
 _M.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)
 local dls = {}
 
+--- Get all download objects.
+-- @treturn table The table of all download objects.
 function _M.get_all()
     return lousy.util.table.clone(dls)
 end
 
--- Get download object from id (passthrough if already given download object)
+--- Get download object from ID (passthrough if already given download object).
+-- @tparam download|number id The download object or the ID of a download object.
+-- @treturn download The download object.
+-- @treturn table The download object's private data.
 function _M.to_download(id)
     if type(id) == "download" then return id end
     for d, data in pairs(dls) do
@@ -48,6 +53,8 @@ function _M.to_download(id)
     end
 end
 
+--- Get private data for a download object.
+-- @tparam download|number id The download object or the ID of a download object.
 function _M.get(id)
     local d = assert(_M.to_download(id),
         "download.get() expected valid download object or id")
@@ -59,6 +66,9 @@ local function is_running(d)
     return status == "created" or status == "started"
 end
 
+--- Attempt to open a downloaded file.
+-- @tparam download d The download object.
+-- @tparam table w The current window table.
 function _M.do_open(d, w)
     if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
         if w then
@@ -99,6 +109,9 @@ status_timer:add_signal("timeout", function ()
     _M.emit_signal("status-tick", running)
 end)
 
+--- Add a new download.
+-- @tparam string uri The URI to download.
+-- @tparam table opts A table of options.
 function _M.add(uri, opts)
     opts = opts or {}
     local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
@@ -141,6 +154,8 @@ function _M.add(uri, opts)
     end)
 end
 
+--- Cancel a download.
+-- @tparam download|number id The download object or the ID of a download object.
 function _M.cancel(id)
     local d = assert(_M.to_download(id),
         "download.cancel() expected valid download object or id")
@@ -148,6 +163,9 @@ function _M.cancel(id)
     _M.emit_signal("download::status", d, dls[d])
 end
 
+--- Remove a download.
+-- If the download is running, it will be cancelled.
+-- @tparam download|number id The download object or the ID of a download object.
 function _M.remove(id)
     local d = assert(_M.to_download(id),
         "download.remove() expected valid download object or id")
@@ -156,6 +174,11 @@ function _M.remove(id)
     dls[d] = nil
 end
 
+--- Restart a download.
+-- A new download with the same source URI as `id` is created, and the original
+-- download `id` is removed.
+-- @tparam download|number id The download object or the ID of a download object.
+-- @treturn download The download object.
 function _M.restart(id)
     local d = assert(_M.to_download(id),
         "download.restart() expected valid download object or id")
@@ -164,6 +187,10 @@ function _M.restart(id)
     return new_d
 end
 
+--- Attempt to open a downloaded file, as soon as the download completes.
+-- If the download is already completed, this is equivalent to `do_open()`.
+-- @tparam download|number id The download object or the ID of a download object.
+-- @tparam table w The current window table.
 function _M.open(id, w)
     local d = assert(_M.to_download(id),
         "download.open() expected valid download object or id")
@@ -178,7 +205,7 @@ function _M.open(id, w)
     end
 end
 
--- Clear all finished, cancelled or aborted downloads
+--- Clear all finished, cancelled or aborted downloads.
 function _M.clear()
     for d, _ in pairs(dls) do
         if not is_running(d) then
