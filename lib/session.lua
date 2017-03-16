@@ -16,13 +16,17 @@ local function rm(file)
     luakit.spawn(string.format("rm %q", file))
 end
 
--- The file which we'll use for session info, $XDG_DATA_HOME/luakit/session
+--- Path to session file.
 _M.session_file = luakit.data_dir .. "/session"
 
--- Crash recovery session file
+--- Path to crash recovery session file.
 _M.recovery_file = luakit.data_dir .. "/recovery_session"
 
--- Save all given windows uris to file.
+--- Save the current session state to a file.
+--
+-- If no file is specified, the path specified by `session_file` is used.
+--
+-- @tparam[opt] string file The file path in which to save the session state.
 _M.save = function (file)
     if not file then file = _M.session_file end
     local state = {}
@@ -59,7 +63,18 @@ _M.save = function (file)
     end
 end
 
--- Load window and tab state from file
+--- Load session state from a file, and optionally delete it.
+--
+-- The session state is *not* restored. This function only loads the state into
+-- a table and returns it.
+--
+-- If no file is specified, the path specified by `session_file` is used.
+--
+-- If `delete` is not `false`, then the session file is deleted.
+--
+-- @tparam[opt] boolean delete Whether to delete the file after the session is
+-- loaded.
+-- @tparam[opt] string file The file path from which to load the session state.
 _M.load = function (delete, file)
     if not file then file = _M.session_file end
     if not os.exists(file) then return {} end
@@ -99,6 +114,16 @@ local restore_file = function (file, delete)
     return w
 end
 
+--- Restore the session state, optionally deleting the session file.
+--
+-- This will first attempt to restore the session saved at `session_file`. If
+-- that does not succeed, the session saved at `recovery_file` will be loaded.
+--
+-- If `delete` is not `false`, then the loaded session file is deleted.
+--
+-- @tparam[opt] boolean delete Whether to delete the file after the session is
+-- @treturn[1] table The window table for the last window created.
+-- @treturn[2] nil If no session could be loaded, `nil` is returned.
 _M.restore = function(delete)
     return restore_file(_M.session_file, delete)
         or restore_file(_M.recovery_file, delete)

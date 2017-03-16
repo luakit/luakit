@@ -17,21 +17,33 @@ local lousy = require("lousy")
 
 local _M = {}
 
+--- Tab order function: Always insert new tabs before all other tabs.
 _M.first = function()
     return 1
 end
+
+--- Tab order function: Always insert new tabs after all other tabs.
+-- @tparam table w The current window table.
 _M.last = function(w)
     return w.tabs:count() + 1
 end
+
+--- Tab order function: Always insert new tabs after the current tab.
+-- @tparam table w The current window table.
 _M.after_current = function (w)
     return w.tabs:current() + 1
 end
+
+--- Tab order function: Always insert new tabs before the current tab.
+-- @tparam table w The current window table.
 _M.before_current = function (w)
     return w.tabs:current()
 end
 
--- Put new child tab next to the parent after unbroken chain of descendants
--- Logical way to use when one "queues" background-followed links
+--- Tab order function: Put new child tab next to the parent after unbroken chain of descendants.
+-- Logical way to use when one "queues" background-followed links.
+-- @tparam table w The current window table.
+-- @tparam widget newview The new webview widget.
 _M.by_origin = function(w, newview)
     local newindex = 0
     local currentview = w.view
@@ -72,12 +84,13 @@ _M.by_origin = function(w, newview)
     return newindex
 end
 
--- Default: open regular tabs last
+--- Default tab order function: open regular tabs last.
 _M.default = _M.last
--- Default: open background tabs by origin
+
+--- Default tab order function for background tabs: open by origin.
 _M.default_bg = _M.by_origin
 
--- Weak table to remember which tab was spawned from which parent
+--- Weak table to remember which tab was spawned from which parent.
 -- Note that family bonds are tied only if tabs are spawned within
 -- family rules, e.g. from by_origin. Tabs created elsewhere are orphans.
 _M.kidsof = {}

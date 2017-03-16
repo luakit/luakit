@@ -131,8 +131,8 @@ local scripts = {}
 --- Stores information on the currently loaded scripts on a webview widget
 local lstate = setmetatable({}, { __mode = "k" })
 
---- The directory, in which to search for userscripts.
--- By default, this is $XDG_DATA_HOME/luakit/scripts
+--- The directory in which to search for userscripts.
+-- By default, this is `$XDG_DATA_HOME/luakit/scripts`
 _M.dir = capi.luakit.data_dir .. "/scripts"
 
 -- Userscript class methods
@@ -253,7 +253,9 @@ local function invoke(view, on_start)
     end
 end
 
--- Saves an userscript
+--- Save a userscript to a file.
+-- @tparam string file The file path in which to save the userscript.
+-- @tparam string js The userscript contents.
 function _M.save(file, js)
     if not os.exists(_M.dir) then
         util.mkdir(_M.dir)
@@ -264,14 +266,15 @@ function _M.save(file, js)
     load_js(_M.dir .. "/" .. file)
 end
 
--- Deletes an userscript
+--- Delete a userscript file.
+-- @tparam string file The file path of the userscript to remove.
 function _M.del(file)
     if not scripts[file] then return end
     os.remove(file)
     scripts[file] = nil
 end
 
---- Hook on the webview's load-status signal to invoke the userscripts.
+-- Hook on the webview's load-status signal to invoke the userscripts.
 webview.init_funcs.userscripts = function (view, w)
     view:add_signal("load-status", function (v, status)
         if status == "provisional" then

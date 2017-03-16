@@ -44,6 +44,11 @@ local function go_up_step(u)
     end
 end
 
+--- Go up a number of steps in the path structure for a given URI.
+-- @tparam string uri The initial URI.
+-- @tparam number n The number of steps to traverse up the path structure of the
+-- URI.
+-- @treturn string The modified URI.
 function _M.go_up(uri, n)
     local u = soup.parse_uri(uri)
     if not u then error("invalid uri: " .. tostring(uri)) end
@@ -53,6 +58,9 @@ function _M.go_up(uri, n)
     return soup.uri_tostring(u)
 end
 
+--- Remove any fragment and query from a given URI, and set the path to `/`.
+-- @tparam string uri The initial URI.
+-- @treturn string The modified URI.
 function _M.go_upmost(uri)
     local u = soup.parse_uri(uri)
     if not u then error("invalid uri: " .. tostring(uri)) end

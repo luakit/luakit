@@ -24,7 +24,7 @@ add_binds("command", {
     key({}, "Tab", function (w) w:set_mode("completion") end),
 })
 
--- Return to command mode with original text and with original cursor position
+--- Return to command mode with original text and with original cursor position.
 function _M.exit_completion(w)
     local state = data[w]
     w:enter_cmd(state.orig_text, { pos = state.orig_pos })
@@ -57,6 +57,10 @@ add_binds("completion", {
         _M.exit_completion),
 })
 
+--- Update the list of completions for some input text.
+-- @tparam table w The current window table.
+-- @tparam string text The current input text
+-- @tparam number pos The current input cursor position
 function _M.update_completions(w, text, pos)
     local state = data[w]
 
@@ -150,8 +154,7 @@ new_mode("completion", {
     end,
 })
 
--- Completion functions
-_M.funcs = {
+local completion_funcs = {
     -- Add command completion items to the menu
     command = function (state)
         -- We are only interested in the first word
@@ -249,11 +252,21 @@ _M.funcs = {
     end,
 }
 
--- Order of completion items
+--- Table of functions used to generate completion entries.
+_M.funcs = {
+    command = completion_funcs.command,
+    -- Completes commands.
+    history = completion_funcs.history,
+    -- Completes URIs present in the user's history.
+    bookmarks = completion_funcs.bookmarks,
+    -- Completes URIs that have been bookmarked.
+}
+
+--- Array of completion functions from `funcs`, called in order.
 _M.order = {
-    _M.funcs.command,
-    _M.funcs.history,
-    _M.funcs.bookmarks,
+    [1] = _M.funcs.command, -- `funcs.command`
+    [2] = _M.funcs.history, -- `funcs.history`
+    [3] = _M.funcs.bookmarks, -- `funcs.bookmarks`
 }
 
 return _M

@@ -10,6 +10,7 @@ local _M = {}
 
 local error_page_wm = require_web_module("error_page_wm")
 
+--- HTML template for error page content.
 _M.html_template = [==[
     <html>
         <head>
@@ -30,6 +31,7 @@ _M.html_template = [==[
     </html>
 ]==]
 
+--- CSS applied to error pages.
 _M.style = [===[
     body {
         margin: 0;
@@ -81,6 +83,7 @@ _M.style = [===[
     }
 ]===]
 
+--- CSS applied to certificate error pages.
 _M.cert_style = [===[
     body {
         background: repeating-linear-gradient(
@@ -263,6 +266,10 @@ local function handle_error(v, uri, msg, cert_errors)
     load_error_page(v, error_page_info)
 end
 
+--- Replace the current contents of a webview with an error page.
+-- @tparam widget v The webview in which to show an error page.
+-- @tparam table error_page_info A table of options specifying the error page
+-- content.
 _M.show_error_page = function(v, error_page_info)
     assert(type(v) == "widget" and v.type == "webview")
     assert(type(error_page_info) == "table")

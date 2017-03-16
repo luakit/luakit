@@ -21,12 +21,15 @@ local proxies = {}
 local noproxy = { address = '' }
 local active = noproxy
 
--- Return ordered list of proxy names
+--- Get an ordered list of proxy names.
+-- @treturn table List of proxy names.
 function _M.get_names()
     return lousy.util.table.keys(proxies)
 end
 
--- Return address of proxy given by name
+--- Get the address of proxy given by name.
+-- @tparam string name The name of a proxy.
+-- @treturn string The address of the proxy.
 function _M.get(name)
     return proxies[name]
 end

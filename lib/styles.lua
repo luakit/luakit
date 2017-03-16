@@ -118,6 +118,9 @@ function webview.methods.styles_toggle(view, _)
     db_set(view.uri, enabled)
 end
 
+--- Load the contents of a file as a stylesheet for a given domain.
+-- @tparam string path The path of the file to load.
+-- @tparam string domain The domain on which to apply the stylesheet.
 _M.load_file = function (path, domain)
     if stylesheet == nil then return end
 
@@ -132,6 +135,7 @@ _M.load_file = function (path, domain)
     end
 end
 
+--- Detect all files in the stylesheets directory and automatically load them.
 _M.detect_files = function ()
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then

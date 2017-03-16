@@ -18,10 +18,13 @@ local _M = {}
 
 local follow_wm = require_web_module("follow_wm")
 
+--- Duration to ignore keypresses after following a hint. 200ms by default.
+--
 -- After each follow ignore all keys pressed by the user to prevent the
 -- accidental activation of other key bindings.
 _M.ignore_delay = 200
 
+--- CSS applied to the follow mode overlay.
 _M.stylesheet = [===[
 #luakit_select_overlay {
     position: absolute;
@@ -65,33 +68,27 @@ local function regex_escape(s)
     return s:gsub(escape_pat, "%%%1")
 end
 
--- Different hint matching styles
+local re_match_text = function (text) return "", text end
+local re_match_both = function (text) return text, text end
+local match_label_re_text = function (text)
+    return #text > 0 and "^"..regex_escape(text) or "", text
+end
+local match_label = function (text)
+    return #text > 0 and "^"..regex_escape(text) or "", ""
+end
+
+--- Table of functions used to select a hint matching style.
 _M.pattern_styles = {
-    -- Regex match target text only
-    re_match_text = function (text)
-        return "", text
-    end,
-
-    -- Regex match both hint label or target text
-    re_match_both = function (text)
-        return text, text
-    end,
-
-    -- String match hint label & regex match text
-    match_label_re_text = function (text)
-        return #text > 0 and "^"..regex_escape(text) or "", text
-    end,
-
-    -- String match hint label only
-    match_label = function (text)
-        return #text > 0 and "^"..regex_escape(text) or "", ""
-    end,
+    re_match_text = re_match_text, -- Regex match target text only.
+    re_match_both = re_match_both, -- Regex match both hint label or target text
+    match_label_re_text = match_label_re_text, -- String match hint label & regex match text
+    match_label = match_label, -- String match hint label only
 }
 
--- Default pattern style
+--- Hint matching style functions.
 _M.pattern_maker = _M.pattern_styles.match_label_re_text
 
--- Ignore case in follow mode by default
+--- Whether text case should be ignored in follow mode. True by default.
 _M.ignore_case = true
 
 local function focus(w, step)
@@ -222,13 +219,20 @@ add_binds("follow", {
     key({"Shift"},   "Return", function (w) follow_all_hints(w) end),
 })
 
+--- Element selectors used to filter elements to follow.
 _M.selectors = {
     clickable = 'a, area, textarea, select, input:not([type=hidden]), button',
+    -- Elements that can be clicked.
     focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
+    -- Elements that can be given input focus.
     uri = 'a, area',
+    -- Elements that have a URI (e.g. hyperlinks).
     desc = '*[title], img[alt], applet[alt], area[alt], input[alt]',
+    -- Elements that can have a description.
     image = 'img, input[type=image]',
+    -- Image elements.
     thumbnail = "a img",
+    -- Image elements within a hyperlink.
 }
 
 local buf = lousy.bind.buf
