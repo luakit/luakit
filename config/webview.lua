@@ -12,8 +12,6 @@ local webview = {}
 
 lousy.signal.setup(webview, true)
 
-webview.enable_webgl = true
-
 local web_module = require_web_module("webview_wm")
 
 web_module:add_signal("form-active", function (_, page_id)
@@ -29,10 +27,6 @@ webview.init_funcs = {
     -- Set useragent
     set_useragent = function (view)
         view.user_agent = globals.useragent
-    end,
-
-    set_webgl_enabled = function (view)
-        view.enable_webgl = webview.enable_webgl
     end,
 
     -- Update window and tab titles

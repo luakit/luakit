@@ -40,6 +40,7 @@ globals.search_engines.default = globals.search_engines.google
 -- https://webkitgtk.org/reference/webkit2gtk/stable/WebKitSettings.html
 globals.domain_props = {
     ["all"] = {
+        enable_webgl               = true,
         -- enable_scripts          = false,
         -- enable_plugins          = false,
         -- zoom-text-only          = true,
