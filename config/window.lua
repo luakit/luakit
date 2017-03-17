@@ -533,13 +533,12 @@ window.methods = {
                     error("Tried to open new tab with invalid table")
                 end
             end
-            view:remove_signal("web-extension-loaded", set_location)
         end
+        w:attach_tab(view, switch, order)
         if not (type(arg) == "widget" and arg.type == "webview") then
-            view:add_signal("web-extension-loaded", set_location)
+            set_location(view)
         end
 
-        w:attach_tab(view, switch, order)
         return view
     end,
 
