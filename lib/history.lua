@@ -97,7 +97,7 @@ function _M.add(uri, title, update_visits)
     end
 end
 
-webview.init_funcs.save_hist = function (view)
+webview.add_signal("init", function (view)
     -- Add items & update visit count
     view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
@@ -117,7 +117,7 @@ webview.init_funcs.save_hist = function (view)
             _M.add(view.uri, title, false)
         end
     end)
-end
+end)
 
 return _M
 

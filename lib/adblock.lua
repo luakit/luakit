@@ -441,12 +441,12 @@ capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
 end)
 
-webview.init_funcs.adblock_load = function (view)
+webview.add_signal("init", function (view)
     for name, list in pairs(_M.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
         adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
     end
-end
+end)
 
 -- Add commands.
 local cmd = lousy.bind.cmd

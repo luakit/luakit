@@ -165,7 +165,7 @@ window.init_funcs.session_init = function(w)
     end)
 end
 
-webview.init_funcs.session_init = function(view)
+webview.add_signal("init", function (view)
     -- Save session state after page navigation
     view:add_signal("load-status", function (_, status)
         if status == "committed" then
@@ -176,7 +176,7 @@ webview.init_funcs.session_init = function(view)
     view:add_signal("switched-page", function ()
         start_timeout()
     end)
-end
+end)
 
 return _M
 

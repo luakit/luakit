@@ -14,9 +14,9 @@ local disable_scrollbar_ss = stylesheet{ source = [===[
     }
 ]===] }
 
-webview.init_funcs.hide_scrollbars = function (v)
-    v.stylesheets[disable_scrollbar_ss] = true
-end
+webview.add_signal("init", function (view)
+    view.stylesheets[disable_scrollbar_ss] = true
+end)
 
 return _M
 

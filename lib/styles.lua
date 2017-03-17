@@ -88,7 +88,7 @@ local function domains_from_uri(uri)
     return domains
 end
 
-webview.init_funcs.styles_load = function(view)
+webview.add_signal("init", function (view)
     view:add_signal("stylesheet", function (v)
         local domains = domains_from_uri(v.uri)
         domains[#domains + 1] = "all"
@@ -103,7 +103,7 @@ webview.init_funcs.styles_load = function(view)
             v.stylesheets[s] = match ~= nil and enabled
         end
     end)
-end
+end)
 
 function webview.methods.styles_enabled_get(view, _)
     return db_get(view.uri) == 1 and true or false

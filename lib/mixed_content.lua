@@ -58,10 +58,10 @@ local function resource_request_starting(v, uri)
 end
 
 -- Hooks
-webview.init_funcs.mixed_content_signals = function (view)
+webview.add_signal("init", function (view)
     view:add_signal("resource-request-starting", resource_request_starting)
     view:add_signal("load-status", load_status)
-end
+end)
 
 -- API
 webview.methods.has_mixed = function (view)

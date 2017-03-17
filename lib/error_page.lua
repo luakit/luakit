@@ -279,17 +279,16 @@ _M.show_error_page = function(v, error_page_info)
     load_error_page(v, error_page_info)
 end
 
-webview.init_funcs.error_page_init = function(view)
+webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status, ...)
         if status ~= "failed" then return end
         handle_error(v, ...)
         return true
     end)
-
     view:add_signal("crashed", function(v)
         handle_error(v, v.uri, "Web process crashed")
     end)
-end
+end)
 
 return _M
 

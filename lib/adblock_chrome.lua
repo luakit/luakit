@@ -251,7 +251,7 @@ _M.navigation_blocked_css_tmpl = [===[
     }
 ]===]
 
-webview.init_funcs.navigation_blocked_page_init = function(view)
+webview.add_signal("init", function (view)
     view:add_signal("navigation-blocked", function(v, _, uri)
         error_page.show_error_page(v, {
             style = _M.navigation_blocked_css_tmpl,
@@ -266,7 +266,7 @@ webview.init_funcs.navigation_blocked_page_init = function(view)
         })
         return true
     end)
-end
+end)
 
 -- Add chrome binds.
 local buf = lousy.bind.buf

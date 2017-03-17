@@ -11,9 +11,9 @@ local add_cmds = binds.add_cmds
 
 local _M = {}
 
-webview.init_funcs.inspector_setup = function (view)
+webview.add_signal("init", function (view)
     view.enable_developer_extras = true
-end
+end)
 
 local cmd = lousy.bind.cmd
 add_cmds({

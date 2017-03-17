@@ -115,7 +115,7 @@ function _M.set_active(name)
 end
 
 -- Load the initial proxy address
-webview.init_funcs.set_proxy = function ()
+webview.add_signal("init", function ()
     local active_proxy = _M.get_active()
     if active_proxy and active_proxy.address ~= '' then
         capi.soup.proxy_uri = active_proxy.address
@@ -124,7 +124,7 @@ webview.init_funcs.set_proxy = function ()
     -- called once. Other proxy changes take place from the interactive
     -- `:proxy` menu.
     webview.init_funcs.set_proxy = nil
-end
+end)
 
 -- Create a proxy indicator widget and add it to the status bar
 window.init_funcs.build_proxy_indicator = function (w)

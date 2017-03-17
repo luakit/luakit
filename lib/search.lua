@@ -171,13 +171,15 @@ for k, m in pairs({
 
 }) do webview.methods[k] = m end
 
-webview.init_funcs.search_callbacks = function (view, w)
+webview.add_signal("init", function (view)
     view:add_signal("found-text", function (v)
+        local w = webview.window(v)
         w.search_state.by_view[v].ret = true
         w:set_ibar_theme()
     end)
 
     view:add_signal("failed-to-find-text", function (v)
+        local w = webview.window(v)
         w.search_state.by_view[v].ret = false
         w:set_ibar_theme("error")
         if not w:is_mode("search") then
@@ -189,12 +191,13 @@ webview.init_funcs.search_callbacks = function (view, w)
     end)
 
     -- Clear start search marker on button press/release
-    local clear_start_search_marker = function ()
-        (w.search_state or {}).marker = nil
+    local clear_start_search_marker = function (v)
+        local w = webview.window(v)
+        if w.search_state then w.search_state.marker = nil end
     end
     view:add_signal("button-press", clear_start_search_marker)
     view:add_signal("button-release", clear_start_search_marker)
-end
+end)
 
 return _M
 

@@ -159,7 +159,7 @@ window.init_funcs.noscript_indicator_load = function (w)
     r.noscript.font = theme.font
 end
 
-webview.init_funcs.noscript_load = function (view, w)
+webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)
         if status == "provisional" or status == "redirected" then
             local es = v:emit_signal("enable-scripts")
@@ -171,13 +171,15 @@ webview.init_funcs.noscript_load = function (view, w)
             end
             view.enable_scripts = es
             view.enable_plugins = ep
+            local w = webview.window(v)
             w:noscript_indicator_update()
         end
     end)
-    view:add_signal("switched-page", function ()
+    view:add_signal("switched-page", function (v)
+        local w = webview.window(v)
         w:noscript_indicator_update()
     end)
-end
+end)
 
 local buf = lousy.bind.buf
 add_binds("normal", {
