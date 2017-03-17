@@ -42,7 +42,7 @@ local hist_binds = {
 }
 
 -- Add the Up & Down keybindings to modes which support command history
-window.init_funcs.add_hist_binds = function (w)
+window.add_signal("init", function (w)
     w:add_signal("mode-entered", function ()
         local mode = w.mode
         -- Setup history state
@@ -67,7 +67,7 @@ window.init_funcs.add_hist_binds = function (w)
             end
         end
     end)
-end
+end)
 
 return _M
 

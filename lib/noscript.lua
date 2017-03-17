@@ -151,13 +151,13 @@ function window.methods.noscript_indicator_update(w)
     end
 end
 
-window.init_funcs.noscript_indicator_load = function (w)
+window.add_signal("init", function (w)
     local r = w.sbar.r
     r.noscript = widget{type="label"}
     r.layout:pack(r.noscript)
     r.layout:reorder(r.noscript, 1)
     r.noscript.font = theme.font
-end
+end)
 
 webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)

@@ -30,7 +30,7 @@ local function get_mode(name) return modes[name] end
 local function get_modes() return lousy.util.table.clone(modes) end
 
 -- Attach window & input bar signals for mode hooks
-window.init_funcs.modes_setup = function (w)
+window.add_signal("init", function (w)
     -- Calls the `enter` and `leave` mode hooks.
     w:add_signal("mode-changed", function (_, name, ...)
         local leave = (w.mode or {}).leave
@@ -87,7 +87,7 @@ window.init_funcs.modes_setup = function (w)
             end
         end
     end)
-end
+end)
 
 -- Add mode related window methods
 window.methods.set_mode = lousy.mode.set

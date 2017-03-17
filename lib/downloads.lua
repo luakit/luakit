@@ -236,7 +236,7 @@ capi.luakit.add_signal("download-start", function (d, v)
     return true
 end)
 
-window.init_funcs.download_status = function (w)
+window.add_signal("init", function (w)
     local r = w.sbar.r
     r.downloads = capi.widget{type="label"}
     r.layout:pack(r.downloads)
@@ -245,7 +245,7 @@ window.init_funcs.download_status = function (w)
     local theme = lousy.theme.get()
     r.downloads.fg = theme.downloads_sbar_fg
     r.downloads.font = theme.downloads_sbar_font
-end
+end)
 
 -- Prevent luakit from soft-closing if there are downloads still running
 capi.luakit.add_signal("can-close", function ()

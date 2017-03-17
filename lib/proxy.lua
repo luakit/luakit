@@ -127,7 +127,7 @@ webview.add_signal("init", function ()
 end)
 
 -- Create a proxy indicator widget and add it to the status bar
-window.init_funcs.build_proxy_indicator = function (w)
+window.add_signal("init", function (w)
     local r = w.sbar.r
     r.proxyi = widget{type="label"}
     r.layout:pack(r.proxyi)
@@ -136,7 +136,7 @@ window.init_funcs.build_proxy_indicator = function (w)
     r.proxyi.fg = theme.proxyi_sbar_fg
     r.proxyi.font = theme.proxyi_sbar_font
     w:update_proxy_indicator()
-end
+end)
 
 -- Helper function to update text in proxy indicator
 window.methods.update_proxy_indicator = function (w)

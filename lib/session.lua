@@ -149,7 +149,7 @@ recovery_save_timer:add_signal("timeout", function ()
     _M.save(_M.recovery_file)
 end)
 
-window.init_funcs.session_init = function(w)
+window.add_signal("init", function (w)
     w.win:add_signal("destroy", function ()
         -- Hack: should add a luakit shutdown hook...
         local num_windows = 0
@@ -163,7 +163,7 @@ window.init_funcs.session_init = function(w)
     w.tabs:add_signal("page-reordered", function ()
         start_timeout()
     end)
-end
+end)
 
 webview.add_signal("init", function (view)
     -- Save session state after page navigation

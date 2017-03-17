@@ -129,10 +129,10 @@ session.add_signal("restore", function (state)
     end
 end)
 
-window.init_funcs.undo_close_tab = function (w)
+window.add_signal("init", function (w)
     w.closed_tabs = {}
     w:add_signal("close-tab", on_tab_close)
-end
+end)
 
 local key = lousy.bind.key
 add_binds("normal", {
