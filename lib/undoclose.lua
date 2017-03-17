@@ -53,14 +53,16 @@ local on_tab_close = function (w, view)
         tab = reopening[view]
         reopening[view] = nil
     else
-        tab = {
-            hist = view.history,
-            session_state = view.session_state,
-            self_uid = uid_from_view(view),
-        }
-        -- Save relative location
         local index = w.tabs:indexof(view)
-        if index ~= 1 then tab.after_uid = uid_from_view(w.tabs[index-1]) end
+        local hist = view.history
+        local hist_item = hist.items[hist.index]
+        local title = lousy.util.escape(hist_item.title) or ""
+        tab = {
+            uri = view.uri,
+            title = title,
+            self_uid = uid_from_view(view),
+            after_uid = (index ~= 1) and uid_from_view(w.tabs[index-1]),
+        }
     end
     table.insert(w.closed_tabs, tab)
 end
@@ -76,7 +78,7 @@ window.methods.undo_close_tab = function (w, index)
         w:notify("No closed tabs to reopen")
         return
     end
-    local view = w:new_tab({ session_state = tab.session_state, hist = tab.hist })
+    local view = w:new_tab(tab.uri)
     reopening[view] = tab
     -- Restore saved view uid
     view_uids[view] = tab.self_uid
@@ -141,15 +143,12 @@ add_binds("normal", {
 })
 
 -- View closed tabs in a list
-local escape = lousy.util.escape
 new_mode("undolist", {
     enter = function (w)
         local rows = {{ "Title", " URI", title = true }}
         for uid, tab in ipairs(w.closed_tabs) do
             tab.uid = uid
-            local item = tab.hist.items[tab.hist.index]
-            local title, uri = escape(item.title) or "", escape(item.uri)
-            table.insert(rows, 2, { "  " .. title, " " .. uri, uid = uid })
+            table.insert(rows, 2, { "  " .. tab.title, " " .. tab.uri, uid = uid })
         end
         w.menu:build(rows)
         w:notify("Use j/k to move, d delete, u undo, w winopen.", false)
