@@ -527,8 +527,6 @@ window.methods = {
                     if v.uri == "about:blank" and arg.uri then
                         v.uri = arg.uri
                     end
-                elseif arg.hist then
-                    v.history = arg.hist
                 else
                     error("Tried to open new tab with invalid table")
                 end
