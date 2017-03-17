@@ -22,8 +22,11 @@ web_module:add_signal("form-active", function (_, page_id)
     end
 end)
 
+-- Deprecated API.
+webview.init_funcs = { }
+
 -- Table of functions which are called on new webview widgets.
-webview.init_funcs = {
+local init_funcs = {
     -- Set useragent
     set_useragent = function (view)
         view.user_agent = globals.useragent
@@ -63,8 +66,9 @@ webview.init_funcs = {
     end,
 
     -- Catch keys in non-passthrough modes
-    mode_key_filter = function (view, w)
-        view:add_signal("key-press", function ()
+    mode_key_filter = function (view)
+        view:add_signal("key-press", function (v)
+            local w = webview.window(v)
             if not w.mode.passthrough then
                 return true
             end
@@ -83,8 +87,9 @@ webview.init_funcs = {
     end,
 
     -- Reset the mode on navigation
-    mode_reset_on_nav = function (view, w)
+    mode_reset_on_nav = function (view)
         view:add_signal("load-status", function (v, status)
+            local w = webview.window(v)
             if status == "provisional" and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
@@ -272,20 +277,22 @@ function webview.methods.scroll(view, w, new)
     end
 end
 
-function webview.new(w)
+function webview.new()
     local view = widget{type = "webview"}
 
-    webview.emit_signal("init", view)
-
-    local function call_init_funcs (v)
-        -- Call webview init functions
-        for k, func in pairs(webview.init_funcs) do
-            msg.verbose("Calling webview init function '%s'", k)
-            func(v, w)
-        end
-        v:remove_signal("web-extension-loaded", call_init_funcs)
+    -- Call webview init functions
+    for _, func in pairs(init_funcs) do
+        func(view)
     end
-    view:add_signal("web-extension-loaded", call_init_funcs)
+    if next(webview.init_funcs) then
+        msg.warn("Modifying webview.init_funcs is deprecated and will be removed in a future version")
+        msg.warn("Instead, connect to the 'init' signal on the webview module")
+        for k, func in pairs(webview.init_funcs) do
+            msg.warn("Webview init function '%s' using deprecated interface!", k)
+            func(view)
+        end
+    end
+    webview.emit_signal("init", view)
 
     return view
 end

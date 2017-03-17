@@ -144,9 +144,12 @@ function window.build()
     return w
 end
 
+-- Deprecated API.
+window.init_funcs = { }
+
 -- Table of functions to call on window creation. Normally used to add signal
 -- handlers to the new windows widgets.
-window.init_funcs = {
+local init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
         w.tabs:add_signal("switch-page", function ()
@@ -512,7 +515,7 @@ window.methods = {
             ww:detach_tab(view)
         else
             -- Make new webview widget
-            view = webview.new(w)
+            view = webview.new()
         end
 
         -- Load uri or webview history table
@@ -793,11 +796,18 @@ function window.new(args)
     lousy.signal.setup(w)
 
     -- Call window init functions
-    window.emit_signal("init", w)
-    for k, func in pairs(window.init_funcs) do
-        msg.verbose("Calling window init function '%s'", k)
+    for _, func in pairs(init_funcs) do
         func(w)
     end
+    if next(window.init_funcs) then
+        msg.warn("Modifying window.init_funcs is deprecated and will be removed in a future version")
+        msg.warn("Instead, connect to the 'init' signal on the window module")
+        for k, func in pairs(window.init_funcs) do
+            msg.warn("window init function '%s' using deprecated interface!", k)
+            func(w)
+        end
+    end
+    window.emit_signal("init", w)
 
     -- Populate notebook with tabs
     for _, arg in ipairs(args or {}) do
