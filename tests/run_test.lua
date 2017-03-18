@@ -146,6 +146,12 @@ local test_files = {
     async = util.find_files("tests/async/", test_file_pat),
 }
 
+-- Check for luassert
+if not pcall(require, "luassert") then
+    print("Running tests requires installing luassert")
+    return
+end
+
 -- Find a free server number
 -- Does have a race condition...
 for i=0,math.huge do
