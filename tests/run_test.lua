@@ -129,7 +129,7 @@ local function do_async_tests(test_files)
 
         local status, test_name
         for line in f:lines() do
-            status, test_name = line:match("^__(%a+)__ ([%a_]+)$")
+            status, test_name = line:match("^__(%a+)__ (.*)$")
             if status and test_name then
                 update_test_status(status, test_name)
             else
@@ -149,7 +149,7 @@ local function do_lunit_tests(test_files)
     f:close()
 end
 
-local test_file_pat = "/test_[a-z_]*%.lua$"
+local test_file_pat = "/test_%S+%.lua$"
 local test_files = {
     style = util.find_files("tests/style/", test_file_pat),
     async = util.find_files("tests/async/", test_file_pat),
