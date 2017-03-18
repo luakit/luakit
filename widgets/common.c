@@ -177,7 +177,7 @@ luaH_widget_get_child(lua_State *L, widget_t *w)
     if (!widget)
         return 0;
 
-    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(w->widget);
+    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
     luaH_object_push(L, child->ref);
     return 1;
 }
