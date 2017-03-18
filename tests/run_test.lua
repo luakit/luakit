@@ -140,20 +140,10 @@ local function do_async_tests(test_files)
     end
 end
 
-local function do_lunit_tests(test_files)
-    print("Running legacy tests...")
-    local f = spawn_luakit_instance("tests/lunit-run.lua", unpack(test_files))
-    for line in f:lines() do
-        print(line)
-    end
-    f:close()
-end
-
 local test_file_pat = "/test_%S+%.lua$"
 local test_files = {
     style = util.find_files("tests/style/", test_file_pat),
     async = util.find_files("tests/async/", test_file_pat),
-    lunit = util.find_files("tests/lunit/", test_file_pat),
 }
 
 -- Find a free server number
@@ -187,6 +177,5 @@ end
 
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
-do_lunit_tests(test_files.lunit)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

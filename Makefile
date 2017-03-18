@@ -107,10 +107,7 @@ uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(MANPREFIX)/man1/luakit.1
 	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
-lunit:
-	git clone git://repo.or.cz/lunit.git
-
-run-tests: luakit luakit.so lunit
+run-tests: luakit luakit.so
 	@luajit tests/run_test.lua
 
 newline: options;@echo
