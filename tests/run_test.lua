@@ -15,7 +15,7 @@ local xvfb_display
 
 local current_test_name
 local prev_test_name
-local function update_test_status(status, test_name)
+local function update_test_status(status, test_name, test_file)
     assert(type(status) == "string")
 
     local esc = string.char(27)
@@ -34,7 +34,7 @@ local function update_test_status(status, test_name)
 
     if status == "run" then
         status = "run "
-        current_test_name = test_name
+        current_test_name = test_file:match("tests/(.*)%.lua") .. " / " .. test_name
     else
         test_name = current_test_name
     end
@@ -43,7 +43,7 @@ local function update_test_status(status, test_name)
     if prev_test_name == test_name then
         io.write(esc .. "[1A" .. esc .. "[K")
     end
-    prev_test_name = test_name
+    prev_test_name = current_test_name
 
     print(status_color .. status:upper() .. c_reset .. " " .. test_name)
 end
@@ -66,7 +66,7 @@ local function do_style_tests(test_files)
             assert(type(test_name) == "string")
             assert(type(func) == "function")
 
-            update_test_status("run", test_name)
+            update_test_status("run", test_name, test_file)
             local ok, ret = pcall(func)
             update_test_status(ok and "pass" or "fail")
             if not ok and ret then
@@ -131,7 +131,7 @@ local function do_async_tests(test_files)
         for line in f:lines() do
             status, test_name = line:match("^__(%a+)__ (.*)$")
             if status and test_name then
-                update_test_status(status, test_name)
+                update_test_status(status, test_name, test_file)
             else
                 log_test_output(line)
             end
