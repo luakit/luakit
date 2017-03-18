@@ -9,5 +9,4 @@ luakit.so
 common/tokenize.h
 common/tokenize.c
 buildopts.h
-lunit
 luakit.1.gz

@@ -10,7 +10,6 @@ function T.test_luacheck ()
     local exclude_files = {
         "lib/markdown.lua",
         "lib/cookie.*.lua",
-        "tests/lunit/",
     }
     local options =  {
         std = "luajit",

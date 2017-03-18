@@ -15,7 +15,7 @@ local xvfb_display
 
 local current_test_name
 local prev_test_name
-local function update_test_status(status, test_name)
+local function update_test_status(status, test_name, test_file)
     assert(type(status) == "string")
 
     local esc = string.char(27)
@@ -34,7 +34,7 @@ local function update_test_status(status, test_name)
 
     if status == "run" then
         status = "run "
-        current_test_name = test_name
+        current_test_name = test_file:match("tests/(.*)%.lua") .. " / " .. test_name
     else
         test_name = current_test_name
     end
@@ -43,7 +43,7 @@ local function update_test_status(status, test_name)
     if prev_test_name == test_name then
         io.write(esc .. "[1A" .. esc .. "[K")
     end
-    prev_test_name = test_name
+    prev_test_name = current_test_name
 
     print(status_color .. status:upper() .. c_reset .. " " .. test_name)
 end
@@ -66,7 +66,7 @@ local function do_style_tests(test_files)
             assert(type(test_name) == "string")
             assert(type(func) == "function")
 
-            update_test_status("run", test_name)
+            update_test_status("run", test_name, test_file)
             local ok, ret = pcall(func)
             update_test_status(ok and "pass" or "fail")
             if not ok and ret then
@@ -129,9 +129,9 @@ local function do_async_tests(test_files)
 
         local status, test_name
         for line in f:lines() do
-            status, test_name = line:match("^__(%a+)__ ([%a_]+)$")
+            status, test_name = line:match("^__(%a+)__ (.*)$")
             if status and test_name then
-                update_test_status(status, test_name)
+                update_test_status(status, test_name, test_file)
             else
                 log_test_output(line)
             end
@@ -140,21 +140,17 @@ local function do_async_tests(test_files)
     end
 end
 
-local function do_lunit_tests(test_files)
-    print("Running legacy tests...")
-    local f = spawn_luakit_instance("tests/lunit-run.lua", unpack(test_files))
-    for line in f:lines() do
-        print(line)
-    end
-    f:close()
-end
-
-local test_file_pat = "/test_[a-z_]*%.lua$"
+local test_file_pat = "/test_%S+%.lua$"
 local test_files = {
     style = util.find_files("tests/style/", test_file_pat),
     async = util.find_files("tests/async/", test_file_pat),
-    lunit = util.find_files("tests/lunit/", test_file_pat),
 }
+
+-- Check for luassert
+if not pcall(require, "luassert") then
+    print("Running tests requires installing luassert")
+    return
+end
 
 -- Find a free server number
 -- Does have a race condition...
@@ -187,6 +183,5 @@ end
 
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
-do_lunit_tests(test_files.lunit)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
