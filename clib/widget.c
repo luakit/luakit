@@ -79,6 +79,9 @@ luaH_widget_new(lua_State *L)
     luaH_class_new(L, &widget_class);
     widget_t *w = lua_touserdata(L, -1);
 
+    if (!w->info)
+        luaL_error(L, "widget does not have a type");
+
     /* save ref to the lua class instance */
     lua_pushvalue(L, -1);
     w->ref = luaH_object_ref_class(L, -1, &widget_class);

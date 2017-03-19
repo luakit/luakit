@@ -6,6 +6,11 @@ local assert = require "luassert"
 
 local T = {}
 
+T.test_widget_of_invalid_type_fails = function ()
+    assert.has_error(function () widget{type="no_such_widget_type"} end)
+    assert.has_error(function () widget{} end)
+end
+
 T.test_bin_widget_set_child = function ()
     local bin = widget{type="window"}
     local child1 = widget{type="entry"}
