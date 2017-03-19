@@ -64,11 +64,18 @@ end
 local function do_style_tests(test_files)
     for _, test_file in ipairs(test_files) do
         -- Load test table
-        update_test_status("load", "", test_file)
-        local chunk, err = loadfile(test_file)
-        assert(chunk, err)
-        local T = chunk()
-        assert(type(T) == "table")
+        local T
+        do
+            update_test_status("load", "", test_file)
+            local ok, ret = pcall(dofile, test_file)
+            if not ok then
+                update_test_status("fail")
+                print(ret)
+                return
+            end
+            T = ret
+            assert(type(T) == "table")
+        end
 
         for test_name, func in pairs(T) do
             assert(type(test_name) == "string")

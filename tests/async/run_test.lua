@@ -17,15 +17,14 @@ local function do_test_file(test_file)
     local T
     do
         print("__load__ ")
-        local chunk, err = loadfile(test_file)
-        assert(chunk, err)
-        local ok, ret = pcall(chunk)
+        local ok, ret = pcall(dofile, test_file)
         if not ok then
             print("__fail__ " .. test_file)
             print(ret)
             return
         end
         T = ret
+        assert(type(T) == "table")
     end
 
     local current_test
