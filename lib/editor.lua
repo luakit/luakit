@@ -10,8 +10,8 @@ local _M = {}
 --- Edit a file in a terminal editor in a new window.
 --
 -- * Can't yet handle files with special characters in their name.
--- * Can't yet detect errors when launching the editor/terminal.
 -- * Can't yet use a graphical text editor (terminal only).
+-- * Can't determine when text editor is closed.
 --
 -- @tparam string file The path of the file to edit.
 -- @tparam number line The line number at which to begin editing.
