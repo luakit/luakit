@@ -7,7 +7,11 @@
 package.path = package.path .. ';./tests/?.lua'
 package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 
-local util = require "tests.util"
+local shared_lib = {}
+local test = require "tests.lib"
+local priv = require "tests.priv"
+test.init(shared_lib)
+
 local posix = require "posix"
 local lfs = require "lfs"
 
@@ -157,8 +161,8 @@ end
 
 local test_file_pat = "/test_%S+%.lua$"
 local test_files = {
-    style = util.find_files("tests/style/", test_file_pat),
-    async = util.find_files("tests/async/", test_file_pat),
+    style = test.find_files("tests/style/", test_file_pat),
+    async = test.find_files("tests/async/", test_file_pat),
 }
 
 -- Check for luassert
@@ -180,7 +184,7 @@ end
 
 -- Launch Xvfb for lifetime of test runner
 print("Starting Xvfb")
-local pid_xvfb = util.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
+local pid_xvfb = priv.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
 local xvfb_prx = newproxy(true)
 getmetatable(xvfb_prx).__gc = function ()
     print("Stopping Xvfb")
@@ -189,7 +193,7 @@ end
 
 -- Launch a test HTTP server
 print("Starting HTTP server")
-local pid_httpd = util.spawn({"luajit", "tests/httpd.lua"})
+local pid_httpd = priv.spawn({"luajit", "tests/httpd.lua"})
 local httpd_prx = newproxy(true)
 getmetatable(httpd_prx).__gc = function ()
     print("Stopping HTTP server")

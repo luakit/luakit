@@ -1,5 +1,4 @@
 local test = require "tests.lib"
-local util = require "tests.util"
 local luacheck = require "luacheck"
 local lousy = { util = require("lousy.util") }
 
@@ -51,7 +50,7 @@ function T.test_luacheck ()
     wm_globals = lousy.util.table.join(shared_globals, wm_globals)
     ui_globals = lousy.util.table.join(shared_globals, ui_globals)
 
-    local file_list = util.find_files(lua_dirs, "%.lua$", exclude_files)
+    local file_list = test.find_files(lua_dirs, "%.lua$", exclude_files)
 
     local warnings, errors, fatals = 0, 0, 0
     local issues = {}

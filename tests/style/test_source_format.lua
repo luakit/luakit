@@ -1,5 +1,4 @@
 local test = require "tests.lib"
-local util = require "tests.util"
 
 local T = {}
 
@@ -11,7 +10,7 @@ function T.test_vim_modeline ()
     local errors = {}
 
     -- Test all C and H files
-    local file_list = util.find_files(".", "%.[ch]$")
+    local file_list = test.find_files(".", "%.[ch]$")
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -25,7 +24,7 @@ function T.test_vim_modeline ()
     end
 
     -- Test all lua files
-    file_list = util.find_files(".", "%.lua$", {"lib/markdown.lua"})
+    file_list = test.find_files(".", "%.lua$", {"lib/markdown.lua"})
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -39,7 +38,7 @@ function T.test_vim_modeline ()
     end
 
     if #errors > 0 then
-        error("Some files do not have modelines:\n" .. util.format_file_errors(errors))
+        error("Some files do not have modelines:\n" .. test.format_file_errors(errors))
     end
 end
 
@@ -47,7 +46,7 @@ function T.test_include_guard ()
     local include_guard_pat = "#ifndef LUAKIT_%s\n#define LUAKIT_%s\n\n"
     local errors = {}
 
-    local file_list = util.find_files(".", "%.h$")
+    local file_list = test.find_files(".", "%.h$")
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -62,7 +61,7 @@ function T.test_include_guard ()
     end
 
     if #errors > 0 then
-        error("Some files do not have include guards:\n" .. util.format_file_errors(errors))
+        error("Some files do not have include guards:\n" .. test.format_file_errors(errors))
     end
 end
 
@@ -101,7 +100,7 @@ function T.test_header_comment ()
 ]]
     local errors = {}
 
-    local file_list = util.find_files(".", "%.[ch]$")
+    local file_list = test.find_files(".", "%.[ch]$")
     for _, file in ipairs(file_list) do
         local contents = get_first_paragraph_of_file(file)
 
@@ -121,7 +120,7 @@ function T.test_header_comment ()
     end
 
     if #errors > 0 then
-        error("Some files have header comment errors:\n" .. util.format_file_errors(errors))
+        error("Some files have header comment errors:\n" .. test.format_file_errors(errors))
     end
 end
 
@@ -130,7 +129,7 @@ function T.test_lua_header ()
 
     local errors = {}
 
-    local file_list = util.find_files("lib", "%.lua$", exclude_files)
+    local file_list = test.find_files("lib", "%.lua$", exclude_files)
     for _, file in ipairs(file_list) do
         local contents = get_first_paragraph_of_file(file)
 
@@ -169,7 +168,7 @@ function T.test_lua_header ()
     end
 
     if #errors > 0 then
-        error("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
+        error("Some Lua files have header comment errors:\n" .. test.format_file_errors(errors))
     end
 end
 
@@ -183,7 +182,7 @@ function T.test_lua_module_uses_M ()
 
     local errors = {}
 
-    local file_list = util.find_files("lib", "%.lua$", exclude_files)
+    local file_list = test.find_files("lib", "%.lua$", exclude_files)
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -202,7 +201,7 @@ function T.test_lua_module_uses_M ()
     end
 
     if #errors > 0 then
-        error("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
+        error("Some Lua modules have module table declaration errors:\n" .. test.format_file_errors(errors))
     end
 end
 
@@ -231,7 +230,7 @@ function T.test_lua_module_functions_are_documented ()
 
     local errors = {}
 
-    local file_list = util.find_files("lib", "%.lua$", exclude_files)
+    local file_list = test.find_files("lib", "%.lua$", exclude_files)
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -260,7 +259,7 @@ function T.test_lua_module_functions_are_documented ()
     end
 
     if #errors > 0 then
-        error("Some Lua modules have documentation issues:\n" .. util.format_file_errors(errors))
+        error("Some Lua modules have documentation issues:\n" .. test.format_file_errors(errors))
     end
 end
 
