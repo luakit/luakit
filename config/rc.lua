@@ -165,6 +165,9 @@ require "hide_scrollbars"
 -- Automatically apply per-domain webview properties
 require "domain_props"
 
+-- Add a stylesheet when showing images
+require "image_css"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
