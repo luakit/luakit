@@ -139,7 +139,7 @@ end
 _M.detect_files = function ()
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
-        print(string.format("Stylesheet directory '%s' doesn't exist, not loading user styles...", styles_dir))
+        msg.info(string.format("Stylesheet directory '%s' doesn't exist", styles_dir))
         return
     end
     for filename in lfs.dir(styles_dir) do
