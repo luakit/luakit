@@ -8,12 +8,13 @@ local assert = require("luassert")
 local spy = require 'luassert.spy'
 local match = require("luassert.match")
 
-T.test_undo_close_works = function ()
-    uris = {"about:blank"}
-    require "config.rc"
-    local window = require "window"
-    local w = assert(select(2, next(window.bywidget)))
+uris = {"about:blank"}
+require "config.rc"
 
+local window = require "window"
+local w = assert(select(2, next(window.bywidget)))
+
+T.test_undo_close_works = function ()
     -- Load page in new tab
     local uri = test.http_server() .. "undoclose_page.html"
     w:new_tab(uri)
@@ -57,6 +58,44 @@ T.test_undo_close_works = function ()
     assert(#w.closed_tabs == 0)
     assert(w.view.uri == uri)
     assert(w.view.title == "undoclose_page")
+
+    -- Restore to initial state
+    w:close_tab()
+    assert(w.tabs:current() == 1)
+    assert(w.view.uri == "about:blank")
+end
+
+T.test_undo_close_restores_tab_history = function ()
+    -- Load page in new tab
+    local uri = test.http_server() .. "undoclose_page.html"
+    w:new_tab(uri)
+    assert.is_equal(w.tabs:current(), 2)
+    repeat
+        local _, status = test.wait_for_signal(w.view, "load-status", 1)
+        assert(status ~= "failed")
+    until status == "finished"
+
+    -- Navigate to about:blank
+    w.view.uri = "about:blank"
+    repeat
+        local _, status = test.wait_for_signal(w.view, "load-status", 1)
+        assert(status ~= "failed")
+    until status == "finished"
+
+    -- Close and undo-close
+    w:close_tab()
+    w:undo_close_tab()
+    assert.is_equal(w.tabs:current(), 2)
+    assert.is_equal(w.view.uri, 'about:blank')
+
+    -- Navigate back
+    w:back(1)
+    assert.is_equal(w.view.uri, uri)
+
+    -- Restore to initial state
+    w:close_tab()
+    assert(w.tabs:current() == 1)
+    assert(w.view.uri == "about:blank")
 end
 
 return T

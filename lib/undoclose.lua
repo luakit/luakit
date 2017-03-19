@@ -58,11 +58,13 @@ local on_tab_close = function (w, view)
         local hist_item = hist.items[hist.index]
         local title = lousy.util.escape(hist_item.title) or ""
         tab = {
+            session_state = view.session_state,
             uri = view.uri,
             title = title,
             self_uid = uid_from_view(view),
             after_uid = (index ~= 1) and uid_from_view(w.tabs[index-1]),
         }
+        if view.uri ~= hist_item.uri then tab.next_uri = view.uri end
     end
     table.insert(w.closed_tabs, tab)
 end
@@ -78,7 +80,13 @@ window.methods.undo_close_tab = function (w, index)
         w:notify("No closed tabs to reopen")
         return
     end
-    local view = w:new_tab(tab.uri)
+    -- Restore the view
+    local view = w:new_tab({session_state = tab.session_state})
+    -- If tab was in the middle of a page load when it was closed, continue that now
+    if tab.next_uri then
+        view.uri = tab.next_uri
+    end
+
     reopening[view] = tab
     -- Restore saved view uid
     view_uids[view] = tab.self_uid
