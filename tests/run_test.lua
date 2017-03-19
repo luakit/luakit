@@ -13,6 +13,7 @@ local lfs = require "lfs"
 
 local xvfb_display
 
+local current_test_file
 local current_test_name
 local prev_test_name
 local function update_test_status(status, test_name, test_file)
@@ -30,22 +31,28 @@ local function update_test_status(status, test_name, test_file)
         wait = c_grey,
         cont = c_grey,
         run  = c_grey,
+        load = c_grey,
     })[status] or ""
+
+    -- Beginning a new test file
+    if status == "load" then
+        current_test_file = test_file:match("tests/(.*)%.lua")
+        current_test_name = ""
+    end
 
     if status == "run" then
         status = "run "
-        current_test_name = test_file:match("tests/(.*)%.lua") .. " / " .. test_name
-    else
-        test_name = current_test_name
+        current_test_name = test_name
     end
 
     -- Overwrite the previous status line if it's for the same test
-    if prev_test_name == test_name then
+    if prev_test_name == current_test_name then
         io.write(esc .. "[1A" .. esc .. "[K")
     end
     prev_test_name = current_test_name
 
-    print(status_color .. status:upper() .. c_reset .. " " .. test_name)
+    local line = current_test_file .. " / " .. current_test_name
+    print(status_color .. status:upper() .. c_reset .. " " .. line)
 end
 
 local function log_test_output(msg)
@@ -57,6 +64,7 @@ end
 local function do_style_tests(test_files)
     for _, test_file in ipairs(test_files) do
         -- Load test table
+        update_test_status("load", "", test_file)
         local chunk, err = loadfile(test_file)
         assert(chunk, err)
         local T = chunk()

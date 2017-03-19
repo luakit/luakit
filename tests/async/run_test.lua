@@ -14,9 +14,20 @@ local function do_test_file(test_file)
     local wait_timer = timer()
 
     -- Load test table
-    local chunk, err = loadfile(test_file)
-    assert(chunk, err)
-    local T = chunk()
+    local T
+    do
+        print("__load__ ")
+        local chunk, err = loadfile(test_file)
+        assert(chunk, err)
+        local ok, ret = pcall(chunk)
+        if not ok then
+            print("__fail__ " .. test_file)
+            print(ret)
+            return
+        end
+        T = ret
+    end
+
     local current_test
     local waiting_signal = "foo"
 
