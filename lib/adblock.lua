@@ -352,7 +352,10 @@ end
 local function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end
-    assert(os.exists(file), "Cannot read subscriptions from non-existent file")
+    if not os.exists(file) then
+        msg.info(string.format("Subscriptions file '%s' doesn't exist", file))
+        return
+    end
 
     -- Read lines into subscriptions data table
     for line in io.lines(file) do
