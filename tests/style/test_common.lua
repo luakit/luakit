@@ -21,7 +21,7 @@ function T.test_no_globalconf_in_common()
         for _, file in ipairs(has_globalconf) do
             err[#err+1] = "  " .. file
         end
-        test.fail("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
+        error("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
     end
 end
 

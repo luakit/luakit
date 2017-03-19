@@ -12,10 +12,6 @@ function _M.init(arg)
     shared_lib = arg
 end
 
-function _M.fail(msg)
-    error(msg, 0)
-end
-
 function _M.wait_for_signal(object, signal, timeout)
     assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")

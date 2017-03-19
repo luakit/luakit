@@ -32,7 +32,7 @@ function T.test_no_tabs_in_indentation ()
     end
 
     if #errors > 0 then
-        test.fail("Some files have tabs in indentation:\n" .. util.format_file_errors(errors))
+        error("Some files have tabs in indentation:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -60,7 +60,7 @@ function T.test_no_trailing_whitespace ()
     end
 
     if #errors > 0 then
-        test.fail("Some files have trailing whitespace:\n" .. util.format_file_errors(errors))
+        error("Some files have trailing whitespace:\n" .. util.format_file_errors(errors))
     end
 end
 

@@ -39,7 +39,7 @@ function T.test_vim_modeline ()
     end
 
     if #errors > 0 then
-        test.fail("Some files do not have modelines:\n" .. util.format_file_errors(errors))
+        error("Some files do not have modelines:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -62,7 +62,7 @@ function T.test_include_guard ()
     end
 
     if #errors > 0 then
-        test.fail("Some files do not have include guards:\n" .. util.format_file_errors(errors))
+        error("Some files do not have include guards:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -121,7 +121,7 @@ function T.test_header_comment ()
     end
 
     if #errors > 0 then
-        test.fail("Some files have header comment errors:\n" .. util.format_file_errors(errors))
+        error("Some files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -169,7 +169,7 @@ function T.test_lua_header ()
     end
 
     if #errors > 0 then
-        test.fail("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
+        error("Some Lua files have header comment errors:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -202,7 +202,7 @@ function T.test_lua_module_uses_M ()
     end
 
     if #errors > 0 then
-        test.fail("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
+        error("Some Lua modules have module table declaration errors:\n" .. util.format_file_errors(errors))
     end
 end
 
@@ -260,7 +260,7 @@ function T.test_lua_module_functions_are_documented ()
     end
 
     if #errors > 0 then
-        test.fail("Some Lua modules have documentation issues:\n" .. util.format_file_errors(errors))
+        error("Some Lua modules have documentation issues:\n" .. util.format_file_errors(errors))
     end
 end
 
