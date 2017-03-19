@@ -68,17 +68,12 @@ end
 local function do_style_tests(test_files)
     for _, test_file in ipairs(test_files) do
         -- Load test table
-        local T
-        do
-            update_test_status("load", "", test_file)
-            local ok, ret = pcall(dofile, test_file)
-            if not ok then
-                update_test_status("fail")
-                print(ret)
-                return
-            end
-            T = ret
-            assert(type(T) == "table")
+        update_test_status("load", "", test_file)
+        local T, err = priv.load_test_file(test_file)
+        if not T then
+            update_test_status("fail")
+            print(err)
+            return
         end
 
         for test_name, func in pairs(T) do

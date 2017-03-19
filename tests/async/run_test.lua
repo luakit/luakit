@@ -4,6 +4,7 @@
 -- @copyright 2017 Aidan Holm
 
 local shared_lib = {}
+local priv = require "tests.priv"
 local test = require("tests.lib")
 test.init(shared_lib)
 
@@ -13,32 +14,24 @@ test.init(shared_lib)
 local function do_test_file(test_file)
     local wait_timer = timer()
 
-    -- Load test table
-    local T
-    do
-        print("__load__ ")
-        local ok, ret = pcall(dofile, test_file)
-        if not ok then
-            print("__fail__ " .. test_file)
-            print(ret)
-            return
-        end
-        T = ret
-        assert(type(T) == "table")
+    -- Load test table, or abort
+    print("__load__ ")
+    local T, err = priv.load_test_file(test_file)
+    if not T then
+        print("__fail__ " .. test_file)
+        print(err)
+        luakit.quit(0)
     end
 
-    local current_test
-    local waiting_signal = "foo"
-
-    -- Type checks
-    assert(type(T) == "table")
+    -- Convert functions to coroutines
     for test_name, func in pairs(T) do
-        assert(type(test_name) == "string")
-        assert(type(func) == "function" or type(func) == "thread")
         if type(func) == "function" then
             T[test_name] = coroutine.create(func)
         end
     end
+
+    local current_test
+    local waiting_signal = "???"
 
     local test_object_signal_handler
 
