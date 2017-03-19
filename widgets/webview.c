@@ -54,6 +54,8 @@ typedef struct {
     gchar *source;
     /** Length in bytes of source array */
     gsize source_length;
+    /** Whether a request for page source is pending */
+    gboolean source_pending;
 
     /** Inspector properties */
     WebKitWebInspector *inspector;
@@ -305,7 +307,8 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
     return TRUE; /* Prevent load-failed signal */
 }
 
-static void webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res, widget_t *w)
+static void
+webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res, widget_t *w)
 {
     webview_data_t *d = w->data;
     if (!d->is_alive)
@@ -317,6 +320,26 @@ static void webview_get_source_finished(WebKitWebResource *main_resource, GAsync
     g_free(d->source);
     d->source = (gchar*)source;
     d->source_length = length;
+    d->source_pending = FALSE;
+}
+
+static gboolean
+webview_get_source(widget_t *w)
+{
+    webview_data_t *d = w->data;
+    WebKitWebResource * main_resource = webkit_web_view_get_main_resource(d->view);
+    if (!main_resource)
+        return FALSE;
+
+    /* Wait until any current source requests are done */
+    if (d->source_pending)
+        return TRUE;
+    d->source_pending = TRUE;
+
+    g_object_ref(main_resource);
+    webkit_web_resource_get_data(main_resource, NULL,
+            (GAsyncReadyCallback) webview_get_source_finished, w);
+    return FALSE;
 }
 
 static void
@@ -353,12 +376,7 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
         g_free(d->source);
         d->source = NULL;
     } else if (e == WEBKIT_LOAD_FINISHED) {
-        WebKitWebResource * main_resource = webkit_web_view_get_main_resource(d->view);
-        if (main_resource) {
-            g_object_ref(main_resource);
-            webkit_web_resource_get_data(main_resource, NULL,
-                    (GAsyncReadyCallback) webview_get_source_finished, w);
-        }
+        g_idle_add((GSourceFunc) webview_get_source, w);
     }
 
     /* Store certificate information about current page */
@@ -1141,6 +1159,8 @@ webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
     d->is_alive = FALSE;
+
+    g_idle_remove_by_data(w);
 
     g_assert(d->ipc);
     ipc_endpoint_decref(d->ipc);
