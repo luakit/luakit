@@ -121,6 +121,12 @@ local function do_test_file(test_file)
     end)
 
     do_next_test()
+
+    -- If the test hasn't opened any windows, open one to keep luakit happy
+    if #luakit.windows == 0 then
+        local win = widget{type="window"}
+        win:show()
+    end
 end
 
 io.stdout:setvbuf("line")
