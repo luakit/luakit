@@ -54,7 +54,7 @@ LOG_LEVELS
 }
 
 void
-_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...)
+_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
@@ -63,7 +63,7 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...)
 }
 
 void
-va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap)
+va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap)
 {
     if (lvl > verbosity)
         return;
@@ -85,7 +85,7 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
     }
 
     /* Log format: [timestamp] prefix: fct:line msg */
-#define LOG_FMT "[%#12f] %c: %s:%d: %s"
+#define LOG_FMT "[%#12f] %c: %s:%s: %s"
 
     if (!isatty(log_fd)) {
         static GRegex *reg;
@@ -125,7 +125,7 @@ ipc_recv_log(ipc_endpoint_t *UNUSED(ipc), const guint8 *lua_msg, guint length)
     g_assert_cmpint(n, ==, 4);
 
     log_level_t lvl = lua_tointeger(L, -4);
-    gint line = lua_tointeger(L, -3);
+    const gchar *line = lua_tostring(L, -3);
     const gchar *fct = lua_tostring(L, -2);
     const gchar *msg = lua_tostring(L, -1);
     _log(lvl, line, fct, "%s", msg);

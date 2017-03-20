@@ -139,11 +139,13 @@ luaH_warn(lua_State *L, const gchar *fmt, ...) {
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "Sln", &ar);
+    gchar line_as_str[20];
+    snprintf(line_as_str, sizeof(line_as_str), "%d", ar.currentline);
     g_assert_cmpint(top, ==, lua_gettop(L));
 
     va_list ap;
     va_start(ap, fmt);
-    va_log(LOG_LEVEL_warn, ar.currentline, ar.short_src, fmt, ap);
+    va_log(LOG_LEVEL_warn, line_as_str, ar.short_src, fmt, ap);
     va_end(ap);
 }
 
