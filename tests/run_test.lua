@@ -15,12 +15,22 @@ test.init(shared_lib)
 local posix = require "posix"
 local lfs = require "lfs"
 local lousy = { util = require "lousy.util" }
+local orig_print = print
 
 local xvfb_display
 
 local current_test_file
 local current_test_name
 local prev_test_name
+
+-- Wrap print()
+local function log_test_output(...)
+    local msg = table.concat({...}, "\t")
+    prev_test_name = nil
+    local indent = "  "
+    orig_print(indent .. msg:gsub("\n", "\n" .. indent))
+end
+
 local function update_test_status(status, test_name, test_file)
     assert(type(status) == "string")
 
@@ -59,24 +69,19 @@ local function update_test_status(status, test_name, test_file)
     prev_test_name = current_test_name
 
     local line = current_test_file .. " / " .. current_test_name
-    print(status_color .. status:upper() .. c_reset .. " " .. line)
-end
-
-local function log_test_output(msg)
-    prev_test_name = nil
-    local indent = "  "
-    print("  " .. msg:gsub("\n", "\n" .. indent))
+    orig_print(status_color .. status:upper() .. c_reset .. " " .. line)
 end
 
 local function do_style_tests(test_files)
+    print = log_test_output -- luacheck: ignore
     for _, test_file in ipairs(test_files) do
         -- Load test table
         update_test_status("load", "", test_file)
         local T, err = priv.load_test_file(test_file)
         if not T then
             update_test_status("fail")
-            print(err)
-            return
+            log_test_output(err)
+            break
         end
 
         for test_name, func in pairs(T) do
@@ -91,6 +96,7 @@ local function do_style_tests(test_files)
             end
         end
     end
+    print = orig_print -- luacheck: ignore
 end
 
 local luakit_tmp_dirs = {}
