@@ -1,5 +1,4 @@
 local test = require "tests.lib"
-local join_table = require("lib.lousy.util").table.join
 
 local T = {}
 
@@ -11,9 +10,7 @@ function T.test_no_tabs_in_indentation ()
     local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
-    local file_list = {}
-    file_list = join_table(file_list, test.find_files(".", "%.lua$", exclude_files))
-    file_list = join_table(file_list, test.find_files(".", "%.[ch]$", exclude_files))
+    local file_list = test.find_files(".", {"%.lua$", "%.[ch]$"}, exclude_files)
 
     for _, file in ipairs(file_list) do
         local lines = {}
@@ -39,9 +36,7 @@ function T.test_no_trailing_whitespace ()
     local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
-    local file_list = {}
-    file_list = join_table(file_list, test.find_files(".", "%.lua$", exclude_files))
-    file_list = join_table(file_list, test.find_files(".", "%.[ch]$", exclude_files))
+    local file_list = test.find_files(".", {"%.lua$", "%.[ch]$"}, exclude_files)
 
     for _, file in ipairs(file_list) do
         local lines = {}
