@@ -156,7 +156,9 @@ new_mode("undolist", {
         local rows = {{ "Title", " URI", title = true }}
         for uid, tab in ipairs(w.closed_tabs) do
             tab.uid = uid
-            table.insert(rows, 2, { "  " .. tab.title, " " .. tab.uri, uid = uid })
+            local title = lousy.util.escape(tab.title)
+            local uri = lousy.util.escape(tab.uri)
+            table.insert(rows, 2, { "  " .. title, " " .. uri, uid = uid })
         end
         w.menu:build(rows)
         w:notify("Use j/k to move, d delete, u undo, w winopen.", false)
