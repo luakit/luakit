@@ -47,18 +47,27 @@ local function path_is_in_directory(path, dir)
     return string.find(path, "^"..dir)
 end
 
-function _M.find_files(dirs, pattern, excludes)
+function _M.find_files(dirs, patterns, excludes)
     assert(type(dirs) == "string" or type(dirs) == "table",
         "Bad search location: expected string or table")
-    assert(type(pattern) == "string", "Bad pattern")
-    assert(excludes == nil or type(excludes) == "table", "Bad exclusion list")
+    assert(type(patterns) == "string" or type(patterns) == "table",
+        "Bad patterns: expected string or table")
+    assert(excludes == nil or type(excludes) == "table",
+        "Bad exclusion list: expected nil or table")
 
     if type(dirs) == "string" then dirs = { dirs } end
+    if type(patterns) == "string" then patterns = { patterns } end
+    if excludes == nil then excludes = {} end
+
     for _, dir in ipairs(dirs) do
         assert(type(dir) == "string", "Each search location must be a string")
     end
-
-    if excludes == nil then excludes = {} end
+    for _, pattern in ipairs(patterns) do
+        assert(type(pattern) == "string", "Each pattern must be a string")
+    end
+    for _, exclude in ipairs(excludes) do
+        assert(type(exclude) == "string", "Each exclude must be a string")
+    end
 
     -- Get list of files tracked by git
     get_git_files()
@@ -70,7 +79,10 @@ function _M.find_files(dirs, pattern, excludes)
         for _, dir in ipairs(dirs) do
             dir_match = dir_match or path_is_in_directory(file, dir)
         end
-        local pat_match = string.find(file, pattern)
+        local pat_match = false
+        for _, pattern in ipairs(patterns) do
+            pat_match = pat_match or string.find(file, pattern)
+        end
         if dir_match and pat_match then
             table.insert(file_list, file)
         end
