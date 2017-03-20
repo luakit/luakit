@@ -76,8 +76,9 @@ va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list a
 
     gchar prefix_char, *style = "";
     switch (lvl) {
-        case LOG_LEVEL_fatal:   prefix_char = 'E'; style = ANSI_COLOR_BG_RED; break;
-        case LOG_LEVEL_warn:    prefix_char = 'W'; style = ANSI_COLOR_RED; break;
+        case LOG_LEVEL_fatal:   prefix_char = 'F'; style = ANSI_COLOR_BG_RED; break;
+        case LOG_LEVEL_error:   prefix_char = 'E'; style = ANSI_COLOR_RED; break;
+        case LOG_LEVEL_warn:    prefix_char = 'W'; style = ANSI_COLOR_YELLOW; break;
         case LOG_LEVEL_info:    prefix_char = 'I'; break;
         case LOG_LEVEL_verbose: prefix_char = 'V'; break;
         case LOG_LEVEL_debug:   prefix_char = 'D'; break;

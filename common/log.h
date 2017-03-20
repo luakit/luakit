@@ -26,6 +26,7 @@
 
 #define LOG_LEVELS \
     X(fatal) \
+    X(error) \
     X(warn) \
     X(info) \
     X(verbose) \
@@ -53,6 +54,7 @@ void _log(log_level_t lvl, int, const gchar *, const gchar *, ...)
 void va_log(log_level_t lvl, int, const gchar *, const gchar *, va_list);
 
 #define fatal(string, ...) _log(LOG_LEVEL_fatal, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+#define error(string, ...) _log(LOG_LEVEL_error, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 #define warn(string, ...) _log(LOG_LEVEL_warn, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 #define info(string, ...) _log(LOG_LEVEL_info, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
 #define verbose(string, ...) _log(LOG_LEVEL_verbose, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
