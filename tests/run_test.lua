@@ -197,6 +197,17 @@ getmetatable(httpd_prx).__gc = function ()
     posix.kill(pid_httpd)
 end
 
+-- Add interrupt handler
+posix.signal(posix.SIGINT, function (_)
+    io.write("\n")
+    print("Interrupted")
+    xvfb_prx = nil
+    httpd_prx = nil
+    luakit_tmp_dirs_prx = nil
+    collectgarbage()
+    os.exit(0)
+end)
+
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
 

@@ -45,6 +45,9 @@ function T.test_luacheck ()
         ["lib/adblock.lua"] = {
             ignore = { "542" }, -- 542: Empty if branch
         },
+        ["tests/run_test.lua"] = {
+            ignore = { "311/.*_prx" }, -- 311: Value assigned to variable is unused
+        },
     }
 
     wm_globals = lousy.util.table.join(shared_globals, wm_globals)
