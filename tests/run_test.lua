@@ -14,6 +14,7 @@ test.init(shared_lib)
 
 local posix = require "posix"
 local lfs = require "lfs"
+local lousy = { util = require "lousy.util" }
 
 local xvfb_display
 
@@ -156,12 +157,6 @@ local function do_async_tests(test_files)
     end
 end
 
-local test_file_pat = "/test_%S+%.lua$"
-local test_files = {
-    style = test.find_files("tests/style/", test_file_pat),
-    async = test.find_files("tests/async/", test_file_pat),
-}
-
 -- Check for luassert
 if not pcall(require, "luassert") then
     print("Running tests requires installing luassert")
@@ -205,8 +200,27 @@ posix.signal(posix.SIGINT, function (_)
     httpd_prx = nil
     luakit_tmp_dirs_prx = nil
     collectgarbage()
-    os.exit(0)
 end)
+
+-- Find test files
+local test_file_pat = "/test_%S+%.lua$"
+local test_files = {
+    style = test.find_files("tests/style/", test_file_pat),
+    async = test.find_files("tests/async/", test_file_pat),
+}
+
+-- Filter test files to arguments
+local include_patterns = arg
+if #arg > 0 then
+    for k, v in pairs(test_files) do
+        test_files[k] = lousy.util.table.filter_array(v, function (_, file)
+            for _, pat in ipairs(include_patterns) do
+                if file:match(pat) then return true end
+            end
+            return false
+        end)
+    end
+end
 
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
