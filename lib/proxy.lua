@@ -8,8 +8,9 @@ local webview = require("webview")
 local theme = lousy.theme.get()
 local window = require("window")
 local binds = require("binds")
+local new_mode = require("modes").new_mode
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
-local new_mode, menu_binds = binds.new_mode, binds.menu_binds
+local menu_binds = binds.menu_binds
 local capi = { luakit = luakit, soup = soup }
 
 local _M = {}
