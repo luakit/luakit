@@ -11,12 +11,9 @@ msg.warn("======================================================================
 
 local cookie_filter_lib = require("cookie_filter")
 local lousy     = require("lousy")
-local add_binds, add_cmds = add_binds, add_cmds
-local chrome    = chrome
-local pairs     = pairs
-local ipairs    = ipairs
-local string    = string
-local table     = table
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local chrome    = require("chrome")
 local window    = require("window")
 
 module("cookie_filter_chrome")

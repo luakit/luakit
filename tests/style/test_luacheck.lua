@@ -1,5 +1,4 @@
 local test = require "tests.lib"
-local util = require "tests.util"
 local luacheck = require "luacheck"
 local lousy = { util = require("lousy.util") }
 
@@ -46,12 +45,15 @@ function T.test_luacheck ()
         ["lib/adblock.lua"] = {
             ignore = { "542" }, -- 542: Empty if branch
         },
+        ["tests/run_test.lua"] = {
+            ignore = { "311/.*_prx" }, -- 311: Value assigned to variable is unused
+        },
     }
 
     wm_globals = lousy.util.table.join(shared_globals, wm_globals)
     ui_globals = lousy.util.table.join(shared_globals, ui_globals)
 
-    local file_list = util.find_files(lua_dirs, "%.lua$", exclude_files)
+    local file_list = test.find_files(lua_dirs, "%.lua$", exclude_files)
 
     local warnings, errors, fatals = 0, 0, 0
     local issues = {}
@@ -96,7 +98,7 @@ function T.test_luacheck ()
         for _, issue in ipairs(issues) do
             output[#output + 1] = string.format("  %-" .. tostring(align+10) .. "s %s", issue.src, issue.msg)
         end
-        test.fail("Luacheck messages:\n" .. table.concat(output, "\n"))
+        error("Luacheck messages:\n" .. table.concat(output, "\n"))
     end
 end
 

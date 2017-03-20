@@ -60,7 +60,8 @@ static gint
 luaH_widget_gc(lua_State *L)
 {
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
-    debug("collecting widget at %p of type '%s'", w, w->info->name);
+    if (w->info)
+        debug("collecting widget at %p of type '%s'", w, w->info->name);
     if(w->destructor)
         w->destructor(w);
     return luaH_object_gc(L);
@@ -79,8 +80,10 @@ luaH_widget_new(lua_State *L)
     luaH_class_new(L, &widget_class);
     widget_t *w = lua_touserdata(L, -1);
 
-    if (!w->info)
+    if (!w->info) {
+        lua_pop(L, 1); /* Allow garbage collection */
         luaL_error(L, "widget does not have a type");
+    }
 
     /* save ref to the lua class instance */
     lua_pushvalue(L, -1);

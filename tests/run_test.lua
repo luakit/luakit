@@ -1,3 +1,5 @@
+#!/usr/bin/env luajit
+
 --- Main test runner.
 --
 -- @script run_test
@@ -7,15 +9,30 @@
 package.path = package.path .. ';./tests/?.lua'
 package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 
-local util = require "tests.util"
+local shared_lib = {}
+local test = require "tests.lib"
+local priv = require "tests.priv"
+test.init(shared_lib)
+
 local posix = require "posix"
 local lfs = require "lfs"
+local lousy = { util = require "lousy.util" }
+local orig_print = print
 
 local xvfb_display
 
 local current_test_file
 local current_test_name
 local prev_test_name
+
+-- Wrap print()
+local function log_test_output(...)
+    local msg = table.concat({...}, "\t")
+    prev_test_name = nil
+    local indent = "  "
+    orig_print(indent .. msg:gsub("\n", "\n" .. indent))
+end
+
 local function update_test_status(status, test_name, test_file)
     assert(type(status) == "string")
 
@@ -46,29 +63,28 @@ local function update_test_status(status, test_name, test_file)
     end
 
     -- Overwrite the previous status line if it's for the same test
-    if prev_test_name == current_test_name then
+    -- Or if the previous test was "" (a test file load)
+    if prev_test_name == current_test_name
+    or prev_test_name == "" then
         io.write(esc .. "[1A" .. esc .. "[K")
     end
     prev_test_name = current_test_name
 
     local line = current_test_file .. " / " .. current_test_name
-    print(status_color .. status:upper() .. c_reset .. " " .. line)
-end
-
-local function log_test_output(msg)
-    prev_test_name = nil
-    local indent = "  "
-    print("  " .. msg:gsub("\n", "\n" .. indent))
+    orig_print(status_color .. status:upper() .. c_reset .. " " .. line)
 end
 
 local function do_style_tests(test_files)
+    print = log_test_output -- luacheck: ignore
     for _, test_file in ipairs(test_files) do
         -- Load test table
         update_test_status("load", "", test_file)
-        local chunk, err = loadfile(test_file)
-        assert(chunk, err)
-        local T = chunk()
-        assert(type(T) == "table")
+        local T, err = priv.load_test_file(test_file)
+        if not T then
+            update_test_status("fail")
+            log_test_output(err)
+            break
+        end
 
         for test_name, func in pairs(T) do
             assert(type(test_name) == "string")
@@ -82,6 +98,7 @@ local function do_style_tests(test_files)
             end
         end
     end
+    print = orig_print -- luacheck: ignore
 end
 
 local luakit_tmp_dirs = {}
@@ -148,12 +165,6 @@ local function do_async_tests(test_files)
     end
 end
 
-local test_file_pat = "/test_%S+%.lua$"
-local test_files = {
-    style = util.find_files("tests/style/", test_file_pat),
-    async = util.find_files("tests/async/", test_file_pat),
-}
-
 -- Check for luassert
 if not pcall(require, "luassert") then
     print("Running tests requires installing luassert")
@@ -173,7 +184,7 @@ end
 
 -- Launch Xvfb for lifetime of test runner
 print("Starting Xvfb")
-local pid_xvfb = util.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
+local pid_xvfb = priv.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
 local xvfb_prx = newproxy(true)
 getmetatable(xvfb_prx).__gc = function ()
     print("Stopping Xvfb")
@@ -182,11 +193,41 @@ end
 
 -- Launch a test HTTP server
 print("Starting HTTP server")
-local pid_httpd = util.spawn({"luajit", "tests/httpd.lua"})
+local pid_httpd = priv.spawn({"luajit", "tests/httpd.lua"})
 local httpd_prx = newproxy(true)
 getmetatable(httpd_prx).__gc = function ()
     print("Stopping HTTP server")
     posix.kill(pid_httpd)
+end
+
+-- Add interrupt handler
+posix.signal(posix.SIGINT, function (_)
+    io.write("\n")
+    print("Interrupted")
+    xvfb_prx = nil
+    httpd_prx = nil
+    luakit_tmp_dirs_prx = nil
+    collectgarbage()
+end)
+
+-- Find test files
+local test_file_pat = "/test_%S+%.lua$"
+local test_files = {
+    style = test.find_files("tests/style/", test_file_pat),
+    async = test.find_files("tests/async/", test_file_pat),
+}
+
+-- Filter test files to arguments
+local include_patterns = arg
+if #arg > 0 then
+    for k, v in pairs(test_files) do
+        test_files[k] = lousy.util.table.filter_array(v, function (_, file)
+            for _, pat in ipairs(include_patterns) do
+                if file:match(pat) then return true end
+            end
+            return false
+        end)
+    end
 end
 
 do_style_tests(test_files.style)

@@ -1,11 +1,10 @@
 local test = require "tests.lib"
-local util = require "tests.util"
 
 local T = {}
 
 function T.test_no_globalconf_in_common()
     local has_globalconf = {}
-    local file_list = util.find_files("common", "%.[ch]$")
+    local file_list = test.find_files("common", "%.[ch]$")
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -21,7 +20,7 @@ function T.test_no_globalconf_in_common()
         for _, file in ipairs(has_globalconf) do
             err[#err+1] = "  " .. file
         end
-        test.fail("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
+        error("Some files in common/ access globalconf:\n" .. table.concat(err, "\n"))
     end
 end
 

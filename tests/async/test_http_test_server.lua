@@ -5,10 +5,6 @@
 local T = {}
 local test = require "tests.lib"
 
-local window = widget{type="window"}
-local view = widget{type="webview"}
-window.child = view
-window:show()
 
 T.test_http_server_returns_file_contents = function ()
     -- Read file contents
@@ -17,6 +13,7 @@ T.test_http_server_returns_file_contents = function ()
     f:close()
 
     -- Load URI and wait for completion
+    local view = widget{type="webview"}
     view.uri = test.http_server() .. "hello_world.html"
     repeat
         local _, status = test.wait_for_signal(view, "load-status", 1)

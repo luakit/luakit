@@ -1,6 +1,4 @@
 local test = require "tests.lib"
-local util = require "tests.util"
-local join_table = require("lib.lousy.util").table.join
 
 local T = {}
 
@@ -12,9 +10,7 @@ function T.test_no_tabs_in_indentation ()
     local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
-    local file_list = {}
-    file_list = join_table(file_list, util.find_files(".", "%.lua$", exclude_files))
-    file_list = join_table(file_list, util.find_files(".", "%.[ch]$", exclude_files))
+    local file_list = test.find_files(".", {"%.lua$", "%.[ch]$"}, exclude_files)
 
     for _, file in ipairs(file_list) do
         local lines = {}
@@ -32,7 +28,7 @@ function T.test_no_tabs_in_indentation ()
     end
 
     if #errors > 0 then
-        test.fail("Some files have tabs in indentation:\n" .. util.format_file_errors(errors))
+        error("Some files have tabs in indentation:\n" .. test.format_file_errors(errors))
     end
 end
 
@@ -40,9 +36,7 @@ function T.test_no_trailing_whitespace ()
     local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
-    local file_list = {}
-    file_list = join_table(file_list, util.find_files(".", "%.lua$", exclude_files))
-    file_list = join_table(file_list, util.find_files(".", "%.[ch]$", exclude_files))
+    local file_list = test.find_files(".", {"%.lua$", "%.[ch]$"}, exclude_files)
 
     for _, file in ipairs(file_list) do
         local lines = {}
@@ -60,7 +54,7 @@ function T.test_no_trailing_whitespace ()
     end
 
     if #errors > 0 then
-        test.fail("Some files have trailing whitespace:\n" .. util.format_file_errors(errors))
+        error("Some files have trailing whitespace:\n" .. test.format_file_errors(errors))
     end
 end
 
