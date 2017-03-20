@@ -4,18 +4,45 @@
 -- @copyright 2017 Aidan Holm
 
 local posix = require('posix')
+local bit = require("bit")
 
 local M = {}
 
 function M.spawn(args)
     assert(type(args) == "table" and #args > 0)
 
+    local r, w = posix.pipe()
     local child = posix.fork()
+
     if child == 0 then
-        local _, err = posix.execx(args)
-        print("execx:", err)
-        os.exit(0)
+        -- Set up error message pipe
+        posix.close(r)
+        local flags = posix.fcntl(w, posix.F_GETFD)
+        posix.fcntl (w, posix.F_SETFD, bit.bor(flags, posix.FD_CLOEXEC))
+        -- Exec the new program
+        local exe = table.remove(args, 1)
+        local _, err = posix.execp(exe, args)
+        -- Write error message on failure
+        posix.write(w, err)
+        posix._exit(0)
+    else
+        posix.close(w)
+
+        -- Collect any error message
+        local err = ""
+        repeat
+            local part = posix.read(r, 1024)
+            err = err .. part
+        until #part == 0
+        posix.close(r)
+
+        -- Raise error if present
+        if #err > 0 then
+            err = string.format("failed to spawn '%s': %s", table.concat(args, " "), err)
+            error(err)
+        end
     end
+
     return child
 end
 
