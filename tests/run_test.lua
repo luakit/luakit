@@ -1,3 +1,5 @@
+#!/usr/bin/env luajit
+
 --- Main test runner.
 --
 -- @script run_test
