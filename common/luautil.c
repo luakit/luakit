@@ -27,13 +27,11 @@ static gpointer debug_traceback_ref;
 gint
 luaH_dofunction_on_error(lua_State *L)
 {
-    lua_pushliteral(L, "error in ");
-    lua_pushvalue(L, -2);
     luaH_object_push(L, debug_traceback_ref);
     lua_pushliteral(L, "");
     lua_pushinteger(L, 3);
     lua_pcall(L, 2, 1, 0);
-    lua_concat(L, 3);
+    lua_concat(L, 2);
     return 1;
 }
 

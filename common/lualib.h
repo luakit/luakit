@@ -154,7 +154,7 @@ luaH_dofunction(lua_State *L, gint nargs, gint nret) {
     lua_insert(L, - nargs - 2);
     gint error_func_pos = lua_gettop(L) - nargs - 1;
     if(lua_pcall(L, nargs, nret, - nargs - 2)) {
-        warn("%s", lua_tostring(L, -1));
+        error("%s", lua_tostring(L, -1));
         /* Remove error function and error string */
         lua_pop(L, 2);
         return FALSE;
