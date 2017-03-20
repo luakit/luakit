@@ -50,7 +50,9 @@ local function update_test_status(status, test_name, test_file)
     end
 
     -- Overwrite the previous status line if it's for the same test
-    if prev_test_name == current_test_name then
+    -- Or if the previous test was "" (a test file load)
+    if prev_test_name == current_test_name
+    or prev_test_name == "" then
         io.write(esc .. "[1A" .. esc .. "[K")
     end
     prev_test_name = current_test_name
