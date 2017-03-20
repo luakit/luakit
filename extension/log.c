@@ -25,7 +25,7 @@
 #include <glib/gprintf.h>
 
 void
-_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
+_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
     va_log(lvl, line, fct, fmt, ap);
@@ -33,12 +33,12 @@ _log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, ...) {
 }
 
 void
-va_log(log_level_t lvl, gint line, const gchar *fct, const gchar *fmt, va_list ap) {
+va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap) {
     lua_State *L = extension.WL;
     gchar *msg = g_strdup_vprintf(fmt, ap);
 
     lua_pushinteger(L, lvl);
-    lua_pushinteger(L, line);
+    lua_pushstring(L, line);
     lua_pushstring(L, fct);
     lua_pushstring(L, msg);
     ipc_send_lua(extension.ipc, IPC_TYPE_log, L, -4, -1);

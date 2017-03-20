@@ -26,6 +26,7 @@
 
 #define LOG_LEVELS \
     X(fatal) \
+    X(error) \
     X(warn) \
     X(info) \
     X(verbose) \
@@ -47,16 +48,20 @@ typedef enum { LOG_LEVELS } log_level_t;
 
 #define ANSI_COLOR_BG_RED  "\x1b[41m"
 
-#define log(lvl, string, ...) _log(lvl, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _log(log_level_t lvl, int, const gchar *, const gchar *, ...)
-    __attribute__ ((format (printf, 4, 5)));
-void va_log(log_level_t lvl, int, const gchar *, const gchar *, va_list);
+#define STRINGIFY(x) #x
+#define TO_STRING(x) STRINGIFY(x)
 
-#define fatal(string, ...) _log(LOG_LEVEL_fatal, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-#define warn(string, ...) _log(LOG_LEVEL_warn, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-#define info(string, ...) _log(LOG_LEVEL_info, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-#define verbose(string, ...) _log(LOG_LEVEL_verbose, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-#define debug(string, ...) _log(LOG_LEVEL_debug, __LINE__, __FUNCTION__, string, ##__VA_ARGS__)
+#define log(lvl, string, ...) _log(lvl, TO_STRING(__LINE__), __FUNCTION__, string, ##__VA_ARGS__)
+void _log(log_level_t lvl, const gchar *, const gchar *, const gchar *, ...)
+    __attribute__ ((format (printf, 4, 5)));
+void va_log(log_level_t lvl, const gchar *, const gchar *, const gchar *, va_list);
+
+#define fatal(...) log(LOG_LEVEL_fatal, ##__VA_ARGS__)
+#define error(...) log(LOG_LEVEL_error, ##__VA_ARGS__)
+#define warn(...) log(LOG_LEVEL_warn, ##__VA_ARGS__)
+#define info(...) log(LOG_LEVEL_info, ##__VA_ARGS__)
+#define verbose(...) log(LOG_LEVEL_verbose, ##__VA_ARGS__)
+#define debug(...) log(LOG_LEVEL_debug, ##__VA_ARGS__)
 
 /* Only accessible from main UI process */
 int log_level_from_string(log_level_t *out, const char *str);
