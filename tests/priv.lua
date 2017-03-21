@@ -4,7 +4,6 @@
 -- @copyright 2017 Aidan Holm
 
 local posix = require('posix')
-local bit = require("bit")
 
 local M = {}
 
@@ -17,8 +16,9 @@ function M.spawn(args)
     if child == 0 then
         -- Set up error message pipe
         posix.close(r)
-        local flags = posix.fcntl(w, posix.F_GETFD)
-        posix.fcntl (w, posix.F_SETFD, bit.bor(flags, posix.FD_CLOEXEC))
+        -- Not future proof, but allows use of regular Lua
+        -- Works because CLOEXEC is currently the only FD flag
+        posix.fcntl (w, posix.F_SETFD, posix.FD_CLOEXEC)
         -- Exec the new program
         local exe = table.remove(args, 1)
         local _, err = posix.execp(exe, args)
