@@ -81,6 +81,8 @@ struct widget_t
     /* CSS provider for this widget */
     GtkCssProvider *provider;
 #endif
+    /* Previous width and height, for resize signal */
+    gint prev_width, prev_height;
     /* Misc private data */
     gpointer data;
 };

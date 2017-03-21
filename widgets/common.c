@@ -115,6 +115,23 @@ add_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
     lua_pop(L, 1);
 }
 
+void
+resize_cb(GtkWidget* UNUSED(win), GdkRectangle *rect, widget_t *w)
+{
+    int width = rect->width, height = rect->height;
+    if (width == w->prev_width && height == w->prev_height)
+        return;
+    w->prev_width = width;
+    w->prev_height = height;
+
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    lua_pushinteger(L, width);
+    lua_pushinteger(L, height);
+    luaH_object_emit_signal(L, -3, "resize", 2, 0);
+    lua_pop(L, 1);
+}
+
 /* gtk container remove callback */
 void
 remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
