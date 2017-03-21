@@ -56,7 +56,7 @@ luaH_msg_string_from_args(lua_State *L)
 {
     gint nargs = lua_gettop(L);
     /* Pre-convert all non-numerical arguments to strings */
-    for (gint i = 0; i < nargs; ++i) {
+    for (gint i = 1; i <= nargs; ++i) {
         if (lua_type(L, i) != LUA_TNUMBER) {
             /* Convert to a string with tostring() ... */
             luaH_object_push(L, tostring_ref);
