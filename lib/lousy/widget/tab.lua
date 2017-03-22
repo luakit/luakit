@@ -39,7 +39,7 @@ local function update_label(tl)
             ntheme = gfg
         end
     end
-    local tfmt = ' <span foreground="%s">%d</span> %s'
+    local tfmt = '<span foreground="%s">%d</span> %s'
     local title = string.format(tfmt, ntheme or fg, priv.index, escape(tl.title))
     label.text = title
 end
@@ -92,6 +92,8 @@ local function new(view, index)
     tl.widget.child = label
     label.font = theme.tab_font
     label.align = { x = 0 }
+    label.margin_left = 10
+    label.margin_right = 10
 
     -- Bind signals to associated view
     view:add_signal("property::title", function (_)
