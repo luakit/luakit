@@ -31,20 +31,16 @@ local function do_test_file(test_file)
     end
 
     local current_test
-    local waiting_signal = "???"
+    local waiting_signal
 
     local test_object_signal_handler
 
     --- Runs a test untit it passes, fails, or waits for a signal
     -- Additional arguments: parameters to signal handler
     -- @treturn string Status of the test; one of "pass", "wait", "fail"
-    local function begin_or_continue_test(test_name, func, ...)
-        assert(type(test_name) == "string")
+    local function begin_or_continue_test(func, ...)
         assert(type(func) == "thread")
 
-        if shared_lib.current_coroutine ~= func then
-            print("__run__ " .. current_test)
-        end
         shared_lib.current_coroutine = func
 
         -- Run test until it finishes, pauses, or fails
@@ -90,20 +86,20 @@ local function do_test_file(test_file)
                 return
             end
             current_test = test_name
-
-            local test_status = begin_or_continue_test(test_name, func)
+            print("__run__ " .. current_test)
+            local test_status = begin_or_continue_test(func)
         until test_status == "wait"
     end
 
     --- Resumes a waiting test when a signal occurs
-    test_object_signal_handler = function (test_name, func, ...)
-        assert(type(test_name) == "string")
+    test_object_signal_handler = function (func, ...)
         assert(type(func) == "thread")
         -- Stop the timeout timer
         wait_timer:stop()
+        waiting_signal = "???"
         -- Continue the test
         print("__cont__ " .. current_test)
-        local test_status = begin_or_continue_test(test_name, func, ...)
+        local test_status = begin_or_continue_test(func, ...)
         -- If the test finished, do the next one
         if test_status ~= "wait" then
             luakit.idle_add(function()
