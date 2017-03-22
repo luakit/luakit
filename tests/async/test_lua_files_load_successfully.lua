@@ -18,7 +18,7 @@ T.test_all_lua_files_load_successfully = function ()
     -- Wait 50ms to allow luakit to finish loading config file
     local t = timer{interval = 50}
     t:start()
-    tests.wait_for_signal(t, "timeout", 1)
+    tests.wait_for_signal(t, "timeout")
 end
 
 return T

@@ -18,7 +18,7 @@ function _M.wait_for_signal(object, signal, timeout)
     assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
     assert(type(signal) == "string", "Expected string")
-    assert(type(timeout) == "number", "Expected number")
+    assert(not timeout or type(timeout) == "number", "Expected number")
 
     return coroutine.yield({object, signal, timeout=timeout})
 end
@@ -28,7 +28,7 @@ local waiting = false
 function _M.wait(timeout)
     assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
-    assert(type(timeout) == "number", "Expected number")
+    assert(not timeout or type(timeout) == "number", "Expected number")
     assert(not waiting, "Already waiting")
 
     waiting = true

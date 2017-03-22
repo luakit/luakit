@@ -16,7 +16,7 @@ T.test_http_server_returns_file_contents = function ()
     local view = widget{type="webview"}
     view.uri = test.http_server() .. "hello_world.html"
     repeat
-        local _, status = test.wait_for_signal(view, "load-status", 1)
+        local _, status = test.wait_for_signal(view, "load-status")
         assert(status ~= "failed")
     until status == "finished"
 
@@ -24,7 +24,7 @@ T.test_http_server_returns_file_contents = function ()
     local t = timer{interval = 1}
     t:start()
     repeat
-        test.wait_for_signal(t, "timeout", 1)
+        test.wait_for_signal(t, "timeout")
     until view.source
 
     assert(view.source == contents, "HTTP server returned wrong content for file")

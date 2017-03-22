@@ -20,7 +20,7 @@ T.test_undo_close_works = function ()
     w:new_tab(uri)
     assert(w.tabs:current() == 2)
     repeat
-        local _, status = test.wait_for_signal(w.view, "load-status", 1)
+        local _, status = test.wait_for_signal(w.view, "load-status")
         assert(status ~= "failed")
     until status == "finished"
 
@@ -51,7 +51,7 @@ T.test_undo_close_works = function ()
     w:undo_close_tab(1)
     assert(w.tabs:current() == 2)
     repeat
-        local _, status = test.wait_for_signal(w.view, "load-status", 1)
+        local _, status = test.wait_for_signal(w.view, "load-status")
         assert(status ~= "failed")
     until status == "finished"
 
@@ -71,14 +71,14 @@ T.test_undo_close_restores_tab_history = function ()
     w:new_tab(uri)
     assert.is_equal(w.tabs:current(), 2)
     repeat
-        local _, status = test.wait_for_signal(w.view, "load-status", 1)
+        local _, status = test.wait_for_signal(w.view, "load-status")
         assert(status ~= "failed")
     until status == "finished"
 
     -- Navigate to about:blank
     w.view.uri = "about:blank"
     repeat
-        local _, status = test.wait_for_signal(w.view, "load-status", 1)
+        local _, status = test.wait_for_signal(w.view, "load-status")
         assert(status ~= "failed")
     until status == "finished"
 

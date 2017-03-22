@@ -20,7 +20,7 @@ package.loaded.webview.emit_signal("init", view)
 
 local view_wait_for_status = function (v, status)
     repeat
-        local _, s = test.wait_for_signal(v, "load-status", 1)
+        local _, s = test.wait_for_signal(v, "load-status")
         assert(s ~= "failed")
     until s == status
 end

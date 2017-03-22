@@ -13,7 +13,7 @@ window:show()
 T.test_about_blank_loads_successfully = function ()
     view.uri = "about:blank"
     repeat
-        local _, status = test.wait_for_signal(view, "load-status", 1)
+        local _, status = test.wait_for_signal(view, "load-status")
         assert(status ~= "failed")
     until status == "finished"
 end
