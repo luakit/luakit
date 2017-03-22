@@ -360,6 +360,17 @@ function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
 
+--- Escape values for lua patterns.
+--
+-- Escapes the magic characters <code>^$()%.[]*+-?)</code> by prepending a
+-- <code>%</code>.
+--
+--  @tparam string s A string.
+--  @treturn string The escaped pattern.
+function _M.lua_escape(s)
+    return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%%%1")
+end
+
 local etc_hosts
 
 --- Get all hostnames in /etc/hosts

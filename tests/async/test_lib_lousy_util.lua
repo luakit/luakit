@@ -73,6 +73,15 @@ T.test_lousy_util_table_filter_array = function ()
     assert.is_true(lousy.util.table.isclone(d, { "IV", "IX" }))
 end
 
+T.test_lousy_util_lua_escape = function ()
+    local magic = "^$()%.[]*+-?)"
+
+    for i=1,#magic do
+        local ch = magic:sub(i,i)
+        assert.equal(" %" .. ch .. " ", lousy.util.lua_escape(" " .. ch .. " "))
+    end
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
