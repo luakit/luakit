@@ -15,10 +15,7 @@ T.test_http_server_returns_file_contents = function ()
     -- Load URI and wait for completion
     local view = widget{type="webview"}
     view.uri = test.http_server() .. "hello_world.html"
-    repeat
-        local _, status = test.wait_for_signal(view, "load-status")
-        assert(status ~= "failed")
-    until status == "finished"
+    test.wait_for_view(view)
 
     -- view.source isn't immediately available... wait a few msec
     local t = timer{interval = 1}

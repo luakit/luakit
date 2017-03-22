@@ -19,10 +19,7 @@ T.test_undo_close_works = function ()
     local uri = test.http_server() .. "undoclose_page.html"
     w:new_tab(uri)
     assert(w.tabs:current() == 2)
-    repeat
-        local _, status = test.wait_for_signal(w.view, "load-status")
-        assert(status ~= "failed")
-    until status == "finished"
+    test.wait_for_view(w.view)
 
     -- Try to open the menu
     assert(#w.closed_tabs == 0 or w.closed_tabs == nil)
@@ -50,10 +47,7 @@ T.test_undo_close_works = function ()
     -- Undo-close the tab
     w:undo_close_tab(1)
     assert(w.tabs:current() == 2)
-    repeat
-        local _, status = test.wait_for_signal(w.view, "load-status")
-        assert(status ~= "failed")
-    until status == "finished"
+    test.wait_for_view(w.view)
 
     assert(#w.closed_tabs == 0)
     assert(w.view.uri == uri)
@@ -70,17 +64,11 @@ T.test_undo_close_restores_tab_history = function ()
     local uri = test.http_server() .. "undoclose_page.html"
     w:new_tab(uri)
     assert.is_equal(w.tabs:current(), 2)
-    repeat
-        local _, status = test.wait_for_signal(w.view, "load-status")
-        assert(status ~= "failed")
-    until status == "finished"
+    test.wait_for_view(w.view)
 
     -- Navigate to about:blank
     w.view.uri = "about:blank"
-    repeat
-        local _, status = test.wait_for_signal(w.view, "load-status")
-        assert(status ~= "failed")
-    until status == "finished"
+    test.wait_for_view(w.view)
 
     -- Close and undo-close
     w:close_tab()

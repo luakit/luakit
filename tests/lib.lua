@@ -14,6 +14,14 @@ function _M.init(arg)
     shared_lib = arg
 end
 
+function _M.wait_for_view(view)
+    assert(type(view) == "widget" and view.type == "webview")
+    repeat
+        local _, status = _M.wait_for_signal(view, "load-status")
+        assert(status ~= "failed")
+    until status == "finished"
+end
+
 function _M.wait_for_signal(object, signal, timeout)
     assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
