@@ -43,10 +43,11 @@
 --   inside an <code>input</code> to focus that element or <code>select = true</code>
 --   to select the text inside it.
 --   <code>focus</code> will trigger input mode.
--- * The string argument to the <code>on</code> function and all of
---   the attributes of the <code>form</code> and <code>input</code>
---   tables take Lua patterns, *not* JavaScript regular expressions!
---   BEWARE their escaping!
+-- * The string argument to the <code>on</code> function (<code>luakit.org</code>
+--   in the example above) takes a Lua pattern!
+--   BEWARE its escaping!
+-- * All of the attributes of the <code>form</code> and <code>input</code> tables
+--   are matched as plain text.
 --
 -- There is a conversion script in the luakit repository that converts
 -- from the old formfiller format to the new one. For more information,
