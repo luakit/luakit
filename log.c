@@ -86,6 +86,18 @@ va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, v
 
     /* Log format: [timestamp] prefix: fct:line msg */
 #define LOG_FMT "[%#12f] %c: %s:%s: %s"
+#define LOG_IND "                  "
+
+    /* Indent new lines within the message */
+    static GRegex *indent_lines_reg;
+    if (!indent_lines_reg) {
+        GError *err = NULL;
+        indent_lines_reg = g_regex_new("\n", G_REGEX_OPTIMIZE, 0, &err);
+        g_assert_no_error(err);
+    }
+    gchar *wrapped = g_regex_replace_literal(indent_lines_reg, msg, -1, 0, "\n" LOG_IND, 0, NULL);
+    g_free(msg);
+    msg = wrapped;
 
     if (!isatty(log_fd)) {
         static GRegex *reg;
