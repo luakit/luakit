@@ -356,6 +356,8 @@ end
 -- quotes ('). A single quote within the string can be encoded by putting two
 -- single quotes in a row - as in Pascal."
 -- Read: <http://sqlite.org/lang_expr.html>
+-- @tparam string s A String.
+-- @treturn string The escaped string.
 function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
