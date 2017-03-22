@@ -29,14 +29,12 @@ end
 
 webview.add_signal("init", function (view)
     -- Update widget when current page changes status
-    for _, sig in ipairs({"load-status", "property::progress"}) do
-        view:add_signal(sig, function (v)
-            local w = webview.window(v)
-            if w.view == v then
-                update(w)
-            end
-        end)
-    end
+    view:add_signal("load-status", function (v, status)
+        local w = webview.window(v)
+        if status == "committed" and w and w.view == v then
+            update(w)
+        end
+    end)
     view:add_signal("switched-page", function (v)
         update(webview.window(v))
     end)
