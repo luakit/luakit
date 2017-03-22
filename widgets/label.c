@@ -173,10 +173,8 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_FG:
         tmp = luaL_checklstring(L, 3, &len);
-        if (!gdk_rgba_parse(&c, tmp)) {
-            warn("invalid color: %s", tmp);
-            return 0;
-        }
+        if (!gdk_rgba_parse(&c, tmp))
+            luaL_argerror(L, 3, "unable to parse color");
 
 #if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "color", tmp, NULL);
