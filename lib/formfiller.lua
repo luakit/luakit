@@ -27,6 +27,7 @@
 --             checked = true,
 --           },
 --           submit = true,
+--           autofill = false,
 --         },
 --       }
 --
@@ -37,7 +38,7 @@
 --   or calls <code>submit()</code>.
 -- * The <code>submit</code> attribute of a form can also be a number, which
 --   gives index of the submit button to click (starting with <code>1</code>).
---   If there is no such button ore the argument is <code>true</code>,
+--   If there is no such button or the argument is <code>true</code>,
 --   <code>form.submit()</code> will be called instead.
 -- * Instead of <code>submit</code>, you can also use <code>focus = true</code>
 --   inside an <code>input</code> to focus that element or <code>select = true</code>
@@ -48,6 +49,15 @@
 --   BEWARE its escaping!
 -- * All of the attributes of the <code>form</code> and <code>input</code> tables
 --   are matched as plain text.
+-- * Setting <code>autofill = true</code> on a form definition will
+--   automatically fill and possibly submit any matching forms when a web page
+--   with a matching URI finishes loading. This is useful if you wish to have
+--   login pages for various web services filled out automatically. It is
+--   critically important, however, to verify that the URI pattern of the rule is
+--   correct!
+--
+--   As a basic precaution, autofill only works if the web page domain
+--   is present within the URI pattern.
 --
 -- There is a conversion script in the luakit repository that converts
 -- from the old formfiller format to the new one. For more information,
@@ -59,6 +69,7 @@
 
 local lousy = require("lousy")
 local window = require("window")
+local webview = require("webview")
 local editor = require("editor")
 local new_mode = require("modes").new_mode
 local binds = require("binds")
@@ -127,7 +138,7 @@ local function read_formfiller_rules_from_file()
     -- the environment of the DSL script
     -- load the script
     local f = io.open(file, "r")
-    if not f then return end -- file doesn't exist
+    if not f then return {} end -- file doesn't exist
     local code = f:read("*all")
     f:close()
     local dsl, message = loadstring(code)
@@ -159,6 +170,7 @@ local function form_specs_for_uri (all_rules, uri)
     local form_specs = {}
     for _, rule in ipairs(rules) do
         for _, form in ipairs(rule.forms) do
+            form.pattern = rule.pattern
             form_specs[#form_specs + 1] = form
         end
     end
@@ -230,6 +242,28 @@ formfiller_wm:add_signal("filter", function (_, view_id, form_specs)
     else
         w:set_mode("formfiller-menu", menu)
     end
+end)
+
+webview.add_signal("init", function (view)
+    view:add_signal("load-status", function (v, status)
+        if status ~= "finished" then return end
+
+        local rules = read_formfiller_rules_from_file()
+        local form_specs = form_specs_for_uri(rules, v.uri)
+        for _, form_spec in ipairs(form_specs) do
+            if form_spec.autofill then
+                -- Precaution: pattern must contain full domain of page URI
+                local domain = lousy.util.lua_escape(lousy.uri.parse(v.uri).host .. "/")
+                if form_spec.pattern:find(domain, 1, true) then
+                    msg.info("auto-filling form profile '%s'", form_spec.profile)
+                    formfiller_wm:emit_signal(view, "apply_form", form_spec)
+                else
+                    local w = webview.window(view)
+                    w:error("refusing to autofill: URI pattern does not contain current page domain")
+                end
+            end
+        end
+    end)
 end)
 
 -- Add formfiller menu mode

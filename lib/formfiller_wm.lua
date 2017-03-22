@@ -199,6 +199,9 @@ local function formfiller_add (page, form)
     local function to_lua_str(str)
         return "'" .. str:gsub("([\\'])", "\\%1").. "'"
     end
+    local function to_lua_pat(str)
+        return to_lua_str(lousy.util.lua_escape(str))
+    end
 
     local function add_attr(elem, attr, indent, tail)
         local a = elem.attr[attr]
@@ -214,7 +217,7 @@ local function formfiller_add (page, form)
     end)
 
     -- Build formfiller config for form
-    local str = { "on " .. to_lua_str(page.uri) .. " {\n"}
+    local str = { "on " .. to_lua_pat(page.uri) .. " {\n"}
     table.insert(str, "  form {\n")
     for _, attr in ipairs({"method", "action", "id", "className", "name"}) do
         table.insert(str, add_attr(form, attr, "    ", ",\n"))
@@ -232,6 +235,7 @@ local function formfiller_add (page, form)
         table.insert(str, "    },\n")
     end
     table.insert(str, "    submit = true,\n")
+    table.insert(str, "    autofill = true,\n")
     table.insert(str, "  },\n")
     table.insert(str, "}\n\n")
     str = table.concat(str)
