@@ -45,7 +45,7 @@
 --   <code>focus</code> will trigger input mode.
 -- * The string argument to the <code>on</code> function and all of
 --   the attributes of the <code>form</code> and <code>input</code>
---   tables take JavaScript regular expressions.
+--   tables take Lua patterns, *not* JavaScript regular expressions!
 --   BEWARE their escaping!
 --
 -- There is a conversion script in the luakit repository that converts
@@ -118,16 +118,6 @@ local DSL = {
     end,
 }
 
-local function pattern_from_js_regex(re)
-    -- TODO: This needs work
-    local special = ".-+*?^$%"
-    re = re:gsub("%%", "%%%%")
-    for c in special:gmatch"." do
-        re = re:gsub("\\%" .. c, "%%" .. c)
-    end
-    return re
-end
-
 --- Reads the rules from the formfiller DSL file
 local function read_formfiller_rules_from_file()
     local state = {
@@ -154,13 +144,6 @@ local function read_formfiller_rules_from_file()
     local success, err = pcall(dsl)
     if not success then
         msg.warn("error in " .. file .. ": " .. err)
-    end
-    -- Convert JS regexes to Lua patterns
-    for _, rule in ipairs(state.rules) do
-        rule.pattern = pattern_from_js_regex(rule.pattern)
-        for _, form in ipairs(rule.forms) do
-            form.action = form.action:gsub("\\", "")
-        end
     end
     return state.rules
 end
