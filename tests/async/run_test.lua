@@ -33,8 +33,6 @@ local function do_test_file(test_file)
     local current_test
     local waiting_signal
 
-    local test_object_signal_handler
-
     --- Runs a test untit it passes, fails, or waits for a signal
     -- Additional arguments: parameters to signal handler
     -- @treturn string Status of the test; one of "pass", "wait", "fail"
@@ -59,14 +57,17 @@ local function do_test_file(test_file)
             wait_timer.interval = interval
             wait_timer:start()
 
-            -- Add signal handlers to resume running test
-            local obj, sig = ret[1], ret[2]
-            local function wrapper(...)
-                obj:remove_signal(sig, wrapper)
-                test_object_signal_handler(test_name, func, ...)
+            -- wait_for_signal
+            if #ret == 2 then
+                -- Add signal handlers to resume running test
+                local obj, sig = ret[1], ret[2]
+                local function wrapper(...)
+                    obj:remove_signal(sig, wrapper)
+                    shared_lib.resume_suspended_test(...)
+                end
+                obj:add_signal(sig, wrapper)
+                waiting_signal = sig
             end
-            obj:add_signal(sig, wrapper)
-            waiting_signal = sig
 
             -- Return to luakit
             return "wait"
@@ -92,27 +93,31 @@ local function do_test_file(test_file)
     end
 
     --- Resumes a waiting test when a signal occurs
-    test_object_signal_handler = function (func, ...)
+    shared_lib.resume_suspended_test = function (...)
+        local func = shared_lib.current_coroutine
         assert(type(func) == "thread")
         -- Stop the timeout timer
         wait_timer:stop()
-        waiting_signal = "???"
+        waiting_signal = nil
         -- Continue the test
         print("__cont__ " .. current_test)
         local test_status = begin_or_continue_test(func, ...)
         -- If the test finished, do the next one
         if test_status ~= "wait" then
-            luakit.idle_add(function()
-                do_next_test()
-                return false
-            end)
+            luakit.idle_add(do_next_test)
         end
     end
 
     wait_timer:add_signal("timeout", function ()
         wait_timer:stop()
         print("__fail__ " .. current_test)
-        print("  Timed out waiting for signal '" .. waiting_signal .. "'")
+        if waiting_signal then
+            print("Timed out while waiting for signal '" .. waiting_signal .. "'")
+        else
+            print("Timed out while waiting")
+        end
+        local ar = debug.getinfo(shared_lib.current_coroutine, 1, "Sln")
+        print(string.format("From %s%s%s:%d", ar.short_src, ar.name and ":" or "", ar.name or "", ar.currentline))
         do_next_test()
     end)
 

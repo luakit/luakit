@@ -23,6 +23,26 @@ function _M.wait_for_signal(object, signal, timeout)
     return coroutine.yield({object, signal, timeout=timeout})
 end
 
+local waiting = false
+
+function _M.wait(timeout)
+    assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
+    assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
+    assert(type(timeout) == "number", "Expected number")
+    assert(not waiting, "Already waiting")
+
+    waiting = true
+    return coroutine.yield({timeout=timeout})
+end
+
+function _M.continue(...)
+    assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
+    assert(waiting and (coroutine.running() ~= shared_lib.current_coroutine), "Not waiting, cannot continue")
+
+    waiting = false
+    shared_lib.resume_suspended_test(...)
+end
+
 function _M.http_server()
     return "http://127.0.0.1:8888/"
 end
