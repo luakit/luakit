@@ -162,6 +162,9 @@ require "styles"
 -- Hide scrollbars on all pages
 require "hide_scrollbars"
 
+-- Automatically apply per-domain webview properties
+require "domain_props"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
