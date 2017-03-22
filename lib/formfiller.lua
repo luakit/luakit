@@ -34,21 +34,27 @@
 -- * The <code>form</code> function's string argument is optional.
 --   It allows you to define multiple profiles for use with the
 --   <code>zL</code> binding.
+--
 -- * All entries are matched top to bottom, until one fully matches
 --   or calls <code>submit()</code>.
+--
 -- * The <code>submit</code> attribute of a form can also be a number, which
 --   gives index of the submit button to click (starting with <code>1</code>).
 --   If there is no such button or the argument is <code>true</code>,
 --   <code>form.submit()</code> will be called instead.
+--
 -- * Instead of <code>submit</code>, you can also use <code>focus = true</code>
 --   inside an <code>input</code> to focus that element or <code>select = true</code>
 --   to select the text inside it.
 --   <code>focus</code> will trigger input mode.
+--
 -- * The string argument to the <code>on</code> function (<code>luakit.org</code>
 --   in the example above) takes a Lua pattern!
 --   BEWARE its escaping!
+--
 -- * All of the attributes of the <code>form</code> and <code>input</code> tables
 --   are matched as plain text.
+--
 -- * Setting <code>autofill = true</code> on a form definition will
 --   automatically fill and possibly submit any matching forms when a web page
 --   with a matching URI finishes loading. This is useful if you wish to have
