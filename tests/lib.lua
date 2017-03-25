@@ -14,13 +14,41 @@ function _M.init(arg)
     shared_lib = arg
 end
 
+function _M.wait_for_view(view)
+    assert(type(view) == "widget" and view.type == "webview")
+    repeat
+        local _, status = _M.wait_for_signal(view, "load-status")
+        assert(status ~= "failed")
+    until status == "finished"
+end
+
 function _M.wait_for_signal(object, signal, timeout)
-    assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
+    assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
     assert(type(signal) == "string", "Expected string")
-    assert(type(timeout) == "number", "Expected number")
+    assert(not timeout or type(timeout) == "number", "Expected number")
 
     return coroutine.yield({object, signal, timeout=timeout})
+end
+
+local waiting = false
+
+function _M.wait(timeout)
+    assert(shared_lib.current_coroutine, "Not currently running a test!")
+    assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
+    assert(not timeout or type(timeout) == "number", "Expected number")
+    assert(not waiting, "Already waiting")
+
+    waiting = true
+    return coroutine.yield({timeout=timeout})
+end
+
+function _M.continue(...)
+    assert(shared_lib.current_coroutine, "Not currently running a test!")
+    assert(waiting and (coroutine.running() ~= shared_lib.current_coroutine), "Not waiting, cannot continue")
+
+    waiting = false
+    shared_lib.resume_suspended_test(...)
 end
 
 function _M.http_server()

@@ -36,6 +36,7 @@
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
 #include "common/clib/ipc.h"
+#include "common/common.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
@@ -77,6 +78,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     const gchar *socket_path = g_variant_get_string(payload, NULL);
 
     extension.WL = luaL_newstate();
+    common.L = extension.WL;
     extension.ext = ext;
     extension.ipc = ipc_endpoint_new("Web");
 
