@@ -23,7 +23,7 @@ function _M.wait_for_view(view)
 end
 
 function _M.wait_for_signal(object, signal, timeout)
-    assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
+    assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
     assert(type(signal) == "string", "Expected string")
     assert(not timeout or type(timeout) == "number", "Expected number")
@@ -34,7 +34,7 @@ end
 local waiting = false
 
 function _M.wait(timeout)
-    assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
+    assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
     assert(not timeout or type(timeout) == "number", "Expected number")
     assert(not waiting, "Already waiting")
@@ -44,7 +44,7 @@ function _M.wait(timeout)
 end
 
 function _M.continue(...)
-    assert(shared_lib.current_coroutine, "Not currently running in a test coroutine!")
+    assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(waiting and (coroutine.running() ~= shared_lib.current_coroutine), "Not waiting, cannot continue")
 
     waiting = false
