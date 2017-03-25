@@ -16,7 +16,7 @@ local add_cmds = require("binds").add_cmds
 
 local _M = {}
 
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
@@ -355,7 +355,8 @@ chrome.add("help", function ()
         javascript = main_js,
         jquery = lousy.load("lib/jquery.min.js")
     }
-    return string.gsub(html, "{(%w+)}", html_subs)
+    local html = string.gsub(html_template, "{(%w+)}", html_subs)
+    return html
 end, nil, {
     open_editor = function(_, ...) return editor.edit(...) end,
 })

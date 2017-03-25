@@ -201,9 +201,9 @@ webview.add_signal("init", function (view)
             end
 
             -- Call luakit:// page handler
-            local _, html = xpcall(function () return func(v, meta) end,
+            local _, html, mime = xpcall(function () return func(v, meta) end,
                 error_handler)
-            return html
+            return html, mime
         end
 
         -- Load error page

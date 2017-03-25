@@ -1201,21 +1201,26 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
 
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
-    gint ret = luaH_object_emit_signal(L, -2, "luakit-chrome", 1, 1);
+    gint ret = luaH_object_emit_signal(L, -2, "luakit-chrome", 1, 2);
 
     if (!ret) {
         error_message = "no return values";
         goto error;
     }
-    if (!lua_isstring(L, -1)) {
-        error_message = "return value isn't a string";
+    if (!lua_isstring(L, -2)) {
+        error_message = "returned data isn't a string";
+        goto error;
+    }
+    if ((lua_type(L, -1) != LUA_TSTRING) && (lua_type(L, -1) != LUA_TNIL)) {
+        error_message = "returned mime isn't a string or nil";
         goto error;
     }
 
     GInputStream *gis;
-    const gchar *html = lua_tostring(L, -1);
+    const gchar *html = lua_tostring(L, -2);
+    const gchar *mime = lua_tostring(L, -1) ?: "text/html";
     gis = g_memory_input_stream_new_from_data(html, -1, NULL);
-    webkit_uri_scheme_request_finish(request, gis, -1, "text/html");
+    webkit_uri_scheme_request_finish(request, gis, -1, mime);
     lua_settop(L, top);
     return;
 

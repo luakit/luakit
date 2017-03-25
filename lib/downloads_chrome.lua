@@ -346,7 +346,8 @@ chrome.add("downloads", function ()
     local html_subs = {
         style  = chrome.stylesheet .. _M.stylesheet,
     }
-    return string.gsub(html_template, "{(%w+)}", html_subs)
+    local html = string.gsub(html_template, "{(%w+)}", html_subs)
+    return html
 end,
 function (view)
     -- Load jQuery JavaScript library

@@ -81,7 +81,7 @@ _M.stylesheet = [===[
 
 ]===]
 
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
@@ -385,10 +385,11 @@ local export_funcs = {
 }
 
 chrome.add("history", function ()
-    return string.gsub(html, "{%%(%w+)}", {
+    local html = string.gsub(html_template, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
         stylesheet = chrome.stylesheet .. _M.stylesheet
     })
+    return html
 end,
 function (view)
     -- Load jQuery JavaScript library

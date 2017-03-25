@@ -196,7 +196,7 @@ _M.stylesheet = [===[
 }
 ]===]
 
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
@@ -484,7 +484,8 @@ chrome.add("bookmarks", function ()
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
-    return string.gsub(html, "{%%(%w+)}", { stylesheet = style })
+    local html = string.gsub(html_template, "{%%(%w+)}", { stylesheet = style })
+    return html
 end,
 function (view)
     -- Load jQuery JavaScript library
