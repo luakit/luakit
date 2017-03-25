@@ -1196,22 +1196,34 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     widget_t *w = webview_get_by_id(webkit_web_view_get_page_id(view));
 
     lua_State *L = globalconf.L;
+    gint top = lua_gettop(L);
+    const gchar *error_message;
+
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
     gint ret = luaH_object_emit_signal(L, -2, "luakit-chrome", 1, 1);
-    if (ret) {
-        GInputStream *gis;
-        if (lua_isstring(L, -1)) {
-            const gchar *html = lua_tostring(L, -1);
-            gis = g_memory_input_stream_new_from_data(html, -1, NULL);
-            webkit_uri_scheme_request_finish(request, gis, -1, "text/html");
-        } else {
-            luaH_warn(L, "luakit_uri_scheme_request_cb(): no return values");
-            // TODO better GError*?
-            webkit_uri_scheme_request_finish_error(request, NULL);
-        }
+
+    if (!ret) {
+        error_message = "no return values";
+        goto error;
     }
-    lua_pop(L, ret + 1);
+    if (!lua_isstring(L, -1)) {
+        error_message = "return value isn't a string";
+        goto error;
+    }
+
+    GInputStream *gis;
+    const gchar *html = lua_tostring(L, -1);
+    gis = g_memory_input_stream_new_from_data(html, -1, NULL);
+    webkit_uri_scheme_request_finish(request, gis, -1, "text/html");
+    lua_settop(L, top);
+    return;
+
+error:
+    luaH_warn(L, "luakit_uri_scheme_request_cb(): %s", error_message);
+    // TODO better GError*?
+    webkit_uri_scheme_request_finish_error(request, NULL);
+    lua_settop(L, top);
     return;
 }
 
