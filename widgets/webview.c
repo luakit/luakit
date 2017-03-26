@@ -1219,7 +1219,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     GInputStream *gis;
     const gchar *html = lua_tostring(L, -2);
     const gchar *mime = lua_tostring(L, -1) ?: "text/html";
-    gis = g_memory_input_stream_new_from_data(html, -1, NULL);
+    gis = g_memory_input_stream_new_from_data(html, lua_objlen(L, -2), NULL);
     webkit_uri_scheme_request_finish(request, gis, -1, mime);
     lua_settop(L, top);
     return;
