@@ -2,6 +2,7 @@ file = {
     "luadoc",
     "../lib",
     "../common/clib/",
+    "../tests/lib.lua",
     exclude = {
         "../lib/markdown.lua"
     },

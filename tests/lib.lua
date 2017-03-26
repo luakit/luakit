@@ -14,6 +14,9 @@ function _M.init(arg)
     shared_lib = arg
 end
 
+--- Pause test execution until a webview widget finishes loading.
+--
+-- @tparam widget view The webview widget to wait on.
 function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
     repeat
@@ -62,6 +65,16 @@ function _M.wait_until(func, poll_time, timeout)
     until func()
 end
 
+--- Pause test execution until a particular signal is emitted on an object.
+--
+-- Suspends test execution until `signal` is emitted on `object`. If no such
+-- signal is emitted on `object` within `timeout` milliseconds, the running test
+-- fails.
+--
+-- @param object The object to wait for `signal` on.
+-- @tparam string signal The signal to wait for.
+-- @tparam[opt] number timeout Maximum time to wait before failing the running test,
+-- in milliseconds. Defaults to 200 milliseconds.
 function _M.wait_for_signal(object, signal, timeout)
     assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
@@ -73,6 +86,14 @@ end
 
 local waiting = false
 
+--- Pause test execution indefinitely.
+--
+-- The running test is suspended until `continue()` is called. If `continue()`
+-- is not called within `timeout` milliseconds, the running test fails.
+--
+-- @tparam[opt] number timeout Maximum time to wait before failing the running test,
+-- in milliseconds. Defaults to 200 milliseconds.
+-- @return All parameters to `continue()`.
 function _M.wait(timeout)
     assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
@@ -83,6 +104,13 @@ function _M.wait(timeout)
     return coroutine.yield({timeout=timeout})
 end
 
+--- Continue test execution.
+--
+-- The running test, currently suspended after a call to `wait()`, is resumed.
+-- `wait()` must have been previously called.
+--
+-- All parameters to `continue()` are returned by `wait()`.
+-- @param ... Values to return from `wait()`.
 function _M.continue(...)
     assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(waiting and (coroutine.running() ~= shared_lib.current_coroutine), "Not waiting, cannot continue")
@@ -91,6 +119,11 @@ function _M.continue(...)
     shared_lib.resume_suspended_test(...)
 end
 
+--- Get the URI prefix for the test HTTP server.
+--
+-- The port the test server listens on may not always be the same. This function
+-- returns the current URI prefix, which looks like `http://127.0.0.1:8888/`.
+-- @treturn string The URI prefix for the test HTTP server.
 function _M.http_server()
     return "http://127.0.0.1:8888/"
 end
@@ -115,6 +148,23 @@ local function path_is_in_directory(path, dir)
     return string.find(path, "^"..dir)
 end
 
+--- Retrieve a subset of files in the Luakit Git repository.
+--
+-- This function runs `git ls-files` and then filters the result according to
+-- the provided parameters. It is mostly intended for use in code style tests.
+-- The returned list of file paths includes all files that:
+--
+--  * are within at least one of the directories in `dirs`,
+--  * match at least one of the Lua patterns in `patterns`, and
+--  * do _not_ match any of the Lua patterns in `excludes`.
+--
+-- @tparam string|table dirs The directory prefix (or list of prefixes) in which
+-- to look for files.
+-- @tparam string|table patterns A Lua pattern (or list of patterns) with which
+-- to filter file paths; non-matching files are removed.
+-- @tparam[opt] table excludes A list of Lua patterns with which to filter file
+-- paths; matching files are removed.
+-- @treturn table A list of matching file paths.
 function _M.find_files(dirs, patterns, excludes)
     assert(type(dirs) == "string" or type(dirs) == "table",
         "Bad search location: expected string or table")
@@ -170,6 +220,17 @@ function _M.find_files(dirs, patterns, excludes)
     return file_list
 end
 
+--- A struct representing a file error.
+-- @tfield string file The path of the file.
+-- @tfield string err The error string.
+-- @table entry
+
+--- Helper function to format a list of file errors.
+--
+-- Aligns file names and file errors into two separate columns.
+--
+-- @tparam {entry} entries A list of file error entries.
+-- @treturn string The formatted output string.
 function _M.format_file_errors(entries)
     assert(type(entries) == "table")
 
