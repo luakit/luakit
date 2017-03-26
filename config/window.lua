@@ -133,6 +133,8 @@ function window.build()
     -- Other settings
     i.input.show_frame = false
     w.tabs.show_tabs = false
+    w.sbar.layout.margin_left = 3
+    w.sbar.layout.margin_right = 3
 
     -- Allow error messages to be copied
     -- TODO: *only* allow copying when showing an error
