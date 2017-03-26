@@ -14,12 +14,10 @@ local mousedown_cb = function (event, page_id)
     ui:emit_signal("form-active", page_id)
 end
 
-extension:add_signal("page-created", function(_, page)
-    page:add_signal("document-loaded", function(p)
-        local doc = dom_document(p.id)
-        doc.body:add_event_listener("mousedown", true, function (e)
-            mousedown_cb(e, p.id)
-        end)
+ui:add_signal("load-finished", function(_, page)
+    local doc = dom_document(page.id)
+    doc.body:add_event_listener("mousedown", true, function (e)
+        mousedown_cb(e, page.id)
     end)
 end)
 

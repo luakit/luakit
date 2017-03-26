@@ -62,6 +62,11 @@ local init_funcs = {
                 w:set_mode()
             end
         end)
+        view:add_signal("load-status", function (v, status, _, err)
+            if status == "finished" or (status == "finished" and err == "Load request cancelled") then
+                web_module:emit_signal(v, "load-finished")
+            end
+        end)
     end,
 
     -- Catch keys in non-passthrough modes
