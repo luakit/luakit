@@ -22,6 +22,46 @@ function _M.wait_for_view(view)
     until status == "finished"
 end
 
+--- Pause test execution for a short time.
+--
+-- @tparam[opt] number timeout The time to delay, in milliseconds.
+-- Defaults to 5 milliseconds.
+function _M.delay(timeout)
+    assert(not timeout or type(timeout) == "number", "Expected number")
+    timeout = timeout or 5 -- "Sensible default" of 5ms
+    local t = timer{interval = timeout}
+    t:start()
+    -- timeout+1000 ensures we don't fail the test while waiting
+    _M.wait_for_signal(t, "timeout", timeout+1000)
+end
+
+--- Pause test execution until a predicate returns `true`.
+--
+-- Suspends test execution, polling the provided predicate function at an
+-- interval, until the predicate returns a truthy value. If the predicate does
+-- not return a truthy value within a certain time period, the running test fails.
+--
+-- @tparam function func The predicate function.
+-- @tparam[opt] number poll_time The interval at which to poll the predicate, in
+-- milliseconds. Defaults to 5 milliseconds.
+-- @tparam[opt] number timeout Maximum time to wait before failing the running test,
+-- in milliseconds. Defaults to 200 milliseconds.
+function _M.wait_until(func, poll_time, timeout)
+    assert(type(func) == "function", "Expected a function")
+    assert(not poll_time or type(poll_time) == "number", "Expected number")
+    assert(not timeout or type(timeout) == "number", "Expected number")
+
+    poll_time = poll_time or 5
+    timeout = timeout or 200
+
+    local t = 0
+    repeat
+        _M.delay(poll_time)
+        t = t + poll_time
+        assert(t < timeout, "Timed out")
+    until func()
+end
+
 function _M.wait_for_signal(object, signal, timeout)
     assert(shared_lib.current_coroutine, "Not currently running a test!")
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
