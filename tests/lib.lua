@@ -19,6 +19,7 @@ end
 -- @tparam widget view The webview widget to wait on.
 function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
+    shared_lib.traceback = debug.traceback("",2)
     repeat
         local _, status = _M.wait_for_signal(view, "load-status")
         assert(status ~= "failed")
@@ -54,6 +55,8 @@ function _M.wait_until(func, poll_time, timeout)
     assert(not poll_time or type(poll_time) == "number", "Expected number")
     assert(not timeout or type(timeout) == "number", "Expected number")
 
+    shared_lib.traceback = debug.traceback("",2)
+
     poll_time = poll_time or 5
     timeout = timeout or 200
 
@@ -81,6 +84,8 @@ function _M.wait_for_signal(object, signal, timeout)
     assert(type(signal) == "string", "Expected string")
     assert(not timeout or type(timeout) == "number", "Expected number")
 
+    shared_lib.traceback = debug.traceback("",2)
+
     timeout = timeout or 200
     return coroutine.yield({object, signal, timeout=timeout})
 end
@@ -100,6 +105,8 @@ function _M.wait(timeout)
     assert(coroutine.running() == shared_lib.current_coroutine, "Not currently running in the test coroutine!")
     assert(not timeout or type(timeout) == "number", "Expected number")
     assert(not waiting, "Already waiting")
+
+    shared_lib.traceback = debug.traceback("",2)
 
     waiting = true
     timeout = timeout or 200

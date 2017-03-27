@@ -115,8 +115,8 @@ local function do_test_file(test_file)
         else
             print("Timed out while waiting")
         end
-        local ar = debug.getinfo(shared_lib.current_coroutine, 1, "Sln")
-        print(string.format("From %s%s%s:%d", ar.short_src, ar.name and ":" or "", ar.name or "", ar.currentline))
+        print("  interval was " .. tostring(wait_timer.interval) .. "msec")
+        print("  " .. shared_lib.traceback)
         do_next_test()
     end)
 
