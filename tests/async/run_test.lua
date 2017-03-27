@@ -52,13 +52,8 @@ local function do_test_file(test_file)
         elseif state == "suspended" then
             print("__wait__ " .. current_test)
 
-            -- 'Sensible default' of 200ms
-            ret.timeout = ret.timeout or 200
-            assert(type(ret.timeout) == "number", "timeout must be a number or nil")
-
             -- Start timer
-            local interval = ret.timeout * 1000
-            wait_timer.interval = interval
+            wait_timer.interval = ret.timeout
             wait_timer:start()
 
             -- wait_for_signal

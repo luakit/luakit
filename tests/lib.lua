@@ -81,6 +81,7 @@ function _M.wait_for_signal(object, signal, timeout)
     assert(type(signal) == "string", "Expected string")
     assert(not timeout or type(timeout) == "number", "Expected number")
 
+    timeout = timeout or 200
     return coroutine.yield({object, signal, timeout=timeout})
 end
 
@@ -101,6 +102,7 @@ function _M.wait(timeout)
     assert(not waiting, "Already waiting")
 
     waiting = true
+    timeout = timeout or 200
     return coroutine.yield({timeout=timeout})
 end
 
