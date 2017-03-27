@@ -21,7 +21,7 @@ function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
     shared_lib.traceback = debug.traceback("",2)
     repeat
-        local _, status = _M.wait_for_signal(view, "load-status")
+        local _, status = _M.wait_for_signal(view, "load-status", 500)
         assert(status ~= "failed")
     until status == "finished"
 end
