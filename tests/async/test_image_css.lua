@@ -27,7 +27,7 @@ end
 
 T.test_image_css = function ()
     local image_uri = test.http_server() .. "image_css/image.png"
-    local page_uri = test.http_server() .. "image_css/default"
+    local page_uri = test.http_server() .. "image_css/default.html"
     local image_ss = image_css.stylesheet
 
     -- Load HTML page: stylesheet must be inactive
