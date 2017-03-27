@@ -31,8 +31,15 @@ local function reply_with_file_contents(client, path)
     local f = io.open(path, "rb")
     local contents = f:read("*a") or ""
     f:close()
+
+    local mime = "text/plain"
+    if path:match("%.html$") then mime = "text/html" end
+    if path:match("%.png$") then mime = "image/png" end
+    if path:match("%.jpg$") then mime = "image/jpeg" end
+
     client:send("HTTP/1.0 200 OK\n")
     client:send(("Content-Length: %d\n"):format(lfs.attributes(path, "size")))
+    client:send(("Content-type: %s\n"):format(mime))
     client:send("\n" .. contents)
 end
 
