@@ -11,6 +11,7 @@ local recalc_funcs = setmetatable({}, { __mode = "k" })
 ui:add_signal("image", function (_, page)
     local body = dom_document(page.id).body
     local img = body:query("img")[1]
+    if not img then return end
 
     recalc_funcs[page] = function ()
         local body_height = body.rect.height
