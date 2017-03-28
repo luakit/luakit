@@ -42,7 +42,7 @@ lua_CFunction lualib_dofunction_on_error;
  * \param L The Lua VM state.
  */
 static inline void
-luaH_traceback(lua_State *L)
+luaH_dump_traceback(lua_State *L)
 {
     g_fprintf(stderr, "--------- Lua traceback ---------\n");
     luaL_loadstring(L, "return debug.traceback()");
@@ -87,7 +87,7 @@ luaH_dump_table_keys(lua_State *L, gint idx)
  * \param L The Lua VM state.
  */
 static inline void
-luaH_dumpstack(lua_State *L) {
+luaH_dump_stack(lua_State *L) {
     g_fprintf(stderr, "-------- Lua stack dump ---------\n");
     for(int i = lua_gettop(L); i; i--) {
         int t = lua_type(L, i);
