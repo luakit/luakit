@@ -34,7 +34,7 @@
 #include <unistd.h>
 #include <webkit2/webkit2.h>
 
-void
+static void
 init_directories(void)
 {
     /* create luakit directory */
