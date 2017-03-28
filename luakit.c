@@ -181,6 +181,12 @@ main(gint argc, gchar *argv[])
 
     /* parse command line opts and get uris to load */
     gchar **uris = parseopts(&argc, argv, &nonblock);
+
+    /* hide command line parameters so process lists don't leak (possibly
+       confidential) URLs */
+    for (gint i = 1; i < argc; i++)
+        memset(argv[i], 0, strlen(argv[i]));
+
     globalconf.windows = g_ptr_array_new();
 
     /* if non block mode - respawn, detach and continue in child */
@@ -203,11 +209,6 @@ main(gint argc, gchar *argv[])
     init_directories();
     web_context_init();
     ipc_init();
-
-    /* hide command line parameters so process lists don't leak (possibly
-       confidential) URLs */
-    for (gint i = 1; i < argc; i++)
-        memset(argv[i], 0, strlen(argv[i]));
 
     /* parse and run configuration file */
     if (!luaH_parserc(globalconf.confpath, TRUE, uris))
