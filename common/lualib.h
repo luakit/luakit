@@ -28,6 +28,7 @@
 #include <lualib.h>
 
 #include "common/util.h"
+#include "common/luautil.h"
 #include "common/luaclass.h"
 
 /** Lua function to call on dofuction() error */
@@ -45,8 +46,7 @@ static inline void
 luaH_dump_traceback(lua_State *L)
 {
     g_fprintf(stderr, "--------- Lua traceback ---------\n");
-    luaL_loadstring(L, "return debug.traceback()");
-    lua_pcall(L, 0, 1, 0);
+    luaH_traceback(L, 0);
     g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
     lua_pop(L, 1);
     g_fprintf(stderr, "-------- Lua traceback end ------\n");
