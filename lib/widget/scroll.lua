@@ -14,20 +14,21 @@ local theme = lousy.theme.get()
 local function update (w)
     w.view:eval_js([=[
         (function () {
-            return {
-                y: window.scrollY,
-                ymax: Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0)
-            };
+            var y = window.scrollY;
+            var max = Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0);
+            return y + " " + max;
         })()
     ]=], { callback = function (scroll, err)
         assert(not err, err)
-        local label = w.sbar.r.scroll
-        local y, max, text = scroll.y, scroll.ymax
+        local y, max = scroll:match("^(%S+) (%S+)$")
+        y, max = tonumber(y), tonumber(max)
+        local text
         if     max == 0   then text = "All"
         elseif y   == 0   then text = "Top"
         elseif y   == max then text = "Bot"
         else text = string.format("%2d%%", (y / max) * 100)
         end
+        local label = w.sbar.r.scroll
         if label.text ~= text then label.text = text end
     end })
 end
