@@ -62,10 +62,13 @@ unique_is_registered(void)
 static gint
 luaH_unique_new(lua_State *L)
 {
+    const gchar *name = luaL_checkstring(L, 1);
+    if (!g_application_id_is_valid(name))
+        return luaL_error(L, "invalid application name");
+
     if (unique_is_registered())
         luaL_error(L, "GApplication already setup");
 
-    const gchar *name = luaL_checkstring(L, 1);
     GError *error = NULL;
     if (!globalconf.application)
         globalconf.application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
