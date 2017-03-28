@@ -144,23 +144,23 @@ luaH_init(void)
     luaH_add_paths(L, globalconf.config_dir);
 }
 
-gboolean
+static gboolean
 luaH_loadrc(const gchar *confpath, gboolean run)
 {
-    debug("Loading rc: %s", confpath);
+    info("Loading rc: %s", confpath);
     lua_State *L = globalconf.L;
-    if(!luaL_loadfile(L, confpath)) {
-        if(run) {
-            if (!luaH_dofunction(L, 0, LUA_MULTRET)) {
-                lua_settop(L, 0);
-            } else
-                return TRUE;
-        } else
-            lua_pop(L, 1);
+
+    if (luaL_loadfile(L, confpath)) {
+        error("Error loading rc: %s", lua_tostring(L, -1));
+        return FALSE;
+    }
+
+    if (!run) {
+        lua_pop(L, 1);
         return TRUE;
-    } else
-        warn("Error loading rc file: %s", lua_tostring(L, -1));
-    return FALSE;
+    }
+
+    return luaH_dofunction(L, 0, 0);
 }
 
 /* Load a configuration file. */
@@ -172,9 +172,8 @@ luaH_parserc(const gchar *confpath, gboolean run)
     GPtrArray *paths = NULL;
 
     /* try to load, return if it's ok */
-    if(confpath) {
-        if(luaH_loadrc(confpath, run))
-            ret = TRUE;
+    if (confpath) {
+        ret = luaH_loadrc(confpath, run);
         goto bailout;
     }
 
