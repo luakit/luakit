@@ -701,7 +701,7 @@ add_cmds({
                 ret, err = loadstring(a)
             end
             if err then
-                error(err)
+                w:error(err)
             else
                 ret()
             end
