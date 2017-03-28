@@ -55,7 +55,9 @@ web_module_lib_setup(lua_State *L)
 
     luaH_openlib(L, "require_web_module", web_module_methods, web_module_methods);
 
-    required_web_modules = g_ptr_array_new();
+    if (required_web_modules)
+        g_ptr_array_free(required_web_modules, TRUE);
+    required_web_modules = g_ptr_array_new_with_free_func(g_free);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

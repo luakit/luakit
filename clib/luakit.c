@@ -583,7 +583,9 @@ luakit_lib_setup(lua_State *L)
     };
 
     /* create signals array */
-    luakit_class.signals = signal_new();
+    if (luakit_class.signals)
+        signal_destroy(luakit_class.signals);
+    luakit_class.signals = luakit_class.signals ?: signal_new();
 
     /* export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);

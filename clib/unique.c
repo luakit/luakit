@@ -139,7 +139,9 @@ unique_lib_setup(lua_State *L)
     };
 
     /* create signals array */
-    unique_class.signals = signal_new();
+    if (unique_class.signals)
+        signal_destroy(unique_class.signals);
+    unique_class.signals = unique_class.signals ?: signal_new();
 
     /* export unique lib */
     luaH_openlib(L, "unique", unique_lib, unique_lib);

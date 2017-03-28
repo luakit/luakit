@@ -160,8 +160,8 @@ luaH_rawfield(lua_State *L, gint idx, const gchar *field)
     return type;
 }
 
-void luaH_init();
-gboolean luaH_parserc(const gchar *, gboolean);
+void luaH_init(gchar ** uris);
+gboolean luaH_parserc(const gchar *, gboolean, gchar **);
 gint luaH_mtnext(lua_State *, gint);
 
 gint luaH_class_index_miss_property(lua_State *, lua_object_t *);

@@ -160,7 +160,9 @@ soup_lib_setup(lua_State *L)
     };
 
     /* create signals array */
-    soup_class.signals = signal_new();
+    if (soup_class.signals)
+        signal_destroy(soup_class.signals);
+    soup_class.signals = soup_class.signals ?: signal_new();
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);

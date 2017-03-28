@@ -86,12 +86,12 @@ luaH_keystr_push(lua_State *L, guint keyval)
 }
 
 void
-luaH_init(const gchar * const * uris)
+luaH_init(gchar ** uris)
 {
-    lua_State *L;
-
     /* Lua VM init */
-    L = common.L = globalconf.L = luaL_newstate();
+    if (common.L)
+        lua_close(common.L);
+    lua_State *L = common.L = globalconf.L = luaL_newstate();
 
     /* Set panic fuction */
     lua_atpanic(L, luaH_panic);
@@ -154,10 +154,12 @@ luaH_init(const gchar * const * uris)
 }
 
 static gboolean
-luaH_loadrc(const gchar *confpath, gboolean run)
+luaH_loadrc(const gchar *confpath, gboolean run, gchar **uris)
 {
     info("Loading rc: %s", confpath);
-    lua_State *L = globalconf.L;
+
+    luaH_init(uris);
+    lua_State *L = common.L;
 
     if (luaL_loadfile(L, confpath)) {
         error("Error loading rc: %s", lua_tostring(L, -1));
@@ -174,7 +176,7 @@ luaH_loadrc(const gchar *confpath, gboolean run)
 
 /* Load a configuration file. */
 gboolean
-luaH_parserc(const gchar *confpath, gboolean run)
+luaH_parserc(const gchar *confpath, gboolean run, gchar **uris)
 {
     const gchar* const *config_dirs = NULL;
     gboolean ret = FALSE;
@@ -182,7 +184,7 @@ luaH_parserc(const gchar *confpath, gboolean run)
 
     /* try to load, return if it's ok */
     if (confpath) {
-        ret = luaH_loadrc(confpath, run);
+        ret = luaH_loadrc(confpath, run, uris);
         goto bailout;
     }
 
@@ -208,7 +210,7 @@ luaH_parserc(const gchar *confpath, gboolean run)
         if (file_exists(path)) {
             if (i > 0)
                 warn("Falling back to rc file: %s", path);
-            if(luaH_loadrc(path, run)) {
+            if(luaH_loadrc(path, run, uris)) {
                 globalconf.confpath = g_strdup(path);
                 ret = TRUE;
                 goto bailout;
