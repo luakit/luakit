@@ -19,3 +19,4 @@ buildopts.h
 # Miscellaneous
 *.swp
 *~
+tags
