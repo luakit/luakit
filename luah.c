@@ -86,12 +86,12 @@ luaH_keystr_push(lua_State *L, guint keyval)
 }
 
 void
-luaH_init(void)
+luaH_init(const gchar * const * uris)
 {
     lua_State *L;
 
     /* Lua VM init */
-    L = globalconf.L = luaL_newstate();
+    L = common.L = globalconf.L = luaL_newstate();
 
     /* Set panic fuction */
     lua_atpanic(L, luaH_panic);
@@ -142,6 +142,15 @@ luaH_init(void)
 
     /* add Lua search paths */
     luaH_add_paths(L, globalconf.config_dir);
+
+    /* push a table of the startup uris */
+    const gchar *uri;
+    lua_newtable(L);
+    for (gint i = 0; uris && (uri = uris[i]); i++) {
+        lua_pushstring(L, uri);
+        lua_rawseti(L, -2, i + 1);
+    }
+    lua_setglobal(L, "uris");
 }
 
 static gboolean

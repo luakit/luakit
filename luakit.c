@@ -35,29 +35,6 @@
 #include <webkit2/webkit2.h>
 
 void
-init_lua(gchar **uris)
-{
-    gchar *uri;
-    lua_State *L;
-
-    /* init globalconf structs */
-    globalconf.windows = g_ptr_array_new();
-
-    /* init lua */
-    luaH_init();
-    L = globalconf.L;
-    common.L = L;
-
-    /* push a table of the statup uris */
-    lua_newtable(L);
-    for (gint i = 0; uris && (uri = uris[i]); i++) {
-        lua_pushstring(L, uri);
-        lua_rawseti(L, -2, i + 1);
-    }
-    lua_setglobal(L, "uris");
-}
-
-void
 init_directories(void)
 {
     /* create luakit directory */
@@ -70,7 +47,7 @@ init_directories(void)
 }
 
 /* load command line options into luakit and return uris to load */
-gchar **
+static gchar **
 parseopts(int *argc, gchar *argv[], gboolean **nonblock)
 {
     GOptionContext *context;
@@ -139,7 +116,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     /* check config syntax and exit */
     if (check_only) {
         init_directories();
-        init_lua(NULL);
+        luaH_init(NULL);
         if (!luaH_parserc(globalconf.confpath, FALSE)) {
             g_fprintf(stderr, "Confiuration file syntax error.\n");
             exit(EXIT_FAILURE);
@@ -155,7 +132,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     if (uris)
         return uris;
     else
-        return argv + 1;
+        return g_strdupv(argv + 1);
 }
 
 static GLogWriterOutput
@@ -194,7 +171,6 @@ gint
 main(gint argc, gchar *argv[])
 {
     gboolean *nonblock = NULL;
-    gchar **uris = NULL;
 
     globalconf.starttime = l_time();
 
@@ -205,7 +181,8 @@ main(gint argc, gchar *argv[])
     setlocale(LC_NUMERIC, "C");
 
     /* parse command line opts and get uris to load */
-    uris = parseopts(&argc, argv, &nonblock);
+    gchar **uris = parseopts(&argc, argv, &nonblock);
+    globalconf.windows = g_ptr_array_new();
 
     /* if non block mode - respawn, detach and continue in child */
     if (nonblock) {
@@ -227,7 +204,7 @@ main(gint argc, gchar *argv[])
     init_directories();
     web_context_init();
     ipc_init();
-    init_lua(uris);
+    luaH_init(uris);
 
     /* hide command line parameters so process lists don't leak (possibly
        confidential) URLs */
