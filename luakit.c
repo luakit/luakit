@@ -195,7 +195,6 @@ main(gint argc, gchar *argv[])
 {
     gboolean *nonblock = NULL;
     gchar **uris = NULL;
-    pid_t pid, sid;
 
     globalconf.starttime = l_time();
 
@@ -210,13 +209,13 @@ main(gint argc, gchar *argv[])
 
     /* if non block mode - respawn, detach and continue in child */
     if (nonblock) {
-        pid = fork();
+        pid_t pid = fork();
         if (pid < 0) {
             fatal("Cannot fork: %d", errno);
         } else if (pid > 0) {
             exit(EXIT_SUCCESS);
         }
-        sid = setsid();
+        pid_t sid = setsid();
         if (sid < 0) {
             fatal("New SID creation failure: %d", errno);
         }
