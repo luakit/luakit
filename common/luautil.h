@@ -52,6 +52,7 @@ luaH_bind_gobject_ref(lua_State *L, gpointer gobject, int idx)
             (GDestroyNotify)luaH_gobject_destroy_cb);
 }
 
+gint luaH_traceback(lua_State *L, gint level);
 gint luaH_dofunction_on_error(lua_State *L);
 void luaH_add_paths(lua_State *L, const gchar *config_dir);
 

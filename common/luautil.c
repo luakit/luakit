@@ -25,6 +25,76 @@
 static gpointer debug_traceback_ref;
 
 gint
+luaH_traceback(lua_State *L, gint min_level)
+{
+    gint top = lua_gettop(L);
+
+    lua_Debug ar;
+    gint max_level;
+    gint loc_pad = 0;
+
+#define AR_SRC(ar) \
+    (g_strstr_len((ar).source, 3, "@./") ? (ar).source+3 : \
+     (ar).source[0] == '@'               ? (ar).source+1 : \
+     (ar).short_src)
+#define LENF(fmt, ...) \
+    (snprintf(NULL, 0, fmt, ##__VA_ARGS__))
+
+    /* Traverse the stack to determine max level and padding sizes */
+    for (gint level = min_level; lua_getstack(L, level, &ar); level++) {
+        lua_getinfo(L, "Sl", &ar);
+
+        max_level = level;
+
+        gint cur_pad = LENF("%s:%d", AR_SRC(ar), ar.currentline);
+        if (cur_pad > loc_pad) loc_pad = cur_pad;
+    }
+
+    gint level_pad = LENF("%d", max_level);
+
+    for (gint level = min_level; level <= max_level; level++) {
+        lua_getstack(L, level, &ar);
+        lua_getinfo(L, "Sln", &ar);
+
+        /* Current stack level */
+        gint shown_level = level - min_level + 1;
+        lua_pushliteral(L, ANSI_COLOR_GRAY "(");
+        for (gint i = level_pad - LENF("%d", shown_level); i > 0; i--)
+            lua_pushliteral(L, " ");
+        lua_pushinteger(L, shown_level);
+        lua_pushliteral(L, ")" ANSI_COLOR_RESET " ");
+
+        /* Current location, padded */
+        if (g_str_equal(ar.what, "C")) {
+            lua_pushliteral(L, "[C]");
+            for (gint i = loc_pad - strlen("[C]"); i > 0; i--)
+                lua_pushliteral(L, " ");
+        } else {
+            const char *src = AR_SRC(ar);
+            lua_pushstring(L, src);
+            lua_pushliteral(L, ":");
+            lua_pushinteger(L, ar.currentline);
+            for (gint i = loc_pad - LENF("%s:%d", src, ar.currentline); i > 0; i--)
+                lua_pushliteral(L, " ");
+        }
+
+        /* Function name */
+        if (g_str_equal(ar.what, "main")) {
+            lua_pushliteral(L, ANSI_COLOR_GRAY " in main chunk" ANSI_COLOR_RESET);
+        } else {
+            lua_pushliteral(L, ANSI_COLOR_GRAY " in function " ANSI_COLOR_RESET);
+            lua_pushstring(L, ar.name ?: "[anonymous]");
+        }
+
+        if (level != max_level)
+            lua_pushliteral(L, "\n");
+    }
+
+    lua_concat(L, lua_gettop(L) - top);
+    return 1;
+}
+
+gint
 luaH_dofunction_on_error(lua_State *L)
 {
     luaH_object_push(L, debug_traceback_ref);
