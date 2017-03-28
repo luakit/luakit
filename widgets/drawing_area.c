@@ -86,7 +86,6 @@ widget_drawing_area(widget_t *w, luakit_token_t UNUSED(token))
         lua_pushliteral(L, "ffi");
         gint error = lua_pcall(L, 1, 1, 0);
         g_assert(error == 0);
-        luaH_dumpstack(L);
         if (!lua_istable(L, -1))
             luaL_error(L, "Cannot create/use drawing area without ffi");
         lua_getfield(L, -1, "new");
