@@ -51,7 +51,7 @@ luaH_callerinfo(lua_State *L)
 gint
 luaH_panic(lua_State *L)
 {
-    warn("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
+    error("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
     return 0;
 }
 
