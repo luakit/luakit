@@ -19,15 +19,28 @@ webview.add_signal("init", function (view)
         domain = string.match(domain or "", "^www%.(.+)") or domain or "all"
         -- Build list of domain props tables to join & load.
         -- I.e. for luakit.org load .luakit.org, luakit.org, .org
-        local props = {domain_props.all or {}, domain_props[domain] or {}}
+        local prop_sets = {
+            { domain = "all", props = domain_props.all or {} },
+            { domain = domain, props = domain_props[domain] or {} },
+        }
         repeat
-            table.insert(props, 2, domain_props["."..domain] or {})
+            table.insert(prop_sets, { domain = "."..domain, props = domain_props["."..domain] or {} })
             domain = string.match(domain, "%.(.+)")
         until not domain
-        -- Join all property tables
-        for k, prop in pairs(lousy.util.table.join(unpack(props))) do
-            msg.info("Domain prop: %s = %s (%s)", k, tostring(prop), domain)
-            view[k] = prop
+
+        -- Sort by rule precedence: "all" first, then by increasing specificity
+        table.sort(prop_sets, function (a, b)
+            if a.domain == "all" then return true end
+            if b.domain == "all" then return false end
+            return #a.domain < #b.domain
+        end)
+
+        -- Apply all properties
+        for _, props in ipairs(prop_sets) do
+            for k, prop in pairs(props.props) do
+                msg.info("Domain prop: %s = %s (%s)", k, prop, props.domain)
+                view[k] = prop
+            end
         end
     end)
 end)
