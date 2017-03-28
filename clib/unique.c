@@ -66,8 +66,15 @@ luaH_unique_new(lua_State *L)
     if (!g_application_id_is_valid(name))
         return luaL_error(L, "invalid application name");
 
-    if (unique_is_registered())
-        luaL_error(L, "GApplication already setup");
+    if (unique_is_registered()) {
+        const gchar *other = g_application_get_application_id(
+                G_APPLICATION(globalconf.application));
+        if (!g_str_equal(name, other))
+            luaL_error(L, "GApplication '%s' already setup", other);
+        else
+            verbose("GApplication '%s' already setup", name);
+        return 0;
+    }
 
     GError *error = NULL;
     if (!globalconf.application)
@@ -75,9 +82,11 @@ luaH_unique_new(lua_State *L)
 
     g_application_register(G_APPLICATION(globalconf.application), NULL, &error);
     if (error != NULL) {
-        luaL_error(L, "unable to register GApplication");
+        luaL_error(L, "unable to register GApplication: %s", error->message);
         g_error_free(error);
-        error = NULL;
+        g_object_unref(G_OBJECT(globalconf.application));
+        globalconf.application = NULL;
+        return 0;
     }
 
     const GActionEntry entries[] = {{
