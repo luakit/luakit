@@ -21,6 +21,7 @@
 
 #include "common/luah.h"
 #include "common/luautil.h"
+#include "common/luaclass.h"
 #include <gtk/gtk.h>
 #include <lauxlib.h>
 

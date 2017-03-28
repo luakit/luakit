@@ -18,8 +18,10 @@
 
 #include <lauxlib.h>
 #include <lualib.h>
+#include <string.h>
 
 #include "common/luautil.h"
+#include "common/log.h"
 #include "buildopts.h"
 
 gint
