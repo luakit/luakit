@@ -23,7 +23,7 @@ ui:add_signal("image", function (_, page)
     img:add_event_listener("click", true, recalc_funcs[page])
 end)
 
-ui:add_signal("resize", function (_, page)
+ui:add_signal("recalc", function (_, page)
     return recalc_funcs[page] and recalc_funcs[page]();
 end)
 

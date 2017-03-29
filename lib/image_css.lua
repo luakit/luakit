@@ -68,10 +68,15 @@ webview.add_signal("init", function (view)
         end
     end)
 
-    view:add_signal("resize", function (v)
-        if webview.window(v).view ~= v then return end
-        wm:emit_signal(view, "resize")
-    end)
+    local recalc_cb = function (v)
+        local w = webview.window(v)
+        if w and w.view == v then
+            wm:emit_signal(view, "recalc")
+        end
+    end
+    view:add_signal("resize", recalc_cb)
+    view:add_signal("switched-page", recalc_cb)
+    view:add_signal("property::zoom_level", recalc_cb)
 end)
 
 return _M
