@@ -75,11 +75,9 @@ local label_styles = {
     trim = function (make_labels)
         return function (size)
             local labels = make_labels(size)
-            local maxlen = #(rawget(labels, 1))
             for n = 1, #labels do
-                local cur, nxt = rawget(labels, n), rawget(labels, n+1)
+                local cur = rawget(labels, n)
                 local rep = cur:sub(1, #cur-1)
-
                 local is_prefix = false
                 for nn = 1, #labels do
                     if nn ~= n and rawget(labels, nn):find(rep, 1, true) == 1 then
