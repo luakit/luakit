@@ -40,6 +40,11 @@ luaH_traceback(lua_State *L, gint min_level)
 #define LENF(fmt, ...) \
     (snprintf(NULL, 0, fmt, ##__VA_ARGS__))
 
+    if (!lua_getstack(L, min_level, &ar)) {
+        lua_pushliteral(L, "");
+        return 1;
+    }
+
     /* Traverse the stack to determine max level and padding sizes */
     for (gint level = min_level; lua_getstack(L, level, &ar); level++) {
         lua_getinfo(L, "Sl", &ar);
