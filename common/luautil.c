@@ -103,7 +103,7 @@ gint
 luaH_dofunction_on_error(lua_State *L)
 {
     lua_pushliteral(L, "\nTraceback:\n");
-    luaH_traceback(L, 2);
+    luaH_traceback(L, 1);
     lua_concat(L, 3);
     return 1;
 }
