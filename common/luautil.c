@@ -99,12 +99,38 @@ luaH_traceback(lua_State *L, gint min_level)
     return 1;
 }
 
+static const gchar *
+extract_error_message(lua_State *L, const gchar *message)
+{
+    lua_Debug ar;
+    for (gint level = 0; ; level++) {
+        if (!lua_getstack(L, level, &ar))
+            return message;
+        lua_getinfo(L, "Sl", &ar);
+        if (!g_str_equal(ar.what, "C"))
+            break;
+    }
+
+    if (strncmp(message, ar.short_src, strlen(ar.short_src)))
+        return message;
+
+    const gchar *tail = message + strlen(ar.short_src);
+
+    if (*tail != ':')
+        return message;
+    tail ++;
+    return strchr(tail, ' ') + 1;
+}
+
 gint
 luaH_dofunction_on_error(lua_State *L)
 {
+    lua_pushliteral(L, "Lua error: ");
+    lua_pushstring(L, extract_error_message(L, lua_tostring(L, -2)));
+
     lua_pushliteral(L, "\nTraceback:\n");
     luaH_traceback(L, 1);
-    lua_concat(L, 3);
+    lua_concat(L, 4);
     return 1;
 }
 
