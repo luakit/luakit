@@ -37,6 +37,7 @@
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
 #include "common/clib/timer.h"
+#include "common/clib/regex.h"
 #include "globalconf.h"
 
 #include <glib.h>
@@ -130,6 +131,9 @@ luaH_init(gchar ** uris)
 
     /* Export timer */
     timer_class_setup(L);
+
+    /* Export regex */
+    regex_class_setup(L);
 
     /* Export request */
     request_class_setup(L);

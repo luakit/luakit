@@ -18,6 +18,7 @@ function T.test_luacheck ()
         "msg",
         "ipc_channel",
         "string.wlen",
+        "regex",
     }
     local ui_globals = {
         "sqlite3",
