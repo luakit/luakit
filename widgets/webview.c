@@ -240,7 +240,7 @@ update_uri(widget_t *w, const gchar *uri)
 
 static gboolean
 load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
-        gchar *failing_uri, gpointer error, widget_t *w)
+        gchar *failing_uri, GError *error, widget_t *w)
 {
     update_uri(w, failing_uri);
 
@@ -249,7 +249,7 @@ load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
     luaH_object_push(L, w->ref);
     lua_pushstring(L, "failed");
     lua_pushstring(L, failing_uri);
-    lua_pushstring(L, ((GError*) error)->message);
+    lua_pushstring(L, error->message);
     gint ret = luaH_object_emit_signal(L, -4, "load-status", 3, 1);
     gboolean ignore = ret && lua_toboolean(L, -1);
     lua_pop(L, ret + 1);
