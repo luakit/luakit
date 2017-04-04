@@ -1328,37 +1328,22 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* insert data into global tables and arrays */
     g_ptr_array_add(globalconf.webviews, w);
 
-    /* connect webview signals */
     g_object_connect(G_OBJECT(d->view),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
       "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
-      /* create-web-view -> create */
       "signal::create",                               G_CALLBACK(create_cb),                    w,
-      /* document-load-finished has no analog in webkit2, but load-changed with
-       * the WEBKIT_LOAD_FINISHED event might be what you're looking for. */
-      /* download-requested -> WebKitWebContext download-started */
       "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
       "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
-      /* hovering-over-link functionality covered by mouse_target_changed_cb */
       "signal::mouse-target-changed",                 G_CALLBACK(mouse_target_changed_cb),      w,
       "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
-      /* {mime-type,navigation,new-window}-policy-decision-requested covered
-       * by decide-policy */
       "signal::decide-policy",                        G_CALLBACK(decide_policy_cb),             w,
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
-      /* notify::load-status -> load-changed */
       "signal::load-changed",                         G_CALLBACK(load_changed_cb),              w,
       "signal::load-failed",                          G_CALLBACK(load_failed_cb),               w,
       "signal::load-failed-with-tls-errors",          G_CALLBACK(load_failed_tls_cb),           w,
-      /* populate-popup -> context-menu */
       "signal::context-menu",                         G_CALLBACK(context_menu_cb),              w,
-      /* unrealize/hide GtkMenu -> context-menu-dismissed WebKitWebView */
       "signal::context-menu-dismissed",               G_CALLBACK(hide_popup_cb),                w,
-      /* resource-request-starting -> resource-load-started, but you are
-       * no longer allowed to modify the request. This was never used in the
-       * original luakit anyway. */
-      //"signal::resource-load-started",                G_CALLBACK(resource_load_started_cb),     w,
       "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
       "signal::notify::uri",                          G_CALLBACK(uri_cb),                       w,
       "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
@@ -1369,16 +1354,10 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
       "signal::failed-to-find-text",                  G_CALLBACK(failed_to_find_text_cb),       w,
       NULL);
 
-    // TODO was this the right thing to do?
     g_object_connect(G_OBJECT(d->view),
       "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
       NULL);
 
-    /* inspect-web-view -> open-window
-       show-window -> bring-to-front
-       close-window -> close
-       attach-window -> attach
-       detach-window -> detach */
     g_object_connect(G_OBJECT(d->inspector),
       "signal::attach",                               G_CALLBACK(inspector_attach_window_cb),   w,
       "signal::bring-to-front",                       G_CALLBACK(inspector_show_window_cb),     w,
