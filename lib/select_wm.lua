@@ -86,7 +86,7 @@ local label_styles = {
                     end
                 end
                 if not is_prefix then
-                    rawset(labels, n, cur:sub(1, #cur-1))
+                    rawset(labels, n, rep)
                 end
             end
             return labels
