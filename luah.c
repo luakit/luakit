@@ -27,7 +27,6 @@
 #include "clib/download.h"
 #include "clib/luakit.h"
 #include "clib/sqlite3.h"
-#include "clib/timer.h"
 #include "clib/unique.h"
 #include "clib/widget.h"
 #include "clib/xdg.h"
@@ -36,6 +35,7 @@
 #include "common/clib/ipc.h"
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
+#include "common/clib/timer.h"
 #include "globalconf.h"
 
 #include <glib.h>

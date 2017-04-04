@@ -1,5 +1,5 @@
 /*
- * clib/timer.c - Simple timer class
+ * common/clib/timer.c - Simple timer class
  *
  * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
@@ -19,9 +19,9 @@
  *
  */
 
-#include "clib/timer.h"
+#include "common/clib/timer.h"
 #include "common/luaobject.h"
-#include "globalconf.h"
+#include "common/common.h"
 #include "luah.h"
 
 #include <glib.h>
@@ -57,8 +57,8 @@ static gboolean
 timer_handle_timeout(gpointer data)
 {
     ltimer_t *timer = (ltimer_t *) data;
-    luaH_object_push(globalconf.L, timer->ref);
-    luaH_object_emit_signal(globalconf.L, -1, "timeout", 1, 0);
+    luaH_object_push(common.L, timer->ref);
+    luaH_object_emit_signal(common.L, -1, "timeout", 1, 0);
     return TRUE;
 }
 
@@ -119,6 +119,18 @@ luaH_timer_get_started(lua_State *L, ltimer_t *timer)
     return 1;
 }
 
+gint
+luaH_timer_index_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
+{
+    return luaL_error(L, "timer index miss; key %s", lua_tostring(L, 2));
+}
+
+gint
+luaH_timer_newindex_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
+{
+    return luaL_error(L, "timer newindex miss; key %s", lua_tostring(L, 2));
+}
+
 void
 timer_class_setup(lua_State *L)
 {
@@ -141,7 +153,7 @@ timer_class_setup(lua_State *L)
 
     luaH_class_setup(L, &timer_class, "timer",
             (lua_class_allocator_t) timer_new,
-            luaH_class_index_miss_property, luaH_class_newindex_miss_property,
+            luaH_timer_index_miss_property, luaH_timer_newindex_miss_property,
             timer_methods, timer_meta);
 
     luaH_class_add_property(&timer_class, L_TK_INTERVAL,

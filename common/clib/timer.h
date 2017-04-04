@@ -1,5 +1,5 @@
 /*
- * clib/timer.h - Timer class header
+ * common/clib/timer.h - Timer class header
  *
  * Copyright © 2010 Fabian Streitel <karottenreibe@gmail.com>
  *
@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef LUAKIT_CLIB_TIMER_H
-#define LUAKIT_CLIB_TIMER_H
+#ifndef LUAKIT_COMMON_CLIB_TIMER_H
+#define LUAKIT_COMMON_CLIB_TIMER_H
 
 #include <lua.h>
 

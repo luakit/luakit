@@ -36,6 +36,7 @@
 #include "common/clib/msg.h"
 #include "common/clib/soup.h"
 #include "common/clib/ipc.h"
+#include "common/clib/timer.h"
 #include "common/common.h"
 
 #include "extension/scroll.h"
@@ -63,6 +64,7 @@ web_lua_init(void)
     luakit_lib_setup(WL);
     soup_lib_setup(WL);
     ipc_channel_class_setup(WL);
+    timer_class_setup(WL);
     dom_document_class_setup(WL);
     dom_element_class_setup(WL);
     page_class_setup(WL);
