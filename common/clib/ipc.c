@@ -20,7 +20,7 @@
  * IPC interface for communication between UI and Web processes.
  *
  * In Luakit there is a single UI Lua state, but there may be multiple web
- * processes, each of which has a separate Lua state. This interface can be used
+ * processes, each of which have a separate Lua state. This interface can be used
  * to communicate between the UI and web processes.
  *
  * An interface similar to Luakit's signals handling is provided, and supports
