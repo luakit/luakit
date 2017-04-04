@@ -19,6 +19,24 @@
  *
  */
 
+/***
+ * @classmod timer
+ *
+ * Timer support for Luakit.
+ *
+ * _This class is available from both UI and web process Lua states._
+ *
+ * @usage
+ * local t = timer{ interval = 500 }
+ *
+ * t:add_signal("timeout", function ()
+ *     print("500msec later!")
+ * end)
+ *
+ * t:start()
+ *
+ */
+
 #include "common/clib/timer.h"
 #include "common/luaobject.h"
 #include "common/common.h"
@@ -62,6 +80,11 @@ timer_handle_timeout(gpointer data)
     return TRUE;
 }
 
+/***
+ * Create a new timer.
+ * @function timer
+ * @tparam table options The initial timer properties to set.
+ */
 static int
 luaH_timer_new(lua_State *L)
 {
@@ -71,6 +94,13 @@ luaH_timer_new(lua_State *L)
     return 1;
 }
 
+/***
+ * Start a timer.
+ *
+ * The timer must already have an interval set.
+ * The timer should not already be running.
+ * @function timer:start
+ */
 static int
 luaH_timer_start(lua_State *L)
 {
@@ -87,6 +117,12 @@ luaH_timer_start(lua_State *L)
     return 0;
 }
 
+/***
+ * Stop a timer.
+ *
+ * The timer should already be running.
+ * @function timer:stop
+ */
 static int
 luaH_timer_stop(lua_State *L)
 {
@@ -156,11 +192,19 @@ timer_class_setup(lua_State *L)
             luaH_timer_index_miss_property, luaH_timer_newindex_miss_property,
             timer_methods, timer_meta);
 
+    /***
+    * The interval of the timer, in milliseconds.
+    * @property interval
+    */
     luaH_class_add_property(&timer_class, L_TK_INTERVAL,
             (lua_class_propfunc_t) luaH_timer_set_interval,
             (lua_class_propfunc_t) luaH_timer_get_interval,
             (lua_class_propfunc_t) luaH_timer_set_interval);
 
+    /***
+    * Whether the timer is running. Read-only.
+    * @property started
+    */
     luaH_class_add_property(&timer_class, L_TK_STARTED,
             NULL,
             (lua_class_propfunc_t) luaH_timer_get_started,
