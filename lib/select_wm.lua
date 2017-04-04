@@ -85,7 +85,7 @@ local label_styles = {
                         break
                     end
                 end
-                if not is_prefix then
+                if not is_prefix and rep ~= "" then
                     rawset(labels, n, rep)
                 end
             end
