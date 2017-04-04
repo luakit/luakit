@@ -48,8 +48,6 @@ typedef struct {
     gchar *uri;
     /** Currently hovered uri */
     gchar *hover;
-    /** Scrollbar hide signal id */
-    gulong hide_id;
     /** Current webview source HTML: not null terminated */
     gchar *source;
     /** Length in bytes of source array */
