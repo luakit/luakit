@@ -1223,9 +1223,10 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     return;
 
 error:
-    luaH_warn(L, "luakit_uri_scheme_request_cb(): %s", error_message);
-    // TODO better GError*?
-    webkit_uri_scheme_request_finish_error(request, NULL);
+    error(error_message);
+    GError *error = g_error_new_literal(g_quark_from_static_string("luakit"),
+            0, error_message);
+    webkit_uri_scheme_request_finish_error(request, error);
     lua_settop(L, top);
     return;
 }
