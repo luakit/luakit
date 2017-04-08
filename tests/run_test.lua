@@ -138,15 +138,24 @@ local function spawn_luakit_instance(config, ...)
     return assert(io.popen(cmd))
 end
 
+-- On exit stuff
+local exit_handlers = {}
+local cleanup = function ()
+    for _, f in ipairs(exit_handlers) do f() end
+    exit_handlers = {}
+end
+-- Run automatically
+local onexit_prx = newproxy(true)
+getmetatable(onexit_prx).__gc = cleanup
+
 -- Automatically clean up test directories
-local luakit_tmp_dirs_prx = newproxy(true)
-getmetatable(luakit_tmp_dirs_prx).__gc = function ()
+table.insert(exit_handlers, function ()
     print("Removing temporary directories")
     for _, dir in ipairs(luakit_tmp_dirs) do
         assert(dir:match("^/tmp/luakit_test_"))
         os.execute("rm -r " .. dir)
     end
-end
+end)
 
 local function do_async_tests(test_files)
     for _, test_file in ipairs(test_files) do
@@ -204,29 +213,24 @@ end
 -- Launch Xvfb for lifetime of test runner
 print("Starting Xvfb")
 local pid_xvfb = priv.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
-local xvfb_prx = newproxy(true)
-getmetatable(xvfb_prx).__gc = function ()
+table.insert(exit_handlers, function ()
     print("Stopping Xvfb")
     posix.kill(pid_xvfb)
-end
+end)
 
 -- Launch a test HTTP server
 print("Starting HTTP server")
 local pid_httpd = priv.spawn({"luajit", "tests/httpd.lua"})
-local httpd_prx = newproxy(true)
-getmetatable(httpd_prx).__gc = function ()
+table.insert(exit_handlers, function ()
     print("Stopping HTTP server")
     posix.kill(pid_httpd)
-end
+end)
 
 -- Add interrupt handler
 posix.signal(posix.SIGINT, function (_)
     io.write("\n")
     print("Interrupted")
-    xvfb_prx = nil
-    httpd_prx = nil
-    luakit_tmp_dirs_prx = nil
-    collectgarbage()
+    cleanup()
 end)
 
 -- Find test files
