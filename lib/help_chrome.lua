@@ -23,6 +23,7 @@ local html_template = [==[
     <meta charset="utf-8">
     <title>Luakit Introspector</title>
     <style type="text/css">
+        {style}
         body {
             background-color: white;
             color: black;
@@ -181,10 +182,12 @@ local html_template = [==[
     </style>
 </head>
 <body>
-    <header>
+    <header id="page-header">
         <h1>Luakit Help</h1>
     </header>
-    {sections}
+    <div class="content-margin">
+        {sections}
+    </div>
     <script>
         {jquery}
     </script>
@@ -323,6 +326,7 @@ chrome.add("help", function ()
     local sections_html = table.concat(sections, "\n")
     local html_subs = {
         sections = sections_html,
+        style  = chrome.stylesheet,
         javascript = main_js,
         jquery = lousy.load("lib/jquery.min.js")
     }
