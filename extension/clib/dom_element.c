@@ -20,7 +20,6 @@
 #define WEBKIT_DOM_USE_UNSTABLE_API
 #include <webkitdom/WebKitDOMElementUnstable.h>
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
-#include <webkitdom/WebKitDOMLocation.h>
 #include <JavaScriptCore/JavaScript.h>
 
 /* HACK: Normally, I'd include WebKitDOMHTMLMediaElement.h here, and that'd work
@@ -439,7 +438,6 @@ luaH_dom_element_push_href(lua_State *L)
         return 1; \
     }
 
-    CHECK(location, LOCATION);
     CHECK(html_anchor_element, HTML_ANCHOR_ELEMENT);
     CHECK(html_area_element, HTML_AREA_ELEMENT);
     CHECK(html_link_element, HTML_LINK_ELEMENT);
