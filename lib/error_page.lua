@@ -230,6 +230,12 @@ local function handle_error(v, uri, msg, cert_errors)
         error_page_info = {
             msg = msg,
         }
+        -- Add proxy info on generic pages
+        local p = soup.proxy_uri
+        if p ~= "no_proxy" then
+            p = p == "default" and "system default" or "<code>" .. p .. "</code>"
+            error_page_info.msg = {error_page_info.msg, "Proxy in use: " .. p}
+        end
     elseif category == "security" then
         local cert = v.certificate
 
