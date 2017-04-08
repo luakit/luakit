@@ -11,6 +11,13 @@ local new_mode = require("modes").new_mode
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
 
+local _, minor = luakit.webkit_version:match("^(%d+)%.(%d+)%.")
+if tonumber(minor) < 16 then
+    msg.error("proxy support in luakit requires WebKit2GTK 2.16 or later")
+    msg.error("this version: %s", luakit.webkit_version)
+    return {}
+end
+
 local _M = {}
 
 --- Module global variables
