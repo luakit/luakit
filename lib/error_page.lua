@@ -176,9 +176,11 @@ local function load_error_page(v, error_page_info)
     error_page_info.buttons = make_button_html(v, error_page_info.buttons)
 
     -- Make msg html
-    local msg = error_page_info.msg
-    if type(msg) == "string" then msg = {msg} end
-    error_page_info.msg = "<p>" .. table.concat(msg, "</p><p>") .. "</p>"
+    if error_page_info.msg then
+        local msg = error_page_info.msg
+        if type(msg) == "string" then msg = {msg} end
+        error_page_info.msg = "<p>" .. table.concat(msg, "</p><p>") .. "</p>"
+    end
 
     -- Substitute values recursively
     local html, nsub = _M.html_template
