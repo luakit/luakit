@@ -22,17 +22,6 @@
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
 #include <JavaScriptCore/JavaScript.h>
 
-/* HACK: Normally, I'd include WebKitDOMHTMLMediaElement.h here, and that'd work
- * fine, except that it includes WebKitDOMHTMLElement.h which can only be
- * included from inside webkitdom.h; the problem is, WebKitDOMHTMLMediaElement.h
- * isn't actually included in webkitdom.h, so there's basically no way to get
- * the definitions we need; just copy-paste for now I guess... ugh */
-#define WEBKIT_DOM_TYPE_HTML_MEDIA_ELEMENT            (webkit_dom_html_media_element_get_type())
-#define WEBKIT_DOM_HTML_MEDIA_ELEMENT(obj)            (G_TYPE_CHECK_INSTANCE_CAST((obj), WEBKIT_DOM_TYPE_HTML_MEDIA_ELEMENT, WebKitDOMHTMLMediaElement))
-#define WEBKIT_DOM_IS_HTML_MEDIA_ELEMENT(obj)         (G_TYPE_CHECK_INSTANCE_TYPE((obj), WEBKIT_DOM_TYPE_HTML_MEDIA_ELEMENT))
-WEBKIT_API gchar* webkit_dom_html_media_element_get_src(WebKitDOMHTMLMediaElement* self);
-WEBKIT_API GType webkit_dom_html_media_element_get_type(void);
-
 #include "extension/clib/dom_element.h"
 #include "extension/clib/dom_document.h"
 #include "common/luauniq.h"
@@ -416,7 +405,6 @@ luaH_dom_element_push_src(lua_State *L)
 
     CHECK(input, INPUT);
     CHECK(frame, FRAME);
-    CHECK(media, MEDIA);
     CHECK(iframe, IFRAME);
     CHECK(embed, EMBED);
     CHECK(image, IMAGE);
