@@ -25,6 +25,8 @@ local current_test_file
 local current_test_name
 local prev_test_name
 
+local have_test_failures = false
+
 -- Wrap print()
 local function log_test_output(...)
     local msg = table.concat({...}, "\t")
@@ -60,6 +62,10 @@ local function update_test_status(status, test_name, test_file)
     if status == "run" then
         status = "run "
         current_test_name = test_name
+    end
+
+    if status == "fail" then
+        have_test_failures = true
     end
 
     -- Overwrite the previous status line if it's for the same test
@@ -255,5 +261,8 @@ end
 
 do_style_tests(test_files.style)
 do_async_tests(test_files.async)
+
+cleanup()
+os.exit(have_test_failures and 1 or 0)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
