@@ -3,6 +3,7 @@
 -- @module error_page
 -- @copyright 2016 Aidan Holm
 
+local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")
 
@@ -125,6 +126,20 @@ local function on_finish(v, status)
     v:remove_signal("load-status", on_finish)
 end
 
+local error_views = setmetatable({}, { __mode = "k" })
+error_page_wm:add_signal("click", function (_, view_id, button_idx)
+    -- Get error_views entry with matching view_id
+    local view
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == view_id then view = w.view end
+    end
+    if not view then return end
+    if not error_views[view] then return end
+
+    -- Call button callback
+    error_views[view].buttons[button_idx].callback(view)
+end)
+
 local function make_button_html(v, buttons)
     local html = ""
     local tmpl = '<input type="button" class="{class}" value="{label}" />'
@@ -138,16 +153,13 @@ local function make_button_html(v, buttons)
         html = html .. string.gsub(tmpl, "{(%w+)}", button)
     end
 
-    -- Add signals for button messages
-    local function error_page_button_cb(_, i)
-        buttons[i].callback(v)
+    error_views[v] = { buttons = buttons }
+
+    local function error_page_on_navigation_request(vv)
+        error_views[vv] = nil
+        vv:remove_signal("navigation-request", error_page_on_navigation_request)
     end
-    local function error_page_button_cb_cleanup()
-        error_page_wm:remove_signal("click", error_page_button_cb)
-        v:remove_signal("navigation-request", error_page_button_cb_cleanup)
-    end
-    error_page_wm:add_signal("click", error_page_button_cb)
-    v:add_signal("navigation-request", error_page_button_cb_cleanup)
+    v:add_signal("navigation-request", error_page_on_navigation_request)
 
     return '<form name="bl">' .. html .. '</form>'
 end
