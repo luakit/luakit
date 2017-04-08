@@ -197,6 +197,11 @@ local function load_error_page(v, error_page_info)
         on_finish(v, "finished")
     end
 
+    -- If v.is_loading = true then the load will first be stopped, causing a finish
+    -- event to fire. The error page will then be loaded; so the _second_ finish
+    -- event to fire indicates that the error page has finished loading.
+    -- If v.is_loading = false, then there is no ongoing load to stop and so the
+    -- subsequent load finish event will be caused by the error page finishing.
     v:add_signal("enable-styles", false_cb)
     v:add_signal("enable-scripts", true_cb)
     v:add_signal("enable-userscripts", false_cb)
