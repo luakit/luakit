@@ -137,7 +137,7 @@ function _M.new(notebook, orientation)
     notebook:add_signal("page-removed", function (_, view, idx)
         local tl = data[tlist].tabs[view]
         box:remove(tl.widget)
-        tl.widget:destroy()
+        tl:destroy()
         regenerate_tab_indices(tlist, idx)
         data[tlist].tabs[view] = nil
     end)
