@@ -22,9 +22,7 @@ _M.html_template = [==[
         </head>
     <body>
         <div id="errorContainer">
-            <div id="errorTitle">
-                <p id="errorTitleText">{heading}</p>
-            </div>
+            <h1>{heading}</h1>
             {content}
             {buttons}
         </div>
@@ -58,29 +56,19 @@ _M.style = [===[
         -webkit-border-radius: 5px;
     }
 
-    #errorTitleText {
+    #errorContainer > h1 {
         font-size: 120%;
         font-weight: bold;
+        margin-top: 0;
     }
 
-    .errorMessage {
+    #errorContainer > p {
         font-size: 90%;
-    }
-
-    #errorMessageText {
-        font-size: 80%;
-    }
-
-    form, p {
-        margin: 0;
-    }
-
-    #errorContainer > div:not(:last-of-type) {
-        margin-bottom: 1em;
+        word-wrap: break-word;
     }
 
     form {
-        margin-top: 1em;
+        margin: 1em 0 0;
     }
 ]===]
 
@@ -169,12 +157,8 @@ local function load_error_page(v, error_page_info)
     local defaults = {
         heading = "Unable to load page",
         content = [==[
-            <div class="errorMessage">
-                <p>A problem occurred while loading the URL {uri}</p>
-            </div>
-            <div class="errorMessage">
-                <p id="errorMessageText">{msg}</p>
-            </div>
+            <p>A problem occurred while loading the URL <code>{uri}</code></p>
+            <p>{msg}</p>
         ]==],
         style = _M.style,
         buttons = {{
