@@ -188,6 +188,15 @@ local function load_error_page(v, error_page_info)
         html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
     until nsub == 0
 
+    if view_finished[v] then
+        -- View is still loading an error page...
+        -- HACK: force early cleanup of the error page by calling the
+        -- load-status signal handler directly; it detaches everything so it
+        -- cannot be called again in response to the actual signal.
+        view_finished[v] = 0
+        on_finish(v, "finished")
+    end
+
     v:add_signal("enable-styles", false_cb)
     v:add_signal("enable-scripts", true_cb)
     v:add_signal("enable-userscripts", false_cb)
