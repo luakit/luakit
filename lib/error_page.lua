@@ -158,7 +158,7 @@ local function load_error_page(v, error_page_info)
         heading = "Unable to load page",
         content = [==[
             <p>A problem occurred while loading the URL <code>{uri}</code></p>
-            <p>{msg}</p>
+            {msg}
         ]==],
         style = _M.style,
         buttons = {{
@@ -174,6 +174,11 @@ local function load_error_page(v, error_page_info)
     end
     error_page_info = lousy.util.table.join(defaults, error_page_info)
     error_page_info.buttons = make_button_html(v, error_page_info.buttons)
+
+    -- Make msg html
+    local msg = error_page_info.msg
+    if type(msg) == "string" then msg = {msg} end
+    error_page_info.msg = "<p>" .. table.concat(msg, "</p><p>") .. "</p>"
 
     -- Substitute values recursively
     local html, nsub = _M.html_template
