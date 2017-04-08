@@ -25,9 +25,12 @@
 #include "common/clib/soup.h"
 #include "common/property.h"
 #include "common/signal.h"
+#include "web_context.h"
 
 #include <libsoup/soup.h>
 #include <webkit2/webkit2.h>
+
+gchar *proxy_uri;
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
@@ -148,12 +151,60 @@ luaH_soup_parse_uri(lua_State *L)
     return uri ? 1 : 0;
 }
 
+static gint
+luaH_soup_index(lua_State *L)
+{
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+
+    switch (token) {
+        PS_CASE(PROXY_URI, proxy_uri)
+        default:
+            break;
+    }
+    return 0;
+}
+
+static gint
+luaH_soup_newindex(lua_State *L)
+{
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+
+    switch (token) {
+        case L_TK_PROXY_URI: {
+            WebKitWebContext *ctx = web_context_get();
+            g_free(proxy_uri);
+            proxy_uri = g_strdup(lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3));
+
+            if (!proxy_uri || g_str_equal(proxy_uri, "default"))
+                webkit_web_context_set_network_proxy_settings(ctx,
+                        WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
+            else if (g_str_equal(proxy_uri, "no_proxy"))
+                webkit_web_context_set_network_proxy_settings(ctx,
+                        WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
+            else {
+                WebKitNetworkProxySettings *proxy_settings = webkit_network_proxy_settings_new(proxy_uri, NULL);
+
+                webkit_web_context_set_network_proxy_settings(ctx,
+                        WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
+                webkit_network_proxy_settings_free(proxy_settings);
+            }
+            }; break;
+        default:
+            break;
+    }
+    return 0;
+}
+
 void
 soup_lib_setup(lua_State *L)
 {
     static const struct luaL_reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
+        { "__index",       luaH_soup_index },
+        { "__newindex",    luaH_soup_newindex },
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
         { NULL,            NULL },
@@ -166,6 +217,9 @@ soup_lib_setup(lua_State *L)
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
+
+    /* Initial proxy settings */
+    proxy_uri = proxy_uri ?: g_strdup("default");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
