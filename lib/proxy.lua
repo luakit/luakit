@@ -4,23 +4,40 @@
 -- @copyright Piotr Husiatyński <phusiatynski@gmail.com>
 
 local lousy = require("lousy")
-local webview = require("webview")
 local theme = lousy.theme.get()
 local window = require("window")
 local binds = require("binds")
 local new_mode = require("modes").new_mode
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
-local capi = { luakit = luakit, soup = soup }
 
 local _M = {}
 
 --- Module global variables
-local proxies_file = capi.luakit.data_dir .. '/proxymenu'
+local proxies_file = luakit.data_dir .. '/proxymenu'
 
 local proxies = {}
 local noproxy = { address = '' }
 local active = noproxy
+
+-- Helper function to update text in proxy indicator
+local update_proxy_indicator = function (w)
+    local name = _M.get_active().name
+    local proxyi = w.sbar.r.proxyi
+    if name then
+        local text = string.format("[%s]", name)
+        if proxyi.text ~= text then proxyi.text = text end
+        proxyi:show()
+    else
+        proxyi:hide()
+    end
+end
+
+local update_proxy_indicators = function ()
+    for _, w in pairs(window.bywidget) do
+        update_proxy_indicator(w)
+    end
+end
 
 --- Get an ordered list of proxy names.
 -- @treturn table List of proxy names.
@@ -56,6 +73,11 @@ function _M.load(fd_name)
             end
             proxies[name] = address
         end
+    end
+
+    if active and active.address ~= '' then
+        soup.proxy_uri = active.address
+        update_proxy_indicators()
     end
 end
 
@@ -115,18 +137,6 @@ function _M.set_active(name)
     return true
 end
 
--- Load the initial proxy address
-webview.add_signal("init", function ()
-    local active_proxy = _M.get_active()
-    if active_proxy and active_proxy.address ~= '' then
-        capi.soup.proxy_uri = active_proxy.address
-    end
-    -- The proxy property is set globablly so this function only needs to be
-    -- called once. Other proxy changes take place from the interactive
-    -- `:proxy` menu.
-    webview.init_funcs.set_proxy = nil
-end)
-
 -- Create a proxy indicator widget and add it to the status bar
 window.add_signal("init", function (w)
     local r = w.sbar.r
@@ -136,28 +146,8 @@ window.add_signal("init", function (w)
 
     r.proxyi.fg = theme.proxyi_sbar_fg
     r.proxyi.font = theme.proxyi_sbar_font
-    w:update_proxy_indicator()
+    update_proxy_indicators()
 end)
-
--- Helper function to update text in proxy indicator
-window.methods.update_proxy_indicator = function (w)
-    local name = _M.get_active().name
-    local proxyi = w.sbar.r.proxyi
-    if name then
-        local text = string.format("[%s]", name)
-        if proxyi.text ~= text then proxyi.text = text end
-        proxyi:show()
-    else
-        proxyi:hide()
-    end
-end
-
--- Update proxy indicator in status bar on change of address
-webview.init_funcs.proxy_indicator_update = function (view, w)
-    view:add_signal("property::proxy-uri", function ()
-        w:update_proxy_indicator()
-    end)
-end
 
 new_mode("proxymenu", {
     enter = function (w)
@@ -211,7 +201,8 @@ add_binds("proxymenu", lousy.util.table.join({
             if row and row.address then
                 _M.set_active(row.name)
                 w:set_mode()
-                capi.soup.proxy_uri = row.address
+                soup.proxy_uri = row.address
+                update_proxy_indicators()
                 if row.name then
                     w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
                 else
