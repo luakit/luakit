@@ -98,14 +98,14 @@ local view_finished = setmetatable({}, { __mode = "k" })
 local function on_finish(v, status)
     if status ~= "finished" then return end
 
-    -- Start listening for button clicks
-    error_page_wm:emit_signal(v, "listen")
-
     -- Skip the appropriate number of signals
     assert(type(view_finished[v]) == "number")
     view_finished[v] = view_finished[v] - 1
     if view_finished[v] > 0 then return end
     view_finished[v] = nil
+
+    -- Start listening for button clicks
+    error_page_wm:emit_signal(v, "listen")
 
     -- Remove userscripts, stylesheet, javascript overrides
     v:remove_signal("enable-styles", false_cb)
