@@ -151,6 +151,7 @@ luaH_soup_parse_uri(lua_State *L)
     return uri ? 1 : 0;
 }
 
+#if WEBKIT_CHECK_VERSION(2,16,0)
 static gint
 luaH_soup_index(lua_State *L)
 {
@@ -196,6 +197,7 @@ luaH_soup_newindex(lua_State *L)
     }
     return 0;
 }
+#endif
 
 void
 soup_lib_setup(lua_State *L)
@@ -203,8 +205,10 @@ soup_lib_setup(lua_State *L)
     static const struct luaL_reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
+#if WEBKIT_CHECK_VERSION(2,16,0)
         { "__index",       luaH_soup_index },
         { "__newindex",    luaH_soup_newindex },
+#endif
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
         { NULL,            NULL },
