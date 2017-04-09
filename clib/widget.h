@@ -96,7 +96,7 @@ static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkudata(L, udx, &widget_class);
-    if (!w->widget)
+    if (!w->destructor)
         luaL_argerror(L, udx, "using destroyed widget");
     return w;
 }
