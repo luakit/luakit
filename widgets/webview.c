@@ -216,6 +216,9 @@ update_uri(widget_t *w, const gchar *uri)
 {
     webview_data_t *d = w->data;
 
+    if (!w->destructor)
+        return;
+
     if (!uri) {
         uri = webkit_web_view_get_uri(d->view);
         if (!uri || !uri[0])
