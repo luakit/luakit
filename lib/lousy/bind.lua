@@ -423,7 +423,7 @@ function _M.hit(object, binds, mods, key, args)
         end
         -- If no partial match, clear the buffer
         if not partial then
-            args.buffer = ""
+            args.buffer = nil
         end
     end
 
