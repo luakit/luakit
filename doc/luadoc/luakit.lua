@@ -10,50 +10,63 @@
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
 -- @module luakit
 
---- Luakit global table
--- @field config_dir config directory path (default: `$XDG_CONFIG_HOME`)
--- @field data_dir data directory path (default: `$XDG_DATA_HOME`)
--- @field cache_dir cache directory path (default: `$XDG_CACHE_HOME`)
--- @field verbose verbosity (boolean value)
--- @field install_path luakit installation path (read only property)
--- @field version luakit version (read only property)
--- @field webkit_major_version webkit major version that luakit is linked against (read only property)
--- @field webkit_minor_version webkit minor version that luakit is linked against (read only property)
--- @field webkit_micro_version webkit micro version that luakit is linked against (read only property)
--- @class table
--- @name luakit
+--- config directory path (default: `$XDG_CONFIG_HOME`)
+-- @field config_dir
+-- @type string
+-- @readonly
+
+--- data directory path (default: `$XDG_DATA_HOME`)
+-- @field data_dir
+-- @type string
+-- @readonly
+
+--- cache directory path (default: `$XDG_CACHE_HOME`)
+-- @field cache_dir
+-- @type string
+-- @readonly
+
+--- verbosity (boolean value)
+-- @field verbose
+-- @type boolean
+-- @readonly
+
+--- luakit installation path (read only property)
+-- @field install_path
+-- @type string
+-- @readonly
+
+--- luakit version (read only property)
+-- @field version
+-- @type string
+-- @readonly
 
 --- All active window widgets
--- @class table
--- @name windows
+-- @field windows
+-- @type {widget}
+-- @readonly
 
 --- Quit luakit
--- @name quit
--- @class function
+-- @function quit
 
 --- Get selection
 -- @param clipboard X clipboard name ('primary', 'secondary' or 'clipboard')
 -- @return A string with the selection (clipboard) content.
--- @name get_selection
--- @class function
+-- @function get_selection
 
 --- Set selection
 -- @param text UTF-8 string to be copied to clipboard
 -- @param clipboard X clipboard name ('primary', 'secondary' or 'clipboard')
--- @name set_selection
--- @class function
+-- @function set_selection
 
 --- Spawn process asynchronously
 -- @param cmd Command to execute. It is parsed with simple shell-like parser.
--- @name spawn
--- @class function
+-- @function spawn
 
 --- Spawn process synchronously
 -- @param cmd Command to execute. It is parsed with simple shell-like parser.
 -- @return An exit status of the command.
 -- @return A string containig data printed on stdout.
 -- @return A string containig data printed on stderr.
--- @name spawn_sync
--- @class function
+-- @function spawn_sync
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

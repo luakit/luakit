@@ -154,11 +154,6 @@ end
 -- @tparam[opt] table excludes A list of Lua patterns with which to filter file
 -- paths; matching files are removed.
 -- @treturn table A list of matching file paths.
-
---- A struct representing a file error.
--- @tfield string file The path of the file.
--- @tfield string err The error string.
--- @table entry
 _M.find_files = find_files.find_files
 
 --- Helper function to format a list of file errors.
@@ -166,6 +161,11 @@ _M.find_files = find_files.find_files
 -- Aligns file names and file errors into two separate columns.
 --
 -- @tparam {entry} entries A list of file error entries.
+--
+-- #### `entry` format
+--
+--  - file: The path of the file.
+--  - err: The error string.
 -- @treturn string The formatted output string.
 function _M.format_file_errors(entries)
     assert(type(entries) == "table")

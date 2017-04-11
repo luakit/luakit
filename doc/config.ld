@@ -1,5 +1,5 @@
 file = {
-    "luadoc",
+    "luadoc/luakit.lua",
     "../lib",
     "../common/clib/",
     "../tests/lib.lua",
