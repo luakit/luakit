@@ -29,7 +29,8 @@ local _M = {}
 local adblock_wm = require_web_module("adblock_wm")
 
 --- Whether ad blocking is enabled.
--- Type: boolean
+-- @readonly
+-- @type boolean
 _M.enabled = true
 
 -- Adblock Plus compatible filter lists.
@@ -38,9 +39,13 @@ local filterfiles = {}
 local subscriptions_file = adblock_dir .. "/subscriptions"
 
 --- The set of ad blocking subscriptions that are active.
+-- @type table
+-- @readonly
 _M.subscriptions = {}
 
 --- String patterns to filter URIs with.
+-- @type table
+-- @readonly
 _M.rules = {}
 
 --- Fitting for adblock.chrome.refresh_views()
