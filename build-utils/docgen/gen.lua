@@ -1,3 +1,5 @@
+local lousy = { util = require "lib.lousy.util" }
+
 local text_macros = {
     available = function (arg)
         return ({
@@ -17,11 +19,13 @@ local format_text = function (text)
     end)
     -- Format with markdown
     ret = (require "markdown")(ret)
-    -- Add syntax highlighting if lxsh is installed
-    local ok, lxsh = pcall(require, "lxsh")
-    if not ok then return ret end
     ret = ret:gsub("<pre><code>(.-)</code></pre>", function (code)
-        return lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true })
+        -- Fix < and > being escaped inside code -_- fail
+        code = lousy.util.unescape(code)
+        -- Add syntax highlighting if lxsh is installed
+        local ok, lxsh = pcall(require, "lxsh")
+        if ok then code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true }) end
+        return code
     end)
     return ret
 end
