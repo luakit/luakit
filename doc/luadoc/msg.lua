@@ -1,12 +1,12 @@
 --- Message logging support for Lua.
 --
+-- DOCMACRO(available:both)
+--
 -- This built-in library offers support for logging messages from Lua code. Five
 -- verbosity levels are available. By default, _verbose_ and _debug_ messages
 -- are not shown, but this can be changed when launching Luakit.
 --
 -- All parameters are converted to strings. A newline is automatically appended.
---
--- _This library is available from both UI and web process Lua states._
 --
 --     webview.add_signal("init", function (view)
 --         msg.debug("Opening a new web view <%d>", view.id)

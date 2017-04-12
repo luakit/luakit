@@ -1,9 +1,8 @@
----
--- Luakit core API
+--- Luakit core API
 --
--- _This library is available from both UI and web process Lua states._
+-- DOCMACRO(available:both)
 --
--- _Some functions and fields are not available on the web process._
+-- DOCMACRO(alert:Some functions and fields are not available on the web process.)
 --
 -- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
 -- @author Paweł Zuzelski &lt;pawelz&lt;AT&gt;pld-linux.org&gt;

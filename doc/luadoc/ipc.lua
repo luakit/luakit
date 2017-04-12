@@ -1,13 +1,13 @@
 --- IPC interface for communication between UI and Web processes.
 --
+-- DOCMACRO(available:both)
+--
 -- In Luakit there is a single UI Lua state, but there may be multiple web
 -- processes, each of which have a separate Lua state. This interface can be used
 -- to communicate between the UI and web processes.
 --
 -- An interface similar to Luakit's signals handling is provided, and supports
 -- serializing multiple Lua parameters.
---
--- _This library is available from both UI and web process Lua states._
 --
 --     -- In UI process
 --     local wm = require_web_module("test_wm")

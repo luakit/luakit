@@ -3,7 +3,7 @@
 -- @author Aidan Holm
 -- @copyright 2016 Aidan Holm
 --
--- <div class="alert"><i>This class is only available from web process Lua states.</i></div>
+-- DOCMACRO(alert:This class is only available from web process Lua states.)
 
 --- @signal page-created
 --

@@ -1,6 +1,6 @@
 --- Timer support for Luakit.
 --
--- <div class="alert good"><i>This class is available from both UI and web process Lua states.</i></div>
+-- DOCMACRO(available:both)
 --
 -- ### Example usage:
 --
