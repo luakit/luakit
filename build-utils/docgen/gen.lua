@@ -1,12 +1,29 @@
+local text_macros = {
+    available = function (arg)
+        return ({
+            both = '<div class="alert good">This module is available from both UI and web process Lua states.</div>',
+              ui = '<div class="alert warn">This module is only available from the UI process Lua state.</div>',
+             web = '<div class="alert warn">This module is only available from web process Lua states.</div>',
+        })[arg] or error("available macro: expected ui, web, or both as argument")
+    end,
+    alert = function (str)
+        return '<div class="alert warn">' .. str .. '</div>'
+    end,
+}
 local format_text = function (text)
+    local ret = text:gsub("DOCMACRO%((%w+):?([^%)]-)%)", function (macro, args)
+        if not text_macros[macro] then error("Bad macro '" .. macro .. "'") end
+        return (text_macros[macro])(args)
+    end)
     -- Format with markdown
-    ret = (require "markdown")(text)
+    ret = (require "markdown")(ret)
     -- Add syntax highlighting if lxsh is installed
     local ok, lxsh = pcall(require, "lxsh")
     if not ok then return ret end
-    return ret:gsub("<pre><code>(.-)</code></pre>", function (code)
+    ret = ret:gsub("<pre><code>(.-)</code></pre>", function (code)
         return lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true })
     end)
+    return ret
 end
 
 local generate_typestr_html = function (typestr)
