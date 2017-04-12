@@ -68,10 +68,7 @@ luakit.1.gz: luakit.1
 apidoc:
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
-	ldoc -c doc/config.ld .
-	@# Seems to be necessary to prevent WebKitNetworkProcess from crashing - hilarious
-	@echo "Replacing DOCTYPE..."
-	@find doc/apidocs -iname '*.html' | xargs sed -i -e '1,2d' -e '3s/^/<!DOCTYPE html>\n/'
+	./build-utils/docgen/makedoc.lua
 
 doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s doc/luakit.doxygen
