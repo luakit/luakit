@@ -76,10 +76,18 @@ doc: buildopts.h $(THEAD) $(TSRC)
 clean:
 	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1
 
-install:
+install: apidoc
 	install -d $(INSTALLDIR)/share/luakit/
 	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
+	cp -r doc/apidocs $(DOCDIR)/apidocs
+	chmod 755 $(DOCDIR)/apidocs
+	chmod 755 $(DOCDIR)/apidocs/pages
+	chmod 755 $(DOCDIR)/apidocs/modules
+	chmod 755 $(DOCDIR)/apidocs/classes
+	chmod 644 $(DOCDIR)/apidocs/pages/*.html
+	chmod 644 $(DOCDIR)/apidocs/modules/*.html
+	chmod 644 $(DOCDIR)/apidocs/classes/*.html
 	cp -r lib $(INSTALLDIR)/share/luakit/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/
