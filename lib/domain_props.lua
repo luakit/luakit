@@ -18,7 +18,7 @@ webview.add_signal("init", function (view)
         -- Strip leading www.
         domain = string.match(domain or "", "^www%.(.+)") or domain or "all"
         -- Build list of domain props tables to join & load.
-        -- I.e. for luakit.org load .luakit.org, luakit.org, .org
+        -- I.e. for example.com load { .example.com, example.com, .com }
         local prop_sets = {
             { domain = "all", props = domain_props.all or {} },
             { domain = domain, props = domain_props[domain] or {} },

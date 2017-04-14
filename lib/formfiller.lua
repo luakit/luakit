@@ -4,7 +4,7 @@
 --
 -- The following is an example for a formfiller definition:
 --
---       on "luakit.org" {
+--       on "example.com" {
 --         form "profile1" {
 --           method = "post",
 --           action = "/login",
@@ -48,7 +48,7 @@
 --   to select the text inside it.
 --   <code>focus</code> will trigger input mode.
 --
--- * The string argument to the <code>on</code> function (<code>luakit.org</code>
+-- * The string argument to the <code>on</code> function (<code>example.com</code>
 --   in the example above) takes a Lua pattern!
 --   BEWARE its escaping!
 --
