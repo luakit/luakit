@@ -149,20 +149,20 @@ end
 local generate_attribution_html = function (doc)
     local html = {}
     table.insert(html, "<div class=attr-wrap>")
-    table.insert(html, "<h4>Authors</h4>")
-    table.insert(html, "<ul class=authors>")
+    table.insert(html, "    <h4>Authors</h4>")
+    table.insert(html, "    <ul class=authors>")
     for _, author in ipairs(doc.author) do
-        table.insert(html, "<li>" .. author)
+        table.insert(html, "        <li>" .. author)
     end
-    table.insert(html, "</ul>")
+    table.insert(html, "    </ul>")
     table.insert(html, "</div>")
 
     table.insert(html, "<div class=attr-wrap>")
-    table.insert(html, "<h4>Copyright</h4><ul class=copyright>")
+    table.insert(html, "    <h4>Copyright</h4><ul class=copyright>")
     for _, copy in ipairs(doc.copyright) do
-        table.insert(html, "<li>" .. copy)
+        table.insert(html, "        <li>" .. copy)
     end
-    table.insert(html, "</ul>")
+    table.insert(html, "    </ul>")
     table.insert(html, "</div>")
 
     return table.concat(html, "\n")
@@ -283,16 +283,16 @@ local generate_sidebar_html = function (docs, current_doc)
     local html = ""
     for _, name in ipairs{"pages", "modules", "classes"} do
         local section = assert(docs[name], "Missing " .. name .. " section")
-        html = html .. ("<h3>%s</h3>"):format(name:gsub("^%l", string.upper))
-        html = html .. "<ul>"
+        html = html .. ("<h3>%s</h3>\n"):format(name:gsub("^%l", string.upper))
+        html = html .. "<ul>\n"
         for _, doc in ipairs(section) do
             if doc == current_doc then
-                html = html .. ('<li><span>%s</span></li>'):format(doc.name)
+                html = html .. ('    <li><span>%s</span></li>\n'):format(doc.name)
             else
-                html = html .. ('<li><a href="../%s/%s.html">%s</a></li>'):format(name, doc.name, doc.name)
+                html = html .. ('    <li><a href="../%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
             end
         end
-        html = html .. "</ul>"
+        html = html .. "</ul>\n"
     end
     return html
 end
