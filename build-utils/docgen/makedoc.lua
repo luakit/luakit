@@ -5,16 +5,9 @@ local config_path = "doc/docgen.ld"
 
 package.path = package.path .. ";" .. docgen_dir .. "?.lua"
 
-local lfs = require "lfs"
 local parse = require "docgen.parse"
 local gen = require "docgen.gen"
 local find_files = require("find_files").find_files
-
--- Load doc stylesheet
-
-local f = assert(io.open(docgen_dir .. "docgen/style.css", "r"))
-local style = f:read("*a")
-f:close()
 
 -- Load helpers
 
@@ -82,39 +75,9 @@ docs = {
     pages = pages,
     modules = module_docs,
     classes = class_docs,
+    stylesheet = docgen_dir .. "docgen/style.css",
 }
 
-local sidebar_html = gen.generate_sidebar_html(docs)
-
-local mkdir = function (path)
-    if lfs.attributes(path, "mode") == "directory" then return end
-    assert(lfs.mkdir(path))
-end
-
-local out_dir = assert(config.dir, "No output directory specified")
-out_dir = out_dir:match("/$") and out_dir or out_dir .. "/"
-mkdir(out_dir)
-for _, section_name, section_docs in ipairs{"modules", "classes"} do
-    local section_docs = docs[section_name]
-    for i, doc in ipairs(section_docs) do
-        local path = out_dir .. section_name .. "/" .. doc.name .. ".html"
-        mkdir(out_dir .. section_name)
-        print("Generating '" .. path .. "'...")
-
-        local f = io.open(path, "w")
-        f:write(gen.generate_module_html(doc, style, sidebar_html))
-        f:close()
-    end
-end
-
-for i, page in ipairs(pages) do
-    local path = out_dir .. "pages/" .. page.name .. ".html"
-    mkdir(out_dir .. "pages")
-    print("Generating '" .. path .. "'...")
-
-    local f = io.open(path, "w")
-    f:write(gen.generate_page_html(page, style, sidebar_html))
-    f:close()
-end
+gen.generate_documentation(docs, config.dir)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

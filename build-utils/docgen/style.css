@@ -151,11 +151,16 @@ div.good.alert {
     margin: 0.2em 0.2em 0.2em 0.5em;
     font-family: monospace;
 }
-#sidebar > ul > li > a{
+#sidebar > ul > li > a, #sidebar > ul > li > span {
     font-family: monospace;
-    color: #204a87;
     text-decoration: none;
-    font-size: 0.9em;
+    font-size: 1.1em;
+}
+#sidebar > ul > li > a {
+    color: #204a87;
+}
+#sidebar > ul > li > span {
+	font-weight: bold;
 }
 
 /* Attribution styling */

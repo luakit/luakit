@@ -1,3 +1,4 @@
+local lfs = require "lfs"
 local lousy = { util = require "lib.lousy.util" }
 
 local text_macros = {
@@ -278,21 +279,25 @@ local generate_doc_html = function (doc)
     return html
 end
 
-local generate_sidebar_html = function (docs)
+local generate_sidebar_html = function (docs, current_doc)
     local html = ""
     for _, name in ipairs{"pages", "modules", "classes"} do
         local section = assert(docs[name], "Missing " .. name .. " section")
         html = html .. ("<h3>%s</h3>"):format(name:gsub("^%l", string.upper))
         html = html .. "<ul>"
         for _, doc in ipairs(section) do
-            html = html .. ('<li><a href="../%s/%s.html">%s</a></li>'):format(name, doc.name, doc.name)
+            if doc == current_doc then
+                html = html .. ('<li><span>%s</span></li>'):format(doc.name)
+            else
+                html = html .. ('<li><a href="../%s/%s.html">%s</a></li>'):format(name, doc.name, doc.name)
+            end
         end
         html = html .. "</ul>"
     end
     return html
 end
 
-local generate_module_html = function (doc, style, sidebar_html)
+local generate_module_html = function (doc, style, docs)
     local html_template = [==[
     <!doctype html>
     <html>
@@ -317,6 +322,8 @@ local generate_module_html = function (doc, style, sidebar_html)
     </body>
     ]==]
 
+    local sidebar_html = generate_sidebar_html(docs, doc)
+
     local html = string.gsub(html_template, "{(%w+)}", {
         title = doc.name,
         style = style,
@@ -327,7 +334,7 @@ local generate_module_html = function (doc, style, sidebar_html)
     return html
 end
 
-local generate_page_html = function (doc, style, sidebar_html)
+local generate_page_html = function (doc, style, docs)
     local html_template = [==[
     <!doctype html>
     <html>
@@ -352,6 +359,8 @@ local generate_page_html = function (doc, style, sidebar_html)
     </body>
     ]==]
 
+    local sidebar_html = generate_sidebar_html(docs, doc)
+
     local html = string.gsub(html_template, "{(%w+)}", {
         title = doc.name,
         style = style,
@@ -361,10 +370,50 @@ local generate_page_html = function (doc, style, sidebar_html)
     return html
 end
 
+local generate_documentation = function (docs, out_dir)
+    -- Utility functions
+    local mkdir = function (path)
+        if lfs.attributes(path, "mode") == "directory" then return end
+        assert(lfs.mkdir(path))
+    end
+    local write_file = function (path, html)
+        local f = assert(io.open(path, "w"))
+        f:write(html)
+        f:close()
+    end
+
+    -- Load doc stylesheet
+    local f = assert(io.open(docs.stylesheet, "r"), "no stylesheet found")
+    local style = f:read("*a")
+    f:close()
+
+    -- Create output directory
+    assert(out_dir, "no output directory specified")
+    out_dir = out_dir:match("/$") and out_dir or out_dir .. "/"
+    mkdir(out_dir)
+
+    -- Generate module and class pages
+    for _, section_name in ipairs{"modules", "classes"} do
+        mkdir(out_dir .. section_name)
+        local section_docs = docs[section_name]
+        for _, doc in ipairs(section_docs) do
+            local path = out_dir .. section_name .. "/" .. doc.name .. ".html"
+            print("Generating '" .. path .. "'...")
+            write_file(path, generate_module_html(doc, style, docs))
+        end
+    end
+
+    -- Generate markdown pages
+    mkdir(out_dir .. "pages")
+    for _, page in ipairs(docs.pages) do
+        local path = out_dir .. "pages/" .. page.name .. ".html"
+        print("Generating '" .. path .. "'...")
+        write_file(path, generate_page_html(page, style, docs))
+    end
+end
+
 return {
-    generate_module_html = generate_module_html,
-    generate_page_html = generate_page_html,
-    generate_sidebar_html = generate_sidebar_html,
+    generate_documentation = generate_documentation,
 }
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
