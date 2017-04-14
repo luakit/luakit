@@ -73,6 +73,7 @@ capi.luakit.idle_add(_M.init)
 -- @tparam string title The title to associate with the URI.
 -- @tparam[opt] boolean update_visits False if the last visit time for this URI
 -- should not be updated.
+-- @default `true`
 function _M.add(uri, title, update_visits)
     if not _M.db then _M.init() end
 

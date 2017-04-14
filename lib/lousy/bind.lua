@@ -26,6 +26,7 @@ _M.map = {
 -- @tparam table mods The table of modifier keys.
 -- @tparam[opt] boolean remove_shift Remove the shift key from the modifier
 -- table.
+-- @default `false`
 -- @treturn string A string of key names, separated by hyphens (-).
 function _M.parse_mods(mods, remove_shift)
     local t = {}
@@ -48,8 +49,10 @@ end
 -- @tparam table mods The table of modifier keys.
 -- @tparam string key The key name.
 -- @tparam[opt] string desc A description for this key binding.
+-- @default `nil`
 -- @tparam function func The callback function for this key binding.
 -- @tparam[opt] table opts The table of key binding options.
+-- @default `{}`
 -- @treturn table A table representing the new key binding.
 function _M.key(mods, key, desc, func, opts)
     -- Detect optional description & adjust argument positions

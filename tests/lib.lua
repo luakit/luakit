@@ -3,7 +3,7 @@
 -- @module tests.lib
 -- @copyright 2017 Aidan Holm
 
-local filter_array = require("lib.lousy.util").table.filter_array
+local find_files = require "build-utils.find_files"
 
 local _M = {}
 
@@ -137,26 +137,6 @@ function _M.http_server()
     return "http://127.0.0.1:8888/"
 end
 
-local git_files
-
-local function get_git_files ()
-    if not git_files then
-        git_files = {}
-        local f = io.popen("git ls-files")
-        for line in f:lines() do
-            table.insert(git_files, line)
-        end
-        f:close()
-    end
-
-    return git_files
-end
-
-local function path_is_in_directory(path, dir)
-    if path == "." then return true end
-    return string.find(path, "^"..dir)
-end
-
 --- Retrieve a subset of files in the Luakit Git repository.
 --
 -- This function runs `git ls-files` and then filters the result according to
@@ -174,71 +154,18 @@ end
 -- @tparam[opt] table excludes A list of Lua patterns with which to filter file
 -- paths; matching files are removed.
 -- @treturn table A list of matching file paths.
-function _M.find_files(dirs, patterns, excludes)
-    assert(type(dirs) == "string" or type(dirs) == "table",
-        "Bad search location: expected string or table")
-    assert(type(patterns) == "string" or type(patterns) == "table",
-        "Bad patterns: expected string or table")
-    assert(excludes == nil or type(excludes) == "table",
-        "Bad exclusion list: expected nil or table")
-
-    if type(dirs) == "string" then dirs = { dirs } end
-    if type(patterns) == "string" then patterns = { patterns } end
-    if excludes == nil then excludes = {} end
-
-    for _, dir in ipairs(dirs) do
-        assert(type(dir) == "string", "Each search location must be a string")
-    end
-    for _, pattern in ipairs(patterns) do
-        assert(type(pattern) == "string", "Each pattern must be a string")
-    end
-    for _, exclude in ipairs(excludes) do
-        assert(type(exclude) == "string", "Each exclude must be a string")
-    end
-
-    -- Get list of files tracked by git
-    get_git_files()
-
-    -- Filter to those inside the given directories
-    local file_list = {}
-    for _, file in ipairs(git_files) do
-        local dir_match = false
-        for _, dir in ipairs(dirs) do
-            dir_match = dir_match or path_is_in_directory(file, dir)
-        end
-        local pat_match = false
-        for _, pattern in ipairs(patterns) do
-            pat_match = pat_match or string.find(file, pattern)
-        end
-        if dir_match and pat_match then
-            table.insert(file_list, file)
-        end
-    end
-
-    -- Remove all files in excludes
-    if excludes then
-        file_list = filter_array(file_list, function (_, file)
-            for _, exclude_pat in ipairs(excludes) do
-                if string.find(file, exclude_pat) then return false end
-            end
-            return true
-        end)
-    end
-
-    -- Return filtered list
-    return file_list
-end
-
---- A struct representing a file error.
--- @tfield string file The path of the file.
--- @tfield string err The error string.
--- @table entry
+_M.find_files = find_files.find_files
 
 --- Helper function to format a list of file errors.
 --
 -- Aligns file names and file errors into two separate columns.
 --
 -- @tparam {entry} entries A list of file error entries.
+--
+-- #### `entry` format
+--
+--  - file: The path of the file.
+--  - err: The error string.
 -- @treturn string The formatted output string.
 function _M.format_file_errors(entries)
     assert(type(entries) == "table")
@@ -246,8 +173,7 @@ function _M.format_file_errors(entries)
     local sep = "    "
 
     -- Find file alignment length
-    local align = 0
-    get_git_files()
+    local align, git_files = 0, find_files.get_git_files()
     for _, file in ipairs(git_files) do
         align = math.max(align, file:len())
     end

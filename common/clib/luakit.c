@@ -16,10 +16,6 @@
  *
  */
 
-/***
- * @module luakit
- */
-
 #include <gtk/gtk.h>
 #include <stdlib.h>
 #include <sys/wait.h>
@@ -37,13 +33,6 @@
  *
  * \param L The Lua VM state.
  * \return  The number of elements pushed on the stack (1).
- */
-
-/***
- * Get the time since Luakit startup.
- *
- * @function luakit.time
- * @treturn number The number of seconds Luakit has been running.
  */
 gint
 luaH_luakit_time(lua_State *L)
@@ -65,13 +54,6 @@ luaH_luakit_time(lua_State *L)
  * \lreturn        The escaped string.
  */
 
-/***
- * Escape a string for use in a URI.
- *
- * @function luakit.uri_encode
- * @tparam string str The string to encode.
- * @treturn string The escaped/encoded string.
- */
 gint
 luaH_luakit_uri_encode(lua_State *L)
 {
@@ -101,17 +83,6 @@ luaH_luakit_uri_encode(lua_State *L)
  * \lreturn        The unescaped string or \c nil if illegal chars found.
  */
 
-/***
- * Unescape an escaped string used in a URI.
- *
- * Returns the unescaped string, or nil if the string contains illegal
- * characters.
- *
- * @function luakit.uri_encode
- * @tparam string str The string to decode.
- * @treturn string The unescaped/decoded string.
- * @error Error message.
- */
 gint
 luaH_luakit_uri_decode(lua_State *L)
 {
@@ -176,19 +147,6 @@ idle_cb(gpointer func)
  * \luastack
  * \lparam func The callback function.
  */
-
-/***
- * Add a function to be called regularly when Luakit is idle. If the function
- * returns false, or if an error is encountered during execution, the function
- * is automatically removed from the set of registered idle functions, and will
- * not be called again.
- *
- * The provided callback function is not called with any arguments; to pass
- * context to the callback function, use a closure.
- *
- * @function luakit.idle_add
- * @tparam function cb The function to call when Luakit is idle.
- */
 gint
 luaH_luakit_idle_add(lua_State *L)
 {
@@ -207,15 +165,6 @@ luaH_luakit_idle_add(lua_State *L)
  * \luastack
  * \lparam func The callback function.
  * \lreturn true if callback removed.
- */
-
-/***
- * Remove a function previously registered with `luakit.idle_add`.
- *
- * @function luakit.idle_remove
- * @tparam function cb The function to removed from the set of idle callbacks.
- * @treturn boolean True if the callback was present (and removed); false if the
- * callback was not found.
  */
 gint
 luaH_luakit_idle_remove(lua_State *L)

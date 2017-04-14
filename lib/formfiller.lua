@@ -4,32 +4,32 @@
 --
 -- The following is an example for a formfiller definition:
 --
---       on "example.com" {
+--     on "example.com" {
 --         form "profile1" {
---           method = "post",
---           action = "/login",
---           className = "someFormClass",
---           id = "form_id",
---           input {
---             name = "username",
---             type = "text",
---             className = "someClass",
---             id = "username_field",
---             value = "myUsername",
---           },
---           input {
---             name = "password",
---             value = "myPassword",
---           },
---           input {
---             name = "autologin",
---             type = "checkbox",
---             checked = true,
---           },
---           submit = true,
---           autofill = false,
+--             method = "post",
+--             action = "/login",
+--             className = "someFormClass",
+--             id = "form_id",
+--             input {
+--                 name = "username",
+--                 type = "text",
+--                 className = "someClass",
+--                 id = "username_field",
+--                 value = "myUsername",
+--             },
+--             input {
+--                 name = "password",
+--                 value = "myPassword",
+--             },
+--             input {
+--                 name = "autologin",
+--                 type = "checkbox",
+--                 checked = true,
+--             },
+--             submit = true,
+--             autofill = false,
 --         },
---       }
+--     }
 --
 -- * The <code>form</code> function's string argument is optional.
 --   It allows you to define multiple profiles for use with the
