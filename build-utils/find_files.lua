@@ -1,4 +1,5 @@
 local filter_array = require("lib.lousy.util").table.filter_array
+local lua_escape = require("lib.lousy.util").lua_escape
 
 local git_files
 
@@ -17,7 +18,7 @@ end
 
 local function path_is_in_directory(path, dir)
     if path == "." then return true end
-    return string.find(path, "^"..dir)
+    return string.find(path, "^"..lua_escape(dir))
 end
 
 local function find_files(dirs, patterns, excludes)
