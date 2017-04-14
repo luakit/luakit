@@ -780,9 +780,6 @@ function window.new(args)
     -- Set window metatable
     setmetatable(w, {
         __index = function (_, k)
-            -- Check widget structure first
-            local v = rawget(w, k)
-            if v then return v end
             -- Call each window index function
             for _, index in ipairs(window.indexes) do
                 v = index(w, k)
