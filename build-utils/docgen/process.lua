@@ -16,35 +16,6 @@ local clear_all_mode_bindings = function ()
     end
 end
 
-local function bind_tostring(b)
-    local t = b.type
-    local m = b.mods
-
-    if t == "key" then
-        if m or string.wlen(b.key) > 1 then
-            return "<".. (m and (m.."-") or "") .. b.key .. ">"
-        else
-            return b.key
-        end
-    elseif t == "buffer" then
-        local p = b.pattern
-        if string.sub(p,1,1) .. string.sub(p, -1, -1) == "^$" then
-            return string.sub(p, 2, -2)
-        end
-        return b.pattern
-    elseif t == "button" then
-        return "<" .. (m and (m.."-") or "") .. "Mouse" .. b.button .. ">"
-    elseif t == "any" then
-        return "any"
-    elseif t == "command" then
-        local cmds = {}
-        for i, cmd in ipairs(b.cmds) do
-            cmds[i] = ":"..cmd
-        end
-        return cmds
-    end
-end
-
 local get_mode_bindings_for_module = function (mod)
     require(mod)
     clear_all_mode_bindings()
@@ -59,7 +30,7 @@ local get_mode_bindings_for_module = function (mod)
         ret[mode_name] = {}
         for _, b in pairs(mode.binds or {}) do
             table.insert(ret[mode_name], {
-                name = bind_tostring(b) or "???",
+                name = lousy.bind.bind_to_string(b) or "???",
                 desc = b.desc,
             })
         end
