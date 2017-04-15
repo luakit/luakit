@@ -455,9 +455,10 @@ function _M.bind_to_string(b)
     elseif t == "buffer" then
         local p = b.pattern
         if string.sub(p,1,1) .. string.sub(p, -1, -1) == "^$" then
-            return string.sub(p, 2, -2)
+            p = string.sub(p, 2, -2)
         end
-        return b.pattern
+        p = p:gsub("%%([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%1")
+        return p
     elseif t == "button" then
         return "<" .. (m and (m.."-") or "") .. "Mouse" .. b.button .. ">"
     elseif t == "any" then
