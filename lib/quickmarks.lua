@@ -205,7 +205,8 @@ new_mode("qmarklist", {
 local key = lousy.bind.key
 add_binds("qmarklist", lousy.util.table.join({
     -- Delete quickmark
-    key({}, "d", function (w)
+    key({}, "d", "Delete the currently highlighted quickmark entry.",
+        function (w)
         local row = w.menu:get()
         if row and row.qmark then
             _M.del(row.qmark)
@@ -214,7 +215,8 @@ add_binds("qmarklist", lousy.util.table.join({
     end),
 
     -- Edit quickmark
-    key({}, "e", function (w)
+    key({}, "e", "Edit the currently highlighted quickmark entry.",
+        function (w)
         local row = w.menu:get()
         if row and row.qmark then
             local uris = _M.get(row.qmark)
@@ -224,7 +226,8 @@ add_binds("qmarklist", lousy.util.table.join({
     end),
 
     -- Open quickmark
-    key({}, "Return", function (w)
+    key({}, "Return", "Open the currently highlighted quickmark entry in the current tab.",
+        function (w)
         local row = w.menu:get()
         if row and row.qmark then
             for i, uri in ipairs(_M.get(row.qmark) or {}) do
@@ -235,7 +238,8 @@ add_binds("qmarklist", lousy.util.table.join({
     end),
 
     -- Open quickmark in new tab
-    key({}, "t", function (w)
+    key({}, "t", "Open the currently highlighted quickmark entry in a new tab.",
+        function (w)
         local row = w.menu:get()
         if row and row.qmark then
             for _, uri in ipairs(_M.get(row.qmark) or {}) do
@@ -245,7 +249,8 @@ add_binds("qmarklist", lousy.util.table.join({
     end),
 
     -- Open quickmark in new window
-    key({}, "w", function (w)
+    key({}, "w", "Open the currently highlighted quickmark entry in a new window.",
+        function (w)
         local row = w.menu:get()
         w:set_mode()
         if row and row.qmark then

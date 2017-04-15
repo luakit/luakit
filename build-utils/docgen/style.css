@@ -163,6 +163,10 @@ div.good.alert {
 	font-weight: bold;
 }
 
+#content li:not(:last-child) {
+    margin-bottom: 0.3em;
+}
+
 /* Attribution styling */
 .attr-wrap {
     display: flex;

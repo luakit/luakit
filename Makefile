@@ -65,10 +65,12 @@ luakit.1: luakit.1.in
 luakit.1.gz: luakit.1
 	@gzip -c $< > $@
 
-apidoc:
+apidoc: luakit luakit.so
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
+	./luakit --log=error -c build-utils/docgen/process.lua > doc/apidocs/module_info.lua
 	./build-utils/docgen/makedoc.lua
+	rm doc/apidocs/module_info.lua
 
 doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s doc/luakit.doxygen

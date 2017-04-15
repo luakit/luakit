@@ -38,7 +38,8 @@ new_mode("tabhistory", {
 local key = lousy.bind.key
 add_binds("tabhistory", join({
     -- Open history item in new tab.
-    key({}, "t", function (w)
+    key({}, "t", "Open the currently highlighted history item in a new tab.",
+        function (w)
         local row = w.menu:get()
         if row and row.index then
             local v = w.view
@@ -48,7 +49,8 @@ add_binds("tabhistory", join({
     end),
 
     -- Open history item in new window.
-    key({}, "w", function (w)
+    key({}, "w", "Open the currently highlighted history item in a new window.",
+        function (w)
         local row = w.menu:get()
         w:set_mode()
         if row and row.index then
@@ -59,7 +61,8 @@ add_binds("tabhistory", join({
     end),
 
     -- Go to history item.
-    key({}, "Return", function (w)
+    key({}, "Return", "Open the currently highlighted history item in the current tab.",
+        function (w)
         local row = w.menu:get()
         w:set_mode()
         if row and row.index then
@@ -87,7 +90,7 @@ end
 -- Add `:history` command to view all history items for the current tab in an interactive menu.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("tabhistory", "list history for tab", window.methods.tab_history),
+    cmd("tabhistory", "List page history for the current tab.", window.methods.tab_history),
 })
 
 return _M

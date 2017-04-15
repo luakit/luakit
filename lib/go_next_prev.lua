@@ -69,8 +69,10 @@ local go_prev = [=[
 -- Add `[[` & `]]` bindings to the normal mode.
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^%]%]$", function (w) w.view:eval_js(go_next, { no_return = true }) end),
-    buf("^%[%[$", function (w) w.view:eval_js(go_prev, { no_return = true }) end),
+    buf("^%]%]$", "Open the next page in the current tab.",
+        function (w) w.view:eval_js(go_next, { no_return = true }) end),
+    buf("^%[%[$", "Open the previous page in the current tab.",
+        function (w) w.view:eval_js(go_prev, { no_return = true }) end),
 })
 
 return _M

@@ -8,6 +8,7 @@ package.path = package.path .. ";" .. docgen_dir .. "?.lua"
 local parse = require "docgen.parse"
 local gen = require "docgen.gen"
 local find_files = require("find_files").find_files
+local pickle = require "lib.lousy.pickle"
 
 -- Load helpers
 
@@ -69,6 +70,12 @@ local class_docs = {}
 for _, doc in ipairs(docs) do
     if doc.module then table.insert(module_docs, doc) end
     if doc.class then table.insert(class_docs, doc) end
+end
+
+-- Add bind information
+local bind_info = pickle.unpickle(load_file("doc/apidocs/module_info.lua"))
+for _, doc in ipairs(module_docs) do
+    doc.bind_info = bind_info[doc.name]
 end
 
 docs = {

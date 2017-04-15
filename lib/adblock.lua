@@ -1,11 +1,17 @@
---- Simple URI-based content filter v0.3.1a.
+--- Simple URI-based content filter.
 --
--- Download an Adblock Plus compatible filter lists to luakit data
--- dir into "/adblock/" directory. Multiple lists are supported.
--- EasyList is the most popular Adblock Plus filter list, and can be
--- downloaded from http://easylist.adblockplus.org/
+-- This is a simple, fast ad blocker module that works by blocking requests to
+-- domains that only serve advertisements. It does not currently do any form of
+-- cosmetic ad blocking (i.e. element hiding with CSS).
 --
--- Filterlists need to be updated regularly (~weekly), use cron!
+-- ### Usage
+--
+-- * Add `require "adblock"` and `require "adblock_chrome"` to your `config.rc`.
+-- * Download AdblockPlus-compatible filter lists to `$XDG_DATA_HOME/luakit/adblock`.
+--   Multiple lists are supported.
+--   EasyList is the most popular Adblock Plus filter list, and can be
+--   downloaded from [https://easylist.to/](https://easylist.to/).
+-- * Filterlists need to be updated regularly (~weekly), use cron!
 --
 -- @module adblock
 -- @author Chris van Dijk (quigybo) (quigybo@hotmail.com)
@@ -461,24 +467,24 @@ end)
 -- Add commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"adblock-reload", "abr"}, function (w)
+    cmd({"adblock-reload", "abr"}, "Reload adblock filters.", function (w)
         _M.load(true)
         w:notify("adblock: Reloading filters complete.")
     end),
 
-    cmd({"adblock-list-enable", "able"}, function (_, a)
+    cmd({"adblock-list-enable", "able"}, "Enable an adblock filter list.", function (_, a)
         _M.list_set_enabled(a, true)
     end),
 
-    cmd({"adblock-list-disable", "abld"}, function (_, a)
+    cmd({"adblock-list-disable", "abld"}, "Disable an adblock filter list.", function (_, a)
         _M.list_set_enabled(a, false)
     end),
 
-    cmd({"adblock-enable", "abe"}, function ()
+    cmd({"adblock-enable", "abe"}, "Enable ad blocking.", function ()
         _M.enable()
     end),
 
-    cmd({"adblock-disable", "abd"}, function ()
+    cmd({"adblock-disable", "abd"}, "Disable ad blocking.", function ()
         _M.disable()
     end),
 })

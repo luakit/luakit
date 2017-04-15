@@ -183,9 +183,12 @@ end)
 
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^,ts$", function (w) w:toggle_scripts() end),
-    buf("^,tp$", function (w) w:toggle_plugins() end),
-    buf("^,tr$", function (w) w:toggle_remove()  end),
+    buf("^,ts$", "Enable/disable JavaScript for the current domain.",
+        function (w) w:toggle_scripts() end),
+    buf("^,tp$", "Enable/disable plugins for the current domain.",
+        function (w) w:toggle_plugins() end),
+    buf("^,tr$", "Remove all previously added rules for the current domain.",
+        function (w) w:toggle_remove()  end),
 })
 
 return _M

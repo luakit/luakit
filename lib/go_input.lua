@@ -49,9 +49,10 @@ end
 -- Add `gi` binding to normal mode
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^gi$", function (w, _, m)
-        w:go_input(m.count)
-    end, {count=1})
+    buf("^gi$", "Focus the first text input on the current page and enter insert mode.",
+        function (w, _, m)
+            w:go_input(m.count)
+        end, {count=1})
 })
 
 return _M

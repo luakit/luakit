@@ -45,14 +45,14 @@ end
 -- Adds the default menu widget bindings to a mode
 local menu_binds = {
     -- Navigate items
-    key({},          "j",       function (w) w.menu:move_down() end),
-    key({},          "k",       function (w) w.menu:move_up()   end),
-    key({},          "Down",    function (w) w.menu:move_down() end),
-    key({},          "Up",      function (w) w.menu:move_up()   end),
-    key({},          "KP_Down", function (w) w.menu:move_down() end),
-    key({},          "KP_Up",   function (w) w.menu:move_up()   end),
-    key({},          "Tab",     function (w) w.menu:move_down() end),
-    key({"Shift"},   "Tab",     function (w) w.menu:move_up()   end),
+    key({},          "j",       "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
+    key({},          "k",       "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
+    key({},          "Down",    "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
+    key({},          "Up",      "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
+    key({},          "KP_Down", "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
+    key({},          "KP_Up",   "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
+    key({},          "Tab",     "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
+    key({"Shift"},   "Tab",     "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
 }
 
 -- Add binds to special mode "all" which adds its binds to all modes.

@@ -39,10 +39,14 @@ end)
 
 -- Add binding to normal mode to follow selected link
 add_binds("normal", {
-    key({},          "Return", function (w) wm:emit_signal(w.view, "follow_selected", "navigate", w.view.id) end),
-    key({"Control"}, "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_tab", w.view.id) end),
-    key({"Shift"},   "Return", function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end),
-    key({"Mod1"},    "Return", function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end),
+    key({},          "Return", "Follow the selected link in the current tab.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "navigate", w.view.id) end),
+    key({"Control"}, "Return", "Follow the selected link in a new tab.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "new_tab", w.view.id) end),
+    key({"Shift"},   "Return", "Follow the selected link in a new window.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end),
+    key({"Mod1"},    "Return", "Download the selected link.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end),
 })
 
 return _M
