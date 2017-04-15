@@ -378,10 +378,6 @@ add_binds("uscriptlist", util.table.join({
             window.new(row.script.homepage)
         end
     end),
-
-    -- Close menu
-    key({}, "q", function (w) w:set_mode() end),
-
 }, menu_binds))
 
 -- Initialize the userscripts

@@ -230,11 +230,6 @@ add_binds("undolist", lousy.util.table.join({
             end
         end
     end),
-
-    -- Exit menu
-    key({}, "q", "Close menu.",
-        function (w) w:set_mode() end),
-
 }, menu_binds))
 
 -- Add `:undolist` command to view all closed tabs in an interactive menu
