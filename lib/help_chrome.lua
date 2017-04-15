@@ -246,35 +246,6 @@ $(document).ready(function () {
 });
 ]=]
 
-local function bind_tostring(b)
-    local t = b.type
-    local m = b.mods
-
-    if t == "key" then
-        if m or string.wlen(b.key) > 1 then
-            return "<".. (m and (m.."-") or "") .. b.key .. ">"
-        else
-            return b.key
-        end
-    elseif t == "buffer" then
-        local p = b.pattern
-        if string.sub(p,1,1) .. string.sub(p, -1, -1) == "^$" then
-            return string.sub(p, 2, -2)
-        end
-        return b.pattern
-    elseif t == "button" then
-        return "<" .. (m and (m.."-") or "") .. "Mouse" .. b.button .. ">"
-    elseif t == "any" then
-        return "any"
-    elseif t == "command" then
-        local cmds = {}
-        for i, cmd in ipairs(b.cmds) do
-            cmds[i] = ":"..cmd
-        end
-        return table.concat(cmds, ", ")
-    end
-end
-
 local source_lines = {}
 local function function_source_range(_, info)
     local lines = source_lines[info.source]
@@ -306,7 +277,7 @@ local help_get_modes = function ()
                 info.source = info.source:sub(2)
                 binds[i] = {
                     type = b.type,
-                    key = bind_tostring(b),
+                    key = lousy.bind.bind_to_string(b),
                     desc = b.desc and markdown(dedent(b.desc)) or nil,
                     filename = info.source,
                     linedefined = info.linedefined,

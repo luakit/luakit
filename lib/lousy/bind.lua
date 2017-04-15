@@ -437,6 +437,40 @@ function _M.hit(object, binds, mods, key, args)
     return false
 end
 
+--- Produce a string describing the action that triggers a given binding.
+-- For example, a binding for the down-arrow key would produce `"<Down>"`,
+--
+-- @tparam table b The binding.
+-- @treturn string The binding description string.
+function _M.bind_to_string(b)
+    local t = b.type
+    local m = b.mods
+
+    if t == "key" then
+        if m or string.wlen(b.key) > 1 then
+            return "<".. (m and (m.."-") or "") .. b.key .. ">"
+        else
+            return b.key
+        end
+    elseif t == "buffer" then
+        local p = b.pattern
+        if string.sub(p,1,1) .. string.sub(p, -1, -1) == "^$" then
+            return string.sub(p, 2, -2)
+        end
+        return b.pattern
+    elseif t == "button" then
+        return "<" .. (m and (m.."-") or "") .. "Mouse" .. b.button .. ">"
+    elseif t == "any" then
+        return "any"
+    elseif t == "command" then
+        local cmds = {}
+        for i, cmd in ipairs(b.cmds) do
+            cmds[i] = ":"..cmd
+        end
+        return table.concat(cmds, ", ")
+    end
+end
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
