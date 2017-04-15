@@ -48,6 +48,7 @@ local function do_test_file(test_file)
         if not ok then
             print("__fail__ " .. current_test)
             print(tostring(ret))
+            print(debug.traceback(func))
             return "fail"
         elseif state == "suspended" then
             print("__wait__ " .. current_test)
