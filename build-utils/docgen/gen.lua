@@ -47,25 +47,31 @@ end
 local generate_function_param_html = function (param)
     local html_template = [==[
         <li class=parameter>
-            <span class=info><span class=parameter>{name}</span> : {typestr} {optional} {default}:</span>
-            {desc}
+            <div class=two-col>
+                <div>
+                    <span class=parameter>{name}</span>
+                    <div>{typestr}</div>
+                    <div>{default}</div>
+                </div>
+                <div>{desc}</div>
+            </div>
         </li>
     ]==]
     local html = string.gsub(html_template, "{(%w+)}", {
         name = param.name,
-        typestr = generate_typestr_html(param.typestr),
+        typestr = "Type: " .. generate_typestr_html(param.typestr),
         desc = html_unwrap_first_p(format_text(param.desc)),
-        optional = param.opt and "<span class=optional>(optional)</span>" or "",
-        default = param.default and "<span class=default>(default: " .. html_unwrap_first_p(format_text(param.default)) .. ")</span>" or "",
+        default = param.default and "Default: " .. html_unwrap_first_p(format_text(param.default)) or "",
     })
     return html
 end
 
 local generate_function_return_html = function (ret)
     local html_template = [==[
-        <li class=return-list>
-            <span class=info>{typestr} :</span>
-            {desc}
+        <li>
+            <div class=two-col>
+                <div>{typestr}</div><div>{desc}</div>
+            </div>
         </li>
     ]==]
     local html = string.gsub(html_template, "{(%w+)}", {
@@ -173,19 +179,21 @@ local generate_property_html = function (prop, prefix)
         <h3 class=property id="property-{name}">
             <a href="#property-{name}">{prefix}{name}</a>
         </h3>
-        <div class=property>
-            {typestr}
-            {desc}
-            {default}
+        <div class="two-col property">
+            <div>
+                <div>{typestr}</div>
+                <div>{default}</div>
+            </div>
+            <div>{desc}</div>
         </div>
     ]==]
 
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
         name = prop.name,
-        desc = format_text(prop.desc),
-        typestr = generate_typestr_html(prop.typestr),
-        default = prop.default and ("<span class=default>(default: " .. prop.default .. ")</span>") or ""
+        typestr = "Type: " .. generate_typestr_html(prop.typestr),
+        desc = html_unwrap_first_p(format_text(prop.desc)),
+        default = prop.default and "Default: " .. html_unwrap_first_p(format_text(prop.default)) or "",
     })
     return html
 end
@@ -208,14 +216,14 @@ local generate_binds_and_modes_html = function (doc)
     for mode_name, binds in pairs(doc.bind_info) do
         if #binds > 0 then
             html = html .. ("<h3><code>%s</code> mode</h3>\n"):format(mode_name)
-            html = html .. "<ul>\n"
+            html = html .. "<ul class=binds>\n"
             for _, bind in ipairs(binds) do
-                html = html .. "<li>"
+                html = html .. "<li><div class=two-col><ul class=triggers>"
                 local names = type(bind.name) == "string" and {bind.name} or bind.name
                 for i, name in ipairs(names) do
-                    names[i] = ("<code>%s</code>"):format(lousy.util.escape(name))
+                    names[i] = ("<li>%s"):format(lousy.util.escape(name))
                 end
-                html = html .. table.concat(names, ", ") .. ": " .. html_unwrap_first_p(format_text(lousy.util.string.dedent(bind.desc or "<i>No description</i>")))
+                html = html .. table.concat(names, "") .. "</ul><div class=desc>" .. html_unwrap_first_p(format_text(lousy.util.string.dedent(bind.desc or "<i>No description</i>"))) .. "</div></div>"
             end
             html = html .. "</ul>\n"
         end
@@ -228,9 +236,9 @@ local generate_field_html = function (field, prefix)
         <h3 class=field id="field-{name}">
             <a href="#field-{name}">{prefix}{name}</a>
         </h3>
-        <div class=field>
-        {typestr}
-        {desc}
+        <div class="two-col field">
+            <div>Type: {typestr}</div>
+            <div>{desc}</div>
         </div>
     ]==]
 
@@ -238,30 +246,7 @@ local generate_field_html = function (field, prefix)
         prefix = prefix,
         name = field.name,
         typestr = generate_typestr_html(field.typestr),
-        desc = format_text(field.desc),
-    })
-    return html
-end
-
-local generate_table_html = function (tbl, prefix)
-    print("-----")
-    local html_template = [==[
-        <h3 class=table id="table-{name}">
-            <a href="#table-{name}">{prefix}{name}</a>
-        </h3>
-        <div class=table>
-        {desc}
-        {fields}
-        </div>
-    ]==]
-
-    local field_html = ""
-
-    local html = string.gsub(html_template, "{([%w_]+)}", {
-        prefix = prefix,
-        name = tbl.name,
-        desc = format_text(tbl.desc),
-        fields = field_html,
+        desc = html_unwrap_first_p(format_text(field.desc)),
     })
     return html
 end
@@ -291,7 +276,6 @@ local generate_doc_html = function (doc)
         .. generate_list_html("Methods", doc.methods, generate_function_html, method_name_prefix)
         .. generate_list_html("Properties", doc.properties, generate_property_html, doc.name .. ".")
         .. generate_list_html("Signals", doc.signals, generate_signal_html)
-        .. generate_list_html("Tables", doc.tables, generate_table_html, prefix)
         .. generate_list_html("Fields", doc.fields, generate_field_html, prefix)
 
     local html = string.gsub(html_template, "{(%w+)}", {
