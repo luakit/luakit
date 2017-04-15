@@ -10,7 +10,7 @@
 -- * Download AdblockPlus-compatible filter lists to `$XDG_DATA_HOME/luakit/adblock`.
 --   Multiple lists are supported.
 --   EasyList is the most popular Adblock Plus filter list, and can be
---   downloaded from http://easylist.adblockplus.org/
+--   downloaded from [https://easylist.to/](https://easylist.to/).
 -- * Filterlists need to be updated regularly (~weekly), use cron!
 --
 -- @module adblock
