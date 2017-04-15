@@ -132,6 +132,9 @@ new_mode("completion", {
 
     changed = function (w, text)
         if not data[w].lock then
+            local input = w.ibar.input
+            data[w].orig_text = input.text
+            data[w].orig_pos = input.position
             _M.update_completions(w, text)
         end
     end,
