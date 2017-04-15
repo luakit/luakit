@@ -20,6 +20,7 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local _M = {}
 
 --- HTML template for enabled adblock list.
+-- @type string
 _M.list_template_enabled = [==[
     <tr>
         <td>{title}</td>
@@ -31,6 +32,7 @@ _M.list_template_enabled = [==[
 ]==]
 
 --- HTML template for disabled adblock list.
+-- @type string
 _M.list_template_disabled = [==[
     <tr>
         <td>{title}</td>
@@ -42,11 +44,13 @@ _M.list_template_disabled = [==[
 ]==]
 
 --- HTML template for adblock state toggle button.
+-- @type string
 _M.toggle_button_template = [==[
     <input type="button" class="button" onclick="adblock_toggle({state})" value="{label}" />
 ]==]
 
 --- HTML template for adblock chrome page content.
+-- @type string
 _M.html_template = [==[
     <html>
     <head>
@@ -81,9 +85,11 @@ _M.html_template = [==[
 ]==]
 
 --- Title for the adblock chrome page.
+-- @type string
 _M.html_page_title = "AdBlock filters"
 
 --- CSS applied to the adblock chrome page.
+-- @type string
 _M.html_style = [===[
     table {
         font-size: 1.0em;
@@ -145,6 +151,7 @@ end
 adblock.refresh_views = refresh_views
 
 --- URI of the adblock chrome page.
+-- @type string
 _M.chrome_page = "luakit://adblock/"
 
 -- Shows the chrome page in the given view.
@@ -217,6 +224,7 @@ nil,
 })
 
 --- CSS for error page shown when page navigation is blocked
+-- @type string
 _M.navigation_blocked_css_tmpl = [===[
     body {
         background-color: #ddd;

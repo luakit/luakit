@@ -1,4 +1,4 @@
---- Provides functionaliy to auto-fill forms based on a Lua DSL.
+--- Provides functionality to auto-fill forms based on a Lua DSL.
 --
 -- The configuration is stored in `$XDG_DATA_DIR/luakit/forms.lua`
 --
