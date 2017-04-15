@@ -8,7 +8,6 @@ function T.test_luacheck ()
     local lua_dirs = {"lib", "config", "tests", "build-utils"}
     local exclude_files = {
         "lib/markdown.lua",
-        "lib/cookie.*.lua",
     }
     local options =  {
         std = "luajit",

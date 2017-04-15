@@ -125,7 +125,7 @@ function T.test_header_comment ()
 end
 
 function T.test_lua_header ()
-    local exclude_files = { "lib/markdown%.lua", "lib/cookie.*%.lua" }
+    local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
 
@@ -175,7 +175,6 @@ end
 function T.test_lua_module_uses_M ()
     local exclude_files = {
         "lib/markdown%.lua",   -- External file
-        "lib/cookie.*%.lua",   -- Cookie handling is broken anyway
         "lib/.*/init%.lua$",   -- Module groupings
         "lib/widget/%S*%.lua", -- Status bar widgets
     }
@@ -225,7 +224,6 @@ end
 function T.test_lua_module_functions_are_documented ()
     local exclude_files = {
         "lib/markdown%.lua",   -- External file
-        "lib/cookie.*%.lua",   -- Cookie handling is broken anyway
     }
 
     local errors = {}
