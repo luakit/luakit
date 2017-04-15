@@ -319,9 +319,12 @@ new_mode("formfiller-add", {
     end,
 })
 add_binds("formfiller-add", {
-    key({},          "Tab",    function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end),
-    key({"Shift"},   "Tab",    function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end),
-    key({},          "Return", function (w) formfiller_wm:emit_signal(w.view, "select") end),
+    key({},          "Tab",    "Focus the next form hint.",
+        function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end),
+    key({"Shift"},   "Tab",    "Focus the previous form hint.",
+        function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end),
+    key({},          "Return", "Add the currently focused form to the formfiller file.",
+        function (w) formfiller_wm:emit_signal(w.view, "select") end),
 })
 
 -- Setup formfiller binds
