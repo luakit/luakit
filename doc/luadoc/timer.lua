@@ -19,7 +19,7 @@
 --- @function timer
 -- Create a new timer instance.
 -- @tparam[opt] table properties Any initial timer properties to set.
--- @default Empty table.
+-- @default `{}`
 
 --- @method start
 -- Start a timer.
@@ -41,7 +41,7 @@
 -- Whether the timer is running.
 -- @type boolean
 -- @readonly
--- @default false
+-- @default `false`
 
 --- @signal timeout
 -- This signal is emitted when the time on the timer has expired.
