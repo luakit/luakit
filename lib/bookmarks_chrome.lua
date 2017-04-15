@@ -502,18 +502,18 @@ _M.chrome_page = "luakit://bookmarks/"
 
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({}, "B", "Shortcut to add a bookmark to the current URL",
+    key({}, "B", "Add a bookmark for the current URL.",
         function(w)
             new_bookmark_values = { uri = w.view.uri, title = w.view.title }
             w:new_tab(_M.chrome_page)
         end),
 
-    buf("^gb$", "Open bookmarks manager in the current tab.",
+    buf("^gb$", "Open the bookmarks manager in the current tab.",
         function(w)
             w:navigate(_M.chrome_page)
         end),
 
-    buf("^gB$", "Open bookmarks manager in a new tab.",
+    buf("^gB$", "Open the bookmarks manager in a new tab.",
         function(w)
             w:new_tab(_M.chrome_page)
         end)
@@ -521,12 +521,12 @@ add_binds("normal", {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("bookmarks", "Open bookmarks manager in a new tab.",
+    cmd("bookmarks", "Open the bookmarks manager in a new tab.",
         function (w)
             w:new_tab(_M.chrome_page)
         end),
 
-    cmd("bookmark", "Add bookmark",
+    cmd("bookmark", "Add a bookmark for the current URL.",
         function (w, a)
             if not a then
                 new_bookmark_values = {

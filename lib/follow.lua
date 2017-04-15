@@ -213,10 +213,14 @@ new_mode("follow", {
 
 local key = lousy.bind.key
 add_binds("follow", {
-    key({},          "Tab",    function (w) focus(w,  1)        end),
-    key({"Shift"},   "Tab",    function (w) focus(w, -1)        end),
-    key({},          "Return", function (w) do_follow(w)        end),
-    key({"Shift"},   "Return", function (w) follow_all_hints(w) end),
+    key({},          "Tab",    "Focus the next element hint.",
+        function (w) focus(w, 1) end),
+    key({"Shift"},   "Tab",    "Focus the previous element hint.",
+        function (w) focus(w, -1)        end),
+    key({},          "Return", "Activate the currently focused element hint.",
+        function (w) do_follow(w)        end),
+    key({"Shift"},   "Return", "Activate all currently visible element hints.",
+        function (w) follow_all_hints(w) end),
 })
 
 --- Element selectors used to filter elements to follow.

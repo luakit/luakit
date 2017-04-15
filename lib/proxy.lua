@@ -185,7 +185,7 @@ new_mode("proxymenu", {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("proxy", "add proxy server",
+    cmd("proxy", "Add a new proxy entry.",
         function (w, a)
             local params = lousy.util.string.split(a or '')
             if not a then
@@ -202,7 +202,7 @@ add_cmds({
 local key = lousy.bind.key
 add_binds("proxymenu", lousy.util.table.join({
     -- Select proxy
-    key({}, "Return",
+    key({}, "Return", "Use the currently highlighted proxy.",
         function (w)
             local row = w.menu:get()
             if row and row.address then
@@ -219,7 +219,7 @@ add_binds("proxymenu", lousy.util.table.join({
         end),
 
     -- Delete proxy
-    key({}, "d",
+    key({}, "d", "Delete the currently highlighted proxy entry.",
         function (w)
             local row = w.menu:get()
             if row and row.name then
@@ -229,7 +229,7 @@ add_binds("proxymenu", lousy.util.table.join({
         end),
 
     -- Edit proxy
-    key({}, "e",
+    key({}, "e", "Edit the currently highlighted proxy entry.",
         function (w)
             local row = w.menu:get()
             if row and row.name then
@@ -238,7 +238,8 @@ add_binds("proxymenu", lousy.util.table.join({
         end),
 
     -- New proxy
-    key({}, "a", function (w) w:enter_cmd(":proxy ") end),
+    key({}, "a", "Begin adding a new proxy entry.",
+        function (w) w:enter_cmd(":proxy ") end),
 }, menu_binds))
 
 -- Initialize module

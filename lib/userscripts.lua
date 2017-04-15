@@ -302,7 +302,7 @@ end)
 local cmd = bind.cmd
 add_cmds({
     -- Saves the content of the open view as an userscript
-    cmd({"userscriptinstall", "usi", "usinstall"}, "install userscript", function (w)
+    cmd({"userscriptinstall", "usi", "usinstall"}, "Install the userscript loaded in the current tab.", function (w)
         local view = w.view
         local file = string.match(view.uri, "/([^/]+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
@@ -317,7 +317,7 @@ add_cmds({
         end})
     end),
 
-    cmd({"userscripts", "uscripts"}, "list userscripts",
+    cmd({"userscripts", "uscripts"}, "List installed userscripts.",
         function (w) w:set_mode("uscriptlist") end),
 })
 
@@ -347,7 +347,8 @@ new_mode("uscriptlist", {
 local key = bind.key
 add_binds("uscriptlist", util.table.join({
     -- Delete userscript
-    key({}, "d", function (w)
+    key({}, "d", "Delete the currently highlighted userscript.",
+        function (w)
         local row = w.menu:get()
         if row and row.script then
             _M.del(row.script.file)
@@ -356,7 +357,8 @@ add_binds("uscriptlist", util.table.join({
     end),
 
     -- Open userscript homepage
-    key({}, "o", function (w)
+    key({}, "o", "Open the currently highlighted userscript's homepage in the current tab.",
+        function (w)
         local row = w.menu:get()
         if row and row.script and row.script.homepage then
             w:navigate(row.script.homepage)
@@ -364,7 +366,8 @@ add_binds("uscriptlist", util.table.join({
     end),
 
     -- Open userscript homepage in new tab
-    key({}, "t", function (w)
+    key({}, "t", "Open the currently highlighted userscript's homepage in a new tab.",
+        function (w)
         local row = w.menu:get()
         if row and row.script and row.script.homepage then
             w:new_tab(row.script.homepage, false)
@@ -372,7 +375,8 @@ add_binds("uscriptlist", util.table.join({
     end),
 
     -- Open userscript homepage in new window
-    key({}, "w", function (w)
+    key({}, "w", "Open the currently highlighted userscript's homepage in a new window.",
+        function (w)
         local row = w.menu:get()
         if row and row.script and row.script.homepage then
             window.new(row.script.homepage)

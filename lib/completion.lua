@@ -21,7 +21,7 @@ local data = setmetatable({}, { __mode = "k" })
 -- Add completion start trigger
 local key = lousy.bind.key
 add_binds("command", {
-    key({}, "Tab", function (w) w:set_mode("completion") end),
+    key({}, "Tab", "Open completion menu.", function (w) w:set_mode("completion") end),
 })
 
 --- Return to command mode with original text and with original cursor position.
