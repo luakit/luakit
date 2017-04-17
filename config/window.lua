@@ -503,10 +503,6 @@ window.methods = {
     end,
 
     new_tab = function (w, arg, switch, order)
-        -- Close and remove the blank page, if present
-        if w.has_blank then w.has_blank:destroy() end
-        w.has_blank = nil
-
         -- Bit of a hack
         local webview = require("webview")
 
@@ -544,9 +540,6 @@ window.methods = {
 
     -- close the current tab
     close_tab = function (w, view, blank_last)
-        -- Don't close the blank page
-        if blank_last ~= false and w.has_blank then return end
-
         view = view or w.view
         w:emit_signal("close-tab", view)
         w:detach_tab(view, blank_last)
@@ -569,7 +562,7 @@ window.methods = {
         view.parent:remove(view)
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 0 then
-            w.has_blank = w:new_tab("about:blank", false)
+            w:new_tab("luakit://newtab/", false)
         end
     end,
 
@@ -673,7 +666,7 @@ window.methods = {
         local match, find = string.match, string.find
 
         -- Detect blank uris
-        if not arg or match(arg, "^%s*$") then return "about:blank" end
+        if not arg or match(arg, "^%s*$") then return "luakit://newtab/" end
 
         -- Strip whitespace and split by whitespace into args table
         local args = lstring.split(lstring.strip(arg))

@@ -171,6 +171,9 @@ require "domain_props"
 -- Add a stylesheet when showing images
 require "image_css"
 
+-- Add a new tab page
+require "newtab_chrome"
+
 -----------------------------
 -- End user script loading --
 -----------------------------

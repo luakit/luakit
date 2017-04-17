@@ -470,7 +470,7 @@ add_binds("normal", {
         function (w) w:goto_tab(-1) end),
 
     key({"Control"}, "t", "Open a new tab.",
-        function (w) w:new_tab(globals.homepage) end),
+        function (w) w:new_tab("luakit://newtab/") end),
 
     key({"Control"}, "w", "Close current tab.",
         function (w) w:close_tab() end),
