@@ -497,7 +497,7 @@ add_binds("normal", {
         function (w) w:navigate(globals.homepage) end),
 
     buf("^gy$", "Duplicate current tab.",
-        function (w) w:new_tab(w.view.history or "") end),
+        function (w) w:new_tab({ session_state = w.view.session_state }) end),
 
     key({}, "r", "Reload current tab.",
         function (w) w:reload() end),
@@ -663,7 +663,7 @@ add_cmds({
         function (w, a) w:each_tab(function () w:run_cmd(":" .. a) end) end),
 
     cmd("tabdu[plicate]", "Duplicate current tab.",
-        function (w) w:new_tab(w.view.history) end),
+        function (w) w:new_tab({ session_state = w.view.session_state }) end),
 
     cmd("tabfir[st]", "Switch to first tab.",
         function (w) w:goto_tab(1) end),
