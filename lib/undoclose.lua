@@ -57,6 +57,12 @@ local on_tab_close = function (w, view)
         local hist = view.history
         local hist_item = hist.items[hist.index]
         local title = lousy.util.escape(hist_item.title) or ""
+
+        -- Don't save the "New Tab" page in undoclose history
+        if string.match(view.uri or "", "^luakit://newtab/?") and #hist.items == 1 then
+            return
+        end
+
         tab = {
             session_state = view.session_state,
             uri = view.uri,
