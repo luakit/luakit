@@ -666,7 +666,7 @@ window.methods = {
         local match, find = string.match, string.find
 
         -- Detect blank uris
-        if not arg or match(arg, "^%s*$") then return "about:blank" end
+        if not arg or match(arg, "^%s*$") then return "luakit://newtab/" end
 
         -- Strip whitespace and split by whitespace into args table
         local args = lstring.split(lstring.strip(arg))
