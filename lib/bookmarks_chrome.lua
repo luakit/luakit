@@ -15,9 +15,11 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local _M = {}
 
 --- Display the bookmark uri and title.
+-- @type boolean
 _M.show_uri = false
 
 --- CSS for bookmarks chrome page.
+-- @type string
 _M.stylesheet = [===[
 .bookmark {
     line-height: 1.6em;
@@ -498,6 +500,7 @@ end,
 export_funcs)
 
 --- URI of the bookmarks chrome page.
+-- @type string
 _M.chrome_page = "luakit://bookmarks/"
 
 local key, buf = lousy.bind.key, lousy.bind.buf

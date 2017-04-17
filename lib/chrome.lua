@@ -11,6 +11,7 @@ local _M = {}
 
 --- Common stylesheet that can be sourced from several chrome modules
 -- for a consitent looking theme.
+-- @type string
 _M.stylesheet = [===[
     body {
         background-color: white;

@@ -35,6 +35,7 @@ local html_template = [==[
 ]==]
 
 --- CSS for downloads chrome page.
+-- @type string
 _M.stylesheet = [==[
     .download {
         -webkit-margin-start: 90px;
@@ -360,6 +361,7 @@ end,
 export_funcs)
 
 --- URI of the downloads chrome page.
+-- @type string
 _M.chrome_page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
