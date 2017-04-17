@@ -33,12 +33,12 @@ _M.new_tab_file = luakit.data_dir .. "/newtab.html"
 -- The default value produces a page with no content and a single solid
 -- background color. `theme.bg` is used as the background color.
 -- @type string
-_M.new_tab_src = ([===[
+_M.new_tab_src = ([==[
     <html>
         <head><title>New Tab</title></head>
         <body bgcolor="{bgcolor}"></body>
     </html>
-]===]):gsub("{bgcolor}", theme.bg)
+]==]):gsub("{bgcolor}", theme.bg)
 
 local function load_file_contents(file)
     if not file then return nil end
