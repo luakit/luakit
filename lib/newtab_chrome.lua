@@ -1,4 +1,19 @@
 --- New tab page for luakit.
+--
+-- This module provides [luakit://newtab/](luakit://newtab/), the luakit new
+-- tab page. This page is opened by default when opening a new tab without
+-- specifying a URL to open.
+--
+-- ### Customization
+--
+-- The easiest way to customize what is shown at
+-- [luakit://newtab/](luakit://newtab/) is to create a HTML file at the
+-- path specified by `newtab_chrome.new_tab_file`; by default this field has the
+-- value `$XDG_DATA_DIR/luakit/newtab.html`.
+--
+-- If this file exists, then its contents will be used to provide the new tab
+-- page. Otherwise, the value of `newtab_chrome.new_tab_src` is used.
+--
 -- @module newtab_chrome
 -- @author Aidan Holm
 -- @copyright 2016 Aidan Holm
@@ -10,13 +25,14 @@ local luakit = require "luakit"
 local _M = {}
 
 --- Path to a HTML file to use for the new tab page.
+--The default value is `$XDG_DATA_DIR/luakit/newtab.html`.
 -- @type string
--- @default `$XDG_DATA_DIR/luakit/newtab.html`
 _M.new_tab_file = luakit.data_dir .. "/newtab.html"
 
 --- HTML string to use for the new tab page, if no HTML file is specified.
+-- The default value produces a page with no content and a single solid
+-- background color. `theme.bg` is used as the background color.
 -- @type string
--- @default Single color page. `theme.bg` is used as the background color.
 _M.new_tab_src = ([===[
     <html>
         <head><title>New Tab</title></head>
