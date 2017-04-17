@@ -777,10 +777,6 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PS_CASE(HOVERED_URI,          d->hover)
       PS_CASE(URI,                  d->uri)
 
-      /* push boolean properties */
-      // TODO this stopped existing...
-      //PB_CASE(VIEW_SOURCE, webkit_web_view_get_view_mode(d->view))
-
       case L_TK_SOURCE:
         return luaH_webview_push_source(L, d);
       case L_TK_SESSION_STATE:
