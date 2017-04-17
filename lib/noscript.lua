@@ -159,6 +159,8 @@ window.add_signal("init", function (w)
     r.noscript.font = theme.font
 end)
 
+local noscript_ss = stylesheet{ source = [===[noscript { display: none !important; }]===] }
+
 webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)
         if status == "provisional" or status == "redirected" then
@@ -173,6 +175,8 @@ webview.add_signal("init", function (view)
             view.enable_plugins = ep
             local w = webview.window(v)
             w:noscript_indicator_update()
+            -- Workaround for https://github.com/aidanholm/luakit/issues/250
+            v.stylesheets[noscript_ss] = es
         end
     end)
     view:add_signal("switched-page", function (v)
