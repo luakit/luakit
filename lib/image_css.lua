@@ -53,9 +53,6 @@ webview.add_signal("init", function (view)
             local mime = uri_mime_cache[v.uri]
             local is_image = mime and mime:match("^image/")
             view.stylesheets[_M.stylesheet] = is_image
-        elseif status == "finished" then
-            local mime = uri_mime_cache[v.uri]
-            local is_image = mime and mime:match("^image/")
             if is_image then
                 wm:emit_signal(view, "image")
             end
