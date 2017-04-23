@@ -70,7 +70,7 @@ local init_funcs = {
             end
         end)
         view:add_signal("load-status", function (v, status, _, err)
-            if status == "finished" or (status == "finished" and err == "Load request cancelled") then
+            if status == "finished" or (status == "failed" and err == "Load request cancelled") then
                 web_module:emit_signal(v, "load-finished")
             end
         end)
