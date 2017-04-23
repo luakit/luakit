@@ -8,26 +8,32 @@ local lousy = require("lousy")
 local ui = ipc_channel("follow_wm")
 
 local evaluators = {
-    click = function(element)
+    click = function(element, page)
         local tag = element.tag_name
         if tag == "INPUT" or tag == "TEXTAREA" then
             local t = element.attr.type
             if t == "radio" or t == "checkbox" or t == "submit" or t == "reset" or t == "button" then
                 element:click()
+                return
             else
                 element:focus()
                 return "form-active"
             end
-        elseif element.child_count > 0 then
-            -- Find the element directly in the centre of the link,
-            -- and click that
+        end
+        -- Find the element directly in the centre of the link
+        if element.child_count > 0 then
             local r = element.rect
             local doc = element.owner_document
-            local mid_elem = doc:element_from_point(r.left + r.width/2, r.top + r.height/2)
-            mid_elem:click()
-        else
-            element:click()
+            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2)
+            tag = element.tag_name
         end
+        -- Handle <a target=_blank> indirectly; WebKit prevents opening a new
+        -- window if not initiated by the user directly
+        if tag == "A" and element.attr.target == "_blank" then
+            ui:emit_signal("click_a_target_blank", page.id, element.href)
+            return
+        end
+        element:click()
     end,
     focus = function(element)
         element:focus()
@@ -60,7 +66,7 @@ local function follow_hint(page, mode, hint)
 
     local overlay_style = hint.overlay_elem.attr.style
     hint.overlay_elem.attr.style = "display: none;"
-    local ret = evaluator(hint.elem)
+    local ret = evaluator(hint.elem, page)
     hint.overlay_elem.attr.style = overlay_style
 
     ui:emit_signal("follow_func", page.id, ret)

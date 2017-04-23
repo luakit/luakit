@@ -152,6 +152,11 @@ follow_wm:add_signal("matches", function(_, page_id, n)
         if w.view.id == page_id then matches_cb(w, n) end
     end
 end)
+follow_wm:add_signal("click_a_target_blank", function(_, page_id, href)
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == page_id then w:new_tab(href) end
+    end
+end)
 
 new_mode("follow", {
     enter = function (w, mode)
