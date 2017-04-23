@@ -39,7 +39,7 @@ local function update_label(tl)
             ntheme = gfg
         end
     end
-    local tfmt = '<span foreground="%s" font="Monospace">%d </span>%s'
+    local tfmt = '<span foreground="%s" font="Monospace">%s </span>%s'
     local title = string.format(tfmt, ntheme or fg, priv.index, escape(tl.title))
     label.text = title
 end

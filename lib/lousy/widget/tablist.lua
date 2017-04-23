@@ -67,11 +67,13 @@ end
 local function regenerate_tab_indices(tlist, a, b)
     local low, high = a or 1, b or data[tlist].notebook:count()
     local views = data[tlist].notebook.children
+    local max_pad_len = #tostring(data[tlist].notebook:count())
 
     for i=low, high do
         local view = views[i]
         local tl = data[tlist].tabs[view]
-        tl.index = i
+        local pad_len = data[tlist].orientation == "vertical" and (max_pad_len - #tostring(i)) or 0
+        tl.index = (" "):rep(pad_len) .. tostring(i)
     end
 end
 
@@ -124,7 +126,7 @@ function _M.new(notebook, orientation)
         end
         box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
         box:reorder(tl.widget, idx-1)
-        regenerate_tab_indices(tlist, idx)
+        regenerate_tab_indices(tlist)
 
         tl.widget:add_signal("button-release", function (_, mods, but)
             return tlist:emit_signal("tab-clicked", tl.index, mods, but)
@@ -134,11 +136,11 @@ function _M.new(notebook, orientation)
         end)
     end)
 
-    notebook:add_signal("page-removed", function (_, view, idx)
+    notebook:add_signal("page-removed", function (_, view)
         local tl = data[tlist].tabs[view]
         box:remove(tl.widget)
         tl:destroy()
-        regenerate_tab_indices(tlist, idx)
+        regenerate_tab_indices(tlist)
         data[tlist].tabs[view] = nil
     end)
 
