@@ -294,7 +294,11 @@ window.methods = {
     -- run command as if typed into the command line
     run_cmd = function (w, cmd, opts)
         w:enter_cmd(cmd, opts)
+        -- Don't append to the mode's history
+        local mode, hist = w.mode, w.mode.history
+        w.mode.history = nil
         w:activate()
+        mode.history = hist
     end,
 
     -- insert a string into the command line at the current cursor position
