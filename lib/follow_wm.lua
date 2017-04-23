@@ -14,20 +14,20 @@ local evaluators = {
             local t = element.attr.type
             if t == "radio" or t == "checkbox" or t == "submit" or t == "reset" or t == "button" then
                 element:click()
+                return
             else
                 element:focus()
                 return "form-active"
             end
-        elseif element.child_count > 0 then
-            -- Find the element directly in the centre of the link,
-            -- and click that
+        end
+        -- Find the element directly in the centre of the link
+        if element.child_count > 0 then
             local r = element.rect
             local doc = element.owner_document
-            local mid_elem = doc:element_from_point(r.left + r.width/2, r.top + r.height/2)
-            mid_elem:click()
-        else
-            element:click()
+            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2)
+            tag = element.tag_name
         end
+        element:click()
     end,
     focus = function(element)
         element:focus()
