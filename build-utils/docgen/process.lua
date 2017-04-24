@@ -2,6 +2,16 @@ assert(luakit, "This file must be run as a luakit config file")
 
 local find_files = require "build-utils.find_files"
 
+-- Restrict Lua search path to just the build dir for luakit-related files
+-- This is done by removing anything that looks like a luakit include dir
+local paths = { "./config/?.lua", "./lib/?.lua", "./lib/?/init.lua" }
+package.path:gsub("([^;]+)", function(path)
+    if not path:find("/luakit/", 1, true) then
+        table.insert(paths, path)
+    end
+end)
+package.path = table.concat(paths, ";")
+
 require "window"
 require "webview"
 require "binds"
