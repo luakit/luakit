@@ -119,13 +119,14 @@ local function update(menu)
                 end
 
                 -- Set cell props
+                local cfg
                 if text and cell and row.title then
                     cell.text = text
-                    local cfg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
+                    cfg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
                     if cell.fg ~= cfg then cell.fg = cfg end
                 elseif text and cell then
                     cell.text = text
-                    local cfg = (selected and (row.selected_fg or sfg)) or row.fg or fg
+                    cfg = (selected and (row.selected_fg or sfg)) or row.fg or fg
                     if cell.fg ~= cfg then cell.fg = cfg end
                 end
             end

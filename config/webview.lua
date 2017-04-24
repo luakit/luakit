@@ -218,7 +218,9 @@ function webview.methods.scroll(view, w, new)
             local n = new[axis]
             if n == -1 then
                 local dir = axis == "x" and "Width" or "Height"
-                local js = string.format([=[Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)]=], dir, dir)
+                local js = string.format([=[
+                    Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
+                ]=], dir, dir)
                 w.view:eval_js(js, { callback = function (max)
                     s[axis] = max
                 end})
@@ -233,7 +235,9 @@ function webview.methods.scroll(view, w, new)
         -- Absolute percent movement
         elseif rawget(new, axis .. "pct") then
             local dir = axis == "x" and "Width" or "Height"
-            local js = string.format([=[Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)]=], dir, dir)
+            local js = string.format([=[
+                Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
+            ]=], dir, dir)
             w.view:eval_js(js, { callback = function (max)
                 s[axis] = math.ceil(max * (new[axis.."pct"]/100))
             end})

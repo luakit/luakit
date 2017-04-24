@@ -189,7 +189,8 @@ chrome.add("adblock", function ()
     local rulescount = { black = 0, white = 0, ignored = 0 }
     for _, list in pairs(adblock.rules) do
         if list.black and list.white and list.ignored then
-            rulescount.black, rulescount.white, rulescount.ignored = rulescount.black + list.black, rulescount.white + list.white, rulescount.ignored + list.ignored
+            rulescount.black, rulescount.white = rulescount.black + list.black, rulescount.white + list.white
+            rulescount.ignored = rulescount.ignored + list.ignored
         end
     end
 

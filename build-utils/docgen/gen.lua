@@ -224,7 +224,9 @@ local generate_binds_and_modes_html = function (doc)
                 for i, name in ipairs(names) do
                     names[i] = ("<li>%s"):format(lousy.util.escape(name))
                 end
-                html = html .. table.concat(names, "") .. "</ul><div class=desc>" .. html_unwrap_first_p(format_text(lousy.util.string.dedent(bind.desc or "<i>No description</i>"))) .. "</div></div>"
+                local desc = bind.desc or "<i>No description</i>"
+                desc = html_unwrap_first_p(format_text(lousy.util.string.dedent(desc)))
+                html = html .. table.concat(names, "") .. "</ul><div class=desc>" .. desc .. "</div></div>"
             end
             html = html .. "</ul>\n"
         end

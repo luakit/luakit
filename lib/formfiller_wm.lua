@@ -167,7 +167,8 @@ local function get_form_spec_matches_on_page(page, form_specs)
 
     local forms = {}
     for _, form_spec in ipairs(form_specs) do
-        local matches = match("form", {"method", "name", "id", "action", "className"}, form_spec, { dom_document(page.id).body })
+        local attrs = {"method", "name", "id", "action", "className"}
+        local matches = match("form", attrs, form_spec, { dom_document(page.id).body })
         for _, form in ipairs(matches) do
             forms[#forms+1] = form
         end

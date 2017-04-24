@@ -24,8 +24,12 @@ _M.table = table
 --- @local
 _M.string = string
 
-local xml_entity_names = { ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;" };
-local xml_entity_chars = { lt = "<", gt = ">", nbsp = " ", quot = "\"", apos = "'", ndash = "-", mdash = "-", amp = "&" };
+local xml_entity_names = {
+    ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;"
+};
+local xml_entity_chars = {
+    lt = "<", gt = ">", nbsp = " ", quot = "\"", apos = "'", ndash = "-", mdash = "-", amp = "&"
+};
 
 --- Escape a string from XML characters.
 -- @param text The text to escape.

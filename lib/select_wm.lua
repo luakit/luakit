@@ -395,8 +395,10 @@ function _M.enter(page, elements, stylesheet, ignore_case)
             local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
             local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, 0), max(r.y-10, 0), r.w, r.h)
 
-            hint.overlay_elem = frame.doc:create_element("span", {class = "hint_overlay hint_overlay_" .. e.tag_name, style = overlay_style})
-            hint.label_elem = frame.doc:create_element("span", {class = "hint_label hint_label_" .. e.tag_name, style = label_style}, hint.label)
+            local overlay_class = "hint_overlay hint_overlay_" .. e.tag_name
+            local label_class = "hint_label hint_label_" .. e.tag_name
+            hint.overlay_elem = frame.doc:create_element("span", {class = overlay_class, style = overlay_style})
+            hint.label_elem = frame.doc:create_element("span", {class = label_class, style = label_style}, hint.label)
 
             frame.overlay:append(hint.overlay_elem)
             frame.overlay:append(hint.label_elem)

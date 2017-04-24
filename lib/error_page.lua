@@ -216,7 +216,8 @@ end
 local function get_cert_error_desc(cert_errors)
     local strings = {
         ["unknown-ca"] = "The signing certificate authority is not known.",
-        ["bad-identity"] = "The certificate does not match the expected identity of the site that it was retrieved from.",
+        ["bad-identity"] = "The certificate does not match the expected identity of the"
+            .. " site that it was retrieved from.",
         ["not-activated"] = "The certificate's activation time is still in the future.",
         expired = "The certificate has expired.",
         insecure = "The certificate has been revoked.",

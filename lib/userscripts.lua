@@ -336,7 +336,8 @@ new_mode("uscriptlist", {
             return
         end
         w.menu:build(rows)
-        w:notify("Use j/k to move, d delete, o visit website, t tabopen, w winopen. '*' indicates active scripts.", false)
+        w:notify("Use j/k to move, d delete, o visit website, t tabopen, w winopen. '*' indicates active scripts.",
+            false)
     end,
 
     leave = function (w)

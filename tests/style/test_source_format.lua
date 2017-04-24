@@ -149,7 +149,8 @@ function T.test_lua_header ()
         if module_name then
             local expected_module_name = file:match("lib/(.*).lua"):gsub("/", "."):gsub(".init$","")
             if module_name ~= expected_module_name then
-                local err = ("Module name must match file name (expected %s, got %s)"):format(expected_module_name, module_name)
+                local fmt = "Module name must match file name (expected %s, got %s)"
+                local err = fmt:format(expected_module_name, module_name)
                 add_file_error(errors, file, err)
             end
         end
