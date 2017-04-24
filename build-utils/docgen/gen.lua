@@ -1,5 +1,6 @@
 local lfs = require "lfs"
 local lousy = { util = require "lib.lousy.util" }
+local markdown = require "lib.markdown"
 
 local text_macros = {
     available = function (arg)
@@ -19,7 +20,7 @@ local format_text = function (text)
         return (text_macros[macro])(args)
     end)
     -- Format with markdown
-    ret = (require "markdown")(ret)
+    ret = markdown(ret)
     ret = ret:gsub("<pre><code>(.-)</code></pre>", function (code)
         -- Fix < and > being escaped inside code -_- fail
         code = lousy.util.unescape(code)
