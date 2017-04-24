@@ -21,8 +21,12 @@ function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
     shared_lib.traceback = debug.traceback("",2)
     repeat
-        local _, status = _M.wait_for_signal(view, "load-status", 500)
-        assert(status ~= "failed")
+        local _, status, uri, err = _M.wait_for_signal(view, "load-status", 500)
+        if status == "failed" then
+            local fmt = "tests.wait_for_view() failed loading '%s': %s"
+            local msg = fmt:format(uri, err)
+            assert(false, msg)
+        end
     until status == "finished"
 end
 

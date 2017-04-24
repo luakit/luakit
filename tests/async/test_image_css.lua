@@ -20,8 +20,12 @@ package.loaded.webview.emit_signal("init", view)
 
 local view_wait_for_status = function (v, status)
     repeat
-        local _, s = test.wait_for_signal(v, "load-status", 1000)
-        assert(s ~= "failed")
+        local _, s, uri, err = test.wait_for_signal(v, "load-status", 1000)
+        if s == "failed" then
+            local fmt = "tests.wait_for_view() failed loading '%s': %s"
+            local msg = fmt:format(uri, err)
+            assert(false, msg)
+        end
     until s == status
 end
 
