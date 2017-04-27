@@ -113,6 +113,7 @@ luaH_webview_set_session_state(lua_State *L, webview_data_t *d)
     if (!state)
         luaL_error(L, "Invalid session state");
     webkit_web_view_restore_session_state(d->view, state);
+    webkit_web_view_session_state_unref(state);
 
     WebKitBackForwardList *bfl = webkit_web_view_get_back_forward_list(d->view);
     WebKitBackForwardListItem *item = webkit_back_forward_list_get_current_item(bfl);
@@ -130,6 +131,8 @@ luaH_webview_push_session_state(lua_State *L, webview_data_t *d)
     gsize len;
     const gchar *str = g_bytes_get_data(bytes, &len);
     lua_pushlstring(L, str, len);
+    g_bytes_unref(bytes);
+    webkit_web_view_session_state_unref(state);
     return 1;
 }
 

@@ -189,6 +189,7 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
         fatal("Cannot access luakit extension '%s': %s" DEVPATHS, extension_file, strerror(errno));
 #undef DEVPATHS
     }
+    g_free(extension_file);
 
     /* There's a potential race condition here; the accept thread might not run
      * until after the web extension process has already started (and failed to
