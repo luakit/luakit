@@ -210,26 +210,29 @@ ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask)
         return ipc_recv_and_dispatch_or_enqueue(ipc, type_mask);
     }
 
-    /* Otherwise, we finished downloading the message */
-    if (state->hdr.type & type_mask) {
-        ipc_dispatch(ipc, state->hdr, state->payload+sizeof(queued_ipc_t));
-        g_slice_free1(sizeof(queued_ipc_t) + state->hdr.length, state->payload);
-    } else {
-        /* Copy the header into the space at the start of the payload slice */
-        queued_ipc_t *msg = state->payload;
-        msg->header = state->hdr;
-        msg->ipc = ipc;
-        g_ptr_array_add(state->queued_ipcs, state->payload);
-        g_idle_add((GSourceFunc)ipc_dispatch_enqueued, ipc);
-    }
+    ipc_header_t header = state->hdr;
+    gpointer payload = state->payload;
 
     /* Reset state for the next message */
     state->payload = NULL;
     state->bytes_read = 0;
     state->hdr_done = FALSE;
 
+    /* Otherwise, we finished downloading the message */
+    if (header.type & type_mask) {
+        ipc_dispatch(ipc, header, payload+sizeof(queued_ipc_t));
+        g_slice_free1(sizeof(queued_ipc_t) + header.length, payload);
+    } else {
+        /* Copy the header into the space at the start of the payload slice */
+        queued_ipc_t *msg = payload;
+        msg->header = header;
+        msg->ipc = ipc;
+        g_ptr_array_add(state->queued_ipcs, payload);
+        g_idle_add((GSourceFunc)ipc_dispatch_enqueued, ipc);
+    }
+
     /* Return true if we dispatched it */
-    return state->hdr.type & type_mask;
+    return header.type & type_mask;
 }
 
 void
