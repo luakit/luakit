@@ -125,15 +125,17 @@ local function lookup_domain(uri)
     return enable_scripts, enable_plugins, nil
 end
 
-function webview.methods.noscript_state(view)
-    if view.uri then
-        return lookup_domain(view.uri)
-    end
-end
+-- NoScript indicator
 
-function window.methods.noscript_indicator_update(w)
+local view_noscript_state = setmetatable({}, { __mode = "k" })
+
+local function noscript_indicator_update(v)
+    local vns = view_noscript_state[v]
+    local w = webview.window(v)
+    if not vns or not w then return end
+
     local ns = w.sbar.r.noscript
-    local es, _, matched_domain = lookup_domain(w.view.uri)
+    local es, matched_domain = vns.enable_scripts, vns.enable_scripts_domain
     local state = es and "enabled" or "disabled"
 
     if es then
@@ -144,12 +146,16 @@ function window.methods.noscript_indicator_update(w)
         ns.fg = theme.notrust_fg
     end
 
-    if matched_domain then
+    if matched_domain == "override" then
+        ns.tooltip = "JavaScript " .. state
+    elseif matched_domain then
         ns.tooltip = "JavaScript " .. state .. ": URI matched domain '" .. matched_domain .. "'"
     else
         ns.tooltip = "JavaScript " .. state .. ": default setting"
     end
 end
+
+local noscript_ss = stylesheet{ source = [===[noscript { display: none !important; }]===] }
 
 window.add_signal("init", function (w)
     local r = w.sbar.r
@@ -159,31 +165,36 @@ window.add_signal("init", function (w)
     r.noscript.font = theme.font
 end)
 
-local noscript_ss = stylesheet{ source = [===[noscript { display: none !important; }]===] }
-
 webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)
         if status == "provisional" or status == "redirected" then
             local es = v:emit_signal("enable-scripts")
             local ep = v:emit_signal("enable-plugins")
+            local vns = {
+                enable_scripts_domain = es and "override" or nil,
+                enable_plugins_domain = ep and "override" or nil,
+            }
             if es == nil or ep == nil then
-                local s, p, _ = lookup_domain(v.uri)
-                if es == nil then es = s end
-                if ep == nil then ep = p end
+                local s, p, matched_domain = lookup_domain(v.uri)
+                if es == nil then es = s; vns.enable_scripts_domain = matched_domain end
+                if ep == nil then ep = p; vns.enable_plugins_domain = matched_domain end
             end
+            vns.enable_scripts = es
+            vns.enable_plugins = ep
             view.enable_scripts = es
             view.enable_plugins = ep
-            local w = webview.window(v)
-            if w then w:noscript_indicator_update() end
+            -- Update indicator
+            view_noscript_state[v] = vns
+            noscript_indicator_update(v)
             -- Workaround for https://github.com/aidanholm/luakit/issues/250
             v.stylesheets[noscript_ss] = es
         end
     end)
     view:add_signal("switched-page", function (v)
-        local w = webview.window(v)
-        w:noscript_indicator_update()
+        noscript_indicator_update(v)
     end)
 end)
+
 
 local buf = lousy.bind.buf
 add_binds("normal", {
