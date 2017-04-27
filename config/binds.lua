@@ -726,13 +726,6 @@ add_cmds({
                 w:notify("Dumped HTML to: " .. file)
             end
         end),
-
-    cmd({"view-source", "vs"}, "View the source code of the current document.",
-        function (w)
-            local v = w.view
-            local source = lousy.util.escape(v.source or "")
-            v:load_string('<pre><code>' .. source .. '</code></pre>', v.uri)
-        end),
 })
 
 return {
