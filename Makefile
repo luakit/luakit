@@ -19,6 +19,7 @@ options:
 	@echo luakit build options:
 	@echo "CC           = $(CC)"
 	@echo "LUA_PKG_NAME = $(LUA_PKG_NAME)"
+	@echo "LUA_BIN_NAME = $(LUA_BIN_NAME)"
 	@echo "CFLAGS       = $(CFLAGS)"
 	@echo "CPPFLAGS     = $(CPPFLAGS)"
 	@echo "LDFLAGS      = $(LDFLAGS)"
@@ -34,7 +35,7 @@ options:
 	@echo "EXT_OBJS = $(EXT_OBJS)"
 
 $(THEAD) $(TSRC): $(TLIST)
-	./build-utils/gentokens.lua $(TLIST) $@
+	$(LUA_BIN_NAME) ./build-utils/gentokens.lua $(TLIST) $@
 
 buildopts.h: buildopts.h.in
 	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' buildopts.h.in > buildopts.h
@@ -69,7 +70,7 @@ apidoc: luakit luakit.so
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
 	./luakit --log=error -c build-utils/docgen/process.lua > doc/apidocs/module_info.lua
-	./build-utils/docgen/makedoc.lua
+	$(LUA_BIN_NAME) ./build-utils/docgen/makedoc.lua
 	rm doc/apidocs/module_info.lua
 
 doc: buildopts.h $(THEAD) $(TSRC)
@@ -115,7 +116,7 @@ uninstall:
 	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
 run-tests: luakit luakit.so
-	@luajit tests/run_test.lua
+	@$(LUA_BIN_NAME) tests/run_test.lua
 
 newline: options;@echo
 .PHONY: all clean options install newline apidoc doc
