@@ -171,9 +171,11 @@ function _M.remove(page)
     on_first_visual_handlers[page] = nil
 end
 
+luakit.register_scheme("luakit")
+
 -- Catch all navigations to the luakit:// scheme
 webview.add_signal("init", function (view)
-    view:add_signal("luakit-chrome", function (v, uri)
+    view:add_signal("scheme-request::luakit", function (v, uri)
         -- Match "luakit://page/path"
         local page, path = string.match(uri, "^luakit://([^/]+)/?(.*)")
         if not page then return end

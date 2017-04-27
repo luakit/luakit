@@ -1177,7 +1177,7 @@ size_request_cb(GtkWidget *UNUSED(widget), GtkRequisition *r, widget_t *w)
 }
 
 void
-luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(user_data))
+luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *scheme)
 {
     const gchar *uri = webkit_uri_scheme_request_get_uri(request);
 
@@ -1190,9 +1190,12 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, gpointer *UNUSED(u
     gint top = lua_gettop(L);
     const gchar *error_message;
 
+    g_assert(scheme);
+    gchar *sig = g_strconcat("scheme-request::", scheme, NULL);
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
-    gint ret = luaH_object_emit_signal(L, -2, "luakit-chrome", 1, 2);
+    gint ret = luaH_object_emit_signal(L, -2, sig, 1, 2);
+    g_free(sig);
 
     if (!ret) {
         error_message = "no return values";

@@ -539,6 +539,25 @@ luaH_luakit_register_function(lua_State *L)
     return 0;
 }
 
+/** Defined in widgets/webview.c */
+void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
+
+static gint
+luaH_luakit_register_scheme(lua_State *L)
+{
+    const gchar *scheme = luaL_checkstring(L, 1);
+
+    if (g_str_equal(scheme, ""))
+        return luaL_error(L, "scheme cannot be empty");
+    if (g_str_equal(scheme, "http") || g_str_equal(scheme, "https"))
+        return luaL_error(L, "scheme cannot be 'http' or 'https'");
+
+    webkit_web_context_register_uri_scheme(web_context_get(), scheme,
+            (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb,
+            g_strdup(scheme), g_free);
+    return 0;
+}
+
 void
 luaH_register_functions_on_endpoint(ipc_endpoint_t *ipc, lua_State *L)
 {
@@ -579,6 +598,7 @@ luakit_lib_setup(lua_State *L)
         { "spawn",             luaH_luakit_spawn },
         { "spawn_sync",        luaH_luakit_spawn_sync },
         { "register_function", luaH_luakit_register_function },
+        { "register_scheme",   luaH_luakit_register_scheme },
         { NULL,              NULL }
     };
 

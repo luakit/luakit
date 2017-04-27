@@ -176,4 +176,25 @@
 -- @type string
 -- @readonly
 
+--- @signal scheme-request
+--
+-- Emitted when the webview attempts to load a URI on a custom URI scheme.
+-- The signal detail is always present and is equal to the URI scheme.
+--
+-- #### Example
+--
+-- A signal `scheme-request::foo` will be emitted on a webview in
+-- response to a `foo://` load attempt. To display content for this request,
+-- return a string with the content to display, as well as (optionally) the
+-- content MIME type.
+--
+-- The type of content to display isn't limited to HTML or other textual
+-- formats; images and other binary content types are acceptable, as long as the
+-- MIME type parameter is returned.
+--
+-- @tparam string uri The URI that the webview is attempting to load.
+-- @treturn string The content to display. Embedded NUL bytes are handled
+-- correctly.
+-- @treturn string The MIME type of the content. Default: `text/html`.
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

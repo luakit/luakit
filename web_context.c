@@ -31,8 +31,6 @@ static guint process_limit = 0;
 /** Whether the web context startup function has been run */
 static gboolean web_context_started = FALSE;
 
-/** Defined in widgets/webview.c */
-void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
 /** Defined in widgets/webview/downloads.c */
 gboolean download_start_cb(WebKitWebContext *, WebKitDownload *, gpointer);
 
@@ -96,12 +94,7 @@ void
 web_context_init(void)
 {
     website_data_dir_init();
-    /* Misc settings */
-
-    webkit_web_context_register_uri_scheme(web_context, "luakit",
-            (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb, NULL, NULL);
     webkit_web_context_set_favicon_database_directory(web_context, NULL);
-
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
 }

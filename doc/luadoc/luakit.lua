@@ -107,4 +107,26 @@
 -- @treturn boolean True if the callback was present (and removed); false if the
 -- callback was not found.
 
+--- Register a custom URI scheme.
+--
+-- Registering a scheme causes network requests to that scheme to be redirected
+-- to Lua code via the signal handling interface. A signal based on the scheme
+-- name will be emitted on a webview widget when it attempts to load a URI on
+-- the registered scheme. To return content to display, as well as an optional
+-- mime-type, connect to the signal and return a string with the content to
+-- display.
+--
+-- This interface is used to register the `luakit://` scheme, but is not limited
+-- to this prefix alone.
+--
+-- #### Example
+--
+-- Registering a scheme `foo` will cause URIs beginning with `foo://` to
+-- be redirected to Lua code. A signal `scheme-request::foo` will be emitted on
+-- a webview in response to a `foo://` load attempt, and should be handled to
+-- provide contentt.
+--
+-- @function luakit.register_scheme
+-- @tparam string scheme The network scheme to register.
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80
