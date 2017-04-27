@@ -190,6 +190,9 @@ require "newtab_chrome"
 -- Add tab favicons mod
 require "tab_favicons"
 
+-- Add :view-source command
+require "view_source"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
