@@ -242,6 +242,11 @@ webview.add_signal("init", function (view)
         -- Call the supplied handler
         on_first_visual_func(v, meta)
     end)
+    -- Always enable JavaScript on luakit:// pages; without this, chrome
+    -- pages which depend upon javascript will break
+    view:add_signal("enable-scripts", function (v)
+        if v.uri:match("^luakit://") then return true end
+    end)
 end)
 
 luakit.register_function("^luakit://(.*)", "reset_mode", function (view)

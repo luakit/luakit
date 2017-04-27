@@ -104,11 +104,6 @@ local function lookup_domain(uri)
     if not uri then uri = "" end
     local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
     local domain = get_domain(uri)
-
-    -- Enable everything for chrome pages; without this, chrome pages which
-    -- depend upon javascript will break
-    if string_starts(uri, "luakit://") then return true, true, "luakit://" end
-
     -- Enable everything for local pages
     if string_starts(uri, "file://") then return true, true, "file://" end
 
