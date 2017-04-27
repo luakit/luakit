@@ -174,7 +174,7 @@ webview.add_signal("init", function (view)
             view.enable_scripts = es
             view.enable_plugins = ep
             local w = webview.window(v)
-            w:noscript_indicator_update()
+            if w then w:noscript_indicator_update() end
             -- Workaround for https://github.com/aidanholm/luakit/issues/250
             v.stylesheets[noscript_ss] = es
         end

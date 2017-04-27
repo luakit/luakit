@@ -27,7 +27,7 @@ webview.add_signal("init", function (view)
     for _, sig in ipairs({"load-status", "property::progress"}) do
         view:add_signal(sig, function (v)
             local w = webview.window(v)
-            if w.view == v then
+            if w and w.view == v then
                 update(w)
             end
         end)

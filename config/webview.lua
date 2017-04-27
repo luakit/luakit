@@ -42,7 +42,7 @@ local init_funcs = {
     title_update = function (view)
         view:add_signal("property::title", function (v)
             local w = webview.window(v)
-            if w.view == v then
+            if w and w.view == v then
                 w:update_win_title()
             end
         end)
@@ -101,7 +101,7 @@ local init_funcs = {
     mode_reset_on_nav = function (view)
         view:add_signal("load-status", function (v, status)
             local w = webview.window(v)
-            if status == "provisional" and w.view == v then
+            if status == "provisional" and w and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
                 end

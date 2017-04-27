@@ -27,7 +27,7 @@ webview.add_signal("init", function (view)
     -- Update widget when current page changes status
     view:add_signal("load-status", function (v)
         local w = webview.window(v)
-        if w.view == v then
+        if w and w.view == v then
             update(w)
         end
     end)

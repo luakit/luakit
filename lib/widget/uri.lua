@@ -20,19 +20,19 @@ end
 webview.add_signal("init", function (view)
     view:add_signal("property::uri", function (v)
         local w = webview.window(v)
-        if w.view == v then
+        if w and w.view == v then
             update(w)
         end
     end)
     view:add_signal("link-hover", function (v, link)
         local w = webview.window(v)
-        if w.view == v and link then
+        if w and w.view == v and link then
             update(w, link)
         end
     end)
     view:add_signal("link-unhover", function (v)
         local w = webview.window(v)
-        if w.view == v then
+        if w and w.view == v then
             update(w)
         end
     end)
