@@ -184,9 +184,14 @@ ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask)
         case G_IO_STATUS_NORMAL:
         case G_IO_STATUS_AGAIN:
             break;
+        case G_IO_STATUS_EOF:
+            return FALSE;
+        case G_IO_STATUS_ERROR:
+            error("g_io_channel_read_chars(): %s", error->message);
+            g_error_free(error);
+            return FALSE;
         default:
-            /* TODO: error */
-            break;
+            g_assert_not_reached();
     }
 
     /* Update ipc_recv state */
