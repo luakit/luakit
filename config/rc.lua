@@ -20,6 +20,9 @@ if unique then
     end
 end
 
+-- Set the number of web processes to use. A value of 0 means 'no limit'.
+luakit.process_limit = 0
+
 -- Load library of useful functions for luakit
 local lousy = require "lousy"
 
@@ -190,9 +193,6 @@ require "tab_favicons"
 -----------------------------
 -- End user script loading --
 -----------------------------
-
--- Set the number of web processes to use. A value of 0 means 'no limit'.
-luakit.process_limit = 0
 
 -- Restore last saved session
 local w = (not luakit.nounique) and (session and session.restore())
