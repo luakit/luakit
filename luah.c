@@ -26,6 +26,7 @@
 /* include clib headers */
 #include "clib/download.h"
 #include "clib/luakit.h"
+#include "clib/request.h"
 #include "clib/sqlite3.h"
 #include "clib/unique.h"
 #include "clib/widget.h"
@@ -129,6 +130,9 @@ luaH_init(gchar ** uris)
 
     /* Export timer */
     timer_class_setup(L);
+
+    /* Export request */
+    request_class_setup(L);
 
     /* Export stylesheet */
     stylesheet_class_setup(L);
