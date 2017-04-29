@@ -63,6 +63,11 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
+-- Add adblock
+-- Enabled by default to work around bug https://github.com/aidanholm/luakit/issues/261
+require "adblock"
+require "adblock_chrome"
+
 require "webinspector"
 
 -- Add uzbl-like form filling
