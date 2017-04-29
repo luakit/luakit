@@ -82,7 +82,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     extension.WL = luaL_newstate();
     common.L = extension.WL;
     extension.ext = ext;
-    extension.ipc = ipc_endpoint_new("Web");
+    extension.ipc = ipc_endpoint_new(g_strdup_printf("Web[%d]", getpid()));
 
     if (web_extension_connect(socket_path)) {
         debug("luakit web process: connecting to UI thread failed");
