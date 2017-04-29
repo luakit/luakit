@@ -182,8 +182,9 @@ ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask)
 
     switch ((s = g_io_channel_read_chars(channel, buf, remaining, &bytes_read, &error))) {
         case G_IO_STATUS_NORMAL:
-        case G_IO_STATUS_AGAIN:
             break;
+        case G_IO_STATUS_AGAIN:
+            return FALSE;
         case G_IO_STATUS_EOF:
             return FALSE;
         case G_IO_STATUS_ERROR:
