@@ -51,11 +51,7 @@ luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
     if (luaH_uniq_get_ptr(L, REG_KEY, node))
         return 1;
 
-    lua_newtable(L);
-    luaH_class_new(L, &dom_element_class);
-    lua_remove(L, -2);
-
-    dom_element_t *element = lua_touserdata(L, -1);
+    dom_element_t *element = dom_element_new(L);
     element->element = WEBKIT_DOM_ELEMENT(node);
 
     luaH_uniq_add_ptr(L, REG_KEY, node, -1);

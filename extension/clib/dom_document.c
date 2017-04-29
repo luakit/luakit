@@ -44,11 +44,7 @@ luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc)
     if (luaH_uniq_get_ptr(L, REG_KEY, doc))
         return 1;
 
-    lua_newtable(L);
-    luaH_class_new(L, &dom_document_class);
-    lua_remove(L, -2);
-
-    dom_document_t *document = lua_touserdata(L, -1);
+    dom_document_t *document = dom_document_new(L);
     document->document = doc;
 
     luaH_uniq_add_ptr(L, REG_KEY, doc, -1);

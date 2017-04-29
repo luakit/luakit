@@ -226,11 +226,7 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     if (luaH_uniq_get_ptr(L, REG_KEY, web_page))
         return 1;
 
-    lua_newtable(L);
-    luaH_class_new(L, &page_class);
-    lua_remove(L, -2);
-
-    page_t *page = lua_touserdata(L, -1);
+    page_t *page = page_new(L);
     page->page = web_page;
 
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);

@@ -24,7 +24,7 @@ typedef struct _extension_t {
 } extension_t;
 
 lua_class_t extension_class;
-gint extension_ref;
+gpointer extension_ref;
 GPtrArray *queued_emissions;
 
 LUA_OBJECT_FUNCS(extension_class, extension_t, extension);
@@ -32,7 +32,7 @@ LUA_OBJECT_FUNCS(extension_class, extension_t, extension);
 static void
 emit_page_created_signal(WebKitWebPage *web_page, lua_State *L)
 {
-    lua_rawgeti(L, LUA_REGISTRYINDEX, extension_ref);
+    luaH_object_push(L, extension_ref);
     luaH_checkudata(L, -1, &extension_class);
     luaH_page_from_web_page(L, web_page);
     luaH_object_emit_signal(L, -2, "page-created", 1, 0);
@@ -50,15 +50,6 @@ page_created_cb(WebKitWebExtension *UNUSED(extension), WebKitWebPage *web_page, 
         g_ptr_array_add(queued_emissions, web_page);
     else
         emit_page_created_signal(web_page, L);
-}
-
-static int
-luaH_extension_new(lua_State *L)
-{
-    lua_newtable(L);
-    luaH_class_new(L, &extension_class);
-    lua_remove(L, -2);
-    return 1;
 }
 
 void
@@ -83,10 +74,11 @@ extension_class_setup(lua_State *L, WebKitWebExtension *extension)
             extension_methods, extension_meta);
 
     queued_emissions = g_ptr_array_sized_new(1);
-    luaH_extension_new(L);
+
+    extension_new(L);
+    lua_pushvalue(L, -1);
     lua_setglobal(L, "extension");
-    lua_getglobal(L, "extension");
-    extension_ref = luaL_ref(L, LUA_REGISTRYINDEX);
+    extension_ref = luaH_object_ref(L, -1);
     g_signal_connect(extension, "page-created", G_CALLBACK(page_created_cb), L);
 }
 
