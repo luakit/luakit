@@ -25,8 +25,7 @@ gboolean
 download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, gpointer UNUSED(user_data))
 {
     WebKitWebView *dl_view = webkit_download_get_web_view(dl);
-    widget_t *w = dl_view ?
-        webview_get_by_id(webkit_web_view_get_page_id(dl_view)) : NULL;
+    widget_t *w = dl_view ? GOBJECT_TO_LUAKIT_WIDGET(dl_view) : NULL;
 
     lua_State *L = globalconf.L;
     gint top = lua_gettop(L);
