@@ -22,6 +22,7 @@ local function path_is_in_directory(path, dir)
 end
 
 local function find_files(dirs, patterns, excludes)
+    assert(dirs ~= ".", "Bad pattern '.'; use empty string instead")
     assert(type(dirs) == "string" or type(dirs) == "table",
         "Bad search location: expected string or table")
     assert(type(patterns) == "string" or type(patterns) == "table",

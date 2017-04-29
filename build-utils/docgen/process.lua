@@ -60,3 +60,5 @@ end
 io.stdout:write(lousy.pickle.pickle(output))
 
 luakit.quit()
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -10,7 +10,7 @@ function T.test_vim_modeline ()
     local errors = {}
 
     -- Test all C and H files
-    local file_list = test.find_files(".", "%.[ch]$")
+    local file_list = test.find_files("", "%.[ch]$")
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -24,7 +24,7 @@ function T.test_vim_modeline ()
     end
 
     -- Test all lua files
-    file_list = test.find_files(".", "%.lua$", {"lib/markdown.lua"})
+    file_list = test.find_files("", "%.lua$", {"lib/markdown.lua"})
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -46,7 +46,7 @@ function T.test_include_guard ()
     local include_guard_pat = "#ifndef LUAKIT_%s\n#define LUAKIT_%s\n\n"
     local errors = {}
 
-    local file_list = test.find_files(".", "%.h$")
+    local file_list = test.find_files("", "%.h$")
     for _, file in ipairs(file_list) do
         -- Get file contents
         local f = assert(io.open(file, "r"))
@@ -100,7 +100,7 @@ function T.test_header_comment ()
 ]]
     local errors = {}
 
-    local file_list = test.find_files(".", "%.[ch]$")
+    local file_list = test.find_files("", "%.[ch]$")
     for _, file in ipairs(file_list) do
         local contents = get_first_paragraph_of_file(file)
 
@@ -266,7 +266,7 @@ function T.test_no_tabs_in_indentation ()
     local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
-    local file_list = test.find_files(".", {"%.lua$", "%.[ch]$"}, exclude_files)
+    local file_list = test.find_files("", {"%.lua$", "%.[ch]$"}, exclude_files)
 
     for _, file in ipairs(file_list) do
         local lines = {}
@@ -292,7 +292,7 @@ function T.test_no_trailing_whitespace ()
     local exclude_files = { "lib/markdown%.lua" }
 
     local errors = {}
-    local file_list = test.find_files(".", {"%.lua$", "%.[ch]$"}, exclude_files)
+    local file_list = test.find_files("", {"%.lua$", "%.[ch]$"}, exclude_files)
 
     for _, file in ipairs(file_list) do
         local lines = {}
