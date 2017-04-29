@@ -293,6 +293,7 @@ window.methods = {
 
     -- run command as if typed into the command line
     run_cmd = function (w, cmd, opts)
+        cmd = cmd:find("^%:") and cmd or (":" .. cmd)
         w:enter_cmd(cmd, opts)
         -- Don't append to the mode's history
         local mode, hist = w.mode, w.mode.history
