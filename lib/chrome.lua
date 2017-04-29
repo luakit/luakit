@@ -175,7 +175,7 @@ luakit.register_scheme("luakit")
 
 -- Catch all navigations to the luakit:// scheme
 webview.add_signal("init", function (view)
-    view:add_signal("scheme-request::luakit", function (v, uri)
+    view:add_signal("scheme-request::luakit", function (v, uri, request)
         -- Match "luakit://page/path"
         local page, path = string.match(uri, "^luakit://([^/]+)/?(.*)")
         if not page then return end
@@ -206,7 +206,8 @@ webview.add_signal("init", function (view)
             -- Call luakit:// page handler
             local _, html, mime = xpcall(function () return func(v, meta) end,
                 error_handler)
-            return html, mime
+            request:finish(html, mime)
+            return
         end
 
         -- Load error page
@@ -220,7 +221,7 @@ webview.add_signal("init", function (view)
             buttons = {},
             page = page,
         })
-        return ""
+        request:finish("")
     end)
 
     view:add_signal("load-status", function (v, status)

@@ -27,6 +27,7 @@
 #include "common/property.h"
 #include "luah.h"
 #include "clib/widget.h"
+#include "clib/request.h"
 #include "common/signal.h"
 #include "web_context.h"
 #include "common/ipc.h"
@@ -1187,45 +1188,14 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
     widget_t *w = GOBJECT_TO_LUAKIT_WIDGET(view);
 
     lua_State *L = globalconf.L;
-    gint top = lua_gettop(L);
-    const gchar *error_message;
 
     g_assert(scheme);
     gchar *sig = g_strconcat("scheme-request::", scheme, NULL);
     luaH_object_push(L, w->ref);
     lua_pushstring(L, uri);
-    gint ret = luaH_object_emit_signal(L, -2, sig, 1, 2);
+    luaH_request_push_uri_scheme_request(L, request);
+    luaH_object_emit_signal(L, -3, sig, 2, 0);
     g_free(sig);
-
-    if (!ret) {
-        error_message = "no return values";
-        goto error;
-    }
-    if (!lua_isstring(L, -2)) {
-        error_message = "returned data isn't a string";
-        goto error;
-    }
-    if ((lua_type(L, -1) != LUA_TSTRING) && (lua_type(L, -1) != LUA_TNIL)) {
-        error_message = "returned mime isn't a string or nil";
-        goto error;
-    }
-
-    GInputStream *gis;
-    const gchar *html = lua_tostring(L, -2);
-    const gchar *mime = lua_tostring(L, -1) ?: "text/html";
-    gis = g_memory_input_stream_new_from_data(html, lua_objlen(L, -2), NULL);
-    webkit_uri_scheme_request_finish(request, gis, -1, mime);
-    g_input_stream_close(gis, NULL, NULL);
-    lua_settop(L, top);
-    return;
-
-error:
-    error(error_message);
-    GError *error = g_error_new_literal(g_quark_from_static_string("luakit"),
-            0, error_message);
-    webkit_uri_scheme_request_finish_error(request, error);
-    lua_settop(L, top);
-    return;
 }
 
 gboolean
