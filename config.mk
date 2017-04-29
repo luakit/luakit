@@ -86,8 +86,8 @@ endif
 # Check user has correct packages installed (and found by pkg-config).
 PKGS_OK := $(shell pkg-config --print-errors --exists $(PKGS) && echo 1)
 ifneq ($(PKGS_OK),1)
-	$(error Cannot find required package(s\) to build luakit. Please \
-	check you have the above packages installed and try again.)
+    $(error Cannot find required package(s\) to build luakit. Please \
+    check you have the above packages installed and try again)
 endif
 
 # Add pkg-config options to compile flags.
