@@ -230,7 +230,6 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
     g_signal_connect(page->page, "document-loaded", G_CALLBACK(document_loaded_cb), page);
 
-    luaH_bind_gobject_ref(L, web_page, -1); /* Keep Lua object alive */
     luaH_uniq_add_ptr(L, REG_KEY, web_page, -1);
     g_object_weak_ref(G_OBJECT(web_page), (GWeakNotify)webkit_web_page_destroy_cb, page);
 
@@ -289,7 +288,7 @@ page_class_setup(lua_State *L)
             NULL, NULL,
             page_methods, page_meta);
 
-    luaH_uniq_setup(L, REG_KEY);
+    luaH_uniq_setup(L, REG_KEY, "");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

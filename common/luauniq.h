@@ -28,7 +28,7 @@
  * depends on the Lua instance lifetime.
  */
 
-void luaH_uniq_setup(lua_State *L, const gchar *reg);
+void luaH_uniq_setup(lua_State *L, const gchar *reg, const gchar *mode);
 int luaH_uniq_add(lua_State *L, const gchar *reg, int k, int oud);
 int luaH_uniq_add_ptr(lua_State *L, const gchar *reg, gpointer key, int oud);
 int luaH_uniq_get(lua_State *L, const gchar *reg, int k);

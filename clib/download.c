@@ -700,7 +700,7 @@ download_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_download_get_uri,
             (lua_class_propfunc_t) NULL);
 
-    luaH_uniq_setup(L, REG_KEY);
+    luaH_uniq_setup(L, REG_KEY, "v");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -23,7 +23,7 @@
 
 /* Setup the unique object system at startup. */
 void
-luaH_uniq_setup(lua_State *L, const gchar *reg)
+luaH_uniq_setup(lua_State *L, const gchar *reg, const gchar *mode)
 {
     /* Push identification string */
     lua_pushstring(L, reg ?: LUAKIT_UNIQ_REGISTRY_KEY);
@@ -32,7 +32,7 @@ luaH_uniq_setup(lua_State *L, const gchar *reg)
     /* Set metatable specifying weak-values mode */
     lua_newtable(L);
     lua_pushstring(L, "__mode");
-    lua_pushstring(L, "v");
+    lua_pushstring(L, mode);
     lua_rawset(L, -3);
     lua_setmetatable(L, -2);
     /* Register table inside registry */

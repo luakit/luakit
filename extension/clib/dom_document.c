@@ -210,7 +210,7 @@ dom_document_class_setup(lua_State *L)
             NULL, NULL,
             dom_document_methods, dom_document_meta);
 
-    luaH_uniq_setup(L, REG_KEY);
+    luaH_uniq_setup(L, REG_KEY, "");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

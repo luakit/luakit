@@ -59,7 +59,7 @@ web_lua_init(void)
     luaL_openlibs(WL);
     luaH_fixups(WL);
     luaH_object_setup(WL);
-    luaH_uniq_setup(WL, NULL);
+    luaH_uniq_setup(WL, NULL, "v");
     luaH_add_paths(WL, NULL);
     luakit_lib_setup(WL);
     soup_lib_setup(WL);
