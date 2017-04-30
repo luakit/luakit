@@ -35,9 +35,16 @@ static dom_element_t*
 luaH_check_dom_element(lua_State *L, gint udx)
 {
     dom_element_t *element = luaH_checkudata(L, udx, &dom_element_class);
-    if (!WEBKIT_DOM_IS_ELEMENT(element->element))
+    if (!element->element || !WEBKIT_DOM_IS_ELEMENT(element->element))
         luaL_argerror(L, udx, "DOM element no longer valid");
     return element;
+}
+
+static void
+webkit_web_page_destroy_cb(dom_element_t *element, GObject *node)
+{
+    element->element = NULL;
+    luaH_uniq_del_ptr(extension.WL, REG_KEY, node);
 }
 
 gint
@@ -52,9 +59,10 @@ luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
         return 1;
 
     dom_element_t *element = dom_element_new(L);
-    element->element = WEBKIT_DOM_ELEMENT(node);
+    element->element = node;
 
     luaH_uniq_add_ptr(L, REG_KEY, node, -1);
+    g_object_weak_ref(G_OBJECT(node), (GWeakNotify)webkit_web_page_destroy_cb, element);
 
     return 1;
 }

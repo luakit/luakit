@@ -33,9 +33,16 @@ static dom_document_t*
 luaH_check_dom_document(lua_State *L, gint udx)
 {
     dom_document_t *document = luaH_checkudata(L, udx, &dom_document_class);
-    if (!WEBKIT_DOM_IS_DOCUMENT(document->document))
+    if (!document->document || !WEBKIT_DOM_IS_DOCUMENT(document->document))
         luaL_argerror(L, udx, "DOM document no longer valid");
     return document;
+}
+
+static void
+webkit_dom_document_destroy_cb(dom_document_t *document, GObject *doc)
+{
+    document->document = NULL;
+    luaH_uniq_del_ptr(extension.WL, REG_KEY, doc);
 }
 
 gint
@@ -48,6 +55,7 @@ luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc)
     document->document = doc;
 
     luaH_uniq_add_ptr(L, REG_KEY, doc, -1);
+    g_object_weak_ref(G_OBJECT(doc), (GWeakNotify)webkit_dom_document_destroy_cb, document);
 
     return 1;
 }

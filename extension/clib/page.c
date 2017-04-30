@@ -33,7 +33,7 @@ static page_t*
 luaH_check_page(lua_State *L, gint udx)
 {
     page_t *page = luaH_checkudata(L, udx, &page_class);
-    if (!WEBKIT_IS_WEB_PAGE(page->page))
+    if (!page->page || !WEBKIT_IS_WEB_PAGE(page->page))
         luaL_argerror(L, udx, "page no longer valid");
     return page;
 }
@@ -61,7 +61,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
         }
     }
 
-    luaH_uniq_get_ptr(L, REG_KEY, web_page);
+    luaH_page_from_web_page(L, web_page);
     lua_pushstring(L, uri);
     lua_pushvalue(L, -3);
 
@@ -113,7 +113,7 @@ static void
 document_loaded_cb(WebKitWebPage *web_page, page_t *UNUSED(page))
 {
     lua_State *L = extension.WL;
-    luaH_uniq_get_ptr(L, REG_KEY, web_page);
+    luaH_page_from_web_page(L, web_page);
     luaH_object_emit_signal(L, -1, "document-loaded", 0, 0);
     lua_pop(L, 1);
 }
@@ -206,13 +206,11 @@ luaH_page_wrap_js(lua_State *L)
     return 1;
 }
 
-static inline void
-luaH_page_destroy_cb(WebKitWebPage *web_page)
+static void
+webkit_web_page_destroy_cb(page_t *page, GObject *web_page)
 {
-    lua_State *L = extension.WL;
-    lua_pushlightuserdata(L, web_page);
-    luaH_uniq_del(L, REG_KEY, -1);
-    lua_pop(L, 1);
+    page->page = NULL;
+    luaH_uniq_del_ptr(extension.WL, REG_KEY, web_page);
 }
 
 gint
@@ -232,10 +230,9 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
     g_signal_connect(page->page, "document-loaded", G_CALLBACK(document_loaded_cb), page);
 
-    luaH_bind_gobject_ref(L, web_page, -1);
+    luaH_bind_gobject_ref(L, web_page, -1); /* Keep Lua object alive */
     luaH_uniq_add_ptr(L, REG_KEY, web_page, -1);
-    g_object_set_data_full(G_OBJECT(web_page), "page-dummy-destroy-notify", web_page,
-            (GDestroyNotify)luaH_page_destroy_cb);
+    g_object_weak_ref(G_OBJECT(web_page), (GWeakNotify)webkit_web_page_destroy_cb, page);
 
     return 1;
 }
