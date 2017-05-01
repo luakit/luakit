@@ -188,7 +188,9 @@ ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask)
         case G_IO_STATUS_EOF:
             return FALSE;
         case G_IO_STATUS_ERROR:
-            error("g_io_channel_read_chars(): %s", error->message);
+            if (!g_str_equal(ipc->name, "UI"))
+            if (!g_str_equal(error->message, "Connection reset by peer"))
+                error("g_io_channel_read_chars(): %s", error->message);
             g_error_free(error);
             return FALSE;
         default:
