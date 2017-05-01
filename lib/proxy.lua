@@ -158,22 +158,25 @@ end)
 
 new_mode("proxymenu", {
     enter = function (w)
-        local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
-        local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
-        local a = _M.get_active()
         local rows = {{ "Proxy Name", " Server address", title = true },
-            {"  None", "", address = '',
-                fg = (a.address == '' and afg) or ifg,
-                bg = (a.address == '' and abg) or ibg},}
+            {"  None",   "", address = "no_proxy", },
+            {"  System", "", address = "default",  },}
         for _, name in ipairs(_M.get_names()) do
             local address = _M.get(name)
             table.insert(rows, {
                 "  " .. name, " " .. address,
                 name = name, address = lousy.util.escape(address),
-                fg = (a.name == name and afg) or ifg,
-                bg = (a.name == name and abg) or ibg,
             })
         end
+        -- Color menu rows according to the currently used proxy
+        local current_proxy = soup.proxy_uri
+        local afg, ifg = theme.proxy_active_menu_fg, theme.proxy_inactive_menu_fg
+        local abg, ibg = theme.proxy_active_menu_bg, theme.proxy_inactive_menu_bg
+        for i=2,#rows do
+            rows[i].fg = (rows[i].address == current_proxy) and afg or ifg
+            rows[i].bg = (rows[i].address == current_proxy) and abg or ibg
+        end
+
         w.menu:build(rows)
         w:notify("Use j/k to move, d delete, e edit, a add, Return activate.", false)
     end,
@@ -185,7 +188,7 @@ new_mode("proxymenu", {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("proxy", "Add a new proxy entry.",
+    cmd("proxy", "Change the current proxy or add a new proxy entry.",
         function (w, a)
             local params = lousy.util.string.split(a or '')
             if not a then
@@ -194,7 +197,7 @@ add_cmds({
                 local name, address = unpack(params)
                 _M.set(name, address)
             else
-                w:error("Bad usage. Correct format :proxy <name> <address>")
+                w:error("Bad usage. Correct format :proxy or :proxy <name> <address>")
             end
         end),
 })
@@ -212,6 +215,8 @@ add_binds("proxymenu", lousy.util.table.join({
                 update_proxy_indicators()
                 if row.name then
                     w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
+                elseif row.address == "default" then
+                    w:notify("Using system default proxy.")
                 else
                     w:notify("Unset proxy.")
                 end
