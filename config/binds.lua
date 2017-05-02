@@ -716,7 +716,7 @@ add_cmds({
             local file = a or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
             if file then
                 local fd = assert(io.open(file, "w"), "failed to open: " .. file)
-                local html = assert(w.view:eval_js("document.documentElement.outerHTML"), "Unable to get HTML")
+                local html = assert(w.view.source, "Unable to get HTML")
                 assert(fd:write(html), "unable to save html")
                 io.close(fd)
                 w:notify("Dumped HTML to: " .. file)
