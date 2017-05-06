@@ -110,7 +110,6 @@ widget_overlay(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_overlay_index;
     w->newindex = luaH_overlay_newindex;
-    w->destructor = widget_destructor;
 
 #if GTK_CHECK_VERSION(3,2,0)
     w->widget = gtk_overlay_new();

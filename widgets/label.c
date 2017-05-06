@@ -231,7 +231,6 @@ widget_label(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_label_index;
     w->newindex = luaH_label_newindex;
-    w->destructor = widget_destructor;
 
     /* create gtk label widget as main widget */
     w->widget = gtk_label_new(NULL);

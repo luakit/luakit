@@ -62,8 +62,7 @@ luaH_widget_gc(lua_State *L)
     widget_t *w = luaH_checkudata(L, 1, &widget_class);
     if (w->info)
         debug("collecting widget at %p of type '%s'", w, w->info->name);
-    if(w->destructor)
-        w->destructor(w);
+    g_assert(!w->destructor);
     return luaH_object_gc(L);
 }
 
@@ -211,7 +210,6 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         winfo = &widgets_list[i];
         w->info = winfo;
         winfo->wc(w, tok);
-        g_assert(w->destructor);
 
 #if GTK_CHECK_VERSION(3,16,0)
     gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");

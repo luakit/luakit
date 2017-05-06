@@ -1164,7 +1164,6 @@ webview_destructor(widget_t *w)
     d->ipc = NULL;
 
     g_ptr_array_remove(globalconf.webviews, w);
-    gtk_widget_destroy(GTK_WIDGET(d->view));
     g_free(d->uri);
     g_free(d->hover);
     g_object_unref(G_OBJECT(d->user_content));

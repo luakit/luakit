@@ -75,7 +75,6 @@ widget_drawing_area(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_drawing_area_index;
     w->newindex = luaH_drawing_area_newindex;
-    w->destructor = widget_destructor;
 
     /* Store ref to ffi.new() */
     /* FIXME: Should do this before Lua code runs at all, but there's no good

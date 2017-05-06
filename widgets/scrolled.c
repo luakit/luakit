@@ -182,7 +182,6 @@ widget_scrolled(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_scrolled_index;
     w->newindex = luaH_scrolled_newindex;
-    w->destructor = widget_destructor;
 
 #if GTK_CHECK_VERSION(3,2,0)
     w->widget = gtk_scrolled_window_new(NULL, NULL);

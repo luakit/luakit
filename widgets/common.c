@@ -163,10 +163,21 @@ parent_set_cb(GtkWidget *widget, GtkWidget *UNUSED(p), widget_t *w)
 void
 destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
 {
+    /* 1. emit destroy signal */
     lua_State *L = globalconf.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, 1);
+
+    /* 2. Call widget destructor */
+    debug("destroy %p (%s)", w, w->info->name);
+    if (w->destructor)
+        w->destructor(w);
+    w->destructor = NULL;
+    w->widget = NULL;
+
+    /* 3. Allow this Lua instance to be freed */
+    luaH_object_unref(L, w->ref);
 }
 
 gboolean
@@ -382,20 +393,8 @@ gint
 luaH_widget_destroy(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    if (w->destructor)
-        w->destructor(w);
-    w->destructor = NULL;
-    luaH_object_unref(L, w->ref);
+    gtk_widget_destroy(GTK_WIDGET(w->widget));
     return 0;
-}
-
-void
-widget_destructor(widget_t *w)
-{
-    debug("destroy %p (%s)", w, w->info->name);
-    if (w->widget)
-        gtk_widget_destroy(GTK_WIDGET(w->widget));
-    w->widget = NULL;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

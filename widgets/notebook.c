@@ -271,7 +271,6 @@ widget_notebook(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_notebook_index;
     w->newindex = luaH_notebook_newindex;
-    w->destructor = widget_destructor;
 
     /* create and setup notebook widget */
     w->widget = gtk_notebook_new();

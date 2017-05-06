@@ -108,7 +108,6 @@ widget_image(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_image_index;
     w->newindex = luaH_image_newindex;
-    w->destructor = widget_destructor;
 
     w->widget = gtk_image_new();
 

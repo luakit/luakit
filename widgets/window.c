@@ -190,7 +190,6 @@ static void
 window_destructor(widget_t *w)
 {
     g_slice_free(window_data_t, w->data);
-    widget_destructor(w);
 }
 
 widget_t *

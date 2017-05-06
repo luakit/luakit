@@ -73,7 +73,6 @@ widget_eventbox(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_eventbox_index;
     w->newindex = luaH_eventbox_newindex;
-    w->destructor = widget_destructor;
 
     w->widget = gtk_event_box_new();
     gtk_widget_show(w->widget);

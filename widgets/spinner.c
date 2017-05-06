@@ -79,7 +79,6 @@ widget_spinner(widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_spinner_index;
     w->newindex = luaH_spinner_newindex;
-    w->destructor = widget_destructor;
 
     w->widget = gtk_spinner_new();
 
