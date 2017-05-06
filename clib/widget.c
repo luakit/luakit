@@ -148,12 +148,7 @@ luaH_widget_index(lua_State *L)
 
     /* Then call special widget index */
     gint ret;
-    widget_t *widget = luaH_checkudata(L, 1, &widget_class);
-
-    /* Check widget is still alive */
-    if (!widget->destructor)
-        return luaL_error(L, "widget %p (%s) has been destroyed", widget, widget->info->name);
-    g_assert(GTK_IS_WIDGET(widget->widget));
+    widget_t *widget = luaH_checkwidget(L, 1);
 
     /* but only if it's not a GtkWidget property */
     if ((ret = luaH_gobject_index(L, widget_properties, token,
@@ -178,12 +173,7 @@ luaH_widget_newindex(lua_State *L)
     luaH_class_newindex(L);
 
     /* Then call special widget newindex */
-    widget_t *widget = luaH_checkudata(L, 1, &widget_class);
-
-    /* Check widget is still alive */
-    if (!widget->destructor)
-        return luaL_error(L, "widget %p (%s) has been destroyed", widget, widget->info->name);
-    g_assert(GTK_IS_WIDGET(widget->widget));
+    widget_t *widget = luaH_checkwidget(L, 1);
 
 #if GTK_CHECK_VERSION(3,16,0)
     if (token == L_TK_CSS) {
@@ -249,6 +239,7 @@ luaH_widget_get_type(lua_State *L, widget_t *w)
     if (!w->info)
         return 0;
 
+    luaH_checkwidget(L, 1);
     lua_pushstring(L, w->info->name);
     return 1;
 }

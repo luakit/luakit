@@ -97,7 +97,8 @@ luaH_checkwidget(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkudata(L, udx, &widget_class);
     if (!w->destructor)
-        luaL_argerror(L, udx, "using destroyed widget");
+        luaL_error(L, "widget %p (%s) has been destroyed", w, w->info->name);
+    g_assert(GTK_IS_WIDGET(w->widget));
     return w;
 }
 
