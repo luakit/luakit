@@ -29,6 +29,27 @@ luaH_checkstylesheet(lua_State *L, gint idx) {
     return luaH_checkudata(L, idx, &(stylesheet_class));
 }
 
+/* Defined in widgets/webview/stylesheets.c */
+int webview_stylesheet_set_enabled(widget_t *w, lstylesheet_t *stylesheet, gboolean enable);
+
+static gint
+luaH_stylesheet_gc(lua_State *L)
+{
+    lstylesheet_t *stylesheet = luaH_checkstylesheet(L, 1);
+
+    if (stylesheet->stylesheet && globalconf.webviews) {
+        /* Need to remove stylesheet from all webviews */
+        for (unsigned i=0; i<globalconf.webviews->len; i++) {
+            widget_t *w = g_ptr_array_index(globalconf.webviews, i);
+            webview_stylesheet_set_enabled(w, stylesheet, FALSE);
+        }
+        webkit_user_style_sheet_unref(stylesheet->stylesheet);
+    }
+    g_free (stylesheet->source);
+
+    return luaH_object_gc(L);
+}
+
 static gint
 luaH_stylesheet_new(lua_State *L)
 {
@@ -90,7 +111,7 @@ stylesheet_class_setup(lua_State *L)
     {
         LUA_OBJECT_META(stylesheet)
         LUA_CLASS_META
-        { "__gc", luaH_object_gc },
+        { "__gc", luaH_stylesheet_gc },
         { NULL, NULL },
     };
 
