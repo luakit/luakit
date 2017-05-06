@@ -215,6 +215,18 @@ function _M.clear()
     _M.emit_signal("cleared-downloads")
 end
 
+-- If undoclose is loaded, then additionally block these ephemeral tabs from
+-- being saved in the undolist.
+local download_views
+luakit.idle_add(function ()
+    local undoclose = package.loaded.undoclose
+    if not undoclose then return end
+    download_views = setmetatable({}, { __mode = "k" })
+    undoclose.add_signal("save", function (v)
+        if download_views[v] then return false end
+    end)
+end)
+
 -- Catch "download-started" webcontext widget signals (webkit2 API)
 -- returned d is a download_t
 capi.luakit.add_signal("download-start", function (d, v)
@@ -222,6 +234,10 @@ capi.luakit.add_signal("download-start", function (d, v)
 
     if v then
         w = webview.window(v)
+        if v.uri == "about:blank" and #v.history.items == 1 then
+            if download_views then download_views[v] = true end
+            w:close_tab(v)
+        end
     else
         -- Fall back to currently focused window
         for _, ww in pairs(window.bywidget) do
