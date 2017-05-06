@@ -3,6 +3,7 @@
 -- @module styles
 -- @copyright 2016 Aidan Holm
 
+local window = require("window")
 local webview = require("webview")
 local lousy   = require("lousy")
 local lfs     = require("lfs")
@@ -23,7 +24,7 @@ local styles_dir = capi.luakit.data_dir .. "/styles/"
 
 local default_enabled = 1
 
-local stylesheets = {}
+local stylesheets
 
 local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
@@ -191,25 +192,32 @@ local parse_file = function (file)
     return parts
 end
 
+local global_comment = "/* i really want this to be global */"
 local file_looks_like_old_format = function (source)
-    local global_comment = "/* i really want this to be global */"
     return not source:find("@-moz-document",1,true) and not source:lower():find(global_comment)
 end
 
 --- Load the contents of a file as a stylesheet for a given domain.
 -- @tparam string path The path of the file to load.
--- @tparam string domain The domain on which to apply the stylesheet.
-_M.load_file = function (path, domain)
+_M.load_file = function (path)
     if stylesheet == nil then return end
 
     local file = io.open(path, "r")
     local source = file:read("*all")
     file:close()
 
-    if stylesheets[domain] then
-        stylesheets[domain].source = source
-    else
-        stylesheets[domain] = stylesheet{ source = source }
+    if file_looks_like_old_format(source) then
+        msg.error("Not loading stylesheet '%s'", path)
+        return true
+    end
+
+    local parsed = parse_file(source)
+
+    for _, part in ipairs(parsed) do
+        stylesheets[#stylesheets+1] = {
+            ss = stylesheet{ source = part.css },
+            when = part.when
+        }
     end
 end
 
@@ -220,14 +228,77 @@ _M.detect_files = function ()
         msg.info(string.format("Stylesheet directory '%s' doesn't exist", styles_dir))
         return
     end
+
+    for _, stylesheet in ipairs(stylesheets or {}) do
+        stylesheet.ss.source = ""
+    end
+    stylesheets = {}
+
+    local old_stylesheets
+    for filename in lfs.dir(styles_dir) do
+        if string.find(filename, ".css$") then
+            old_stylesheets = _M.load_file(filename) or old_stylesheets
+        end
+    end
+
+    -- Update page appearances
+    for _, ww in pairs(window.bywidget) do
+        for _, v in pairs(ww.tabs.children) do
+            update_stylesheet_applications(v)
+        end
+    end
+
+    if old_stylesheets then
+        msg.error([[Outdated stylesheet format detected!
+
+Some stylesheets appear to be using the old stylesheet system: no
+@-moz-document rules were found. If this file is intended to be global
+(applying to all pages, including luakit:// pages), add the CSS comment
+
+    %s
+
+anywhere to the file (case-insensitive).
+
+This mechanism is to prevent parsing old stylesheets as new ones; the
+unexpected interaction of many stylesheets on websites tends to have
+strange effects.
+
+To automatically upgrade your files, you can run :styles-rewrite-old-files
+This command wraps the contents of the file in a @-moz-document domain()
+block, with the domain based on the filename. A backup file is created.
+
+]], global_comment)
+    end
+
+    lfs.chdir(cwd)
+end
+
+local rewrite_file_format = function ()
+    local cwd = lfs.currentdir()
+    if not lfs.chdir(styles_dir) then
+        msg.info(string.format("Stylesheet directory '%s' doesn't exist", styles_dir))
+        return
+    end
     for filename in lfs.dir(styles_dir) do
         if string.find(filename, ".css$") then
             -- Get the domain name from the filename
             local domain = string.sub(filename, 1, #filename - 4)
             if string.sub(domain, 1, 1) == "*" then
-                domain = "." .. string.sub(domain, 2)
+                domain = string.sub(domain, 2)
             end
-            _M.load_file(filename, domain)
+            -- Get source
+            local file = assert(io.open(filename, "r"))
+            local source = file:read("*all")
+            file:close()
+
+            if file_looks_like_old_format(source) then
+                assert(os.rename(filename, filename .. ".backup"))
+                msg.info("Rewriting CSS file '%s'", filename)
+                local new_source = ('@-moz-document domain("%s") {\n\n%s\n}\n'):format(domain, source)
+                local new_file = assert(io.open(filename, "w"))
+                new_file:write(new_source)
+                new_file:close()
+            end
         end
     end
     lfs.chdir(cwd)
@@ -239,6 +310,11 @@ add_cmds({
         w:notify("styles: Reloading files...")
         _M.detect_files()
         w:notify("styles: Reloading files complete.")
+    end),
+    cmd({"styles-rewrite-old-files"}, "Rewrite user stylesheets using old format.", function (w)
+        w:notify("styles: Rewriting files...")
+        rewrite_file_format()
+        w:notify("styles: Rewriting files complete.")
     end),
 })
 
