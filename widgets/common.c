@@ -160,6 +160,15 @@ parent_set_cb(GtkWidget *widget, GtkWidget *UNUSED(p), widget_t *w)
     lua_pop(L, 1);
 }
 
+void
+destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
+{
+    lua_State *L = globalconf.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
+    lua_pop(L, 1);
+}
+
 gboolean
 true_cb()
 {

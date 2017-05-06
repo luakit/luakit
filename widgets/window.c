@@ -43,15 +43,10 @@ luaH_checkwindow(lua_State *L, gint udx)
 #define luaH_checkwindata(L, udx) ((window_data_t*)(luaH_checkwindow(L, udx)->data))
 
 static void
-destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
+destroy_win_cb(GtkWidget* UNUSED(win), widget_t *w)
 {
     /* remove window from global windows list */
     g_ptr_array_remove(globalconf.windows, w);
-
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
-    lua_pop(L, 1);
 }
 
 static gint
@@ -224,9 +219,9 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect(G_OBJECT(w->widget),
+      "signal::destroy",            G_CALLBACK(destroy_win_cb),  w,
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",                G_CALLBACK(add_cb),          w,
-      "signal::destroy",            G_CALLBACK(destroy_cb),      w,
       "signal::delete-event",       G_CALLBACK(can_close_cb),    w,
       "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
       "signal::remove",             G_CALLBACK(remove_cb),       w,

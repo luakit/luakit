@@ -76,6 +76,7 @@
       return luaH_widget_get_children(L, widget);
 
 #define LUAKIT_WIDGET_SIGNAL_COMMON(w)                       \
+    "signal::destroy",         G_CALLBACK(destroy_cb),    w, \
     "signal::size-allocate",   G_CALLBACK(resize_cb),     w, \
     "signal::focus-in-event",  G_CALLBACK(focus_cb),      w, \
     "signal::focus-out-event", G_CALLBACK(focus_cb),      w, \
@@ -112,6 +113,7 @@ void add_cb(GtkContainer*, GtkWidget*, widget_t*);
 void parent_set_cb(GtkWidget*, GtkWidget*, widget_t*);
 void resize_cb(GtkWidget*, GdkRectangle *, widget_t *);
 void remove_cb(GtkContainer*, GtkWidget*, widget_t*);
+void destroy_cb(GtkWidget* UNUSED(win), widget_t *w);
 void widget_destructor(widget_t*);
 
 #endif
