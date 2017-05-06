@@ -70,6 +70,7 @@ local on_tab_close = function (w, view)
             self_uid = uid_from_view(view),
             after_uid = (index ~= 1) and uid_from_view(w.tabs[index-1]),
         }
+        view_uids[view] = nil
         if view.uri ~= hist_item.uri then tab.next_uri = view.uri end
     end
     table.insert(w.closed_tabs, tab)
