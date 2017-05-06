@@ -118,6 +118,67 @@ function webview.methods.styles_toggle(view, _)
     db_set(view.uri, enabled)
 end
 
+local parse_moz_document_subrule = function (file)
+    local word, param, i
+    word, i = file:match("^%s+([%w-]+)%s*()")
+    file = file:sub(i)
+    param, i = file:match("(%b())()")
+    file = file:sub(i)
+    param = param:match("^%(['\"]?(.-)['\"]?%)$")
+    return file, word, param
+end
+
+local parse_moz_document_section = function (file, parts)
+    file = file:gsub("^%s*%@%-moz%-document", "")
+    local when = {}
+    local word, param
+
+    while true do
+        -- Strip off a subrule
+        file, word, param = parse_moz_document_subrule(file)
+        local valid_words = { url = true, ["url-prefix"] = true, domain = true, regexp = true }
+
+        if valid_words[word] then
+            if word == "regexp" then param = regex{pattern=param} end
+            when[#when+1] = {word, param}
+        else
+            msg.warn("Ignoring unrecognized @-moz-document rule '%s'", word)
+        end
+
+        if file:match("^%s*,%s*") then
+            file = file:sub(file:find(",")+1)
+        else
+            break
+        end
+    end
+    local css, i = file:match("(%b{})()")
+    css = css:sub(2, -2)
+    file = file:sub(i)
+    parts[#parts+1] = { when = when, css = css }
+
+    return file
+end
+
+local parse_file = function (file)
+    -- First, strip comments and @namespace
+    file = file:gsub("%/%*.-%*%/","")
+    file = file:gsub("%@namespace%s*url%b();?", "")
+    -- Next, match moz document rules
+    local parts = {}
+    while file:find("^%s*%@%-moz%-document") do
+        file = parse_moz_document_section(file, parts)
+    end
+    if file:find("%S") then
+        parts[#parts+1] = { when = {"url-prefix", ""}, css = file }
+    end
+    return parts
+end
+
+local file_looks_like_old_format = function (source)
+    local global_comment = "/* i really want this to be global */"
+    return not source:find("@-moz-document",1,true) and not source:lower():find(global_comment)
+end
+
 --- Load the contents of a file as a stylesheet for a given domain.
 -- @tparam string path The path of the file to load.
 -- @tparam string domain The domain on which to apply the stylesheet.
