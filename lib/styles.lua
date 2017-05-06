@@ -42,19 +42,13 @@ local query_insert = db:compile [[ INSERT INTO by_domain VALUES (NULL, ?, ?) ]]
 local query_update = db:compile [[ UPDATE by_domain SET enabled = ? WHERE id == ?  ]]
 local query_select = db:compile [[ SELECT * FROM by_domain WHERE domain == ?  ]]
 
-local function string_starts(str, prefix)
-   return string.sub(str, 1, string.len(prefix)) == prefix
-end
-
 local function domain_from_uri(uri)
-    if not uri then
-        return nil
-    elseif uri == "about:blank" then
-        return "about:blank"
-    elseif string_starts(uri, "file://") then
-        return "file"
+    if not uri or uri == "" then return nil end
+    uri = assert(lousy.uri.parse(uri), "invalid uri")
+    -- Return the scheme for non-http/https URIs
+    if uri.scheme ~= "http" and uri.scheme ~= "https" then
+        return uri.scheme
     else
-        uri = assert(lousy.uri.parse(uri), "invalid uri")
         return string.lower(uri.host)
     end
 end
