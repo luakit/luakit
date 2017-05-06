@@ -27,6 +27,7 @@
 #include <webkit2/webkit2.h>
 
 gchar *proxy_uri;
+GRegex *scheme_reg;
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
@@ -116,11 +117,11 @@ luaH_soup_parse_uri(lua_State *L)
     gchar *str = (gchar*)luaL_checkstring(L, 1);
 
     /* check for blank uris */
-    if (!str[0] || !g_strcmp0(str, "about:blank"))
+    if (!str[0])
         return 0;
 
     /* default to http:// scheme */
-    if (!g_strrstr(str, "://"))
+    if (!g_regex_match(scheme_reg, str, 0, 0))
         str = g_strdup_printf("http://%s", str);
     else
         str = g_strdup(str);
@@ -208,6 +209,8 @@ soup_lib_setup(lua_State *L)
 
     /* Initial proxy settings */
     proxy_uri = proxy_uri ?: g_strdup("default");
+
+    scheme_reg = scheme_reg ?: g_regex_new("^[a-z][a-z0-9\\+\\-\\.]*:", G_REGEX_OPTIMIZE, 0, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
