@@ -80,9 +80,9 @@ end
 
 local function domains_from_uri(uri)
     local domain = domain_from_uri(uri)
-    local domains = { domain }
+    local domains = { }
     while domain do
-        domains[#domains + 1] = "." .. domain
+        domains[#domains + 1] = domain
         domain = string.match(domain, "%.(.+)")
     end
     return domains
