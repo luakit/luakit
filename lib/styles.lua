@@ -117,6 +117,15 @@ local function update_stylesheet_applications(v)
     end
 end
 
+local function update_all_stylesheet_applications()
+    -- Update page appearances
+    for _, ww in pairs(window.bywidget) do
+        for _, v in pairs(ww.tabs.children) do
+            update_stylesheet_applications(v)
+        end
+    end
+end
+
 webview.add_signal("init", function (view)
     view:add_signal("stylesheet", function (v)
         update_stylesheet_applications(v)
@@ -134,6 +143,7 @@ end
 function webview.methods.styles_toggle(view, _)
     local enabled = 1 - db_get(view.uri)
     db_set(view.uri, enabled)
+    update_all_stylesheet_applications()
 end
 
 local parse_moz_document_subrule = function (file)
@@ -241,12 +251,7 @@ _M.detect_files = function ()
         end
     end
 
-    -- Update page appearances
-    for _, ww in pairs(window.bywidget) do
-        for _, v in pairs(ww.tabs.children) do
-            update_stylesheet_applications(v)
-        end
-    end
+    update_all_stylesheet_applications()
 
     if old_stylesheets then
         msg.error([[Outdated stylesheet format detected!
