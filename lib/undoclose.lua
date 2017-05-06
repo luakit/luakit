@@ -14,6 +14,8 @@ local session = require("session")
 
 local _M = {}
 
+lousy.signal.setup(_M, true)
+
 local reopening = {}
 
 -- Map of view widgets to UIDs that are restored after reopening a web view
@@ -59,7 +61,7 @@ local on_tab_close = function (w, view)
         local title = lousy.util.escape(hist_item.title) or ""
 
         -- Don't save the "New Tab" page in undoclose history
-        if string.match(view.uri or "", "^luakit://newtab/?") and #hist.items == 1 then
+        if _M.emit_signal("save", view) == false then
             return
         end
 

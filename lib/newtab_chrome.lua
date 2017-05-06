@@ -53,6 +53,17 @@ chrome.add("newtab", function ()
     return load_file_contents(_M.new_tab_file) or _M.new_tab_src
 end)
 
+luakit.idle_add(function ()
+    local undoclose = package.loaded.undoclose
+    if not undoclose then return end
+    undoclose.add_signal("save", function (view)
+        local uri, hist = view.uri or "", view.history
+        if uri:match("^luakit://newtab/?") and #hist.items == 1 then
+            return false
+        end
+    end)
+end)
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
