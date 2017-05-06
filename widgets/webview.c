@@ -743,6 +743,10 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
     token = webview_translate_old_token(token);
 
+    /* HACK to prevent webview_get_source_finished() from segfaulting */
+    if (token == L_TK_DESTROY)
+        d->is_alive = FALSE;
+
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       PB_CASE(INSPECTOR,            d->inspector_open);
