@@ -155,8 +155,8 @@ local init_funcs = {
     -- Attach notebook widget signals
     notebook_signals = function (w)
         w.tabs:add_signal("switch-page", function ()
-            w.view = nil
             w:set_mode()
+            w.view = nil
             -- Update widgets after tab switch
             luakit.idle_add(function ()
                 -- Cancel if window already destroyed
