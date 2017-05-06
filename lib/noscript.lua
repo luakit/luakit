@@ -164,31 +164,44 @@ window.add_signal("init", function (w)
     r.noscript.font = theme.font
 end)
 
+local update_webview_blocking = function (v)
+    local es = v:emit_signal("enable-scripts")
+    local ep = v:emit_signal("enable-plugins")
+    local vns = {
+        enable_scripts_domain = es and "override" or nil,
+        enable_plugins_domain = ep and "override" or nil,
+    }
+    if es == nil or ep == nil then
+        local s, p, matched_domain = lookup_domain(v.uri)
+        if es == nil then es = s; vns.enable_scripts_domain = matched_domain end
+        if ep == nil then ep = p; vns.enable_plugins_domain = matched_domain end
+    end
+    vns.enable_scripts = es
+    vns.enable_plugins = ep
+    v.enable_scripts = es
+    v.enable_plugins = ep
+    -- Update indicator
+    view_noscript_state[v] = vns
+    noscript_indicator_update(v)
+    -- Workaround for https://github.com/aidanholm/luakit/issues/250
+    v.stylesheets[noscript_ss] = es
+end
+
 webview.add_signal("init", function (view)
-    view:add_signal("load-status", function (v, status)
-        if status == "provisional" or status == "redirected" then
-            local es = v:emit_signal("enable-scripts")
-            local ep = v:emit_signal("enable-plugins")
-            local vns = {
-                enable_scripts_domain = es and "override" or nil,
-                enable_plugins_domain = ep and "override" or nil,
-            }
-            if es == nil or ep == nil then
-                local s, p, matched_domain = lookup_domain(v.uri)
-                if es == nil then es = s; vns.enable_scripts_domain = matched_domain end
-                if ep == nil then ep = p; vns.enable_plugins_domain = matched_domain end
-            end
-            vns.enable_scripts = es
-            vns.enable_plugins = ep
-            view.enable_scripts = es
-            view.enable_plugins = ep
-            -- Update indicator
-            view_noscript_state[v] = vns
-            noscript_indicator_update(v)
-            -- Workaround for https://github.com/aidanholm/luakit/issues/250
-            v.stylesheets[noscript_ss] = es
+    -- Update on new resource load
+    view:add_signal("policy-decided", function (v, _, _, decision)
+        if decision == "use" then
+            update_webview_blocking(v)
         end
     end)
+
+    -- Update on history navigation
+    view:add_signal("load-status", function (v, status)
+        if status == "committed" then
+            update_webview_blocking(v)
+        end
+    end)
+
     view:add_signal("switched-page", function (v)
         noscript_indicator_update(v)
     end)
