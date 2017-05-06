@@ -27,8 +27,6 @@
 gint
 luaH_traceback(lua_State *L, gint min_level)
 {
-    gint top = lua_gettop(L);
-
     lua_Debug ar;
     gint max_level;
     gint loc_pad = 0;
@@ -55,6 +53,7 @@ luaH_traceback(lua_State *L, gint min_level)
         if (cur_pad > loc_pad) loc_pad = cur_pad;
     }
 
+    GString *tb = g_string_new("");
     gint level_pad = LENF("%d", max_level);
 
     for (gint level = min_level; level <= max_level; level++) {
@@ -63,39 +62,34 @@ luaH_traceback(lua_State *L, gint min_level)
 
         /* Current stack level */
         gint shown_level = level - min_level + 1;
-        lua_pushliteral(L, ANSI_COLOR_GRAY "(");
-        for (gint i = level_pad - LENF("%d", shown_level); i > 0; i--)
-            lua_pushliteral(L, " ");
-        lua_pushinteger(L, shown_level);
-        lua_pushliteral(L, ")" ANSI_COLOR_RESET " ");
+        g_string_append_printf(tb, ANSI_COLOR_GRAY "(%*d)" ANSI_COLOR_RESET " ",
+                level_pad, shown_level);
 
         /* Current location, padded */
         if (g_str_equal(ar.what, "C")) {
-            lua_pushliteral(L, "[C]");
-            for (gint i = loc_pad - strlen("[C]"); i > 0; i--)
-                lua_pushliteral(L, " ");
+            g_string_append_printf(tb, "%-*s", loc_pad, "[C]");
         } else {
             const char *src = AR_SRC(ar);
-            lua_pushstring(L, src);
-            lua_pushliteral(L, ":");
-            lua_pushinteger(L, ar.currentline);
-            for (gint i = loc_pad - LENF("%s:%d", src, ar.currentline); i > 0; i--)
-                lua_pushliteral(L, " ");
+            int n;
+            g_string_append_printf(tb, "%s:%d%n", src, ar.currentline, &n);
+            g_string_append_printf(tb, "%*.*s", loc_pad-n, loc_pad-n, "");
         }
 
         /* Function name */
         if (g_str_equal(ar.what, "main")) {
-            lua_pushliteral(L, ANSI_COLOR_GRAY " in main chunk" ANSI_COLOR_RESET);
+            g_string_append(tb, ANSI_COLOR_GRAY " in main chunk" ANSI_COLOR_RESET);
         } else {
-            lua_pushliteral(L, ANSI_COLOR_GRAY " in function " ANSI_COLOR_RESET);
-            lua_pushstring(L, ar.name ?: "[anonymous]");
+            g_string_append_printf(tb, ANSI_COLOR_GRAY " in function " ANSI_COLOR_RESET "%s",
+                    ar.name ?: "[anonymous]");
         }
 
-        if (level != max_level)
-            lua_pushliteral(L, "\n");
+        if (level != max_level) {
+            g_string_append(tb, "\n");
+        }
     }
 
-    lua_concat(L, lua_gettop(L) - top);
+    lua_pushstring(L, tb->str);
+    g_string_free(tb, TRUE);
     return 1;
 }
 
@@ -125,6 +119,11 @@ extract_error_message(lua_State *L, const gchar *message)
 gint
 luaH_dofunction_on_error(lua_State *L)
 {
+    /* Guaranteed stack availability: LUA_MINSTACK = 20
+     * This function's stack use is five items, so even on stack overflow
+     * there should be no problem producing a full stack trace. */
+    g_assert(lua_checkstack(L, 5));
+
     lua_pushliteral(L, "Lua error: ");
     lua_pushstring(L, extract_error_message(L, lua_tostring(L, -2)));
 
