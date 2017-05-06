@@ -70,6 +70,16 @@ T.test_idle_add_del = function ()
         "idle_remove removed incorrect number of callbacks.")
 end
 
+T.test_register_scheme = function ()
+    assert.has_error(function () luakit.register_scheme("") end)
+    assert.has_error(function () luakit.register_scheme("http") end)
+    assert.has_error(function () luakit.register_scheme("https") end)
+    assert.has_error(function () luakit.register_scheme("ABC") end)
+    assert.has_error(function () luakit.register_scheme(" ") end)
+    luakit.register_scheme("test-scheme-name")
+    luakit.register_scheme("a-.++...--8970d-d-")
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

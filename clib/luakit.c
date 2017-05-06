@@ -551,6 +551,8 @@ luaH_luakit_register_scheme(lua_State *L)
         return luaL_error(L, "scheme cannot be empty");
     if (g_str_equal(scheme, "http") || g_str_equal(scheme, "https"))
         return luaL_error(L, "scheme cannot be 'http' or 'https'");
+    if (!g_regex_match_simple("^[a-z][a-z0-9\\+\\-\\.]*$", scheme, 0, 0))
+        return luaL_error(L, "scheme must match [a-z][a-z0-9\\+\\-\\.]*");
 
     webkit_web_context_register_uri_scheme(web_context_get(), scheme,
             (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb,
