@@ -88,20 +88,37 @@ local function domains_from_uri(uri)
     return domains
 end
 
+local function update_stylesheet_application(view, domains, stylesheet, enabled)
+    local match
+    if stylesheet.when then
+        for _, w in ipairs(stylesheet.when) do
+            match = match or (w[1] == "url" and w[2] == view.uri)
+            match = match or (w[1] == "url-prefix" and view.uri:find(w[2],1,true) == 1)
+            match = match or (w[1] == "regexp" and w[2]:match(view.uri))
+
+            if w[1] == "domain" then
+                for _, domain in ipairs(domains) do
+                    if w[2] == domain then match = true end
+                end
+            end
+        end
+    end
+    view.stylesheets[stylesheet.ss] = match and enabled
+end
+
+local function update_stylesheet_applications(v)
+    local domains = domains_from_uri(v.uri)
+    local enabled = v:emit_signal("enable-styles")
+    if enabled == nil then enabled = db_get(v.uri) ~= 0 end
+
+    for _, s in ipairs(stylesheets or {}) do
+        update_stylesheet_application(v, domains, s, enabled)
+    end
+end
+
 webview.add_signal("init", function (view)
     view:add_signal("stylesheet", function (v)
-        local domains = domains_from_uri(v.uri)
-        domains[#domains + 1] = "all"
-        local enabled = v:emit_signal("enable-styles")
-        if enabled == nil then enabled = db_get(v.uri) ~= 0 end
-
-        for k, s in pairs(stylesheets) do
-            local match
-            for _, domain in ipairs(domains) do
-                if k == domain then match = domain end
-            end
-            v.stylesheets[s] = match ~= nil and enabled
-        end
+        update_stylesheet_applications(v)
     end)
 end)
 
