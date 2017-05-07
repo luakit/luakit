@@ -113,12 +113,29 @@ local function update_stylesheet_applications(v)
     end
 end
 
-local menu_row_for_stylesheet = function (stylesheet)
+local menu_row_for_stylesheet = function (w, stylesheet)
     local theme = lousy.theme.get()
     local title = stylesheet.file
-    local state = stylesheet.enabled and "Enabled" or "Disabled"
-    local fg = stylesheet.enabled and theme.menu_enabled_fg or theme.menu_disabled_fg
-    local bg = stylesheet.enabled and theme.menu_enabled_bg or theme.menu_disabled_bg
+    local view = w.view
+
+    -- Determine whether stylesheet is active for the current view
+    local enabled, active = stylesheet.enabled, false
+    if enabled then
+        for _, part in ipairs(stylesheet.parts) do
+            active = active or view.stylesheets[part.ss]
+        end
+    end
+
+    -- Determine state label and row colours
+    local state, fg, bg
+    if not enabled then
+        state, fg, bg = "Disabled", theme.menu_disabled_fg, theme.menu_disabled_bg
+    elseif not active then
+        state, fg, bg = "Enabled", theme.menu_enabled_fg, theme.menu_enabled_bg
+    else
+        state, fg, bg = "Active", theme.menu_active_fg, theme.menu_active_bg
+    end
+
     return { title, state, stylesheet = stylesheet, fg = fg, bg = bg }
 end
 
@@ -129,7 +146,7 @@ local function update_stylesheet_menus()
             assert(stylesheets_menu_rows[w])
             local rows = stylesheets_menu_rows[w]
             for i, stylesheet in ipairs(stylesheets) do
-                local rep = menu_row_for_stylesheet(stylesheet)
+                local rep = menu_row_for_stylesheet(w, stylesheet)
                 for j in ipairs(rep) do
                     rows[i+1][j] = rep[j]
                 end
@@ -351,7 +368,7 @@ new_mode("styles-list", {
     enter = function (w)
         local rows = {{ "Stylesheets", "State", title = true }}
         for _, stylesheet in ipairs(stylesheets) do
-            table.insert(rows, menu_row_for_stylesheet(stylesheet))
+            table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
         end
         if #rows == 1 then
             w:notify("No userstyles installed.")
