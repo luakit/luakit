@@ -139,21 +139,21 @@ local menu_row_for_stylesheet = function (w, stylesheet)
     return { title, state, stylesheet = stylesheet, fg = fg, bg = bg }
 end
 
+local function update_stylesheet_menu_for_w(w)
+    assert(stylesheets_menu_rows[w])
+    local rows = stylesheets_menu_rows[w]
+    for i=2,#rows do
+        local row, rep = rows[i], menu_row_for_stylesheet(w, rows[i].stylesheet)
+        for k, v in pairs(rep) do row[k] = v end
+    end
+    w.menu:update()
+end
+
 local function update_stylesheet_menus()
     -- Update any windows in styles-list mode
     for _, w in pairs(window.bywidget) do
         if w:is_mode("styles-list") then
-            assert(stylesheets_menu_rows[w])
-            local rows = stylesheets_menu_rows[w]
-            for i, stylesheet in ipairs(stylesheets) do
-                local rep = menu_row_for_stylesheet(w, stylesheet)
-                for j in ipairs(rep) do
-                    rows[i+1][j] = rep[j]
-                end
-                rows[i+1].fg = rep.fg
-                rows[i+1].bg = rep.bg
-            end
-            w.menu:update()
+            update_stylesheet_menu_for_w(w)
         end
     end
 end
