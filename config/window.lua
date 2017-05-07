@@ -647,15 +647,12 @@ window.methods = {
         end
 
         -- Get new config path
-        local conf
-        if luakit.confpath ~= "/etc/xdg/luakit/rc.lua" and os.exists(luakit.confpath) then
-            conf = luakit.confpath
-        end
+        local conf = assert(luakit.confpath)
 
         -- Check config has valid syntax
         local cmd = table.concat(args, " ")
-        if luakit.spawn_sync(cmd .. " -k") ~= 0 then
-            return w:error("Cannot restart, syntax error in configuration file"..((conf and ": "..conf) or "."))
+        if luakit.spawn_sync(cmd .. " -k -c " .. conf) ~= 0 then
+            return w:error("Cannot restart, syntax error in configuration file: "..conf)
         end
 
         -- Save session.
