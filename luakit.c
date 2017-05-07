@@ -116,7 +116,8 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     /* check config syntax and exit */
     if (check_only) {
         init_directories();
-        if (!luaH_parserc(globalconf.confpath, FALSE, uris)) {
+        luaH_init(NULL);
+        if (!luaH_parserc(globalconf.confpath, FALSE)) {
             g_fprintf(stderr, "Confiuration file syntax error.\n");
             exit(EXIT_FAILURE);
         } else {
@@ -213,9 +214,10 @@ main(gint argc, gchar *argv[])
     init_directories();
     web_context_init();
     ipc_init();
+    luaH_init(uris);
 
     /* parse and run configuration file */
-    if (!luaH_parserc(globalconf.confpath, TRUE, uris))
+    if (!luaH_parserc(globalconf.confpath, TRUE))
         fatal("couldn't find rc file");
 
     if (!globalconf.windows->len)

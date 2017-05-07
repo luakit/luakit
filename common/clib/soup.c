@@ -200,17 +200,15 @@ soup_lib_setup(lua_State *L)
     };
 
     /* create signals array */
-    if (soup_class.signals)
-        signal_destroy(soup_class.signals);
     soup_class.signals = signal_new();
 
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
 
     /* Initial proxy settings */
-    proxy_uri = proxy_uri ?: g_strdup("default");
+    proxy_uri = g_strdup("default");
 
-    scheme_reg = scheme_reg ?: g_regex_new("^[a-z][a-z0-9\\+\\-\\.]*:", G_REGEX_OPTIMIZE, 0, NULL);
+    scheme_reg = g_regex_new("^[a-z][a-z0-9\\+\\-\\.]*:", G_REGEX_OPTIMIZE, 0, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
