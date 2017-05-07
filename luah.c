@@ -42,6 +42,7 @@
 
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
 
 void
 luaH_modifier_table_push(lua_State *L, guint state) {
@@ -212,20 +213,44 @@ luaH_parserc(const gchar *confpath, gboolean run, gchar **uris)
     for(; *config_dirs; config_dirs++)
         g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "rc.lua", NULL));
 
-    const gchar *path;
-    for (guint i = 0; i < paths->len; i++) {
-        path = paths->pdata[i];
-        if (file_exists(path)) {
-            if (i > 0)
-                warn("Falling back to rc file: %s", path);
-            if(luaH_loadrc(path, run, uris)) {
-                globalconf.confpath = g_strdup(path);
-                ret = TRUE;
-                goto bailout;
-            } else if(!run)
-                goto bailout;
-        }
-    }
+    /* get continuation variable; bail out if invalid */
+    char *i_str = getenv("LUAKIT_NEXT_CONFIG_INDEX");
+    gint i = i_str ? atoi(i_str) : 0;
+    if (i_str && (i <= 0 || i >= (gint)paths->len))
+        goto bailout;
+
+    /* attempt to load the indicated config file */
+    const gchar *path = paths->pdata[i++];
+    if (!file_exists(path))
+        verbose("rc file '%s' does not exist", path);
+    else if (luaH_loadrc(path, run, uris)) {
+        setenv("LUAKIT_NEXT_CONFIG_INDEX", "", TRUE);
+        globalconf.confpath = g_strdup(path);
+        ret = TRUE;
+        goto bailout;
+    } else if (i == (gint)paths->len) {
+        warn("loading rc '%s' failed", path);
+        goto bailout;
+    } else
+        warn("loading rc '%s' failed, falling back...", path);
+
+    /* set continuation variable for replacement process */
+    i_str = g_strdup_printf("%i", i);
+    setenv("LUAKIT_NEXT_CONFIG_INDEX", i_str, TRUE);
+    g_free(i_str);
+
+    /* exec path: escape spaces (why?) */
+    gchar **parts = g_strsplit(globalconf.execpath, " ", -1);
+    gchar *escaped_execpath = g_strjoinv("\\ ", parts);
+    g_strfreev(parts);
+
+    /* rebuild argv */
+    GPtrArray *argv = globalconf.argv;
+    g_ptr_array_insert(argv, 0, escaped_execpath);
+    g_ptr_array_add(argv, NULL);
+
+    verbose("exec: %s", g_strjoinv(" ", (gchar**)argv->pdata));
+    execvp(escaped_execpath, (gchar**)argv->pdata);
 
 bailout:
 
