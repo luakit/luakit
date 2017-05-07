@@ -74,7 +74,7 @@ local function update(menu)
                 while j > 0 do
                     local r = d.rows[j]
                     -- Only check rows with same number of columns
-                    if r.ncols ~= row.ncols then break end
+                    if #r ~= #row then break end
                     -- Check if title row
                     if r.title then
                         row, index = r, j
@@ -96,7 +96,7 @@ local function update(menu)
             end
             if rw.ebox.bg ~= rbg then rw.ebox.bg = rbg end
 
-            for c = 1, math.max(row.ncols, #(rw.cols)) do
+            for c = 1, math.max(#row, #(rw.cols)) do
                 -- Get column text
                 local text = row[c]
                 text = (type(text) == "function" and text(row)) or text
@@ -146,7 +146,6 @@ local function build(menu, rows)
     for _, row in ipairs(rows) do
         assert(type(row) == "table", "invalid row in rows table")
         assert(#row >= 1, "empty row")
-        row.ncols = #row
     end
 
     d.rows = rows
