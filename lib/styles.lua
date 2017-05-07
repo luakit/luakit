@@ -25,7 +25,6 @@ local _M = {}
 local styles_dir = capi.luakit.data_dir .. "/styles/"
 
 local stylesheets
-local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
 
 local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
@@ -139,12 +138,23 @@ local menu_row_for_stylesheet = function (w, stylesheet)
     return { title, state, stylesheet = stylesheet, fg = fg, bg = bg }
 end
 
+-- Routines to build and update stylesheet menus per-window
+
+local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
+
+local function create_stylesheet_menu_for_w(w)
+    local rows = {{ "Stylesheets", "State", title = true }}
+    for _, stylesheet in ipairs(stylesheets) do
+        table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
+    end
+    w.menu:build(rows)
+    stylesheets_menu_rows[w] = rows
+end
+
 local function update_stylesheet_menu_for_w(w)
-    assert(stylesheets_menu_rows[w])
-    local rows = stylesheets_menu_rows[w]
+    local rows = assert(stylesheets_menu_rows[w])
     for i=2,#rows do
-        local row, rep = rows[i], menu_row_for_stylesheet(w, rows[i].stylesheet)
-        for k, v in pairs(rep) do row[k] = v end
+        rows[i] = menu_row_for_stylesheet(w, rows[i].stylesheet)
     end
     w.menu:update()
 end
@@ -366,21 +376,15 @@ add_cmds({
 -- Add mode to display all userscripts in menu
 new_mode("styles-list", {
     enter = function (w)
-        local rows = {{ "Stylesheets", "State", title = true }}
-        for _, stylesheet in ipairs(stylesheets) do
-            table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
-        end
-        if #rows == 1 then
+        if #stylesheets == 0 then
             w:notify("No userstyles installed.")
-            return
+        else
+            create_stylesheet_menu_for_w(w)
+            w:notify("Use j/k to move, e edit, <space> enable/disable.", false)
         end
-        stylesheets_menu_rows[w] = rows
-        w.menu:build(rows)
-        w:notify("Use j/k to move, e edit, <space> enable/disable.", false)
     end,
 
     leave = function (w)
-        stylesheets_menu_rows[w] = nil
         w.menu:hide()
     end,
 })
