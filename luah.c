@@ -223,7 +223,7 @@ luaH_parserc(const gchar *confpath, gboolean run)
     if (!file_exists(path))
         verbose("rc file '%s' does not exist", path);
     else if (luaH_loadrc(path, run)) {
-        setenv("LUAKIT_NEXT_CONFIG_INDEX", "", TRUE);
+        unsetenv("LUAKIT_NEXT_CONFIG_INDEX");
         globalconf.confpath = g_strdup(path);
         ret = TRUE;
         goto bailout;
