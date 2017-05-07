@@ -83,8 +83,8 @@ _M.load = function (delete, file)
     local fh = io.open(file, "rb")
     local state = pickle.unpickle(fh:read("*all"))
     io.close(fh)
-    -- Delete file
-    if delete ~= false then rm(file) end
+    -- Delete file on idle (i.e. only if config loads successfully)
+    if delete ~= false then luakit.idle_add(function() rm(file) end) end
 
     return state
 end
