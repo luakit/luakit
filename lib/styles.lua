@@ -10,7 +10,9 @@ local lfs     = require("lfs")
 local editor  = require("editor")
 local globals = require("globals")
 local binds = require("binds")
+local new_mode = require("modes").new_mode
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local menu_binds = binds.menu_binds
 local key     = lousy.bind.key
 
 local capi = {
@@ -22,25 +24,42 @@ local _M = {}
 
 local styles_dir = capi.luakit.data_dir .. "/styles/"
 
-local default_enabled = 1
-
 local stylesheets
+local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
 
 local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 
 local query_create = db:compile [[
-    CREATE TABLE IF NOT EXISTS by_domain (
+    CREATE TABLE IF NOT EXISTS by_file (
         id INTEGER PRIMARY KEY,
-        domain TEXT,
+        file TEXT,
         enabled INTEGER
     );]]
 
 query_create:exec()
 
-local query_insert = db:compile [[ INSERT INTO by_domain VALUES (NULL, ?, ?) ]]
-local query_update = db:compile [[ UPDATE by_domain SET enabled = ? WHERE id == ?  ]]
-local query_select = db:compile [[ SELECT * FROM by_domain WHERE domain == ?  ]]
+local query_insert = db:compile [[ INSERT INTO by_file VALUES (NULL, ?, ?) ]]
+local query_update = db:compile [[ UPDATE by_file SET enabled = ? WHERE id == ?  ]]
+local query_select = db:compile [[ SELECT * FROM by_file WHERE file == ?  ]]
+
+local function db_get(file)
+    assert(file)
+    local rows = query_select:exec{file}
+    return (rows[1] and rows[1].enabled or 1) ~= 0
+end
+
+local function db_set(file, enabled)
+    assert(file)
+    local rows = query_select:exec{file}
+    if rows[1] then
+        query_update:exec{enabled, rows[1].id}
+    else
+        query_insert:exec{file, enabled}
+    end
+end
+
+-- Routines to extract an array of domain names from a URI
 
 local function domain_from_uri(uri)
     if not uri or uri == "" then return nil end
@@ -50,26 +69,6 @@ local function domain_from_uri(uri)
         return uri.scheme
     else
         return string.lower(uri.host)
-    end
-end
-
-local function db_get(uri)
-    local domain = domain_from_uri(uri)
-    if not domain then
-        return default_enabled
-    else
-        local rows = query_select:exec{domain}
-        return rows[1] and rows[1].enabled or default_enabled
-    end
-end
-
-local function db_set(uri, enabled)
-    local domain = domain_from_uri(uri)
-    local rows = query_select:exec{domain}
-    if rows[1] then
-        query_update:exec{enabled, rows[1].id}
-    else
-        query_insert:exec{domain, enabled}
     end
 end
 
@@ -83,31 +82,79 @@ local function domains_from_uri(uri)
     return domains
 end
 
+-- Routines to re-apply all stylesheets to a given webview
+
 local function update_stylesheet_application(view, domains, stylesheet, enabled)
-    local match
-    if stylesheet.when then
-        for _, w in ipairs(stylesheet.when) do
+    for _, part in ipairs(stylesheet.parts) do
+        local match = false
+        for _, w in ipairs(part.when) do
             match = match or (w[1] == "url" and w[2] == view.uri)
             match = match or (w[1] == "url-prefix" and view.uri:find(w[2],1,true) == 1)
             match = match or (w[1] == "regexp" and w[2]:match(view.uri))
-
             if w[1] == "domain" then
                 for _, domain in ipairs(domains) do
-                    if w[2] == domain then match = true end
+                    match = match or (w[2] == domain)
                 end
             end
         end
+        match = match and stylesheet.enabled and enabled
+        view.stylesheets[part.ss] = match
     end
-    view.stylesheets[stylesheet.ss] = match and enabled
 end
 
-local function update_stylesheet_applications(v)
-    local domains = domains_from_uri(v.uri)
-    local enabled = v:emit_signal("enable-styles")
-    if enabled == nil then enabled = db_get(v.uri) ~= 0 end
+-- Routines to update the stylesheet menu
 
+local function update_stylesheet_applications(v)
+    local enabled = v:emit_signal("enable-styles")
+    enabled = enabled ~= false and true
+    local domains = domains_from_uri(v.uri)
     for _, s in ipairs(stylesheets or {}) do
-        update_stylesheet_application(v, domains, s, enabled)
+        update_stylesheet_application(v, domains, s, enabled ~= false )
+    end
+end
+
+local menu_row_for_stylesheet = function (w, stylesheet)
+    local theme = lousy.theme.get()
+    local title = stylesheet.file
+    local view = w.view
+
+    -- Determine whether stylesheet is active for the current view
+    local enabled, active = stylesheet.enabled, false
+    if enabled then
+        for _, part in ipairs(stylesheet.parts) do
+            active = active or view.stylesheets[part.ss]
+        end
+    end
+
+    -- Determine state label and row colours
+    local state, fg, bg
+    if not enabled then
+        state, fg, bg = "Disabled", theme.menu_disabled_fg, theme.menu_disabled_bg
+    elseif not active then
+        state, fg, bg = "Enabled", theme.menu_enabled_fg, theme.menu_enabled_bg
+    else
+        state, fg, bg = "Active", theme.menu_active_fg, theme.menu_active_bg
+    end
+
+    return { title, state, stylesheet = stylesheet, fg = fg, bg = bg }
+end
+
+local function update_stylesheet_menus()
+    -- Update any windows in styles-list mode
+    for _, w in pairs(window.bywidget) do
+        if w:is_mode("styles-list") then
+            assert(stylesheets_menu_rows[w])
+            local rows = stylesheets_menu_rows[w]
+            for i, stylesheet in ipairs(stylesheets) do
+                local rep = menu_row_for_stylesheet(w, stylesheet)
+                for j in ipairs(rep) do
+                    rows[i+1][j] = rep[j]
+                end
+                rows[i+1].fg = rep.fg
+                rows[i+1].bg = rep.bg
+            end
+            w.menu:update()
+        end
     end
 end
 
@@ -118,6 +165,7 @@ local function update_all_stylesheet_applications()
             update_stylesheet_applications(v)
         end
     end
+    update_stylesheet_menus()
 end
 
 webview.add_signal("init", function (view)
@@ -126,19 +174,7 @@ webview.add_signal("init", function (view)
     end)
 end)
 
-function webview.methods.styles_enabled_get(view, _)
-    return db_get(view.uri) == 1 and true or false
-end
-
-function webview.methods.styles_enabled_set(view, _, enabled)
-    db_set(view.uri, enabled and 1 or 0)
-end
-
-function webview.methods.styles_toggle(view, _)
-    local enabled = 1 - db_get(view.uri)
-    db_set(view.uri, enabled)
-    update_all_stylesheet_applications()
-end
+-- Routines to parse the @-moz-document format into CSS chunks
 
 local parse_moz_document_subrule = function (file)
     local word, param, i
@@ -217,12 +253,18 @@ _M.load_file = function (path)
 
     local parsed = parse_file(source)
 
+    local parts = {}
     for _, part in ipairs(parsed) do
-        stylesheets[#stylesheets+1] = {
+        table.insert(parts, {
             ss = stylesheet{ source = part.css },
             when = part.when
-        }
+        })
     end
+    stylesheets[#stylesheets+1] = {
+        parts = parts,
+        file = path,
+        enabled = db_get(path),
+    }
 end
 
 --- Detect all files in the stylesheets directory and automatically load them.
@@ -233,8 +275,10 @@ _M.detect_files = function ()
         return
     end
 
-    for _, stylesheet in ipairs(stylesheets or {}) do
-        stylesheet.ss.source = ""
+    for _, stylesheet in pairs(stylesheets or {}) do
+        for _, part in ipairs(stylesheet.parts) do
+            part.ss.source = ""
+        end
     end
     stylesheets = {}
 
@@ -315,7 +359,44 @@ add_cmds({
         rewrite_file_format()
         w:notify("styles: Rewriting files complete.")
     end),
+    cmd({"styles-list"}, "List installed userstyles.",
+        function (w) w:set_mode("styles-list") end),
 })
+
+-- Add mode to display all userscripts in menu
+new_mode("styles-list", {
+    enter = function (w)
+        local rows = {{ "Stylesheets", "State", title = true }}
+        for _, stylesheet in ipairs(stylesheets) do
+            table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
+        end
+        if #rows == 1 then
+            w:notify("No userstyles installed.")
+            return
+        end
+        stylesheets_menu_rows[w] = rows
+        w.menu:build(rows)
+        w:notify("Use j/k to move, <space> to enable/disable.", false)
+    end,
+
+    leave = function (w)
+        stylesheets_menu_rows[w] = nil
+        w.menu:hide()
+    end,
+})
+
+add_binds("styles-list", lousy.util.table.join({
+    -- Delete userscript
+    key({}, "space", "Enable/disable the currently highlighted userstyle.",
+        function (w)
+        local row = w.menu:get()
+        if row and row.stylesheet then
+            row.stylesheet.enabled = not row.stylesheet.enabled
+            db_set(row.stylesheet.file, row.stylesheet.enabled)
+            update_all_stylesheet_applications()
+        end
+    end),
+}, menu_binds))
 
 add_binds("normal", {
     key({}, "V", "Edit page user stylesheet.", function (w)
