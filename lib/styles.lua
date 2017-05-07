@@ -24,8 +24,6 @@ local _M = {}
 
 local styles_dir = capi.luakit.data_dir .. "/styles/"
 
-local default_enabled = 1
-
 local stylesheets
 local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
 
@@ -33,17 +31,35 @@ local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 
 local query_create = db:compile [[
-    CREATE TABLE IF NOT EXISTS by_domain (
+    CREATE TABLE IF NOT EXISTS by_file (
         id INTEGER PRIMARY KEY,
-        domain TEXT,
+        file TEXT,
         enabled INTEGER
     );]]
 
 query_create:exec()
 
-local query_insert = db:compile [[ INSERT INTO by_domain VALUES (NULL, ?, ?) ]]
-local query_update = db:compile [[ UPDATE by_domain SET enabled = ? WHERE id == ?  ]]
-local query_select = db:compile [[ SELECT * FROM by_domain WHERE domain == ?  ]]
+local query_insert = db:compile [[ INSERT INTO by_file VALUES (NULL, ?, ?) ]]
+local query_update = db:compile [[ UPDATE by_file SET enabled = ? WHERE id == ?  ]]
+local query_select = db:compile [[ SELECT * FROM by_file WHERE file == ?  ]]
+
+local function db_get(file)
+    assert(file)
+    local rows = query_select:exec{file}
+    return (rows[1] and rows[1].enabled or 1) ~= 0
+end
+
+local function db_set(file, enabled)
+    assert(file)
+    local rows = query_select:exec{file}
+    if rows[1] then
+        query_update:exec{enabled, rows[1].id}
+    else
+        query_insert:exec{file, enabled}
+    end
+end
+
+-- Routines to extract an array of domain names from a URI
 
 local function domain_from_uri(uri)
     if not uri or uri == "" then return nil end
@@ -53,26 +69,6 @@ local function domain_from_uri(uri)
         return uri.scheme
     else
         return string.lower(uri.host)
-    end
-end
-
-local function db_get(uri)
-    local domain = domain_from_uri(uri)
-    if not domain then
-        return default_enabled
-    else
-        local rows = query_select:exec{domain}
-        return rows[1] and rows[1].enabled or default_enabled
-    end
-end
-
-local function db_set(uri, enabled)
-    local domain = domain_from_uri(uri)
-    local rows = query_select:exec{domain}
-    if rows[1] then
-        query_update:exec{enabled, rows[1].id}
-    else
-        query_insert:exec{domain, enabled}
     end
 end
 
@@ -86,7 +82,9 @@ local function domains_from_uri(uri)
     return domains
 end
 
-local function update_stylesheet_application(view, domains, stylesheet)
+-- Routines to re-apply all stylesheets to a given webview
+
+local function update_stylesheet_application(view, domains, stylesheet, enabled)
     for _, part in ipairs(stylesheet.parts) do
         local match = false
         for _, w in ipairs(part.when) do
@@ -99,18 +97,19 @@ local function update_stylesheet_application(view, domains, stylesheet)
                 end
             end
         end
-        match = match and stylesheet.enabled
+        match = match and stylesheet.enabled and enabled
         view.stylesheets[part.ss] = match
     end
 end
 
-local function update_stylesheet_applications(v)
-    local domains = domains_from_uri(v.uri)
-    local enabled = v:emit_signal("enable-styles")
-    if enabled == nil then enabled = db_get(v.uri) ~= 0 end
+-- Routines to update the stylesheet menu
 
+local function update_stylesheet_applications(v)
+    local enabled = v:emit_signal("enable-styles")
+    enabled = enabled ~= false and true
+    local domains = domains_from_uri(v.uri)
     for _, s in ipairs(stylesheets or {}) do
-        update_stylesheet_application(v, domains, s)
+        update_stylesheet_application(v, domains, s, enabled ~= false )
     end
 end
 
@@ -158,19 +157,7 @@ webview.add_signal("init", function (view)
     end)
 end)
 
-function webview.methods.styles_enabled_get(view, _)
-    return db_get(view.uri) == 1 and true or false
-end
-
-function webview.methods.styles_enabled_set(view, _, enabled)
-    db_set(view.uri, enabled and 1 or 0)
-end
-
-function webview.methods.styles_toggle(view, _)
-    local enabled = 1 - db_get(view.uri)
-    db_set(view.uri, enabled)
-    update_all_stylesheet_applications()
-end
+-- Routines to parse the @-moz-document format into CSS chunks
 
 local parse_moz_document_subrule = function (file)
     local word, param, i
@@ -257,10 +244,9 @@ _M.load_file = function (path)
         })
     end
     stylesheets[#stylesheets+1] = {
-        idx = #stylesheets+1, -- index of this stylesheet
         parts = parts,
         file = path,
-        enabled = true, -- TODO: Load from DB
+        enabled = db_get(path),
     }
 end
 
@@ -389,6 +375,7 @@ add_binds("styles-list", lousy.util.table.join({
         local row = w.menu:get()
         if row and row.stylesheet then
             row.stylesheet.enabled = not row.stylesheet.enabled
+            db_set(row.stylesheet.file, row.stylesheet.enabled)
             update_all_stylesheet_applications()
         end
     end),
