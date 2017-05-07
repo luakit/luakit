@@ -32,6 +32,13 @@ theme.menu_title_bg             = "#fff"
 theme.menu_primary_title_fg     = "#f00"
 theme.menu_secondary_title_fg   = "#666"
 
+theme.menu_disabled_fg = "#999"
+theme.menu_disabled_bg = theme.menu_bg
+theme.menu_enabled_fg = theme.menu_fg
+theme.menu_enabled_bg = theme.menu_bg
+theme.menu_active_fg = "#060"
+theme.menu_active_bg = theme.menu_bg
+
 -- Proxy manager
 theme.proxy_active_menu_fg      = '#000'
 theme.proxy_active_menu_bg      = '#FFF'
