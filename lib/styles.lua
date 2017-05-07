@@ -376,7 +376,7 @@ new_mode("styles-list", {
         end
         stylesheets_menu_rows[w] = rows
         w.menu:build(rows)
-        w:notify("Use j/k to move, <space> to enable/disable.", false)
+        w:notify("Use j/k to move, e edit, <space> enable/disable.", false)
     end,
 
     leave = function (w)
@@ -396,16 +396,14 @@ add_binds("styles-list", lousy.util.table.join({
             update_all_stylesheet_applications()
         end
     end),
-}, menu_binds))
-
-add_binds("normal", {
-    key({}, "V", "Edit page user stylesheet.", function (w)
-        if string.sub(w.view.uri, 1, 9) == "luakit://" then return end
-        local domain = domain_from_uri(w.view.uri)
-        local file = capi.luakit.data_dir .. "/styles/" .. domain .. ".css"
-        editor.edit(file)
+    key({}, "e", "Edit the currently highlighted userstyle.", function (w)
+        local row = w.menu:get()
+        if row and row.stylesheet then
+            local file = capi.luakit.data_dir .. "/styles/" .. row.stylesheet.file
+            editor.edit(file)
+        end
     end),
-})
+}, menu_binds))
 
 _M.detect_files()
 
