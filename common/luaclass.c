@@ -163,13 +163,6 @@ luaH_class_add_property(lua_class_t *lua_class, luakit_token_t token,
             (gpointer) token, prop);
 }
 
-static void
-luaH_class_free(lua_class_t *class)
-{
-    signal_destroy(class->signals);
-    g_hash_table_destroy(class->properties);
-}
-
 /** Creates a new Lua class.
  *
  * \param L The Lua VM state.
@@ -190,10 +183,7 @@ luaH_class_setup(lua_State *L, lua_class_t *class,
         lua_class_propfunc_t index_miss_property,
         lua_class_propfunc_t newindex_miss_property,
         const struct luaL_reg methods[],
-        const struct luaL_reg meta[])
-{
-    if (class->name)
-        luaH_class_free(class);
+        const struct luaL_reg meta[]) {
     /* Create the metatable */
     lua_newtable(L);
     /* Register it with class pointer as key in the registry */
