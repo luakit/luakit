@@ -26,7 +26,6 @@ local lousy     = require("lousy")
 local util      = lousy.util
 local capi      = { luakit = luakit }
 local lfs       = require("lfs")
-local window    = require("window")
 local binds     = require("binds")
 local add_cmds  = binds.add_cmds
 
@@ -440,16 +439,6 @@ function _M.list_set_enabled(a, enabled)
         list_opts_modify(tonumber(a), "Enabled", "Disabled")
     end
 end
-
-adblock_wm:add_signal("navigation-blocked", function(_, id, uri)
-    for _, w in pairs(window.bywidget) do
-        if w.view.id == id then
-            if not w.view:emit_signal("navigation-blocked", w, uri) then
-                w:error("Ad Block: page load for '" .. uri .. "' blocked")
-            end
-        end
-    end
-end)
 
 capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", _M.rules)

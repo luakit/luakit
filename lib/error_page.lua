@@ -210,7 +210,11 @@ local function load_error_page(v, error_page_info)
     v:add_signal("enable-userscripts", false_cb)
     view_finished[v] = v.is_loading and 2 or 1
     v:add_signal("load-status", on_finish)
-    v:load_string(html, error_page_info.uri)
+    if error_page_info.request then
+        error_page_info.request:finish(html)
+    else
+        v:load_string(html, error_page_info.uri)
+    end
 end
 
 local function get_cert_error_desc(cert_errors)
@@ -300,6 +304,7 @@ end
 _M.show_error_page = function(v, error_page_info)
     assert(type(v) == "widget" and v.type == "webview")
     assert(type(error_page_info) == "table")
+    assert(type(error_page_info.request) == "request")
     if not error_page_info.uri then
         error_page_info.uri = v.uri
     end

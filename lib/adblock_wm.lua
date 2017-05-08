@@ -160,7 +160,7 @@ extension:add_signal("page-created", function(_, page)
     page:add_signal("send-request", function(p, uri)
         local allow = filter(p.uri, uri)
         if allow == false and p.uri == uri then
-            ui:emit_signal("navigation-blocked", p.id, uri)
+            return "adblock-blocked:" .. uri
         end
         if allow == false then return false end
     end)

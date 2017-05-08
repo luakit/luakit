@@ -200,13 +200,14 @@ webview.add_signal("init", function (view)
                     buttons = {},
                     page = page,
                     traceback = debug.traceback(err, 2),
+                    request = request,
                 })
             end
 
             -- Call luakit:// page handler
-            local _, html, mime = xpcall(function () return func(v, meta) end,
+            local ok, html, mime = xpcall(function () return func(v, meta) end,
                 error_handler)
-            request:finish(html, mime)
+            if ok then request:finish(html, mime) end
             return
         end
 
@@ -220,8 +221,8 @@ webview.add_signal("init", function (view)
             ]==],
             buttons = {},
             page = page,
+            request = request,
         })
-        request:finish("")
     end)
 
     view:add_signal("load-status", function (v, status)

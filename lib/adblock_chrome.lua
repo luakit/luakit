@@ -260,8 +260,10 @@ _M.navigation_blocked_css_tmpl = [===[
     }
 ]===]
 
+luakit.register_scheme("adblock-blocked")
 webview.add_signal("init", function (view)
-    view:add_signal("navigation-blocked", function(v, _, uri)
+    view:add_signal("scheme-request::adblock-blocked", function (v, uri, request)
+        uri = uri:gsub("^adblock%-blocked:", "")
         error_page.show_error_page(v, {
             style = _M.navigation_blocked_css_tmpl,
             heading = "Page blocked",
@@ -272,8 +274,9 @@ webview.add_signal("init", function (view)
             ]==],
             buttons = {},
             uri = uri,
+            request = request,
         })
-        return true
+        return
     end)
 end)
 
