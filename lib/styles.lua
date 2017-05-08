@@ -112,6 +112,20 @@ local function update_stylesheet_applications(v)
     end
 end
 
+local function describe_stylesheet_affected_pages(stylesheet)
+    local affects = {}
+    for _, part in ipairs(stylesheet.parts) do
+        for _, w in ipairs(part.when) do
+            local w2 = w[1] == "regexp" and w[2].pattern or w[2]
+            local desc = w[1] .. " " .. w2
+            if not lousy.util.table.hasitem(affects, desc) then
+                table.insert(affects, desc)
+            end
+        end
+    end
+    return table.concat(affects, ", ")
+end
+
 local menu_row_for_stylesheet = function (w, stylesheet)
     local theme = lousy.theme.get()
     local title = stylesheet.file
@@ -125,6 +139,8 @@ local menu_row_for_stylesheet = function (w, stylesheet)
         end
     end
 
+    local affects = describe_stylesheet_affected_pages(stylesheet)
+
     -- Determine state label and row colours
     local state, fg, bg
     if not enabled then
@@ -135,7 +151,7 @@ local menu_row_for_stylesheet = function (w, stylesheet)
         state, fg, bg = "Active", theme.menu_active_fg, theme.menu_active_bg
     end
 
-    return { title, state, stylesheet = stylesheet, fg = fg, bg = bg }
+    return { title, state, affects, stylesheet = stylesheet, fg = fg, bg = bg }
 end
 
 -- Routines to build and update stylesheet menus per-window
@@ -143,7 +159,7 @@ end
 local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
 
 local function create_stylesheet_menu_for_w(w)
-    local rows = {{ "Stylesheets", "State", title = true }}
+    local rows = {{ "Stylesheets", "State", "Affects", title = true }}
     for _, stylesheet in ipairs(stylesheets) do
         table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
     end
