@@ -237,7 +237,7 @@ local parse_file = function (file)
         file = parse_moz_document_section(file, parts)
     end
     if file:find("%S") then
-        parts[#parts+1] = { when = {"url-prefix", ""}, css = file }
+        parts[#parts+1] = { when = {{"url-prefix", ""}}, css = file }
     end
     return parts
 end
