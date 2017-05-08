@@ -94,27 +94,38 @@ _M.cert_style = [===[
 local function false_cb() return false end
 local function true_cb() return true end
 
-local view_finished = setmetatable({}, { __mode = "k" })
+local view_state = setmetatable({}, { __mode = "k" })
+
+-- Not fired if the error page is just closed
+local function on_navigate_away(v, status)
+    if status ~= "provisional" then return end
+    v:remove_signal("load-status", on_navigate_away)
+    view_state[v].is_error_page = nil
+    -- Remove userscripts, stylesheet, javascript overrides
+    v:remove_signal("enable-styles", false_cb)
+    v:remove_signal("enable-scripts", true_cb)
+    v:remove_signal("enable-userscripts", false_cb)
+end
 
 -- Clean up only when error page has finished since sometimes multiple
 -- load-status provisional signals are dispatched
 local function on_finish(v, status)
     if status ~= "finished" then return end
+    local vs = view_state[v]
 
     -- Skip the appropriate number of signals
-    assert(type(view_finished[v]) == "number")
-    view_finished[v] = view_finished[v] - 1
-    if view_finished[v] > 0 then return end
-    view_finished[v] = nil
+    assert(type(vs.finished) == "number")
+    vs.finished = vs.finished - 1
+    if vs.finished > 0 then return end
+    vs.finished = nil
+    v:remove_signal("load-status", on_finish)
 
     -- Start listening for button clicks
     error_page_wm:emit_signal(v, "listen")
-
-    -- Remove userscripts, stylesheet, javascript overrides
-    v:remove_signal("enable-styles", false_cb)
-    v:remove_signal("enable-scripts", true_cb)
-    v:remove_signal("enable-userscripts", false_cb)
-    v:remove_signal("load-status", on_finish)
+    -- Mark current history index as showing an error page
+    vs.history[v.history.index] = true
+    -- Listen for a page navigation away from the error page
+    v:add_signal("load-status", on_navigate_away)
 end
 
 local error_views = setmetatable({}, { __mode = "k" })
@@ -155,6 +166,28 @@ local function make_button_html(v, buttons)
     return '<form name="bl">' .. html .. '</form>'
 end
 
+local function attach_error_page_signals(v, skip_count)
+    assert(skip_count == 1 or skip_count == 2)
+
+    if view_state[v] and view_state[v].finished then
+        -- View is still loading an error page...
+        -- HACK: force early cleanup of the error page by calling the
+        -- load-status signal handler directly; it detaches everything so it
+        -- cannot be called again in response to the actual signal.
+        view_state[v].finished = 0
+        on_finish(v, "finished")
+    end
+
+    view_state[v] = view_state[v] or { history = {} }
+    view_state[v].is_error_page = true
+    view_state[v].finished = skip_count
+
+    v:add_signal("enable-styles", false_cb)
+    v:add_signal("enable-scripts", true_cb)
+    v:add_signal("enable-userscripts", false_cb)
+    v:add_signal("load-status", on_finish)
+end
+
 local function load_error_page(v, error_page_info)
     -- Set default values
     local defaults = {
@@ -191,25 +224,16 @@ local function load_error_page(v, error_page_info)
         html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
     until nsub == 0
 
-    if view_finished[v] then
-        -- View is still loading an error page...
-        -- HACK: force early cleanup of the error page by calling the
-        -- load-status signal handler directly; it detaches everything so it
-        -- cannot be called again in response to the actual signal.
-        view_finished[v] = 0
-        on_finish(v, "finished")
-    end
-
     -- If v.is_loading = true then the load will first be stopped, causing a finish
     -- event to fire. The error page will then be loaded; so the _second_ finish
     -- event to fire indicates that the error page has finished loading.
     -- If v.is_loading = false, then there is no ongoing load to stop and so the
     -- subsequent load finish event will be caused by the error page finishing.
-    v:add_signal("enable-styles", false_cb)
-    v:add_signal("enable-scripts", true_cb)
-    v:add_signal("enable-userscripts", false_cb)
-    view_finished[v] = v.is_loading and 2 or 1
-    v:add_signal("load-status", on_finish)
+    --
+    -- The above doesn't hold if we're given a request to finish(). If that's
+    -- the case, the first finish event to fire indicates the load has finished.
+    local skip_count = (v.is_loading and not error_page_info.request) and 2 or 1
+    attach_error_page_signals(v, skip_count)
     if error_page_info.request then
         error_page_info.request:finish(html)
     else
@@ -313,12 +337,25 @@ end
 
 webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status, ...)
-        if status ~= "failed" then return end
-        handle_error(v, ...)
-        return true
+        if status == "finished" then
+            -- Update view history table
+            local vs = view_state[v]
+            if vs and not vs.is_error_page then
+                vs.history[v.history.index] = nil
+            end
+        elseif status == "failed" then
+            handle_error(v, ...)
+            return true
+        end
     end)
     view:add_signal("crashed", function(v)
         handle_error(v, v.uri, "Web process crashed")
+    end)
+    view:add_signal("go-back-forward", function (v, n)
+        local vs = view_state[v]
+        if vs and vs.history[v.history.index + n] then
+            attach_error_page_signals(v, 1)
+        end
     end)
 end)
 
