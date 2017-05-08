@@ -195,10 +195,12 @@ webview.methods = {
     -- History traversing functions
     back = function (view, _, n)
         view:go_back(n or 1)
+        view:emit_signal("go-back-forward", -(n or 1))
     end,
 
     forward = function (view, _, n)
         view:go_forward(n or 1)
+        view:emit_signal("go-back-forward", (n or 1))
     end,
 }
 
