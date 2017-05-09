@@ -522,7 +522,7 @@ window.methods = {
         end
 
         w:attach_tab(view, switch, order)
-        if not (type(arg) == "widget" and arg.type == "webview") then
+        if arg and not (type(arg) == "widget" and arg.type == "webview") then
             webview.set_location(view, arg)
         end
 
