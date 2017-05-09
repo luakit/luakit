@@ -31,9 +31,6 @@
 #include "common/luautil.h"
 #include "common/luaclass.h"
 
-/** Lua function to call on dofuction() error */
-lua_CFunction lualib_dofunction_on_error;
-
 #define luaH_checkfunction(L, n) do { \
         if(!lua_isfunction(L, n)) \
             luaL_typerror(L, n, "function"); \
@@ -131,13 +128,6 @@ luaH_absindex(lua_State *L, gint ud) {
     return (ud >= 0 || ud <= LUA_REGISTRYINDEX) ? ud : lua_gettop(L) + ud + 1;
 }
 
-static inline gint
-luaH_dofunction_error(lua_State *L) {
-    if(lualib_dofunction_on_error)
-        return lualib_dofunction_on_error(L);
-    return 0;
-}
-
 /** Execute an Lua function on top of the stack.
  * \param L The Lua stack.
  * \param nargs The number of arguments for the Lua function.
@@ -149,7 +139,7 @@ luaH_dofunction(lua_State *L, gint nargs, gint nret) {
     /* Move function before arguments */
     lua_insert(L, - nargs - 1);
     /* Push error handling function */
-    lua_pushcfunction(L, luaH_dofunction_error);
+    lua_pushcfunction(L, luaH_dofunction_on_error);
     /* Move error handling function before args and function */
     lua_insert(L, - nargs - 2);
     gint error_func_pos = lua_gettop(L) - nargs - 1;

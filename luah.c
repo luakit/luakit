@@ -99,9 +99,6 @@ luaH_init(gchar ** uris)
     /* Set panic fuction */
     lua_atpanic(L, luaH_panic);
 
-    /* Set error handling function */
-    lualib_dofunction_on_error = luaH_dofunction_on_error;
-
     luaL_openlibs(L);
 
     luaH_fixups(L);
