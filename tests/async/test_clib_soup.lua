@@ -51,6 +51,15 @@ T.test_set_proxy_uri = function ()
     assert.has_error(function () soup.proxy_uri = true end)
 end
 
+T.test_set_accept_policy = function ()
+    soup.accept_policy = "always"
+    assert.equal("always", soup.accept_policy)
+    soup.accept_policy = "never"
+    assert.equal("never", soup.accept_policy)
+    soup.accept_policy = "no_third_party"
+    assert.equal("no_third_party", soup.accept_policy)
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

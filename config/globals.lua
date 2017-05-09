@@ -51,6 +51,10 @@ globals.domain_props = {
     }, ]]
 }
 
+-- Cookie acceptance policy
+-- Acceptable values: "always", "never", "no_third_party"
+soup.accept_policy = "no_third_party"
+
 return globals
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
