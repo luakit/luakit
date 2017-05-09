@@ -73,11 +73,13 @@ T.test_undo_close_restores_tab_history = function ()
     -- Close and undo-close
     w:close_tab()
     w:undo_close_tab()
+    test.wait_for_view(w.view)
     assert.is_equal(w.tabs:current(), 2)
     assert.is_equal(w.view.uri, 'about:blank')
 
     -- Navigate back
     w:back(1)
+    test.wait_for_view(w.view)
     assert.is_equal(w.view.uri, uri)
 
     -- Restore to initial state

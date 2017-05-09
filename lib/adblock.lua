@@ -22,6 +22,7 @@
 -- @copyright 2012 Plaque FCC (Reslayer@ya.ru)
 
 local webview   = require("webview")
+local window    = require("window")
 local lousy     = require("lousy")
 local util      = lousy.util
 local capi      = { luakit = luakit }
@@ -439,6 +440,19 @@ function _M.list_set_enabled(a, enabled)
         list_opts_modify(tonumber(a), "Enabled", "Disabled")
     end
 end
+
+webview.add_signal("init", function (view)
+    webview.modify_load_block(view, "adblock", true)
+end)
+adblock_wm:add_signal("rules_updated", function (_, web_process_id)
+    for _, ww in pairs(window.bywidget) do
+        for _, v in pairs(ww.tabs.children) do
+            if v.web_process_id == web_process_id then
+                webview.modify_load_block(v, "adblock", false)
+            end
+        end
+    end
+end)
 
 capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
