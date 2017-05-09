@@ -259,13 +259,15 @@ do
         local mt = getmetatable(view)
         local oi = mt.__index
         mt.__index = function (w, k)
-            if k == "uri" and oi(w, "type") == "webview" then
-                if next(webview_state[w].blockers) then
-                    if type(webview_state[w].queued_location) == "string" then
-                        return webview_state[w].queued_location
-                    elseif type(webview_state[w].queued_location) == "table" then
-                        return webview_state[w].queued_location.uri or oi(w, k)
-                    end
+            if (k == "uri" or k == "session_state") and oi(w, "type") == "webview" then
+                local ws = webview_state[w]
+                if not next(ws.blockers) then return oi(w, k) end
+                local ql = ws.queued_location or {}
+                if k == "uri" then
+                    return ql.uri or oi(w, k)
+                end
+                if k == "session_state" then
+                    return ql.session_state or oi(w, k)
                 end
             end
             return oi(w, k)
@@ -322,6 +324,18 @@ function webview.modify_load_block(view, name, enable)
 end
 
 function webview.set_location(view, arg)
+    assert(type(view) == "widget" and view.type == "webview")
+    assert(type(arg) == "string" or type(arg) == "table")
+
+    -- Always execute JS URIs immediately, even when webview is blocked
+    if type(arg) == "string" and arg:match("^javascript:") then
+        local js = string.match(arg, "^javascript:(.+)$")
+        return view:eval_js(luakit.uri_decode(js))
+    end
+
+    if type(arg) == "string" then arg = { uri = arg } end
+    assert(arg.uri or arg.session_state)
+
     local ws = webview_state[view]
     if next(ws.blockers) then
         ws.queued_location = arg
@@ -329,21 +343,13 @@ function webview.set_location(view, arg)
         return
     end
 
-    if type(arg) == "string" then
-        local js = string.match(arg, "^javascript:(.+)$")
-        if js then
-            return view:eval_js(luakit.uri_decode(js))
+    if arg.session_state then
+        view.session_state = arg.session_state
+        if view.uri == "about:blank" and arg.uri then
+            view.uri = arg.uri
         end
-        view.uri = arg
-    elseif type(arg) == "table" then
-        if arg.session_state then
-            view.session_state = arg.session_state
-            if view.uri == "about:blank" and arg.uri then
-                view.uri = arg.uri
-            end
-        else
-            error("Tried to open new tab with invalid table")
-        end
+    else
+        view.uri = arg.uri
     end
 end
 
