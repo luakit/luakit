@@ -171,6 +171,21 @@ luaH_abspath(lua_State *L)
     return 1;
 }
 
+static gint
+luaH_debug_traceback(lua_State *L)
+{
+    lua_State *thread;
+    if ((thread = lua_tothread(L, 1)))
+        lua_remove(L, 1);
+    const gchar *msg = luaL_optstring(L, 1, NULL);
+    int level = luaL_optnumber(L, msg ? 2 : 1, 1);
+
+    lua_pushstring(L, msg ?: "");
+    lua_pushstring(L, msg ? "\nTraceback:\n" : "Traceback:\n");
+    luaH_traceback(thread ?: L, level);
+    lua_concat(L, 3);
+    return 1;
+}
 
 /* Fix up and add handy standard lib functions */
 void
@@ -204,6 +219,11 @@ luaH_fixups(lua_State *L)
     lua_pushliteral(L, "type");
     lua_pushcfunction(L, luaHe_type);
     lua_settable(L, LUA_GLOBALSINDEX);
+    /* replace debug.traceback */
+    lua_getglobal(L, "debug");
+    lua_pushcfunction(L, &luaH_debug_traceback);
+    lua_setfield(L, -2, "traceback");
+    lua_pop(L, 1);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
