@@ -1,5 +1,5 @@
 /*
- * common/clib/soup.c - soup library
+ * clib/soup.c - soup library
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,7 +18,7 @@
  *
  */
 
-#include "common/clib/soup.h"
+#include "clib/soup.h"
 #include "common/property.h"
 #include "common/signal.h"
 #include "web_context.h"
