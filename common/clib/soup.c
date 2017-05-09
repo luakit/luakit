@@ -26,8 +26,10 @@
 #include <libsoup/soup.h>
 #include <webkit2/webkit2.h>
 
-gchar *proxy_uri;
-GRegex *scheme_reg;
+static gchar *proxy_uri;
+static GRegex *scheme_reg;
+/* lua soup class for signals */
+static lua_class_t soup_class;
 
 /* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);

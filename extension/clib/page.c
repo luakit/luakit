@@ -27,6 +27,8 @@
 
 #define REG_KEY "luakit.uniq.registry.page"
 
+static lua_class_t page_class;
+
 LUA_OBJECT_FUNCS(page_class, page_t, page);
 
 static page_t*

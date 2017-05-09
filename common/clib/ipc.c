@@ -27,6 +27,16 @@
 
 #define REG_KEY "luakit.registry.ipc_channel"
 
+static lua_class_t ipc_channel_class;
+
+LUA_OBJECT_FUNCS(ipc_channel_class, ipc_channel_t, ipc_channel);
+
+ipc_channel_t *
+luaH_check_ipc_channel(lua_State *L, gint idx)
+{
+    return luaH_checkudata(L, idx, &ipc_channel_class);
+}
+
 int
 luaH_ipc_channel_new(lua_State *L)
 {

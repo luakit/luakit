@@ -31,12 +31,7 @@ typedef struct _ipc_channel_t {
     char *name;
 } ipc_channel_t;
 
-lua_class_t ipc_channel_class;
-
-LUA_OBJECT_FUNCS(ipc_channel_class, ipc_channel_t, ipc_channel);
-
-#define luaH_check_ipc_channel(L, idx) luaH_checkudata(L, idx, &(ipc_channel_class))
-
+ipc_channel_t *luaH_check_ipc_channel(lua_State *L, gint idx);
 gint luaH_ipc_channel_new(lua_State *L);
 gint ipc_channel_send(lua_State *L);
 void ipc_channel_recv(lua_State *L, const gchar *arg, guint arglen);

@@ -28,7 +28,7 @@
 #include <glib.h>
 
 /* setup unique module signals */
-lua_class_t unique_class;
+static lua_class_t unique_class;
 LUA_CLASS_FUNCS(unique, unique_class);
 
 static void

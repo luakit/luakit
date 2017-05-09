@@ -257,18 +257,4 @@ bailout:
     return ret;
 }
 
-gint
-luaH_class_index_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
-{
-    signal_object_emit(L, luakit_class.signals, "debug::index::miss", 2, 0);
-    return 0;
-}
-
-gint
-luaH_class_newindex_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
-{
-    signal_object_emit(L, luakit_class.signals, "debug::newindex::miss", 3, 0);
-    return 0;
-}
-
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

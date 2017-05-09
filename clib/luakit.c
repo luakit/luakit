@@ -36,6 +36,7 @@
 #include <webkit2/webkit2.h>
 
 /* setup luakit module signals */
+static lua_class_t luakit_class;
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
 GtkClipboard *
@@ -579,6 +580,20 @@ luaH_register_functions_on_endpoint(ipc_endpoint_t *ipc, lua_State *L)
         ipc_send_lua(ipc, IPC_TYPE_lua_js_register, L, -3, -1);
         lua_pop(L, 3);
     }
+}
+
+gint
+luaH_class_index_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
+{
+    signal_object_emit(L, luakit_class.signals, "debug::index::miss", 2, 0);
+    return 0;
+}
+
+gint
+luaH_class_newindex_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
+{
+    signal_object_emit(L, luakit_class.signals, "debug::newindex::miss", 3, 0);
+    return 0;
 }
 
 /** Setup luakit module.

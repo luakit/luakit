@@ -32,8 +32,6 @@ typedef struct _dom_document_t {
     WebKitDOMDocument *document;
 } dom_document_t;
 
-lua_class_t dom_document_class;
-
 void dom_document_class_setup(lua_State *);
 gint luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc);
 gint luaH_dom_document_from_web_page(lua_State *L, WebKitWebPage *web_page);

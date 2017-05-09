@@ -16,10 +16,10 @@
  *
  */
 
+#include "clib/luakit.h"
 #include "clib/widget.h"
 #include "clib/stylesheet.h"
 #include "globalconf.h"
-#include "luah.h"
 
 static lua_class_t stylesheet_class;
 LUA_OBJECT_FUNCS(stylesheet_class, lstylesheet_t, stylesheet)

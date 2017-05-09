@@ -25,9 +25,6 @@
 
 #include <libsoup/soup-uri.h>
 
-/* lua soup class for signals */
-lua_class_t soup_class;
-
 void soup_lib_setup(lua_State *L);
 gint luaH_soup_push_uri(lua_State *L, SoupURI *uri);
 

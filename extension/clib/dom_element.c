@@ -29,6 +29,8 @@
 
 #define REG_KEY "luakit.uniq.registry.dom_element"
 
+static lua_class_t dom_element_class;
+
 LUA_OBJECT_FUNCS(dom_element_class, dom_element_t, dom_element);
 
 static dom_element_t*

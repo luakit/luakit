@@ -22,7 +22,7 @@
 #include "clib/widget.h"
 #include "common/property.h"
 
-property_t widget_properties[] = {
+static property_t widget_properties[] = {
   { L_TK_MARGIN,            "margin",            INT,    TRUE  },
   { L_TK_MARGIN_TOP,        "margin-top",        INT,    TRUE  },
   { L_TK_MARGIN_BOTTOM,     "margin-bottom",     INT,    TRUE  },
@@ -31,7 +31,7 @@ property_t widget_properties[] = {
   { 0,                      NULL,                0,      0     },
 };
 
-widget_info_t widgets_list[] = {
+static widget_info_t widgets_list[] = {
   { L_TK_ENTRY,     "entry",    widget_entry    },
   { L_TK_EVENTBOX,  "eventbox", widget_eventbox },
   { L_TK_HBOX,      "hbox",     widget_box      },

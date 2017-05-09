@@ -19,7 +19,7 @@
 #include "clib/web_module.h"
 #include "common/clib/ipc.h"
 
-GPtrArray *required_web_modules;
+static GPtrArray *required_web_modules;
 
 static int
 luaH_require_web_module(lua_State *L)

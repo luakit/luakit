@@ -46,7 +46,7 @@ typedef struct {
     const gchar *name;
 } token_map_t;
 
-token_map_t tokens_table[] = {
+static token_map_t tokens_table[] = {
     %s
     { 0, NULL },
 };

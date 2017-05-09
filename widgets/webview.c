@@ -89,7 +89,7 @@ static struct {
     GSList *old_refs;
 } last_popup = { NULL, NULL };
 
-property_t webview_properties[] = {
+static property_t webview_properties[] = {
   { L_TK_EDITABLE,           "editable",         BOOL,    TRUE },
   { L_TK_PROGRESS,    "estimated-load-progress", DOUBLE, FALSE },
   { L_TK_IS_LOADING,        "is-loading",        BOOL,   FALSE },
@@ -99,7 +99,7 @@ property_t webview_properties[] = {
   { 0,                      NULL,                0,      0     },
 };
 
-property_t webview_settings_properties[] = {
+static property_t webview_settings_properties[] = {
   { L_TK_ALLOW_MODAL_DIALOGS,                       "allow-modal-dialogs",                       BOOL,  TRUE },
   { L_TK_AUTO_LOAD_IMAGES,                          "auto-load-images",                          BOOL,  TRUE },
   { L_TK_CURSIVE_FONT_FAMILY,                       "cursive-font-family",                       CHAR,  TRUE },
@@ -1175,12 +1175,6 @@ webview_destructor(widget_t *w)
     g_free(d->source);
 
     g_slice_free(webview_data_t, d);
-}
-
-void
-size_request_cb(GtkWidget *UNUSED(widget), GtkRequisition *r, widget_t *w)
-{
-    gtk_widget_set_size_request(GTK_WIDGET(w->widget), r->width, r->height);
 }
 
 void

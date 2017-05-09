@@ -23,9 +23,9 @@ typedef struct _extension_t {
     LUA_OBJECT_HEADER
 } extension_t;
 
-lua_class_t extension_class;
-gpointer extension_ref;
-GPtrArray *queued_emissions;
+static lua_class_t extension_class;
+static gpointer extension_ref;
+static GPtrArray *queued_emissions;
 
 LUA_OBJECT_FUNCS(extension_class, extension_t, extension);
 
