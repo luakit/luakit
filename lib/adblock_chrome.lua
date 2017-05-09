@@ -195,15 +195,15 @@ chrome.add("adblock", function ()
     end
 
     local toggle_button_subs = {
-        state = adblock.state() == "Disabled" and "true" or "false",
-        label = adblock.state() == "Disabled" and "Enable" or "Disable",
+        state = tostring(not adblock.enabled),
+        label = (not adblock.enabled) and "Enable" or "Disable",
     }
 
     local html_subs = {
         links   = table.concat(links, "\n\n"),
         title  = _M.html_page_title,
         style  = chrome.stylesheet .. _M.html_style,
-        state = adblock.state(),
+        state = adblock.enabled and "Enabled" or "Disabled",
         white   = rulescount.white,
         black   = rulescount.black,
         ignored = rulescount.ignored,
@@ -216,7 +216,7 @@ end,
 nil,
 {
     adblock_toggle = function (_, enable)
-        if enable then adblock.enable() else adblock.disable() end
+        adblock.enabled = enable
     end,
 
     adblock_list_toggle = function (_, id, enable)

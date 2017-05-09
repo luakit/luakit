@@ -34,10 +34,10 @@ local _M = {}
 
 local adblock_wm = require_web_module("adblock_wm")
 
---- Whether ad blocking is enabled.
+--- @property enabled
+-- Whether ad blocking is enabled.
 -- @readonly
 -- @type boolean
-_M.enabled = true
 
 -- Adblock Plus compatible filter lists.
 local adblock_dir = capi.luakit.data_dir .. "/adblock/"
@@ -62,23 +62,14 @@ end
 
 --- Enable ad blocking.
 _M.enable = function ()
+    msg.warn("deprecated function! set adblock.enabled = true directly")
     _M.enabled = true
-    adblock_wm:emit_signal("enable", true)
-    _M.refresh_views()
 end
 
 --- Disable ad blocking.
 _M.disable = function ()
+    msg.warn("deprecated function! set adblock.enabled = false directly")
     _M.enabled = false
-    adblock_wm:emit_signal("enable", false)
-    _M.refresh_views()
-end
-
---- Report AdBlock state.
--- @treturn[1] string "Enabled" if ad blocking is enabled
--- @treturn[2] string "Disabled" if ad blocking is disabled
-_M.state = function ()
-    return _M.enabled and "Enabled" or "Disabled"
 end
 
 -- Detect files to read rules from
@@ -456,15 +447,10 @@ end)
 
 capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
-end)
-
-webview.add_signal("init", function (view)
-    view:add_signal("web-extension-loaded", function(v)
-        for name, list in pairs(_M.rules) do
-            local enabled = util.table.hasitem(list.opts, "Enabled")
-            adblock_wm:emit_signal(v, "list_set_enabled", name, enabled)
-        end
-    end)
+    for name, list in pairs(_M.rules) do
+        local enabled = util.table.hasitem(list.opts, "Enabled")
+        adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
+    end
 end)
 
 -- Add commands.
@@ -495,6 +481,19 @@ add_cmds({
 -- Initialise module
 _M.load(nil, nil, true)
 
-return _M
+local wrapped = { enabled = true }
+local mt = {
+    __index = wrapped,
+    __newindex = function (_, k, v)
+        if k == "enabled" then
+            assert(type(v) == "boolean")
+            wrapped.enabled = v
+            adblock_wm:emit_signal("enable", v)
+            _M.refresh_views()
+        end
+    end,
+}
+
+return setmetatable(_M, mt)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
