@@ -299,3 +299,4 @@ is_playing_audio
 drawing_area
 invalidate
 pattern
+web_process_id

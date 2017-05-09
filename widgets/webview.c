@@ -77,6 +77,7 @@ typedef struct {
     GTlsCertificate *cert;
 
     ipc_endpoint_t *ipc;
+    pid_t web_process_id;
 } webview_data_t;
 
 static WebKitWebView *related_view;
@@ -782,6 +783,8 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PS_CASE(HOVERED_URI,          d->hover)
       PS_CASE(URI,                  d->uri)
 
+      PI_CASE(WEB_PROCESS_ID,     d->web_process_id)
+
       case L_TK_SOURCE:
         return luaH_webview_push_source(L, d);
       case L_TK_SESSION_STATE:
@@ -1253,6 +1256,13 @@ webview_get_endpoint(widget_t *w)
     g_assert(w->info->tok == L_TK_WEBVIEW);
     webview_data_t *d = w->data;
     return d->ipc;
+}
+
+void
+webview_set_web_process_id(widget_t *w, pid_t pid)
+{
+    webview_data_t *d = w->data;
+    d->web_process_id = pid;
 }
 
 widget_t *
