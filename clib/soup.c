@@ -162,8 +162,9 @@ luaH_soup_newindex(lua_State *L)
     switch (token) {
         case L_TK_PROXY_URI: {
             WebKitWebContext *ctx = web_context_get();
+            const gchar *new_proxy_uri = lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3);
             g_free(proxy_uri);
-            proxy_uri = g_strdup(lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3));
+            proxy_uri = g_strdup(new_proxy_uri);
 
             if (!proxy_uri || g_str_equal(proxy_uri, "default"))
                 webkit_web_context_set_network_proxy_settings(ctx,

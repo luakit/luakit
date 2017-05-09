@@ -39,6 +39,18 @@ T.test_soup = function ()
     })
 end
 
+T.test_set_proxy_uri = function ()
+    soup.proxy_uri = "default"
+    assert.equal(soup.proxy_uri, "default")
+    soup.proxy_uri = "no_proxy"
+    assert.equal(soup.proxy_uri, "no_proxy")
+    soup.proxy_uri = "no_proxy"
+    assert.equal(soup.proxy_uri, "no_proxy")
+    soup.proxy_uri = nil
+    assert.equal(soup.proxy_uri, "default")
+    assert.has_error(function () soup.proxy_uri = true end)
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
