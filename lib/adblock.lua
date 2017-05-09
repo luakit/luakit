@@ -456,15 +456,10 @@ end)
 
 capi.luakit.add_signal("web-extension-created", function (view)
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
-end)
-
-webview.add_signal("init", function (view)
-    view:add_signal("web-extension-loaded", function(v)
-        for name, list in pairs(_M.rules) do
-            local enabled = util.table.hasitem(list.opts, "Enabled")
-            adblock_wm:emit_signal(v, "list_set_enabled", name, enabled)
-        end
-    end)
+    for name, list in pairs(_M.rules) do
+        local enabled = util.table.hasitem(list.opts, "Enabled")
+        adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
+    end
 end)
 
 -- Add commands.
