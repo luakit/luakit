@@ -74,13 +74,6 @@ _M.disable = function ()
     _M.refresh_views()
 end
 
---- Report AdBlock state.
--- @treturn[1] string "Enabled" if ad blocking is enabled
--- @treturn[2] string "Disabled" if ad blocking is disabled
-_M.state = function ()
-    return _M.enabled and "Enabled" or "Disabled"
-end
-
 -- Detect files to read rules from
 local function detect_files()
     -- Create adblock directory if it doesn't exist
