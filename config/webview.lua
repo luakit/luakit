@@ -28,6 +28,8 @@ web_module:add_signal("navigate", function (_, page_id, uri)
     end
 end)
 
+local webview_state = setmetatable({}, { __mode = "k" })
+
 -- Deprecated API.
 webview.init_funcs = { }
 
@@ -247,8 +249,37 @@ function webview.methods.scroll(view, w, new)
     end
 end
 
+local wrap_widget_metatable
+do
+    local wrapped = false
+    wrap_widget_metatable = function (view)
+        if wrapped then return end
+        wrapped = true
+
+        local mt = getmetatable(view)
+        local oi = mt.__index
+        mt.__index = function (w, k)
+            if (k == "uri" or k == "session_state") and oi(w, "type") == "webview" then
+                local ws = webview_state[w]
+                if not next(ws.blockers) then return oi(w, k) end
+                local ql = ws.queued_location or {}
+                if k == "uri" then
+                    return ql.uri or oi(w, k)
+                end
+                if k == "session_state" then
+                    return ql.session_state or oi(w, k)
+                end
+            end
+            return oi(w, k)
+        end
+    end
+end
+
 function webview.new()
     local view = widget{type = "webview"}
+
+    webview_state[view] = { blockers = {} }
+    wrap_widget_metatable(view)
 
     -- Call webview init functions
     for _, func in pairs(init_funcs) do
@@ -274,6 +305,52 @@ function webview.window(view)
         w = w.parent
     until w == nil or w.type == "window"
     return window.bywidget[w]
+end
+
+function webview.modify_load_block(view, name, enable)
+    assert(type(view) == "widget" and view.type == "webview")
+    assert(type(name) == "string")
+
+    local ws = webview_state[view]
+    ws.blockers[name] = enable and true or nil
+    msg.verbose("%s %s %s", view, name, enable and "block" or "unblock")
+
+    if not next(ws.blockers) and ws.queued_location then
+        msg.verbose("fully unblocked %s", view)
+        local queued = ws.queued_location
+        ws.queued_location = nil
+        webview.set_location(view, queued)
+    end
+end
+
+function webview.set_location(view, arg)
+    assert(type(view) == "widget" and view.type == "webview")
+    assert(type(arg) == "string" or type(arg) == "table")
+
+    -- Always execute JS URIs immediately, even when webview is blocked
+    if type(arg) == "string" and arg:match("^javascript:") then
+        local js = string.match(arg, "^javascript:(.+)$")
+        return view:eval_js(luakit.uri_decode(js))
+    end
+
+    if type(arg) == "string" then arg = { uri = arg } end
+    assert(arg.uri or arg.session_state)
+
+    local ws = webview_state[view]
+    if next(ws.blockers) then
+        ws.queued_location = arg
+        view:emit_signal("property::uri")
+        return
+    end
+
+    if arg.session_state then
+        view.session_state = arg.session_state
+        if view.uri == "about:blank" and arg.uri then
+            view.uri = arg.uri
+        end
+    else
+        view.uri = arg.uri
+    end
 end
 
 -- Insert webview method lookup on window structure

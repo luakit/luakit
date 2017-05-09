@@ -52,6 +52,21 @@ page_created_cb(WebKitWebExtension *UNUSED(extension), WebKitWebPage *web_page, 
         emit_page_created_signal(web_page, L);
 }
 
+static gint
+luaH_extension_index(lua_State *L)
+{
+    if (luaH_usemetatable(L, 1, 2))
+        return 1;
+
+    const char *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+
+    switch (token) {
+        PI_CASE(WEB_PROCESS_ID, getpid())
+        default: return 0;
+    }
+}
+
 void
 extension_class_setup(lua_State *L, WebKitWebExtension *extension)
 {
@@ -64,6 +79,7 @@ extension_class_setup(lua_State *L, WebKitWebExtension *extension)
     static const struct luaL_reg extension_meta[] =
     {
         LUA_OBJECT_META(extension)
+        { "__index", luaH_extension_index },
         { "__gc", luaH_object_gc },
         { NULL, NULL }
     };

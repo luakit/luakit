@@ -124,15 +124,15 @@ ipc_recv_lua_js_gc(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 }
 
 void
-ipc_recv_page_created(ipc_endpoint_t *ipc, const guint64 *page_id, guint length)
+ipc_recv_page_created(ipc_endpoint_t *ipc, const ipc_page_created_t *msg, guint UNUSED(length))
 {
-    g_assert(length == sizeof(*page_id));
-    widget_t *w = webview_get_by_id(*page_id);
+    widget_t *w = webview_get_by_id(msg->page_id);
 
     /* Page may already have been closed */
     if (!w) return;
 
     webview_connect_to_endpoint(w, ipc);
+    webview_set_web_process_id(w, msg->pid);
 }
 
 static gpointer

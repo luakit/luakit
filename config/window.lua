@@ -521,23 +521,9 @@ window.methods = {
             view = webview.new()
         end
 
-        -- Load uri or webview history table
-        local function set_location (v)
-            if type(arg) == "string" then v.uri = arg
-            elseif type(arg) == "table" then
-                if arg.session_state then
-                    v.session_state = arg.session_state
-                    if v.uri == "about:blank" and arg.uri then
-                        v.uri = arg.uri
-                    end
-                else
-                    error("Tried to open new tab with invalid table")
-                end
-            end
-        end
         w:attach_tab(view, switch, order)
         if not (type(arg) == "widget" and arg.type == "webview") then
-            set_location(view)
+            webview.set_location(view, arg)
         end
 
         return view
@@ -621,17 +607,10 @@ window.methods = {
     end,
 
     -- Navigate current view or open new tab
-    navigate = function (w, uri, view)
+    navigate = function (w, arg, view)
         view = view or w.view
-        if view then
-            local js = string.match(uri, "^javascript:(.+)$")
-            if js then
-                return view:eval_js(luakit.uri_decode(js))
-            end
-            view.uri = uri
-        else
-            return w:new_tab(uri)
-        end
+        if not view then return w:new_tab(arg) end
+        require("webview").set_location(view, arg)
     end,
 
     -- Save, restart luakit and reload session.

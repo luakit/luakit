@@ -100,11 +100,21 @@ local restore_file = function (file, delete)
     for _, win in ipairs(wins) do
         w = nil
         for _, item in ipairs(win.open) do
+            local v
             if not w then
-                w = window.new({{ session_state = item.session_state, uri = item.uri }})
+                w = window.new({"about:blank"})
+                v = w.view
             else
-                w:new_tab({ session_state = item.session_state, uri = item.uri  }, item.current)
+                v = w:new_tab("about:blank", item.current)
             end
+            -- Block the tab load, then set its location
+            webview.modify_load_block(v, "session-restore", true)
+            webview.set_location(v, { session_state = item.session_state, uri = item.uri })
+            local function unblock(vv)
+                webview.modify_load_block(vv, "session-restore", false)
+                vv:remove_signal("switched-page", unblock)
+            end
+            v:add_signal("switched-page", unblock)
         end
         -- Convert state keys from index to w table
         state[w] = win

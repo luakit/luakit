@@ -76,6 +76,11 @@ typedef struct _ipc_scroll_t {
     ipc_scroll_subtype_t subtype;
 } ipc_scroll_t;
 
+typedef struct _ipc_page_created_t {
+    guint64 page_id;
+    pid_t pid;
+} ipc_page_created_t;
+
 /* Message names */
 static inline const char *
 ipc_type_name(ipc_type_t type)
