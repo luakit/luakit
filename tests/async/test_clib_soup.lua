@@ -60,6 +60,12 @@ T.test_set_accept_policy = function ()
     assert.equal("no_third_party", soup.accept_policy)
 end
 
+T.test_set_cookies_storage = function ()
+    local path = luakit.data_dir .. "/cookies2.db"
+    soup.cookies_storage = path
+    assert.equal(path, soup.cookies_storage)
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
