@@ -216,7 +216,7 @@ end,
 nil,
 {
     adblock_toggle = function (_, enable)
-        if enable then adblock.enable() else adblock.disable() end
+        adblock.enabled = enable
     end,
 
     adblock_list_toggle = function (_, id, enable)
