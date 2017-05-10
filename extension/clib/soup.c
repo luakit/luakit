@@ -1,5 +1,5 @@
 /*
- * clib/soup.h - soup library
+ * extension/clib/soup.c - soup library
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,13 +18,38 @@
  *
  */
 
-#ifndef LUAKIT_CLIB_SOUP_H
-#define LUAKIT_CLIB_SOUP_H
+#include "luah.h"
+#include "clib/soup.h"
+#include "common/property.h"
+#include "common/signal.h"
+#include "web_context.h"
 
-#include <lua.h>
+#include <libsoup/soup.h>
+#include <webkit2/webkit2.h>
 
-void soup_lib_setup(lua_State *L);
+static lua_class_t soup_class;
+LUA_CLASS_FUNCS(soup, soup_class);
 
-#endif
+#include "common/clib/soup.h"
+
+void
+soup_lib_setup(lua_State *L)
+{
+    soup_lib_setup_common();
+
+    static const struct luaL_reg soup_lib[] =
+    {
+        LUA_CLASS_METHODS(soup)
+        { "parse_uri",     luaH_soup_parse_uri },
+        { "uri_tostring",  luaH_soup_uri_tostring },
+        { NULL,            NULL },
+    };
+
+    /* create signals array */
+    soup_class.signals = signal_new();
+
+    /* export soup lib */
+    luaH_openlib(L, "soup", soup_lib, soup_lib);
+}
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

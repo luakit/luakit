@@ -18,6 +18,7 @@
  *
  */
 
+#include "luah.h"
 #include "clib/soup.h"
 #include "common/property.h"
 #include "common/signal.h"
@@ -26,121 +27,16 @@
 #include <libsoup/soup.h>
 #include <webkit2/webkit2.h>
 
-static gchar *proxy_uri;
-static GRegex *scheme_reg;
-/* lua soup class for signals */
 static lua_class_t soup_class;
+
+static gchar *proxy_uri;
 static gchar *accept_policy;
 static gchar *cookies_storage;
 
-/* setup soup module signals */
 LUA_CLASS_FUNCS(soup, soup_class);
 
-static gint
-luaH_soup_uri_tostring(lua_State *L)
-{
-    const gchar *p;
-    gint port;
-    /* check for uri table */
-    luaH_checktable(L, 1);
-    /* create empty soup uri object */
-    SoupURI *uri = soup_uri_new(NULL);
-    soup_uri_set_scheme(uri, "http");
+#include "common/clib/soup.h"
 
-#define GET_PROP(prop)                                          \
-    lua_pushliteral(L, #prop);                                  \
-    lua_rawget(L, 1);                                           \
-    if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) \
-        soup_uri_set_##prop(uri, p);                            \
-    lua_pop(L, 1);
-
-    GET_PROP(scheme)
-
-    /* If this is a file:// uri, set a default host of ""
-     * Without host set, a path of "/home/..." will become "file:/home/..."
-     * instead of "file:///home/..."
-     */
-    if (soup_uri_get_scheme(uri) == SOUP_URI_SCHEME_FILE) {
-        soup_uri_set_host(uri, "");
-    }
-
-    GET_PROP(user)
-    GET_PROP(password)
-    GET_PROP(host)
-    GET_PROP(path)
-    GET_PROP(query)
-    GET_PROP(fragment)
-
-    lua_pushliteral(L, "port");
-    lua_rawget(L, 1);
-    if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1)))
-        soup_uri_set_port(uri, port);
-    lua_pop(L, 1);
-
-    gchar *str = soup_uri_to_string(uri, FALSE);
-    lua_pushstring(L, str);
-    g_free(str);
-    soup_uri_free(uri);
-    return 1;
-}
-
-gint
-luaH_soup_push_uri(lua_State *L, SoupURI *uri)
-{
-    const gchar *p;
-    /* create table for uri properties */
-    lua_newtable(L);
-
-#define PUSH_PROP(prop)            \
-    if ((p = uri->prop) && p[0]) { \
-        lua_pushliteral(L, #prop); \
-        lua_pushstring(L, p);      \
-        lua_rawset(L, -3);         \
-    }
-
-    PUSH_PROP(scheme)
-    PUSH_PROP(user)
-    PUSH_PROP(password)
-    PUSH_PROP(host)
-    PUSH_PROP(path)
-    PUSH_PROP(query)
-    PUSH_PROP(fragment)
-
-    if (uri->port) {
-        lua_pushliteral(L, "port");
-        lua_pushnumber(L, uri->port);
-        lua_rawset(L, -3);
-    }
-
-    return 1;
-}
-
-static gint
-luaH_soup_parse_uri(lua_State *L)
-{
-    gchar *str = (gchar*)luaL_checkstring(L, 1);
-
-    /* check for blank uris */
-    if (!str[0])
-        return 0;
-
-    /* default to http:// scheme */
-    if (!g_regex_match(scheme_reg, str, 0, 0))
-        str = g_strdup_printf("http://%s", str);
-    else
-        str = g_strdup(str);
-
-    /* parse & push uri */
-    SoupURI *uri = soup_uri_new(str);
-    g_free(str);
-    if (uri) {
-        luaH_soup_push_uri(L, uri);
-        soup_uri_free(uri);
-    }
-    return uri ? 1 : 0;
-}
-
-#if WEBKIT_CHECK_VERSION(2,16,0)
 static gint
 luaH_soup_index(lua_State *L)
 {
@@ -148,7 +44,11 @@ luaH_soup_index(lua_State *L)
     luakit_token_t token = l_tokenize(prop);
 
     switch (token) {
+#if WEBKIT_CHECK_VERSION(2,16,0)
         PS_CASE(PROXY_URI, proxy_uri)
+#else
+        case PROXY_URI: luaL_error(L, "soup.proxy_uri requires WebKitGTK >= 2.16.0");
+#endif
         PS_CASE(ACCEPT_POLICY, accept_policy)
         PS_CASE(COOKIES_STORAGE, cookies_storage)
         default:
@@ -156,6 +56,30 @@ luaH_soup_index(lua_State *L)
     }
     return 0;
 }
+
+static void
+luaH_soup_set_proxy_uri(lua_State *L)
+{
+    WebKitWebContext *ctx = web_context_get();
+    const gchar *new_proxy_uri = lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3);
+    g_free(proxy_uri);
+    proxy_uri = g_strdup(new_proxy_uri);
+
+    if (!proxy_uri || g_str_equal(proxy_uri, "default"))
+        webkit_web_context_set_network_proxy_settings(ctx,
+                WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
+    else if (g_str_equal(proxy_uri, "no_proxy"))
+        webkit_web_context_set_network_proxy_settings(ctx,
+                WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
+    else {
+        WebKitNetworkProxySettings *proxy_settings = webkit_network_proxy_settings_new(proxy_uri, NULL);
+
+        webkit_web_context_set_network_proxy_settings(ctx,
+                WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
+        webkit_network_proxy_settings_free(proxy_settings);
+    }
+}
+
 
 static void
 luaH_soup_set_accept_policy(lua_State *L)
@@ -203,28 +127,17 @@ luaH_soup_newindex(lua_State *L)
     luakit_token_t token = l_tokenize(prop);
 
     switch (token) {
-        case L_TK_PROXY_URI: {
-            WebKitWebContext *ctx = web_context_get();
-            const gchar *new_proxy_uri = lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3);
-            g_free(proxy_uri);
-            proxy_uri = g_strdup(new_proxy_uri);
+        case L_TK_PROXY_URI:
+#if WEBKIT_CHECK_VERSION(2,16,0)
+            luaH_soup_set_proxy_uri(L);
+#else
+            luaL_error(L, "soup.proxy_uri requires WebKitGTK >= 2.16.0");
+#endif
+            break;
 
-            if (!proxy_uri || g_str_equal(proxy_uri, "default"))
-                webkit_web_context_set_network_proxy_settings(ctx,
-                        WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
-            else if (g_str_equal(proxy_uri, "no_proxy"))
-                webkit_web_context_set_network_proxy_settings(ctx,
-                        WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
-            else {
-                WebKitNetworkProxySettings *proxy_settings = webkit_network_proxy_settings_new(proxy_uri, NULL);
-
-                webkit_web_context_set_network_proxy_settings(ctx,
-                        WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
-                webkit_network_proxy_settings_free(proxy_settings);
-            }
-            }; break;
         case L_TK_ACCEPT_POLICY:
             luaH_soup_set_accept_policy(L);
+            break;
         case L_TK_COOKIES_STORAGE:
             luaH_soup_set_cookies_storage(L);
             break;
@@ -233,18 +146,17 @@ luaH_soup_newindex(lua_State *L)
     }
     return 0;
 }
-#endif
 
 void
 soup_lib_setup(lua_State *L)
 {
+    soup_lib_setup_common();
+
     static const struct luaL_reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
-#if WEBKIT_CHECK_VERSION(2,16,0)
         { "__index",       luaH_soup_index },
         { "__newindex",    luaH_soup_newindex },
-#endif
         { "parse_uri",     luaH_soup_parse_uri },
         { "uri_tostring",  luaH_soup_uri_tostring },
         { NULL,            NULL },
@@ -258,8 +170,6 @@ soup_lib_setup(lua_State *L)
 
     /* Initial proxy settings */
     proxy_uri = g_strdup("default");
-
-    scheme_reg = g_regex_new("^[a-z][a-z0-9\\+\\-\\.]*:", G_REGEX_OPTIMIZE, 0, NULL);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

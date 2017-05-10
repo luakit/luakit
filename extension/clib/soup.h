@@ -1,5 +1,5 @@
 /*
- * clib/soup.h - soup library
+ * extension/clib/soup.h - soup library
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef LUAKIT_CLIB_SOUP_H
-#define LUAKIT_CLIB_SOUP_H
+#ifndef LUAKIT_EXTENSION_CLIB_SOUP_H
+#define LUAKIT_EXTENSION_CLIB_SOUP_H
 
 #include <lua.h>
 
