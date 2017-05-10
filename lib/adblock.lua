@@ -432,8 +432,17 @@ function _M.list_set_enabled(a, enabled)
     end
 end
 
+local new_web_extension_created
+
 webview.add_signal("init", function (view)
     webview.modify_load_block(view, "adblock", true)
+
+    view:add_signal("web-extension-loaded", function (v)
+        if not new_web_extension_created then
+            webview.modify_load_block(v, "adblock", false)
+        end
+        new_web_extension_created = nil
+    end)
 end)
 adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     for _, ww in pairs(window.bywidget) do
@@ -446,6 +455,7 @@ adblock_wm:add_signal("rules_updated", function (_, web_process_id)
 end)
 
 capi.luakit.add_signal("web-extension-created", function (view)
+    new_web_extension_created = true
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
     for name, list in pairs(_M.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
