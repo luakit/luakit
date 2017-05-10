@@ -18,9 +18,11 @@
  *
  */
 
+#include "luah.h"
+#include <lauxlib.h>
 #include "common/property.h"
-#include "common/clib/soup.h"
 
+#include <libsoup/soup-uri.h>
 #include <webkit2/webkit2.h>
 
 static gint

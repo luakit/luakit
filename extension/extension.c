@@ -34,7 +34,6 @@
 #include "extension/clib/page.h"
 #include "extension/clib/extension.h"
 #include "common/clib/msg.h"
-#include "common/clib/soup.h"
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"
@@ -60,7 +59,6 @@ web_lua_init(void)
     luaH_uniq_setup(WL, NULL, "v");
     luaH_add_paths(WL, NULL);
     luakit_lib_setup(WL);
-    soup_lib_setup(WL);
     ipc_channel_class_setup(WL);
     timer_class_setup(WL);
     regex_class_setup(WL);

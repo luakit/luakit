@@ -1,5 +1,5 @@
 /*
- * common/clib/soup.h - soup library
+ * clib/soup.h - soup library
  *
  * Copyright © 2011 Mason Larobina <mason.larobina@gmail.com>
  *
@@ -18,8 +18,8 @@
  *
  */
 
-#ifndef LUAKIT_COMMON_CLIB_SOUP_H
-#define LUAKIT_COMMON_CLIB_SOUP_H
+#ifndef LUAKIT_CLIB_SOUP_H
+#define LUAKIT_CLIB_SOUP_H
 
 #include "luah.h"
 

@@ -51,6 +51,14 @@ globals.domain_props = {
     }, ]]
 }
 
+-- Cookie acceptance policy
+-- Acceptable values: "always", "never", "no_third_party"
+soup.accept_policy = "no_third_party"
+
+-- Cookie storage location
+-- Remove this line or set to nil to disable cookie persistence
+soup.cookies_storage = luakit.data_dir .. "/cookies.db"
+
 return globals
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
