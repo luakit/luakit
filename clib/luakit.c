@@ -257,7 +257,7 @@ async_callback_handler(GPid pid, gint status, gpointer cb_ref)
     if (!cb_ref)
         return;
 
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
 
     /* push exit reason & exit status onto lua stack */
     if (WIFEXITED(status)) {

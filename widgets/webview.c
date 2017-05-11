@@ -206,7 +206,7 @@ notify_cb(WebKitWebView* UNUSED(v), GParamSpec *ps, widget_t *w)
     }
 
     if ((p = g_hash_table_lookup(wvprops, ps->name))) {
-        lua_State *L = globalconf.L;
+        lua_State *L = common.L;
         luaH_object_push(L, w->ref);
         luaH_object_property_signal(L, -1, p->tok);
         lua_pop(L, 1);
@@ -231,7 +231,7 @@ update_uri(widget_t *w, const gchar *uri)
     if (g_strcmp0(d->uri, uri)) {
         g_free(d->uri);
         d->uri = g_strdup(uri);
-        lua_State *L = globalconf.L;
+        lua_State *L = common.L;
         luaH_object_push(L, w->ref);
         luaH_object_emit_signal(L, -1, "property::uri", 0, 0);
         lua_pop(L, 1);
@@ -244,7 +244,7 @@ load_failed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent UNUSED(e),
 {
     update_uri(w, failing_uri);
 
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     ((webview_data_t*) w->data)->is_failed = TRUE;
     luaH_object_push(L, w->ref);
     lua_pushstring(L, "failed");
@@ -283,7 +283,7 @@ static gboolean
 load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
         GTlsCertificate *certificate, GTlsCertificateFlags errors, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     webview_data_t *d = w->data;
     update_uri(w, failing_uri);
 
@@ -346,7 +346,7 @@ static void
 load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 {
     webview_data_t *d = w->data;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
 
     /* get load status literal */
     gchar *name = NULL;
@@ -416,7 +416,7 @@ create_cb(WebKitWebView* v, WebKitNavigationAction* UNUSED(a), widget_t *w)
 
     g_assert(!related_view);
     related_view = v;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     gint top = lua_gettop(L);
     luaH_object_push(L, w->ref);
     gint ret = luaH_object_emit_signal(L, -1, "create-web-view", 0, 1);
@@ -443,7 +443,7 @@ static gboolean
 decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
         WebKitPolicyDecisionType type, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
 
     switch (type) {
 /* Raises the "navigation-request" signal on a webkit navigation policy
@@ -714,7 +714,7 @@ luaH_webview_push_favicon(lua_State *L, WebKitWebView *view)
 static void
 favicon_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "favicon", 0, 0);
     lua_pop(L, 1);
@@ -892,7 +892,7 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 static gboolean
 expose_cb(GtkWidget* UNUSED(widget), cairo_t *UNUSED(e), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "expose", 0, 0);
     lua_pop(L, 1);
@@ -903,7 +903,7 @@ static void
 mouse_target_changed_cb(WebKitWebView* UNUSED(v), WebKitHitTestResult *htr,
         guint UNUSED(modifiers), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     webview_data_t *d = w->data;
     d->htr_context = webkit_hit_test_result_get_context(htr);
 
@@ -969,7 +969,7 @@ static gboolean
 webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 {
     gint ret;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     lua_pushinteger(L, ev->button);
@@ -1001,7 +1001,7 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 static void
 menu_item_cb(GtkAction *action, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     gpointer ref = g_object_get_data(G_OBJECT(action), "lua_callback");
     luaH_object_push(L, w->ref);
     luaH_object_push(L, ref);
@@ -1011,7 +1011,7 @@ menu_item_cb(GtkAction *action, widget_t *w)
 static void
 hide_popup_cb(WebKitWebView* UNUSED(v), widget_t* UNUSED(w)) {
     GSList *iter;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
 
     /* dereference context menu items callback functions from the last
        context menu */
@@ -1132,7 +1132,7 @@ static gboolean
 context_menu_cb(WebKitWebView* UNUSED(v), WebKitContextMenu *menu,
         GdkEvent* UNUSED(e), WebKitHitTestResult* UNUSED(htr), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     g_assert(!context_menu_actions);
     table_from_context_menu(L, menu, w);
 
@@ -1187,7 +1187,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
         return;
     widget_t *w = GOBJECT_TO_LUAKIT_WIDGET(view);
 
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
 
     g_assert(scheme);
     gchar *sig = g_strconcat("scheme-request::", scheme, NULL);
@@ -1206,7 +1206,7 @@ webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
     d->ipc = ipc_endpoint_new("UI");
 
     /* Emit 'crashed' signal on web view */
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
 
@@ -1223,7 +1223,7 @@ webview_connect_to_endpoint(widget_t *w, ipc_endpoint_t *ipc)
     webview_data_t *d = w->data;
     d->ipc = ipc_endpoint_replace(d->ipc, ipc);
 
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
 
     /* Emit 'web-extension-created' signal on luakit if necessary */
     /* TODO: move signal emission to somewhere else */

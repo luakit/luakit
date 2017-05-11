@@ -44,7 +44,7 @@ static gboolean
 send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
         WebKitURIResponse *UNUSED(redirected_response), page_t *UNUSED(page))
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     const gchar *uri = webkit_uri_request_get_uri(request);
     SoupMessageHeaders *hdrs = webkit_uri_request_get_http_headers(request);
 
@@ -114,7 +114,7 @@ send_request_cb(WebKitWebPage *web_page, WebKitURIRequest *request,
 static void
 document_loaded_cb(WebKitWebPage *web_page, page_t *UNUSED(page))
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     luaH_page_from_web_page(L, web_page);
     luaH_object_emit_signal(L, -1, "document-loaded", 0, 0);
     lua_pop(L, 1);
@@ -140,7 +140,7 @@ luaH_page_eval_js(lua_State *L)
     WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
     WebKitScriptWorld *world = extension.script_world;
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
-    return luaJS_eval_js(extension.WL, ctx, script, source, false);
+    return luaJS_eval_js(common.L, ctx, script, source, false);
 }
 
 static gint
@@ -212,7 +212,7 @@ static void
 webkit_web_page_destroy_cb(page_t *page, GObject *web_page)
 {
     page->page = NULL;
-    luaH_uniq_del_ptr(extension.WL, REG_KEY, web_page);
+    luaH_uniq_del_ptr(common.L, REG_KEY, web_page);
 }
 
 gint

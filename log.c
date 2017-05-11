@@ -132,7 +132,7 @@ va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, v
 void
 ipc_recv_log(ipc_endpoint_t *UNUSED(ipc), const guint8 *lua_msg, guint length)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     gint n = lua_deserialize_range(L, lua_msg, length);
     g_assert_cmpint(n, ==, 4);
 

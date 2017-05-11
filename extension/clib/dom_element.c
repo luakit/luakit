@@ -46,7 +46,7 @@ static void
 webkit_web_page_destroy_cb(dom_element_t *element, GObject *node)
 {
     element->element = NULL;
-    luaH_uniq_del_ptr(extension.WL, REG_KEY, node);
+    luaH_uniq_del_ptr(common.L, REG_KEY, node);
 }
 
 gint
@@ -361,7 +361,7 @@ luaH_dom_element_submit(lua_State *L)
 static void
 event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointer func)
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
 
     lua_createtable(L, 0, 1);
     lua_pushliteral(L, "target");

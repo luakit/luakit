@@ -29,7 +29,7 @@
 gboolean
 key_press_cb(GtkWidget* UNUSED(win), GdkEventKey *ev, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     luaH_keystr_push(L, ev->keyval);
@@ -43,7 +43,7 @@ gboolean
 button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 {
     gint ret;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     lua_pushinteger(L, ev->button);
@@ -68,7 +68,7 @@ button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 gboolean
 mouse_cb(GtkWidget* UNUSED(win), GdkEventCrossing *ev, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
 
@@ -84,7 +84,7 @@ mouse_cb(GtkWidget* UNUSED(win), GdkEventCrossing *ev, widget_t *w)
 gboolean
 focus_cb(GtkWidget* UNUSED(win), GdkEventFocus *ev, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     gint ret;
     if (ev->in)
@@ -108,7 +108,7 @@ void
 add_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
     widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -2, "add", 1, 0);
@@ -124,7 +124,7 @@ resize_cb(GtkWidget* UNUSED(win), GdkRectangle *rect, widget_t *w)
     w->prev_width = width;
     w->prev_height = height;
 
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     lua_pushinteger(L, width);
     lua_pushinteger(L, height);
@@ -137,7 +137,7 @@ void
 remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
     widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -2, "remove", 1, 0);
@@ -147,7 +147,7 @@ remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 void
 parent_set_cb(GtkWidget *widget, GtkWidget *UNUSED(p), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     widget_t *parent = NULL;
     GtkContainer *new;
     g_object_get(G_OBJECT(widget), "parent", &new, NULL);
@@ -164,7 +164,7 @@ void
 destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
 {
     /* 1. emit destroy signal */
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, 1);

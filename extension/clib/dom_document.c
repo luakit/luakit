@@ -44,7 +44,7 @@ static void
 webkit_dom_document_destroy_cb(dom_document_t *document, GObject *doc)
 {
     document->document = NULL;
-    luaH_uniq_del_ptr(extension.WL, REG_KEY, doc);
+    luaH_uniq_del_ptr(common.L, REG_KEY, doc);
 }
 
 gint

@@ -56,7 +56,7 @@ void
 ipc_recv_extension_init(ipc_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length))
 {
     web_module_load_modules_on_endpoint(ipc);
-    luaH_register_functions_on_endpoint(ipc, globalconf.L);
+    luaH_register_functions_on_endpoint(ipc, common.L);
 
     /* Notify web extension that pending signals can be released */
     ipc_header_t header = { .type = IPC_TYPE_extension_init, .length = 0 };
@@ -66,7 +66,7 @@ ipc_recv_extension_init(ipc_endpoint_t *ipc, const gpointer UNUSED(msg), guint U
 void
 ipc_recv_lua_ipc(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_ipc_t *msg, guint length)
 {
-    ipc_channel_recv(globalconf.L, msg->arg, length);
+    ipc_channel_recv(common.L, msg->arg, length);
 }
 
 void
@@ -84,7 +84,7 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 void
 ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     gint top = lua_gettop(L);
 
     int argc = lua_deserialize_range(L, msg, length) - 1;
@@ -115,7 +115,7 @@ ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length)
 void
 ipc_recv_lua_js_gc(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     /* Unref the function reference we got */
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, ==, 1);

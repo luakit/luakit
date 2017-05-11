@@ -38,7 +38,6 @@
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"
-#include "common/common.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
@@ -49,7 +48,7 @@ web_lua_init(void)
 {
     debug("luakit web process: Lua initializing...");
 
-    lua_State *WL = extension.WL;
+    lua_State *WL = common.L;
 
     /* Set panic fuction */
     lua_atpanic(WL, luaH_panic);
@@ -78,8 +77,8 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
 {
     const gchar *socket_path = g_variant_get_string(payload, NULL);
 
-    extension.WL = luaL_newstate();
-    common.L = extension.WL;
+    common.L = luaL_newstate();
+    common.L = common.L;
     extension.ext = ext;
     extension.ipc = ipc_endpoint_new(g_strdup_printf("Web[%d]", getpid()));
 

@@ -44,7 +44,7 @@ free_auth_data(LuakitAuthData *auth_data)
 static void
 luakit_store_password(LuakitAuthData *auth_data, const gchar *login, const gchar *password)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(auth_data->w->widget));
     luaH_object_push(L, auth_data->w->ref);
     lua_pushstring(L, uri);
@@ -56,7 +56,7 @@ luakit_store_password(LuakitAuthData *auth_data, const gchar *login, const gchar
 static void
 luakit_find_password(LuakitAuthData *auth_data, const gchar **login, const gchar **password)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     const gchar *uri = webkit_web_view_get_uri(WEBKIT_WEB_VIEW(auth_data->w->widget));
     luaH_object_push(L, auth_data->w->ref);
     lua_pushstring(L, uri);

@@ -23,10 +23,9 @@
 #include <lauxlib.h>
 #include <lualib.h>
 #include "extension/ipc.h"
+#include "common/common.h"
 
 typedef struct _extension_t {
-    /** Web Lua VM state */
-    lua_State *WL;
     /** Handle to the WebKit Web Extension */
     WebKitWebExtension *ext;
     /** Channel for IPC with ui process */

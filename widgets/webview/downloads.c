@@ -27,7 +27,7 @@ download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, gpointer UNUS
     WebKitWebView *dl_view = webkit_download_get_web_view(dl);
     widget_t *w = dl_view ? GOBJECT_TO_LUAKIT_WIDGET(dl_view) : NULL;
 
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     gint top = lua_gettop(L);
     luaH_download_push(L, dl);
     if (w)

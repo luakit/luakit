@@ -49,7 +49,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
         JSObjectRef UNUSED(this), size_t argc, const JSValueRef *argv,
         JSValueRef *exception)
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     gint top = lua_gettop(L);
     gchar *error = NULL;
 
@@ -104,7 +104,7 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
 void
 ipc_recv_lua_js_call(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     int n = lua_deserialize_range(L, msg, length);
     /* Should have two values: arbitrary return value, and ok/err status */
     g_assert_cmpint(n, ==, 2);
@@ -114,7 +114,7 @@ ipc_recv_lua_js_call(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint lengt
 void
 ipc_recv_lua_js_register(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
 
     /* Should have three values: pattern, function name, function ref */
     int n = lua_deserialize_range(L, msg, length);
@@ -192,7 +192,7 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
 static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     const gchar *uri = webkit_web_page_get_uri(web_page) ?: "about:blank";
 
     /* Push pattern -> funclist table */
@@ -239,7 +239,7 @@ web_luajs_init(void)
             G_CALLBACK (window_object_cleared_cb), NULL);
 
     /* Push empty function registration table */
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     lua_pushliteral(L, LUAKIT_LUAJS_REGISTRY_KEY);
     lua_newtable(L);
     lua_rawset(L, LUA_REGISTRYINDEX);

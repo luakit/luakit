@@ -23,7 +23,7 @@ static void
 found_text_cb(WebKitFindController* UNUSED(find_controller), guint match_count,
         widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     lua_pushinteger(L, match_count);
     luaH_object_emit_signal(L, -2, "found-text", 1, 0);
@@ -35,7 +35,7 @@ static void
 failed_to_find_text_cb(WebKitFindController* UNUSED(find_controller),
         widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "failed-to-find-text", 0, 0);
     lua_pop(L, 1);

@@ -121,7 +121,7 @@ luaH_download_gc(lua_State *L)
 static gboolean
 decide_destination_cb(WebKitDownload* UNUSED(dl), gchar *suggested_filename, download_t *download)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, download->ref);
     lua_pushstring(L, suggested_filename);
 
@@ -140,7 +140,7 @@ decide_destination_cb(WebKitDownload* UNUSED(dl), gchar *suggested_filename, dow
 static void
 created_destination_cb(WebKitDownload* UNUSED(dl), gchar *destination, download_t *download)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, download->ref);
     lua_pushstring(L, destination);
 
@@ -178,7 +178,7 @@ failed_cb(WebKitDownload* UNUSED(d), GError *error, download_t *download)
 
         /* emit error signal if able */
         if (download->ref) {
-            lua_State *L = globalconf.L;
+            lua_State *L = common.L;
             luaH_object_push(L, download->ref);
             lua_pushstring(L, error->message);
             luaH_object_emit_signal(L, -2, "error", 1, 0);
@@ -200,7 +200,7 @@ progress_cb(WebKitDownload *UNUSED(dl), GParamSpec *UNUSED(ps), download_t *down
  */
 static void
 finished_cb(WebKitDownload* UNUSED(dl), download_t *download) {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, download->ref);
 
     if (download->status != LUAKIT_DOWNLOAD_STATUS_CANCELLED &&

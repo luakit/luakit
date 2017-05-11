@@ -52,7 +52,7 @@ destroy_win_cb(GtkWidget* UNUSED(win), widget_t *w)
 static gint
 can_close_cb(GtkWidget* UNUSED(win), GdkEvent *UNUSED(event), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     gint ret = luaH_object_emit_signal(L, -1, "can-close", 0, 1);
     gboolean keep_open = ret && !lua_toboolean(L, -1);
@@ -173,7 +173,7 @@ window_state_cb(GtkWidget* UNUSED(widget), GdkEventWindowState *ev, widget_t *w)
 {
     window_data_t *d = (window_data_t*)w->data;
     d->state = ev->new_window_state;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
 
     if (ev->changed_mask & GDK_WINDOW_STATE_MAXIMIZED)

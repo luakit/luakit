@@ -58,7 +58,7 @@ luaH_drawing_area_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 static gboolean
 drawing_area_draw_cb(GtkWidget *UNUSED(widget), cairo_t *cr, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     /* Convert cr to a FFI wrapper */
     luaH_object_push(L, ffi_new_ref);
@@ -80,7 +80,7 @@ widget_drawing_area(widget_t *w, luakit_token_t UNUSED(token))
     /* FIXME: Should do this before Lua code runs at all, but there's no good
      * way for random C code to hook into the Lua initialization stuff */
     if (!ffi_new_ref) {
-        lua_State *L = globalconf.L;
+        lua_State *L = common.L;
         lua_getglobal(L, "require");
         lua_pushliteral(L, "ffi");
         gint error = lua_pcall(L, 1, 1, 0);

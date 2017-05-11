@@ -24,7 +24,6 @@
 
 #include "common/clib/luakit.h"
 #include "common/util.h"
-#include "common/common.h"
 #include "common/luaobject.h"
 
 /** Get seconds from unix epoch with nanosecond precision (or nearest

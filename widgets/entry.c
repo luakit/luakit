@@ -145,7 +145,7 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 static void
 activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "activate", 0, 0);
     lua_pop(L, 1);
@@ -154,7 +154,7 @@ activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 static void
 changed_cb(widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "changed", 0, 0);
     lua_pop(L, 1);
@@ -163,7 +163,7 @@ changed_cb(widget_t *w)
 static void
 position_cb(GtkEntry* UNUSED(e), GParamSpec* UNUSED(ps), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "property::position", 0, 0);
     lua_pop(L, 1);

@@ -42,28 +42,28 @@ ipc_recv_lua_require_module(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_require_m
     assert(strlen(module_name) > 0);
     assert(strlen(module_name) == length-1);
 
-    lua_pushstring(extension.WL, module_name);
-    lua_getglobal(extension.WL, "require");
-    luaH_dofunction(extension.WL, 1, 0);
+    lua_pushstring(common.L, module_name);
+    lua_getglobal(common.L, "require");
+    luaH_dofunction(common.L, 1, 0);
 }
 
 void
 ipc_recv_lua_ipc(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_ipc_t *msg, guint length)
 {
-    ipc_channel_recv(extension.WL, msg->arg, length);
+    ipc_channel_recv(common.L, msg->arg, length);
 }
 
 void
 ipc_recv_extension_init(ipc_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     emit_pending_page_creation_ipc();
-    extension_class_emit_pending_signals(extension.WL);
+    extension_class_emit_pending_signals(common.L);
 }
 
 void
 ipc_recv_scroll(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, ==, 3);
 
@@ -79,7 +79,7 @@ ipc_recv_scroll(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 void
 ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, ==, 5);
 

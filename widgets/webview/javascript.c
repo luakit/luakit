@@ -28,7 +28,7 @@
 void
 run_javascript_finished(const guint8 *msg, guint length)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     gint top = lua_gettop(L);
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, >=, 2);

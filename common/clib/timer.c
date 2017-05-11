@@ -21,7 +21,6 @@
 
 #include "common/clib/timer.h"
 #include "common/luaobject.h"
-#include "common/common.h"
 #include "luah.h"
 
 #include <glib.h>

@@ -91,10 +91,8 @@ luaH_keystr_push(lua_State *L, guint keyval)
 void
 luaH_init(gchar ** uris)
 {
-    lua_State *L;
-
     /* Lua VM init */
-    L = common.L = globalconf.L = luaL_newstate();
+    lua_State *L = common.L = luaL_newstate();
 
     /* Set panic fuction */
     lua_atpanic(L, luaH_panic);

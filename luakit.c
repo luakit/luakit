@@ -19,7 +19,6 @@
  */
 
 #include "common/util.h"
-#include "common/common.h"
 #include "globalconf.h"
 #include "luah.h"
 #include "ipc.h"

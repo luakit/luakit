@@ -22,6 +22,7 @@
 #define LUAKIT_GLOBALCONF_H
 
 #include "buildopts.h"
+#include "common/common.h"
 
 #include <glib.h>
 #include <gtk/gtk.h>
@@ -29,10 +30,6 @@
 
 /** Global luakit state struct. */
 typedef struct {
-    /** Main Lua VM state.
-     * \see http://www.lua.org/manual/5.1/manual.html#lua_State */
-    lua_State *L;
-
     /** GTK application */
     GtkApplication *application;
 

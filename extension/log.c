@@ -34,7 +34,7 @@ _log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...
 
 void
 va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap) {
-    lua_State *L = extension.WL;
+    lua_State *L = common.L;
     gchar *msg = g_strdup_vprintf(fmt, ap);
 
     lua_pushinteger(L, lvl);
