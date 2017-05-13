@@ -183,7 +183,11 @@ luaH_debug_traceback(lua_State *L)
     lua_pushstring(L, msg ?: "");
     lua_pushstring(L, msg ? "\nTraceback:\n" : "Traceback:\n");
     luaH_traceback(thread ?: L, level);
+    gchar *stripped = strip_ansi_escapes(lua_tostring(L, -1));
+    lua_pop(L, 1);
+    lua_pushstring(L, stripped);
     lua_concat(L, 3);
+    g_free(stripped);
     return 1;
 }
 

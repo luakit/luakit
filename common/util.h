@@ -71,6 +71,7 @@ gboolean file_exists(const gchar*);
 void l_exec(const gchar*);
 gchar *luaH_callerinfo(lua_State*);
 gint luaH_panic(lua_State *L);
+gchar *strip_ansi_escapes(const gchar *in);
 
 #endif
 

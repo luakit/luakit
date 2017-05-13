@@ -55,4 +55,19 @@ luaH_panic(lua_State *L)
     return 0;
 }
 
+gchar *
+strip_ansi_escapes(const gchar *in)
+{
+    static GRegex *reg;
+
+    if (!reg) {
+        const gchar *expr = "[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]";
+        GError *err = NULL;
+        reg = g_regex_new(expr, G_REGEX_JAVASCRIPT_COMPAT | G_REGEX_DOTALL | G_REGEX_EXTENDED | G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, &err);
+        g_assert_no_error(err);
+    }
+
+    return g_regex_replace_literal (reg, in, -1, 0, "", 0, NULL);
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
