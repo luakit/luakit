@@ -32,7 +32,6 @@
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
 #include "extension/clib/page.h"
-#include "extension/clib/extension.h"
 #include "extension/clib/soup.h"
 #include "common/clib/msg.h"
 #include "common/clib/ipc.h"
@@ -66,7 +65,6 @@ web_lua_init(void)
     dom_document_class_setup(WL);
     dom_element_class_setup(WL);
     page_class_setup(WL);
-    extension_class_setup(WL, extension.ext);
     msg_lib_setup(WL);
 
     debug("luakit web process: Lua initialized");

@@ -13,7 +13,7 @@ local enabled_rules = {}
 ui:add_signal("enable", function(_, _, e) enabled = e end)
 ui:add_signal("update_rules", function(_, _, r)
     rules = r
-    ui:emit_signal("rules_updated", extension.web_process_id)
+    ui:emit_signal("rules_updated", luakit.web_process_id)
 end)
 ui:add_signal("list_set_enabled", function(_, _, list, enable)
     enabled_rules[list] = enable and rules[list] or nil
@@ -159,7 +159,7 @@ local filter = function (src, dst)
     end
 end
 
-extension:add_signal("page-created", function(_, page)
+luakit.add_signal("page-created", function(page)
     page:add_signal("send-request", function(p, uri)
         local allow = filter(p.uri, uri)
         if allow == false and p.uri == uri then

@@ -12,7 +12,7 @@ local function domain_from_uri(uri)
     return domain or ""
 end
 
-extension:add_signal("page-created", function(_, page)
+luakit.add_signal("page-created", function(page)
     page:add_signal("send-request", function(p, _, headers)
         if not headers.Referer then return end
         if domain_from_uri(p.uri) ~= domain_from_uri(headers.Referer) then

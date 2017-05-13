@@ -25,7 +25,7 @@
 #include <sys/un.h>
 
 #include "extension/extension.h"
-#include "extension/clib/extension.h"
+#include "extension/clib/luakit.h"
 #include "extension/ipc.h"
 #include "extension/scroll.h"
 #include "common/util.h"
@@ -57,7 +57,7 @@ void
 ipc_recv_extension_init(ipc_endpoint_t *UNUSED(ipc), gpointer UNUSED(msg), guint UNUSED(length))
 {
     emit_pending_page_creation_ipc();
-    extension_class_emit_pending_signals(common.L);
+    luakit_lib_emit_pending_signals(common.L);
 }
 
 void

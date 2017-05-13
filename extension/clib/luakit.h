@@ -25,6 +25,7 @@
 #include "common/ipc.h"
 
 void luakit_lib_setup(lua_State *L);
+void luakit_lib_emit_pending_signals(lua_State *L);
 
 #endif
 
