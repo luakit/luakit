@@ -15,7 +15,7 @@ local mousedown_cb = function (event, page_id)
 end
 
 ui:add_signal("load-finished", function(_, page)
-    local doc = dom_document(page.id)
+    local doc = page.document
     doc.body:add_event_listener("mousedown", true, function (e)
         mousedown_cb(e, page.id)
     end)

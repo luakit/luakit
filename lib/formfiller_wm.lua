@@ -168,7 +168,7 @@ local function get_form_spec_matches_on_page(page, form_specs)
     local forms = {}
     for _, form_spec in ipairs(form_specs) do
         local attrs = {"method", "name", "id", "action", "className"}
-        local matches = match("form", attrs, form_spec, { dom_document(page.id).body })
+        local matches = match("form", attrs, form_spec, { page.document.body })
         for _, form in ipairs(matches) do
             forms[#forms+1] = form
         end
@@ -264,7 +264,7 @@ end)
 
 ui:add_signal("enter", function (_, page)
     -- Filter forms to those with valid inputs
-    local forms = dom_document(page.id).body:query("form")
+    local forms = page.document.body:query("form")
     forms = filter(forms, function(_, form)
         local inputs = form:query("input")
         inputs = filter(inputs, function(_, input)
@@ -294,7 +294,7 @@ end)
 
 ui:add_signal("filter", function (_, page, form_specs)
     local matching_form_specs = {}
-    local roots = { dom_document(page.id).body }
+    local roots = { page.document.body }
     for _, form_spec in ipairs(form_specs) do
         local matches = match("form", {"method", "name", "id", "action", "className"}, form_spec, roots)
         if #matches > 0 then

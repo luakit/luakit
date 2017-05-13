@@ -18,6 +18,7 @@
 
 #include "extension/extension.h"
 #include "extension/clib/page.h"
+#include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
 #include "common/tokenize.h"
 #include "common/luautil.h"
@@ -247,6 +248,13 @@ luaH_page_new(lua_State *L)
 }
 
 static gint
+luaH_page_push_document(lua_State *L, page_t *page)
+{
+    WebKitDOMDocument *doc = webkit_web_page_get_dom_document(page->page);
+    return luaH_dom_document_from_webkit_dom_document(L, doc);
+}
+
+static gint
 luaH_page_index(lua_State *L)
 {
     const char *prop = luaL_checkstring(L, 2);
@@ -262,6 +270,8 @@ luaH_page_index(lua_State *L)
         PI_CASE(ID, webkit_web_page_get_id(page->page));
         PF_CASE(EVAL_JS, luaH_page_eval_js)
         PF_CASE(WRAP_JS, luaH_page_wrap_js)
+        case L_TK_DOCUMENT:
+            return luaH_page_push_document(L, page);
         default:
             return 0;
     }

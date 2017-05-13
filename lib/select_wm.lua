@@ -354,7 +354,7 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     local page_id = page.id
     assert(page_states[page_id] == nil)
 
-    local root = dom_document(page.id)
+    local root = page.document
     local root_frame = { doc = root, body = root.body }
 
     local state = {}
