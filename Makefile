@@ -13,7 +13,7 @@ OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 EXT_SRCS = $(filter-out $(TSRC),$(wildcard extension/*.c) $(wildcard extension/clib/*.c) $(wildcard common/*.c)) $(wildcard common/clib/*.c) $(TSRC)
 EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
 
-all: options newline luakit luakit.1.gz luakit.so
+all: options newline luakit luakit.1.gz luakit.so apidoc
 
 options:
 	@echo luakit build options:
@@ -79,7 +79,7 @@ doc: buildopts.h $(THEAD) $(TSRC)
 clean:
 	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1
 
-install: apidoc
+install:
 	install -d $(INSTALLDIR)/share/luakit/
 	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
