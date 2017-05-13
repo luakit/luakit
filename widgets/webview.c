@@ -1266,6 +1266,17 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     w->newindex = luaH_webview_newindex;
     w->destructor = webview_destructor;
 
+    /* Determine whether webview should be ephemeral */
+    lua_State *L = common.L;
+    gboolean private;
+    /* Lua stack: [{class meta}, {props}, new widget, "type", "webview"] */
+    gint prop_tbl_idx = luaH_absindex(L, -4);
+    g_assert(lua_istable(L, prop_tbl_idx));
+    lua_pushstring(L, "private");
+    lua_rawget(L, prop_tbl_idx);
+    private = lua_type(L, -1) == LUA_TNIL ? FALSE : lua_toboolean(L, -1);
+    lua_pop(L, 1);
+
     /* create private webview data struct */
     webview_data_t *d = g_slice_new0(webview_data_t);
     d->widget = w;
