@@ -47,25 +47,25 @@ web_lua_init(void)
 {
     debug("luakit web process: Lua initializing...");
 
-    lua_State *WL = common.L;
+    lua_State *L = common.L;
 
     /* Set panic fuction */
-    lua_atpanic(WL, luaH_panic);
+    lua_atpanic(L, luaH_panic);
 
-    luaL_openlibs(WL);
-    luaH_fixups(WL);
-    luaH_object_setup(WL);
-    luaH_uniq_setup(WL, NULL, "v");
-    luaH_add_paths(WL, NULL);
-    luakit_lib_setup(WL);
-    soup_lib_setup(WL);
-    ipc_channel_class_setup(WL);
-    timer_class_setup(WL);
-    regex_class_setup(WL);
-    dom_document_class_setup(WL);
-    dom_element_class_setup(WL);
-    page_class_setup(WL);
-    msg_lib_setup(WL);
+    luaL_openlibs(L);
+    luaH_fixups(L);
+    luaH_object_setup(L);
+    luaH_uniq_setup(L, NULL, "v");
+    luaH_add_paths(L, NULL);
+    luakit_lib_setup(L);
+    soup_lib_setup(L);
+    ipc_channel_class_setup(L);
+    timer_class_setup(L);
+    regex_class_setup(L);
+    dom_document_class_setup(L);
+    dom_element_class_setup(L);
+    page_class_setup(L);
+    msg_lib_setup(L);
 
     debug("luakit web process: Lua initialized");
 }
