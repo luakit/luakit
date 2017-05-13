@@ -184,6 +184,7 @@ local generate_property_html = function (prop, prefix)
             <div>
                 <div>{typestr}</div>
                 <div>{default}</div>
+                <div>{readwrite}</div>
             </div>
             <div>{desc}</div>
         </div>
@@ -195,6 +196,7 @@ local generate_property_html = function (prop, prefix)
         typestr = "Type: " .. generate_typestr_html(prop.typestr),
         desc = html_unwrap_first_p(format_text(prop.desc)),
         default = prop.default and "Default: " .. html_unwrap_first_p(format_text(prop.default)) or "",
+        readwrite = (prop.readonly and "Read-only") or (prop.readwrite and "Read-write")
     })
     return html
 end
@@ -240,7 +242,11 @@ local generate_field_html = function (field, prefix)
             <a href="#field-{name}">{prefix}{name}</a>
         </h3>
         <div class="two-col field">
-            <div>Type: {typestr}</div>
+            <div>
+                <div>{typestr}</div>
+                <div>{default}</div>
+                <div>{readwrite}</div>
+            </div>
             <div>{desc}</div>
         </div>
     ]==]
@@ -248,8 +254,10 @@ local generate_field_html = function (field, prefix)
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
         name = field.name,
-        typestr = generate_typestr_html(field.typestr),
+        typestr = "Type: " .. generate_typestr_html(field.typestr),
         desc = html_unwrap_first_p(format_text(field.desc)),
+        default = field.default and "Default: " .. html_unwrap_first_p(format_text(field.default)) or "",
+        readwrite = (field.readonly and "Read-only") or (field.readwrite and "Read-write"),
     })
     return html
 end
