@@ -45,6 +45,11 @@ local html_unwrap_first_p = function (html)
     return html:gsub("</?p>", "", 2) -- Remove first two open/closing p tags
 end
 
+local generate_deprecated_html = function (item)
+    if not item.deprecated then return "" end
+    return text_macros.alert("Deprecated: " .. html_unwrap_first_p(format_text(item.deprecated)))
+end
+
 local generate_function_param_html = function (param)
     local html_template = [==[
         <li class=parameter>
@@ -107,12 +112,14 @@ end
 local generate_function_body_html = function (func)
     local html_template = [==[
         <div class=function>
+            {deprecated}
             {desc}
             {params}
             {returns}
         </div>
     ]==]
     local html = string.gsub(html_template, "{([%w_]+)}", {
+        deprecated = generate_deprecated_html(func),
         desc = format_text(func.desc),
         params = generate_function_params_html(func.params),
         returns = generate_function_returns_html(func.returns),

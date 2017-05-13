@@ -73,6 +73,12 @@ local parse_at_default_line = function (item, block)
     item.default = (default .. peel_off_text_block(block)):gsub("^%s+",""):gsub("[%s%.]+$","")
 end
 
+local parse_at_deprecated_line = function (item, block)
+    if not block[1]:find("^@deprecated ") then return end
+    local deprecated = expect(block, "^%@deprecated (.+)", "Missing @deprecated")
+    item.deprecated = (deprecated .. peel_off_text_block(block)):gsub("^%s+",""):gsub("[%s%.]+$","")
+end
+
 local function parse_first_file_block(doc, block)
     doc.author = {}
     doc.copyright = {}
@@ -192,6 +198,8 @@ local function parse_file_block_part(item, block)
         parse_at_default_line(item, block)
     elseif at == "type" then
         parse_optional_at_type_line(item, block)
+    elseif at == "deprecated" then
+        parse_at_deprecated_line(item, block)
     elseif at then
         parse_error(block, "Unexpected at-line '" .. at .. "'")
     else
