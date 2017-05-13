@@ -56,12 +56,14 @@ _M.refresh_views = function()
 end
 
 --- Enable ad blocking.
+-- @deprecated instead of using this function, set adblock.enabled to true directly
 _M.enable = function ()
     msg.warn("deprecated function! set adblock.enabled = true directly")
     _M.enabled = true
 end
 
 --- Disable ad blocking.
+-- @deprecated instead of using this function, set adblock.enabled to false directly
 _M.disable = function ()
     msg.warn("deprecated function! set adblock.enabled = false directly")
     _M.enabled = false
