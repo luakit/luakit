@@ -34,11 +34,6 @@ local _M = {}
 
 local adblock_wm = require_web_module("adblock_wm")
 
---- @property enabled
--- Whether ad blocking is enabled.
--- @readonly
--- @type boolean
-
 -- Adblock Plus compatible filter lists.
 local adblock_dir = capi.luakit.data_dir .. "/adblock/"
 local filterfiles = {}
@@ -491,12 +486,20 @@ add_cmds({
 -- Initialise module
 _M.load(nil, nil, true)
 
+--- @field enabled
+-- Whether ad blocking is enabled. Modifying this value will modify adblock
+-- state; setting it to `true` will enable ad blocking, while setting it to
+-- `false` will disable ad blocking.
+-- @readwrite
+-- @default true
+-- @type boolean
+
 local wrapped = { enabled = true }
 local mt = {
     __index = wrapped,
     __newindex = function (_, k, v)
         if k == "enabled" then
-            assert(type(v) == "boolean")
+            assert(type(v) == "boolean", "property 'enabled' must be boolean")
             wrapped.enabled = v
             adblock_wm:emit_signal("enable", v)
             _M.refresh_views()
