@@ -26,6 +26,8 @@
 
 /** WebKit context common to all web views */
 static WebKitWebContext *web_context;
+/** Private WebKit context common to private web views */
+static WebKitWebContext *private_web_context;
 /** WebKit process count; default to unlimited */
 static guint process_limit = 0;
 /** Whether the web context startup function has been run */
@@ -81,6 +83,9 @@ website_data_dir_init(void)
 
     web_context = webkit_web_context_new_with_website_data_manager(data_mgr);
 
+    private_web_context = webkit_web_context_new_with_website_data_manager(
+            webkit_website_data_manager_new_ephemeral());
+
     verbose("base_data_directory:                 %s", webkit_website_data_manager_get_base_data_directory(data_mgr));
     verbose("base_cache_directory:                %s", webkit_website_data_manager_get_base_cache_directory(data_mgr));
     verbose("disk_cache_directory:                %s", webkit_website_data_manager_get_disk_cache_directory(data_mgr));
@@ -106,8 +111,10 @@ web_context_init_finish(void)
         return;
 
     webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
+    webkit_web_context_set_process_model(private_web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
     info("Web process count: %d", process_limit);
     webkit_web_context_set_web_process_count_limit(web_context, process_limit);
+    webkit_web_context_set_web_process_count_limit(private_web_context, process_limit);
 
     web_context_started = TRUE;
 }
