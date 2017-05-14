@@ -69,6 +69,9 @@ theme.selected_ntheme   = "#ddd"
 theme.loading_fg        = "#33AADD"
 theme.loading_bg        = "#000"
 
+theme.selected_private_tab_bg = "#3d295b"
+theme.private_tab_bg    = "#22254a"
+
 -- Trusted/untrusted ssl colours
 theme.trust_fg          = "#0F0"
 theme.notrust_fg        = "#F00"
