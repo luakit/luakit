@@ -25,6 +25,15 @@ T.test_bin_widget_set_child = function ()
     assert.is_nil(bin.child)
 end
 
+T.test_webview_widget_privacy = function ()
+    local v = widget{type="webview"}
+    assert.is_false(v.private)
+    v = widget{type="webview", private=false}
+    assert.is_false(v.private)
+    v = widget{type="webview", private=true}
+    assert.is_true(v.private)
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
