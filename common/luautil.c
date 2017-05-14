@@ -25,7 +25,7 @@
 #include "buildopts.h"
 
 gint
-luaH_traceback(lua_State *L, gint min_level)
+luaH_traceback(lua_State *L, lua_State *T, gint min_level)
 {
     lua_Debug ar;
     gint max_level;
@@ -38,14 +38,14 @@ luaH_traceback(lua_State *L, gint min_level)
 #define LENF(fmt, ...) \
     (snprintf(NULL, 0, fmt, ##__VA_ARGS__))
 
-    if (!lua_getstack(L, min_level, &ar)) {
+    if (!lua_getstack(T, min_level, &ar)) {
         lua_pushliteral(L, "");
         return 1;
     }
 
     /* Traverse the stack to determine max level and padding sizes */
-    for (gint level = min_level; lua_getstack(L, level, &ar); level++) {
-        lua_getinfo(L, "Sl", &ar);
+    for (gint level = min_level; lua_getstack(T, level, &ar); level++) {
+        lua_getinfo(T, "Sl", &ar);
 
         max_level = level;
 
@@ -57,8 +57,8 @@ luaH_traceback(lua_State *L, gint min_level)
     gint level_pad = LENF("%d", max_level);
 
     for (gint level = min_level; level <= max_level; level++) {
-        lua_getstack(L, level, &ar);
-        lua_getinfo(L, "Sln", &ar);
+        lua_getstack(T, level, &ar);
+        lua_getinfo(T, "Sln", &ar);
 
         /* Current stack level */
         gint shown_level = level - min_level + 1;
@@ -128,7 +128,7 @@ luaH_dofunction_on_error(lua_State *L)
     lua_pushstring(L, extract_error_message(L, lua_tostring(L, -2)));
 
     lua_pushliteral(L, "\nTraceback:\n");
-    luaH_traceback(L, 1);
+    luaH_traceback(L, L, 1);
     lua_concat(L, 4);
     return 1;
 }

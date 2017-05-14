@@ -43,7 +43,7 @@ static inline void
 luaH_dump_traceback(lua_State *L)
 {
     g_fprintf(stderr, "--------- Lua traceback ---------\n");
-    luaH_traceback(L, 0);
+    luaH_traceback(L, L, 0);
     g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
     lua_pop(L, 1);
     g_fprintf(stderr, "-------- Lua traceback end ------\n");

@@ -22,7 +22,7 @@
 #include <lua.h>
 #include <glib.h>
 
-gint luaH_traceback(lua_State *L, gint level);
+gint luaH_traceback(lua_State *L, lua_State *T, gint level);
 gint luaH_dofunction_on_error(lua_State *L);
 void luaH_add_paths(lua_State *L, const gchar *config_dir);
 
