@@ -62,21 +62,21 @@ static void
 luaH_soup_set_proxy_uri(lua_State *L)
 {
     WebKitWebContext *ctx = web_context_get();
+    WebKitWebContext *p_ctx = web_context_get_private();
     const gchar *new_proxy_uri = lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3);
     g_free(proxy_uri);
     proxy_uri = g_strdup(new_proxy_uri);
 
-    if (!proxy_uri || g_str_equal(proxy_uri, "default"))
-        webkit_web_context_set_network_proxy_settings(ctx,
-                WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
-    else if (g_str_equal(proxy_uri, "no_proxy"))
-        webkit_web_context_set_network_proxy_settings(ctx,
-                WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
-    else {
+    if (!proxy_uri || g_str_equal(proxy_uri, "default")) {
+        webkit_web_context_set_network_proxy_settings(ctx, WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
+        webkit_web_context_set_network_proxy_settings(p_ctx, WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
+    } else if (g_str_equal(proxy_uri, "no_proxy")) {
+        webkit_web_context_set_network_proxy_settings(ctx, WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
+        webkit_web_context_set_network_proxy_settings(p_ctx, WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
+    } else {
         WebKitNetworkProxySettings *proxy_settings = webkit_network_proxy_settings_new(proxy_uri, NULL);
-
-        webkit_web_context_set_network_proxy_settings(ctx,
-                WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
+        webkit_web_context_set_network_proxy_settings(ctx, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
+        webkit_web_context_set_network_proxy_settings(p_ctx, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
         webkit_network_proxy_settings_free(proxy_settings);
     }
 }

@@ -1296,7 +1296,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* create widgets */
     d->user_content = webkit_user_content_manager_new();
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
-                 "web-context", web_context_get(),
+                 "web-context", private ? web_context_get_private() :web_context_get(),
                  "user-content-manager", d->user_content,
                  related_view ? "related-view" : NULL, related_view,
                  NULL);

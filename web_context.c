@@ -43,6 +43,14 @@ web_context_get(void)
     return web_context;
 }
 
+WebKitWebContext *
+web_context_get_private(void)
+{
+    g_assert(private_web_context);
+    return private_web_context;
+}
+
+
 guint
 web_context_process_limit_get(void)
 {

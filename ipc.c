@@ -228,6 +228,8 @@ ipc_init(void)
     g_thread_new("accept_thread", (GThreadFunc) web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
+    g_signal_connect(web_context_get_private(), "initialize-web-extensions",
+            G_CALLBACK (initialize_web_extensions_cb), socket_path);
     /* Remove socket file at exit */
     atexit(remove_socket_file);
 }
