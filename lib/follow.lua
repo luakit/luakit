@@ -154,7 +154,9 @@ follow_wm:add_signal("matches", function(_, page_id, n)
 end)
 follow_wm:add_signal("click_a_target_blank", function(_, page_id, href)
     for _, w in pairs(window.bywidget) do
-        if w.view.id == page_id then w:new_tab(href) end
+        if w.view.id == page_id then
+            w:new_tab(href, { private = w.view.private })
+        end
     end
 end)
 
@@ -270,7 +272,7 @@ add_binds("normal", {
                 prompt = "background tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri, { switch = false })
+                    w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
         end),
@@ -357,7 +359,7 @@ add_binds("ex-follow", {
                 prompt = "tab image", selector = "image", evaluator = "src",
                 func = function (src)
                     assert(type(src) == "string")
-                    w:new_tab(src)
+                    w:new_tab(src, { private = w.view.private })
                 end
             })
         end),
@@ -385,7 +387,7 @@ add_binds("ex-follow", {
                 evaluator = "parent_href",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri, { switch = false })
+                    w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
         end),
@@ -411,7 +413,7 @@ add_binds("ex-follow", {
                 prompt = "open tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri)
+                    w:new_tab(uri, { private = w.view.private })
                 end
             })
         end),
@@ -424,7 +426,7 @@ add_binds("ex-follow", {
                 prompt = "background tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri, { switch = false })
+                    w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
         end),

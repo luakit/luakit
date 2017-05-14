@@ -88,7 +88,7 @@ add_binds("all", {
         function (w)
             local uri = w.view.hovered_uri
             if uri then
-                w:new_tab(uri, { switch = false })
+                w:new_tab(uri, { switch = false, private = w.view.private })
             end
         end),
 
