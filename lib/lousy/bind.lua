@@ -142,8 +142,8 @@ function _M.cmd(cmds, desc, func, opts)
 
     -- Parse "co[mmand]" or literal.
     if type(cmds) == "string" then
-        if string.match(cmds, "^(%w+)%[(%w+)%]") then
-            local l, r = string.match(cmds, "^(%w+)%[(%w+)%]")
+        if string.match(cmds, "^([%-%w]+)%[(%w+)%]") then
+            local l, r = string.match(cmds, "^([%-%w]+)%[(%w+)%]")
             cmds = {l..r, l}
         else
             cmds = {cmds,}
