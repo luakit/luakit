@@ -65,7 +65,7 @@ local function update_title_and_label(tl)
     assert(type(view) == "widget" and view.type == "webview")
     local new_title = (not data[tl].no_title and view.title ~= "" and view.title)
                       or view.uri
-                      or (view.is_loading and "Loading,,," or "(Untitled)")
+                      or (view.is_loading and "Loading…" or "(Untitled)")
     if new_title == tl.title then return end
     tl.title = new_title
     update_label(tl)
