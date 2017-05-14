@@ -170,7 +170,7 @@ position_cb(GtkEntry* UNUSED(e), GParamSpec* UNUSED(ps), widget_t *w)
 }
 
 widget_t *
-widget_entry(widget_t *w, luakit_token_t UNUSED(token))
+widget_entry(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_entry_index;
     w->newindex = luaH_entry_newindex;

@@ -193,7 +193,7 @@ window_destructor(widget_t *w)
 }
 
 widget_t *
-widget_window(widget_t *w, luakit_token_t UNUSED(token))
+widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_window_index;
     w->newindex = luaH_window_newindex;

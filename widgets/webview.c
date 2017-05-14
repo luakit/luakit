@@ -1262,7 +1262,7 @@ webview_set_web_process_id(widget_t *w, pid_t pid)
 }
 
 widget_t *
-widget_webview(widget_t *w, luakit_token_t UNUSED(token))
+widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_webview_index;
     w->newindex = luaH_webview_newindex;
@@ -1274,7 +1274,6 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     w->data = d;
 
     /* Determine whether webview should be ephemeral */
-    lua_State *L = common.L;
     /* Lua stack: [{class meta}, {props}, new widget, "type", "webview"] */
     gint prop_tbl_idx = luaH_absindex(L, -4);
     g_assert(lua_istable(L, prop_tbl_idx));

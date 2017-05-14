@@ -178,7 +178,7 @@ luaH_scrolled_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_scrolled(widget_t *w, luakit_token_t UNUSED(token))
+widget_scrolled(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_scrolled_index;
     w->newindex = luaH_scrolled_newindex;

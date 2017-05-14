@@ -136,7 +136,7 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_box(widget_t *w, luakit_token_t token)
+widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 {
     w->index = luaH_box_index;
     w->newindex = luaH_box_newindex;

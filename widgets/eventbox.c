@@ -69,7 +69,7 @@ luaH_eventbox_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_eventbox(widget_t *w, luakit_token_t UNUSED(token))
+widget_eventbox(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_eventbox_index;
     w->newindex = luaH_eventbox_newindex;
