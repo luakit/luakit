@@ -65,6 +65,7 @@ typedef struct {
     gboolean is_committed;
     gboolean is_failed;
     gboolean is_alive;
+    gboolean private;
 
     /** Document size */
     gint doc_w, doc_h;
@@ -751,6 +752,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       PB_CASE(INSPECTOR,            d->inspector_open);
+      PB_CASE(PRIVATE,              d->private);
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -1266,21 +1268,20 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     w->newindex = luaH_webview_newindex;
     w->destructor = webview_destructor;
 
+    /* create private webview data struct */
+    webview_data_t *d = g_slice_new0(webview_data_t);
+    d->widget = w;
+    w->data = d;
+
     /* Determine whether webview should be ephemeral */
     lua_State *L = common.L;
-    gboolean private;
     /* Lua stack: [{class meta}, {props}, new widget, "type", "webview"] */
     gint prop_tbl_idx = luaH_absindex(L, -4);
     g_assert(lua_istable(L, prop_tbl_idx));
     lua_pushstring(L, "private");
     lua_rawget(L, prop_tbl_idx);
-    private = lua_type(L, -1) == LUA_TNIL ? FALSE : lua_toboolean(L, -1);
+    d->private = lua_type(L, -1) == LUA_TNIL ? FALSE : lua_toboolean(L, -1);
     lua_pop(L, 1);
-
-    /* create private webview data struct */
-    webview_data_t *d = g_slice_new0(webview_data_t);
-    d->widget = w;
-    w->data = d;
 
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
@@ -1296,7 +1297,7 @@ widget_webview(widget_t *w, luakit_token_t UNUSED(token))
     /* create widgets */
     d->user_content = webkit_user_content_manager_new();
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
-                 "web-context", private ? web_context_get_private() :web_context_get(),
+                 "web-context", d->private ? web_context_get_private() :web_context_get(),
                  "user-content-manager", d->user_content,
                  related_view ? "related-view" : NULL, related_view,
                  NULL);
