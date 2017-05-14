@@ -275,8 +275,9 @@ do
     end
 end
 
-function webview.new()
-    local view = widget{type = "webview"}
+function webview.new(opts)
+    assert(opts)
+    local view = widget{type = "webview", private = opts.private}
 
     webview_state[view] = { blockers = {} }
     wrap_widget_metatable(view)

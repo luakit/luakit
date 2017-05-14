@@ -522,7 +522,7 @@ window.methods = {
             ww:detach_tab(view)
         else
             -- Make new webview widget
-            view = webview.new()
+            view = webview.new({ private = opts.private })
         end
 
         w:attach_tab(view, switch, order)
