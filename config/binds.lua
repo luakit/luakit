@@ -644,6 +644,9 @@ add_cmds({
     cmd("t[abopen]", "Open one or more URLs in a new tab.",
         function (w, a) w:new_tab(w:search_open(a)) end),
 
+    cmd("priv-t[abopen]", "Open one or more URLs in a new private tab.",
+        function (w, a) w:new_tab(w:search_open(a), { private = true }) end),
+
     cmd("w[inopen]", "Open one or more URLs in a new window.",
         function (w, a) window.new{w:search_open(a)} end),
 
