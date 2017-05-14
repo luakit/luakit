@@ -36,12 +36,14 @@ _M.save = function (file)
         local current = w.tabs:current()
         state[w] = { open = {} }
         for ti, tab in ipairs(w.tabs.children) do
-            table.insert(state[w].open, {
-                ti = ti,
-                current = (current == ti),
-                uri = tab.uri,
-                session_state = tab.session_state
-            })
+            if not tab.private then
+                table.insert(state[w].open, {
+                    ti = ti,
+                    current = (current == ti),
+                    uri = tab.uri,
+                    session_state = tab.session_state
+                })
+            end
         end
     end
     _M.emit_signal("save", state)

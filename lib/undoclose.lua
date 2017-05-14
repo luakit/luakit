@@ -127,7 +127,9 @@ session.add_signal("save", function (state)
         -- Save view uids for each view
         -- HACK: This is rather brittle; need a better API for session stuff
         for i, v in ipairs(w.tabs.children) do
-            state[w].open[i].view_uid = view_uids[v]
+            if not v.private then
+                state[w].open[i].view_uid = view_uids[v]
+            end
         end
     end
 end)
