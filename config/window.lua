@@ -507,7 +507,11 @@ window.methods = {
         w:update_buf()
     end,
 
-    new_tab = function (w, arg, switch, order)
+    new_tab = function (w, arg, opts)
+        opts = opts or {}
+        assert(type(opts) == "table")
+        local switch, order = opts.switch, opts.order
+
         -- Bit of a hack
         local webview = require("webview")
 

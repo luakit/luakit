@@ -127,7 +127,7 @@ add_binds("normal", {
                 else
                     for i, uri in ipairs(uris or {}) do
                         if mode == "o" and c == 1 and i == 1 then w:navigate(uri)
-                        else w:new_tab(uri, i == 1) end
+                        else w:new_tab(uri, {switch = i == 1}) end
                     end
                 end
             end
@@ -232,7 +232,7 @@ add_binds("qmarklist", lousy.util.table.join({
         if row and row.qmark then
             for i, uri in ipairs(_M.get(row.qmark) or {}) do
                 uri = w:search_open(uri)
-                if i == 1 then w:navigate(uri) else w:new_tab(uri, false) end
+                if i == 1 then w:navigate(uri) else w:new_tab(uri, { switch = false }) end
             end
         end
     end),
@@ -243,7 +243,7 @@ add_binds("qmarklist", lousy.util.table.join({
         local row = w.menu:get()
         if row and row.qmark then
             for _, uri in ipairs(_M.get(row.qmark) or {}) do
-                w:new_tab(w:search_open(uri), false)
+                w:new_tab(w:search_open(uri), { switch = false })
             end
         end
     end),

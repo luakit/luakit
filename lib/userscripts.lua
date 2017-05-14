@@ -371,7 +371,7 @@ add_binds("uscriptlist", util.table.join({
         function (w)
         local row = w.menu:get()
         if row and row.script and row.script.homepage then
-            w:new_tab(row.script.homepage, false)
+            w:new_tab(row.script.homepage, { switch = false })
         end
     end),
 

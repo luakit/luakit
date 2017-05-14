@@ -270,7 +270,7 @@ add_binds("normal", {
                 prompt = "background tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri, false)
+                    w:new_tab(uri, { switch = false })
                 end
             })
         end),
@@ -385,7 +385,7 @@ add_binds("ex-follow", {
                 evaluator = "parent_href",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri, false)
+                    w:new_tab(uri, { switch = false })
                 end
             })
         end),
@@ -424,7 +424,7 @@ add_binds("ex-follow", {
                 prompt = "background tab", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    w:new_tab(uri, false)
+                    w:new_tab(uri, { switch = false })
                 end
             })
         end),

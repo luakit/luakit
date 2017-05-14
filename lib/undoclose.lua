@@ -202,7 +202,7 @@ add_binds("undolist", lousy.util.table.join({
         if row and row.uid then
             for i, tab in ipairs(w.closed_tabs) do
                 if tab.uid == row.uid then
-                    w:new_tab(table.remove(w.closed_tabs, i), false)
+                    w:new_tab(table.remove(w.closed_tabs, i), { switch = false })
                     break
                 end
             end

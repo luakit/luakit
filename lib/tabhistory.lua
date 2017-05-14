@@ -44,7 +44,7 @@ add_binds("tabhistory", join({
         if row and row.index then
             local v = w.view
             local uri = v.history.items[row.index].uri
-            w:new_tab(uri, false)
+            w:new_tab(uri, { switch = false })
         end
     end),
 

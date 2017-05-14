@@ -105,7 +105,7 @@ local restore_file = function (file, delete)
                 w = window.new({"about:blank"})
                 v = w.view
             else
-                v = w:new_tab("about:blank", item.current)
+                v = w:new_tab("about:blank", { switch = item.current })
             end
             -- Block the tab load, then set its location
             webview.modify_load_block(v, "session-restore", true)
