@@ -298,6 +298,14 @@ function webview.new()
     return view
 end
 
+luakit.idle_add(function ()
+    local undoclose = package.loaded.undoclose
+    if not undoclose then return end
+    undoclose.add_signal("save", function (view)
+        if view.private then return false end
+    end)
+end)
+
 function webview.window(view)
     assert(type(view) == "widget" and view.type == "webview")
     local w = view
