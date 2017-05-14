@@ -103,6 +103,7 @@ webview.add_signal("init", function (view)
     view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
+        if view.private then return end
 
         if status == "committed" then
             _M.add(view.uri)
@@ -112,6 +113,7 @@ webview.add_signal("init", function (view)
     view:add_signal("property::title", function ()
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
+        if view.private then return end
 
         local title = view.title
         if title and title ~= "" then
