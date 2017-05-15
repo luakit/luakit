@@ -15,9 +15,9 @@ local _M = {}
 --- CSS applied to the history chrome page.
 _M.stylesheet = [===[
 .day-heading {
-    font-size: 1.6em;
+    font-size: 1.3em;
     font-weight: 100;
-    margin: 1em 0 0.5em 0.5em;
+    margin: 1em 0 0.5em 0;
     -webkit-user-select: none;
     cursor: default;
     overflow: hidden;
@@ -30,7 +30,6 @@ _M.stylesheet = [===[
 }
 
 .item {
-    font-size: 1.3em;
     font-weight: 400;
     overflow: hidden;
     white-space: nowrap;
@@ -93,9 +92,10 @@ local html_template = [==[
 </head>
 <body>
     <header id="page-header">
+        <h1>History</h1>
         <span id="search-box">
             <input type="text" id="search" placeholder="Search history..." />
-            <input type="button" id="clear-button" value="X" />
+            <input type="button" class="button" id="clear-button" value="✕" />
             <input type="hidden" id="page" />
         </span>
         <input type="button" id="search-button" class="button" value="Search" />

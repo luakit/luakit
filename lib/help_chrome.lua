@@ -27,8 +27,6 @@ local html_template = [==[
         body {
             background-color: white;
             color: black;
-            display: block;
-            font-size: 62.5%;
             font-family: sans-serif;
             width: 700px;
             margin: 1em auto;
@@ -41,7 +39,6 @@ local html_template = [==[
         }
 
         h1 {
-            font-size: 2em;
             font-weight: bold;
             line-height: 1.4em;
             margin: 0;
@@ -50,7 +47,6 @@ local html_template = [==[
 
         h3.mode-name {
             color: black;
-            font-size: 1.6em;
             margin-bottom: 1.0em;
             line-height: 1.4em;
             border-bottom: 1px solid #888;
@@ -75,7 +71,6 @@ local html_template = [==[
         .mode {
             width: 100%;
             float: left;
-            font-size: 1.2em;
             margin-bottom: 1em;
         }
 
@@ -100,6 +95,7 @@ local html_template = [==[
         }
 
         .bind .link-box {
+            font-size: 0.8em;
             float: right;
             font-family: monospace, sans-serif;
             text-decoration: none;
@@ -124,6 +120,7 @@ local html_template = [==[
             float: left;
             color: #2E4483;
             font-weight: bold;
+            font-size: 0.8em;
         }
 
         .bind .box {
@@ -142,7 +139,6 @@ local html_template = [==[
         .bind code {
             color: #2525ff;
             display: inline-block;
-            font-size: 1.1em;
         }
 
         .bind pre {

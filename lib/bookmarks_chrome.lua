@@ -23,13 +23,15 @@ _M.show_uri = false
 _M.stylesheet = [===[
 .bookmark {
     line-height: 1.6em;
-    padding: 0.4em 0.5em;
-    margin: 0;
+    margin: 0.4em 0;
+    padding: 0;
     left: 0;
     right: 0;
     border: 1px solid #fff;
     border-radius: 0.3em;
 }
+.bookmark:first-child { margin-top: 1em; }
+.bookmark:last-child { margin-bottom: 1em; }
 
 .bookmark .title, .bookmark .uri {
     overflow: hidden;
@@ -43,7 +45,6 @@ _M.stylesheet = [===[
 
 .bookmark .title a {
     font-weight: normal;
-    font-size: 1.4em;
     text-decoration: none;
 }
 
@@ -142,7 +143,6 @@ _M.stylesheet = [===[
 #edit-dialog {
     position: fixed;
     z-index: 101;
-    font-size: 1.3em;
     font-weight: 100;
 
     top: 6em;
@@ -210,9 +210,10 @@ local html_template = [==[
 </head>
 <body>
     <header id="page-header">
+        <h1>Bookmarks</h1>
         <span id="search-box">
             <input type="text" id="search" placeholder="Search bookmarks..." />
-            <input type="button" id="clear-button" value="X" />
+            <input type="button" class="button" id="clear-button" value="✕" />
         </span>
         <input type="button" id="search-button" class="button" value="Search" />
         <div class="rhs">
