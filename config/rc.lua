@@ -135,6 +135,7 @@ require "history"
 require "history_chrome"
 
 require "help_chrome"
+require "introspector_chrome"
 
 -- Add command completion
 require "completion"

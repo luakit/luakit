@@ -1,6 +1,6 @@
---- Provides luakit://help/ page.
+--- Provides luakit://introspector/ page.
 --
--- @module help_chrome
+-- @module introspector_chrome
 -- @copyright 2016 Aidan Holm
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
@@ -29,7 +29,7 @@ local html_template = [==[
             color: black;
             font-family: sans-serif;
             width: 700px;
-            margin: 1em auto;
+            margin: 0 auto;
         }
 
         header {
@@ -69,7 +69,6 @@ local html_template = [==[
 
 
         .mode {
-            width: 100%;
             float: left;
             margin-bottom: 1em;
         }
@@ -298,7 +297,7 @@ local help_get_modes = function ()
     return ret
 end
 
-chrome.add("help", function ()
+chrome.add("introspector", function ()
     local sections = {}
     local modes = help_get_modes()
 
@@ -334,13 +333,13 @@ end, nil, {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("help", "Open [luakit://help/](luakit://help/) in a new tab.",
-        function (w) w:new_tab("luakit://help/") end),
+    cmd("introspector", "Open [luakit://introspector/](luakit://introspector/) in a new tab.",
+        function (w) w:new_tab("luakit://introspector/") end),
 })
 
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)
-    if string.match(uri, "^luakit://help/") then return false end
+    if string.match(uri, "^luakit://introspector/") then return false end
 end)
 
 return _M
