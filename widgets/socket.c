@@ -75,7 +75,7 @@ luaH_socket_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_socket(widget_t *w, luakit_token_t UNUSED(token))
+widget_socket(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_socket_index;
     w->newindex = luaH_socket_newindex;

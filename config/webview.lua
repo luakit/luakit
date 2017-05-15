@@ -138,7 +138,7 @@ local init_funcs = {
     create_webview = function (view)
         -- Return a newly created webview in a new tab
         view:add_signal("create-web-view", function (v)
-            return webview.window(v):new_tab()
+            return webview.window(v):new_tab(nil, { private = v.private })
         end)
     end,
 
@@ -275,8 +275,9 @@ do
     end
 end
 
-function webview.new()
-    local view = widget{type = "webview"}
+function webview.new(opts)
+    assert(opts)
+    local view = widget{type = "webview", private = opts.private}
 
     webview_state[view] = { blockers = {} }
     wrap_widget_metatable(view)
@@ -297,6 +298,14 @@ function webview.new()
 
     return view
 end
+
+luakit.idle_add(function ()
+    local undoclose = package.loaded.undoclose
+    if not undoclose then return end
+    undoclose.add_signal("save", function (view)
+        if view.private then return false end
+    end)
+end)
 
 function webview.window(view)
     assert(type(view) == "widget" and view.type == "webview")

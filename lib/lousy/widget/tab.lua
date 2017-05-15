@@ -51,7 +51,11 @@ local function set_current(tl, current)
     local label = priv.label
     priv.current = current
     label.fg = (priv.current and theme.tab_selected_fg) or theme.tab_fg
-    ebox.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
+    if priv.view.private then
+        ebox.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
+    else
+        ebox.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
+    end
     update_label(tl)
 end
 
@@ -113,7 +117,12 @@ local function new(view, index)
         t.bg = theme.tab_hover_bg
     end)
     tl.widget:add_signal("mouse-leave", function (t)
-        t.bg = (data[tl].current and theme.tab_selected_bg) or theme.tab_bg
+        local priv = data[tl]
+        if priv.view.private then
+            t.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
+        else
+            t.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
+        end
     end)
 
     -- Set new title

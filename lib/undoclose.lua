@@ -127,7 +127,9 @@ session.add_signal("save", function (state)
         -- Save view uids for each view
         -- HACK: This is rather brittle; need a better API for session stuff
         for i, v in ipairs(w.tabs.children) do
-            state[w].open[i].view_uid = view_uids[v]
+            if not v.private then
+                state[w].open[i].view_uid = view_uids[v]
+            end
         end
     end
 end)
@@ -202,7 +204,7 @@ add_binds("undolist", lousy.util.table.join({
         if row and row.uid then
             for i, tab in ipairs(w.closed_tabs) do
                 if tab.uid == row.uid then
-                    w:new_tab(table.remove(w.closed_tabs, i), false)
+                    w:new_tab(table.remove(w.closed_tabs, i), { switch = false })
                     break
                 end
             end

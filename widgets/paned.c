@@ -129,7 +129,7 @@ luaH_paned_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_paned(widget_t *w, luakit_token_t token)
+widget_paned(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 {
     w->index = luaH_paned_index;
     w->newindex = luaH_paned_newindex;

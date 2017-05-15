@@ -71,7 +71,7 @@ drawing_area_draw_cb(GtkWidget *UNUSED(widget), cairo_t *cr, widget_t *w)
 }
 
 widget_t *
-widget_drawing_area(widget_t *w, luakit_token_t UNUSED(token))
+widget_drawing_area(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_drawing_area_index;
     w->newindex = luaH_drawing_area_newindex;

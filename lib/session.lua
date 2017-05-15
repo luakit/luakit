@@ -36,12 +36,14 @@ _M.save = function (file)
         local current = w.tabs:current()
         state[w] = { open = {} }
         for ti, tab in ipairs(w.tabs.children) do
-            table.insert(state[w].open, {
-                ti = ti,
-                current = (current == ti),
-                uri = tab.uri,
-                session_state = tab.session_state
-            })
+            if not tab.private then
+                table.insert(state[w].open, {
+                    ti = ti,
+                    current = (current == ti),
+                    uri = tab.uri,
+                    session_state = tab.session_state
+                })
+            end
         end
     end
     _M.emit_signal("save", state)
@@ -105,7 +107,7 @@ local restore_file = function (file, delete)
                 w = window.new({"about:blank"})
                 v = w.view
             else
-                v = w:new_tab("about:blank", item.current)
+                v = w:new_tab("about:blank", { switch = item.current })
             end
             -- Block the tab load, then set its location
             webview.modify_load_block(v, "session-restore", true)

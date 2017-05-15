@@ -209,7 +209,7 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
 
         winfo = &widgets_list[i];
         w->info = winfo;
-        winfo->wc(w, tok);
+        winfo->wc(L, w, tok);
 
 #if GTK_CHECK_VERSION(3,16,0)
     gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");
