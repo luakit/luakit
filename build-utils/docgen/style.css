@@ -54,7 +54,6 @@ code, pre
 code {
 	border: 1px solid #dfdfe9;
 	padding: 0px 4px;
-	vertical-align: text-bottom;
 }
 pre > code {
     border: none;
