@@ -19,7 +19,7 @@ USE_LUAJIT        ?= 1
 
 PREFIX     ?= /usr/local
 MANPREFIX  ?= $(PREFIX)/share/man
-DOCDIR     ?= $(PREFIX)/share/luakit/docs
+DOCDIR     ?= $(PREFIX)/share/luakit/doc
 
 INSTALLDIR := $(DESTDIR)$(PREFIX)
 MANPREFIX  := $(DESTDIR)$(MANPREFIX)
