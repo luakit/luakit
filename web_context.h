@@ -26,7 +26,9 @@
 void web_context_init(void);
 void web_context_init_finish(void);
 WebKitWebContext *web_context_get(void);
+#if WEBKIT_CHECK_VERSION(2,16,0)
 WebKitWebContext *web_context_get_private(void);
+#endif
 guint web_context_process_limit_get(void);
 gboolean web_context_process_limit_set(guint limit);
 

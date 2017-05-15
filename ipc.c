@@ -228,8 +228,10 @@ ipc_init(void)
     g_thread_new("accept_thread", (GThreadFunc) web_extension_connect_thread, socket_path);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
+#if WEBKIT_CHECK_VERSION(2,16,0)
     g_signal_connect(web_context_get_private(), "initialize-web-extensions",
             G_CALLBACK (initialize_web_extensions_cb), socket_path);
+#endif
     /* Remove socket file at exit */
     atexit(remove_socket_file);
 }
