@@ -397,6 +397,58 @@ local generate_page_html = function (doc, style, docs)
     return html
 end
 
+local generate_index_html = function (style, docs)
+    local html_template = [==[
+    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Luakit Documentation</title>
+        <style>
+        {style}
+        h2 { margin-top: 0; }
+        ul { column-count: 3; }
+        @media (max-width: 650px) { ul { column-count: 2; } }
+        @media (max-width: 400px) { ul { column-count: 1; } }
+        </style>
+    </head>
+    <body>
+        <div id=hdr>
+            <h1>Luakit Documentation &nbsp;&nbsp;/&nbsp;&nbsp; Index</h1>
+        </div>
+        <div id=wrap>
+            <div id=content>
+                <h2>Pages</h2>
+                {pages}
+                <h2>Modules</h2>
+                {modules}
+                <h2>Classes</h2>
+                {classes}
+            </div>
+        </div>
+    </body>
+    ]==]
+
+    local lists = {}
+    for _, name in ipairs{"pages", "modules", "classes"} do
+        local html = ""
+        local section = assert(docs[name], "Missing " .. name .. " section")
+        html = html .. "<ul>\n"
+        for _, doc in ipairs(section) do
+            html = html .. ('    <li><a href="%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
+        end
+        lists[name] = html .. "</ul>\n"
+    end
+
+    local html = string.gsub(html_template, "{(%w+)}", {
+        style = style,
+        pages = lists.pages,
+        modules = lists.modules,
+        classes = lists.classes,
+    })
+    return html
+end
+
 local generate_documentation = function (docs, out_dir)
     -- Utility functions
     local mkdir = function (path)
@@ -437,6 +489,11 @@ local generate_documentation = function (docs, out_dir)
         print("Generating '" .. path .. "'...")
         write_file(path, generate_page_html(page, style, docs))
     end
+
+    -- Generate index
+    local path = out_dir .. "index.html"
+    print("Generating '" .. path .. "'...")
+    write_file(path, generate_index_html(style, docs))
 end
 
 return {
