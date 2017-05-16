@@ -209,7 +209,7 @@ signal_array_emit(lua_State *L, signal_t *signals,
     if (sigfuncs) {
         gint nbfunc = sigfuncs->len;
         luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 1,
-                "too much signal");
+                "too many signal handlers; need a new implementation!");
         /* Push all functions and then execute, because this list can change
          * while executing funcs. */
         for (gint i = 0; i < nbfunc; i++) {
@@ -316,7 +316,8 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if (sigfuncs) {
         guint nbfunc = sigfuncs->len;
-        luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 2, "too much signal");
+        luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 2,
+                "too many signal handlers; need a new implementation!");
         /* Push all functions and then execute, because this list can change
          * while executing funcs. */
         for (guint i = 0; i < nbfunc; i++)
