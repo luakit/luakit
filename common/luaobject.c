@@ -228,8 +228,12 @@ signal_array_emit(lua_State *L, signal_t *signals,
             luaH_dofunction(L, nargs, LUA_MULTRET);
             gint ret = lua_gettop(L) - stacksize + 1;
 
-            /* Note that only if nret && ret will the signal execution stop */
-            if (nret && ret) {
+            /* Signal execution stops when:
+             *  - there's an expected number of return values (>0 or LUA_MULTRET)
+             *  - at least one return value (ret)
+             *  - the first return value is non-nil
+             */
+            if (nret && ret && !lua_isnil(L, -ret)) {
                 /* remove all args and functions */
                 for (gint j = 0; j < nargs + nbfunc - i - 1; j++) {
                     lua_remove(L, - ret - 1);
@@ -261,7 +265,7 @@ signal_array_emit(lua_State *L, signal_t *signals,
 }
 
 /* Emit a signal from a signals array and return the results of the first
- * handler that returns something.
+ * handler that returns something non-nil.
  * `signals` is the signals array.
  * `name` is the name of the signal.
  * `nargs` is the number of arguments to pass to the called functions.
@@ -332,8 +336,12 @@ luaH_object_emit_signal(lua_State *L, gint oud,
             luaH_dofunction(L, nargs + 1, LUA_MULTRET);
             ret = lua_gettop(L) - top;
 
-            /* Note that only if nret && ret will the signal execution stop */
-            if (nret && ret) {
+            /* Signal execution stops when:
+             *  - there's an expected number of return values (>0 or LUA_MULTRET)
+             *  - at least one return value (ret)
+             *  - the first return value is non-nil
+             */
+            if (nret && ret && !lua_isnil(L, -ret)) {
                 /* Adjust the number of results to match nret (including 0) */
                 if (nret != LUA_MULTRET && ret != nret) {
                     /* Pad with nils */
