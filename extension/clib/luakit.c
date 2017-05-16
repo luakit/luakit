@@ -31,7 +31,7 @@
 #include <time.h>
 
 /* lua luakit class for signals */
-lua_class_t luakit_class;
+static lua_class_t luakit_class;
 static GPtrArray *queued_emissions;
 
 /* setup luakit module signals */
