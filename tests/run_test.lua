@@ -209,12 +209,12 @@ end
 -- Find a free server number
 -- Does have a race condition...
 for i=0,math.huge do
-    local f = io.open(("/tmp/.X%d-lock"):format(i))
-    if not f then
+    local flat_lock = lfs.attributes(("/tmp/.X%d-lock"):format(i))
+    local nest_lock = lfs.attributes(("/tmp/.X11-unix/X%d"):format(i))
+    if not (flat_lock or nest_lock) then
         xvfb_display = ":" .. tostring(i)
         break
     end
-    f:close()
 end
 
 -- Launch Xvfb for lifetime of test runner
