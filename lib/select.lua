@@ -27,7 +27,9 @@ local wrapped = { label_maker = nil }
 local wm = require_web_module("select_wm")
 
 luakit.add_signal("web-extension-created", function (view)
-    wm:emit_signal(view, "set_label_maker", wrapped.label_maker)
+    if wrapped.label_maker then
+        wm:emit_signal(view, "set_label_maker", wrapped.label_maker)
+    end
 end)
 
 local mt = {
