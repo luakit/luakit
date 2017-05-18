@@ -38,11 +38,10 @@ local html_template = [==[
 -- @type string
 _M.stylesheet = [==[
     .download {
-        -webkit-margin-start: 90px;
-        -webkit-padding-start: 10px;
+        padding-left: 10px;
         position: relative;
         display: block;
-        margin-bottom: 10px;
+        margin: 10px 0 10px 90px;
     }
 
     .download .date {

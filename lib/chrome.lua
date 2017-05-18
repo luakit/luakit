@@ -13,116 +13,143 @@ local _M = {}
 -- for a consitent looking theme.
 -- @type string
 _M.stylesheet = [===[
+    * {
+        box-sizing: border-box;
+    }
     body {
         background-color: white;
-        color: black;
+        color: #222;
         display: block;
-        font-size: 62.5%; /* 1em == 10px @ 96dpi */
         margin: 0;
         padding: 0;
         font-family: sans-serif;
     }
-
     #page-header {
-        font-size: 1.3em;
+        display: flex;
+        -webkit-align-items: center;
         background-color: #eee;
         position: fixed;
         top: 0;
         left: 0;
         width: 100%;
         margin: 0;
-        padding: 0;
+        padding: 0 1.5em;
+        height: 3.5em;
         border-bottom: 1px solid #ddd;
-        -webkit-box-shadow: 0 0.5em 2em #fff;
-        overflow: hidden;
-        white-space: nowrap;
+        -webkit-user-select: none;
+        overflow-y: hidden;
     }
-
-    header > h1 {
-        font-size: 1.3em;
-        margin: 1em;
-        display: inline-block;
+    #page-header > h1 {
+        font-size: 1.4em;
+        margin: 0 1em;
+        color: #445;
+        cursor: default;
     }
+    #page-header > h1:first-child {
+        margin-left: 0;
+    }
+    .content-margin {
+        padding: 3.5em 1.5em 0 1.5em;
+    }
+    h2 { font-size: 1.2rem; }
+    h3 { font-size: 1.1rem; color: #666; }
 
-    header input {
-        font-size: inherit;
-        font-weight: 100;
-        padding: 0.5em 0.75em;
+    #page-header input {
+        font-size: 0.8rem;
+        padding: 0.5rem 0.75rem;
         border: none;
         outline: none;
-        margin: 0;
+        margin-top: 0;
+        margin-bottom: 0;
         background-color: #fff;
     }
 
-    header #search-box {
-        display: inline-block;
-        margin: 1em 0 1em 1em;
+    #page-header #search-box {
+        display: flex;
         padding: 0;
         background-color: #fff;
-        border-radius: 0.25em;
+        border-radius: 0.25rem;
         box-shadow: 0 1px 1px #888;
     }
 
-    header #search {
+    #page-header #search {
         width: 20em;
         font-weight: normal;
-        color: #111;
-        border-radius: 0.25em 0 0 0.25em;
+        border-radius: 0.25rem 0 0 0.25rem;
         margin: 0;
         padding-right: 0;
     }
 
-    header #clear-button {
-        margin-left: 0;
-        font-weight: 100;
-        color: #444;
-        border-radius: 0 0.25em 0.25em 0;
+    #page-header #clear-button {
+        margin: 0;
+        padding: 0.5rem 0.55rem;
+        border-radius: 0 0.25rem 0.25rem 0;
+        box-shadow: none;
+        font-size: 1rem;
+        line-height: 1rem;
     }
 
-    header #clear-button:hover {
+    #page-header #clear-button:hover {
         color: #000;
     }
 
-    header #clear-button:active {
+    #page-header #clear-button:active {
         background-color: #eee;
     }
 
     .button {
         box-shadow: 0 1px 1px #888;
-        margin: 1em 0 1em 0.5em;
+        margin: 1rem 0 1rem 0.5rem;
         border-radius: 0.25em;
-        color: #444;
+        color: #888;
+        display: inline-block;
+        line-height: 1.25;
+        text-align: center;
+        white-space: nowrap;
+        vertical-align: middle;
+        -webkit-user-select: none;
+        border: 1px solid transparent;
+        padding: .5rem 1rem;
+        font-size: 1rem;
+        border-radius: .25rem;
+        transition: color .1s ease-in-out, background-color .1s ease-in-out;
+        cursor: pointer;
     }
 
-    .button:hover {
+    #page-header .button:hover, .button:hover {
         color: #000;
     }
 
-    .button:active {
+    #page-header .button:active, .button:active {
         background-color: #eee;
     }
 
-    .button[disabled] {
+    #page-header .button[disabled], .button[disabled] {
         color: #888;
         background-color: #eee;
+        cursor: not-allowed;
     }
 
-    header .rhs {
-        position: absolute;
+    #page-header .rhs {
+        display: flex;
+        -webkit-align-items: center;
+        position: fixed;
+        top: 0;
         right: 0;
-        padding: 0 1em 0.5em 0;
         margin: 0;
-        display: inline-block;
+        padding-right: 1.5em;
+        height: 3.5em;
+        margin: 0;
         background-color: inherit;
         box-shadow: -1em 0 1em #eee;
     }
 
-    header .rhs .button {
+    #page-header .rhs .button {
         margin-bottom: 0;
     }
 
-    .content-margin {
-        padding: 6.5em 1em 1em 1em;
+    .license {
+        font-family: monospace;
     }
 
     .hidden {

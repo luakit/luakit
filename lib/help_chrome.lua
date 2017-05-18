@@ -5,333 +5,129 @@
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
-local dedent = lousy.util.string.dedent
-local escape = lousy.util.escape
 local chrome = require("chrome")
 local history = require("history")
-local markdown = require("markdown")
 local editor = require("editor")
-local get_modes = require("modes").get_modes
 local add_cmds = require("binds").add_cmds
 
 local _M = {}
 
-local html_template = [==[
+local index_html_template = [==[
 <!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Luakit Introspector</title>
-    <style type="text/css">
-        {style}
-        body {
-            background-color: white;
-            color: black;
-            display: block;
-            font-size: 62.5%;
-            font-family: sans-serif;
-            width: 700px;
-            margin: 1em auto;
-        }
-
-        header {
-            padding: 0.5em 0 0.5em 0;
-            margin: 2em 0 0.5em 0;
-            border-bottom: 1px solid #888;
-        }
-
-        h1 {
-            font-size: 2em;
-            font-weight: bold;
-            line-height: 1.4em;
-            margin: 0;
-            padding: 0;
-        }
-
-        h3.mode-name {
-            color: black;
-            font-size: 1.6em;
-            margin-bottom: 1.0em;
-            line-height: 1.4em;
-            border-bottom: 1px solid #888;
-        }
-
-        h1, h2, h3, h4 {
-            -webkit-user-select: none;
-        }
-
-        ol, li {
-            margin: 0;
-            padding: 0;
-            list-style: none;
-        }
-
-        pre {
-            margin: 0;
-            padding: 0;
-        }
-
-
-        .mode {
-            width: 100%;
-            float: left;
-            font-size: 1.2em;
-            margin-bottom: 1em;
-        }
-
-        .mode .mode-name {
-            font-family: monospace, sans-serif;
-        }
-
-        .mode .binds {
-            clear: both;
-            display: block;
-        }
-
-        .bind {
-            float: left;
-            width: 690px;
-            padding: 5px;
-        }
-
-        .bind:hover {
-            background-color: #f8f8f8;
-            -webkit-border-radius: 0.5em;
-        }
-
-        .bind .link-box {
-            float: right;
-            font-family: monospace, sans-serif;
-            text-decoration: none;
-        }
-
-        .bind .link-box a {
-            color: #11c;
-            text-decoration: none;
-        }
-
-        .bind .link-box a:hover {
-            color: #11c;
-            text-decoration: underline;
-        }
-
-        .bind .func-source {
-            display: none;
-        }
-
-        .bind .key {
-            font-family: monospace, sans-serif;
-            float: left;
-            color: #2E4483;
-            font-weight: bold;
-        }
-
-        .bind .box {
-            float: right;
-            width: 550px;
-        }
-
-        .bind .desc p:first-child {
-            margin-top: 0;
-        }
-
-        .bind .desc p:last-child {
-            margin-bottom: 0;
-        }
-
-        .bind code {
-            color: #2525ff;
-            display: inline-block;
-            font-size: 1.1em;
-        }
-
-        .bind pre {
-            margin: 1em;
-            padding: 0.5em;
-            background-color: #EFC;
-            border-top: 1px solid #AC9;
-            border-bottom: 1px solid #AC9;
-        }
-
-        .bind pre code {
-            color: #000;
-        }
-
-        .mode h4 {
-            margin: 1em 0;
-            padding: 0;
-        }
-
-        .bind .clear {
-            display: block;
-            width: 100%;
-            height: 0;
-            margin: 0;
-            padding: 0;
-            border: none;
-        }
-
-        .bind_type_any .key {
-            color: #888;
-            float: left;
-        }
-
-        #templates {
-            display: none;
-        }
+    <title>Luakit Help</title>
+    <style type="text/css">{style}
     </style>
 </head>
 <body>
-    <header id="page-header">
-        <h1>Luakit Help</h1>
-    </header>
-    <div class="content-margin">
-        {sections}
+    <header id="page-header"><h1>Luakit Help</h1></header>
+    <div class=content-margin>
+        <h2>About Luakit</h2>
+            <p>Luakit is a highly configurable, browser framework based on the <a
+            href="http://webkit.org/" target="_blank">WebKit</a> web content engine and the <a
+            href="http://gtk.org/" target="_blank">GTK+</a> toolkit. It is very fast, extensible with <a
+            href="http://lua.org/" target="_blank">Lua</a> and licensed under the <a
+            href="https://raw.github.com/aidanholm/luakit/develop/COPYING.GPLv3" target="_blank">GNU GPLv3</a>
+            license.  It is primarily targeted at power users, developers and any people with too much time
+            on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
+            interface.</p>
+        <h2>Introspector</h2>
+        <p> To view the automatically generated documentation for currently loaded
+        modules and available keybinds, open the Luakit introspector.</p>
+        <ul>
+            <li><a href="luakit://introspector/">Introspector</a></li>
+        </ul>
+        <h2>API Documentation</h2>
+        <ul>
+            <li><a href="luakit://help/doc/index.html">API Index</a></li>
+        </ul>
+        <h2>Questions, Bugs, and Contributions</h2>
+
+        <p>Please report any bugs or issues you find at the GitHub
+        <a href="https://github.com/aidanholm/luakit/issues" target="_blank">issue tracker</a>.</p>
+        <p>If you have any feature requests or questions, feel free to open an
+        issue for those as well. Pull requests and patches are both welcome,
+        and there are plenty of areas that could be improved, especially tests
+        and documentation.</p>
+
+        <h2>License</h2>
+        <p>Luakit is licensed under the GNU General Public License version 3 or later.
+        The abbreviated text of the license is as follows:</p>
+        <div class=license>
+            <p>This program is free software: you can redistribute it and/or modify
+            it under the terms of the GNU General Public License as published by
+            the Free Software Foundation, either version 3 of the License, or
+            (at your option) any later version.</p>
+
+            <p>This program is distributed in the hope that it will be useful,
+            but WITHOUT ANY WARRANTY; without even the implied warranty of
+            MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+            GNU General Public License for more details.</p>
+
+            <p>You should have received a copy of the GNU General Public License
+            along with this program.  If not, see
+            <a href="https://www.gnu.org/licenses/">https://www.gnu.org/licenses/</a>.</p>
+        </div>
     </div>
-    <script>
-        {jquery}
-    </script>
-    <script>
-        {javascript}
-    </script>
 </body>
 ]==]
 
-local mode_section_template = [==[
-    <section class="mode" id="mode-{name}">
-        <h3 class="mode-name">{name} mode</h3>
-        <p class="mode-desc">{desc}</p>
-        <pre style="display: none;" class="mode-traceback">{traceback}</pre>
-        <ol class="binds">
-            {binds}
-        </ol>
-    </section>
-]==]
-
-local mode_bind_template = [==[
-    <li class="bind bind_type_{type}">
-        <div class="link-box">
-            <a href="#" class="filename">{filename}</a>
-            <a href="#" class="linedefined" filename="{filename}" line="{linedefined}">{linedefined}</a>
-        </div>
-        <hr class="clear" />
-        <div class="key">{key}</div>
-        <div class="box desc">{desc}</div>
-        <div class="box func-source">
-            <h4>Function source:</h4>
-            <pre><code>{func}</code></pre>
-        </div>
-    </li>
-]==]
-
-local main_js = [=[
-$(document).ready(function () {
-    var $body = $(document.body);
-
-    $body.on("click", ".bind .linedefined", function (event) {
-        event.preventDefault();
-        var $e = $(this);
-        open_editor($e.attr("filename"), $e.attr("line"));
-        return false;
-    })
-
-    $body.on("click", ".bind .desc a", function (event) {
-        event.stopPropagation(); // prevent source toggling
-    })
-
-    $body.on("click", ".bind", function (e) {
-        var $src = $(this).find(".func-source");
-        if ($src.is(":visible"))
-            $src.slideUp();
-        else
-            $src.slideDown();
-    })
-});
-]=]
-
-local source_lines = {}
-local function function_source_range(_, info)
-    local lines = source_lines[info.source]
-
-    if not lines then
-        local source = lousy.load(info.source)
-        lines = {}
-        string.gsub(source, "([^\n]*)\n", function (line)
-            table.insert(lines, line)
-        end)
-        source_lines[info.source] = lines
-    end
-
-    return dedent(table.concat(lines, "\n", info.linedefined,
-        info.lastlinedefined), true)
-end
-
-local help_get_modes = function ()
-    local ret = {}
-    local modes = lousy.util.table.values(get_modes())
-    table.sort(modes, function (a, b) return a.order < b.order end)
-
-    for _, mode in pairs(modes) do
-        local binds = {}
-
-        if mode.binds then
-            for i, b in pairs(mode.binds) do
-                local info = debug.getinfo(b.func, "uS")
-                info.source = info.source:sub(2)
-                binds[i] = {
-                    type = b.type,
-                    key = lousy.bind.bind_to_string(b),
-                    desc = b.desc and markdown(dedent(b.desc)) or nil,
-                    filename = info.source,
-                    linedefined = info.linedefined,
-                    lastlinedefined = info.lastlinedefined,
-                    func = function_source_range(b.func, info),
-                }
-            end
-        end
-
-        table.insert(ret, {
-            name = mode.name,
-            desc = mode.desc and markdown(dedent(mode.desc)) or nil,
-            binds = binds,
-            traceback = mode.traceback
-        })
-    end
-    -- Clear source file cache
-    source_lines = {}
-    return ret
-end
-
-chrome.add("help", function ()
-    local sections = {}
-    local modes = help_get_modes()
-
-    for _, mode in ipairs(modes) do
-        local binds = {}
-        for _, bind in ipairs(mode.binds) do
-            bind.key = escape(bind.key)
-            bind.desc = bind.desc or ""
-            binds[#binds+1] = string.gsub(mode_bind_template, "{(%w+)}", bind)
-        end
-
-        local section_html_subs = {
-            name = mode.name,
-            desc = mode.desc or "",
-            traceback = mode.traceback,
-            binds = table.concat(binds, "\n")
-        }
-        sections[#sections+1] = string.gsub(mode_section_template, "{(%w+)}", section_html_subs)
-    end
-
-    local sections_html = table.concat(sections, "\n")
-    local html_subs = {
-        sections = sections_html,
-        style  = chrome.stylesheet,
-        javascript = main_js,
-        jquery = lousy.load("lib/jquery.min.js")
-    }
-    local html = string.gsub(html_template, "{(%w+)}", html_subs)
+local help_index_page = function ()
+    local html_subs = { style = chrome.stylesheet, }
+    local html = string.gsub(index_html_template, "{(%w+)}", html_subs)
     return html
+end
+
+local help_doc_page = function (path)
+    local extract_doc_html = function (file_path)
+        local ok, blob = pcall(lousy.load, file_path)
+        if not ok then return "<h2>Documentation not found</h2>", "" end
+        local style = blob:match("<style>(.*)</style>")
+        -- Remove some css rules
+        style = style:gsub("html %b{}", ""):gsub("#hdr %b{}", ""):gsub("#hdr > h1 %b{}", "")
+        local inner = blob:match("(<div id=wrap>.*</div>)%s*</body>")
+        return inner, style
+    end
+
+    local doc_html_template = [==[
+    <!doctype html>
+    <html>
+    <head>
+        <meta charset="utf-8">
+        <title>Luakit API Documentation</title>
+        <style type="text/css">
+        {style}
+        #wrap { padding: 2em 0; }
+        #content > h1 { font-size: 28px; }
+        </style>
+    </head>
+    <body>
+        <header id="page-header">
+            <h1>Luakit API Documentation</h1>
+        </header>
+        <div class="content-margin">
+        {doc_html}
+        </div>
+    </body>
+    ]==]
+    local doc_root = "doc/apidocs/"
+    local doc_html, doc_style = extract_doc_html(doc_root .. path)
+    local html_subs = {
+        style = doc_style .. chrome.stylesheet,
+        doc_html = doc_html,
+    }
+    local html = string.gsub(doc_html_template, "{([%w_]+)}", html_subs)
+    return html
+end
+
+chrome.add("help", function (_, meta)
+    if meta.path:match("^/?$") then
+        return help_index_page()
+    elseif meta.path:match("^doc/?") then
+        return help_doc_page(({meta.path:match("^doc/?(.*)$")})[1])
+    end
 end, nil, {
     open_editor = function(_, ...) return editor.edit(...) end,
 })

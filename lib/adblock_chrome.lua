@@ -92,19 +92,18 @@ _M.html_page_title = "AdBlock filters"
 -- @type string
 _M.html_style = [===[
     table {
-        font-size: 1.0em;
         width: 100%;
+        margin: 1em 0;
     }
     th {
         text-align: left;
-        font-size: 1.6em;
+        font-size: 1.3em;
         font-weight: 100;
         margin: 1em 0 0.5em 0.5em;
         -webkit-user-select: none;
         cursor: default;
     }
     td {
-        font-size: 1.3em;
     }
     th, td {
         white-space: nowrap;
