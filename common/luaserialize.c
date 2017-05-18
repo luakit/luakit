@@ -21,6 +21,27 @@
 
 #include <lauxlib.h>
 
+static GByteArray *bytecode_buf; /* Used only for serializing functions */
+static size_t bytecode_len; /* Used only for de-serializing functions */
+
+static int
+lua_function_writer(lua_State *UNUSED(L), const void *p, size_t sz, void *UNUSED(ud))
+{
+    g_byte_array_append(bytecode_buf, (guint8*)p, sz);
+    return 0;
+}
+
+static const char *
+lua_function_reader(lua_State *UNUSED(L), const guint8** bytes, size_t *sz)
+{
+    if (bytecode_len == 0)
+        return NULL;
+    const char *ret = (const char *)*bytes;
+    *bytes += bytecode_len;
+    *sz = bytecode_len;
+    return ret;
+}
+
 static void
 lua_serialize_value(lua_State *L, GByteArray *out, int index)
 {
@@ -29,7 +50,6 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
 
     switch (type) {
         case LUA_TUSERDATA:
-        case LUA_TFUNCTION:
         case LUA_TTHREAD:
             luaL_error(L, "cannot serialize variable of type %s", lua_typename(L, type));
             return;
@@ -76,6 +96,18 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
         case LUA_TLIGHTUSERDATA: {
             gpointer p = lua_touserdata(L, index);
             g_byte_array_append(out, (guint8*)&p, sizeof(p));
+            break;
+        }
+        case LUA_TFUNCTION: {
+            bytecode_buf = bytecode_buf ?: g_byte_array_new();
+            g_byte_array_set_size(bytecode_buf, 0);
+            lua_pushvalue(L, index);
+            lua_dump(L, lua_function_writer, NULL);
+            lua_pop(L, 1);
+            size_t len = bytecode_buf->len;
+            g_byte_array_append(out, (guint8*)&len, sizeof(len));
+            g_byte_array_append(out, bytecode_buf->data, len);
+            g_byte_array_set_size(bytecode_buf, 0);
             break;
         }
     }
@@ -131,6 +163,13 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
             gpointer p;
             TAKE(p, sizeof(p));
             lua_pushlightuserdata(L, p);
+            break;
+        }
+        case LUA_TFUNCTION: {
+            TAKE(bytecode_len, sizeof(bytecode_len));
+            int status = lua_load(L, (lua_Reader)lua_function_reader, bytes, NULL);
+            if (status != 0)
+                return luaL_error(L, "deserialize error: %s", lua_tostring(L, -1));
             break;
         }
         case LUA_TNONE:
