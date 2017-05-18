@@ -1,11 +1,13 @@
---- Select a page element with a visual interface.
+-- Select a page element with a visual interface.
 --
--- @module select_wm
+-- @submodule select
 -- @copyright 2017 Aidan Holm
 
 local floor, max = math.floor, math.max
 
 local _M = {}
+
+local ui = ipc_channel("select_wm")
 
 -- Label making
 
@@ -502,6 +504,10 @@ function _M.focused_hint(page)
     local state = assert(page_states[page.id])
     return state.hints[state.focused]
 end
+
+ui:add_signal("set_label_maker", function (_, _, f)
+    label_maker = f(label_styles)
+end)
 
 return _M
 
