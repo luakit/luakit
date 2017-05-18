@@ -4,6 +4,8 @@
 -- @copyright 2017 Aidan Holm
 
 local posix = require('posix')
+-- workaround for outdated posix module
+posix.FD_CLOEXEC = posix.FD_CLOEXEC or 1
 
 local M = {}
 
