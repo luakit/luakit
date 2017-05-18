@@ -48,6 +48,8 @@ typedef struct _queued_ipc_t {
 const GPtrArray *
 ipc_endpoints_get(void)
 {
+    if (!endpoints)
+        endpoints = g_ptr_array_sized_new(1);
     return endpoints;
 }
 
