@@ -11,10 +11,7 @@ local ip = "127.0.0.1"
 local port = 8888
 local backlog = 10
 
-local server = socket.tcp()
-server:setoption("reuseaddr", true)
-assert(server:bind(ip, port))
-server:listen(backlog)
+local server = assert(socket.bind(ip, port, backlog))
 
 local function reply_with_not_implemented(client)
     client:send("HTTP/1.0 501 Not Implemented\n\n501 Not Implemented")
