@@ -223,7 +223,8 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
 
         verbose("created widget of type: %s", w->info->name);
 
-        luaH_object_emit_signal(L, -3, "init", 0, 0);
+        lua_pushvalue(L, -3);
+        luaH_class_emit_signal(L, &widget_class, "create", 1, 0);
         return 0;
     }
 
