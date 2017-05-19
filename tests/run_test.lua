@@ -129,7 +129,7 @@ local function spawn_luakit_instance(config, ...)
     -- HACK: make GStreamer shut up about not finding random .so files
     -- when it rebuilds its registry, which it does with every single
     -- luakit instance spawned this way
-    local cache_dir = posix.getenv("XDG_CACHE_HOME") or (posix.getenv("HOME") .. "/")
+    local cache_dir = util.getenv("XDG_CACHE_HOME") or (util.getenv("HOME") .. "/")
     local gst_dir = cache_dir .. "/gstreamer-1.0"
     if lfs.attributes(gst_dir, "mode") == "directory" then
         os.execute("mkdir -p " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0/")

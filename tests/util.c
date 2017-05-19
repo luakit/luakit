@@ -75,12 +75,20 @@ l_spawn_async(lua_State *L)
     return error ? 2 : 1;
 }
 
+static int
+l_getenv(lua_State *L)
+{
+    lua_pushstring(L, g_getenv(luaL_checkstring(L, 1)));
+    return 1;
+}
+
 int
 luaopen_tests_util(lua_State *L)
 {
     static const struct luaL_reg util [] = {
         {"make_tmp_dir", l_make_tmp_dir},
         {"spawn_async", l_spawn_async},
+        {"getenv", l_getenv},
         {NULL, NULL},
     };
     luaL_openlib(L, "tests.util", util, 0);
