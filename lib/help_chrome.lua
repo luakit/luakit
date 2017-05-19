@@ -81,9 +81,13 @@ local help_index_page = function ()
 end
 
 local help_doc_page = function (path)
-    local extract_doc_html = function (file_path)
-        local ok, blob = pcall(lousy.load, file_path)
-        if not ok then return "<h2>Documentation not found</h2>", "" end
+    local extract_doc_html = function (file)
+        local roots, ok, blob = {luakit.install_path  .. "/doc/", "doc/apidocs/"}
+        for _, root in ipairs(roots) do
+            ok, blob = pcall(lousy.load, root .. file)
+            if ok then break end
+        end
+        if not ok then msg.error(blob); return "<h2>Documentation not found</h2>", "" end
         local style = blob:match("<style>(.*)</style>")
         -- Remove some css rules
         style = style:gsub("html %b{}", ""):gsub("#hdr %b{}", ""):gsub("#hdr > h1 %b{}", "")
@@ -112,8 +116,7 @@ local help_doc_page = function (path)
         </div>
     </body>
     ]==]
-    local doc_root = "doc/apidocs/"
-    local doc_html, doc_style = extract_doc_html(doc_root .. path)
+    local doc_html, doc_style = extract_doc_html(path)
     local html_subs = {
         style = doc_style .. chrome.stylesheet,
         doc_html = doc_html,
