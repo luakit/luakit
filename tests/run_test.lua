@@ -224,14 +224,6 @@ table.insert(exit_handlers, function ()
     util.kill(pid_xvfb)
 end)
 
--- Launch a test HTTP server
-print("Starting HTTP server")
-local pid_httpd = assert(util.spawn_async({"luajit", "tests/httpd.lua"}))
-table.insert(exit_handlers, function ()
-    print("Stopping HTTP server")
-    util.kill(pid_httpd)
-end)
-
 -- Find test files
 local test_file_pat = "/test_%S+%.lua$"
 local test_files = {

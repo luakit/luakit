@@ -136,9 +136,12 @@ end
 --
 -- The port the test server listens on may not always be the same. This function
 -- returns the current URI prefix, which looks like `http://127.0.0.1:8888/`.
+--
+-- Currently, however, there is no HTTP server; instead, the custom URI scheme
+-- `luakit-test://` is used.
 -- @treturn string The URI prefix for the test HTTP server.
 function _M.http_server()
-    return "http://127.0.0.1:8888/"
+    return "luakit-test://"
 end
 
 --- Retrieve a subset of files in the Luakit Git repository.

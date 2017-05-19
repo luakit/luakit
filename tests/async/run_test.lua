@@ -135,6 +135,26 @@ io.stdout:setvbuf("line")
 local test_file = uris[1]
 assert(type(test_file) == "string")
 
+-- Setup luakit-test:// URI scheme
+luakit.register_scheme("luakit-test")
+widget.add_signal("create", function (w)
+    if w.type == "webview" then
+        w:add_signal("scheme-request::luakit-test", function (_, uri, request)
+            local path = uri:gsub("^luakit%-test://", "tests/html/")
+            local f = assert(io.open(path, "rb"))
+            local contents = f:read("*a") or ""
+            f:close()
+
+            local mime = "text/plain"
+            if path:match("%.html$") then mime = "text/html" end
+            if path:match("%.png$") then mime = "image/png" end
+            if path:match("%.jpg$") then mime = "image/jpeg" end
+
+            request:finish(contents, mime)
+        end)
+    end
+end)
+
 do_test_file(test_file)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
