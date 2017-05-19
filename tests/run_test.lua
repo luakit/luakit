@@ -12,9 +12,9 @@ package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 local shared_lib = {}
 local test = require "tests.lib"
 local priv = require "tests.priv"
+local util = require "tests.util"
 test.init(shared_lib)
 
-local posix = require "posix"
 local lfs = require "lfs"
 local lousy = { util = require "lousy.util" }
 local orig_print = print
@@ -111,7 +111,7 @@ local luakit_tmp_dirs = {}
 
 local function spawn_luakit_instance(config, ...)
     -- Create a temporary directory, hopefully on a ramdisk
-    local dir = posix.mkdtemp("/tmp/luakit_test_XXXXXX")
+    local dir = util.make_tmp_dir("luakit_test_XXXXXX")
     table.insert(luakit_tmp_dirs, dir)
 
     -- Cheap version of a chroot that doesn't require special permissions
@@ -128,7 +128,7 @@ local function spawn_luakit_instance(config, ...)
     -- HACK: make GStreamer shut up about not finding random .so files
     -- when it rebuilds its registry, which it does with every single
     -- luakit instance spawned this way
-    local cache_dir = posix.getenv("XDG_CACHE_HOME") or (posix.getenv("HOME") .. "/")
+    local cache_dir = util.getenv("XDG_CACHE_HOME") or (util.getenv("HOME") .. "/")
     local gst_dir = cache_dir .. "/gstreamer-1.0"
     if lfs.attributes(gst_dir, "mode") == "directory" then
         os.execute("mkdir -p " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0/")
@@ -159,7 +159,6 @@ getmetatable(onexit_prx).__gc = cleanup
 table.insert(exit_handlers, function ()
     print("Removing temporary directories")
     for _, dir in ipairs(luakit_tmp_dirs) do
-        assert(dir:match("^/tmp/luakit_test_"))
         os.execute("rm -r " .. dir)
     end
 end)
@@ -219,25 +218,18 @@ end
 
 -- Launch Xvfb for lifetime of test runner
 print("Starting Xvfb")
-local pid_xvfb = priv.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
+local pid_xvfb = assert(util.spawn_async({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"}))
 table.insert(exit_handlers, function ()
     print("Stopping Xvfb")
-    posix.kill(pid_xvfb)
+    util.kill(pid_xvfb)
 end)
 
 -- Launch a test HTTP server
 print("Starting HTTP server")
-local pid_httpd = priv.spawn({"luajit", "tests/httpd.lua"})
+local pid_httpd = assert(util.spawn_async({"luajit", "tests/httpd.lua"}))
 table.insert(exit_handlers, function ()
     print("Stopping HTTP server")
-    posix.kill(pid_httpd)
-end)
-
--- Add interrupt handler
-posix.signal(posix.SIGINT, function (_)
-    io.write("\n")
-    print("Interrupted")
-    cleanup()
+    util.kill(pid_httpd)
 end)
 
 -- Find test files
@@ -260,8 +252,11 @@ if #arg > 0 then
     end
 end
 
-do_style_tests(test_files.style)
-do_async_tests(test_files.async)
+local ok, err = pcall(function ()
+    do_style_tests(test_files.style)
+    do_async_tests(test_files.async)
+end)
+if not ok then print("\n" .. err) end
 
 cleanup()
 os.exit(have_test_failures and 1 or 0)
