@@ -82,12 +82,9 @@ end
 
 local help_doc_page = function (path)
     local extract_doc_html = function (file)
-        local roots, ok, blob = {luakit.install_path  .. "/doc/", "doc/apidocs/"}
-        for _, root in ipairs(roots) do
-            ok, blob = pcall(lousy.load, root .. file)
-            if ok then break else msg.error(blob) end
-        end
-        if not ok then return "<h2>Documentation not found</h2>", "" end
+        local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
+        local ok, blob = pcall(lousy.load, prefix .. file)
+        if not ok then msg.error(blob); return "<h2>Documentation not found</h2>", "" end
         local style = blob:match("<style>(.*)</style>")
         -- Remove some css rules
         style = style:gsub("html %b{}", ""):gsub("#hdr %b{}", ""):gsub("#hdr > h1 %b{}", "")
