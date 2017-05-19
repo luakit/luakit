@@ -84,13 +84,12 @@ install:
 	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
 	cp -r doc/apidocs/{classes,modules,pages} $(DOCDIR)
-	chmod 755 $(DOCDIR)/apidocs
-	chmod 755 $(DOCDIR)/apidocs/pages
-	chmod 755 $(DOCDIR)/apidocs/modules
-	chmod 755 $(DOCDIR)/apidocs/classes
-	chmod 644 $(DOCDIR)/apidocs/pages/*.html
-	chmod 644 $(DOCDIR)/apidocs/modules/*.html
-	chmod 644 $(DOCDIR)/apidocs/classes/*.html
+	chmod 755 $(DOCDIR)/pages
+	chmod 755 $(DOCDIR)/modules
+	chmod 755 $(DOCDIR)/classes
+	chmod 644 $(DOCDIR)/pages/*.html
+	chmod 644 $(DOCDIR)/modules/*.html
+	chmod 644 $(DOCDIR)/classes/*.html
 	cp -r lib $(INSTALLDIR)/share/luakit/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/
 	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/
