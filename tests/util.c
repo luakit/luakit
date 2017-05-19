@@ -20,6 +20,7 @@
 
 #include <lauxlib.h>
 #include "common/util.h"
+#include "common/lualib.h"
 
 static int
 l_make_tmp_dir(lua_State *L)
@@ -36,11 +37,50 @@ l_make_tmp_dir(lua_State *L)
     return error ? 2 : 1;
 }
 
+static int
+l_spawn_async(lua_State *L)
+{
+    /* Convert the first argv table argument to a char** */
+    luaH_checktable(L, 1);
+    size_t n = lua_objlen(L, 1);
+    if (n == 0)
+        return luaL_error(L, "argv must be non-empty");
+    GPtrArray *argv = g_ptr_array_sized_new(n + 1);
+    for (size_t i = 1; i <= n; i++) {
+        lua_rawgeti(L, 1, i);
+        if (!lua_isstring(L, -1)) {
+            g_ptr_array_free(argv, TRUE);
+            return luaL_error(L, "non-string argv element #%u", i);
+        }
+        g_ptr_array_add(argv, (gpointer)lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+    g_ptr_array_add(argv, NULL);
+
+    GSpawnFlags spawn_flags = G_SPAWN_SEARCH_PATH;
+    GPid child_pid;
+    GError *error = NULL;
+
+    g_spawn_async(NULL, (gchar**)argv->pdata, NULL, spawn_flags, NULL, NULL,
+            &child_pid, &error);
+    g_ptr_array_free(argv, TRUE);
+
+    if (!error)
+        lua_pushnumber(L, child_pid);
+    else {
+        lua_pushnil(L);
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+    }
+    return error ? 2 : 1;
+}
+
 int
 luaopen_tests_util(lua_State *L)
 {
     static const struct luaL_reg util [] = {
         {"make_tmp_dir", l_make_tmp_dir},
+        {"spawn_async", l_spawn_async},
         {NULL, NULL},
     };
     luaL_openlib(L, "tests.util", util, 0);

@@ -219,7 +219,7 @@ end
 
 -- Launch Xvfb for lifetime of test runner
 print("Starting Xvfb")
-local pid_xvfb = priv.spawn({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"})
+local pid_xvfb = assert(util.spawn_async({"Xvfb", xvfb_display, "-screen", "0", "800x600x8"}))
 table.insert(exit_handlers, function ()
     print("Stopping Xvfb")
     posix.kill(pid_xvfb)
@@ -227,7 +227,7 @@ end)
 
 -- Launch a test HTTP server
 print("Starting HTTP server")
-local pid_httpd = priv.spawn({"luajit", "tests/httpd.lua"})
+local pid_httpd = assert(util.spawn_async({"luajit", "tests/httpd.lua"}))
 table.insert(exit_handlers, function ()
     print("Stopping HTTP server")
     posix.kill(pid_httpd)
