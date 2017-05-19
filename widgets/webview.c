@@ -756,6 +756,8 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(INSPECTOR,            d->inspector_open);
 #if WEBKIT_CHECK_VERSION(2,16,0)
       PB_CASE(PRIVATE,              d->private);
+#else
+      PB_CASE(PRIVATE,              FALSE);
 #endif
 
       /* push property methods */
