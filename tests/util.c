@@ -18,7 +18,9 @@
  *
  */
 
+#include <errno.h>
 #include <lauxlib.h>
+#include <signal.h>
 #include "common/util.h"
 #include "common/lualib.h"
 
@@ -82,6 +84,18 @@ l_getenv(lua_State *L)
     return 1;
 }
 
+static int
+l_kill(lua_State *L)
+{
+    pid_t pid = luaL_checknumber(L, 1);
+    int sig = luaL_optint(L, 2, SIGTERM);
+
+    if (!kill(pid, sig))
+        return 0;
+    lua_pushstring(L, strerror(errno));
+    return 1;
+}
+
 int
 luaopen_tests_util(lua_State *L)
 {
@@ -89,6 +103,7 @@ luaopen_tests_util(lua_State *L)
         {"make_tmp_dir", l_make_tmp_dir},
         {"spawn_async", l_spawn_async},
         {"getenv", l_getenv},
+        {"kill", l_kill},
         {NULL, NULL},
     };
     luaL_openlib(L, "tests.util", util, 0);
