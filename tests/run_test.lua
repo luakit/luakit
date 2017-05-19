@@ -15,7 +15,6 @@ local priv = require "tests.priv"
 local util = require "tests.util"
 test.init(shared_lib)
 
-local posix = require "posix"
 local lfs = require "lfs"
 local lousy = { util = require "lousy.util" }
 local orig_print = print
@@ -233,13 +232,6 @@ table.insert(exit_handlers, function ()
     util.kill(pid_httpd)
 end)
 
--- Add interrupt handler
-posix.signal(posix.SIGINT, function (_)
-    io.write("\n")
-    print("Interrupted")
-    cleanup()
-end)
-
 -- Find test files
 local test_file_pat = "/test_%S+%.lua$"
 local test_files = {
@@ -260,8 +252,11 @@ if #arg > 0 then
     end
 end
 
-do_style_tests(test_files.style)
-do_async_tests(test_files.async)
+local ok, err = pcall(function ()
+    do_style_tests(test_files.style)
+    do_async_tests(test_files.async)
+end)
+if not ok then print("\n" .. err) end
 
 cleanup()
 os.exit(have_test_failures and 1 or 0)
