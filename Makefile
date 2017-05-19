@@ -85,10 +85,11 @@ install:
 	install -d $(INSTALLDIR)/share/luakit/
 	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
-	cp -r doc/apidocs/{classes,modules,pages} $(DOCDIR)
+	cp -r doc/apidocs/{classes,modules,pages,*.html} $(DOCDIR)
 	chmod 755 $(DOCDIR)/pages
 	chmod 755 $(DOCDIR)/modules
 	chmod 755 $(DOCDIR)/classes
+	chmod 644 $(DOCDIR)/*.html
 	chmod 644 $(DOCDIR)/pages/*.html
 	chmod 644 $(DOCDIR)/modules/*.html
 	chmod 644 $(DOCDIR)/classes/*.html
