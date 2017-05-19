@@ -6,6 +6,7 @@ doc/html
 luakit
 luakit.so
 luakit.1.gz
+tests/util.so
 
 # Generated source files
 common/tokenize.h

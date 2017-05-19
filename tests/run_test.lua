@@ -12,6 +12,7 @@ package.path = package.path .. ';./lib/?.lua;./lib/?/init.lua'
 local shared_lib = {}
 local test = require "tests.lib"
 local priv = require "tests.priv"
+local util = require "tests.util"
 test.init(shared_lib)
 
 local posix = require "posix"
@@ -111,7 +112,7 @@ local luakit_tmp_dirs = {}
 
 local function spawn_luakit_instance(config, ...)
     -- Create a temporary directory, hopefully on a ramdisk
-    local dir = posix.mkdtemp("/tmp/luakit_test_XXXXXX")
+    local dir = util.make_tmp_dir("luakit_test_XXXXXX")
     table.insert(luakit_tmp_dirs, dir)
 
     -- Cheap version of a chroot that doesn't require special permissions
@@ -159,7 +160,6 @@ getmetatable(onexit_prx).__gc = cleanup
 table.insert(exit_handlers, function ()
     print("Removing temporary directories")
     for _, dir in ipairs(luakit_tmp_dirs) do
-        assert(dir:match("^/tmp/luakit_test_"))
         os.execute("rm -r " .. dir)
     end
 end)
