@@ -274,7 +274,7 @@ end
 
 local generate_doc_html = function (doc)
     local html_template = [==[
-        <h1>Module <code>{title}</code></h1>
+        <h1>{type} <code>{title}</code></h1>
         <h2 class=tagline>{tagline}</h2>
         {desc}
         {functions}
@@ -300,6 +300,7 @@ local generate_doc_html = function (doc)
         .. generate_list_html("Fields", doc.fields, generate_field_html, prefix)
 
     local html = string.gsub(html_template, "{(%w+)}", {
+        type = doc.module and "Module" or "Class",
         title = doc.name,
         tagline = doc.tagline:gsub("%.$",""),
         desc = format_text(doc.desc),
