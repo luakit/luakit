@@ -4,8 +4,10 @@
 -- DOCMACRO(available:both)
 -- DOCMACRO(alert:Some functions and fields are not available on the web process.)
 --
+-- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
 -- @author Paweł Zuzelski &lt;pawelz&lt;AT&gt;pld-linux.org&gt;
+-- @copyright 2016 Aidan Holm
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
 -- @module luakit
 
@@ -128,5 +130,21 @@
 --
 -- @function luakit.register_scheme
 -- @tparam string scheme The network scheme to register.
+
+--- @signal page-created
+--
+-- DOCMACRO(alert:This signal is only emitted on the web process of the
+-- newly-created page.)
+--
+-- Emitted after the creation of a [`page`](../classes/page.html) object; i.e. after
+-- a new webview widget has been created in the UI process.
+--
+-- @usage
+--
+--     luakit.add_signal("page-created", function (page)
+--         -- Add more signals to page
+--     end)
+--
+-- @tparam page page
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
