@@ -13,6 +13,9 @@ local text_macros = {
     alert = function (str)
         return '<div class="alert warn">' .. str .. '</div>'
     end,
+    builtin = function ()
+        return '<div class="alert good">This module is builtin and does not need to be manually loaded.</div>'
+    end
 }
 local format_text = function (text)
     local ret = text:gsub("DOCMACRO%((%w+):?([^%)]-)%)", function (macro, args)

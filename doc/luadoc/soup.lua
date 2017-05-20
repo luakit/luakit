@@ -1,4 +1,5 @@
 --- Soup
+-- DOCMACRO(builtin)
 -- @module soup
 -- @author Mason Larobina
 -- @copyright 2012 Mason Larobina

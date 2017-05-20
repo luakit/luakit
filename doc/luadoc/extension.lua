@@ -3,6 +3,7 @@
 -- @author Aidan Holm
 -- @copyright 2016 Aidan Holm
 --
+-- DOCMACRO(builtin)
 -- DOCMACRO(alert:This class is only available from web process Lua states.)
 
 --- @signal page-created

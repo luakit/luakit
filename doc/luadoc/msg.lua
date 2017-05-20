@@ -1,5 +1,6 @@
 --- Message logging support for Lua.
 --
+-- DOCMACRO(builtin)
 -- DOCMACRO(available:both)
 --
 -- This built-in library offers support for logging messages from Lua code. Five

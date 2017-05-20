@@ -1,7 +1,7 @@
 --- Luakit core API
 --
+-- DOCMACRO(builtin)
 -- DOCMACRO(available:both)
---
 -- DOCMACRO(alert:Some functions and fields are not available on the web process.)
 --
 -- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
