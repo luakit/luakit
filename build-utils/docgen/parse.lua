@@ -30,7 +30,7 @@ local parse_error = function (block, ...)
 end
 
 local expect = function (block, pat, err, should_advance)
-    if not block[1] then error("Early EOF") end
+    if not block[1] then error("Early EOF: " .. err) end
     local rets = {}
     for _, p in ipairs(type(pat) == "string" and {pat} or pat) do
         rets = #rets > 0 and rets or {block[1]:match(p)}
@@ -68,7 +68,7 @@ local parse_at_read_write_line = function (item, block)
 end
 
 local parse_at_default_line = function (item, block)
-    if not block[1]:find("^@default ") then return end
+    if not (block[1] and block[1]:find("^@default ")) then return end
     local default = expect(block, "^%@default (.+)", "Missing @default")
     item.default = (default .. peel_off_text_block(block)):gsub("^%s+",""):gsub("[%s%.]+$","")
 end
