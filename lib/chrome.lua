@@ -212,7 +212,8 @@ webview.add_signal("init", function (view)
             -- Give the handler function everything it may need
             local w = webview.window(v)
             local meta = { page = page, path = path, w = w,
-                uri = "luakit://" .. page .. "/" .. path }
+                uri = "luakit://" .. page .. "/" .. path,
+                request = request }
 
             -- Render error output in webview with traceback
             local function error_handler(err)
@@ -234,7 +235,7 @@ webview.add_signal("init", function (view)
             -- Call luakit:// page handler
             local ok, html, mime = xpcall(function () return func(v, meta) end,
                 error_handler)
-            if ok then request:finish(html, mime) end
+            if ok and not request.finished then request:finish(html, mime) end
             return
         end
 
