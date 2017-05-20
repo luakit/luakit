@@ -2,7 +2,7 @@
 --
 -- DOCMACRO(builtin)
 -- DOCMACRO(available:both)
--- DOCMACRO(alert:Some functions and fields are not available on the web process.)
+-- DOCMACRO(alert:Some functions and fields are not available from web processes.)
 --
 -- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
