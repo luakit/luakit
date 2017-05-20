@@ -9,6 +9,7 @@ local chrome = require("chrome")
 local history = require("history")
 local editor = require("editor")
 local add_cmds = require("binds").add_cmds
+local error_page = require("error_page")
 
 local _M = {}
 
@@ -131,11 +132,10 @@ local help_doc_index_page_preprocess = function (inner, style)
     return inner, style
 end
 
-local help_doc_page = function (path, request)
+local help_doc_page = function (v, path, request)
     local extract_doc_html = function (file)
         local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
-        local ok, blob = pcall(lousy.load, prefix .. file)
-        if not ok then msg.error(blob); return "<h2>Documentation not found</h2>", "" end
+        local blob = lousy.load(prefix .. file)
         local style = blob:match("<style>(.*)</style>")
         -- Remove some css rules
         style = style:gsub("html %b{}", ""):gsub("#hdr %b{}", ""):gsub("#hdr > h1 %b{}", "")
@@ -167,7 +167,20 @@ local help_doc_page = function (path, request)
         </div>
     </body>
     ]==]
-    local doc_html, doc_style = extract_doc_html(path)
+    local ok, doc_html, doc_style = pcall(extract_doc_html, path)
+    if not ok then
+        print(doc_html)
+        error_page.show_error_page(v, {
+            heading = "Documentation not found",
+            content = [==[]==],
+            buttons = {{
+                label = "Return to API Index",
+                callback = function (vv) vv.uri = "luakit://help/doc/index.html" end
+            }},
+            request = request,
+        })
+        return
+    end
     local html_subs = {
         style = doc_style .. chrome.stylesheet,
         doc_html = doc_html,
@@ -176,11 +189,11 @@ local help_doc_page = function (path, request)
     return html
 end
 
-chrome.add("help", function (_, meta)
+chrome.add("help", function (v, meta)
     if meta.path:match("^/?$") then
         return help_index_page()
     elseif meta.path:match("^doc/?") then
-        return help_doc_page(({meta.path:match("^doc/?(.*)$")})[1])
+        return help_doc_page(v, ({meta.path:match("^doc/?(.*)$")})[1], meta.request)
     end
 end, nil, {
     open_editor = function(_, ...) return editor.edit(...) end,
