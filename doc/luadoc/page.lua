@@ -53,6 +53,11 @@
 -- @type string
 -- @readonly
 
+--- @property document
+-- The `dom_document` currently loaded in the page.
+-- @type dom_document
+-- @readonly
+
 --- Unique ID number associated with the web page.
 --
 -- A page and webview widget pair will always have the same ID; this is
