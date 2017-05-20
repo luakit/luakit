@@ -80,7 +80,58 @@ local help_index_page = function ()
     return html
 end
 
-local help_doc_page = function (path)
+local help_doc_index_page_preprocess = function (inner, style)
+    -- Mark each list with the section heading just above it
+    inner = inner:gsub("<h2>(%S+)</h2>%s*<ul>", "<h2>%1</h2><ul class=%1>")
+    -- Customize each module link bullet
+    inner = inner:gsub('<li><a href="modules/(%S+).html">', function (pkg)
+        local builtins = {
+            extension = true,
+            ipc = true,
+            luakit = true,
+            msg = true,
+            soup = true,
+        }
+        local class = package.loaded[pkg] and "enabled" or "disabled"
+        if builtins[pkg] then class = "builtin" end
+        return '<li class=' .. class .. '><a title="' .. pkg .. ": " .. class .. '" href="modules/' .. pkg .. '.html">'
+    end)
+    style = style .. [===[
+        div#wrap { padding-top: 0; }
+        h2 { margin: 1.5em 0 0.75em; }
+        h2 + ul { margin: 0.5em 0; }
+        ul {
+            display: flex;
+            flex-wrap: wrap;
+            padding-left: 1em;
+            list-style-type: none;
+        }
+        ul > li {
+            flex: 1 0 200px;
+            padding: 5px;
+            margin: 0px !important;
+            position: relative;
+            padding-left: 1.5em;
+        }
+        ul > li:before {
+            font-weight: bold;
+            width: 1.5em;
+            text-align: center;
+            left: 0;
+            position: absolute;
+        }
+        ul > li:before { content: "●"; transform: translate(1px, -1px); z-index: 0; }
+        ul.Modules > li.enabled:before { content: "\2713 "; color: darkgreen; }
+        ul.Modules > li.disabled:before { content: "\2717 "; color: darkred; }
+        ul.Modules > li.enabled:before, ul.Modules > li.disabled:before {
+            transform: none;
+        }
+        #page-header { z-index: 100; }
+    ]===]
+    return inner, style
+end
+
+local help_doc_page = function (path, request)
     local extract_doc_html = function (file)
         local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
         local ok, blob = pcall(lousy.load, prefix .. file)
@@ -89,6 +140,9 @@ local help_doc_page = function (path)
         -- Remove some css rules
         style = style:gsub("html %b{}", ""):gsub("#hdr %b{}", ""):gsub("#hdr > h1 %b{}", "")
         local inner = blob:match("(<div id=wrap>.*</div>)%s*</body>")
+        if file == "index.html" then
+            inner, style = help_doc_index_page_preprocess(inner, style)
+        end
         return inner, style
     end
 
