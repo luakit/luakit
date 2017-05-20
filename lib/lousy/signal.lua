@@ -9,6 +9,8 @@
 
 local _M = {}
 
+local clone_table = (require "lousy.util").table.clone
+
 -- Private signal data for objects
 local data = setmetatable({}, { __mode = "k" })
 
@@ -69,7 +71,9 @@ end
 -- @param ... Additional arguments are passed any signal handlers called.
 function _M.emit_signal(object, signame, ...)
     local d = get_data(object)
-    local sigfuncs = d.signals[signame] or {}
+    -- Shallow clone the signal table, since it can change while executing
+    -- signal handlers.
+    local sigfuncs = clone_table(d.signals[signame] or {})
 
     msg.debug("emit_signal: %q on %s", signame, tostring(object))
 
