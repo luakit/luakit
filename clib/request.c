@@ -98,6 +98,13 @@ error:
     return luaL_error(L, error_message);
 }
 
+static int
+luaH_request_get_finished(lua_State *L, request_t *request)
+{
+    lua_pushboolean(L, request->finished);
+    return 1;
+}
+
 void
 request_class_setup(lua_State *L)
 {
@@ -113,6 +120,9 @@ request_class_setup(lua_State *L)
              (lua_class_allocator_t) request_new,
              NULL, NULL,
              NULL, request_meta);
+
+    luaH_class_add_property(&request_class, L_TK_FINISHED,
+            NULL, (lua_class_propfunc_t) luaH_request_get_finished, NULL);
 
     luaH_uniq_setup(L, REG_KEY, "");
 }
