@@ -2,7 +2,7 @@
 --
 -- Shows the load progress of the current web page as a percentage.
 --
--- @module widget.progress
+-- @module lousy.widget.progress
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 

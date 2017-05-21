@@ -3,7 +3,7 @@
 -- Shows the number of the current tab, as well as the total number of
 -- tabs in the window.
 --
--- @module widget.tabi
+-- @module lousy.widget.tabi
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 

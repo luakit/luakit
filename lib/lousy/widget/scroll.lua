@@ -2,7 +2,7 @@
 --
 -- Shows the current scroll position of the web page as a percentage.
 --
--- @module widget.scroll
+-- @module lousy.widget.scroll
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 

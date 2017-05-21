@@ -3,7 +3,7 @@
 -- Shows the URI of the current web page. If a link is hovered over with
 -- the mouse, the target URI of that link will be shown temporarily.
 --
--- @module widget.uri
+-- @module lousy.widget.uri
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 

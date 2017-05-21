@@ -2,7 +2,7 @@
 --
 -- Shows the current contents of the input buffer in the status bar.
 --
--- @module widget.buf
+-- @module lousy.widget.buf
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 

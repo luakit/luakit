@@ -3,7 +3,7 @@
 -- Indicates whether the connection used to load the current web page
 -- was secure.
 --
--- @module widget.ssl
+-- @module lousy.widget.ssl
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 

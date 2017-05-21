@@ -2,7 +2,7 @@
 --
 -- Indicates whether the current page can go back or go forward.
 --
--- @module widget.hist
+-- @module lousy.widget.hist
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
 
