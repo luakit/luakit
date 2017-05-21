@@ -124,7 +124,7 @@ local function parse_at_param_line(item, block)
     -- Handle [opt]
     if line:match("^%@t?param%[opt%] ") then
         line = line:gsub("^%@(t?param)%[opt%] ", "@%1 ")
-        param.opt = true
+        param.optional = true
     end
 
     local typestr, name, prefix
@@ -137,7 +137,7 @@ local function parse_at_param_line(item, block)
 
     parse_optional_at_type_line(param, block)
 
-    if param.opt then
+    if param.optional then
         parse_at_default_line(param, block)
     end
 

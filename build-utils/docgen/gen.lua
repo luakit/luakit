@@ -60,6 +60,7 @@ local generate_function_param_html = function (param)
                 <div>
                     <span class=parameter>{name}</span>
                     <div>{typestr}</div>
+                    <div>{optional}</div>
                     <div>{default}</div>
                 </div>
                 <div>{desc}</div>
@@ -70,6 +71,7 @@ local generate_function_param_html = function (param)
         name = param.name,
         typestr = "Type: " .. generate_typestr_html(param.typestr),
         desc = html_unwrap_first_p(format_text(param.desc)),
+        optional = param.optional and "Optional" or "",
         default = param.default and "Default: " .. html_unwrap_first_p(format_text(param.default)) or "",
     })
     return html
