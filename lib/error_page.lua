@@ -13,6 +13,7 @@ local error_page_wm = require_web_module("error_page_wm")
 
 --- HTML template for error page content.
 -- @type string
+-- @readwrite
 _M.html_template = [==[
     <html>
         <head>
@@ -33,6 +34,7 @@ _M.html_template = [==[
 
 --- CSS applied to error pages.
 -- @type string
+-- @readwrite
 _M.style = [===[
     body {
         margin: 0;
@@ -76,6 +78,7 @@ _M.style = [===[
 
 --- CSS applied to certificate error pages.
 -- @type string
+-- @readwrite
 _M.cert_style = [===[
     body {
         background: repeating-linear-gradient(

@@ -17,9 +17,13 @@ local function rm(file)
 end
 
 --- Path to session file.
+-- @type string
+-- @readwrite
 _M.session_file = luakit.data_dir .. "/session"
 
 --- Path to crash recovery session file.
+-- @type string
+-- @readwrite
 _M.recovery_file = luakit.data_dir .. "/recovery_session"
 
 --- Save the current session state to a file.

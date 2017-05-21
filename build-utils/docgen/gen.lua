@@ -202,6 +202,8 @@ local generate_property_html = function (prop, prefix)
         </div>
     ]==]
 
+    assert(prop.readonly or prop.readwrite, "Property " .. prop.name .. " missing RO/RW annotation")
+
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
         name = prop.name,
@@ -262,6 +264,8 @@ local generate_field_html = function (field, prefix)
             <div>{desc}</div>
         </div>
     ]==]
+
+    assert(field.readonly or field.readwrite, "Field " .. field.name .. " missing RO/RW annotation")
 
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,

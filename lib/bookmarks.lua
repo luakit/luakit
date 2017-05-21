@@ -13,6 +13,7 @@ local _M = {}
 lousy.signal.setup(_M, true)
 
 --- Path to bookmarks database.
+-- @readwrite
 _M.db_path = capi.luakit.data_dir .. "/bookmarks.db"
 
 --- Connect to and initialize the bookmarks database.

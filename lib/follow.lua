@@ -23,10 +23,12 @@ local follow_wm = require_web_module("follow_wm")
 -- After each follow ignore all keys pressed by the user to prevent the
 -- accidental activation of other key bindings.
 -- @type number
+-- @readwrite
 _M.ignore_delay = 200
 
 --- CSS applied to the follow mode overlay.
 -- @type string
+-- @readwrite
 _M.stylesheet = [===[
 #luakit_select_overlay {
     position: absolute;
@@ -81,6 +83,7 @@ end
 
 --- Table of functions used to select a hint matching style.
 -- @type {[string]=function}
+-- @readonly
 _M.pattern_styles = {
     re_match_text = re_match_text, -- Regex match target text only.
     re_match_both = re_match_both, -- Regex match both hint label or target text
@@ -90,10 +93,12 @@ _M.pattern_styles = {
 
 --- Hint matching style functions.
 -- @type function
+-- @readwrite
 _M.pattern_maker = _M.pattern_styles.match_label_re_text
 
 --- Whether text case should be ignored in follow mode. True by default.
 -- @type boolean
+-- @readwrite
 _M.ignore_case = true
 
 local function focus(w, step)
@@ -237,6 +242,7 @@ add_binds("follow", {
 
 --- Element selectors used to filter elements to follow.
 -- @type {[string]=string}
+-- @readwrite
 _M.selectors = {
     clickable = 'a, area, textarea, select, input:not([type=hidden]), button',
     -- Elements that can be clicked.

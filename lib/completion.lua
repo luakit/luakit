@@ -256,6 +256,7 @@ local completion_funcs = {
 }
 
 --- Table of functions used to generate completion entries.
+-- @readonly
 _M.funcs = {
     command = completion_funcs.command,
     -- Completes commands.
@@ -266,6 +267,7 @@ _M.funcs = {
 }
 
 --- Array of completion functions from `funcs`, called in order.
+-- @readwrite
 _M.order = {
     [1] = _M.funcs.command, -- `funcs.command`
     [2] = _M.funcs.history, -- `funcs.history`

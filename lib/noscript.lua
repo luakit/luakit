@@ -15,9 +15,13 @@ local theme = require("theme")
 local _M = {}
 
 --- Whether JavaScript should be enabled by default. Default: `true`
+-- @type boolean
+-- @readwrite
 _M.enable_scripts = true
 
 --- Whether plugins should be enabled by default. Default: `true`
+-- @type boolean
+-- @readwrite
 _M.enable_plugins = true
 
 local create_table = [[

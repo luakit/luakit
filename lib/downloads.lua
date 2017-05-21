@@ -31,6 +31,7 @@ local function next_download_id()
 end
 
 --- Default download directory.
+-- @readwrite
 _M.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)

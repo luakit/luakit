@@ -12,6 +12,7 @@ local _M = {}
 --- Common stylesheet that can be sourced from several chrome modules
 -- for a consitent looking theme.
 -- @type string
+-- @readwrite
 _M.stylesheet = [===[
     * {
         box-sizing: border-box;

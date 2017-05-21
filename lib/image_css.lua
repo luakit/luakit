@@ -9,6 +9,7 @@ local wm = require_web_module("image_css_wm")
 local _M = {}
 
 --- The background color to use when showing images.
+-- @readwrite
 _M.background = "#222"
 
 -- Drawn from Firefox's TopLevelImageDocument.css, with some simplifications
@@ -39,6 +40,7 @@ local css_tmpl = [===[
 local css = string.gsub(css_tmpl, "{(%w+)}", { background = _M.background })
 
 --- Stylesheet that is applied to webviews that contain only a single image.
+-- @readonly
 _M.stylesheet = stylesheet{ source = css }
 
 webview.add_signal("init", function (view)

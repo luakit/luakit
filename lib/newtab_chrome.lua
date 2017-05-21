@@ -27,12 +27,14 @@ local _M = {}
 --- Path to a HTML file to use for the new tab page.
 --The default value is `$XDG_DATA_DIR/luakit/newtab.html`.
 -- @type string
+-- @readwrite
 _M.new_tab_file = luakit.data_dir .. "/newtab.html"
 
 --- HTML string to use for the new tab page, if no HTML file is specified.
 -- The default value produces a page with no content and a single solid
 -- background color. `theme.bg` is used as the background color.
 -- @type string
+-- @readwrite
 _M.new_tab_src = ([==[
     <html>
         <head><title>New Tab</title></head>

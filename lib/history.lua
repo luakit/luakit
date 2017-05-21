@@ -11,6 +11,7 @@ local capi = { luakit = luakit, sqlite3 = sqlite3 }
 local _M = {}
 
 --- Path to history database.
+-- @readwrite
 _M.db_path = capi.luakit.data_dir .. "/history.db"
 
 local query_find_last

@@ -13,11 +13,13 @@ local keys = util.table.keys
 local _M = {}
 
 --- Set of modifiers to ignore.
+-- @readwrite
 _M.ignore_mask = {
     Mod2 = true, Mod3 = true, Mod5 = true, Lock = true,
 }
 
 --- A table that contains mappings for key names.
+-- @readwrite
 _M.map = {
     ISO_Left_Tab = "Tab",
 }

@@ -36,6 +36,7 @@ local html_template = [==[
 
 --- CSS for downloads chrome page.
 -- @type string
+-- @readwrite
 _M.stylesheet = [==[
     .download {
         padding-left: 10px;
@@ -361,6 +362,7 @@ export_funcs)
 
 --- URI of the downloads chrome page.
 -- @type string
+-- @readonly
 _M.chrome_page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 

@@ -154,6 +154,7 @@ end
 --  * match at least one of the Lua patterns in `patterns`, and
 --  * do _not_ match any of the Lua patterns in `excludes`.
 --
+-- @function find_files
 -- @tparam string|table dirs The directory prefix (or list of prefixes) in which
 -- to look for files.
 -- @tparam string|table patterns A Lua pattern (or list of patterns) with which
@@ -161,6 +162,7 @@ end
 -- @tparam[opt] table excludes A list of Lua patterns with which to filter file
 -- paths; matching files are removed.
 -- @treturn table A list of matching file paths.
+
 _M.find_files = find_files.find_files
 
 --- Helper function to format a list of file errors.

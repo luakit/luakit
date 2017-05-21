@@ -12,6 +12,8 @@ local tab = require "lousy.widget.tab"
 local _M = {}
 
 --- Width that tabs will shrink to before scrolling starts.
+-- @type number
+-- @readwrite
 _M.min_width = 100
 
 local data = setmetatable({}, { __mode = "k" })

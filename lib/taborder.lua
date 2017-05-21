@@ -85,14 +85,17 @@ _M.by_origin = function(w, newview)
 end
 
 --- Default tab order function: open regular tabs last.
+-- @readwrite
 _M.default = _M.last
 
 --- Default tab order function for background tabs: open by origin.
+-- @readwrite
 _M.default_bg = _M.by_origin
 
 --- Weak table to remember which tab was spawned from which parent.
 -- Note that family bonds are tied only if tabs are spawned within
 -- family rules, e.g. from by_origin. Tabs created elsewhere are orphans.
+-- @readwrite
 _M.kidsof = {}
 setmetatable(_M.kidsof, { __mode = "k" })
 
