@@ -9,29 +9,31 @@
 local window = require("window")
 local lousy = require("lousy")
 local theme = lousy.theme.get()
+local wc = require("lousy.widget.common")
 
-local function update (w)
-    local buf = w.sbar.r.buf
-    if w.buffer then
-        buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
-        buf:show()
-    else
-        buf:hide()
-    end
+local _M = {}
+
+local widgets = {
+    update = function (w, buf)
+        if w.buffer then
+            buf.text = lousy.util.escape(string.format(" %-3s", w.buffer))
+            buf:show()
+        else
+            buf:hide()
+        end
+    end,
+}
+
+local function new()
+    local buf = widget{type="label"}
+    buf:hide()
+    buf.fg = theme.buf_sbar_fg
+    buf.font = theme.buf_sbar_font
+    return wc.add_widget(widgets, buf)
 end
 
-window.add_signal("init", function (w)
-    -- Add widget to window
-    local r = w.sbar.r
-    r.buf = widget{type="label"}
-    r.layout:pack(r.buf)
-    r.buf:hide()
+window.methods.update_buf = function (w) wc.update_widgets_on_w(widgets, w) end
 
-    -- Set style
-    r.buf.fg = theme.buf_sbar_fg
-    r.buf.font = theme.buf_sbar_font
-end)
-
-window.methods.update_buf = update
+return setmetatable(_M, { __call = function(_, ...) return new(...) end })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
