@@ -809,6 +809,13 @@ function window.new(args)
     return w
 end
 
+function window.ancestor(w)
+    repeat
+        w = w.parent
+    until w == nil or w.type == "window"
+    return w and window.bywidget[w] or nil
+end
+
 return window
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

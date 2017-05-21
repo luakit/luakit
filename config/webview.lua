@@ -309,11 +309,7 @@ end)
 
 function webview.window(view)
     assert(type(view) == "widget" and view.type == "webview")
-    local w = view
-    repeat
-        w = w.parent
-    until w == nil or w.type == "window"
-    return window.bywidget[w]
+    return window.ancestor(view)
 end
 
 function webview.modify_load_block(view, name, enable)
