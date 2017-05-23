@@ -558,11 +558,6 @@ luaH_luakit_register_scheme(lua_State *L)
     webkit_web_context_register_uri_scheme(web_context_get(), scheme,
             (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb,
             g_strdup(scheme), g_free);
-#if WEBKIT_CHECK_VERSION(2,16,0)
-    webkit_web_context_register_uri_scheme(web_context_get_private(), scheme,
-            (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb,
-            g_strdup(scheme), g_free);
-#endif
     return 0;
 }
 
