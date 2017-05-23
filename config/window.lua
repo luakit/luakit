@@ -26,11 +26,11 @@ local function vbox()     return widget{type="vbox"}     end
 local function overlay()  return widget{type="overlay"}  end
 
 -- Build and pack window widgets
-function window.build()
+function window.build(w)
     local vertitabs = false
 
     -- Create a table for widgets and state variables for a window
-    local w = {
+    local ww = {
         win    = widget{type="window"},
         ebox   = eventbox(),
         layout = vbox(),
@@ -69,6 +69,9 @@ function window.build()
         },
         bar_layout = vbox(),
     }
+
+    -- Replace values in w
+    for k, v in pairs(ww) do w[k] = v end
 
     -- Tablist widget
     w.tablist = lousy.widget.tablist(w.tabs, vertitabs and "vertical" or "horizontal")
@@ -142,8 +145,6 @@ function window.build()
 
     -- Allows indexing of window struct by window widget
     window.bywidget[w.win] = w
-
-    return w
 end
 
 -- Deprecated API.
@@ -751,9 +752,12 @@ window.indexes = {
     function (_, k) return window.methods[k] end
 }
 
+window.add_signal("build", window.build)
+
 -- Create new window
 function window.new(args)
-    local w = window.build()
+    local w = {}
+    window.emit_signal("build", w)
 
     -- Set window metatable
     setmetatable(w, {
@@ -803,6 +807,13 @@ function window.new(args)
     w.win:show()
 
     return w
+end
+
+function window.ancestor(w)
+    repeat
+        w = w.parent
+    until w == nil or w.type == "window"
+    return w and window.bywidget[w] or nil
 end
 
 return window
