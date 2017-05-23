@@ -16,8 +16,11 @@
  *
  */
 
+#include <webkit2/webkit2.h>
+
 #include "luah.h"
 #include "widgets/common.h"
+#include "web_context.h"
 
 static widget_t*
 luaH_checkimage(lua_State *L, gint udx)
@@ -74,6 +77,49 @@ luaH_image_scale(lua_State *L)
     return 0;
 }
 
+void
+luaH_image_set_favicon_for_uri_finished(WebKitFaviconDatabase *fdb, GAsyncResult *res, widget_t *w)
+{
+    GError *error = NULL;
+    cairo_surface_t *favicon = webkit_favicon_database_get_favicon_finish(fdb, res, &error);
+    if (error) {
+        error("%s", error->message);
+        g_error_free(error);
+        return;
+    }
+
+    int width = cairo_image_surface_get_width(favicon);
+    int height = cairo_image_surface_get_height(favicon);
+    GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface(favicon, 0, 0, width, height);
+    GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 16, 16, GDK_INTERP_BILINEAR);
+    g_object_unref(pixbuf);
+
+    gtk_image_set_from_pixbuf(GTK_IMAGE(w->widget), scaled);
+    g_object_unref(scaled);
+}
+
+static gint
+luaH_image_set_favicon_for_uri(lua_State *L)
+{
+    widget_t *w = luaH_checkimage(L, 1);
+    const gchar *uri = luaL_checkstring(L, 2);
+
+    WebKitWebContext *main_ctx = web_context_get();
+    WebKitFaviconDatabase *main_fdb = webkit_web_context_get_favicon_database(main_ctx);
+    gchar *f_uri;
+    gboolean ok = TRUE;
+
+    if ((f_uri = webkit_favicon_database_get_favicon_uri(main_fdb, uri))) {
+        g_free(f_uri);
+        webkit_favicon_database_get_favicon(main_fdb, uri, NULL,
+                (GAsyncReadyCallback)luaH_image_set_favicon_for_uri_finished, w);
+    } else
+        ok = FALSE;
+
+    lua_pushboolean(L, ok);
+    return 1;
+}
+
 static gint
 luaH_image_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
@@ -83,6 +129,7 @@ luaH_image_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(FILENAME, luaH_image_set_from_file_name)
       PF_CASE(ICON, luaH_image_set_from_icon_name)
       PF_CASE(SCALE, luaH_image_scale)
+      PF_CASE(SET_FAVICON_FOR_URI, luaH_image_set_favicon_for_uri)
 
       default:
         break;
