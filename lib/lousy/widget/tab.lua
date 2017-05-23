@@ -11,6 +11,33 @@ local _M = {}
 
 local data = setmetatable({}, { __mode = "k" })
 
+--- Table of functions used to generate parts of the tab label text
+_M.label_subs = {
+    index_fg = function (tl)
+        local view = data[tl].view
+        local theme = get_theme()
+        local nfg, snfg = theme.tab_ntheme, theme.selected_ntheme
+        local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
+
+        if view.is_loading then -- Show loading on all tabs
+            return lfg
+        elseif tl.current then
+            local trusted = view:ssl_trusted()
+            if trusted == false then return bfg
+            elseif trusted then return gfg
+            else return snfg end
+        else
+            return nfg
+        end
+    end,
+    index = function (tl) return data[tl].index end,
+    title = function (tl) return escape(tl.title) end,
+}
+
+--- Format string which defines the text of each tab label
+-- @type string
+_M.label_format = '<span foreground="{index_fg}" font="Monospace">{index} </span>{title}'
+
 local function destroy(tl)
     -- Destroy tab container widget
     tl.widget:destroy()
@@ -19,29 +46,10 @@ local function destroy(tl)
 end
 
 local function update_label(tl)
-    local priv = data[tl]
-    local view = priv.view
-    local label = priv.label
-    assert(view.type == "webview")
-    local theme = get_theme()
-    local fg, nfg, snfg = theme.tab_fg, theme.tab_ntheme, theme.selected_ntheme
-    local lfg, bfg, gfg = theme.tab_loading_fg, theme.tab_notrust_fg, theme.tab_trust_fg
-
-    local ntheme = nfg
-    if view.is_loading then -- Show loading on all tabs
-        ntheme = lfg
-    elseif tl.current then
-        local trusted = view:ssl_trusted()
-        ntheme = snfg
-        if trusted == false then
-            ntheme = bfg
-        elseif trusted then
-            ntheme = gfg
-        end
-    end
-    local tfmt = '<span foreground="%s" font="Monospace">%s </span>%s'
-    local title = string.format(tfmt, ntheme or fg, priv.index, escape(tl.title))
-    label.text = title
+    local label = data[tl].label
+    label.text = string.gsub(_M.label_format, "{([%w_]+)}", function (k)
+        return _M.label_subs[k](tl)
+    end)
 end
 
 local function set_current(tl, current)
