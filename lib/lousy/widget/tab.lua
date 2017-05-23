@@ -9,6 +9,8 @@ local escape = require("lousy.util").escape
 
 local _M = {}
 
+require("lousy.signal").setup(_M, true)
+
 local data = setmetatable({}, { __mode = "k" })
 
 --- Table of functions used to generate parts of the tab label text
@@ -132,6 +134,8 @@ local function new(view, index)
             t.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
         end
     end)
+
+    _M.emit_signal("build", tl, view)
 
     -- Set new title
     update_title_and_label(tl)
