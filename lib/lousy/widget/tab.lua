@@ -14,6 +14,7 @@ require("lousy.signal").setup(_M, true)
 local data = setmetatable({}, { __mode = "k" })
 
 --- Table of functions used to generate parts of the tab label text
+-- @readwrite
 _M.label_subs = {
     index_fg = function (tl)
         local view = data[tl].view
@@ -38,6 +39,7 @@ _M.label_subs = {
 
 --- Format string which defines the text of each tab label
 -- @type string
+-- @readwrite
 _M.label_format = '<span foreground="{index_fg}" font="Monospace">{index} </span>{title}'
 
 local function destroy(tl)
