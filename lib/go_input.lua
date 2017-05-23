@@ -17,7 +17,7 @@ local go_input = [=[
         ":not([type='button'])", ":not([type='checkbox'])",
         ":not([type='hidden'])", ":not([type='image'])",
         ":not([type='radio'])",  ":not([type='reset'])",
-        ":not([type='submit'])"].join(""));
+        ":not([type='submit'])", ":not([type='file'])"].join(""));
     if (elements) {
         var el, i = 0, n = 0;
         while((el = elements[i++])) {
