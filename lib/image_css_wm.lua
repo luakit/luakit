@@ -9,6 +9,10 @@ local recalc_funcs = setmetatable({}, { __mode = "k" })
 
 ui:add_signal("image", function (_, page)
     local body = page.document.body
+
+    -- do nothing if loaded document is not HTML
+    if not body then return end
+
     local img = body:query("img")[1]
     if not img then return end
 

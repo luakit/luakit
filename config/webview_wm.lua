@@ -16,6 +16,10 @@ end
 
 ui:add_signal("load-finished", function(_, page)
     local doc = page.document
+
+    -- do nothing if loaded document is not HTML
+    if not doc.body then return end
+
     doc.body:add_event_listener("mousedown", true, function (e)
         mousedown_cb(e, page.id)
     end)
