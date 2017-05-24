@@ -198,6 +198,16 @@ _M.stylesheet = [===[
 #edit-view {
     display: none;
 }
+
+.nav-button-box {
+    margin: 2em;
+}
+
+.nav-button-box a {
+    display: none;
+    border: 1px solid #aaa;
+    padding: 0.4em 1em;
+}
 ]===]
 
 local html_template = [==[
@@ -216,6 +226,7 @@ local html_template = [==[
         <span id="search-box">
             <input type="text" id="search" placeholder="Search bookmarks..." />
             <input type="button" class="button" id="clear-button" value="✕" />
+            <input type="hidden" id="page" />
         </span>
         <input type="button" id="search-button" class="button" value="Search" />
         <div class="rhs">
@@ -225,6 +236,11 @@ local html_template = [==[
     </header>
 
     <div id="results" class="content-margin"></div>
+
+    <div class="nav-button-box">
+        <a id="nav-prev">prev</a>
+        <a id="nav-next">next</a>
+    </div>
 
     <div id="edit-view" stlye="position: absolute;">
         <div id="blackout"></div>
@@ -266,11 +282,18 @@ local html_template = [==[
 ]==]
 
 local main_js = [=[
-$(document).ready(function () { 'use strict'
+$(document).ready(function () { 'use strict';
+
+    var limit = 100, results_len = 0;
 
     var bookmark_html = $("#bookmark-skelly").html(),
         $results = $("#results"), $search = $("#search"),
-        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog");
+        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog"),
+        $next = $("#nav-next").eq(0), $prev = $("#nav-prev").eq(0),
+        $page = $("#page").eq(0);
+
+    if ($page.val() == "")
+        $page.val(1);
 
     function make_bookmark(b) {
         var $b = $(bookmark_html);
@@ -313,12 +336,28 @@ $(document).ready(function () { 'use strict'
         return $(that).parents(".bookmark").eq(0);
     }
 
-    function search() {
+    function update_nav_buttons() {
+        if (results_len === limit)
+            $next.show();
+        else
+            $next.hide();
+        if (parseInt($page.val(), 10) > 1)
+            $prev.show();
+        else
+            $prev.hide();
+    }
 
-        var results = bookmarks_search({ query: $search.val() });
+    function search() {
+        var query = $search.val(),
+            results = bookmarks_search({
+            query: query, limit: limit, page: parseInt($page.val(), 10) });
+
+        // Used to trigger hiding of next nav button when results_len < limit
+        results_len = results.length || 0;
 
         if (results.length === "undefined") {
             $results.empty();
+            update_nav_buttons();
             return;
         }
 
@@ -327,12 +366,15 @@ $(document).ready(function () { 'use strict'
         for (var i = 0; i < results.length; i++)
             html += make_bookmark(results[i]);
 
+        update_nav_buttons();
+
         $results.get(0).innerHTML = html;
     };
 
     /* input field callback */
     $search.keydown(function(ev) {
         if (ev.which == 13) { /* Return */
+            $page.val(1);
             search();
             $search.blur();
             reset_mode();
@@ -403,12 +445,27 @@ $(document).ready(function () { 'use strict'
 
     $("#clear-button").click(function () {
         $search.val("");
+        $page.val(1);
         search();
     });
 
     $("#search-button").click(function () {
+        $page.val(1);
         search();
     });
+
+    $next.click(function () {
+        var page = parseInt($page.val(), 10);
+        $page.val(page + 1);
+        search();
+    });
+
+    $prev.click(function () {
+        var page = parseInt($page.val(), 10);
+        $page.val(Math.max(page - 1,1));
+        search();
+    });
+
 
     search();
 
