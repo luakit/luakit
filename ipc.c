@@ -107,6 +107,11 @@ ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length)
     luaH_object_push(L, ref);
     lua_pushboolean(L, !luaH_dofunction(L, argc, 1));
 
+    if (lua_toboolean(L, -1)) {
+        lua_pushstring(L, "error calling Lua code");
+        lua_insert(L, -2);
+    }
+
     /* Serialize the result, and send it back */
     ipc_send_lua(from, IPC_TYPE_lua_js_call, L, -2, -1);
     lua_settop(L, top);
