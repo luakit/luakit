@@ -38,6 +38,7 @@ static GThread *send_thread;
 static GAsyncQueue *send_queue;
 /** IPC endpoints for all webviews */
 static GPtrArray *endpoints;
+static GMutex ipc_mutex;
 
 typedef struct _queued_ipc_t {
     ipc_header_t header;
@@ -94,8 +95,10 @@ ipc_send_thread(gpointer UNUSED(user_data))
         gpointer data = out->payload;
 
         if (ipc->channel) {
+            g_mutex_lock(&ipc_mutex);
             g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
             g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
+            g_mutex_unlock(&ipc_mutex);
         } else {
             g_byte_array_append(ipc->queue, (guint8*)header, sizeof(*header));
             g_byte_array_append(ipc->queue, (guint8*)data, header->length);
@@ -339,9 +342,11 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
 
     /* Send all queued messages */
     if (orig->queue) {
+        g_mutex_lock(&ipc_mutex);
         g_io_channel_write_chars(new->channel,
                 (gchar*)orig->queue->data,
                 orig->queue->len, NULL, NULL);
+        g_mutex_unlock(&ipc_mutex);
         g_byte_array_unref(orig->queue);
         orig->queue = NULL;
     }
