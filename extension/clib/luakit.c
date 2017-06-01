@@ -19,6 +19,7 @@
  */
 
 #include "extension/extension.h"
+#include "extension/luajs.h"
 #include "extension/clib/luakit.h"
 #include "extension/clib/page.h"
 #include "common/clib/luakit.h"
@@ -72,6 +73,22 @@ luaH_luakit_index(lua_State *L)
     }
 }
 
+static gint
+luaH_luakit_register_function(lua_State *L)
+{
+    luaL_checkstring(L, 1);
+    luaL_checkstring(L, 2);
+    if (strlen(lua_tostring(L, 1)) == 0)
+        return luaL_error(L, "pattern cannot be empty");
+    if (strlen(lua_tostring(L, 2)) == 0)
+        return luaL_error(L, "function name cannot be empty");
+    luaH_checkfunction(L, 3);
+
+    luaJS_register_function(L);
+
+    return 0;
+}
+
 /** Setup luakit module.
  *
  * \param L The Lua VM state.
@@ -84,6 +101,7 @@ luakit_lib_setup(lua_State *L)
         LUA_CLASS_METHODS(luakit)
         LUAKIT_LIB_COMMON_METHODS
         { "__index",           luaH_luakit_index },
+        { "register_function", luaH_luakit_register_function },
         { NULL,              NULL }
     };
 

@@ -48,7 +48,6 @@ ipc_recv_##type(ipc_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint U
 } \
 
 NO_HANDLER(lua_require_module)
-NO_HANDLER(lua_js_register)
 NO_HANDLER(web_extension_loaded)
 NO_HANDLER(crash)
 
@@ -56,7 +55,6 @@ void
 ipc_recv_extension_init(ipc_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length))
 {
     web_module_load_modules_on_endpoint(ipc);
-    luaH_register_functions_on_endpoint(ipc, common.L);
 
     /* Notify web extension that pending signals can be released */
     ipc_header_t header = { .type = IPC_TYPE_extension_init, .length = 0 };
@@ -79,53 +77,6 @@ void
 ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     run_javascript_finished(msg, length);
-}
-
-void
-ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length)
-{
-    lua_State *L = common.L;
-    gint top = lua_gettop(L);
-
-    int argc = lua_deserialize_range(L, msg, length) - 1;
-    g_assert_cmpint(argc, >=, 1);
-
-    /* Retrieve and pop view id and function ref */
-    guint64 view_id = lua_tointeger(L, top + 1);
-    gpointer ref = lua_touserdata(L, top + 2);
-    lua_remove(L, top+1);
-    lua_remove(L, top+1);
-
-    /* get webview and push into position */
-    /* Page may already have been closed */
-    widget_t *w = webview_get_by_id(view_id);
-    if (!w) return;
-    luaH_object_push(L, w->ref);
-    lua_insert(L, top+1);
-
-    /* Call the function; push result/error and ok/error boolean */
-    luaH_object_push(L, ref);
-    lua_pushboolean(L, !luaH_dofunction(L, argc, 1));
-
-    if (lua_toboolean(L, -1)) {
-        lua_pushstring(L, "error calling Lua code");
-        lua_insert(L, -2);
-    }
-
-    /* Serialize the result, and send it back */
-    ipc_send_lua(from, IPC_TYPE_lua_js_call, L, -2, -1);
-    lua_settop(L, top);
-}
-
-void
-ipc_recv_lua_js_gc(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
-{
-    lua_State *L = common.L;
-    /* Unref the function reference we got */
-    gint n = lua_deserialize_range(L, msg, length);
-    g_assert_cmpint(n, ==, 1);
-    luaH_object_unref(L, lua_touserdata(L, -1));
-    lua_pop(L, 1);
 }
 
 void
