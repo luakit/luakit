@@ -38,7 +38,6 @@ static GThread *send_thread;
 static GAsyncQueue *send_queue;
 /** IPC endpoints for all webviews */
 static GPtrArray *endpoints;
-static GMutex ipc_mutex;
 
 typedef struct _queued_ipc_t {
     ipc_header_t header;
@@ -78,15 +77,8 @@ ipc_send_thread(gpointer UNUSED(user_data))
         ipc_header_t *header = &out->header;
         gpointer data = out->payload;
 
-        if (ipc->channel) {
-            g_mutex_lock(&ipc_mutex);
-            g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
-            g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
-            g_mutex_unlock(&ipc_mutex);
-        } else {
-            g_byte_array_append(ipc->queue, (guint8*)header, sizeof(*header));
-            g_byte_array_append(ipc->queue, (guint8*)data, header->length);
-        }
+        g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
+        g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
 
         /* Message is sent; endpoint can be freed now */
         ipc_endpoint_decref(ipc);
@@ -120,7 +112,11 @@ ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data)
     msg->header = *header;
     if (header->length)
         memcpy(msg->payload, data, header->length);
-    g_async_queue_push(send_queue, msg);
+
+    if (ipc->channel)
+        g_async_queue_push(send_queue, msg);
+    else
+        g_queue_push_tail(ipc->queue, msg);
 }
 
 static void
@@ -222,7 +218,7 @@ ipc_endpoint_new(const gchar *name)
     ipc_endpoint_t *ipc = g_slice_new0(ipc_endpoint_t);
 
     ipc->name = (gchar*)name;
-    ipc->queue = g_byte_array_new();
+    ipc->queue = g_queue_new();
     ipc->status = IPC_ENDPOINT_DISCONNECTED;
     ipc->refcount = 1;
     ipc->creation_notified = FALSE;
@@ -305,12 +301,14 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
 
     /* Send all queued messages */
     if (orig->queue) {
-        g_mutex_lock(&ipc_mutex);
-        g_io_channel_write_chars(new->channel,
-                (gchar*)orig->queue->data,
-                orig->queue->len, NULL, NULL);
-        g_mutex_unlock(&ipc_mutex);
-        g_byte_array_unref(orig->queue);
+        while (!g_queue_is_empty(orig->queue)) {
+            queued_ipc_t *msg = g_queue_pop_head(orig->queue);
+            msg->ipc = new;
+            ipc_endpoint_incref_no_check(new);
+            g_async_queue_push(send_queue, msg);
+        }
+
+        g_queue_free(orig->queue);
         orig->queue = NULL;
     }
 

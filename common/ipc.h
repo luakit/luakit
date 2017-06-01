@@ -115,7 +115,7 @@ typedef struct _ipc_endpoint_t {
     /** Channel for IPC with web process */
     GIOChannel *channel;
     /** Queued data for when channel is not yet open */
-    GByteArray *queue;
+    GQueue *queue;
     /** Incoming message bookkeeping data */
     ipc_recv_state_t recv_state;
     /** Refcount: number of webviews + number of unsent messages */
