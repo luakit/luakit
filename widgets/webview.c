@@ -489,7 +489,7 @@ decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
           lua_pushstring(L, uri);
           lua_pushstring(L, reason);
           gint ret = luaH_object_emit_signal(L, -3, signal_name, 2, 1);
-          gboolean ignore = ret && lua_toboolean(L, -1);
+          gboolean ignore = ret && !lua_toboolean(L, -1);
 
           if (ignore)
               webkit_policy_decision_ignore(p);
