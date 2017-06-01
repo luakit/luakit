@@ -134,7 +134,6 @@ void ipc_endpoint_decref(ipc_endpoint_t *ipc);
 
 const GPtrArray *ipc_endpoints_get(void);
 
-gboolean ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask);
 void ipc_send_lua(ipc_endpoint_t *ipc, ipc_type_t type, lua_State *L, gint start, gint end);
 void ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data);
 

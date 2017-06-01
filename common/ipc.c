@@ -69,22 +69,6 @@ ipc_dispatch(ipc_endpoint_t *ipc, ipc_header_t header, gpointer payload)
     }
 }
 
-static gboolean
-ipc_dispatch_enqueued(ipc_endpoint_t *ipc)
-{
-    ipc_recv_state_t *state = &ipc->recv_state;
-
-    if (state->queued_ipcs->len > 0) {
-        queued_ipc_t *msg = g_ptr_array_index(state->queued_ipcs, 0);
-        /* Dispatch and free the message */
-        ipc_dispatch(msg->ipc, msg->header, msg->payload);
-        g_ptr_array_remove_index(state->queued_ipcs, 0);
-        g_slice_free1(sizeof(queued_ipc_t) + state->hdr.length, state->payload);
-        return TRUE;
-    }
-    return FALSE;
-}
-
 static gpointer
 ipc_send_thread(gpointer UNUSED(user_data))
 {
@@ -139,15 +123,70 @@ ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data)
     g_async_queue_push(send_queue, msg);
 }
 
+static void
+ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc)
+{
+    g_assert(ipc);
+
+    ipc_recv_state_t *state = &ipc->recv_state;
+    GIOChannel *channel = ipc->channel;
+
+    gchar *buf = (state->hdr_done ? state->payload : &state->hdr) + state->bytes_read;
+    gsize remaining = (state->hdr_done ? state->hdr.length : sizeof(state->hdr)) - state->bytes_read;
+    gsize bytes_read;
+    GError *error = NULL;
+
+    switch (g_io_channel_read_chars(channel, buf, remaining, &bytes_read, &error)) {
+        case G_IO_STATUS_NORMAL:
+            break;
+        case G_IO_STATUS_AGAIN:
+            return;
+        case G_IO_STATUS_EOF:
+            return;
+        case G_IO_STATUS_ERROR:
+            if (!g_str_equal(ipc->name, "UI"))
+            if (!g_str_equal(error->message, "Connection reset by peer"))
+                error("g_io_channel_read_chars(): %s", error->message);
+            g_error_free(error);
+            return;
+        default:
+            g_assert_not_reached();
+    }
+
+    /* Update ipc_recv state */
+    state->bytes_read += bytes_read;
+    remaining -= bytes_read;
+
+    if (remaining > 0)
+        return;
+
+    /* If we've just finished downloading the header... */
+    if (!state->hdr_done) {
+        /* ... update state, and try to download payload */
+        state->hdr_done = TRUE;
+        state->bytes_read = 0;
+        state->payload = g_malloc(state->hdr.length);
+        ipc_recv_and_dispatch_or_enqueue(ipc);
+        return;
+    }
+
+    /* Otherwise, we finished downloading the message */
+    ipc_dispatch(ipc, state->hdr, state->payload);
+    g_free(state->payload);
+
+    /* Reset state for the next message */
+    state->payload = NULL;
+    state->bytes_read = 0;
+    state->hdr_done = FALSE;
+}
+
 /* Callback function for channel watch */
 static gboolean
 ipc_recv(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *ipc)
 {
     if (!ipc_endpoint_incref(ipc))
         return TRUE;
-
-    (void) (ipc_dispatch_enqueued(ipc) || ipc_recv_and_dispatch_or_enqueue(ipc, IPC_TYPE_ANY));
-
+    ipc_recv_and_dispatch_or_enqueue(ipc);
     ipc_endpoint_decref(ipc);
     return TRUE;
 }
@@ -165,82 +204,6 @@ ipc_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *
     if (should_exit)
         exit(0);
     return TRUE;
-}
-
-/* Receive a single message
- * If the message matches the type mask, dispatch it; otherwise, enqueue it
- * Return true if a message was dispatched */
-gboolean
-ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc, int type_mask)
-{
-    g_assert(ipc);
-    g_assert(type_mask != 0);
-
-    ipc_recv_state_t *state = &ipc->recv_state;
-    GIOChannel *channel = ipc->channel;
-
-    gchar *buf = (state->hdr_done ? state->payload+sizeof(queued_ipc_t) : &state->hdr) + state->bytes_read;
-    gsize remaining = (state->hdr_done ? state->hdr.length : sizeof(state->hdr)) - state->bytes_read;
-    gsize bytes_read;
-    GError *error = NULL;
-    GIOStatus s;
-
-    switch ((s = g_io_channel_read_chars(channel, buf, remaining, &bytes_read, &error))) {
-        case G_IO_STATUS_NORMAL:
-            break;
-        case G_IO_STATUS_AGAIN:
-            return FALSE;
-        case G_IO_STATUS_EOF:
-            return FALSE;
-        case G_IO_STATUS_ERROR:
-            if (!g_str_equal(ipc->name, "UI"))
-            if (!g_str_equal(error->message, "Connection reset by peer"))
-                error("g_io_channel_read_chars(): %s", error->message);
-            g_error_free(error);
-            return FALSE;
-        default:
-            g_assert_not_reached();
-    }
-
-    /* Update ipc_recv state */
-    state->bytes_read += bytes_read;
-    remaining -= bytes_read;
-
-    if (remaining > 0)
-        return FALSE;
-
-    /* If we've just finished downloading the header... */
-    if (!state->hdr_done) {
-        /* ... update state, and try to download payload */
-        state->hdr_done = TRUE;
-        state->bytes_read = 0;
-        state->payload = g_slice_alloc(sizeof(queued_ipc_t) + state->hdr.length);
-        return ipc_recv_and_dispatch_or_enqueue(ipc, type_mask);
-    }
-
-    ipc_header_t header = state->hdr;
-    gpointer payload = state->payload;
-
-    /* Reset state for the next message */
-    state->payload = NULL;
-    state->bytes_read = 0;
-    state->hdr_done = FALSE;
-
-    /* Otherwise, we finished downloading the message */
-    if (header.type & type_mask) {
-        ipc_dispatch(ipc, header, payload+sizeof(queued_ipc_t));
-        g_slice_free1(sizeof(queued_ipc_t) + header.length, payload);
-    } else {
-        /* Copy the header into the space at the start of the payload slice */
-        queued_ipc_t *msg = payload;
-        msg->header = header;
-        msg->ipc = ipc;
-        g_ptr_array_add(state->queued_ipcs, payload);
-        g_idle_add((GSourceFunc)ipc_dispatch_enqueued, ipc);
-    }
-
-    /* Return true if we dispatched it */
-    return header.type & type_mask;
 }
 
 void
