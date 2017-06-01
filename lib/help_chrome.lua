@@ -7,7 +7,6 @@
 local lousy = require("lousy")
 local chrome = require("chrome")
 local history = require("history")
-local editor = require("editor")
 local add_cmds = require("binds").add_cmds
 local error_page = require("error_page")
 
@@ -195,9 +194,7 @@ chrome.add("help", function (v, meta)
     elseif meta.path:match("^doc/?") then
         return help_doc_page(v, ({meta.path:match("^doc/?(.*)$")})[1], meta.request)
     end
-end, nil, {
-    open_editor = function(_, ...) return editor.edit(...) end,
-})
+end, nil, {})
 
 local cmd = lousy.bind.cmd
 add_cmds({
