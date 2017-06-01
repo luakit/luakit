@@ -497,7 +497,8 @@ add_binds("normal", {
         function (w) w:navigate(globals.homepage) end),
 
     buf("^gy$", "Duplicate current tab.",
-        function (w) w:new_tab({ session_state = w.view.session_state }) end),
+        function (w) w:new_tab({ session_state = w.view.session_state },
+                { private = w.view.private }) end),
 
     key({}, "r", "Reload current tab.",
         function (w) w:reload() end),
