@@ -295,14 +295,16 @@ end)
 wm:add_signal("function-call", function (_, page_id, page_name, func_name, id, args)
     local func = assert(page_funcs[page_name][func_name])
     -- Find view
-    local v
+    local view
     for _, w in pairs(window.bywidget) do
-        if w.view.id == page_id then v = w.view end
+        for _, v in pairs(w.tabs.children) do
+            if v.id == page_id then view = v end
+        end
     end
     -- Call Lua function, return result
-    local ok, ret = xpcall(func, debug.traceback, v, unpack(args))
+    local ok, ret = xpcall(func, debug.traceback, view, unpack(args))
     if not ok then msg.error(ret) end
-    wm:emit_signal(v, "function-return", id, ok, ret)
+    wm:emit_signal(view, "function-return", id, ok, ret)
 end)
 
 luakit.add_signal("web-extension-created", function ()
