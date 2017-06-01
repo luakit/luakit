@@ -28,7 +28,7 @@ ui:add_signal("load-finished", function(_, page)
         doc.body:add_event_listener("click", true, function (event)
             if event.button ~= 0 then return end
             if event.target.tag_name ~= "A" then return end
-            if event.target.attr.href:find("file://", 1, true) ~= 1 then return end
+            if (event.target.attr.href or ""):find("file://", 1, true) ~= 1 then return end
 
             ui:emit_signal("navigate", page.id, event.target.attr.href)
         end)
