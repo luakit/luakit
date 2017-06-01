@@ -179,45 +179,46 @@ $(document).ready(function () { 'use strict';
     }
 
     function search() {
-        var query = $search.val(),
-            results = history_search({
-                query: query, limit: limit, page: parseInt($page.val(), 10) });
+        var query = $search.val();
+        history_search({
+            query: query, limit: limit, page: parseInt($page.val(), 10),
+        }).then(function (results) {
+            // Used to trigger hiding of next nav button when results_len < limit
+            results_len = results.length || 0;
 
-        // Used to trigger hiding of next nav button when results_len < limit
-        results_len = results.length || 0;
+            update_clear_buttons(query, !query, true);
 
-        update_clear_buttons(query, !query, true);
+            if (!results.length) {
+                $results.empty();
+                update_nav_buttons();
+                return;
+            }
 
-        if (!results.length) {
-            $results.empty();
-            update_nav_buttons();
-            return;
-        }
+            var last_date, last_time = 0, group_html;
 
-        var last_date, last_time = 0, group_html;
+            var i = 0, len = results.length, html = "";
 
-        var i = 0, len = results.length, html = "";
+            var sep = $("<div/>").addClass("day-sep").prop("outerHTML"),
+                $heading = $("<div/>").addClass("day-heading");
 
-        var sep = $("<div/>").addClass("day-sep").prop("outerHTML"),
-            $heading = $("<div/>").addClass("day-heading");
+            for (; i < len;) {
+                var h = results[i++];
 
-        for (; i < len;) {
-            var h = results[i++];
+                if (h.date !== last_date) {
+                    last_date = h.date;
+                    html += $heading.text(h.date).prop("outerHTML");
 
-            if (h.date !== last_date) {
-                last_date = h.date;
-                html += $heading.text(h.date).prop("outerHTML");
+                } else if ((last_time - h.last_visit) > 3600)
+                    html += sep;
 
-            } else if ((last_time - h.last_visit) > 3600)
-                html += sep;
+                last_time = h.last_visit;
+                html += make_history_item(h);
+            }
 
-            last_time = h.last_visit;
-            html += make_history_item(h);
-        }
+            update_nav_buttons(query);
 
-        update_nav_buttons(query);
-
-        $results.get(0).innerHTML = html;
+            $results.get(0).innerHTML = html;
+        });
     }
 
     /* input field callback */
@@ -310,11 +311,11 @@ $(document).ready(function () { 'use strict';
         $clear_selected.blur();
     });
 
-    var query = initial_search_term();
-    if (query)
-        $search.val(query);
-
-    search();
+    initial_search_term().then(function (query) {
+        if (query)
+            $search.val(query);
+        search();
+    });
 });
 
 ]=]

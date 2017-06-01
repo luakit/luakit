@@ -135,9 +135,8 @@ function getid(that) {
     return $(that).parents(".download").eq(0).attr("id");
 };
 
-function update_list() {
-    var downloads = downloads_get_all(["status", "speed", "current_size", "total_size"]);
-
+function update_list_finish(downloads) {
+    console.log(downloads)
     // return if no downloads to display
     if (downloads.length === "undefined") {
         setTimeout(update, 1000); // update 1s from now
@@ -152,27 +151,29 @@ function update_list() {
         // create new download element
         if ($elem.length === 0) {
             // get some more information
-            d = download_get(d.id, ["status", "destination", "created", "uri", "total_size"]);
-            var elem_html = make_download(d);
 
-            // ordered insert
-            var inserted = false;
-            var $all = $("#downloads-list .download");
-            for (var j = 0; j < $all.length; j++) {
-                if (d.created > $all.eq(j).attr("created")) {
-                    $all.eq(j).before(elem_html);
-                    inserted = true;
-                    break;
+            download_get(d.id, ["status", "destination", "created", "uri", "total_size"]).then(function (d) {
+                var elem_html = make_download(d);
+
+                // ordered insert
+                var inserted = false;
+                var $all = $("#downloads-list .download");
+                for (var j = 0; j < $all.length; j++) {
+                    if (d.created > $all.eq(j).attr("created")) {
+                        $all.eq(j).before(elem_html);
+                        inserted = true;
+                        break;
+                    }
                 }
-            }
 
-            // back of the bus
-            if (!inserted) {
-                $("#downloads-list").append(elem_html);
-            }
+                // back of the bus
+                if (!inserted) {
+                    $("#downloads-list").append(elem_html);
+                }
 
-            $elem = $("#"+d.id).eq(0);
-            $elem.fadeIn();
+                $elem = $("#"+d.id).eq(0);
+                $elem.fadeIn();
+            });
         }
 
         // update download controls when download status changes
@@ -226,6 +227,10 @@ function update_list() {
             break;
         }
     }
+}
+
+function update_list() {
+    downloads_get_all(["status", "speed", "current_size", "total_size"]).then(update_list_finish);
 };
 
 $(document).ready(function () {
