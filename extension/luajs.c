@@ -24,18 +24,13 @@
 #include "luah.h"
 #include "extension/extension.h"
 #include "extension/luajs.h"
+#include "extension/clib/page.h"
 #include "common/ipc.h"
 #include "common/lualib.h"
 #include "common/luaserialize.h"
 #include "common/luajs.h"
 
 static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, const gchar *name, gpointer ref);
-
-static void
-lua_gc_stack_top(lua_State *L)
-{
-    ipc_send_lua(extension.ipc, IPC_TYPE_lua_js_gc, L, -1, -1);
-}
 
 typedef struct _luajs_func_ctx_t {
     gpointer ref;
@@ -44,6 +39,74 @@ typedef struct _luajs_func_ctx_t {
 
 static gint lua_string_find_ref = LUA_REFNIL;
 
+static JSObjectRef
+js_make_closure(JSContextRef context, JSObjectCallAsFunctionCallback callback, gpointer user_data)
+{
+    JSClassDefinition def = kJSClassDefinitionEmpty;
+    def.callAsFunction = callback;
+    JSClassRef class = JSClassCreate(&def);
+    JSObjectRef fun = JSObjectMake(context, class, user_data);
+    JSClassRelease(class);
+    return fun;
+}
+
+typedef struct _js_promise_t {
+    JSObjectRef promise;
+    JSObjectRef resolve;
+    JSObjectRef reject;
+} js_promise_t;
+
+static JSValueRef
+promise_executor_cb(JSContextRef context, JSObjectRef function, JSObjectRef UNUSED(thisObject), size_t argc, const JSValueRef argv[], JSValueRef *UNUSED(exception))
+{
+    g_assert_cmpint(argc,==,2);
+    JSObjectRef resolve = JSValueToObject(context, argv[0], NULL),
+                reject = JSValueToObject(context, argv[1], NULL);
+    g_assert(JSObjectIsFunction(context, resolve));
+    g_assert(JSObjectIsFunction(context, reject));
+
+    js_promise_t *promise = JSObjectGetPrivate(function);
+
+    JSValueProtect(context, resolve);
+    JSValueProtect(context, reject);
+    promise->resolve = resolve;
+    promise->reject = reject;
+
+    return JSValueMakeUndefined(context);
+}
+
+static void
+new_promise(JSContextRef context, js_promise_t *promise)
+{
+    /* Get the Promise() constructor */
+    JSObjectRef global = JSContextGetGlobalObject(context);
+    JSStringRef key = JSStringCreateWithUTF8CString("Promise");
+    JSObjectRef promise_ctor = JSValueToObject(context, JSObjectGetProperty(context, global, key, NULL), NULL);
+    JSStringRelease(key);
+    g_assert(JSObjectIsConstructor(context, promise_ctor));
+
+    JSValueRef argv[] = { js_make_closure(context, promise_executor_cb, promise) };
+    promise->promise = JSObjectCallAsConstructor(context, promise_ctor, 1, argv, NULL);
+}
+
+static int
+luaJS_promise_resolve_reject(lua_State *L)
+{
+    guint64 page_id = lua_tointeger(L, lua_upvalueindex(1));
+    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    JSGlobalContextRef context = webkit_frame_get_javascript_global_context(
+            webkit_web_page_get_main_frame(page));
+
+    js_promise_t *promise = (js_promise_t*)lua_topointer(L, lua_upvalueindex(2));
+    JSObjectRef cb = lua_toboolean(L, lua_upvalueindex(3)) ? promise->resolve : promise->reject;
+
+    JSValueRef ret = luaJS_tovalue(L, context, 1, NULL);
+
+    JSObjectCallAsFunction(context, cb, NULL, 1, &ret, NULL);
+    g_slice_free(js_promise_t, promise);
+    return 0;
+}
+
 static JSValueRef
 luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
         JSObjectRef UNUSED(this), size_t argc, const JSValueRef *argv,
@@ -51,15 +114,27 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
 {
     lua_State *L = common.L;
     gint top = lua_gettop(L);
-    gchar *error = NULL;
-
-    /* Push view id, function ref onto Lua stack */
     luajs_func_ctx_t *ctx = JSObjectGetPrivate(fun);
+
+    /* Make promise */
+    js_promise_t *promise = g_slice_new(js_promise_t);
+    new_promise(context, promise);
+
+    luaH_page_from_web_page(L, webkit_web_extension_get_page(extension.ext, ctx->page_id));
+
     lua_pushinteger(L, ctx->page_id);
-    lua_pushlightuserdata(L, ctx->ref);
+    lua_pushlightuserdata(L, promise);
+    lua_pushboolean(L, TRUE);
+    lua_pushcclosure(L, luaJS_promise_resolve_reject, 3);
+
+    lua_pushinteger(L, ctx->page_id);
+    lua_pushlightuserdata(L, promise);
+    lua_pushboolean(L, FALSE);
+    lua_pushcclosure(L, luaJS_promise_resolve_reject, 3);
 
     /* push function arguments onto Lua stack */
     for (guint i = 0; i < argc; i++) {
+        gchar *error = NULL;
         if (luaJS_pushvalue(L, context, argv[i], &error))
             continue;
 
@@ -73,55 +148,20 @@ luaJS_registered_function_callback(JSContextRef context, JSObjectRef fun,
         return JSValueMakeUndefined(context);
     }
 
-    /* Notify UI process of function call... */
-    ipc_send_lua(extension.ipc, IPC_TYPE_lua_js_call, L, top+1, -1);
-
-    /* ...and block until it's replied */
-    do {
-        usleep(1);
-    } while(!ipc_recv_and_dispatch_or_enqueue(extension.ipc, IPC_TYPE_lua_js_call));
-
-    /* At this point, reply was just handled in ipc_recv_lua_js_call() below */
-
-    JSValueRef ret = NULL;
-
-    if (lua_toboolean(L, -1))
-        error = g_strdup(luaL_checkstring(L, -2));
-    else
-        ret = luaJS_tovalue(L, context, -2, &error);
-
-    /* invalid return type from registered function */
-    if (error) {
-        *exception = luaJS_make_exception(context, error);
-        ret = JSValueMakeUndefined(context);
-        g_free(error);
-    }
+    /* TODO: handle callback failure? */
+    luaH_object_push(L, ctx->ref);
+    luaH_dofunction(L, argc + 3, 0);
 
     lua_settop(L, top);
-    return ret;
+    return promise->promise;
 }
 
 void
-ipc_recv_lua_js_call(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
+luaJS_register_function(lua_State *L)
 {
-    lua_State *L = common.L;
-    int n = lua_deserialize_range(L, msg, length);
-    /* Should have two values: arbitrary return value, and ok/err status */
-    g_assert_cmpint(n, ==, 2);
-    g_assert(lua_isboolean(L, -1));
-}
-
-void
-ipc_recv_lua_js_register(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
-{
-    lua_State *L = common.L;
-
-    /* Should have three values: pattern, function name, function ref */
-    int n = lua_deserialize_range(L, msg, length);
-    g_assert_cmpint(n, ==, 3);
     g_assert(lua_isstring(L, -3));
     g_assert(lua_isstring(L, -2));
-    g_assert(lua_islightuserdata(L, -1));
+    g_assert(lua_isfunction(L, -1));
 
     /* push pattern_table[pattern] */
     lua_pushliteral(L, LUAKIT_LUAJS_REGISTRY_KEY);
@@ -143,55 +183,33 @@ ipc_recv_lua_js_register(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint l
 
     lua_replace(L, -2);
 
-    /* If that function is already registered, free it */
-    lua_pushvalue(L, -3);
-    lua_rawget(L, -2);
-    if (!lua_isnil(L, -1)) {
-        g_assert(lua_islightuserdata(L, -1));
-        lua_gc_stack_top(L);
-    }
-    lua_pop(L, 1);
-
     /* Shift the table down, and set it */
     lua_insert(L, -3);
     lua_rawset(L, -3);
     lua_pop(L, 2);
 }
 
-static void
-luaJS_registered_function_gc(JSObjectRef obj)
-{
-    luajs_func_ctx_t *ctx = JSObjectGetPrivate(obj);
-    g_slice_free(luajs_func_ctx_t, ctx);
-}
-
 static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, const gchar *name, gpointer ref)
 {
     JSGlobalContextRef context = webkit_frame_get_javascript_context_for_script_world(frame, world);
-
-    JSStringRef js_name = JSStringCreateWithUTF8CString(name);
-    JSClassDefinition def = kJSClassDefinitionEmpty;
-    def.callAsFunction = luaJS_registered_function_callback;
-    def.className = g_strdup(name);
-    def.finalize = luaJS_registered_function_gc;
-    JSClassRef class = JSClassCreate(&def);
-
     luajs_func_ctx_t *ctx = g_slice_new(luajs_func_ctx_t);
     ctx->page_id = webkit_web_page_get_id(web_page);
     ctx->ref = ref;
+    JSObjectRef fun = js_make_closure(context, luaJS_registered_function_callback, ctx);
 
-    JSObjectRef fun = JSObjectMake(context, class, ctx);
+    JSStringRef js_name = JSStringCreateWithUTF8CString(name);
     JSObjectRef global = JSContextGetGlobalObject(context);
     JSObjectSetProperty(context, global, js_name, fun,
             kJSPropertyAttributeDontDelete | kJSPropertyAttributeReadOnly, NULL);
-
     JSStringRelease(js_name);
-    JSClassRelease(class);
 }
 
 static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
+    if (!webkit_frame_is_main_frame(frame))
+        return;
+
     lua_State *L = common.L;
     const gchar *uri = webkit_web_page_get_uri(web_page) ?: "about:blank";
 
@@ -217,9 +235,10 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
             while (lua_next(L, -3) != 0) {
                 /* Entries must be name -> ref */
                 g_assert(lua_isstring(L, -2));
-                g_assert(lua_islightuserdata(L, -1));
+                g_assert(lua_isfunction(L, -1));
+                lua_pushvalue(L, -1);
                 /* Register the function */
-                register_func(world, web_page, frame, lua_tostring(L, -2), lua_touserdata(L, -1));
+                register_func(world, web_page, frame, lua_tostring(L, -2), luaH_object_ref(L, -1));
                 lua_pop(L, 1);
             }
         }

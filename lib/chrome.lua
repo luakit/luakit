@@ -6,6 +6,7 @@
 local error_page = require("error_page")
 local webview = require("webview")
 local window = require("window")
+local wm = require_web_module("chrome_wm")
 
 local _M = {}
 
@@ -162,6 +163,7 @@ _M.stylesheet = [===[
 -- luakit:// page handlers
 local handlers = {}
 local on_first_visual_handlers = {}
+local page_funcs = {}
 
 --- Register a chrome page URI with an associated handler function.
 -- @tparam string page The name of the chrome page to register.
@@ -183,14 +185,23 @@ function _M.add(page, func, on_first_visual_func, export_funcs)
         "invalid chrome handler (function/nil expected, got "..type(on_first_visual_func)..")")
 
     for name, export_func in pairs(export_funcs or {}) do
-        local pattern = "^luakit://" .. page .. "/?(.*)"
         assert(type(name) == "string")
         assert(type(export_func) == "function")
-        luakit.register_function(pattern, name, export_func)
     end
 
     handlers[page] = func
     on_first_visual_handlers[page] = on_first_visual_func
+    page_funcs[page] = export_funcs
+
+    if page_funcs[page] then
+        page_funcs[page].reset_mode = function (view)
+            for _, w in pairs(window.bywidget) do
+                if w.view == view then
+                    w:set_mode()
+                end
+            end
+        end
+    end
 end
 
 --- Remove a regeistered chrome page.
@@ -281,10 +292,23 @@ webview.add_signal("init", function (view)
     end)
 end)
 
-luakit.register_function("^luakit://(.*)", "reset_mode", function (view)
+wm:add_signal("function-call", function (_, page_id, page_name, func_name, id, args)
+    local func = assert(page_funcs[page_name][func_name])
+    -- Find view
+    local v
     for _, w in pairs(window.bywidget) do
-        if w.view == view then
-            w:set_mode()
+        if w.view.id == page_id then v = w.view end
+    end
+    -- Call Lua function, return result
+    local ok, ret = xpcall(func, debug.traceback, v, unpack(args))
+    if not ok then msg.error(ret) end
+    wm:emit_signal(v, "function-return", id, ok, ret)
+end)
+
+luakit.add_signal("web-extension-created", function ()
+    for page, export_funcs in pairs(page_funcs) do
+        for name in pairs(export_funcs or {}) do
+            wm:emit_signal("register-function", page, name)
         end
     end
 end)

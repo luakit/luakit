@@ -348,27 +348,31 @@ $(document).ready(function () { 'use strict';
     }
 
     function search() {
-        var query = $search.val(),
-            results = bookmarks_search({
-            query: query, limit: limit, page: parseInt($page.val(), 10) });
+            var query = $search.val();
+            bookmarks_search({
+                query: query,
+                limit: limit,
+                page: parseInt($page.val(), 10)
+            }).then(function (results) {
 
-        // Used to trigger hiding of next nav button when results_len < limit
-        results_len = results.length || 0;
+            // Used to trigger hiding of next nav button when results_len < limit
+            results_len = results.length || 0;
 
-        if (results.length === "undefined") {
-            $results.empty();
+            if (results.length === "undefined") {
+                $results.empty();
+                update_nav_buttons();
+                return;
+            }
+
+            /* display results */
+            var html = "";
+            for (var i = 0; i < results.length; i++)
+                html += make_bookmark(results[i]);
+
             update_nav_buttons();
-            return;
-        }
 
-        /* display results */
-        var html = "";
-        for (var i = 0; i < results.length; i++)
-            html += make_bookmark(results[i]);
-
-        update_nav_buttons();
-
-        $results.get(0).innerHTML = html;
+            $results.get(0).innerHTML = html;
+        });
     };
 
     /* input field callback */
@@ -397,8 +401,9 @@ $(document).ready(function () { 'use strict';
 
     $results.on("click", ".bookmark .controls .edit-button", function (e) {
         var $b = find_bookmark_parent(this);
-        var b = bookmarks_get(parseInt($b.attr("bookmark_id")));
-        show_edit(b);
+        bookmarks_get(parseInt($b.attr("bookmark_id"))).then(function (b) {
+            show_edit(b);
+        });
     });
 
     function edit_submit() {
@@ -466,12 +471,12 @@ $(document).ready(function () { 'use strict';
         search();
     });
 
-
     search();
 
-    var values = new_bookmark_values();
-    if (values)
-        show_edit(values);
+    new_bookmark_values().then(function (values) {
+        if (values)
+            show_edit(values);
+    });
 });
 ]=]
 

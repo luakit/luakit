@@ -504,42 +504,6 @@ luaH_luakit_quit(lua_State *UNUSED(L))
     return 0;
 }
 
-typedef struct _lua_js_registration_t {
-    gchar *pattern;
-    gchar *name;
-    gpointer ref;
-} lua_js_registration_t;
-
-static GArray *registrations;
-
-static gint
-luaH_luakit_register_function(lua_State *L)
-{
-    lua_js_registration_t reg = {
-        .pattern = (gchar*)luaL_checkstring(L, 1),
-        .name = (gchar*)luaL_checkstring(L, 2),
-        .ref = NULL
-    };
-
-    if (strlen(reg.pattern) == 0)
-        return luaL_error(L, "pattern cannot be empty");
-    if (strlen(reg.name) == 0)
-        return luaL_error(L, "function name cannot be empty");
-
-    /* get lua callback function */
-    luaH_checkfunction(L, 3);
-    reg.ref = luaH_object_ref(L, 3);
-
-    /* Keep a copy for reregistration */
-    if (!registrations)
-        registrations = g_array_new(FALSE, FALSE, sizeof(lua_js_registration_t));
-    reg.pattern = g_strdup(reg.pattern);
-    reg.name = g_strdup(reg.name);
-    g_array_append_val(registrations, reg);
-
-    return 0;
-}
-
 /** Defined in widgets/webview.c */
 void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
 
@@ -559,27 +523,6 @@ luaH_luakit_register_scheme(lua_State *L)
             (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb,
             g_strdup(scheme), g_free);
     return 0;
-}
-
-void
-luaH_register_functions_on_endpoint(ipc_endpoint_t *ipc, lua_State *L)
-{
-    if (!registrations)
-        return;
-
-    for (guint i = 0; i < registrations->len; ++i) {
-        lua_js_registration_t reg = g_array_index(registrations, lua_js_registration_t, i);
-        lua_pushstring(L, reg.pattern);
-        lua_pushstring(L, reg.name);
-        lua_pushlightuserdata(L, reg.ref);
-
-        /* Incref */
-        luaH_object_push(L, reg.ref);
-        luaH_object_ref(L, -1);
-
-        ipc_send_lua(ipc, IPC_TYPE_lua_js_register, L, -3, -1);
-        lua_pop(L, 3);
-    }
 }
 
 gint
@@ -614,7 +557,6 @@ luakit_lib_setup(lua_State *L)
         { "save_file",         luaH_luakit_save_file },
         { "spawn",             luaH_luakit_spawn },
         { "spawn_sync",        luaH_luakit_spawn_sync },
-        { "register_function", luaH_luakit_register_function },
         { "register_scheme",   luaH_luakit_register_scheme },
         { NULL,              NULL }
     };

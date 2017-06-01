@@ -22,6 +22,7 @@
 #include <glib.h>
 
 void web_luajs_init(void);
+void luaJS_register_function(lua_State *L);
 void ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length);
 void ipc_recv_lua_js_register(ipc_endpoint_t *from, const guint8 *msg, guint length);
 
