@@ -15,6 +15,9 @@ EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
 
 all: options newline luakit luakit.1.gz luakit.so apidoc
 
+default: all
+	@echo "[DEPRECATED] Use of the 'default' target is deprecated. Please use 'all' target as a replacement."
+
 options:
 	@echo luakit build options:
 	@echo "CC           = $(CC)"
@@ -123,4 +126,4 @@ run-tests: luakit luakit.so tests/util.so
 	@$(LUA_BIN_NAME) tests/run_test.lua
 
 newline: options;@echo
-.PHONY: all clean options install newline apidoc doc
+.PHONY: all clean options install newline apidoc doc default
