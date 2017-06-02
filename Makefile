@@ -114,7 +114,8 @@ install: all
 	install -m644 luakit.1.gz $(MANPREFIX)/man1/
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(MANPREFIX)/man1/luakit.1
+	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
+	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)/etc/xdg/luakit
 	rm -rf /usr/share/applications/luakit.desktop /usr/share/pixmaps/luakit.png
 
 tests/util.so: tests/util.c Makefile
