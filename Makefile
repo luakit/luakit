@@ -79,7 +79,7 @@ doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s doc/luakit.doxygen
 
 clean:
-	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1
+	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
 install:
 	install -d $(INSTALLDIR)/share/luakit/
