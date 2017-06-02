@@ -81,7 +81,7 @@ doc: buildopts.h $(THEAD) $(TSRC)
 clean:
 	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
-install:
+install: all
 	install -d $(INSTALLDIR)/share/luakit/
 	install -d $(DOCDIR)
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
