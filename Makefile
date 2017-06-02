@@ -84,33 +84,25 @@ clean:
 
 install: all
 	install -d $(INSTALLDIR)/share/luakit/
-	install -d $(DOCDIR)
+	install -d $(DOCDIR) $(DOCDIR)/classes $(DOCDIR)/modules $(DOCDIR)/pages
 	install -m644 README.md AUTHORS COPYING* $(DOCDIR)
-	cp -r doc/apidocs/classes doc/apidocs/modules doc/apidocs/pages doc/apidocs/*.html $(DOCDIR)
-	chmod 755 $(DOCDIR)/pages
-	chmod 755 $(DOCDIR)/modules
-	chmod 755 $(DOCDIR)/classes
-	chmod 644 $(DOCDIR)/*.html
-	chmod 644 $(DOCDIR)/pages/*.html
-	chmod 644 $(DOCDIR)/modules/*.html
-	chmod 644 $(DOCDIR)/classes/*.html
-	cp -r lib $(INSTALLDIR)/share/luakit/
-	chmod 755 $(INSTALLDIR)/share/luakit/lib/
-	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/
-	chmod 755 $(INSTALLDIR)/share/luakit/lib/lousy/widget/
-	chmod 644 $(INSTALLDIR)/share/luakit/lib/*.lua
-	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/*.lua
-	chmod 644 $(INSTALLDIR)/share/luakit/lib/lousy/widget/*.lua
+	install -m644 doc/apidocs/classes/* $(DOCDIR)/classes
+	install -m644 doc/apidocs/modules/* $(DOCDIR)/modules
+	install -m644 doc/apidocs/pages/* $(DOCDIR)/pages
+	install -m644 doc/apidocs/*.html $(DOCDIR)
+	install -d $(INSTALLDIR)/share/luakit/lib $(INSTALLDIR)/share/luakit/lib/lousy $(INSTALLDIR)/share/luakit/lib/lousy/widget
+	install -m644 lib/*.* $(INSTALLDIR)/share/luakit/lib
+	install -m644 lib/lousy/*.* $(INSTALLDIR)/share/luakit/lib/lousy
+	install -m644 lib/lousy/widget/*.* $(INSTALLDIR)/share/luakit/lib/lousy/widget
 	install luakit.so $(INSTALLDIR)/share/luakit/luakit.so
 	install -d $(INSTALLDIR)/bin
 	install luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
-	install config/*.lua $(DESTDIR)/etc/xdg/luakit/
-	chmod 644 $(DESTDIR)/etc/xdg/luakit/*.lua
+	install -m644 config/*.lua $(DESTDIR)/etc/xdg/luakit/
 	install -d $(DESTDIR)/usr/share/pixmaps
-	install -m0644 extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
+	install -m644 extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
 	install -d $(DESTDIR)/usr/share/applications
-	install -m0644 extras/luakit.desktop $(DESTDIR)/usr/share/applications/
+	install -m644 extras/luakit.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(MANPREFIX)/man1/
 	install -m644 luakit.1.gz $(MANPREFIX)/man1/
 
