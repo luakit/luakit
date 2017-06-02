@@ -13,8 +13,6 @@ OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 EXT_SRCS = $(filter-out $(TSRC),$(wildcard extension/*.c) $(wildcard extension/clib/*.c) $(wildcard common/*.c)) $(wildcard common/clib/*.c) $(TSRC)
 EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
 
-default: luakit luakit.1.gz luakit.so
-
 all: options newline luakit luakit.1.gz luakit.so apidoc
 
 options:
@@ -125,4 +123,4 @@ run-tests: luakit luakit.so tests/util.so
 	@$(LUA_BIN_NAME) tests/run_test.lua
 
 newline: options;@echo
-.PHONY: all clean options install newline apidoc doc default
+.PHONY: all clean options install newline apidoc doc
