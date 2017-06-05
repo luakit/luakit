@@ -184,6 +184,9 @@ require "image_css"
 -- Add a new tab page
 require "newtab_chrome"
 
+-- Add tab favicons mod
+require "tab_favicons"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
