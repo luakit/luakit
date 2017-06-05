@@ -35,10 +35,17 @@ static gint
 luaH_image_set_from_file_name(lua_State *L)
 {
     widget_t *w = luaH_checkimage(L, 1);
-    const gchar *path = luaL_checkstring(L, 2);
-    gchar *x2_path = NULL;
+    gchar *path = (gchar*)luaL_checkstring(L, 2), *x2_path = NULL;
 
     float scale = gtk_widget_get_scale_factor(w->widget);
+
+#if !DEVELOPMENT_PATHS
+    /* Convert relative paths to install location */
+    if (path[0] != '/')
+        path = g_build_filename(LUAKIT_INSTALL_PATH, path, NULL);
+    else
+#endif
+    path = g_strdup(path);
 
     /* Detect @2x file if on HiDPI screen */
     if (scale == 2) {
@@ -66,6 +73,7 @@ fallback:
     if (error) {
         lua_pushstring(L, error->message);
         g_error_free(error);
+        g_free(path);
         return luaL_error(L, "unable to load image file: %s", lua_tostring(L, -1));
     }
 
@@ -91,6 +99,7 @@ fallback:
     cairo_surface_destroy(target);
     cairo_destroy(cr);
 
+    g_free(path);
     g_free(x2_path);
     return 0;
 }
