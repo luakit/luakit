@@ -105,6 +105,9 @@ install: all
 	install -m644 extras/luakit.desktop $(DESTDIR)/usr/share/applications/
 	install -d $(MANPREFIX)/man1/
 	install -m644 luakit.1.gz $(MANPREFIX)/man1/
+	mkdir -p resources
+	find resources -type d -exec install -d $(INSTALLDIR)/share/luakit/'{}' \;
+	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(INSTALLDIR)/share/luakit/$$(dirname $$f)"' \;
 
 uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
