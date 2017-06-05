@@ -136,13 +136,9 @@ luaH_image_scale(lua_State *L)
 void
 luaH_image_set_favicon_for_uri_finished(WebKitFaviconDatabase *fdb, GAsyncResult *res, widget_t *w)
 {
-    GError *error = NULL;
-    cairo_surface_t *source = webkit_favicon_database_get_favicon_finish(fdb, res, &error);
-    if (error) {
-        error("error setting image to favicon: %s", error->message);
-        g_error_free(error);
+    cairo_surface_t *source = webkit_favicon_database_get_favicon_finish(fdb, res, NULL);
+    if (!source)
         return;
-    }
 
     /* Source width/height, scale factor, target logical size, target device size */
     float src_w = cairo_image_surface_get_width(source);
