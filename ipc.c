@@ -136,7 +136,7 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 #endif
 
     char *extension_file = g_build_filename(extension_dir,  "luakit.so", NULL);
-    if (access(extension_file, R_OK | X_OK)) {
+    if (access(extension_file, R_OK)) {
 #if DEVELOPMENT_PATHS
 #  define DEVPATHS "\nLuakit was built with DEVELOPMENT_PATHS=1; are you running luakit correctly?"
 #else

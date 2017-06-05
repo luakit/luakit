@@ -94,7 +94,7 @@ install: all
 	install -m644 lib/*.* $(INSTALLDIR)/share/luakit/lib
 	install -m644 lib/lousy/*.* $(INSTALLDIR)/share/luakit/lib/lousy
 	install -m644 lib/lousy/widget/*.* $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install luakit.so $(INSTALLDIR)/share/luakit/luakit.so
+	install -m644 luakit.so $(INSTALLDIR)/share/luakit/luakit.so
 	install -d $(INSTALLDIR)/bin
 	install luakit $(INSTALLDIR)/bin/luakit
 	install -d $(DESTDIR)/etc/xdg/luakit/
