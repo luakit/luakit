@@ -35,7 +35,63 @@ static gint
 luaH_image_set_from_file_name(lua_State *L)
 {
     widget_t *w = luaH_checkimage(L, 1);
-    gtk_image_set_from_file(GTK_IMAGE(w->widget), luaL_checkstring(L, 2));
+    const gchar *path = luaL_checkstring(L, 2);
+    gchar *x2_path = NULL;
+
+    float scale = gtk_widget_get_scale_factor(w->widget);
+
+    /* Detect @2x file if on HiDPI screen */
+    if (scale == 2) {
+        const gchar *ext = strrchr(path, '.') ?: &path[strlen(path)];
+        x2_path = g_strdup_printf("%.*s@2x%s", (int)(ext - path), path, ext);
+        if (!g_file_test(x2_path, G_FILE_TEST_IS_REGULAR)) {
+            g_free(x2_path);
+            x2_path = NULL;
+        }
+    }
+
+    /* Load image into pixbuf */
+    GError *error;
+fallback:
+    error = NULL;
+    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(x2_path ?: path, &error);
+    if (error)
+        verbose("unable to load image file: %s", error->message);
+    if (error && x2_path) {
+        g_error_free(error);
+        g_free(x2_path);
+        x2_path = NULL;
+        goto fallback;
+    }
+    if (error) {
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+        return luaL_error(L, "unable to load image file: %s", lua_tostring(L, -1));
+    }
+
+    /* Convert to cairo surface, and scale */
+    cairo_surface_t *source = gdk_cairo_surface_create_from_pixbuf(pixbuf, 1, 0);
+    g_object_unref(G_OBJECT(pixbuf));
+
+    float src_w = cairo_image_surface_get_width(source);
+    float src_h = cairo_image_surface_get_height(source);
+
+    cairo_surface_t *target = cairo_surface_create_similar(source,
+            CAIRO_CONTENT_COLOR_ALPHA, src_w, src_h);
+    cairo_surface_set_device_scale(target, scale, scale);
+
+    cairo_t *cr = cairo_create(target);
+    cairo_scale(cr, 1/scale, 1/scale);
+    cairo_set_source_surface(cr, source, 0, 0);
+    cairo_surface_set_device_offset(source, 0, 0);
+    cairo_paint(cr);
+
+    gtk_image_set_from_surface(GTK_IMAGE(w->widget), target);
+    cairo_surface_destroy(source);
+    cairo_surface_destroy(target);
+    cairo_destroy(cr);
+
+    g_free(x2_path);
     return 0;
 }
 
@@ -81,21 +137,33 @@ void
 luaH_image_set_favicon_for_uri_finished(WebKitFaviconDatabase *fdb, GAsyncResult *res, widget_t *w)
 {
     GError *error = NULL;
-    cairo_surface_t *favicon = webkit_favicon_database_get_favicon_finish(fdb, res, &error);
+    cairo_surface_t *source = webkit_favicon_database_get_favicon_finish(fdb, res, &error);
     if (error) {
-        error("%s", error->message);
+        error("error setting image to favicon: %s", error->message);
         g_error_free(error);
         return;
     }
 
-    int width = cairo_image_surface_get_width(favicon);
-    int height = cairo_image_surface_get_height(favicon);
-    GdkPixbuf *pixbuf = gdk_pixbuf_get_from_surface(favicon, 0, 0, width, height);
-    GdkPixbuf *scaled = gdk_pixbuf_scale_simple(pixbuf, 16, 16, GDK_INTERP_BILINEAR);
-    g_object_unref(pixbuf);
+    /* Source width/height, scale factor, target logical size, target device size */
+    float src_w = cairo_image_surface_get_width(source);
+    float src_h = cairo_image_surface_get_height(source);
+    float scale = gtk_widget_get_scale_factor(w->widget);
+    float log_sz = 16, dev_sz = log_sz*scale;
 
-    gtk_image_set_from_pixbuf(GTK_IMAGE(w->widget), scaled);
-    g_object_unref(scaled);
+    cairo_surface_t *target = cairo_surface_create_similar(source,
+            CAIRO_CONTENT_COLOR_ALPHA, dev_sz, dev_sz);
+    cairo_surface_set_device_scale(target, scale, scale);
+
+    cairo_t *cr = cairo_create(target);
+    cairo_scale(cr, log_sz/src_w, log_sz/src_h);
+    cairo_set_source_surface(cr, source, 0, 0);
+    cairo_surface_set_device_offset(source, 0, 0);
+    cairo_paint(cr);
+
+    gtk_image_set_from_surface(GTK_IMAGE(w->widget), target);
+    cairo_surface_destroy(source);
+    cairo_surface_destroy(target);
+    cairo_destroy(cr);
 }
 
 static gint
