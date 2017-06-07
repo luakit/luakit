@@ -45,6 +45,10 @@ _M.label_format = '<span foreground="{index_fg}" font="Monospace">{index} </span
 local function destroy(tl)
     -- Destroy tab container widget
     tl.widget:destroy()
+    -- Remove signal handlers: tab destruction ≠ view destruction (:tabdetach)
+    for sig, func in pairs(data[tl].view_handlers) do
+        data[tl].view:remove_signal(sig, func)
+    end
     -- Destroy private widget data
     data[tl] = nil
 end
@@ -112,18 +116,23 @@ local function new(view, index)
     label.margin_right = 10
 
     -- Bind signals to associated view
-    view:add_signal("property::title", function (_)
-        data[tl].no_title = false
-        update_title_and_label(tl)
-    end)
-    view:add_signal("property::uri",   function (_)
-        update_title_and_label(tl)
-    end)
-    view:add_signal("load-status",     function (_, status)
-        if status == "provisional" then data[tl].no_title = true end
-        update_title_and_label(tl)
-        update_label(tl)
-    end)
+    data[tl].view_handlers = {
+        ["property::title"] = function ()
+            data[tl].no_title = false
+            update_title_and_label(tl)
+        end,
+        ["property::uri"] = function ()
+            update_title_and_label(tl)
+        end,
+        ["load-status"] = function (_, status)
+            if status == "provisional" then data[tl].no_title = true end
+            update_title_and_label(tl)
+            update_label(tl)
+        end,
+    }
+    for sig, func in pairs(data[tl].view_handlers) do
+        view:add_signal(sig, func)
+    end
 
     tl.widget:add_signal("mouse-enter", function (t)
         t.bg = theme.tab_hover_bg
