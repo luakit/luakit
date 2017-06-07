@@ -146,9 +146,8 @@ widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
     gtk_box_set_homogeneous(GTK_BOX(w->widget), (token == L_TK_VBOX) ? FALSE : TRUE);
 
     g_object_connect(G_OBJECT(w->widget),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",        G_CALLBACK(add_cb),        w,
-      "signal::parent-set", G_CALLBACK(parent_set_cb), w,
-      "signal::remove",     G_CALLBACK(remove_cb),     w,
       NULL);
     gtk_widget_show(w->widget);
     return w;

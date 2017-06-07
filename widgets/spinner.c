@@ -82,6 +82,10 @@ widget_spinner(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 
     w->widget = gtk_spinner_new();
 
+    g_object_connect(G_OBJECT(w->widget),
+        LUAKIT_WIDGET_SIGNAL_COMMON(w)
+        NULL);
+
     gtk_widget_show(w->widget);
     return w;
 }

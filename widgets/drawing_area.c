@@ -93,7 +93,12 @@ widget_drawing_area(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(tok
     }
 
     w->widget = gtk_drawing_area_new();
-    g_signal_connect(G_OBJECT(w->widget), "draw", G_CALLBACK(drawing_area_draw_cb), w);
+
+    g_object_connect(G_OBJECT(w->widget),
+        LUAKIT_WIDGET_SIGNAL_COMMON(w)
+        "draw", G_CALLBACK(drawing_area_draw_cb), w,
+        NULL);
+
     gtk_widget_show(w->widget);
     return w;
 }
