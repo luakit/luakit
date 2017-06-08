@@ -45,6 +45,11 @@ luaH_check_dom_element(lua_State *L, gint udx)
 static void
 webkit_web_page_destroy_cb(dom_element_t *element, GObject *node)
 {
+    lua_State *L = common.L;
+    luaH_uniq_get_ptr(L, REG_KEY, node);
+    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
+    lua_pop(L, 1);
+
     element->element = NULL;
     luaH_uniq_del_ptr(common.L, REG_KEY, node);
 }

@@ -43,6 +43,11 @@ luaH_check_dom_document(lua_State *L, gint udx)
 static void
 webkit_dom_document_destroy_cb(dom_document_t *document, GObject *doc)
 {
+    lua_State *L = common.L;
+    luaH_uniq_get_ptr(L, REG_KEY, doc);
+    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
+    lua_pop(L, 1);
+
     document->document = NULL;
     luaH_uniq_del_ptr(common.L, REG_KEY, doc);
 }

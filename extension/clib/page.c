@@ -212,6 +212,11 @@ luaH_page_wrap_js(lua_State *L)
 static void
 webkit_web_page_destroy_cb(page_t *page, GObject *web_page)
 {
+    lua_State *L = common.L;
+    luaH_uniq_get_ptr(L, REG_KEY, web_page);
+    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
+    lua_pop(L, 1);
+
     page->page = NULL;
     luaH_uniq_del_ptr(common.L, REG_KEY, web_page);
 }
