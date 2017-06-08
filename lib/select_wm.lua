@@ -407,6 +407,8 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         end
     end
 
+    page.document:add_signal("destroy", function () _M.leave(page) end)
+
     filter(state, "", "")
     return focus(state, 0), state.num_visible_hints
 end
@@ -419,7 +421,8 @@ end
 function _M.leave(page)
     assert(type(page) == "page")
 
-    local state = assert(page_states[page.id])
+    local state = page_states[page.id]
+    if not state then return end
     for _, frame in ipairs(state.frames) do
         cleanup_frame(frame)
     end
