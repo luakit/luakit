@@ -570,6 +570,9 @@ luaH_dom_element_push_owner_document(lua_State *L)
 static gint
 luaH_dom_element_index(lua_State *L)
 {
+    if (luaH_usemetatable(L, 1, 2))
+        return 1;
+
     dom_element_t *element = luaH_check_dom_element(L, 1);
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);

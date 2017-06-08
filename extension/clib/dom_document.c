@@ -181,6 +181,9 @@ luaH_dom_document_element_from_point(lua_State *L)
 static gint
 luaH_dom_document_index(lua_State *L)
 {
+    if (luaH_usemetatable(L, 1, 2))
+        return 1;
+
     dom_document_t *document = luaH_check_dom_document(L, 1);
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
