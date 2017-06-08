@@ -177,6 +177,25 @@ luaH_luakit_uri_decode(lua_State *L)
     return 1;
 }
 
+/** Computes MD5 checksum of a string.
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ *
+ * \luastack
+ * \lparam string  The string to compute checksum of.
+ * \lreturn        The checksum string.
+ */
+static gint
+luaH_luakit_checksum(lua_State *L)
+{
+    const gchar *string = luaL_checkstring(L, 1);
+
+    gchar *checksum = g_compute_checksum_for_string(G_CHECKSUM_MD5, string, -1);
+    lua_pushstring(L, checksum);
+    g_free(checksum);
+    return 1;
+}
+
 /** Shows a Gtk save dialog.
  * \see http://developer.gnome.org/gtk/stable/GtkDialog.html
  *
@@ -614,6 +633,7 @@ luakit_lib_setup(lua_State *L)
         { "time",            luaH_luakit_time },
         { "uri_decode",      luaH_luakit_uri_decode },
         { "uri_encode",      luaH_luakit_uri_encode },
+        { "checksum",        luaH_luakit_checksum },
         { "idle_add",        luaH_luakit_idle_add },
         { "idle_remove",     luaH_luakit_idle_remove },
         { NULL,              NULL }
