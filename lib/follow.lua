@@ -409,6 +409,19 @@ label_styles = {
             return labels
         end
     end,
+
+    -- Chainable style: prefixes labels
+    prefix = function (pre, make_labels)
+        return function (size)
+            local labels = make_labels(size)
+            local rawset, rawget, reverse = rawset, rawget, string.reverse
+            local labels = make_labels(size)
+            for i = 1, #labels do
+                rawset(labels, i, pre .. rawget(labels, i))
+            end
+            return labels
+        end
+    end,
 }
 
 -- Default follow style

@@ -111,7 +111,10 @@ require "follow"
 
 -- Use a custom charater set for hint labels
 --local s = follow.label_styles
---follow.label_maker = s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+-- Prefix all labels with ',' so we don't break matching against text directly.
+-- Now we aren't forced (but still able) to match only hint labels.
+--local myprefix = ','
+--follow.label_maker = s.sort(s.prefix(myprefix, s.reverse(s.charset("asdfqwerzxcv"))))
 
 -- Match only hint labels
 --follow.pattern_maker = follow.pattern_styles.match_label
