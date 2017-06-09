@@ -29,6 +29,13 @@
     .footer       { text-align:center; padding-top:30px; font-style: italic; }
     .rl a         { color: #000; text-decoration: underline; }
     .rl a:hover   { color: #7DC1fF; }
+    .notice {
+        border-top: 3px solid #ff006c;
+        border-bottom: 3px solid #ff006c;
+        margin: 2em 0;
+        padding: 1em 0;
+    }
+    .notice > h2 { margin-top: 0; }
 
   </style>
 </head>
@@ -53,6 +60,13 @@
 
     <div class="description">
       Fast, small, webkit based browser framework extensible by Lua.
+    </div>
+
+    <div class=notice>
+      <h2>Important notice</h2>
+      <big>This project has merged changes from an <a href="https://github.com/aidanholm/luakit">updated fork of luakit</a>.
+      This is a major update. Existing configuration files will need to be
+      updated, and online resources may be out-of-date.</big>
     </div>
 
     <p id="ld">Luakit is a highly configurable, browser framework based on the <a
