@@ -54,9 +54,9 @@ local init_funcs = {
     form_insert_mode = function (view)
         -- Emit root-active event in button release to prevent "missing"
         -- buttons or links when the input bar hides.
-        view:add_signal("button-release", function (v, _, button, context)
-            if button == 1 and not context.editable then
-                v:emit_signal("root-active")
+        view:add_signal("button-press", function (v, _, button, context)
+            if button == 1 then
+                v:emit_signal(context.editable and "form-active" or "root-active")
             end
         end)
         view:add_signal("form-active", function (v)
