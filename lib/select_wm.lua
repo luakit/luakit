@@ -249,8 +249,8 @@ local function init_frame(frame, stylesheet)
     frame.overlay = frame.doc:create_element("div", { id = "luakit_select_overlay" })
     frame.stylesheet = frame.doc:create_element("style", { id = "luakit_select_stylesheet" }, stylesheet)
 
-    frame.body:append(frame.overlay)
-    frame.body:append(frame.stylesheet)
+    frame.body.parent:append(frame.overlay)
+    frame.body.parent:append(frame.stylesheet)
 end
 
 local function cleanup_frame(frame)
