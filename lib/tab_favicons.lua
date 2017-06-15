@@ -30,7 +30,10 @@ tab.add_signal("build", function (tl, view)
         end
     end
     view:add_signal("favicon", update_favicon)
-    view:add_signal("property::uri", update_favicon) -- luakit:// URIs don't emit favicon signal
+    -- luakit:// URIs don't emit favicon signal
+    view:add_signal("property::uri", function (v)
+        if v.uri:match("^luakit://") then update_favicon(v) end
+    end)
 
     local is_loading_cb = function (v)
         if v.is_loading then
