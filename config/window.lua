@@ -795,16 +795,16 @@ function window.new(args)
         w:new_tab(arg, false)
     end
 
-    -- Make sure something is loaded
-    if w.tabs:count() == 0 then
-        w:new_tab(w:search_open(globals.homepage), false)
-    end
+    -- Show window
+    w.win:show()
 
     -- Set initial mode
     w:set_mode()
 
-    -- Show window
-    w.win:show()
+    -- Make sure something is loaded
+    if w.tabs:count() == 0 then
+        w:new_tab(w:search_open(globals.homepage), false)
+    end
 
     return w
 end

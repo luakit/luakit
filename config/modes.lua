@@ -100,6 +100,7 @@ new_mode("normal", [[When luakit first starts you will find yourself in this
     enter = function (w)
         w:set_prompt()
         w:set_input()
+        w.win:focus()
     end,
 })
 
@@ -114,9 +115,6 @@ new_mode("insert", [[When clicking on form fields luakit will enter the insert
         w:set_prompt("-- INSERT --")
         w:set_input()
         w.view:focus()
-    end,
-    leave = function (w)
-        w.win:focus()
     end,
     -- Send key events to webview
     passthrough = true,
