@@ -1,5 +1,47 @@
 --- Link hinting for luakit.
 --
+-- Link hints allow interacting with web pages without the use of a
+-- mouse. When `follow` mode is entered, all clickable elements are
+-- highlighted and labeled with a short number. Typing either an element
+-- number or part of the element text will "follow" that hint, issuing a
+-- mouse click. This is most commonly used to click links without using
+-- the mouse and focus text input boxes. In addition, the `ex-follow`
+-- mode offers several variations on this behavior. For example, instead
+-- of clicking, the URI of a followed link can be copied into the clipboard.
+-- Another example would be hinting all images on the page, and opening the
+-- followed image in a new tab.
+--
+-- ### Using a custom character set for hint labels
+--
+-- If you prefer to use letters instead of numbers for hint labels (useful if
+-- you use a non-qwerty keyboard layout), this can be done by replacing the
+-- `select.label_maker` function:
+--
+--     -- Use "asdfqwerzxcv" for generating labels
+--     local select = require "select"
+--     select.label_maker = function (s)
+--         return s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+--     end
+--
+-- Note: this requires modifying the `select` module because the actual
+-- link hinting interface is implemented in the `select` module; the
+-- `follow` module provides the `follow` and `ex-follow` user interface on top
+-- of that.
+--
+-- ### Matching only hint labels, not element text
+--
+-- If you prefer not to match element text, and wish to select hints only by
+-- their label, this can be done by specifying the `pattern_maker`:
+--
+--     -- Match only hint label text
+--     follow.pattern_maker = follow.pattern_styles.match_label
+--
+-- ### Ignoring element text case
+-- To ignore element text case when filtering hints, set the following option:
+--
+--     -- Uncomment if you want to ignore case when matching
+--     follow.ignore_case = true
+--
 -- @module follow
 -- @copyright 2010-2012 Mason Larobina  <mason.larobina@gmail.com>
 -- @copyright 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
