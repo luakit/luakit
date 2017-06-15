@@ -344,7 +344,7 @@ function webview.set_location(view, arg)
     local ws = webview_state[view]
     if next(ws.blockers) then
         ws.queued_location = arg
-        view:emit_signal("property::uri")
+        if arg.uri then view:emit_signal("property::uri") end
         return
     end
 
