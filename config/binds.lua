@@ -707,6 +707,10 @@ add_cmds({
             if err then
                 w:error(err)
             else
+                setfenv(ret, setmetatable({}, { __index = function (_, k)
+                    if _G[k] ~= nil then return _G[k] end
+                    if k == "w" then return w end
+                end, __newindex = _G }))
                 ret()
             end
         else
