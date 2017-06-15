@@ -1,9 +1,9 @@
 --- lousy.theme library.
 --
 -- @module lousy.theme
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
--- @author Damien Leone &lt;damien.leone@gmail.com&gt;
--- @author Julien Danjou &lt;julien@danjou.info&gt;
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @author Damien Leone <damien.leone@gmail.com>
+-- @author Julien Danjou <julien@danjou.info>
 -- @copyright 2008-2009 Damien Leone, Julien Danjou, 2010 Mason Larobina
 
 local util = require "lousy.util"

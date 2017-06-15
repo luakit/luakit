@@ -3,8 +3,8 @@
 -- Mimic the luakit signal api functions for tables.
 --
 -- @module lousy.signal
--- @author Fabian Streitel &lt;karottenreibe@gmail.com&gt;
--- @author Mason Larobina  &lt;mason.larobina@gmail.com&gt;
+-- @author Fabian Streitel <karottenreibe@gmail.com>
+-- @author Mason Larobina  <mason.larobina@gmail.com>
 -- @copyright 2010 Fabian Streitel, Mason Larobina
 
 local _M = {}

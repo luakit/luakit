@@ -5,8 +5,8 @@
 -- DOCMACRO(alert:Some functions and fields are not available from web processes.)
 --
 -- @author Aidan Holm <aidanholm@gmail.com>
--- @author Mason Larobina &lt;mason.larobina&lt;AT&gt;gmail.com&gt;
--- @author Paweł Zuzelski &lt;pawelz&lt;AT&gt;pld-linux.org&gt;
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @author Paweł Zuzelski <pawelz@pld-linux.org>
 -- @copyright 2016 Aidan Holm
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
 -- @module luakit

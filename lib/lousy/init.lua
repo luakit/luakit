@@ -1,7 +1,7 @@
 --- lousy library.
 --
 -- @module lousy
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
+-- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Mason Larobina
 
 return {

@@ -1,8 +1,8 @@
 --- Vimperator style quickmarking.
 --
 -- @module quickmarks
--- @author Piotr Husiatyński &lt;phusiatynski@gmail.com&gt;
--- @author Mason Larobina    &lt;mason.larobina@gmail.com&gt;
+-- @author Piotr Husiatyński <phusiatynski@gmail.com>
+-- @author Mason Larobina    <mason.larobina@gmail.com>
 
 -- Get luakit environment
 local lousy = require("lousy")

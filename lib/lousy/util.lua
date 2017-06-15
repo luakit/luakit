@@ -3,8 +3,8 @@
 --- Utility functions for lousy.
 --
 -- @module lousy.util
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
--- @author Julien Danjou &lt;julien@danjou.info&gt;
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @author Julien Danjou <julien@danjou.info>
 -- @copyright 2010 Mason Larobina, 2008 Julien Danjou
 
 --- Grab environment we need
