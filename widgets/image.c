@@ -77,6 +77,11 @@ fallback:
         return luaL_error(L, "unable to load image file: %s", lua_tostring(L, -1));
     }
 
+    if (w->data) {
+        g_cancellable_cancel(w->data);
+        g_clear_object(&w->data);
+    }
+
     /* Convert to cairo surface, and scale */
     cairo_surface_t *source = gdk_cairo_surface_create_from_pixbuf(pixbuf, 1, 0);
     g_object_unref(G_OBJECT(pixbuf));
@@ -117,6 +122,11 @@ luaH_image_set_from_icon_name(lua_State *L)
         case 48: size = GTK_ICON_SIZE_DIALOG; break;
         default:
             return luaL_error(L, "Bad icon size: must be 16, 24, 32, or 48.");
+    }
+
+    if (w->data) {
+        g_cancellable_cancel(w->data);
+        g_clear_object(&w->data);
     }
 
     gtk_image_set_from_icon_name(GTK_IMAGE(w->widget), luaL_checkstring(L, 2), size);
@@ -184,7 +194,14 @@ luaH_image_set_favicon_for_uri(lua_State *L)
 
     if ((f_uri = webkit_favicon_database_get_favicon_uri(main_fdb, uri))) {
         g_free(f_uri);
-        webkit_favicon_database_get_favicon(main_fdb, uri, NULL,
+
+        if (w->data) {
+            g_cancellable_cancel(w->data);
+            g_clear_object(&w->data);
+        }
+        w->data = g_cancellable_new();
+
+        webkit_favicon_database_get_favicon(main_fdb, uri, w->data,
                 (GAsyncReadyCallback)luaH_image_set_favicon_for_uri_finished, w);
     } else
         ok = FALSE;
@@ -230,6 +247,7 @@ widget_image(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     w->newindex = luaH_image_newindex;
 
     w->widget = gtk_image_new();
+    w->data = NULL;
 
     g_object_connect(G_OBJECT(w->widget),
         LUAKIT_WIDGET_SIGNAL_COMMON(w)
