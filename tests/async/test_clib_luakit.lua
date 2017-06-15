@@ -80,6 +80,17 @@ T.test_register_scheme = function ()
     luakit.register_scheme("a-.++...--8970d-d-")
 end
 
+T.test_website_data = function ()
+    local _, minor = luakit.webkit_version:match("^(%d+)%.(%d+)%.")
+    if tonumber(minor) < 16 then return end
+
+    local wd = luakit.website_data
+    assert.is_table(wd)
+    assert.is_function(wd.fetch)
+    assert.has_error(function () wd:fetch("") end)
+    assert.has_error(function () wd:fetch({}) end)
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

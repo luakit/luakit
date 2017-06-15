@@ -304,3 +304,5 @@ cookies_storage
 private
 finished
 set_favicon_for_uri
+website_data
+fetch

@@ -387,6 +387,132 @@ luaH_luakit_push_options_table(lua_State *L)
     return 1;
 }
 
+#if WEBKIT_CHECK_VERSION(2,16,0)
+static WebKitWebsiteDataTypes
+luaH_parse_website_data_types_table(lua_State *L, gint idx)
+{
+    WebKitWebsiteDataTypes types = 0;
+    idx = luaH_absindex(L, idx);
+    luaH_checktable(L, idx);
+    size_t len = lua_objlen(L, idx);
+    for (size_t i = 1; i <= len; i++) {
+        lua_rawgeti(L, idx, i);
+        if (!lua_isstring(L, -1))
+            luaL_error(L, "website data types must be strings");
+        const char *type = lua_tostring(L, -1);
+
+#define TYPE(upper, lower) \
+        if (g_str_equal(type, #lower)) types |= WEBKIT_WEBSITE_DATA_##upper;
+        TYPE(MEMORY_CACHE, memory_cache)
+        TYPE(DISK_CACHE, disk_cache)
+        TYPE(OFFLINE_APPLICATION_CACHE, offline_application_cache)
+        TYPE(SESSION_STORAGE, session_storage)
+        TYPE(LOCAL_STORAGE, local_storage)
+        TYPE(WEBSQL_DATABASES, websql_databases)
+        TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
+        TYPE(PLUGIN_DATA, plugin_data)
+        TYPE(COOKIES, cookies)
+        TYPE(ALL, all)
+#undef TYPE
+
+        lua_pop(L, 1);
+    }
+
+    return types;
+}
+
+static void
+website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, lua_State *L)
+{
+    GError *error = NULL;
+    GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
+    if (error) {
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+        luaL_error(L, lua_tostring(L, -1));
+    }
+
+    lua_newtable(L);
+    GList *item = items;
+    while (item) {
+        WebKitWebsiteData *website_data = item->data;
+        WebKitWebsiteDataTypes present = webkit_website_data_get_types(website_data);
+
+        lua_pushstring(L, webkit_website_data_get_name(website_data));
+        lua_newtable(L);
+
+#define TYPE(upper, lower)                                                \
+        if (present & WEBKIT_WEBSITE_DATA_##upper) {                      \
+            lua_pushstring(L, #lower);                                    \
+            lua_pushinteger(L, webkit_website_data_get_size(website_data, \
+                        WEBKIT_WEBSITE_DATA_##upper));                    \
+            lua_rawset(L, -3);                                            \
+        }
+        TYPE(MEMORY_CACHE, memory_cache)
+        TYPE(DISK_CACHE, disk_cache)
+        TYPE(OFFLINE_APPLICATION_CACHE, offline_application_cache)
+        TYPE(SESSION_STORAGE, session_storage)
+        TYPE(LOCAL_STORAGE, local_storage)
+        TYPE(WEBSQL_DATABASES, websql_databases)
+        TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
+        TYPE(PLUGIN_DATA, plugin_data)
+        TYPE(COOKIES, cookies)
+#undef TYPE
+        lua_rawset(L, -3);
+
+        webkit_website_data_unref(website_data);
+        item = item->next;
+    }
+    g_list_free(items);
+    lua_resume(L, 1);
+}
+
+static gint
+luaH_luakit_website_data_fetch(lua_State *L)
+{
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 2);
+
+    if (lua_pushthread(L))
+        return luaL_error(L, "called from main thread");
+    lua_pop(L, 1);
+    if (data_types == 0)
+        return luaL_error(L, "no website data types specified");
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_fetch(data_manager, data_types, NULL,
+            (GAsyncReadyCallback)website_data_fetch_finish, L);
+
+    return lua_yield(L, 0);
+}
+
+static gint
+luaH_luakit_website_data_index(lua_State *L)
+{
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+    switch (token) {
+        PF_CASE(FETCH, luaH_luakit_website_data_fetch)
+        default: return 0;
+    }
+}
+
+static gint
+luaH_luakit_push_website_data_table(lua_State *L)
+{
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy webview userdata */
+    lua_pushcclosure(L, luaH_luakit_website_data_index, 1);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+#endif
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -417,6 +543,12 @@ luaH_luakit_index(lua_State *L)
       PI_CASE(PROCESS_LIMIT,    web_context_process_limit_get())
       case L_TK_OPTIONS:
         return luaH_luakit_push_options_table(L);
+      case L_TK_WEBSITE_DATA:
+#if WEBKIT_CHECK_VERSION(2,16,0)
+        return luaH_luakit_push_website_data_table(L);
+#else
+        return luaL_error(L, "luakit.website_data requires WebKitGTK >= 2.16.0");
+#endif
 
       PB_CASE(WEBKIT2,          true)
 
