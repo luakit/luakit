@@ -27,14 +27,11 @@ local function overlay()  return widget{type="overlay"}  end
 
 -- Build and pack window widgets
 function window.build(w)
-    local vertitabs = false
-
     -- Create a table for widgets and state variables for a window
     local ww = {
         win    = widget{type="window"},
         ebox   = eventbox(),
         layout = vbox(),
-        paned  = widget{type=vertitabs and "hpaned" or "vpaned"},
         tabs   = notebook(),
         -- Status bar widgets
         sbar = {
@@ -74,25 +71,11 @@ function window.build(w)
     for k, v in pairs(ww) do w[k] = v end
 
     -- Tablist widget
-    w.tablist = lousy.widget.tablist(w.tabs, vertitabs and "vertical" or "horizontal")
+    w.tablist = lousy.widget.tablist(w.tabs, "horizontal")
 
-    -- Assemble window
-    if vertitabs then
-        w.ebox.child = w.layout
-
-        w.paned:pack1(w.tablist.widget, { resize = false })
-        w.paned:pack2(w.tabs)
-        w.paned.position = globals.vertical_tab_width or 200
-
-        w.menu_tabs.child = w.paned
-    else
-        w.ebox.child = w.paned
-        w.paned:pack1(w.layout)
-
-        w.layout:pack(w.tablist.widget)
-
-        w.menu_tabs.child = w.tabs
-    end
+    w.ebox.child = w.layout
+    w.layout:pack(w.tablist.widget)
+    w.menu_tabs.child = w.tabs
 
     w.win.child = w.ebox
     w.layout:pack(w.menu_tabs, { expand = true, fill = true })
