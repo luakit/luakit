@@ -21,6 +21,10 @@ local data = setmetatable({}, { __mode = "k" })
 local function destroy(tlist)
     -- Destroy tablist container widget
     tlist.widget:destroy()
+    -- Remove signal handlers
+    for _, entry in pairs(data[tlist].handlers) do
+        data[tlist].notebook:remove_signal(entry.signame, entry.func)
+    end
     -- Destroy private widget data
     data[tlist] = nil
 end
@@ -119,63 +123,77 @@ function _M.new(notebook, orientation)
     signal.setup(tlist)
 
     -- Attach notebook signal handlers
-    notebook:add_signal("page-added", function (_, view, idx)
-        local tl = tab(view, idx)
-        data[tlist].tabs[view] = tl
-
-        if _M.min_width and _M.min_width > 0 and orientation == "horizontal" then
-            tl.widget.min_size = { w = _M.min_width }
-        end
-        box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
-        box:reorder(tl.widget, idx-1)
-        regenerate_tab_indices(tlist)
-
-        tl.widget:add_signal("button-release", function (_, mods, but)
-            return tlist:emit_signal("tab-clicked", tl.index, mods, but)
-        end)
-        tl.widget:add_signal("button-double-click", function (_, mods, but)
-            return tlist:emit_signal("tab-double-clicked", tl.index, mods, but)
-        end)
-    end)
-
-    notebook:add_signal("page-removed", function (_, view)
-        local tl = data[tlist].tabs[view]
-        box:remove(tl.widget)
-        tl:destroy()
-        regenerate_tab_indices(tlist)
-        data[tlist].tabs[view] = nil
-    end)
-
-    notebook:add_signal("switch-page", function (_, view)
-        local prev_view = data[tlist].prev_view
-        data[tlist].prev_view = view
-
-        if prev_view then
-            local prev_tl = data[tlist].tabs[prev_view]
-            if prev_tl then prev_tl.current = false end
-        end
-        local tl = data[tlist].tabs[view]
-        tl.current = true
-
-        scroll_current_tab_into_view(tlist)
-    end)
-
-    notebook:add_signal("page-reordered", function (_, view, idx)
-        local tl = data[tlist].tabs[view]
-        local old_idx = tl.index
-        box:reorder(tl.widget, idx-1)
-        regenerate_tab_indices(tlist, math.min(old_idx, idx), math.max(old_idx, idx))
-        scroll_current_tab_into_view(tlist)
-    end)
-
     local function update_tablist_visibility()
         if tlist.visible and notebook:count() >= 2 then tlist.widget:show() end
         if not tlist.visible or notebook:count() < 2 then tlist.widget:hide() end
     end
 
-    -- Show tablist widget if there is more than one tab
-    notebook:add_signal("page-added", update_tablist_visibility)
-    notebook:add_signal("page-removed", update_tablist_visibility)
+    data[tlist].handlers = {
+        {
+            signame = "page-added",
+            func = function (_, view, idx)
+                local tl = tab(view, idx)
+                data[tlist].tabs[view] = tl
+
+                if _M.min_width and _M.min_width > 0 and orientation == "horizontal" then
+                    tl.widget.min_size = { w = _M.min_width }
+                end
+                box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
+                box:reorder(tl.widget, idx-1)
+                regenerate_tab_indices(tlist)
+
+                tl.widget:add_signal("button-release", function (_, mods, but)
+                    return tlist:emit_signal("tab-clicked", tl.index, mods, but)
+                end)
+                tl.widget:add_signal("button-double-click", function (_, mods, but)
+                    return tlist:emit_signal("tab-double-clicked", tl.index, mods, but)
+                end)
+            end,
+        },
+        {
+            signame = "page-removed",
+            func = function (_, view)
+                local tl = data[tlist].tabs[view]
+                box:remove(tl.widget)
+                tl:destroy()
+                regenerate_tab_indices(tlist)
+                data[tlist].tabs[view] = nil
+            end,
+        },
+        {
+            signame = "switch-page",
+            func = function (_, view)
+                local prev_view = data[tlist].prev_view
+                data[tlist].prev_view = view
+
+                if prev_view then
+                    local prev_tl = data[tlist].tabs[prev_view]
+                    if prev_tl then prev_tl.current = false end
+                end
+                local tl = data[tlist].tabs[view]
+                tl.current = true
+
+                scroll_current_tab_into_view(tlist)
+            end,
+        },
+        {
+            signame = "page-reordered",
+            func = function (_, view, idx)
+                local tl = data[tlist].tabs[view]
+                local old_idx = tl.index
+                box:reorder(tl.widget, idx-1)
+                regenerate_tab_indices(tlist, math.min(old_idx, idx), math.max(old_idx, idx))
+                scroll_current_tab_into_view(tlist)
+            end,
+        },
+        -- Show tablist widget if there is more than one tab
+        { signame = "page-added", func = update_tablist_visibility, },
+        { signame = "page-removed", func = update_tablist_visibility, },
+    }
+    for _, entry in pairs(data[tlist].handlers) do
+        notebook:add_signal(entry.signame, entry.func)
+    end
+
     tlist.widget:hide()
 
     -- Setup metatable interface
