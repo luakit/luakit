@@ -120,7 +120,7 @@ local match_label_re_text = function (text)
     return #text > 0 and "^"..regex_escape(text) or "", text
 end
 local match_label = function (text)
-    return #text > 0 and "^"..regex_escape(text) or "", ""
+    return #text > 0 and "^"..regex_escape(text) or "", nil
 end
 
 --- Table of functions used to select a hint matching style.
