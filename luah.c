@@ -213,17 +213,25 @@ luaH_parserc(const gchar *confpath, gboolean run)
     if (i_str && (i <= 0 || i >= (gint)paths->len))
         goto bailout;
 
+    /* Loop through paths until we have a config that exists: avoid needless execs */
+    for (; i < (gint)paths->len; i++) {
+        const gchar *path = paths->pdata[i];
+        if (file_exists(path))
+            break;
+        verbose("rc file '%s' does not exist", path);
+    }
+
+    if (i == (gint)paths->len) {
+        warn("couldn't load any rc file");
+        goto bailout;
+    }
+
     /* attempt to load the indicated config file */
     const gchar *path = paths->pdata[i++];
-    if (!file_exists(path))
-        verbose("rc file '%s' does not exist", path);
-    else if (luaH_loadrc(path, run)) {
+    if (luaH_loadrc(path, run)) {
         unsetenv("LUAKIT_NEXT_CONFIG_INDEX");
         globalconf.confpath = g_strdup(path);
         ret = TRUE;
-        goto bailout;
-    } else if (i == (gint)paths->len) {
-        warn("loading rc '%s' failed", path);
         goto bailout;
     } else
         warn("loading rc '%s' failed, falling back...", path);
