@@ -106,6 +106,10 @@ web_extension_connect_thread(const gchar *socket_path)
     /* Remove any pre-existing socket, before opening */
     unlink(local.sun_path);
 
+    int enable = 1;
+    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
+        fatal("Error setting SO_REUSEADDR: %s", strerror(errno));
+
     if (bind(sock, (struct sockaddr *)&local, len) == -1)
         fatal("Error calling bind(): %s", strerror(errno));
 
