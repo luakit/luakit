@@ -305,7 +305,7 @@ function _M.find_config(f)
     -- Search locations
     local paths = { "config/"..f, capi.luakit.config_dir.."/"..f }
     for _, path in ipairs(xdg.system_config_dirs) do
-        rtable.insert(paths, path.."/"..f)
+        rtable.insert(paths, path.."/luakit/"..f)
     end
     return find_file(paths)
 end
