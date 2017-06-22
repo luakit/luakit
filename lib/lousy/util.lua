@@ -303,7 +303,10 @@ end
 function _M.find_config(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f, "/etc/xdg/luakit/"..f }
+    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f }
+    for _, path in ipairs(xdg.system_config_dirs) do
+        rtable.insert(paths, path.."/"..f)
+    end
     return find_file(paths)
 end
 
