@@ -32,15 +32,22 @@ str_chomp_slashes(gchar *path)
 }
 
 static int
+luaH_push_path(lua_State *L, const gchar *path)
+{
+    gchar *p = g_strdup(path);
+    str_chomp_slashes(p);
+    lua_pushstring(L, p);
+    g_free(p);
+    return 1;
+}
+
+static int
 luaH_push_path_array(lua_State *L, const gchar * const * paths)
 {
     lua_newtable(L);
     for (gint n = 0; paths[n]; ++n) {
-        gchar *path = g_strdup(paths[n]);
-        str_chomp_slashes(path);
-        lua_pushstring(L, path);
+        luaH_push_path(L, paths[n]);
         lua_rawseti(L, -2, n+1);
-        g_free(path);
     }
     return 1;
 }
@@ -53,13 +60,15 @@ luaH_xdg_index(lua_State *L)
 
     switch(l_tokenize(lua_tostring(L, 2)))
     {
-      PS_CASE(CACHE_DIR,  g_get_user_cache_dir())
-      PS_CASE(CONFIG_DIR, g_get_user_config_dir())
-      PS_CASE(DATA_DIR,   g_get_user_data_dir())
+#define PP_CASE(t, s) case L_TK_##t: luaH_push_path(L, s); return 1;
+
+      PP_CASE(CACHE_DIR,  g_get_user_cache_dir())
+      PP_CASE(CONFIG_DIR, g_get_user_config_dir())
+      PP_CASE(DATA_DIR,   g_get_user_data_dir())
 
 #define UD_CASE(TOK)                                                       \
       case L_TK_##TOK##_DIR:                                               \
-        lua_pushstring(L, g_get_user_special_dir(G_USER_DIRECTORY_##TOK)); \
+        luaH_push_path(L, g_get_user_special_dir(G_USER_DIRECTORY_##TOK)); \
         return 1;
 
       UD_CASE(DESKTOP)
