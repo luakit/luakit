@@ -306,3 +306,5 @@ finished
 set_favicon_for_uri
 website_data
 fetch
+system_data_dirs
+system_config_dirs

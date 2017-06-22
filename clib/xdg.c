@@ -21,6 +21,30 @@
 #include "clib/xdg.h"
 #include "luah.h"
 
+static void
+str_chomp_slashes(gchar *path)
+{
+    if (!path)
+        return;
+    gint last = strlen(path) - 1;
+    while (last > 0 && path[last] == '/')
+        path[last--] = '\0';
+}
+
+static int
+luaH_push_path_array(lua_State *L, const gchar * const * paths)
+{
+    lua_newtable(L);
+    for (gint n = 0; paths[n]; ++n) {
+        gchar *path = g_strdup(paths[n]);
+        str_chomp_slashes(path);
+        lua_pushstring(L, path);
+        lua_rawseti(L, -2, n+1);
+        g_free(path);
+    }
+    return 1;
+}
+
 static gint
 luaH_xdg_index(lua_State *L)
 {
@@ -46,6 +70,12 @@ luaH_xdg_index(lua_State *L)
       UD_CASE(PUBLIC_SHARE)
       UD_CASE(TEMPLATES)
       UD_CASE(VIDEOS)
+
+      case L_TK_SYSTEM_DATA_DIRS:
+        return luaH_push_path_array(L, g_get_system_data_dirs());
+
+      case L_TK_SYSTEM_CONFIG_DIRS:
+        return luaH_push_path_array(L, g_get_system_config_dirs());
 
       default:
         break;
