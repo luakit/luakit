@@ -20,10 +20,16 @@ USE_LUAJIT        ?= 1
 PREFIX     ?= /usr/local
 MANPREFIX  ?= $(PREFIX)/share/man
 DOCDIR     ?= $(PREFIX)/share/luakit/doc
+XDGPREFIX  ?= /etc/xdg
+PIXMAPDIR  ?= $(PREFIX)/share/pixmaps
+APPDIR     ?= $(PREFIX)/share/applications
 
 INSTALLDIR := $(DESTDIR)$(PREFIX)
 MANPREFIX  := $(DESTDIR)$(MANPREFIX)
 DOCDIR     := $(DESTDIR)$(DOCDIR)
+XDGPREFIX  := $(DESTDIR)$(XDGPREFIX)
+PIXMAPDIR  := $(DESTDIR)$(PIXMAPDIR)
+APPDIR     := $(DESTDIR)$(APPDIR)
 
 # Should luakit be built to load relative config paths (./lib ./config) ?
 # (Useful when running luakit from it's source directory, disable otherwise).

@@ -29,6 +29,9 @@ options:
 	@echo "INSTALLDIR   = $(INSTALLDIR)"
 	@echo "MANPREFIX    = $(MANPREFIX)"
 	@echo "DOCDIR       = $(DOCDIR)"
+	@echo "XDGPREFIX    = $(XDGPREFIX)"
+	@echo "PIXMAPDIR    = $(PIXMAPDIR)"
+	@echo "APPDIR       = $(APPDIR)"
 	@echo
 	@echo build targets:
 	@echo "SRCS     = $(SRCS)"
@@ -97,12 +100,12 @@ install: all
 	install -m644 luakit.so $(INSTALLDIR)/share/luakit/luakit.so
 	install -d $(INSTALLDIR)/bin
 	install luakit $(INSTALLDIR)/bin/luakit
-	install -d $(DESTDIR)/etc/xdg/luakit/
-	install -m644 config/*.lua $(DESTDIR)/etc/xdg/luakit/
-	install -d $(DESTDIR)/usr/share/pixmaps
-	install -m644 extras/luakit.png $(DESTDIR)/usr/share/pixmaps/
-	install -d $(DESTDIR)/usr/share/applications
-	install -m644 extras/luakit.desktop $(DESTDIR)/usr/share/applications/
+	install -d $(XDGPREFIX)/luakit/
+	install -m644 config/*.lua $(XDGPREFIX)/luakit/
+	install -d $(PIXMAPDIR)
+	install -m644 extras/luakit.png $(PIXMAPDIR)
+	install -d $(APPDIR)
+	install -m644 extras/luakit.desktop $(APPDIR)
 	install -d $(MANPREFIX)/man1/
 	install -m644 luakit.1.gz $(MANPREFIX)/man1/
 	mkdir -p resources
@@ -111,8 +114,8 @@ install: all
 
 uninstall:
 	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
-	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)/etc/xdg/luakit
-	rm -rf $(DESTDIR)/usr/share/applications/luakit.desktop $(DESTDIR)/usr/share/pixmaps/luakit.png
+	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(XDGPREFIX)/luakit
+	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
 	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $(LDFLAGS) $< -o $@
