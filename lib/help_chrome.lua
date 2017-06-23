@@ -136,8 +136,6 @@ local help_doc_page = function (v, path, request)
         local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
         local blob = lousy.load(prefix .. file)
         local style = blob:match("<style>(.*)</style>")
-        -- Remove some css rules
-        style = style:gsub("html %b{}", ""):gsub("#hdr %b{}", ""):gsub("#hdr > h1 %b{}", "")
         local inner = blob:match("(<div id=wrap>.*</div>)%s*</body>")
         if file == "index.html" then
             inner, style = help_doc_index_page_preprocess(inner, style)
