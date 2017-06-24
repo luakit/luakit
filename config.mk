@@ -97,7 +97,6 @@ endif
 # Packages required to build luakit.
 PKGS += gtk+-3.0
 PKGS += gthread-2.0
-CPPFLAGS += -DWITH_WEBKIT2
 PKGS += webkit2gtk-4.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
