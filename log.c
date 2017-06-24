@@ -82,6 +82,7 @@ va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, v
         case LOG_LEVEL_info:    prefix_char = 'I'; break;
         case LOG_LEVEL_verbose: prefix_char = 'V'; break;
         case LOG_LEVEL_debug:   prefix_char = 'D'; break;
+        default: g_assert_not_reached();
     }
 
     /* Log format: [timestamp] prefix: fct:line msg */
