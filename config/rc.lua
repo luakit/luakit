@@ -2,6 +2,8 @@
 -- luakit configuration file, more information at https://aidanholm.github.io/luakit/ --
 ----------------------------------------------------------------------------------------
 
+require "lfs"
+
 if unique then
     unique.new("org.luakit")
     -- Check for a running luakit instance
