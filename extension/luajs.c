@@ -30,24 +30,21 @@
 #include "common/luaserialize.h"
 #include "common/luajs.h"
 
-static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, const gchar *name, gpointer ref);
-
 typedef struct _luajs_func_ctx_t {
     gpointer ref;
     guint64 page_id;
 } luajs_func_ctx_t;
 
 static gint lua_string_find_ref = LUA_REFNIL;
+static JSClassRef promise_executor_cb_class;
+static JSClassRef luaJS_registered_function_callback_class;
 
 static JSObjectRef
-js_make_closure(JSContextRef context, JSObjectCallAsFunctionCallback callback, gpointer user_data)
+js_make_closure(JSContextRef context, JSClassRef callback_class, gpointer user_data)
 {
-    JSClassDefinition def = kJSClassDefinitionEmpty;
-    def.callAsFunction = callback;
-    JSClassRef class = JSClassCreate(&def);
-    JSObjectRef fun = JSObjectMake(context, class, user_data);
-    JSClassRelease(class);
-    return fun;
+    g_assert(context);
+    g_assert(callback_class);
+    return JSObjectMake(context, callback_class, user_data);
 }
 
 typedef struct _js_promise_t {
@@ -85,7 +82,7 @@ new_promise(JSContextRef context, js_promise_t *promise)
     JSStringRelease(key);
     g_assert(JSObjectIsConstructor(context, promise_ctor));
 
-    JSValueRef argv[] = { js_make_closure(context, promise_executor_cb, promise) };
+    JSValueRef argv[] = { js_make_closure(context, promise_executor_cb_class, promise) };
     promise->promise = JSObjectCallAsConstructor(context, promise_ctor, 1, argv, NULL);
 }
 
@@ -195,7 +192,7 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
     luajs_func_ctx_t *ctx = g_slice_new(luajs_func_ctx_t);
     ctx->page_id = webkit_web_page_get_id(web_page);
     ctx->ref = ref;
-    JSObjectRef fun = js_make_closure(context, luaJS_registered_function_callback, ctx);
+    JSObjectRef fun = js_make_closure(context, luaJS_registered_function_callback_class, ctx);
 
     JSStringRef js_name = JSStringCreateWithUTF8CString(name);
     JSObjectRef global = JSContextGetGlobalObject(context);
@@ -268,6 +265,15 @@ web_luajs_init(void)
     lua_getfield(L, -1, "find");
     luaH_registerfct(L, -1, &lua_string_find_ref);
     lua_pop(L, 2);
+
+    /* Create callback classes */
+    JSClassDefinition def;
+    def = kJSClassDefinitionEmpty;
+    def.callAsFunction = promise_executor_cb;
+    promise_executor_cb_class = JSClassCreate(&def);
+    def = kJSClassDefinitionEmpty;
+    def.callAsFunction = luaJS_registered_function_callback;
+    luaJS_registered_function_callback_class = JSClassCreate(&def);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
