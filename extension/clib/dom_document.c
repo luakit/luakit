@@ -201,14 +201,14 @@ luaH_dom_document_index(lua_State *L)
 void
 dom_document_class_setup(lua_State *L)
 {
-    static const struct luaL_reg dom_document_methods[] =
+    static const struct luaL_Reg dom_document_methods[] =
     {
         LUA_CLASS_METHODS(dom_document)
         { "__call", luaH_dom_document_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg dom_document_meta[] =
+    static const struct luaL_Reg dom_document_meta[] =
     {
         LUA_OBJECT_META(dom_document)
         { "__index", luaH_dom_document_index },

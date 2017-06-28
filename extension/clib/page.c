@@ -285,14 +285,14 @@ luaH_page_index(lua_State *L)
 void
 page_class_setup(lua_State *L)
 {
-    static const struct luaL_reg page_methods[] =
+    static const struct luaL_Reg page_methods[] =
     {
         LUA_CLASS_METHODS(page)
         { "__call", luaH_page_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg page_meta[] =
+    static const struct luaL_Reg page_meta[] =
     {
         LUA_OBJECT_META(page)
         { "__index", luaH_page_index },

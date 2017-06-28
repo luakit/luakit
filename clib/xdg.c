@@ -95,7 +95,7 @@ luaH_xdg_index(lua_State *L)
 void
 xdg_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg xdg_lib[] =
+    static const struct luaL_Reg xdg_lib[] =
     {
         { "__index", luaH_xdg_index },
         { NULL, NULL },

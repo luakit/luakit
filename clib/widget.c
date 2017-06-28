@@ -246,14 +246,14 @@ luaH_widget_get_type(lua_State *L, widget_t *w)
 void
 widget_class_setup(lua_State *L)
 {
-    static const struct luaL_reg widget_methods[] =
+    static const struct luaL_Reg widget_methods[] =
     {
         LUA_CLASS_METHODS(widget)
         { "__call", luaH_widget_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg widget_meta[] =
+    static const struct luaL_Reg widget_meta[] =
     {
         LUA_OBJECT_META(widget)
         { "__index", luaH_widget_index },

@@ -108,7 +108,7 @@ luaH_request_get_finished(lua_State *L, request_t *request)
 void
 request_class_setup(lua_State *L)
 {
-    static const struct luaL_reg request_meta[] =
+    static const struct luaL_Reg request_meta[] =
     {
         LUA_OBJECT_META(request)
         LUA_CLASS_META

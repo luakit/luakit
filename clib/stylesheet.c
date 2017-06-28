@@ -100,14 +100,14 @@ luaH_stylesheet_get_source(lua_State *L, lstylesheet_t *stylesheet)
 void
 stylesheet_class_setup(lua_State *L)
 {
-    static const struct luaL_reg stylesheet_methods[] =
+    static const struct luaL_Reg stylesheet_methods[] =
     {
         LUA_CLASS_METHODS(stylesheet)
         { "__call", luaH_stylesheet_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg stylesheet_meta[] =
+    static const struct luaL_Reg stylesheet_meta[] =
     {
         LUA_OBJECT_META(stylesheet)
         LUA_CLASS_META

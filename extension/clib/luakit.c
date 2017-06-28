@@ -96,7 +96,7 @@ luaH_luakit_register_function(lua_State *L)
 void
 luakit_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg luakit_lib[] =
+    static const struct luaL_Reg luakit_lib[] =
     {
         LUA_CLASS_METHODS(luakit)
         LUAKIT_LIB_COMMON_METHODS

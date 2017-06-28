@@ -47,7 +47,7 @@ web_module_load_modules_on_endpoint(ipc_endpoint_t *ipc)
 void
 web_module_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg web_module_methods[] =
+    static const struct luaL_Reg web_module_methods[] =
     {
         { "__call", luaH_require_web_module },
         { NULL, NULL }

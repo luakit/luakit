@@ -655,13 +655,13 @@ luaH_dom_element_newindex(lua_State *L)
 void
 dom_element_class_setup(lua_State *L)
 {
-    static const struct luaL_reg dom_element_methods[] =
+    static const struct luaL_Reg dom_element_methods[] =
     {
         LUA_CLASS_METHODS(dom_element)
         { NULL, NULL }
     };
 
-    static const struct luaL_reg dom_element_meta[] =
+    static const struct luaL_Reg dom_element_meta[] =
     {
         LUA_OBJECT_META(dom_element)
         { "__index", luaH_dom_element_index },

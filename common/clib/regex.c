@@ -111,14 +111,14 @@ luaH_regex_set_pattern(lua_State *L, lregex_t *regex)
 void
 regex_class_setup(lua_State *L)
 {
-    static const struct luaL_reg regex_methods[] =
+    static const struct luaL_Reg regex_methods[] =
     {
         LUA_CLASS_METHODS(regex)
         { "__call", luaH_regex_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg regex_meta[] =
+    static const struct luaL_Reg regex_meta[] =
     {
         LUA_OBJECT_META(regex)
         LUA_CLASS_META

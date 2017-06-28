@@ -99,7 +99,7 @@ l_kill(lua_State *L)
 int
 luaopen_tests_util(lua_State *L)
 {
-    static const struct luaL_reg util [] = {
+    static const struct luaL_Reg util [] = {
         {"make_tmp_dir", l_make_tmp_dir},
         {"spawn_async", l_spawn_async},
         {"getenv", l_getenv},

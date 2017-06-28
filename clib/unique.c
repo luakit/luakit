@@ -129,7 +129,7 @@ luaH_unique_send_message(lua_State *L)
 void
 unique_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg unique_lib[] =
+    static const struct luaL_Reg unique_lib[] =
     {
         LUA_CLASS_METHODS(unique)
         { "new", luaH_unique_new },

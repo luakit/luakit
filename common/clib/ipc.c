@@ -66,14 +66,14 @@ luaH_ipc_channel_gc(lua_State *L)
 void
 ipc_channel_class_setup(lua_State *L)
 {
-    static const struct luaL_reg ipc_channel_methods[] =
+    static const struct luaL_Reg ipc_channel_methods[] =
     {
         LUA_CLASS_METHODS(ipc_channel)
         { "__call", luaH_ipc_channel_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg ipc_channel_meta[] =
+    static const struct luaL_Reg ipc_channel_meta[] =
     {
         LUA_OBJECT_META(ipc_channel)
         { "emit_signal", ipc_channel_send },

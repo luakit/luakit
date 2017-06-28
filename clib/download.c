@@ -622,14 +622,14 @@ luaH_download_cancel(lua_State *L)
 void
 download_class_setup(lua_State *L)
 {
-    static const struct luaL_reg download_methods[] =
+    static const struct luaL_Reg download_methods[] =
     {
         LUA_CLASS_METHODS(download)
         { "__call", luaH_download_new },
         { NULL, NULL }
     };
 
-    static const struct luaL_reg download_meta[] =
+    static const struct luaL_Reg download_meta[] =
     {
         LUA_OBJECT_META(download)
         LUA_CLASS_META

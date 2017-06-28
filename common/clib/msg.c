@@ -81,7 +81,7 @@ LOG_LEVELS
 void
 msg_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg msg_lib[] =
+    static const struct luaL_Reg msg_lib[] =
     {
 #define X(name) \
         { #name, luaH_msg_##name },

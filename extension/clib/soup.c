@@ -37,7 +37,7 @@ soup_lib_setup(lua_State *L)
 {
     soup_lib_setup_common();
 
-    static const struct luaL_reg soup_lib[] =
+    static const struct luaL_Reg soup_lib[] =
     {
         LUA_CLASS_METHODS(soup)
         { "parse_uri",     luaH_soup_parse_uri },
