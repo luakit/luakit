@@ -640,15 +640,10 @@ window.methods = {
         -- Strip whitespace and split by whitespace into args table
         local args = lstring.split(lstring.strip(arg))
 
-        -- Guess if first argument is an address, search engine, file
-        if #args == 1 then
+        -- Guess if single argument is an address, file, etc
+        if #args == 1 and not search_engines[args[1]] then
             local uri = args[1]
             if uri == "about:blank" then return uri end
-
-            -- Check if search engine name
-            if search_engines[uri] then
-                return string.format(search_engines[uri], "")
-            end
 
             -- Navigate if . or / in uri (I.e. domains, IP's, scheme://)
             if find(uri, "%.") or find(uri, "/") then return uri end
