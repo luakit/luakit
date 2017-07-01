@@ -674,10 +674,15 @@ window.methods = {
             engine = args[1]
             table.remove(args, 1)
         end
+        local e = search_engines[engine] or "%s"
 
         -- URI encode search terms
-        local terms = luakit.uri_encode(table.concat(args, " "))
-        return string.format(search_engines[engine], terms)
+        if type(e) == "string" then
+            local terms = luakit.uri_encode(table.concat(args, " "))
+            return string.format(e, terms)
+        else
+            return e(unpack(args))
+        end
     end,
 
     -- Increase (or decrease) the last found number in the current uri
