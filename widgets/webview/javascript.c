@@ -60,22 +60,19 @@ luaH_webview_eval_js(lua_State *L)
     gchar *source = NULL;
     bool no_return = false;
 
+    luaH_checktable(L, 3);
+
     gint top = lua_gettop(L);
-        luaH_checktable(L, 3);
-
-        /* source filename to use in error messages and webinspector */
-        if (luaH_rawfield(L, 3, "source") && lua_isstring(L, -1))
-            usr_source = lua_tostring(L, -1);
-
-        if (luaH_rawfield(L, 3, "no_return"))
-            no_return = lua_toboolean(L, -1);
-
-        if (luaH_rawfield(L, 3, "callback")) {
-            luaH_checkfunction(L, -1);
-            cb = luaH_object_ref(L, -1);
-        }
-
-        lua_settop(L, top);
+    /* source filename to use in error messages and webinspector */
+    if (luaH_rawfield(L, 3, "source") && lua_isstring(L, -1))
+        usr_source = lua_tostring(L, -1);
+    if (luaH_rawfield(L, 3, "no_return"))
+        no_return = lua_toboolean(L, -1);
+    if (luaH_rawfield(L, 3, "callback")) {
+        luaH_checkfunction(L, -1);
+        cb = luaH_object_ref(L, -1);
+    }
+    lua_settop(L, top);
 
     if (!usr_source)
         source = luaH_callerinfo(L);
