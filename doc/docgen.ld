@@ -1,3 +1,6 @@
+-- List of sources used to generate Lua API documentation
+-- Must be kept in sync with Makefile
+
 file = {
     "doc/luadoc",
     "lib",

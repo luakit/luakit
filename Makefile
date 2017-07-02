@@ -13,6 +13,10 @@ OBJS  = $(foreach obj,$(SRCS:.c=.o),$(obj))
 EXT_SRCS = $(filter-out $(TSRC),$(wildcard extension/*.c) $(wildcard extension/clib/*.c) $(wildcard common/*.c)) $(wildcard common/clib/*.c) $(TSRC)
 EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
 
+# List of sources used to generate Lua API documentation
+# Must be kept in sync with doc/docgen.ld
+DOC_SRCS = $(filter-out lib/markdown.lua,$(shell for d in doc/luadoc lib common/clib; do find $$d -type f; done)) tests/lib.lua
+
 all: options newline luakit luakit.1.gz luakit.so apidoc
 
 default: all
@@ -72,12 +76,14 @@ luakit.1: luakit.1.in
 luakit.1.gz: luakit.1
 	@gzip -c $< > $@
 
-apidoc: luakit luakit.so
+doc/apidocs/index.html: luakit luakit.so $(DOC_SRCS)
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
 	./luakit --log=error -c build-utils/docgen/process.lua > doc/apidocs/module_info.lua
 	$(LUA_BIN_NAME) ./build-utils/docgen/makedoc.lua
 	rm doc/apidocs/module_info.lua
+
+apidoc: doc/apidocs/index.html
 
 doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s doc/luakit.doxygen
