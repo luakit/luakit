@@ -677,12 +677,8 @@ window.methods = {
         local e = search_engines[engine] or "%s"
 
         -- URI encode search terms
-        if type(e) == "string" then
-            local terms = luakit.uri_encode(table.concat(args, " "))
-            return string.format(e, terms)
-        else
-            return e(unpack(args))
-        end
+        local terms = table.concat(args, " ")
+        return type(e) == "string" and string.format(e, luakit.uri_encode(terms)) or e(terms)
     end,
 
     -- Increase (or decrease) the last found number in the current uri
