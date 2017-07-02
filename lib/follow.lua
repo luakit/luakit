@@ -364,7 +364,7 @@ add_binds("ex-follow", {
                 prompt = "yank", selector = "uri", evaluator = "uri",
                 func = function (uri)
                     assert(type(uri) == "string")
-                    uri = string.gsub(uri, " ", "%%20")
+                    uri = uri:gsub(" ", "%%20"):gsub("^mailto:", "")
                     capi.luakit.selection.primary = uri
                     w:notify("Yanked uri: " .. uri, false)
                 end
