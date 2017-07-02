@@ -247,25 +247,23 @@ gint
 luaJS_eval_js(lua_State *L, JSContextRef context, const gchar *script, const gchar *source, bool no_return)
 {
 
-    JSStringRef js_source, js_script;
+    JSStringRef js_script;
     JSValueRef result, exception = NULL;
 
     /* evaluate the script and get return value*/
     js_script = JSStringCreateWithUTF8CString(script);
-    js_source = JSStringCreateWithUTF8CString(source);
-
-    result = JSEvaluateScript(context, js_script, NULL, js_source, 0, &exception);
-
-    /* cleanup */
+    result = JSEvaluateScript(context, js_script, NULL, NULL, 0, &exception);
     JSStringRelease(js_script);
-    JSStringRelease(js_source);
 
     /* handle javascript exceptions while running script */
     if (exception) {
         lua_pushnil(L);
+        lua_pushstring(L, source);
+        lua_pushstring(L, ": ");
         if (!luaJS_pushstring(L, context, exception, NULL))
             lua_pushliteral(L, "Unknown JavaScript exception (unable to "
                     "convert thrown exception object into string)");
+        lua_concat(L, 3);
         return 2;
     }
 
