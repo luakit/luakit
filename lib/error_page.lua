@@ -249,7 +249,7 @@ local function load_error_page(v, error_page_info)
     end
 end
 
-local function get_cert_error_desc(cert_errors)
+local function get_cert_error_desc(err)
     local strings = {
         ["unknown-ca"] = "The signing certificate authority is not known.",
         ["bad-identity"] = "The certificate does not match the expected identity of the"
@@ -260,31 +260,34 @@ local function get_cert_error_desc(cert_errors)
         ["generic-error"] = "Error not specified.",
     }
 
-    local msg = ""
-    for _, e in ipairs(cert_errors) do
-        local emsg = strings[e] or "Unknown error."
+    local msg = err.message .. ": "
+    for _, e in ipairs(err.certificate_flags) do
+        local emsg = strings[e] or ("Unknown error code " .. e)
         msg = msg .. emsg .. " "
     end
+    msg = msg
 
     return msg
 end
 
-local function handle_error(v, uri, msg, cert_errors)
+local function handle_error(v, uri, err)
+    msg.warn("Showing error page for error '%s', code '%s'", err.message, err.code)
     local error_category_lut = {
-        ["Load request cancelled"] = "ignore",
-        ["Plugin will handle load"] = "ignore",
-        ["Frame load was interrupted"] = "ignore",
-        ["Unacceptable TLS certificate"] = "security",
-        ["Web process crashed"] = "crash",
+        ["WebKitNetworkError-302"] = "ignore", -- Load request cancelled
+        ["WebKitPluginError-204"] = "ignore", -- Plugin will handle load
+        ["WebKitPolicyError-102"] = "ignore", -- Frame load was interrupted
+        ["LuakitError-0"] = "security", -- Unacceptable TLS certificate
+        ["crash"] = "crash",
     }
-    local category = error_category_lut[msg] or "generic"
+    local category = error_category_lut[err.code] or "generic"
+    msg.warn("Category: %s", category)
 
     if category == "ignore" then return end
 
     local error_page_info
     if category == "generic" then
         error_page_info = {
-            msg = msg,
+            msg = err.message,
         }
         -- Add proxy info on generic pages
         local p = soup.proxy_uri
@@ -296,7 +299,7 @@ local function handle_error(v, uri, msg, cert_errors)
         local cert = v.certificate
 
         error_page_info = {
-            msg = msg .. ": " .. get_cert_error_desc(cert_errors),
+            msg = get_cert_error_desc(err),
             style = _M.cert_style,
             heading = "Your connection may be insecure!",
             buttons = {{
@@ -357,7 +360,7 @@ webview.add_signal("init", function (view)
         end
     end)
     view:add_signal("crashed", function(v)
-        handle_error(v, v.uri, "Web process crashed")
+        handle_error(v, v.uri, { code = "crash", message = "Web process crashed" })
     end)
     view:add_signal("go-back-forward", function (v, n)
         local vs = view_state[v]
