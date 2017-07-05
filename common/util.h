@@ -73,6 +73,16 @@ gchar *luaH_callerinfo(lua_State*);
 gint luaH_panic(lua_State *L);
 gchar *strip_ansi_escapes(const gchar *in);
 
+/* Error codes */
+
+GQuark luakit_error_quark(void);
+
+#define LUAKIT_ERROR luakit_error_quark()
+
+enum LuakitError {
+    LUAKIT_ERROR_TLS,
+};
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
