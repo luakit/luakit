@@ -195,4 +195,16 @@ luaH_add_paths(lua_State *L, const gchar *config_dir)
     lua_pop(L, 1);
 }
 
+gint
+luaH_push_gerror(lua_State *L, GError *error)
+{
+    g_assert(error);
+    lua_createtable(L, 0, 2);
+    lua_pushfstring(L, "%s-%d", g_quark_to_string(error->domain), error->code);
+    lua_setfield(L, -2, "code");
+    lua_pushstring(L, error->message);
+    lua_setfield(L, -2, "message");
+    return 1;
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
