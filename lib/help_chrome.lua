@@ -29,7 +29,7 @@ local index_html_template = [==[
             href="http://webkit.org/" target="_blank">WebKit</a> web content engine and the <a
             href="http://gtk.org/" target="_blank">GTK+</a> toolkit. It is very fast, extensible with <a
             href="http://lua.org/" target="_blank">Lua</a> and licensed under the <a
-            href="https://raw.github.com/aidanholm/luakit/develop/COPYING.GPLv3" target="_blank">GNU GPLv3</a>
+            href="https://raw.github.com/luakit/luakit/develop/COPYING.GPLv3" target="_blank">GNU GPLv3</a>
             license.  It is primarily targeted at power users, developers and any people with too much time
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
@@ -46,7 +46,7 @@ local index_html_template = [==[
         <h2>Questions, Bugs, and Contributions</h2>
 
         <p>Please report any bugs or issues you find at the GitHub
-        <a href="https://github.com/aidanholm/luakit/issues" target="_blank">issue tracker</a>.</p>
+        <a href="https://github.com/luakit/luakit/issues" target="_blank">issue tracker</a>.</p>
         <p>If you have any feature requests or questions, feel free to open an
         issue for those as well. Pull requests and patches are both welcome,
         and there are plenty of areas that could be improved, especially tests

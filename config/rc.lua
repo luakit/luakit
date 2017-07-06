@@ -1,5 +1,5 @@
 ----------------------------------------------------------------------------------------
--- luakit configuration file, more information at https://aidanholm.github.io/luakit/ --
+-- luakit configuration file, more information at http://luakit.org/ --
 ----------------------------------------------------------------------------------------
 
 require "lfs"
