@@ -21,6 +21,7 @@
 
 #include "common/luaclass.h"
 #include "common/luaobject.h"
+#include "common/luayield.h"
 
 #include <stdlib.h>
 

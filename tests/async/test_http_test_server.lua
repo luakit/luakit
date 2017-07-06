@@ -16,9 +16,15 @@ T.test_http_server_returns_file_contents = function ()
     local view = widget{type="webview"}
     view.uri = test.http_server() .. "hello_world.html"
     test.wait_for_view(view)
-    test.wait_until(function () return view.source end)
 
-    assert(view.source == contents, "HTTP server returned wrong content for file")
+    -- Wrap view.source get in another coroutine, since auto-suspending the
+    -- test coroutine confuses the test runner
+    coroutine.wrap(function ()
+        test.continue(view:get_source())
+    end)()
+    local source = test.wait()
+
+    assert(source == contents, "HTTP server returned wrong content for file")
 end
 
 return T

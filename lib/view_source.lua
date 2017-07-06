@@ -42,7 +42,7 @@ end
 local loader_view = webview.new("about:blank", { private = true })
 
 local get_source_for_view = function (target_view)
-    local source = target_view.source or ""
+    local source = target_view:get_source()
 
     local lines = lousy.util.string.split(source, "\r?\n")
     for i, line in ipairs(lines) do
@@ -70,14 +70,6 @@ local load_view_source_uri = function ()
         loader_view.uri = uri
         msg.info("loading in background: %s", uri)
         wait_for_signal_with_arguments(loader_view, "load-status", "finished")
-        -- webview source is not immediately available after a load finishes
-        while not loader_view.source do
-            local timer = timer{ interval = 5 }
-            timer:start()
-            msg.debug("loader source poll spin")
-            wait_for_signal_with_arguments(timer, "timeout")
-            timer:stop()
-        end
     end
 
     local source = get_source_for_view(target_view or loader_view)

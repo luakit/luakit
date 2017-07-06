@@ -22,6 +22,7 @@
 #include "luah.h"
 #include "common/luah.h"
 #include "common/luautil.h"
+#include "common/luayield.h"
 
 /* include clib headers */
 #include "clib/download.h"
@@ -143,6 +144,8 @@ luaH_init(gchar ** uris)
 
     /* Export web module */
     msg_lib_setup(L);
+
+    luaH_yield_setup(L);
 
     /* add Lua search paths */
     luaH_add_paths(L, globalconf.config_dir);

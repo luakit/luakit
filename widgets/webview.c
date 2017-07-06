@@ -31,6 +31,7 @@
 #include "common/signal.h"
 #include "web_context.h"
 #include "common/ipc.h"
+#include "common/luayield.h"
 
 typedef struct {
     /** The parent widget_t struct */
@@ -49,12 +50,6 @@ typedef struct {
     gchar *uri;
     /** Currently hovered uri */
     gchar *hover;
-    /** Current webview source HTML: not null terminated */
-    gchar *source;
-    /** Length in bytes of source array */
-    gsize source_length;
-    /** Whether a request for page source is pending */
-    gboolean source_pending;
 
     /** Inspector properties */
     WebKitWebInspector *inspector;
@@ -64,7 +59,6 @@ typedef struct {
     guint htr_context;
     gboolean is_committed;
     gboolean is_failed;
-    gboolean is_alive;
 #if WEBKIT_CHECK_VERSION(2,16,0)
     gboolean private;
 #endif
@@ -311,38 +305,28 @@ load_failed_tls_cb(WebKitWebView* UNUSED(v), gchar *failing_uri,
 }
 
 static void
-webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res, widget_t *w)
+webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res, lua_State *L)
 {
-    webview_data_t *d = w->data;
-    if (!d->is_alive)
-        return;
-
     gsize length;
-    guchar *source = webkit_web_resource_get_data_finish (main_resource, res, &length, NULL);
+    const gchar *source = (gchar*) webkit_web_resource_get_data_finish(main_resource, res, &length, NULL);
     g_object_unref(main_resource);
-    g_free(d->source);
-    d->source = (gchar*)source;
-    d->source_length = length;
-    d->source_pending = FALSE;
+    lua_pushlstring(L, source, length);
+    lua_resume(L, 1);
 }
 
-static gboolean
-webview_get_source(widget_t *w)
+static gint
+luaH_webview_push_source(lua_State *L)
 {
-    webview_data_t *d = w->data;
-    WebKitWebResource * main_resource = webkit_web_view_get_main_resource(d->view);
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    WebKitWebResource *main_resource = webkit_web_view_get_main_resource(d->view);
     if (!main_resource)
-        return FALSE;
-
-    /* Wait until any current source requests are done */
-    if (d->source_pending)
-        return TRUE;
-    d->source_pending = TRUE;
+        return 0;
 
     g_object_ref(main_resource);
     webkit_web_resource_get_data(main_resource, NULL,
-            (GAsyncReadyCallback) webview_get_source_finished, w);
-    return FALSE;
+            (GAsyncReadyCallback) webview_get_source_finished, L);
+
+    return luaH_yield(L);
 }
 
 static void
@@ -373,13 +357,6 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
         ((webview_data_t*) w->data)->is_committed = FALSE;
     } else if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED) {
         ((webview_data_t*) w->data)->is_committed = TRUE;
-    }
-
-    if (e == WEBKIT_LOAD_STARTED && d->source) {
-        g_free(d->source);
-        d->source = NULL;
-    } else if (e == WEBKIT_LOAD_FINISHED) {
-        g_idle_add((GSourceFunc) webview_get_source, w);
     }
 
     /* Store certificate information about current page */
@@ -702,26 +679,12 @@ uri_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
 }
 
 static gint
-luaH_webview_push_source(lua_State *L, webview_data_t *d)
-{
-    if (d->source)
-        lua_pushlstring(L, d->source, (size_t)d->source_length);
-    else
-        lua_pushnil(L);
-    return 1;
-}
-
-static gint
 luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     webview_data_t *d = w->data;
     gint ret;
 
     token = webview_translate_old_token(token);
-
-    /* HACK to prevent webview_get_source_finished() from segfaulting */
-    if (token == L_TK_DESTROY)
-        d->is_alive = FALSE;
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
@@ -766,7 +729,11 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       PI_CASE(WEB_PROCESS_ID,     d->web_process_id)
 
       case L_TK_SOURCE:
-        return luaH_webview_push_source(L, d);
+        return luaL_error(L, "view.source has been removed; use view:get_source() instead");
+      case L_TK_GET_SOURCE:
+        lua_pushcfunction(L, luaH_webview_push_source);
+        luaH_yield_wrap_function(L);
+        return 1;
       case L_TK_SESSION_STATE:
         return luaH_webview_push_session_state(L, d);
       case L_TK_STYLESHEETS:
@@ -1135,7 +1102,6 @@ static void
 webview_destructor(widget_t *w)
 {
     webview_data_t *d = w->data;
-    d->is_alive = FALSE;
 
     g_idle_remove_by_data(w);
 
@@ -1149,7 +1115,6 @@ webview_destructor(widget_t *w)
     g_object_unref(G_OBJECT(d->user_content));
     if (d->cert)
         g_object_unref(G_OBJECT(d->cert));
-    g_free(d->source);
 
     g_slice_free(webview_data_t, d);
 }
@@ -1287,7 +1252,6 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
-    d->is_alive = TRUE;
 
     /* Create a new endpoint with one ref (this webview) */
     d->ipc = ipc_endpoint_new("UI");
