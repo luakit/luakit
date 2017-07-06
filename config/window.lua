@@ -130,9 +130,6 @@ function window.build(w)
     window.bywidget[w.win] = w
 end
 
--- Deprecated API.
-window.init_funcs = { }
-
 -- Table of functions to call on window creation. Normally used to add signal
 -- handlers to the new windows widgets.
 local init_funcs = {
@@ -755,14 +752,6 @@ function window.new(args)
     -- Call window init functions
     for _, func in pairs(init_funcs) do
         func(w)
-    end
-    if next(window.init_funcs) then
-        msg.warn("Modifying window.init_funcs is deprecated and will be removed in a future version")
-        msg.warn("Instead, connect to the 'init' signal on the window module")
-        for k, func in pairs(window.init_funcs) do
-            msg.warn("window init function '%s' using deprecated interface!", k)
-            func(w)
-        end
     end
     window.emit_signal("init", w)
 

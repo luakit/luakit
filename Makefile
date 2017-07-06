@@ -19,9 +19,6 @@ DOC_SRCS = $(filter-out lib/markdown.lua,$(shell for d in doc/luadoc lib common/
 
 all: options newline luakit luakit.1.gz luakit.so apidoc
 
-default: all
-	@echo "[DEPRECATED] Use of the 'default' target is deprecated. Please use 'all' target as a replacement."
-
 options:
 	@echo luakit build options:
 	@echo "CC           = $(CC)"

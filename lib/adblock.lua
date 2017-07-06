@@ -55,20 +55,6 @@ _M.refresh_views = function()
     -- Dummy.
 end
 
---- Enable ad blocking.
--- @deprecated instead of using this function, set adblock.enabled to true directly
-_M.enable = function ()
-    msg.warn("deprecated function! set adblock.enabled = true directly")
-    _M.enabled = true
-end
-
---- Disable ad blocking.
--- @deprecated instead of using this function, set adblock.enabled to false directly
-_M.disable = function ()
-    msg.warn("deprecated function! set adblock.enabled = false directly")
-    _M.enabled = false
-end
-
 -- Detect files to read rules from
 local function detect_files()
     -- Create adblock directory if it doesn't exist
@@ -477,11 +463,11 @@ add_cmds({
     end),
 
     cmd({"adblock-enable", "abe"}, "Enable ad blocking.", function ()
-        _M.enable()
+        _M.enabled = true
     end),
 
     cmd({"adblock-disable", "abd"}, "Disable ad blocking.", function ()
-        _M.disable()
+        _M.enabled = false
     end),
 })
 

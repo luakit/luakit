@@ -30,9 +30,6 @@ end)
 
 local webview_state = setmetatable({}, { __mode = "k" })
 
--- Deprecated API.
-webview.init_funcs = { }
-
 -- Table of functions which are called on new webview widgets.
 local init_funcs = {
     -- Set useragent
@@ -285,14 +282,6 @@ function webview.new(opts)
     -- Call webview init functions
     for _, func in pairs(init_funcs) do
         func(view)
-    end
-    if next(webview.init_funcs) then
-        msg.warn("Modifying webview.init_funcs is deprecated and will be removed in a future version")
-        msg.warn("Instead, connect to the 'init' signal on the webview module")
-        for k, func in pairs(webview.init_funcs) do
-            msg.warn("Webview init function '%s' using deprecated interface!", k)
-            func(view)
-        end
     end
     webview.emit_signal("init", view)
 
