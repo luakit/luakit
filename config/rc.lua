@@ -21,7 +21,7 @@ if unique then
 end
 
 -- Set the number of web processes to use. A value of 0 means 'no limit'.
-luakit.process_limit = 0
+luakit.process_limit = 4
 
 -- Load library of useful functions for luakit
 local lousy = require "lousy"
