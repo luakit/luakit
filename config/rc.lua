@@ -151,11 +151,6 @@ require "go_input"
 require "go_next_prev"
 require "go_up"
 
--- Block insecure content on secure pages by default
--- Add a bind to w:toggle_mixed_content() to temporarily enable mixed content
--- for the current tab.
-require "mixed_content"
-
 -- Filter Referer HTTP header if page domain does not match Referer domain
 require_web_module("referer_control_wm")
 
