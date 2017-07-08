@@ -130,6 +130,12 @@ decide_destination_cb(WebKitDownload* UNUSED(dl), gchar *suggested_filename, dow
     gboolean handled = (ret && lua_toboolean(L, -1));
     lua_pop(L, 1 + ret);
     current_destination_cb = NULL;
+
+    /* Prevent segfault when download cancelled without setting destination.
+     * https://github.com/aidanholm/luakit/issues/402 */
+    if (download->status == LUAKIT_DOWNLOAD_STATUS_CANCELLED)
+        webkit_download_set_destination(download->webkit_download, "/tmp/");
+
     return handled;
 }
 
