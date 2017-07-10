@@ -141,11 +141,10 @@ local html_template = [==[
         }
 
         .bind pre {
-            margin: 1em;
-            padding: 0.5em;
-            background-color: #EFC;
-            border-top: 1px solid #AC9;
-            border-bottom: 1px solid #AC9;
+            padding: 1rem 1.2rem;
+            border-left: 2px solid #69c;
+            background: #f5f7f9;
+            color: #334;
         }
 
         .bind pre code {
