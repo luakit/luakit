@@ -112,6 +112,7 @@ local help_doc_index_page_preprocess = function (inner, style)
             margin: 0px !important;
             position: relative;
             padding-left: 1.5em;
+            max-width: 219px;
         }
         ul > li:before {
             font-weight: bold;
