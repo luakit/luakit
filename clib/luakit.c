@@ -22,6 +22,7 @@
 #include "common/clib/luakit.h"
 #include "clib/widget.h"
 #include "common/luaserialize.h"
+#include "common/luayield.h"
 #include "common/ipc.h"
 #include "common/signal.h"
 #include "luah.h"
@@ -472,8 +473,6 @@ luaH_luakit_website_data_fetch(lua_State *L)
 {
     WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 2);
 
-    if (lua_pushthread(L))
-        return luaL_error(L, "called from main thread");
     lua_pop(L, 1);
     if (data_types == 0)
         return luaL_error(L, "no website data types specified");
@@ -492,7 +491,10 @@ luaH_luakit_website_data_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
     switch (token) {
-        PF_CASE(FETCH, luaH_luakit_website_data_fetch)
+        case L_TK_FETCH:
+            lua_pushcfunction(L, luaH_luakit_website_data_fetch);
+            luaH_yield_wrap_function(L);
+            return 1;
         default: return 0;
     }
 }
