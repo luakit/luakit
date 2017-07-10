@@ -1,6 +1,6 @@
 # Changelog
 
-## [2017-08-11]
+## [2017-07-11]
 
  - Required WebKitGTK+ version: 2.14+
  - A relatively recent version of GTK+ 3 is required; some features are not available on older versions.
