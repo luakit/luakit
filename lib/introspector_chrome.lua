@@ -178,7 +178,7 @@ local html_template = [==[
 </head>
 <body>
     <header id="page-header">
-        <h1>Luakit Help</h1>
+        <h1>Luakit Introspector</h1>
     </header>
     <div class="content-margin">
         {sections}
