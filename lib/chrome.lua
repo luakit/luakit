@@ -41,6 +41,7 @@ _M.stylesheet = [===[
         -webkit-user-select: none;
         overflow-y: hidden;
         z-index: 100000;
+        font-size: 16px;
     }
     #page-header > h1 {
         font-size: 1.4em;
