@@ -22,7 +22,7 @@ local index_html_template = [==[
     </style>
 </head>
 <body>
-    <header id="page-header"><h1>Luakit Help</h1></header>
+    <header id="page-header"><h1>Luakit Help</h1><div class="rhs">version {version}</div></header>
     <div class=content-margin>
         <h2>About Luakit</h2>
             <p>Luakit is a highly configurable, browser framework based on the <a
@@ -75,7 +75,7 @@ local index_html_template = [==[
 ]==]
 
 local help_index_page = function ()
-    local html_subs = { style = chrome.stylesheet, }
+    local html_subs = { style = chrome.stylesheet, version = luakit.version, }
     local html = string.gsub(index_html_template, "{(%w+)}", html_subs)
     return html
 end
