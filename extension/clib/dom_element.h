@@ -19,7 +19,7 @@
 #ifndef LUAKIT_EXTENSION_CLIB_DOM_ELEMENT_H
 #define LUAKIT_EXTENSION_CLIB_DOM_ELEMENT_H
 
-#include <webkit2/webkit-web-extension.h>
+#include "extension/extension.h"
 
 #include "common/util.h"
 #include "common/luaclass.h"

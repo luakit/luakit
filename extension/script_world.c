@@ -16,7 +16,6 @@
  *
  */
 
-#include <webkit2/webkit-web-extension.h>
 #include "extension/extension.h"
 
 void

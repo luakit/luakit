@@ -19,7 +19,14 @@
 #ifndef LUAKIT_EXTENSION_EXTENSION_H
 #define LUAKIT_EXTENSION_EXTENSION_H
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wunknown-pragmas"
+#pragma clang diagnostic push
+#pragma clang diagnostic ignored "-Wtypedef-redefinition"
 #include <webkit2/webkit-web-extension.h>
+#pragma clang diagnostic pop
+#pragma GCC diagnostic pop
+
 #include <lauxlib.h>
 #include <lualib.h>
 #include "extension/ipc.h"
