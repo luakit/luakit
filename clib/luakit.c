@@ -428,44 +428,45 @@ website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resul
     GError *error = NULL;
     GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
     if (error) {
+        lua_pushnil(L);
         lua_pushstring(L, error->message);
         g_error_free(error);
-        luaL_error(L, lua_tostring(L, -1));
-    }
-
-    lua_newtable(L);
-    GList *item = items;
-    while (item) {
-        WebKitWebsiteData *website_data = item->data;
-        WebKitWebsiteDataTypes present = webkit_website_data_get_types(website_data);
-
-        lua_pushstring(L, webkit_website_data_get_name(website_data));
+    } else {
         lua_newtable(L);
+        GList *item = items;
+        while (item) {
+            WebKitWebsiteData *website_data = item->data;
+            WebKitWebsiteDataTypes present = webkit_website_data_get_types(website_data);
 
-#define TYPE(upper, lower)                                                \
-        if (present & WEBKIT_WEBSITE_DATA_##upper) {                      \
-            lua_pushstring(L, #lower);                                    \
-            lua_pushinteger(L, webkit_website_data_get_size(website_data, \
-                        WEBKIT_WEBSITE_DATA_##upper));                    \
-            lua_rawset(L, -3);                                            \
-        }
-        TYPE(MEMORY_CACHE, memory_cache)
-        TYPE(DISK_CACHE, disk_cache)
-        TYPE(OFFLINE_APPLICATION_CACHE, offline_application_cache)
-        TYPE(SESSION_STORAGE, session_storage)
-        TYPE(LOCAL_STORAGE, local_storage)
-        TYPE(WEBSQL_DATABASES, websql_databases)
-        TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
-        TYPE(PLUGIN_DATA, plugin_data)
-        TYPE(COOKIES, cookies)
+            lua_pushstring(L, webkit_website_data_get_name(website_data));
+            lua_newtable(L);
+
+#define TYPE(upper, lower)                                                    \
+            if (present & WEBKIT_WEBSITE_DATA_##upper) {                      \
+                lua_pushstring(L, #lower);                                    \
+                lua_pushinteger(L, webkit_website_data_get_size(website_data, \
+                            WEBKIT_WEBSITE_DATA_##upper));                    \
+                lua_rawset(L, -3);                                            \
+            }
+            TYPE(MEMORY_CACHE, memory_cache)
+            TYPE(DISK_CACHE, disk_cache)
+            TYPE(OFFLINE_APPLICATION_CACHE, offline_application_cache)
+            TYPE(SESSION_STORAGE, session_storage)
+            TYPE(LOCAL_STORAGE, local_storage)
+            TYPE(WEBSQL_DATABASES, websql_databases)
+            TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
+            TYPE(PLUGIN_DATA, plugin_data)
+            TYPE(COOKIES, cookies)
 #undef TYPE
-        lua_rawset(L, -3);
+            lua_rawset(L, -3);
 
-        webkit_website_data_unref(website_data);
-        item = item->next;
+            webkit_website_data_unref(website_data);
+            item = item->next;
+        }
     }
+
     g_list_free(items);
-    lua_resume(L, 1);
+    lua_resume(L, lua_gettop(L));
 }
 
 static gint
