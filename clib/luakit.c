@@ -482,7 +482,7 @@ luaH_luakit_website_data_fetch(lua_State *L)
     webkit_website_data_manager_fetch(data_manager, data_types, NULL,
             (GAsyncReadyCallback)website_data_fetch_finish, L);
 
-    return lua_yield(L, 0);
+    return luaH_yield(L);
 }
 
 typedef struct _website_data_remove_task_t {
