@@ -485,6 +485,91 @@ luaH_luakit_website_data_fetch(lua_State *L)
     return lua_yield(L, 0);
 }
 
+typedef struct _website_data_remove_task_t {
+    lua_State *L;
+    WebKitWebsiteDataTypes data_types;
+    char *domain;
+} website_data_remove_task_t;
+
+static void
+website_data_remove_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, website_data_remove_task_t *wdrt)
+{
+    lua_State *L = wdrt->L;
+
+    GError *error = NULL;
+    webkit_website_data_manager_remove_finish(manager, result, &error);
+    if (error) {
+        lua_pushnil(L);
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+    } else
+        lua_pushboolean(L, TRUE);
+
+    g_free(wdrt->domain);
+    g_slice_free(website_data_remove_task_t, wdrt);
+    lua_resume(L, lua_gettop(L));
+}
+
+static void
+luaH_luakit_website_data_remove_cont(WebKitWebsiteDataManager *manager, GAsyncResult *result, website_data_remove_task_t *wdrt)
+{
+    lua_State *L = wdrt->L;
+
+    GError *error = NULL;
+    GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
+    if (error) {
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+        g_free(wdrt->domain);
+        g_slice_free(website_data_remove_task_t, wdrt);
+        luaL_error(L, lua_tostring(L, -1));
+    }
+
+    GList *item = items;
+    while (item) {
+        WebKitWebsiteData *website_data = item->data;
+        GList *next = item->next;
+        if (!g_str_equal(webkit_website_data_get_name(website_data), wdrt->domain)) {
+            webkit_website_data_unref(website_data);
+            items = g_list_delete_link(items, item);
+        }
+        item = next;
+    }
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_remove(data_manager, wdrt->data_types, items, NULL,
+            (GAsyncReadyCallback)website_data_remove_finish, wdrt);
+
+    item = items;
+    while (item) {
+        webkit_website_data_unref(item->data);
+        item = item->next;
+    }
+    g_list_free(items);
+}
+
+static gint
+luaH_luakit_website_data_remove(lua_State *L)
+{
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 2);
+    if (data_types == 0)
+        return luaL_error(L, "no website data types specified");
+    const char *domain = luaL_checkstring(L, 3);
+
+    website_data_remove_task_t *wdrt = g_slice_new0(website_data_remove_task_t);
+    wdrt->L = L;
+    wdrt->domain = g_strdup(domain);
+    wdrt->data_types = data_types;
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_fetch(data_manager, data_types, NULL,
+            (GAsyncReadyCallback)luaH_luakit_website_data_remove_cont, wdrt);
+
+    return luaH_yield(L);
+}
+
 static gint
 luaH_luakit_website_data_index(lua_State *L)
 {
@@ -493,6 +578,10 @@ luaH_luakit_website_data_index(lua_State *L)
     switch (token) {
         case L_TK_FETCH:
             lua_pushcfunction(L, luaH_luakit_website_data_fetch);
+            luaH_yield_wrap_function(L);
+            return 1;
+        case L_TK_REMOVE:
+            lua_pushcfunction(L, luaH_luakit_website_data_remove);
             luaH_yield_wrap_function(L);
             return 1;
         default: return 0;
