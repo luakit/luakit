@@ -224,32 +224,6 @@ local generate_list_html = function (heading, list, item_func, ...)
     return html
 end
 
-local generate_binds_and_modes_html = function (doc)
-    local n = 0
-    for _, binds in pairs(doc.bind_info or {}) do n = n + #binds end
-    if n == 0 then return "" end
-
-    local html = "<h2>Binds and Modes</h2>\n"
-    for mode_name, binds in pairs(doc.bind_info) do
-        if #binds > 0 then
-            html = html .. ("<h3><code>%s</code> mode</h3>\n"):format(mode_name)
-            html = html .. "<ul class=binds>\n"
-            for _, bind in ipairs(binds) do
-                html = html .. "<li><div class=two-col><ul class=triggers>"
-                local names = type(bind.name) == "string" and {bind.name} or bind.name
-                for i, name in ipairs(names) do
-                    names[i] = ("<li>%s"):format(lousy.util.escape(name))
-                end
-                local desc = bind.desc or "<i>No description</i>"
-                desc = html_unwrap_first_p(format_text(lousy.util.string.dedent(desc)))
-                html = html .. table.concat(names, "") .. "</ul><div class=desc>" .. desc .. "</div></div>"
-            end
-            html = html .. "</ul>\n"
-        end
-    end
-    return html
-end
-
 local generate_field_html = function (field, prefix)
     local html_template = [==[
         <h3 class=field id="field-{name}">
@@ -298,7 +272,7 @@ local generate_doc_html = function (doc)
     end
 
     local fhtml = ""
-        .. generate_binds_and_modes_html(doc)
+        .. "<!-- modes and binds -->"
         .. generate_list_html("Functions", doc.functions, generate_function_html, prefix)
         .. generate_list_html("Methods", doc.methods, generate_function_html, method_name_prefix)
         .. generate_list_html("Properties", doc.properties, generate_property_html, doc.name .. ".")

@@ -76,9 +76,7 @@ luakit.1.gz: luakit.1
 doc/apidocs/index.html: luakit luakit.so $(DOC_SRCS)
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
-	./luakit --log=error -c build-utils/docgen/process.lua > doc/apidocs/module_info.lua
 	$(LUA_BIN_NAME) ./build-utils/docgen/makedoc.lua
-	rm doc/apidocs/module_info.lua
 
 apidoc: doc/apidocs/index.html
 
