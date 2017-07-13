@@ -311,7 +311,7 @@ webview_get_source_finished(WebKitWebResource *main_resource, GAsyncResult *res,
     const gchar *source = (gchar*) webkit_web_resource_get_data_finish(main_resource, res, &length, NULL);
     g_object_unref(main_resource);
     lua_pushlstring(L, source, length);
-    lua_resume(L, 1);
+    luaH_resume(L, 1);
 }
 
 static gint

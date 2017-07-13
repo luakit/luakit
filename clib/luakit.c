@@ -466,7 +466,7 @@ website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resul
     }
 
     g_list_free(items);
-    lua_resume(L, lua_gettop(L));
+    luaH_resume(L, lua_gettop(L));
 }
 
 static gint
@@ -507,7 +507,7 @@ website_data_remove_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resu
 
     g_free(wdrt->domain);
     g_slice_free(website_data_remove_task_t, wdrt);
-    lua_resume(L, lua_gettop(L));
+    luaH_resume(L, lua_gettop(L));
 }
 
 static void
