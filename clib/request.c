@@ -108,6 +108,12 @@ luaH_request_get_finished(lua_State *L, request_t *request)
 void
 request_class_setup(lua_State *L)
 {
+    static const struct luaL_Reg request_methods[] =
+    {
+        LUA_CLASS_METHODS(request)
+        { NULL, NULL }
+    };
+
     static const struct luaL_Reg request_meta[] =
     {
         LUA_OBJECT_META(request)
@@ -119,7 +125,7 @@ request_class_setup(lua_State *L)
     luaH_class_setup(L, &request_class, "request",
              (lua_class_allocator_t) request_new,
              NULL, NULL,
-             NULL, request_meta);
+             request_methods, request_meta);
 
     luaH_class_add_property(&request_class, L_TK_FINISHED,
             NULL, (lua_class_propfunc_t) luaH_request_get_finished, NULL);
