@@ -9,6 +9,8 @@ local chrome = require("chrome")
 local history = require("history")
 local add_cmds = require("binds").add_cmds
 local error_page = require("error_page")
+local get_modes = require("modes").get_modes
+local markdown = require("markdown")
 
 local _M = {}
 
@@ -133,6 +135,36 @@ local help_doc_index_page_preprocess = function (inner, style)
 end
 
 local help_doc_page = function (v, path, request)
+    -- Generate HTML documenting the additional bindings added by module `m`
+    local generate_mode_doc_html = function (m)
+        local fmt = function (str)
+            -- Fix < and > being escaped inside code -_- fail
+            return markdown(str):gsub("<pre><code>(.-)</code></pre>", lousy.util.unescape)
+        end
+        local modes, parts = get_modes(), {}
+        for name, mode in pairs(modes) do
+            local binds = {}
+            for _, b in pairs(mode.binds or {}) do
+                local src_m = debug.getinfo(b.func, "S").source:match("lib/(.*)%.lua")
+                if src_m == m then binds[#binds+1] = b end
+            end
+            if #binds > 0 then
+                parts[#parts+1] = string.format("<h3><code>%s</code> mode</h3>", name)
+                parts[#parts+1] = "<ul class=binds>\n"
+                for _, b in ipairs(binds) do
+                    local b_name = lousy.bind.bind_to_string(b) or "???"
+                    local b_desc = b.desc or "<i>No description</i>"
+                    b_desc = fmt(lousy.util.string.dedent(b_desc)):gsub("</?p>", "", 2)
+                    parts[#parts+1] = "<li><div class=two-col><ul class=triggers>"
+                    parts[#parts+1] = "<li>" .. lousy.util.escape(b_name)
+                    parts[#parts+1] = "</li></ul><div class=desc>" .. b_desc .. "</div></div>"
+                end
+                parts[#parts+1] = "</ul>"
+            end
+        end
+        return #parts > 0 and "<h2>Binds and Modes</h2>" .. table.concat(parts, "") or ""
+    end
+
     local extract_doc_html = function (file)
         local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
         local blob = lousy.load(prefix .. file)
@@ -140,6 +172,12 @@ local help_doc_page = function (v, path, request)
         local inner = blob:match("(<div id=wrap>.*</div>)%s*</body>")
         if file == "index.html" then
             inner, style = help_doc_index_page_preprocess(inner, style)
+        end
+        local m = file:match("^modules/(.*)%.html$")
+        if m then
+            local modes_binds_html = generate_mode_doc_html(m)
+            local i = inner:find("<!-- modes and binds -->", 1, true)
+            inner = inner:sub(1, i-1) .. modes_binds_html .. inner:sub(i)
         end
         return inner, style
     end
