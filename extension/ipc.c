@@ -106,19 +106,10 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     lua_pop(L, 5 + n);
 }
 
-static gboolean
-do_crash(gpointer UNUSED(user_data))
-{
-    /* Force the web process to crash by dereferencing a NULL pointer */
-    void **nul = NULL;
-    void *foo = *nul;
-    return !foo;
-}
-
 void
 ipc_recv_crash(ipc_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNUSED(length))
 {
-    g_idle_add(do_crash, NULL);
+    raise(SIGKILL);
 }
 
 static void
