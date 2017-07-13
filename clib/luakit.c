@@ -471,9 +471,8 @@ website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resul
 static gint
 luaH_luakit_website_data_fetch(lua_State *L)
 {
-    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 2);
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 1);
 
-    lua_pop(L, 1);
     if (data_types == 0)
         return luaL_error(L, "no website data types specified");
 
@@ -552,10 +551,10 @@ luaH_luakit_website_data_remove_cont(WebKitWebsiteDataManager *manager, GAsyncRe
 static gint
 luaH_luakit_website_data_remove(lua_State *L)
 {
-    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 2);
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 1);
     if (data_types == 0)
         return luaL_error(L, "no website data types specified");
-    const char *domain = luaL_checkstring(L, 3);
+    const char *domain = luaL_checkstring(L, 2);
 
     website_data_remove_task_t *wdrt = g_slice_new0(website_data_remove_task_t);
     wdrt->L = L;

@@ -87,8 +87,8 @@ T.test_website_data = function ()
     local wd = luakit.website_data
     assert.is_table(wd)
     assert.is_function(wd.fetch)
-    assert.has_error(function () wd:fetch("") end)
-    assert.has_error(function () wd:fetch({}) end)
+    assert.has_error(function () wd.fetch("") end)
+    assert.has_error(function () wd.fetch({}) end)
 end
 
 return T
