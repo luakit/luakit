@@ -536,6 +536,14 @@ luaH_luakit_website_data_remove_cont(WebKitWebsiteDataManager *manager, GAsyncRe
         item = next;
     }
 
+    if (!items) {
+        g_free(wdrt->domain);
+        g_slice_free(website_data_remove_task_t, wdrt);
+        lua_pushboolean(L, TRUE);
+        luaH_resume(L, 1);
+        return;
+    }
+
     WebKitWebContext *web_context = web_context_get();
     WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
     webkit_website_data_manager_remove(data_manager, wdrt->data_types, items, NULL,
