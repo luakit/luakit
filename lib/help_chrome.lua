@@ -211,10 +211,10 @@ local help_doc_page = function (v, path, request)
         error_page.show_error_page(v, {
             heading = "Documentation not found",
             content = "Opening <code>" .. file .. "</code> failed",
-            buttons = {{
+            buttons = { path ~= "index.html" and {
                 label = "Return to API Index",
                 callback = function (vv) vv.uri = "luakit://help/doc/index.html" end
-            }},
+            } or nil },
             request = request,
         })
         return
