@@ -209,7 +209,7 @@ ul.copyright > li:before { content: "©"; }
 .sourcecode a:link, .sourcecode a:visited { color: #272fc2; }
 
 .two-col { display: flex; }
-.two-col > :first-child { flex: 0 0 200px; }
+.two-col > :first-child { flex: 0 0 200px; margin-right: 10px; }
 .two-col > :first-child > div:not(:first-child) { margin-top: 0.3rem; }
 ul.triggers {
 	list-style-type: none;
