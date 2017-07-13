@@ -167,7 +167,8 @@ local help_doc_page = function (v, path, request)
 
     local extract_doc_html = function (file)
         local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
-        local blob = lousy.load(prefix .. file)
+        local ok, blob = pcall(lousy.load, prefix .. file)
+        if not ok then return nil, prefix .. file end
         local style = blob:match("<style>(.*)</style>")
         local inner = blob:match("(<div id=wrap>.*</div>)%s*</body>")
         if file == "index.html" then
@@ -203,12 +204,13 @@ local help_doc_page = function (v, path, request)
         </div>
     </body>
     ]==]
-    local ok, doc_html, doc_style = pcall(extract_doc_html, path)
-    if not ok then
-        print(doc_html)
+
+    local doc_html, doc_style = extract_doc_html(path)
+    if not doc_html then
+        local file = doc_style
         error_page.show_error_page(v, {
             heading = "Documentation not found",
-            content = [==[]==],
+            content = "Opening <code>" .. file .. "</code> failed",
             buttons = {{
                 label = "Return to API Index",
                 callback = function (vv) vv.uri = "luakit://help/doc/index.html" end
