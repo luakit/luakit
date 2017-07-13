@@ -3,6 +3,7 @@
 -- @copyright Mason Larobina
 
 local assert = require "luassert"
+local test = require "tests.lib"
 
 local T = {}
 
@@ -43,12 +44,13 @@ end
 
 T.test_windows_table = function ()
     assert.is_table(luakit.windows, "Missing/invalid luakit.windows table.")
-    assert.is_equal(#luakit.windows, 0, "Invalid number of windows")
+    local baseline = #luakit.windows
+    assert.is_number(baseline, "Invalid number of windows")
     local win = widget{type="window"}
-    assert.is_equal(#luakit.windows, 1,
+    assert.is_equal(baseline+1, #luakit.windows,
         "luakit.windows not tracking opened windows.")
     win:destroy()
-    assert.is_equal(#luakit.windows, 0,
+    assert.is_equal(baseline, #luakit.windows,
         "luakit.windows not tracking closed windows.")
 end
 
@@ -89,6 +91,30 @@ T.test_website_data = function ()
     assert.is_function(wd.fetch)
     assert.has_error(function () wd.fetch("") end)
     assert.has_error(function () wd.fetch({}) end)
+    assert.has_error(function () wd.remove("") end)
+    assert.has_error(function () wd.remove({}) end)
+    assert.has_error(function () wd.remove({"all"}) end)
+
+    local v = widget{type="webview"}
+
+    coroutine.wrap(function ()
+        assert(not wd.fetch({"all"})["Local files"])
+        test.continue()
+    end)()
+    test.wait()
+
+    v.uri = "file:///"
+    test.wait_for_view(v)
+
+    coroutine.wrap(function ()
+        assert(wd.fetch({"all"})["Local files"])
+        wd.remove({"all"}, "Local files")
+        assert(not wd.fetch({"all"})["Local files"])
+        test.continue()
+    end)()
+    test.wait()
+
+    v:destroy()
 end
 
 return T
