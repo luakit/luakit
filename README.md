@@ -3,12 +3,6 @@
 luakit is a fast, light and simple to use micro-browser framework extensible
 by Lua using the WebKit web content engine and the GTK+ toolkit.
 
-This is a fork of the original luakit based on the newer WebKit2 web
-engine, which is under active development. Note that the older WebKit1
-and web browsers based upon WebKit1 are insecure and will not be fixed: see
-[here](https://blogs.gnome.org/mcatanzaro/2016/02/01/on-webkit-security-updates/)
-for more details.
-
 ## Don't Panic!
 
 You don't have to be a developer to use luakit on a daily basis. If you are
