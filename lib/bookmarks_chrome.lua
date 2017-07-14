@@ -1,5 +1,15 @@
 --- Simple sqlite3 bookmarks - chrome page.
 --
+-- This module allows you to add and remove bookmarks with a simple graphical
+-- webpage at [luakit://bookmarks/](luakit://bookmarks/). You can currently:
+--
+--  - add, edit, and remove individual bookmarks,
+--  - tag bookmarks or add markdown descriptions, and
+--  - search for and filter bookmarks.
+--
+-- This module also adds convenience commands and bindings to quickly bookmark a
+-- page.
+--
 -- @module bookmarks_chrome
 -- @author Mason Larobina (mason.larobina@gmail.com)
 -- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)

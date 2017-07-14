@@ -1,5 +1,10 @@
 --- Simple sqlite3 bookmarks.
 --
+-- This module provides a Lua API for accessing and modifying bookmarks,
+-- but does not provide a user interface. In order to add/remove bookmarks and
+-- view all bookmarks in a single page, you'll need the `bookmarks_chrome`
+-- module.
+--
 -- @module bookmarks
 -- @author Mason Larobina (mason.larobina@gmail.com)
 -- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
