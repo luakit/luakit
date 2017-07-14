@@ -130,18 +130,6 @@ Please use the bug tracker at:
 
   https://github.com/luakit/luakit/issues
 
-## Community for the original luakit
-
-### Mailing list
-
-Subscribe to the development mailing list here:
-
-  http://lists.luakit.org/mailman/listinfo/luakit-dev
-
-Or view the archives at:
-
-  http://lists.luakit.org/archive/luakit-dev/
-
-### IRC
+## IRC
 
 Join us in `#luakit` on the `irc.oftc.net` network.
