@@ -1,5 +1,10 @@
 --- Error pages.
 --
+-- This module provides an improved version of the default WebKit error page,
+-- and allows other Lua modules to show error pages as necessary, with a
+-- consistent theme. User customization of the error page and its visual style
+-- is also supported.
+--
 -- @module error_page
 -- @copyright 2016 Aidan Holm
 

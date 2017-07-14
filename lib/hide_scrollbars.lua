@@ -1,5 +1,7 @@
 --- Hide scrollbars.
 --
+-- Hides all element scrollbars. Elements can still be scrolled as usual.
+--
 -- @module hide_scrollbars
 -- @copyright 2016 Aidan Holm
 

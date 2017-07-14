@@ -1,5 +1,9 @@
 --- Command completion.
 --
+-- This module provides tab completion for luakit commands. Currently, it
+-- supports completing URLs from the user's bookmarks and history, and also
+-- supports completing partially typed commands.
+--
 -- @module completion
 -- @copyright 2010-2011 Mason Larobina  <mason.larobina@gmail.com>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>

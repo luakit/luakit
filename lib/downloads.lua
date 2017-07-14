@@ -1,5 +1,11 @@
 --- Downloads for luakit.
 --
+-- This module adds support for downloading files from websites, and provides a
+-- Lua API to monitor and control the file download process.
+--
+-- Enabling this module is sufficient for starting downloads, but users will
+-- probably wish to also enable the `downloads_chrome` module.
+--
 -- @module downloads
 -- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
@@ -32,6 +38,7 @@ end
 
 --- Default download directory.
 -- @readwrite
+-- @type string
 _M.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)

@@ -1,5 +1,9 @@
 --- Text editor launching functionality.
 --
+-- This module is primarily for use by other Lua modules that wish to
+-- allow the user to edit a particular text file. This module does not
+-- have any user-facing modifications or features.
+--
 -- @module editor
 
 local globals = require("globals")

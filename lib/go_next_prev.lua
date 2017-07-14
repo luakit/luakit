@@ -1,5 +1,9 @@
 --- Follow "next" or "prev" links on a page.
 --
+-- Many web pages make use of pagination. This module does away with the need to
+-- hunt for the next- and previous-page buttons by automatically detecting them
+-- and clicking them for you on demand.
+--
 -- @module go_next_prev
 -- @copyright 2009 Aldrik Dunbar  (n30n)
 -- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>

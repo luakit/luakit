@@ -1,5 +1,8 @@
 --- Downloads for luakit - chrome page.
 --
+-- This module allows you to monitor the progress of ongoing downloads through a
+-- webpage at [luakit://downloads/](luakit://downloads/).
+--
 -- @module downloads_chrome
 -- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>

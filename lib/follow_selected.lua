@@ -1,5 +1,9 @@
 --- Add {A,C,S,}-Return binds to follow selected link (or link in selection).
 --
+-- This module allows you to follow links that are part of the currently
+-- selected text. This is useful as an alternative to the follow mode: search
+-- for the text of the link, and then press `<Return>` to follow it.
+--
 -- @module follow_selected
 -- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
 -- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>

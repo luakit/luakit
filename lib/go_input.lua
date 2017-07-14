@@ -1,5 +1,9 @@
 --- Go to the first input on a page and enter insert mode.
 --
+-- This module adds a key binding to quickly focus the first text input on a
+-- page and enter insert mode. A count is also accepted, which allows choosing a
+-- specific text input other than the first.
+--
 -- @module go_input
 -- @copyright 2009 Aldrik Dunbar  (n30n)
 -- @copyright 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org>
