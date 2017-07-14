@@ -700,9 +700,9 @@ add_cmds({
         if a then
             -- Parse as expression first, then statement
             -- With this order an error message won't contain the print() wrapper
-            local ret, err = loadstring("print(" .. a .. ")")
+            local ret, err = loadstring("print(" .. a .. ")", "lua-cmd")
             if err then
-                ret, err = loadstring(a)
+                ret, err = loadstring(a, "lua-cmd")
             end
             if err then
                 w:error(err)
