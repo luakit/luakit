@@ -308,7 +308,14 @@ local generate_sidebar_html = function (docs, current_doc)
     return html
 end
 
-local generate_module_html = function (doc, style, docs)
+local generate_pagination_html = function (pagination)
+    return ("<div style='display:none'>{prv}{nxt}</div>"):gsub("{(%w+)}", {
+        prv = pagination.prv and ("<a rel=prev href='../" .. pagination.prv .. "'>") or "",
+        nxt = pagination.nxt and ("<a rel=next href='../" .. pagination.nxt .. "'>") or "",
+    })
+end
+
+local generate_module_html = function (doc, style, docs, pagination)
     local html_template = [==[
     <!doctype html>
     <html>
@@ -329,23 +336,23 @@ local generate_module_html = function (doc, style, docs)
             <div id=content>
                 {body}
             </div>
+            {pagination}
         </div>
     </body>
     ]==]
-
-    local sidebar_html = generate_sidebar_html(docs, doc)
 
     local html = string.gsub(html_template, "{(%w+)}", {
         title = doc.name,
         style = style,
         section = doc.module and "Modules" or doc.class and "Classes" or "Pages",
         body = generate_doc_html(doc),
-        sidebar = sidebar_html,
+        sidebar = generate_sidebar_html(docs, doc),
+        pagination = generate_pagination_html(pagination),
     })
     return html
 end
 
-local generate_page_html = function (doc, style, docs)
+local generate_page_html = function (doc, style, docs, pagination)
     local html_template = [==[
     <!doctype html>
     <html>
@@ -366,17 +373,17 @@ local generate_page_html = function (doc, style, docs)
             <div id=content>
                 {body}
             </div>
+            {pagination}
         </div>
     </body>
     ]==]
-
-    local sidebar_html = generate_sidebar_html(docs, doc)
 
     local html = string.gsub(html_template, "{(%w+)}", {
         title = doc.name,
         style = style,
         body = format_text(assert(doc.text, "No page text")),
-        sidebar = sidebar_html,
+        sidebar = generate_sidebar_html(docs, doc),
+        pagination = generate_pagination_html(pagination),
     })
     return html
 end
@@ -455,23 +462,32 @@ local generate_documentation = function (docs, out_dir)
     out_dir = out_dir:match("/$") and out_dir or out_dir .. "/"
     mkdir(out_dir)
 
-    -- Generate module and class pages
+    local pages = {}
+    mkdir(out_dir .. "pages")
+    for _, page in ipairs(docs.pages) do
+        pages[#pages+1] = {
+            doc = page, gen = generate_page_html,
+            path = "pages/" .. page.name .. ".html",
+        }
+    end
     for _, section_name in ipairs{"modules", "classes"} do
         mkdir(out_dir .. section_name)
         local section_docs = docs[section_name]
         for _, doc in ipairs(section_docs) do
-            local path = out_dir .. section_name .. "/" .. doc.name .. ".html"
-            print("Generating '" .. path .. "'...")
-            write_file(path, generate_module_html(doc, style, docs))
+            pages[#pages+1] = {
+                doc = doc, gen = generate_module_html,
+                path = section_name .. "/" .. doc.name .. ".html",
+            }
         end
     end
 
-    -- Generate markdown pages
-    mkdir(out_dir .. "pages")
-    for _, page in ipairs(docs.pages) do
-        local path = out_dir .. "pages/" .. page.name .. ".html"
-        print("Generating '" .. path .. "'...")
-        write_file(path, generate_page_html(page, style, docs))
+    for i, page in ipairs(pages) do
+        print("Generating '" .. page.path .. "'...")
+        local pagination = {
+            nxt = (pages[i+1] or {}).path,
+            prv = (pages[i-1] or {}).path,
+        }
+        write_file(out_dir .. page.path, page.gen(page.doc, style, docs, pagination))
     end
 
     -- Generate index
