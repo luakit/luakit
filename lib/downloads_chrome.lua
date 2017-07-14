@@ -150,30 +150,26 @@ function update_list_finish(downloads) {
 
         // create new download element
         if ($elem.length === 0) {
-            // get some more information
+            var elem_html = make_download(d);
 
-            download_get(d.id, ["status", "destination", "created", "uri", "total_size"]).then(function (d) {
-                var elem_html = make_download(d);
-
-                // ordered insert
-                var inserted = false;
-                var $all = $("#downloads-list .download");
-                for (var j = 0; j < $all.length; j++) {
-                    if (d.created > $all.eq(j).attr("created")) {
-                        $all.eq(j).before(elem_html);
-                        inserted = true;
-                        break;
-                    }
+            // ordered insert
+            var inserted = false;
+            var $all = $("#downloads-list .download");
+            for (var j = 0; j < $all.length; j++) {
+                if (d.created > $all.eq(j).attr("created")) {
+                    $all.eq(j).before(elem_html);
+                    inserted = true;
+                    break;
                 }
+            }
 
-                // back of the bus
-                if (!inserted) {
-                    $("#downloads-list").append(elem_html);
-                }
+            // back of the bus
+            if (!inserted) {
+                $("#downloads-list").append(elem_html);
+            }
 
-                $elem = $("#"+d.id).eq(0);
-                $elem.fadeIn();
-            });
+            $elem = $("#"+d.id).eq(0);
+            $elem.fadeIn();
         }
 
         // update download controls when download status changes
@@ -230,7 +226,8 @@ function update_list_finish(downloads) {
 }
 
 function update_list() {
-    downloads_get_all(["status", "speed", "current_size", "total_size"]).then(update_list_finish);
+    downloads_get_all(["status", "speed", "current_size", "total_size",
+        "destination", "created", "uri",]).then(update_list_finish);
 };
 
 $(document).ready(function () {
