@@ -18,7 +18,9 @@
 --   Lua modules should use the `luakit` sub-directories to store and read data.
 --
 -- @module xdg
+-- @author Aidan Holm
 -- @author Mason Larobina
+-- @copyright 2017 Aidan Holm
 -- @copyright 2011 Mason Larobina
 
 --- @field cache_dir
@@ -105,6 +107,16 @@
 --
 -- Example value: `/home/user/Videos`
 -- @type string
+-- @readonly
+
+--- @field system_data_dirs
+-- Get an array of paths where system data should be loaded from.
+-- @type {string}
+-- @readonly
+
+--- @field system_config_dirs
+-- Get an array of paths where system configuration should be loaded from.
+-- @type {string}
 -- @readonly
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
