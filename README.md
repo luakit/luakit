@@ -128,7 +128,7 @@ here also, example:
 
 Please use the bug tracker at:
 
-  https://github.com/aidanholm/luakit/issues
+  https://github.com/luakit/luakit/issues
 
 ## Community for the original luakit
 
