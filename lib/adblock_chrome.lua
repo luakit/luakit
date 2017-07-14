@@ -1,5 +1,15 @@
 --- Simple URI-based content filter - chrome page.
 --
+-- This module allows you to configure the `adblock` module with a simple
+-- graphical webpage at [luakit://adblock/](luakit://adblock/). You can
+-- currently:
+--
+--  - enable/disable the adblocker globally, and
+--  - enable/disable individual filter lists.
+--
+-- The adblocker page also shows some statistics about the number of adblock
+-- rules in effect.
+--
 -- @module adblock_chrome
 -- @author Henning Hasemann
 -- @author Mason Larobina
