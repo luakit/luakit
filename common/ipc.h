@@ -137,6 +137,13 @@ const GPtrArray *ipc_endpoints_get(void);
 void ipc_send_lua(ipc_endpoint_t *ipc, ipc_type_t type, lua_State *L, gint start, gint end);
 void ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data);
 
+#define IPC_NO_HANDLER(type) \
+void \
+ipc_recv_##type(ipc_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length)) \
+{ \
+    fatal("process '%s': should never receive message of type %s", ipc->name, #type); \
+} \
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

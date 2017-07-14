@@ -35,6 +35,9 @@
 
 static GPtrArray *queued_page_ipc;
 
+IPC_NO_HANDLER(page_created)
+IPC_NO_HANDLER(log)
+
 void
 ipc_recv_lua_require_module(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_require_module_t *msg, guint length)
 {

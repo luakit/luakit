@@ -40,16 +40,9 @@
 void webview_scroll_recv(void *d, const ipc_scroll_t *ipc);
 void run_javascript_finished(const guint8 *msg, guint length);
 
-#define NO_HANDLER(type) \
-void \
-ipc_recv_##type(ipc_endpoint_t *UNUSED(ipc), const gpointer UNUSED(msg), guint UNUSED(length)) \
-{ \
-    fatal("UI process should never receive message of type %s", #type); \
-} \
-
-NO_HANDLER(lua_require_module)
-NO_HANDLER(web_extension_loaded)
-NO_HANDLER(crash)
+IPC_NO_HANDLER(lua_require_module)
+IPC_NO_HANDLER(web_extension_loaded)
+IPC_NO_HANDLER(crash)
 
 void
 ipc_recv_extension_init(ipc_endpoint_t *ipc, const gpointer UNUSED(msg), guint UNUSED(length))
