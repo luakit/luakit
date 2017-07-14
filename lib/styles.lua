@@ -376,12 +376,11 @@ for domain, prop in pairs(globals.domain_props) do
 end
 
 if #domains > 0 then
-    msg.warn("Using domain_props for user stylesheets is non-functional")
+    msg.warn("using domain_props for user stylesheets is non-functional")
     for _, domain in ipairs(domains) do
-        msg.warn("Found user_stylesheet_uri property for domain '%s'", domain)
+        msg.warn("found user_stylesheet_uri property for domain '%s'", domain)
     end
-    msg.warn("Instead, add an appropriately-named CSS file to %s", luakit.data_dir .. "/styles/")
-    msg.warn("See https://github.com/aidanholm/luakit/issues/189")
+    msg.warn("use styles module instead")
 end
 
 return _M
