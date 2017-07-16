@@ -638,6 +638,7 @@ luaH_luakit_index(lua_State *L)
       /* push boolean properties */
       PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
+      PB_CASE(ENABLE_SPELL_CHECKING,    webkit_web_context_get_spell_checking_enabled(web_context_get()))
       /* push integer properties */
       PI_CASE(PROCESS_LIMIT,    web_context_process_limit_get())
       case L_TK_OPTIONS:
@@ -689,6 +690,10 @@ luaH_luakit_index(lua_State *L)
 #endif
         return 1;
 
+      case L_TK_SPELL_CHECKING_LANGUAGES:
+        luaH_push_strv(L, webkit_web_context_get_spell_checking_languages(web_context_get()));
+        return 1;
+
       default:
         break;
     }
@@ -712,6 +717,16 @@ luaH_luakit_newindex(lua_State *L)
             if (!web_context_process_limit_set(lua_tointeger(L, 3)))
                 return luaL_error(L, "Too late to set WebKit process limit");
             break;
+        case L_TK_ENABLE_SPELL_CHECKING:
+            webkit_web_context_set_spell_checking_enabled(web_context_get(),
+                    luaH_checkboolean(L, 3));
+            break;
+        case L_TK_SPELL_CHECKING_LANGUAGES: {
+            const gchar ** langs = luaH_checkstrv(L, 3);
+            webkit_web_context_set_spell_checking_languages(web_context_get(),
+                    langs);
+            g_free(langs);
+        }
         default:
             break;
     }
