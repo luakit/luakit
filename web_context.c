@@ -22,7 +22,6 @@
 #include "common/log.h"
 #include "web_context.h"
 
-#include <langinfo.h>
 #include <webkit2/webkit2.h>
 
 /** WebKit context common to all web views */
