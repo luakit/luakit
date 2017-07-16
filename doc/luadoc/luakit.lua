@@ -147,4 +147,27 @@
 --
 -- @tparam page page
 
+--- Whether spell checking is enabled.
+-- @property enable_spell_checking
+-- @readwrite
+-- @type boolean
+-- @default `false`
+
+--- The set of languages to use for spell checking, if spell checking is
+-- enabled.
+--
+-- Each item in the table is a code of the form `lang_COUNTRY`,
+-- where `lang` is an ISO-639 language code, in lowercase, and `COUNTRY`
+-- is an ISO-3166 country code, in uppercase.
+--
+-- When setting a new value for this property, any unrecognized codes are
+-- discarded and a warning is logged, but no error is generated.
+--
+-- This property has a default value based on the user's locale. Setting this
+-- value to `{}` will reset it to the default value.
+--
+-- @property spell_checking_languages
+-- @readwrite
+-- @type {string}
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80
