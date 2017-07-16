@@ -271,7 +271,6 @@ local function get_cert_error_desc(err)
 end
 
 local function handle_error(v, uri, err)
-    msg.warn("Showing error page for error '%s', code '%s'", err.message, err.code)
     local error_category_lut = {
         ["WebKitNetworkError-302"] = "ignore", -- Load request cancelled
         ["WebKitPluginError-204"] = "ignore", -- Plugin will handle load
@@ -280,7 +279,8 @@ local function handle_error(v, uri, err)
         ["crash"] = "crash",
     }
     local category = error_category_lut[err.code] or "generic"
-    msg.warn("Category: %s", category)
+    msg.verbose("showing error page for error '%s', code '%s', category '%s'",
+        err.message, err.code, category)
 
     if category == "ignore" then return end
 
