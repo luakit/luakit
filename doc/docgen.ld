@@ -7,7 +7,8 @@ file = {
     "common/clib",
     "tests/lib.lua",
     exclude = {
-        "lib/markdown.lua"
+        "lib/markdown.lua",
+        "lib/lousy/init.lua",
     },
 }
 

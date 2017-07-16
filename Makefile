@@ -15,7 +15,7 @@ EXT_OBJS = $(foreach obj,$(EXT_SRCS:.c=.o),$(obj))
 
 # List of sources used to generate Lua API documentation
 # Must be kept in sync with doc/docgen.ld
-DOC_SRCS = $(filter-out lib/markdown.lua,$(shell for d in doc/luadoc lib common/clib; do find $$d -type f; done)) tests/lib.lua
+DOC_SRCS = $(filter-out lib/markdown.lua lib/lousy/init.lua,$(shell for d in doc/luadoc lib common/clib; do find $$d -type f; done)) tests/lib.lua
 
 all: options newline luakit luakit.1.gz luakit.so apidoc
 
