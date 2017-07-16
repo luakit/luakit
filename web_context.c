@@ -22,6 +22,7 @@
 #include "common/log.h"
 #include "web_context.h"
 
+#include <langinfo.h>
 #include <webkit2/webkit2.h>
 
 /** WebKit context common to all web views */
@@ -97,6 +98,13 @@ web_context_init(void)
     webkit_web_context_set_favicon_database_directory(web_context, NULL);
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
+
+    /* This seems to autodetect spell checking languages */
+    const gchar * null = NULL;
+    webkit_web_context_set_spell_checking_languages(web_context, &null);
+    gchar * langs = g_strjoinv(", ", (gchar**)webkit_web_context_get_spell_checking_languages(web_context));
+    verbose("setting spell check languages: %s", langs);
+    g_free(langs);
 }
 
 void
