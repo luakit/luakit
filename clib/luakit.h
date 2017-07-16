@@ -32,6 +32,9 @@ lua_class_t * luakit_lib_get_luakit_class(void);
 gint luaH_class_index_miss_property(lua_State *, lua_object_t *);
 gint luaH_class_newindex_miss_property(lua_State *, lua_object_t *);
 
+/* Referenced from deprecated webview:allow_certificate() */
+gint luaH_luakit_allow_certificate(lua_State *L);
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

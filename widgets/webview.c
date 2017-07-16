@@ -624,25 +624,13 @@ luaH_webview_ssl_trusted(lua_State *L)
 static gint
 luaH_webview_allow_certificate(lua_State *L)
 {
-    webview_data_t *d = luaH_checkwvdata(L, 1);
-    const gchar *host = luaL_checkstring(L, 2);
-    const gchar *cert_pem = luaL_checkstring(L, 3);
-    GError *err = NULL;
-
-    GTlsCertificate *cert = g_tls_certificate_new_from_pem(cert_pem, strlen(cert_pem), &err);
-
-    if (err) {
-        lua_pushnil(L);
-        lua_pushstring(L, err->message);
-        return 2;
-    }
-
-    WebKitWebContext *ctx = webkit_web_view_get_context(d->view);
-    webkit_web_context_allow_tls_certificate_for_host(ctx, cert, host);
-    g_object_unref(G_OBJECT(cert));
-
-    lua_pushboolean(L, TRUE);
-    return 1;
+    warn("webview:allow_certificate() is deprecated: use luakit.allow_certificate() instead");
+    (void)luaH_checkwvdata(L, 1);
+    lua_remove(L, 1);
+    luaL_checkstring(L, 1);
+    luaL_checkstring(L, 2);
+    /* When removing this function, make luaH_luakit_allow_certificate static */
+    return luaH_luakit_allow_certificate(L);
 }
 
 static gint

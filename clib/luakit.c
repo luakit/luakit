@@ -776,6 +776,30 @@ luaH_luakit_register_scheme(lua_State *L)
 }
 
 gint
+luaH_luakit_allow_certificate(lua_State *L)
+{
+    const gchar *host = luaL_checkstring(L, 1);
+    size_t len;
+    const gchar *cert_pem = luaL_checklstring(L, 2, &len);
+    GError *err = NULL;
+
+    GTlsCertificate *cert = g_tls_certificate_new_from_pem(cert_pem, len, &err);
+
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err->message);
+        return 2;
+    }
+
+    WebKitWebContext *ctx = web_context_get();
+    webkit_web_context_allow_tls_certificate_for_host(ctx, cert, host);
+    g_object_unref(G_OBJECT(cert));
+
+    lua_pushboolean(L, TRUE);
+    return 1;
+}
+
+gint
 luaH_class_index_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
 {
     signal_object_emit(L, luakit_class.signals, "debug::index::miss", 2, 0);
@@ -808,6 +832,7 @@ luakit_lib_setup(lua_State *L)
         { "spawn",             luaH_luakit_spawn },
         { "spawn_sync",        luaH_luakit_spawn_sync },
         { "register_scheme",   luaH_luakit_register_scheme },
+        { "allow_certificate", luaH_luakit_allow_certificate },
         { NULL,              NULL }
     };
 
