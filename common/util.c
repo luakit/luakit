@@ -70,4 +70,10 @@ strip_ansi_escapes(const gchar *in)
     return g_regex_replace_literal (reg, in, -1, 0, "", 0, NULL);
 }
 
+GQuark
+luakit_error_quark(void)
+{
+    return g_quark_from_static_string("LuakitError");
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
