@@ -21,6 +21,7 @@
 #include <string.h>
 
 #include "common/luautil.h"
+#include "common/lualib.h"
 #include "common/log.h"
 #include "buildopts.h"
 
@@ -205,6 +206,43 @@ luaH_push_gerror(lua_State *L, GError *error)
     lua_pushstring(L, error->message);
     lua_setfield(L, -2, "message");
     return 1;
+}
+
+gint
+luaH_push_strv(lua_State *L, const gchar * const *strv)
+{
+    lua_newtable(L);
+    if (!strv)
+        return 1;
+    gint n = 1;
+    while (*strv) {
+        lua_pushstring(L, *strv);
+        lua_rawseti(L, -2, n++);
+        strv++;
+    }
+    return 1;
+}
+
+const gchar **
+luaH_checkstrv(lua_State *L, gint idx)
+{
+    luaH_checktable(L, idx);
+    gint len = lua_objlen(L, idx);
+    GPtrArray *langs = g_ptr_array_new();
+    for (gint i = 1; i <= len; ++i) {
+        lua_rawgeti(L, idx, i);
+        if (!lua_isstring(L, -1)) {
+            g_ptr_array_free(langs, TRUE);
+            luaL_error(L, "bad argument %d ({string} expected, but array item %d has type %s)",
+                    idx, i, lua_typename(L, lua_type(L, -1)));
+        }
+        g_ptr_array_add(langs, (gchar*)lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+    g_ptr_array_add(langs, NULL);
+    const gchar ** strv = (const gchar **)langs->pdata;
+    g_ptr_array_free(langs, FALSE);
+    return strv;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
