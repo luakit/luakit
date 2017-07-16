@@ -723,8 +723,12 @@ luaH_luakit_newindex(lua_State *L)
             break;
         case L_TK_SPELL_CHECKING_LANGUAGES: {
             const gchar ** langs = luaH_checkstrv(L, 3);
-            webkit_web_context_set_spell_checking_languages(web_context_get(),
-                    langs);
+            WebKitWebContext *ctx = web_context_get();
+            webkit_web_context_set_spell_checking_languages(ctx, langs);
+            const gchar * const * accepted = webkit_web_context_get_spell_checking_languages(ctx);
+            for (const gchar ** lang = langs; *lang; lang++)
+                if (!g_strv_contains(accepted, *lang))
+                    warn("unrecognized language code '%s'", *lang);
             g_free(langs);
         }
         default:
