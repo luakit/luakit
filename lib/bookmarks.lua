@@ -6,8 +6,8 @@
 -- module.
 --
 -- @module bookmarks
--- @author Mason Larobina (mason.larobina@gmail.com)
--- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require "lousy"
 local capi = { luakit = luakit, sqlite3 = sqlite3 }

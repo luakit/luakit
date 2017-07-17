@@ -2,7 +2,7 @@
 --
 -- @module quickmarks
 -- @author Piotr Husiatyński <phusiatynski@gmail.com>
--- @author Mason Larobina    <mason.larobina@gmail.com>
+-- @author Mason Larobina <mason.larobina@gmail.com>
 
 -- Get luakit environment
 local lousy = require("lousy")

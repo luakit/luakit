@@ -1,6 +1,6 @@
 --- Test page scrolling.
 --
--- @copyright Aidan Holm 2017
+-- @copyright 2017 Aidan Holm
 
 local T = {}
 local test = require "tests.lib"
