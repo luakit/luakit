@@ -1,0 +1,39 @@
+--- Miscellaneous UI and statusbar widgets.
+--
+-- This module provides a set of builtin user interface widgets used to
+-- construct the Luakit user interface, as well as a set of widgets that can be
+-- added to the luakit status bar.
+--
+-- ### Widget types:
+--
+-- - `buf`: A status bar widget that displays the contents of the current key
+-- binding input buffer. When typing a multi-key key binding, such as `gi`, this
+-- widget will show the partially-typed key binding.
+-- - `hist`: A status bar widget that indicates whether the current tab can be
+-- navigated forwards or backwards. Backwards page history is indicated
+-- with a `+`, while forwards page history is indicated with a `-`.
+-- - `menu`: A widget that shows a scrollable menu. This widget type is
+-- used in the default luakit user interface.
+-- - `progress`: A status bar widget that shows the current page load
+-- progress as a percentage while a load is underway. The progress
+-- indicator is hidden when no page load is taking place.
+-- - `scroll`: A status bar widget that shows the current vertical scroll
+-- position of the current web page, as a percentage.
+-- - `ssl`: A status bar widget that shows whether the current web page was
+-- loaded over a secure connection. If the page was loaded securely,
+-- `(trust)` is shown in green; otherwise, `(notrust)` is shown in red.
+-- - `tabi`: A status bar that shows the number of the currently selected tab,
+-- as well as the total number of tabs in the window.
+-- - `tablist`: A widget that displays a set of `tab` widgets in a scrollable
+-- window. This widget type is used in the default luakit user interface.
+-- - `tablist`: A widget that displays the clickable "handle" attached to a tab.
+-- This widget type is used in the default luakit user interface.
+-- - `uri`: A status bar widget that displays the URI of the current web page.
+--
+-- @module lousy.widget
+-- @author Aidan Holm <aidanholm@gmail.com>
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2017 Aidan Holm
+-- @copyright 2010 Mason Larobina
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -9,6 +9,7 @@ file = {
     exclude = {
         "lib/markdown.lua",
         "lib/lousy/init.lua",
+        "lib/lousy/widget/*",
     },
 }
 
