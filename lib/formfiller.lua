@@ -211,7 +211,7 @@ formfiller_wm:add_signal("add", function (_, view_id, str)
 end)
 
 --- Fills the current page from the formfiller rules.
--- @param w The window on which to fill the forms
+-- @tparam table w The window on which to fill the forms.
 local function fill_form_fast(w)
     local rules = read_formfiller_rules_from_file(w)
     local form_specs = form_specs_for_uri(rules, w.view.uri)

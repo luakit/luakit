@@ -290,12 +290,12 @@ end
 --- Try and match a buffer binding in a given table of bindings and call that
 -- bindings callback function.
 -- @param object The first argument of the bind callback function.
--- @param binds The table of binds in which to check for a match.
--- @param buffer The buffer string to match.
--- @param args The bind options/state/metadata table which is applied over the
+-- @tparam table binds The table of binds in which to check for a match.
+-- @tparam string buffer The buffer string to match.
+-- @tparam table args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
--- @return True if a binding was matched and called.
--- @return True if a partial match exists.
+-- @treturn boolean True if a binding was matched and called.
+-- @treturn boolean True if a partial match exists.
 function _M.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
@@ -322,11 +322,11 @@ end
 --- Try and match a command or buffer binding in a given table of bindings
 -- and call that bindings callback function.
 -- @param object The first argument of the bind callback function.
--- @param binds The table of binds in which to check for a match.
--- @param buffer The buffer string to match.
--- @param args The bind options/state/metadata table which is applied over the
+-- @tparam table binds The table of binds in which to check for a match.
+-- @tparam string buffer The buffer string to match.
+-- @tparam table args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
--- @return True if either type of binding was matched and called.
+-- @treturn boolean True if either type of binding was matched and called.
 function _M.match_cmd(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
@@ -366,14 +366,14 @@ end
 -- function is also responsible for performing operations on the buffer when
 -- necessary and the buffer is enabled.
 -- @param object The first argument of the bind callback function.
--- @param binds The table of binds in which to check for a match.
--- @param mods The modifiers to match.
--- @param key The key name to match.
--- @param args The bind options/state/metadata table which is applied over the
+-- @tparam table binds The table of binds in which to check for a match.
+-- @tparam {string} mods The modifiers to match.
+-- @tparam string key The key name to match.
+-- @tparam table args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
--- @return True if a key or buffer binding was matched or if a key was added to
+-- @treturn boolean True if a key or buffer binding was matched or if a key was added to
 -- the buffer.
--- @return The new buffer truncated to 10 characters (if you need more buffer
+-- @treturn string The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing). If no buffer binding
 -- could be matched, the returned buffer will be the empty string.
 function _M.hit(object, binds, mods, key, args)

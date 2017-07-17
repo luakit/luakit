@@ -254,7 +254,7 @@ local parse_abpfilterlist = function (filters_dir, filename, cache)
 end
 
 --- Save the in-memory subscriptions to flatfile.
--- @param file The destination file or the default location if nil.
+-- @tparam string file The destination file or the default location if nil.
 local function write_subscriptions(file)
     if not file then file = subscriptions_file end
     assert(file and file ~= "", "Cannot write subscriptions to empty path")
@@ -333,7 +333,7 @@ local function add_list(uri, title, opts, replace, save_lists)
 end
 
 --- Load subscriptions from a flatfile to memory.
--- @param file The subscriptions file or the default subscriptions location if nil.
+-- @tparam string file The subscriptions file or the default subscriptions location if nil.
 local function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end

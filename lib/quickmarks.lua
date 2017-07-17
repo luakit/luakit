@@ -1,4 +1,9 @@
---- Vimperator style quickmarking.
+--- Vimperator-style quickmarking.
+--
+-- Inspired by vimperator's quickmarks feature, this module allows you to
+-- associate up to sixty-two websites with a set of easy-to-type keybindings.
+-- Users can then type a three-keystroke command to open any of these websites
+-- in the current tab, a new tab, or a new window.
 --
 -- @module quickmarks
 -- @author Piotr Husiatyński <phusiatynski@gmail.com>
@@ -24,7 +29,7 @@ local function check_token(token)
 end
 
 --- Load quick bookmarks from storage file into memory
--- @param fd_name bookmarks storage file path of nil to use default one
+-- @tparam string fd_name bookmarks storage file path or nil to use default one
 function _M.load(fd_name)
     if not qmarks then qmarks = {} end
 
@@ -40,7 +45,7 @@ function _M.load(fd_name)
 end
 
 --- Save quick bookmarks to file
--- @param fd_name bookmarks storage file path of nil to use default one
+-- @tparam string fd_name bookmarks storage file path or nil to use default one
 function _M.save(fd_name)
     -- Quickmarks init check
     if not qmarks then _M.load() end
@@ -54,8 +59,8 @@ function _M.save(fd_name)
 end
 
 --- Return url related to given key or nil if does not exist
--- @param token quick bookmarks mapping token
--- @param load_file Call quickmark.load() before get
+-- @tparam string token quick bookmarks mapping token
+-- @tparam boolean load_file Call quickmark.load() before get
 function _M.get(token, load_file)
     -- Load quickmarks from other sessions
     if not qmarks or load_file ~= false then _M.load() end
@@ -70,10 +75,10 @@ function _M.get_tokens()
 end
 
 --- Set new quick bookmarks mapping
--- @param token The token under which given uris will be available
--- @param uris List of locations to quickmark
--- @param load_file Call quickmark.load() before set
--- @param save_file Call quickmark.save() after set
+-- @tparam string token The token under which given uris will be available
+-- @tparam string|{string} uris List of locations to quickmark
+-- @tparam boolean load_file Call quickmark.load() before set
+-- @tparam boolean save_file Call quickmark.save() after set
 function _M.set(token, uris, load_file, save_file)
     -- Load quickmarks from other sessions
     if not qmarks or load_file ~= false then _M.load() end
@@ -92,9 +97,9 @@ function _M.set(token, uris, load_file, save_file)
 end
 
 --- Delete a quickmark
--- @param token The quickmark token
--- @param load_file Call quickmark.load() before deletion
--- @param save_file Call quickmark.save() after deletion
+-- @tparam string token The quickmark token
+-- @tparam boolean load_file Call quickmark.load() before deletion
+-- @tparam boolean save_file Call quickmark.save() after deletion
 function _M.del(token, load_file, save_file)
     -- Load quickmarks from other sessions
     if not qmarks or load_file ~= false then _M.load() end
@@ -104,7 +109,7 @@ function _M.del(token, load_file, save_file)
 end
 
 --- Delete all quickmarks
--- @param save_file Call quickmark.save() function.
+-- @tparam boolean save_file Call quickmark.save() function.
 function _M.delall(save_file)
     qmarks = {}
     if save_file ~= false then _M.save() end
