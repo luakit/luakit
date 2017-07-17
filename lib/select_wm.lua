@@ -407,7 +407,7 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         end
     end
 
-    page.document:add_signal("destroy", function () _M.leave(page) end)
+    page.document:add_signal("destroy", function () _M.leave(page_id) end)
 
     filter(state, "", "")
     return focus(state, 0), state.num_visible_hints
@@ -417,16 +417,18 @@ end
 --
 -- The web page must be in element selection mode
 --
--- @param[type=page] page The web page in which to leave element selection
+-- @param page|number page The web page (or the web page id) in which to
+-- leave element selection.
 function _M.leave(page)
-    assert(type(page) == "page")
+    if type(page) == "page" then page = page.id end
+    assert(type(page) == "number")
 
-    local state = page_states[page.id]
+    local state = page_states[page]
     if not state then return end
     for _, frame in ipairs(state.frames) do
         cleanup_frame(frame)
     end
-    page_states[page.id] = nil
+    page_states[page] = nil
 end
 
 --- Update the element selection interface when user selection text changes
