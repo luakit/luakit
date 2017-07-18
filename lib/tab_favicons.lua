@@ -1,7 +1,14 @@
 --- UI mod: adds favicons to tabs.
 --
+-- This module modifies the default luakit user interface.
+--
+-- By default, tabs are numbered and do not feature the website icon
+-- associated with the web page that is currently loaded. This module
+-- removes the tab numbers and replaces them with the web page icon, for
+-- an alternative appearance.
+--
 -- @module tab_favicons
--- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local _M = {}
 

@@ -1,5 +1,8 @@
 --- Save history in sqlite3 database - chrome page.
 --
+-- This module provides the luakit://history/ chrome page - a user interface for
+-- searching the web browsing history.
+--
 -- @module history_chrome
 -- @copyright 2010-2011 Mason Larobina <mason.larobina@gmail.com>
 

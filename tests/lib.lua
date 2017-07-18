@@ -1,5 +1,7 @@
 --- Testing interface.
 --
+-- This module provides useful functions for use in luakit tests.
+--
 -- @module tests.lib
 -- @copyright 2017 Aidan Holm
 

@@ -1,5 +1,28 @@
 --- Dynamic proxy settings.
 --
+-- This module offers a simple and convenient user interface for using a proxy
+-- while browsing the web. Users can add entries for specific proxy addresses,
+-- and easily switch between using any of these proxies to redirect traffic. It
+-- is also possible to use the system proxy, or disable proxy use altogether.
+--
+-- ### Adding a new proxy entry
+--
+-- To add a new proxy entry, use the `:proxy` command, with the name of the
+-- proxy and the web address of the proxy as arguments:`:proxy <name> <address>`.
+--
+-- #### Example
+--
+-- To add a proxy entry for a local proxy running on port 8000, run the
+-- following:
+--
+--     :proxy proxy-name socks://localhost:8000
+--
+-- ### Viewing and changing the current proxy
+--
+-- It is currently easiest to view the current proxy by opening the proxy menu
+-- with the `:proxy` command. The current proxy will be shown in black text, while any
+-- inactive proxies will be shown in light gray text.
+--
 -- @module proxy
 -- @copyright Piotr Husiatyński <phusiatynski@gmail.com>
 
@@ -59,7 +82,9 @@ function _M.get(name)
     return proxies[name]
 end
 
---- Get active proxy configuration: { name = "name", address = "address" }
+--- Get active proxy configuration
+-- @treturn table The active proxy configuration. Two fields are present:
+-- `name` and `address`.
 function _M.get_active()
     return active
 end

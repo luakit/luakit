@@ -1,5 +1,9 @@
 --- Provides luakit://introspector/ page.
 --
+-- This module provides the luakit://introspector/ page. It is useful for
+-- viewing all keybindings and modes on a single page, as well as searching for
+-- a keybinding for a particular task.
+--
 -- @module introspector_chrome
 -- @copyright 2016 Aidan Holm
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>

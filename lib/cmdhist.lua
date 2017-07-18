@@ -1,5 +1,10 @@
 --- Enables command history in modes that support it.
 --
+-- This module adds support for modes to specify that user input on the
+-- command line should be recorded, so that users can scroll back through
+-- previous input with the arrow keys. It is used to implement history for the
+-- `command` mode.
+--
 -- @module cmdhist
 -- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 

@@ -1,5 +1,7 @@
 --- lousy.theme library.
 --
+-- This module provides theme variable lookup for other modules.
+--
 -- @module lousy.theme
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Damien Leone <damien.leone@gmail.com>
