@@ -5,7 +5,6 @@ local markdown = require "lib.markdown"
 local text_macros = {
     available = function (arg)
         return ({
-            both = '<div class="alert good">This module is available from both UI and web process Lua states.</div>',
               ui = '<div class="alert warn">This module is only available from the UI process Lua state.</div>',
              web = '<div class="alert warn">This module is only available from web process Lua states.</div>',
         })[arg] or error("available macro: expected ui, web, or both as argument")

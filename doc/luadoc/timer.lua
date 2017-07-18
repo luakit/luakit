@@ -1,7 +1,5 @@
 --- Timer support for Luakit.
 --
--- DOCMACRO(available:both)
---
 -- ### Example usage:
 --
 --     local t = timer{ interval = 500 }

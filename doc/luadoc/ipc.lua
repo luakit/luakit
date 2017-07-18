@@ -1,7 +1,5 @@
 --- IPC interface for communication between UI and Web processes.
 --
--- DOCMACRO(available:both)
---
 -- In Luakit there is a single UI Lua state, but there may be multiple web
 -- processes, each of which have a separate Lua state. This interface can be used
 -- to communicate between the UI and web processes.
