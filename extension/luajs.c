@@ -91,6 +91,8 @@ luaJS_promise_resolve_reject(lua_State *L)
 {
     guint64 page_id = lua_tointeger(L, lua_upvalueindex(1));
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    if (!page || !WEBKIT_IS_WEB_PAGE(page))
+        return luaL_error(L, "promise no longer valid (associated page closed)");
     JSGlobalContextRef context = webkit_frame_get_javascript_global_context(
             webkit_web_page_get_main_frame(page));
 
