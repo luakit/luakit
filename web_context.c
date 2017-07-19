@@ -90,6 +90,20 @@ website_data_dir_init(void)
     verbose("websql_directory:                    %s", webkit_website_data_manager_get_websql_directory(data_mgr));
 }
 
+static void
+web_context_set_default_spelling_language(void)
+{
+    /* This seems to autodetect spell checking languages */
+    const gchar *null = NULL;
+    webkit_web_context_set_spell_checking_languages(web_context, &null);
+    gchar **ret = (gchar**)webkit_web_context_get_spell_checking_languages(web_context);
+    if (!ret)
+        return;
+    gchar *langs = g_strjoinv(", ", ret);
+    verbose("setting spell check languages: %s", langs);
+    g_free(langs);
+}
+
 void
 web_context_init(void)
 {
@@ -102,12 +116,7 @@ web_context_init(void)
     WebKitCookieManager *cookie_mgr = webkit_web_context_get_cookie_manager(web_context);
     webkit_cookie_manager_set_accept_policy(cookie_mgr, WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY);
 
-    /* This seems to autodetect spell checking languages */
-    const gchar * null = NULL;
-    webkit_web_context_set_spell_checking_languages(web_context, &null);
-    gchar * langs = g_strjoinv(", ", (gchar**)webkit_web_context_get_spell_checking_languages(web_context));
-    verbose("setting spell check languages: %s", langs);
-    g_free(langs);
+    web_context_set_default_spelling_language();
 }
 
 void
