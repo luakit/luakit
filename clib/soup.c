@@ -165,8 +165,9 @@ soup_lib_setup(lua_State *L)
     /* export soup lib */
     luaH_openlib(L, "soup", soup_lib, soup_lib);
 
-    /* Initial proxy settings */
+    /* Initial settings */
     proxy_uri = g_strdup("default");
+    accept_policy = g_strdup("no_third_party"); /* Must match default set in web_context.c */
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

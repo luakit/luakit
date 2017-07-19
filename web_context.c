@@ -98,6 +98,10 @@ web_context_init(void)
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
 
+    /* Set default cookie policy: must match default in clib/soup.c */
+    WebKitCookieManager *cookie_mgr = webkit_web_context_get_cookie_manager(web_context);
+    webkit_cookie_manager_set_accept_policy(cookie_mgr, WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY);
+
     /* This seems to autodetect spell checking languages */
     const gchar * null = NULL;
     webkit_web_context_set_spell_checking_languages(web_context, &null);
