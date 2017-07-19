@@ -1,5 +1,7 @@
 --- Web process counterpart to the webview widget
 --
+-- DOCMACRO(available:web)
+--
 -- The page is the web process counterpart to the webview widget; for each
 -- webview widget created on the UI process, a corresponding page instance
 -- is created in a web process.

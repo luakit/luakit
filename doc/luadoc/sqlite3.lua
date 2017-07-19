@@ -1,6 +1,6 @@
 --- Lightweight SQLite database interface.
 --
--- DOCMACRO(builtin)
+-- DOCMACRO(available:web)
 --
 -- This module provides Lua access to SQLite databases. These are used
 -- for a number of purposes by the default modules, including storing

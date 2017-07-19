@@ -1,5 +1,8 @@
 --- lousy.load library.
 --
+-- This module provides a function to search for and load the contents of
+-- files.
+--
 -- @module lousy.load
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Mason Larobina
@@ -29,6 +32,14 @@ local function load_resource(path, memorize)
         return dat
     end
 end
+
+--- @function __call
+-- Load the contents of a file, with optional caching.
+-- @tparam string path The path of the file to load. If the path is a relative
+-- path, it is relative to the luakit installation path.
+-- @tparam boolean memorize Whether file loads should be cached. If not `true`,
+-- the cache will not be queried for an already-loaded copy, nor will the cache
+-- be populated on a successful load.
 
 local function search_load(path, memorize)
     assert(type(path) == "string", "invalid path")
