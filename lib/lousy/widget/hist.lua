@@ -2,6 +2,8 @@
 --
 -- Indicates whether the current page can go back or go forward.
 --
+-- The widget will not be shown if the current page cannot go back or forward.
+--
 -- @module lousy.widget.hist
 -- @copyright 2017 Aidan Holm
 -- @copyright 2010 Mason Larobina
@@ -13,12 +15,31 @@ local wc = require("lousy.widget.common")
 
 local _M = {}
 
+--- Format string which defines the appearance of the widget.
+-- The text `{back}` is replaced with the back indicator, and the text
+-- `{forward}` is replaced with the forward indicator.
+-- @type string
+-- @readwrite
+_M.format = "[{back}{forward}]"
+
+--- Text used to indicate that the current page can go back.
+-- @type string
+-- @readwrite
+_M.back_indicator = "+"
+
+--- Text used to indicate that the current page can go forward.
+-- @type string
+-- @readwrite
+_M.forward_indicator = "-"
+
 local widgets = {
     update = function (w, hist)
         local back, forward = w.view:can_go_back(), w.view:can_go_forward()
-        local s = (back and "+" or "") .. (forward and "-" or "")
-        if s ~= "" then
-            hist.text = '['..s..']'
+        if back or forward then
+            hist.text  = string.gsub(_M.format, "{(%w+)}", {
+                back = back and _M.back_indicator or "",
+                forward = forward and _M.forward_indicator or "",
+            })
             hist:show()
         else
             hist:hide()
