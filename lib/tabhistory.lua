@@ -1,5 +1,10 @@
 --- View and open history items in an interactive menu.
 --
+-- This module allows you to access items in the current tab's history.
+-- You can directly jump backwards or forwards in a tab's history.
+-- Alternatively, you can open a particular history item in a new tab or
+-- window, without affecting the current page.
+--
 -- @module tabhistory
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 -- @copyright 2010 Mason Larobina  <mason.larobina@gmail.com>

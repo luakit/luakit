@@ -1,5 +1,8 @@
 --- View the HTML source code of web pages.
 --
+-- This module provides support for viewing the source code of web pages. It
+-- also provides the `view-source:` URI scheme.
+--
 -- @module view_source
 -- @copyright 2017 Aidan Holm
 

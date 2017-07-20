@@ -1,5 +1,9 @@
 --- Customize how single images are displayed in the browser.
 --
+-- This module provides an improved version of the default WebKit image view.
+-- Images are now centered within the page, and an option is provided for
+-- specifying the page background color.
+--
 -- @module image_css
 -- @copyright 2017 Aidan Holm
 

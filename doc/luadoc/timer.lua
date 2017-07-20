@@ -14,7 +14,7 @@
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina
 
---- @function timer
+--- @function __call
 -- Create a new timer instance.
 -- @tparam[opt] table properties Any initial timer properties to set.
 -- @default `{}`

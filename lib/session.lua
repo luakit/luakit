@@ -1,5 +1,11 @@
 --- Session saving / loading functions.
 --
+-- This module allows you to save your current session when quitting
+-- luakit, and then restore it again the next time you open luakit.
+--
+-- This module also provides a Lua API to allow other modules to save data to
+-- the session file and restore it when reopening Luakit.
+--
 -- @module session
 -- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 

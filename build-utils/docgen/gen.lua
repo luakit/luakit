@@ -132,6 +132,10 @@ local generate_function_body_html = function (func)
 end
 
 local generate_function_html = function (func, prefix)
+    if func.name == "__call" then
+        prefix = prefix:gsub(".$", "")
+        func.name = ""
+    end
     local html_template = [==[
         <h3 class=function id="{prefix}{name}">
             <a href="#{prefix}{name}">{prefix}{name} ({param_names})</a>
@@ -262,21 +266,16 @@ local generate_doc_html = function (doc)
     ]==]
 
     -- Determine function name prefix
-    local prefix, method_name_prefix
-    if doc.methods then
-        prefix = ""
-        method_name_prefix = doc.name .. ":"
-    else
-        prefix = doc.name .. "."
-    end
+    local prefix = doc.prefix or doc.name
+    local func_prefix, method_prefix = prefix .. ".", prefix .. ":"
 
     local fhtml = ""
         .. "<!-- modes and binds -->"
-        .. generate_list_html("Functions", doc.functions, generate_function_html, prefix)
-        .. generate_list_html("Methods", doc.methods, generate_function_html, method_name_prefix)
-        .. generate_list_html("Properties", doc.properties, generate_property_html, doc.name .. ".")
+        .. generate_list_html("Functions", doc.functions, generate_function_html, func_prefix)
+        .. generate_list_html("Methods", doc.methods, generate_function_html, method_prefix)
+        .. generate_list_html("Properties", doc.properties, generate_property_html, func_prefix)
         .. generate_list_html("Signals", doc.signals, generate_signal_html)
-        .. generate_list_html("Fields", doc.fields, generate_field_html, prefix)
+        .. generate_list_html("Fields", doc.fields, generate_field_html, func_prefix)
 
     local html = string.gsub(html_template, "{(%w+)}", {
         type = doc.module and "Module" or "Class",

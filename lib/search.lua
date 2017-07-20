@@ -1,5 +1,10 @@
 --- Search for a string in the current webview.
 --
+-- This module allows you to search for a string of text in the currently
+-- visible web page. A history of search terms is kept while luakit is running.
+--
+-- *Note: regular expressions are not supported.*
+--
 -- @module search
 -- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 

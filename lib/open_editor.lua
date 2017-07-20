@@ -1,5 +1,12 @@
 --- Edit the contents of text inputs in an external editor.
 --
+-- This module allows you to edit the contents of the currently focused
+-- text input in your preferred text editor. The focused text input is
+-- disabled, and a text editor window will open with the current input
+-- contents. After you have finished editing, save the file and quit the
+-- editor; the text input will be enabled and its contents will be set
+-- to that of the saved file.
+--
 -- @module open_editor
 
 local lousy = require "lousy"

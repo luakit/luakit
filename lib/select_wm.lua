@@ -1,6 +1,11 @@
--- Select a page element with a visual interface.
+--- Select a page element with a visual interface.
 --
--- @submodule select
+-- This web module allows other Lua modules to select page elements with the
+-- same interface as that used by the follow mode plugin: a visual overlay is
+-- shown that allows the users to type to filter visible hints. For example,
+-- this module is used by the `formfiller` module when selecting a form to add.
+--
+-- @module select_wm
 -- @copyright 2017 Aidan Holm
 
 local floor, max = math.floor, math.max
@@ -343,12 +348,12 @@ end
 --
 -- The web page must not already be in element selection mode
 --
--- @param[type=page] page The web page in which to enter element selection
--- @param elements A selector to filter elements, or an array of elements
--- @param[type=string] stylesheet The stylesheet to apply
--- @param[type=boolean] ignore_case Whether text case should be ignored
--- @return[type=table] The currently focused hint
--- @return[type=number] The number of currently visible hints
+-- @tparam page page The web page in which to enter element selection
+-- @tparam string|{dom_element} elements A selector to filter elements, or an array of elements
+-- @tparam string stylesheet The stylesheet to apply
+-- @tparam boolean ignore_case Whether text case should be ignored
+-- @treturn {...} Table with data for the currently focused hint.
+-- @treturn number The number of currently visible hints.
 function _M.enter(page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
@@ -435,12 +440,12 @@ end
 --
 -- The web page must be in element selection mode
 --
--- @param[type=page] page The web page
--- @param[type=string] hint_pat The hint pattern filter
--- @param[type=string] text_pat The text pattern filter
--- @param[type=string] text The full text
--- @return[type=table] The currently focused hint
--- @return[type=number] The number of currently visible hints
+-- @tparam page page The web page
+-- @tparam string hint_pat The hint pattern filter
+-- @tparam string text_pat The text pattern filter
+-- @tparam string text The full text
+-- @treturn table The currently focused hint
+-- @treturn number The number of currently visible hints
 function _M.changed(page, hint_pat, text_pat, text)
     assert(type(page) == "page")
     assert(hint_pat == nil or type(hint_pat) == "string")
@@ -468,17 +473,18 @@ end
 -- The web page must be in element selection mode
 --
 -- @usage
--- function handle_next (page)
---     select_wm.focus(page, 1)
--- end
--- function handle_prev (page)
---     select_wm.focus(page, -1)
--- end
 --
--- @param[type=page] page The web page
--- @param[type=number] step Relative amount to shift focus by
--- @return[type=table] The currently focused hint
--- @return[type=number] The number of currently visible hints
+--     function handle_next (page)
+--         select_wm.focus(page, 1)
+--     end
+--     function handle_prev (page)
+--         select_wm.focus(page, -1)
+--     end
+--
+-- @tparam page page The web page
+-- @tparam number step Relative amount to shift focus by
+-- @treturn table The currently focused hint
+-- @treturn number The number of currently visible hints
 function _M.focus(page, step)
     assert(type(page) == "page")
     assert(type(step) == "number")
@@ -490,7 +496,7 @@ end
 --
 -- The web page must be in element selection mode
 --
--- @param[type=page] page The web page
+-- @tparam page page The web page
 -- @treturn table The current hint state for `page`
 function _M.hints(page)
     assert(type(page) == "page")
@@ -502,7 +508,7 @@ end
 --
 -- The web page must be in element selection mode
 --
--- @param[type=page] page The web page
+-- @tparam page page The web page
 -- @treturn table The currently focused hint
 function _M.focused_hint(page)
     assert(type(page) == "page")

@@ -2,7 +2,7 @@
 --
 -- @submodule adblock_wm
 -- @copyright 2016 Aidan Holm
--- @author Aidan Holm (aidanholm@gmail.com)
+-- @author Aidan Holm <aidanholm@gmail.com>
 
 local ui = ipc_channel("adblock_wm")
 

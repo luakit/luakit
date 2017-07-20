@@ -57,7 +57,7 @@ local parse_doc_header_line = function (doc, line)
 end
 
 local parse_optional_at_type_line = function (item, block)
-    if not block[1] or not block[1]:find("^@type ") then return end
+    if not block[1] or not block[1]:find("^@type") then return end
     assert(not item.typestr, "Type already set")
     item.typestr = expect(block, "^%@type (%S+)$", "Bad @type line")
 end
@@ -68,13 +68,13 @@ local parse_at_read_write_line = function (item, block)
 end
 
 local parse_at_default_line = function (item, block)
-    if not (block[1] and block[1]:find("^@default ")) then return end
+    if not (block[1] and block[1]:find("^@default")) then return end
     local default = expect(block, "^%@default (.+)", "Missing @default")
     item.default = (default .. peel_off_text_block(block)):gsub("^%s+",""):gsub("[%s%.]+$","")
 end
 
 local parse_at_deprecated_line = function (item, block)
-    if not block[1]:find("^@deprecated ") then return end
+    if not block[1]:find("^@deprecated") then return end
     local deprecated = expect(block, "^%@deprecated (.+)", "Missing @deprecated")
     item.deprecated = (deprecated .. peel_off_text_block(block)):gsub("^%s+",""):gsub("[%s%.]+$","")
 end

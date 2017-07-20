@@ -1,0 +1,33 @@
+--- CSS stylesheet
+--
+-- DOCMACRO(available:ui)
+--
+-- Stylesheet objects allow Lua code to customize the appearance of web pages
+-- shown in `webview` widgets. The mozilla format (@-moz-document rules) is not
+-- supported.
+--
+-- ### Creating a new stylesheet
+--
+-- To create a new stylesheet, use the `stylesheet` constructor:
+--
+--     local style = stylesheet{ source = "#p { color: black; }" }
+--
+-- ### Modifying webview appearance
+--
+-- To attach a `stylesheet` instance to a webview, modify the webview's
+-- `stylesheets` table:
+--
+--     local style = stylesheet{ ... }
+--     view.stylesheets[style] = true -- Enable the stylesheet
+--
+-- @class stylesheet
+-- @author Aidan Holm
+-- @copyright 2016 Aidan Holm
+
+--- @property source
+-- The CSS source of the stylesheet. Modification will cause reapplication to any attached `webview` widgets.
+-- @type string
+-- @default `""`
+-- @readwrite
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,5 +1,28 @@
 --- Dynamic proxy settings.
 --
+-- This module offers a simple and convenient user interface for using a proxy
+-- while browsing the web. Users can add entries for specific proxy addresses,
+-- and easily switch between using any of these proxies to redirect traffic. It
+-- is also possible to use the system proxy, or disable proxy use altogether.
+--
+-- ### Adding a new proxy entry
+--
+-- To add a new proxy entry, use the `:proxy` command, with the name of the
+-- proxy and the web address of the proxy as arguments:`:proxy <name> <address>`.
+--
+-- #### Example
+--
+-- To add a proxy entry for a local proxy running on port 8000, run the
+-- following:
+--
+--     :proxy proxy-name socks://localhost:8000
+--
+-- ### Viewing and changing the current proxy
+--
+-- It is currently easiest to view the current proxy by opening the proxy menu
+-- with the `:proxy` command. The current proxy will be shown in black text, while any
+-- inactive proxies will be shown in light gray text.
+--
 -- @module proxy
 -- @copyright Piotr Husiatyński <phusiatynski@gmail.com>
 
@@ -59,13 +82,15 @@ function _M.get(name)
     return proxies[name]
 end
 
---- Get active proxy configuration: { name = "name", address = "address" }
+--- Get active proxy configuration
+-- @treturn table The active proxy configuration. Two fields are present:
+-- `name` and `address`.
 function _M.get_active()
     return active
 end
 
 --- Load proxies list from file
--- @param fd_name custom proxy storage of nil to use default
+-- @tparam string fd_name custom proxy storage or nil to use default
 function _M.load(fd_name)
     fd_name = fd_name or proxies_file
     if not os.exists(fd_name) then return end
@@ -89,7 +114,7 @@ function _M.load(fd_name)
 end
 
 --- Save proxies list to file
--- @param fd_name custom proxy storage of nil to use default
+-- @tparam string fd_name custom proxy storage or nil to use default
 function _M.save(fd_name)
     local fd = io.open(fd_name or proxies_file, "w")
     for name, address in pairs(proxies) do
@@ -102,9 +127,9 @@ function _M.save(fd_name)
 end
 
 --- Add new proxy server to current list
--- @param name proxy configuration name
--- @param address proxy server address
--- @param save_file do not save configuration if false
+-- @tparam string name proxy configuration name
+-- @tparam string address proxy server address
+-- @tparam boolean save_file do not save configuration if false
 function _M.set(name, address, save_file)
     name = lousy.util.string.strip(name)
     if not string.match(name, "^([%w%p]+)$") then
@@ -115,7 +140,7 @@ function _M.set(name, address, save_file)
 end
 
 --- Delete selected proxy from list
--- @param name proxy server name
+-- @tparam string name proxy server name
 function _M.del(name)
     name = lousy.util.string.strip(name)
     if proxies[name] then
@@ -129,7 +154,7 @@ function _M.del(name)
 end
 
 --- Set given proxy to active. Return true on success, else false
--- @param name proxy configuration name or nil to unset proxy.
+-- @tparam string name proxy configuration name or nil to unset proxy.
 function _M.set_active(name)
     if name then
         name = lousy.util.string.strip(name)

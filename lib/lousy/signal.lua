@@ -1,6 +1,6 @@
 --- lousy.signal library.
 --
--- Mimic the luakit signal api functions for tables.
+-- Mimic the luakit signal API functions for tables.
 --
 -- @module lousy.signal
 -- @author Fabian Streitel <karottenreibe@gmail.com>

@@ -1,5 +1,8 @@
 --- Provides luakit://help/ page.
 --
+-- This module provides the luakit://help/ page and all of its sub-pages,
+-- including the built-in documentation browser.
+--
 -- @module help_chrome
 -- @copyright 2016 Aidan Holm
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>

@@ -1,4 +1,11 @@
---- View and undo closed tabs in an interactive menu.
+--- View and reopen closed tabs in an interactive menu.
+--
+-- This module provides support for reopening previously-closed tabs.
+-- The set of closed tabs is saved in the luakit session, so users can
+-- still reopen tabs after a restart.
+--
+-- This module also provides a menu that allows viewing the full set of closed
+-- tabs, as well as opening them directly.
 --
 -- @module undoclose
 -- @copyright 2010 Chris van Dijk <quigybo@hotmail.com>

@@ -1,5 +1,8 @@
 --- Bindings for the web inspector.
 --
+-- This module enables developer extras for luakit's web views, and adds a
+-- command to show/hide the WebKit web inspector.
+--
 -- @module webinspector
 -- @copyright 2012 Fabian Streitel <karottenreibe@gmail.com>
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>

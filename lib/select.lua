@@ -1,5 +1,9 @@
 --- Select a page element with a visual interface.
 --
+-- This module allows you to change the style of hints used to hint elements for
+-- selection in `follow` mode, as well as other modes that use the visual hint
+-- overlay.
+--
 -- @module select
 -- @copyright 2017 Aidan Holm
 

@@ -49,34 +49,34 @@
 -- @function quit
 
 --- Get selection
--- @param clipboard X clipboard name ('primary', 'secondary' or 'clipboard')
--- @return A string with the selection (clipboard) content.
+-- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
+-- @treturn string The contents of the named selection.
 -- @function get_selection
 
 --- Set selection
--- @param text UTF-8 string to be copied to clipboard
--- @param clipboard X clipboard name ('primary', 'secondary' or 'clipboard')
+-- @tparam string text The UTF-8 string to be copied to the named selection.
+-- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
 -- @function set_selection
 
---- Spawn process asynchronously
--- @param cmd Command to execute. It is parsed with simple shell-like parser.
+--- Spawn a process asynchronously
+-- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
 -- @function spawn
 
---- Spawn process synchronously
--- @param cmd Command to execute. It is parsed with simple shell-like parser.
--- @return An exit status of the command.
--- @return A string containig data printed on stdout.
--- @return A string containig data printed on stderr.
+--- Spawn a process synchronously
+-- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
+-- @treturn number The exit status of the command.
+-- @treturn string A string containig data printed on `stdout`.
+-- @treturn string A string containig data printed on `stderr`.
 -- @function spawn_sync
 
 --- Get the time since Luakit startup.
 --
--- @function luakit.time
+-- @function time
 -- @treturn number The number of seconds Luakit has been running.
 
 --- Escape a string for use in a URI.
 --
--- @function luakit.uri_encode
+-- @function uri_encode
 -- @tparam string str The string to encode.
 -- @treturn string The escaped/encoded string.
 
@@ -85,7 +85,7 @@
 -- Returns the unescaped string, or nil if the string contains illegal
 -- characters.
 --
--- @function luakit.uri_encode
+-- @function uri_encode
 -- @tparam string str The string to decode.
 -- @treturn string The unescaped/decoded string, or `nil` on error.
 -- @treturn string Error message.
@@ -98,12 +98,12 @@
 -- The provided callback function is not called with any arguments; to pass
 -- context to the callback function, use a closure.
 --
--- @function luakit.idle_add
+-- @function idle_add
 -- @tparam function cb The function to call when Luakit is idle.
 
---- Remove a function previously registered with `luakit.idle_add`.
+--- Remove a function previously registered with `idle_add`.
 --
--- @function luakit.idle_remove
+-- @function idle_remove
 -- @tparam function cb The function to removed from the set of idle callbacks.
 -- @treturn boolean True if the callback was present (and removed); false if the
 -- callback was not found.
@@ -127,7 +127,7 @@
 -- a webview in response to a `foo://` load attempt, and should be handled to
 -- provide contentt.
 --
--- @function luakit.register_scheme
+-- @function register_scheme
 -- @tparam string scheme The network scheme to register.
 
 --- @signal page-created

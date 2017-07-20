@@ -1,4 +1,14 @@
---- User styles.
+--- User stylesheets.
+--
+-- This module provides support for Mozilla-format user stylesheets, as a
+-- replacement for the old `domain_props`-based `user_stylesheet_uri` method
+-- (which is no longer supported). User stylesheets from https://userstyles.org
+-- are supported, giving access to a wide variety of already-made themes.
+--
+-- User stylesheets are automatically detected and loaded when luakit starts up.
+-- In addition, user stylesheets can be enabled/disabled instantly, without
+-- refreshing the web pages they affect, and it is possible to reload external
+-- changes to stylesheets into luakit, without restarting the browser.
 --
 -- @module styles
 -- @copyright 2016 Aidan Holm

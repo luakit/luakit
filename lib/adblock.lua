@@ -14,12 +14,12 @@
 -- * Filterlists need to be updated regularly (~weekly), use cron!
 --
 -- @module adblock
--- @author Chris van Dijk (quigybo) (quigybo@hotmail.com)
--- @author Mason Larobina (mason-l) (mason.larobina@gmail.com)
--- @author Plaque FCC (Reslayer@ya.ru)
--- @copyright 2010 Chris van Dijk (quigybo) (quigybo@hotmail.com)
--- @copyright 2010 Mason Larobina (mason-l) (mason.larobina@gmail.com)
--- @copyright 2012 Plaque FCC (Reslayer@ya.ru)
+-- @author Chris van Dijk (quigybo) <quigybo@hotmail.com>
+-- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @author Plaque FCC <Reslayer@ya.ru>
+-- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2012 Plaque FCC <Reslayer@ya.ru>
 
 local webview   = require("webview")
 local window    = require("window")
@@ -254,7 +254,7 @@ local parse_abpfilterlist = function (filters_dir, filename, cache)
 end
 
 --- Save the in-memory subscriptions to flatfile.
--- @param file The destination file or the default location if nil.
+-- @tparam string file The destination file or the default location if nil.
 local function write_subscriptions(file)
     if not file then file = subscriptions_file end
     assert(file and file ~= "", "Cannot write subscriptions to empty path")
@@ -333,7 +333,7 @@ local function add_list(uri, title, opts, replace, save_lists)
 end
 
 --- Load subscriptions from a flatfile to memory.
--- @param file The subscriptions file or the default subscriptions location if nil.
+-- @tparam string file The subscriptions file or the default subscriptions location if nil.
 local function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end

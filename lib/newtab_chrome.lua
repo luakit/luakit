@@ -16,7 +16,7 @@
 --
 -- @module newtab_chrome
 -- @author Aidan Holm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local chrome = require "chrome"
 local theme = require "theme"

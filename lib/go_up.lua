@@ -1,5 +1,32 @@
 --- Go one step upward in the URI path structure.
 --
+-- This module adds keybindings that allow you to easily navigate upwards in the
+-- URI hierarchy of the current page. For example, if the current page is
+-- `www.example.com/photos/pets/`, then going up once will navigate to
+-- `www.example.com/photos/`, and going up once more will navigate to
+-- `www.example.com`.
+--
+-- It is possible to go up multiple steps at once.
+--
+-- ### Finer details
+--
+-- When using this module to navigate websites, generally you don't need to
+-- worry about the finer details of how the current page URI is transformed.
+-- The steps taken to transform the curent page URI, however, are listed here for
+-- completeness.
+--
+-- When going up a single step, several checks are done on the current page URI:
+--
+-- 1. If there is a URI fragment, that is removed.
+--    For example: `www.example.com/photos/#cool-photos-section` will become `www.example.com/photos/`.
+-- 2. Otherwise, if there are any query parameters, they are removed.
+--    For example: `www.example.com/photos/?cool=very` will become `www.example.com/photos/`.
+-- 3. Otherwise, if there is a sub-path, one section of that is removed.
+--    For example: `www.example.com/photos/` will become `www.example.com/`.
+-- 4. Finally, if there are sub-domains in the host, the most specific
+--    will be removed. This also applies to `www`.
+--    For example: `www.example.com` will become `example.com`.
+--
 -- @module go_up
 -- @copyright 2010-2012 Mason Larobina (mason-l) <mason.larobina@gmail.com>
 -- @copyright 2012 LokiChaos <loki.chaos@gmail.com>
