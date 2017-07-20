@@ -28,7 +28,7 @@ plug_added_cb(GtkSocket* UNUSED(socket), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "plug-added", 1, 0);
+    luaH_object_emit_signal(L, -1, "plug-added", 0, 0);
 }
 
 static gboolean
@@ -36,7 +36,7 @@ plug_removed_cb(GtkSocket* UNUSED(socket), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "plug-removed", 1, 0);
+    luaH_object_emit_signal(L, -1, "plug-removed", 0, 0);
     return FALSE;
 }
 
