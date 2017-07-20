@@ -4,9 +4,9 @@
 --
 -- @class download
 -- @author Fabian Streitel
--- @author Mason Larobina 
+-- @author Mason Larobina
 -- @copyright 2011 Fabian Streitel
--- @copyright 2011 Mason Larobina 
+-- @copyright 2011 Mason Larobina
 
 --- @property allow_overwrite
 -- Whether this download should be permitted to overwrite any file already
