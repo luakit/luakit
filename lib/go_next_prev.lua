@@ -31,12 +31,15 @@ local go_next = [=[
     if (e) // Wow a developer that knows what he's doing!
         click(e);
     else { // Search from the bottom of the page up for a next link.
-        var els = document.getElementsByTagName("a"), i = els.length;
-        while ((e = els[--i])) {
-            if (e.text.search(/(\blearn\b|\blast\b|\bimages\b)/i) > -1) {
-            } else if (e.text.search(/(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)/i) > -1) {
-                click(e);
-                break;
+        var els = document.getElementsByTagName("a");
+        var res = "\\bnext\\b,^>$,^(>>|»)$,^(>|»),(>|»)$,\\bmore\\b"
+        for (let r of res.split(",").map(r => new RegExp(r, "i"))) {
+            var i = els.length;
+            while ((e = els[--i])) {
+                if (e.text.search(r) > -1) {
+                    click(e);
+                    return;
+                }
             }
         }
     }
@@ -60,11 +63,15 @@ local go_prev = [=[
     if (e)
         click(e);
     else {
-        var els = document.getElementsByTagName("a"), i = els.length;
-        while ((e = els[--i])) {
-            if (e.text.search(/(\b(prev|previous)\b|^<$|^(<<|«)$|^(<|«)|(<|«)$)/i) > -1) {
-                click(e);
-                break;
+        var els = document.getElementsByTagName("a");
+        var res = "\\b(prev|previous)\\b,^<$,^(<<|«)$,^(<|«),(<|«)$"
+        for (let r of res.split(",").map(r => new RegExp(r, "i"))) {
+            var i = els.length;
+            while ((e = els[--i])) {
+                if (e.text.search(r) > -1) {
+                    click(e);
+                    return;
+                }
             }
         }
     }
