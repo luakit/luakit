@@ -24,7 +24,7 @@ local _M = {}
 
 local styles_dir = capi.luakit.data_dir .. "/styles/"
 
-local stylesheets
+local stylesheets = {}
 
 local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
