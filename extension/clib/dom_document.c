@@ -74,15 +74,6 @@ luaH_dom_document_from_web_page(lua_State *L, WebKitWebPage *web_page)
     return luaH_dom_document_from_webkit_dom_document(L, doc);
 }
 
-static int
-luaH_dom_document_new(lua_State *L)
-{
-    warn("deprecated function! use page.document instead");
-    guint64 page_id = luaL_checknumber(L, -1);
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
-    return luaH_dom_document_from_web_page(L, page);
-}
-
 static gint
 luaH_dom_document_gc(lua_State *L)
 {
@@ -204,7 +195,6 @@ dom_document_class_setup(lua_State *L)
     static const struct luaL_Reg dom_document_methods[] =
     {
         LUA_CLASS_METHODS(dom_document)
-        { "__call", luaH_dom_document_new },
         { NULL, NULL }
     };
 
