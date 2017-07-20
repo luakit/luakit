@@ -235,10 +235,8 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
                 /* Entries must be name -> ref */
                 g_assert(lua_isstring(L, -2));
                 g_assert(lua_isfunction(L, -1));
-                lua_pushvalue(L, -1);
-                /* Register the function */
-                register_func(world, web_page, frame, lua_tostring(L, -2), luaH_object_ref(L, -1));
-                lua_pop(L, 1);
+                gpointer ref = luaH_object_ref(L, -1);
+                register_func(world, web_page, frame, lua_tostring(L, -1), ref);
             }
         }
 
