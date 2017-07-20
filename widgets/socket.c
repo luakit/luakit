@@ -37,7 +37,7 @@ plug_removed_cb(GtkSocket* UNUSED(socket), widget_t *w)
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "plug-removed", 0, 0);
-    return FALSE;
+    return TRUE;
 }
 
 static gint
