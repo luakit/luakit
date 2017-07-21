@@ -33,7 +33,8 @@ local go_next = [=[
     else { // Search from the bottom of the page up for a next link.
         var els = document.getElementsByTagName("a"), i = els.length;
         while ((e = els[--i])) {
-            if (e.text.search(/(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)/i) > -1) {
+            if (e.text.search(/(\blearn\b|\blast\b|\bimages\b)/i) > -1) {
+            } else if (e.text.search(/(\bnext\b|^>$|^(>>|»)$|^(>|»)|(>|»)$|\bmore\b)/i) > -1) {
                 click(e);
                 break;
             }
