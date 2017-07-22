@@ -23,7 +23,7 @@ ui:add_signal("image", function (_, page)
         img.attr.class = vert_overflow and "verticalOverflow" or ""
     end
 
-    page:add_signal("destroy", function ()
+    img:add_signal("destroy", function ()
         recalc_funcs[page] = nil
     end)
 
