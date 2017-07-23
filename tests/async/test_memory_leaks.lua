@@ -14,8 +14,7 @@ T.test_webview_from_closed_tab_is_released = function ()
     local refs = setmetatable({}, { __mode = "k" })
     refs[w.view] = true
     w:close_tab()
-    collectgarbage()
-    collectgarbage()
+    for _=1,100 do collectgarbage() end
     assert(not next(refs), "webview widget not collected")
 end
 
