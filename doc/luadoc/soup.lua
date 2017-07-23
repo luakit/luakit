@@ -40,6 +40,6 @@
 -- @property cookies_storage
 -- @type string
 -- @readwrite
--- @default nil
+-- @default `nil`
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

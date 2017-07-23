@@ -350,10 +350,10 @@ local function read_subscriptions(file)
 end
 
 --- Load filter list files, and refresh any adblock pages that are open.
--- @tparam boolean reload True if all subscriptions already loaded
+-- @tparam boolean reload `true` if all subscriptions already loaded
 -- should be fully reloaded.
 -- @tparam string single_list Single list file.
--- @tparam boolean no_sync True if subscriptions should not be synchronized to
+-- @tparam boolean no_sync `true` if subscriptions should not be synchronized to
 -- the web process.
 _M.load = function (reload, single_list, no_sync)
     if reload then _M.subscriptions, filterfiles = {}, {} end
@@ -406,7 +406,7 @@ end
 
 --- Enable or disable an adblock filter list.
 -- @tparam number|string a The number of the list to enable or disable.
--- @tparam boolean enabled True to enable, false to disable.
+-- @tparam boolean enabled `true` to enable, `false` to disable.
 function _M.list_set_enabled(a, enabled)
     if enabled then
         list_opts_modify(tonumber(a), "Disabled", "Enabled")

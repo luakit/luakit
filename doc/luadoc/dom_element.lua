@@ -1,17 +1,17 @@
 --- Web process Lua interface to the DOM
 --
+-- DOCMACRO(available:web)
+--
 -- The `dom_element` class allows interaction with elements on any web page.
 --
 -- @class dom_element
 -- @author Aidan Holm
 -- @copyright 2017 Aidan Holm
 -- @prefix element
---
--- DOCMACRO(available:web)
 
 --- @method query
 -- Find all sub-elements which match a given CSS selector.
--- @tparam string selector A CSS selector
+-- @tparam string selector A CSS selector.
 -- @treturn {dom_element} All sub-elements which match the selector.
 
 --- @method append

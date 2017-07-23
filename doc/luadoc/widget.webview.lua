@@ -130,11 +130,10 @@
 -- Close the web inspector for the webview.
 
 --- @method allow_certificate
--- Allow a certificate
-
+-- Allow a certificate.
 
 --- @property uri
--- The URI of the current web page
+-- The URI of the current web page.
 -- @type string
 -- @readwrite
 -- @default "about:blank"
@@ -146,36 +145,36 @@
 -- @readonly
 
 --- @property source
--- The source of the current web page
+-- The source of the current web page.
 -- @readonly
 
 --- @property session_state
--- The session state of the current web page
+-- The session state of the current web page.
 -- @type string
 -- @readwrite
 
 --- @property stylesheets
--- The stylesheets of the webview
+-- The stylesheets of the webview.
 -- @type table
 -- @readonly
 
 --- @property history
--- The history of the webview
+-- The history of the webview.
 -- @type table
 -- @readonly
 
 --- @property scroll
--- The scroll of the webview
+-- The scroll of the webview.
 -- @type table
 -- @readonly
 
 --- @property favicon
--- The favicon of the webview
+-- The favicon of the webview.
 -- @type widget
 -- @readonly
 
 --- @property certificate
--- The certificate of the webview
+-- The certificate of the webview.
 -- @type string
 -- @readonly
 

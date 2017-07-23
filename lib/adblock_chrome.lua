@@ -240,7 +240,7 @@ nil,
     end,
 })
 
---- CSS for error page shown when page navigation is blocked
+--- CSS for error page shown when page navigation is blocked.
 -- @type string
 -- @readwrite
 _M.navigation_blocked_css_tmpl = [===[

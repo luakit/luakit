@@ -63,8 +63,8 @@ add_binds("completion", {
 
 --- Update the list of completions for some input text.
 -- @tparam table w The current window table.
--- @tparam string text The current input text
--- @tparam number pos The current input cursor position
+-- @tparam string text The current input text.
+-- @tparam number pos The current input cursor position.
 function _M.update_completions(w, text, pos)
     local state = data[w]
 

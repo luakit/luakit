@@ -132,7 +132,7 @@ local scripts = {}
 local lstate = setmetatable({}, { __mode = "k" })
 
 --- The directory in which to search for userscripts.
--- By default, this is `$XDG_DATA_HOME/luakit/scripts`
+-- By default, this is `$XDG_DATA_HOME/luakit/scripts`.
 -- @type string
 -- @readonly
 _M.dir = capi.luakit.data_dir .. "/scripts"

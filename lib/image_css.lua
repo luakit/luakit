@@ -14,6 +14,7 @@ local _M = {}
 
 --- The background color to use when showing images.
 -- @readwrite
+-- @type string
 _M.background = "#222"
 
 -- Drawn from Firefox's TopLevelImageDocument.css, with some simplifications
@@ -45,6 +46,7 @@ local css = string.gsub(css_tmpl, "{(%w+)}", { background = _M.background })
 
 --- Stylesheet that is applied to webviews that contain only a single image.
 -- @readonly
+-- @type stylesheet
 _M.stylesheet = stylesheet{ source = css }
 
 webview.add_signal("init", function (view)

@@ -144,6 +144,7 @@ end
 -- If `delete` is not `false`, then the loaded session file is deleted.
 --
 -- @tparam[opt] boolean delete Whether to delete the file after the session is
+-- restored.
 -- @treturn[1] table The window table for the last window created.
 -- @treturn[2] nil If no session could be loaded, `nil` is returned.
 _M.restore = function(delete)

@@ -10,59 +10,61 @@
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
 -- @module luakit
 
---- config directory path (default: `$XDG_CONFIG_HOME`)
+--- The configuration directory path (default: `$XDG_CONFIG_HOME`).
 -- @field config_dir
 -- @type string
 -- @readonly
 
---- data directory path (default: `$XDG_DATA_HOME`)
+--- The data directory path (default: `$XDG_DATA_HOME`).
 -- @field data_dir
 -- @type string
 -- @readonly
 
---- cache directory path (default: `$XDG_CACHE_HOME`)
+--- The cache directory path (default: `$XDG_CACHE_HOME`).
 -- @field cache_dir
 -- @type string
 -- @readonly
 
---- verbosity (boolean value)
+--- Whether luakit is using verbose logging. `true` if logging in `verbose` or
+--`debug` mode.
 -- @field verbose
 -- @type boolean
 -- @readonly
 
---- luakit installation path (read only property)
+--- The luakit installation path.
 -- @field install_path
 -- @type string
 -- @readonly
 
---- luakit version (read only property)
+--- The luakit version.
 -- @field version
 -- @type string
 -- @readonly
 
---- All active window widgets
+--- An array of all active window widgets.
 -- @field windows
 -- @type {widget}
 -- @readonly
 
---- Quit luakit
+--- Quit luakit immediately, without asking modules for confirmation.
 -- @function quit
 
---- Get selection
+--- Get the contents of the X selection.
 -- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
 -- @treturn string The contents of the named selection.
 -- @function get_selection
 
---- Set selection
+--- Set the contents of the X selection.
 -- @tparam string text The UTF-8 string to be copied to the named selection.
 -- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
 -- @function set_selection
 
---- Spawn a process asynchronously
+--- Spawn a process asynchronously.
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
 -- @function spawn
 
---- Spawn a process synchronously
+--- Spawn a process synchronously.
+-- DOCMACRO(alert:This will block the luakit UI until the process exits.)
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
 -- @treturn number The exit status of the command.
 -- @treturn string A string containig data printed on `stdout`.
@@ -70,19 +72,17 @@
 -- @function spawn_sync
 
 --- Get the time since Luakit startup.
---
 -- @function time
 -- @treturn number The number of seconds Luakit has been running.
 
 --- Escape a string for use in a URI.
---
 -- @function uri_encode
 -- @tparam string str The string to encode.
 -- @treturn string The escaped/encoded string.
 
 --- Unescape an escaped string used in a URI.
 --
--- Returns the unescaped string, or nil if the string contains illegal
+-- Returns the unescaped string, or `nil` if the string contains illegal
 -- characters.
 --
 -- @function uri_encode
@@ -91,7 +91,7 @@
 -- @treturn string Error message.
 
 --- Add a function to be called regularly when Luakit is idle. If the function
--- returns false, or if an error is encountered during execution, the function
+-- returns `false`, or if an error is encountered during execution, the function
 -- is automatically removed from the set of registered idle functions, and will
 -- not be called again.
 --
@@ -105,7 +105,7 @@
 --
 -- @function idle_remove
 -- @tparam function cb The function to removed from the set of idle callbacks.
--- @treturn boolean True if the callback was present (and removed); false if the
+-- @treturn boolean `true` if the callback was present (and removed); `false` if the
 -- callback was not found.
 
 --- Register a custom URI scheme.
@@ -144,7 +144,7 @@
 --         -- Add more signals to page
 --     end)
 --
--- @tparam page page
+-- @tparam page page The new page object.
 
 --- Whether spell checking is enabled.
 -- @property enable_spell_checking

@@ -28,8 +28,8 @@ local function check_token(token)
     return token
 end
 
---- Load quick bookmarks from storage file into memory
--- @tparam string fd_name bookmarks storage file path or nil to use default one
+--- Load quick bookmarks from storage file into memory.
+-- @tparam string fd_name Bookmarks storage file path or `nil` to use default one.
 function _M.load(fd_name)
     if not qmarks then qmarks = {} end
 
@@ -44,8 +44,8 @@ function _M.load(fd_name)
     end
 end
 
---- Save quick bookmarks to file
--- @tparam string fd_name bookmarks storage file path or nil to use default one
+--- Save quick bookmarks to file.
+-- @tparam string fd_name Bookmarks storage file path or `nil` to use default one.
 function _M.save(fd_name)
     -- Quickmarks init check
     if not qmarks then _M.load() end
@@ -58,9 +58,9 @@ function _M.save(fd_name)
     io.close(fd)
 end
 
---- Return url related to given key or nil if does not exist
--- @tparam string token quick bookmarks mapping token
--- @tparam boolean load_file Call quickmark.load() before get
+--- Return URI related to given key or nil if does not exist.
+-- @tparam string token Quick bookmarks mapping token.
+-- @tparam boolean load_file Call `quickmark.load()` before retrieving the URI.
 function _M.get(token, load_file)
     -- Load quickmarks from other sessions
     if not qmarks or load_file ~= false then _M.load() end
@@ -68,17 +68,17 @@ function _M.get(token, load_file)
     return qmarks[check_token(token)]
 end
 
---- Return a list of all the tokens in the quickmarks table
+--- Return a list of all the tokens in the quickmarks table.
 function _M.get_tokens()
     if not qmarks then _M.load() end
     return lousy.util.table.keys(qmarks )
 end
 
---- Set new quick bookmarks mapping
--- @tparam string token The token under which given uris will be available
--- @tparam string|{string} uris List of locations to quickmark
--- @tparam boolean load_file Call quickmark.load() before set
--- @tparam boolean save_file Call quickmark.save() after set
+--- Set new quick bookmarks mapping.
+-- @tparam string token The token under which given uris will be available.
+-- @tparam string|{string} uris List of locations to quickmark.
+-- @tparam boolean load_file Call `quickmark.load()` before adding the mapping.
+-- @tparam boolean save_file Call `quickmark.save()` after adding the mapping.
 function _M.set(token, uris, load_file, save_file)
     -- Load quickmarks from other sessions
     if not qmarks or load_file ~= false then _M.load() end
@@ -96,10 +96,10 @@ function _M.set(token, uris, load_file, save_file)
     if save_file ~= false then _M.save() end
 end
 
---- Delete a quickmark
--- @tparam string token The quickmark token
--- @tparam boolean load_file Call quickmark.load() before deletion
--- @tparam boolean save_file Call quickmark.save() after deletion
+--- Delete a quickmark.
+-- @tparam string token The quickmark token.
+-- @tparam boolean load_file Call `quickmark.load()` before deletion.
+-- @tparam boolean save_file Call `quickmark.save()` after deletion.
 function _M.del(token, load_file, save_file)
     -- Load quickmarks from other sessions
     if not qmarks or load_file ~= false then _M.load() end
@@ -108,7 +108,7 @@ function _M.del(token, load_file, save_file)
     if save_file ~= false then _M.save() end
 end
 
---- Delete all quickmarks
+--- Delete all quickmarks.
 -- @tparam boolean save_file Call quickmark.save() function.
 function _M.delall(save_file)
     qmarks = {}

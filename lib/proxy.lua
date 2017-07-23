@@ -82,15 +82,15 @@ function _M.get(name)
     return proxies[name]
 end
 
---- Get active proxy configuration
+--- Get the active proxy configuration.
 -- @treturn table The active proxy configuration. Two fields are present:
 -- `name` and `address`.
 function _M.get_active()
     return active
 end
 
---- Load proxies list from file
--- @tparam string fd_name custom proxy storage or nil to use default
+--- Load the proxies list from a file.
+-- @tparam string fd_name Custom proxy storage or `nil` to use default.
 function _M.load(fd_name)
     fd_name = fd_name or proxies_file
     if not os.exists(fd_name) then return end
@@ -113,8 +113,8 @@ function _M.load(fd_name)
     end
 end
 
---- Save proxies list to file
--- @tparam string fd_name custom proxy storage or nil to use default
+--- Save the proxies list to a file.
+-- @tparam string fd_name Custom proxy storage or `nil` to use default.
 function _M.save(fd_name)
     local fd = io.open(fd_name or proxies_file, "w")
     for name, address in pairs(proxies) do
@@ -126,10 +126,10 @@ function _M.save(fd_name)
     io.close(fd)
 end
 
---- Add new proxy server to current list
--- @tparam string name proxy configuration name
--- @tparam string address proxy server address
--- @tparam boolean save_file do not save configuration if false
+--- Add a new proxy server to current list.
+-- @tparam string name Proxy configuration name.
+-- @tparam string address Proxy server address.
+-- @tparam boolean save_file Do not save configuration if `false`.
 function _M.set(name, address, save_file)
     name = lousy.util.string.strip(name)
     if not string.match(name, "^([%w%p]+)$") then
@@ -139,8 +139,8 @@ function _M.set(name, address, save_file)
     if save_file ~= false then _M.save() end
 end
 
---- Delete selected proxy from list
--- @tparam string name proxy server name
+--- Delete a proxy from the proxy list.
+-- @tparam string name Proxy server name.
 function _M.del(name)
     name = lousy.util.string.strip(name)
     if proxies[name] then
@@ -153,8 +153,8 @@ function _M.del(name)
     end
 end
 
---- Set given proxy to active. Return true on success, else false
--- @tparam string name proxy configuration name or nil to unset proxy.
+--- Set given proxy to active. Return true on success, else false.
+-- @tparam string name Proxy configuration name or `nil` to unset proxy.
 function _M.set_active(name)
     if name then
         name = lousy.util.string.strip(name)

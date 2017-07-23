@@ -35,7 +35,7 @@
 -- @readonly
 
 --- @property error
--- The error message for the download, or nil.
+-- The error message for the download, or `nil`.
 -- @type string|nil
 -- @readonly
 

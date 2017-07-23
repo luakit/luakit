@@ -45,7 +45,7 @@
 -- 	    headers.Referer = nil -- Don't send Referer header
 -- 	end)
 -- @signal send-request
--- @tparam page The page.
+-- @tparam page page The page.
 -- @tparam string uri The URI of the request.
 -- @tparam table headers The HTTP headers of the request.
 -- @treturn string|false A redirect URI, or `false` to block the request.

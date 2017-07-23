@@ -13,7 +13,7 @@
 
 --- @method match
 -- Scan a given string for a match.
--- @tparam string string The string to scan for a match
+-- @tparam string string The string to scan for a match.
 -- @treturn boolean `true` if a match was found, `false` otherwise.
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

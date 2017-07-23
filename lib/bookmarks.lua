@@ -43,8 +43,8 @@ end
 capi.luakit.idle_add(_M.init)
 
 --- Get a bookmark entry by its ID number.
--- @tparam number id The ID of the bookmark entry to get
--- @treturn table The bookmark entry
+-- @tparam number id The ID of the bookmark entry to get.
+-- @treturn table The bookmark entry.
 function _M.get(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
     local rows = _M.db:exec([[ SELECT * FROM bookmarks WHERE id = ? ]], { id })
@@ -52,7 +52,7 @@ function _M.get(id)
 end
 
 --- Remove a bookmark entry by its ID number.
--- @tparam number id The ID of the bookmark entry to remove
+-- @tparam number id The ID of the bookmark entry to remove.
 function _M.remove(id)
     assert(type(id) == "number", "invalid bookmark id (number expected)")
 
@@ -77,9 +77,9 @@ local function update_tags(b, tags)
 end
 
 --- Update the tags on a bookmark entry.
--- @tparam number id The ID of the bookmark entry to update
--- @tparam table|string new_tags The tags to add to the bookmark entry
--- @tparam boolean replace True if the new tags should replace all existing
+-- @tparam number id The ID of the bookmark entry to update.
+-- @tparam table|string new_tags The tags to add to the bookmark entry.
+-- @tparam boolean replace `true` if the new tags should replace all existing
 -- tags.
 function _M.tag(id, new_tags, replace)
     local b = assert(_M.get(id), "bookmark not found")
@@ -101,8 +101,8 @@ function _M.tag(id, new_tags, replace)
 end
 
 --- Remove a tag from a bookmark entry.
--- @tparam number id The ID of the bookmark entry to update
--- @tparam string name The tag to remove from the bookmark entry
+-- @tparam number id The ID of the bookmark entry to update.
+-- @tparam string name The tag to remove from the bookmark entry.
 function _M.untag(id, name)
     local b = assert(_M.get(id), "bookmark not found")
     if b.tags then

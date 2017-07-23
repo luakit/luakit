@@ -32,8 +32,7 @@
 -- @treturn ipc_channel An IPC channel endpoint object.
 
 
----
--- Require a Lua module on the web process.
+--- Require a Lua module on the web process.
 --
 -- Load the named module on all web process Lua states. The module will
 -- be loaded on any future web process Lua states.

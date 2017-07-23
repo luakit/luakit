@@ -200,7 +200,7 @@ end
 -- @tparam table binds A table of bindings to search.
 -- @tparam table args A table of arguments passed through to any 'any' bindings
 -- called.
--- @treturn boolean True if an 'any' binding was ran successfully.
+-- @treturn boolean `true` if an 'any' binding was ran successfully.
 function _M.match_any(object, binds, args)
     for _, b in ipairs(binds) do
         if b.type == "any" then
@@ -226,7 +226,7 @@ end
 -- @tparam string key The key name.
 -- @tparam table args A table of arguments passed through to any key bindings
 -- called.
--- @treturn boolean True if a key binding was ran successfully.
+-- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_key(object, binds, mods, key, args)
     for _, b in ipairs(binds) do
         if b.type == "key" and b.key == key and b.mods == mods then
@@ -252,7 +252,7 @@ end
 -- @tparam string button The button name.
 -- @tparam table args A table of arguments passed through to any button bindings
 -- called.
--- @treturn boolean True if a key binding was ran successfully.
+-- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_but(object, binds, mods, button, args)
     for _, b in ipairs(binds) do
         if b.type == "button" and b.button == button and b.mods == mods then
@@ -294,8 +294,8 @@ end
 -- @tparam string buffer The buffer string to match.
 -- @tparam table args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
--- @treturn boolean True if a binding was matched and called.
--- @treturn boolean True if a partial match exists.
+-- @treturn boolean `true` if a binding was matched and called.
+-- @treturn boolean `true` if a partial match exists.
 function _M.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
@@ -326,7 +326,7 @@ end
 -- @tparam string buffer The buffer string to match.
 -- @tparam table args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
--- @treturn boolean True if either type of binding was matched and called.
+-- @treturn boolean `true` if either type of binding was matched and called.
 function _M.match_cmd(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
@@ -371,7 +371,7 @@ end
 -- @tparam string key The key name to match.
 -- @tparam table args The bind options/state/metadata table which is applied over the
 -- opts table given when the bind was created.
--- @treturn boolean True if a key or buffer binding was matched or if a key was added to
+-- @treturn boolean `true` if a key or buffer binding was matched or if a key was added to
 -- the buffer.
 -- @treturn string The new buffer truncated to 10 characters (if you need more buffer
 -- then use the input bar for whatever you are doing). If no buffer binding
@@ -440,7 +440,7 @@ function _M.hit(object, binds, mods, key, args)
 end
 
 --- Produce a string describing the action that triggers a given binding.
--- For example, a binding for the down-arrow key would produce `"<Down>"`,
+-- For example, a binding for the down-arrow key would produce `"<Down>"`.
 --
 -- @tparam table b The binding.
 -- @treturn string The binding description string.

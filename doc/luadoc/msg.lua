@@ -17,27 +17,27 @@
 
 --- Log a fatal error message, and abort the program.
 -- @function fatal
--- @tparam string format Format string
+-- @tparam string format Format string.
 -- @param ... Additional arguments referenced from the format string.
 
 --- Log a warning message.
 -- @function warn
--- @tparam string format Format string
+-- @tparam string format Format string.
 -- @param ... Additional arguments referenced from the format string.
 
 --- Log an informational message.
 -- @function info
--- @tparam string format Format string
+-- @tparam string format Format string.
 -- @param ... Additional arguments referenced from the format string.
 
 --- Log a verbose message.
 -- @function verbose
--- @tparam string format Format string
+-- @tparam string format Format string.
 -- @param ... Additional arguments referenced from the format string.
 
 --- Log a debug message.
 -- @function debug
--- @tparam string format Format string
+-- @tparam string format Format string.
 -- @param ... Additional arguments referenced from the format string.
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

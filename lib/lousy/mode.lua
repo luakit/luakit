@@ -21,7 +21,7 @@ setmetatable(default_modes, { __mode = "k" })
 
 --- Check if the mode can be set on an object.
 -- An object is considered mode-able if it has an "emit_signal" method.
--- @tparam object The object to check.
+-- @param object The object to check.
 function _M.is_modeable(object)
     local t = type(object)
     return ((t == "table" or t == "userdata" or t == "lightuserdata")
@@ -29,7 +29,7 @@ function _M.is_modeable(object)
 end
 
 --- Get the current mode for a given object.
--- @tparam object A mode-able object.
+-- @param object A mode-able object.
 -- @treturn string The current mode of the given object, or the default mode of that object,
 -- or "normal".
 function _M.get(object)
@@ -40,8 +40,8 @@ function _M.get(object)
 end
 
 --- Set the mode for a given object.
--- @tparam object A mode-able object.
--- @tparam string mode A mode name (I.e. "insert", "command", ...)
+-- @param object A mode-able object.
+-- @tparam string mode A mode name (e.g. "insert", "command", ...).
 -- @treturn string The newly set mode.
 function _M.set(object, mode, ...)
     if not _M.is_modeable(object) then

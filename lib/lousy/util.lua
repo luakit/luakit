@@ -45,9 +45,9 @@ function _M.unescape(text)
     return text and text:gsub("&(%a+);", xml_entity_chars) or nil
 end
 
---- Create a directory
+--- Create a directory.
 -- @tparam string dir The directory.
--- @treturn number mkdir return code
+-- @treturn number The status code returned by `mkdir`; 0 indicates success.
 function _M.mkdir(dir)
     return os.execute(rstring.format("mkdir -p %q",  dir))
 end
@@ -96,7 +96,7 @@ end
 
 --- Join all tables given as parameters.
 -- This will iterate all tables and insert all their keys into a new table.
--- @tparam {table} args A list of tables to join
+-- @tparam {table} args A list of tables to join.
 -- @treturn table A new table containing all keys from the arguments.
 function table.join(...)
     local ret = {}
@@ -115,7 +115,7 @@ end
 --- Check if a table has an item and return its key.
 -- @tparam table t The table.
 -- @param item The item to look for in values of the table.
--- @return The key where the item is found, or nil if not found.
+-- @return The key where the item is found, or `nil` if not found.
 function table.hasitem(t, item)
     for k, v in pairs(t) do
         if v == item then
@@ -124,9 +124,9 @@ function table.hasitem(t, item)
     end
 end
 
---- Get a sorted table with all integer keys from a table
--- @tparam table t the table for which the keys to get
--- @treturn table A table with keys
+--- Get a sorted table with all integer keys from a table.
+-- @tparam table t The table for which the keys to get.
+-- @treturn table A table with keys.
 function table.keys(t)
     local keys = { }
     for k, _ in pairs(t) do
@@ -138,9 +138,9 @@ function table.keys(t)
     return keys
 end
 
---- Reverse a table
--- @tparam table t the table to reverse
--- @treturn table the reversed table
+--- Reverse a table.
+-- @tparam table t The table to reverse.
+-- @treturn table The reversed table.
 function table.reverse(t)
     local tr = { }
     -- reverse all elements with integer keys
@@ -156,9 +156,9 @@ function table.reverse(t)
     return tr
 end
 
---- Clone a table
--- @tparam table t the table to clone
--- @treturn table a clone of t
+--- Clone a table.
+-- @tparam table t The table to clone.
+-- @treturn table A clone of `t`.
 function table.clone(t)
     local c = { }
     for k, v in pairs(t) do
@@ -167,9 +167,9 @@ function table.clone(t)
     return c
 end
 
---- Clone table and set metatable
--- @tparam table t the table to clone
--- @treturn table a clone of t with t's metatable
+--- Clone table and set metatable.
+-- @tparam table t The table to clone.
+-- @treturn table A clone of `t` with `t`'s metatable.
 function table.copy(t)
     local c = table.clone(t)
     return setmetatable(c, getmetatable(t))
@@ -178,7 +178,7 @@ end
 --- Check if two tables are identical.
 -- @tparam table a The first table.
 -- @tparam table b The second table.
--- @treturn boolean True if both tables are identical.
+-- @treturn boolean `true` if both tables are identical.
 function table.isclone(a, b)
     if #a ~= #b then return false end
     for k, _ in pairs(a) do
@@ -188,8 +188,8 @@ function table.isclone(a, b)
 end
 
 --- Clone a table with all values as array items.
--- @tparam table t the table to clone
--- @treturn table all values in t
+-- @tparam table t The table to clone.
+-- @treturn table All values in `t`.
 function table.values(t)
     local ret = {}
     for _, v in pairs(t) do
@@ -199,8 +199,8 @@ function table.values(t)
 end
 
 --- Convert a table to an array by removing all keys that are not sequential numbers.
--- @tparam table t the table to converts
--- @treturn table a new table with all non-number keys removed
+-- @tparam table t The table to convert.
+-- @treturn table A new table with all non-number keys removed.
 function table.toarray(t)
     local ret = {}
     for k, v in ipairs(t) do
@@ -210,10 +210,10 @@ function table.toarray(t)
 end
 
 --- Filters an array with a predicate function. Element indices are shifted down
--- to fill gaps
--- @tparam table t The array to filter
--- @tparam function pred The predicate function: called with (key, value); return true to
--- keep element, false to remove.
+-- to fill gaps.
+-- @tparam table t The array to filter.
+-- @tparam function pred The predicate function: called with (key, value); return
+-- `true` to keep element, `false` to remove.
 -- @treturn table The filtered array.
 function table.filter_array(t, pred)
     local ret = {}
@@ -227,7 +227,7 @@ end
 
 --- Check if a file exists and is readable.
 -- @tparam string f The file path.
--- @treturn boolean True if the file exists and is readable.
+-- @treturn boolean `true` if the file exists and is readable.
 function os.exists(f)
     assert(type(f) == "string", "invalid path")
     local fh = io.open(f)
@@ -237,11 +237,11 @@ function os.exists(f)
     end
 end
 
---- Python like string split (source: lua wiki)
+--- Python like string split (source: lua wiki).
 -- @tparam string s The string to split.
 -- @tparam string pattern The split pattern (I.e. "%s+" to split text by one or more
 -- whitespace characters).
--- @tparam[opt] table ret The table to insert the split items in to or a new table if nil.
+-- @tparam[opt] table ret The table to insert the split items in to or a new table if `nil`.
 -- @treturn table A table of the string split by the pattern.
 function string.split(s, pattern, ret)
     if not pattern then pattern = "%s+" end
@@ -363,8 +363,8 @@ end
 -- In sqlite3: "A string constant is formed by enclosing the string in single
 -- quotes ('). A single quote within the string can be encoded by putting two
 -- single quotes in a row - as in Pascal."
--- Read: <http://sqlite.org/lang_expr.html>
--- @tparam string s A String.
+-- Read: <http://sqlite.org/lang_expr.html>.
+-- @tparam string s A string.
 -- @treturn string The escaped string.
 function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
@@ -375,17 +375,17 @@ end
 -- Escapes the magic characters <code>^$()%.[]*+-?)</code> by prepending a
 -- <code>%</code>.
 --
---  @tparam string s A string.
---  @treturn string The escaped pattern.
+-- @tparam string s A string.
+-- @treturn string The escaped pattern.
 function _M.lua_escape(s)
     return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%%%1")
 end
 
 local etc_hosts
 
---- Get all hostnames in /etc/hosts
--- @tparam boolean force Force re-load of /etc/hosts
--- @treturn {string} Table of all hostnames in /etc/hosts
+--- Get all hostnames in `/etc/hosts`.
+-- @tparam boolean force Force re-load of `/etc/hosts`.
+-- @treturn {string} Table of all hostnames in `/etc/hosts`.
 function _M.get_etc_hosts(force)
     -- Unless forced return previous hostnames
     if not force and etc_hosts then
