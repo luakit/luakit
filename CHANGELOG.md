@@ -1,6 +1,6 @@
 # Changelog
 
-## [2017-07-11]
+## [2017-07-24]
 
  - Required WebKitGTK+ version: 2.14+
  - A relatively recent version of GTK+ 3 is required; some features are not available on older versions.
@@ -85,7 +85,8 @@ Core APIs:
  - Added `luakit.process_limit` to control the maximum number of web processes.
  - Added `luakit.options` and `luakit.webkit2` properties.
  - Added `lousy.util.table.filter_array()` and `lousy.util.lua_escape()`.
- - Added website data retrieval API.
+ - Added luakit spell checking API. A suitable language to check spelling with is automatically detected.
+ - Added website data retrieval and removal APIs.
  - Added user stylesheet APIs, used by `styles.lua`. Stylesheet objects can be created from Lua code and enabled/disabled for individual `webview` widgets.
  - Added request API. This supports handling custom URI scheme requests asynchronously.
  - Added `msg` logging library. This replaces the `info()` and `warn()` functions.
@@ -203,6 +204,8 @@ New webview APIs:
  - The API for retrieving page source is now asynchronous.
  - Follow mode now strips the leading `mailto:` from email links, and allows the user to configure whether to ignore case in or not.
  - Changed the `label` widget `width` property to `textwidth`.
+ - The `socket` widget is no longer destroyed upon plug disconnect.
+ - `go_next_prev.lua` now uses an improved heuristic for guessing page relationship.
  - Other minor changes.
 
 ### Removed
@@ -261,7 +264,7 @@ New webview APIs:
 
 ### Contributors to this release:
 
- - Aidan Holm            (1485 commits)
+ - Aidan Holm            (1575 commits)
  - Jenny Wong            (71 commits)
  - Mason Larobina        (17 commits)
  - Grégory DAVID         (8 commits)
@@ -282,6 +285,7 @@ New webview APIs:
  - nmeum                 (1 commit)
  - Kane Wallmann         (1 commit)
  - Jasper den Ouden      (1 commit)
+ - gleachkr              (1 commit)
  - feivel                (1 commit)
  - eshizhan              (1 commit)
  - donlzx                (1 commit)
