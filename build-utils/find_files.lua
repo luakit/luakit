@@ -1,19 +1,32 @@
 local filter_array = require("lib.lousy.util").table.filter_array
 local lua_escape = require("lib.lousy.util").lua_escape
 
-local git_files
+local luakit_files
 
-local function get_git_files ()
-    if not git_files then
-        git_files = {}
-        local f = io.popen("git ls-files")
+local function get_luakit_files ()
+    if not luakit_files then
+        luakit_files = {}
+        local f = io.popen("find . -type f | grep -v '\\./\\.' | sed 's#^\\./##'")
         for line in f:lines() do
-            table.insert(git_files, line)
+            -- Check file against filters derived from .gitignore
+            local ok = true
+            ok = ok and not line:match("^doc/apidocs/")
+            ok = ok and not line:match("^doc/html/")
+            ok = ok and not line:match("%.o$")
+            ok = ok and not line:match("%.1$")
+            ok = ok and not line:match("%.swp$")
+            ok = ok and not line:match("~$")
+            ok = ok and not line:match("^common/tokenize.[ch]$")
+            ok = ok and not ({
+                ["luakit"] = true, ["luakit.so"] = true, ["luakit.1.gz"] = true,
+                ["tests/util.so"] = true, ["buildopts.h"] = true, ["tags"] = true,
+            })[line]
+            if ok then table.insert(luakit_files, line) end
         end
         f:close()
     end
 
-    return git_files
+    return luakit_files
 end
 
 local function path_is_in_directory(path, dir)
@@ -44,12 +57,12 @@ local function find_files(dirs, patterns, excludes)
         assert(type(exclude) == "string", "Each exclude must be a string")
     end
 
-    -- Get list of files tracked by git
-    get_git_files()
+    -- Get list of files tracked by luakit
+    get_luakit_files()
 
     -- Filter to those inside the given directories
     local file_list = {}
-    for _, file in ipairs(git_files) do
+    for _, file in ipairs(luakit_files) do
         local dir_match = false
         for _, dir in ipairs(dirs) do
             dir_match = dir_match or path_is_in_directory(file, dir)
@@ -78,7 +91,7 @@ local function find_files(dirs, patterns, excludes)
 end
 
 return {
-    get_git_files = get_git_files,
+    get_luakit_files = get_luakit_files,
     find_files = find_files,
 }
 
