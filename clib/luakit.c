@@ -425,6 +425,7 @@ luaH_parse_website_data_types_table(lua_State *L, gint idx)
 static void
 website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, lua_State *L)
 {
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
     GError *error = NULL;
     GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
     if (error) {
@@ -495,6 +496,7 @@ static void
 website_data_remove_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, website_data_remove_task_t *wdrt)
 {
     lua_State *L = wdrt->L;
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
 
     GError *error = NULL;
     webkit_website_data_manager_remove_finish(manager, result, &error);
@@ -514,6 +516,7 @@ static void
 luaH_luakit_website_data_remove_cont(WebKitWebsiteDataManager *manager, GAsyncResult *result, website_data_remove_task_t *wdrt)
 {
     lua_State *L = wdrt->L;
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
 
     GError *error = NULL;
     GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
