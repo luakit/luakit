@@ -4,7 +4,7 @@
 --
 -- The event box widget allows stacking widgets horizontally or vertically.
 --
--- @class widget[type=event_box]
+-- @class widget:event_box
 -- @prefix ebox
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

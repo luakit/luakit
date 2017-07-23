@@ -5,7 +5,7 @@
 -- The socket widget allows displaying a window from an XEMBED client within the
 -- luakit user interface.
 --
--- @class widget[type=socket]
+-- @class widget:socket
 -- @prefix socket
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

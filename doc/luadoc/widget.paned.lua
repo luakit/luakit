@@ -5,7 +5,7 @@
 -- The paned widget provides a two-pane interface widget, with a
 -- draggable slider between panes.
 --
--- @class widget[type=paned]
+-- @class widget:paned
 -- @prefix paned
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

@@ -5,7 +5,7 @@
 -- The image widget shows an image from a website favicon, a file, or an icon
 -- name.
 --
--- @class widget[type=image]
+-- @class widget:image
 -- @prefix image
 -- @author Aidan Holm
 -- @copyright 2016 Aidan Holm

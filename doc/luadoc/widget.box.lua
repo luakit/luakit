@@ -4,7 +4,7 @@
 --
 -- The box widget allows stacking widgets horizontally or vertically.
 --
--- @class widget[type=box]
+-- @class widget:box
 -- @prefix box
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

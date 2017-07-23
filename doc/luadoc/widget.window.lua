@@ -4,7 +4,7 @@
 --
 -- The window widget is the main container for any windows on the screen.
 --
--- @class widget[type=window]
+-- @class widget:window
 -- @prefix window
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

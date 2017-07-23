@@ -5,7 +5,7 @@
 -- The notebook widget allows switching between a set of widgets, only one of
 -- which will be visible at a given time.
 --
--- @class widget[type=notebook]
+-- @class widget:notebook
 -- @prefix notebook
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

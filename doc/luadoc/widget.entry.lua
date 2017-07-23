@@ -4,7 +4,7 @@
 --
 -- The entry widget shows a text box for single-line user input.
 --
--- @class widget[type=entry]
+-- @class widget:entry
 -- @prefix entry
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

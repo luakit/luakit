@@ -15,7 +15,7 @@
 --
 --     view:destroy()
 --
--- @class widget[type=webview]
+-- @class widget:webview
 -- @prefix view
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

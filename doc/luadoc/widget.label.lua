@@ -5,7 +5,7 @@
 -- The label widget shows a single line of formatted text. It is not editable by the
 -- user.
 --
--- @class widget[type=label]
+-- @class widget:label
 -- @prefix label
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

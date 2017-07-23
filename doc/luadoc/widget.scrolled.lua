@@ -6,7 +6,7 @@
 -- be scrolled. One example use for this is the tablist, which will be scrolled
 -- when there are too many tabs to display all at once.
 --
--- @class widget[type=scrolled]
+-- @class widget:scrolled
 -- @prefix scrolled
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

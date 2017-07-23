@@ -4,7 +4,7 @@
 --
 -- The overlay widget allows independent layers of widgets.
 --
--- @class widget[type=overlay]
+-- @class widget:overlay
 -- @prefix overlay
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

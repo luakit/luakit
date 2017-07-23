@@ -4,7 +4,7 @@
 --
 -- The spinner widget indicates an ongoing process of indefinite duration.
 --
--- @class widget[type=spinner]
+-- @class widget:spinner
 -- @prefix spinner
 -- @author Mason Larobina
 -- @copyright 2010 Mason Larobina

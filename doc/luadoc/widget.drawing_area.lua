@@ -6,7 +6,7 @@
 --
 -- Widgets of this type cannot be created without LuaJIT FFI support.
 --
--- @class widget[type=drawing_area]
+-- @class widget:drawing_area
 -- @prefix area
 -- @author Aidan Holm
 -- @copyright 2017 Aidan Holm
