@@ -120,10 +120,10 @@ webview.add_signal("init", function (view)
         domain = string.match(domain or "", "^www%.(.+)") or domain or "all"
         -- Build list of domain props tables to join & load.
         -- I.e. for example.com load { .example.com, example.com, .com }
-        local prop_sets = {
-            { domain = "all", props = domain_props.all or {} },
-            { domain = domain, props = domain_props[domain] or {} },
-        }
+        local prop_sets = { { domain = "all", props = domain_props.all or {} } }
+        if domain ~= "all" then
+            table.insert(prop_sets, { domain = domain, props = domain_props[domain] or {} })
+        end
         repeat
             table.insert(prop_sets, { domain = "."..domain, props = domain_props["."..domain] or {} })
             domain = string.match(domain, "%.(.+)")
