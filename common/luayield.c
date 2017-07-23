@@ -26,6 +26,7 @@
 
 static void *wrap_function_ref;
 static void *yield_ref;
+static void *unlock_ref;
 static const char * sched_src =                                                                  \
                                                                                                  \
 " local y = {}                                                                               \n" \
@@ -38,7 +39,10 @@ static const char * sched_src =                                                 
 "         y.yieldable = false                                                                \n" \
 "         if y.yield then                                                                    \n" \
 "             y.yield = false                                                                \n" \
-"             ret = {coroutine.yield()}                                                      \n" \
+"             y[coroutine.running()] = true                                                  \n" \
+"             repeat                                                                         \n" \
+"                 ret = {coroutine.yield()}                                                  \n" \
+"             until not y[coroutine.running()]                                               \n" \
 "         end                                                                                \n" \
 "         return unpack(ret)                                                                 \n" \
 "     end                                                                                    \n" \
@@ -49,9 +53,14 @@ static const char * sched_src =                                                 
 "     y.yield = true                                                                         \n" \
 " end                                                                                        \n" \
 "                                                                                            \n" \
+" local unlock = function ()                                                                 \n" \
+"     y[coroutine.running()] = nil                                                           \n" \
+" end                                                                                        \n" \
+"                                                                                            \n" \
 " return {                                                                                   \n" \
 "     wrap_function = wrap_function,                                                         \n" \
 "     yield = yield,                                                                         \n" \
+"     unlock = unlock,                                                                       \n" \
 " }                                                                                          \n" \
 ;
 
@@ -65,6 +74,8 @@ luaH_yield_setup(lua_State *L)
     yield_ref = luaH_object_ref(L, -1);
     lua_getfield(L, -1, "wrap_function");
     wrap_function_ref = luaH_object_ref(L, -1);
+    lua_getfield(L, -1, "unlock");
+    unlock_ref = luaH_object_ref(L, -1);
     lua_settop(L, top);
 }
 
@@ -82,6 +93,27 @@ luaH_yield(lua_State *L)
     luaH_object_push(L, yield_ref);
     luaH_dofunction(L, 0, 0);
     return 0;
+}
+
+/** Continue a suspended Lua thread.
+ * \param L The Lua stack.
+ * \param nret The number of values to return to the suspended thread.
+ * \return True on no error, false otherwise.
+ */
+gboolean
+luaH_resume(lua_State *L, gint nret) {
+    luaH_object_push(L, unlock_ref);
+    luaH_dofunction(L, 0, 0);
+    gint top = lua_gettop(L) - nret;
+    gint ret = lua_resume(L, nret);
+    if (ret == 0 || ret == LUA_YIELD)
+        return TRUE;
+    lua_pushcfunction(L, luaH_dofunction_on_error);
+    lua_insert(L, -2);
+    lua_call(L, 1, 1);
+    error("%s", lua_tostring(L, -1));
+    lua_settop(L, top);
+    return FALSE;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

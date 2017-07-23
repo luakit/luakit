@@ -154,25 +154,6 @@ luaH_dofunction(lua_State *L, gint nargs, gint nret) {
     return TRUE;
 }
 
-/** Continue a suspended Lua thread.
- * \param L The Lua stack.
- * \param nret The number of values to return to the suspended thread.
- * \return True on no error, false otherwise.
- */
-static inline gboolean
-luaH_resume(lua_State *L, gint nret) {
-    gint top = lua_gettop(L) - nret;
-    gint ret = lua_resume(L, nret);
-    if (ret == 0 || ret == LUA_YIELD)
-        return TRUE;
-    lua_pushcfunction(L, luaH_dofunction_on_error);
-    lua_insert(L, -2);
-    lua_call(L, 1, 1);
-    error("%s", lua_tostring(L, -1));
-    lua_settop(L, top);
-    return FALSE;
-}
-
 #define luaH_checktable(L, n) do { \
         if(!lua_istable(L, n)) \
             luaL_typerror(L, n, "table"); \

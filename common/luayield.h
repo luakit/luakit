@@ -22,10 +22,12 @@
 #define LUAKIT_COMMON_LUAYIELD_H
 
 #include <lauxlib.h>
+#include <glib.h>
 
 void luaH_yield_setup(lua_State *L);
 void luaH_yield_wrap_function(lua_State *L);
 int luaH_yield(lua_State *L);
+gboolean luaH_resume(lua_State *L, gint nret);
 
 #endif
 
