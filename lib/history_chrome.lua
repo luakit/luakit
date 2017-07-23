@@ -415,7 +415,7 @@ end)
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("history", "Open [luakit://history/](luakit://history/) in a new tab.",
+    cmd("history", "Open <luakit://history/> in a new tab.",
         function (w, query)
             initial_search_term = query
             w:new_tab("luakit://history/")

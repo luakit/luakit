@@ -1,7 +1,7 @@
 --- Add custom luakit:// scheme rendering functions.
 --
 -- This module provides a convenient interface for other modules to add
--- luakit:// chrome pages, with features like a shared theme, error reporting,
+-- `luakit://` chrome pages, with features like a shared theme, error reporting,
 -- and Lua to JavaScript function bridge management.
 --
 -- @module chrome

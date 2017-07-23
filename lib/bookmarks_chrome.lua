@@ -1,7 +1,7 @@
 --- Simple sqlite3 bookmarks - chrome page.
 --
 -- This module allows you to add and remove bookmarks with a simple graphical
--- webpage at [luakit://bookmarks/](luakit://bookmarks/). You can currently:
+-- webpage at <luakit://bookmarks/>. You can currently:
 --
 --  - add, edit, and remove individual bookmarks,
 --  - tag bookmarks or add markdown descriptions, and

@@ -995,6 +995,7 @@ function auto_links(text)
 	-- links
 	text = text:gsub("<(https?:[^'\">%s]+)>", link)
 	text = text:gsub("<(ftp:[^'\">%s]+)>", link)
+	text = text:gsub("<(luakit:[^'\">%s]+)>", link)
 
 	-- mail
 	text = text:gsub("<mailto:([^'\">%s]+)>", mail)

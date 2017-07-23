@@ -1,13 +1,13 @@
 --- New tab page for luakit.
 --
--- This module provides [luakit://newtab/](luakit://newtab/), the luakit new
+-- This module provides <luakit://newtab/>, the luakit new
 -- tab page. This page is opened by default when opening a new tab without
 -- specifying a URL to open.
 --
 -- ### Customization
 --
 -- The easiest way to customize what is shown at
--- [luakit://newtab/](luakit://newtab/) is to create a HTML file at the
+-- <luakit://newtab/> is to create a HTML file at the
 -- path specified by `newtab_chrome.new_tab_file`; by default this field has the
 -- value `$XDG_DATA_DIR/luakit/newtab.html`.
 --

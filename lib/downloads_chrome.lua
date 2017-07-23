@@ -1,7 +1,7 @@
 --- Downloads for luakit - chrome page.
 --
 -- This module allows you to monitor the progress of ongoing downloads through a
--- webpage at [luakit://downloads/](luakit://downloads/).
+-- webpage at <luakit://downloads/>.
 --
 -- @module downloads_chrome
 -- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
@@ -373,17 +373,17 @@ local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
 add_binds("normal", {
     buf("^gd$",
-        [[Open [luakit://downloads](luakit://downloads/) in current tab.]],
+        [[Open <luakit://downloads> in current tab.]],
         function (w) w:navigate(_M.chrome_page) end),
 
     buf("^gD$",
-        [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
+        [[Open <luakit://downloads> in new tab.]],
         function (w) w:new_tab(_M.chrome_page) end),
 })
 
 add_cmds({
     cmd("downloads",
-        [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
+        [[Open <luakit://downloads> in new tab.]],
         function (w) w:new_tab(_M.chrome_page) end),
 })
 

@@ -1,6 +1,6 @@
 --- Provides luakit://help/ page.
 --
--- This module provides the luakit://help/ page and all of its sub-pages,
+-- This module provides the <luakit://help/> page and all of its sub-pages,
 -- including the built-in documentation browser.
 --
 -- @module help_chrome
@@ -240,7 +240,7 @@ end, nil, {})
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("help", "Open [luakit://help/](luakit://help/) in a new tab.",
+    cmd("help", "Open <luakit://help/> in a new tab.",
         function (w) w:new_tab("luakit://help/") end),
 })
 

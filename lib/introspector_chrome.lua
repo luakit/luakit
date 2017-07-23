@@ -336,7 +336,7 @@ end, nil, {
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("introspector", "Open [luakit://introspector/](luakit://introspector/) in a new tab.",
+    cmd("introspector", "Open <luakit://introspector/> in a new tab.",
         function (w) w:new_tab("luakit://introspector/") end),
 })
 

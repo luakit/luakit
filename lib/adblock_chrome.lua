@@ -1,7 +1,7 @@
 --- Simple URI-based content filter - chrome page.
 --
 -- This module allows you to configure the `adblock` module with a simple
--- graphical webpage at [luakit://adblock/](luakit://adblock/). You can
+-- graphical webpage at <luakit://adblock/>. You can
 -- currently:
 --
 --  - enable/disable the adblocker globally, and
@@ -300,11 +300,11 @@ end)
 -- Add chrome binds.
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^ga$", "Open [luakit://adblock/](luakit://adblock/) in the current tab.", function (w)
+    buf("^ga$", "Open <luakit://adblock/> in the current tab.", function (w)
         w:navigate(_M.chrome_page)
     end),
 
-    buf("^gA$", "Open [luakit://adblock/](luakit://adblock/) in a new tab.", function (w, _, m)
+    buf("^gA$", "Open <luakit://adblock/> in a new tab.", function (w, _, m)
         for _=1, m.count do
             w:new_tab(_M.chrome_page)
         end
@@ -314,7 +314,7 @@ add_binds("normal", {
 -- Add chrome commands.
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("adblock", "Open [luakit://adblock/](luakit://adblock/) in the current tab.", function (w)
+    cmd("adblock", "Open <luakit://adblock/> in the current tab.", function (w)
         w:navigate(_M.chrome_page)
     end),
 })

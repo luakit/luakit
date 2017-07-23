@@ -3,7 +3,7 @@
 -- This module provides browsing history support. Pages are saved to an on-disk
 -- database automatically as the user browses.
 --
--- The luakit://history/ page is provided by the `history_chrome` module.
+-- The <luakit://history/> page is provided by the `history_chrome` module.
 --
 -- @module history
 -- @copyright 2010-2011 Mason Larobina <mason.larobina@gmail.com>
