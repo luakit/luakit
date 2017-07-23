@@ -73,7 +73,7 @@ luakit.1: luakit.1.in
 luakit.1.gz: luakit.1
 	@gzip -c $< > $@
 
-doc/apidocs/index.html: $(DOC_SRCS)
+doc/apidocs/index.html: $(DOC_SRCS) $(wildcard build-utils/docgen/*.lua)
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
 	$(LUA_BIN_NAME) ./build-utils/docgen/makedoc.lua
