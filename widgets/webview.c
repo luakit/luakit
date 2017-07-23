@@ -812,6 +812,15 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         break;
     }
 
+    /* If setting view.zoom_level = x, x != 1.0, then first reset zoom_level
+     * This prevents an issue where the zoom_level is ignored after a view crash
+     * https://github.com/luakit/luakit/issues/357 */
+    if (token == L_TK_ZOOM_LEVEL && lua_isnumber(L, 3) && (lua_tonumber(L, 3) != 1.0)) {
+        g_object_freeze_notify(G_OBJECT(d->view));
+        g_object_set(d->view, "zoom-level", 1.0, NULL);
+        g_object_thaw_notify(G_OBJECT(d->view));
+    }
+
     /* check for webview widget gobject properties */
     gboolean emit = luaH_gobject_newindex(L, webview_properties, token, 3,
             G_OBJECT(d->view));
