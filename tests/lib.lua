@@ -146,12 +146,11 @@ function _M.http_server()
     return "luakit-test://"
 end
 
---- Retrieve a subset of files in the current directory.
+--- Retrieve a subset of files in the Luakit Git repository.
 --
--- This function searches the directory and then filters the result
--- according to the provided parameters and the `.gitignore` file. It
--- is mostly intended for use in code style tests. The returned list of
--- file paths includes all files that:
+-- This function runs `git ls-files` and then filters the result according to
+-- the provided parameters. It is mostly intended for use in code style tests.
+-- The returned list of file paths includes all files that:
 --
 --  * are within at least one of the directories in `dirs`,
 --  * match at least one of the Lua patterns in `patterns`, and
@@ -185,8 +184,8 @@ function _M.format_file_errors(entries)
     local sep = "    "
 
     -- Find file alignment length
-    local align, luakit_files = 0, find_files.get_luakit_files()
-    for _, file in ipairs(luakit_files) do
+    local align, git_files = 0, find_files.get_git_files()
+    for _, file in ipairs(git_files) do
         align = math.max(align, file:len())
     end
 
