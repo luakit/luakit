@@ -6,7 +6,6 @@
 --
 -- @module editor
 
-local globals = require("globals")
 local capi = { luakit = luakit }
 
 local _M = {}
