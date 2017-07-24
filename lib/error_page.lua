@@ -22,7 +22,8 @@ local error_page_wm = require_web_module("error_page_wm")
 _M.html_template = [==[
     <html>
         <head>
-            <title>Error</title>
+            <title>{title}</title>
+            <link rel="icon" type="image/png" href="luakit://resources/icons/tab-icon-{error_icon}.png" />
             <style type="text/css">
                 {style}
             </style>
@@ -199,6 +200,8 @@ end
 local function load_error_page(v, error_page_info)
     -- Set default values
     local defaults = {
+        title = "Error",
+        error_icon = "error",
         heading = "Unable to load page",
         content = [==[
             <p>A problem occurred while loading the URL <code>{uri}</code></p>
@@ -229,7 +232,7 @@ local function load_error_page(v, error_page_info)
     -- Substitute values recursively
     local html, nsub = _M.html_template
     repeat
-        html, nsub = string.gsub(html, "{(%w+)}", error_page_info)
+        html, nsub = string.gsub(html, "{([%w_]+)}", error_page_info)
     until nsub == 0
 
     -- If v.is_loading = true then the load will first be stopped, causing a finish
@@ -299,6 +302,8 @@ local function handle_error(v, uri, err)
         local cert = v.certificate
 
         error_page_info = {
+            title = "Security Error",
+            error_icon = "security-error",
             msg = get_cert_error_desc(err),
             style = _M.cert_style,
             heading = "Your connection may be insecure!",
@@ -313,6 +318,8 @@ local function handle_error(v, uri, err)
         }
     elseif category == "crash" then
         error_page_info = {
+            title = "Web Process Crashed",
+            error_icon = "crash",
             heading = "Web process crashed",
             content = [==[
                 <div class="errorMessage">
