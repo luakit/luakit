@@ -30,11 +30,20 @@ tab.add_signal("build", function (tl, view)
 
     local update_favicon = function (v)
         local uri = v.uri or "about:blank"
-        if v.private then fav:filename("resources/icons/tab-icon-private.png")
-        elseif uri:match("^luakit://") then fav:filename("resources/icons/tab-icon-chrome.png")
-        elseif not fav:set_favicon_for_uri(uri) then
-            fav:filename("resources/icons/tab-icon-page.png")
-        end
+        local favicon_js = [=[
+            favicon = document.evaluate('//link[(@rel="icon") or (@rel="shortcut icon")]/@href',
+                document, null, XPathResult.STRING_TYPE, null).stringValue || '/favicon.ico';
+        ]=]
+        v:eval_js(favicon_js, { callback = function (favicon_uri, err)
+            assert(not err, err)
+            favicon_uri = favicon_uri:match("^luakit://(.*)")
+            if favicon_uri then fav:filename(favicon_uri)
+            elseif v.private then fav:filename("resources/icons/tab-icon-private.png")
+            elseif uri:match("^luakit://") then fav:filename("resources/icons/tab-icon-chrome.png")
+            elseif not fav:set_favicon_for_uri(uri) then
+                fav:filename("resources/icons/tab-icon-page.png")
+            end
+        end})
     end
     view:add_signal("favicon", update_favicon)
     -- luakit:// URIs don't emit favicon signal
@@ -51,10 +60,16 @@ tab.add_signal("build", function (tl, view)
     end
     view:add_signal("property::is_loading", is_loading_cb)
 
+    local finished_cb = function (v, status)
+        if status == "finished" then update_favicon(v) end
+    end
+    view:add_signal("load-status", finished_cb)
+
     tl.widget:add_signal("destroy", function ()
         view:remove_signal("favicon", update_favicon)
         view:remove_signal("property::uri", update_favicon)
         view:remove_signal("property::is_loading", is_loading_cb)
+        view:remove_signal("load-status", finished_cb)
     end)
 
     spin:start();
