@@ -1,5 +1,7 @@
 # Changelog
 
+## [Unreleased]
+
 ## [2017-07-26]
 
  - Required WebKitGTK+ version: 2.14+
