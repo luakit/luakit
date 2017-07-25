@@ -88,15 +88,15 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     g_assert_cmpint(n, ==, 5);
 
     gboolean no_return = lua_toboolean(L, -5);
-    guint64 page_id = lua_tointeger(L, -4);
-    const gchar *script = lua_tostring(L, -3);
-    const gchar *source = lua_tostring(L, -2);
+    const gchar *script = lua_tostring(L, -4);
+    const gchar *source = lua_tostring(L, -3);
+    guint64 page_id = lua_tointeger(L, -2);
     /* cb ref is index -1 */
 
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
     if (!page) {
         /* Notify UI to free callback ref */
-        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -1, -1);
+        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -2, -1);
         lua_settop(L, top);
         return;
     }
@@ -105,8 +105,8 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     WebKitScriptWorld *world = webkit_script_world_get_default();
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
     n = luaJS_eval_js(L, ctx, script, source, no_return);
-    /* Send [cb, ret] or [cb, nil, error] */
-    ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -n-1, -1);
+    /* Send [page_id, cb, ret] or [page_id, cb, nil, error] */
+    ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -n-2, -1);
     lua_settop(L, top);
 }
 

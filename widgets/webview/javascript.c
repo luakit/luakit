@@ -31,10 +31,13 @@ run_javascript_finished(const guint8 *msg, guint length)
     lua_State *L = common.L;
     gint top = lua_gettop(L);
     gint n = lua_deserialize_range(L, msg, length);
-    g_assert_cmpint(n, >=, 1);
-    g_assert_cmpint(n, <=, 3);
-    /* Lua stack: [cb], [cb, nil, err] or [cb, ret] */
+    g_assert_cmpint(n, >=, 2);
+    g_assert_cmpint(n, <=, 4);
+    /* Lua stack: [page_id, cb], [page_id, cb, nil, err] or [page_id, cb, ret] */
 
+    widget_t *w = webview_get_by_id(lua_tointeger(L, -n));
+    lua_remove(L, -n);
+    n--;
     gpointer cb = lua_touserdata(L, -n);
     lua_remove(L, -n);
     n--;
@@ -44,15 +47,23 @@ run_javascript_finished(const guint8 *msg, guint length)
         g_assert(lua_isstring(L, -1));
     }
 
-    if (n >= 1 && cb) {
+    if (n >= 1 && cb && w) {
         luaH_object_push(L, cb);
         luaH_dofunction(L, n, 0);
     }
 
-    if (cb)
+    if (w && cb) {
+        g_signal_handlers_disconnect_by_data(w->widget, cb);
         luaH_object_unref(L, cb);
+    }
 
     lua_settop(L, top);
+}
+
+static void
+run_javascript_webview_closed(WebKitWebView *UNUSED(view), gpointer cb)
+{
+    luaH_object_unref(common.L, cb);
 }
 
 static gint
@@ -83,12 +94,15 @@ luaH_webview_eval_js(lua_State *L)
         source = luaH_callerinfo(L);
 
     lua_pushboolean(L, no_return);
-    lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
     lua_pushstring(L, script);
     lua_pushstring(L, usr_source ? g_strdup(usr_source) : source);
+    lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
     lua_pushlightuserdata(L, cb);
     ipc_send_lua(d->ipc, IPC_TYPE_eval_js, L, -5, -1);
     lua_pop(L, 5);
+
+    if (cb)
+        g_signal_connect(d->view, "destroy", G_CALLBACK(run_javascript_webview_closed), cb);
 
     return FALSE;
 }
