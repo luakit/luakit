@@ -1,6 +1,6 @@
 # Changelog
 
-## [2017-07-24]
+## [2017-07-26]
 
  - Required WebKitGTK+ version: 2.14+
  - A relatively recent version of GTK+ 3 is required; some features are not available on older versions.
@@ -264,7 +264,7 @@ New webview APIs:
 
 ### Contributors to this release:
 
- - Aidan Holm            (1575 commits)
+ - Aidan Holm            (1585 commits)
  - Jenny Wong            (71 commits)
  - Mason Larobina        (17 commits)
  - Grégory DAVID         (8 commits)
