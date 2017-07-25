@@ -252,6 +252,13 @@ ipc_endpoint_decref(ipc_endpoint_t *ipc)
         return;
     if (ipc->status == IPC_ENDPOINT_CONNECTED)
         ipc_endpoint_disconnect(ipc);
+    if (ipc->queue) {
+        while (!g_queue_is_empty(ipc->queue)) {
+            queued_ipc_t *msg = g_queue_pop_head(ipc->queue);
+            g_free(msg);
+        }
+        g_queue_free(ipc->queue);
+    }
     ipc->status = IPC_ENDPOINT_FREED;
     g_slice_free(ipc_endpoint_t, ipc);
 }
