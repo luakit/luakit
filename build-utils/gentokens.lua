@@ -99,7 +99,7 @@ table.sort(order)
 if string.match(arg[2], "%.h$") then
     -- Gen list of tokens
     local enums = {}
-    for _, k in pairs(order) do
+    for _, k in ipairs(order) do
         table.insert(enums, string.format("%s,", k))
     end
 
@@ -111,7 +111,7 @@ if string.match(arg[2], "%.h$") then
 elseif string.match(arg[2], "%.c$") then
     -- Gen table of { token, "literal" }
     local tokmap = {}
-    for _, k in pairs(order) do
+    for _, k in ipairs(order) do
         local t = tokens[k]
         table.insert(tokmap, string.format('{ %s, %q },', t.enum, t.token))
     end
