@@ -9,7 +9,7 @@
 
 #### Adblock module
 
-The adblock module available at https://github.com/luakit/luakit-plugins
+The adblock module previously available at <https://github.com/luakit/luakit-plugins>
 has been included into the main luakit repository, with the following changes:
 
  - Ported adblock module to use WebKit 2 compatible APIs. This breaks compatibility with WebKit 1.
@@ -36,8 +36,8 @@ has been included into the main luakit repository, with the following changes:
 
 See also:
 
- - luakit://help/doc/modules/adblock.html
- - luakit://help/doc/modules/adblock_chrome.html
+ - <luakit://help/doc/modules/adblock.html>
+ - <luakit://help/doc/modules/adblock_chrome.html>
 
 #### Error pages
 
@@ -51,12 +51,12 @@ pages, such as those displayed when a page fails to load.
 
 See also:
 
- - luakit://help/doc/modules/error_page.html
+ - <luakit://help/doc/modules/error_page.html>
 
 #### User styles
 
 A new module, `styles.lua`, supports user stylesheets with
-`@-moz-document` sections. User stylesheets from https://userstyles.org are
+`@-moz-document` sections. User stylesheets from <https://userstyles.org> are
 supported.
 
  - Luakit now automatically detects and parses user stylesheets on startup.
@@ -67,7 +67,7 @@ supported.
 
 See also:
 
- - luakit://help/doc/modules/styles.html
+ - <luakit://help/doc/modules/styles.html>
 
 #### Other new modules
 
