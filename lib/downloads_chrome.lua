@@ -1,123 +1,112 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local print = print
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
+--- Downloads for luakit - chrome page.
+--
+-- This module allows you to monitor the progress of ongoing downloads through a
+-- webpage at <luakit://downloads/>.
+--
+-- @module downloads_chrome
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 -- Grab the luakit environment we need
 local downloads = require("downloads")
 local lousy = require("lousy")
 local chrome = require("chrome")
-local add_binds = add_binds
-local add_cmds = add_cmds
-local webview = webview
-local capi = {
-    luakit = luakit
-}
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local webview = require("webview")
+local window = require("window")
 
-module("downloads.chrome")
+local _M = {}
 
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
     <meta charset="utf-8">
     <title>Downloads</title>
     <style type="text/css">
-        body {
-            background-color: white;
-            color: black;
-            margin: 10px;
-            display: block;
-            font-size: 84%;
-            font-family: sans-serif;
-        }
-
-        div {
-            display: block;
-        }
-
-        #downloads-summary {
-            border-top: 1px solid #888;
-            background-color: #ddd;
-            padding: 3px;
-            font-weight: bold;
-            margin-top: 10px;
-            margin-bottom: 10px;
-        }
-
-        .download {
-            -webkit-margin-start: 90px;
-            -webkit-padding-start: 10px;
-            position: relative;
-            display: block;
-            margin-bottom: 10px;
-        }
-
-        .download .date {
-            left: -90px;
-            width: 90px;
-            position: absolute;
-            display: block;
-            color: #888;
-        }
-
-        .download .title a {
-            color: #3F6EC2;
-            padding-right: 16px;
-        }
-
-        .download .status {
-            display: inline;
-            color: #999;
-            white-space: nowrap;
-        }
-
-        .download .uri a {
-            color: #56D;
-            text-overflow: ellipsis;
-            display: inline-block;
-            white-space: nowrap;
-            text-decoration: none;
-            overflow: hidden;
-            max-width: 500px;
-        }
-
-        .download .controls a {
-            color: #777;
-            margin-right: 16px;
-        }
+        {style}
     </style>
 </head>
 <body>
-    <div id="main">
-        <div id="downloads-summary">Downloads</div>
-        <div id="downloads-list">
-        </div>
-    </div>
-    <script>
-    </script>
+    <header id="page-header">
+        <h1>Downloads</h1>
+    </header>
+    <div id="downloads-list" class="content-margin">
 </body>
 </html>
 ]==]
 
+--- CSS for downloads chrome page.
+-- @type string
+-- @readwrite
+_M.stylesheet = [==[
+    .download {
+        padding-left: 10px;
+        position: relative;
+        display: block;
+        margin: 10px 0 10px 90px;
+    }
+
+    .download .date {
+        left: -90px;
+        width: 90px;
+        position: absolute;
+        display: block;
+        color: #888;
+    }
+
+    .download .title a {
+        color: #3F6EC2;
+        padding-right: 16px;
+    }
+
+    .download .status {
+        display: inline;
+        color: #999;
+        white-space: nowrap;
+    }
+
+    .download .uri a {
+        color: #56D;
+        text-overflow: ellipsis;
+        display: inline-block;
+        white-space: nowrap;
+        text-decoration: none;
+        overflow: hidden;
+        max-width: 500px;
+    }
+
+    .download .controls a {
+        color: #777;
+        margin-right: 16px;
+    }
+]==]
+
 local main_js = [=[
 
-var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+var months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep',
+    'Oct', 'Nov', 'Dec'];
 
 function basename(url) {
     return url.substring(url.lastIndexOf('/') + 1);
 };
+
+function readable_size(bytes, precision) {
+    var bytes = bytes || 0, precision = precision || 2,
+        kb = 1024, mb = kb*1024, gb = mb*1024, tb = gb*1024;
+    if (bytes >= tb) {
+        return (bytes / tb).toFixed(precision) + ' TB';
+    } else if (bytes >= gb) {
+        return (bytes / gb).toFixed(precision) + ' GB';
+    } else if (bytes >= mb) {
+        return (bytes / mb).toFixed(precision) + ' MB';
+    } else if (bytes >= kb) {
+        return (bytes / kb).toFixed(precision) + ' KB';
+    } else {
+        return bytes + ' B';
+    }
+}
 
 function make_download(d) {
     var e = "<div class='download' id='" + d.id + "' created='" + d.created + "'>";
@@ -128,7 +117,7 @@ function make_download(d) {
 
     e += ("<div class='details'>"
         + "<div class='title'><a href='file://" + escape(d.destination) + "'>"
-        + encodeURI(basename(d.destination)) + "</a>"
+        + basename(d.destination) + "</a>"
         + "<div class='status'>waiting</div></div>"
         + "<div class='uri'><a href='" + encodeURI(d.uri) + "'>"
         + encodeURI(d.uri) + "</a></div></div>");
@@ -149,9 +138,8 @@ function getid(that) {
     return $(that).parents(".download").eq(0).attr("id");
 };
 
-function update_list() {
-    var downloads = downloads_get_all(["status", "speed"]);
-
+function update_list_finish(downloads) {
+    console.log(downloads)
     // return if no downloads to display
     if (downloads.length === "undefined") {
         setTimeout(update, 1000); // update 1s from now
@@ -165,8 +153,6 @@ function update_list() {
 
         // create new download element
         if ($elem.length === 0) {
-            // get some more information
-            d = download_get(d.id, ["status", "destination", "created", "uri"]);
             var elem_html = make_download(d);
 
             // ordered insert
@@ -213,12 +199,14 @@ function update_list() {
         var $st = $elem.find(".status").eq(0);
         switch (d.status) {
         case "started":
-            var speed = Math.round((d.speed || 0) / 1024);
-            if (speed >= 1024) { // MB/s
-                $st.text("downloading - " + Math.round(speed/10.24)/100 + " MB/s")
-            } else {
-                $st.text("downloading - " + speed + " KB/s")
-            }
+            $st.text("downloading - "
+                + readable_size(d.current_size) + "/"
+                + readable_size(d.total_size) + " @ "
+                + readable_size(d.speed) + "/s");
+            break;
+
+        case "finished":
+            $st.html("Finished - " + readable_size(d.total_size));
             break;
 
         case "error":
@@ -230,14 +218,19 @@ function update_list() {
             break;
 
         case "created":
-        case "finished":
+            $st.html("Waiting");
+            break;
+
         default:
             $st.html("");
             break;
         }
     }
+}
 
-    setTimeout(update_list, 1000);
+function update_list() {
+    downloads_get_all(["status", "speed", "current_size", "total_size",
+        "destination", "created", "uri",]).then(update_list_finish);
 };
 
 $(document).ready(function () {
@@ -271,6 +264,8 @@ $(document).ready(function () {
 });
 ]=]
 
+local update_list_js = [=[update_list();]=]
+
 -- default filter
 local default_filter = { destination = true, status = true, created = true,
     current_size = true, total_size = true, mime_type = true, uri = true,
@@ -294,7 +289,7 @@ local function collate_download_data(d, data, filter)
 end
 
 local export_funcs = {
-    download_get = function (id, filter)
+    download_get = function (_, id, filter)
         local d, data = downloads.get(id)
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -303,7 +298,7 @@ local export_funcs = {
         return collate_download_data(d, data, filter)
     end,
 
-    downloads_get_all = function (filter)
+    downloads_get_all = function (_, filter)
         local ret = {}
         if filter then
             assert(type(filter) == "table", "invalid filter table")
@@ -315,25 +310,25 @@ local export_funcs = {
         return ret
     end,
 
-    download_show = function (id)
-        local d, data = downloads.get(id)
+    download_show = function (view, id)
+        local d = downloads.get(id)
         local dirname = string.gsub(d.destination, "(.*/)(.*)", "%1")
         if downloads.emit_signal("open-file", dirname, "inode/directory") ~= true then
-            error("Couldn't show download directory (no inode/directory handler)")
+            local w = webview.window(view)
+            w:error("Couldn't show download directory (no inode/directory handler)")
         end
     end,
 
-    download_cancel = downloads.cancel,
-    download_restart = downloads.restart,
-    download_open = downloads.open,
-    download_remove = downloads.remove,
-    downloads_clear = downloads.clear,
+    download_cancel  = function (_, id) return downloads.cancel(id) end,
+    download_restart = function (_, id) return downloads.restart(id) end,
+    download_open    = function (_, id) return downloads.open(id) end,
+    download_remove  = function (_, id) return downloads.remove(id) end,
+    downloads_clear  = function (_, id) return downloads.clear(id) end,
 }
 
 downloads.add_signal("status-tick", function (running)
     if running == 0 then
         for _, data in pairs(downloads.get_all()) do data.speed = nil end
-        return
     end
     for d, data in pairs(downloads.get_all()) do
         if d.status == "started" then
@@ -342,54 +337,56 @@ downloads.add_signal("status-tick", function (running)
             rawset(data, "last_size", curr)
         end
     end
-end)
 
-chrome.add("downloads", function (view, meta)
-    view:load_string(html, "luakit://downloads/")
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= "luakit://downloads/" then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
+    -- Update all download pages when a change occurrs
+    for _, w in pairs(window.bywidget) do
+        for _, v in ipairs(w.tabs.children) do
+            if string.match(v.uri or "", "^luakit://downloads/?") then
+                v:eval_js(update_list_js, { no_return = true })
+            end
         end
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://download/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
     end
-
-    view:add_signal("load-status", on_first_visual)
 end)
 
-local page = "luakit://downloads/"
+chrome.add("downloads", function ()
+    local html_subs = {
+        style  = chrome.stylesheet .. _M.stylesheet,
+    }
+    local html = string.gsub(html_template, "{(%w+)}", html_subs)
+    return html
+end,
+function (view)
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    view:eval_js(jquery, { no_return = true })
+
+    -- Load main luakit://download/ JavaScript
+    view:eval_js(main_js, { no_return = true })
+end,
+export_funcs)
+
+--- URI of the downloads chrome page.
+-- @type string
+-- @readonly
+_M.chrome_page = "luakit://downloads/"
 local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
 add_binds("normal", {
     buf("^gd$",
-        [[Open [luakit://downloads](luakit://downloads/) in current tab.]],
-        function (w) w:navigate(page) end),
+        [[Open <luakit://downloads> in current tab.]],
+        function (w) w:navigate(_M.chrome_page) end),
 
     buf("^gD$",
-        [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
-        function (w) w:new_tab(page) end),
+        [[Open <luakit://downloads> in new tab.]],
+        function (w) w:new_tab(_M.chrome_page) end),
 })
 
 add_cmds({
     cmd("downloads",
-        [[Open [luakit://downloads](luakit://downloads/) in new tab.]],
-        function (w) w:new_tab(page) end),
+        [[Open <luakit://downloads> in new tab.]],
+        function (w) w:new_tab(_M.chrome_page) end),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

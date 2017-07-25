@@ -1,24 +1,15 @@
---------------------------------------------------------------
--- Mimic the luakit signal api functions for tables         --
--- @author Fabian Streitel &lt;karottenreibe@gmail.com&gt;  --
--- @author Mason Larobina  &lt;mason.larobina@gmail.com&gt; --
--- @copyright 2010 Fabian Streitel, Mason Larobina          --
---------------------------------------------------------------
+--- lousy.signal library.
+--
+-- Mimic the luakit signal API functions for tables.
+--
+-- @module lousy.signal
+-- @author Fabian Streitel <karottenreibe@gmail.com>
+-- @author Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel, Mason Larobina
 
--- Grab environment we need
-local assert = assert
-local io = io
-local ipairs = ipairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local tostring = tostring
-local type = type
-local unpack = unpack
-local verbose = luakit.verbose
+local _M = {}
 
---- Provides a signal API similar to GTK's signals.
-module("lousy.signal")
+local clone_table = (require "lousy.util").table.clone
 
 -- Private signal data for objects
 local data = setmetatable({}, { __mode = "k" })
@@ -36,7 +27,24 @@ local function get_data(object)
     return d
 end
 
-function add_signal(object, signame, func)
+--- Add a signal handler to an object, for a particular signal.
+--
+-- When a signal with the given name is emitted on the given object with
+-- `emit_signal()`, the given callback function will be called, along with all
+-- other signal handlers for the signal on the object.
+--
+-- The first argument passed to the callback function will be the object this
+-- signal is emitted on (`object`), *unless* this object was setup for signals
+-- with `module=true`, i.e. as a module object. In that case, the object will
+-- not be passed to the callback at all. Subsequently, the callback
+-- function will receive all additional arguments passed to `emit_signal()`.
+--
+-- `object` must have been set up for signals with `setup()`.
+--
+-- @param object The object on which to listen for signals.
+-- @tparam string signame The name of the signal to listen for.
+-- @tparam function func The signal handler callback function.
+function _M.add_signal(object, signame, func)
     local signals = get_data(object).signals
 
     -- Check signal name
@@ -54,14 +62,20 @@ function add_signal(object, signame, func)
     end
 end
 
-function emit_signal(object, signame, ...)
+--- Emit a signal on an object.
+--
+-- `object` must have been set up for signals with `setup()`.
+--
+-- @param object The object on which to emit the signal.
+-- @tparam string signame The name of the signal to emit.
+-- @param ... Additional arguments are passed any signal handlers called.
+function _M.emit_signal(object, signame, ...)
     local d = get_data(object)
-    local sigfuncs = d.signals[signame] or {}
+    -- Shallow clone the signal table, since it can change while executing
+    -- signal handlers.
+    local sigfuncs = clone_table(d.signals[signame] or {})
 
-    if verbose then
-        io.stderr:write(string.format("D: lousy.signal: emit_signal: "
-            .. "%q on %s\n", signame, tostring(object)))
-    end
+    msg.debug("emit_signal: %q on %s", signame, tostring(object))
 
     for _, sigfunc in ipairs(sigfuncs) do
         local ret
@@ -76,8 +90,17 @@ function emit_signal(object, signame, ...)
     end
 end
 
--- Remove a signame & function pair.
-function remove_signal(object, signame, func)
+--- Remove a signal handler function from an object.
+--
+-- `object` must have been set up for signals with `setup()`.
+--
+-- @param object The object on which to remove a signal handler.
+-- @tparam string signame The name of the signal handler to remove.
+-- @tparam function func The signal handler callback function to remove.
+-- @treturn[1] function Returns the removed callback function, if the signal
+-- handler was found.
+-- @treturn[2] nil If the signal handler was not found.
+function _M.remove_signal(object, signame, func)
     local signals = get_data(object).signals
     local sigfuncs = signals[signame] or {}
 
@@ -93,13 +116,27 @@ function remove_signal(object, signame, func)
     end
 end
 
--- Remove all signal handlers with the given signame.
-function remove_signals(object, signame)
+--- Remove all signal handlers with a given name from an object.
+-- @param object The object on which to remove a signal handler.
+-- @tparam string signame The name of the signal handler to remove.
+function _M.remove_signals(object, signame)
     local signals = get_data(object).signals
     signals[signame] = nil
 end
 
-function setup(object, module)
+--- Setup an object for signals.
+--
+-- Sets up the given object for signals, and returns the object.
+--
+-- If `module` is `true`, then the object is not passed to signal callback
+-- functions as the first parameter when a signal is emitted.
+--
+-- `object` must *not* have been set up for signals with `setup()`.
+--
+-- @param object The object to set up for signals.
+-- @tparam boolean module Whether this object should be treated as a module.
+-- @return The given object.
+function _M.setup(object, module)
     assert(not data[object], "given object already setup for signals")
 
     data[object] = { signals = {}, module = module }
@@ -116,5 +153,7 @@ function setup(object, module)
 
     return object
 end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,29 +1,39 @@
------------------------------------------------------------
--- Save history in sqlite3 database                      --
--- © 2010-2011 Mason Larobina <mason.larobina@gmail.com> --
------------------------------------------------------------
+--- Save history in sqlite3 database.
+--
+-- This module provides browsing history support. Pages are saved to an on-disk
+-- database automatically as the user browses.
+--
+-- The <luakit://history/> page is provided by the `history_chrome` module.
+--
+-- @module history
+-- @copyright 2010-2011 Mason Larobina <mason.larobina@gmail.com>
 
-local os = require "os"
-local webview = webview
-local table = table
-local string = string
-local lousy = require "lousy"
+local os = require("os")
+local webview = require("webview")
+local lousy = require("lousy")
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
-module "history"
+local _M = {}
 
--- Path of history sqlite database to open/create/update
-db_path = capi.luakit.data_dir .. "/history.db"
+--- Path to history database.
+-- @readwrite
+_M.db_path = capi.luakit.data_dir .. "/history.db"
+
+local query_find_last
+local query_insert
+local query_update_visits
+local query_update_title
 
 -- Setup signals on history module
 lousy.signal.setup(_M, true)
 
-function init()
+--- Connect to and initialize the history database.
+function _M.init()
     -- Return if database handle already open
-    if db then return end
+    if _M.db then return end
 
-    db = capi.sqlite3{ filename = _M.db_path }
-    db:exec [[
+    _M.db = capi.sqlite3{ filename = _M.db_path }
+    _M.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
 
@@ -36,7 +46,7 @@ function init()
         );
     ]]
 
-    query_find_last = db:compile [[
+    query_find_last = _M.db:compile [[
         SELECT id
         FROM history
         WHERE uri = ?
@@ -44,31 +54,39 @@ function init()
         LIMIT 1
     ]]
 
-    query_insert = db:compile [[
+    query_insert = _M.db:compile [[
         INSERT INTO history
         VALUES (NULL, ?, ?, ?, ?)
     ]]
 
-    query_update_visits = db:compile [[
+    query_update_visits = _M.db:compile [[
         UPDATE history
         SET visits = visits + 1, last_visit = ?
         WHERE id = ?
     ]]
 
-    query_update_title = db:compile [[
+    query_update_title = _M.db:compile [[
         UPDATE history
         SET title = ?
         WHERE id = ?
     ]]
 end
 
-capi.luakit.idle_add(init)
+capi.luakit.idle_add(_M.init)
 
-function add(uri, title, update_visits)
-    if not db then init() end
+--- Add a URI to the user's history.
+-- @tparam string uri The URI to add to the user's history.
+-- @tparam string title The title to associate with the URI.
+-- @tparam[opt] boolean update_visits `false` if the last visit time for this URI
+-- should not be updated.
+-- @default `true`
+function _M.add(uri, title, update_visits)
+    if not _M.db then _M.init() end
 
     -- Ignore blank uris
     if not uri or uri == "" or uri == "about:blank" then return end
+    -- Ignore luakit:// urls
+    if string.find(uri, "^luakit://") then return end
     -- Ask user if we should ignore uri
     if _M.emit_signal("add", uri, title) == false then return end
 
@@ -86,26 +104,30 @@ function add(uri, title, update_visits)
     end
 end
 
-webview.init_funcs.save_hist = function (view)
+webview.add_signal("init", function (view)
     -- Add items & update visit count
     view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
+        if view.private then return end
 
         if status == "committed" then
-            add(view.uri)
+            _M.add(view.uri)
         end
     end)
     -- Update titles
     view:add_signal("property::title", function ()
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
+        if view.private then return end
 
         local title = view.title
         if title and title ~= "" then
-            add(view.uri, title, false)
+            _M.add(view.uri, title, false)
         end
     end)
-end
+end)
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

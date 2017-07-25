@@ -90,6 +90,8 @@ luaH_box_index(lua_State *L, widget_t *w, luakit_token_t token)
       /* push string properties */
       PN_CASE(SPACING,      gtk_box_get_spacing(GTK_BOX(w->widget)))
 
+      PS_CASE(BG, g_object_get_data(G_OBJECT(w->widget), "bg"))
+
       default:
         break;
     }
@@ -99,6 +101,10 @@ luaH_box_index(lua_State *L, widget_t *w, luakit_token_t token)
 static gint
 luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
+    size_t len;
+    const gchar *tmp;
+    GdkRGBA c;
+
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
@@ -110,6 +116,18 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         gtk_box_set_spacing(GTK_BOX(w->widget), luaL_checknumber(L, 3));
         break;
 
+      case L_TK_BG:
+        tmp = luaL_checklstring(L, 3, &len);
+        if (!gdk_rgba_parse(&c, tmp))
+            luaL_argerror(L, 3, "unable to parse colour");
+#if GTK_CHECK_VERSION(3,16,0)
+        widget_set_css_properties(w, "background-color", tmp, NULL);
+#else
+        gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
+#endif
+        g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
+        break;
+
       default:
         return 0;
     }
@@ -118,19 +136,18 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_box(widget_t *w, luakit_token_t token)
+widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 {
     w->index = luaH_box_index;
     w->newindex = luaH_box_newindex;
-    w->destructor = widget_destructor;
 
-    w->widget = (token == L_TK_VBOX) ? gtk_vbox_new(FALSE, 0) :
-            gtk_hbox_new(FALSE, 0);
+    w->widget = gtk_box_new((token == L_TK_VBOX) ?
+            GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL, 0);
+    gtk_box_set_homogeneous(GTK_BOX(w->widget), (token == L_TK_VBOX) ? FALSE : TRUE);
 
     g_object_connect(G_OBJECT(w->widget),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",        G_CALLBACK(add_cb),        w,
-      "signal::parent-set", G_CALLBACK(parent_set_cb), w,
-      "signal::remove",     G_CALLBACK(remove_cb),     w,
       NULL);
     gtk_widget_show(w->widget);
     return w;

@@ -1,6 +1,6 @@
------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 -- luakit configuration file, more information at http://luakit.org/ --
------------------------------------------------------------------------
+----------------------------------------------------------------------------------------
 
 require "lfs"
 
@@ -20,12 +20,11 @@ if unique then
     end
 end
 
--- Load library of useful functions for luakit
-require "lousy"
+-- Set the number of web processes to use. A value of 0 means 'no limit'.
+luakit.process_limit = 4
 
--- Small util functions to print output (info prints only when luakit.verbose is true)
-function warn(...) io.stderr:write(string.format(...) .. "\n") end
-function info(...) if luakit.verbose then io.stdout:write(string.format(...) .. "\n") end end
+-- Load library of useful functions for luakit
+local lousy = require "lousy"
 
 -- Load users global config
 -- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
@@ -34,15 +33,30 @@ require "globals"
 -- Load users theme
 -- ("$XDG_CONFIG_HOME/luakit/theme.lua" or "/etc/xdg/luakit/theme.lua")
 lousy.theme.init(lousy.util.find_config("theme.lua"))
-theme = assert(lousy.theme.get(), "failed to load theme")
+assert(lousy.theme.get(), "failed to load theme")
 
 -- Load users window class
 -- ("$XDG_CONFIG_HOME/luakit/window.lua" or "/etc/xdg/luakit/window.lua")
-require "window"
+local window = require "window"
 
 -- Load users webview class
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
-require "webview"
+local webview = require "webview"
+
+window.add_signal("build", function (w)
+    local widgets, l, r = require "lousy.widget", w.sbar.l, w.sbar.r
+
+    -- Left-aligned status bar widgets
+    l.layout:pack(widgets.uri())
+    l.layout:pack(widgets.hist())
+    l.layout:pack(widgets.progress())
+
+    -- Right-aligned status bar widgets
+    r.layout:pack(widgets.buf())
+    r.layout:pack(widgets.ssl())
+    r.layout:pack(widgets.tabi())
+    r.layout:pack(widgets.scroll())
+end)
 
 -- Load users mode configuration
 -- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
@@ -56,20 +70,11 @@ require "binds"
 -- Optional user script loading --
 ----------------------------------
 
+-- Add adblock
+require "adblock"
+require "adblock_chrome"
+
 require "webinspector"
-
--- Add sqlite3 cookiejar
-require "cookies"
-
--- Cookie blocking by domain (extends cookies module)
--- Add domains to the whitelist at "$XDG_CONFIG_HOME/luakit/cookie.whitelist"
--- and blacklist at "$XDG_CONFIG_HOME/luakit/cookie.blacklist".
--- Each domain must be on it's own line and you may use "*" as a
--- wildcard character (I.e. "*google.com")
---require "cookie_blocking"
-
--- Block all cookies by default (unless whitelisted)
---cookies.default_allow = false
 
 -- Add uzbl-like form filling
 require "formfiller"
@@ -81,7 +86,7 @@ require "proxy"
 require "quickmarks"
 
 -- Add session saving/loading support
-require "session"
+local session = require "session"
 
 -- Add command to list closed tabs & bind to open closed tabs
 require "undoclose"
@@ -97,24 +102,20 @@ require "bookmarks"
 require "bookmarks_chrome"
 
 -- Add download support
-require "downloads"
+local downloads = require "downloads"
 require "downloads_chrome"
 
+-- Add automatic PDF downloading and opening
+require "viewpdf"
+
 -- Example using xdg-open for opening downloads / showing download folders
---downloads.add_signal("open-file", function (file, mime)
---    luakit.spawn(string.format("xdg-open %q", file))
---    return true
---end)
+downloads.add_signal("open-file", function (file)
+    luakit.spawn(string.format("xdg-open %q", file))
+    return true
+end)
 
 -- Add vimperator-like link hinting & following
 require "follow"
-
--- Use a custom charater set for hint labels
---local s = follow.label_styles
---follow.label_maker = s.sort(s.reverse(s.charset("asdfqwerzxcv")))
-
--- Match only hint labels
---follow.pattern_maker = follow.pattern_styles.match_label
 
 -- Add command history
 require "cmdhist"
@@ -129,10 +130,15 @@ require "taborder"
 require "history"
 require "history_chrome"
 
-require "introspector"
+require "help_chrome"
+require "introspector_chrome"
 
 -- Add command completion
 require "completion"
+
+-- Press Control-E while in insert mode to edit the contents of the currently
+-- focused <textarea> or <input> element, using `xdg-open`
+require "open_editor"
 
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
@@ -145,15 +151,41 @@ require "go_input"
 require "go_next_prev"
 require "go_up"
 
+-- Filter Referer HTTP header if page domain does not match Referer domain
+require_web_module("referer_control_wm")
+
+require "error_page"
+
+-- Add userstyles loader
+require "styles"
+
+-- Hide scrollbars on all pages
+require "hide_scrollbars"
+
+-- Automatically apply per-domain webview properties
+require "domain_props"
+
+-- Add a stylesheet when showing images
+require "image_css"
+
+-- Add a new tab page
+require "newtab_chrome"
+
+-- Add tab favicons mod
+require "tab_favicons"
+
+-- Add :view-source command
+require "view_source"
+
 -----------------------------
 -- End user script loading --
 -----------------------------
 
 -- Restore last saved session
-local w = (session and session.restore())
+local w = (not luakit.nounique) and (session and session.restore())
 if w then
     for i, uri in ipairs(uris) do
-        w:new_tab(uri, i == 1)
+        w:new_tab(uri, { switch = i == 1 })
     end
 else
     -- Or open new window
@@ -167,14 +199,14 @@ end
 if unique then
     unique.add_signal("message", function (msg, screen)
         local cmd, arg = string.match(msg, "^(%S+)%s*(.*)")
-        local w = lousy.util.table.values(window.bywidget)[1]
+        local ww = lousy.util.table.values(window.bywidget)[1]
         if cmd == "tabopen" then
-            w:new_tab(arg)
+            ww:new_tab(arg)
         elseif cmd == "winopen" then
-            w = window.new((arg ~= "") and { arg } or {})
+            ww = window.new((arg ~= "") and { arg } or {})
         end
-        w.win.screen = screen
-        w.win.urgency_hint = true
+        ww.win.screen = screen
+        ww.win.urgency_hint = true
     end)
 end
 

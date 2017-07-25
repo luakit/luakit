@@ -1,5 +1,5 @@
 /*
- * util.c - useful functions
+ * common/util.c - useful functions
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2007-2008 Julien Danjou <julien@danjou.info>
@@ -21,57 +21,11 @@
  */
 
 #include "common/util.h"
-#include "globalconf.h"
 
 #include <glib/gprintf.h>
 #include <stdarg.h>
 #include <stdlib.h>
 #include <unistd.h>
-
-/* Print error and exit with EXIT_FAILURE code. */
-void
-_fatal(gint line, const gchar *fct, const gchar *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    gint atty = isatty(STDERR_FILENO);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_BG_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
-    exit(EXIT_FAILURE);
-}
-
-/* Print error message on stderr. */
-void
-_warn(gint line, const gchar *fct, const gchar *fmt, ...) {
-    va_list ap;
-    va_start(ap, fmt);
-    gint atty = isatty(STDERR_FILENO);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RED);
-    g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-    g_fprintf(stderr, "E: luakit: %s:%d: ", fct, line);
-    g_vfprintf(stderr, fmt, ap);
-    va_end(ap);
-    if (atty) g_fprintf(stderr, ANSI_COLOR_RESET);
-    g_fprintf(stderr, "\n");
-}
-
-/* Print debug message on stderr. */
-void
-_debug(gint line, const gchar *fct, const gchar *fmt, ...) {
-    if (globalconf.verbose) {
-        va_list ap;
-        va_start(ap, fmt);
-        g_fprintf(stderr, "[%#12f] ", l_time() - globalconf.starttime);
-        g_fprintf(stderr, "D: luakit: %s:%d: ", fct, line);
-        g_vfprintf(stderr, fmt, ap);
-        va_end(ap);
-        g_fprintf(stderr, "\n");
-    }
-}
 
 gboolean
 file_exists(const gchar *filename)
@@ -93,3 +47,33 @@ luaH_callerinfo(lua_State *L)
 
     return NULL;
 }
+
+gint
+luaH_panic(lua_State *L)
+{
+    error("unprotected error in call to Lua API (%s)", lua_tostring(L, -1));
+    return 0;
+}
+
+gchar *
+strip_ansi_escapes(const gchar *in)
+{
+    static GRegex *reg;
+
+    if (!reg) {
+        const gchar *expr = "[\\u001b\\u009b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]";
+        GError *err = NULL;
+        reg = g_regex_new(expr, G_REGEX_JAVASCRIPT_COMPAT | G_REGEX_DOTALL | G_REGEX_EXTENDED | G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, &err);
+        g_assert_no_error(err);
+    }
+
+    return g_regex_replace_literal (reg, in, -1, 0, "", 0, NULL);
+}
+
+GQuark
+luakit_error_quark(void)
+{
+    return g_quark_from_static_string("LuakitError");
+}
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

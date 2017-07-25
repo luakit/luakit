@@ -1,5 +1,5 @@
 /*
- * lualib.h - useful functions and type for Lua
+ * common/lualib.h - useful functions and type for Lua
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_COMMON_LUALIB
-#define LUAKIT_COMMON_LUALIB
+#ifndef LUAKIT_COMMON_LUALIB_H
+#define LUAKIT_COMMON_LUALIB_H
 
 #include <glib/gprintf.h>
 #include <lauxlib.h>
@@ -28,20 +28,63 @@
 #include <lualib.h>
 
 #include "common/util.h"
-
-/** Lua function to call on dofuction() error */
-lua_CFunction lualib_dofunction_on_error;
+#include "common/luautil.h"
+#include "common/luaclass.h"
 
 #define luaH_checkfunction(L, n) do { \
         if(!lua_isfunction(L, n)) \
             luaL_typerror(L, n, "function"); \
     } while(0)
 
+/** Dump the Lua function call stack. Useful for debugging.
+ * \param L The Lua VM state.
+ */
+static inline void
+luaH_dump_traceback(lua_State *L)
+{
+    g_fprintf(stderr, "--------- Lua traceback ---------\n");
+    luaH_traceback(L, L, 0);
+    g_fprintf(stderr, "%s\n", lua_tostring(L, -1));
+    lua_pop(L, 1);
+    g_fprintf(stderr, "-------- Lua traceback end ------\n");
+}
+
+static inline void
+luaH_dump_table_keys(lua_State *L, gint idx)
+{
+    gint len = (gint)lua_objlen(L, idx);
+    guint limit = 5, rem = 0;
+
+    g_fprintf(stderr, "  Keys: ");
+
+    lua_pushvalue(L, idx);
+    lua_pushnil(L);
+    while (lua_next(L, -2)) {
+        if (limit == 0)
+            rem++;
+        else {
+            limit --;
+            gint key_type = lua_type(L, -2);
+            if (key_type == LUA_TNUMBER && lua_tointeger(L, -2) > len)
+                g_fprintf(stderr, "%zd, ", lua_tointeger(L, -2));
+            else if (key_type == LUA_TSTRING)
+                g_fprintf(stderr, "%s, ", lua_tostring(L, -2));
+            else
+                g_fprintf(stderr, "[%s]", lua_typename(L, key_type));
+        }
+
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 1);
+
+    g_fprintf(stderr, "and %d more\n", rem);
+}
+
 /** Dump the Lua stack. Useful for debugging.
  * \param L The Lua VM state.
  */
 static inline void
-luaH_dumpstack(lua_State *L) {
+luaH_dump_stack(lua_State *L) {
     g_fprintf(stderr, "-------- Lua stack dump ---------\n");
     for(int i = lua_gettop(L); i; i--) {
         int t = lua_type(L, i);
@@ -57,6 +100,13 @@ luaH_dumpstack(lua_State *L) {
             break;
           case LUA_TNIL:
             g_fprintf(stderr, "%d: nil\n", i);
+            break;
+          case LUA_TUSERDATA:
+            g_fprintf(stderr, "%d: <%s>\t\t%p\n", i, luaH_typename(L, i), lua_topointer(L, i));
+            break;
+          case LUA_TTABLE:
+            g_fprintf(stderr, "%d: table\t#%zu\t%p\n", i, lua_objlen(L, i), lua_topointer(L, i));
+            luaH_dump_table_keys(L, i);
             break;
           default:
             g_fprintf(stderr, "%d: %s\t#%d\t%p\n", i, lua_typename(L, t),
@@ -75,14 +125,7 @@ luaH_dumpstack(lua_State *L) {
  */
 static inline gint
 luaH_absindex(lua_State *L, gint ud) {
-    return (ud > 0 || ud <= LUA_REGISTRYINDEX) ? ud : lua_gettop(L) + ud + 1;
-}
-
-static inline gint
-luaH_dofunction_error(lua_State *L) {
-    if(lualib_dofunction_on_error)
-        return lualib_dofunction_on_error(L);
-    return 0;
+    return (ud >= 0 || ud <= LUA_REGISTRYINDEX) ? ud : lua_gettop(L) + ud + 1;
 }
 
 /** Execute an Lua function on top of the stack.
@@ -96,12 +139,12 @@ luaH_dofunction(lua_State *L, gint nargs, gint nret) {
     /* Move function before arguments */
     lua_insert(L, - nargs - 1);
     /* Push error handling function */
-    lua_pushcfunction(L, luaH_dofunction_error);
+    lua_pushcfunction(L, luaH_dofunction_on_error);
     /* Move error handling function before args and function */
     lua_insert(L, - nargs - 2);
     gint error_func_pos = lua_gettop(L) - nargs - 1;
     if(lua_pcall(L, nargs, nret, - nargs - 2)) {
-        warn("%s", lua_tostring(L, -1));
+        error("%s", lua_tostring(L, -1));
         /* Remove error function and error string */
         lua_pop(L, 2);
         return FALSE;

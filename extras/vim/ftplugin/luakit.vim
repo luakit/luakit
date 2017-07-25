@@ -1,6 +1,6 @@
 " Vim filetype plugin
 " Language:     luakit configuration
-" Maintainer:   Gregor Uhlenheuer &lt;kongo2002@googlemail.com&gt;
+" Maintainer:   Gregor Uhlenheuer <kongo2002@googlemail.com>
 " Last Change:  Tue 14 Sep 2010 01:18:20 PM CEST
 
 " Custom configuration:

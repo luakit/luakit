@@ -1,71 +1,70 @@
----------------------------------------------------------------------------
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
--- @author Julien Danjou &lt;julien@danjou.info&gt;
+--- lousy.util library.
+--
+--- Utility functions for lousy.
+--
+-- @module lousy.util
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @author Julien Danjou <julien@danjou.info>
 -- @copyright 2010 Mason Larobina, 2008 Julien Danjou
----------------------------------------------------------------------------
 
 --- Grab environment we need
-local assert = assert
-local print = print
-local debug = debug
-local error = error
-local setmetatable = setmetatable
-local getmetatable = getmetatable
-local io = io
-local ipairs = ipairs
-local loadstring = loadstring
-local os = os
-local pairs = pairs
 local rstring = string
 local rtable = table
-local type = type
-local tonumber = tonumber
-local tostring = tostring
 local math = require "math"
 local capi = { luakit = luakit }
 
---- Utility functions for lousy.
-module("lousy.util")
+local _M = {}
 
-table = {}
-string = {}
+local table = {}
+local string = {}
 
-local xml_entity_names = { ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;" };
-local xml_entity_chars = { lt = "<", gt = ">", nbsp = " ", quot = "\"", apos = "'", ndash = "-", mdash = "-", amp = "&" };
+--- @local
+_M.table = table
+
+--- @local
+_M.string = string
+
+local xml_entity_names = {
+    ["'"] = "&apos;", ["\""] = "&quot;", ["<"] = "&lt;", [">"] = "&gt;", ["&"] = "&amp;"
+};
+local xml_entity_chars = {
+    lt = "<", gt = ">", nbsp = " ", quot = "\"", apos = "'", ndash = "-", mdash = "-", amp = "&"
+};
 
 --- Escape a string from XML characters.
--- @param text The text to escape.
--- @return A string with all XML characters escaped.
-function escape(text)
+-- @tparam string text The text to escape.
+-- @treturn string A string with all XML characters escaped.
+function _M.escape(text)
     return text and text:gsub("['&<>\"]", xml_entity_names) or nil
 end
 
 --- Unescape a string from XML entities.
--- @param text The text to un-escape.
--- @return A string with all the XML entities un-escaped.
-function unescape(text)
+-- @tparam strng text The text to un-escape.
+-- @treturn string A string with all the XML entities un-escaped.
+function _M.unescape(text)
     return text and text:gsub("&(%a+);", xml_entity_chars) or nil
 end
 
---- Create a directory
--- @param dir The directory.
--- @return mkdir return code
-function mkdir(dir)
+--- Create a directory.
+-- @tparam string dir The directory.
+-- @treturn number The status code returned by `mkdir`; 0 indicates success.
+function _M.mkdir(dir)
     return os.execute(rstring.format("mkdir -p %q",  dir))
 end
 
---- Eval Lua code.
+--- Evaluate Lua code.
+-- @tparam string s The string of Lua code to evaluate.
 -- @return The return value of Lua code.
-function eval(s)
+function _M.eval(s)
     return assert(loadstring(s))()
 end
 
 --- Check if a file is a Lua valid file.
--- This is done by loading the content and compiling it with loadfile().
--- @param path The file path.
--- @return A function if everything is alright, a string with the error
--- otherwise.
-function checkfile(path)
+-- This is done by loading the content and compiling it with `loadfile()`.
+-- @tparam string path The file path.
+-- @treturn function|nil A function if the file was loaded successfully,
+-- and a string with the error otherwise.
+function _M.checkfile(path)
     local f, e = loadfile(path)
     -- Return function if function, otherwise return error.
     if f then return f end
@@ -73,8 +72,8 @@ function checkfile(path)
 end
 
 --- Return the difference of one table against another.
--- @param t The original table.
--- @param other The table to perform the difference against.
+-- @tparam table t The original table.
+-- @tparam table other The table to perform the difference against.
 -- @return All elements in the first table that are not in the other table.
 function table.difference(t, other)
     local ret = {}
@@ -97,8 +96,8 @@ end
 
 --- Join all tables given as parameters.
 -- This will iterate all tables and insert all their keys into a new table.
--- @param args A list of tables to join
--- @return A new table containing all keys from the arguments.
+-- @tparam {table} args A list of tables to join.
+-- @treturn table A new table containing all keys from the arguments.
 function table.join(...)
     local ret = {}
     for _, t in pairs({...}) do
@@ -114,9 +113,9 @@ function table.join(...)
 end
 
 --- Check if a table has an item and return its key.
--- @param t The table.
+-- @tparam table t The table.
 -- @param item The item to look for in values of the table.
--- @return The key were the item is found, or nil if not found.
+-- @return The key where the item is found, or `nil` if not found.
 function table.hasitem(t, item)
     for k, v in pairs(t) do
         if v == item then
@@ -125,9 +124,9 @@ function table.hasitem(t, item)
     end
 end
 
---- Get a sorted table with all integer keys from a table
--- @param t the table for which the keys to get
--- @return A table with keys
+--- Get a sorted table with all integer keys from a table.
+-- @tparam table t The table for which the keys to get.
+-- @treturn table A table with keys.
 function table.keys(t)
     local keys = { }
     for k, _ in pairs(t) do
@@ -139,9 +138,9 @@ function table.keys(t)
     return keys
 end
 
---- Reverse a table
--- @param t the table to reverse
--- @return the reversed table
+--- Reverse a table.
+-- @tparam table t The table to reverse.
+-- @treturn table The reversed table.
 function table.reverse(t)
     local tr = { }
     -- reverse all elements with integer keys
@@ -157,9 +156,9 @@ function table.reverse(t)
     return tr
 end
 
---- Clone a table
--- @param t the table to clone
--- @return a clone of t
+--- Clone a table.
+-- @tparam table t The table to clone.
+-- @treturn table A clone of `t`.
 function table.clone(t)
     local c = { }
     for k, v in pairs(t) do
@@ -168,29 +167,29 @@ function table.clone(t)
     return c
 end
 
---- Clone table and set metatable
--- @param t the table to clone
--- @return a clone of t with t's metatable
+--- Clone table and set metatable.
+-- @tparam table t The table to clone.
+-- @treturn table A clone of `t` with `t`'s metatable.
 function table.copy(t)
     local c = table.clone(t)
     return setmetatable(c, getmetatable(t))
 end
 
 --- Check if two tables are identical.
--- @param a The first table.
--- @param b The second table.
--- @return True if both tables are identical.
+-- @tparam table a The first table.
+-- @tparam table b The second table.
+-- @treturn boolean `true` if both tables are identical.
 function table.isclone(a, b)
     if #a ~= #b then return false end
-    for k, v in pairs(a) do
+    for k, _ in pairs(a) do
         if a[k] ~= b[k] then return false end
     end
     return true
 end
 
 --- Clone a table with all values as array items.
--- @param t the table to clone
--- @return all values in t
+-- @tparam table t The table to clone.
+-- @treturn table All values in `t`.
 function table.values(t)
     local ret = {}
     for _, v in pairs(t) do
@@ -200,8 +199,8 @@ function table.values(t)
 end
 
 --- Convert a table to an array by removing all keys that are not sequential numbers.
--- @param t the table to converts
--- @return a new table with all non-number keys removed
+-- @tparam table t The table to convert.
+-- @treturn table A new table with all non-number keys removed.
 function table.toarray(t)
     local ret = {}
     for k, v in ipairs(t) do
@@ -210,24 +209,40 @@ function table.toarray(t)
     return ret
 end
 
+--- Filters an array with a predicate function. Element indices are shifted down
+-- to fill gaps.
+-- @tparam table t The array to filter.
+-- @tparam function pred The predicate function: called with (key, value); return
+-- `true` to keep element, `false` to remove.
+-- @treturn table The filtered array.
+function table.filter_array(t, pred)
+    local ret = {}
+    for i, v in ipairs(t) do
+        if pred(i, v) then
+            ret[#ret+1] = v
+        end
+    end
+    return ret
+end
+
 --- Check if a file exists and is readable.
--- @param f The file path.
--- @return True if the file exists and is readable.
+-- @tparam string f The file path.
+-- @treturn boolean `true` if the file exists and is readable.
 function os.exists(f)
     assert(type(f) == "string", "invalid path")
-    fh, err = io.open(f)
+    local fh = io.open(f)
     if fh then
         fh:close()
         return f
     end
 end
 
---- Python like string split (source: lua wiki)
--- @param s The string to split.
--- @param pattern The split pattern (I.e. "%s+" to split text by one or more
+--- Python like string split (source: lua wiki).
+-- @tparam string s The string to split.
+-- @tparam string pattern The split pattern (I.e. "%s+" to split text by one or more
 -- whitespace characters).
--- @param ret The table to insert the split items in to or a new table if nil.
--- @return A table of the string split by the pattern.
+-- @tparam[opt] table ret The table to insert the split items in to or a new table if `nil`.
+-- @treturn table A table of the string split by the pattern.
 function string.split(s, pattern, ret)
     if not pattern then pattern = "%s+" end
     if not ret then ret = {} end
@@ -243,8 +258,8 @@ function string.split(s, pattern, ret)
 end
 
 -- Python like string strip.
--- @param s The string to strip.
--- @param pattern The pattern to strip from the left-most and right-most of the
+-- @tparam string s The string to strip.
+-- @tparam string pattern The pattern to strip from the left-most and right-most of the
 -- string.
 -- @return The inner string segment.
 function string.strip(s, pattern)
@@ -283,21 +298,24 @@ local function find_file(paths)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- or $XDG_CONFIG_HOME/luakit/ or /etc/xdg/luakit/.
--- @param f The relative filepath.
--- @return The first valid filepath or an error.
-function find_config(f)
+-- `$XDG_CONFIG_HOME/luakit/`, or `/etc/xdg/luakit/`.
+-- @tparam string f The relative filepath.
+-- @treturn string The first valid filepath or an error.
+function _M.find_config(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f, "/etc/xdg/luakit/"..f }
+    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f }
+    for _, path in ipairs(xdg.system_config_dirs) do
+        rtable.insert(paths, path.."/luakit/"..f)
+    end
     return find_file(paths)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- in the users $XDG_DATA_HOME/luakit/ or the luakit install dir.
--- @param f The relative filepath.
--- @return The first valid filepath or an error.
-function find_data(f)
+-- `$XDG_DATA_HOME/luakit/`, or the luakit install dir.
+-- @tparam string f The relative filepath.
+-- @treturn string The first valid filepath or an error.
+function _M.find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
     local paths = { f, capi.luakit.data_dir.."/"..f, capi.luakit.install_path.."/"..f }
@@ -305,10 +323,10 @@ function find_data(f)
 end
 
 --- Search and return the filepath of a file in the current working directory
--- or in the users $XDG_CACHE_HOME/luakit/
--- @param f The relative filepath.
--- @return The first valid filepath or an error.
-function find_cache(f)
+-- or `$XDG_CACHE_HOME/luakit/`.
+-- @tparam string f The relative filepath.
+-- @treturn string The first valid filepath or an error.
+function _M.find_cache(f)
     -- Ignore absolute paths
     if rstring.match(f, "^/") then return f end
     -- Search locations
@@ -317,14 +335,14 @@ function find_cache(f)
 end
 
 --- Recursively traverse widget tree and return all widgets.
--- @param wi The widget.
-function recursive_remove(wi)
+-- @tparam widget wi The widget.
+function _M.recursive_remove(wi)
     local ret = {}
     -- Empty other container widgets
     for _, child in ipairs(wi.children or {}) do
         wi:remove(child)
         rtable.insert(ret, child)
-        for _, c in ipairs(recursive_remove(child)) do
+        for _, c in ipairs(_M.recursive_remove(child)) do
             rtable.insert(ret, c)
         end
     end
@@ -332,10 +350,10 @@ function recursive_remove(wi)
 end
 
 --- Convert a number to string independent from locale.
--- @param num A number.
--- @param sigs Signifigant figures (if float).
--- @return The string representation of the number.
-function ntos(num, sigs)
+-- @tparam number num A number.
+-- @tparam number sigs Signifigant figures (if float).
+-- @treturn string The string representation of the number.
+function _M.ntos(num, sigs)
     local dec = rstring.sub(tostring(num % 1), 3, 2 + (sigs or 4))
     num = tostring(math.floor(num))
     return (#dec == 0 and num) or (num .. "." .. dec)
@@ -345,16 +363,30 @@ end
 -- In sqlite3: "A string constant is formed by enclosing the string in single
 -- quotes ('). A single quote within the string can be encoded by putting two
 -- single quotes in a row - as in Pascal."
--- Read: http://sqlite.org/lang_expr.html
-function sql_escape(s)
+-- Read: <http://sqlite.org/lang_expr.html>.
+-- @tparam string s A string.
+-- @treturn string The escaped string.
+function _M.sql_escape(s)
     return "'" .. rstring.gsub(s or "", "'", "''") .. "'"
 end
 
---- Get all hostnames in /etc/hosts
--- @param Force re-load of /etc/hosts
--- @return Table of all hostnames in /etc/hosts
+--- Escape values for lua patterns.
+--
+-- Escapes the magic characters <code>^$()%.[]*+-?)</code> by prepending a
+-- <code>%</code>.
+--
+-- @tparam string s A string.
+-- @treturn string The escaped pattern.
+function _M.lua_escape(s)
+    return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%%%1")
+end
+
 local etc_hosts
-function get_etc_hosts(force)
+
+--- Get all hostnames in `/etc/hosts`.
+-- @tparam boolean force Force re-load of `/etc/hosts`.
+-- @treturn {string} Table of all hostnames in `/etc/hosts`.
+function _M.get_etc_hosts(force)
     -- Unless forced return previous hostnames
     if not force and etc_hosts then
         return etc_hosts
@@ -373,5 +405,7 @@ function get_etc_hosts(force)
     etc_hosts = table.values(h)
     return etc_hosts
 end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

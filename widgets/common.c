@@ -29,7 +29,7 @@
 gboolean
 key_press_cb(GtkWidget* UNUSED(win), GdkEventKey *ev, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     luaH_keystr_push(L, ev->keyval);
@@ -43,7 +43,7 @@ gboolean
 button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 {
     gint ret;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     lua_pushinteger(L, ev->button);
@@ -66,9 +66,25 @@ button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 }
 
 gboolean
+mouse_cb(GtkWidget* UNUSED(win), GdkEventCrossing *ev, widget_t *w)
+{
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
+
+    GdkEventType type = ev->type;
+    g_assert(type == GDK_ENTER_NOTIFY || type == GDK_LEAVE_NOTIFY);
+    gint ret = luaH_object_emit_signal(L, -2, type == GDK_ENTER_NOTIFY ? "mouse-enter" : "mouse-leave", 1, 1);
+
+    gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
+    lua_pop(L, ret + 1);
+    return catch;
+}
+
+gboolean
 focus_cb(GtkWidget* UNUSED(win), GdkEventFocus *ev, widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     gint ret;
     if (ev->in)
@@ -92,10 +108,27 @@ void
 add_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
     widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -2, "add", 1, 0);
+    lua_pop(L, 1);
+}
+
+void
+resize_cb(GtkWidget* UNUSED(win), GdkRectangle *rect, widget_t *w)
+{
+    int width = rect->width, height = rect->height;
+    if (width == w->prev_width && height == w->prev_height)
+        return;
+    w->prev_width = width;
+    w->prev_height = height;
+
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    lua_pushinteger(L, width);
+    lua_pushinteger(L, height);
+    luaH_object_emit_signal(L, -3, "resize", 2, 0);
     lua_pop(L, 1);
 }
 
@@ -104,7 +137,7 @@ void
 remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 {
     widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_push(L, child->ref);
     luaH_object_emit_signal(L, -2, "remove", 1, 0);
@@ -112,9 +145,9 @@ remove_cb(GtkContainer* UNUSED(c), GtkWidget *widget, widget_t *w)
 }
 
 void
-parent_set_cb(GtkWidget *widget, GtkObject* UNUSED(old), widget_t *w)
+parent_set_cb(GtkWidget *widget, GtkWidget *UNUSED(p), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     widget_t *parent = NULL;
     GtkContainer *new;
     g_object_get(G_OBJECT(widget), "parent", &new, NULL);
@@ -125,6 +158,26 @@ parent_set_cb(GtkWidget *widget, GtkObject* UNUSED(old), widget_t *w)
         lua_pushnil(L);
     luaH_object_emit_signal(L, -2, "parent-set", 1, 0);
     lua_pop(L, 1);
+}
+
+void
+destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
+{
+    /* 1. emit destroy signal */
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
+    lua_pop(L, 1);
+
+    /* 2. Call widget destructor */
+    debug("destroy %p (%s)", w, w->info->name);
+    if (w->destructor)
+        w->destructor(w);
+    w->destructor = NULL;
+    w->widget = NULL;
+
+    /* 3. Allow this Lua instance to be freed */
+    luaH_object_unref(L, w->ref);
 }
 
 gboolean
@@ -161,7 +214,7 @@ luaH_widget_get_child(lua_State *L, widget_t *w)
     if (!widget)
         return 0;
 
-    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(w->widget);
+    widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
     luaH_object_push(L, child->ref);
     return 1;
 }
@@ -220,6 +273,81 @@ luaH_widget_set_visible(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_min_size(lua_State *L, widget_t *w)
+{
+    gint width, height;
+    gtk_widget_get_size_request(w->widget, &width, &height);
+
+    lua_newtable(L);
+
+    lua_pushliteral(L, "width");
+    lua_pushinteger(L, width);
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "height");
+    lua_pushinteger(L, height);
+    lua_rawset(L, -3);
+
+    return 1;
+}
+
+gint
+luaH_widget_set_min_size(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+
+    gint width, height;
+    gtk_widget_get_size_request(w->widget, &width, &height);
+
+    gint top = lua_gettop(L);
+    if (luaH_rawfield(L, 3, "w"))
+        width = lua_tonumber(L, -1);
+    if (luaH_rawfield(L, 3, "h"))
+        height = lua_tonumber(L, -1);
+    lua_settop(L, top);
+
+    gtk_widget_set_size_request(w->widget, width, height);
+    return 1;
+}
+
+gint
+luaH_widget_set_tooltip(lua_State *L, widget_t *w)
+{
+    gtk_widget_set_tooltip_markup(w->widget, lua_tostring(L, 3) ?: "");
+    return 0;
+}
+
+gint
+luaH_widget_get_tooltip(lua_State *L, widget_t *w)
+{
+    lua_pushstring(L, gtk_widget_get_tooltip_markup(w->widget));
+    return 1;
+}
+
+gint
+luaH_widget_get_parent(lua_State *L, widget_t *w)
+{
+    GtkWidget *widget = gtk_widget_get_parent(GTK_WIDGET(w->widget));
+
+    if (!widget)
+        return 0;
+
+    widget_t *parent = GOBJECT_TO_LUAKIT_WIDGET(widget);
+    luaH_object_push(L, parent->ref);
+    return 1;
+}
+
+gint
+luaH_widget_get_focused(lua_State *L, widget_t *w)
+{
+    gboolean focused = w->info->tok == L_TK_WINDOW ?
+        gtk_window_has_toplevel_focus(GTK_WINDOW(w->widget)) :
+        gtk_widget_is_focus(w->widget);
+    lua_pushboolean(L, focused);
+    return 1;
+}
+
+gint
 luaH_widget_get_visible(lua_State *L, widget_t *w)
 {
     lua_pushboolean(L, gtk_widget_get_visible(w->widget));
@@ -227,10 +355,37 @@ luaH_widget_get_visible(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_width(lua_State *L, widget_t *w)
+{
+    lua_pushnumber(L, gtk_widget_get_allocated_width(w->widget));
+    return 1;
+}
+
+gint
+luaH_widget_get_height(lua_State *L, widget_t *w)
+{
+    lua_pushnumber(L, gtk_widget_get_allocated_height(w->widget));
+    return 1;
+}
+
+gint
 luaH_widget_focus(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_grab_focus(w->widget);
+
+    switch (w->info->tok) {
+        case L_TK_WINDOW:
+            /* win:focus() unfocuses anything within that window */
+            gtk_window_set_focus(GTK_WINDOW(w->widget), NULL);
+            break;
+        case L_TK_ENTRY:
+            gtk_entry_grab_focus_without_selecting(GTK_ENTRY(w->widget));
+            break;
+        default:
+            gtk_widget_grab_focus(w->widget);
+            break;
+    }
+
     return 0;
 }
 
@@ -238,20 +393,8 @@ gint
 luaH_widget_destroy(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    if (w->destructor)
-        w->destructor(w);
-    w->destructor = NULL;
-    luaH_object_unref(L, w->ref);
+    gtk_widget_destroy(GTK_WIDGET(w->widget));
     return 0;
-}
-
-void
-widget_destructor(widget_t *w)
-{
-    debug("destroy %p (%s)", w, w->info->name);
-    if (w->widget)
-        gtk_widget_destroy(GTK_WIDGET(w->widget));
-    w->widget = NULL;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

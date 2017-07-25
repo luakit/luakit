@@ -1,7 +1,20 @@
-------------------------------------------------------
--- Search for a string in the current webview       --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- Search for a string in the current webview.
+--
+-- This module allows you to search for a string of text in the currently
+-- visible web page. A history of search terms is kept while luakit is running.
+--
+-- *Note: regular expressions are not supported.*
+--
+-- @module search
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+
+local webview = require("webview")
+local lousy = require("lousy")
+local new_mode = require("modes").new_mode
+local binds = require("binds")
+local add_binds = binds.add_binds
+
+local _M = {}
 
 -- Add searching binds to normal mode
 local key = lousy.bind.key
@@ -13,44 +26,39 @@ add_binds("normal", {
         function (w) w:start_search("?") end),
 
     key({}, "n", "Find next search result.", function (w, m)
-        for i=1,m.count do w:search(nil, true)  end
-        if w.search_state.ret == false then
-            w:error("Pattern not found: " .. w.search_state.last_search)
-        elseif w.search_state.wrapped then
-            if w.search_state.forward then
-                w:warning("Search hit BOTTOM, continuing at TOP")
-            else
-                w:warning("Search hit TOP, continuing at BOTTOM")
+        for _=1,m.count do
+            w:search(nil, true)
+            if w.search_state.by_view[w.view].ret == false then
+                break
             end
         end
     end, {count=1}),
 
     key({}, "N", "Find previous search result.", function (w, m)
-        for i=1,m.count do w:search(nil, false) end
-        if w.search_state.ret == false then
-            w:error("Pattern not found: " .. w.search_state.last_search)
-        elseif w.search_state.wrapped then
-            if w.search_state.forward then
-                w:warning("Search hit TOP, continuing at BOTTOM")
-            else
-                w:warning("Search hit BOTTOM, continuing at TOP")
+        for _=1,m.count do
+            w:search(nil, false)
+            if w.search_state.by_view[w.view].ret == false then
+                break
             end
         end
     end, {count=1}),
 })
 
+local function new_search_state()
+    return { by_view = setmetatable({}, { __mode = "k" }) }
+end
+
 -- Setup search mode
 new_mode("search", {
     enter = function (w)
         -- Clear old search state
-        w.search_state = {}
+        w.search_state = new_search_state()
         w:set_prompt()
         w:set_input("/")
     end,
 
     leave = function (w)
-        w.ibar.input.fg = theme.ibar_fg
-        w.ibar.input.bg = theme.ibar_bg
+        w:set_ibar_theme()
         -- Check if search was aborted and return to original position
         local s = w.search_state
         if s.marker then
@@ -62,21 +70,9 @@ new_mode("search", {
     changed = function (w, text)
         -- Check that the first character is '/' or '?' and update search
         if string.match(text, "^[?/]") then
-            s = w.search_state
-            s.last_search = string.sub(text, 2)
-            if #text > 3 then
-                w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
-                if s.ret == false then
-                    if s.marker then w:scroll(s.marker) end
-                    w.ibar.input.fg = theme.ibar_error_fg
-                    w.ibar.input.bg = theme.ibar_error_bg
-                else
-                    w.ibar.input.fg = theme.ibar_fg
-                    w.ibar.input.bg = theme.ibar_bg
-                end
-            else
-                w:clear_search(false)
-            end
+            local prefix = string.sub(text, 1, 1)
+            local search = string.sub(text, 2)
+            w:search(search, (prefix == "/"))
         else
             w:clear_search()
             w:set_mode()
@@ -85,17 +81,10 @@ new_mode("search", {
 
     activate = function (w, text)
         w.search_state.marker = nil
-        -- Search if haven't already (won't have for short strings)
-        if not w.search_state.searched then
-            w:search(string.sub(text, 2), (string.sub(text, 1, 1) == "/"))
+        if text == "/" or text == "?" then
+            w:clear_search()
         end
-        -- Ghost the last search term
-        if w.search_state.ret then
-            w:set_mode()
-            w:set_prompt(text)
-        else
-            w:error("Pattern not found: " .. string.sub(text, 2))
-        end
+        w:set_mode()
     end,
 
     history = {maxlen = 50},
@@ -114,7 +103,7 @@ add_binds("search", {
 
 -- Add search functions to webview
 for k, m in pairs({
-    start_search = function (view, w, text)
+    start_search = function (_, w, text)
         if string.match(text, "^[?/]") then
             w:set_mode("search")
             if not string.match(text, "^/$") then w:set_input(text) end
@@ -124,55 +113,97 @@ for k, m in pairs({
     end,
 
     search = function (view, w, text, forward, wrap)
-        if forward == nil then forward = true end
-
         -- Get search state (or new state)
-        if not w.search_state then w.search_state = {} end
+        if not w.search_state then w.search_state = new_search_state() end
         local s = w.search_state
+
+        if not s.by_view[view] then
+            s.by_view[view] = {}
+        end
+
+        -- Default values
+        if forward == nil then forward = true end
+        text = text or s.last_search or ""
 
         -- Check if wrapping should be performed
         if wrap == nil then
             if s.wrap ~= nil then wrap = s.wrap else wrap = true end
         end
 
-        -- Get search term
-        text = text or s.last_search
-        if not text or #text == 0 then
-            return w:clear_search()
+        if text == "" then
+            if w:is_mode("search") then
+                return w:clear_search()
+            else
+                return w:notify("No search term specified")
+            end
         end
-        s.last_search = text
 
-        if s.forward == nil then
+        if not s.searched then
             -- Haven't searched before, save some state.
             s.forward = forward
             s.wrap = wrap
             local scroll = view.scroll
             s.marker = { x = scroll.x, y = scroll.y }
-        else
-            -- Invert direction if originally searching in reverse
-            forward = (s.forward == forward)
         end
-
         s.searched = true
-        s.wrapped = false
-        s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
-        if not s.ret and wrap then
-            s.wrapped = true
-            s.ret = view:search(text, text ~= string.lower(text), forward, s.wrapped);
+
+        -- Invert direction if originally searching in reverse
+        forward = (s.forward == forward)
+
+        if text == s.by_view[view].last_search then
+            if forward then
+                view:search_next()
+            else
+                view:search_previous()
+            end
+        else
+            s.by_view[view].search = text
+            s.last_search = text
+            view:search(text, text ~= string.lower(text), forward, wrap)
         end
     end,
 
     clear_search = function (view, w, clear_state)
-        w.ibar.input.fg = theme.ibar_fg
-        w.ibar.input.bg = theme.ibar_bg
+        w:set_ibar_theme()
         view:clear_search()
         if clear_state ~= false then
-            w.search_state = {}
+            w.search_state = new_search_state()
         else
             w.search_state.searched = false
+            w.search_state.last_search = nil
         end
     end,
 
 }) do webview.methods[k] = m end
+
+webview.add_signal("init", function (view)
+    view:add_signal("found-text", function (v)
+        local w = webview.window(v)
+        w.search_state.by_view[v].ret = true
+        w:set_ibar_theme()
+    end)
+
+    view:add_signal("failed-to-find-text", function (v)
+        local w = webview.window(v)
+        w.search_state.by_view[v].ret = false
+        w:set_ibar_theme("error")
+        if not w:is_mode("search") then
+            w:error("not found: " .. w.search_state.last_search)
+        end
+
+        local s = w.search_state
+        if s.marker then w:scroll(s.marker) end
+    end)
+
+    -- Clear start search marker on button press/release
+    local clear_start_search_marker = function (v)
+        local w = webview.window(v)
+        if w.search_state then w.search_state.marker = nil end
+    end
+    view:add_signal("button-press", clear_start_search_marker)
+    view:add_signal("button-release", clear_start_search_marker)
+end)
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

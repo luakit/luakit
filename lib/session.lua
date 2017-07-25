@@ -1,89 +1,206 @@
-------------------------------------------------------
--- Session saving / loading functions               --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- Session saving / loading functions.
+--
+-- This module allows you to save your current session when quitting
+-- luakit, and then restore it again the next time you open luakit.
+--
+-- This module also provides a Lua API to allow other modules to save data to
+-- the session file and restore it when reopening Luakit.
+--
+-- @module session
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+
+local window = require("window")
+local webview = require("webview")
+local lousy = require("lousy")
+local pickle = lousy.pickle
+
+local _M = {}
+
+lousy.signal.setup(_M, true)
 
 local function rm(file)
     luakit.spawn(string.format("rm %q", file))
 end
 
--- Session functions
-session = {
-    -- The file which we'll use for session info, $XDG_DATA_HOME/luakit/session
-    file = luakit.data_dir .. "/session",
+--- Path to session file.
+-- @type string
+-- @readwrite
+_M.session_file = luakit.data_dir .. "/session"
 
-    -- Save all given windows uris to file.
-    save = function (wins)
-        local lines = {}
-        -- Save tabs from all the given windows
-        for wi, w in pairs(wins) do
-            local current = w.tabs:current()
-            for ti, tab in ipairs(w.tabs.children) do
-                table.insert(lines, string.format("%d\t%d\t%s\t%s", wi, ti,
-                    tostring(current == ti), tab.uri))
+--- Path to crash recovery session file.
+-- @type string
+-- @readwrite
+_M.recovery_file = luakit.data_dir .. "/recovery_session"
+
+--- Save the current session state to a file.
+--
+-- If no file is specified, the path specified by `session_file` is used.
+--
+-- @tparam[opt] string file The file path in which to save the session state.
+_M.save = function (file)
+    if not file then file = _M.session_file end
+    local state = {}
+    local wins = lousy.util.table.values(window.bywidget)
+    -- Save tabs from all windows
+    for _, w in ipairs(wins) do
+        local current = w.tabs:current()
+        state[w] = { open = {} }
+        for ti, tab in ipairs(w.tabs.children) do
+            if not tab.private then
+                table.insert(state[w].open, {
+                    ti = ti,
+                    current = (current == ti),
+                    uri = tab.uri,
+                    session_state = tab.session_state
+                })
             end
         end
+    end
+    _M.emit_signal("save", state)
 
-        if #lines > 0 then
-            local fh = io.open(session.file, "w")
-            fh:write(table.concat(lines, "\n"))
-            io.close(fh)
-        else
-            rm(session.file)
-        end
-    end,
+    -- Convert state keys from w to an index
+    local istate = {}
+    for i, w in ipairs(wins) do
+        assert(type(state[w]) == "table")
+        istate[i] = state[w]
+    end
+    state = istate
 
-    -- Load window and tab state from file
-    load = function (delete)
-        if not os.exists(session.file) then return end
-        local ret = {}
-
-        -- Read file
-        local lines = {}
-        local fh = io.open(session.file, "r")
-        for line in fh:lines() do table.insert(lines, line) end
+    if #state > 0 then
+        local fh = io.open(file, "wb")
+        fh:write(pickle.pickle(state))
         io.close(fh)
-        -- Delete file
-        if delete ~= false then rm(session.file) end
+    else
+        rm(file)
+    end
+end
 
-        -- Parse session file
-        local split = lousy.util.string.split
-        for _, line in ipairs(lines) do
-            local wi, ti, current, uri = unpack(split(line, "\t"))
-            wi = tonumber(wi)
-            current = (current == "true")
-            if not ret[wi] then ret[wi] = {} end
-            table.insert(ret[wi], {uri = uri, current = current})
-        end
+--- Load session state from a file, and optionally delete it.
+--
+-- The session state is *not* restored. This function only loads the state into
+-- a table and returns it.
+--
+-- If no file is specified, the path specified by `session_file` is used.
+--
+-- If `delete` is not `false`, then the session file is deleted.
+--
+-- @tparam[opt] boolean delete Whether to delete the file after the session is
+-- loaded.
+-- @tparam[opt] string file The file path from which to load the session state.
+_M.load = function (delete, file)
+    if not file then file = _M.session_file end
+    if not os.exists(file) then return {} end
 
-        return (#ret > 0 and ret) or nil
-    end,
+    -- Read file
+    local fh = io.open(file, "rb")
+    local state = pickle.unpickle(fh:read("*all"))
+    io.close(fh)
+    -- Delete file on idle (i.e. only if config loads successfully)
+    if delete ~= false then luakit.idle_add(function() rm(file) end) end
 
-    -- Spawn windows from saved session and return the last window
-    restore = function (delete)
-        wins = session.load(delete)
-        if not wins or #wins == 0 then return end
+    return state
+end
 
-        -- Spawn windows
-        local w
-        for _, win in ipairs(wins) do
-            w = nil
-            for _, item in ipairs(win) do
-                if not w then
-                    w = window.new({item.uri})
-                else
-                    w:new_tab(item.uri, item.current)
-                end
+-- Spawn windows from saved session and return the last window
+local restore_file = function (file, delete)
+    local ok, wins = pcall(_M.load, delete, file)
+    if not ok or #wins == 0 then return end
+
+    local state = {}
+    -- Spawn windows
+    local w
+    for _, win in ipairs(wins) do
+        w = nil
+        for _, item in ipairs(win.open) do
+            local v
+            if not w then
+                w = window.new({"about:blank"})
+                v = w.view
+            else
+                v = w:new_tab("about:blank", { switch = item.current })
             end
+            -- Block the tab load, then set its location
+            webview.modify_load_block(v, "session-restore", true)
+            webview.set_location(v, { session_state = item.session_state, uri = item.uri })
+            local function unblock(vv)
+                webview.modify_load_block(vv, "session-restore", false)
+                vv:remove_signal("switched-page", unblock)
+            end
+            v:add_signal("switched-page", unblock)
         end
+        -- Convert state keys from index to w table
+        state[w] = win
+    end
+    _M.emit_signal("restore", state)
 
-        return w
-    end,
-}
+    return w
+end
+
+--- Restore the session state, optionally deleting the session file.
+--
+-- This will first attempt to restore the session saved at `session_file`. If
+-- that does not succeed, the session saved at `recovery_file` will be loaded.
+--
+-- If `delete` is not `false`, then the loaded session file is deleted.
+--
+-- @tparam[opt] boolean delete Whether to delete the file after the session is
+-- restored.
+-- @treturn[1] table The window table for the last window created.
+-- @treturn[2] nil If no session could be loaded, `nil` is returned.
+_M.restore = function(delete)
+    return restore_file(_M.session_file, delete)
+        or restore_file(_M.recovery_file, delete)
+end
+
+local recovery_save_timer = timer{ interval = 10*1000 }
 
 -- Save current window session helper
-window.methods.save_session = function (w)
-    session.save({w,})
+window.methods.save_session = function ()
+    _M.save(_M.session_file)
 end
+
+local function start_timeout()
+    -- Restart the timer
+    if recovery_save_timer.started then
+        recovery_save_timer:stop()
+    end
+    recovery_save_timer:start()
+end
+
+recovery_save_timer:add_signal("timeout", function ()
+    recovery_save_timer:stop()
+    _M.save(_M.recovery_file)
+end)
+
+window.add_signal("init", function (w)
+    w.win:add_signal("destroy", function ()
+        -- Hack: should add a luakit shutdown hook...
+        local num_windows = 0
+        for _, _ in pairs(window.bywidget) do num_windows = num_windows + 1 end
+        -- Remove the recovery session on a successful exit
+        if num_windows == 0 and os.exists(_M.recovery_file) then
+            rm(_M.recovery_file)
+        end
+    end)
+
+    w.tabs:add_signal("page-reordered", function ()
+        start_timeout()
+    end)
+end)
+
+webview.add_signal("init", function (view)
+    -- Save session state after page navigation
+    view:add_signal("load-status", function (_, status)
+        if status == "committed" then
+            start_timeout()
+        end
+    end)
+    -- Save session state after switching page (session includes current tab)
+    view:add_signal("switched-page", function ()
+        start_timeout()
+    end)
+end)
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

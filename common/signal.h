@@ -1,5 +1,5 @@
 /*
- * signal.h - Signal handling functions
+ * common/signal.h - Signal handling functions
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
@@ -19,8 +19,8 @@
  *
  */
 
-#ifndef LUAKIT_COMMON_SIGNAL
-#define LUAKIT_COMMON_SIGNAL
+#ifndef LUAKIT_COMMON_SIGNAL_H
+#define LUAKIT_COMMON_SIGNAL_H
 
 #include <glib.h>
 
@@ -89,5 +89,16 @@ signal_remove(signal_t *signals, const gchar *name, gpointer func)
     }
 }
 
+/* remove all signal inside a signal array */
+static inline void
+signals_remove(signal_t *signals, const gchar *name)
+{
+    signal_array_t *sigfuncs = signal_lookup(signals, name);
+    if (sigfuncs) {
+        g_tree_remove((GTree*) signals, (gpointer) name);
+    }
+}
+
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

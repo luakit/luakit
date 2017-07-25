@@ -1,37 +1,27 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local print = print
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
+--- Save history in sqlite3 database - chrome page.
+--
+-- This module provides the luakit://history/ chrome page - a user interface for
+-- searching the web browsing history.
+--
+-- @module history_chrome
+-- @copyright 2010-2011 Mason Larobina <mason.larobina@gmail.com>
 
 -- Grab the luakit environment we need
 local history = require("history")
 local lousy = require("lousy")
 local chrome = require("chrome")
-local add_binds = add_binds
-local add_cmds = add_cmds
-local webview = webview
-local capi = {
-    luakit = luakit
-}
+local binds = require("binds")
+local add_cmds = binds.add_cmds
 
-module("history.chrome")
+local _M = {}
 
-stylesheet = [===[
+--- CSS applied to the history chrome page.
+-- @readwrite
+_M.stylesheet = [===[
 .day-heading {
-    font-size: 1.6em;
+    font-size: 1.3em;
     font-weight: 100;
-    margin: 1em 0 0.5em 0.5em;
+    margin: 1em 0 0.5em 0;
     -webkit-user-select: none;
     cursor: default;
     overflow: hidden;
@@ -44,7 +34,6 @@ stylesheet = [===[
 }
 
 .item {
-    font-size: 1.3em;
     font-weight: 400;
     overflow: hidden;
     white-space: nowrap;
@@ -95,7 +84,7 @@ stylesheet = [===[
 
 ]===]
 
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
@@ -107,9 +96,11 @@ local html = [==[
 </head>
 <body>
     <header id="page-header">
+        <h1>History</h1>
         <span id="search-box">
             <input type="text" id="search" placeholder="Search history..." />
-            <input type="button" id="clear-button" value="X" />
+            <input type="button" class="button" id="clear-button" value="✕" />
+            <input type="hidden" id="page" />
         </span>
         <input type="button" id="search-button" class="button" value="Search" />
         <div class="rhs">
@@ -141,13 +132,12 @@ local html = [==[
 local main_js = [=[
 $(document).ready(function () { 'use strict';
 
-    var limit = 100, page = 1, results_len = 0;
+    var limit = 100, results_len = 0;
 
     var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
     var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
 
     var item_html = $("#item-skelly").html();
-    $("#templates").remove();
 
     function make_history_item(h) {
         var $e = $(item_html);
@@ -168,7 +158,11 @@ $(document).ready(function () { 'use strict';
         $clear_results = $("#clear-results-button").eq(0),
         $clear_selected = $("#clear-selected-button").eq(0),
         $next = $("#nav-next").eq(0),
-        $prev = $("#nav-prev").eq(0);
+        $prev = $("#nav-prev").eq(0),
+        $page = $("#page").eq(0);
+
+    if ($page.val() == "")
+        $page.val(1);
 
     function update_clear_buttons(all, results, selected) {
         $clear_all.attr("disabled", !!all);
@@ -181,59 +175,60 @@ $(document).ready(function () { 'use strict';
             $next.show();
         else
             $next.hide();
-        if (page > 1)
+        if (parseInt($page.val(), 10) > 1)
             $prev.show();
         else
             $prev.hide();
     }
 
     function search() {
-        var query = $search.val(),
-            results = history_search({
-                query: query, limit: limit, page: page });
+        var query = $search.val();
+        history_search({
+            query: query, limit: limit, page: parseInt($page.val(), 10),
+        }).then(function (results) {
+            // Used to trigger hiding of next nav button when results_len < limit
+            results_len = results.length || 0;
 
-        // Used to trigger hiding of next nav button when results_len < limit
-        results_len = results.length || 0;
+            update_clear_buttons(query, !query, true);
 
-        update_clear_buttons(query, !query, true);
+            if (!results.length) {
+                $results.empty();
+                update_nav_buttons();
+                return;
+            }
 
-        if (!results.length) {
-            $results.empty();
-            update_nav_buttons();
-            return;
-        }
+            var last_date, last_time = 0, group_html;
 
-        var last_date, last_time = 0, group_html;
+            var i = 0, len = results.length, html = "";
 
-        var i = 0, len = results.length, html = "";
+            var sep = $("<div/>").addClass("day-sep").prop("outerHTML"),
+                $heading = $("<div/>").addClass("day-heading");
 
-        var sep = $("<div/>").addClass("day-sep").prop("outerHTML"),
-            $heading = $("<div/>").addClass("day-heading");
+            for (; i < len;) {
+                var h = results[i++];
 
-        for (; i < len;) {
-            var h = results[i++];
+                if (h.date !== last_date) {
+                    last_date = h.date;
+                    html += $heading.text(h.date).prop("outerHTML");
 
-            if (h.date !== last_date) {
-                last_date = h.date;
-                html += $heading.text(h.date).prop("outerHTML");
+                } else if ((last_time - h.last_visit) > 3600)
+                    html += sep;
 
-            } else if ((last_time - h.last_visit) > 3600)
-                html += sep;
+                last_time = h.last_visit;
+                html += make_history_item(h);
+            }
 
-            last_time = h.last_visit;
-            html += make_history_item(h);
-        }
+            update_nav_buttons(query);
 
-        update_nav_buttons(query);
-
-        $results.get(0).innerHTML = html;
+            $results.get(0).innerHTML = html;
+        });
     }
 
     /* input field callback */
     $search.keydown(function(ev) {
         if (ev.which == 13) { /* Return */
             reset_mode();
-            page = 1;
+            $page.val(1);
             search();
             $search.blur();
         }
@@ -241,12 +236,12 @@ $(document).ready(function () { 'use strict';
 
     $("#clear-button").click(function () {
         $search.val("");
-        page = 1;
+        $page.val(1);
         search();
     });
 
     $("#search-button").click(function () {
-        page = 1;
+        $page.val(1);
         search();
     });
 
@@ -282,12 +277,14 @@ $(document).ready(function () { 'use strict';
     });
 
     $next.click(function () {
-        page++;
+        var page = parseInt($page.val(), 10);
+        $page.val(page + 1);
         search();
     });
 
     $prev.click(function () {
-        page = Math.max(page-1,1);
+        var page = parseInt($page.val(), 10);
+        $page.val(Math.max(page - 1,1));
         search();
     });
 
@@ -317,19 +314,19 @@ $(document).ready(function () { 'use strict';
         $clear_selected.blur();
     });
 
-    var query = initial_search_term();
-    if (query)
-        $search.val(query);
-
-    search();
+    initial_search_term().then(function (query) {
+        if (query)
+            $search.val(query);
+        search();
+    });
 });
 
 ]=]
 
 local initial_search_term
 
-export_funcs = {
-    history_search = function (opts)
+local export_funcs = {
+    history_search = function (_, opts)
         local sql = { "SELECT", "*", "FROM history" }
 
         local where, args, argc = {}, {}, 1
@@ -364,7 +361,7 @@ export_funcs = {
 
         local rows = history.db:exec(sql, args)
 
-        for i, row in ipairs(rows) do
+        for _, row in ipairs(rows) do
             local time = rawget(row, "last_visit")
             rawset(row, "date", os.date("%A, %d %B %Y", time))
             rawset(row, "time", os.date("%H:%M", time))
@@ -373,11 +370,11 @@ export_funcs = {
         return rows
     end,
 
-    history_clear_all = function ()
+    history_clear_all = function (_)
         history.db:exec [[ DELETE FROM history ]]
     end,
 
-    history_clear_list = function (ids)
+    history_clear_list = function (_, ids)
         if not ids or #ids == 0 then return end
         local marks = {}
         for i=1,#ids do marks[i] = "?" end
@@ -385,53 +382,31 @@ export_funcs = {
             .. table.concat(marks, ",") .. " )", ids)
     end,
 
-    initial_search_term = function ()
+    initial_search_term = function (_)
         local term = initial_search_term
         initial_search_term = nil
         return term
     end,
 }
 
-chrome.add("history", function (view, meta)
-
-    local html = string.gsub(html, "{%%(%w+)}", {
+chrome.add("history", function ()
+    local html = string.gsub(html_template, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
-        stylesheet = chrome.stylesheet .. stylesheet
+        stylesheet = chrome.stylesheet .. _M.stylesheet
     })
+    return html
+end,
+function (view)
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    local _, err = view:eval_js(jquery, { no_return = true })
+    assert(not err, err)
 
-    view:load_string(html, meta.uri)
-
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= meta.uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        view:register_function("reset_mode", function ()
-            meta.w:set_mode() -- HACK to unfocus search box
-        end)
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://download/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
-    end
-
-    view:add_signal("load-status", on_first_visual)
-end)
+    -- Load main luakit://history/ JavaScript
+    _, err = view:eval_js(main_js, { no_return = true })
+    assert(not err, err)
+end,
+export_funcs)
 
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)
@@ -440,8 +415,13 @@ end)
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("history", function (w, query)
-        initial_search_term = query
-        w:new_tab("luakit://history/")
-    end),
+    cmd("history", "Open <luakit://history/> in a new tab.",
+        function (w, query)
+            initial_search_term = query
+            w:new_tab("luakit://history/")
+        end),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

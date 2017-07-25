@@ -1,0 +1,399 @@
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.\" Luakit man page.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.ds appname Luakit
+.ds cmdname luakit
+.ds manname LUAKIT
+.ds version LUAKITVERSION
+.ds year 2012
+.ds date \*[year]-10-10
+.ds appauthors Mason Larobina <mason.larobina@gmail.com>
+.ds manauthors Pierre Neidhardt <ambrevar@gmail.com>
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.TH \*[manname] 1 "\*[date]" "\*[appname] \*[version]" "User Commands"
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH NAME
+\*[appname] - Fast, small, WebKit based browser framework extensible by Lua.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH SYNOPSIS
+.
+.SY \*[cmdname]
+.RI [ OPTION ] " " [ URI ]
+.YS
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH DESCRIPTION
+\*[appname] is a highly configurable, browser framework based on the WebKit web
+content engine and the GTK+ toolkit. It is very fast, extensible by Lua and
+licensed under the GNU GPLv3 license. It is primarily targeted at power users,
+developers and any people with too much time on their hands who want to have
+fine-grained control over their web browsers behaviour and interface.
+.
+.SS Modes
+\*[appname] can run in various modes, which specify how the user interacts with
+the browser.
+.TP
+.B Normal mode
+This is the default mode when \*[appname] is started. You can load URIs, open
+tabs and windows, access to other modes, etc.
+.TP
+.B All mode
+Special meta-mode in which the bindings are present in all modes.
+.TP
+.B Insert mode
+When selecting form fields \*[appname] will enter the insert mode which allows
+you to enter text in form fields without accidentally triggering normal mode
+bindings.
+.TP
+.B  Passthrough mode
+\*[appname] will pass every key event to the WebView until the user presses
+Escape. This is useful for using webpage shortcuts.
+.TP
+.B Command mode
+Enter commands. Every action in \*[appname] is a command, so basically you can
+do anything from there.
+.TP
+.B Lua mode
+Execute arbitrary Lua commands within the \*[appname] environment.
+.
+.SS Userscripts
+\*[appname] is highly extensible with userscripts written in Lua. These scripts
+may provide additional modes. Some are embedded by default. You will need to
+load the userscript to use its features. See the \fBCONFIGURATION\fR section for
+more details.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH OPTIONS
+.SS Help options
+.TP
+.BR -h ", " --help
+Show help options.
+.TP
+.BR --help-all
+Show all help options.
+.TP
+.BR --help-gtk
+Show GTK+ help options.
+.
+.SS Application options
+.TP
+.BR -k ", " --check
+Check configuration file and exit.
+.TP
+.BR -c ", " --config = \fIFILE\fR
+Configuration file to use.
+.TP
+.BR -n ", " --nonblock
+Fork \*[appname] into the background.
+.TP
+.BR -U ", " --nounique
+Ignore libunique bindings.
+.TP
+.BR -u ", " --uri = \fIURI\fR
+URI(s) to load at startup.
+.TP
+.BR -v ", " --verbose
+Print debugging output.
+.TP
+.BR -V ", " --version
+Print version and exit.
+.TP
+.BR --display = \fIDISPLAY\fR
+X display to use.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH KEYBINDINGS
+\*[appname] is fully usable with keyboard. Default bindings should be familiar
+to users of Emacs and Vim; nonetheless a lot of keyboards and mouse shortcuts
+are shared with popular web browsers.
+.P
+Pressing
+.B :
+will open the command prompt. You can enter commands from there.
+You can view the current list of bindings
+in \*[appname]'s help page with the
+.IP
+.B :help
+.P
+command.
+.P
+Some bindings have an uppercase version which will behave somewhat
+differently. Some come with userscripts, so you will need to have the
+appropriate userscript loaded to use it.  Here follows a list of some noteworthy
+default bindings.
+.
+.TP
+.B ZZ
+Quit and save the session.
+.TP
+.B ZQ
+Quit without saving the session.
+.
+.TP
+.BR o ", " O
+Open specified URIs. If uppercase, edit current URI.
+.TP
+.BR t ", " T
+Open specified URIs in new tab. If uppercase, edit current URI.
+.TP
+.BR w ", " W
+Open specified URIs in new window. If uppercase, edit current URI.
+.P
+.BR <Left> ", " <Down> ", " <Up> ", " <Right>
+.br
+.BR h ", " j ", " k ", " l
+.RS 7
+Scroll page vertically and horizontally.
+.RE
+.P
+.BR <Home> ", " <End>
+.br
+.BR gg ", " G
+.RS 7
+Go to top / bottom of the page.
+.RE
+.TP
+.BR [count]%
+Go to [count] percent of the page.
+.TP
+.BR f ", " F
+Enter follow mode. Use numbers or text to open
+corresponding links. Use arrow to navigate between links. If uppercase,
+open in new tab.
+Requires
+.I follow
+userscript.
+.TP
+.BR i
+Enter insert mode. In some case form fields may not receive characters; press an
+arrow key to insert characters correctly.
+.TP
+.BR gi
+Enter insert mode in the first form field.
+Requires
+.I go_input
+userscript.
+.TP
+.BR <F11>
+Toggle fullscreen.
+.TP
+.BR + ", " -
+Change the zoom level.
+.TP
+.BR =
+Restore zoom level.
+.TP
+.BR p ", " P
+Open URI from clipboard. If uppercase, open in new tab.
+.TP
+.BR y
+Yank current URI to clipboard.
+.TP
+.BR <Ctrl>x ", " <Ctrl>a
+Decrement / increment last number in URI. This is useful for forum threads or
+any ordered website.
+.TP
+.BR H ", " L
+Go back / forward in the browser history.
+.P
+.BR <Ctrl><Shift><Tab> ", " <Ctrl><Tab>
+.br
+.BR <Ctrl><PageDown> ", " <Ctrl><PageUp>
+.br
+.BR gT ", " gt
+.RS 7
+Go to previous / next tab.
+.RE
+.TP
+.BR <Alt>[0-9]
+Go to tab #, where # is between 0 and 9.
+.TP
+.BR < ", " >
+Reorder tabs.
+Requires
+.I taborder
+userscript.
+.TP
+.BR [count]d
+Close [count] tabs.
+.TP
+.BR u
+Restore last closed tab.
+.TP
+.BR gy
+Duplicate current tab.
+.TP
+.BR gh ", " gH
+Open homepage. If uppercase, open in new tab.
+.TP
+.BR r ", " R
+Reload current page. If uppercase, skip cache.
+.TP
+.BR <Ctrl>c
+Stop loading the current page.
+.TP
+.BR <Ctrl>z
+Enter passthrough mode. Use ESC to return to normal mode.
+.TP
+.BR M[a-zA-Z0-9]
+Associate current URI to quickmark #, where # is an ASCII letter or a digit.
+Requires
+.I quickmarks
+userscript.
+.TP
+.BR go[a-zA-Z0-9] ", " gn[a-zA-Z0-9] ", " gw[a-zA-Z0-9]
+Open specified quickmark in current tab /
+new tab / new window.
+Requires
+.I quickmarks
+userscript.
+.TP
+.BR B
+Add current URI to bookmarks.
+.TP
+.BR gb ", " gB
+Open bookmarks manager. If uppercase, open in new tab.
+.TP
+.BR / ", " ?
+Search / reverse search for a string on current page.
+.TP
+.BR n ", " N
+Find next / previous result from search.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH COMMANDS
+All bindings actually refer to commands. However, some commands do not have
+bindings associated by default. If
+.I completion
+userscript is used, you can autocomplete commands by pressing <TAB> by
+default. Once again, you should consult the configuration files to get an
+exhaustive list. The currently available functions may be displayed from the
+help view, which you can open with the
+.B :help
+command.
+.P
+Here follows some noteworthy commands:
+.TP
+.B :bookmarks
+Display and search bookmarks.
+.TP
+.B :downloads
+Open Download page, which displays all downloads along with their status.
+.TP
+.B :dump
+Download current page.
+.TP
+.B :help
+Display all commands and bindings, along with their description. The help page
+also features some details about modes.
+.TP
+.B :history
+Display and search history.
+.TP
+.B :inspect
+Launch WebKit inspector.
+Use \fB:inspect!\fR to toggle off.
+.TP
+.B :nohlsearch
+Disable search highlighting.
+.TP
+.B :qmarks
+Display the quickmarks list.
+.TP
+.B :tabhistory
+Display the tab history.
+.TP
+.B :view-source
+Display page source code.
+Use \fB:view-source!\fR to toggle off.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH FILES
+.\" TODO: fix indentation.
+\*[appname] will load configuration files from the following folders in priority
+order:
+.IP
+.I $XDG_CONFIG_HOME/luakit
+.IP
+.I $XDG_CONFIG_DIRS/luakit
+.P
+Default configuration files:
+.TP
+.I binds.lua
+The keyboard and mouse bindings.
+.TP
+.I globals.lua
+General configuration, like home page, search engines, user agent, per-domain
+properties, cookies policy.
+.TP
+.I modes.lua
+All default modes are set in this file.
+.TP
+.I rc.lua
+Main configuration files. All other files are loaded from there.
+.TP
+.I theme.lua,
+Colors definition.
+.TP
+.I webview.lua
+WebKit related.
+.TP
+.I window.lua
+Status bar, windows and tabs behaviour.
+.P
+Embedded userscript will be loaded from \fI$XDG_DATA_DIRS/luakit/lib\fR.
+.P
+All browsing-related files are stored in \fI$XDG_DATA_HOME/luakit\fR.  All of
+are created if needed and if they do not exist. Depending on the userscripts you are using,
+you may find:
+.TP
+.I bookmarks.db
+An SQLite3 database containing your complete bookmark list. If you want to
+synchronise your bookmarks between your different systems, just share this
+file. You can use a symbolic link if the file is not stored in the required
+folder.
+.TP
+.I cookies.db
+This file contains all details needed for websites keeping track of your status,
+like login information. Delete this file once you are finished with browsing if
+you are not on your personal system.
+.TP
+.I history.db
+Your browsing history.  Delete this file once you are finished with browsing if
+you are not on your personal system.
+.TP
+.I quickmarks
+A plain text file saving your quickmarks. The structure is extremely simple:
+each line is a single quickmark; first character is the quickmark shortcut and
+may be one of [a-zA-Z0-9]; second character is a space; the remaining part is
+the URI.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH CONFIGURATION
+If you do not want to stick to the default configuration and want to benefit
+from the flexibility and extensibility of \*[appname], you can fully configure
+it from the Lua configuration files.
+.P
+If you do not want to start from scratch, you may use default configuration
+files and tweak them to fit your needs. Use the following command to copy
+configuration file to your home folder:
+.IP
+.EX
+cp -r $XDG_CONFIG_DIRS/luakit $XDG_CONFIG_HOME
+.EE
+.P
+You can now edit the new files. Configuration should be quite straightforward,
+even if you do not know much about Lua.
+.
+.\""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""""
+.SH AUTHORS
+\*[appname] was mainly developed by \*[appauthors]. Other contributors are
+listed in the
+.I AUTHORS
+file.
+.
+.P
+This man page was written by \*[manauthors].

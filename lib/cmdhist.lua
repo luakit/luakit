@@ -1,7 +1,17 @@
-------------------------------------------------------
--- Enables command history in modes that support it --
--- © 2010 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
+--- Enables command history in modes that support it.
+--
+-- This module adds support for modes to specify that user input on the
+-- command line should be recorded, so that users can scroll back through
+-- previous input with the arrow keys. It is used to implement history for the
+-- `command` mode.
+--
+-- @module cmdhist
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+
+local window = require("window")
+local lousy = require("lousy")
+
+local _M = {}
 
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when
@@ -37,7 +47,7 @@ local hist_binds = {
 }
 
 -- Add the Up & Down keybindings to modes which support command history
-window.init_funcs.add_hist_binds = function (w)
+window.add_signal("init", function (w)
     w:add_signal("mode-entered", function ()
         local mode = w.mode
         -- Setup history state
@@ -62,6 +72,8 @@ window.init_funcs.add_hist_binds = function (w)
             end
         end
     end)
-end
+end)
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

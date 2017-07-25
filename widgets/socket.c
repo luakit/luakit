@@ -21,22 +21,23 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include <stdlib.h>
+#include <gtk/gtkx.h>
 
 static void
 plug_added_cb(GtkSocket* UNUSED(socket), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "plug-added", 1, 0);
+    luaH_object_emit_signal(L, -1, "plug-added", 0, 0);
 }
 
 static gboolean
 plug_removed_cb(GtkSocket* UNUSED(socket), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "plug-removed", 1, 0);
-    return FALSE;
+    luaH_object_emit_signal(L, -1, "plug-removed", 0, 0);
+    return TRUE;
 }
 
 static gint
@@ -64,7 +65,7 @@ luaH_socket_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_ID:
         gtk_socket_add_id(GTK_SOCKET(w->widget),
-                (GdkNativeWindow) luaL_checkint(L, 2));
+                (Window) luaL_checkint(L, 2));
         break;
 
       default:
@@ -74,11 +75,10 @@ luaH_socket_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_socket(widget_t *w, luakit_token_t UNUSED(token))
+widget_socket(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_socket_index;
     w->newindex = luaH_socket_newindex;
-    w->destructor = widget_destructor;
 
     w->widget = gtk_socket_new();
     gtk_widget_show(w->widget);
@@ -89,3 +89,5 @@ widget_socket(widget_t *w, luakit_token_t UNUSED(token))
       NULL);
     return w;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

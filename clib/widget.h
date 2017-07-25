@@ -28,6 +28,7 @@ typedef struct widget_t widget_t;
 #include "common/luaclass.h"
 #include "common/luaobject.h"
 #include "luah.h"
+#include "globalconf.h"
 
 #include <gtk/gtk.h>
 
@@ -36,7 +37,7 @@ typedef struct widget_t widget_t;
 #define GOBJECT_TO_LUAKIT_WIDGET(gtk_widget) ((widget_t*)g_object_get_data(G_OBJECT(gtk_widget), \
             GOBJECT_LUAKIT_WIDGET_DATA_KEY))
 
-typedef widget_t *(widget_constructor_t)(widget_t *, luakit_token_t);
+typedef widget_t *(widget_constructor_t)(lua_State *L, widget_t *, luakit_token_t);
 typedef void (widget_destructor_t)(widget_t *);
 
 widget_constructor_t widget_box;
@@ -48,6 +49,11 @@ widget_constructor_t widget_paned;
 widget_constructor_t widget_webview;
 widget_constructor_t widget_window;
 widget_constructor_t widget_socket;
+widget_constructor_t widget_overlay;
+widget_constructor_t widget_scrolled;
+widget_constructor_t widget_image;
+widget_constructor_t widget_spinner;
+widget_constructor_t widget_drawing_area;
 
 typedef const struct {
     luakit_token_t tok;
@@ -71,19 +77,28 @@ struct widget_t
     gpointer ref;
     /* Main gtk widget */
     GtkWidget *widget;
+#if GTK_CHECK_VERSION(3,16,0)
+    /* CSS provider for this widget */
+    GtkCssProvider *provider;
+#endif
+    /* Previous width and height, for resize signal */
+    gint prev_width, prev_height;
     /* Misc private data */
     gpointer data;
 };
 
 lua_class_t widget_class;
 void widget_class_setup(lua_State *);
+void widget_set_css_properties(widget_t *, ...);
+gint luaH_widget_new(lua_State *L);
 
 static inline widget_t*
 luaH_checkwidget(lua_State *L, gint udx)
 {
     widget_t *w = luaH_checkudata(L, udx, &widget_class);
     if (!w->widget)
-        luaL_argerror(L, udx, "using destroyed widget");
+        luaL_error(L, "widget %p (%s) has been destroyed", w, w->info->name);
+    g_assert(GTK_IS_WIDGET(w->widget));
     return w;
 }
 

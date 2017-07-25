@@ -1,0 +1,47 @@
+--- IPC interface for communication between UI and Web processes.
+--
+-- In Luakit there is a single UI Lua state, but there may be multiple web
+-- processes, each of which have a separate Lua state. This interface can be used
+-- to communicate between the UI and web processes.
+--
+-- An interface similar to Luakit's signals handling is provided, and supports
+-- serializing multiple Lua parameters.
+--
+--     -- In UI process
+--     local wm = require_web_module("test_wm")
+--     wm:add_signal("test", function (_, text)
+--         msg.info("Web process said %s!", text)
+--     end)
+--
+--     -- In test_wm web module
+--     local ui = ipc_channel("test_wm")
+--     ui:emit_signal("test", "hello")
+--
+-- @module ipc
+-- @author Aidan Holm
+-- @copyright 2016 Aidan Holm
+
+--- Open an IPC channel.
+--
+-- Open an IPC channel and create an `ipc_channel` object. Signals
+-- emitted on this object on the web process will call signal handlers
+-- on the UI process, and vice versa.
+--
+-- @function ipc_channel
+-- @tparam string name A name that identifies the channel.
+-- @treturn ipc_channel An IPC channel endpoint object.
+
+
+--- Require a Lua module on the web process.
+--
+-- Load the named module on all web process Lua states. The module will
+-- be loaded on any future web process Lua states.
+--
+-- For convenience, this function returns an IPC channel with the same name as
+-- the web module.
+--
+-- @function require_web_module
+-- @tparam string name The name of the module to load.
+-- @treturn ipc_channel An IPC channel endpoint object.
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

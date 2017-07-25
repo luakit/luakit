@@ -21,13 +21,15 @@
 #include <gdk/gdkx.h>
 #include "luah.h"
 #include "widgets/common.h"
-#include "clib/soup/auth.h"
 
 typedef struct {
     widget_t *widget;
     GtkWindow *win;
     GdkWindowState state;
+    guint id;
 } window_data_t;
+
+static int window_id_next = 0;
 
 static widget_t *
 luaH_checkwindow(lua_State *L, gint udx)
@@ -41,15 +43,21 @@ luaH_checkwindow(lua_State *L, gint udx)
 #define luaH_checkwindata(L, udx) ((window_data_t*)(luaH_checkwindow(L, udx)->data))
 
 static void
-destroy_cb(GtkObject* UNUSED(win), widget_t *w)
+destroy_win_cb(GtkWidget* UNUSED(win), widget_t *w)
 {
     /* remove window from global windows list */
     g_ptr_array_remove(globalconf.windows, w);
+}
 
-    lua_State *L = globalconf.L;
+static gint
+can_close_cb(GtkWidget* UNUSED(win), GdkEvent *UNUSED(event), widget_t *w)
+{
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
-    lua_pop(L, 1);
+    gint ret = luaH_object_emit_signal(L, -1, "can-close", 0, 1);
+    gboolean keep_open = ret && !lua_toboolean(L, -1);
+    lua_pop(L, ret + 1);
+    return keep_open;
 }
 
 static gint
@@ -85,7 +93,17 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
 
       /* push integer properties */
-      PI_CASE(XID, GDK_WINDOW_XID(GTK_WIDGET(d->win)->window))
+      PN_CASE(ID,           d->id)
+
+# ifdef GDK_WINDOWING_X11
+      PI_CASE(XID, GDK_WINDOW_XID(
+#  if GTK_CHECK_VERSION(3,12,0)
+                  gdk_screen_get_root_window(gtk_widget_get_screen(GTK_WIDGET(d->win)))
+#  else
+                  gtk_widget_get_root_window(GTK_WIDGET(d->win))
+#  endif
+                  ))
+# endif
 
       case L_TK_SCREEN:
         lua_pushlightuserdata(L, gtk_window_get_screen(d->win));
@@ -155,7 +173,7 @@ window_state_cb(GtkWidget* UNUSED(widget), GdkEventWindowState *ev, widget_t *w)
 {
     window_data_t *d = (window_data_t*)w->data;
     d->state = ev->new_window_state;
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
 
     if (ev->changed_mask & GDK_WINDOW_STATE_MAXIMIZED)
@@ -172,11 +190,10 @@ static void
 window_destructor(widget_t *w)
 {
     g_slice_free(window_data_t, w->data);
-    widget_destructor(w);
 }
 
 widget_t *
-widget_window(widget_t *w, luakit_token_t UNUSED(token))
+widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 {
     w->index = luaH_window_index;
     w->newindex = luaH_window_newindex;
@@ -190,9 +207,10 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     /* create and setup window widget */
     w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
     d->win = GTK_WINDOW(w->widget);
-    gtk_window_set_wmclass(d->win, "luakit", "luakit");
     gtk_window_set_default_size(d->win, 800, 600);
     gtk_window_set_title(d->win, "luakit");
+    if (globalconf.application)
+        gtk_window_set_application(d->win, globalconf.application);
 
     GdkGeometry hints;
     hints.min_width = 1;
@@ -200,13 +218,16 @@ widget_window(widget_t *w, luakit_token_t UNUSED(token))
     gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect(G_OBJECT(w->widget),
+      "signal::destroy",            G_CALLBACK(destroy_win_cb),  w,
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",                G_CALLBACK(add_cb),          w,
-      "signal::destroy",            G_CALLBACK(destroy_cb),      w,
+      "signal::delete-event",       G_CALLBACK(can_close_cb),    w,
       "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
       "signal::remove",             G_CALLBACK(remove_cb),       w,
       "signal::window-state-event", G_CALLBACK(window_state_cb), w,
       NULL);
+
+    d->id = ++window_id_next;
 
     /* add to global windows list */
     g_ptr_array_add(globalconf.windows, w);

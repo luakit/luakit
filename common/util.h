@@ -1,5 +1,5 @@
 /*
- * util.h - useful functions
+ * common/util.h - useful functions
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2007-2008 Julien Danjou <julien@danjou.info>
@@ -29,17 +29,7 @@
 #include <lua.h>
 #include <sys/time.h>
 
-/* ANSI term color codes */
-#define ANSI_COLOR_RESET   "\x1b[0m"
-
-#define ANSI_COLOR_RED     "\x1b[31m"
-#define ANSI_COLOR_GREEN   "\x1b[32m"
-#define ANSI_COLOR_YELLOW  "\x1b[33m"
-#define ANSI_COLOR_BLUE    "\x1b[34m"
-#define ANSI_COLOR_MAGENTA "\x1b[35m"
-#define ANSI_COLOR_CYAN    "\x1b[36m"
-
-#define ANSI_COLOR_BG_RED  "\x1b[41m"
+#include "common/log.h"
 
 /* Useful macros */
 #define NONULL(x) (x ? x : "")
@@ -54,21 +44,14 @@
 # define UNUSED(x) x
 #endif
 
+#define WARN_UNUSED __attribute__ ((warn_unused_result))
+
 /* stack pushing macros */
 #define PB_CASE(t, b) case L_TK_##t: lua_pushboolean   (L, b); return 1;
 #define PF_CASE(t, f) case L_TK_##t: lua_pushcfunction (L, f); return 1;
 #define PI_CASE(t, i) case L_TK_##t: lua_pushinteger   (L, i); return 1;
 #define PN_CASE(t, n) case L_TK_##t: lua_pushnumber    (L, n); return 1;
 #define PS_CASE(t, s) case L_TK_##t: lua_pushstring    (L, s); return 1;
-
-#define fatal(string, ...) _fatal(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _fatal(int, const gchar *, const gchar *, ...);
-
-#define warn(string, ...) _warn(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _warn(int, const gchar *, const gchar *, ...);
-
-#define debug(string, ...) _debug(__LINE__, __FUNCTION__, string, ##__VA_ARGS__)
-void _debug(int, const gchar *, const gchar *, ...);
 
 /* A NULL resistant strlen. Unlike it's libc sibling, l_strlen returns a
  * ssize_t, and supports its argument being NULL. */
@@ -87,6 +70,19 @@ static inline gdouble l_time() {
 gboolean file_exists(const gchar*);
 void l_exec(const gchar*);
 gchar *luaH_callerinfo(lua_State*);
+gint luaH_panic(lua_State *L);
+gchar *strip_ansi_escapes(const gchar *in);
+
+/* Error codes */
+
+GQuark luakit_error_quark(void);
+
+#define LUAKIT_ERROR luakit_error_quark()
+
+enum LuakitError {
+    LUAKIT_ERROR_TLS,
+};
 
 #endif
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

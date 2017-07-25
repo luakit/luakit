@@ -1,6 +1,6 @@
 " Vim syntax file
 " Language:     luakit configuration
-" Maintainer:   Gregor Uhlenheuer &lt;kongo2002@googlemail.com&gt;
+" Maintainer:   Gregor Uhlenheuer <kongo2002@googlemail.com>
 " Last Change:  Fri 27 Aug 2010 09:46:46 PM CEST
 
 if exists('b:current_syntax')

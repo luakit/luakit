@@ -18,22 +18,29 @@
  *
  */
 
-#include "common/signal.h"
-#include "clib/widget.h"
 #include "clib/luakit.h"
+#include "common/clib/luakit.h"
+#include "clib/widget.h"
+#include "common/luaserialize.h"
+#include "common/luayield.h"
+#include "common/ipc.h"
+#include "common/signal.h"
 #include "luah.h"
+#include "web_context.h"
+#include "globalconf.h"
 
-#include <stdlib.h>
 #include <glib.h>
 #include <gtk/gtk.h>
+#include <stdlib.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <webkit/webkit.h>
+#include <webkit2/webkit2.h>
 
 /* setup luakit module signals */
+static lua_class_t luakit_class;
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
-GtkClipboard*
+GtkClipboard *
 luaH_clipboard_get(lua_State *L, gint idx)
 {
 #define CB_CASE(t) case L_TK_##t: return gtk_clipboard_get(GDK_SELECTION_##t);
@@ -118,65 +125,6 @@ luaH_luakit_selection_table_push(lua_State *L)
     return 1;
 }
 
-/** Escapes a string for use in a URI.
- * \see http://developer.gnome.org/glib/stable/glib-URI-Functions.html#g-uri-escape-string
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on stack.
- *
- * \luastack
- * \lparam string  The string to escape for use in a URI.
- * \lparam allowed Optional string of allowed characters to leave unescaped in
- *                 the \c string.
- * \lreturn        The escaped string.
- */
-static gint
-luaH_luakit_uri_encode(lua_State *L)
-{
-    const gchar *string = luaL_checkstring(L, 1);
-    const gchar *allowed = NULL;
-
-    /* get list of reserved characters that are allowed in the string */
-    if (1 < lua_gettop(L) && !lua_isnil(L, 2))
-        allowed = luaL_checkstring(L, 2);
-
-    gchar *res = g_uri_escape_string(string, allowed, true);
-    lua_pushstring(L, res);
-    g_free(res);
-    return 1;
-}
-
-/** Unescapes an escaped string used in a URI.
- * \see http://developer.gnome.org/glib/stable/glib-URI-Functions.html#g-uri-unescape-string
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on stack.
- *
- * \luastack
- * \lparam string  The string to unescape.
- * \lparam illegal Optional string of illegal chars which should not appear in
- *                 the unescaped string.
- * \lreturn        The unescaped string or \c nil if illegal chars found.
- */
-static gint
-luaH_luakit_uri_decode(lua_State *L)
-{
-    const gchar *string = luaL_checkstring(L, 1);
-    const gchar *illegal = NULL;
-
-    /* get list of illegal chars not to be found in the unescaped string */
-    if (1 < lua_gettop(L) && !lua_isnil(L, 2))
-        illegal = luaL_checkstring(L, 2);
-
-    gchar *res = g_uri_unescape_string(string, illegal);
-    if (!res)
-        return 0;
-
-    lua_pushstring(L, res);
-    g_free(res);
-    return 1;
-}
-
 /** Shows a Gtk save dialog.
  * \see http://developer.gnome.org/gtk/stable/GtkDialog.html
  *
@@ -208,12 +156,21 @@ luaH_luakit_save_file(lua_State *L)
     const gchar *default_folder = luaL_checkstring(L, 3);
     const gchar *default_name = luaL_checkstring(L, 4);
 
+#if GTK_CHECK_VERSION(3,10,0)
+    GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
+            parent_window,
+            GTK_FILE_CHOOSER_ACTION_SAVE,
+            "_Cancel", GTK_RESPONSE_CANCEL,
+            "_Save", GTK_RESPONSE_ACCEPT,
+            NULL);
+#else
     GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
             parent_window,
             GTK_FILE_CHOOSER_ACTION_SAVE,
             GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
             GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
             NULL);
+#endif
 
     /* set default folder, name and overwrite confirmation policy */
     gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), default_folder);
@@ -259,9 +216,9 @@ luaH_luakit_spawn_sync(lua_State *L)
 
     /* Note: we have to temporarily clear the SIGCHLD handler. Otherwise
      * g_spawn_sync wouldn't be able to read subprocess' return value. */
-    sigact.sa_handler=SIG_DFL;
-    sigemptyset (&sigact.sa_mask);
-    sigact.sa_flags=0;
+    sigact.sa_handler = SIG_DFL;
+    sigemptyset(&sigact.sa_mask);
+    sigact.sa_flags = 0;
     if (sigaction(SIGCHLD, &sigact, &oldact))
         fatal("Can't clear SIGCHLD handler");
 
@@ -272,7 +229,7 @@ luaH_luakit_spawn_sync(lua_State *L)
         fatal("Can't restore SIGCHLD handler");
 
     /* raise error on spawn function error */
-    if(e) {
+    if (e) {
         lua_pushstring(L, e->message);
         g_clear_error(&e);
         lua_error(L);
@@ -294,11 +251,14 @@ luaH_luakit_spawn_sync(lua_State *L)
  * Exit number: When normal exit happened, the exit code of the process. When
  *              finished by a signal, the signal number. -1 otherwise.
  */
-void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
+void
+async_callback_handler(GPid pid, gint status, gpointer cb_ref)
 {
-    lua_State *L = globalconf.L;
-    /* push callback function onto stack */
-    luaH_object_push(L, cb_ref);
+    g_spawn_close_pid(pid);
+    if (!cb_ref)
+        return;
+
+    lua_State *L = common.L;
 
     /* push exit reason & exit status onto lua stack */
     if (WIFEXITED(status)) {
@@ -312,13 +272,10 @@ void async_callback_handler(GPid pid, gint status, gpointer cb_ref)
         lua_pushinteger(L, -1);
     }
 
-    if (lua_pcall(L, 2, 0, 0)) {
-        warn("error in callback function: %s", lua_tostring(L, -1));
-        lua_pop(L, 1);
-    }
-
+    /* push callback function onto stack */
+    luaH_object_push(L, cb_ref);
+    luaH_dofunction(L, 2, 0);
     luaH_object_unref(L, cb_ref);
-    g_spawn_close_pid(pid);
 }
 
 /** Executes a child program asynchronously (your program will not block waiting
@@ -377,14 +334,12 @@ luaH_luakit_spawn(lua_State *L)
         goto spawn_error;
 
     /* spawn command */
-    if (!g_spawn_async(NULL, argv, NULL,
-            G_SPAWN_DO_NOT_REAP_CHILD|G_SPAWN_SEARCH_PATH, NULL, NULL, &pid,
-            &e))
+    if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
+            NULL, &pid, &e))
         goto spawn_error;
 
-    /* attach users Lua callback */
-    if (cb_ref)
-        g_child_watch_add(pid, async_callback_handler, cb_ref);
+    /* call Lua callback (if present), and free GLib resources */
+    g_child_watch_add(pid, async_callback_handler, cb_ref);
 
     g_strfreev(argv);
     lua_pushnumber(L, pid);
@@ -397,20 +352,6 @@ spawn_error:
     g_strfreev(argv);
     lua_error(L);
     return 0;
-}
-
-/** Get seconds from unix epoch with nanosecond precision (or nearest
- * supported by the users system).
- * \see http://www.kernel.org/doc/man-pages/online/pages/man2/clock_gettime.2.html
- *
- * \param L The Lua VM state.
- * \return  The number of elements pushed on the stack (1).
- */
-static gint
-luaH_luakit_time(lua_State *L)
-{
-    lua_pushnumber(L, l_time());
-    return 1;
 }
 
 /** Wrapper around the execl POSIX function. The exec family of functions
@@ -431,6 +372,249 @@ luaH_luakit_exec(lua_State *L)
     return 0;
 }
 
+/** Pushes the command-line options parsed by luakit
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ */
+static gint
+luaH_luakit_push_options_table(lua_State *L)
+{
+    lua_newtable(L);
+    for (guint i = 0; i < globalconf.argv->len; ++i) {
+        lua_pushstring(L, g_ptr_array_index(globalconf.argv, i));
+        lua_rawseti(L, -2, i + 1);
+    }
+    return 1;
+}
+
+#if WEBKIT_CHECK_VERSION(2,16,0)
+static WebKitWebsiteDataTypes
+luaH_parse_website_data_types_table(lua_State *L, gint idx)
+{
+    WebKitWebsiteDataTypes types = 0;
+    idx = luaH_absindex(L, idx);
+    luaH_checktable(L, idx);
+    size_t len = lua_objlen(L, idx);
+    for (size_t i = 1; i <= len; i++) {
+        lua_rawgeti(L, idx, i);
+        if (!lua_isstring(L, -1))
+            luaL_error(L, "website data types must be strings");
+        const char *type = lua_tostring(L, -1);
+
+#define TYPE(upper, lower) \
+        if (g_str_equal(type, #lower)) types |= WEBKIT_WEBSITE_DATA_##upper;
+        TYPE(MEMORY_CACHE, memory_cache)
+        TYPE(DISK_CACHE, disk_cache)
+        TYPE(OFFLINE_APPLICATION_CACHE, offline_application_cache)
+        TYPE(SESSION_STORAGE, session_storage)
+        TYPE(LOCAL_STORAGE, local_storage)
+        TYPE(WEBSQL_DATABASES, websql_databases)
+        TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
+        TYPE(PLUGIN_DATA, plugin_data)
+        TYPE(COOKIES, cookies)
+        TYPE(ALL, all)
+#undef TYPE
+
+        lua_pop(L, 1);
+    }
+
+    return types;
+}
+
+static void
+website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, lua_State *L)
+{
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
+    GError *error = NULL;
+    GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
+    if (error) {
+        lua_pushnil(L);
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+    } else {
+        lua_newtable(L);
+        GList *item = items;
+        while (item) {
+            WebKitWebsiteData *website_data = item->data;
+            WebKitWebsiteDataTypes present = webkit_website_data_get_types(website_data);
+
+            lua_pushstring(L, webkit_website_data_get_name(website_data));
+            lua_newtable(L);
+
+#define TYPE(upper, lower)                                                    \
+            if (present & WEBKIT_WEBSITE_DATA_##upper) {                      \
+                lua_pushstring(L, #lower);                                    \
+                lua_pushinteger(L, webkit_website_data_get_size(website_data, \
+                            WEBKIT_WEBSITE_DATA_##upper));                    \
+                lua_rawset(L, -3);                                            \
+            }
+            TYPE(MEMORY_CACHE, memory_cache)
+            TYPE(DISK_CACHE, disk_cache)
+            TYPE(OFFLINE_APPLICATION_CACHE, offline_application_cache)
+            TYPE(SESSION_STORAGE, session_storage)
+            TYPE(LOCAL_STORAGE, local_storage)
+            TYPE(WEBSQL_DATABASES, websql_databases)
+            TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
+            TYPE(PLUGIN_DATA, plugin_data)
+            TYPE(COOKIES, cookies)
+#undef TYPE
+            lua_rawset(L, -3);
+
+            webkit_website_data_unref(website_data);
+            item = item->next;
+        }
+    }
+
+    g_list_free(items);
+    luaH_resume(L, lua_gettop(L));
+}
+
+static gint
+luaH_luakit_website_data_fetch(lua_State *L)
+{
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 1);
+
+    if (data_types == 0)
+        return luaL_error(L, "no website data types specified");
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_fetch(data_manager, data_types, NULL,
+            (GAsyncReadyCallback)website_data_fetch_finish, L);
+
+    return luaH_yield(L);
+}
+
+typedef struct _website_data_remove_task_t {
+    lua_State *L;
+    WebKitWebsiteDataTypes data_types;
+    char *domain;
+} website_data_remove_task_t;
+
+static void
+website_data_remove_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, website_data_remove_task_t *wdrt)
+{
+    lua_State *L = wdrt->L;
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
+
+    GError *error = NULL;
+    webkit_website_data_manager_remove_finish(manager, result, &error);
+    if (error) {
+        lua_pushnil(L);
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+    } else
+        lua_pushboolean(L, TRUE);
+
+    g_free(wdrt->domain);
+    g_slice_free(website_data_remove_task_t, wdrt);
+    luaH_resume(L, lua_gettop(L));
+}
+
+static void
+luaH_luakit_website_data_remove_cont(WebKitWebsiteDataManager *manager, GAsyncResult *result, website_data_remove_task_t *wdrt)
+{
+    lua_State *L = wdrt->L;
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
+
+    GError *error = NULL;
+    GList *items = webkit_website_data_manager_fetch_finish(manager, result, &error);
+    if (error) {
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+        g_free(wdrt->domain);
+        g_slice_free(website_data_remove_task_t, wdrt);
+        luaL_error(L, lua_tostring(L, -1));
+    }
+
+    GList *item = items;
+    while (item) {
+        WebKitWebsiteData *website_data = item->data;
+        GList *next = item->next;
+        if (!g_str_equal(webkit_website_data_get_name(website_data), wdrt->domain)) {
+            webkit_website_data_unref(website_data);
+            items = g_list_delete_link(items, item);
+        }
+        item = next;
+    }
+
+    if (!items) {
+        g_free(wdrt->domain);
+        g_slice_free(website_data_remove_task_t, wdrt);
+        lua_pushboolean(L, TRUE);
+        luaH_resume(L, 1);
+        return;
+    }
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_remove(data_manager, wdrt->data_types, items, NULL,
+            (GAsyncReadyCallback)website_data_remove_finish, wdrt);
+
+    item = items;
+    while (item) {
+        webkit_website_data_unref(item->data);
+        item = item->next;
+    }
+    g_list_free(items);
+}
+
+static gint
+luaH_luakit_website_data_remove(lua_State *L)
+{
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 1);
+    if (data_types == 0)
+        return luaL_error(L, "no website data types specified");
+    const char *domain = luaL_checkstring(L, 2);
+
+    website_data_remove_task_t *wdrt = g_slice_new0(website_data_remove_task_t);
+    wdrt->L = L;
+    wdrt->domain = g_strdup(domain);
+    wdrt->data_types = data_types;
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_fetch(data_manager, data_types, NULL,
+            (GAsyncReadyCallback)luaH_luakit_website_data_remove_cont, wdrt);
+
+    return luaH_yield(L);
+}
+
+static gint
+luaH_luakit_website_data_index(lua_State *L)
+{
+    const gchar *prop = luaL_checkstring(L, 2);
+    luakit_token_t token = l_tokenize(prop);
+    switch (token) {
+        case L_TK_FETCH:
+            lua_pushcfunction(L, luaH_luakit_website_data_fetch);
+            luaH_yield_wrap_function(L);
+            return 1;
+        case L_TK_REMOVE:
+            lua_pushcfunction(L, luaH_luakit_website_data_remove);
+            luaH_yield_wrap_function(L);
+            return 1;
+        default: return 0;
+    }
+}
+
+static gint
+luaH_luakit_push_website_data_table(lua_State *L)
+{
+    lua_newtable(L);
+    /* setup metatable */
+    lua_createtable(L, 0, 2);
+    /* push __index metafunction */
+    lua_pushliteral(L, "__index");
+    lua_pushvalue(L, 1); /* copy webview userdata */
+    lua_pushcclosure(L, luaH_luakit_website_data_index, 1);
+    lua_rawset(L, -3);
+    lua_setmetatable(L, -2);
+    return 1;
+}
+#endif
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -439,14 +623,14 @@ luaH_luakit_exec(lua_State *L)
 static gint
 luaH_luakit_index(lua_State *L)
 {
-    if(luaH_usemetatable(L, 1, 2))
+    if (luaH_usemetatable(L, 1, 2))
         return 1;
 
     widget_t *w;
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    switch(token) {
+    switch (token) {
 
       /* push string properties */
       PS_CASE(CACHE_DIR,        globalconf.cache_dir)
@@ -455,15 +639,28 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
       /* push boolean properties */
-      PB_CASE(VERBOSE,          globalconf.verbose)
+      PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
+      PB_CASE(ENABLE_SPELL_CHECKING,    webkit_web_context_get_spell_checking_enabled(web_context_get()))
+      /* push integer properties */
+      PI_CASE(PROCESS_LIMIT,    web_context_process_limit_get())
+      case L_TK_OPTIONS:
+        return luaH_luakit_push_options_table(L);
+      case L_TK_WEBSITE_DATA:
+#if WEBKIT_CHECK_VERSION(2,16,0)
+        return luaH_luakit_push_website_data_table(L);
+#else
+        return luaL_error(L, "luakit.website_data requires WebKitGTK >= 2.16.0");
+#endif
+
+      PB_CASE(WEBKIT2,          true)
 
       case L_TK_WINDOWS:
         lua_newtable(L);
         for (guint i = 0; i < globalconf.windows->len; i++) {
             w = globalconf.windows->pdata[i];
             luaH_object_push(L, w->ref);
-            lua_rawseti(L, -2, i+1);
+            lua_rawseti(L, -2, i + 1);
         }
         return 1;
 
@@ -473,8 +670,8 @@ luaH_luakit_index(lua_State *L)
         return 1;
 
       case L_TK_WEBKIT_USER_AGENT_VERSION:
-        lua_pushfstring(L, "%d.%d", WEBKIT_USER_AGENT_MAJOR_VERSION,
-                WEBKIT_USER_AGENT_MINOR_VERSION);
+        lua_pushfstring(L, "%d.%d", WEBKIT_MAJOR_VERSION,
+                WEBKIT_MINOR_VERSION);
         return 1;
 
       case L_TK_SELECTION:
@@ -496,9 +693,51 @@ luaH_luakit_index(lua_State *L)
 #endif
         return 1;
 
+      case L_TK_SPELL_CHECKING_LANGUAGES:
+        luaH_push_strv(L, webkit_web_context_get_spell_checking_languages(web_context_get()));
+        return 1;
+
       default:
         break;
     }
+    return 0;
+}
+
+/** luakit module newindex metamethod.
+ *
+ * \param  L The Lua VM state.
+ * \return   The number of elements pushed on stack.
+ */
+static gint
+luaH_luakit_newindex(lua_State *L)
+{
+    if (!lua_isstring(L, 2))
+        return 0;
+    luakit_token_t token = l_tokenize(lua_tostring(L, 2));
+
+    switch (token) {
+        case L_TK_PROCESS_LIMIT:
+            if (!web_context_process_limit_set(lua_tointeger(L, 3)))
+                return luaL_error(L, "Too late to set WebKit process limit");
+            break;
+        case L_TK_ENABLE_SPELL_CHECKING:
+            webkit_web_context_set_spell_checking_enabled(web_context_get(),
+                    luaH_checkboolean(L, 3));
+            break;
+        case L_TK_SPELL_CHECKING_LANGUAGES: {
+            const gchar ** langs = luaH_checkstrv(L, 3);
+            WebKitWebContext *ctx = web_context_get();
+            webkit_web_context_set_spell_checking_languages(ctx, langs);
+            const gchar * const * accepted = webkit_web_context_get_spell_checking_languages(ctx);
+            for (const gchar ** lang = langs; *lang; lang++)
+                if (!g_strv_contains(accepted, *lang))
+                    warn("unrecognized language code '%s'", *lang);
+            g_free(langs);
+        }
+        default:
+            break;
+    }
+
     return 0;
 }
 
@@ -509,7 +748,7 @@ luaH_luakit_index(lua_State *L)
  * \return   The number of elements pushed on stack.
  */
 static gint
-luaH_luakit_quit(lua_State* UNUSED(L))
+luaH_luakit_quit(lua_State *UNUSED(L))
 {
     if (gtk_main_level())
         gtk_main_quit();
@@ -518,81 +757,63 @@ luaH_luakit_quit(lua_State* UNUSED(L))
     return 0;
 }
 
-/** Calls the idle callback function. If the callback function returns false the
- * idle source is removed, the Lua function is unreffed and will not be called
- * again.
- * \see luaH_luakit_idle_add
- *
- * \param func Lua callback function.
- * \return TRUE to keep source alive, FALSE to remove.
- */
-static gboolean
-idle_cb(gpointer func)
-{
-    lua_State *L = globalconf.L;
+/** Defined in widgets/webview.c */
+void luakit_uri_scheme_request_cb(WebKitURISchemeRequest *, gpointer);
 
-    /* get original stack size */
-    gint top = lua_gettop(L);
-    gboolean keep = FALSE;
-
-    /* call function */
-    luaH_object_push(L, func);
-    if (lua_pcall(L, 0, 1, 0))
-        /* remove idle source if error in callback */
-        warn("error in idle callback: %s", lua_tostring(L, -1));
-    else
-        /* keep the source alive? */
-        keep = lua_toboolean(L, -1);
-
-    /* allow collection of idle callback func */
-    if (!keep)
-        luaH_object_unref(L, func);
-
-    /* leave stack how we found it */
-    lua_settop(L, top);
-
-    return keep;
-}
-
-/** Adds a function to be called whenever there are no higher priority GTK
- * events pending in the default main loop. If the function returns false it
- * is automatically removed from the list of event sources and will not be
- * called again.
- * \see http://developer.gnome.org/glib/unstable/glib-The-Main-Event-Loop.html#g-idle-add
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on the stack (0).
- *
- * \luastack
- * \lparam func The callback function.
- */
 static gint
-luaH_luakit_idle_add(lua_State *L)
+luaH_luakit_register_scheme(lua_State *L)
 {
-    luaH_checkfunction(L, 1);
-    gpointer func = luaH_object_ref(L, 1);
-    g_idle_add(idle_cb, func);
+    const gchar *scheme = luaL_checkstring(L, 1);
+
+    if (g_str_equal(scheme, ""))
+        return luaL_error(L, "scheme cannot be empty");
+    if (g_str_equal(scheme, "http") || g_str_equal(scheme, "https"))
+        return luaL_error(L, "scheme cannot be 'http' or 'https'");
+    if (!g_regex_match_simple("^[a-z][a-z0-9\\+\\-\\.]*$", scheme, 0, 0))
+        return luaL_error(L, "scheme must match [a-z][a-z0-9\\+\\-\\.]*");
+
+    webkit_web_context_register_uri_scheme(web_context_get(), scheme,
+            (WebKitURISchemeRequestCallback) luakit_uri_scheme_request_cb,
+            g_strdup(scheme), g_free);
     return 0;
 }
 
-/** Removes an idle callback by function.
- * \see http://developer.gnome.org/glib/unstable/glib-The-Main-Event-Loop.html#g-idle-remove-by-data
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on the stack (0).
- *
- * \luastack
- * \lparam func The callback function.
- * \lreturn true if callback removed.
- */
-static gint
-luaH_luakit_idle_remove(lua_State *L)
+gint
+luaH_luakit_allow_certificate(lua_State *L)
 {
-    luaH_checkfunction(L, 1);
-    gpointer func = (gpointer)lua_topointer(L, 1);
-    lua_pushboolean(L, g_idle_remove_by_data(func));
-    luaH_object_unref(L, func);
+    const gchar *host = luaL_checkstring(L, 1);
+    size_t len;
+    const gchar *cert_pem = luaL_checklstring(L, 2, &len);
+    GError *err = NULL;
+
+    GTlsCertificate *cert = g_tls_certificate_new_from_pem(cert_pem, len, &err);
+
+    if (err) {
+        lua_pushnil(L);
+        lua_pushstring(L, err->message);
+        return 2;
+    }
+
+    WebKitWebContext *ctx = web_context_get();
+    webkit_web_context_allow_tls_certificate_for_host(ctx, cert, host);
+    g_object_unref(G_OBJECT(cert));
+
+    lua_pushboolean(L, TRUE);
     return 1;
+}
+
+gint
+luaH_class_index_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
+{
+    signal_object_emit(L, luakit_class.signals, "debug::index::miss", 2, 0);
+    return 0;
+}
+
+gint
+luaH_class_newindex_miss_property(lua_State *L, lua_object_t* UNUSED(obj))
+{
+    signal_object_emit(L, luakit_class.signals, "debug::newindex::miss", 3, 0);
+    return 0;
 }
 
 /** Setup luakit module.
@@ -602,20 +823,19 @@ luaH_luakit_idle_remove(lua_State *L)
 void
 luakit_lib_setup(lua_State *L)
 {
-    static const struct luaL_reg luakit_lib[] =
+    static const struct luaL_Reg luakit_lib[] =
     {
         LUA_CLASS_METHODS(luakit)
-        { "__index",         luaH_luakit_index },
-        { "exec",            luaH_luakit_exec },
-        { "quit",            luaH_luakit_quit },
-        { "save_file",       luaH_luakit_save_file },
-        { "spawn",           luaH_luakit_spawn },
-        { "spawn_sync",      luaH_luakit_spawn_sync },
-        { "time",            luaH_luakit_time },
-        { "uri_decode",      luaH_luakit_uri_decode },
-        { "uri_encode",      luaH_luakit_uri_encode },
-        { "idle_add",        luaH_luakit_idle_add },
-        { "idle_remove",     luaH_luakit_idle_remove },
+        LUAKIT_LIB_COMMON_METHODS
+        { "__index",           luaH_luakit_index },
+        { "__newindex",        luaH_luakit_newindex },
+        { "exec",              luaH_luakit_exec },
+        { "quit",              luaH_luakit_quit },
+        { "save_file",         luaH_luakit_save_file },
+        { "spawn",             luaH_luakit_spawn },
+        { "spawn_sync",        luaH_luakit_spawn_sync },
+        { "register_scheme",   luaH_luakit_register_scheme },
+        { "allow_certificate", luaH_luakit_allow_certificate },
         { NULL,              NULL }
     };
 
@@ -624,6 +844,12 @@ luakit_lib_setup(lua_State *L)
 
     /* export luakit lib */
     luaH_openlib(L, "luakit", luakit_lib, luakit_lib);
+}
+
+lua_class_t *
+luakit_lib_get_luakit_class(void)
+{
+    return &luakit_class;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

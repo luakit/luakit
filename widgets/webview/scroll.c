@@ -18,6 +18,32 @@
  *
  */
 
+#include "ipc.h"
+
+void
+webview_scroll_recv(widget_t *w, const ipc_scroll_t *msg)
+{
+    webview_data_t *d = w->data;
+    if (webkit_web_view_get_page_id(d->view) != msg->page_id)
+        return;
+
+    switch (msg->subtype) {
+        case IPC_SCROLL_TYPE_docresize:
+            d->doc_w = msg->h;
+            d->doc_h = msg->v;
+            break;
+        case IPC_SCROLL_TYPE_winresize:
+            d->win_w = msg->h;
+            d->win_h = msg->v;
+            break;
+        case IPC_SCROLL_TYPE_scroll:
+            d->scroll_x = msg->h;
+            d->scroll_y = msg->v;
+        default:
+            break;
+    }
+}
+
 static gint
 luaH_webview_scroll_newindex(lua_State *L)
 {
@@ -26,15 +52,19 @@ luaH_webview_scroll_newindex(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t t = l_tokenize(prop);
 
-    GtkAdjustment *a;
-    if (t == L_TK_X)      a = gtk_scrolled_window_get_hadjustment(d->win);
-    else if (t == L_TK_Y) a = gtk_scrolled_window_get_vadjustment(d->win);
-    else return 0;
+    if (t == L_TK_X)
+        d->scroll_x = luaL_checknumber(L, 3);
+    else if (t == L_TK_Y)
+        d->scroll_y = luaL_checknumber(L, 3);
+    else {
+        return 0;
+    }
 
-    gdouble value = luaL_checknumber(L, 3);
-    gdouble max = gtk_adjustment_get_upper(a) -
-            gtk_adjustment_get_page_size(a);
-    gtk_adjustment_set_value(a, ((value < 0 ? 0 : value) > max ? max : value));
+    lua_pushinteger(L, webkit_web_view_get_page_id(d->view));
+    lua_pushinteger(L, d->scroll_x);
+    lua_pushinteger(L, d->scroll_y);
+    ipc_send_lua(d->ipc, IPC_TYPE_scroll, L, 4, 6);
+
     return 0;
 }
 
@@ -45,24 +75,16 @@ luaH_webview_scroll_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t t = l_tokenize(prop);
 
-    GtkAdjustment *a = (*prop == 'x') ?
-              gtk_scrolled_window_get_hadjustment(d->win)
-            : gtk_scrolled_window_get_vadjustment(d->win);
-
-    if (t == L_TK_X || t == L_TK_Y) {
-        lua_pushnumber(L, gtk_adjustment_get_value(a));
-        return 1;
-
-    } else if (t == L_TK_XMAX || t == L_TK_YMAX) {
-        lua_pushnumber(L, gtk_adjustment_get_upper(a) -
-                gtk_adjustment_get_page_size(a));
-        return 1;
-
-    } else if (t == L_TK_XPAGE_SIZE || t == L_TK_YPAGE_SIZE) {
-        lua_pushnumber(L, gtk_adjustment_get_page_size(a));
-        return 1;
+    switch (t) {
+        PN_CASE(X, d->scroll_x);
+        PN_CASE(Y, d->scroll_y);
+        PN_CASE(XMAX, d->doc_w - d->win_w);
+        PN_CASE(YMAX, d->doc_h - d->win_h);
+        PN_CASE(XPAGE_SIZE, d->win_w);
+        PN_CASE(YPAGE_SIZE, d->win_h);
+        default:
+            return 0;
     }
-    return 0;
 }
 
 static gint
@@ -86,24 +108,4 @@ luaH_webview_push_scroll_table(lua_State *L)
     return 1;
 }
 
-void
-show_scrollbars(webview_data_t *d, gboolean show)
-{
-    GObject *frame = G_OBJECT(webkit_web_view_get_main_frame(d->view));
-
-    /* show scrollbars */
-    if (show) {
-        if (d->hide_id)
-            g_signal_handler_disconnect(frame, d->hide_id);
-        gtk_scrolled_window_set_policy(d->win,
-                GTK_POLICY_AUTOMATIC, GTK_POLICY_AUTOMATIC);
-        d->hide_id = 0;
-
-    /* hide scrollbars */
-    } else if (!d->hide_id) {
-        gtk_scrolled_window_set_policy(d->win,
-                GTK_POLICY_NEVER, GTK_POLICY_NEVER);
-        d->hide_id = g_signal_connect(frame, "scrollbars-policy-changed",
-                G_CALLBACK(true_cb), NULL);
-    }
-}
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

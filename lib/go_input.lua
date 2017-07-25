@@ -1,8 +1,19 @@
------------------------------------------------------------
--- Go to the first input on a page and enter insert mode --
--- © 2009 Aldrik Dunbar  (n30n)                          --
--- © 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org> --
------------------------------------------------------------
+--- Go to the first input on a page and enter insert mode.
+--
+-- This module adds a key binding to quickly focus the first text input on a
+-- page and enter insert mode. A count is also accepted, which allows choosing a
+-- specific text input other than the first.
+--
+-- @module go_input
+-- @copyright 2009 Aldrik Dunbar  (n30n)
+-- @copyright 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org>
+
+local webview = require("webview")
+local lousy = require("lousy")
+local binds = require("binds")
+local add_binds = binds.add_binds
+
+local _M = {}
 
 local go_input = [=[
 (function (count) {
@@ -10,7 +21,7 @@ local go_input = [=[
         ":not([type='button'])", ":not([type='checkbox'])",
         ":not([type='hidden'])", ":not([type='image'])",
         ":not([type='radio'])",  ":not([type='reset'])",
-        ":not([type='submit'])"].join(""));
+        ":not([type='submit'])", ":not([type='file'])"].join(""));
     if (elements) {
         var el, i = 0, n = 0;
         while((el = elements[i++])) {
@@ -32,17 +43,22 @@ local go_input = [=[
 })]=]
 
 -- Add `w:go_input()` webview method
-webview.methods.go_input = function(view, w, count)
+webview.methods.go_input = function(_, w, count)
     local js = string.format("%s(%d);", go_input, count or 1)
-    w:emit_form_root_active_signal(w.view:eval_js(js))
+    w.view:eval_js(js, { callback = function(ret)
+        w:emit_form_root_active_signal(ret)
+    end})
 end
 
 -- Add `gi` binding to normal mode
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^gi$", function (w, b, m)
-        w:go_input(m.count)
-    end, {count=1})
+    buf("^gi$", "Focus the first text input on the current page and enter insert mode.",
+        function (w, _, m)
+            w:go_input(m.count)
+        end, {count=1})
 })
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,47 +1,49 @@
--- Grab what we need from the Lua environment
-local table = table
-local string = string
-local io = io
-local print = print
-local pairs = pairs
-local ipairs = ipairs
-local math = math
-local assert = assert
-local setmetatable = setmetatable
-local rawget = rawget
-local rawset = rawset
-local type = type
-local os = os
-local error = error
+--- Simple sqlite3 bookmarks - chrome page.
+--
+-- This module allows you to add and remove bookmarks with a simple graphical
+-- webpage at <luakit://bookmarks/>. You can currently:
+--
+--  - add, edit, and remove individual bookmarks,
+--  - tag bookmarks or add markdown descriptions, and
+--  - search for and filter bookmarks.
+--
+-- This module also adds convenience commands and bindings to quickly bookmark a
+-- page.
+--
+-- @module bookmarks_chrome
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 -- Grab the luakit environment we need
 local bookmarks = require("bookmarks")
 local lousy = require("lousy")
 local chrome = require("chrome")
 local markdown = require("markdown")
-local sql_escape = lousy.util.sql_escape
-local add_binds = add_binds
-local add_cmds = add_cmds
-local webview = webview
-local capi = {
-    luakit = luakit
-}
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
-module("bookmarks.chrome")
+local _M = {}
 
--- Display the bookmark uri and title.
-show_uri = false
+--- Display the bookmark uri and title.
+-- @type boolean
+-- @readwrite
+_M.show_uri = false
 
-stylesheet = [===[
+--- CSS for bookmarks chrome page.
+-- @type string
+-- @readwrite
+_M.stylesheet = [===[
 .bookmark {
     line-height: 1.6em;
-    padding: 0.4em 0.5em;
-    margin: 0;
+    margin: 0.4em 0;
+    padding: 0;
     left: 0;
     right: 0;
     border: 1px solid #fff;
     border-radius: 0.3em;
 }
+.bookmark:first-child { margin-top: 1em; }
+.bookmark:last-child { margin-bottom: 1em; }
 
 .bookmark .title, .bookmark .uri {
     overflow: hidden;
@@ -55,7 +57,6 @@ stylesheet = [===[
 
 .bookmark .title a {
     font-weight: normal;
-    font-size: 1.4em;
     text-decoration: none;
 }
 
@@ -154,7 +155,6 @@ stylesheet = [===[
 #edit-dialog {
     position: fixed;
     z-index: 101;
-    font-size: 1.3em;
     font-weight: 100;
 
     top: 6em;
@@ -208,10 +208,19 @@ stylesheet = [===[
 #edit-view {
     display: none;
 }
+
+.nav-button-box {
+    margin: 2em;
+}
+
+.nav-button-box a {
+    display: none;
+    border: 1px solid #aaa;
+    padding: 0.4em 1em;
+}
 ]===]
 
-
-local html = [==[
+local html_template = [==[
 <!doctype html>
 <html>
 <head>
@@ -223,9 +232,11 @@ local html = [==[
 </head>
 <body>
     <header id="page-header">
+        <h1>Bookmarks</h1>
         <span id="search-box">
             <input type="text" id="search" placeholder="Search bookmarks..." />
-            <input type="button" id="clear-button" value="X" />
+            <input type="button" class="button" id="clear-button" value="✕" />
+            <input type="hidden" id="page" />
         </span>
         <input type="button" id="search-button" class="button" value="Search" />
         <div class="rhs">
@@ -235,6 +246,11 @@ local html = [==[
     </header>
 
     <div id="results" class="content-margin"></div>
+
+    <div class="nav-button-box">
+        <a id="nav-prev">prev</a>
+        <a id="nav-next">next</a>
+    </div>
 
     <div id="edit-view" stlye="position: absolute;">
         <div id="blackout"></div>
@@ -276,11 +292,18 @@ local html = [==[
 ]==]
 
 local main_js = [=[
-$(document).ready(function () { 'use strict'
+$(document).ready(function () { 'use strict';
+
+    var limit = 100, results_len = 0;
 
     var bookmark_html = $("#bookmark-skelly").html(),
         $results = $("#results"), $search = $("#search"),
-        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog");
+        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog"),
+        $next = $("#nav-next").eq(0), $prev = $("#nav-prev").eq(0),
+        $page = $("#page").eq(0);
+
+    if ($page.val() == "")
+        $page.val(1);
 
     function make_bookmark(b) {
         var $b = $(bookmark_html);
@@ -323,26 +346,49 @@ $(document).ready(function () { 'use strict'
         return $(that).parents(".bookmark").eq(0);
     }
 
+    function update_nav_buttons() {
+        if (results_len === limit)
+            $next.show();
+        else
+            $next.hide();
+        if (parseInt($page.val(), 10) > 1)
+            $prev.show();
+        else
+            $prev.hide();
+    }
+
     function search() {
+            var query = $search.val();
+            bookmarks_search({
+                query: query,
+                limit: limit,
+                page: parseInt($page.val(), 10)
+            }).then(function (results) {
 
-        var results = bookmarks_search({ query: $search.val() });
+            // Used to trigger hiding of next nav button when results_len < limit
+            results_len = results.length || 0;
 
-        if (results.length === "undefined") {
-            $results.empty();
-            return;
-        }
+            if (results.length === "undefined") {
+                $results.empty();
+                update_nav_buttons();
+                return;
+            }
 
-        /* display results */
-        var html = "";
-        for (var i = 0; i < results.length; i++)
-            html += make_bookmark(results[i]);
+            /* display results */
+            var html = "";
+            for (var i = 0; i < results.length; i++)
+                html += make_bookmark(results[i]);
 
-        $results.get(0).innerHTML = html;
+            update_nav_buttons();
+
+            $results.get(0).innerHTML = html;
+        });
     };
 
     /* input field callback */
     $search.keydown(function(ev) {
         if (ev.which == 13) { /* Return */
+            $page.val(1);
             search();
             $search.blur();
             reset_mode();
@@ -365,8 +411,9 @@ $(document).ready(function () { 'use strict'
 
     $results.on("click", ".bookmark .controls .edit-button", function (e) {
         var $b = find_bookmark_parent(this);
-        var b = bookmarks_get(parseInt($b.attr("bookmark_id")));
-        show_edit(b);
+        bookmarks_get(parseInt($b.attr("bookmark_id"))).then(function (b) {
+            show_edit(b);
+        });
     });
 
     function edit_submit() {
@@ -413,25 +460,40 @@ $(document).ready(function () { 'use strict'
 
     $("#clear-button").click(function () {
         $search.val("");
+        $page.val(1);
         search();
     });
 
     $("#search-button").click(function () {
+        $page.val(1);
+        search();
+    });
+
+    $next.click(function () {
+        var page = parseInt($page.val(), 10);
+        $page.val(page + 1);
+        search();
+    });
+
+    $prev.click(function () {
+        var page = parseInt($page.val(), 10);
+        $page.val(Math.max(page - 1,1));
         search();
     });
 
     search();
 
-    var values = new_bookmark_values();
-    if (values)
-        show_edit(values);
+    new_bookmark_values().then(function (values) {
+        if (values)
+            show_edit(values);
+    });
 });
 ]=]
 
 local new_bookmark_values
 
-export_funcs = {
-    bookmarks_search = function (opts)
+local export_funcs = {
+    bookmarks_search = function (_, opts)
         if not bookmarks.db then bookmarks.init() end
 
         local sql = { "SELECT", "*", "FROM bookmarks" }
@@ -481,91 +543,69 @@ export_funcs = {
         return rows
     end,
 
-    bookmarks_add = bookmarks.add,
-    bookmarks_get = bookmarks.get,
-    bookmarks_remove = bookmarks.remove,
+    bookmarks_add = function (_, ...) return bookmarks.add(...) end,
+    bookmarks_get = function (_, ...) return bookmarks.get(...) end,
+    bookmarks_remove = function (_, ...) return bookmarks.remove(...) end,
 
-    new_bookmark_values = function ()
+    new_bookmark_values = function (_)
         local values = new_bookmark_values
         new_bookmark_values = nil
         return values
     end,
 }
 
-chrome.add("bookmarks", function (view, meta)
-    local uri = "luakit://bookmarks/"
-
+chrome.add("bookmarks", function ()
     local style = chrome.stylesheet .. _M.stylesheet
 
     if not _M.show_uri then
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
-    local html = string.gsub(html, "{%%(%w+)}", { stylesheet = style })
+    local html = string.gsub(html_template, "{%%(%w+)}", { stylesheet = style })
+    return html
+end,
+function (view)
+    -- Load jQuery JavaScript library
+    local jquery = lousy.load("lib/jquery.min.js")
+    view:eval_js(jquery, { no_return = true })
 
-    view:load_string(html, uri)
+    -- Load main luakit://bookmarks/ JavaScript
+    view:eval_js(main_js, { no_return = true })
+end,
+export_funcs)
 
-    function on_first_visual(_, status)
-        -- Wait for new page to be created
-        if status ~= "first-visual" then return end
-
-        -- Hack to run-once
-        view:remove_signal("load-status", on_first_visual)
-
-        -- Double check that we are where we should be
-        if view.uri ~= uri then return end
-
-        -- Export luakit JS<->Lua API functions
-        for name, func in pairs(export_funcs) do
-            view:register_function(name, func)
-        end
-
-        view:register_function("reset_mode", function ()
-            meta.w:set_mode() -- HACK to unfocus search box
-        end)
-
-        -- Load jQuery JavaScript library
-        local jquery = lousy.load("lib/jquery.min.js")
-        local _, err = view:eval_js(jquery, { no_return = true })
-        assert(not err, err)
-
-        -- Load main luakit://download/ JavaScript
-        local _, err = view:eval_js(main_js, { no_return = true })
-        assert(not err, err)
-    end
-
-    view:add_signal("load-status", on_first_visual)
-end)
-
-chrome_page = "luakit://bookmarks/"
+--- URI of the bookmarks chrome page.
+-- @type string
+-- @readonly
+_M.chrome_page = "luakit://bookmarks/"
 
 local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({}, "B", "Shortcut to add a bookmark to the current URL",
+    key({}, "B", "Add a bookmark for the current URL.",
         function(w)
             new_bookmark_values = { uri = w.view.uri, title = w.view.title }
-            w:new_tab(chrome_page)
+            w:new_tab(_M.chrome_page)
         end),
 
-    buf("^gb$", "Open bookmarks manager in the current tab.",
+    buf("^gb$", "Open the bookmarks manager in the current tab.",
         function(w)
-            w:navigate(chrome_page)
+            w:navigate(_M.chrome_page)
         end),
 
-    buf("^gB$", "Open bookmarks manager in a new tab.",
+    buf("^gB$", "Open the bookmarks manager in a new tab.",
         function(w)
-            w:new_tab(chrome_page)
+            w:new_tab(_M.chrome_page)
         end)
 })
 
 local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("bookmarks", "Open bookmarks manager in a new tab.",
+    cmd("bookmarks", "Open the bookmarks manager in a new tab.",
         function (w)
-            w:new_tab(chrome_page)
+            w:new_tab(_M.chrome_page)
         end),
 
-    cmd("bookmark", "Add bookmark",
+    cmd("bookmark", "Add a bookmark for the current URL.",
         function (w, a)
             if not a then
                 new_bookmark_values = {
@@ -577,6 +617,10 @@ add_cmds({
                     uri = a[1], tags = table.concat(a, " ", 2)
                 }
             end
-            w:new_tab(chrome_page)
+            w:new_tab(_M.chrome_page)
         end),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

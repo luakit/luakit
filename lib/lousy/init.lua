@@ -1,18 +1,19 @@
----------------------------------------------------------------------------
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt;
+--- lousy library.
+--
+-- @module lousy
+-- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Mason Larobina
----------------------------------------------------------------------------
 
-require("lousy.util")
-require("lousy.bind")
-require("lousy.mode")
-require("lousy.theme")
-require("lousy.signal")
-require("lousy.widget")
-require("lousy.uri")
-require("lousy.load")
-
---- Useful functions for luakit.
-module("lousy")
+return {
+    util   = require("lousy.util"),
+    bind   = require("lousy.bind"),
+    mode   = require("lousy.mode"),
+    theme  = require("lousy.theme"),
+    signal = require("lousy.signal"),
+    widget = require("lousy.widget"),
+    uri    = require("lousy.uri"),
+    load   = require("lousy.load"),
+    pickle = require("lousy.pickle"),
+}
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

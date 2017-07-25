@@ -1,0 +1,21 @@
+The following files are part of the Arc Icon Theme project, available at
+https://github.com/horst3180/arc-icon-theme, licensed under the GPLv3.
+See COPYING.GPLv3.
+
+	resources/icons/tab-icon-chrome.png
+	resources/icons/tab-icon-chrome@2x.png
+	resources/icons/tab-icon-private.png
+	resources/icons/tab-icon-private@2x.png
+
+The following files are modified files from the Arc Icon Theme project,
+available at https://github.com/horst3180/arc-icon-theme, licensed under
+the GPLv3. See COPYING.GPLv3. Modification date: 24 July 2017.
+
+	resources/icons/tab-icon-page.png
+	resources/icons/tab-icon-page@2x.png
+	resources/icons/tab-icon-crash.png
+	resources/icons/tab-icon-crash@2x.png
+	resources/icons/tab-icon-error.png
+	resources/icons/tab-icon-error@2x.png
+	resources/icons/tab-icon-security-error.png
+	resources/icons/tab-icon-security-error@2x.png

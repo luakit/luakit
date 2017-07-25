@@ -1,0 +1,35 @@
+--- Overlay widget
+--
+-- DOCMACRO(available:ui)
+--
+-- The overlay widget allows independent layers of widgets.
+--
+-- @class widget:overlay
+-- @prefix overlay
+-- @author Mason Larobina
+-- @copyright 2010 Mason Larobina
+
+--- @method pack
+-- Add a widget to the overlay; it will be stacked on top of the main child
+-- widget. Multiple overlaying widgets can be added; their order affects the
+-- order in which they will be rendered, if they overlap.
+--
+-- The options table has two keys that can be set: `halign` and `valign`. There
+-- are five possible values for these keys:
+--
+--  - `fill`: expand the new child widget to fill the total available area.
+--  - `start`: align the new child widget to the left/top.
+--  - `end`: align the new child widget to the right/bottom.
+--  - `center`: align the new child widget to the center.
+--  - `baseline`: align according to the child widget's baseline. Only works for `valign`.
+--
+-- @tparam widget child The widget to add as a new child.
+-- @tparam table|nil options Table of options.
+
+--- @method reorder_child
+-- Reorder a widget already in the overlay. The order affects draw order and
+-- focus order.
+-- @tparam widget child The child widget to reorder.
+-- @tparam integer position The position to move the widget to.
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

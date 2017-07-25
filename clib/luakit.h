@@ -21,10 +21,19 @@
 #ifndef LUAKIT_CLIB_LUAKIT_H
 #define LUAKIT_CLIB_LUAKIT_H
 
-/* lua luakit class for signals */
-lua_class_t luakit_class;
+#include "common/luaclass.h"
+#include "common/ipc.h"
+
+#include <lua.h>
 
 void luakit_lib_setup(lua_State *L);
+void luaH_register_functions_on_endpoint(ipc_endpoint_t *ipc, lua_State *L);
+lua_class_t * luakit_lib_get_luakit_class(void);
+gint luaH_class_index_miss_property(lua_State *, lua_object_t *);
+gint luaH_class_newindex_miss_property(lua_State *, lua_object_t *);
+
+/* Referenced from deprecated webview:allow_certificate() */
+gint luaH_luakit_allow_certificate(lua_State *L);
 
 #endif
 

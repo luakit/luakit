@@ -19,41 +19,26 @@
  */
 
 #include "clib/download.h"
+#include "clib/luakit.h"
 
-static gboolean
-mime_type_decision_cb(WebKitWebView *v, WebKitWebFrame* UNUSED(f),
-        WebKitNetworkRequest *r, gchar *mime, WebKitWebPolicyDecision *pd,
-        widget_t *w)
+gboolean
+download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, gpointer UNUSED(user_data))
 {
-    lua_State *L = globalconf.L;
-    const gchar *uri = webkit_network_request_get_uri(r);
+    WebKitWebView *dl_view = webkit_download_get_web_view(dl);
+    widget_t *w = dl_view ? GOBJECT_TO_LUAKIT_WIDGET(dl_view) : NULL;
 
-    luaH_object_push(L, w->ref);
-    lua_pushstring(L, uri);
-    lua_pushstring(L, mime);
-    gint ret = luaH_object_emit_signal(L, -3, "mime-type-decision", 2, 1);
-
-    if (ret && !lua_toboolean(L, -1))
-        /* User responded with false, ignore request */
-        webkit_web_policy_decision_ignore(pd);
-    else if (!webkit_web_view_can_show_mime_type(v, mime))
-        webkit_web_policy_decision_download(pd);
-    else
-        webkit_web_policy_decision_use(pd);
-
-    lua_pop(L, ret + 1);
-    return TRUE;
-}
-
-static gboolean
-download_request_cb(WebKitWebView* UNUSED(v), WebKitDownload *dl, widget_t *w)
-{
-    lua_State *L = globalconf.L;
-    luaH_object_push(L, w->ref);
+    lua_State *L = common.L;
+    gint top = lua_gettop(L);
     luaH_download_push(L, dl);
-    gint ret = luaH_object_emit_signal(L, 1, "download-request", 1, 1);
+    if (w)
+        luaH_object_push(L, w->ref);
+    else
+        lua_pushnil(L);
+
+    lua_class_t *luakit_class = luakit_lib_get_luakit_class();
+    gint ret = luaH_class_emit_signal(L, luakit_class, "download-start", 2, 1);
     gboolean handled = (ret && lua_toboolean(L, 2));
-    lua_pop(L, 1 + ret);
+    lua_settop(L, top);
     return handled;
 }
 

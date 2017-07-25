@@ -1,26 +1,23 @@
-------------------------------------------------------------
--- Command completion                                     --
--- © 2010-2011 Mason Larobina  <mason.larobina@gmail.com> --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>       --
-------------------------------------------------------------
+--- Command completion.
+--
+-- This module provides tab completion for luakit commands. Currently, it
+-- supports completing URLs from the user's bookmarks and history, and also
+-- supports completing partially typed commands.
+--
+-- @module completion
+-- @copyright 2010-2011 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
--- Get Lua environment
-local ipairs = ipairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local unpack = unpack
-
--- Get luakit environment
-local lousy = require "lousy"
-local history = require "history"
-local bookmarks = require "bookmarks"
+local lousy = require("lousy")
+local history = require("history")
+local bookmarks = require("bookmarks")
+local modes = require("modes")
+local new_mode, get_mode = modes.new_mode, modes.get_mode
+local binds = require("binds")
+local add_binds = binds.add_binds
 local escape = lousy.util.escape
-local new_mode, get_mode = new_mode, get_mode
-local add_binds = add_binds
-local capi = { luakit = luakit }
 
-module "completion"
+local _M = {}
 
 -- Store completion state (indexed by window)
 local data = setmetatable({}, { __mode = "k" })
@@ -28,11 +25,11 @@ local data = setmetatable({}, { __mode = "k" })
 -- Add completion start trigger
 local key = lousy.bind.key
 add_binds("command", {
-    key({}, "Tab", function (w) w:set_mode("completion") end),
+    key({}, "Tab", "Open completion menu.", function (w) w:set_mode("completion") end),
 })
 
--- Return to command mode with original text and with original cursor position
-function exit_completion(w)
+--- Return to command mode with original text and with original cursor position.
+function _M.exit_completion(w)
     local state = data[w]
     w:enter_cmd(state.orig_text, { pos = state.orig_pos })
 end
@@ -58,28 +55,27 @@ add_binds("completion", {
         function (w) w.menu:move_up() end),
 
     key({}, "Escape", "Stop completion and restore original command.",
-        exit_completion),
+        _M.exit_completion),
 
     key({"Control"}, "[", "Stop completion and restore original command.",
-        exit_completion),
+        _M.exit_completion),
 })
 
-function update_completions(w, text, pos)
+--- Update the list of completions for some input text.
+-- @tparam table w The current window table.
+-- @tparam string text The current input text.
+-- @tparam number pos The current input cursor position.
+function _M.update_completions(w, text, pos)
     local state = data[w]
 
     -- Other parts of the code are triggering input changed events
     if state.lock then return end
 
     local input = w.ibar.input
-    local text, pos = text or input.text, pos or input.position
+    text, pos = text or input.text, pos or input.position
 
     -- Don't rebuild the menu if the text & cursor position are the same
     if text == state.text and pos == state.pos then return end
-
-    -- Exit completion if cursor outside a word
-    if string.sub(text, pos, pos) == " " then
-        w:enter_cmd(text, { pos = pos })
-    end
 
     -- Update left and right strings
     state.text, state.pos = text, pos
@@ -92,7 +88,7 @@ function update_completions(w, text, pos)
         table.insert(groups, func(state) or {})
     end
     -- Join all result tables
-    rows = lousy.util.table.join(unpack(groups))
+    local rows = lousy.util.table.join(unpack(groups))
 
     if rows[1] then
         -- Prevent callbacks triggering recursive updates.
@@ -105,7 +101,7 @@ function update_completions(w, text, pos)
         end
         state.lock = false
     elseif not state.built then
-        exit_completion(w)
+        _M.exit_completion(w)
     else
         w.menu:hide()
     end
@@ -123,7 +119,7 @@ new_mode("completion", {
         state.orig_pos = input.position
 
         -- Update input text when scrolling through completion menu items
-        w.menu:add_signal("changed", function (m, row)
+        w.menu:add_signal("changed", function (_, row)
             state.lock = true
             if row then
                 input.text = row.left .. " " .. state.right
@@ -135,18 +131,21 @@ new_mode("completion", {
             state.lock = false
         end)
 
-        update_completions(w)
+        _M.update_completions(w)
     end,
 
     changed = function (w, text)
         if not data[w].lock then
-            update_completions(w, text)
+            local input = w.ibar.input
+            data[w].orig_text = input.text
+            data[w].orig_pos = input.position
+            _M.update_completions(w, text)
         end
     end,
 
     move_cursor = function (w, pos)
         if not data[w].lock then
-            update_completions(w, nil, pos)
+            _M.update_completions(w, nil, pos)
         end
     end,
 
@@ -162,19 +161,18 @@ new_mode("completion", {
     end,
 })
 
--- Completion functions
-funcs = {
+local completion_funcs = {
     -- Add command completion items to the menu
     command = function (state)
         -- We are only interested in the first word
         if string.match(state.left, "%s") then return end
         -- Check each command binding for matches
-        local pat = "^" .. state.left
+        local pat = state.left
         local cmds = {}
         for _, b in ipairs(get_mode("command").binds) do
             if b.cmds then
                 for i, cmd in ipairs(b.cmds) do
-                    if string.match(cmd, pat) then
+                    if string.find(cmd, pat, 1, true) == 1 then
                         if i == 1 then
                             cmd = ":" .. cmd
                         else
@@ -201,9 +199,12 @@ funcs = {
 
     -- Add history completion items to the menu
     history = function (state)
-        -- Find word under cursor (also checks not first word)
-        local term = string.match(state.left, "%s(%S+)$")
-        if not term then return end
+        -- Split into prefix and search term
+        local split = string.find(state.left, "%s")
+        if not split then return end
+        local prefix = ":" .. string.sub(state.left, 1, split)
+        local term = string.sub(state.left, split+1)
+        if not term or term == "" then return end
 
         local sql = [[
             SELECT uri, title, lower(uri||title) AS text
@@ -214,9 +215,8 @@ funcs = {
         local rows = history.db:exec(sql, { string.format("*%s*", term) })
         if not rows[1] then return end
 
-        -- Strip last word (so that we can append the completion uri)
-        local left = ":" .. string.sub(state.left, 1,
-            string.find(state.left, "%s(%S+)$"))
+        -- Strip everything but the prefix (so that we can append the completion uri)
+        local left = prefix
 
         -- Build rows
         local ret = {{ "History", "URI", title = true }}
@@ -229,9 +229,12 @@ funcs = {
 
     -- add bookmarks completion to the menu
     bookmarks = function (state)
-        -- Find word under cursor (also checks not first word)
-        local term = string.match(state.left, "%s(%S+)$")
-        if not term then return end
+        -- Split into prefix and search term
+        local split = string.find(state.left, "%s")
+        if not split then return end
+        local prefix = ":" .. string.sub(state.left, 1, split)
+        local term = string.sub(state.left, split+1)
+        if not term or term == "" then return end
 
         local sql = [[
             SELECT uri, title, lower(uri||title||tags) AS text
@@ -242,9 +245,8 @@ funcs = {
         local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
         if not rows[1] then return end
 
-        -- Strip last word (so that we can append the completion uri)
-        local left = ":" .. string.sub(state.left, 1,
-            string.find(state.left, "%s(%S+)$"))
+        -- Strip everything but the prefix (so that we can append the completion uri)
+        local left = prefix
 
         -- Build rows
         local ret = {{ "Bookmarks", "URI", title = true }}
@@ -257,11 +259,25 @@ funcs = {
     end,
 }
 
--- Order of completion items
-order = {
-    funcs.command,
-    funcs.history,
-    funcs.bookmarks,
+--- Table of functions used to generate completion entries.
+-- @readonly
+_M.funcs = {
+    command = completion_funcs.command,
+    -- Completes commands.
+    history = completion_funcs.history,
+    -- Completes URIs present in the user's history.
+    bookmarks = completion_funcs.bookmarks,
+    -- Completes URIs that have been bookmarked.
 }
+
+--- Array of completion functions from `funcs`, called in order.
+-- @readwrite
+_M.order = {
+    [1] = _M.funcs.command, -- `funcs.command`
+    [2] = _M.funcs.history, -- `funcs.history`
+    [3] = _M.funcs.bookmarks, -- `funcs.bookmarks`
+}
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,29 +1,39 @@
---------------------------------------------------------
--- NoScript plugin for luakit                         --
--- (C) 2011 Mason Larobina <mason.larobina@gmail.com> --
---------------------------------------------------------
+--- NoScript plugin for luakit.
+--
+-- This module provides an alternative method of restricting web page access to
+-- JavaScript and plugins, in addition to using the `domain_props` module.
+--
+-- This module provides keybindings for enabling/disabling either plugins or
+-- JavaScript for the current web page, as well as a status bar widget that
+-- indicates whether JavaScript is enabled for the current web page.
+--
+-- @module noscript
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
--- Get Lua environment
-local os = require "os"
-local tonumber = tonumber
-local assert = assert
-local table = table
-local string = string
-
--- Get luakit environment
-local webview = webview
-local add_binds = add_binds
-local lousy = require "lousy"
+local window = require("window")
+local webview = require("webview")
+local binds = require("binds")
+local add_binds = binds.add_binds
+local lousy = require("lousy")
 local sql_escape = lousy.util.sql_escape
 local capi = { luakit = luakit, sqlite3 = sqlite3 }
+local theme = require("theme")
 
-module "noscript"
+local _M = {}
 
--- Default blocking values
-enable_scripts = true
-enable_plugins = true
+--- Whether JavaScript should be enabled by default.
+-- @type boolean
+-- @readwrite
+-- @default `true`
+_M.enable_scripts = true
 
-create_table = [[
+--- Whether plugins should be enabled by default.
+-- @type boolean
+-- @readwrite
+-- @default `true`
+_M.enable_plugins = true
+
+local create_table = [[
 CREATE TABLE IF NOT EXISTS by_domain (
     id INTEGER PRIMARY KEY,
     domain TEXT,
@@ -31,7 +41,7 @@ CREATE TABLE IF NOT EXISTS by_domain (
     enable_plugins INTEGER
 );]]
 
-db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/noscript.db" }
+local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/noscript.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 db:exec(create_table)
 
@@ -39,8 +49,9 @@ local function btoi(bool) return bool and 1 or 0    end
 local function itob(int)  return tonumber(int) ~= 0 end
 
 local function get_domain(uri)
-    uri = assert(lousy.uri.parse(uri), "invalid uri")
-    return string.lower(uri.host)
+    uri = lousy.uri.parse(uri)
+    -- uri parsing will fail on some URIs, e.g. "about:blank"
+    return (uri and uri.host) and string.lower(uri.host) or nil
 end
 
 local function match_domain(domain)
@@ -98,24 +109,124 @@ function webview.methods.toggle_remove(view, w)
     w:notify("Removed rules for domain: " .. domain)
 end
 
-webview.init_funcs.noscript_load = function (view)
-    view:add_signal("load-status", function (v, status)
-        if status ~= "committed" or v.uri == "about:blank" then return end
-        local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
-        local domain = get_domain(v.uri)
+local function string_starts(a, b)
+    return string.sub(a, 1, string.len(b)) == b
+end
+
+local function lookup_domain(uri)
+    if not uri then uri = "" end
+    local enable_scripts, enable_plugins = _M.enable_scripts, _M.enable_plugins
+    local domain = get_domain(uri)
+    -- Enable everything for local pages
+    if string_starts(uri, "file://") then return true, true, "file://" end
+
+    -- Look up this domain and all parent domains, returning the first match
+    -- E.g. querying a.b.com will lookup a.b.com, then b.com, then com
+    while domain do
         local row = match_domain(domain)
         if row then
-            enable_scripts = itob(row.enable_scripts)
-            enable_plugins = itob(row.enable_plugins)
+            return itob(row.enable_scripts), itob(row.enable_plugins), row.domain
         end
-        view.enable_scripts = enable_scripts
-        view.enable_plugins = enable_plugins
-    end)
+        domain = string.match(domain, "%.(.+)")
+    end
+
+    return enable_scripts, enable_plugins, nil
 end
+
+-- NoScript indicator
+
+local view_noscript_state = setmetatable({}, { __mode = "k" })
+
+local function noscript_indicator_update(v)
+    local vns = view_noscript_state[v]
+    local w = webview.window(v)
+    if not vns or not w then return end
+
+    local ns = w.sbar.r.noscript
+    local es, matched_domain = vns.enable_scripts, vns.enable_scripts_domain
+    local state = es and "enabled" or "disabled"
+
+    if es then
+        ns.text = "S" or "<s>S</s>"
+        ns.fg = theme.trust_fg
+    else
+        ns.text = "<s>S</s>"
+        ns.fg = theme.notrust_fg
+    end
+
+    if matched_domain == "override" then
+        ns.tooltip = "JavaScript " .. state
+    elseif matched_domain then
+        ns.tooltip = "JavaScript " .. state .. ": URI matched domain '" .. matched_domain .. "'"
+    else
+        ns.tooltip = "JavaScript " .. state .. ": default setting"
+    end
+end
+
+local noscript_ss = stylesheet{ source = [===[noscript { display: none !important; }]===] }
+
+window.add_signal("init", function (w)
+    local r = w.sbar.r
+    r.noscript = widget{type="label"}
+    r.layout:pack(r.noscript)
+    r.layout:reorder(r.noscript, 1)
+    r.noscript.font = theme.font
+end)
+
+local update_webview_blocking = function (v)
+    local es = v:emit_signal("enable-scripts")
+    local ep = v:emit_signal("enable-plugins")
+    local vns = {
+        enable_scripts_domain = es and "override" or nil,
+        enable_plugins_domain = ep and "override" or nil,
+    }
+    if es == nil or ep == nil then
+        local s, p, matched_domain = lookup_domain(v.uri)
+        if es == nil then es = s; vns.enable_scripts_domain = matched_domain end
+        if ep == nil then ep = p; vns.enable_plugins_domain = matched_domain end
+    end
+    vns.enable_scripts = es
+    vns.enable_plugins = ep
+    v.enable_scripts = es
+    v.enable_plugins = ep
+    -- Update indicator
+    view_noscript_state[v] = vns
+    noscript_indicator_update(v)
+    -- Workaround for https://github.com/aidanholm/luakit/issues/250
+    v.stylesheets[noscript_ss] = es
+end
+
+webview.add_signal("init", function (view)
+    -- Update on new resource load
+    view:add_signal("policy-decided", function (v, _, _, decision)
+        if decision == "use" then
+            update_webview_blocking(v)
+        end
+    end)
+
+    -- Update on history navigation
+    view:add_signal("load-status", function (v, status)
+        if status == "committed" then
+            update_webview_blocking(v)
+        end
+    end)
+
+    view:add_signal("switched-page", function (v)
+        noscript_indicator_update(v)
+    end)
+end)
+
 
 local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^,ts$", function (w) w:toggle_scripts() end),
-    buf("^,tp$", function (w) w:toggle_plugins() end),
-    buf("^,tr$", function (w) w:toggle_remove()  end),
+    buf("^,ts$", "Enable/disable JavaScript for the current domain.",
+        function (w) w:toggle_scripts() end),
+    buf("^,tp$", "Enable/disable plugins for the current domain.",
+        function (w) w:toggle_plugins() end),
+    buf("^,tr$", "Remove all previously added rules for the current domain.",
+        function (w) w:toggle_remove()  end),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -19,68 +19,64 @@
  *
  */
 
-static WebKitWebView*
-inspect_webview_cb(WebKitWebInspector *UNUSED(inspector), WebKitWebView *UNUSED(v), widget_t *w)
+gboolean
+inspector_open_window_cb(WebKitWebInspector *UNUSED(inspector), widget_t *w)
 {
-    lua_State *L = globalconf.L;
-    webview_data_t *d = w->data;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-
-    if (luaH_object_emit_signal(L, -1, "create-inspector-web-view", 0, 1)) {
-        widget_t *new;
-        if (((new = luaH_towidget(L, -1)) && new->info->tok == L_TK_WEBVIEW)) {
-            d->iview = new;
-            lua_pop(L, 2);
-            return ((webview_data_t*)new->data)->view;
-        }
-        warn("invalid signal return type (expected webview widget, got %s)",
-                lua_typename(L, lua_type(L, -1)));
-    }
-    lua_pop(L, 1);
-    return NULL;
+    gint nret = luaH_object_emit_signal(L, -1, "create-inspector-window", 0, 1);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
 inspector_show_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "show-inspector", 0, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    gint nret = luaH_object_emit_signal(L, -1, "show-inspector", 0, 1);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
 inspector_close_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     webview_data_t *d = w->data;
-    luaH_object_push(L, d->iview);
-    d->iview = NULL;
-    luaH_object_emit_signal(L, -2, "close-inspector", 1, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    lua_pushnil(L);
+    d->inspector_open = FALSE;
+    gint nret = luaH_object_emit_signal(L, -2, "close-inspector", 1, 0);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
 inspector_attach_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
+    webview_data_t *d = w->data;
+    d->inspector_open = TRUE;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "attach-inspector", 0, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    gint nret = luaH_object_emit_signal(L, -1, "attach-inspector", 0, 0);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gboolean
 inspector_detach_window_cb(WebKitWebInspector* UNUSED(inspector), widget_t *w)
 {
-    lua_State *L = globalconf.L;
+    lua_State *L = common.L;
     luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "detach-inspector", 0, 0);
-    lua_pop(L, 1);
-    return TRUE;
+    gint nret = luaH_object_emit_signal(L, -1, "detach-inspector", 0, 0);
+    gboolean ret = nret && lua_toboolean(L, -1);
+    lua_pop(L, 1 + nret);
+    return ret;
 }
 
 static gint
@@ -98,3 +94,5 @@ luaH_webview_close_inspector(lua_State *L)
     webkit_web_inspector_close(d->inspector);
     return 0;
 }
+
+// vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

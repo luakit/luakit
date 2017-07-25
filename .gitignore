@@ -1,10 +1,23 @@
-*.o
-*.swp
-*~
-*.1
-apidocs
+# Generated documentation
+doc/apidocs
+doc/html
+
+# Build targets
 luakit
+luakit.so
+luakit.1.gz
+tests/util.so
+
+# Generated source files
 common/tokenize.h
 common/tokenize.c
-globalconf.h
-lunit
+buildopts.h
+
+# Intermediate build files
+*.o
+*.1
+
+# Miscellaneous
+*.swp
+*~
+tags

@@ -215,7 +215,7 @@ luaH_bind_value(lua_State *L, sqlite3_stmt *stmt, gint bidx, gint idx)
 static gint
 luaH_sqlite3_do_exec(lua_State *L, sqlite3_stmt *stmt)
 {
-    gint ret = sqlite3_step(stmt), rows = 0, ncol;
+    gint ret = sqlite3_step(stmt), rows = 0, ncol = 0;
 
     /* determine if this statement returns rows */
     if (ret == SQLITE_DONE || ret == SQLITE_ROW) {
@@ -426,14 +426,14 @@ luaH_sqlite3_new(lua_State *L)
 void
 sqlite3_class_setup(lua_State *L)
 {
-    static const struct luaL_reg sqlite3_methods[] =
+    static const struct luaL_Reg sqlite3_methods[] =
     {
         LUA_CLASS_METHODS(sqlite3)
         { "__call", luaH_sqlite3_new },
         { NULL, NULL },
     };
 
-    static const struct luaL_reg sqlite3_meta[] =
+    static const struct luaL_Reg sqlite3_meta[] =
     {
         LUA_OBJECT_META(sqlite3)
         LUA_CLASS_META
@@ -455,7 +455,7 @@ sqlite3_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_sqlite3_get_filename,
             NULL);
 
-    static const struct luaL_reg sqlite3_stmt_meta[] =
+    static const struct luaL_Reg sqlite3_stmt_meta[] =
     {
         { "exec", luaH_sqlite3_stmt_exec },
         { "__gc", luaH_sqlite3_stmt_gc },

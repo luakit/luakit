@@ -1,0 +1,61 @@
+# Maintainer: Robbie Smith <zoqaeski AT gmail DOT com>
+
+pkgname=luakit-git
+_gitname=luakit
+pkgver=20130501.g807dc42
+pkgrel=1
+pkgdesc="A fast, small, webkit-gtk based browser extensible by Lua"
+arch=('i686' 'x86_64')
+url="http://www.luakit.org/projects/luakit" 
+license=('GPL3')
+depends=('libwebkit' 'lua-filesystem' 'libunique')
+makedepends=('git' 'lua' 'help2man')
+optdepends=('luajit2: Needed if use the luajit option in make')
+# Luakit crowd fork
+source=($_gitname.install 'luakit::git+https://github.com/luakit-crowd/luakit.git#branch=develop')
+# Mason Larobina’s master
+#source=($_gitname.install 'luakit::git+https://github.com/mason-larobina/luakit.git#branch=develop')
+md5sums=('184069a7264115726f73204d1d708e2c' 'SKIP')
+provides=(luakit)
+conflicts=('luakit' 'luakit-develop-git')
+install=$_gitname.install
+options=(!strip)
+backup=('etc/xdg/luakit/binds.lua' 
+        'etc/xdg/luakit/globals.lua' 
+        'etc/xdg/luakit/modes.lua' 
+        'etc/xdg/luakit/rc.lua' 
+        'etc/xdg/luakit/theme.lua' 
+        'etc/xdg/luakit/webview.lua' 
+        'etc/xdg/luakit/window.lua')
+
+_gitbranch="develop"
+
+# To disable lua’s just-in-time compiler, remove USE_LUAJIT=1 from the below line:
+_makeopts="PREFIX=/usr DEVELOPMENT_PATHS=0 USE_LUAJIT=1"  
+
+
+pkgver() {
+  cd $_gitname
+  # Package version is the date of the last commit + the SHA tag
+  git log -1 --format="%cd.g%h" --date=short | sed 's/-//g'
+  # Package version is the tag of the last commit
+  #echo $(git describe --always | sed 's|-|.|g')
+}
+
+build() {
+  cd $_gitname
+  make $_makeopts all
+}
+
+package() {
+  cd $_gitname
+  make $_makeopts DESTDIR=${pkgdir} install
+
+  # Install extras
+  install -Dm 0644 "${srcdir}/$_gitname/extras/vim/ftdetect/luakit.vim" "${pkgdir}/usr/share/vim/vimfiles/ftdetect/luakit.vim"
+  install -Dm 0644 "${srcdir}/$_gitname/extras/vim/ftplugin/luakit.vim" "${pkgdir}/usr/share/vim/vimfiles/ftplugin/luakit.vim"
+  install -Dm 0644 "${srcdir}/$_gitname/extras/vim/indent/luakit.vim" "${pkgdir}/usr/share/vim/vimfiles/indent/luakit.vim"
+  install -Dm 0644 "${srcdir}/$_gitname/extras/vim/syntax/luakit.vim" "${pkgdir}/usr/share/vim/vimfiles/syntax/luakit.vim"
+}
+
+# vim:set ts=2 sw=2 et:

@@ -67,6 +67,22 @@ luaH_paned_get_child(lua_State *L, widget_t *w, gint n)
 }
 
 static gint
+luaH_paned_get_position(lua_State *L, widget_t *w)
+{
+    gint position = gtk_paned_get_position(GTK_PANED(w->widget));
+    lua_pushnumber(L, position);
+    return 1;
+}
+
+static gint
+luaH_paned_set_position(lua_State *L, widget_t *w)
+{
+    gint position = lua_tonumber(L, -1);
+    gtk_paned_set_position(GTK_PANED(w->widget), position);
+    return 0;
+}
+
+static gint
 luaH_paned_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
@@ -88,6 +104,9 @@ luaH_paned_index(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_RIGHT:
         return luaH_paned_get_child(L, w, 2);
 
+      case L_TK_POSITION:
+        return luaH_paned_get_position(L, w);
+
       default:
         break;
     }
@@ -100,6 +119,9 @@ luaH_paned_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
+      case L_TK_POSITION:
+        return luaH_paned_set_position(L, w);
+
       default:
         break;
     }
@@ -107,19 +129,17 @@ luaH_paned_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 }
 
 widget_t *
-widget_paned(widget_t *w, luakit_token_t token)
+widget_paned(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 {
     w->index = luaH_paned_index;
     w->newindex = luaH_paned_newindex;
-    w->destructor = widget_destructor;
 
-    w->widget = (token == L_TK_VPANED) ? gtk_vpaned_new() :
-            gtk_hpaned_new();
+    w->widget = (token == L_TK_VPANED) ? gtk_paned_new(GTK_ORIENTATION_VERTICAL) :
+            gtk_paned_new(GTK_ORIENTATION_HORIZONTAL);
 
     g_object_connect(G_OBJECT(w->widget),
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::add",        G_CALLBACK(add_cb),        w,
-      "signal::parent-set", G_CALLBACK(parent_set_cb), w,
-      "signal::remove",     G_CALLBACK(remove_cb),     w,
       NULL);
     gtk_widget_show(w->widget);
     return w;

@@ -2,6 +2,8 @@
 -- luakit mode configuration --
 -------------------------------
 
+local window = require("window")
+
 -- Table of modes and their callback hooks
 local modes = {}
 local lousy = require "lousy"
@@ -9,7 +11,7 @@ local join = lousy.util.table.join
 local order = 0
 
 -- Add new mode table (optionally merges with original mode)
-function new_mode(name, desc, mode, replace)
+local function new_mode(name, desc, mode, replace)
     assert(string.match(name, "^[%w-_]+$"), "invalid mode name: " .. name)
     -- Detect optional description
     if type(desc) == "table" then
@@ -23,12 +25,12 @@ function new_mode(name, desc, mode, replace)
 end
 
 -- Get mode table
-function get_mode(name) return modes[name] end
+local function get_mode(name) return modes[name] end
 
-function get_modes() return lousy.util.table.clone(modes) end
+local function get_modes() return lousy.util.table.clone(modes) end
 
 -- Attach window & input bar signals for mode hooks
-window.init_funcs.modes_setup = function (w)
+window.add_signal("init", function (w)
     -- Calls the `enter` and `leave` mode hooks.
     w:add_signal("mode-changed", function (_, name, ...)
         local leave = (w.mode or {}).leave
@@ -47,6 +49,7 @@ window.init_funcs.modes_setup = function (w)
 
         -- Call new modes enter hook.
         if mode.enter then mode.enter(w, ...) end
+        w.last_mode_entered = mode
 
         w:emit_signal("mode-entered", mode)
     end)
@@ -56,7 +59,15 @@ window.init_funcs.modes_setup = function (w)
     -- Calls the changed hook on input widget changed.
     input:add_signal("changed", function ()
         local changed = w.mode.changed
-        if changed then changed(w, input.text) end
+        -- the w:set_input() in normal mode's enter function would create a
+        -- changed signal which would run before the next mode's enter
+        -- function, usually causing a change back to normal mode before the
+        -- next mode's enter function actually ran.
+        -- here, we only run the changed callback if the current mode matches
+        -- the last mode entered.
+        if changed and w.last_mode_entered == w.mode then
+            changed(w, input.text)
+        end
     end)
 
     input:add_signal("property::position", function ()
@@ -76,7 +87,7 @@ window.init_funcs.modes_setup = function (w)
             end
         end
     end)
-end
+end)
 
 -- Add mode related window methods
 window.methods.set_mode = lousy.mode.set
@@ -89,6 +100,7 @@ new_mode("normal", [[When luakit first starts you will find yourself in this
     enter = function (w)
         w:set_prompt()
         w:set_input()
+        w.win:focus()
     end,
 })
 
@@ -113,6 +125,9 @@ new_mode("passthrough", [[Luakit will pass every key event to the WebView
     enter = function (w)
         w:set_prompt("-- PASS THROUGH --")
         w:set_input()
+    end,
+    leave = function (w)
+        w.win:focus()
     end,
     -- Send key events to webview
     passthrough = true,
@@ -161,3 +176,11 @@ new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     end,
     history = {maxlen = 50},
 })
+
+return {
+    new_mode = new_mode,
+    get_mode = get_mode,
+    get_modes = get_modes,
+}
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -1,5 +1,5 @@
 /*
- * luaobject.h - useful functions for handling Lua objects
+ * common/luaobject.h - useful functions for handling Lua objects
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
@@ -22,10 +22,18 @@
 #ifndef LUAKIT_COMMON_LUAOBJECT_H
 #define LUAKIT_COMMON_LUAOBJECT_H
 
+#include <glib-object.h>
+
 #include "common/luaclass.h"
 #include "common/lualib.h"
 #include "common/signal.h"
-#include "globalconf.h"
+#include "common/common.h"
+
+/** Registry key for the Lua registry API to store a private reference counting
+ * table. This table prevents garbage collection of objects (userdata or
+ * tables) while in use by C functions or objects.
+ * \see http://www.lua.org/manual/5.1/manual.html#3.5 */
+#define LUAKIT_OBJECT_REGISTRY_KEY "luakit.object.registry"
 
 gint luaH_settype(lua_State *L, lua_class_t *lua_class);
 void luaH_object_setup(lua_State *L);
@@ -130,6 +138,23 @@ luaH_object_push(lua_State *L, gpointer p) {
     return 1;
 }
 
+static inline void
+luaH_gobject_destroy_cb(gpointer ref)
+{
+    luaH_object_unref(common.L, ref);
+}
+
+static inline void
+luaH_bind_gobject_ref(lua_State *L, gpointer gobject, int idx)
+{
+    lua_pushvalue(L, idx);
+    gpointer ref = luaH_object_ref(L, -1);
+    g_object_set_data_full(G_OBJECT(gobject), "dummy-destroy-notify", ref,
+            (GDestroyNotify)luaH_gobject_destroy_cb);
+}
+
+gint signal_array_emit(lua_State *L, signal_t *signals,
+        const gchar *array_name, const gchar *name, gint nargs, gint nret);
 gint signal_object_emit(lua_State *, signal_t *signals,
         const gchar *name, gint nargs, gint nret);
 void luaH_object_add_signal(lua_State *L, gint oud,
@@ -141,6 +166,7 @@ gint luaH_object_emit_signal(lua_State *L, gint oud,
 
 gint luaH_object_add_signal_simple(lua_State *L);
 gint luaH_object_remove_signal_simple(lua_State *L);
+gint luaH_object_remove_signals_simple(lua_State *L);
 gint luaH_object_emit_signal_simple(lua_State *L);
 gint luaH_object_property_signal(lua_State *, gint, luakit_token_t);
 
@@ -177,10 +203,11 @@ gint luaH_object_property_signal(lua_State *, gint, luakit_token_t);
 gint luaH_object_tostring(lua_State *);
 gint luaH_object_gc(lua_State *);
 
-#define LUA_OBJECT_META(prefix)                            \
-    { "__tostring", luaH_object_tostring },                \
-    { "add_signal", luaH_object_add_signal_simple },       \
-    { "remove_signal", luaH_object_remove_signal_simple }, \
+#define LUA_OBJECT_META(prefix)                              \
+    { "__tostring", luaH_object_tostring },                  \
+    { "add_signal", luaH_object_add_signal_simple },         \
+    { "remove_signal", luaH_object_remove_signal_simple },   \
+    { "remove_signals", luaH_object_remove_signals_simple }, \
     { "emit_signal", luaH_object_emit_signal_simple },
 
 #endif

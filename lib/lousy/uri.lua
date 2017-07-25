@@ -1,19 +1,9 @@
-------------------------------------------------------
--- URI parsing functions                            --
--- © 2011 Mason Larobina <mason.larobina@gmail.com> --
-------------------------------------------------------
-
--- Get lua environment
-local table = table
-local string = string
-local ipairs = ipairs
-local pairs = pairs
-local tostring = tostring
-local type = type
-local setmetatable = setmetatable
-local getmetatable = getmetatable
-local assert = assert
-local rawset = rawset
+--- lousy.uri library.
+--
+-- URI parsing functions
+--
+-- @module lousy.uri
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 -- Get luakit environment
 local util = require "lousy.util"
@@ -21,7 +11,7 @@ local capi = { soup = soup }
 local uri_encode = luakit.uri_encode
 local uri_decode = luakit.uri_decode
 
-module "lousy.uri"
+local _M = {}
 
 local opts_metatable = {
     __tostring = function (opts)
@@ -56,12 +46,21 @@ local opts_metatable = {
         end
         return ret
     end,
+    __sub = function (op1, op2)
+        assert(type(op1) == "table" and type(op2) == "table",
+            "non-table operands")
+        local ret = util.table.copy(op1)
+        for _, k in ipairs(op2) do
+            ret[k] = nil
+        end
+        return ret
+    end,
 }
 
---- Parse uri query
---@param query the query component of a uri
---@return table of options
-function parse_query(query)
+--- Parse the query component of a URI and return it as a table.
+-- @tparam string query The query component of a URI.
+-- @treturn table The parsed table of query options.
+function _M.parse_query(query)
     local opts, order = {}, {}
     string.gsub(query or "", "&*([^&=]+)=([^&]+)", function (k, v)
         opts[k] = uri_decode(v)
@@ -74,7 +73,7 @@ function parse_query(query)
 end
 
 -- Allowed URI table properties
-local uri_allowed = { scheme = true, user = true, password = true,
+local uri_allowed = { scheme = true, user = true, password = true, port = true,
     host = true, path = true, query = true, fragment = true, opts = true }
 
 -- URI table metatable
@@ -91,30 +90,36 @@ local uri_metatable = {
         for k, v in pairs(op2) do
             assert(uri_allowed[k], "invalid property: " .. k)
             if k == "query" and type(v) == "string" then
-                uri.opts = parse_query(v)
+                ret.opts = _M.parse_query(v)
             else
-                uri[k] = v
+                ret[k] = v
             end
         end
         return ret
     end,
 }
 
--- Parse uri string and return uri table
-function parse(uri)
+--- Parse a URI string and return a URI table.
+-- @tparam string uri The URI as a string.
+-- @treturn table The URI as a table.
+function _M.parse(uri)
     -- Get uri table
-    local uri = capi.soup.parse_uri(uri)
+    uri = capi.soup.parse_uri(uri)
     if not uri then return end
     -- Parse uri.query and set uri.opts
-    uri.opts = parse_query(uri.query)
+    uri.opts = _M.parse_query(uri.query)
     uri.query = nil
     return setmetatable(uri, uri_metatable)
 end
 
--- Duplicate uri object
-function copy(uri)
+--- Duplicate a URI table.
+-- @tparam table uri The URI as a table.
+-- @treturn table A new copy of the URI table.
+function _M.copy(uri)
     assert(type(uri) == "table", "not a table")
-    return parse(tostring(uri))
+    return _M.parse(tostring(uri))
 end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

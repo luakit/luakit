@@ -1,1 +1,3 @@
 build-utils/getversion.sh export-subst
+*.c diff=cpp
+*.h diff=cpp

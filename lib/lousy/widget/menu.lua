@@ -1,25 +1,20 @@
--------------------------------------------------------------
--- @author Mason Larobina &lt;mason.larobina@gmail.com&gt; --
--- @copyright 2010 Mason Larobina                          --
--------------------------------------------------------------
+--- Luakit menu widget.
+--
+-- @module lousy.widget.menu
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Mason Larobina
 
 -- Grab environment we need
 local capi = { widget = widget }
-local setmetatable = setmetatable
 local math = require "math"
 local signal = require "lousy.signal"
-local type = type
-local assert = assert
-local ipairs = ipairs
-local table = table
-local util = require "lousy.util"
 local get_theme = require("lousy.theme").get
 
-module "lousy.widget.menu"
+local _M = {}
 
 local data = setmetatable({}, { __mode = "k" })
 
-function update(menu)
+local function update(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -79,7 +74,7 @@ function update(menu)
                 while j > 0 do
                     local r = d.rows[j]
                     -- Only check rows with same number of columns
-                    if r.ncols ~= row.ncols then break end
+                    if #r ~= #row then break end
                     -- Check if title row
                     if r.title then
                         row, index = r, j
@@ -90,7 +85,7 @@ function update(menu)
             end
 
             -- Is this the selected row?
-            selected = not row.title and index == d.cursor
+            local selected = not row.title and index == d.cursor
 
             -- Set row bg
             local rbg
@@ -101,7 +96,7 @@ function update(menu)
             end
             if rw.ebox.bg ~= rbg then rw.ebox.bg = rbg end
 
-            for c = 1, math.max(row.ncols, #(rw.cols)) do
+            for c = 1, math.max(#row, #(rw.cols)) do
                 -- Get column text
                 local text = row[c]
                 text = (type(text) == "function" and text(row)) or text
@@ -114,7 +109,7 @@ function update(menu)
                     rw.hbox:pack(cell, { expand = true, fill = true })
                     rw.cols[c] = cell
                     cell.font = font
-                    cell.width = 1
+                    cell.textwidth = 1
 
                 -- Remove row column widget
                 elseif not text and cell then
@@ -124,14 +119,15 @@ function update(menu)
                 end
 
                 -- Set cell props
+                local cfg
                 if text and cell and row.title then
                     cell.text = text
-                    local fg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
-                    if cell.fg ~= fg then cell.fg = fg end
+                    cfg = row.fg or (c == 1 and theme.menu_primary_title_fg or theme.menu_secondary_title_fg) or fg
+                    if cell.fg ~= cfg then cell.fg = cfg end
                 elseif text and cell then
                     cell.text = text
-                    local fg = (selected and (row.selected_fg or sfg)) or row.fg or fg
-                    if cell.fg ~= fg then cell.fg = fg end
+                    cfg = (selected and (row.selected_fg or sfg)) or row.fg or fg
+                    if cell.fg ~= cfg then cell.fg = cfg end
                 end
             end
         end
@@ -140,17 +136,16 @@ function update(menu)
     menu.widget:show()
 end
 
-function build(menu, rows)
+local function build(menu, rows)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
     local d = data[menu]
 
     -- Check rows
-    for i, row in ipairs(rows) do
+    for _, row in ipairs(rows) do
         assert(type(row) == "table", "invalid row in rows table")
         assert(#row >= 1, "empty row")
-        row.ncols = #row
     end
 
     d.rows = rows
@@ -174,7 +169,7 @@ local function calc_offset(menu)
     end
 end
 
-function move_up(menu)
+local function move_up(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -199,7 +194,7 @@ function move_up(menu)
     menu:emit_signal("changed", menu:get())
 end
 
-function move_down(menu)
+local function move_down(menu)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -224,7 +219,7 @@ function move_down(menu)
     menu:emit_signal("changed", menu:get())
 end
 
-function get(menu, index)
+local function get(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
 
     -- Get private menu widget data
@@ -234,16 +229,19 @@ function get(menu, index)
     return d.rows[index or d.cursor]
 end
 
-function del(menu, index)
+local function del(menu, index)
     assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
+    assert(not index or type(index) == "number", "invalid index")
 
     -- Get private menu widget data
     local d = data[menu]
+    index = index or d.cursor
 
     -- Unable to delete this index, return
-    if d.cursor < 1 then return end
+    if index < 1 then return end
 
-    table.remove(d.rows, d.cursor)
+    table.remove(d.rows, index)
+    if index < d.cursor then d.cursor = d.cursor - 1 end
 
     -- Update rows count
     d.nrows = #(d.rows)
@@ -258,7 +256,12 @@ function del(menu, index)
     menu:emit_signal("changed", menu:get())
 end
 
-function new(args)
+local function nrows(menu)
+    assert(data[menu] and type(menu.widget) == "widget", "invalid menu widget")
+    return data[menu].nrows
+end
+
+local function new(args)
     args = args or {}
 
     local menu = {
@@ -272,6 +275,7 @@ function new(args)
         move_down = move_down,
         hide      = function(menu) menu.widget:hide() end,
         show      = function(menu) menu.widget:show() end,
+        nrows     = nrows,
     }
 
     -- Save private widget data
@@ -290,4 +294,6 @@ function new(args)
     return menu
 end
 
-setmetatable(_M, { __call = function(_, ...) return new(...) end })
+return setmetatable(_M, { __call = function(_, ...) return new(...) end })
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80

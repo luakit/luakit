@@ -1,8 +1,5 @@
---------------------------------------------
--- Rules for where to put new tabs        --
--- © 2010 Henrik Hallberg <henrik@k2h.se> --
---------------------------------------------
-
+--- Rules for where to put new tabs.
+--
 -- When a new tab is opened in a window, a tab order function is called to
 -- determine where in the tab list it should be placed. window.new_tab()
 -- accepts a tab order function as parameter. If this is not sent,
@@ -12,76 +9,96 @@
 -- A tab order function receives the current window, and the view that is being
 -- opened as parameters. In return, it gives the index at which the new tab
 -- should be put.
+--
+-- @module taborder
+-- @copyright 2010 Henrik Hallberg <henrik@k2h.se>
 
-taborder = {
-    first = function()
-        return 1
-    end,
+local lousy = require("lousy")
 
-    last = function(w)
-        return w.tabs:count() + 1
-    end,
+local _M = {}
 
-    after_current = function (w)
-        return w.tabs:current() + 1
-    end,
+--- Tab order function: Always insert new tabs before all other tabs.
+_M.first = function()
+    return 1
+end
 
-    before_current = function (w)
-        return w.tabs:current()
-    end,
+--- Tab order function: Always insert new tabs after all other tabs.
+-- @tparam table w The current window table.
+_M.last = function(w)
+    return w.tabs:count() + 1
+end
 
-    -- Put new child tab next to the parent after unbroken chain of descendants
-    -- Logical way to use when one "queues" background-followed links
-    by_origin = function(w, newview)
-        local newindex = 0
-        local currentview = w.view
-        if not currentview then return 1 end
+--- Tab order function: Always insert new tabs after the current tab.
+-- @tparam table w The current window table.
+_M.after_current = function (w)
+    return w.tabs:current() + 1
+end
 
-        local kids = taborder.kidsof
-        local views = w.tabs.children
+--- Tab order function: Always insert new tabs before the current tab.
+-- @tparam table w The current window table.
+_M.before_current = function (w)
+    return w.tabs:current()
+end
 
-        if kids[currentview] then
-            -- Collect all descendants
-            local desc = { currentview }
-            local i = 1
-            repeat
-                desc = lousy.util.table.join(desc, kids[desc[i]])
-                i = i + 1
-            until i > #desc
+--- Tab order function: Put new child tab next to the parent after unbroken chain of descendants.
+-- Logical way to use when one "queues" background-followed links.
+-- @tparam table w The current window table.
+-- @tparam widget newview The new webview widget.
+_M.by_origin = function(w, newview)
+    local newindex = 0
+    local currentview = w.view
+    if not currentview then return 1 end
 
-            -- Find the non-descendant closest after current. This is where
-            -- the new tab should be put.
-            for i = #views, 1, -1 do
-                if not lousy.util.table.hasitem(desc, views[i]) then
-                    newindex = i
-                end
-                if views[i] == currentview then
-                    break
-                end
+    local kids = _M.kidsof
+    local views = w.tabs.children
+
+    if kids[currentview] then
+        -- Collect all descendants
+        local desc = { currentview }
+        local ii = 1
+        repeat
+            desc = lousy.util.table.join(desc, kids[desc[ii]])
+            ii = ii + 1
+        until ii > #desc
+
+        -- Find the non-descendant closest after current. This is where
+        -- the new tab should be put.
+        for i = #views, 1, -1 do
+            if not lousy.util.table.hasitem(desc, views[i]) then
+                newindex = i
             end
-
-            -- There were no non-descendants after current. Put new tab last.
-            if newindex == 0 then newindex = taborder.last(w, newview) end
-        else
-            kids[currentview] = {}
-            newindex = taborder.after_current(w, newview)
+            if views[i] == currentview then
+                break
+            end
         end
 
-        table.insert(kids[currentview], newview)
+        -- There were no non-descendants after current. Put new tab last.
+        if newindex == 0 then newindex = _M.last(w, newview) end
+    else
+        kids[currentview] = {}
+        newindex = _M.after_current(w, newview)
+    end
 
-        return newindex
-    end,
-}
+    table.insert(kids[currentview], newview)
 
--- Default: open regular tabs last
-taborder.default = taborder.last
--- Default: open background tabs by origin
-taborder.default_bg = taborder.by_origin
+    return newindex
+end
 
--- Weak table to remember which tab was spawned from which parent
+--- Default tab order function: open regular tabs last.
+-- @readwrite
+_M.default = _M.last
+
+--- Default tab order function for background tabs: open by origin.
+-- @readwrite
+_M.default_bg = _M.by_origin
+
+--- Weak table to remember which tab was spawned from which parent.
 -- Note that family bonds are tied only if tabs are spawned within
 -- family rules, e.g. from by_origin. Tabs created elsewhere are orphans.
-taborder.kidsof = {}
-setmetatable(taborder.kidsof, { __mode = "k" })
+-- @readwrite
+_M.kidsof = {}
+setmetatable(_M.kidsof, { __mode = "k" })
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

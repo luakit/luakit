@@ -1,9 +1,9 @@
 # Luakit
 
-luakit is a fast, light and simple to use micro-browser framework exensible
+luakit is a fast, light and simple to use micro-browser framework extensible
 by Lua using the WebKit web content engine and the GTK+ toolkit.
 
-## Dont Panic!
+## Don't Panic!
 
 You don't have to be a developer to use luakit on a daily basis. If you are
 familiar with vimperator, pentadactyl, jumanji, uzbl & etc you will find
@@ -11,13 +11,11 @@ luakit behaves similarly out of the box.
 
 ## Requirements
 
- * gtk2
- * Lua (5.1)
+ * GTK+ 3
+ * Lua 5.1 or LuaJIT 2
  * lfs (lua file system)
- * libwebkit (webkit-gtk)
- * libunique
+ * webkit2gtk
  * sqlite3
- * help2man
 
 ## Compiling
 
@@ -28,10 +26,6 @@ To compile the stock luakit run:
 To link against LuaJIT (if you have LuaJIT installed) run:
 
     make USE_LUAJIT=1
-
-To build without libunique (which uses dbus) run:
-
-    make USE_UNIQUE=0
 
 To build with a custom compiler run:
 
@@ -44,8 +38,8 @@ Note to packagers: you may wish to build luakit with:
 To prevent luakit searching in relative paths (`./config` & `./lib`) for
 user configs.
 
-The `USE_LUAJIT=1`, `USE_UNIQUE=0`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`,
-`CC=clang` build options do not conflict. You can use whichever you desire.
+The `USE_LUAJIT=1`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`, `CC=clang`
+build options do not conflict. You can use whichever you desire.
 
 ## Installing
 
@@ -100,7 +94,7 @@ There are several files of interest:
                   `w:close_tab()`, `w:close_win()`, etc).
  * webview.lua -- is a wrapper around the webview widget object and is
                   responsible for watching webview signals (I.e. "key-press",
-                  "load-status", "resource-request-starting", etc). This file
+                  "load-status", "resource-load-started", etc). This file
                   also provides several window methods which operate on the
                   current webview tab (I.e. `w:reload()`,
                   `w:eval_js("code here..")`, `w:back()`, `w:forward()`).
@@ -128,20 +122,8 @@ here also, example:
 
 Please use the bug tracker at:
 
-  http://luakit.org/projects/luakit/issues
+  https://github.com/luakit/luakit/issues
 
-## Community
-
-### Mailing list
-
-Subscribe to the development mailing list here:
-
-  http://lists.luakit.org/mailman/listinfo/luakit-dev
-
-Or view the archives at:
-
-  http://lists.luakit.org/archive/luakit-dev/
-
-### IRC
+## IRC
 
 Join us in `#luakit` on the `irc.oftc.net` network.

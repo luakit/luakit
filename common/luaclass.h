@@ -1,5 +1,5 @@
 /*
- * luaclass.h - useful functions for handling Lua classes
+ * common/luaclass.h - useful functions for handling Lua classes
  *
  * Copyright © 2010 Mason Larobina <mason.larobina@gmail.com>
  * Copyright © 2009 Julien Danjou <julien@danjou.info>
@@ -22,11 +22,11 @@
 #ifndef LUAKIT_COMMON_LUACLASS_H
 #define LUAKIT_COMMON_LUACLASS_H
 
-#include "common/lualib.h"
 #include "common/signal.h"
 #include "common/tokenize.h"
 
 #include <glib.h>
+#include <lauxlib.h>
 
 typedef struct     lua_class_property lua_class_property_t;
 typedef GHashTable lua_class_property_array_t;
@@ -71,11 +71,11 @@ gint luaH_class_emit_signal(lua_State *, lua_class_t *, const gchar *name,
 
 gint luaH_class_property_signal(lua_State *, lua_class_t *, luakit_token_t);
 
-void luaH_openlib(lua_State *, const gchar *, const struct luaL_reg[],
-        const struct luaL_reg[]);
+void luaH_openlib(lua_State *, const gchar *, const struct luaL_Reg[],
+        const struct luaL_Reg[]);
 void luaH_class_setup(lua_State *, lua_class_t *, const gchar *,
         lua_class_allocator_t, lua_class_propfunc_t, lua_class_propfunc_t,
-        const struct luaL_reg[], const struct luaL_reg[]);
+        const struct luaL_Reg[], const struct luaL_Reg[]);
 
 void luaH_class_add_property(lua_class_t *, luakit_token_t token,
         lua_class_propfunc_t, lua_class_propfunc_t, lua_class_propfunc_t);

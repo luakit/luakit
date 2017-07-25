@@ -1,27 +1,21 @@
------------------------------------------------------------
--- Downloads for luakit                                  --
--- © 2010-2012 Mason Larobina <mason.larobina@gmail.com> --
--- © 2010 Fabian Streitel <karottenreibe@gmail.com>      --
------------------------------------------------------------
-
--- Grab environment we need from the standard lib
-local assert = assert
-local ipairs = ipairs
-local os = os
-local pairs = pairs
-local setmetatable = setmetatable
-local string = string
-local table = table
-local type = type
-local tostring = tostring
-local print = print
+--- Downloads for luakit.
+--
+-- This module adds support for downloading files from websites, and provides a
+-- Lua API to monitor and control the file download process.
+--
+-- Enabling this module is sufficient for starting downloads, but users will
+-- probably wish to also enable the `downloads_chrome` module.
+--
+-- @module downloads
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 -- Grab environment from luakit libs
 local lousy = require("lousy")
-local webview = webview
-local window = window
-local add_cmds = add_cmds
-local add_binds = add_binds
+local webview = require("webview")
+local window = require("window")
+local binds = require("binds")
+local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
 local capi = {
     download = download,
@@ -31,7 +25,9 @@ local capi = {
     xdg = xdg
 }
 
-module("downloads")
+local _M = {}
+
+lousy.signal.setup(_M, true)
 
 -- Unique ids for downloads in this luakit instance
 local id_count = 0
@@ -40,31 +36,37 @@ local function next_download_id()
     return tostring(id_count)
 end
 
--- Default download directory
-default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
-
--- Setup signals on download module
-lousy.signal.setup(_M, true)
+--- Default download directory.
+-- @readwrite
+-- @type string
+_M.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)
-local downloads = {}
+local dls = {}
 
-function get_all()
-    return lousy.util.table.clone(downloads)
+--- Get all download objects.
+-- @treturn table The table of all download objects.
+function _M.get_all()
+    return lousy.util.table.clone(dls)
 end
 
--- Get download object from id (passthrough if already given download object)
-function to_download(id)
+--- Get download object from ID (passthrough if already given download object).
+-- @tparam download|number id The download object or the ID of a download object.
+-- @treturn download The download object.
+-- @treturn table The download object's private data.
+function _M.to_download(id)
     if type(id) == "download" then return id end
-    for d, data in pairs(downloads) do
+    for d, data in pairs(dls) do
         if id == data.id then return d end
     end
 end
 
-function get(id)
-    local d = assert(to_download(id),
+--- Get private data for a download object.
+-- @tparam download|number id The download object or the ID of a download object.
+function _M.get(id)
+    local d = assert(_M.to_download(id),
         "download.get() expected valid download object or id")
-    return d, downloads[d]
+    return d, dls[d]
 end
 
 local function is_running(d)
@@ -72,7 +74,10 @@ local function is_running(d)
     return status == "created" or status == "started"
 end
 
-function do_open(d, w)
+--- Attempt to open a downloaded file.
+-- @tparam download d The download object.
+-- @tparam table w The current window table.
+function _M.do_open(d, w)
     if _M.emit_signal("open-file", d.destination, d.mime_type, w) ~= true then
         if w then
             w:error(string.format("Couldn't open: %q (%s)", d.destination,
@@ -84,7 +89,7 @@ end
 local status_timer = capi.timer{interval=1000}
 status_timer:add_signal("timeout", function ()
     local running = 0
-    for d, data in pairs(downloads) do
+    for d, data in pairs(dls) do
         -- Create list of running downloads
         if is_running(d) then running = running + 1 end
 
@@ -96,7 +101,7 @@ status_timer:add_signal("timeout", function ()
 
             -- Open download
             if status == "finished" and data.opening then
-                do_open(d)
+                _M.do_open(d)
             end
         end
     end
@@ -112,7 +117,10 @@ status_timer:add_signal("timeout", function ()
     _M.emit_signal("status-tick", running)
 end)
 
-function add(uri, opts)
+--- Add a new download.
+-- @tparam string uri The URI to download.
+-- @tparam table opts A table of options.
+function _M.add(uri, opts)
     opts = opts or {}
     local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
 
@@ -120,89 +128,139 @@ function add(uri, opts)
         string.format("download.add() expected uri or download object "
             .. "(got %s)", type(d) or "nil"))
 
-    -- Emit signal to get initial download location
-    local fn = _M.emit_signal("download-location", d.uri,
-        d.suggested_filename, d.mime_type)
+    d:add_signal("decide-destination", function(dd, suggested_filename)
+        -- Emit signal to get initial download location
+        local fn = opts.filename or _M.emit_signal("download-location", dd.uri,
+            opts.suggested_filename or suggested_filename, dd.mime_type)
+        assert(fn == nil or type(fn) == "string" and #fn > 1,
+            string.format("invalid filename: %q", tostring(fn)))
 
-    assert(fn == nil or type(fn) == "string" and #fn > 1,
-        string.format("invalid filename: %q", tostring(file)))
+        -- Ask the user where we should download the file to
+        if not fn then
+            fn = capi.luakit.save_file("Save file", opts.window, _M.default_dir,
+                suggested_filename)
+        end
 
-    -- Ask the user where we should download the file to
-    if not fn then
-        fn = capi.luakit.save_file("Save file", opts.window, default_dir,
-            d.suggested_filename)
-    end
+        dd.allow_overwrite = true
 
-    if fn then
-        d.destination = fn
-        d:start()
-        local data = {
-            created = capi.luakit.time(),
-            id = next_download_id(),
-        }
-        downloads[d] = data
-        if not status_timer.started then status_timer:start() end
-        _M.emit_signal("download::status", d, downloads[d])
+        if fn then
+            dd.destination = fn
+            dd:add_signal("created-destination", function(ddd)
+                local data = {
+                    created = capi.luakit.time(),
+                    id = next_download_id(),
+                }
+                dls[ddd] = data
+                if not status_timer.started then status_timer:start() end
+                _M.emit_signal("download::status", ddd, dls[ddd])
+            end)
+            --return true
+        else
+            dd:cancel()
+        end
         return true
-    end
+    end)
 end
 
-function cancel(id)
-    local d = assert(to_download(id),
+--- Cancel a download.
+-- @tparam download|number id The download object or the ID of a download object.
+function _M.cancel(id)
+    local d = assert(_M.to_download(id),
         "download.cancel() expected valid download object or id")
     d:cancel()
-    _M.emit_signal("download::status", d, downloads[d])
+    _M.emit_signal("download::status", d, dls[d])
 end
 
-function remove(id)
-    local d = assert(to_download(id),
+--- Remove a download.
+-- If the download is running, it will be cancelled.
+-- @tparam download|number id The download object or the ID of a download object.
+function _M.remove(id)
+    local d = assert(_M.to_download(id),
         "download.remove() expected valid download object or id")
-    if is_running(d) then cancel(d) end
-    _M.emit_signal("removed-download", d, downloads[d])
-    downloads[d] = nil
+    if is_running(d) then _M.cancel(d) end
+    _M.emit_signal("removed-download", d, dls[d])
+    dls[d] = nil
 end
 
-function restart(id)
-    local d = assert(to_download(id),
+--- Restart a download.
+-- A new download with the same source URI as `id` is created, and the original
+-- download `id` is removed.
+-- @tparam download|number id The download object or the ID of a download object.
+-- @treturn download The download object.
+function _M.restart(id)
+    local d = assert(_M.to_download(id),
         "download.restart() expected valid download object or id")
-    local new_d = add(d.uri) -- TODO use soup message from old download
-    if new_d then remove(d) end
+    local new_d = _M.add(d.uri) -- TODO use soup message from old download
+    if new_d then _M.remove(d) end
     return new_d
 end
 
-function open(id, w)
-    local d = assert(to_download(id),
+--- Attempt to open a downloaded file, as soon as the download completes.
+-- If the download is already completed, this is equivalent to `do_open()`.
+-- @tparam download|number id The download object or the ID of a download object.
+-- @tparam table w The current window table.
+function _M.open(id, w)
+    local d = assert(_M.to_download(id),
         "download.open() expected valid download object or id")
-    local data = assert(downloads[d], "download removed")
+    local data = assert(dls[d], "download removed")
 
     if d.status == "finished" then
         data.opening = false
-        do_open(d, w)
+        _M.do_open(d, w)
     else
         -- Set open flag to open file when download finishes
         data.opening = true
     end
 end
 
--- Clear all finished, cancelled or aborted downloads
-function clear()
-    for d, _ in pairs(downloads) do
+--- Clear all finished, cancelled or aborted downloads.
+function _M.clear()
+    for d, _ in pairs(dls) do
         if not is_running(d) then
-            downloads[d] = nil
+            dls[d] = nil
         end
     end
     _M.emit_signal("cleared-downloads")
 end
 
--- Catch "download-request" webview widget signals
-webview.init_funcs.download_request = function (view, w)
-    view:add_signal("download-request", function (v, d)
-        add(d, { window = w.win })
-        return true
+-- If undoclose is loaded, then additionally block these ephemeral tabs from
+-- being saved in the undolist.
+local download_views
+luakit.idle_add(function ()
+    local undoclose = package.loaded.undoclose
+    if not undoclose then return end
+    download_views = setmetatable({}, { __mode = "k" })
+    undoclose.add_signal("save", function (v)
+        if download_views[v] then return false end
     end)
-end
+end)
 
-window.init_funcs.download_status = function (w)
+-- Catch "download-started" webcontext widget signals (webkit2 API)
+-- returned d is a download_t
+capi.luakit.add_signal("download-start", function (d, v)
+    local w
+
+    if v then
+        w = webview.window(v)
+        if v.uri == "about:blank" and #v.history.items == 1 then
+            if download_views then download_views[v] = true end
+            w:close_tab(v)
+        end
+    else
+        -- Fall back to currently focused window
+        for _, ww in pairs(window.bywidget) do
+            if ww.win.focused then
+                w, v = ww, ww.view
+                break
+            end
+        end
+    end
+
+    _M.add(d, { window = w.win }, v)
+    return true
+end)
+
+window.add_signal("init", function (w)
     local r = w.sbar.r
     r.downloads = capi.widget{type="label"}
     r.layout:pack(r.downloads)
@@ -211,12 +269,12 @@ window.init_funcs.download_status = function (w)
     local theme = lousy.theme.get()
     r.downloads.fg = theme.downloads_sbar_fg
     r.downloads.font = theme.downloads_sbar_font
-end
+end)
 
 -- Prevent luakit from soft-closing if there are downloads still running
 capi.luakit.add_signal("can-close", function ()
     local count = 0
-    for d, _ in pairs(downloads) do
+    for d, _ in pairs(dls) do
         if is_running(d) then
             count = count + 1
         end
@@ -240,6 +298,10 @@ add_binds("normal", {
 local cmd = lousy.bind.cmd
 add_cmds({
     cmd("down[load]", "Download the given URI.", function (w, a)
-        add(a, { window = w.win })
+        _M.add(a, { window = w.win })
     end),
 })
+
+return _M
+
+-- vim: et:sw=4:ts=8:sts=4:tw=80
