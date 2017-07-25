@@ -83,6 +83,7 @@ void
 ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     lua_State *L = common.L;
+    gint top = lua_gettop(L);
     gint n = lua_deserialize_range(L, msg, length);
     g_assert_cmpint(n, ==, 5);
 
@@ -94,19 +95,19 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
     if (!page) {
-        /* Do nothing if eval'ing on page that's been closed */
-        lua_pop(L, 5);
+        /* Notify UI to free callback ref */
+        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -1, -1);
+        lua_settop(L, top);
         return;
     }
+
     WebKitFrame *frame = webkit_web_page_get_main_frame(page);
     WebKitScriptWorld *world = webkit_script_world_get_default();
     JSGlobalContextRef ctx = webkit_frame_get_javascript_context_for_script_world(frame, world);
-
     n = luaJS_eval_js(L, ctx, script, source, no_return);
-    /* Send source and callback ref back again as well */
-    if (n) /* Don't send if no_return == true and no errors */
-        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -n-2, -1);
-    lua_pop(L, 5 + n);
+    /* Send [cb, ret] or [cb, nil, error] */
+    ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -n-1, -1);
+    lua_settop(L, top);
 }
 
 void

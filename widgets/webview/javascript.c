@@ -31,21 +31,26 @@ run_javascript_finished(const guint8 *msg, guint length)
     lua_State *L = common.L;
     gint top = lua_gettop(L);
     gint n = lua_deserialize_range(L, msg, length);
-    g_assert_cmpint(n, >=, 2);
-    g_assert_cmpint(n, <=, 4);
+    g_assert_cmpint(n, >=, 1);
+    g_assert_cmpint(n, <=, 3);
+    /* Lua stack: [cb], [cb, nil, err] or [cb, ret] */
 
-    gpointer cb = lua_touserdata(L, -n + 1);
+    gpointer cb = lua_touserdata(L, -n);
+    lua_remove(L, -n);
+    n--;
 
-    if (n == 4) { /* Nil return value and Error */
+    if (n == 2) { /* Nil return value and Error */
         g_assert(lua_isnil(L, -2));
         g_assert(lua_isstring(L, -1));
     }
 
-    if (n >= 3 && cb) {
+    if (n >= 1 && cb) {
         luaH_object_push(L, cb);
-        luaH_dofunction(L, n-2, 0);
-        luaH_object_unref(L, cb);
+        luaH_dofunction(L, n, 0);
     }
+
+    if (cb)
+        luaH_object_unref(L, cb);
 
     lua_settop(L, top);
 }
