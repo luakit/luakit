@@ -5,6 +5,11 @@
 ### Fixed
 
  - Fixed code-blocks in documentation being formatted incorrectly.
+ - Fixed incompatibility of `editor.lua` with urxvt.
+
+### Changed
+
+ - `editor.lua` now uses substitution strings, rather than `global` to determine which editor to open.
 
 ## [2017-07-26]
 
