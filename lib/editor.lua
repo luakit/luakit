@@ -37,7 +37,6 @@ end
 -- variables, and otherwise falls back to xterm and vim)
 -- * `xterm`
 -- * `urxvt`
--- * `urxvtc`
 -- * `xdg_open`
 --
 -- @type table
@@ -46,7 +45,6 @@ _M.builtin = {
     default = env_sub("{term} -e '{editor} {file} +{line}'"),
     xterm = env_sub("xterm -e {editor} {file} +{line}"),
     urxvt = env_sub("urxvt -e {editor} {file} +{line}"),
-    urxvtc = env_sub("urxvtc -e {editor} {file} +{line}"),
     xdg_open = env_sub("xdg-open {file}")
 }
 
