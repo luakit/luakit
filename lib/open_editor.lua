@@ -11,6 +11,7 @@
 
 local lousy = require "lousy"
 local binds = require("binds")
+local editor = require("editor")
 local add_binds = binds.add_binds
 
 local _M = {}
@@ -57,8 +58,7 @@ local function edit_externally(w)
             f:write(s)
             f:flush()
             f:close()
-            local c = string.format("xdg-open %s", file)
-            luakit.spawn(c, editor_callback)
+            editor.edit(file, 1, editor_callback)
         end
     end })
 end
