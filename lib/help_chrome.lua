@@ -117,16 +117,15 @@ local help_doc_index_page_preprocess = function (inner, style)
             margin: 0px !important;
             position: relative;
             padding-left: 1.5em;
-            max-width: 219px;
         }
-        ul > li:before {
+        ul > li:not(.dummy):before {
             font-weight: bold;
             width: 1.5em;
             text-align: center;
             left: 0;
             position: absolute;
         }
-        ul > li:before { content: "●"; transform: translate(1px, -1px); z-index: 0; }
+        ul > li:not(.dummy):before { content: "●"; transform: translate(1px, -1px); z-index: 0; }
         ul.Modules > li.enabled:before { content: "\2713 "; color: darkgreen; }
         ul.Modules > li.disabled:before { content: "\2717 "; color: darkred; }
         ul.Modules > li.enabled:before, ul.Modules > li.disabled:before {

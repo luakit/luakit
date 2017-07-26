@@ -430,6 +430,7 @@ local generate_index_html = function (style, docs)
         for _, doc in ipairs(section) do
             html = html .. ('    <li><a href="%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
         end
+        for _=1,(3-#section%3)%3 do html = html .. '    <li class=dummy></li>\n' end
         lists[name] = html .. "</ul>\n"
     end
 
