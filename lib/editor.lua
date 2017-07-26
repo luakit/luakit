@@ -20,8 +20,6 @@
 -- @copyright 2017 Graham Leach-Krouse
 -- @copyright 2017 Aidan Holm
 
-local capi = { luakit = luakit }
-
 local _M = {}
 
 -- substitute in common values from the environment.
@@ -71,7 +69,7 @@ _M.edit = function (file, line)
         line = line or 1,
     }
     local cmd = string.gsub(_M.editor_cmd, "{(%w+)}", subs)
-    capi.luakit.spawn(cmd)
+    luakit.spawn(cmd)
 end
 
 return _M
