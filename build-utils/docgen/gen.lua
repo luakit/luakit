@@ -399,7 +399,7 @@ local generate_index_html = function (style, docs)
         <title>Luakit Documentation</title>
         <style>
         {style}
-        h2 { margin-top: 0; }
+        #wrap { padding-top: 0; }
         ul { column-count: 3; }
         @media (max-width: 650px) { ul { column-count: 2; } }
         @media (max-width: 400px) { ul { column-count: 1; } }
