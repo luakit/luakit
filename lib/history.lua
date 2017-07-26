@@ -11,13 +11,12 @@
 local os = require("os")
 local webview = require("webview")
 local lousy = require("lousy")
-local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
 local _M = {}
 
 --- Path to history database.
 -- @readwrite
-_M.db_path = capi.luakit.data_dir .. "/history.db"
+_M.db_path = luakit.data_dir .. "/history.db"
 
 local query_find_last
 local query_insert
@@ -32,7 +31,7 @@ function _M.init()
     -- Return if database handle already open
     if _M.db then return end
 
-    _M.db = capi.sqlite3{ filename = _M.db_path }
+    _M.db = sqlite3{ filename = _M.db_path }
     _M.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
@@ -72,7 +71,7 @@ function _M.init()
     ]]
 end
 
-capi.luakit.idle_add(_M.init)
+luakit.idle_add(_M.init)
 
 --- Add a URI to the user's history.
 -- @tparam string uri The URI to add to the user's history.

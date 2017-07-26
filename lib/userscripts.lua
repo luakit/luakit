@@ -17,7 +17,6 @@ local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
-local capi = { luakit = luakit }
 
 local _M = {}
 
@@ -135,7 +134,7 @@ local lstate = setmetatable({}, { __mode = "k" })
 -- By default, this is `$XDG_DATA_HOME/luakit/scripts`.
 -- @type string
 -- @readonly
-_M.dir = capi.luakit.data_dir .. "/scripts"
+_M.dir = luakit.data_dir .. "/scripts"
 
 -- Userscript class methods
 local prototype = {

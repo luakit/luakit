@@ -11,7 +11,6 @@
 local rstring = string
 local rtable = table
 local math = require "math"
-local capi = { luakit = luakit }
 
 local _M = {}
 
@@ -304,7 +303,7 @@ end
 function _M.find_config(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f }
+    local paths = { "config/"..f, luakit.config_dir.."/"..f }
     for _, path in ipairs(xdg.system_config_dirs) do
         rtable.insert(paths, path.."/luakit/"..f)
     end
@@ -318,7 +317,7 @@ end
 function _M.find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { f, capi.luakit.data_dir.."/"..f, capi.luakit.install_path.."/"..f }
+    local paths = { f, luakit.data_dir.."/"..f, luakit.install_path.."/"..f }
     return find_file(paths)
 end
 
@@ -330,7 +329,7 @@ function _M.find_cache(f)
     -- Ignore absolute paths
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { capi.luakit.cache_dir.."/"..f }
+    local paths = { luakit.cache_dir.."/"..f }
     return find_file(paths)
 end
 

@@ -25,18 +25,13 @@ local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
 local key     = lousy.bind.key
 
-local capi = {
-    luakit = luakit,
-    sqlite3 = sqlite3
-}
-
 local _M = {}
 
-local styles_dir = capi.luakit.data_dir .. "/styles/"
+local styles_dir = luakit.data_dir .. "/styles/"
 
 local stylesheets = {}
 
-local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
+local db = sqlite3{ filename = luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 
 local query_create = db:compile [[
@@ -369,7 +364,7 @@ add_binds("styles-list", lousy.util.table.join({
     key({}, "e", "Edit the currently highlighted userstyle.", function (w)
         local row = w.menu:get()
         if row and row.stylesheet then
-            local file = capi.luakit.data_dir .. "/styles/" .. row.stylesheet.file
+            local file = luakit.data_dir .. "/styles/" .. row.stylesheet.file
             editor.edit(file)
         end
     end),

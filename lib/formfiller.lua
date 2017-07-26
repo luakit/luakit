@@ -81,14 +81,13 @@ local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds = binds.add_binds
 local menu_binds = binds.menu_binds
-local capi = { luakit = luakit }
 
 local _M = {}
 
 local formfiller_wm = require_web_module("formfiller_wm")
 
 -- The Lua DSL file containing the formfiller rules
-local file = capi.luakit.data_dir .. "/forms.lua"
+local file = luakit.data_dir .. "/forms.lua"
 
 -- The function environment for the formfiller script
 local DSL = {

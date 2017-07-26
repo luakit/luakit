@@ -17,14 +17,6 @@ local window = require("window")
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 
-local capi = {
-    download = download,
-    timer = timer,
-    luakit = luakit,
-    widget = widget,
-    xdg = xdg
-}
-
 local _M = {}
 
 lousy.signal.setup(_M, true)
@@ -39,7 +31,7 @@ end
 --- Default download directory.
 -- @readwrite
 -- @type string
-_M.default_dir = capi.xdg.download_dir or (os.getenv("HOME") .. "/downloads")
+_M.default_dir = xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)
 local dls = {}
@@ -86,7 +78,7 @@ function _M.do_open(d, w)
     end
 end
 
-local status_timer = capi.timer{interval=1000}
+local status_timer = timer{interval=1000}
 status_timer:add_signal("timeout", function ()
     local running = 0
     for d, data in pairs(dls) do
@@ -122,7 +114,7 @@ end)
 -- @tparam table opts A table of options.
 function _M.add(uri, opts)
     opts = opts or {}
-    local d = (type(uri) == "string" and capi.download{uri=uri}) or uri
+    local d = (type(uri) == "string" and download{uri=uri}) or uri
 
     assert(type(d) == "download",
         string.format("download.add() expected uri or download object "
@@ -137,7 +129,7 @@ function _M.add(uri, opts)
 
         -- Ask the user where we should download the file to
         if not fn then
-            fn = capi.luakit.save_file("Save file", opts.window, _M.default_dir,
+            fn = luakit.save_file("Save file", opts.window, _M.default_dir,
                 suggested_filename)
         end
 
@@ -147,7 +139,7 @@ function _M.add(uri, opts)
             dd.destination = fn
             dd:add_signal("created-destination", function(ddd)
                 local data = {
-                    created = capi.luakit.time(),
+                    created = luakit.time(),
                     id = next_download_id(),
                 }
                 dls[ddd] = data
@@ -237,7 +229,7 @@ end)
 
 -- Catch "download-started" webcontext widget signals (webkit2 API)
 -- returned d is a download_t
-capi.luakit.add_signal("download-start", function (d, v)
+luakit.add_signal("download-start", function (d, v)
     local w
 
     if v then
@@ -262,7 +254,7 @@ end)
 
 window.add_signal("init", function (w)
     local r = w.sbar.r
-    r.downloads = capi.widget{type="label"}
+    r.downloads = widget{type="label"}
     r.layout:pack(r.downloads)
     r.layout:reorder(r.downloads, 1)
     -- Apply theme
@@ -272,7 +264,7 @@ window.add_signal("init", function (w)
 end)
 
 -- Prevent luakit from soft-closing if there are downloads still running
-capi.luakit.add_signal("can-close", function ()
+luakit.add_signal("can-close", function ()
     local count = 0
     for d, _ in pairs(dls) do
         if is_running(d) then

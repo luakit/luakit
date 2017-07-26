@@ -16,7 +16,6 @@ local binds = require("binds")
 local add_binds = binds.add_binds
 local lousy = require("lousy")
 local sql_escape = lousy.util.sql_escape
-local capi = { luakit = luakit, sqlite3 = sqlite3 }
 local theme = require("theme")
 
 local _M = {}
@@ -41,7 +40,7 @@ CREATE TABLE IF NOT EXISTS by_domain (
     enable_plugins INTEGER
 );]]
 
-local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/noscript.db" }
+local db = sqlite3{ filename = luakit.data_dir .. "/noscript.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 db:exec(create_table)
 

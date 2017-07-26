@@ -16,12 +16,11 @@ local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds, add_cmds = binds.add_binds, binds.add_cmds
 local menu_binds = binds.menu_binds
-local capi = { luakit = luakit }
 
 local _M = {}
 
 local qmarks
-local quickmarks_file = capi.luakit.data_dir .. '/quickmarks'
+local quickmarks_file = luakit.data_dir .. '/quickmarks'
 
 local function check_token(token)
     assert(string.match(tostring(token), "^(%w)$"), "invalid token: " .. tostring(token))

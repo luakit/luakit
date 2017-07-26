@@ -51,10 +51,6 @@ local window = require("window")
 local new_mode = require("modes").new_mode
 local binds = require("binds")
 local add_binds = binds.add_binds
-local capi = {
-    luakit = luakit,
-    timer = timer
-}
 
 local _M = {}
 
@@ -154,7 +150,7 @@ local function ignore_keys(w)
     if not delay or delay == 0 then return end
     -- Replace w:hit(..) with a no-op
     w.hit = hit_nop
-    local timer = capi.timer{ interval = delay }
+    local timer = timer{ interval = delay }
     timer:add_signal("timeout", function (t)
         t:stop()
         w.hit = nil
@@ -365,7 +361,7 @@ add_binds("ex-follow", {
                 func = function (uri)
                     assert(type(uri) == "string")
                     uri = uri:gsub(" ", "%%20"):gsub("^mailto:", "")
-                    capi.luakit.selection.primary = uri
+                    luakit.selection.primary = uri
                     w:notify("Yanked uri: " .. uri, false)
                 end
             })
@@ -379,7 +375,7 @@ add_binds("ex-follow", {
                 prompt = "yank desc", selector = "desc", evaluator = "desc",
                 func = function (desc)
                     assert(type(desc) == "string")
-                    capi.luakit.selection.primary = desc
+                    luakit.selection.primary = desc
                     w:notify("Yanked desc: " .. desc)
                 end
             })

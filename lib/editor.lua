@@ -7,7 +7,6 @@
 -- @module editor
 
 local globals = require("globals")
-local capi = { luakit = luakit }
 
 local _M = {}
 
@@ -28,7 +27,7 @@ _M.edit = function (file, line)
     }
     local cmd_tmpl = "{term} -e '{editor} {file}{line}'"
     local cmd = string.gsub(cmd_tmpl, "{(%w+)}", subs)
-    capi.luakit.spawn(cmd)
+    luakit.spawn(cmd)
 end
 
 return _M

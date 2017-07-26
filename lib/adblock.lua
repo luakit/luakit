@@ -25,7 +25,6 @@ local webview   = require("webview")
 local window    = require("window")
 local lousy     = require("lousy")
 local util      = lousy.util
-local capi      = { luakit = luakit }
 local lfs       = require("lfs")
 local binds     = require("binds")
 local add_cmds  = binds.add_cmds
@@ -35,7 +34,7 @@ local _M = {}
 local adblock_wm = require_web_module("adblock_wm")
 
 -- Adblock Plus compatible filter lists.
-local adblock_dir = capi.luakit.data_dir .. "/adblock/"
+local adblock_dir = luakit.data_dir .. "/adblock/"
 local filterfiles = {}
 local subscriptions_file = adblock_dir .. "/subscriptions"
 
@@ -437,7 +436,7 @@ adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     end
 end)
 
-capi.luakit.add_signal("web-extension-created", function (view)
+luakit.add_signal("web-extension-created", function (view)
     new_web_extension_created = true
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
     for name, list in pairs(_M.rules) do

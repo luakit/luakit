@@ -6,7 +6,6 @@
 
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
-local capi = { widget = widget, luakit = luakit, }
 local tab = require "lousy.widget.tab"
 
 local _M = {}
@@ -38,7 +37,7 @@ local function scroll_current_tab_into_view(tlist)
 
     -- When opening a new webview, the new tab widget's size is not yet allocated
     -- Queueing the scroll op avoids a lot of nasty hacks
-    capi.luakit.idle_add(function()
+    luakit.idle_add(function()
         -- Cancel if tlist already destroyed
         if not data[tlist] then return end
 
@@ -96,11 +95,11 @@ function _M.new(notebook, orientation)
 
     -- Create tablist widget table
     local tlist = {
-        widget  = capi.widget{type = "scrolled"},
+        widget  = widget{type = "scrolled"},
         destroy = destroy,
     }
 
-    local box = capi.widget{type = orientation == "horizontal" and "hbox" or "vbox"}
+    local box = widget{type = orientation == "horizontal" and "hbox" or "vbox"}
     local theme = get_theme()
     box.bg = theme.tab_list_bg
     tlist.widget.child = box

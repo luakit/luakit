@@ -3,7 +3,6 @@
 -- @module lousy.widget.tab
 -- @copyright 2016 Aidan Holm
 
-local capi = { widget = widget }
 local get_theme = require("lousy.theme").get
 local escape = require("lousy.util").escape
 
@@ -96,11 +95,11 @@ local function new(view, index)
     assert(type(index) == "number")
 
     local tl = {
-        widget = capi.widget{type = "eventbox"},
+        widget = widget{type = "eventbox"},
         destroy = destroy,
     }
     data[tl] = {
-        label = capi.widget{type = "label"},
+        label = widget{type = "label"},
         view = view,
         index = index,
         current = false,
