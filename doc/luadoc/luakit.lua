@@ -61,6 +61,11 @@
 
 --- Spawn a process asynchronously.
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
+-- @tparam[opt] function callback A callback function to execute when the spawned
+-- process is terminated. It receives two parameters `reason` and `status`,
+-- which are the reason for the process exit and the exit status code respectively.
+-- `reason` can be one of `"exit"`, indicating normal termination;
+-- `"signal"`, indicating the process was killed with a signal; and `"unknown"`.
 -- @function spawn
 
 --- Spawn a process synchronously.
