@@ -2,6 +2,10 @@
 
 ## [Unreleased]
 
+### Fixed
+
+ - Fixed code-blocks in documentation being formatted incorrectly.
+
 ## [2017-07-26]
 
  - Required WebKitGTK+ version: 2.14+

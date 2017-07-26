@@ -28,7 +28,11 @@ local format_text = function (text)
         code = lousy.util.unescape(code)
         -- Add syntax highlighting if lxsh is installed
         local ok, lxsh = pcall(require, "lxsh")
-        if ok then code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true }) end
+        if ok then
+            code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true })
+        else
+            code = "<pre class='sourcecode lua'>" .. code .. "</pre>"
+        end
         return code
     end)
     return ret
