@@ -59,17 +59,19 @@ _M.editor_cmd = _M.builtin.default
 --- Edit a file in a terminal editor in a new window.
 --
 -- * Can't yet handle files with special characters in their name.
--- * Can't determine when text editor is closed.
 --
 -- @tparam string file The path of the file to edit.
 -- @tparam[opt] number line The line number at which to begin editing.
-_M.edit = function (file, line)
+-- @tparam[opt] function callback A callback that fires when the process spawned
+-- by the editor command exits. Arguments passed to the callback are the same as
+-- those passed to the `luakit.spawn` callback.
+_M.edit = function (file, line, callback)
     local subs = {
         file = file,
         line = line or 1,
     }
     local cmd = string.gsub(_M.editor_cmd, "{(%w+)}", subs)
-    luakit.spawn(cmd)
+    luakit.spawn(cmd, callback)
 end
 
 return _M
