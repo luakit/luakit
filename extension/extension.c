@@ -45,7 +45,7 @@
 void
 web_lua_init(void)
 {
-    debug("luakit web process: Lua initializing...");
+    debug("Lua initializing...");
 
     lua_State *L = common.L;
 
@@ -67,7 +67,7 @@ web_lua_init(void)
     page_class_setup(L);
     msg_lib_setup(L);
 
-    debug("luakit web process: Lua initialized");
+    debug("Lua initialized");
 }
 
 G_MODULE_EXPORT void
@@ -81,7 +81,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     extension.ipc = ipc_endpoint_new(g_strdup_printf("Web[%d]", getpid()));
 
     if (web_extension_connect(socket_path)) {
-        debug("luakit web process: connecting to UI thread failed");
+        debug("connecting to UI thread failed");
         exit(EXIT_FAILURE);
     }
 
@@ -90,8 +90,8 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     web_luajs_init();
     web_script_world_init();
 
-    debug("luakit web process: PID %d", getpid());
-    debug("luakit web process: ready for messages");
+    debug("PID %d", getpid());
+    debug("ready for messages");
 
     ipc_header_t header = { .type = IPC_TYPE_extension_init, .length = 0 };
     ipc_send(extension.ipc, &header, NULL);

@@ -639,7 +639,7 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
       /* push boolean properties */
-      PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
+      PB_CASE(VERBOSE,          log_get_verbosity("all") >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
       PB_CASE(ENABLE_SPELL_CHECKING,    webkit_web_context_get_spell_checking_enabled(web_context_get()))
       /* push integer properties */
