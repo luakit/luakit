@@ -33,14 +33,45 @@ void
 log_set_verbosity(const char *group, log_level_t lvl)
 {
     group_levels = group_levels ?: g_hash_table_new(g_str_hash, g_str_equal);
-    g_hash_table_insert(group_levels, (gpointer)group, GINT_TO_POINTER(lvl));
+    g_hash_table_insert(group_levels, (gpointer)group, GINT_TO_POINTER(lvl+1));
 }
 
+/* Will modify the group name passed to it, unless that name is "all" */
 log_level_t
-log_get_verbosity(const char *group)
+log_get_verbosity(char *group)
 {
     if (!group_levels) return LOG_LEVEL_info;
-    return GPOINTER_TO_UINT(g_hash_table_lookup(group_levels, (gpointer)group));
+
+    while (TRUE) {
+        log_level_t lvl = GPOINTER_TO_UINT(g_hash_table_lookup(group_levels, (gpointer)group));
+        if (lvl > 0)
+            return lvl-1;
+        char *slash = strrchr(group, '/');
+        if (slash)
+            *slash = '\0';
+        else if (g_str_equal(group, "all"))
+            return LOG_LEVEL_info;
+        else
+            group = "all";
+    }
+}
+
+static char *
+log_group_from_fct(const char *fct)
+{
+    int len = strlen(fct);
+    gboolean core = !strcmp(&fct[len-2], ".c"), lua = !strcmp(&fct[len-4], ".lua");
+    g_assert_cmpint(core,!=,lua);
+
+    if (core) /* Strip .c off the end */
+        return g_strdup_printf("core/%.*s", len-2, fct);
+    else {
+        if (!strncmp(fct, "./", 2)) {
+            fct += 2;
+            len -= 2;
+        }
+        return g_strdup_printf("lua/%.*s", len-4, fct);
+    }
 }
 
 int
@@ -67,7 +98,9 @@ _log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...
 void
 va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap)
 {
-    log_level_t verbosity = log_get_verbosity("all");
+    char *group = log_group_from_fct(fct);
+    log_level_t verbosity = log_get_verbosity(group);
+    g_free(group);
     if (lvl > verbosity)
         return;
 

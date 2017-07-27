@@ -68,7 +68,7 @@ void va_log(log_level_t lvl, const gchar *, const gchar *, const gchar *, va_lis
 /* Only accessible from main UI process */
 int log_level_from_string(log_level_t *out, const char *str);
 void log_set_verbosity(const char *group, log_level_t lvl);
-log_level_t log_get_verbosity(const char *group);
+log_level_t log_get_verbosity(char *group);
 
 #endif
 
