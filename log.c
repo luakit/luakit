@@ -58,7 +58,7 @@ static char *
 log_group_from_fct(const char *fct)
 {
     int len = strlen(fct);
-    gboolean core = !strcmp(&fct[len-2], ".c"), lua = !strcmp(&fct[len-4], ".lua");
+    gboolean core = !strcmp(&fct[len-2], ".c"), lua = !strcmp(&fct[len-4], ".lua") || !strncmp(fct, "[string \"", 9);
     g_assert_cmpint(core,!=,lua);
 
     if (core) /* Strip .c off the end */
