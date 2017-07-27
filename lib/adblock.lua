@@ -67,12 +67,12 @@ local function detect_files()
     -- Look for filters lists:
     for filename in lfs.dir(adblock_dir) do
         if string.find(filename, "%.txt$") then
-            msg.verbose("adblock: Found adblock list: " .. filename)
+            msg.verbose("found adblock list: " .. filename)
             table.insert(filterfiles, filename)
         end
     end
 
-    msg.info("adblock: Found " .. #filterfiles .. " rules lists")
+    msg.info("found " .. #filterfiles .. " rules lists")
 end
 
 local function get_abp_opts(s)
@@ -226,9 +226,9 @@ end
 -- Parses an Adblock Plus compatible filter list
 local parse_abpfilterlist = function (filters_dir, filename, cache)
     if os.exists(filters_dir .. filename) then
-        msg.verbose("adblock: loading filterlist %s", filename)
+        msg.verbose("loading filterlist %s", filename)
     else
-        msg.warn("adblock: error loading filter list (%s: No such file or directory)", filename)
+        msg.warn("error loading filter list (%s: No such file or directory)", filename)
     end
     filename = filters_dir .. filename
 
