@@ -60,11 +60,9 @@ luaH_msg(lua_State *L, log_level_t lvl)
     lua_Debug ar;
     lua_getstack(L, 1, &ar);
     lua_getinfo(L, "Sln", &ar);
-    gchar line_as_str[20];
-    snprintf(line_as_str, sizeof(line_as_str), "%d", ar.currentline);
     /* Use .source if it's a file, since short_src is truncated for long paths */
     const char *src = ar.source[0] == '@' ? ar.source+1 : ar.short_src;
-    _log(lvl, line_as_str, src, "%s", luaH_msg_string_from_args(L));
+    _log(lvl, src, "%s", luaH_msg_string_from_args(L));
     return 0;
 }
 

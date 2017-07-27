@@ -40,18 +40,29 @@ log_set_verbosity(const char *group, log_level_t lvl)
 log_level_t
 log_get_verbosity(char *group)
 {
-    if (!group_levels) return LOG_LEVEL_info;
+    if (!group_levels)
+        return LOG_LEVEL_info;
+
+    gint len = strlen(group);
+    log_level_t lvl;
 
     while (TRUE) {
-        log_level_t lvl = GPOINTER_TO_UINT(g_hash_table_lookup(group_levels, (gpointer)group));
+        lvl = GPOINTER_TO_UINT(g_hash_table_lookup(group_levels, (gpointer)group));
         if (lvl > 0)
-            return lvl-1;
+            break;
         char *slash = strrchr(group, '/');
         if (slash)
             *slash = '\0';
-        else
-            group = "all";
+        else {
+            lvl = GPOINTER_TO_UINT(g_hash_table_lookup(group_levels, (gpointer)"all"));
+            break;
+        }
     }
+
+    for (gint i = 0; i < len; ++i)
+        if (group[i] == '\0') group[i] = '/';
+
+    return lvl-1;
 }
 
 static char *
@@ -85,22 +96,22 @@ LOG_LEVELS
 }
 
 void
-_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...)
+_log(log_level_t lvl, const gchar *fct, const gchar *fmt, ...)
 {
     va_list ap;
     va_start(ap, fmt);
-    va_log(lvl, line, fct, fmt, ap);
+    va_log(lvl, fct, fmt, ap);
     va_end(ap);
 }
 
 void
-va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap)
+va_log(log_level_t lvl, const gchar *fct, const gchar *fmt, va_list ap)
 {
+    /* printf("%s %s\n", fct, fmt); */
     char *group = log_group_from_fct(fct);
     log_level_t verbosity = log_get_verbosity(group);
-    g_free(group);
     if (lvl > verbosity)
-        return;
+        goto done;
 
     gchar *msg = g_strdup_vprintf(fmt, ap);
     gint log_fd = STDERR_FILENO;
@@ -119,9 +130,9 @@ va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, v
         default: g_assert_not_reached();
     }
 
-    /* Log format: [timestamp] prefix: fct:line msg */
-#define LOG_FMT "[%#12f] %c: %s:%s: %s"
-#define LOG_IND "                  "
+    /* Log format: [timestamp] level [group]: msg */
+#define LOG_FMT "[%#12f] %c [%s]: %s"
+#define LOG_IND "                 "
 
     /* Indent new lines within the message */
     static GRegex *indent_lines_reg;
@@ -141,18 +152,20 @@ va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, v
 
         g_fprintf(stderr, LOG_FMT "\n",
                 l_time() - globalconf.starttime,
-                prefix_char, fct, line, msg);
+                prefix_char, group, msg);
     } else {
         g_fprintf(stderr, "%s" LOG_FMT ANSI_COLOR_RESET "\n",
                 style,
                 l_time() - globalconf.starttime,
-                prefix_char, fct, line, msg);
+                prefix_char, group, msg);
     }
 
     g_free(msg);
 
     if (lvl == LOG_LEVEL_fatal)
         exit(EXIT_FAILURE);
+done:
+    g_free(group);
 }
 
 void
@@ -160,14 +173,13 @@ ipc_recv_log(ipc_endpoint_t *UNUSED(ipc), const guint8 *lua_msg, guint length)
 {
     lua_State *L = common.L;
     gint n = lua_deserialize_range(L, lua_msg, length);
-    g_assert_cmpint(n, ==, 4);
+    g_assert_cmpint(n, ==, 3);
 
-    log_level_t lvl = lua_tointeger(L, -4);
-    const gchar *line = lua_tostring(L, -3);
+    log_level_t lvl = lua_tointeger(L, -3);
     const gchar *fct = lua_tostring(L, -2);
     const gchar *msg = lua_tostring(L, -1);
-    _log(lvl, line, fct, "%s", msg);
-    lua_pop(L, 4);
+    _log(lvl, fct, "%s", msg);
+    lua_pop(L, 3);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -25,24 +25,23 @@
 #include <glib/gprintf.h>
 
 void
-_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...) {
+_log(log_level_t lvl, const gchar *fct, const gchar *fmt, ...) {
     va_list ap;
     va_start(ap, fmt);
-    va_log(lvl, line, fct, fmt, ap);
+    va_log(lvl, fct, fmt, ap);
     va_end(ap);
 }
 
 void
-va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap) {
+va_log(log_level_t lvl, const gchar *fct, const gchar *fmt, va_list ap) {
     lua_State *L = common.L;
     gchar *msg = g_strdup_vprintf(fmt, ap);
 
     lua_pushinteger(L, lvl);
-    lua_pushstring(L, line);
     lua_pushstring(L, fct);
     lua_pushstring(L, msg);
-    ipc_send_lua(extension.ipc, IPC_TYPE_log, L, -4, -1);
-    lua_pop(L, 4);
+    ipc_send_lua(extension.ipc, IPC_TYPE_log, L, -3, -1);
+    lua_pop(L, 3);
 
     g_free(msg);
 }
