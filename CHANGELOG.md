@@ -13,6 +13,7 @@
  - `open_editor.lua` now uses `editor.lua` rather than always using `xdg-open`.
  - `--log` can now set different log levels for different modules, similarly to `mpv`.
  - Documentation now has inter-page references.
+ - The adblock page-blocked page now has a "Continue anyway" button.
 
 ## [2017-07-26]
 
