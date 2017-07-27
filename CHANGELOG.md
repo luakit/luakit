@@ -11,6 +11,7 @@
 
  - `editor.lua` now uses substitution strings, rather than `global` to determine which editor to open.
  - `open_editor.lua` now uses `editor.lua` rather than always using `xdg-open`.
+ - `--log` can now set different log levels for different modules, similarly to `mpv`.
 
 ## [2017-07-26]
 
