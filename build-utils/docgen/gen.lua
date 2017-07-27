@@ -2,6 +2,8 @@ local lfs = require "lfs"
 local lousy = { util = require "lib.lousy.util" }
 local markdown = require "lib.markdown"
 
+local index = {}
+
 local text_macros = {
     available = function (arg)
         return ({
@@ -20,6 +22,14 @@ local format_text = function (text)
     local ret = text:gsub("DOCMACRO%((%w+):?([^%)]-)%)", function (macro, args)
         if not text_macros[macro] then error("Bad macro '" .. macro .. "'") end
         return (text_macros[macro])(args)
+    end)
+    ret = ret:gsub('@ref{([^}]+)}', function (ref)
+        assert(index[ref] ~= false, "ambiguous ref '" .. ref .. "', prefix with doc/")
+        assert(index[ref], "invalid ref '" .. ref .. "'")
+        local doc, item = index[ref].doc, index[ref].item
+        local group, name = doc.module and "modules" or "classes", doc.name
+        local fragment = item and ("#%s-%s"):format(item.type, item.name) or ""
+        return ('<a href="../%s/%s.html%s">`%s`</code></a>'):format(group, name, fragment, ref:gsub(".*/", ""))
     end)
     -- Format with markdown
     ret = markdown(ret)
@@ -141,8 +151,9 @@ local generate_function_html = function (func, prefix)
         func.name = ""
     end
     local html_template = [==[
-        <h3 class=function id="{prefix}{name}">
-            <a href="#{prefix}{name}">{prefix}{name} ({param_names})</a>
+        <h3 class=function>
+            <span class=target id="{type}-{name}"></span>
+            <a href="#{type}-{name}">{prefix}{name} ({param_names})</a>
         </h3>
     ]==]
 
@@ -153,6 +164,7 @@ local generate_function_html = function (func, prefix)
 
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
+        type = func.type,
         name = func.name,
         param_names = table.concat(param_names, ", "),
     }) .. generate_function_body_html(func)
@@ -161,7 +173,8 @@ end
 
 local generate_signal_html = function (func)
     local html_template = [==[
-        <h3 class=function id="signal-{name}">
+        <h3 class=function>
+            <span class=target id="signal-{name}"></span>
             <a href="#signal-{name}">"{name}"</a>
         </h3>
     ]==]
@@ -196,7 +209,8 @@ end
 
 local generate_property_html = function (prop, prefix)
     local html_template = [==[
-        <h3 class=property id="property-{name}">
+        <h3 class=property>
+            <span class=target id="property-{name}"></span>
             <a href="#property-{name}">{prefix}{name}</a>
         </h3>
         <div class="two-col property">
@@ -233,7 +247,8 @@ end
 
 local generate_field_html = function (field, prefix)
     local html_template = [==[
-        <h3 class=field id="field-{name}">
+        <h3 class=field>
+            <span class=target id="field-{name}"></span>
             <a href="#field-{name}">{prefix}{name}</a>
         </h3>
         <div class="two-col field">
@@ -465,6 +480,37 @@ local generate_documentation = function (docs, out_dir)
     assert(out_dir, "no output directory specified")
     out_dir = out_dir:match("/$") and out_dir or out_dir .. "/"
     mkdir(out_dir)
+
+    -- Build symbol index
+    do
+        local add_index_obj = function (doc, item)
+            local short_name = item and item.name or doc.name
+            local get_long_name = function (d, i)
+                return d.name .. "/" .. (i and i.name or "")
+            end
+            if index[short_name] then
+                -- Move any item already using the short name to its long name slot
+                local o = index[short_name]
+                local new_name = get_long_name(o.doc, o.item)
+                assert(not index[new_name])
+                index[new_name] = o
+                index[short_name] = false
+            end
+            if index[short_name] == false then
+                index[get_long_name(doc, item)] = { doc = doc, item = item }
+            else
+                index[short_name] = { doc = doc, item = item }
+            end
+        end
+        for _, doc in ipairs(lousy.util.table.join(docs.modules, docs.classes)) do
+            add_index_obj(doc)
+            for _, t in ipairs {"functions", "methods", "properties", "fields", "signals", "callbacks"} do
+                for _, item in ipairs(doc[t] or {}) do
+                    add_index_obj(doc, item)
+                end
+            end
+        end
+    end
 
     local pages = {}
     mkdir(out_dir .. "pages")

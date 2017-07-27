@@ -8,7 +8,7 @@ end
 
 local peel_off_text_block = function (block)
     local lines = {}
-    while block[1] and not block[1]:match("^@%w+") do
+    while block[1] and not (block[1]:match("^@%w+") and not block[1]:match("^@ref{")) do
         table.insert(lines, advance(block))
     end
     return table.concat(lines, "\n")
@@ -87,7 +87,7 @@ local function parse_first_file_block(doc, block)
     -- Separate block into markdown and @-lines
     local atlines = {}
     for i, line in ipairs(block) do
-        if line:match("^@%w+") then
+        if line:match("^@%w+") and not line:match("^@ref{") then
             table.insert(atlines, line)
             block[i] = ""
         end
