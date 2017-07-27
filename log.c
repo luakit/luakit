@@ -27,18 +27,20 @@
 #include <stdlib.h>
 #include <unistd.h>
 
-static log_level_t verbosity;
+static GHashTable *group_levels;
 
 void
-log_set_verbosity(log_level_t lvl)
+log_set_verbosity(const char *group, log_level_t lvl)
 {
-    verbosity = lvl;
+    group_levels = group_levels ?: g_hash_table_new(g_str_hash, g_str_equal);
+    g_hash_table_insert(group_levels, (gpointer)group, GINT_TO_POINTER(lvl));
 }
 
 log_level_t
-log_get_verbosity(void)
+log_get_verbosity(const char *group)
 {
-    return verbosity;
+    if (!group_levels) return LOG_LEVEL_info;
+    return GPOINTER_TO_UINT(g_hash_table_lookup(group_levels, (gpointer)group));
 }
 
 int
@@ -65,6 +67,7 @@ _log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, ...
 void
 va_log(log_level_t lvl, const gchar *line, const gchar *fct, const gchar *fmt, va_list ap)
 {
+    log_level_t verbosity = log_get_verbosity("all");
     if (lvl > verbosity)
         return;
 

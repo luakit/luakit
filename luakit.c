@@ -100,13 +100,13 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     }
 
     if (!log_lvl)
-        log_set_verbosity(verbose ? LOG_LEVEL_verbose : LOG_LEVEL_info);
+        log_set_verbosity("all", verbose ? LOG_LEVEL_verbose : LOG_LEVEL_info);
     else {
         log_level_t lvl;
         int err = log_level_from_string(&lvl, log_lvl);
         if (err)
             fatal("invalid log level");
-        log_set_verbosity(lvl);
+        log_set_verbosity("all", lvl);
 
         if (verbose)
             warn("invalid mix of -v and -l, ignoring -v...");
