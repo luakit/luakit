@@ -108,13 +108,15 @@ end
 
 local function parse_at_function_line(item, block, func_type)
     if item.type then parse_error(block, "@%s line inside %s block", func_type, item.type) end
-    item.type = func_type -- "function" / "method" / "signal"
+    item.type = func_type -- "function" / "method" / "signal" / "callback"
     item.params = item.params or {}
     item.returns = item.returns or {}
     item.name = block[1]:match("^%@function (%S+)$")
              or block[1]:match("^%@method (%S+)$")
              or block[1]:match("^%@signal (%S+)$")
+             or block[1]:match("^%@callback (%S+)$")
              or parse_error(block, "Missing %s name", func_type)
+    if item.type == "callback" then assert(item.name:match("_cb$")) end
     advance(block)
 end
 
@@ -182,7 +184,7 @@ end
 
 local function parse_file_block_part(item, block)
     local at = block[1]:match("^@(%w+)")
-    if at == "function" or at == "method" or at == "signal" then
+    if at == "function" or at == "method" or at == "signal" or at == "callback" then
         parse_at_function_line(item, block, at)
     elseif at == "param" or at == "tparam" then
         parse_at_param_line(item, block)

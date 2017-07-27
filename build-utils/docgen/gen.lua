@@ -279,6 +279,7 @@ local generate_doc_html = function (doc)
         .. generate_list_html("Methods", doc.methods, generate_function_html, method_prefix)
         .. generate_list_html("Properties", doc.properties, generate_property_html, func_prefix)
         .. generate_list_html("Signals", doc.signals, generate_signal_html)
+        .. generate_list_html("Callback Types", doc.callbacks, generate_function_html, "")
         .. generate_list_html("Fields", doc.fields, generate_field_html, func_prefix)
 
     local html = string.gsub(html_template, "{(%w+)}", {
