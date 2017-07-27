@@ -414,6 +414,16 @@ function _M.list_set_enabled(a, enabled)
     end
 end
 
+local page_whitelist = {}
+
+--- Whitelist accessing a blocked domain for the current session.
+-- @tparam string domain The domain to whitelist.
+_M.whitelist_domain_access = function (domain)
+    if lousy.util.table.hasitem(page_whitelist, domain) then return end
+    table.insert(page_whitelist, domain)
+    adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
+end
+
 local new_web_extension_created
 
 webview.add_signal("init", function (view)

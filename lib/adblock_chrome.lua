@@ -289,7 +289,14 @@ webview.add_signal("init", function (view)
                     <p>AdBlock has prevented the page at {uri} from loading</p>
                 </div>
             ]==],
-            buttons = {},
+            buttons = {{
+                label = "Continue anyway",
+                callback = function(vv)
+                    webview.modify_load_block(v, "adblock", true)
+                    webview.set_location(vv, uri)
+                    adblock.whitelist_domain_access(lousy.uri.parse(uri).host)
+                end
+            }},
             uri = uri,
             request = request,
         })
