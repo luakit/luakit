@@ -33,7 +33,7 @@
 
 --- @property fg
 -- The color of the text displayed by the widget. This can be changed with
--- markup set by the `text` property.
+-- markup set by the @ref{widget:label/text} property.
 -- @type string
 -- @readwrite
 

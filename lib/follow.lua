@@ -15,7 +15,7 @@
 --
 -- If you prefer to use letters instead of numbers for hint labels (useful if
 -- you use a non-qwerty keyboard layout), this can be done by replacing the
--- `select.label_maker` function:
+-- @ref{label_maker} function:
 --
 --     -- Use "asdfqwerzxcv" for generating labels
 --     local select = require "select"
@@ -23,7 +23,7 @@
 --         return s.sort(s.reverse(s.charset("asdfqwerzxcv")))
 --     end
 --
--- Note: this requires modifying the `select` module because the actual
+-- Note: this requires modifying the @ref{select} module because the actual
 -- link hinting interface is implemented in the `select` module; the
 -- `follow` module provides the `follow` and `ex-follow` user interface on top
 -- of that.
@@ -31,7 +31,7 @@
 -- ### Matching only hint labels, not element text
 --
 -- If you prefer not to match element text, and wish to select hints only by
--- their label, this can be done by specifying the `pattern_maker`:
+-- their label, this can be done by specifying the @ref{pattern_maker}:
 --
 --     -- Match only hint label text
 --     follow.pattern_maker = follow.pattern_styles.match_label

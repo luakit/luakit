@@ -23,7 +23,7 @@
 
 --- @property progress
 -- The download progress, ranging from 0.0 (no data yet received) to 1.0 (all
--- data received). This is only an estimate; see the `current_size` property for
+-- data received). This is only an estimate; see the @ref{current_size} property for
 -- a more exact value.
 -- @type number
 -- @readonly
@@ -68,14 +68,14 @@
 -- @readonly
 
 --- @signal property::allow-overwrite
--- Emitted when the `allow_overwrite` property has changed.
+-- Emitted when the @ref{allow_overwrite} property has changed.
 
 --- @signal property::destination
--- Emitted when the `destination` property has changed.
+-- Emitted when the @ref{destination} property has changed.
 
 --- @signal decide-destination
 -- Emitted when a destination for the download must be decided. Handlers should
--- set the download's `destination` property.
+-- set the download's @ref{destination} property.
 -- @tparam string suggested_filename The suggested filename for the download.
 -- @treturn boolean `true` if the destination was decided.
 

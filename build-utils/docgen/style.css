@@ -225,3 +225,11 @@ ul.triggers > li {
 }
 
 div.info > div { margin-top: 0.3rem; }
+
+span.target {
+    position: absolute;
+    display: block;
+    margin-top: -100px;
+    height: 100px;
+    visibility: hidden;
+}

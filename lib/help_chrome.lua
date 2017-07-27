@@ -207,7 +207,7 @@ local help_doc_page = function (v, path, request)
     </body>
     ]==]
 
-    local doc_html, doc_style = extract_doc_html(path)
+    local doc_html, doc_style = extract_doc_html(path:gsub("[?#].*", ""))
     if not doc_html then
         local file = doc_style
         error_page.show_error_page(v, {

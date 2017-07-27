@@ -12,7 +12,7 @@
 -- ### Usage notes
 --
 -- - None of the returned directory paths end with a `/`.
--- - The `cache_dir`, `config_dir`, and `data_dir` directories are the system
+-- - The @ref{xdg/cache_dir}, @ref{xdg/config_dir}, and @ref{xdg/data_dir} directories are the system
 --   cache, config, and user data directories respectively. Each of
 --   these directories contains a `luakit` sub-directory.
 --   Lua modules should use the `luakit` sub-directories to store and read data.

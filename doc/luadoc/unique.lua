@@ -13,7 +13,7 @@
 --- @function new
 -- Set up an application with a shared identifier used to locate
 -- already-running instances. This must be called before calling
--- `unique.is_running()` or `unique.send_message()`.
+-- @ref{is_running} or @ref{send_message}.
 -- @tparam string id The application identifier string to use.
 
 --- @function is_running

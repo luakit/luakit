@@ -203,7 +203,7 @@
 --
 -- Emitted when the value of a webview property may have been updated.
 -- For example, the `"property::uri"` signal is emitted on a `webview`
--- widget when its `uri` property changes.
+-- widget when its @ref{widget:webview/uri} property changes.
 
 --- @signal link-hover
 -- Emitted when the mouse cursor is moved over a link.

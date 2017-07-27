@@ -8,7 +8,7 @@ end
 
 local peel_off_text_block = function (block)
     local lines = {}
-    while block[1] and not block[1]:match("^@%w+") do
+    while block[1] and not (block[1]:match("^@%w+") and not block[1]:match("^@ref{")) do
         table.insert(lines, advance(block))
     end
     return table.concat(lines, "\n")
@@ -87,7 +87,7 @@ local function parse_first_file_block(doc, block)
     -- Separate block into markdown and @-lines
     local atlines = {}
     for i, line in ipairs(block) do
-        if line:match("^@%w+") then
+        if line:match("^@%w+") and not line:match("^@ref{") then
             table.insert(atlines, line)
             block[i] = ""
         end
@@ -108,13 +108,15 @@ end
 
 local function parse_at_function_line(item, block, func_type)
     if item.type then parse_error(block, "@%s line inside %s block", func_type, item.type) end
-    item.type = func_type -- "function" / "method" / "signal"
+    item.type = func_type -- "function" / "method" / "signal" / "callback"
     item.params = item.params or {}
     item.returns = item.returns or {}
     item.name = block[1]:match("^%@function (%S+)$")
              or block[1]:match("^%@method (%S+)$")
              or block[1]:match("^%@signal (%S+)$")
+             or block[1]:match("^%@callback (%S+)$")
              or parse_error(block, "Missing %s name", func_type)
+    if item.type == "callback" then assert(item.name:match("_cb$")) end
     advance(block)
 end
 
@@ -182,7 +184,7 @@ end
 
 local function parse_file_block_part(item, block)
     local at = block[1]:match("^@(%w+)")
-    if at == "function" or at == "method" or at == "signal" then
+    if at == "function" or at == "method" or at == "signal" or at == "callback" then
         parse_at_function_line(item, block, at)
     elseif at == "param" or at == "tparam" then
         parse_at_param_line(item, block)
