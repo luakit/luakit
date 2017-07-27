@@ -218,7 +218,7 @@ local function load_js(file)
         script.file = file
         scripts[file] = setmetatable(script, { __index = prototype })
     else
-        msg.warn("(userscripts.lua): Invalid userscript header in file: %s", file)
+        msg.warn("invalid userscript header in file: %s", file)
     end
 end
 

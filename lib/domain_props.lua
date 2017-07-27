@@ -139,7 +139,7 @@ webview.add_signal("init", function (view)
         -- Apply all properties
         for _, props in ipairs(prop_sets) do
             for k, prop in pairs(props.props) do
-                msg.info("Domain prop: %s = %s (%s)", k, prop, props.domain)
+                msg.info("setting property %s = %s (matched %s)", k, prop, props.domain)
                 view[k] = prop
             end
         end

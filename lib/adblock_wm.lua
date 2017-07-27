@@ -115,7 +115,7 @@ end
 local match = function (src, dst)
     -- Always allow data: URIs
     if string.sub(dst, 1, 5) == "data:" then
-        msg.debug("adblock: allowing data URI")
+        msg.debug("allowing data URI")
         return
     end
 
@@ -139,7 +139,7 @@ local match = function (src, dst)
     for _, list in pairs(enabled_rules) do
         local found, pattern = match_list(list.whitelist, dst, dst_domains, src_domain, dst_domain)
         if found then
-            msg.debug("adblock: allowing request as pattern %q matched to uri %s", pattern, dst)
+            msg.debug("allowing request as pattern %q matched to uri %s", pattern, dst)
             return true
         end
     end
@@ -148,7 +148,7 @@ local match = function (src, dst)
     for _, list in pairs(enabled_rules) do
         local found, pattern = match_list(list.blacklist, dst, dst_domains, src_domain, dst_domain)
         if found then
-            msg.debug("adblock: blocking request as pattern %q matched to uri %s", pattern, dst)
+            msg.debug("blocking request as pattern %q matched to uri %s", pattern, dst)
             return false
         end
     end
