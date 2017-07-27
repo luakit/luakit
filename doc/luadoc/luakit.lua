@@ -59,13 +59,16 @@
 -- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
 -- @function set_selection
 
+--- Callback type for `luakit.spawn`.
+-- @callback process_exit_cb
+-- @tparam string reason The reason for process termination. Can be one of `"exit"`, indicating normal termination;
+-- `"signal"`, indicating the process was killed with a signal; and `"unknown"`.
+-- @tparam integer status The exit status code of the process. Its meaning is system-dependent.
+
 --- Spawn a process asynchronously.
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
 -- @tparam[opt] function callback A callback function to execute when the spawned
--- process is terminated. It receives two parameters `reason` and `status`,
--- which are the reason for the process exit and the exit status code respectively.
--- `reason` can be one of `"exit"`, indicating normal termination;
--- `"signal"`, indicating the process was killed with a signal; and `"unknown"`.
+-- process is terminated, of type `process_exit_cb`.
 -- @function spawn
 
 --- Spawn a process synchronously.
@@ -95,6 +98,13 @@
 -- @treturn string The unescaped/decoded string, or `nil` on error.
 -- @treturn string Error message.
 
+--- Idle callback function type.
+-- Return `true` to keep the callback running on idle.
+-- Returning `false` or `nil` will cause the callback to be
+-- automatically removed from the set of registered idle functions.
+-- @treturn boolean Whether the callback should be kept running on idle.
+-- @callback idle_cb
+
 --- Add a function to be called regularly when Luakit is idle. If the function
 -- returns `false`, or if an error is encountered during execution, the function
 -- is automatically removed from the set of registered idle functions, and will
@@ -104,7 +114,7 @@
 -- context to the callback function, use a closure.
 --
 -- @function idle_add
--- @tparam function cb The function to call when Luakit is idle.
+-- @tparam function cb The function to call when Luakit is idle, of type `idle_cb`.
 
 --- Remove a function previously registered with `idle_add`.
 --
