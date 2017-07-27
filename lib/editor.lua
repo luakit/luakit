@@ -61,7 +61,7 @@ _M.editor_cmd = _M.builtin.default
 -- @tparam string file The path of the file to edit.
 -- @tparam[opt] number line The line number at which to begin editing.
 -- @tparam[opt] function callback A callback that fires when the process spawned
--- by the editor command exits, of type `process_exit_cb`.
+-- by the editor command exits, of type @ref{process_exit_cb}.
 _M.edit = function (file, line, callback)
     local subs = {
         file = file,

@@ -270,7 +270,7 @@ _M.funcs = {
     -- Completes URIs that have been bookmarked.
 }
 
---- Array of completion functions from `funcs`, called in order.
+--- Array of completion functions from @ref{funcs}, called in order.
 -- @readwrite
 _M.order = {
     [1] = _M.funcs.command, -- `funcs.command`

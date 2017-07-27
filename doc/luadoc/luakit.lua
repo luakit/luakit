@@ -59,7 +59,7 @@
 -- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
 -- @function set_selection
 
---- Callback type for `luakit.spawn`.
+--- Callback type for @ref{spawn}.
 -- @callback process_exit_cb
 -- @tparam string reason The reason for process termination. Can be one of `"exit"`, indicating normal termination;
 -- `"signal"`, indicating the process was killed with a signal; and `"unknown"`.
@@ -68,7 +68,7 @@
 --- Spawn a process asynchronously.
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
 -- @tparam[opt] function callback A callback function to execute when the spawned
--- process is terminated, of type `process_exit_cb`.
+-- process is terminated, of type @ref{process_exit_cb}.
 -- @function spawn
 
 --- Spawn a process synchronously.
@@ -114,9 +114,9 @@
 -- context to the callback function, use a closure.
 --
 -- @function idle_add
--- @tparam function cb The function to call when Luakit is idle, of type `idle_cb`.
+-- @tparam function cb The function to call when Luakit is idle, of type @ref{idle_cb}.
 
---- Remove a function previously registered with `idle_add`.
+--- Remove a function previously registered with @ref{idle_add}.
 --
 -- @function idle_remove
 -- @tparam function cb The function to removed from the set of idle callbacks.

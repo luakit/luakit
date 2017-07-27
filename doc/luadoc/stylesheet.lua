@@ -15,7 +15,7 @@
 -- ### Modifying webview appearance
 --
 -- To attach a `stylesheet` instance to a webview, modify the webview's
--- `stylesheets` table:
+-- @ref{stylesheets} table:
 --
 --     local style = stylesheet{ ... }
 --     view.stylesheets[style] = true -- Enable the stylesheet

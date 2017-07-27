@@ -8,7 +8,7 @@
 --
 -- ### Retrieving the DOM document for a `page`:
 --
--- To retrieve the DOM document loaded in a page, use the `document` property.
+-- To retrieve the DOM document loaded in a page, use the @ref{page/document} property.
 
 --- @method create_element
 -- Create a new element for the DOM document.
