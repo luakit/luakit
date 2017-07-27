@@ -53,7 +53,7 @@ typedef enum { LOG_LEVELS } log_level_t;
 #define STRINGIFY(x) #x
 #define TO_STRING(x) STRINGIFY(x)
 
-#define log(lvl, string, ...) _log(lvl, TO_STRING(__LINE__), __FUNCTION__, string, ##__VA_ARGS__)
+#define log(lvl, string, ...) _log(lvl, TO_STRING(__LINE__), __FILE__, string, ##__VA_ARGS__)
 void _log(log_level_t lvl, const gchar *, const gchar *, const gchar *, ...)
     __attribute__ ((format (printf, 4, 5)));
 void va_log(log_level_t lvl, const gchar *, const gchar *, const gchar *, va_list);
