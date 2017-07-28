@@ -22,6 +22,7 @@
 #include "globalconf.h"
 #include "luah.h"
 #include "ipc.h"
+#include "log.h"
 #include "web_context.h"
 
 #include <errno.h>

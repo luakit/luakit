@@ -62,11 +62,6 @@ void va_log(log_level_t lvl, const gchar *, const gchar *, va_list);
 #define verbose(...) log(LOG_LEVEL_verbose, ##__VA_ARGS__)
 #define debug(...) log(LOG_LEVEL_debug, ##__VA_ARGS__)
 
-/* Only accessible from main UI process */
-int log_level_from_string(log_level_t *out, const char *str);
-void log_set_verbosity(const char *group, log_level_t lvl);
-log_level_t log_get_verbosity(char *group);
-
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
