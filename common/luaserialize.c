@@ -99,6 +99,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             break;
         }
         case LUA_TFUNCTION: {
+            /* Serialize bytecode */
             bytecode_buf = bytecode_buf ?: g_byte_array_new();
             g_byte_array_set_size(bytecode_buf, 0);
             lua_pushvalue(L, index);
@@ -108,6 +109,13 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             g_byte_array_append(out, (guint8*)&len, sizeof(len));
             g_byte_array_append(out, bytecode_buf->data, len);
             g_byte_array_set_size(bytecode_buf, 0);
+            /* Serialize upvalues */
+            lua_Debug ar;
+            lua_pushvalue(L, index);
+            lua_getinfo(L, ">u", &ar);
+            g_byte_array_append(out, (guint8*)&ar.nups, sizeof(ar.nups));
+            for (int i = i; i <= ar.nups; i++)
+                lua_serialize_value(L, out, lua_upvalueindex(i));
             break;
         }
     }
@@ -166,10 +174,18 @@ lua_deserialize_value(lua_State *L, const guint8 **bytes)
             break;
         }
         case LUA_TFUNCTION: {
+            /* Deserialize bytecode */
             TAKE(bytecode_len, sizeof(bytecode_len));
             int status = lua_load(L, (lua_Reader)lua_function_reader, bytes, NULL);
             if (status != 0)
                 return luaL_error(L, "deserialize error: %s", lua_tostring(L, -1));
+            /* Deserialize upvalues */
+            int nups;
+            TAKE(nups, sizeof(nups));
+            for (int i = 1; i <= nups; i++) {
+                lua_deserialize_value(L, bytes);
+                lua_setupvalue(L, -2, lua_upvalueindex(i));
+            }
             break;
         }
         case LUA_TNONE:
