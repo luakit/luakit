@@ -59,9 +59,7 @@ typedef struct {
     guint htr_context;
     gboolean is_committed;
     gboolean is_failed;
-#if WEBKIT_CHECK_VERSION(2,16,0)
     gboolean private;
-#endif
 
     /** Document size */
     gint doc_w, doc_h;
@@ -686,11 +684,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       PB_CASE(INSPECTOR,            d->inspector_open);
-#if WEBKIT_CHECK_VERSION(2,16,0)
       PB_CASE(PRIVATE,              d->private);
-#else
-      PB_CASE(PRIVATE,              FALSE);
-#endif
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -1227,12 +1221,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
     lua_rawget(L, prop_tbl_idx);
     gboolean private = lua_type(L, -1) == LUA_TNIL ? FALSE : lua_toboolean(L, -1);
     lua_pop(L, 1);
-#if WEBKIT_CHECK_VERSION(2,16,0)
     d->private = private;
-#else
-    if (private)
-        luaL_error(L, "private webview requires WebKitGTK >= 2.16.0");
-#endif
 
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
@@ -1249,9 +1238,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
     d->user_content = webkit_user_content_manager_new();
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
                  "web-context", web_context_get(),
-#if WEBKIT_CHECK_VERSION(2,16,0)
                  "is-ephemeral", d->private,
-#endif
                  "user-content-manager", d->user_content,
                  related_view ? "related-view" : NULL, related_view,
                  NULL);

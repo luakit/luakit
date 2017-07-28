@@ -388,7 +388,6 @@ luaH_luakit_push_options_table(lua_State *L)
     return 1;
 }
 
-#if WEBKIT_CHECK_VERSION(2,16,0)
 static WebKitWebsiteDataTypes
 luaH_parse_website_data_types_table(lua_State *L, gint idx)
 {
@@ -613,7 +612,6 @@ luaH_luakit_push_website_data_table(lua_State *L)
     lua_setmetatable(L, -2);
     return 1;
 }
-#endif
 
 /** luakit module index metamethod.
  *
@@ -647,11 +645,7 @@ luaH_luakit_index(lua_State *L)
       case L_TK_OPTIONS:
         return luaH_luakit_push_options_table(L);
       case L_TK_WEBSITE_DATA:
-#if WEBKIT_CHECK_VERSION(2,16,0)
         return luaH_luakit_push_website_data_table(L);
-#else
-        return luaL_error(L, "luakit.website_data requires WebKitGTK >= 2.16.0");
-#endif
 
       PB_CASE(WEBKIT2,          true)
 
