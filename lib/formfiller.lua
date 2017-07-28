@@ -135,6 +135,45 @@ local DSL = {
     end,
 }
 
+local dsl_extensions = {}
+
+formfiller_wm:add_signal("dsl_extension_query", function (_, k, arg, view_id)
+    local reply = dsl_extensions[k](unpack(arg))
+    formfiller_wm:emit_signal(view_id,"dsl_extension_reply", reply, view_id)
+end)
+
+--- Extend the formfiller DSL with additional functions. This takes a table of
+-- functions, for example
+--
+--     {pass = function(s) return io.popen("pass " .. s):read()}
+--
+-- which will then be usable in fields of `form.lua`. For example:
+--
+--     input {
+--         name = "username",
+--         value = pass("emailpassword"),
+--     }
+--
+-- functions used to extend the DSL will be called only when needed: when
+-- matching for attributes used in matching, or once a form is applied, for
+-- attributes used in form application.
+--
+-- @tparam table extensions The table of functions extending the formfiller DSL.
+_M.extend = function (extensions)
+    for k, v in pairs(extensions) do
+        assert(type(v) == "function", "bad DSL extension: values must be functions")
+        assert(type(k) == "string", "bad DSL extension: keys must be strings")
+        assert(k ~= "on" and k ~= "form" and k ~= "input", "bad DSL extension: don't shadow core DSL functions")
+    end
+    dsl_extensions = extensions
+    for k, _ in pairs(extensions) do
+        DSL[k] = function (_, ...)
+                return {sentinel = true, arg = {...}, key = k}
+        end
+    end
+    return true
+end
+
 --- Reads the rules from the formfiller DSL file
 local function read_formfiller_rules_from_file()
     local state = {
@@ -256,6 +295,9 @@ webview.add_signal("init", function (view)
         local rules = read_formfiller_rules_from_file()
         local form_specs = form_specs_for_uri(rules, v.uri)
         for _, form_spec in ipairs(form_specs) do
+            if type(form_spec.autofill) == "table" and form_spec.autofill.sentinel then
+                form_spec.autofill = dsl_extensions[form_spec.autofill.key](unpack(form_spec.autofill.arg))
+            end
             if form_spec.autofill then
                 -- Precaution: pattern must contain full domain of page URI
                 local domain = lousy.util.lua_escape(lousy.uri.parse(v.uri).host .. "/")

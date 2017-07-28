@@ -122,30 +122,52 @@ local stylesheet = [===[
 }
 ]===]
 
-local function apply (form, form_spec)
-    -- Map of attr -> value that form has to match
-    local attrs = {}
-    for _, v in ipairs({"method", "name", "id", "action", "className"}) do
-        attrs[v] = form_spec[v]
-    end
-    if not element_attributes_match(form, attrs) then
-        return false
-    end
+local dsl_coroutines = {}
 
-    for _, input_spec in ipairs(form_spec.inputs) do
-        local matches = match("input", {"name", "id", "className", "type"}, input_spec, {form})
-        if #matches > 0 then
-            local val = input_spec.value or input_spec.checked
-            if val then fill_input(matches, val) end
-            if input_spec.focus then matches[1]:focus() end
-            if input_spec.select then matches[1]:select() end
+ui:add_signal("dsl_extension_reply", function(_, _, v, view_id)
+    coroutine.resume(dsl_coroutines[view_id],v)
+end)
+
+local function traverse(view_id, t)
+    if type(t) == "table" and t.sentinel then
+        ui:emit_signal("dsl_extension_query", t.key,t.arg,view_id)
+        return coroutine.yield(dsl_coroutines[view_id])
+    elseif type(t) == "table" then
+        for k,v in pairs(t) do t[k] = traverse(view_id, v) end
+    end
+    return t
+end
+
+local function apply (form, form_spec, page)
+    local co = coroutine.create(function ()
+        -- Map of attr -> value that form has to match
+        local attrs = {}
+        for _, v in ipairs({"method", "name", "id", "action", "className"}) do
+            attrs[v] = traverse(page.id, form_spec[v]) -- traverse and evaluate attributes
+            form_spec[v] = attrs[v] -- write them back to the form_spec
         end
-    end
-    if form_spec.submit then
-        submit_form(form, type(form_spec.submit) == "number" and form_spec.submit or 0)
-    end
+        if not element_attributes_match(form, attrs) then
+            return false
+        end
+        traverse(page.id, form_spec) -- traverse the rest of the form_spec
+        for _, input_spec in ipairs(form_spec.inputs) do
+            local matches = match("input", {"name", "id", "className", "type"}, input_spec, {form})
+            if #matches > 0 then
+                local val = input_spec.value or input_spec.checked
+                if val then fill_input(matches, val) end
+                if input_spec.focus then matches[1]:focus() end
+                if input_spec.select then matches[1]:select() end
+            end
+        end
+        if form_spec.submit then
+            submit_form(form, type(form_spec.submit) == "number" and form_spec.submit or 0)
+        end
 
-    return true
+        dsl_coroutines[page.id] = nil
+        return true
+    end)
+    dsl_coroutines[page.id] = co
+    coroutine.resume(co)
 end
 
 local function formfiller_fill (page, form, form_specs)
@@ -153,7 +175,7 @@ local function formfiller_fill (page, form, form_specs)
     assert(type(form) == "dom_element" and form.tag_name == "FORM")
 
     for _, form_spec in ipairs(form_specs) do
-        if apply(form, form_spec) then
+        if apply(form, form_spec, page) then
             break
         end
     end
