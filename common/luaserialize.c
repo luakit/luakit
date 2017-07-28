@@ -114,7 +114,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             lua_pushvalue(L, index);
             lua_getinfo(L, ">u", &ar);
             g_byte_array_append(out, (guint8*)&ar.nups, sizeof(ar.nups));
-            for (int i = i; i <= ar.nups; i++)
+            for (int i = 1; i <= ar.nups; i++)
                 lua_serialize_value(L, out, lua_upvalueindex(i));
             break;
         }
