@@ -232,6 +232,7 @@ main(gint argc, gchar *argv[])
 #if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 50
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
 #endif
+    log_init();
     init_directories();
     web_context_init();
     ipc_init();

@@ -21,13 +21,17 @@
 #include "globalconf.h"
 #include "common/log.h"
 #include "common/luaserialize.h"
+#include "common/luaclass.h"
 #include "common/ipc.h"
+#include "clib/msg.h"
 
 #include <glib/gprintf.h>
 #include <stdlib.h>
 #include <unistd.h>
 
 static GHashTable *group_levels;
+static GAsyncQueue *queued_emissions;
+static gboolean block_log = FALSE;
 
 void
 log_set_verbosity(const char *group, log_level_t lvl)
@@ -108,6 +112,58 @@ LOG_LEVELS
     g_assert_not_reached();
 }
 
+static void
+emit_log_signal(double time, log_level_t lvl, const gchar *group, const gchar *msg)
+{
+    lua_class_t *msg_class = msg_lib_get_msg_class();
+    lua_pushnumber(common.L, time);
+    lua_pushstring(common.L, log_string_from_level(lvl));
+    lua_pushstring(common.L, group);
+    lua_pushstring(common.L, msg);
+    block_log = TRUE;
+    luaH_class_emit_signal(common.L, msg_class, "log", 4, 0);
+    block_log = FALSE;
+}
+
+typedef struct _queued_log_t {
+    log_level_t lvl;
+    double time;
+    char *group;
+    char *msg;
+} queued_log_t;
+
+static int consumer_added = FALSE;
+
+static gboolean
+log_emit_pending_signals(void *UNUSED(usedata))
+{
+    queued_log_t *entry;
+    while ((entry = g_async_queue_try_pop(queued_emissions)))
+    {
+        emit_log_signal(entry->time, entry->lvl, entry->group, entry->msg);
+        g_free(entry->group);
+        g_free(entry->msg);
+        g_slice_free(queued_log_t, entry);
+    }
+    g_atomic_int_set(&consumer_added, FALSE);
+    return FALSE;
+}
+
+static void
+queue_log_signal(double time, log_level_t lvl, const gchar *group, const gchar *msg)
+{
+    queued_log_t *entry = g_slice_new0(queued_log_t);
+    entry->time = time;
+    entry->lvl = lvl;
+    entry->group = g_strdup(group);
+    entry->msg = g_strdup(msg);
+    g_async_queue_push(queued_emissions, entry);
+
+    /* Add idle function to consume everything in the queue */
+    if (g_atomic_int_compare_and_exchange(&consumer_added, FALSE, TRUE))
+        g_idle_add(log_emit_pending_signals, NULL);
+}
+
 void
 _log(log_level_t lvl, const gchar *fct, const gchar *fmt, ...)
 {
@@ -120,7 +176,9 @@ _log(log_level_t lvl, const gchar *fct, const gchar *fmt, ...)
 void
 va_log(log_level_t lvl, const gchar *fct, const gchar *fmt, va_list ap)
 {
-    /* printf("%s %s\n", fct, fmt); */
+    if (block_log)
+        return;
+
     char *group = log_group_from_fct(fct);
     log_level_t verbosity = log_get_verbosity(group);
     if (lvl > verbosity)
@@ -128,6 +186,9 @@ va_log(log_level_t lvl, const gchar *fct, const gchar *fmt, va_list ap)
 
     gchar *msg = g_strdup_vprintf(fmt, ap);
     gint log_fd = STDERR_FILENO;
+    double time = l_time() - globalconf.starttime;
+
+    queue_log_signal(time, lvl, group, msg);
 
     /* Determine logging style */
     /* TODO: move to X-macro generated table? */
@@ -163,14 +224,10 @@ va_log(log_level_t lvl, const gchar *fct, const gchar *fmt, va_list ap)
         g_free(msg);
         msg = stripped;
 
-        g_fprintf(stderr, LOG_FMT "\n",
-                l_time() - globalconf.starttime,
-                prefix_char, group, msg);
+        g_fprintf(stderr, LOG_FMT "\n", time, prefix_char, group, msg);
     } else {
         g_fprintf(stderr, "%s" LOG_FMT ANSI_COLOR_RESET "\n",
-                style,
-                l_time() - globalconf.starttime,
-                prefix_char, group, msg);
+                style, time, prefix_char, group, msg);
     }
 
     g_free(msg);
@@ -193,6 +250,12 @@ ipc_recv_log(ipc_endpoint_t *UNUSED(ipc), const guint8 *lua_msg, guint length)
     const gchar *msg = lua_tostring(L, -1);
     _log(lvl, fct, "%s", msg);
     lua_pop(L, 3);
+}
+
+void
+log_init(void)
+{
+    queued_emissions = g_async_queue_new();
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -1,7 +1,7 @@
 /*
- * log.h - logging functions
+ * clib/msg.h - Lua logging interface
  *
- * Copyright © 2017 Aidan Holm <aidanholm@gmail.com>
+ * Copyright © 2016 Aidan Holm <aidanholm@gmail.com>
  *
  * This program is free software: you can redistribute it and/or modify
  * it under the terms of the GNU General Public License as published by
@@ -18,15 +18,14 @@
  *
  */
 
-#ifndef LUAKIT_LOG_H
-#define LUAKIT_LOG_H
+#ifndef LUAKIT_CLIB_MSG_H
+#define LUAKIT_CLIB_MSG_H
 
-#include "common/log.h"
+#include <lua.h>
+#include "common/luaclass.h"
 
-void log_init(void);
-int log_level_from_string(log_level_t *out, const char *str);
-void log_set_verbosity(const char *group, log_level_t lvl);
-log_level_t log_get_verbosity(char *group);
+void msg_lib_setup(lua_State *L);
+lua_class_t * msg_lib_get_msg_class(void);
 
 #endif
 
