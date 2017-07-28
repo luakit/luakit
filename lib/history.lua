@@ -103,12 +103,18 @@ function _M.add(uri, title, update_visits)
     end
 end
 
+--- Set of webviews on which to freeze history collection.
+-- @type {[string]=boolean}
+-- @readwrite
+_M.frozen = setmetatable({}, { __mode = "k" })
+
 webview.add_signal("init", function (view)
     -- Add items & update visit count
     view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
         if view.private then return end
+        if _M.frozen[view] then return end
 
         if status == "committed" then
             _M.add(view.uri)
@@ -119,6 +125,7 @@ webview.add_signal("init", function (view)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
         if view.private then return end
+        if _M.frozen[view] then return end
 
         local title = view.title
         if title and title ~= "" then

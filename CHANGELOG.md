@@ -4,6 +4,10 @@
 
 ## [Unreleased]
 
+### Added
+
+ - New `history.frozen` API allows temporarily freezing history collection.
+
 ### Fixed
 
  - Fixed code-blocks in documentation being formatted incorrectly.
