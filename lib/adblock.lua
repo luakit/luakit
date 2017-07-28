@@ -64,15 +64,15 @@ local function detect_files()
         lfs.chdir(curdir)
     end
 
-    -- Look for filters lists:
+    msg.verbose("searching for filter lists in %s", adblock_dir)
     for filename in lfs.dir(adblock_dir) do
         if string.find(filename, "%.txt$") then
-            msg.verbose("found adblock list: " .. filename)
+            msg.verbose("found filter list: " .. filename)
             table.insert(filterfiles, filename)
         end
     end
 
-    msg.info("found " .. #filterfiles .. " rules lists")
+    msg.info("found " .. #filterfiles .. " filter list" .. (#filterfiles == 1 and "" or "s"))
 end
 
 local function get_abp_opts(s)
@@ -226,9 +226,9 @@ end
 -- Parses an Adblock Plus compatible filter list
 local parse_abpfilterlist = function (filters_dir, filename, cache)
     if os.exists(filters_dir .. filename) then
-        msg.verbose("loading filterlist %s", filename)
+        msg.verbose("loading filter list %s", filename)
     else
-        msg.warn("error loading filter list (%s: No such file or directory)", filename)
+        msg.warn("error loading filter list (%s: no such file or directory)", filename)
     end
     filename = filters_dir .. filename
 
@@ -337,7 +337,7 @@ local function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end
     if not os.exists(file) then
-        msg.info(string.format("Subscriptions file '%s' doesn't exist", file))
+        msg.info(string.format("subscriptions file '%s' doesn't exist", file))
         return
     end
 

@@ -278,7 +278,8 @@ _M.load_file = function (path)
     file:close()
 
     if file_looks_like_old_format(source) then
-        msg.error("Not loading stylesheet '%s'", path)
+        msg.error("stylesheet '%s' is global, refusing to load", path)
+        msg.error("to load anyway, add %s to the file", global_comment)
         return true
     end
 
@@ -300,24 +301,28 @@ end
 
 --- Detect all files in the stylesheets directory and automatically load them.
 _M.detect_files = function ()
+    -- Create styles directory if it doesn't exist
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
-        msg.info(string.format("Stylesheet directory '%s' doesn't exist", styles_dir))
-        return
+        lfs.mkdir(styles_dir)
+        lfs.chdir(styles_dir)
     end
 
-    for _, stylesheet in pairs(stylesheets or {}) do
+    for _, stylesheet in ipairs(stylesheets or {}) do
         for _, part in ipairs(stylesheet.parts) do
             part.ss.source = ""
         end
     end
     stylesheets = {}
 
+    msg.verbose("searching for user stylesheets in %s", styles_dir)
     for filename in lfs.dir(styles_dir) do
         if string.find(filename, ".css$") then
+            msg.verbose("found user stylesheet: " .. filename)
             _M.load_file(filename)
         end
     end
+    msg.info("found " .. #stylesheets .. " user stylesheet" .. (#stylesheets == 1 and "" or "s"))
 
     update_all_stylesheet_applications()
     lfs.chdir(cwd)

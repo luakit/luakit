@@ -23,6 +23,7 @@
  - The adblock page-blocked page now has a "Continue anyway" button.
  - Serializing Lua functions now includes their upvalues.
  - Support for WebKitGTK+ versions older than 2.16 has been removed.
+ - `adblock` and `styles` now log the directory searched for files.
 
 ## [2017-07-26]
 
