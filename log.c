@@ -97,6 +97,17 @@ LOG_LEVELS
     return 1;
 }
 
+const char*
+log_string_from_level(log_level_t lvl)
+{
+    switch (lvl) {
+#define X(name) case LOG_LEVEL_##name: return #name;
+LOG_LEVELS
+#undef X
+    }
+    g_assert_not_reached();
+}
+
 void
 _log(log_level_t lvl, const gchar *fct, const gchar *fmt, ...)
 {
