@@ -6,6 +6,7 @@
 
  - Fixed code-blocks in documentation being formatted incorrectly.
  - Fixed incompatibility of `editor.lua` with urxvt.
+ - Fixed slow performance while beginning a search.
 
 ### Changed
 
