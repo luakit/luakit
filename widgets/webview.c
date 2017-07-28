@@ -536,13 +536,16 @@ luaH_webview_search(lua_State *L)
     gboolean forward = luaH_checkboolean(L, 4);
     gboolean wrap = luaH_checkboolean(L, 5);
 
+    size_t textlen = strlen(text);
+    guint max_match_count = textlen < 5 ? 100 : G_MAXUINT;
+
     WebKitFindController *webkit_fc = webkit_web_view_get_find_controller(d->view);
     webkit_find_controller_search_finish(webkit_fc);
     webkit_find_controller_search(webkit_fc, text,
             WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE * (!case_sensitive) |
             WEBKIT_FIND_OPTIONS_BACKWARDS * (!forward) |
             WEBKIT_FIND_OPTIONS_WRAP_AROUND * wrap,
-            G_MAXUINT);
+            max_match_count);
     return 0;
 }
 
