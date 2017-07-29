@@ -177,10 +177,34 @@ new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     history = {maxlen = 50},
 })
 
+local function add_binds(mode, binds)
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, name in ipairs(mode) do
+        if not get_mode(name) then new_mode(name) end
+        local mdata = get_mode(name)
+        mdata.binds = mdata.binds or {}
+        for _, m in ipairs(binds) do
+            local bind, desc, action, opts = unpack(m)
+            if type(desc) == "function" then
+                desc, action, opts = nil, desc, action
+            end
+            if type(desc) == "string" or type(action) == "function" then -- Make ad-hoc action
+                action = type(action) == "table" and lousy.util.table.clone(action) or { func = action }
+                action.desc = desc
+            end
+            lousy.bind.add_bind(mdata.binds, bind, action, opts)
+        end
+    end
+end
+
+local function add_cmds (...) add_binds("command", ...) end
+
 return {
     new_mode = new_mode,
     get_mode = get_mode,
     get_modes = get_modes,
+    add_binds = add_binds,
+    add_cmds = add_cmds,
 }
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

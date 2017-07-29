@@ -12,6 +12,20 @@ local keys = util.table.keys
 
 local _M = {}
 
+local function convert_bind_syntax(b)
+    -- Convert single-char buffer bindings into key bindings
+    if string.wlen(b) == 1 then return "<"..b..">" end
+    -- commands are a no-op
+    if b:match("^:") then return b end
+
+    -- Otherwise, if it doesn't look like a <key> bind, make it a buffer bind
+    if not b:match("^<.+>$") then
+        -- wrap in ^$ if necessary
+        return string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
+    end
+    return b
+end
+
 --- Set of modifiers to ignore.
 -- @readwrite
 _M.ignore_mask = {
@@ -47,147 +61,6 @@ function _M.parse_mods(mods, remove_shift)
     return mods ~= "" and mods or nil
 end
 
---- Create a new key binding.
--- @tparam table mods The table of modifier keys.
--- @tparam string key The key name.
--- @tparam[opt] string desc A description for this key binding.
--- @default `nil`
--- @tparam function func The callback function for this key binding.
--- @tparam[opt] table opts The table of key binding options.
--- @default `{}`
--- @treturn table A table representing the new key binding.
-function _M.key(mods, key, desc, func, opts)
-    -- Detect optional description & adjust argument positions
-    if type(desc) == "function" then
-        desc, func, opts = nil, desc, func
-    end
-
-    assert(type(mods) == "table", "invalid modifiers table")
-    assert(type(key)  == "string" and #key > 0, "invalid key string")
-    assert(not desc or type(desc) == "string", "invalid description")
-    assert(type(func) == "function", "invalid callback function")
-
-    return {
-        type = "key",
-        mods = _M.parse_mods(mods, string.wlen(key) == 1),
-        key  = key,
-        desc = desc,
-        func = func,
-        opts = opts or {},
-    }
-end
-
---- Create a new button binding.
--- @tparam table mods The table of modifier keys.
--- @tparam string button The button name.
--- @tparam[opt] string desc A description for this button binding.
--- @tparam function func The callback function for this button binding.
--- @tparam[opt] table opts The table of button binding options.
--- @treturn table A table representing the new button binding.
-function _M.but(mods, button, desc, func, opts)
-    -- Detect optional description & adjust argument positions
-    if type(desc) == "function" then
-        desc, func, opts = nil, desc, func
-    end
-
-    assert(type(mods) == "table", "invalid modifiers table")
-    assert(type(button) == "number", "invalid button number")
-    assert(not desc or type(desc) == "string", "invalid description")
-    assert(type(func) == "function", "invalid callback function")
-
-    return {
-        type   = "button",
-        mods   = _M.parse_mods(mods),
-        button = button,
-        desc   = desc,
-        func   = func,
-        opts   = opts or {},
-    }
-end
-
---- Create a new buffer binding.
--- @tparam string pattern The text pattern to match.
--- @tparam[opt] string desc A description for this buffer binding.
--- @tparam function func The callback function for this buffer binding.
--- @tparam[opt] table opts The table of buffer binding options.
--- @treturn table A table representing the new buffer binding.
-function _M.buf(pattern, desc, func, opts)
-    -- Detect optional description & adjust argument positions
-    if type(desc) == "function" then
-        desc, func, opts = nil, desc, func
-    end
-
-    assert(type(pattern) == "string" and #pattern > 0, "invalid pattern string")
-    assert(not desc or type(desc) == "string", "invalid description")
-    assert(type(func) == "function", "invalid callback function")
-
-    return {
-        type    = "buffer",
-        pattern = pattern,
-        desc    = desc,
-        func    = func,
-        opts    = opts or {},
-    }
-end
-
---- Create a new command binding.
--- @tparam string|table cmds One or more text patterns to match.
--- @tparam[opt] string desc A description for this buffer binding.
--- @tparam function func The callback function for this buffer binding.
--- @tparam[opt] table opts The table of buffer binding options.
--- @treturn table A table representing the new buffer binding.
-function _M.cmd(cmds, desc, func, opts)
-    -- Detect optional description & adjust argument positions
-    if type(desc) == "function" then
-        desc, func, opts = nil, desc, func
-    end
-
-    -- Parse "co[mmand]" or literal.
-    if type(cmds) == "string" then
-        if string.match(cmds, "^([%-%w]+)%[(%w+)%]") then
-            local l, r = string.match(cmds, "^([%-%w]+)%[(%w+)%]")
-            cmds = {l..r, l}
-        else
-            cmds = {cmds,}
-        end
-    end
-
-    assert(type(cmds) == "table", "invalid commands table type")
-    assert(#cmds > 0, "empty commands table")
-    assert(not desc or type(desc) == "string", "invalid description")
-    assert(type(func) == "function", "invalid callback function")
-
-    return {
-        type = "command",
-        cmds = cmds,
-        desc = desc,
-        func = func,
-        opts = opts or {},
-    }
-end
-
---- Create a binding which is always called.
--- @tparam[opt] string desc A description for this binding.
--- @tparam function func The callback function for this binding.
--- @tparam[opt] table opts The table of binding options.
--- @treturn table A table representing the new binding.
-function _M.any(desc, func, opts)
-    -- Detect optional description & adjust argument positions
-    if type(desc) == "function" then
-        desc, func, opts = nil, desc, func
-    end
-
-    assert(not desc or type(desc) == "string", "invalid description")
-    assert(type(func) == "function", "invalid callback function")
-
-    return {
-        type = "any",
-        func = func,
-        desc = desc,
-        opts = opts or {},
-    }
-end
-
 --- Match any 'any' bindings in a given table of bindings.
 --
 -- The bindings' callback functions are called in the order that they
@@ -202,9 +75,10 @@ end
 -- called.
 -- @treturn boolean `true` if an 'any' binding was ran successfully.
 function _M.match_any(object, binds, args)
-    for _, b in ipairs(binds) do
-        if b.type == "any" then
-            if b.func(object, join(b.opts, args)) ~= false then
+    for _, m in ipairs(binds) do
+        local b, a, o = unpack(m)
+        if b == "<any>" then
+            if a.func(object, join(o, args), o) ~= false then
                 return true
             end
         end
@@ -228,9 +102,10 @@ end
 -- called.
 -- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_key(object, binds, mods, key, args)
-    for _, b in ipairs(binds) do
-        if b.type == "key" and b.key == key and b.mods == mods then
-            if b.func(object, join(b.opts, args)) ~= false then
+    for _, m in ipairs(binds) do
+        local b, a, o = unpack(m)
+        if b == "<".. (mods and (mods.."-") or "") .. key .. ">" then
+            if a.func(object, join(o, args), o) ~= false then
                 return true
             end
         end
@@ -254,9 +129,10 @@ end
 -- called.
 -- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_but(object, binds, mods, button, args)
-    for _, b in ipairs(binds) do
-        if b.type == "button" and b.button == button and b.mods == mods then
-            if b.func(object, join(b.opts, args)) ~= false then
+    for _, m in ipairs(binds) do
+        local b, a, o = unpack(m)
+        if b == "<" .. (mods and (mods.."-") or "") .. "Mouse" .. button .. ">" then
+            if a.func(object, join(o, args), o) ~= false then
                 return true
             end
         end
@@ -300,18 +176,17 @@ function _M.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
 
     local has_partial_match = false
-    for _, b in ipairs(binds) do
-        if b.type == "buffer" and string.match(buffer, b.pattern) then
-            if b.func(object, buffer, join(b.opts, args)) ~= false then
-                return true, true
+    for _, m in ipairs(binds) do
+        local b, a, o = unpack(m)
+        if b:match("^^") then
+            if buffer:match(b) then
+                local params = {join(o, args, { buffer = buffer }), o}
+                if a.compat == "buffer" then table.insert(params, 1, buffer) end
+                if a.func(object, unpack(params)) ~= false then
+                    return true, true
+                end
             end
-        --elseif b.type == "any" then
-        --    if b.func(object, join(b.opts, args)) ~= false then
-        --        return true
-        --    end
-        end
-        if b.type == "buffer" then
-            if is_partial_match(buffer, b.pattern) then
+            if is_partial_match(buffer, b) then
                 has_partial_match = true
             end
         end
@@ -339,22 +214,40 @@ function _M.match_cmd(object, binds, buffer, args)
     args = join(args or {}, {
         binds = binds,
         cmd = buffer,
+        arg = argument,
     })
 
-    for _, b in ipairs(binds) do
+    for _, m in ipairs(binds) do
+        local b, a, o = unpack(m)
+        -- split command binding string into long and short forms
+        local cmds = {}
+        for _, cmd in ipairs(util.string.split(b:gsub("^:", ""), ",%s+:")) do
+            if string.match(cmd, "^([%-%w]+)%[(%w+)%]") then
+                local l, r = string.match(cmd, "^([%-%w]+)%[(%w+)%]")
+                table.insert(cmds, l..r)
+                table.insert(cmds, l)
+            else
+                table.insert(cmds, cmd)
+            end
+        end
+
         -- Command matching
-        if b.type == "command" and util.table.hasitem(b.cmds, command) then
-            if b.func(object, argument, join(b.opts, args)) ~= false then
+        if b:match("^:") and util.table.hasitem(cmds, command) then
+            local params = {join(o, args, { argument = argument }), o}
+            if a.compat then table.insert(params, 1, argument) end
+            if a.func(object, unpack(params)) ~= false then
                 return true
             end
         -- Buffer matching
-        elseif b.type == "buffer" and string.match(buffer, b.pattern) then
-            if b.func(object, buffer, join(b.opts, args)) ~= false then
+        elseif b:match("^%^") and string.match(buffer, b) then
+            local params = {join(o, args, { buffer = buffer }), o}
+            if a.compat then table.insert(params, 1, buffer) end
+            if a.func(object, unpack(params)) ~= false then
                 return true
             end
         -- Any matching
-        elseif b.type == "any" then
-            if b.func(object, join(b.opts, args)) ~= false then
+        elseif b == "<any>" then
+            if a.func(object, join(o, args), o) ~= false then
                 return true
             end
         end
@@ -398,10 +291,7 @@ function _M.hit(object, binds, mods, key, args)
 
     -- Match button bindings
     elseif type(key) == "number" then
-        if _M.match_but(object, binds, mods, key, args) then
-            return true
-        end
-        return false
+        return _M.match_but(object, binds, mods, key, args)
 
     -- Match key bindings
     elseif (not args.buffer or not args.enable_buffer) or mods or len ~= 1 then
@@ -445,33 +335,30 @@ end
 -- @tparam table b The binding.
 -- @treturn string The binding description string.
 function _M.bind_to_string(b)
-    local t = b.type
-    local m = b.mods
-
-    if t == "key" then
-        if m or string.wlen(b.key) > 1 then
-            return "<".. (m and (m.."-") or "") .. b.key .. ">"
-        else
-            return b.key
+    if b:match("^^") then
+        if string.sub(b,1,1) .. string.sub(b, -1, -1) == "^$" then
+            b = string.sub(b, 2, -2)
         end
-    elseif t == "buffer" then
-        local p = b.pattern
-        if string.sub(p,1,1) .. string.sub(p, -1, -1) == "^$" then
-            p = string.sub(p, 2, -2)
-        end
-        p = p:gsub("%%([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%1")
-        return p
-    elseif t == "button" then
-        return "<" .. (m and (m.."-") or "") .. "Mouse" .. b.button .. ">"
-    elseif t == "any" then
-        return "any"
-    elseif t == "command" then
-        local cmds = {}
-        for i, cmd in ipairs(b.cmds) do
-            cmds[i] = ":"..cmd
-        end
-        return table.concat(cmds, ", ")
+        return b:gsub("%%([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%1")
+    elseif b:match("^<.>$") then
+        return b:sub(2,2)
+    else
+        return b
     end
+end
+
+--- Bind a trigger to an action, adding the resulting binding to an array of
+-- bindings.
+-- @tparam table binds The array of bindings to add the new binding to.
+-- @tparam string bind The trigger that will activate the action associated with
+-- this bind.
+-- @tparam table action The action that will be activated.
+-- @tparam[opt] table opts A table of bind-time options that will be passed to the
+-- action when it is activated.
+function _M.add_bind (binds, bind, action, opts)
+    assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
+    bind = convert_bind_syntax(bind)
+    table.insert(binds, { bind, action, opts or {} })
 end
 
 return _M
