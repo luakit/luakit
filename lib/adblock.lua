@@ -4,6 +4,18 @@
 -- domains that only serve advertisements. It does not currently do any form of
 -- cosmetic ad blocking (i.e. element hiding with CSS).
 --
+-- See also: @ref{adblock_chrome}.
+--
+-- ### Capabilities
+--
+-- * You can allow specific content to be loaded if it is inadvertently
+--   blocked: simply add whitelisting rules formed by `@@` and the pattern to
+--   allow.
+-- * Supports multiple filter list files.
+-- * Filter files can be enabled, disabled and reloaded from disk
+--   without restarting luakit.
+-- * A configuration chrome page is provided by @ref{adblock_chrome}.
+--
 -- ### Usage
 --
 -- * Add `require "adblock"` and `require "adblock_chrome"` to your `config.rc`.
@@ -11,7 +23,24 @@
 --   Multiple lists are supported.
 --   EasyList is the most popular Adblock Plus filter list, and can be
 --   downloaded from [https://easylist.to/](https://easylist.to/).
--- * Filterlists need to be updated regularly (~weekly), use cron!
+-- * Filter lists downloaded to `$XDG_DATA_HOME/luakit/adblock` must end in
+-- `.txt`.
+-- * Filter lists need to be updated regularly (~weekly), use cron!
+--
+-- ### Troubleshooting
+--
+-- If ad blocking is not working as expected, the easiest way to determine
+-- what is happening is to set the appropriate log levels to `debug`:
+--
+-- If a filterlist is not being loaded for some reason, start luakit with
+--   the following:
+--
+--     --log=lua/lib/adblock=debug
+--
+-- If a filterlist is not behaving correctly, by blocking too much or too
+--   little, start luakit with the following:
+--
+--     --log=lua/lib/adblock_wm=debug
 --
 -- @module adblock
 -- @author Chris van Dijk (quigybo) <quigybo@hotmail.com>

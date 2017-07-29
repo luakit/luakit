@@ -49,16 +49,6 @@
 --- Quit luakit immediately, without asking modules for confirmation.
 -- @function quit
 
---- Get the contents of the X selection.
--- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
--- @treturn string The contents of the named selection.
--- @function get_selection
-
---- Set the contents of the X selection.
--- @tparam string text The UTF-8 string to be copied to the named selection.
--- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
--- @function set_selection
-
 --- Callback type for @ref{spawn}.
 -- @callback process_exit_cb
 -- @tparam string reason The reason for process termination. Can be one of `"exit"`, indicating normal termination;
@@ -183,5 +173,21 @@
 -- @property spell_checking_languages
 -- @readwrite
 -- @type {string}
+
+--- The current contents of the different X selections.
+-- The key used to access this table must be the name of the X clipboard
+-- to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
+-- #### Primary
+-- When the user selects some text with the mouse, the primary selection
+-- is filled automatically with the contents of that text selection.
+-- #### Secondary
+-- The secondary selection is not used as much as the primary and clipboard
+-- selections, but is included here for completeness.
+-- #### Clipboard
+-- The clipboard selection is filled with the contents of the primary selection
+-- when the user explicitly requests a copy operation.
+-- @type {[string]=string}
+-- @readwrite
+-- @property selection
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
