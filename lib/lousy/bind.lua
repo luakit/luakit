@@ -222,7 +222,7 @@ end
 --
 -- @param object An object passed through to any key bindings called.
 -- @tparam table binds A table of bindings to search.
--- @tparam table mods The table of modifier keys.
+-- @tparam string mods The string of modifier keys.
 -- @tparam string key The key name.
 -- @tparam table args A table of arguments passed through to any key bindings
 -- called.
@@ -248,7 +248,7 @@ end
 --
 -- @param object An object passed through to any key bindings called.
 -- @tparam table binds A table of bindings to search.
--- @tparam table mods The table of modifier keys.
+-- @tparam string mods The table of modifier keys.
 -- @tparam string button The button name.
 -- @tparam table args A table of arguments passed through to any button bindings
 -- called.
