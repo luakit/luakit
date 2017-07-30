@@ -392,10 +392,10 @@ add_binds("normal", {
 
     -- Commands
     key({"Control"}, "a", "Increment last number in URL.",
-        function (w) w:navigate(w:inc_uri(1)) end),
+        function (w, m) w:navigate(w:inc_uri(m.count)) end, {count = 1}),
 
     key({"Control"}, "x", "Decrement last number in URL.",
-        function (w) w:navigate(w:inc_uri(-1)) end),
+        function (w, m) w:navigate(w:inc_uri(-m.count)) end, {count = 1}),
 
     key({}, "o", "Open one or more URLs.",
         function (w) w:enter_cmd(":open ") end),
