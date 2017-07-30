@@ -99,7 +99,7 @@ end
 -- @treturn table A new table containing all keys from the arguments.
 function table.join(...)
     local ret = {}
-    for _, t in pairs({...}) do
+    for _, t in ipairs({...}) do
         for k, v in pairs(t) do
             if type(k) == "number" then
                 rtable.insert(ret, v)
