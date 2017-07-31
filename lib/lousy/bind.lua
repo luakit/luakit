@@ -17,13 +17,16 @@ local function convert_bind_syntax(b)
     if string.wlen(b) == 1 then return "<"..b..">" end
     -- commands are a no-op
     if b:match("^:") then return b end
-
-    -- Otherwise, if it doesn't look like a <key> bind, make it a buffer bind
-    if not b:match("^<.+>$") then
-        -- wrap in ^$ if necessary
-        return string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
+    -- Key/mouse binds have to have sorted modifiers
+    if b:match("^<.+>$") then
+        local mods = util.string.split(b:match("^<(.+)>$"), "%-")
+        local key = table.remove(mods)
+        table.sort(mods)
+        mods = #mods > 0 and table.concat(mods, "-") or nil
+        return "<".. (mods and (mods.."-") or "") .. key .. ">"
     end
-    return b
+    -- Otherwise, make it a buffer bind; wrap in ^$ if necessary
+    return string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
 end
 
 --- Set of modifiers to ignore.
@@ -46,6 +49,7 @@ _M.map = {
 -- @treturn string A string of key names, separated by hyphens (-).
 function _M.parse_mods(mods, remove_shift)
     local t = {}
+    table.sort(mods)
     for _, mod in ipairs(mods) do
         if not _M.ignore_mask[mod] then
             mod = _M.map[mod] or mod
