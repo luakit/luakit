@@ -10,8 +10,8 @@
 local history = require("history")
 local lousy = require("lousy")
 local chrome = require("chrome")
-local binds = require("binds")
-local add_cmds = binds.add_cmds
+local modes     = require("modes")
+local add_cmds  = modes.add_cmds
 
 local _M = {}
 
@@ -413,13 +413,12 @@ history.add_signal("add", function (uri)
     if string.match(uri, "^luakit://history/") then return false end
 end)
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("history", "Open <luakit://history/> in a new tab.",
-        function (w, query)
-            initial_search_term = query
+    { ":history", "Open <luakit://history/> in a new tab.",
+        function (w, o)
+            initial_search_term = o.arg
             w:new_tab("luakit://history/")
-        end),
+        end },
 })
 
 return _M

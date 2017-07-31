@@ -11,8 +11,8 @@
 local downloads = require("downloads")
 local lousy = require("lousy")
 local chrome = require("chrome")
-local binds = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local modes = require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local webview = require("webview")
 local window = require("window")
 
@@ -369,22 +369,18 @@ export_funcs)
 -- @type string
 -- @readonly
 _M.chrome_page = "luakit://downloads/"
-local buf, cmd = lousy.bind.buf, lousy.bind.cmd
 
 add_binds("normal", {
-    buf("^gd$",
-        [[Open <luakit://downloads> in current tab.]],
-        function (w) w:navigate(_M.chrome_page) end),
+    { "gd", [[Open <luakit://downloads> in current tab.]],
+        function (w) w:navigate(_M.chrome_page) end },
 
-    buf("^gD$",
-        [[Open <luakit://downloads> in new tab.]],
-        function (w) w:new_tab(_M.chrome_page) end),
+    { "gD", [[Open <luakit://downloads> in new tab.]],
+        function (w) w:new_tab(_M.chrome_page) end },
 })
 
 add_cmds({
-    cmd("downloads",
-        [[Open <luakit://downloads> in new tab.]],
-        function (w) w:new_tab(_M.chrome_page) end),
+    { ":downloads", [[Open <luakit://downloads> in new tab.]],
+        function (w) w:new_tab(_M.chrome_page) end },
 })
 
 return _M

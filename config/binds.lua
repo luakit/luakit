@@ -8,7 +8,6 @@ local globals = require("globals")
 -- Binding aliases
 local lousy = require("lousy")
 local modes = require("modes")
-local new_mode, get_mode = modes.new_mode, modes.get_mode
 
 -- Util aliases
 local join, split = lousy.util.table.join, lousy.util.string.split
@@ -18,27 +17,8 @@ local scroll_step = globals.scroll_step or 20
 local page_step = globals.page_step or 1.0
 local zoom_step = globals.zoom_step or 0.1
 
--- Add binds to a mode
-local function add_binds(mode, binds, before)
-    assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
-    mode = type(mode) ~= "table" and {mode} or mode
-    for _, m in ipairs(mode) do
-        local mdata = get_mode(m)
-        if mdata and before then
-            mdata.binds = join(binds, mdata.binds or {})
-        elseif mdata then
-            mdata.binds = mdata.binds or {}
-            for _, b in ipairs(binds) do table.insert(mdata.binds, b) end
-        else
-            new_mode(m, { binds = binds })
-        end
-    end
-end
-
--- Add commands to command mode
-local function add_cmds(cmds, before)
-    add_binds("command", cmds, before)
-end
+local add_binds = modes.add_binds
+local add_cmds = modes.add_cmds
 
 -- Adds the default menu widget bindings to a mode
 local menu_binds = {

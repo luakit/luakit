@@ -33,11 +33,10 @@ local lousy   = require("lousy")
 local lfs     = require("lfs")
 local editor  = require("editor")
 local globals = require("globals")
-local binds = require("binds")
+local binds, modes = require("binds"), require("modes")
 local new_mode = require("modes").new_mode
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
-local key     = lousy.bind.key
 
 local _M = {}
 
@@ -342,15 +341,14 @@ _M.detect_files = function ()
     lfs.chdir(cwd)
 end
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"styles-reload", "sr"}, "Reload user stylesheets.", function (w)
-        w:notify("styles: Reloading files...")
-        _M.detect_files()
-        w:notify("styles: Reloading files complete.")
-    end),
-    cmd({"styles-list"}, "List installed userstyles.",
-        function (w) w:set_mode("styles-list") end),
+    { ":styles-reload, :sr", "Reload user stylesheets.", function (w)
+            w:notify("styles: Reloading files...")
+            _M.detect_files()
+            w:notify("styles: Reloading files complete.")
+        end },
+    { ":styles-list", "List installed userstyles.",
+        function (w) w:set_mode("styles-list") end },
 })
 
 -- Add mode to display all userscripts in menu
@@ -371,22 +369,21 @@ new_mode("styles-list", {
 
 add_binds("styles-list", lousy.util.table.join({
     -- Delete userscript
-    key({}, "space", "Enable/disable the currently highlighted userstyle.",
-        function (w)
-        local row = w.menu:get()
-        if row and row.stylesheet then
-            row.stylesheet.enabled = not row.stylesheet.enabled
-            db_set(row.stylesheet.file, row.stylesheet.enabled)
-            update_all_stylesheet_applications()
-        end
-    end),
-    key({}, "e", "Edit the currently highlighted userstyle.", function (w)
-        local row = w.menu:get()
-        if row and row.stylesheet then
-            local file = luakit.data_dir .. "/styles/" .. row.stylesheet.file
-            editor.edit(file)
-        end
-    end),
+    { "<space>", "Enable/disable the currently highlighted userstyle.", function (w)
+            local row = w.menu:get()
+            if row and row.stylesheet then
+                row.stylesheet.enabled = not row.stylesheet.enabled
+                db_set(row.stylesheet.file, row.stylesheet.enabled)
+                update_all_stylesheet_applications()
+            end
+        end },
+    { "e", "Edit the currently highlighted userstyle.", function (w)
+            local row = w.menu:get()
+            if row and row.stylesheet then
+                local file = luakit.data_dir .. "/styles/" .. row.stylesheet.file
+                editor.edit(file)
+            end
+        end },
 }, menu_binds))
 
 _M.detect_files()

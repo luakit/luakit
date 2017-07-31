@@ -10,10 +10,9 @@
 -- @copyright 2010 Mason Larobina  <mason.larobina@gmail.com>
 
 local window = require("window")
-local lousy = require("lousy")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local binds, modes = require("binds"), require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
 local util = require("lousy.util")
 local join = util.table.join
@@ -40,46 +39,45 @@ new_mode("tabhistory", {
 })
 
 -- Add history menu binds.
-local key = lousy.bind.key
 add_binds("tabhistory", join({
     -- Open history item in new tab.
-    key({}, "t", "Open the currently highlighted history item in a new tab.",
+    { "t", "Open the currently highlighted history item in a new tab.",
         function (w)
-        local row = w.menu:get()
-        if row and row.index then
-            local v = w.view
-            local uri = v.history.items[row.index].uri
-            w:new_tab(uri, { switch = false })
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.index then
+                local v = w.view
+                local uri = v.history.items[row.index].uri
+                w:new_tab(uri, { switch = false })
+            end
+        end },
 
     -- Open history item in new window.
-    key({}, "w", "Open the currently highlighted history item in a new window.",
+    { "w", "Open the currently highlighted history item in a new window.",
         function (w)
-        local row = w.menu:get()
-        w:set_mode()
-        if row and row.index then
-            local v = w.view
-            local uri = v.history.items[row.index].uri
-            window.new({uri})
-        end
-    end),
+            local row = w.menu:get()
+            w:set_mode()
+            if row and row.index then
+                local v = w.view
+                local uri = v.history.items[row.index].uri
+                window.new({uri})
+            end
+        end },
 
     -- Go to history item.
-    key({}, "Return", "Open the currently highlighted history item in the current tab.",
+    { "<Return>", "Open the currently highlighted history item in the current tab.",
         function (w)
-        local row = w.menu:get()
-        w:set_mode()
-        if row and row.index then
-            local v = w.view
-            local offset = row.index - v.history.index
-            if offset < 0 then
-                v:go_back(-offset)
-            elseif offset > 0 then
-                v:go_forward(offset)
+            local row = w.menu:get()
+            w:set_mode()
+            if row and row.index then
+                local v = w.view
+                local offset = row.index - v.history.index
+                if offset < 0 then
+                    v:go_back(-offset)
+                elseif offset > 0 then
+                    v:go_forward(offset)
+                end
             end
-        end
-    end),
+        end },
 
 }, menu_binds))
 
@@ -93,9 +91,8 @@ window.methods.tab_history = function (w)
 end
 
 -- Add `:history` command to view all history items for the current tab in an interactive menu.
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("tabhistory", "List page history for the current tab.", window.methods.tab_history),
+    { ":tabhistory", "List page history for the current tab.", window.methods.tab_history },
 })
 
 return _M

@@ -16,9 +16,8 @@ local _M = {}
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when
 -- a mode contains a `history` table item (with history settings therein).
-local key = lousy.bind.key
 local hist_binds = {
-    key({}, "Up", function (w)
+    { "<Up>", function (w)
         local h = w.mode.history
         local lc = h.cursor
         if not h.cursor and h.len > 0 then
@@ -30,9 +29,9 @@ local hist_binds = {
             if not h.orig then h.orig = w.ibar.input.text end
             w:set_input(h.items[h.cursor])
         end
-    end),
+    end },
 
-    key({}, "Down", function (w)
+    { "<Down>", function (w)
         local h = w.mode.history
         if not h.cursor then return end
         if h.cursor >= h.len then
@@ -43,7 +42,7 @@ local hist_binds = {
             h.cursor = h.cursor + 1
             w:set_input(h.items[h.cursor])
         end
-    end),
+    end },
 }
 
 -- Add the Up & Down keybindings to modes which support command history
@@ -59,7 +58,7 @@ window.add_signal("init", function (w)
             h.orig = nil
             -- Add Up & Down history bindings
             for _, b in ipairs(hist_binds) do
-                table.insert(w.binds, b)
+                lousy.bind.add_bind(w.binds, b[1], { func = b[2] })
             end
             -- Trim history
             if h.maxlen and h.len > (h.maxlen * 1.5) then

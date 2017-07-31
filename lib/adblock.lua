@@ -55,8 +55,8 @@ local window    = require("window")
 local lousy     = require("lousy")
 local util      = lousy.util
 local lfs       = require("lfs")
-local binds     = require("binds")
-local add_cmds  = binds.add_cmds
+local modes     = require("modes")
+local add_cmds  = modes.add_cmds
 
 local _M = {}
 
@@ -485,28 +485,19 @@ luakit.add_signal("web-extension-created", function (view)
 end)
 
 -- Add commands.
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"adblock-reload", "abr"}, "Reload adblock filters.", function (w)
-        _M.load(true)
-        w:notify("adblock: Reloading filters complete.")
-    end),
-
-    cmd({"adblock-list-enable", "able"}, "Enable an adblock filter list.", function (_, a)
-        _M.list_set_enabled(a, true)
-    end),
-
-    cmd({"adblock-list-disable", "abld"}, "Disable an adblock filter list.", function (_, a)
-        _M.list_set_enabled(a, false)
-    end),
-
-    cmd({"adblock-enable", "abe"}, "Enable ad blocking.", function ()
-        _M.enabled = true
-    end),
-
-    cmd({"adblock-disable", "abd"}, "Disable ad blocking.", function ()
-        _M.enabled = false
-    end),
+    { ":adblock-reload, :abr", "Reload adblock filters.", function (w)
+            _M.load(true)
+            w:notify("adblock: Reloading filters complete.")
+        end },
+    { ":adblock-list-enable, :able", "Enable an adblock filter list.",
+        function (_, a) _M.list_set_enabled(a, true) end },
+    { ":adblock-list-disable, :abld", "Disable an adblock filter list.",
+        function (_, a) _M.list_set_enabled(a, false) end },
+    { ":adblock-enable, :abe", "Enable ad blocking.",
+        function () _M.enabled = true end },
+    { ":adblock-disable, :abd", "Disable ad blocking.",
+        function () _M.enabled = false end },
 })
 
 -- Initialise module

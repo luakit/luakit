@@ -46,11 +46,10 @@
 -- @copyright 2010-2012 Mason Larobina  <mason.larobina@gmail.com>
 -- @copyright 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
 
-local lousy = require "lousy"
 local window = require("window")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
+local modes = require("modes")
+local add_binds = modes.add_binds
 
 local _M = {}
 
@@ -266,16 +265,15 @@ new_mode("follow", {
     end,
 })
 
-local key = lousy.bind.key
 add_binds("follow", {
-    key({},          "Tab",    "Focus the next element hint.",
-        function (w) focus(w, 1) end),
-    key({"Shift"},   "Tab",    "Focus the previous element hint.",
-        function (w) focus(w, -1)        end),
-    key({},          "Return", "Activate the currently focused element hint.",
-        function (w) do_follow(w)        end),
-    key({"Shift"},   "Return", "Activate all currently visible element hints.",
-        function (w) follow_all_hints(w) end),
+    { "<Tab>",    "Focus the next element hint.",
+        function (w) focus(w, 1) end },
+    { "<Shift-Tab>",    "Focus the previous element hint.",
+        function (w) focus(w, -1)        end },
+    { "<Return>", "Activate the currently focused element hint.",
+        function (w) do_follow(w)        end },
+    { "<Shift-Return>", "Activate all currently visible element hints.",
+        function (w) follow_all_hints(w) end },
 })
 
 --- Element selectors used to filter elements to follow.
@@ -296,21 +294,20 @@ _M.selectors = {
     -- Image elements within a hyperlink.
 }
 
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^f$", [[Start `follow` mode. Hint all clickable elements
+    { "^f$", [[Start `follow` mode. Hint all clickable elements
         (as defined by the `follow.selectors.clickable`
-        selector) and open links in the current tab.]],
+            selector) and open links in the current tab.]],
         function (w)
             w:set_mode("follow", {
                 selector = "clickable", evaluator = "click",
                 func = function (s) w:emit_form_root_active_signal(s) end,
             })
-        end),
+        end },
 
     -- Open new tab
-    buf("^F$", [[Start follow mode. Hint all links (as defined by the
-        `follow.selectors.uri` selector) and open links in a new tab.]],
+    { "^F$", [[Start follow mode. Hint all links (as defined by the
+            `follow.selectors.uri` selector) and open links in a new tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "background tab", selector = "uri", evaluator = "uri",
@@ -319,20 +316,15 @@ add_binds("normal", {
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Start extended follow mode
-    buf("^;$", [[Start `ex-follow` mode. See the [ex-follow](#mode-ex-follow)
+    { "^;$", [[Start `ex-follow` mode. See the [ex-follow](#mode-ex-follow)
         help section for the list of follow modes.]],
-        function (w)
-            w:set_mode("ex-follow")
-        end),
+        function (w) w:set_mode("ex-follow") end },
 
-    buf("^g;$", [[Start `ex-follow` mode and stay there until `<Escape>` is
-        pressed.]],
-        function (w)
-            w:set_mode("ex-follow", true)
-        end),
+    { "^g;$", [[Start `ex-follow` mode and stay there until `<Escape>` is pressed.]],
+        function (w) w:set_mode("ex-follow", true) end },
 })
 
 -- Extended follow mode
@@ -343,17 +335,17 @@ new_mode("ex-follow", {
 })
 
 add_binds("ex-follow", {
-    key({}, ";", [[Hint all focusable elements (as defined by the
+    { ";", [[Hint all focusable elements (as defined by the
         `follow.selectors.focus` selector) and focus the matched element.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "focus", selector = "focus", evaluator = "focus",
                 func = function (s) w:emit_form_root_active_signal(s) end,
             })
-        end),
+        end },
 
     -- Yank element uri or description into primary selection
-    key({}, "y", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "y", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -365,10 +357,10 @@ add_binds("ex-follow", {
                     w:notify("Yanked uri: " .. uri, false)
                 end
             })
-        end),
+        end },
 
     -- Yank element description
-    key({}, "Y", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "Y", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -379,10 +371,10 @@ add_binds("ex-follow", {
                     w:notify("Yanked desc: " .. desc)
                 end
             })
-        end),
+        end },
 
     -- Open image src
-    key({}, "i", [[Hint all images (as defined by the `follow.selectors.image`
+    { "i", [[Hint all images (as defined by the `follow.selectors.image`
         selector) and open matching image location in the current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -392,10 +384,10 @@ add_binds("ex-follow", {
                     w:navigate(src)
                 end
             })
-        end),
+        end },
 
     -- Open image src in new tab
-    key({}, "I", [[Hint all images (as defined by the
+    { "I", [[Hint all images (as defined by the
         `follow.selectors.image` selector) and open matching image location in
         a new tab.]],
         function (w)
@@ -406,10 +398,10 @@ add_binds("ex-follow", {
                     w:new_tab(src, { private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open thumbnail link
-    key({}, "x", [[Hint all thumbnails (as defined by the
+    { "x", [[Hint all thumbnails (as defined by the
         `follow.selectors.thumbnail` selector) and open link in current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -420,10 +412,10 @@ add_binds("ex-follow", {
                     w:navigate(uri)
                 end
             })
-        end),
+        end },
 
     -- Open thumbnail link in new tab
-    key({}, "X", [[Hint all thumbnails (as defined by the
+    { "X", [[Hint all thumbnails (as defined by the
         `follow.selectors.thumbnail` selector) and open link in a new tab.]],
         function (w)
             w:set_mode("follow", {
@@ -434,10 +426,10 @@ add_binds("ex-follow", {
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open link
-    key({}, "o", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "o", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in the current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -447,10 +439,10 @@ add_binds("ex-follow", {
                     w:navigate(uri)
                 end
             })
-        end),
+        end },
 
     -- Open link in new tab
-    key({}, "t", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "t", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in a new tab.]],
         function (w)
             w:set_mode("follow", {
@@ -460,10 +452,10 @@ add_binds("ex-follow", {
                     w:new_tab(uri, { private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open link in background tab
-    key({}, "b", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "b", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in a background tab.]],
         function (w)
             w:set_mode("follow", {
@@ -473,10 +465,10 @@ add_binds("ex-follow", {
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open link in new window
-    key({}, "w", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "w", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in a new window.]],
         function (w)
             w:set_mode("follow", {
@@ -486,10 +478,10 @@ add_binds("ex-follow", {
                     window.new{uri}
                 end
             })
-        end),
+        end },
 
     -- Set command `:open <uri>`
-    key({}, "O", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "O", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and generate a `:open` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -499,10 +491,10 @@ add_binds("ex-follow", {
                     w:enter_cmd(":open " .. uri)
                 end
             })
-        end),
+        end },
 
     -- Set command `:tabopen <uri>`
-    key({}, "T", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "T", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and generate a `:tabopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -512,10 +504,10 @@ add_binds("ex-follow", {
                     w:enter_cmd(":tabopen " .. uri)
                 end
             })
-        end),
+        end },
 
     -- Set command `:winopen <uri>`
-    key({}, "W", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "W", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and generate a `:winopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -525,7 +517,7 @@ add_binds("ex-follow", {
                     w:enter_cmd(":winopen " .. uri)
                 end
             })
-        end),
+        end },
 })
 
 return _M

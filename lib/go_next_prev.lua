@@ -8,9 +8,8 @@
 -- @copyright 2009 Aldrik Dunbar  (n30n)
 -- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
 
-local lousy = require("lousy")
-local binds = require("binds")
-local add_binds = binds.add_binds
+local modes = require("modes")
+local add_binds = modes.add_binds
 
 local _M = {}
 
@@ -79,12 +78,11 @@ local go_prev = [=[
 ]=]
 
 -- Add `[[` & `]]` bindings to the normal mode.
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^%]%]$", "Open the next page in the current tab.",
-        function (w) w.view:eval_js(go_next, { no_return = true }) end),
-    buf("^%[%[$", "Open the previous page in the current tab.",
-        function (w) w.view:eval_js(go_prev, { no_return = true }) end),
+    { "%]%]", "Open the next page in the current tab.",
+        function (w) w.view:eval_js(go_next, { no_return = true }) end },
+    { "%[%[", "Open the previous page in the current tab.",
+        function (w) w.view:eval_js(go_prev, { no_return = true }) end },
 })
 
 return _M

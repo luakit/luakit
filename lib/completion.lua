@@ -13,8 +13,7 @@ local history = require("history")
 local bookmarks = require("bookmarks")
 local modes = require("modes")
 local new_mode, get_mode = modes.new_mode, modes.get_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
+local add_binds = modes.add_binds
 local escape = lousy.util.escape
 
 local _M = {}
@@ -23,9 +22,8 @@ local _M = {}
 local data = setmetatable({}, { __mode = "k" })
 
 -- Add completion start trigger
-local key = lousy.bind.key
 add_binds("command", {
-    key({}, "Tab", "Open completion menu.", function (w) w:set_mode("completion") end),
+    { "<Tab>", "Open completion menu.", function (w) w:set_mode("completion") end },
 })
 
 --- Return to command mode with original text and with original cursor position.
@@ -36,29 +34,22 @@ end
 
 -- Command completion binds
 add_binds("completion", {
-    key({}, "Tab", "Select next matching completion item.",
-        function (w) w.menu:move_down() end),
-
-    key({"Shift"}, "Tab", "Select previous matching completion item.",
-        function (w) w.menu:move_up() end),
-
-    key({}, "Up", "Select next matching completion item.",
-        function (w) w.menu:move_up() end),
-
-    key({}, "Down", "Select previous matching completion item.",
-        function (w) w.menu:move_down() end),
-
-    key({"Control"}, "j", "Select next matching completion item.",
-        function (w) w.menu:move_down() end),
-
-    key({"Control"}, "k", "Select previous matching completion item.",
-        function (w) w.menu:move_up() end),
-
-    key({}, "Escape", "Stop completion and restore original command.",
-        _M.exit_completion),
-
-    key({"Control"}, "[", "Stop completion and restore original command.",
-        _M.exit_completion),
+    { "<Tab>", "Select next matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Shift-Tab>", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "Up", "Select next matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "Down", "Select previous matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Control-j>", "Select next matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Control-k>", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "<Escape>", "Stop completion and restore original command.",
+        _M.exit_completion },
+    { "<Control-[>", "Stop completion and restore original command.",
+        _M.exit_completion },
 })
 
 --- Update the list of completions for some input text.

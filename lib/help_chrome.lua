@@ -10,7 +10,7 @@
 local lousy = require("lousy")
 local chrome = require("chrome")
 local history = require("history")
-local add_cmds = require("binds").add_cmds
+local add_cmds = require("modes").add_cmds
 local error_page = require("error_page")
 local get_modes = require("modes").get_modes
 local markdown = require("markdown")
@@ -237,10 +237,9 @@ chrome.add("help", function (v, meta)
     end
 end, nil, {})
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("help", "Open <luakit://help/> in a new tab.",
-        function (w) w:new_tab("luakit://help/") end),
+    { ":help", "Open <luakit://help/> in a new tab.",
+        function (w) w:new_tab("luakit://help/") end },
 })
 
 -- Prevent history items from turning up in history

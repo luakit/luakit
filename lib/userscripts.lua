@@ -10,12 +10,11 @@
 
 local webview = require("webview")
 local window = require("window")
-local bind = require("lousy.bind")
 local util = require("lousy.util")
 local lfs = require("lfs")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local binds, modes = require("binds"), require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
 
 local _M = {}
@@ -300,10 +299,9 @@ webview.add_signal("init", function (view)
 end)
 
 -- Add userscript commands
-local cmd = bind.cmd
 add_cmds({
     -- Saves the content of the open view as an userscript
-    cmd({"userscriptinstall", "usi", "usinstall"}, "Install the userscript loaded in the current tab.", function (w)
+    { ":userscriptinstall, :usi, :usinstall", "Install the userscript loaded in the current tab.", function (w)
         local view = w.view
         local file = string.match(view.uri, "/([^/]+%.user%.js)$")
         if (not file) then return w:error("URL is not a *.user.js file") end
@@ -316,10 +314,10 @@ add_cmds({
             _M.save(file, script)
             w:notify("Installed userscript to: " .. _M.dir .. "/" .. file)
         end})
-    end),
+    end },
 
-    cmd({"userscripts", "uscripts"}, "List installed userscripts.",
-        function (w) w:set_mode("uscriptlist") end),
+    { ":userscripts, :uscripts", "List installed userscripts.",
+        function (w) w:set_mode("uscriptlist") end },
 })
 
 -- Add mode to display all userscripts in menu
@@ -346,44 +344,43 @@ new_mode("uscriptlist", {
     end,
 })
 
-local key = bind.key
 add_binds("uscriptlist", util.table.join({
     -- Delete userscript
-    key({}, "d", "Delete the currently highlighted userscript.",
+    { "d", "Delete the currently highlighted userscript.",
         function (w)
-        local row = w.menu:get()
-        if row and row.script then
-            _M.del(row.script.file)
-            w.menu:del()
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.script then
+                _M.del(row.script.file)
+                w.menu:del()
+            end
+        end },
 
     -- Open userscript homepage
-    key({}, "o", "Open the currently highlighted userscript's homepage in the current tab.",
+    { "o", "Open the currently highlighted userscript's homepage in the current tab.",
         function (w)
-        local row = w.menu:get()
-        if row and row.script and row.script.homepage then
-            w:navigate(row.script.homepage)
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.script and row.script.homepage then
+                w:navigate(row.script.homepage)
+            end
+        end },
 
     -- Open userscript homepage in new tab
-    key({}, "t", "Open the currently highlighted userscript's homepage in a new tab.",
+    { "t", "Open the currently highlighted userscript's homepage in a new tab.",
         function (w)
-        local row = w.menu:get()
-        if row and row.script and row.script.homepage then
-            w:new_tab(row.script.homepage, { switch = false })
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.script and row.script.homepage then
+                w:new_tab(row.script.homepage, { switch = false })
+            end
+        end },
 
     -- Open userscript homepage in new window
-    key({}, "w", "Open the currently highlighted userscript's homepage in a new window.",
+    { "w", "Open the currently highlighted userscript's homepage in a new window.",
         function (w)
-        local row = w.menu:get()
-        if row and row.script and row.script.homepage then
-            window.new(row.script.homepage)
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.script and row.script.homepage then
+                window.new(row.script.homepage)
+            end
+        end },
 }, menu_binds))
 
 -- Initialize the userscripts

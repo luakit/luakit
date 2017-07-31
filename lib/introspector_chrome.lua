@@ -16,7 +16,7 @@ local history = require("history")
 local markdown = require("markdown")
 local editor = require("editor")
 local get_modes = require("modes").get_modes
-local add_cmds = require("binds").add_cmds
+local add_cmds = require("modes").add_cmds
 
 local _M = {}
 
@@ -334,10 +334,9 @@ end, nil, {
     open_editor = function(_, ...) return editor.edit(...) end,
 })
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("introspector", "Open <luakit://introspector/> in a new tab.",
-        function (w) w:new_tab("luakit://introspector/") end),
+    { ":introspector", "Open <luakit://introspector/> in a new tab.",
+        function (w) w:new_tab("luakit://introspector/") end },
 })
 
 -- Prevent history items from turning up in history

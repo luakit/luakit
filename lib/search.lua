@@ -9,39 +9,34 @@
 -- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
-local lousy = require("lousy")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
+local modes = require("modes")
+local add_binds = modes.add_binds
 
 local _M = {}
 
 -- Add searching binds to normal mode
-local key = lousy.bind.key
 add_binds("normal", {
-    key({}, "/", "Search for string on current page.",
-        function (w) w:start_search("/") end),
-
-    key({}, "?", "Reverse search for string on current page.",
-        function (w) w:start_search("?") end),
-
-    key({}, "n", "Find next search result.", function (w, m)
+    { "/", "Search for string on current page.",
+        function (w) w:start_search("/") end },
+    { "?", "Reverse search for string on current page.",
+        function (w) w:start_search("?") end },
+    { "n", "Find next search result.", function (w, m)
         for _=1,m.count do
             w:search(nil, true)
             if w.search_state.by_view[w.view].ret == false then
                 break
             end
         end
-    end, {count=1}),
-
-    key({}, "N", "Find previous search result.", function (w, m)
+    end, {count=1} },
+    { "N", "Find previous search result.", function (w, m)
         for _=1,m.count do
             w:search(nil, false)
             if w.search_state.by_view[w.view].ret == false then
                 break
             end
         end
-    end, {count=1}),
+    end, {count=1} },
 })
 
 local function new_search_state()
@@ -92,13 +87,12 @@ new_mode("search", {
 
 -- Add binds to search mode
 add_binds("search", {
-    key({"Control"}, "j", "Select next search result.", function (w)
+    { "<Control-j>", "Select next search result.", function (w)
         w:search(w.search_state.last_search, true)
-    end),
-
-    key({"Control"}, "k", "Select previous result.", function (w)
+    end },
+    { "<Control-k>", "Select previous result.", function (w)
         w:search(w.search_state.last_search, false)
-    end),
+    end },
 })
 
 -- Add search functions to webview
