@@ -197,7 +197,17 @@ local function add_binds(mode, binds)
     end
 end
 
-local function add_cmds (...) add_binds("command", ...) end
+local function add_cmds (binds)
+    for _, m in ipairs(binds) do
+        local b = m[1]
+        if b and b:match("^:") then
+            for _, c in ipairs(lousy.util.string.split(b, ",%s+")) do
+                assert(c:match("^:[%[%]%w%-!]+$"), "Bad command binding '" .. b .. "'")
+            end
+        end
+    end
+    add_binds("command", binds)
+end
 
 return {
     new_mode = new_mode,
