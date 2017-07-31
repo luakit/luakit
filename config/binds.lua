@@ -7,8 +7,6 @@ local globals = require("globals")
 
 -- Binding aliases
 local lousy = require("lousy")
-local key, buf, but = lousy.bind.key, lousy.bind.buf, lousy.bind.but
-local cmd, any = lousy.bind.cmd, lousy.bind.any
 local modes = require("modes")
 local new_mode, get_mode = modes.new_mode, modes.get_mode
 
@@ -45,26 +43,21 @@ end
 -- Adds the default menu widget bindings to a mode
 local menu_binds = {
     -- Navigate items
-    key({},          "j",       "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
-    key({},          "k",       "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
-    key({},          "Down",    "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
-    key({},          "Up",      "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
-    key({},          "KP_Down", "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
-    key({},          "KP_Up",   "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
-    key({},          "Tab",     "Move the menu row focus downwards.", function (w) w.menu:move_down() end),
-    key({"Shift"},   "Tab",     "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end),
+    { "j",           "Move the menu row focus downwards.", function (w) w.menu:move_down() end },
+    { "k",           "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
+    { "<Down>",      "Move the menu row focus downwards.", function (w) w.menu:move_down() end },
+    { "<Up>",        "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
+    { "<KP_Down>",   "Move the menu row focus downwards.", function (w) w.menu:move_down() end },
+    { "<KP_Up>",     "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
+    { "<Tab>",       "Move the menu row focus downwards.", function (w) w.menu:move_down() end },
+    { "<Shift-Tab>", "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
 }
 
 -- Add binds to special mode "all" which adds its binds to all modes.
 add_binds("all", {
-    key({}, "Escape", "Return to `normal` mode.",
-        function (w) w:set_prompt(); w:set_mode() end),
-
-    key({"Control"}, "[", "Return to `normal` mode.",
-        function (w) w:set_mode() end),
-
-    -- Open link in new tab or navigate to selection
-    but({}, 2, [[Open link under mouse cursor in new tab or navigate to the
+    { "<Escape>", "Return to `normal` mode.", function (w) w:set_prompt(); w:set_mode() end },
+    { "<Control-[>", "Return to `normal` mode.", function (w) w:set_mode() end },
+    { "<Mouse2>", [[Open link under mouse cursor in new tab or navigate to the
         contents of `luakit.selection.primary`.]],
         function (w, m)
             -- Ignore button 2 clicks in form fields
@@ -81,48 +74,39 @@ add_binds("all", {
                     end
                 end
             end
-        end),
+        end
+    },
 
-    -- Open link in new tab when Ctrl-clicked.
-    but({"Control"}, 1, "Open link under mouse cursor in new tab.",
+    { "<Control-Mouse1>", "Open link under mouse cursor in new tab.",
         function (w)
             local uri = w.view.hovered_uri
             if uri then
                 w:new_tab(uri, { switch = false, private = w.view.private })
             end
-        end),
+        end },
 
-    -- Zoom binds
-    but({"Control"}, 4, "Increase text zoom level.",
-        function (w) w:zoom_in() end),
-
-    but({"Control"}, 5, "Reduce text zoom level.",
-        function (w) w:zoom_out() end),
-
-    -- Horizontal mouse scroll binds
-    but({"Shift"}, 4, "Scroll left.",
-        function (w) w:scroll{ xrel = -scroll_step } end),
-
-    but({"Shift"}, 5, "Scroll right.",
-        function (w) w:scroll{ xrel =  scroll_step } end),
+    { "<Control-Mouse4>", "Increase text zoom level.", function (w) w:zoom_in() end },
+    { "<Control-Mouse5>", "Reduce text zoom level.", function (w) w:zoom_out() end },
+    { "<Shift-Mouse4>", "Scroll left.", function (w) w:scroll{ xrel = -scroll_step } end },
+    { "<Shift-Mouse5>", "Scroll right.", function (w) w:scroll{ xrel = scroll_step } end },
 })
 
 add_binds("normal", {
     -- Autoparse the `[count]` before a binding and re-call the hit function
     -- with the count removed and added to the opts table.
-    any([[Meta-binding to detect the `^[count]` syntax. The `[count]` is parsed
+    { "<any>", [[Meta-binding to detect the `^[count]` syntax. The `[count]` is parsed
         and stripped from the internal buffer string and the value assigned to
         `state.count`. Then `lousy.bind.hit()` is re-called with the modified
         buffer string & original modifier state.
 
         #### Example binding
 
-            lousy.bind.key({}, "%", function (w, state)
-                w:scroll{ ypct = state.count }
-            end, { count = 0 })
+        lousy.bind.key({}, "%", function (w, state)
+            w:scroll{ ypct = state.count }
+        end, { count = 0 })
 
-        This binding demonstrates several concepts. Firstly that you are able to
-        specify per-binding default values of `count`. In this case if the user
+    This binding demonstrates several concepts. Firstly that you are able to
+    specify per-binding default values of `count`. In this case if the user
         types `"%"` the document will be scrolled vertically to `0%` (the top).
 
         If the user types `"100%"` then the document will be scrolled to `100%`
@@ -143,159 +127,66 @@ add_binds("normal", {
                 end
             end
             return false
-        end),
+        end },
 
-    key({}, "i", "Enter `insert` mode.",
-        function (w) w:set_mode("insert")  end),
-
-    key({}, ":", "Enter `command` mode.",
-        function (w) w:set_mode("command") end),
+    { "i", "Enter `insert` mode.", function (w) w:set_mode("insert") end, {} },
+    { ":", "Enter `command` mode.", function (w) w:set_mode("command") end, {} },
 
     -- Scrolling
-    key({}, "j", "Scroll document down.",
-        function (w) w:scroll{ yrel =  scroll_step } end),
+    { "j", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
+    { "k", "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
+    { "h", "Scroll document left.", function (w) w:scroll{ xrel = -scroll_step } end },
+    { "l", "Scroll document right.", function (w) w:scroll{ xrel =  scroll_step } end },
+    { "<Down>", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
+    { "<Up>",   "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
+    { "<Left>", "Scroll document left.", function (w) w:scroll{ xrel = -scroll_step } end },
+    { "<Right>", "Scroll document right.", function (w) w:scroll{ xrel =  scroll_step } end },
+    { "<KP_Down>", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
+    { "<KP_Up>",   "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
+    { "<KP_Left>", "Scroll document left.", function (w) w:scroll{ xrel = -scroll_step } end },
+    { "<KP_Right>", "Scroll document right.", function (w) w:scroll{ xrel =  scroll_step } end },
 
-    key({}, "k", "Scroll document up.",
-        function (w) w:scroll{ yrel = -scroll_step } end),
-
-    key({}, "h", "Scroll document left.",
-        function (w) w:scroll{ xrel = -scroll_step } end),
-
-    key({}, "l", "Scroll document right.",
-        function (w) w:scroll{ xrel =  scroll_step } end),
-
-    key({}, "Down", "Scroll document down.",
-        function (w) w:scroll{ yrel =  scroll_step } end),
-
-    key({}, "Up",   "Scroll document up.",
-        function (w) w:scroll{ yrel = -scroll_step } end),
-
-    key({}, "Left", "Scroll document left.",
-        function (w) w:scroll{ xrel = -scroll_step } end),
-
-    key({}, "Right", "Scroll document right.",
-        function (w) w:scroll{ xrel =  scroll_step } end),
-
-    key({}, "KP_Down", "Scroll document down.",
-        function (w) w:scroll{ yrel =  scroll_step } end),
-
-    key({}, "KP_Up",   "Scroll document up.",
-        function (w) w:scroll{ yrel = -scroll_step } end),
-
-    key({}, "KP_Left", "Scroll document left.",
-        function (w) w:scroll{ xrel = -scroll_step } end),
-
-    key({}, "KP_Right", "Scroll document right.",
-        function (w) w:scroll{ xrel =  scroll_step } end),
-
-    key({}, "^", "Scroll to the absolute left of the document.",
-        function (w) w:scroll{ x =  0 } end),
-
-    key({}, "$", "Scroll to the absolute right of the document.",
-        function (w) w:scroll{ x = -1 } end),
-
-    key({}, "0", "Scroll to the top of the document.",
+    { "^", "Scroll to the absolute left of the document.", function (w) w:scroll{ x =  0 } end },
+    { "$", "Scroll to the absolute right of the document.", function (w) w:scroll{ x = -1 } end },
+    { "0", "Scroll to the top of the document.",
         function (w, m)
             if not m.count then w:scroll{ y = 0 } else return false end
-        end),
-
-    key({"Control"}, "e", "Scroll document down.",
-        function (w) w:scroll{ yrel =  scroll_step } end),
-
-    key({"Control"}, "y", "Scroll document up.",
-        function (w) w:scroll{ yrel = -scroll_step } end),
-
-    key({"Control"}, "d", "Scroll half page down.",
-        function (w) w:scroll{ ypagerel =  0.5 } end),
-
-    key({"Control"}, "u", "Scroll half page up.",
-        function (w) w:scroll{ ypagerel = -0.5 } end),
-
-    key({"Control"}, "f", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  page_step } end),
-
-    key({"Control"}, "b", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -page_step } end),
-
-    key({}, "space", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  page_step } end),
-
-    key({"Shift"}, "space", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -page_step } end),
-
-    key({}, "BackSpace", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -page_step } end),
-
-    key({}, "Page_Down", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  page_step } end),
-
-    key({}, "Page_Up", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -page_step } end),
-
-    key({}, "KP_Next", "Scroll page down.",
-        function (w) w:scroll{ ypagerel =  page_step } end),
-
-    key({}, "KP_Page_Up", "Scroll page up.",
-        function (w) w:scroll{ ypagerel = -page_step } end),
-
-    key({}, "Home", "Scroll to the top of the document.",
-        function (w) w:scroll{ y =  0 } end),
-
-    key({}, "End", "Scroll to the end of the document.",
-        function (w) w:scroll{ y = -1 } end),
-
-    key({}, "KP_Home", "Scroll to the top of the document.",
-        function (w) w:scroll{ y =  0 } end),
-
-    key({}, "KP_End", "Scroll to the end of the document.",
-        function (w) w:scroll{ y = -1 } end),
+        end },
+    { "<Control-e>", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
+    { "<Control-y>", "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
+    { "<Control-d>", "Scroll half page down.", function (w) w:scroll{ ypagerel =  0.5 } end },
+    { "<Control-u>", "Scroll half page up.", function (w) w:scroll{ ypagerel = -0.5 } end },
+    { "<Control-f>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
+    { "<Control-b>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
+    { "<space>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
+    { "<Shift-space>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
+    { "<BackSpace>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
+    { "<Page_Down>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
+    { "<Page_Up>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
+    { "<KP_Next>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
+    { "<KP_Page_Up>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
+    { "<Home>", "Scroll to the top of the document.", function (w) w:scroll{ y =  0 } end },
+    { "<End>", "Scroll to the end of the document.", function (w) w:scroll{ y = -1 } end },
+    { "<KP_Home>", "Scroll to the top of the document.", function (w) w:scroll{ y =  0 } end },
+    { "<KP_End>", "Scroll to the end of the document.", function (w) w:scroll{ y = -1 } end },
 
     -- Specific scroll
-    buf("^gg$", "Go to the top of the document.",
-        function (w, _, m) w:scroll{ ypct = m.count } end, {count=0}),
+    { "gg", "Go to the top of the document.", function (w, m) w:scroll{ ypct = m.count } end, {count=0} },
+    { "G", "Go to the bottom of the document.", function (w, m) w:scroll{ ypct = m.count } end, {count=100} },
+    { "%", "Go to `[count]` percent of the document.", function (w, m) w:scroll{ ypct = m.count } end },
 
-    buf("^G$", "Go to the bottom of the document.",
-        function (w, _, m) w:scroll{ ypct = m.count } end, {count=100}),
-
-    buf("^%%$", "Go to `[count]` percent of the document.",
-        function (w, _, m) w:scroll{ ypct = m.count } end),
-
-    -- Zooming
-    key({}, "+", "Enlarge text zoom of the current page.",
-        function (w, m) w:zoom_in(zoom_step * m.count) end, {count=1}),
-
-    key({}, "-", "Reduce text zom of the current page.",
-        function (w, m) w:zoom_out(zoom_step * m.count) end, {count=1}),
-
-    key({}, "=", "Reset zoom level.",
-        function (w, _) w:zoom_set() end),
-
-    buf("^z[iI]$", [[Enlarge text zoom of current page with `zi` or `zI` to
-        reduce full zoom.]],
-        function (w, _, m)
-            w:zoom_in(zoom_step  * m.count)
-        end, {count=1}),
-
-    buf("^z[oO]$", [[Reduce text zoom of current page with `zo` or `zO` to
-        reduce full zoom.]],
-        function (w, _, m)
-            w:zoom_out(zoom_step * m.count)
-        end, {count=1}),
-
-    -- Zoom reset or specific zoom ([count]zZ for full content zoom)
-    buf("^z[zZ]$", [[Set current page zoom to `[count]` percent with
-        `[count]zz`, use `[count]zZ` to set full zoom percent.]],
-        function (w, _, m)
-            w:zoom_set(m.count/100)
-        end, {count=100}),
-
-    -- Fullscreen
-    key({}, "F11", "Toggle fullscreen mode.",
-        function (w) w.win.fullscreen = not w.win.fullscreen end),
+    -- Zoom
+    { "+", "Enlarge text zoom of the current page.", function (w, m) w:zoom_in(zoom_step * m.count) end, {count=1} },
+    { "-", "Reduce text zom of the current page.", function (w, m) w:zoom_out(zoom_step * m.count) end, {count=1} },
+    { "=", "Reset zoom level.", function (w, _) w:zoom_set() end },
+    { "zi", "Enlarge text zoom of current page.", function (w, m) w:zoom_in(zoom_step  * m.count) end, {count=1} },
+    { "zo", "Reduce text zoom of current page.", function (w, _, m) w:zoom_out(zoom_step * m.count) end, {count=1} },
+    { "zz", [[Set current page zoom to `[count]` percent with `[count]zz`, use `[count]zZ` to set full zoom percent.]],
+        function (w, _, m) w:zoom_set(m.count/100) end, {count=100} },
+    { "<F11>", "Toggle fullscreen mode.", function (w) w.win.fullscreen = not w.win.fullscreen end },
 
     -- Open primary selection contents.
-    buf("^pp$", [[Open URLs based on the current primary selection contents
-        in the current tab.]],
+    { "pp", [[Open URLs based on the current primary selection contents in the current tab.]],
         function (w)
             local uris = {}
             for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
@@ -308,18 +199,14 @@ add_binds("normal", {
                     w:new_tab(w:search_open(uris[i]))
                 end
             end
-        end),
-
-    buf("^pt$", [[Open a URL based on the current primary selection contents
-        in `[count=1]` new tab(s).]],
-        function (w, _, m)
-            local uri = luakit.selection.primary
-            if not uri then w:notify("No primary selection...") return end
-            for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
-        end, {count = 1}),
-
-    buf("^pw$", [[Open URLs based on the current primary selection contents in
-        a new window.]],
+        end },
+    { "pt", [[Open a URL based on the current primary selection contents in `[count=1]` new tab(s).]],
+            function (w, _, m)
+                local uri = luakit.selection.primary
+                if not uri then w:notify("No primary selection...") return end
+                for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
+        end, {count = 1} },
+    { "^pw$", [[Open URLs based on the current primary selection contents in a new window.]],
         function(w)
             local uris = {}
             for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
@@ -332,11 +219,10 @@ add_binds("normal", {
                     w:new_tab(w:search_open(uris[i]))
                 end
             end
-        end),
+        end },
 
     -- Open clipboard contents.
-    buf("^PP$", [[Open URLs based on the current clipboard selection contents
-        in the current tab.]],
+    { "^PP$", [[Open URLs based on the current clipboard selection contents in the current tab.]],
         function (w)
             local uris = {}
             for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
@@ -349,18 +235,16 @@ add_binds("normal", {
                     w:new_tab(w:search_open(uris[1]))
                 end
             end
-        end),
+        end },
 
-    buf("^PT$", [[Open a URL based on the current clipboard selection contents
-        in `[count=1]` new tab(s).]],
+    { "^PT$", [[Open a URL based on the current clipboard selection contents in `[count=1]` new tab(s).]],
         function (w, _, m)
             local uri = luakit.selection.clipboard
             if not uri then w:notify("Nothing in clipboard...") return end
             for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
-        end, {count = 1}),
+    end, {count = 1} },
 
-    buf("^PW$", [[Open URLs based on the current clipboard selection contents
-        in a new window.]],
+    { "^PW$", [[Open URLs based on the current clipboard selection contents in a new window.]],
         function(w)
             local uris = {}
             for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
@@ -373,201 +257,116 @@ add_binds("normal", {
                     w:new_tab(w:search_open(uris[i]))
                 end
             end
-        end),
+        end },
 
     -- Yanking
-    key({}, "y", "Yank current URI to primary selection.",
-        function (w)
+    { "y", "Yank current URI to primary selection.", function (w)
             local uri = string.gsub(w.view.uri or "", " ", "%%20")
             luakit.selection.primary = uri
             w:notify("Yanked uri: " .. uri)
-        end),
-
-    key({}, "Y", "Yank current URI to clipboard.",
-        function (w)
-            local uri = string.gsub(w.view.uri or "", " ", "%%20")
-            luakit.selection.clipboard = uri
-            w:notify("Yanked uri (to clipboard): " .. uri)
-        end),
+        end },
+    {"Y", "Yank current URI to clipboard.", function (w)
+        local uri = string.gsub(w.view.uri or "", " ", "%%20")
+        luakit.selection.clipboard = uri
+        w:notify("Yanked uri (to clipboard): " .. uri)
+    end },
 
     -- Commands
-    key({"Control"}, "a", "Increment last number in URL.",
-        function (w, m) w:navigate(w:inc_uri(m.count)) end, {count = 1}),
+    { "<Control-a>", "Increment last number in URL.",
+        function (w, m) w:navigate(w:inc_uri(m.count)) end, {count = 1} },
+    { "<Control-x>", "Decrement last number in URL.",
+        function (w, m) w:navigate(w:inc_uri(-m.count)) end, {count = 1} },
+    { "o", "Open one or more URLs.", function (w) w:enter_cmd(":open ") end },
+    { "t", "Open one or more URLs in a new tab.", function (w) w:enter_cmd(":tabopen ") end },
+    { "w", "Open one or more URLs in a new window.", function (w) w:enter_cmd(":winopen ") end },
+    { "O", "Open one or more URLs based on current location.",
+        function (w) w:enter_cmd(":open " .. (w.view.uri or "")) end },
+    { "T", "Open one or more URLs based on current location in a new tab.",
+        function (w) w:enter_cmd(":tabopen " .. (w.view.uri or "")) end },
+    { "W", "Open one or more URLs based on current location in a new window.",
+        function (w) w:enter_cmd(":winopen " .. (w.view.uri or "")) end },
 
-    key({"Control"}, "x", "Decrement last number in URL.",
-        function (w, m) w:navigate(w:inc_uri(-m.count)) end, {count = 1}),
+    { "H", "Go back in the browser history `[count=1]` items.", function (w, m) w:back(m.count) end },
+    { "L", "Go forward in the browser history `[count=1]` times.", function (w, m) w:forward(m.count) end },
+    { "<XF86Back>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
+    { "<XF86Forward>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
 
-    key({}, "o", "Open one or more URLs.",
-        function (w) w:enter_cmd(":open ") end),
-
-    key({}, "t", "Open one or more URLs in a new tab.",
-        function (w) w:enter_cmd(":tabopen ") end),
-
-    key({}, "w", "Open one or more URLs in a new window.",
-        function (w) w:enter_cmd(":winopen ") end),
-
-    key({}, "O", "Open one or more URLs based on current location.",
-        function (w) w:enter_cmd(":open " .. (w.view.uri or "")) end),
-
-    key({}, "T",
-        "Open one or more URLs based on current location in a new tab.",
-        function (w) w:enter_cmd(":tabopen " .. (w.view.uri or "")) end),
-
-    key({}, "W",
-        "Open one or more URLs based on current location in a new window.",
-        function (w) w:enter_cmd(":winopen " .. (w.view.uri or "")) end),
-
-    -- History
-    key({}, "H", "Go back in the browser history `[count=1]` items.",
-        function (w, m) w:back(m.count) end),
-
-    key({}, "L", "Go forward in the browser history `[count=1]` times.",
-        function (w, m) w:forward(m.count) end),
-
-    key({}, "XF86Back", "Go back in the browser history.",
-        function (w, m) w:back(m.count) end),
-
-    key({}, "XF86Forward", "Go forward in the browser history.",
-        function (w, m) w:forward(m.count) end),
-
-    key({"Control"}, "o", "Go back in the browser history.",
-        function (w, m) w:back(m.count) end),
-
-    key({"Control"}, "i", "Go forward in the browser history.",
-        function (w, m) w:forward(m.count) end),
+    { "<Control-o>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
+    { "<Control-i>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
 
     -- Tab
-    key({"Control"}, "Page_Up", "Go to previous tab.",
-        function (w) w:prev_tab() end),
+    { "<Control-Page_Up>", "Go to previous tab.", function (w) w:prev_tab() end },
+    { "<Control-Page_Down>", "Go to next tab.", function (w) w:next_tab() end },
+    { "<Control-Tab>", "Go to next tab.", function (w) w:next_tab() end },
+    { "<Shift-Control-Tab>", "Go to previous tab.", function (w) w:prev_tab() end },
+    { "<F1>", "Show help.", function (w) w:run_cmd(":help") end },
+    { "<F12>", "Toggle web inspector.", function (w) w:run_cmd(":inspect!") end },
+    { "gT", "Go to previous tab.", function (w) w:prev_tab() end },
 
-    key({"Control"}, "Page_Down", "Go to next tab.",
-        function (w) w:next_tab() end),
-
-    key({"Control"}, "Tab", "Go to next tab.",
-        function (w) w:next_tab() end),
-
-    key({"Shift","Control"}, "Tab", "Go to previous tab.",
-        function (w) w:prev_tab() end),
-
-    key({}, "F1", "Show help.",
-        function (w) w:run_cmd(":help") end),
-
-    key({}, "F12", "Toggle web inspector.",
-        function (w) w:run_cmd(":inspect!") end),
-
-    buf("^gT$", "Go to previous tab.",
-        function (w) w:prev_tab() end),
-
-    buf("^gt$", "Go to next tab (or `[count]` nth tab).",
+    { "gt", "Go to next tab (or `[count]` nth tab).",
         function (w, _, m)
             if not w:goto_tab(m.count) then w:next_tab() end
-        end, {count=0}),
+    end, {count=0} },
+    { "g0", "Go to first tab.", function (w) w:goto_tab(1) end },
+    { "g$", "Go to last tab.", function (w) w:goto_tab(-1) end },
 
-    buf("^g0$", "Go to first tab.",
-        function (w) w:goto_tab(1) end),
+    { "<Control-t>", "Open a new tab.", function (w) w:new_tab("luakit://newtab/") end },
+    { "<Control-w>", "Close current tab.", function (w) w:close_tab() end },
+    { "d", "Close current tab (or `[count]` tabs).",
+        function (w, m) for _=1,m.count do w:close_tab() end end, {count=1} },
 
-    buf("^g$$", "Go to last tab.",
-        function (w) w:goto_tab(-1) end),
-
-    key({"Control"}, "t", "Open a new tab.",
-        function (w) w:new_tab("luakit://newtab/") end),
-
-    key({"Control"}, "w", "Close current tab.",
-        function (w) w:close_tab() end),
-
-    key({}, "d", "Close current tab (or `[count]` tabs).",
-        function (w, m) for _=1,m.count do w:close_tab() end end, {count=1}),
-
-    key({}, "<", "Reorder tab left `[count=1]` positions.",
+    { "<", "Reorder tab left `[count=1]` positions.",
         function (w, m)
             w.tabs:reorder(w.view,
                 (w.tabs:current() - m.count) % w.tabs:count())
-        end, {count=1}),
+        end, {count=1} },
 
-    key({}, ">", "Reorder tab right `[count=1]` positions.",
+    { ">", "Reorder tab right `[count=1]` positions.",
         function (w, m)
             w.tabs:reorder(w.view,
                 (w.tabs:current() + m.count) % w.tabs:count())
-        end, {count=1}),
+        end, {count=1} },
 
-    buf("^gH$", "Open homepage in new tab.",
-        function (w) w:new_tab(globals.homepage) end),
+    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(globals.homepage) end },
+    { "^gh$", "Open homepage.", function (w) w:navigate(globals.homepage) end },
+    { "^gy$", "Duplicate current tab.",
+        function (w)
+            w:new_tab({ session_state = w.view.session_state }, { private = w.view.private })
+        end },
 
-    buf("^gh$", "Open homepage.",
-        function (w) w:navigate(globals.homepage) end),
-
-    buf("^gy$", "Duplicate current tab.",
-        function (w) w:new_tab({ session_state = w.view.session_state },
-                { private = w.view.private }) end),
-
-    key({}, "r", "Reload current tab.",
-        function (w) w:reload() end),
-
-    key({}, "R", "Reload current tab (skipping cache).",
-        function (w) w:reload(true) end),
-
-    key({"Control"}, "c", "Stop loading the current tab.",
-        function (w) w.view:stop() end),
-
-    key({"Control", "Shift"}, "R", "Restart luakit (reloading configs).",
-        function (w) w:restart() end),
+    { "r", "Reload current tab.", function (w) w:reload() end },
+    { "R", "Reload current tab (skipping cache).", function (w) w:reload(true) end },
+    { "<Control-c>", "Stop loading the current tab.", function (w) w.view:stop() end },
+    { "<Control-R>", "Restart luakit (reloading configs).", function (w) w:restart() end },
 
     -- Window
-    buf("^ZZ$", "Quit and save the session.",
-        function (w) w:save_session() w:close_win() end),
-
-    buf("^ZQ$", "Quit and don't save the session.",
-        function (w) w:close_win() end),
-
-    buf("^D$",  "Quit and don't save the session.",
-        function (w) w:close_win() end),
+    { "^ZZ$", "Quit and save the session.", function (w) w:save_session() w:close_win() end },
+    { "^ZQ$", "Quit and don't save the session.", function (w) w:close_win() end },
+    { "^D$",  "Quit and don't save the session.", function (w) w:close_win() end },
 
     -- Enter passthrough mode
-    key({"Control"}, "z",
-        "Enter `passthrough` mode, ignores all luakit keybindings.",
-        function (w) w:set_mode("passthrough") end),
+    { "<Control-z>", "Enter `passthrough` mode, ignores all luakit keybindings.",
+        function (w) w:set_mode("passthrough") end },
 })
 
 add_binds("insert", {
-    key({"Control"}, "z",
-        "Enter `passthrough` mode, ignores all luakit keybindings.",
-        function (w) w:set_mode("passthrough") end),
+    { "<Control-z>", "Enter `passthrough` mode, ignores all luakit keybindings.",
+        function (w) w:set_mode("passthrough") end },
 })
 
 local readline_bindings = {
-    key({"Shift"}, "Insert",
-        "Insert contents of primary selection at cursor position.",
-        function (w) w:insert_cmd(luakit.selection.primary) end),
-
-    key({"Control"}, "w", "Delete previous word.",
-        function (w) w:del_word() end),
-
-    key({"Control"}, "u", "Delete until beginning of current line.",
-        function (w) w:del_line() end),
-
-    key({"Control"}, "h", "Delete character to the left.",
-        function (w) w:del_backward_char() end),
-
-    key({"Control"}, "d", "Delete character to the right.",
-        function (w) w:del_forward_char() end),
-
-    key({"Control"}, "a", "Move cursor to beginning of current line.",
-        function (w) w:beg_line() end),
-
-    key({"Control"}, "e", "Move cursor to end of current line.",
-        function (w) w:end_line() end),
-
-    key({"Control"}, "f", "Move cursor forward one character.",
-        function (w) w:forward_char() end),
-
-    key({"Control"}, "b", "Move cursor backward one character.",
-        function (w) w:backward_char() end),
-
-    key({"Mod1"}, "f", "Move cursor forward one word.",
-        function (w) w:forward_word() end),
-
-    key({"Mod1"}, "b", "Move cursor backward one word.",
-        function (w) w:backward_word() end),
+    { "<Shift-Insert>", "Insert contents of primary selection at cursor position.",
+        function (w) w:insert_cmd(luakit.selection.primary) end },
+    { "<Control-w>", "Delete previous word.", function (w) w:del_word() end },
+    { "<Control-u>", "Delete until beginning of current line.", function (w) w:del_line() end },
+    { "<Control-h>", "Delete character to the left.", function (w) w:del_backward_char() end },
+    { "<Control-d>", "Delete character to the right.", function (w) w:del_forward_char() end },
+    { "<Control-a>", "Move cursor to beginning of current line.", function (w) w:beg_line() end },
+    { "<Control-e>", "Move cursor to end of current line.", function (w) w:end_line() end },
+    { "<Control-f>", "Move cursor forward one character.", function (w) w:forward_char() end },
+    { "<Control-b>", "Move cursor backward one character.", function (w) w:backward_char() end },
+    { "<Mod1-f>", "Move cursor forward one word.", function (w) w:forward_word() end },
+    { "<Mod1-b>", "Move cursor backward one word.", function (w) w:backward_word() end },
 }
 
 add_binds({"command", "search"}, readline_bindings)
@@ -576,9 +375,9 @@ add_binds({"command", "search"}, readline_bindings)
 do
     local mod1binds = {}
     for i=1,10 do
-        table.insert(mod1binds,
-            key({"Mod1"}, tostring(i % 10), "Jump to tab at index "..i..".",
-                function (w) w.tabs:switch(i) end))
+        table.insert(mod1binds, {
+            ("<Mod1-%d>"):format(i % 10), "Jump to tab at index "..i..".", function (w) w.tabs:switch(i) end
+        })
     end
     add_binds("normal", mod1binds)
 end
@@ -586,142 +385,104 @@ end
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
 add_cmds({
-    buf("^%S+!",
-        [[Detect bang syntax in `:command!` and recursively calls
+    { "^%S+!", [[Detect bang syntax in `:command!` and recursively calls
         `lousy.bind.match_cmd(..)` removing the bang from the command string
         and setting `bang = true` in the bind opts table.]],
-        function (w, command, opts)
-            local args
+        function (w, opts)
+            local command, args = opts.buffer
             command, args = string.match(command, "^(%S+)!+(.*)")
             if command then
                 opts = join(opts, { bang = true })
                 return lousy.bind.match_cmd(w, opts.binds, command .. args, opts)
             end
-        end),
+        end },
 
-    key({"Control"}, "Return",
-        [[Expand `:[tab,win]open example` to `:[tab,win]open www.example.com`.]],
+    { "<Control-Return>", [[Expand `:[tab,win]open example` to `:[tab,win]open www.example.com`.]],
         function (w)
             local tokens = split(w.ibar.input.text, "%s+")
             if string.match(tokens[1], "^:%w*open$") and #tokens == 2 then
                 w:enter_cmd(string.format("%s www.%s.com", tokens[1], tokens[2]))
             end
             w:activate()
-        end),
+        end },
 
-    cmd("c[lose]", "Close current tab.",
-        function (w) w:close_tab() end),
+    { ":c[lose]", "Close current tab.", function (w) w:close_tab() end },
+    { ":print", "Print current page.", function (w) w.view:eval_js("print()", { no_return = true }) end },
+    { ":stop", "Stop loading.", function (w) w.view:stop() end },
+    { ":reload", "Reload page", function (w) w:reload() end },
+    { ":restart", "Restart browser (reload config files).", function (w, _, o) w:restart(o.bang) end },
+    { ":write", "Save current session.", function (w) w:save_session() end },
+    { ":noh[lsearch]", "Clear search highlighting.", function (w) w:clear_search() end },
+    { ":back", "Go back in the browser history `[count=1]` items.", function (w, o) w:back(tonumber(o.arg) or 1) end },
+    { ":f[orward]", "Go forward in the browser history `[count=1]` items.",
+        function (w, o) w:forward(tonumber(o.arg) or 1) end },
+    { ":inc[rease]", "Increment last number in URL.", function (w, o) w:navigate(w:inc_uri(tonumber(o.arg) or 1)) end },
+    { ":o[pen]", "Open one or more URLs.", function (w, o) w:navigate(w:search_open(o.arg)) end },
+    { ":t[abopen]", "Open one or more URLs in a new tab.", function (w, o) w:new_tab(w:search_open(o.arg)) end },
+    { ":priv-t[abopen]", "Open one or more URLs in a new private tab.",
+        function (w, o) w:new_tab(w:search_open(o.arg), { private = true }) end },
 
-    cmd("print", "Print current page.",
-        function (w) w.view:eval_js("print()", { no_return = true }) end),
+    { ":w[inopen]", "Open one or more URLs in a new window.",
+        function (w, o) window.new{w:search_open(o.arg)} end },
 
-    cmd("stop", "Stop loading.",
-        function (w) w.view:stop() end),
-
-    cmd("reload", "Reload page",
-        function (w) w:reload() end),
-
-    cmd("restart", "Restart browser (reload config files).",
-        function (w, _, o) w:restart(o.bang) end),
-
-    cmd("write", "Save current session.",
-        function (w) w:save_session() end),
-
-    cmd("noh[lsearch]", "Clear search highlighting.",
-        function (w) w:clear_search() end),
-
-    cmd("back", "Go back in the browser history `[count=1]` items.",
-        function (w, a) w:back(tonumber(a) or 1) end),
-
-    cmd("f[orward]", "Go forward in the browser history `[count=1]` items.",
-        function (w, a) w:forward(tonumber(a) or 1) end),
-
-    cmd("inc[rease]", "Increment last number in URL.",
-        function (w, a) w:navigate(w:inc_uri(tonumber(a) or 1)) end),
-
-    cmd("o[pen]", "Open one or more URLs.",
-        function (w, a) w:navigate(w:search_open(a)) end),
-
-    cmd("t[abopen]", "Open one or more URLs in a new tab.",
-        function (w, a) w:new_tab(w:search_open(a)) end),
-
-    cmd("priv-t[abopen]", "Open one or more URLs in a new private tab.",
-        function (w, a) w:new_tab(w:search_open(a), { private = true }) end),
-
-    cmd("w[inopen]", "Open one or more URLs in a new window.",
-        function (w, a) window.new{w:search_open(a)} end),
-
-    cmd({"javascript", "js"}, "Evaluate JavaScript snippet.",
-        function (w, a) w.view:eval_js(a, {
-            no_return = true,
-            callback = function (_, err)
-                w:error(err)
-            end,
-        }) end),
+    { ":javascript, :js", "Evaluate JavaScript snippet.",
+        function (w, o) w.view:eval_js(o.arg, {
+                    no_return = true,
+                    callback = function (_, err)
+                        w:error(err)
+                    end,
+                }) end },
 
     -- Tab manipulation commands
-    cmd("tab", "Execute command and open result in new tab.",
-        function (w, a) w:new_tab() w:run_cmd(":" .. a) end),
+    { ":tab", "Execute command and open result in new tab.",
+        function (w, o) w:new_tab() w:run_cmd(":" .. o.arg) end },
+    { ":tabd[o]", "Execute command in each tab.",
+        function (w, o) w:each_tab(function () w:run_cmd(":" .. o.arg) end) end },
+    { ":tabdu[plicate]", "Duplicate current tab.",
+        function (w) w:new_tab({ session_state = w.view.session_state }) end },
+    { ":tabfir[st]", "Switch to first tab.", function (w) w:goto_tab(1) end },
+    { ":tabl[ast]", "Switch to last tab.", function (w) w:goto_tab(-1) end },
+    { ":tabn[ext]", "Switch to the next tab.", function (w) w:next_tab() end },
+    { ":tabp[revious]", "Switch to the previous tab.", function (w) w:prev_tab() end },
+    { ":tabde[tach]", "Move the current tab tab into a new window", function (w) window.new({w.view}) end },
+    { ":q[uit]", "Close the current window.", function (w, _, o) w:close_win(o.bang) end },
 
-    cmd("tabd[o]", "Execute command in each tab.",
-        function (w, a) w:each_tab(function () w:run_cmd(":" .. a) end) end),
-
-    cmd("tabdu[plicate]", "Duplicate current tab.",
-        function (w) w:new_tab({ session_state = w.view.session_state }) end),
-
-    cmd("tabfir[st]", "Switch to first tab.",
-        function (w) w:goto_tab(1) end),
-
-    cmd("tabl[ast]", "Switch to last tab.",
-        function (w) w:goto_tab(-1) end),
-
-    cmd("tabn[ext]", "Switch to the next tab.",
-        function (w) w:next_tab() end),
-
-    cmd("tabp[revious]", "Switch to the previous tab.",
-        function (w) w:prev_tab() end),
-
-    cmd("tabde[tach]", "Move the current tab tab into a new window",
-        function (w) window.new({w.view}) end),
-
-    cmd("q[uit]", "Close the current window.",
-        function (w, _, o) w:close_win(o.bang) end),
-
-    cmd({"wqall", "wq"}, "Save the session and quit.", function (w, _, o)
+    { ":wq[all]", "Save the session and quit.", function (w, _, o)
         local force = o.bang
         if not force and not w:can_quit() then return end
         w:save_session()
         for _, ww in pairs(window.bywidget) do
             ww:close_win(true)
         end
-    end),
+    end },
 
-    cmd("lua", "Evaluate Lua snippet.", function (w, a)
-        if a then
-            -- Parse as expression first, then statement
-            -- With this order an error message won't contain the print() wrapper
-            local ret, err = loadstring("print(" .. a .. ")", "lua-cmd")
-            if err then
-                ret, err = loadstring(a, "lua-cmd")
-            end
-            if err then
-                w:error(err)
-            else
-                setfenv(ret, setmetatable({}, { __index = function (_, k)
-                    if _G[k] ~= nil then return _G[k] end
-                    if k == "w" then return w end
-                end, __newindex = _G }))
-                ret()
-            end
-        else
-            w:set_mode("lua")
-        end
-    end),
+    { ":lua", "Evaluate Lua snippet.", function (w, o)
+            local a = o.arg
+            if a then
+                -- Parse as expression first, then statement
+                -- With this order an error message won't contain the print() wrapper
+                local ret, err = loadstring("print(" .. a .. ")", "lua-cmd")
+                if err then
+                    ret, err = loadstring(a, "lua-cmd")
+                end
+                if err then
+                    w:error(err)
+                else
+                    setfenv(ret, setmetatable({}, { __index = function (_, k)
+                        if _G[k] ~= nil then return _G[k] end
+                        if k == "w" then return w end
+            end, __newindex = _G }))
+        ret()
+    end
+else
+    w:set_mode("lua")
+end
+    end },
 
-    cmd("dump", "Dump current tabs html to file.",
-        function (w, a)
+    { "dump", "Dump current tabs html to file.",
+        function (w, o)
             local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.html' -- sanitize filename
-            local file = a or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
+            local file = o.arg or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
             if file then
                 local fd = assert(io.open(file, "w"), "failed to open: " .. file)
                 local html = assert(w.view.source, "Unable to get HTML")
@@ -729,7 +490,7 @@ add_cmds({
                 io.close(fd)
                 w:notify("Dumped HTML to: " .. file)
             end
-        end),
+        end },
 })
 
 return {
