@@ -23,6 +23,7 @@
  - Added status bar widget that notifies of any Lua warnings or errors.
  - Added migration guide to documentation.
  - Added `luakit.wch_upper` and `luakit.wch_lower` key case conversion utility functions.
+ - Added `formfiller.extend` function for extending the formfiller DSL.
 
 ### Fixed
 
