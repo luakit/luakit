@@ -160,17 +160,31 @@ local completion_funcs = {
         -- Check each command binding for matches
         local pat = state.left
         local cmds = {}
-        for _, b in ipairs(get_mode("command").binds) do
-            if b.cmds then
-                for i, cmd in ipairs(b.cmds) do
+        for _, m in ipairs(get_mode("command").binds) do
+            local b = m[1]
+            if m.cmds or (b and b:match("^:")) then
+                local c = m.cmds or {}
+                if not m.cmds then
+                    for _, cmd in ipairs(lousy.util.string.split(b:gsub("^:", ""), ",%s+:")) do
+                        if string.match(cmd, "^([%-%w]+)%[(%w+)%]") then
+                            local l, r = string.match(cmd, "^([%-%w]+)%[(%w+)%]")
+                            table.insert(c, l..r)
+                            table.insert(c, l)
+                        else
+                            table.insert(c, cmd)
+                        end
+                    end
+                end
+
+                for i, cmd in ipairs(c) do
                     if string.find(cmd, pat, 1, true) == 1 then
                         if i == 1 then
                             cmd = ":" .. cmd
                         else
-                            cmd = string.format(":%s (:%s)", cmd, b.cmds[1])
+                            cmd = string.format(":%s (:%s)", cmd, c[1])
                         end
 
-                        cmds[cmd] = { escape(cmd), escape(b.desc) or "", left = ":" .. b.cmds[1] }
+                        cmds[cmd] = { escape(cmd), escape(m[2].desc) or "", left = ":" .. c[1] }
                         break
                     end
                 end
