@@ -132,11 +132,6 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
     const gchar *extension_dir = LUAKIT_INSTALL_PATH;
 #endif
 
-/*
- * FIXME: Check prevents installation from AUR, since luakit is ran to generate
- * documentation as part of the installation process.
- */
-#if 0
     char *extension_file = g_build_filename(extension_dir,  "luakit.so", NULL);
     if (access(extension_file, R_OK)) {
 #if DEVELOPMENT_PATHS
@@ -148,7 +143,6 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 #undef DEVPATHS
     }
     g_free(extension_file);
-#endif
 
     /* There's a potential race condition here; the accept thread might not run
      * until after the web extension process has already started (and failed to
