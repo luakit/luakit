@@ -13,6 +13,7 @@
  - Fixed code-blocks in documentation being formatted incorrectly.
  - Fixed incompatibility of `editor.lua` with urxvt.
  - Fixed slow performance while beginning a search.
+ - Fixed `lousy.util.table.join` merging tables in unpredictable order.
 
 ### Changed
 
@@ -25,6 +26,8 @@
  - Support for WebKitGTK+ versions older than 2.16 has been removed.
  - `adblock` and `styles` now log the directory searched for files.
  - `<ctrl-a>` and `<Ctrl-x>` bindings now take an optional count.
+ - Luakit's IPC socket files are now opened in `/tmp/`.
+ - Luakit now checks for accidental use of DEVELOPMENT_PATHS.
 
 ## [2017-07-26]
 
