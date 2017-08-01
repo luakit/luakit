@@ -19,6 +19,7 @@ local wrapped = {
     tablist  = wrap("lousy.widget.tablist"),
     tab      = wrap("lousy.widget.tab"),
     uri      = wrap("lousy.widget.uri"),
+    zoom     = wrap("lousy.widget.zoom"),
 }
 
 local unwrap = function (t, k)

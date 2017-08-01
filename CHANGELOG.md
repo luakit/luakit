@@ -7,6 +7,7 @@
 ### Added
 
  - New `history.frozen` API allows temporarily freezing history collection.
+ - New `lousy.widget.zoom` statusbar widget: shows current page zoom level.
 
 ### Fixed
 
