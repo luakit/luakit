@@ -78,7 +78,7 @@ log_group_from_fct(const char *fct)
         paths = g_ptr_array_new_with_free_func(g_free);
         g_ptr_array_add(paths, "./");
         g_ptr_array_add(paths, g_build_path("/", LUAKIT_INSTALL_PATH, "lib/", NULL));
-        g_ptr_array_add(paths, g_build_path("/", LUAKIT_CONFIG_PATH, "/", NULL));
+        g_ptr_array_add(paths, g_build_path("/", LUAKIT_CONFIG_PATH, "/luakit/", NULL));
         g_ptr_array_add(paths, g_build_path("/", globalconf.config_dir, "/", NULL));
     }
     for (unsigned i = 0; i < paths->len; i++)
