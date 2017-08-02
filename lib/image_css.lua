@@ -8,6 +8,7 @@
 -- @copyright 2017 Aidan Holm
 
 local webview = require("webview")
+local window = require("window")
 local wm = require_web_module("image_css_wm")
 
 local _M = {}
@@ -79,7 +80,7 @@ webview.add_signal("init", function (view)
     end)
 
     local recalc_cb = function (v)
-        local w = webview.window(v)
+        local w = window.ancestor(v)
         if w and w.view == v then
             wm:emit_signal(view, "recalc")
         end
