@@ -63,6 +63,11 @@ webview.add_signal("init", function (view)
             view.stylesheets[_M.stylesheet] = is_image
             if is_image then
                 wm:emit_signal(view, "image")
+                -- Hack: ensure that domain_props doesn't muck with the image
+                -- See https://github.com/luakit/luakit/issues/387
+                luakit.idle_add(function ()
+                    if view.is_alive then view.zoom_level = 1.0 end
+                end)
             end
         end
     end)
