@@ -273,13 +273,14 @@ local help_get_modes = function ()
         local binds = {}
 
         if mode.binds then
-            for i, b in pairs(mode.binds) do
-                local info = debug.getinfo(b.func, "uS")
+            for i, m in pairs(mode.binds) do
+                local b, a = unpack(m)
+                local info = debug.getinfo(a.func, "uS")
                 info.source = info.source:sub(2)
                 binds[i] = {
                     type = b.type,
-                    key = lousy.bind.bind_to_string(b),
-                    desc = b.desc and markdown(dedent(b.desc)) or nil,
+                    key = lousy.bind.bind_to_string(b) or "???",
+                    desc = a.desc and markdown(dedent(a.desc)) or nil,
                     filename = info.source,
                     linedefined = info.linedefined,
                     lastlinedefined = info.lastlinedefined,
