@@ -158,6 +158,9 @@ luaH_add_paths(lua_State *L, const gchar *config_dir)
     g_ptr_array_add(paths, g_strdup("./config"));
 #endif
 
+    /* add luakit install path */
+    g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
+
     /* add users config dir (see: XDG_CONFIG_DIR) */
     if (config_dir)
         g_ptr_array_add(paths, g_strdup(config_dir));
@@ -166,9 +169,6 @@ luaH_add_paths(lua_State *L, const gchar *config_dir)
     const gchar* const *config_dirs = g_get_system_config_dirs();
     for (; *config_dirs; config_dirs++)
         g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", NULL));
-
-    /* add luakit install path */
-    g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
 
     const gchar *path;
     for (guint i = 0; i < paths->len; i++) {
