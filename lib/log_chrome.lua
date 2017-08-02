@@ -107,16 +107,17 @@ _M.html_style = [===[
     .content-margin { padding: 3.5em 0 0 0; }
 ]===]
 
-local build_log_entry_html = function (entry)
-    assert(entry)
-    return ([==[
+local log_entry_fmt = ([==[
         <tr class="level-{llevel} group-{groupkey}">
             <td class=level>{time}</td>
             <td class=llevel>{level}</td>
             <td class=group>{group}</td>
             <td class=msg><pre>{msg}</pre></td>
         </tr>
-    ]==]):gsub("{(%w+)}", {
+    ]==]):gsub("\n +", ""):gsub("^ +", ""):gsub(" +$", "")
+local build_log_entry_html = function (entry)
+    assert(entry)
+    return log_entry_fmt:gsub("{(%w+)}", {
         time = string.format("%012f", entry.time),
         llevel = entry.level,
         level = entry.level:gsub("^%l", string.upper),
@@ -135,14 +136,19 @@ local sync_view = function (v)
     log_views[v].unsynced_count = 0
 
     local js = [=[
-        var html = %q, num_rows = %d;
+        var html = %s, num_rows = %d;
         var tbody = document.querySelector("tbody");
         tbody.insertAdjacentHTML('beforeend', html);
         for (var i = tbody.childElementCount; i > num_rows; i-- ) {
             tbody.firstElementChild.remove();
         }
     ]=]
-    js = js:format(table.concat(rows,""), _M.buffer_size)
+    for i, row in ipairs(rows) do
+        -- only the msg contains literal newlines: escape them
+        -- has to be done outside of %q formatting
+        rows[i] = string.format("%q", row):gsub("\\\n", "\n")
+    end
+    js = js:format(table.concat(rows,"+"), _M.buffer_size)
 
     v:eval_js(js, { no_return = true, callback = function (_, err)
         assert(not err, err)
