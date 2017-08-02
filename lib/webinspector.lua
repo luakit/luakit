@@ -18,7 +18,7 @@ webview.add_signal("init", function (view)
 end)
 
 add_cmds({
-    { ":in[spect]", "Open the DOM inspector.", function (w, _, o)
+    { ":in[spect]", "Open the DOM inspector.", function (w, o)
         local v = w.view
         if o.bang then -- "inspect!" toggles inspector
             (v.inspector and v.close_inspector or v.show_inspector)(v)

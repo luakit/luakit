@@ -285,7 +285,7 @@ add_binds("normal", {
 -- Download commands
 add_cmds({
     { ":down[load]", "Download the given URI.",
-        function (w, a) _M.add(a, { window = w.win }) end },
+        function (w, o) _M.add(o.arg, { window = w.win }) end },
 })
 
 return _M

@@ -491,9 +491,9 @@ add_cmds({
             w:notify("adblock: Reloading filters complete.")
         end },
     { ":adblock-list-enable, :able", "Enable an adblock filter list.",
-        function (_, a) _M.list_set_enabled(a, true) end },
+        function (_, o) _M.list_set_enabled(o.arg, true) end },
     { ":adblock-list-disable, :abld", "Disable an adblock filter list.",
-        function (_, a) _M.list_set_enabled(a, false) end },
+        function (_, o) _M.list_set_enabled(o.arg, false) end },
     { ":adblock-enable, :abe", "Enable ad blocking.",
         function () _M.enabled = true end },
     { ":adblock-disable, :abd", "Disable ad blocking.",

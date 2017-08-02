@@ -213,7 +213,8 @@ new_mode("proxymenu", {
 
 add_cmds({
     { ":proxy", "Change the current proxy or add a new proxy entry.",
-        function (w, a)
+        function (w, o)
+            local a = o.arg
             local params = lousy.util.string.split(a or '')
             if not a then
                 w:set_mode("proxymenu")

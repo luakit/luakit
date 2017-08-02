@@ -167,7 +167,8 @@ add_binds("normal", {
 -- Add quickmarking commands
 add_cmds({
     -- Quickmark add (`:qmark f http://forum1.com, forum2.com, imdb some artist`)
-    { ":qma[rk]", "Add a quickmark.", function (w, a)
+    { ":qma[rk]", "Add a quickmark.", function (w, o)
+            local a = o.arg
             local token, uris = string.match(lousy.util.string.strip(a), "^(%w)%s+(.+)$")
             assert(token, "invalid token")
             uris = lousy.util.string.split(uris, ",%s+")
@@ -176,7 +177,8 @@ add_cmds({
         end },
 
     -- Quickmark edit (`:qmarkedit f` -> `:qmark f furi1, furi2, ..`)
-    { ":qmarkedit, :qme", "Edit a quickmark.", function (w, a)
+    { ":qmarkedit, :qme", "Edit a quickmark.", function (w, o)
+        local a = o.arg
         local token = lousy.util.string.strip(a)
         assert(#token == 1, "invalid token length: " .. token)
         local uris = _M.get(token)
@@ -184,7 +186,8 @@ add_cmds({
     end },
 
     -- Quickmark del (`:delqmarks b-p Aa z 4-9`)
-    { ":delqm[arks]", "Delete a quickmark.", function (_, a)
+    { ":delqm[arks]", "Delete a quickmark.", function (_, o)
+            local a = o.arg
             -- Find and del all range specifiers
             string.gsub(a, "(%w%-%w)", function (range)
                 range = "["..range.."]"

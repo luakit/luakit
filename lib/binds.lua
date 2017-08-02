@@ -417,7 +417,7 @@ modes.add_cmds({
     { ":print", "Print current page.", function (w) w.view:eval_js("print()", { no_return = true }) end },
     { ":stop", "Stop loading.", function (w) w.view:stop() end },
     { ":reload", "Reload page", function (w) w:reload() end },
-    { ":restart", "Restart browser (reload config files).", function (w, _, o) w:restart(o.bang) end },
+    { ":restart", "Restart browser (reload config files).", function (w, o) w:restart(o.bang) end },
     { ":write", "Save current session.", function (w) w:save_session() end },
     { ":noh[lsearch]", "Clear search highlighting.", function (w) w:clear_search() end },
     { ":back", "Go back in the browser history `[count=1]` items.", function (w, o) w:back(tonumber(o.arg) or 1) end },
@@ -452,9 +452,9 @@ modes.add_cmds({
     { ":tabn[ext]", "Switch to the next tab.", function (w) w:next_tab() end },
     { ":tabp[revious]", "Switch to the previous tab.", function (w) w:prev_tab() end },
     { ":tabde[tach]", "Move the current tab tab into a new window", function (w) window.new({w.view}) end },
-    { ":q[uit]", "Close the current window.", function (w, _, o) w:close_win(o.bang) end },
+    { ":q[uit]", "Close the current window.", function (w, o) w:close_win(o.bang) end },
 
-    { ":wq[all]", "Save the session and quit.", function (w, _, o)
+    { ":wq[all]", "Save the session and quit.", function (w, o)
         local force = o.bang
         if not force and not w:can_quit() then return end
         w:save_session()

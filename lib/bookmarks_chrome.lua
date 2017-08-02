@@ -595,7 +595,8 @@ add_cmds({
     { ":bookmarks", "Open the bookmarks manager in a new tab.",
         function (w) w:new_tab(_M.chrome_page) end },
     { ":bookmark", "Add a bookmark for the current URL.",
-        function (w, a)
+        function (w, o)
+            local a = o.arg
             if not a then
                 new_bookmark_values = {
                     uri = w.view.uri, title = w.view.title
