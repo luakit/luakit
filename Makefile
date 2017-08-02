@@ -45,8 +45,9 @@ $(THEAD) $(TSRC): $(TLIST)
 	$(LUA_BIN_NAME) ./build-utils/gentokens.lua $(TLIST) $@
 
 buildopts.h: buildopts.h.in
-	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' buildopts.h.in > buildopts.h
-	sed 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' buildopts.h.in > buildopts.h
+	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' \
+		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' buildopts.h.in \
+		> buildopts.h
 
 $(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
 
