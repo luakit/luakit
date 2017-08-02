@@ -145,6 +145,12 @@ luaH_widget_index(lua_State *L)
     if(luaH_class_index(L))
         return 1;
 
+    if (token == L_TK_IS_ALIVE) {
+        widget_t *w = luaH_checkudata(L, 1, &widget_class);
+        lua_pushboolean(L, !!w);
+        return 1;
+    }
+
     /* Then call special widget index */
     gint ret;
     widget_t *widget = luaH_checkwidget(L, 1);

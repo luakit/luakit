@@ -61,6 +61,12 @@
 -- @type string
 -- @readonly
 
+--- @property is_alive
+-- Whether the widget is alive. If it is not (i.e. it has been destroyed), then
+-- this is the only property that can be accessed without raising an error.
+-- @type boolean
+-- @readonly
+
 --- @property margin
 -- Combined property for all widget margins, in pixels.
 -- @type integer
