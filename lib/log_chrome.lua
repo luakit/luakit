@@ -226,8 +226,10 @@ local function update_widgets()
             errors = error_count > 0 and string.format(_M.widget_error_format, error_count) or "",
             warnings = warning_count > 0 and string.format(_M.widget_warning_format, warning_count) or "",
         })
+    local tooltip = string.format("Errors: %d, Warnings: %d", error_count, warning_count)
     for _, notif in ipairs(widgets) do
         notif.text = text
+        notif.tooltip = tooltip
         notif:show()
     end
 end
