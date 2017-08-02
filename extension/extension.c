@@ -33,7 +33,7 @@
 #include "extension/clib/dom_element.h"
 #include "extension/clib/page.h"
 #include "extension/clib/soup.h"
-#include "common/clib/msg.h"
+#include "extension/clib/msg.h"
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"

@@ -76,6 +76,8 @@ local adblock_chrome = require "adblock_chrome"
 
 local webinspector = require "webinspector"
 
+require "log_chrome"
+
 -- Add uzbl-like form filling
 local formfiller = require "formfiller"
 

@@ -26,6 +26,7 @@
 #include "common/ipc.h"
 #include "common/signal.h"
 #include "luah.h"
+#include "log.h"
 #include "web_context.h"
 #include "globalconf.h"
 

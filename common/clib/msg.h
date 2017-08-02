@@ -1,5 +1,5 @@
 /*
- * common/clib/msg.h - Lua logging interface
+ * common/clib/msg.h - Lua logging shared functionality
  *
  * Copyright © 2016 Aidan Holm <aidanholm@gmail.com>
  *
@@ -21,9 +21,63 @@
 #ifndef LUAKIT_COMMON_CLIB_MSG_H
 #define LUAKIT_COMMON_CLIB_MSG_H
 
+#include "luah.h"
 #include <lua.h>
 
-void msg_lib_setup(lua_State *L);
+#include <stdlib.h>
+#include <glib.h>
+#include <gtk/gtk.h>
+#include <sys/wait.h>
+#include <time.h>
+#include <webkit2/webkit2.h>
+
+static gpointer string_format_ref;
+static gpointer tostring_ref;
+
+static const gchar *
+luaH_msg_string_from_args(lua_State *L)
+{
+    gint nargs = lua_gettop(L);
+    /* Pre-convert all non-numerical arguments to strings */
+    for (gint i = 1; i <= nargs; ++i) {
+        if (lua_type(L, i) != LUA_TNUMBER) {
+            /* Convert to a string with tostring() ... */
+            luaH_object_push(L, tostring_ref);
+            lua_pushvalue(L, i);
+            lua_pcall(L, 1, 1, 0);
+            /* ... And replace the original value */
+            lua_remove(L, i);
+            lua_insert(L, i);
+        }
+    }
+    luaH_object_push(L, string_format_ref);
+    lua_insert(L, 1);
+    if (lua_pcall(L, nargs, 1, 0))
+        luaL_error(L, "failed to format message: %s", lua_tostring(L, -1));
+    return lua_tostring(L, -1);
+}
+
+static gint
+luaH_msg(lua_State *L, log_level_t lvl)
+{
+    lua_Debug ar;
+    lua_getstack(L, 1, &ar);
+    lua_getinfo(L, "Sln", &ar);
+    /* Use .source if it's a file, since short_src is truncated for long paths */
+    const char *src = ar.source[0] == '@' ? ar.source+1 : ar.short_src;
+    _log(lvl, src, "%s", luaH_msg_string_from_args(L));
+    return 0;
+}
+
+#define X(name) \
+static gint \
+luaH_msg_##name(lua_State *L) \
+{ \
+    return luaH_msg(L, LOG_LEVEL_##name); \
+} \
+
+LOG_LEVELS
+#undef X
 
 #endif
 
