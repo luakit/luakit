@@ -30,10 +30,11 @@ local get_mode_bindings_for_module = function (mod)
     local mode_list = modes.get_modes()
     for mode_name in pairs(mode_list) do
         local mode = modes.get_mode(mode_name)
-        for _, b in pairs(mode.binds or {}) do
+        for _, m in pairs(mode.binds or {}) do
+            local b, a = unpack(m)
             table.insert(ret, {
                 name = lousy.bind.bind_to_string(b),
-                desc = b.desc,
+                desc = a.desc,
             })
         end
     end
