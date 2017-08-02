@@ -62,12 +62,8 @@ window.add_signal("build", function (w)
     r.layout:pack(widgets.scroll())
 end)
 
--- Load users mode configuration
--- ("$XDG_CONFIG_HOME/luakit/modes.lua" or "/etc/xdg/luakit/modes.lua")
+-- Load luakit binds and modes
 local modes = require "modes"
-
--- Load users keybindings
--- ("$XDG_CONFIG_HOME/luakit/binds.lua" or "/etc/xdg/luakit/binds.lua")
 local binds = require "binds"
 
 ----------------------------------

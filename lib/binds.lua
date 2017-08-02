@@ -1,6 +1,15 @@
------------------
--- Keybindings --
------------------
+--- Default bind configuration for luakit.
+--
+-- This module defines the default set of keybindings that luakit uses, in
+-- various modes.
+--
+-- @module binds
+-- @author Aidan Holm <aidanholm@gmail.com>
+-- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+
+local _M = {}
 
 local window = require("window")
 local globals = require("globals")
@@ -17,11 +26,26 @@ local scroll_step = globals.scroll_step or 20
 local page_step = globals.page_step or 1.0
 local zoom_step = globals.zoom_step or 0.1
 
-local add_binds = modes.add_binds
-local add_cmds = modes.add_cmds
+--- Compatibility wrapper for @ref{modes/add_binds|modes.add_binds()}.
+-- @deprecated use @ref{modes/add_binds|modes.add_binds()} instead.
+_M.add_binds = function (...)
+    msg.warn("binds.add_binds() is deprecated and will be removed in a future version!")
+    msg.warn("please use modes.add_binds() instead")
+    return modes.add_binds(...)
+end
 
--- Adds the default menu widget bindings to a mode
-local menu_binds = {
+--- Compatibility wrapper for @ref{modes/add_cmds|modes.add_cmds()}.
+-- @deprecated use @ref{modes/add_cmds|modes.add_cmds()} instead.
+_M.add_cmds = function (...)
+    msg.warn("binds.add_cmds() is deprecated and will be removed in a future version!")
+    msg.warn("please use modes.add_cmds() instead")
+    return modes.add_cmds(...)
+end
+
+--- Table of bindings for the luakit menu.
+-- @readwrite
+-- @type table
+_M.menu_binds = {
     -- Navigate items
     { "j",           "Move the menu row focus downwards.", function (w) w.menu:move_down() end },
     { "k",           "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
@@ -34,7 +58,7 @@ local menu_binds = {
 }
 
 -- Add binds to special mode "all" which adds its binds to all modes.
-add_binds("all", {
+modes.add_binds("all", {
     { "<Escape>", "Return to `normal` mode.", function (w) w:set_prompt(); w:set_mode() end },
     { "<Control-[>", "Return to `normal` mode.", function (w) w:set_mode() end },
     { "<Mouse2>", [[Open link under mouse cursor in new tab or navigate to the
@@ -71,7 +95,7 @@ add_binds("all", {
     { "<Shift-Mouse5>", "Scroll right.", function (w) w:scroll{ xrel = scroll_step } end },
 })
 
-add_binds("normal", {
+modes.add_binds("normal", {
     -- Autoparse the `[count]` before a binding and re-call the hit function
     -- with the count removed and added to the opts table.
     { "<any>", [[Meta-binding to detect the `^[count]` syntax. The `[count]` is parsed
@@ -329,12 +353,15 @@ add_binds("normal", {
         function (w) w:set_mode("passthrough") end },
 })
 
-add_binds("insert", {
+modes.add_binds("insert", {
     { "<Control-z>", "Enter `passthrough` mode, ignores all luakit keybindings.",
         function (w) w:set_mode("passthrough") end },
 })
 
-local readline_bindings = {
+--- Readline bindings for the luakit input bar.
+-- @readwrite
+-- @type table
+_M.readline_bindings = {
     { "<Shift-Insert>", "Insert contents of primary selection at cursor position.",
         function (w) w:insert_cmd(luakit.selection.primary) end },
     { "<Control-w>", "Delete previous word.", function (w) w:del_word() end },
@@ -349,7 +376,7 @@ local readline_bindings = {
     { "<Mod1-b>", "Move cursor backward one word.", function (w) w:backward_word() end },
 }
 
-add_binds({"command", "search"}, readline_bindings)
+modes.add_binds({"command", "search"}, _M.readline_bindings)
 
 -- Switching tabs with Mod1+{1,2,3,...}
 do
@@ -359,12 +386,12 @@ do
             ("<Mod1-%d>"):format(i % 10), "Jump to tab at index "..i..".", function (w) w.tabs:switch(i) end
         })
     end
-    add_binds("normal", mod1binds)
+    modes.add_binds("normal", mod1binds)
 end
 
 -- Command bindings which are matched in the "command" mode from text
 -- entered into the input bar.
-add_cmds({
+modes.add_cmds({
     { "^%S+!", [[Detect bang syntax in `:command!` and recursively calls
         `lousy.bind.match_cmd(..)` removing the bang from the command string
         and setting `bang = true` in the bind opts table.]],
@@ -459,7 +486,7 @@ else
 end
     end },
 
-    { "dump", "Dump current tabs html to file.",
+    { ":dump", "Dump current tabs html to file.",
         function (w, o)
             local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.html' -- sanitize filename
             local file = o.arg or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
@@ -473,11 +500,6 @@ end
         end },
 })
 
-return {
-    add_binds = add_binds,
-    add_cmds = add_cmds,
-    menu_binds = menu_binds,
-    readline_bindings = readline_bindings,
-}
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
