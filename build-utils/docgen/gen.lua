@@ -24,12 +24,14 @@ local format_text = function (text)
         return (text_macros[macro])(args)
     end)
     ret = ret:gsub('@ref{([^}]+)}', function (ref)
+        local r, reftext = ref:match("^(.*)%|(.*)$")
+        ref, reftext = r or ref, reftext or ref:gsub(".*/", "")
         assert(index[ref] ~= false, "ambiguous ref '" .. ref .. "', prefix with doc/")
         assert(index[ref], "invalid ref '" .. ref .. "'")
         local doc, item = index[ref].doc, index[ref].item
         local group, name = doc.module and "modules" or "classes", doc.name
         local fragment = item and ("#%s-%s"):format(item.type, item.name) or ""
-        return ('<a href="../%s/%s.html%s">`%s`</code></a>'):format(group, name, fragment, ref:gsub(".*/", ""))
+        return ('<a href="../%s/%s.html%s">`%s`</code></a>'):format(group, name, fragment, reftext)
     end)
     -- Format with markdown
     ret = markdown(ret)
