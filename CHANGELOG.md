@@ -10,6 +10,8 @@
  - New `lousy.widget.zoom` statusbar widget: shows current page zoom level.
  - Added `log` signal, emitted whenever a message is logged.
  - New `widget.is_alive` property. Can be accessed even if the widget has been destroyed.
+ - Added `luakit://log/` chrome page: displays log messages.
+ - Added status bar widget that notifies of any Lua warnings or errors.
 
 ### Fixed
 
@@ -17,6 +19,8 @@
  - Fixed incompatibility of `editor.lua` with urxvt.
  - Fixed slow performance while beginning a search.
  - Fixed `lousy.util.table.join` merging tables in unpredictable order.
+ - Fixed `image_css` raising errors on page zoom in/out.
+ - Worked around `image_css` breaking slightly when using non-1.0 zoom_level.
 
 ### Changed
 
