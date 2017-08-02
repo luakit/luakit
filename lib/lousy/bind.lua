@@ -361,8 +361,25 @@ end
 -- action when it is activated.
 function _M.add_bind (binds, bind, action, opts)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
+    assert(bind and type(bind) == "string", "invalid bind type: " .. type(bind))
     bind = convert_bind_syntax(bind)
+    _M.remove_bind(binds, bind)
     table.insert(binds, { bind, action, opts or {} })
+end
+
+--- Remove any binding with a specific trigger from the given array of bindings.
+-- @tparam table binds The array of bindings to remove the named binding from.
+-- @tparam string bind The trigger to unbind.
+function _M.remove_bind (binds, bind)
+    assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
+    assert(bind and type(bind) == "string", "invalid bind type: " .. type(bind))
+    bind = convert_bind_syntax(bind)
+    for i, m in ipairs(binds) do
+        if m[1] == bind then
+            table.remove(binds, i)
+            return
+        end
+    end
 end
 
 return _M
