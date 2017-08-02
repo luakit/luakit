@@ -43,6 +43,9 @@ local window = require "window"
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
 local webview = require "webview"
 
+-- Add luakit;//log/ chrome page
+local log_chrome = require "log_chrome"
+
 window.add_signal("build", function (w)
     local widgets, l, r = require "lousy.widget", w.sbar.l, w.sbar.r
 
@@ -53,6 +56,7 @@ window.add_signal("build", function (w)
 
     -- Right-aligned status bar widgets
     r.layout:pack(widgets.buf())
+    r.layout:pack(log_chrome.widget())
     r.layout:pack(widgets.ssl())
     r.layout:pack(widgets.tabi())
     r.layout:pack(widgets.scroll())
@@ -75,8 +79,6 @@ local adblock = require "adblock"
 local adblock_chrome = require "adblock_chrome"
 
 local webinspector = require "webinspector"
-
-require "log_chrome"
 
 -- Add uzbl-like form filling
 local formfiller = require "formfiller"
