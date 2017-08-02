@@ -54,12 +54,12 @@ _M.html_template = [==[
     </html>
 ]==]
 
---- Title for the adblock chrome page.
+--- Title for the log chrome page.
 -- @type string
 -- @readwrite
 _M.html_page_title = "Luakit log"
 
---- CSS applied to the adblock chrome page.
+--- CSS applied to the log chrome page.
 -- @type string
 -- @readwrite
 _M.html_style = [===[
