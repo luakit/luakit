@@ -8,6 +8,7 @@
 -- @copyright 2017 Aidan Holm
 
 local chrome = require "chrome"
+local theme = require("lousy").theme.get()
 
 local _M = {}
 
@@ -194,6 +195,43 @@ chrome.add("log", function (view)
     return html
 end)
 
+--- Format string which defines the appearance of the error/warning widget.
+-- This is passed to `string.format` with the number of errors as a
+-- numerical argument, the result of which is substituted into @ref{widget_format}.
+-- @type string
+-- @readwrite
+_M.widget_error_format = "<span color='#f00'>E: %d</span>"
+
+--- Format string which defines the appearance of the error/warning widget.
+-- This is passed to `string.format` with the number of warnings as a
+-- numerical argument, the result of which is substituted into @ref{widget_format}.
+-- @type string
+-- @readwrite
+_M.widget_warning_format = "<span color='#f60'>W: %d</span>"
+
+--- Format string which defines the appearance of the error/warning widget.
+-- This combines the error and warning sub-format strings. `{errors}` will be
+-- replaced with the result of formatting @ref{widget_error_format}, or the
+-- empty string if there have been no errors. Likewise, `{warnings}` will be
+-- replaced with the result of formatting @ref{widget_warning_format}, or the
+-- empty string if there have been no warnings
+-- @type string
+-- @readwrite
+_M.widget_format = " {errors} {warnings} "
+
+local widgets = {}
+local error_count, warning_count = 0, 0
+local function update_widgets()
+    local text = string.gsub(_M.widget_format, "{(%w+)}", {
+            errors = error_count > 0 and string.format(_M.widget_error_format, error_count) or "",
+            warnings = warning_count > 0 and string.format(_M.widget_warning_format, warning_count) or "",
+        })
+    for _, notif in ipairs(widgets) do
+        notif.text = text
+        notif:show()
+    end
+end
+
 msg.add_signal("log", function (time, level, group, msg)
     table.insert(log_entries, {
         time = time,
@@ -201,6 +239,14 @@ msg.add_signal("log", function (time, level, group, msg)
         group = group,
         msg = msg:gsub("^%l", string.upper):gsub(string.char(27) .. '%[%d+m', '')
     })
+
+    if level == "warn" then
+        warning_count = warning_count + 1
+        update_widgets()
+    elseif level == "error" then
+        error_count = error_count + 1
+        update_widgets()
+    end
 
     for _, t in pairs(log_views) do
         t.unsynced_count = math.min(t.unsynced_count + 1, _M.buffer_size)
@@ -211,6 +257,19 @@ msg.add_signal("log", function (time, level, group, msg)
     end
     while #log_entries > _M.buffer_size do table.remove(log_entries, 1) end
 end)
+
+--- Construct a new error/warning status bar widget.
+-- This widget will stay hidden, until a luakit error or warning is logged.
+-- @treturn widget The newly-constructed status bar widget.
+_M.widget = function ()
+    local notif = widget{type="label"}
+    notif:hide()
+    notif.fg = theme.sbar_notif_fg
+    notif.font = theme.sbar_notif_font
+    table.insert(widgets, notif)
+    update_widgets()
+    return notif
+end
 
 return _M
 
