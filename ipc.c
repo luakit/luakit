@@ -115,14 +115,15 @@ web_extension_connect_thread(gpointer UNUSED(data))
 {
     gchar *path = build_socket_path();
 
-    int sock, web_socket;
-    struct sockaddr_un local, remote;
-    local.sun_family = AF_UNIX;
-    strcpy(local.sun_path, path);
-    int len = strlen(local.sun_path) + sizeof(local.sun_family);
-
+    int sock;
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
         fatal("Error calling socket(): %s", strerror(errno));
+
+    struct sockaddr_un local;
+    memset(&local, 0, sizeof(local));
+    local.sun_family = AF_UNIX;
+    strcpy(local.sun_path, path);
+    int len = offsetof(struct sockaddr_un, sun_path) + strlen(local.sun_path);
 
     /* Remove any pre-existing socket, before opening */
     unlink(local.sun_path);
@@ -141,6 +142,8 @@ web_extension_connect_thread(gpointer UNUSED(data))
     while (TRUE) {
         debug("Waiting for a connection...");
 
+        int web_socket;
+        struct sockaddr_un remote;
         socklen_t size = sizeof(remote);
         if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
             fatal("Error calling accept(): %s", strerror(errno));
@@ -191,10 +194,6 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 static void
 remove_socket_file(void)
 {
-    #if defined(__FreeBSD__)
-      // FreeBSD is missing the last character
-      socket_path[strlen(socket_path)-1] = '\0';
-    #endif
     g_mutex_lock(&socket_path_lock);
     g_unlink(socket_path);
     g_free(socket_path);
