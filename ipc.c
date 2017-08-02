@@ -40,6 +40,10 @@
 void webview_scroll_recv(void *d, const ipc_scroll_t *ipc);
 void run_javascript_finished(const guint8 *msg, guint length);
 
+static char *socket_path;
+GMutex socket_path_lock;
+GCond socket_path_cond;
+
 IPC_NO_HANDLER(lua_require_module)
 IPC_NO_HANDLER(web_extension_loaded)
 IPC_NO_HANDLER(crash)
@@ -84,13 +88,37 @@ ipc_recv_page_created(ipc_endpoint_t *ipc, const ipc_page_created_t *msg, guint 
     webview_set_web_process_id(w, msg->pid);
 }
 
-static gpointer
-web_extension_connect_thread(const gchar *socket_path)
+static gchar *
+build_socket_path(void)
 {
+    char suffix[11] = {0};
+retry:
+    for (unsigned i=0; i < sizeof(suffix)-1; i++) {
+        int c = g_random_int_range(0, 10+26+26), base = '0';
+        if (c >= 10) { base = 'A'; c -= 10; }
+        if (c >= 26) { base = 'a'; c -= 26; }
+        suffix[i] = base + c;
+    }
+    gchar *socket_name = g_strdup_printf("luakit-ipc-%d-%s", getpid(), suffix);
+    gchar *socket_path = g_build_filename(g_get_tmp_dir(), socket_name, NULL);
+    g_free(socket_name);
+
+    if (g_file_test(socket_path, G_FILE_TEST_EXISTS)) {
+        g_free(socket_path);
+        goto retry;
+    }
+    return socket_path;
+}
+
+static gpointer
+web_extension_connect_thread(gpointer UNUSED(data))
+{
+    gchar *path = build_socket_path();
+
     int sock, web_socket;
     struct sockaddr_un local, remote;
     local.sun_family = AF_UNIX;
-    strcpy(local.sun_path, socket_path);
+    strcpy(local.sun_path, path);
     int len = strlen(local.sun_path) + sizeof(local.sun_family);
 
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
@@ -99,15 +127,16 @@ web_extension_connect_thread(const gchar *socket_path)
     /* Remove any pre-existing socket, before opening */
     unlink(local.sun_path);
 
-    int enable = 1;
-    if (setsockopt(sock, SOL_SOCKET, SO_REUSEADDR, &enable, sizeof(enable)) < 0)
-        fatal("Error setting SO_REUSEADDR: %s", strerror(errno));
-
     if (bind(sock, (struct sockaddr *)&local, len) == -1)
         fatal("Error calling bind(): %s", strerror(errno));
 
     if (listen(sock, 5) == -1)
         fatal("Error calling listen(): %s", strerror(errno));
+
+    g_mutex_lock(&socket_path_lock);
+    socket_path = path;
+    g_cond_signal(&socket_path_cond);
+    g_mutex_unlock(&socket_path_lock);
 
     while (TRUE) {
         debug("Waiting for a connection...");
@@ -124,7 +153,7 @@ web_extension_connect_thread(const gchar *socket_path)
 }
 
 static void
-initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
+initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 {
 #if DEVELOPMENT_PATHS
     gchar *extension_dir = g_get_current_dir();
@@ -144,11 +173,14 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
     }
     g_free(extension_file);
 
-    /* There's a potential race condition here; the accept thread might not run
-     * until after the web extension process has already started (and failed to
-     * connect). TODO: add a busy wait */
+    const char *path;
+    g_mutex_lock (&socket_path_lock);
+    while (!socket_path)
+        g_cond_wait (&socket_path_cond, &socket_path_lock);
+    path = socket_path;
+    g_mutex_unlock (&socket_path_lock);
 
-    GVariant *payload = g_variant_new_string(socket_path);
+    GVariant *payload = g_variant_new_string(path);
     webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
     webkit_web_context_set_web_extensions_directory(context, extension_dir);
 #if DEVELOPMENT_PATHS
@@ -156,31 +188,23 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer socket_path)
 #endif
 }
 
-static gchar *
-build_socket_path(void)
-{
-    gchar *socket_name = g_strdup_printf("socket.%d", getpid());
-    gchar *socket_path = g_build_filename(globalconf.cache_dir, socket_name, NULL);
-    g_free(socket_name);
-    return socket_path;
-}
-
 static void
 remove_socket_file(void)
 {
-    gchar *socket_path = build_socket_path();
+    g_mutex_lock(&socket_path_lock);
     g_unlink(socket_path);
     g_free(socket_path);
+    socket_path = NULL;
+    g_mutex_unlock(&socket_path_lock);
 }
 
 void
 ipc_init(void)
 {
-    gchar *socket_path = build_socket_path();
     /* Start web extension connection accept thread */
-    g_thread_new("accept_thread", (GThreadFunc) web_extension_connect_thread, socket_path);
+    g_thread_new("accept_thread", web_extension_connect_thread, NULL);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
-            G_CALLBACK (initialize_web_extensions_cb), socket_path);
+            G_CALLBACK (initialize_web_extensions_cb), NULL);
     /* Remove socket file at exit */
     atexit(remove_socket_file);
 }
