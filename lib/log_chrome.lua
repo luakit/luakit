@@ -8,6 +8,7 @@
 -- @copyright 2017 Aidan Holm
 
 local chrome = require "chrome"
+local window = require "window"
 local theme = require("lousy").theme.get()
 
 local _M = {}
@@ -234,11 +235,13 @@ local function update_widgets()
     end
 end
 
-local function widget_click_cb()
+local function widget_click_cb(notif)
     error_count, warning_count = 0, 0
-    for _, notif in ipairs(widgets) do
-        notif:hide()
+    for _, n in ipairs(widgets) do
+        n:hide()
     end
+    local w = window.ancestor(notif)
+    if w then w:new_tab("luakit://log/", { switch = true }) end
 end
 
 msg.add_signal("log", function (time, level, group, msg)
