@@ -30,6 +30,8 @@
  - `<ctrl-a>` and `<Ctrl-x>` bindings now take an optional count.
  - Luakit's IPC socket files are now opened in `/tmp/`.
  - Luakit now checks for accidental use of DEVELOPMENT_PATHS.
+ - IPC endpoints' `emit_signal()` method now accepts a webview ID as its first argument, as well as a webview.
+   This specifies a single destination for the IPC call.
 
 ## [2017-07-26]
 
