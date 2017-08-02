@@ -1,6 +1,6 @@
 --- Luakit log viewer.
 --
--- This module supplies the luakit://log/ chrome page, which displays the most
+-- This module supplies the <luakit://log/> chrome page, which displays the most
 -- recent log messages.
 --
 -- @module log_chrome
