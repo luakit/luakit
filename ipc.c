@@ -119,7 +119,7 @@ web_extension_connect_thread(gpointer UNUSED(data))
     struct sockaddr_un local, remote;
     local.sun_family = AF_UNIX;
     strcpy(local.sun_path, path);
-    int len = offsetof(struct sockaddr_un, sun_path) + strlen(local.sun_path);
+    int len = strlen(local.sun_path) + sizeof(local.sun_family);
 
     if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
         fatal("Error calling socket(): %s", strerror(errno));
@@ -191,6 +191,10 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 static void
 remove_socket_file(void)
 {
+    #if defined(__FreeBSD__)
+      // FreeBSD is missing the last character
+      socket_path[strlen(socket_path)-1] = '\0';
+    #endif
     g_mutex_lock(&socket_path_lock);
     g_unlink(socket_path);
     g_free(socket_path);
