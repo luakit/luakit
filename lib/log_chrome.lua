@@ -232,6 +232,13 @@ local function update_widgets()
     end
 end
 
+local function widget_click_cb()
+    error_count, warning_count = 0, 0
+    for _, notif in ipairs(widgets) do
+        notif:hide()
+    end
+end
+
 msg.add_signal("log", function (time, level, group, msg)
     table.insert(log_entries, {
         time = time,
@@ -260,15 +267,18 @@ end)
 
 --- Construct a new error/warning status bar widget.
 -- This widget will stay hidden, until a luakit error or warning is logged.
+-- Once shown, clicking on the widget will hide it and all other such widgets.
 -- @treturn widget The newly-constructed status bar widget.
 _M.widget = function ()
-    local notif = widget{type="label"}
+    local notif, ebox = widget{type="label"}, widget{type="eventbox"}
     notif:hide()
     notif.fg = theme.sbar_notif_fg
     notif.font = theme.sbar_notif_font
     table.insert(widgets, notif)
     update_widgets()
-    return notif
+    ebox.child = notif
+    ebox:add_signal("button-release", widget_click_cb)
+    return ebox
 end
 
 return _M
