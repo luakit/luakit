@@ -191,6 +191,10 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 static void
 remove_socket_file(void)
 {
+    #if defined(__FreeBSD__)
+      // FreeBSD is missing the last character
+      socket_path[strlen(socket_path)-1] = '\0';
+    #endif
     g_mutex_lock(&socket_path_lock);
     g_unlink(socket_path);
     g_free(socket_path);
