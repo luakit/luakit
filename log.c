@@ -68,6 +68,21 @@ log_get_verbosity(char *group)
 static char *
 log_group_from_fct(const char *fct)
 {
+    /* Strip off installation prefixes */
+    static GPtrArray *paths;
+    if (!paths) {
+        paths = g_ptr_array_new_with_free_func(g_free);
+        g_ptr_array_add(paths, "./");
+        g_ptr_array_add(paths, g_build_path("/", LUAKIT_INSTALL_PATH, "lib/", NULL));
+        g_ptr_array_add(paths, g_build_path("/", LUAKIT_CONFIG_PATH, "/", NULL));
+        g_ptr_array_add(paths, g_build_path("/", globalconf.config_dir, "/", NULL));
+    }
+    for (unsigned i = 0; i < paths->len; i++)
+        if (g_str_has_prefix(fct, paths->pdata[i])) {
+            fct += strlen(paths->pdata[i]);
+            break;
+        }
+
     int len = strlen(fct);
     gboolean core = !strcmp(&fct[len-2], ".c") || !strcmp(&fct[len-2], ".h"),
              lua = !strcmp(&fct[len-4], ".lua") || !strncmp(fct, "[string \"", 9);
