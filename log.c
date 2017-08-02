@@ -93,15 +93,10 @@ log_group_from_fct(const char *fct)
     if (core == lua)
         warn("not sure how to handle this one: '%s'", fct);
 
-    if (core) /* Strip .c off the end */
+    if (core) /* Strip .c or .lua off the end */
         return g_strdup_printf("core/%.*s", len-2, fct);
-    else {
-        if (!strncmp(fct, "./", 2)) {
-            fct += 2;
-            len -= 2;
-        }
+    else
         return g_strdup_printf("lua/%.*s", len-4, fct);
-    }
 }
 
 int
