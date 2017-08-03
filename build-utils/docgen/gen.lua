@@ -320,7 +320,8 @@ local generate_sidebar_html = function (docs, current_doc)
             if doc == current_doc then
                 html = html .. ('    <li><span>%s</span></li>\n'):format(doc.name)
             else
-                html = html .. ('    <li><a href="../%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
+                html = html .. ('    <li><a href="../%s/%s.html">%s</a></li>\n'):format(name,
+                    doc.filename or doc.name, doc.name)
             end
         end
         html = html .. "</ul>\n"
@@ -446,7 +447,8 @@ local generate_index_html = function (style, docs)
         local section = assert(docs[name], "Missing " .. name .. " section")
         html = html .. "<ul>\n"
         for _, doc in ipairs(section) do
-            html = html .. ('    <li><a href="%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
+            html = html .. ('    <li><a href="%s/%s.html">%s</a></li>\n'):format(name,
+                doc.filename or doc.name, doc.name)
         end
         for _=1,(3-#section%3)%3 do html = html .. '    <li class=dummy></li>\n' end
         lists[name] = html .. "</ul>\n"
@@ -519,7 +521,7 @@ local generate_documentation = function (docs, out_dir)
     for _, page in ipairs(docs.pages) do
         pages[#pages+1] = {
             doc = page, gen = generate_page_html,
-            path = "pages/" .. page.name .. ".html",
+            path = "pages/" .. page.filename .. ".html",
         }
     end
     for _, section_name in ipairs{"modules", "classes"} do
