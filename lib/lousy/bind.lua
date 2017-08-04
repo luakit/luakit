@@ -14,13 +14,20 @@ local _M = {}
 
 local function convert_bind_syntax(b)
     -- Convert single-char buffer bindings into key bindings
-    if string.wlen(b) == 1 then return "<"..b..">" end
+    if string.wlen(b) == 1 then b = "<"..b..">" end
     -- commands are a no-op
     if b:match("^:") then return b end
-    -- Key/mouse binds have to have sorted modifiers
+    -- Keys have sorted modifiers and uppercase -> lowercase+shift conversion
     if b:match("^<.+>$") then
         local mods = util.string.split(b:match("^<(.+)>$"), "%-")
         local key = table.remove(mods)
+        -- Convert upper-case keys to shift+lower-case
+        local lc = luakit.wch_lower(key)
+        if lc ~= key then
+            key = lc
+            if not util.table.hasitem(mods, "Shift") then table.insert(mods, "Shift") end
+        end
+        -- Key/mouse binds have to have sorted modifiers
         table.sort(mods)
         mods = #mods > 0 and table.concat(mods, "-") or nil
         return "<".. (mods and (mods.."-") or "") .. key .. ">"
@@ -262,6 +269,10 @@ end
 --- Attempt to match either a key or buffer binding and execute it. This
 -- function is also responsible for performing operations on the buffer when
 -- necessary and the buffer is enabled.
+--
+-- When matching key bindings, this function ignores the case of `key`, and uses
+-- the presence of the Shift modifier to determine which bindings should be matched.
+--
 -- @param object The first argument of the bind callback function.
 -- @tparam table binds The table of binds in which to check for a match.
 -- @tparam {string} mods The modifiers to match.
@@ -288,6 +299,7 @@ function _M.hit(object, binds, mods, key, args)
         key    = key,
     })
 
+    local omods = mods
     mods = _M.parse_mods(mods, type(key) == "string" and len == 1)
 
     if _M.match_any(object, binds, args) then
@@ -299,12 +311,22 @@ function _M.hit(object, binds, mods, key, args)
 
     -- Match key bindings
     elseif (not args.buffer or not args.enable_buffer) or mods or len ~= 1 then
-        -- Check if the current buffer affects key bind (I.e. if the key has a
-        -- `[count]` prefix)
-        if _M.match_key(object, binds, mods, key, args) then
+        -- Remove tab for single-char keys with no case (like ?, :, etc)
+        local lk = luakit.wch_lower(key)
+        local remove_shift = lk == luakit.wch_upper(key) and len == 1
+        local m = _M.parse_mods(omods, remove_shift)
+        if _M.match_key(object, binds, m, lk, args) then
             return true
         end
     end
+
+    -- -- Invert key case on capslock
+    if util.table.hasitem(omods, "Lock") then
+        local uc, lc = luakit.wch_upper(key), luakit.wch_lower(key)
+        key = key == uc and lc or uc
+        table.remove(omods, util.table.hasitem(omods, "Lock"))
+    end
+    mods = _M.parse_mods(omods, type(key) == "string" and len == 1)
 
     -- Clear buffer
     if not args.enable_buffer or mods then
