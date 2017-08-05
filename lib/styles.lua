@@ -10,6 +10,20 @@
 -- refreshing the web pages they affect, and it is possible to reload external
 -- changes to stylesheets into luakit, without restarting the browser.
 --
+-- @usage
+--
+-- 1. Ensure the @ref{styles} module is enabled in your `rc.lua`.
+-- 2. Locate the @ref{styles} sub-directory within luakit's data storage directory.
+--    Normally, this is located at `~/.local/share/luakit/styles/`. Create the
+--    directory if it does not already exist.
+-- 3. Move any CSS rules to a new file within that directory. In order for the
+--    @ref{styles} module to load the stylesheet, the filename must end in `.css`.
+-- 4. Make sure you specify which sites your stylesheet should apply to. The way to
+--    do this is to use `@-moz-document` rules. The Stylish wiki page [Applying styles to specific sites
+--    ](https://github.com/stylish-userstyles/stylish/wiki/Applying-styles-to-specific-sites) may be helpful.
+-- 5. Run `:styles-reload` to detect new stylesheet files and reload any changes to
+--    existing stylesheet files; it isn't necessary to restart luakit.
+--
 -- @module styles
 -- @copyright 2016 Aidan Holm
 
