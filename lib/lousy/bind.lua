@@ -43,6 +43,9 @@ _M.ignore_mask = {
 -- @readwrite
 _M.map = {
     ISO_Left_Tab = "Tab",
+    Ctrl = "Control",
+    PgUp = "Page_Up",
+    PgDn = "Page_Down",
 }
 
 --- Parse a table of modifier keys into a string.
