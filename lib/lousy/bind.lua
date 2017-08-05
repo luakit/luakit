@@ -56,9 +56,11 @@ _M.map = {
 -- @treturn string A string of key names, separated by hyphens (-).
 function _M.parse_mods(mods, remove_shift)
     local t = {}
+    local recognized_mods = { "shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5" }
     for _, mod in ipairs(mods) do
         if not _M.ignore_mask[mod] then
             mod = string.lower(_M.map[mod] or mod)
+            assert(util.table.hasitem(recognized_mods, mod), "unrecognized modifier '"..mod.."'")
             t[mod] = true
         end
     end
