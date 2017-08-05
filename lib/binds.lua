@@ -376,7 +376,7 @@ _M.readline_bindings = {
     { "<Mod1-b>", "Move cursor backward one word.", function (w) w:backward_word() end },
 }
 
-modes.add_binds({"command", "search"}, _M.readline_bindings)
+modes.add_binds("command", _M.readline_bindings)
 
 -- Switching tabs with Mod1+{1,2,3,...}
 do

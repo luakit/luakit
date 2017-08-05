@@ -32,26 +32,6 @@ function _M.exit_completion(w)
     w:enter_cmd(state.orig_text, { pos = state.orig_pos })
 end
 
--- Command completion binds
-add_binds("completion", {
-    { "<Tab>", "Select next matching completion item.",
-        function (w) w.menu:move_down() end },
-    { "<Shift-Tab>", "Select previous matching completion item.",
-        function (w) w.menu:move_up() end },
-    { "Up", "Select next matching completion item.",
-        function (w) w.menu:move_up() end },
-    { "Down", "Select previous matching completion item.",
-        function (w) w.menu:move_down() end },
-    { "<Control-j>", "Select next matching completion item.",
-        function (w) w.menu:move_down() end },
-    { "<Control-k>", "Select previous matching completion item.",
-        function (w) w.menu:move_up() end },
-    { "<Escape>", "Stop completion and restore original command.",
-        _M.exit_completion },
-    { "<Control-[>", "Stop completion and restore original command.",
-        _M.exit_completion },
-})
-
 --- Update the list of completions for some input text.
 -- @tparam table w The current window table.
 -- @tparam string text The current input text.
@@ -150,6 +130,26 @@ new_mode("completion", {
         if string.sub(text, pos+1, pos+1) == " " then pos = pos+1 end
         w:enter_cmd(text, { pos = pos })
     end,
+})
+
+-- Command completion binds
+add_binds("completion", {
+    { "<Tab>", "Select next matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Shift-Tab>", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "Up", "Select next matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "Down", "Select previous matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Control-j>", "Select next matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Control-k>", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "<Escape>", "Stop completion and restore original command.",
+        _M.exit_completion },
+    { "<Control-[>", "Stop completion and restore original command.",
+        _M.exit_completion },
 })
 
 local completion_funcs = {

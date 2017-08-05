@@ -39,6 +39,7 @@
  - Luakit now checks for accidental use of DEVELOPMENT_PATHS.
  - IPC endpoints' `emit_signal()` method now accepts a webview ID as its first argument, as well as a webview.
    This specifies a single destination for the IPC call.
+ - `modes.add_binds()` now verifies that modes with the given names already exist, to guard against typos.
 
 ## [2017-07-26]
 

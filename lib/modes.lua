@@ -201,8 +201,7 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 _M.add_binds = function (mode, binds)
     mode = type(mode) ~= "table" and {mode} or mode
     for _, name in ipairs(mode) do
-        if not _M.get_mode(name) then _M.new_mode(name) end
-        local mdata = _M.get_mode(name)
+        local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
         mdata.binds = mdata.binds or {}
         for _, m in ipairs(binds) do
             local bind, desc, action, opts = unpack(m)
