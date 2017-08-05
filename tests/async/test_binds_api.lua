@@ -23,7 +23,8 @@ T.test_binds_are_called = function ()
     lousy.bind.add_bind(binds, "<Shift-Mouse1>", action)
     lousy.bind.add_bind(binds, "gT", action)
     lousy.bind.add_bind(binds, "-", action)
-    assert.equal(11, #binds)
+    lousy.bind.add_bind(binds, "<C-S-D>", action)
+    assert.equal(12, #binds)
 
     lousy.bind.hit(nil, binds, {}, "a", {})
     assert.equal(1, hit_count)
@@ -63,6 +64,9 @@ T.test_binds_are_called = function ()
 
     lousy.bind.hit(nil, binds, {}, "-", {})
     assert.equal(13, hit_count)
+
+    lousy.bind.hit(nil, binds, {"Control", "Shift"}, "d", {})
+    assert.equal(14, hit_count)
 end
 
 return T

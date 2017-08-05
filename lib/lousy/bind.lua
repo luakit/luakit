@@ -43,9 +43,16 @@ _M.ignore_mask = {
 -- @readwrite
 _M.map = {
     ISO_Left_Tab = "Tab",
-    Ctrl = "Control",
     PgUp = "Page_Up",
     PgDn = "Page_Down",
+}
+
+--- A table that contains mappings for modifier names.
+-- @readwrite
+_M.mod_map = {
+    C = "Control",
+    S = "Shift",
+    Ctrl = "Control",
 }
 
 --- Parse a table of modifier keys into a string.
@@ -59,7 +66,7 @@ function _M.parse_mods(mods, remove_shift)
     local recognized_mods = { "shift", "lock", "control", "mod1", "mod2", "mod3", "mod4", "mod5" }
     for _, mod in ipairs(mods) do
         if not _M.ignore_mask[mod] then
-            mod = string.lower(_M.map[mod] or mod)
+            mod = string.lower(_M.mod_map[mod] or _M.map[mod] or mod)
             assert(util.table.hasitem(recognized_mods, mod), "unrecognized modifier '"..mod.."'")
             t[mod] = true
         end
