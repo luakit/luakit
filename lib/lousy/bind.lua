@@ -58,14 +58,14 @@ function _M.parse_mods(mods, remove_shift)
     local t = {}
     for _, mod in ipairs(mods) do
         if not _M.ignore_mask[mod] then
-            mod = _M.map[mod] or mod
+            mod = string.lower(_M.map[mod] or mod)
             t[mod] = true
         end
     end
 
     -- For single character bindings shift is not processed as it should
     -- have already transformed the keycode within gdk.
-    if remove_shift then t.Shift = nil end
+    if remove_shift then t.shift = nil end
 
     mods = keys(t)
     table.sort(mods)
