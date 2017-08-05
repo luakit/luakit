@@ -387,6 +387,7 @@ function _M.add_bind (binds, bind, action, opts)
     bind = convert_bind_syntax(bind)
     _M.remove_bind(binds, bind)
     table.insert(binds, { bind, action, opts or {} })
+    msg.verbose("added bind %s", bind)
 end
 
 --- Remove any binding with a specific trigger from the given array of bindings.
@@ -399,9 +400,11 @@ function _M.remove_bind (binds, bind)
     for i, m in ipairs(binds) do
         if m[1] == bind then
             table.remove(binds, i)
+            msg.verbose("removed bind %s", bind)
             return
         end
     end
+    msg.verbose("no bind %s to remove", bind)
 end
 
 return _M

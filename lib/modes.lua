@@ -195,9 +195,20 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     history = {maxlen = 50},
 })
 
---- Add a set of binds to one or more modes.
+--- Add a set of binds to one or more modes. Any pre-existing binds with the
+-- same trigger will be removed automatically.
+--
+-- #### Example
+--
+-- The following code snippet will rebind `Control-c` to copy text selected with
+-- the mouse, and the default binding for `Control-c` will be removed.
+--
+--     modes.add_binds("normal", { "<Control-c>", "Copy selected text.", function ()
+--         luakit.selection.clipboard = luakit.selection.primary
+--     end})
+--
 -- @tparam table|string mode The name of the mode, or an array of mode names.
--- @tparam table binds An raray of binds to add to each of the named modes.
+-- @tparam table binds An array of binds to add to each of the named modes.
 _M.add_binds = function (mode, binds)
     mode = type(mode) ~= "table" and {mode} or mode
     for _, name in ipairs(mode) do
@@ -213,6 +224,28 @@ _M.add_binds = function (mode, binds)
                 action.desc = desc
             end
             lousy.bind.add_bind(mdata.binds, bind, action, opts)
+        end
+    end
+end
+
+--- Remove a set of binds from one or more modes.
+--
+-- #### Example
+--
+--     -- Disable extra zooming commands
+--     modes.remove_binds("normal", { "zi", "zo", "zz" })
+--
+--     -- Disable passthrough mode
+--     modes.remove_binds({"normal", "insert"}, { "<Control-z>" })
+--
+-- @tparam table|string mode The name of the mode, or an array of mode names.
+-- @tparam table binds An array of binds to remove from each of the named modes.
+_M.remove_binds = function (mode, binds)
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, name in ipairs(mode) do
+        local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
+        for _, bind in ipairs(binds) do
+            lousy.bind.remove_bind(mdata.binds or {} , bind)
         end
     end
 end
