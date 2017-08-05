@@ -22,7 +22,7 @@ merge upstream changes into, and you are more likely to experience
 errors caused by such upstream changes (until those changes are merged with your
 personal configuration).
 
-### Remove use of `module()`
+### Remove use of `module()` in scripts
 
 Lua's `module()` function sets a global variable of the same name as the module,
 which pollutes the global namespace for _all_ Lua code. A recent effort
