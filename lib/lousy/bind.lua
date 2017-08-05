@@ -13,13 +13,12 @@ local keys = util.table.keys
 local _M = {}
 
 local function convert_bind_syntax(b)
-    -- Convert single-char buffer bindings into key bindings
-    if string.wlen(b) == 1 then b = "<"..b..">" end
     -- commands are a no-op
-    if b:match("^:") then return b end
+    if b:match("^:") and b ~= ":" then return b end
     -- Keys have sorted modifiers and uppercase -> lowercase+shift conversion
-    if b:match("^<.+>$") then
-        local mods = util.string.split(b:match("^<(.+)>$"), "%-")
+    if string.wlen(b) == 1 or b:match("^<.+>$") then
+        b = b:match("^<(.+)>$") or b
+        local mods = b == "-" and {"-"} or util.string.split(b, "%-")
         local key = table.remove(mods)
         -- Convert upper-case keys to shift+lower-case
         local lc = luakit.wch_lower(key)
