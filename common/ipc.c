@@ -192,13 +192,7 @@ ipc_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *
 {
     g_assert(ipc->status == IPC_ENDPOINT_CONNECTED);
     g_assert(ipc->channel);
-
-    gboolean should_exit = !strcmp(ipc->name, "Web");
-
     ipc_endpoint_decref(ipc);
-
-    if (should_exit)
-        exit(0);
     return TRUE;
 }
 
