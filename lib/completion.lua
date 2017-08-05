@@ -13,8 +13,7 @@ local history = require("history")
 local bookmarks = require("bookmarks")
 local modes = require("modes")
 local new_mode, get_mode = modes.new_mode, modes.get_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
+local add_binds = modes.add_binds
 local escape = lousy.util.escape
 
 local _M = {}
@@ -23,9 +22,8 @@ local _M = {}
 local data = setmetatable({}, { __mode = "k" })
 
 -- Add completion start trigger
-local key = lousy.bind.key
 add_binds("command", {
-    key({}, "Tab", "Open completion menu.", function (w) w:set_mode("completion") end),
+    { "<Tab>", "Open completion menu.", function (w) w:set_mode("completion") end },
 })
 
 --- Return to command mode with original text and with original cursor position.
@@ -33,33 +31,6 @@ function _M.exit_completion(w)
     local state = data[w]
     w:enter_cmd(state.orig_text, { pos = state.orig_pos })
 end
-
--- Command completion binds
-add_binds("completion", {
-    key({}, "Tab", "Select next matching completion item.",
-        function (w) w.menu:move_down() end),
-
-    key({"Shift"}, "Tab", "Select previous matching completion item.",
-        function (w) w.menu:move_up() end),
-
-    key({}, "Up", "Select next matching completion item.",
-        function (w) w.menu:move_up() end),
-
-    key({}, "Down", "Select previous matching completion item.",
-        function (w) w.menu:move_down() end),
-
-    key({"Control"}, "j", "Select next matching completion item.",
-        function (w) w.menu:move_down() end),
-
-    key({"Control"}, "k", "Select previous matching completion item.",
-        function (w) w.menu:move_up() end),
-
-    key({}, "Escape", "Stop completion and restore original command.",
-        _M.exit_completion),
-
-    key({"Control"}, "[", "Stop completion and restore original command.",
-        _M.exit_completion),
-})
 
 --- Update the list of completions for some input text.
 -- @tparam table w The current window table.
@@ -161,6 +132,26 @@ new_mode("completion", {
     end,
 })
 
+-- Command completion binds
+add_binds("completion", {
+    { "<Tab>", "Select next matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Shift-Tab>", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "Up", "Select next matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "Down", "Select previous matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Control-j>", "Select next matching completion item.",
+        function (w) w.menu:move_down() end },
+    { "<Control-k>", "Select previous matching completion item.",
+        function (w) w.menu:move_up() end },
+    { "<Escape>", "Stop completion and restore original command.",
+        _M.exit_completion },
+    { "<Control-[>", "Stop completion and restore original command.",
+        _M.exit_completion },
+})
+
 local completion_funcs = {
     -- Add command completion items to the menu
     command = function (state)
@@ -169,17 +160,31 @@ local completion_funcs = {
         -- Check each command binding for matches
         local pat = state.left
         local cmds = {}
-        for _, b in ipairs(get_mode("command").binds) do
-            if b.cmds then
-                for i, cmd in ipairs(b.cmds) do
+        for _, m in ipairs(get_mode("command").binds) do
+            local b = m[1]
+            if m.cmds or (b and b:match("^:")) then
+                local c = m.cmds or {}
+                if not m.cmds then
+                    for _, cmd in ipairs(lousy.util.string.split(b:gsub("^:", ""), ",%s+:")) do
+                        if string.match(cmd, "^([%-%w]+)%[(%w+)%]") then
+                            local l, r = string.match(cmd, "^([%-%w]+)%[(%w+)%]")
+                            table.insert(c, l..r)
+                            table.insert(c, l)
+                        else
+                            table.insert(c, cmd)
+                        end
+                    end
+                end
+
+                for i, cmd in ipairs(c) do
                     if string.find(cmd, pat, 1, true) == 1 then
                         if i == 1 then
                             cmd = ":" .. cmd
                         else
-                            cmd = string.format(":%s (:%s)", cmd, b.cmds[1])
+                            cmd = string.format(":%s (:%s)", cmd, c[1])
                         end
 
-                        cmds[cmd] = { escape(cmd), escape(b.desc) or "", left = ":" .. b.cmds[1] }
+                        cmds[cmd] = { escape(cmd), escape(m[2].desc) or "", left = ":" .. c[1] }
                         break
                     end
                 end

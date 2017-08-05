@@ -29,9 +29,9 @@
 local lousy = require("lousy")
 local theme = lousy.theme.get()
 local window = require("window")
-local binds = require("binds")
+local binds, modes = require("binds"), require("modes")
 local new_mode = require("modes").new_mode
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
 
 local _, minor = luakit.webkit_version:match("^(%d+)%.(%d+)%.")
@@ -211,10 +211,10 @@ new_mode("proxymenu", {
     end,
 })
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("proxy", "Change the current proxy or add a new proxy entry.",
-        function (w, a)
+    { ":proxy", "Change the current proxy or add a new proxy entry.",
+        function (w, o)
+            local a = o.arg
             local params = lousy.util.string.split(a or '')
             if not a then
                 w:set_mode("proxymenu")
@@ -224,13 +224,12 @@ add_cmds({
             else
                 w:error("Bad usage. Correct format :proxy or :proxy <name> <address>")
             end
-        end),
+        end },
 })
 
-local key = lousy.bind.key
 add_binds("proxymenu", lousy.util.table.join({
     -- Select proxy
-    key({}, "Return", "Use the currently highlighted proxy.",
+    { "<Return>", "Use the currently highlighted proxy.",
         function (w)
             local row = w.menu:get()
             if row and row.address then
@@ -246,30 +245,30 @@ add_binds("proxymenu", lousy.util.table.join({
                     w:notify("Unset proxy.")
                 end
             end
-        end),
+        end },
 
     -- Delete proxy
-    key({}, "d", "Delete the currently highlighted proxy entry.",
+    { "d", "Delete the currently highlighted proxy entry.",
         function (w)
             local row = w.menu:get()
             if row and row.name then
                 _M.del(row.name)
                 w.menu:del()
             end
-        end),
+        end },
 
     -- Edit proxy
-    key({}, "e", "Edit the currently highlighted proxy entry.",
+    { "e", "Edit the currently highlighted proxy entry.",
         function (w)
             local row = w.menu:get()
             if row and row.name then
                 w:enter_cmd(string.format(":proxy %s %s", row.name, row.address))
             end
-        end),
+        end },
 
     -- New proxy
-    key({}, "a", "Begin adding a new proxy entry.",
-        function (w) w:enter_cmd(":proxy ") end),
+    { "a", "Begin adding a new proxy entry.",
+    function (w) w:enter_cmd(":proxy ") end },
 }, menu_binds))
 
 -- Initialize module

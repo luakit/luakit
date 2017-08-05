@@ -14,8 +14,8 @@
 local lousy = require("lousy")
 local webview = require("webview")
 local window = require("window")
-local binds = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local modes = require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 
 local _M = {}
 
@@ -277,21 +277,15 @@ luakit.add_signal("can-close", function ()
 end)
 
 -- Download normal mode binds.
-local key = lousy.bind.key
 add_binds("normal", {
-    key({"Control"}, "D",
-        "Generate `:download` command with current URI.",
-        function (w)
-            w:enter_cmd(":download " .. (w.view.uri or "http://"))
-        end),
+    { "<Control-D>", "Generate `:download` command with current URI.",
+        function (w) w:enter_cmd(":download " .. (w.view.uri or "http://")) end },
 })
 
 -- Download commands
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("down[load]", "Download the given URI.", function (w, a)
-        _M.add(a, { window = w.win })
-    end),
+    { ":down[load]", "Download the given URI.",
+        function (w, o) _M.add(o.arg, { window = w.win }) end },
 })
 
 return _M

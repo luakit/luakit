@@ -10,7 +10,7 @@
 local lousy = require("lousy")
 local chrome = require("chrome")
 local history = require("history")
-local add_cmds = require("binds").add_cmds
+local add_cmds = require("modes").add_cmds
 local error_page = require("error_page")
 local get_modes = require("modes").get_modes
 local markdown = require("markdown")
@@ -146,16 +146,18 @@ local help_doc_page = function (v, path, request)
         local modes, parts = get_modes(), {}
         for name, mode in pairs(modes) do
             local binds = {}
-            for _, b in pairs(mode.binds or {}) do
-                local src_m = debug.getinfo(b.func, "S").source:match("lib/(.*)%.lua")
-                if src_m == m then binds[#binds+1] = b end
+            for _, bm in pairs(mode.binds or {}) do
+                local _, a = unpack(bm)
+                local src_m = debug.getinfo(a.func, "S").source:match("lib/(.*)%.lua")
+                if src_m == m then binds[#binds+1] = bm end
             end
             if #binds > 0 then
                 parts[#parts+1] = string.format("<h3><code>%s</code> mode</h3>", name)
                 parts[#parts+1] = "<ul class=binds>\n"
-                for _, b in ipairs(binds) do
+                for _, bm in ipairs(binds) do
+                    local b, a = unpack(bm)
                     local b_name = lousy.bind.bind_to_string(b) or "???"
-                    local b_desc = b.desc or "<i>No description</i>"
+                    local b_desc = a.desc or "<i>No description</i>"
                     b_desc = fmt(lousy.util.string.dedent(b_desc)):gsub("</?p>", "", 2)
                     parts[#parts+1] = "<li><div class=two-col><ul class=triggers>"
                     parts[#parts+1] = "<li>" .. lousy.util.escape(b_name)
@@ -237,10 +239,9 @@ chrome.add("help", function (v, meta)
     end
 end, nil, {})
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("help", "Open <luakit://help/> in a new tab.",
-        function (w) w:new_tab("luakit://help/") end),
+    { ":help", "Open <luakit://help/> in a new tab.",
+        function (w) w:new_tab("luakit://help/") end },
 })
 
 -- Prevent history items from turning up in history

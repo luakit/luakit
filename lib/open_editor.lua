@@ -9,10 +9,9 @@
 --
 -- @module open_editor
 
-local lousy = require "lousy"
-local binds = require("binds")
+local modes = require("modes")
 local editor = require("editor")
-local add_binds = binds.add_binds
+local add_binds = modes.add_binds
 
 local _M = {}
 
@@ -63,9 +62,8 @@ local function edit_externally(w)
     end })
 end
 
-local key = lousy.bind.key
 add_binds("insert", {
-    key({"Control"}, "e", "Edit currently focused input in external editor.", edit_externally),
+    { "<Control-e>", "Edit currently focused input in external editor.", edit_externally },
 })
 
 return _M

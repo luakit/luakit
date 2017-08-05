@@ -12,8 +12,8 @@
 
 local window = require("window")
 local webview = require("webview")
-local binds = require("binds")
-local add_binds = binds.add_binds
+local modes = require("modes")
+local add_binds = modes.add_binds
 local lousy = require("lousy")
 local sql_escape = lousy.util.sql_escape
 local theme = require("theme")
@@ -216,14 +216,13 @@ webview.add_signal("init", function (view)
 end)
 
 
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^,ts$", "Enable/disable JavaScript for the current domain.",
-        function (w) w:toggle_scripts() end),
-    buf("^,tp$", "Enable/disable plugins for the current domain.",
-        function (w) w:toggle_plugins() end),
-    buf("^,tr$", "Remove all previously added rules for the current domain.",
-        function (w) w:toggle_remove()  end),
+    { "^,ts$", "Enable/disable JavaScript for the current domain.",
+        function (w) w:toggle_scripts() end },
+    { "^,tp$", "Enable/disable plugins for the current domain.",
+        function (w) w:toggle_plugins() end },
+    { "^,tr$", "Remove all previously added rules for the current domain.",
+        function (w) w:toggle_remove()  end },
 })
 
 return _M

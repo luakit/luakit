@@ -614,6 +614,33 @@ luaH_luakit_push_website_data_table(lua_State *L)
     return 1;
 }
 
+static gint
+luaH_string_wch_convert_case(lua_State *L, const char *key, gboolean upper)
+{
+    guint kval = gdk_keyval_from_name(key);
+    if (kval == GDK_KEY_VoidSymbol) {
+        debug("unrecognized key symbol '%s'", key);
+        lua_pushstring(L, key);
+        return 1;
+    }
+    guint cased;
+    gdk_keyval_convert_case(kval, upper ? NULL : &cased, upper ? &cased : NULL);
+    luaH_keystr_push(L, cased);
+    return 1;
+}
+
+static gint
+luaH_luakit_wch_lower(lua_State *L)
+{
+    return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), FALSE);
+}
+
+static gint
+luaH_luakit_wch_upper(lua_State *L)
+{
+    return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), TRUE);
+}
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -831,6 +858,8 @@ luakit_lib_setup(lua_State *L)
         { "spawn_sync",        luaH_luakit_spawn_sync },
         { "register_scheme",   luaH_luakit_register_scheme },
         { "allow_certificate", luaH_luakit_allow_certificate },
+        { "wch_lower",         luaH_luakit_wch_lower },
+        { "wch_upper",         luaH_luakit_wch_upper },
         { NULL,              NULL }
     };
 

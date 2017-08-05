@@ -9,8 +9,7 @@
 local lousy = require("lousy")
 local webview = require("webview")
 local history = require("history")
-local add_binds = require("binds").add_binds
-local cmd, key = lousy.bind.cmd, lousy.bind.key
+local add_binds = require("modes").add_binds
 
 local _M = {}
 
@@ -165,18 +164,18 @@ history.add_signal("add", function (uri)
 end)
 
 add_binds("command", {
-    cmd({"view-source", "vs"}, "View the source code of the current document.",
+    { ":view-source, :vs", "View the source code of the current document.",
         function (w)
             local target = w.view
             local display = w:new_tab(nil, { private = target.private })
             view_targets[display] = target
             display.uri = "view-source:" .. target.uri
-        end),
+        end },
 })
 
 add_binds("normal", {
-    key({"Shift", "Control"}, "U", "View the source code of the current document.",
-        function (w) w:run_cmd("vs") end),
+    { "<Shift-Control-U>", "View the source code of the current document.",
+        function (w) w:run_cmd("vs") end },
 })
 
 return _M

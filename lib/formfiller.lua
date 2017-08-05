@@ -78,8 +78,8 @@ local window = require("window")
 local webview = require("webview")
 local editor = require("editor")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
+local binds, modes = require("binds"), require("modes")
+local add_binds = modes.add_binds
 local menu_binds = binds.menu_binds
 
 local _M = {}
@@ -286,16 +286,15 @@ new_mode("formfiller-menu", {
     end,
 })
 
-local key = lousy.bind.key
 add_binds("formfiller-menu", lousy.util.table.join({
     -- use profile
-    key({}, "Return", "Select formfiller profile.",
+    { "<Return>", "Select formfiller profile.",
         function (w)
             local row = w.menu:get()
             local form = row.form
             w:set_mode()
             formfiller_wm:emit_signal(w.view, "apply_form", form)
-        end),
+        end },
 }, menu_binds))
 
 -- Visual form selection for adding a form
@@ -318,28 +317,24 @@ new_mode("formfiller-add", {
     end,
 })
 add_binds("formfiller-add", {
-    key({},          "Tab",    "Focus the next form hint.",
-        function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end),
-    key({"Shift"},   "Tab",    "Focus the previous form hint.",
-        function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end),
-    key({},          "Return", "Add the currently focused form to the formfiller file.",
-        function (w) formfiller_wm:emit_signal(w.view, "select") end),
+    { "<Tab>",    "Focus the next form hint.",
+        function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end },
+    { "<Shift-Tab>",    "Focus the previous form hint.",
+        function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end },
+    { "<Return>", "Add the currently focused form to the formfiller file.",
+        function (w) formfiller_wm:emit_signal(w.view, "select") end },
 })
 
 -- Setup formfiller binds
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za$", "Add formfiller form.",
-        function (w) w:set_mode("formfiller-add") end),
-
-    buf("^ze$", "Edit formfiller forms for current domain.",
-        function (_) edit() end),
-
-    buf("^zl$", "Load formfiller form (use first profile).",
-        fill_form_fast),
-
-    buf("^zL$", "Load formfiller form.",
-        fill_form_menu),
+    { "za", "Add formfiller form.",
+       function (w) w:set_mode("formfiller-add") end },
+    { "ze", "Edit formfiller forms for current domain.",
+       function (_) edit() end },
+    { "zl", "Load formfiller form (use first profile).",
+       fill_form_fast },
+    { "zL", "Load formfiller form.",
+        fill_form_menu },
 })
 
 return _M

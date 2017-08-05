@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+ - Support for WebKitGTK+ versions older than 2.16 has been removed.
+ - It is no longer possible to override built-in luakit modules with Lua
+   files in one's personal configuration directory.
+ - The configuration files `binds.lua` and `modes.lua` have become built-in luakit modules.
+   Configuration files named `binds.lua` or `modes.lua` will not be loaded. Any custom
+   bindings should be moved to `rc.lua`.
+
 ### Added
 
  - New `history.frozen` API allows temporarily freezing history collection.
@@ -13,6 +22,7 @@
  - Added `luakit://log/` chrome page: displays log messages.
  - Added status bar widget that notifies of any Lua warnings or errors.
  - Added migration guide to documentation.
+ - Added `luakit.wch_upper` and `luakit.wch_lower` key case conversion utility functions.
 
 ### Fixed
 
@@ -31,13 +41,13 @@
  - Documentation now has inter-page references.
  - The adblock page-blocked page now has a "Continue anyway" button.
  - Serializing Lua functions now includes their upvalues.
- - Support for WebKitGTK+ versions older than 2.16 has been removed.
  - `adblock` and `styles` now log the directory searched for files.
  - `<ctrl-a>` and `<Ctrl-x>` bindings now take an optional count.
  - Luakit's IPC socket files are now opened in `/tmp/`.
  - Luakit now checks for accidental use of DEVELOPMENT_PATHS.
  - IPC endpoints' `emit_signal()` method now accepts a webview ID as its first argument, as well as a webview.
    This specifies a single destination for the IPC call.
+ - `modes.add_binds()` now verifies that modes with the given names already exist, to guard against typos.
 
 ## [2017-07-26]
 

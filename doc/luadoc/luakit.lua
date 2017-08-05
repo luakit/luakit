@@ -190,4 +190,16 @@
 -- @readwrite
 -- @property selection
 
+--- Convert a key or key name to uppercase.
+-- @tparam string key The key or key name to convert.
+-- @treturn string The converted key. This will be the same as `key` if the key
+-- is already uppercase or if case conversion does not apply to the key.
+-- @function wch_upper
+
+--- Convert a key or key name to lowercase.
+-- @tparam string key The key or key name to convert.
+-- @treturn string The converted key. This will be the same as `key` if the key
+-- is already lowercase or if case conversion does not apply to the key.
+-- @function wch_lower
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

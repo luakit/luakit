@@ -1,6 +1,15 @@
--------------------------------
--- luakit mode configuration --
--------------------------------
+--- Default mode configuration for luakit.
+--
+-- This module defines a core set of modes each luakit window can be in.
+-- Different modes recognize different keybindings.
+--
+-- @module modes
+-- @author Aidan Holm <aidanholm@gmail.com>
+-- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+
+local _M = {}
 
 local window = require("window")
 
@@ -10,8 +19,14 @@ local lousy = require "lousy"
 local join = lousy.util.table.join
 local order = 0
 
--- Add new mode table (optionally merges with original mode)
-local function new_mode(name, desc, mode, replace)
+--- Add a new mode table (optionally merges with original mode)
+-- @tparam string name The name of the mode.
+-- @tparam[opt] string desc The description of the mode.
+-- @tparam table mode A table that defines the mode.
+-- @tparam[opt] boolean replace `true` if any existing mode with the same name should
+-- be replaced, and `false` if the pre-existing mode should be extended.
+-- @default `false`
+_M.new_mode = function (name, desc, mode, replace)
     assert(string.match(name, "^[%w-_]+$"), "invalid mode name: " .. name)
     -- Detect optional description
     if type(desc) == "table" then
@@ -24,10 +39,14 @@ local function new_mode(name, desc, mode, replace)
         { name = name, desc = desc })
 end
 
--- Get mode table
-local function get_mode(name) return modes[name] end
+--- Get a mode by name.
+-- @tparam string name The name of the mode to retrieve.
+-- @treturn table The mode table for the named mode.
+_M.get_mode = function(name) return modes[name] end
 
-local function get_modes() return lousy.util.table.clone(modes) end
+--- Get all modes.
+-- @treturn table A clone of the full table of modes.
+_M.get_modes = function () return lousy.util.table.clone(modes) end
 
 -- Attach window & input bar signals for mode hooks
 window.add_signal("init", function (w)
@@ -95,7 +114,7 @@ local mget = lousy.mode.get
 window.methods.is_mode = function (w, name) return name == mget(w) end
 
 -- Setup normal mode
-new_mode("normal", [[When luakit first starts you will find yourself in this
+_M.new_mode("normal", [[When luakit first starts you will find yourself in this
     mode.]], {
     enter = function (w)
         w:set_prompt()
@@ -104,11 +123,10 @@ new_mode("normal", [[When luakit first starts you will find yourself in this
     end,
 })
 
-new_mode("all", [[Special meta-mode in which the bindings for this mode are
-    present in all modes.]])
+_M.new_mode("all", "Special meta-mode in which the bindings for this mode are present in all modes.")
 
 -- Setup insert mode
-new_mode("insert", [[When clicking on form fields luakit will enter the insert
+_M.new_mode("insert", [[When clicking on form fields luakit will enter the insert
     mode which allows you to enter text in form fields without accidentally
     triggering normal mode bindings.]], {
     enter = function (w)
@@ -120,7 +138,7 @@ new_mode("insert", [[When clicking on form fields luakit will enter the insert
     passthrough = true,
 })
 
-new_mode("passthrough", [[Luakit will pass every key event to the WebView
+_M.new_mode("passthrough", [[Luakit will pass every key event to the WebView
     until the user presses Escape.]], {
     enter = function (w)
         w:set_prompt("-- PASS THROUGH --")
@@ -138,7 +156,7 @@ new_mode("passthrough", [[Luakit will pass every key event to the WebView
 })
 
 -- Setup command mode
-new_mode("command", [[Enter commands.]], {
+_M.new_mode("command", [[Enter commands.]], {
     enter = function (w)
         w:set_prompt()
         w:set_input(":")
@@ -163,7 +181,7 @@ new_mode("command", [[Enter commands.]], {
     history = {maxlen = 50},
 })
 
-new_mode("lua", [[Execute arbitrary Lua commands within the luakit
+_M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     environment.]], {
     enter = function (w)
         w:set_prompt(">")
@@ -177,10 +195,76 @@ new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     history = {maxlen = 50},
 })
 
-return {
-    new_mode = new_mode,
-    get_mode = get_mode,
-    get_modes = get_modes,
-}
+--- Add a set of binds to one or more modes. Any pre-existing binds with the
+-- same trigger will be removed automatically.
+--
+-- #### Example
+--
+-- The following code snippet will rebind `Control-c` to copy text selected with
+-- the mouse, and the default binding for `Control-c` will be removed.
+--
+--     modes.add_binds("normal", { "<Control-c>", "Copy selected text.", function ()
+--         luakit.selection.clipboard = luakit.selection.primary
+--     end})
+--
+-- @tparam table|string mode The name of the mode, or an array of mode names.
+-- @tparam table binds An array of binds to add to each of the named modes.
+_M.add_binds = function (mode, binds)
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, name in ipairs(mode) do
+        local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
+        mdata.binds = mdata.binds or {}
+        for _, m in ipairs(binds) do
+            local bind, desc, action, opts = unpack(m)
+            if type(desc) == "function" then
+                desc, action, opts = nil, desc, action
+            end
+            if type(desc) == "string" or type(action) == "function" then -- Make ad-hoc action
+                action = type(action) == "table" and lousy.util.table.clone(action) or { func = action }
+                action.desc = desc
+            end
+            lousy.bind.add_bind(mdata.binds, bind, action, opts)
+        end
+    end
+end
+
+--- Remove a set of binds from one or more modes.
+--
+-- #### Example
+--
+--     -- Disable extra zooming commands
+--     modes.remove_binds("normal", { "zi", "zo", "zz" })
+--
+--     -- Disable passthrough mode
+--     modes.remove_binds({"normal", "insert"}, { "<Control-z>" })
+--
+-- @tparam table|string mode The name of the mode, or an array of mode names.
+-- @tparam table binds An array of binds to remove from each of the named modes.
+_M.remove_binds = function (mode, binds)
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, name in ipairs(mode) do
+        local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
+        for _, bind in ipairs(binds) do
+            lousy.bind.remove_bind(mdata.binds or {} , bind)
+        end
+    end
+end
+
+--- Add a set of commands to the built-in `command` mode.
+-- @tparam table|string mode The name of the mode, or an array of mode names.
+-- @tparam table binds An raray of binds to add to each of the named modes.
+_M.add_cmds = function (binds)
+    for _, m in ipairs(binds) do
+        local b = m[1]
+        if b and b:match("^[^<^]") then
+            for _, c in ipairs(lousy.util.string.split(b, ",%s+")) do
+                assert(c:match("^:[%[%]%w%-!]+$"), "Bad command binding '" .. b .. "'")
+            end
+        end
+    end
+    _M.add_binds("command", binds)
+end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
