@@ -24,11 +24,9 @@ local function convert_bind_syntax(b)
         local lc = luakit.wch_lower(key)
         if lc ~= key then
             key = lc
-            if not util.table.hasitem(mods, "Shift") then table.insert(mods, "Shift") end
+            table.insert(mods, "Shift")
         end
-        -- Key/mouse binds have to have sorted modifiers
-        table.sort(mods)
-        mods = #mods > 0 and table.concat(mods, "-") or nil
+        mods = _M.parse_mods(mods)
         return "<".. (mods and (mods.."-") or "") .. key .. ">"
     end
     -- Otherwise, make it a buffer bind; wrap in ^$ if necessary
@@ -55,7 +53,6 @@ _M.map = {
 -- @treturn string A string of key names, separated by hyphens (-).
 function _M.parse_mods(mods, remove_shift)
     local t = {}
-    table.sort(mods)
     for _, mod in ipairs(mods) do
         if not _M.ignore_mask[mod] then
             mod = _M.map[mod] or mod
@@ -67,7 +64,9 @@ function _M.parse_mods(mods, remove_shift)
     -- have already transformed the keycode within gdk.
     if remove_shift then t.Shift = nil end
 
-    mods = table.concat(keys(t), "-")
+    mods = keys(t)
+    table.sort(mods)
+    mods = table.concat(mods, "-")
     return mods ~= "" and mods or nil
 end
 
