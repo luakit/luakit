@@ -195,6 +195,16 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
     history = {maxlen = 50},
 })
 
+--- Callback type for a bind action.
+-- @callback bind_action_cb
+-- @tparam table w The window table for the window on which the binding was
+-- activated.
+-- @tparam table opts Combined table of bind-time and invocation-time options.
+-- @tparam table bind_opts Table of invocation-time options.
+-- @treturn boolean `false` if bind matching should be continued, as if this
+-- action were not bound. Any other value stops bind matching, which is usually
+-- what you want.
+
 --- Add a set of binds to one or more modes. Any pre-existing binds with the
 -- same trigger will be removed automatically.
 --
@@ -203,9 +213,24 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 -- The following code snippet will rebind `Control-c` to copy text selected with
 -- the mouse, and the default binding for `Control-c` will be removed.
 --
---     modes.add_binds("normal", { "<Control-c>", "Copy selected text.", function ()
+--     modes.add_binds("normal", {{ "<Control-c>", "Copy selected text.", function ()
 --         luakit.selection.clipboard = luakit.selection.primary
---     end})
+--     end}})
+--
+-- #### Bind format
+--
+-- Every item in the `binds` array must be a table that defines a single binding
+-- between a trigger and an action. Each entry must have the following form:
+--
+--     { trigger, description, action, options }
+--
+-- - `trigger` is a string describing the combination of keys/modifiers/buttons
+--   that will trigger the associated action.
+-- - `description` is an optional string. Any description will show up in the
+--   introspector.
+-- - `action` is a function that will be called when the binding is
+--   activated, of type @ref{bind_action_cb}.
+-- - `options` is a table of bind-time options passed to the `action` callback.
 --
 -- @tparam table|string mode The name of the mode, or an array of mode names.
 -- @tparam table binds An array of binds to add to each of the named modes.
