@@ -4,6 +4,15 @@
 
 ## [Unreleased]
 
+### Breaking changes
+
+ - Support for WebKitGTK+ versions older than 2.16 has been removed.
+ - It is no longer possible to override built-in luakit modules with Lua
+   files in one's personal configuration directory.
+ - The configuration files `binds.lua` and `modes.lua` have become built-in luakit modules.
+   Configuration files named `binds.lua` or `modes.lua` will not be loaded. Any custom
+   bindings should be moved to `rc.lua`.
+
 ### Added
 
  - New `history.frozen` API allows temporarily freezing history collection.
@@ -32,7 +41,6 @@
  - Documentation now has inter-page references.
  - The adblock page-blocked page now has a "Continue anyway" button.
  - Serializing Lua functions now includes their upvalues.
- - Support for WebKitGTK+ versions older than 2.16 has been removed.
  - `adblock` and `styles` now log the directory searched for files.
  - `<ctrl-a>` and `<Ctrl-x>` bindings now take an optional count.
  - Luakit's IPC socket files are now opened in `/tmp/`.

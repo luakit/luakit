@@ -22,6 +22,14 @@ merge upstream changes into, and you are more likely to experience
 errors caused by such upstream changes (until those changes are merged with your
 personal configuration).
 
+### Migrate personal key bindings
+
+The `binds.lua` and `modes.lua` configuration files have been removed.
+It is no longer necessary to copy the entire set of key bindings to
+your configuration to change or add just a few key bindings. Instead,
+use @ref{modes/add_binds} and @ref{remove_binds} to add and remove key
+bindings.
+
 ### Remove use of `module()` in scripts
 
 Lua's `module()` function sets a global variable of the same name as the module,
