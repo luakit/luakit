@@ -190,15 +190,6 @@ end
 local generate_attribution_html = function (doc)
     local html = {}
     table.insert(html, "<div class=attr-wrap>")
-    table.insert(html, "    <h4>Authors</h4>")
-    table.insert(html, "    <ul class=authors>")
-    for _, author in ipairs(doc.author) do
-        table.insert(html, "        <li>" .. author)
-    end
-    table.insert(html, "    </ul>")
-    table.insert(html, "</div>")
-
-    table.insert(html, "<div class=attr-wrap>")
     table.insert(html, "    <h4>Copyright</h4><ul class=copyright>")
     for _, copy in ipairs(doc.copyright) do
         table.insert(html, "        <li>" .. copy)
