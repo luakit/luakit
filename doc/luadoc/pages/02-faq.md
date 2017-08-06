@@ -129,7 +129,8 @@ for navigation to specific addresses (in this case `"about:blank"`):
     webview.add_signal("init", function (view)
         view:add_signal("navigation-request", function (_, uri)
             if uri == "about:blank" then
-                view:load_string("<html><body bgcolor='#000000'></body></html>", "about:blank")
+                local html = "<html><body bgcolor='#000000'></body></html>"
+                view:load_string(html, "about:blank")
                 return true
             end
         end)
