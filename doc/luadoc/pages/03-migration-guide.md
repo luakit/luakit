@@ -54,6 +54,11 @@ functions previously registered via `init_funcs`, add a signal handler:
 	    -- Do something with new view
 	end)
 
+One important difference between the `"init"` signal and the
+`init_funcs` method is that the former no longer passes the current
+window table `w` as a parameter. This is because views may be moved
+between windows (for example, with the `:tabdetach` command).
+
 The `window` class also emits a `"build"` signal _before_ emitting the
 init signal. This provides an opportunity for modules to change the layout and
 arrangement of widgets within the window, before the `"init"` signal is emitted.
