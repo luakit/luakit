@@ -213,9 +213,11 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 -- The following code snippet will rebind `Control-c` to copy text selected with
 -- the mouse, and the default binding for `Control-c` will be removed.
 --
---     modes.add_binds("normal", {{ "<Control-c>", "Copy selected text.", function ()
---         luakit.selection.clipboard = luakit.selection.primary
---     end}})
+--     modes.add_binds("normal", {
+--         { "<Control-c>", "Copy selected text.", function ()
+--             luakit.selection.clipboard = luakit.selection.primary
+--         end},
+--     })
 --
 -- #### Bind format
 --
