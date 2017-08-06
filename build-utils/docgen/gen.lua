@@ -274,7 +274,7 @@ local generate_sidebar_html = function (docs, current_doc)
     for _, name in ipairs{"pages", "modules", "classes"} do
         local section = assert(docs[name], "Missing " .. name .. " section")
         html = html .. ("<h3>%s</h3>\n"):format(name:gsub("^%l", string.upper))
-        html = html .. "<ul>\n"
+        html = html .. "<ul class=" .. name .. ">\n"
         for _, doc in ipairs(section) do
             if doc == current_doc then
                 html = html .. ('    <li><span>%s</span></li>\n'):format(doc.name)

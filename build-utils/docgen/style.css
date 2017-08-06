@@ -133,8 +133,9 @@ div.good.alert {
     position: relative;
 }
 #sidebar {
-    flex: 0 0 15rem;
+    flex: 0 0 13rem;
     margin-right: 1rem;
+    font-family: "Open Sans", "DejaVu Sans", sans-serif;
 }
 
 @media (max-width: 55rem) {
@@ -144,10 +145,12 @@ div.good.alert {
 #sidebar > h2 {
     margin: 0 0 1rem;
     font-size: 1.3rem;
+    font-weight: normal;
 }
 #sidebar > h3 {
     margin: 1rem 0 0.5rem;
     font-size: 1.1rem;
+    font-weight: normal;
     color: #444;
 }
 #sidebar > ul {
@@ -157,16 +160,20 @@ div.good.alert {
 }
 #sidebar > ul > li {
     margin: 0.2rem 0.2rem 0.2rem 0.5rem;
-    font-size: 1rem;
-    font-family: monospace;
+    font-size: 0.9rem;
 }
 #sidebar > ul > li > a, #sidebar > ul > li > span {
-    font-size: 1rem;
-    font-family: monospace;
     text-decoration: none;
+    font-size: 0.9rem;
 }
 #sidebar > ul > li > span {
-    font-weight: bold;
+    color: black;
+    font-weight: 500;
+}
+#sidebar > ul.modules > li, #sidebar > ul.classes > li,
+#sidebar > ul.modules > li > a, #sidebar > ul.modules > li > span,
+#sidebar > ul.classes > li > a, #sidebar > ul.classes > li > span {
+    font-family: monospace;
 }
 
 #content li:not(:last-child) {
