@@ -270,6 +270,7 @@ end
 local generate_doc_html = function (doc)
     local html_template = [==[
         <h1>{type} <code>{title}</code></h1>
+        <!-- status indicator -->
         <h2 class=tagline>{tagline}</h2>
         {desc}
         {functions}
