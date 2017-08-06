@@ -1,5 +1,5 @@
 html {
-	color: #333;
+    color: #333;
 }
 body {
     margin: 0;
@@ -46,39 +46,39 @@ h4 { margin: 1rem 0; }
 
 code, pre
 {
-	background: #f5f7f9;
-	color: #334;
+    background: #f5f7f9;
+    color: #334;
 }
 code {
-	border: 1px solid #dfdfe9;
-	padding: 0px 4px;
+    border: 1px solid #dfdfe9;
+    padding: 0px 4px;
 }
 pre > code {
     border: none;
     padding: 0;
 }
 pre {
-	padding: 1rem 1.2rem;
-	border-left: 2px solid #69c;
+    padding: 1rem 1.2rem;
+    border-left: 2px solid #69c;
 }
 
 #content > h2 {
-	font-size: 1.3rem;
+    font-size: 1.3rem;
 }
 
 h3.function > a, h3.property > a, h3.table > a, h3.field > a {
     font-family: monospace;
-	color: #2B5782;
+    color: #2B5782;
     text-decoration: none;
 }
 
 span.parameter, span.type {
     font-family: monospace;
-	color: #2B5782;
+    color: #2B5782;
     text-decoration: none;
 }
 span.parameter {
-	font-weight: bold;
+    font-weight: bold;
 }
 
 li.parameter {
@@ -162,7 +162,7 @@ div.good.alert {
     text-decoration: none;
 }
 #sidebar > ul > li > span {
-	font-weight: bold;
+    font-weight: bold;
 }
 
 #content li:not(:last-child) {
@@ -219,13 +219,13 @@ ul.copyright > li:before { content: "©"; }
 .two-col > :first-child { flex: 0 0 200px; margin-right: 10px; }
 .two-col > :first-child > div:not(:first-child) { margin-top: 0.3rem; }
 ul.triggers {
-	list-style-type: none;
-	padding: 0;
+    list-style-type: none;
+    padding: 0;
 }
 ul.triggers > li {
-	font-family: monospace, sans-serif;
-	color: #2B5782;
-	font-weight: bold;
+    font-family: monospace, sans-serif;
+    color: #2B5782;
+    font-weight: bold;
 }
 
 div.info > div { margin-top: 0.3rem; }
