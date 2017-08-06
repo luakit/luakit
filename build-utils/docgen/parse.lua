@@ -147,17 +147,6 @@ local function parse_at_param_line(item, block)
     table.insert(item.params, param)
 end
 
-local function parse_at_field_line(item, block)
-    if item.type then parse_error(block, "@field line inside %s block", item.type) end
-    item.type = "field"
-    local line = block[1]
-    local typestr
-    line, typestr = peel_off_type_string(line)
-    item.typestr = item.typestr or typestr
-    item.name = line:match("^%@field (%S+)$")
-    advance(block)
-end
-
 local function parse_at_property_line(item, block)
     assert(not item.type, "Misplaced @property line")
     item.type = "property"
@@ -188,8 +177,6 @@ local function parse_file_block_part(item, block)
         parse_at_function_line(item, block, at)
     elseif at == "param" or at == "tparam" then
         parse_at_param_line(item, block)
-    elseif at == "field" or at == "tfield" then
-        parse_at_field_line(item, block)
     elseif at == "return" or at == "treturn" then
         parse_at_return_line(item, block)
     elseif at == "property" then
@@ -258,7 +245,7 @@ local function convert_comment_block_last_line(block)
 
     local name = line:match("_M%.([%w%d_]+)") or line:match("^function ([%w%d_]+)")
     local is_function = line:match("^function ") or line:match("= ?function")
-    local type = is_function and "function" or "field"
+    local type = is_function and "function" or "property"
     if name then
         return string.format("-- @%s %s", type, name)
     end

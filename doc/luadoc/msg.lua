@@ -1,7 +1,5 @@
 --- Message logging support for Lua.
 --
--- DOCMACRO(builtin)
---
 -- This built-in library offers support for logging messages from Lua code. Five
 -- verbosity levels are available. By default, _verbose_ and _debug_ messages
 -- are not shown, but this can be changed when launching Luakit.
