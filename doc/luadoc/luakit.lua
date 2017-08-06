@@ -1,6 +1,5 @@
 --- Luakit core API
 --
--- DOCMACRO(builtin)
 -- DOCMACRO(alert:Some functions and fields are not available from web processes.)
 --
 -- @author Aidan Holm <aidanholm@gmail.com>
