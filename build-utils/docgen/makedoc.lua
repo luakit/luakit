@@ -54,7 +54,7 @@ local parse_pages_files = function (files)
             text = text:sub(idx),
         }
     end
-    table.sort(pages, function(a, b) return a.name < b.name end)
+    table.sort(pages, function(a, b) return a.filename < b.filename end)
     return pages
 end
 
