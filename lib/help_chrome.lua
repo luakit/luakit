@@ -143,6 +143,22 @@ local help_doc_page = function (v, path, request)
             -- Fix < and > being escaped inside code -_- fail
             return markdown(str):gsub("<pre><code>(.-)</code></pre>", lousy.util.unescape)
         end
+        local bind_to_html = function (b)
+            b = lousy.bind.bind_to_string(b) or "???"
+            if b:match("^:.") then
+                local cmds = {}
+                for _, c in ipairs(lousy.util.string.split(b, ", ")) do
+                    c = lousy.util.escape(c)
+                    table.insert(cmds, ("<li><span class=cmd>%s</span>"):format(c))
+                end
+                return "<ul class=triggers>" .. table.concat(cmds, "") .. "</ul>"
+            elseif b:match("^^.") then
+                b = ("<span class=buf>%s</span>"):format(lousy.util.escape(b))
+            else
+                b = ("<kbd>%s</kbd>"):format(lousy.util.escape(b))
+            end
+            return "<ul class=triggers><li>" .. b .. "</ul>"
+        end
         local modes, parts = get_modes(), {}
         for name, mode in pairs(modes) do
             local binds = {}
@@ -156,12 +172,10 @@ local help_doc_page = function (v, path, request)
                 parts[#parts+1] = "<ul class=binds>\n"
                 for _, bm in ipairs(binds) do
                     local b, a = unpack(bm)
-                    local b_name = lousy.bind.bind_to_string(b) or "???"
                     local b_desc = a.desc or "<i>No description</i>"
                     b_desc = fmt(lousy.util.string.dedent(b_desc)):gsub("</?p>", "", 2)
-                    parts[#parts+1] = "<li><div class=two-col><ul class=triggers>"
-                    parts[#parts+1] = "<li>" .. lousy.util.escape(b_name)
-                    parts[#parts+1] = "</li></ul><div class=desc>" .. b_desc .. "</div></div>"
+                    parts[#parts+1] = "<li><div class=two-col>" .. bind_to_html(b)
+                    parts[#parts+1] = "<div class=desc>" .. b_desc .. "</div></div>"
                 end
                 parts[#parts+1] = "</ul>"
             end
