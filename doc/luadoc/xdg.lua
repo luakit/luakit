@@ -1,7 +1,5 @@
 --- XDG Base Directory Specification paths.
 --
--- DOCMACRO(builtin)
---
 -- This module provides access to the directories defined by the XDG
 -- Base Directory specification. With this module, Lua scripts can
 -- determine the best place to store and look for various types of data.
