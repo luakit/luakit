@@ -2,6 +2,10 @@
 --
 -- DOCMACRO(alert:Some functions and fields are not available from web processes.)
 --
+-- This library provides a set of infrastructure and utility functions for
+-- controlling luakit, accessing and modifying current settings, running
+-- background programs, and more.
+--
 -- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Paweł Zuzelski <pawelz@pld-linux.org>
