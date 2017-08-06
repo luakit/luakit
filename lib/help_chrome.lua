@@ -103,24 +103,23 @@ local help_doc_index_page_preprocess = function (inner, style)
     end)
     style = style .. [===[
         div#wrap { padding-top: 0; }
-        h2 { margin: 1.5em 0 0.75em; }
+        h2 { margin: 1em 0 0.75em; }
         h2 + ul { margin: 0.5em 0; }
         ul {
             display: flex;
             flex-wrap: wrap;
-            padding-left: 1em;
+            padding-left: 1rem;
             list-style-type: none;
         }
         ul > li {
-            flex: 1 0 200px;
-            padding: 5px;
+            flex: 1 0 14rem;
+            padding: 0.2em 0.2rem 0.2rem 1.5rem;
             margin: 0px !important;
             position: relative;
-            padding-left: 1.5em;
         }
         ul > li:not(.dummy):before {
             font-weight: bold;
-            width: 1.5em;
+            width: 1.5rem;
             text-align: center;
             left: 0;
             position: absolute;
@@ -177,6 +176,8 @@ local help_doc_page = function (v, path, request)
         local inner = blob:match("(<div id=wrap>.*</div>)%s*</body>")
         if file == "index.html" then
             inner, style = help_doc_index_page_preprocess(inner, style)
+        else
+            style = style .. [===[ div.content-margin { padding-left: 1rem; padding-right: 1rem; } ]===]
         end
         local m = file:match("^modules/(.*)%.html$")
         if m then
@@ -195,7 +196,7 @@ local help_doc_page = function (v, path, request)
         <title>Luakit API Documentation</title>
         <style type="text/css">
         {style}
-        #wrap { padding: 2em 0; }
+        #wrap { padding: 1em 0; }
         #content > h1 { font-size: 28px; }
         </style>
     </head>
