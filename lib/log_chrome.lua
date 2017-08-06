@@ -10,6 +10,7 @@
 local chrome = require "chrome"
 local window = require "window"
 local theme = require("lousy").theme.get()
+local modes = require "modes"
 
 local _M = {}
 
@@ -285,6 +286,12 @@ _M.widget = function ()
     ebox:add_signal("button-release", widget_click_cb)
     return ebox
 end
+
+modes.add_cmds({
+    { ":log", "Open <luakit://log/> in a new tab.", function (w)
+        w:new_tab("luakit://log/")
+    end },
+})
 
 return _M
 
