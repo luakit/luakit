@@ -235,35 +235,6 @@ local generate_list_html = function (heading, list, item_func, ...)
     return html
 end
 
-local generate_field_html = function (field, prefix)
-    local html_template = [==[
-        <h3 class=field>
-            <span class=target id="field-{name}"></span>
-            <a href="#field-{name}">{prefix}{name}</a>
-        </h3>
-        <div class="two-col field">
-            <div>
-                <div>{typestr}</div>
-                <div>{default}</div>
-                <div>{readwrite}</div>
-            </div>
-            <div>{desc}</div>
-        </div>
-    ]==]
-
-    assert(field.readonly or field.readwrite, "Field " .. field.name .. " missing RO/RW annotation")
-
-    local html = string.gsub(html_template, "{([%w_]+)}", {
-        prefix = prefix,
-        name = field.name,
-        typestr = "Type: " .. generate_typestr_html(field.typestr),
-        desc = html_unwrap_first_p(format_text(field.desc)),
-        default = field.default and "Default: " .. html_unwrap_first_p(format_text(field.default)) or "",
-        readwrite = (field.readonly and "Read-only") or (field.readwrite and "Read-write"),
-    })
-    return html
-end
-
 local generate_doc_html = function (doc)
     local html_template = [==[
         <h1>{type} <code>{title}</code></h1>
@@ -286,7 +257,6 @@ local generate_doc_html = function (doc)
         .. generate_list_html("Properties", doc.properties, generate_property_html, func_prefix)
         .. generate_list_html("Signals", doc.signals, generate_signal_html)
         .. generate_list_html("Callback Types", doc.callbacks, generate_function_html, "")
-        .. generate_list_html("Fields", doc.fields, generate_field_html, func_prefix)
 
     local html = string.gsub(html_template, "{(%w+)}", {
         type = doc.module and "Module" or "Class",
@@ -497,7 +467,7 @@ local generate_documentation = function (docs, out_dir)
         end
         for _, doc in ipairs(lousy.util.table.join(docs.modules, docs.classes)) do
             add_index_obj(doc)
-            for _, t in ipairs {"functions", "methods", "properties", "fields", "signals", "callbacks"} do
+            for _, t in ipairs {"functions", "methods", "properties", "signals", "callbacks"} do
                 for _, item in ipairs(doc[t] or {}) do
                     add_index_obj(doc, item)
                 end

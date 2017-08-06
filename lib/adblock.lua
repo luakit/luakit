@@ -503,7 +503,7 @@ add_cmds({
 -- Initialise module
 _M.load(nil, nil, true)
 
---- @field enabled
+--- @property enabled
 -- Whether ad blocking is enabled. Modifying this value will modify adblock
 -- state; setting it to `true` will enable ad blocking, while setting it to
 -- `false` will disable ad blocking.

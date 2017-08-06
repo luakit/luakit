@@ -11,7 +11,7 @@ local _M = {}
 
 local wrapped = { label_maker = nil }
 
---- @field label_maker
+--- @property label_maker
 -- Function that describes how to generate labels for hints. In order to modify
 -- the hint label style, set this field to a function that takes one parameter,
 -- a table of chainable hint label style functions, and returns a chained set of

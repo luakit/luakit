@@ -14,38 +14,38 @@
 -- @module luakit
 
 --- The configuration directory path (default: `$XDG_CONFIG_HOME`).
--- @field config_dir
+-- @property config_dir
 -- @type string
 -- @readonly
 
 --- The data directory path (default: `$XDG_DATA_HOME`).
--- @field data_dir
+-- @property data_dir
 -- @type string
 -- @readonly
 
 --- The cache directory path (default: `$XDG_CACHE_HOME`).
--- @field cache_dir
+-- @property cache_dir
 -- @type string
 -- @readonly
 
 --- Whether luakit is using verbose logging. `true` if logging in `verbose` or
 --`debug` mode.
--- @field verbose
+-- @property verbose
 -- @type boolean
 -- @readonly
 
 --- The luakit installation path.
--- @field install_path
+-- @property install_path
 -- @type string
 -- @readonly
 
 --- The luakit version.
--- @field version
+-- @property version
 -- @type string
 -- @readonly
 
 --- An array of all active window widgets.
--- @field windows
+-- @property windows
 -- @type {widget}
 -- @readonly
 
