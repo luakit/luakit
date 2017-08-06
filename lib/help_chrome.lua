@@ -177,7 +177,11 @@ local help_doc_page = function (v, path, request)
         if file == "index.html" then
             inner, style = help_doc_index_page_preprocess(inner, style)
         else
-            style = style .. [===[ div.content-margin { padding-left: 1rem; padding-right: 1rem; } ]===]
+            style = style .. [===[
+                #wrap { padding: 1rem; }
+                header#page-header { position: static; }
+                div.content-margin { padding: 0; }
+            ]===]
         end
         local m = file:match("^modules/(.*)%.html$")
         if m then
@@ -196,8 +200,6 @@ local help_doc_page = function (v, path, request)
         <title>Luakit API Documentation</title>
         <style type="text/css">
         {style}
-        #wrap { padding: 1em 0; }
-        #content > h1 { font-size: 28px; }
         </style>
     </head>
     <body>

@@ -1,3 +1,6 @@
+* {
+    box-sizing: border-box;
+}
 html {
     color: #333;
 }
@@ -133,7 +136,7 @@ div.good.alert {
     margin-right: 1rem;
 }
 
-@media (max-width: 57rem) {
+@media (max-width: 55rem) {
     #sidebar { display: none; }
 }
 
