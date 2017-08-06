@@ -7,21 +7,21 @@
 
 In your `rc.lua` after `require "downloads"` add (or modify) the following:
 
-	downloads.default_dir = os.getenv("HOME") .. "/downloads"
+    downloads.default_dir = os.getenv("HOME") .. "/downloads"
 
 ### How do I make all downloads save to my default download location without asking?
 
 In your `rc.lua` after `require "downloads"` add (or modify) the following:
 
-	downloads.add_signal("download-location", function (uri, file)
-		if not file or file == "" then
-			file = (string.match(uri, "/([^/]+)$")
-				or string.match(uri, "^%w+://(.+)")
-				or string.gsub(uri, "/", "_")
-				or "untitled")
-		end
-		return downloads.default_dir .. "/" .. file
-	end)
+    downloads.add_signal("download-location", function (uri, file)
+        if not file or file == "" then
+            file = (string.match(uri, "/([^/]+)$")
+                or string.match(uri, "^%w+://(.+)")
+                or string.gsub(uri, "/", "_")
+                or "untitled")
+        end
+        return downloads.default_dir .. "/" .. file
+    end)
 
 ## Behaviour
 
@@ -32,13 +32,13 @@ links in new tabs.
 
 In your `rc.lua` after `require "webview"` add (or modify) the following:
 
-	webview.add_signal("init", function (view)
-		view:add_signal("new-window-decision", function (v, uri, reason)
-			local w = window.ancestor(v)
-			w:new_tab(uri)
-			return true
-		end)
-	end)
+    webview.add_signal("init", function (view)
+        view:add_signal("new-window-decision", function (v, uri, reason)
+            local w = window.ancestor(v)
+            w:new_tab(uri)
+            return true
+        end)
+    end)
 
 ### How do I copy text with Control-C?
 
@@ -58,11 +58,11 @@ To open particular schemes in other applications, use the
 `navigation-request` webview signal. The generic boilerplate for
 attaching to this signal is shown here:
 
-	webview.add_signal("init", function (view)
-		view:add_signal("navigation-request", function (v, uri)
-			--- Check URI and open program here
-		end)
-	end)
+    webview.add_signal("init", function (view)
+        view:add_signal("navigation-request", function (v, uri)
+            --- Check URI and open program here
+        end)
+    end)
 
 Replace the inner comment with code that checks the URI and, if it
 matches the right scheme, opens your external program. If it matches, it
@@ -73,33 +73,33 @@ Here are some examples:
 
 #### Opening `mailto:` links using GMail
 
-	if string.match(string.lower(uri), "^mailto:") then
-		local mailto = "https://mail.google.com/mail/?extsrc=mailto&url=%s"
-		local w = window.ancestor(v)
-		w:new_tab(string.format(mailto, uri))
-		return false
-	end
+    if string.match(string.lower(uri), "^mailto:") then
+        local mailto = "https://mail.google.com/mail/?extsrc=mailto&url=%s"
+        local w = window.ancestor(v)
+        w:new_tab(string.format(mailto, uri))
+        return false
+    end
 
 #### Opening `mailto:` links using Mutt in `urxvt`
 
-	if string.match(string.lower(uri), "^mailto:") then
-		luakit.spawn(string.format("%s %q", "urxvt -title mutt -e mutt", uri))
-		return false
-	end
+    if string.match(string.lower(uri), "^mailto:") then
+        luakit.spawn(string.format("%s %q", "urxvt -title mutt -e mutt", uri))
+        return false
+    end
 
 #### Opening `magnet:` links with Deluge
 
-	if string.match(string.lower(uri), "^magnet:") then
-		luakit.spawn(string.format("%s %q", "deluge-gtk", uri))
-		return false
-	end
+    if string.match(string.lower(uri), "^magnet:") then
+        luakit.spawn(string.format("%s %q", "deluge-gtk", uri))
+        return false
+    end
 
 #### Opening `magnet:` links with rTorrent
 
-	if string.match(string.lower(uri), "^magnet:") then
-		luakit.spawn(string.format("%s %q", "mktor", uri))
-		return false
-	end
+    if string.match(string.lower(uri), "^magnet:") then
+        luakit.spawn(string.format("%s %q", "mktor", uri))
+        return false
+    end
 
 ## Styling
 
@@ -113,11 +113,11 @@ This is not currently possible, as with WebKit 2 there is no way to give a webvi
 
 The best way to change the default zoom level is to add a rule to `domain_props`:
 
-	globals.domain_props.all = {
-	    ...
-		zoom_level = 1.5, -- a 50% zoom
-	    ...
-	}
+    globals.domain_props.all = {
+        ...
+        zoom_level = 1.5, -- a 50% zoom
+        ...
+    }
 
 ### How do I set a custom `about:blank` page?
 
@@ -126,13 +126,13 @@ The easiest way to do this is to customize the @ref{newtab_chrome} module's opti
 You can also do this by watching the `"navigation-request"` webview signal
 for navigation to specific addresses (in this case `"about:blank"`):
 
-	webview.add_signal("init", function (view)
-		view:add_signal("navigation-request", function (_, uri)
-			if uri == "about:blank" then
-				view:load_string("<html><body bgcolor='#000000'></body></html>", "about:blank")
-				return true
-			end
-		end)
-	end)
+    webview.add_signal("init", function (view)
+        view:add_signal("navigation-request", function (_, uri)
+            if uri == "about:blank" then
+                view:load_string("<html><body bgcolor='#000000'></body></html>", "about:blank")
+                return true
+            end
+        end)
+    end)
 
 <!-- vim: et:sw=4:ts=8:sts=4:tw=79 -->
