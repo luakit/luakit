@@ -191,7 +191,7 @@ local help_doc_page = function (v, path, request)
                     padding: .3em 0.5em;
                     -webkit-user-select: none;
                     cursor: default;
-                    line-height: 1.4rem;
+                    line-height: 1.1rem;
                     font-weight: bold;
                 }
                 .status_indicator.active {
@@ -268,7 +268,7 @@ local help_doc_page = function (v, path, request)
         return
     end
     local html_subs = {
-        style = doc_style .. chrome.stylesheet,
+        style = chrome.stylesheet .. doc_style,
         doc_html = doc_html,
     }
     local html = string.gsub(doc_html_template, "{([%w_]+)}", html_subs)

@@ -1,12 +1,12 @@
 * {
     box-sizing: border-box;
 }
-html {
-    color: #333;
-}
+
 body {
     margin: 0;
     font-family: "Arial", sans-serif;
+    color: #333;
+    line-height: 1.4;
 }
 
 #hdr {
@@ -18,7 +18,7 @@ body {
     color: #555;
     margin: 0 auto;
     padding: 1rem;
-    font-size: 1em;
+    font-size: 1rem;
     line-height: 1;
 }
 
@@ -32,47 +32,18 @@ body {
     justify-content: center;
 }
 
-h1, h2, strong {
-    margin: 0;
-    color: #111;
-}
-
 .tagline {
+    font-size: 1.5rem;
     color: #555;
     margin: 0 0 1rem;
     font-weight: normal;
-}
-
-h1 { margin: 0 0 0.7rem; }
-h2 { margin: 1.5rem 0 1rem; }
-h4 { margin: 1rem 0; }
-
-code, pre
-{
-    background: #f5f7f9;
-    color: #334;
-}
-code {
-    border: 1px solid #dfdfe9;
-    padding: 0px 4px;
-}
-pre > code {
-    border: none;
-    padding: 0;
-}
-pre {
-    padding: 1rem 1.2rem;
-    border-left: 2px solid #69c;
-}
-
-#content > h2 {
-    font-size: 1.3rem;
 }
 
 h3.function > a, h3.property > a, h3.table > a, h3.field > a {
     font-family: monospace;
     color: #2B5782;
     text-decoration: none;
+    font-size: 1rem;
 }
 
 span.parameter, span.type {
@@ -180,6 +151,27 @@ div.good.alert {
     margin-bottom: 0.5rem;
 }
 
+/*
+ * Content typography
+ */
+
+#content > h1 {
+    font-size: 1.7rem;
+    color: #000;
+    margin: 0 0 0.7rem;
+}
+
+#content > h2 {
+    font-size: 1.3rem;
+    color: #000;
+    margin: 1.5rem 0 1rem;
+}
+
+#content > h3 {
+    font-size: 1.0rem;
+    color: #000;
+}
+
 /* Links */
 a { color: #204a87; text-decoration: none; }
 a:visited { color: #2B2087; }
@@ -214,6 +206,10 @@ li.dummy {
 ul.authors > li:before { content: "•"; }
 ul.copyright > li:before { content: "©"; }
 
+/*
+ * Code blocks and inline code
+ */
+
 .sourcecode .comment { color: #558817; }
 .sourcecode .constant { color: #a8660d; }
 .sourcecode .escape { color: #844631; }
@@ -226,6 +222,23 @@ ul.copyright > li:before { content: "©"; }
 .sourcecode .prompt { color: #558817; }
 .sourcecode a:link, .sourcecode a:visited { color: #272fc2; }
 
+code, pre {
+    background: #f5f7f9;
+    color: #334;
+}
+code {
+    border: 1px solid #dfdfe9;
+    padding: 0px 4px;
+}
+pre > code {
+    border: none;
+    padding: 0;
+}
+pre {
+    padding: 1rem 1.2rem;
+    border-left: 2px solid #69c;
+}
+
 .two-col { display: flex; }
 .two-col > :first-child { flex: 0 0 200px; margin-right: 10px; }
 .two-col > :first-child > div:not(:first-child) { margin-top: 0.3rem; }
@@ -237,6 +250,7 @@ ul.triggers > li {
     font-family: monospace, sans-serif;
     color: #2B5782;
     font-weight: bold;
+    font-size: 1rem;
 }
 
 div.info > div { margin-top: 0.3rem; }
