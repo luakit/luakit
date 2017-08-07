@@ -67,7 +67,7 @@
 --
 -- There is a conversion script in the luakit repository that converts
 -- from the old formfiller format to the new one. For more information,
--- see the converter script under <code>extras/convert_formfiller.rb</code>
+-- see the converter script under <code>extras/convert_formfiller.rb</code>.
 --
 -- @module formfiller
 -- @copyright 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be>
@@ -143,18 +143,20 @@ formfiller_wm:add_signal("dsl_extension_query", function (_, k, arg, view_id)
 end)
 
 --- Extend the formfiller DSL with additional functions. This takes a table of
--- functions, for example
+-- functions. For example, to use the `pass` storage manager:
 --
---     {pass = function(s) return io.popen("pass " .. s):read()}
+--     formfiller.extend({
+--         pass = function(s) return io.popen("pass " .. s):read()
+--     })
 --
--- which will then be usable in fields of `form.lua`. For example:
+-- which will then be usable in the fields of `form.lua`:
 --
 --     input {
 --         name = "username",
 --         value = pass("emailpassword"),
 --     }
 --
--- functions used to extend the DSL will be called only when needed: when
+-- Functions used to extend the DSL will be called only when needed: when
 -- matching for attributes used in matching, or once a form is applied, for
 -- attributes used in form application.
 --
@@ -168,10 +170,9 @@ _M.extend = function (extensions)
     dsl_extensions = extensions
     for k, _ in pairs(extensions) do
         DSL[k] = function (_, ...)
-                return {sentinel = true, arg = {...}, key = k}
+            return {sentinel = true, arg = {...}, key = k}
         end
     end
-    return true
 end
 
 --- Reads the rules from the formfiller DSL file
