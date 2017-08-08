@@ -28,6 +28,7 @@ static property_t widget_properties[] = {
   { L_TK_MARGIN_BOTTOM,     "margin-bottom",     INT,    TRUE  },
   { L_TK_MARGIN_LEFT,       "margin-left",       INT,    TRUE  },
   { L_TK_MARGIN_RIGHT,      "margin-right",      INT,    TRUE  },
+  { L_TK_CAN_FOCUS,         "can-focus",         BOOL,   TRUE  },
   { 0,                      NULL,                0,      0     },
 };
 
