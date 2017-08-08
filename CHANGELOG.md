@@ -34,6 +34,7 @@
  - Fixed `image_css` raising errors on page zoom in/out.
  - Worked around `image_css` breaking slightly when using non-1.0 zoom_level.
  - Fixed sessions failing to save with a mix of tabs and private tabs.
+ - Worked around webview widgets self-focusing on click.
 
 ### Changed
 

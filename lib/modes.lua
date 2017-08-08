@@ -12,6 +12,7 @@
 local _M = {}
 
 local window = require("window")
+local webview = require("webview")
 
 -- Table of modes and their callback hooks
 local modes = {}
@@ -113,12 +114,17 @@ window.methods.set_mode = lousy.mode.set
 local mget = lousy.mode.get
 window.methods.is_mode = function (w, name) return name == mget(w) end
 
+webview.add_signal("init", function (view)
+    view.can_focus = false
+end)
+
 -- Setup normal mode
 _M.new_mode("normal", [[When luakit first starts you will find yourself in this
     mode.]], {
     enter = function (w)
         w:set_prompt()
         w:set_input()
+        if w.view then w.view.can_focus = false end
         w.win:focus()
     end,
 })
@@ -132,6 +138,7 @@ _M.new_mode("insert", [[When clicking on form fields luakit will enter the inser
     enter = function (w)
         w:set_prompt("-- INSERT --")
         w:set_input()
+        w.view.can_focus = true
         w.view:focus()
     end,
     -- Send key events to webview
@@ -143,9 +150,8 @@ _M.new_mode("passthrough", [[Luakit will pass every key event to the WebView
     enter = function (w)
         w:set_prompt("-- PASS THROUGH --")
         w:set_input()
-    end,
-    leave = function (w)
-        w.win:focus()
+        w.view.can_focus = true
+        w.view:focus()
     end,
     -- Send key events to webview
     passthrough = true,
