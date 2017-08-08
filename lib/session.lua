@@ -46,7 +46,9 @@ _M.save = function (file)
         local current = w.tabs:current()
         state[w] = { open = {} }
         for ti, tab in ipairs(w.tabs.children) do
-            if not tab.private then
+            if tab.private then
+                table.insert(state[w].open, { private = true })
+            else
                 table.insert(state[w].open, {
                     ti = ti,
                     current = (current == ti),
@@ -57,6 +59,12 @@ _M.save = function (file)
         end
     end
     _M.emit_signal("save", state)
+
+    for _, ws in pairs(state) do
+        for i=#ws.open,1,-1 do
+            if ws.open[i].private then table.remove(ws.open, i) end
+        end
+    end
 
     -- Convert state keys from w to an index
     local istate = {}
