@@ -146,7 +146,7 @@ end)
 -- functions. For example, to use the `pass` storage manager:
 --
 --     formfiller.extend({
---         pass = function(s) return io.popen("pass " .. s):read()
+--         pass = function(s) return io.popen("pass " .. s):read() end
 --     })
 --
 -- which will then be usable in the fields of `form.lua`:
