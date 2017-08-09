@@ -166,6 +166,15 @@ function _M.update_completions(w, text, pos)
     end
 end
 
+local function input_change_cb (w)
+    if not data[w].lock then
+        local input = w.ibar.input
+        data[w].orig_text = input.text
+        data[w].orig_pos = input.position
+        _M.update_completions(w)
+    end
+end
+
 new_mode("completion", {
     enter = function (w)
         -- Clear state
@@ -193,22 +202,8 @@ new_mode("completion", {
         _M.update_completions(w)
     end,
 
-    changed = function (w)
-        if not data[w].lock then
-            local input = w.ibar.input
-            data[w].orig_text = input.text
-            data[w].orig_pos = input.position
-        end
-    end,
-
-    move_cursor = function (w)
-        if not data[w].lock then
-            local input = w.ibar.input
-            data[w].orig_text = input.text
-            data[w].orig_pos = input.position
-            _M.update_completions(w)
-        end
-    end,
+    changed = input_change_cb,
+    move_cursor = input_change_cb,
 
     leave = function (w)
         w.menu:hide()
