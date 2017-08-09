@@ -254,7 +254,7 @@ _M.add_binds = function (mode, binds)
         mdata.binds = mdata.binds or {}
         for _, m in ipairs(binds) do
             local bind, desc, action, opts = unpack(m)
-            if type(desc) == "function" then
+            if type(desc) ~= "string" then
                 desc, action, opts = nil, desc, action
             end
             if type(desc) == "string" or type(action) == "function" then -- Make ad-hoc action
