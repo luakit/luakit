@@ -331,6 +331,10 @@ completers.bookmarks = {
     end,
 }
 
+completers.uri = {
+    func = function () return { { format = "{history}" }, { format = "{bookmarks}" }, } end,
+}
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
