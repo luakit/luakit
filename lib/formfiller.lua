@@ -303,7 +303,7 @@ webview.add_signal("init", function (view)
                 -- Precaution: pattern must contain full domain of page URI
                 local uri = lousy.uri.parse(v.uri)
                 local domain = uri.host
-                if uri.port ~= "80" and uri.port ~= "443" then
+                if uri.port ~= 80 and uri.port ~= 443 then
                     domain = domain .. ":" .. uri.port
                 end
                 domain = lousy.util.lua_escape(domain .. "/")
