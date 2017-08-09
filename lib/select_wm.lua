@@ -167,6 +167,17 @@ local function get_element_bb_if_visible(element, wbb, page)
 
     if not bounding_boxes_intersect(wbb, rbb) then return nil end
 
+    -- Check whether element is visible
+    -- Heuristic: get element at center of bbox, and check if that is a
+    -- descendant of the hinted element
+    local is_ancestor = false
+    local ce = page.document:element_from_point(r.left + rbb.w/2, r.top + rbb.h/2)
+    while ce and not is_ancestor do
+        is_ancestor = ce == element
+        ce = ce.tag_name ~= "HTML" and ce.parent or nil
+    end
+    if not is_ancestor then return nil end
+
     -- If a link element contains one image, use the image dimensions
     if element.tag_name == "A" then
         local first = element.first_child
