@@ -284,8 +284,10 @@ add_binds("normal", {
 
 -- Download commands
 add_cmds({
-    { ":down[load]", "Download the given URI.",
-        function (w, o) _M.add(o.arg, { window = w.win }) end },
+    { ":down[load]", "Download the given URI.", {
+        func = function (w, o) _M.add(o.arg, { window = w.win }) end,
+        format = "{uri}",
+    }},
 })
 
 return _M

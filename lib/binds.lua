@@ -424,14 +424,22 @@ modes.add_cmds({
     { ":f[orward]", "Go forward in the browser history `[count=1]` items.",
         function (w, o) w:forward(tonumber(o.arg) or 1) end },
     { ":inc[rease]", "Increment last number in URL.", function (w, o) w:navigate(w:inc_uri(tonumber(o.arg) or 1)) end },
-    { ":o[pen]", "Open one or more URLs.", function (w, o) w:navigate(w:search_open(o.arg)) end },
-    { ":t[abopen]", "Open one or more URLs in a new tab.", function (w, o) w:new_tab(w:search_open(o.arg)) end },
-    { ":priv-t[abopen]", "Open one or more URLs in a new private tab.",
-        function (w, o) w:new_tab(w:search_open(o.arg), { private = true }) end },
-
-    { ":w[inopen]", "Open one or more URLs in a new window.",
-        function (w, o) window.new{w:search_open(o.arg)} end },
-
+    { ":o[pen]", "Open one or more URLs.", {
+        func = function (w, o) w:navigate(w:search_open(o.arg)) end,
+        format = "{uri}",
+    }},
+    { ":t[abopen]", "Open one or more URLs in a new tab.", {
+        func = function (w, o) w:new_tab(w:search_open(o.arg)) end,
+        format = "{uri}",
+    }},
+    { ":priv-t[abopen]", "Open one or more URLs in a new private tab.", {
+        func = function (w, o) w:new_tab(w:search_open(o.arg), { private = true }) end,
+        format = "{uri}",
+    }},
+    { ":w[inopen]", "Open one or more URLs in a new window.", {
+        func = function (w, o) window.new{w:search_open(o.arg)} end,
+        format = "{uri}",
+    }},
     { ":javascript, :js", "Evaluate JavaScript snippet.",
         function (w, o) w.view:eval_js(o.arg, {
                     no_return = true,
@@ -441,10 +449,14 @@ modes.add_cmds({
                 }) end },
 
     -- Tab manipulation commands
-    { ":tab", "Execute command and open result in new tab.",
-        function (w, o) w:new_tab() w:run_cmd(":" .. o.arg) end },
-    { ":tabd[o]", "Execute command in each tab.",
-        function (w, o) w:each_tab(function () w:run_cmd(":" .. o.arg) end) end },
+    { ":tab", "Execute command and open result in new tab.", {
+        func = function (w, o) w:new_tab() w:run_cmd(":" .. o.arg) end,
+        format = "{command}",
+    }},
+    { ":tabd[o]", "Execute command in each tab.", {
+        func = function (w, o) w:each_tab(function () w:run_cmd(":" .. o.arg) end) end,
+        format = "{command}",
+    }},
     { ":tabdu[plicate]", "Duplicate current tab.",
         function (w) w:new_tab({ session_state = w.view.session_state }) end },
     { ":tabfir[st]", "Switch to first tab.", function (w) w:goto_tab(1) end },
