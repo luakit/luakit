@@ -211,9 +211,9 @@ new_mode("completion", {
     end,
 
     activate = function (w, text)
-        local pos = w.ibar.input.position
-        if string.sub(text, pos+1, pos+1) == " " then pos = pos+1 end
-        w:enter_cmd(text, { pos = pos })
+        _M.exit_completion(w)
+        w:enter_cmd(text)
+        w:activate()
     end,
 })
 
