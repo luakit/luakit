@@ -444,7 +444,7 @@ modes.add_cmds({
     { ":c[lose]", "Close current tab.", function (w) w:close_tab() end },
     { ":print", "Print current page.", function (w) w.view:eval_js("print()", { no_return = true }) end },
     { ":stop", "Stop loading.", function (w) w.view:stop() end },
-    { ":reload", "Reload page", function (w) w:reload() end },
+    { ":reload", "Reload page.", function (w) w:reload() end },
     { ":restart", "Restart browser (reload config files).", function (w, o) w:restart(o.bang) end },
     { ":write", "Save current session.", function (w) w:save_session() end },
     { ":noh[lsearch]", "Clear search highlighting.", function (w) w:clear_search() end },
@@ -491,7 +491,7 @@ modes.add_cmds({
     { ":tabl[ast]", "Switch to last tab.", function (w) w:goto_tab(-1) end },
     { ":tabn[ext]", "Switch to the next tab.", function (w) w:next_tab() end },
     { ":tabp[revious]", "Switch to the previous tab.", function (w) w:prev_tab() end },
-    { ":tabde[tach]", "Move the current tab tab into a new window", function (w) window.new({w.view}) end },
+    { ":tabde[tach]", "Move the current tab tab into a new window.", function (w) window.new({w.view}) end },
     { ":q[uit]", "Close the current window.", function (w, o) w:close_win(o.bang) end },
 
     { ":wq[all]", "Save the session and quit.", function (w, o)

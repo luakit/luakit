@@ -101,7 +101,7 @@ T.test_website_data = function ()
         assert(not wd.fetch({"all"})["Local files"])
         test.continue()
     end)()
-    test.wait()
+    test.wait(1000)
 
     v.uri = "file:///"
     test.wait_for_view(v)
