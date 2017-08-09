@@ -292,10 +292,7 @@ completers.command = {
 completers.history = {
     header = { "History", "URI" },
     func = function (buf)
-        local term, ret = buf, {}
-        if not term or term == "" then return {} end
-
-        local sql = [[
+        local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||title) AS text
             FROM history WHERE text GLOB ?
             ORDER BY visits DESC LIMIT 25
@@ -318,10 +315,7 @@ completers.history = {
 completers.bookmarks = {
     header = { "Bookmarks", "URI" },
     func = function (buf)
-        local term, ret = buf, {}
-        if not term or term == "" then return {} end
-
-        local sql = [[
+        local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||title||tags) AS text
             FROM bookmarks WHERE text GLOB ?
             ORDER BY title DESC LIMIT 25
