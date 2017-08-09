@@ -121,7 +121,7 @@ uninstall:
 	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
-	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $(LDFLAGS) $< -o $@
+	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $< $(LDFLAGS) -o $@
 
 run-tests: luakit luakit.so tests/util.so
 	@$(LUA_BIN_NAME) tests/run_test.lua
