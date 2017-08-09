@@ -9,7 +9,8 @@
 
 local chrome = require "chrome"
 local window = require "window"
-local theme = require("lousy").theme.get()
+local lousy = require "lousy"
+local theme = lousy.theme.get()
 local modes = require "modes"
 
 local _M = {}
@@ -281,6 +282,9 @@ _M.widget = function ()
     notif.fg = theme.sbar_notif_fg
     notif.font = theme.sbar_notif_font
     table.insert(widgets, notif)
+    notif:add_signal("destroy", function ()
+        table.remove(widgets, lousy.util.table.hasitem(widgets, notif))
+    end)
     update_widgets()
     ebox.child = notif
     ebox:add_signal("button-release", widget_click_cb)
