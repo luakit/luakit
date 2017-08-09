@@ -301,7 +301,12 @@ webview.add_signal("init", function (view)
             end
             if form_spec.autofill then
                 -- Precaution: pattern must contain full domain of page URI
-                local domain = lousy.util.lua_escape(lousy.uri.parse(v.uri).host .. "/")
+                local uri = lousy.uri.parse(v.uri)
+                local domain = uri.host
+                if uri.port ~= "80" and uri.port ~= "443" then
+                    domain = domain .. ":" .. uri.port
+                end
+                domain = lousy.util.lua_escape(domain .. "/")
                 if form_spec.pattern:find(domain, 1, true) then
                     msg.info("auto-filling form profile '%s'", form_spec.profile)
                     formfiller_wm:emit_signal(view, "apply_form", form_spec)
