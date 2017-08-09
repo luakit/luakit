@@ -394,6 +394,7 @@ end
 function _M.add_bind (binds, bind, action, opts)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
     assert(bind and type(bind) == "string", "invalid bind type: " .. type(bind))
+    assert(action and type(action) == "table", "invalid action type: " .. type(action))
     bind = convert_bind_syntax(bind)
     _M.remove_bind(binds, bind)
     table.insert(binds, { bind, action, opts or {} })
