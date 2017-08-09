@@ -942,6 +942,31 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
     return FALSE;
 }
 
+static gboolean
+webview_scroll_cb(GtkWidget *view, GdkEventScroll *ev, widget_t *w)
+{
+    int button = 0, ret = FALSE;
+    if (ev->direction == GDK_SCROLL_UP || ev->direction == GDK_SCROLL_DOWN)
+        button = ev->direction == GDK_SCROLL_UP ? 4 : 5;
+    else if (ev->direction == GDK_SCROLL_SMOOTH) {
+        double dx, dy;
+        gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy);
+        if (dx == 0.0 && dy == -1.0) button = 4;
+        if (dx == 0.0 && dy ==  1.0) button = 5;
+    }
+    if (button) {
+        GdkEventButton btn_ev = {
+            .state = ev->state,
+            .button = button,
+            .type = GDK_BUTTON_PRESS,
+        };
+        ret |= webview_button_cb(view, &btn_ev, w);
+        btn_ev.type = GDK_BUTTON_RELEASE;
+        ret |= webview_button_cb(view, &btn_ev, w);
+    }
+    return ret;
+}
+
 static void
 menu_item_cb(GtkAction *action, widget_t *w)
 {
@@ -1258,6 +1283,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
       "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
+      "signal::scroll-event",                         G_CALLBACK(webview_scroll_cb),            w,
       "signal::create",                               G_CALLBACK(create_cb),                    w,
       "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
       "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
