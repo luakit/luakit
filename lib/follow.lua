@@ -50,6 +50,7 @@ local window = require("window")
 local new_mode = require("modes").new_mode
 local modes = require("modes")
 local add_binds = modes.add_binds
+local lousy = require("lousy")
 
 local _M = {}
 
@@ -213,15 +214,22 @@ new_mode("follow", {
         assert(type(mode.pattern_maker or _M.pattern_maker) == "function",
             "invalid pattern_maker function")
 
+        local view = w.view
+
         local selector = mode.selector_func or _M.selectors[mode.selector]
         assert(type(selector) == "string", "invalid follow selector")
+
+        -- Append site-specific selector
+        local domain = lousy.uri.parse(view.uri).host
+        local sss = _M.site_specific_selectors[domain]
+        if sss and sss[mode.selector] then
+            selector = selector .. ", " .. sss[mode.selector]
+        end
         mode.selector = selector
 
         local stylesheet = mode.stylesheet or _M.stylesheet
         assert(type(stylesheet) == "string", "invalid stylesheet")
         mode.stylesheet = stylesheet
-
-        local view = w.view
 
         if w.follow_persist then
             mode.persist = true
@@ -292,6 +300,17 @@ _M.selectors = {
     -- Image elements.
     thumbnail = "a img",
     -- Image elements within a hyperlink.
+}
+
+--- Site specific element selectors used to extend @ref{selectors}.
+-- Table keys should be website domains. Values are tables with the same
+-- structure as @ref{selectors}.
+-- @type {[string]=table}
+-- @readwrite
+_M.site_specific_selectors = {
+    ["github.com"] = {
+        clickable = "svg.js-menu-close, div.select-menu-item"
+    },
 }
 
 add_binds("normal", {
