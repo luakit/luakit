@@ -95,6 +95,33 @@ modes.add_binds("all", {
     { "<Shift-Mouse5>", "Scroll right.", function (w) w:scroll{ xrel = scroll_step } end },
 })
 
+local actions = { scroll = {
+    up = {
+        desc = "Scroll the current page up.",
+        func = function (w, m) w:scroll{ yrel = -scroll_step*(m.count or 1) } end,
+    },
+    down = {
+        desc = "Scroll the current page down.",
+        func = function (w, m) w:scroll{ yrel =  scroll_step*(m.count or 1) } end,
+    },
+    left = {
+        desc = "Scroll the current page left.",
+        func = function (w, m) w:scroll{ xrel = -scroll_step*(m.count or 1) } end,
+    },
+    right = {
+        desc = "Scroll the current page right.",
+        func = function (w, m) w:scroll{ xrel =  scroll_step*(m.count or 1) } end,
+    },
+    page_up = {
+        desc = "Scroll the current page up a full screen.",
+        func = function (w, m) w:scroll{ ypagerel = -page_step*(m.count or 1) } end,
+    },
+    page_down = {
+        desc = "Scroll the current page down a full screen.",
+        func = function (w, m) w:scroll{ ypagerel =  page_step*(m.count or 1) } end,
+    },
+}}
+
 modes.add_binds("normal", {
     -- Autoparse the `[count]` before a binding and re-call the hit function
     -- with the count removed and added to the opts table.
@@ -137,18 +164,18 @@ modes.add_binds("normal", {
     { ":", "Enter `command` mode.", function (w) w:set_mode("command") end, {} },
 
     -- Scrolling
-    { "j", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
-    { "k", "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
-    { "h", "Scroll document left.", function (w) w:scroll{ xrel = -scroll_step } end },
-    { "l", "Scroll document right.", function (w) w:scroll{ xrel =  scroll_step } end },
-    { "<Down>", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
-    { "<Up>",   "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
-    { "<Left>", "Scroll document left.", function (w) w:scroll{ xrel = -scroll_step } end },
-    { "<Right>", "Scroll document right.", function (w) w:scroll{ xrel =  scroll_step } end },
-    { "<KP_Down>", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
-    { "<KP_Up>",   "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
-    { "<KP_Left>", "Scroll document left.", function (w) w:scroll{ xrel = -scroll_step } end },
-    { "<KP_Right>", "Scroll document right.", function (w) w:scroll{ xrel =  scroll_step } end },
+    { "j", actions.scroll.down },
+    { "k", actions.scroll.up },
+    { "h", actions.scroll.left },
+    { "l", actions.scroll.right },
+    { "<Down>",  actions.scroll.down },
+    { "<Up>",    actions.scroll.up },
+    { "<Left>",  actions.scroll.left },
+    { "<Right>", actions.scroll.right },
+    { "<KP_Down>",  actions.scroll.down },
+    { "<KP_Up>",    actions.scroll.up },
+    { "<KP_Left>",  actions.scroll.left },
+    { "<KP_Right>", actions.scroll.right },
 
     { "^", "Scroll to the absolute left of the document.", function (w) w:scroll{ x =  0 } end },
     { "$", "Scroll to the absolute right of the document.", function (w) w:scroll{ x = -1 } end },
@@ -156,19 +183,20 @@ modes.add_binds("normal", {
         function (w, m)
             if not m.count then w:scroll{ y = 0 } else return false end
         end },
-    { "<Control-e>", "Scroll document down.", function (w) w:scroll{ yrel =  scroll_step } end },
-    { "<Control-y>", "Scroll document up.", function (w) w:scroll{ yrel = -scroll_step } end },
+    { "<Control-e>", actions.scroll.down },
+    { "<Control-y>", actions.scroll.up },
+
     { "<Control-d>", "Scroll half page down.", function (w) w:scroll{ ypagerel =  0.5 } end },
     { "<Control-u>", "Scroll half page up.", function (w) w:scroll{ ypagerel = -0.5 } end },
-    { "<Control-f>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
-    { "<Control-b>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
-    { "<space>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
-    { "<Shift-space>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
-    { "<BackSpace>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
-    { "<Page_Down>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
-    { "<Page_Up>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
-    { "<KP_Next>", "Scroll page down.", function (w) w:scroll{ ypagerel =  page_step } end },
-    { "<KP_Page_Up>", "Scroll page up.", function (w) w:scroll{ ypagerel = -page_step } end },
+    { "<Control-f>", actions.scroll.page_down },
+    { "<Control-b>", actions.scroll.page_up },
+    { "<space>", actions.scroll.page_down },
+    { "<Shift-space>", actions.scroll.page_up },
+    { "<BackSpace>", actions.scroll.page_up },
+    { "<Page_Down>", actions.scroll.page_down },
+    { "<Page_Up>", actions.scroll.page_up },
+    { "<KP_Next>", actions.scroll.page_down },
+    { "<KP_Page_Up>", actions.scroll.page_up },
     { "<Home>", "Scroll to the top of the document.", function (w) w:scroll{ y =  0 } end },
     { "<End>", "Scroll to the end of the document.", function (w) w:scroll{ y = -1 } end },
     { "<KP_Home>", "Scroll to the top of the document.", function (w) w:scroll{ y =  0 } end },
