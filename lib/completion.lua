@@ -43,7 +43,7 @@ local parse_completion_format = function (fmt)
     return ret
 end
 
-local completion_funcs = {}
+local completers = {}
 
 local function parse(buf)
     local function match_step (state, matches)
@@ -63,8 +63,8 @@ local function parse(buf)
                     table.insert(new_states, lousy.util.table.join(s, { buf = s.buf:sub(#m+1), pos = s.pos+1 }))
                 end
             elseif nup.grp then -- completion group name
-                local cfunc = assert(completion_funcs[nup.grp], "No completion group '".. nup.grp .. "'")
-                local cresults = assert(cfunc(s.buf))
+                local cgroup = assert(completers[nup.grp], "No completion group '".. nup.grp .. "'")
+                local cresults = assert(cgroup.func(s.buf))
 
                 for _, cr in ipairs(cresults) do
                     local crf = type(cr) == "table" and cr.format or cr
@@ -74,6 +74,7 @@ local function parse(buf)
                     table.remove(ns, ns.pos)
                     for i, part in ipairs(parts) do table.insert(ns, ns.pos+i-1, part) end
                     ns[ns.pos].row = cr
+                    ns[ns.pos].orig_grp = nup.grp
 
                     if cr.buf then
                         -- to complete from this state, we need to change the buffer
@@ -107,16 +108,24 @@ local function parse(buf)
 end
 
 local function complete(buf)
-    local matches, sugg = parse(buf).partial, {}
+    local matches, rows = parse(buf).partial, {}
     local pat2lit = function (p) return p == "%s+" and " " or p end
+    local prev_grp
+
     for _, m in ipairs(matches) do
         if m[m.pos].lit == "%s+" and m.pos > 1 then m.pos = m.pos-1 end
 
+        local grp = m[m.pos].orig_grp
+        if prev_grp ~= grp then
+            prev_grp = grp
+            table.insert(rows, lousy.util.table.join(completers[grp].header, { title = true }))
+        end
+
         local whole = ""
         for i=1,m.pos do whole = whole .. pat2lit(m[i].lit) end
-        table.insert(sugg, { m[m.pos].row[1], m[m.pos].row[2], text = whole })
+        table.insert(rows, { m[m.pos].row[1], m[m.pos].row[2], text = whole })
     end
-    return sugg
+    return rows
 end
 
 --- Update the list of completions for some input text.
@@ -140,12 +149,8 @@ function _M.update_completions(w, text, pos)
     -- Update left and right strings
     state.text, state.pos = text, pos
 
-    local suggestions = complete(text)
+    local rows = complete(text)
 
-    local rows = { { "Completion", "Description", title = true } }
-    for _, suggestion in ipairs(suggestions) do
-        table.insert(rows, { suggestion[1], suggestion[2], text = suggestion.text })
-    end
     if rows[2] then
         -- Prevent callbacks triggering recursive updates.
         state.lock = true
@@ -237,100 +242,105 @@ add_binds("completion", {
         _M.exit_completion },
 })
 
-completion_funcs.command = function (rem)
-    local prefix, rets = rem:match("^([%w-]*)"), {}
+completers.command = {
+    header = { "Command", "Description" },
+    func = function (rem)
+        local prefix, rets = rem:match("^([%w-]*)"), {}
 
-    -- Check each command binding for matches
-    local cmds = {}
-    for _, m in ipairs(get_mode("command").binds) do
-        local b, a = unpack(m)
-        if m.cmds or (b and b:match("^:")) then
-            local c = m.cmds or {}
-            if not m.cmds then
-                for _, cmd in ipairs(lousy.util.string.split(b:gsub("^:", ""), ",%s+:")) do
-                    if string.match(cmd, "^([%-%w]+)%[(%w+)%]") then
-                        local l, r = string.match(cmd, "^([%-%w]+)%[(%w+)%]")
-                        table.insert(c, l..r)
-                        table.insert(c, l)
-                    else
-                        table.insert(c, cmd)
+        -- Check each command binding for matches
+        local cmds = {}
+        for _, m in ipairs(get_mode("command").binds) do
+            local b, a = unpack(m)
+            if m.cmds or (b and b:match("^:")) then
+                local c = m.cmds or {}
+                if not m.cmds then
+                    for _, cmd in ipairs(lousy.util.string.split(b:gsub("^:", ""), ",%s+:")) do
+                        if string.match(cmd, "^([%-%w]+)%[(%w+)%]") then
+                            local l, r = string.match(cmd, "^([%-%w]+)%[(%w+)%]")
+                            table.insert(c, l..r)
+                            table.insert(c, l)
+                        else
+                            table.insert(c, cmd)
+                        end
                     end
                 end
-            end
 
-            for i, cmd in ipairs(c) do
-                if string.find(cmd, prefix, 1, true) == 1 then
-                    if i == 1 then
-                        cmd = ":" .. cmd
-                    else
-                        cmd = string.format(":%s (:%s)", cmd, c[1])
+                for i, cmd in ipairs(c) do
+                    if string.find(cmd, prefix, 1, true) == 1 then
+                        if i == 1 then
+                            cmd = ":" .. cmd
+                        else
+                            cmd = string.format(":%s (:%s)", cmd, c[1])
+                        end
+
+                        local format = c[1] .. (a.format and (" "..a.format) or "")
+                        cmds[cmd] = { escape(cmd), escape(m[2].desc) or "", format = format }
+                        break
                     end
-
-                    local format = c[1] .. (a.format and (" "..a.format) or "")
-                    cmds[cmd] = { escape(cmd), escape(m[2].desc) or "", format = format }
-                    break
                 end
             end
         end
-    end
 
-    local keys = lousy.util.table.keys(cmds)
-    for _, k in ipairs(keys) do
-        rets[#rets+1] = cmds[k]
-    end
-    return rets
-end
+        local keys = lousy.util.table.keys(cmds)
+        for _, k in ipairs(keys) do
+            rets[#rets+1] = cmds[k]
+        end
+        return rets
+    end,
+}
 
-completion_funcs.history = function (buf)
-    local term, ret = buf, {}
-    if not term or term == "" then return {} end
+completers.history = {
+    header = { "History", "URI" },
+    func = function (buf)
+        local term, ret = buf, {}
+        if not term or term == "" then return {} end
 
-    local sql = [[
-        SELECT uri, title, lower(uri||title) AS text
-        FROM history WHERE text GLOB ?
-        ORDER BY visits DESC LIMIT 25
-    ]]
+        local sql = [[
+            SELECT uri, title, lower(uri||title) AS text
+            FROM history WHERE text GLOB ?
+            ORDER BY visits DESC LIMIT 25
+        ]]
 
-    local rows = history.db:exec(sql, { string.format("*%s*", term) })
-    if not rows[1] then return {} end
+        local rows = history.db:exec(sql, { string.format("*%s*", term) })
+        if not rows[1] then return {} end
 
-    -- Build rows
-    -- local ret = {{ "History", "URI", title = true }}
-    for _, row in ipairs(rows) do
-        table.insert(ret, {
-            escape(row.title), escape(row.uri),
-            format = {{ lit = row.uri }},
-            buf = row.uri
-        })
-    end
-    return ret
-end
+        for _, row in ipairs(rows) do
+            table.insert(ret, {
+                escape(row.title), escape(row.uri),
+                format = {{ lit = row.uri }},
+                buf = row.uri
+            })
+        end
+        return ret
+    end,
+}
 
-completion_funcs.bookmarks = function (buf)
-    local term, ret = buf, {}
-    if not term or term == "" then return {} end
+completers.bookmarks = {
+    header = { "Bookmarks", "URI" },
+    func = function (buf)
+        local term, ret = buf, {}
+        if not term or term == "" then return {} end
 
-    local sql = [[
-        SELECT uri, title, lower(uri||title||tags) AS text
-        FROM bookmarks WHERE text GLOB ?
-        ORDER BY title DESC LIMIT 25
-    ]]
+        local sql = [[
+            SELECT uri, title, lower(uri||title||tags) AS text
+            FROM bookmarks WHERE text GLOB ?
+            ORDER BY title DESC LIMIT 25
+        ]]
 
-    local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
-    if not rows[1] then return {} end
+        local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
+        if not rows[1] then return {} end
 
-    -- Build rows
-    -- local ret = {{ "Bookmarks", "URI", title = true }}
-    for _, row in ipairs(rows) do
-        local title = row.title ~= "" and row.title or row.uri
-        table.insert(ret, {
-            escape(title), escape(row.uri),
-            format = {{ lit = row.uri }},
-            buf = row.uri
-        })
-    end
-    return ret
-end
+        for _, row in ipairs(rows) do
+            local title = row.title ~= "" and row.title or row.uri
+            table.insert(ret, {
+                escape(title), escape(row.uri),
+                format = {{ lit = row.uri }},
+                buf = row.uri
+            })
+        end
+        return ret
+    end,
+}
 
 return _M
 
