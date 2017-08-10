@@ -1,6 +1,8 @@
 --- Provides functionality to auto-fill forms based on a Lua DSL.
 --
--- The configuration is stored in `$XDG_DATA_DIR/luakit/forms.lua`
+-- The formfiller provides support for filling out forms based on the contents
+-- of a forms file, which uses a domain-specific language to specify the content to
+-- fill forms with.
 --
 -- The following is an example for a formfiller definition:
 --
@@ -68,6 +70,11 @@
 -- There is a conversion script in the luakit repository that converts
 -- from the old formfiller format to the new one. For more information,
 -- see the converter script under <code>extras/convert_formfiller.rb</code>.
+--
+-- # Files and Directories
+--
+-- - The formfiller configuration is loaded from the `forms.lua` file stored in
+--   the luakit data directory.
 --
 -- @module formfiller
 -- @copyright 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be>

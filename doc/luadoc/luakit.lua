@@ -13,17 +13,17 @@
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
 -- @module luakit
 
---- The configuration directory path (default: `$XDG_CONFIG_HOME`).
+--- The path to the luakit configuration directory.
 -- @property config_dir
 -- @type string
 -- @readonly
 
---- The data directory path (default: `$XDG_DATA_HOME`).
+--- The path to the luakit data directory.
 -- @property data_dir
 -- @type string
 -- @readonly
 
---- The cache directory path (default: `$XDG_CACHE_HOME`).
+--- The path to the luakit cache directory.
 -- @property cache_dir
 -- @type string
 -- @readonly

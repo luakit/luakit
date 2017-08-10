@@ -8,11 +8,15 @@
 --
 -- The easiest way to customize what is shown at
 -- <luakit://newtab/> is to create a HTML file at the
--- path specified by `newtab_chrome.new_tab_file`; by default this field has the
--- value `$XDG_DATA_DIR/luakit/newtab.html`.
+-- path specified by `newtab_chrome.new_tab_file`. By default, this is the
+-- `newtab.html` file located in the luakit data directory.
 --
 -- If this file exists, then its contents will be used to provide the new tab
 -- page. Otherwise, the value of `newtab_chrome.new_tab_src` is used.
+--
+-- # Files and Directories
+--
+-- - The default path for the new-tab file is `newtab.html`, located in the luakit data directory.
 --
 -- @module newtab_chrome
 -- @author Aidan Holm

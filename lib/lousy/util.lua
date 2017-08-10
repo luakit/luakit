@@ -297,7 +297,8 @@ local function find_file(paths)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- `$XDG_CONFIG_HOME/luakit/`, or `/etc/xdg/luakit/`.
+-- the luakit configuration directory, or the system luakit configuration
+-- directory.
 -- @tparam string f The relative filepath.
 -- @treturn string The first valid filepath or an error.
 function _M.find_config(f)
@@ -311,7 +312,7 @@ function _M.find_config(f)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- `$XDG_DATA_HOME/luakit/`, or the luakit install dir.
+-- the luakit data directory, or the luakit installation directory.
 -- @tparam string f The relative filepath.
 -- @treturn string The first valid filepath or an error.
 function _M.find_data(f)
@@ -322,7 +323,7 @@ function _M.find_data(f)
 end
 
 --- Search and return the filepath of a file in the current working directory
--- or `$XDG_CACHE_HOME/luakit/`.
+-- or the luakit cache directory.
 -- @tparam string f The relative filepath.
 -- @treturn string The first valid filepath or an error.
 function _M.find_cache(f)

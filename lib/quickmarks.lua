@@ -11,8 +11,8 @@
 -- of the current page, creating a new shortcut or overwriting an existing
 -- one.
 --
--- Every quickmark mapping is saved in `$XDG_DATA_HOME/luakit/quickmarks`
--- and works across multiple luakit instances.
+-- Every quickmark mapping is saved in the `quickmarks` file in the luakit data
+-- directory, and is shared between multiple luakit instances.
 --
 -- # Jumping to a marked url
 --
@@ -23,7 +23,12 @@
 -- # Managing quickmarks
 --
 -- As well as using the included quickmarks manager and various commands, you
--- can directly edit the quickmarks file `$XDG_DATA_HOME/luakit/quickmarks`.
+-- can directly edit the `quickmarks` file in the luakit data directory.
+--
+-- # Files and Directories
+--
+-- - The quickmarks file is called `quickmarks` and is in the luakit data
+-- directory.
 --
 -- @module quickmarks
 -- @author Piotr Husiatyński <phusiatynski@gmail.com>

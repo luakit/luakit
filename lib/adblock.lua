@@ -19,12 +19,12 @@
 -- # Usage
 --
 -- * Add `require "adblock"` and `require "adblock_chrome"` to your `config.rc`.
--- * Download AdblockPlus-compatible filter lists to `$XDG_DATA_HOME/luakit/adblock`.
+-- * Download AdblockPlus-compatible filter lists to the adblock directory.
 --   Multiple lists are supported.
 --   EasyList is the most popular Adblock Plus filter list, and can be
 --   downloaded from [https://easylist.to/](https://easylist.to/).
--- * Filter lists downloaded to `$XDG_DATA_HOME/luakit/adblock` must end in
--- `.txt`.
+-- * Filter lists downloaded to the adblock directory must have a
+--   filename ending in `.txt` in order to be loaded.
 -- * Filter lists need to be updated regularly (~weekly), use cron!
 --
 -- # Troubleshooting
@@ -41,6 +41,12 @@
 --   little, start luakit with the following:
 --
 --     --log=lua/lib/adblock_wm=debug
+--
+-- # Files and Directories
+--
+-- - All filterlists should be downloaded to the adblock data directory.
+--   By default, this is the `adblock` sub-directory of the luakit data
+--   directory. All filterlists must have a filename ending in `.txt`.
 --
 -- @module adblock
 -- @author Chris van Dijk (quigybo) <quigybo@hotmail.com>

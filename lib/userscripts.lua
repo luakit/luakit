@@ -3,6 +3,11 @@
 -- Evaluates and manages userscripts.
 -- JavaScript userscripts must end in <code>.user.js</code>
 --
+-- # Files and Directories
+--
+-- - Userscript files should be placed in the `scripts` sub-directory of the
+--   luakit data directory, and must have a filename ending in `.user.js`.
+--
 -- @module userscripts
 -- @copyright 2011 Constantin Schomburg <me@xconstruct.net>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
@@ -130,7 +135,7 @@ local scripts = {}
 local lstate = setmetatable({}, { __mode = "k" })
 
 --- The directory in which to search for userscripts.
--- By default, this is `$XDG_DATA_HOME/luakit/scripts`.
+-- By default, this is the `scripts` directory in the luakit data directory.
 -- @type string
 -- @readonly
 _M.dir = luakit.data_dir .. "/scripts"
