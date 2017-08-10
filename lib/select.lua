@@ -17,7 +17,7 @@ local wrapped = { label_maker = nil }
 -- a table of chainable hint label style functions, and returns a chained set of
 -- these functions.
 --
--- ### Example usage:
+-- # Example usage:
 --
 --     local select = require "select"
 --     select.label_maker = function (s)

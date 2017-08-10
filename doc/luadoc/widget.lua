@@ -14,7 +14,7 @@
 -- *Note: some user interface widgets are also provided by the `lousy.widget`
 -- library.*
 --
--- ### Widget types
+-- # Widget types
 --
 -- The following widget types are available:
 --
@@ -33,7 +33,7 @@
 -- - `webview`: Shows the contents of a web page and allows page interaction.
 -- - `window`: A window contains all other user interface elements.
 --
--- ### Creating a new widget
+-- # Creating a new widget
 --
 -- To create a new widget, use the `widget` constructor:
 --
@@ -41,7 +41,7 @@
 --
 -- The `type` field must be provided.
 --
--- ### Destroying a webview widget
+-- # Destroying a webview widget
 --
 --     view:destroy()
 --

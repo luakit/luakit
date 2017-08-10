@@ -5,7 +5,7 @@
 -- only on a sub-domain of a website without enabling JavaScript for the root
 -- domain.
 --
--- ### Example `domain_props` rules
+-- # Example `domain_props` rules
 --
 --     globals.domain_props = {
 --         ["all"] = {
@@ -20,7 +20,7 @@
 --         },
 --     }
 --
--- #### Explanation
+-- ## Explanation
 --
 -- There are three rules in the example. From top to bottom, they are
 -- least-specific to most-specific:
@@ -37,7 +37,7 @@
 --  _all_ web pages will have plugins disabled, since no more-specific rules
 --  specified a value for `enable_plugins`. This rule is less specific than all other rules.
 --
--- ### Rule application
+-- # Rule application
 --
 -- The order that rules are specified in the file does not matter, although
 -- in the default the "all" rule is listed first. All properties in _any_ matching
@@ -45,7 +45,7 @@
 -- most specific rule. If a property is not applied in any rule, it is not
 -- changed.
 --
--- ### Available properties
+-- # Available properties
 --
 --  - `allow_modal_dialogs`
 --  - `auto_load_images`

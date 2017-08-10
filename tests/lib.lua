@@ -174,7 +174,7 @@ _M.find_files = find_files.find_files
 --
 -- @tparam {entry} entries A list of file error entries.
 --
--- #### `entry` format
+-- # `entry` format
 --
 --  - file: The path of the file.
 --  - err: The error string.

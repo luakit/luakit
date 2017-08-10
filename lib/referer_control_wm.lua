@@ -15,7 +15,7 @@
 --
 -- *Note: the word 'referer' is intentionally misspelled for historic reasons.*
 --
--- ### Usage
+-- # Usage
 --
 -- As this is a web module, it will not function if loaded on the main UI Lua
 -- process through `require()`. Instead, it should be loaded with

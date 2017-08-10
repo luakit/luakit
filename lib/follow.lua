@@ -11,7 +11,7 @@
 -- Another example would be hinting all images on the page, and opening the
 -- followed image in a new tab.
 --
--- ### Using a custom character set for hint labels
+-- # Using a custom character set for hint labels
 --
 -- If you prefer to use letters instead of numbers for hint labels (useful if
 -- you use a non-qwerty keyboard layout), this can be done by replacing the
@@ -28,7 +28,7 @@
 -- `follow` module provides the `follow` and `ex-follow` user interface on top
 -- of that.
 --
--- ### Matching only hint labels, not element text
+-- # Matching only hint labels, not element text
 --
 -- If you prefer not to match element text, and wish to select hints only by
 -- their label, this can be done by specifying the @ref{pattern_maker}:
@@ -36,7 +36,8 @@
 --     -- Match only hint label text
 --     follow.pattern_maker = follow.pattern_styles.match_label
 --
--- ### Ignoring element text case
+-- # Ignoring element text case
+--
 -- To ignore element text case when filtering hints, set the following option:
 --
 --     -- Uncomment if you want to ignore case when matching

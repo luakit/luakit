@@ -6,7 +6,7 @@
 --
 -- DOCMACRO(available:web)
 --
--- ### Retrieving the DOM document for a `page`:
+-- # Retrieving the DOM document for a `page`:
 --
 -- To retrieve the DOM document loaded in a page, use the @ref{page/document} property.
 

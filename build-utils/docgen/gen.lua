@@ -47,6 +47,10 @@ local format_text = function (text)
     return ret
 end
 
+local shift_hdr = function (text, n)
+    return ("\n"..text):gsub("\n#", "\n" .. string.rep("#", n+1)):sub(2)
+end
+
 local generate_typestr_html = function (typestr)
     if not typestr then return "<span class=any_type>any type</span>" end
     local alts = {}
@@ -82,7 +86,7 @@ local generate_function_param_html = function (param)
     local html = string.gsub(html_template, "{(%w+)}", {
         name = param.name,
         typestr = "Type: " .. generate_typestr_html(param.typestr),
-        desc = html_unwrap_first_p(format_text(param.desc)),
+        desc = html_unwrap_first_p(format_text(shift_hdr(param.desc, 3))),
         optional = param.optional and "Optional" or "",
         default = param.default and "Default: " .. html_unwrap_first_p(format_text(param.default)) or "",
     })
@@ -99,7 +103,7 @@ local generate_function_return_html = function (ret)
     ]==]
     local html = string.gsub(html_template, "{(%w+)}", {
         typestr = generate_typestr_html(ret.typestr),
-        desc = html_unwrap_first_p(format_text(ret.desc)),
+        desc = html_unwrap_first_p(format_text(shift_hdr(ret.desc, 3))),
     })
     return html
 end
@@ -137,7 +141,7 @@ local generate_function_body_html = function (func)
     ]==]
     local html = string.gsub(html_template, "{([%w_]+)}", {
         deprecated = generate_deprecated_html(func),
-        desc = format_text(func.desc),
+        desc = format_text(shift_hdr(func.desc, 3)),
         params = generate_function_params_html(func.params),
         returns = generate_function_returns_html(func.returns),
     })
@@ -219,7 +223,7 @@ local generate_property_html = function (prop, prefix)
         prefix = prefix,
         name = prop.name,
         typestr = "Type: " .. generate_typestr_html(prop.typestr),
-        desc = html_unwrap_first_p(format_text(prop.desc)),
+        desc = html_unwrap_first_p(format_text(shift_hdr(prop.desc, 3))),
         default = prop.default and "Default: " .. html_unwrap_first_p(format_text(prop.default)) or "",
         readwrite = (prop.readonly and "Read-only") or (prop.readwrite and "Read-write")
     })
@@ -262,7 +266,7 @@ local generate_doc_html = function (doc)
         type = doc.module and "Module" or "Class",
         title = doc.name,
         tagline = doc.tagline:gsub("%.$",""),
-        desc = format_text(doc.desc),
+        desc = format_text(shift_hdr(doc.desc, 1)),
         functions = fhtml,
         attribution = generate_attribution_html(doc)
     })

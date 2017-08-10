@@ -18,7 +18,7 @@
 -- entirely. It is also possible to modify the HTTP headers sent with the
 -- request.
 --
--- #### Redirecting a request to a different URI
+-- # Redirecting a request to a different URI
 --
 -- To redirect a request to a different URI, return the new URI from your
 -- signal handler.
@@ -27,7 +27,7 @@
 -- 		return "http://0.0.0.0/" -- Redirect everything to localhost
 -- 	end)
 --
--- #### Blocking a request
+-- # Blocking a request
 --
 -- To block a request, return `false`.
 --
@@ -37,7 +37,7 @@
 -- 		end
 -- 	end)
 --
--- #### Modifying HTTP headers
+-- # Modifying HTTP headers
 --
 -- To modify the HTTP headers sent with the request, modify the `headers` table.
 --

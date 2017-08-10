@@ -7,7 +7,7 @@
 -- The full XDG Base Directory specification is available
 -- [here](http://standards.freedesktop.org/basedir-spec/latest/).
 --
--- ### Usage notes
+-- # Usage notes
 --
 -- - None of the returned directory paths end with a `/`.
 -- - The @ref{xdg/cache_dir}, @ref{xdg/config_dir}, and @ref{xdg/data_dir} directories are the system

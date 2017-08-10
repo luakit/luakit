@@ -8,7 +8,7 @@
 --
 -- It is possible to go up multiple steps at once.
 --
--- ### Finer details
+-- # Finer details
 --
 -- When using this module to navigate websites, generally you don't need to
 -- worry about the finer details of how the current page URI is transformed.

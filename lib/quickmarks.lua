@@ -5,7 +5,7 @@
 -- Users can then type a three-keystroke command to open any of these websites
 -- in the current tab, a new tab, or a new window.
 --
--- ### Adding a new quickmark
+-- # Adding a new quickmark
 --
 -- You can mark any url by pressing `M{a-zA-Z0-9}`. This will save the url
 -- of the current page, creating a new shortcut or overwriting an existing
@@ -14,13 +14,13 @@
 -- Every quickmark mapping is saved in `$XDG_DATA_HOME/luakit/quickmarks`
 -- and works across multiple luakit instances.
 --
--- ### Jumping to a marked url
+-- # Jumping to a marked url
 --
 -- After adding a quickmark, you can open it in the current window with
 -- `go{a-zA-Z0-9}`, or in a new tab with `gn{a-zA-Z0-9}`. To list all
 -- quickmarks, run `:qmarks`.
 --
--- ### Managing quickmarks
+-- # Managing quickmarks
 --
 -- As well as using the included quickmarks manager and various commands, you
 -- can directly edit the quickmarks file `$XDG_DATA_HOME/luakit/quickmarks`.

@@ -2,7 +2,7 @@
 --
 -- DOCMACRO(available:ui)
 --
--- ### Creating a new webview widget
+-- # Creating a new webview widget
 --
 -- To create a new webview widget, use the `widget` constructor:
 --
@@ -11,7 +11,7 @@
 -- 	print(type(view)) -- Prints "widget"
 -- 	print(view.type)  -- Prints "webview"
 --
--- ### Destroying a webview widget
+-- # Destroying a webview widget
 --
 --     view:destroy()
 --
@@ -77,7 +77,7 @@
 -- 	    msg.info("The document height is %d pixels", ret)
 -- 	end })
 --
--- #### Calling options
+-- # Calling options
 --
 -- The following keys can be set in the `options` argument:
 --
@@ -183,7 +183,7 @@
 -- Emitted when the webview attempts to load a URI on a custom URI scheme.
 -- The signal detail is always present and is equal to the URI scheme.
 --
--- #### Example
+-- # Example
 --
 -- A signal `scheme-request::foo` will be emitted on a webview in
 -- response to a `foo://` load attempt. To display content for this request,

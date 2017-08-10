@@ -219,7 +219,7 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 --- Add a set of binds to one or more modes. Any pre-existing binds with the
 -- same trigger will be removed automatically.
 --
--- #### Example
+-- # Example
 --
 -- The following code snippet will rebind `Control-c` to copy text selected with
 -- the mouse, and the default binding for `Control-c` will be removed.
@@ -230,7 +230,7 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 --         end},
 --     })
 --
--- #### Bind format
+-- ## Bind format
 --
 -- Every item in the `binds` array must be a table that defines a single binding
 -- between a trigger and an action. Each entry must have the following form:
@@ -268,7 +268,7 @@ end
 
 --- Remove a set of binds from one or more modes.
 --
--- #### Example
+-- # Example
 --
 --     -- Disable extra zooming commands
 --     modes.remove_binds("normal", { "zi", "zo", "zz" })

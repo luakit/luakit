@@ -6,13 +6,13 @@
 -- shown in `webview` widgets. The mozilla format (@-moz-document rules) is not
 -- supported.
 --
--- ### Creating a new stylesheet
+-- # Creating a new stylesheet
 --
 -- To create a new stylesheet, use the `stylesheet` constructor:
 --
 --     local style = stylesheet{ source = "#p { color: black; }" }
 --
--- ### Modifying webview appearance
+-- # Modifying webview appearance
 --
 -- To attach a `stylesheet` instance to a webview, modify the webview's
 -- @ref{stylesheets} table:

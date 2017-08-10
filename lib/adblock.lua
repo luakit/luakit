@@ -6,7 +6,7 @@
 --
 -- See also: @ref{adblock_chrome}.
 --
--- ### Capabilities
+-- # Capabilities
 --
 -- * You can allow specific content to be loaded if it is inadvertently
 --   blocked: simply add whitelisting rules formed by `@@` and the pattern to
@@ -16,7 +16,7 @@
 --   without restarting luakit.
 -- * A configuration chrome page is provided by @ref{adblock_chrome}.
 --
--- ### Usage
+-- # Usage
 --
 -- * Add `require "adblock"` and `require "adblock_chrome"` to your `config.rc`.
 -- * Download AdblockPlus-compatible filter lists to `$XDG_DATA_HOME/luakit/adblock`.
@@ -27,7 +27,7 @@
 -- `.txt`.
 -- * Filter lists need to be updated regularly (~weekly), use cron!
 --
--- ### Troubleshooting
+-- # Troubleshooting
 --
 -- If ad blocking is not working as expected, the easiest way to determine
 -- what is happening is to set the appropriate log levels to `debug`:

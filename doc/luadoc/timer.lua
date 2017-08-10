@@ -1,6 +1,6 @@
 --- Timer support for Luakit.
 --
--- ### Example usage:
+-- # Example usage:
 --
 --     local t = timer{ interval = 500 }
 --

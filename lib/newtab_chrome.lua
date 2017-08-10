@@ -4,7 +4,7 @@
 -- tab page. This page is opened by default when opening a new tab without
 -- specifying a URL to open.
 --
--- ### Customization
+-- # Customization
 --
 -- The easiest way to customize what is shown at
 -- <luakit://newtab/> is to create a HTML file at the

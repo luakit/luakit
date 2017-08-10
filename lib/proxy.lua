@@ -5,19 +5,19 @@
 -- and easily switch between using any of these proxies to redirect traffic. It
 -- is also possible to use the system proxy, or disable proxy use altogether.
 --
--- ### Adding a new proxy entry
+-- # Adding a new proxy entry
 --
 -- To add a new proxy entry, use the `:proxy` command, with the name of the
 -- proxy and the web address of the proxy as arguments:`:proxy <name> <address>`.
 --
--- #### Example
+-- ## Example
 --
 -- To add a proxy entry for a local proxy running on port 8000, run the
 -- following:
 --
 --     :proxy proxy-name socks://localhost:8000
 --
--- ### Viewing and changing the current proxy
+-- # Viewing and changing the current proxy
 --
 -- It is currently easiest to view the current proxy by opening the proxy menu
 -- with the `:proxy` command. The current proxy will be shown in black text, while any

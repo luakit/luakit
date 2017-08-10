@@ -128,7 +128,7 @@
 -- This interface is used to register the `luakit://` scheme, but is not limited
 -- to this prefix alone.
 --
--- #### Example
+-- # Example
 --
 -- Registering a scheme `foo` will cause URIs beginning with `foo://` to
 -- be redirected to Lua code. A signal `scheme-request::foo` will be emitted on
@@ -180,13 +180,13 @@
 --- The current contents of the different X selections.
 -- The key used to access this table must be the name of the X clipboard
 -- to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
--- #### Primary
+-- # Primary
 -- When the user selects some text with the mouse, the primary selection
 -- is filled automatically with the contents of that text selection.
--- #### Secondary
+-- # Secondary
 -- The secondary selection is not used as much as the primary and clipboard
 -- selections, but is included here for completeness.
--- #### Clipboard
+-- # Clipboard
 -- The clipboard selection is filled with the contents of the primary selection
 -- when the user explicitly requests a copy operation.
 -- @type {[string]=string}
