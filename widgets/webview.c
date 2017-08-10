@@ -495,10 +495,12 @@ decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
         if (ignore)
             /* User responded with false, ignore request */
             webkit_policy_decision_ignore(p);
-        else if (!webkit_response_policy_decision_is_mime_type_supported(rp))
-            webkit_policy_decision_download(p);
-        else
+        else if (g_str_equal(mime, "application/x-extension-html"))
             webkit_policy_decision_use(p);
+        else if (webkit_response_policy_decision_is_mime_type_supported(rp))
+            webkit_policy_decision_use(p);
+        else
+            webkit_policy_decision_download(p);
 
         lua_pop(L, ret + 1);
         return TRUE;
