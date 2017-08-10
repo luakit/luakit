@@ -95,6 +95,11 @@ When launching luakit after a fresh install, it will look for the file
 personal luakit configuration directory, luakit will fall back to the
 global `/etc/xdg/luakit/rc.lua` file.
 
+To list the directories luakit will search when loading modules, run the
+following command:
+
+    :lua w:notify(package.path:gsub(";","\n"))
+
 To customize luakit, we can define our own configuration by creating a
 `rc.lua` file in the `/home/$USER/.config/luakit/` directory. The easiest
 way of creating a proper functional configuration is copying the global
