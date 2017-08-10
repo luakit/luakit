@@ -1,8 +1,8 @@
 # Changelog
 
- - Required WebKitGTK+ version: 2.16+
+## [2017-08-10]
 
-## [Unreleased]
+ - Required WebKitGTK+ version: 2.16+
 
 ### Breaking changes
 
@@ -54,6 +54,15 @@
    This specifies a single destination for the IPC call.
  - `modes.add_binds()` now verifies that modes with the given names already exist, to guard against typos.
  - Scrolling keybinds now take a count.
+
+### Contributors to this release:
+
+ - Aidan Holm    (150 commits)
+ - gleachkr      (10 commits)
+ - Zhong Jianxin (4 commits)
+ - Stefan Hagen  (3 commits)
+ - Aric Belsito  (1 commit)
+ - Ygrex         (1 commit)
 
 ## [2017-07-26]
 
