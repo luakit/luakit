@@ -21,7 +21,8 @@
  - New `widget.is_alive` property. Can be accessed even if the widget has been destroyed.
  - Added `luakit://log/` chrome page: displays log messages.
  - Added status bar widget that notifies of any Lua warnings or errors.
- - Added migration guide to documentation.
+ - Added migration, quick-start, and files and directories guides to documentation.
+ - Added frequently-asked questions to documentation.
  - Added `luakit.wch_upper` and `luakit.wch_lower` key case conversion utility functions.
  - Added `formfiller.extend` function for extending the formfiller DSL.
  - Added context-aware command completion.
