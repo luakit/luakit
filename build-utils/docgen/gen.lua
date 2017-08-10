@@ -28,7 +28,7 @@ local format_text = function (text)
         local doc, item = index[ref].doc, index[ref].item
         local group, name = doc.module and "modules" or "classes", doc.name
         local fragment = item and ("#%s-%s"):format(item.type, item.name) or ""
-        return ('<a href="../%s/%s.html%s">`%s`</code></a>'):format(group, name, fragment, reftext)
+        return ('<a href="../%s/%s.html%s">`%s`</a>'):format(group, name, fragment, reftext)
     end)
     -- Format with markdown
     ret = markdown(ret)
