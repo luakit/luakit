@@ -294,8 +294,8 @@ end
 
 local generate_pagination_html = function (pagination)
     return ("<div style='display:none'>{prv}{nxt}</div>"):gsub("{(%w+)}", {
-        prv = pagination.prv and ("<a rel=prev href='../" .. pagination.prv .. "'>") or "",
-        nxt = pagination.nxt and ("<a rel=next href='../" .. pagination.nxt .. "'>") or "",
+        prv = pagination.prv and ("<a rel=prev href='../" .. pagination.prv .. "'></a>") or "",
+        nxt = pagination.nxt and ("<a rel=next href='../" .. pagination.nxt .. "'></a>") or "",
     })
 end
 
