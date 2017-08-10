@@ -70,6 +70,7 @@ If you plan to submit more involved patches, here's a checklist:
 4. Check for problems and formatting errors:
 	- Ensure that your work does not cause any tests to fail
 	- Add new tests if appropriate
+	- Add an entry to the changelog if appropriate
 	- Check for unnecessary whitespace with "git diff --check" before committing
 	- Do not check in commented out code or unneeded files
 

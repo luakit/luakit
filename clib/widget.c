@@ -28,6 +28,7 @@ static property_t widget_properties[] = {
   { L_TK_MARGIN_BOTTOM,     "margin-bottom",     INT,    TRUE  },
   { L_TK_MARGIN_LEFT,       "margin-left",       INT,    TRUE  },
   { L_TK_MARGIN_RIGHT,      "margin-right",      INT,    TRUE  },
+  { L_TK_CAN_FOCUS,         "can-focus",         BOOL,   TRUE  },
   { 0,                      NULL,                0,      0     },
 };
 
@@ -144,6 +145,12 @@ luaH_widget_index(lua_State *L)
     /* Try standard method */
     if(luaH_class_index(L))
         return 1;
+
+    if (token == L_TK_IS_ALIVE) {
+        widget_t *w = luaH_checkudata(L, 1, &widget_class);
+        lua_pushboolean(L, !!w);
+        return 1;
+    }
 
     /* Then call special widget index */
     gint ret;

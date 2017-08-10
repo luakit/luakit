@@ -4,14 +4,49 @@
 -- domains that only serve advertisements. It does not currently do any form of
 -- cosmetic ad blocking (i.e. element hiding with CSS).
 --
--- ### Usage
+-- See also: @ref{adblock_chrome}.
+--
+-- # Capabilities
+--
+-- * You can allow specific content to be loaded if it is inadvertently
+--   blocked: simply add whitelisting rules formed by `@@` and the pattern to
+--   allow.
+-- * Supports multiple filter list files.
+-- * Filter files can be enabled, disabled and reloaded from disk
+--   without restarting luakit.
+-- * A configuration chrome page is provided by @ref{adblock_chrome}.
+--
+-- # Usage
 --
 -- * Add `require "adblock"` and `require "adblock_chrome"` to your `config.rc`.
--- * Download AdblockPlus-compatible filter lists to `$XDG_DATA_HOME/luakit/adblock`.
+-- * Download AdblockPlus-compatible filter lists to the adblock directory.
 --   Multiple lists are supported.
 --   EasyList is the most popular Adblock Plus filter list, and can be
 --   downloaded from [https://easylist.to/](https://easylist.to/).
--- * Filterlists need to be updated regularly (~weekly), use cron!
+-- * Filter lists downloaded to the adblock directory must have a
+--   filename ending in `.txt` in order to be loaded.
+-- * Filter lists need to be updated regularly (~weekly), use cron!
+--
+-- # Troubleshooting
+--
+-- If ad blocking is not working as expected, the easiest way to determine
+-- what is happening is to set the appropriate log levels to `debug`:
+--
+-- If a filterlist is not being loaded for some reason, start luakit with
+--   the following:
+--
+--     --log=lua/lib/adblock=debug
+--
+-- If a filterlist is not behaving correctly, by blocking too much or too
+--   little, start luakit with the following:
+--
+--     --log=lua/lib/adblock_wm=debug
+--
+-- # Files and Directories
+--
+-- - All filterlists should be downloaded to the adblock data directory.
+--   By default, this is the `adblock` sub-directory of the luakit data
+--   directory. All filterlists must have a filename ending in `.txt`.
 --
 -- @module adblock
 -- @author Chris van Dijk (quigybo) <quigybo@hotmail.com>
@@ -25,17 +60,16 @@ local webview   = require("webview")
 local window    = require("window")
 local lousy     = require("lousy")
 local util      = lousy.util
-local capi      = { luakit = luakit }
 local lfs       = require("lfs")
-local binds     = require("binds")
-local add_cmds  = binds.add_cmds
+local modes     = require("modes")
+local add_cmds  = modes.add_cmds
 
 local _M = {}
 
 local adblock_wm = require_web_module("adblock_wm")
 
 -- Adblock Plus compatible filter lists.
-local adblock_dir = capi.luakit.data_dir .. "/adblock/"
+local adblock_dir = luakit.data_dir .. "/adblock/"
 local filterfiles = {}
 local subscriptions_file = adblock_dir .. "/subscriptions"
 
@@ -65,15 +99,15 @@ local function detect_files()
         lfs.chdir(curdir)
     end
 
-    -- Look for filters lists:
+    msg.verbose("searching for filter lists in %s", adblock_dir)
     for filename in lfs.dir(adblock_dir) do
         if string.find(filename, "%.txt$") then
-            msg.verbose("adblock: Found adblock list: " .. filename)
+            msg.verbose("found filter list: " .. filename)
             table.insert(filterfiles, filename)
         end
     end
 
-    msg.info("adblock: Found " .. #filterfiles .. " rules lists")
+    msg.info("found " .. #filterfiles .. " filter list" .. (#filterfiles == 1 and "" or "s"))
 end
 
 local function get_abp_opts(s)
@@ -227,9 +261,9 @@ end
 -- Parses an Adblock Plus compatible filter list
 local parse_abpfilterlist = function (filters_dir, filename, cache)
     if os.exists(filters_dir .. filename) then
-        msg.verbose("adblock: loading filterlist %s", filename)
+        msg.verbose("loading filter list %s", filename)
     else
-        msg.warn("adblock: error loading filter list (%s: No such file or directory)", filename)
+        msg.warn("error loading filter list (%s: no such file or directory)", filename)
     end
     filename = filters_dir .. filename
 
@@ -338,7 +372,7 @@ local function read_subscriptions(file)
     -- Find a subscriptions file
     if not file then file = subscriptions_file end
     if not os.exists(file) then
-        msg.info(string.format("Subscriptions file '%s' doesn't exist", file))
+        msg.info(string.format("subscriptions file '%s' doesn't exist", file))
         return
     end
 
@@ -415,6 +449,16 @@ function _M.list_set_enabled(a, enabled)
     end
 end
 
+local page_whitelist = {}
+
+--- Whitelist accessing a blocked domain for the current session.
+-- @tparam string domain The domain to whitelist.
+_M.whitelist_domain_access = function (domain)
+    if lousy.util.table.hasitem(page_whitelist, domain) then return end
+    table.insert(page_whitelist, domain)
+    adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
+end
+
 local new_web_extension_created
 
 webview.add_signal("init", function (view)
@@ -437,7 +481,7 @@ adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     end
 end)
 
-capi.luakit.add_signal("web-extension-created", function (view)
+luakit.add_signal("web-extension-created", function (view)
     new_web_extension_created = true
     adblock_wm:emit_signal(view, "update_rules", _M.rules)
     for name, list in pairs(_M.rules) do
@@ -447,34 +491,25 @@ capi.luakit.add_signal("web-extension-created", function (view)
 end)
 
 -- Add commands.
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"adblock-reload", "abr"}, "Reload adblock filters.", function (w)
-        _M.load(true)
-        w:notify("adblock: Reloading filters complete.")
-    end),
-
-    cmd({"adblock-list-enable", "able"}, "Enable an adblock filter list.", function (_, a)
-        _M.list_set_enabled(a, true)
-    end),
-
-    cmd({"adblock-list-disable", "abld"}, "Disable an adblock filter list.", function (_, a)
-        _M.list_set_enabled(a, false)
-    end),
-
-    cmd({"adblock-enable", "abe"}, "Enable ad blocking.", function ()
-        _M.enabled = true
-    end),
-
-    cmd({"adblock-disable", "abd"}, "Disable ad blocking.", function ()
-        _M.enabled = false
-    end),
+    { ":adblock-reload, :abr", "Reload adblock filters.", function (w)
+            _M.load(true)
+            w:notify("adblock: Reloading filters complete.")
+        end },
+    { ":adblock-list-enable, :able", "Enable an adblock filter list.",
+        function (_, o) _M.list_set_enabled(o.arg, true) end },
+    { ":adblock-list-disable, :abld", "Disable an adblock filter list.",
+        function (_, o) _M.list_set_enabled(o.arg, false) end },
+    { ":adblock-enable, :abe", "Enable ad blocking.",
+        function () _M.enabled = true end },
+    { ":adblock-disable, :abd", "Disable ad blocking.",
+        function () _M.enabled = false end },
 })
 
 -- Initialise module
 _M.load(nil, nil, true)
 
---- @field enabled
+--- @property enabled
 -- Whether ad blocking is enabled. Modifying this value will modify adblock
 -- state; setting it to `true` will enable ad blocking, while setting it to
 -- `false` will disable ad blocking.

@@ -1,5 +1,69 @@
 # Changelog
 
+## [2017-08-10]
+
+ - Required WebKitGTK+ version: 2.16+
+
+### Breaking changes
+
+ - Support for WebKitGTK+ versions older than 2.16 has been removed.
+ - It is no longer possible to override built-in luakit modules with Lua
+   files in one's personal configuration directory.
+ - The configuration files `binds.lua` and `modes.lua` have become built-in luakit modules.
+   Configuration files named `binds.lua` or `modes.lua` will not be loaded. Any custom
+   bindings should be moved to `rc.lua`.
+
+### Added
+
+ - New `history.frozen` API allows temporarily freezing history collection.
+ - New `lousy.widget.zoom` statusbar widget: shows current page zoom level.
+ - Added `log` signal, emitted whenever a message is logged.
+ - New `widget.is_alive` property. Can be accessed even if the widget has been destroyed.
+ - Added `luakit://log/` chrome page: displays log messages.
+ - Added status bar widget that notifies of any Lua warnings or errors.
+ - Added migration, quick-start, and files and directories guides to documentation.
+ - Added frequently-asked questions to documentation.
+ - Added `luakit.wch_upper` and `luakit.wch_lower` key case conversion utility functions.
+ - Added `formfiller.extend` function for extending the formfiller DSL.
+ - Added context-aware command completion.
+
+### Fixed
+
+ - Fixed code-blocks in documentation being formatted incorrectly.
+ - Fixed incompatibility of `editor.lua` with urxvt.
+ - Fixed slow performance while beginning a search.
+ - Fixed `lousy.util.table.join` merging tables in unpredictable order.
+ - Fixed `image_css` raising errors on page zoom in/out.
+ - Worked around `image_css` breaking slightly when using non-1.0 zoom_level.
+ - Fixed sessions failing to save with a mix of tabs and private tabs.
+ - Worked around webview widgets self-focusing on click.
+
+### Changed
+
+ - `editor.lua` now uses substitution strings, rather than `global` to determine which editor to open.
+ - `open_editor.lua` now uses `editor.lua` rather than always using `xdg-open`.
+ - `--log` can now set different log levels for different modules, similarly to `mpv`.
+ - Documentation now has inter-page references.
+ - The adblock page-blocked page now has a "Continue anyway" button.
+ - Serializing Lua functions now includes their upvalues.
+ - `adblock` and `styles` now log the directory searched for files.
+ - `<ctrl-a>` and `<Ctrl-x>` bindings now take an optional count.
+ - Luakit's IPC socket files are now opened in `/tmp/`.
+ - Luakit now checks for accidental use of DEVELOPMENT_PATHS.
+ - IPC endpoints' `emit_signal()` method now accepts a webview ID as its first argument, as well as a webview.
+   This specifies a single destination for the IPC call.
+ - `modes.add_binds()` now verifies that modes with the given names already exist, to guard against typos.
+ - Scrolling keybinds now take a count.
+
+### Contributors to this release:
+
+ - Aidan Holm    (150 commits)
+ - gleachkr      (10 commits)
+ - Zhong Jianxin (4 commits)
+ - Stefan Hagen  (3 commits)
+ - Aric Belsito  (1 commit)
+ - Ygrex         (1 commit)
+
 ## [2017-07-26]
 
  - Required WebKitGTK+ version: 2.14+
@@ -9,7 +73,7 @@
 
 #### Adblock module
 
-The adblock module available at https://github.com/luakit/luakit-plugins
+The adblock module previously available at <https://github.com/luakit/luakit-plugins>
 has been included into the main luakit repository, with the following changes:
 
  - Ported adblock module to use WebKit 2 compatible APIs. This breaks compatibility with WebKit 1.
@@ -36,8 +100,8 @@ has been included into the main luakit repository, with the following changes:
 
 See also:
 
- - luakit://help/doc/modules/adblock.html
- - luakit://help/doc/modules/adblock_chrome.html
+ - <luakit://help/doc/modules/adblock.html>
+ - <luakit://help/doc/modules/adblock_chrome.html>
 
 #### Error pages
 
@@ -51,12 +115,12 @@ pages, such as those displayed when a page fails to load.
 
 See also:
 
- - luakit://help/doc/modules/error_page.html
+ - <luakit://help/doc/modules/error_page.html>
 
 #### User styles
 
 A new module, `styles.lua`, supports user stylesheets with
-`@-moz-document` sections. User stylesheets from https://userstyles.org are
+`@-moz-document` sections. User stylesheets from <https://userstyles.org> are
 supported.
 
  - Luakit now automatically detects and parses user stylesheets on startup.
@@ -67,7 +131,7 @@ supported.
 
 See also:
 
- - luakit://help/doc/modules/styles.html
+ - <luakit://help/doc/modules/styles.html>
 
 #### Other new modules
 

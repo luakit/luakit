@@ -6,7 +6,7 @@
 -- for a number of purposes by the default modules, including storing
 -- user bookmarks, cookies, and browsing history.
 --
--- ### Opening a database
+-- # Opening a database
 --
 -- To create a new `sqlite3` instance and connect to a database, use the
 -- `sqlite3` constructor:

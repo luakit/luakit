@@ -41,7 +41,7 @@ function T.test_luacheck ()
     }
     local file_options = {
         ["config/rc.lua"] = {
-            ignore = { "211/webview" } -- 211: Unused variable
+            ignore = { "211" } -- 211: Unused variable
         },
         ["lib/adblock.lua"] = {
             ignore = { "542" }, -- 542: Empty if branch

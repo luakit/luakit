@@ -11,13 +11,12 @@
 local os = require("os")
 local webview = require("webview")
 local lousy = require("lousy")
-local capi = { luakit = luakit, sqlite3 = sqlite3 }
 
 local _M = {}
 
 --- Path to history database.
 -- @readwrite
-_M.db_path = capi.luakit.data_dir .. "/history.db"
+_M.db_path = luakit.data_dir .. "/history.db"
 
 local query_find_last
 local query_insert
@@ -32,7 +31,7 @@ function _M.init()
     -- Return if database handle already open
     if _M.db then return end
 
-    _M.db = capi.sqlite3{ filename = _M.db_path }
+    _M.db = sqlite3{ filename = _M.db_path }
     _M.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
@@ -72,7 +71,7 @@ function _M.init()
     ]]
 end
 
-capi.luakit.idle_add(_M.init)
+luakit.idle_add(_M.init)
 
 --- Add a URI to the user's history.
 -- @tparam string uri The URI to add to the user's history.
@@ -104,12 +103,18 @@ function _M.add(uri, title, update_visits)
     end
 end
 
+--- Set of webviews on which to freeze history collection.
+-- @type {[string]=boolean}
+-- @readwrite
+_M.frozen = setmetatable({}, { __mode = "k" })
+
 webview.add_signal("init", function (view)
     -- Add items & update visit count
     view:add_signal("load-status", function (_, status)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
         if view.private then return end
+        if _M.frozen[view] then return end
 
         if status == "committed" then
             _M.add(view.uri)
@@ -120,6 +125,7 @@ webview.add_signal("init", function (view)
         -- Don't add history items when in private browsing mode
         if view.enable_private_browsing then return end
         if view.private then return end
+        if _M.frozen[view] then return end
 
         local title = view.title
         if title and title ~= "" then

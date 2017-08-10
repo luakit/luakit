@@ -46,12 +46,15 @@ local parse_pages_files = function (files)
         print("Reading '" .. filename .. "'...")
         local text = load_file(filename)
         local name, idx = text:match("^@name (.-)\n()")
+        filename = filename:gsub(".*/([%w-]+).md", "%1")
+        assert(filename:gmatch("[%w-]+.md"), "Bad page filename " .. filename)
         pages[#pages+1] = {
             name = assert(name, "no @name line found"),
+            filename = filename,
             text = text:sub(idx),
         }
     end
-    table.sort(pages, function(a, b) return a.name < b.name end)
+    table.sort(pages, function(a, b) return a.filename < b.filename end)
     return pages
 end
 

@@ -19,8 +19,8 @@ local bookmarks = require("bookmarks")
 local lousy = require("lousy")
 local chrome = require("chrome")
 local markdown = require("markdown")
-local binds = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local modes = require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 
 local _M = {}
 
@@ -579,34 +579,24 @@ export_funcs)
 -- @readonly
 _M.chrome_page = "luakit://bookmarks/"
 
-local key, buf = lousy.bind.key, lousy.bind.buf
 add_binds("normal", {
-    key({}, "B", "Add a bookmark for the current URL.",
+    { "B", "Add a bookmark for the current URL.",
         function(w)
             new_bookmark_values = { uri = w.view.uri, title = w.view.title }
             w:new_tab(_M.chrome_page)
-        end),
-
-    buf("^gb$", "Open the bookmarks manager in the current tab.",
-        function(w)
-            w:navigate(_M.chrome_page)
-        end),
-
-    buf("^gB$", "Open the bookmarks manager in a new tab.",
-        function(w)
-            w:new_tab(_M.chrome_page)
-        end)
+        end },
+    { "^gb$", "Open the bookmarks manager in the current tab.",
+        function(w) w:navigate(_M.chrome_page) end },
+    { "^gB$", "Open the bookmarks manager in a new tab.",
+        function(w) w:new_tab(_M.chrome_page) end }
 })
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("bookmarks", "Open the bookmarks manager in a new tab.",
-        function (w)
-            w:new_tab(_M.chrome_page)
-        end),
-
-    cmd("bookmark", "Add a bookmark for the current URL.",
-        function (w, a)
+    { ":bookmarks", "Open the bookmarks manager in a new tab.",
+        function (w) w:new_tab(_M.chrome_page) end },
+    { ":bookmark", "Add a bookmark for the current URL.", {
+        func = function (w, o)
+            local a = o.arg
             if not a then
                 new_bookmark_values = {
                     uri = w.view.uri, title = w.view.title
@@ -618,7 +608,9 @@ add_cmds({
                 }
             end
             w:new_tab(_M.chrome_page)
-        end),
+        end,
+        format = "{uri}",
+    }},
 })
 
 return _M

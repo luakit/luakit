@@ -5,14 +5,20 @@
 -- @author Aidan Holm <aidanholm@gmail.com>
 
 local ui = ipc_channel("adblock_wm")
+local lousy = require "lousy"
 
 local enabled = true
 local rules = {}
 local enabled_rules = {}
+local page_whitelist = {}
 
 ui:add_signal("enable", function(_, _, e) enabled = e end)
 ui:add_signal("update_rules", function(_, _, r)
     rules = r
+    ui:emit_signal("rules_updated", luakit.web_process_id)
+end)
+ui:add_signal("update_page_whitelist", function(_, _, wl)
+    page_whitelist = wl
     ui:emit_signal("rules_updated", luakit.web_process_id)
 end)
 ui:add_signal("list_set_enabled", function(_, _, list, enable)
@@ -109,7 +115,7 @@ end
 local match = function (src, dst)
     -- Always allow data: URIs
     if string.sub(dst, 1, 5) == "data:" then
-        msg.debug("adblock: allowing data URI")
+        msg.debug("allowing data URI")
         return
     end
 
@@ -133,7 +139,7 @@ local match = function (src, dst)
     for _, list in pairs(enabled_rules) do
         local found, pattern = match_list(list.whitelist, dst, dst_domains, src_domain, dst_domain)
         if found then
-            msg.debug("adblock: allowing request as pattern %q matched to uri %s", pattern, dst)
+            msg.debug("allowing request as pattern %q matched to uri %s", pattern, dst)
             return true
         end
     end
@@ -142,7 +148,7 @@ local match = function (src, dst)
     for _, list in pairs(enabled_rules) do
         local found, pattern = match_list(list.blacklist, dst, dst_domains, src_domain, dst_domain)
         if found then
-            msg.debug("adblock: blocking request as pattern %q matched to uri %s", pattern, dst)
+            msg.debug("blocking request as pattern %q matched to uri %s", pattern, dst)
             return false
         end
     end
@@ -163,9 +169,12 @@ luakit.add_signal("page-created", function(page)
     page:add_signal("send-request", function(p, uri)
         local allow = filter(p.uri, uri)
         if allow == false and p.uri == uri then
-            return "adblock-blocked:" .. uri
+            if not lousy.util.table.hasitem(page_whitelist, lousy.uri.parse(uri).host) then
+                return "adblock-blocked:" .. uri
+            end
+        else
+            if allow == false then return false end
         end
-        if allow == false then return false end
     end)
 end)
 

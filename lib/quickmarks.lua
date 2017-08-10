@@ -5,6 +5,31 @@
 -- Users can then type a three-keystroke command to open any of these websites
 -- in the current tab, a new tab, or a new window.
 --
+-- # Adding a new quickmark
+--
+-- You can mark any url by pressing `M{a-zA-Z0-9}`. This will save the url
+-- of the current page, creating a new shortcut or overwriting an existing
+-- one.
+--
+-- Every quickmark mapping is saved in the `quickmarks` file in the luakit data
+-- directory, and is shared between multiple luakit instances.
+--
+-- # Jumping to a marked url
+--
+-- After adding a quickmark, you can open it in the current window with
+-- `go{a-zA-Z0-9}`, or in a new tab with `gn{a-zA-Z0-9}`. To list all
+-- quickmarks, run `:qmarks`.
+--
+-- # Managing quickmarks
+--
+-- As well as using the included quickmarks manager and various commands, you
+-- can directly edit the `quickmarks` file in the luakit data directory.
+--
+-- # Files and Directories
+--
+-- - The quickmarks file is called `quickmarks` and is in the luakit data
+-- directory.
+--
 -- @module quickmarks
 -- @author Piotr Husiatyński <phusiatynski@gmail.com>
 -- @author Mason Larobina <mason.larobina@gmail.com>
@@ -13,15 +38,14 @@
 local lousy = require("lousy")
 local window = require("window")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local binds, modes = require("binds"), require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
-local capi = { luakit = luakit }
 
 local _M = {}
 
 local qmarks
-local quickmarks_file = capi.luakit.data_dir .. '/quickmarks'
+local quickmarks_file = luakit.data_dir .. '/quickmarks'
 
 local function check_token(token)
     assert(string.match(tostring(token), "^(%w)$"), "invalid token: " .. tostring(token))
@@ -115,78 +139,86 @@ function _M.delall(save_file)
     if save_file ~= false then _M.save() end
 end
 
+local actions = {
+    quickmark_delete = {
+        desc = "Delete a quickmark or all quickmarks.",
+        func = function (w, o)
+            if o.bang then
+                _M.delall()
+                return
+            end
+            local a = o.arg
+            if not a or a == "" then w:error("missing argument") return end
+            -- Find and del all range specifiers
+            string.gsub(a, "(%w%-%w)", function (range)
+                range = "["..range.."]"
+                for _, token in ipairs(_M.get_tokens()) do
+                    if string.match(token, range) then _M.del(token, false) end
+                end
+            end)
+            -- Delete lone tokens
+            string.gsub(a, "(%w)", function (token) _M.del(token, false) end)
+            _M.save()
+        end,
+    },
+}
+
 -- Add quickmarking binds to normal mode
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^g[onw][a-zA-Z0-9]$",
-        [[Jump to quickmark in current tab with `go{a-zA-Z0-9}`,
-        `gn{a-zA-Z0-9}` to open in new tab and or `gw{a-zA-Z0-9}` to open a
-        quickmark in a new window.]],
-        function (w, b, m)
-            local mode, token = string.match(b, "^g(.)(.)$")
-            local uris = lousy.util.table.clone(_M.get(token) or {})
-            for i, uri in ipairs(uris) do uris[i] = w:search_open(uri) end
-            for c=1,m.count do
-                if mode == "w" then
-                    window.new(uris)
-                else
-                    for i, uri in ipairs(uris or {}) do
-                        if mode == "o" and c == 1 and i == 1 then w:navigate(uri)
+    { "^g[onw][a-zA-Z0-9]$", [[Jump to quickmark in current tab with `go{a-zA-Z0-9}`,
+            `gn{a-zA-Z0-9}` to open in new tab and or `gw{a-zA-Z0-9}` to open a
+            quickmark in a new window.]],
+            function (w, o, m)
+                local mode, token = string.match(o.buffer, "^g(.)(.)$")
+                local uris = lousy.util.table.clone(_M.get(token) or {})
+                for i, uri in ipairs(uris) do uris[i] = w:search_open(uri) end
+                for c=1,m.count do
+                    if mode == "w" then
+                        window.new(uris)
+                    else
+                        for i, uri in ipairs(uris or {}) do
+                            if mode == "o" and c == 1 and i == 1 then w:navigate(uri)
                         else w:new_tab(uri, {switch = i == 1}) end
                     end
                 end
             end
-        end, {count=1}),
+        end, {count=1} },
 
-    buf("^M[a-zA-Z0-9]$",
-        [[Add quickmark for current URL.]],
-        function (w, b)
-            local token = string.match(b, "^M(.)$")
+    { "^M[a-zA-Z0-9]$", "Add quickmark for current URL.",
+        function (w, o)
+            local token = string.match(o.buffer, "^M(.)$")
             local uri = w.view.uri
             _M.set(token, {uri})
             w:notify(string.format("Quickmarked %q: %s", token, uri))
-        end),
+        end },
 })
 
 -- Add quickmarking commands
-local cmd = lousy.bind.cmd
 add_cmds({
     -- Quickmark add (`:qmark f http://forum1.com, forum2.com, imdb some artist`)
-    cmd("qma[rk]", "Add a quickmark.", function (w, a)
-        local token, uris = string.match(lousy.util.string.strip(a), "^(%w)%s+(.+)$")
-        assert(token, "invalid token")
-        uris = lousy.util.string.split(uris, ",%s+")
-        _M.set(token, uris)
-        w:notify(string.format("Quickmarked %q: %s", token, table.concat(uris, ", ")))
-    end),
+    { ":qma[rk]", "Add a quickmark.", function (w, o)
+            local a = o.arg
+            local token, uris = string.match(lousy.util.string.strip(a), "^(%w)%s+(.+)$")
+            assert(token, "invalid token")
+            uris = lousy.util.string.split(uris, ",%s+")
+            _M.set(token, uris)
+            w:notify(string.format("Quickmarked %q: %s", token, table.concat(uris, ", ")))
+        end },
 
     -- Quickmark edit (`:qmarkedit f` -> `:qmark f furi1, furi2, ..`)
-    cmd({"qmarkedit", "qme"}, "Edit a quickmark.", function (w, a)
+    { ":qmarkedit, :qme", "Edit a quickmark.", function (w, o)
+        local a = o.arg
         local token = lousy.util.string.strip(a)
         assert(#token == 1, "invalid token length: " .. token)
         local uris = _M.get(token)
         w:enter_cmd(string.format(":qmark %s %s", token, table.concat(uris or {}, ", ")))
-    end),
+    end },
 
     -- Quickmark del (`:delqmarks b-p Aa z 4-9`)
-    cmd("delqm[arks]", "Delete a quickmark.", function (_, a)
-        -- Find and del all range specifiers
-        string.gsub(a, "(%w%-%w)", function (range)
-            range = "["..range.."]"
-            for _, token in ipairs(_M.get_tokens()) do
-                if string.match(token, range) then _M.del(token, false) end
-            end
-        end)
-        -- Delete lone tokens
-        string.gsub(a, "(%w)", function (token) _M.del(token, false) end)
-        _M.save()
-    end),
+    { ":delqm[arks]", actions.quickmark_delete },
 
     -- View all quickmarks in an interactive menu
-    cmd("qmarks", "List all quickmarks.", function (w) w:set_mode("qmarklist") end),
-
-    -- Delete all quickmarks
-    cmd({"delqmarks!", "delqm!"}, "Delete all quickmarks.", function () _M.delall() end),
+    { ":qmarks", "List all quickmarks.", function (w) w:set_mode("qmarklist") end },
 })
 
 -- Add mode to display all quickmarks in an interactive menu
@@ -207,61 +239,60 @@ new_mode("qmarklist", {
 })
 
 -- Add additional binds to quickmarks menu mode
-local key = lousy.bind.key
 add_binds("qmarklist", lousy.util.table.join({
     -- Delete quickmark
-    key({}, "d", "Delete the currently highlighted quickmark entry.",
+    { "d", "Delete the currently highlighted quickmark entry.",
         function (w)
-        local row = w.menu:get()
-        if row and row.qmark then
-            _M.del(row.qmark)
-            w.menu:del()
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.qmark then
+                _M.del(row.qmark)
+                w.menu:del()
+            end
+        end },
 
     -- Edit quickmark
-    key({}, "e", "Edit the currently highlighted quickmark entry.",
+    { "e", "Edit the currently highlighted quickmark entry.",
         function (w)
-        local row = w.menu:get()
-        if row and row.qmark then
-            local uris = _M.get(row.qmark)
-            w:enter_cmd(string.format(":qmark %s %s",
-                row.qmark, table.concat(uris or {}, ", ")))
-        end
-    end),
+            local row = w.menu:get()
+            if row and row.qmark then
+                local uris = _M.get(row.qmark)
+                w:enter_cmd(string.format(":qmark %s %s",
+                    row.qmark, table.concat(uris or {}, ", ")))
+            end
+        end },
 
     -- Open quickmark
-    key({}, "Return", "Open the currently highlighted quickmark entry in the current tab.",
+    { "<Return>", "Open the currently highlighted quickmark entry in the current tab.",
         function (w)
-        local row = w.menu:get()
-        if row and row.qmark then
-            for i, uri in ipairs(_M.get(row.qmark) or {}) do
-                uri = w:search_open(uri)
-                if i == 1 then w:navigate(uri) else w:new_tab(uri, { switch = false }) end
+            local row = w.menu:get()
+            if row and row.qmark then
+                for i, uri in ipairs(_M.get(row.qmark) or {}) do
+                    uri = w:search_open(uri)
+                    if i == 1 then w:navigate(uri) else w:new_tab(uri, { switch = false }) end
+                end
             end
-        end
-    end),
+        end },
 
     -- Open quickmark in new tab
-    key({}, "t", "Open the currently highlighted quickmark entry in a new tab.",
+    { "t", "Open the currently highlighted quickmark entry in a new tab.",
         function (w)
-        local row = w.menu:get()
-        if row and row.qmark then
-            for _, uri in ipairs(_M.get(row.qmark) or {}) do
-                w:new_tab(w:search_open(uri), { switch = false })
+            local row = w.menu:get()
+            if row and row.qmark then
+                for _, uri in ipairs(_M.get(row.qmark) or {}) do
+                    w:new_tab(w:search_open(uri), { switch = false })
+                end
             end
-        end
-    end),
+        end },
 
     -- Open quickmark in new window
-    key({}, "w", "Open the currently highlighted quickmark entry in a new window.",
+    { "w", "Open the currently highlighted quickmark entry in a new window.",
         function (w)
-        local row = w.menu:get()
-        w:set_mode()
-        if row and row.qmark then
-            window.new(_M.get(row.qmark) or {})
-        end
-    end),
+            local row = w.menu:get()
+            w:set_mode()
+            if row and row.qmark then
+                window.new(_M.get(row.qmark) or {})
+            end
+        end },
 }, menu_binds))
 
 return _M

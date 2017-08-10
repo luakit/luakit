@@ -4,7 +4,7 @@
 -- construct the Luakit user interface, as well as a set of widgets that can be
 -- added to the luakit status bar.
 --
--- ### Widget types:
+-- # Widget types:
 --
 -- - `buf`: A status bar widget that displays the contents of the current key
 -- binding input buffer. When typing a multi-key key binding, such as `gi`, this

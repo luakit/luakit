@@ -22,6 +22,7 @@
 #include "globalconf.h"
 #include "luah.h"
 #include "ipc.h"
+#include "log.h"
 #include "web_context.h"
 
 #include <errno.h>
@@ -33,6 +34,10 @@
 #include <unistd.h>
 #include <webkit2/webkit2.h>
 
+#if !WEBKIT_CHECK_VERSION(2,16,0)
+#error Your version of WebKit is outdated!
+#endif
+
 static void
 init_directories(void)
 {
@@ -43,6 +48,27 @@ init_directories(void)
     g_mkdir_with_parents(globalconf.cache_dir,  0771);
     g_mkdir_with_parents(globalconf.config_dir, 0771);
     g_mkdir_with_parents(globalconf.data_dir,   0771);
+}
+
+static void
+parse_log_level_option(gchar *log_lvl)
+{
+    gchar **parts = g_strsplit(log_lvl, ",", 0);
+
+    for (gchar **part = parts; *part; part++) {
+        log_level_t lvl;
+        if (!log_level_from_string(&lvl, *part))
+            log_set_verbosity("all", lvl);
+        else {
+            gchar *sep = strchr(*part, '=');
+            if (sep && !log_level_from_string(&lvl, sep+1)) {
+                *sep = '\0';
+                log_set_verbosity(*part, lvl);
+            } else
+                warn("ignoring unrecognized --log option '%s'", *part);
+        }
+    }
+    g_strfreev(parts);
 }
 
 /* load command line options into luakit and return uris to load */
@@ -100,14 +126,10 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     }
 
     if (!log_lvl)
-        log_set_verbosity(verbose ? LOG_LEVEL_verbose : LOG_LEVEL_info);
+        log_set_verbosity("all", verbose ? LOG_LEVEL_verbose : LOG_LEVEL_info);
     else {
-        log_level_t lvl;
-        int err = log_level_from_string(&lvl, log_lvl);
-        if (err)
-            fatal("invalid log level");
-        log_set_verbosity(lvl);
-
+        log_set_verbosity("all", LOG_LEVEL_info);
+        parse_log_level_option(log_lvl);
         if (verbose)
             warn("invalid mix of -v and -l, ignoring -v...");
     }
@@ -172,8 +194,9 @@ gint
 main(gint argc, gchar *argv[])
 {
     gboolean *nonblock = NULL;
-
     globalconf.starttime = l_time();
+
+    log_init();
 
     /* set numeric locale to C (required for compatibility with
        LuaJIT and luakit scripts) */

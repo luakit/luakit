@@ -2,6 +2,8 @@ local lfs = require "lfs"
 local lousy = { util = require "lib.lousy.util" }
 local markdown = require "lib.markdown"
 
+local index = {}
+
 local text_macros = {
     available = function (arg)
         return ({
@@ -12,14 +14,21 @@ local text_macros = {
     alert = function (str)
         return '<div class="alert warn">' .. str .. '</div>'
     end,
-    builtin = function ()
-        return '<div class="alert good">This module is builtin and does not need to be manually loaded.</div>'
-    end
 }
 local format_text = function (text)
     local ret = text:gsub("DOCMACRO%((%w+):?([^%)]-)%)", function (macro, args)
         if not text_macros[macro] then error("Bad macro '" .. macro .. "'") end
         return (text_macros[macro])(args)
+    end)
+    ret = ret:gsub('@ref{([^}]+)}', function (ref)
+        local r, reftext = ref:match("^(.*)%|(.*)$")
+        ref, reftext = r or ref, reftext or ref:gsub(".*/", "")
+        assert(index[ref] ~= false, "ambiguous ref '" .. ref .. "', prefix with doc/")
+        assert(index[ref], "invalid ref '" .. ref .. "'")
+        local doc, item = index[ref].doc, index[ref].item
+        local group, name = doc.module and "modules" or "classes", doc.name
+        local fragment = item and ("#%s-%s"):format(item.type, item.name) or ""
+        return ('<a href="../%s/%s.html%s">`%s`</code></a>'):format(group, name, fragment, reftext)
     end)
     -- Format with markdown
     ret = markdown(ret)
@@ -28,10 +37,18 @@ local format_text = function (text)
         code = lousy.util.unescape(code)
         -- Add syntax highlighting if lxsh is installed
         local ok, lxsh = pcall(require, "lxsh")
-        if ok then code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true }) end
+        if ok then
+            code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true })
+        else
+            code = "<pre class='sourcecode lua'>" .. code .. "</pre>"
+        end
         return code
     end)
     return ret
+end
+
+local shift_hdr = function (text, n)
+    return ("\n"..text):gsub("\n#", "\n" .. string.rep("#", n+1)):sub(2)
 end
 
 local generate_typestr_html = function (typestr)
@@ -69,7 +86,7 @@ local generate_function_param_html = function (param)
     local html = string.gsub(html_template, "{(%w+)}", {
         name = param.name,
         typestr = "Type: " .. generate_typestr_html(param.typestr),
-        desc = html_unwrap_first_p(format_text(param.desc)),
+        desc = html_unwrap_first_p(format_text(shift_hdr(param.desc, 3))),
         optional = param.optional and "Optional" or "",
         default = param.default and "Default: " .. html_unwrap_first_p(format_text(param.default)) or "",
     })
@@ -86,7 +103,7 @@ local generate_function_return_html = function (ret)
     ]==]
     local html = string.gsub(html_template, "{(%w+)}", {
         typestr = generate_typestr_html(ret.typestr),
-        desc = html_unwrap_first_p(format_text(ret.desc)),
+        desc = html_unwrap_first_p(format_text(shift_hdr(ret.desc, 3))),
     })
     return html
 end
@@ -124,7 +141,7 @@ local generate_function_body_html = function (func)
     ]==]
     local html = string.gsub(html_template, "{([%w_]+)}", {
         deprecated = generate_deprecated_html(func),
-        desc = format_text(func.desc),
+        desc = format_text(shift_hdr(func.desc, 3)),
         params = generate_function_params_html(func.params),
         returns = generate_function_returns_html(func.returns),
     })
@@ -137,8 +154,9 @@ local generate_function_html = function (func, prefix)
         func.name = ""
     end
     local html_template = [==[
-        <h3 class=function id="{prefix}{name}">
-            <a href="#{prefix}{name}">{prefix}{name} ({param_names})</a>
+        <h3 class=function>
+            <span class=target id="{type}-{name}"></span>
+            <a href="#{type}-{name}">{prefix}{name} ({param_names})</a>
         </h3>
     ]==]
 
@@ -149,6 +167,7 @@ local generate_function_html = function (func, prefix)
 
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
+        type = func.type,
         name = func.name,
         param_names = table.concat(param_names, ", "),
     }) .. generate_function_body_html(func)
@@ -157,7 +176,8 @@ end
 
 local generate_signal_html = function (func)
     local html_template = [==[
-        <h3 class=function id="signal-{name}">
+        <h3 class=function>
+            <span class=target id="signal-{name}"></span>
             <a href="#signal-{name}">"{name}"</a>
         </h3>
     ]==]
@@ -171,15 +191,6 @@ end
 local generate_attribution_html = function (doc)
     local html = {}
     table.insert(html, "<div class=attr-wrap>")
-    table.insert(html, "    <h4>Authors</h4>")
-    table.insert(html, "    <ul class=authors>")
-    for _, author in ipairs(doc.author) do
-        table.insert(html, "        <li>" .. author)
-    end
-    table.insert(html, "    </ul>")
-    table.insert(html, "</div>")
-
-    table.insert(html, "<div class=attr-wrap>")
     table.insert(html, "    <h4>Copyright</h4><ul class=copyright>")
     for _, copy in ipairs(doc.copyright) do
         table.insert(html, "        <li>" .. copy)
@@ -192,7 +203,8 @@ end
 
 local generate_property_html = function (prop, prefix)
     local html_template = [==[
-        <h3 class=property id="property-{name}">
+        <h3 class=property>
+            <span class=target id="property-{name}"></span>
             <a href="#property-{name}">{prefix}{name}</a>
         </h3>
         <div class="two-col property">
@@ -211,7 +223,7 @@ local generate_property_html = function (prop, prefix)
         prefix = prefix,
         name = prop.name,
         typestr = "Type: " .. generate_typestr_html(prop.typestr),
-        desc = html_unwrap_first_p(format_text(prop.desc)),
+        desc = html_unwrap_first_p(format_text(shift_hdr(prop.desc, 3))),
         default = prop.default and "Default: " .. html_unwrap_first_p(format_text(prop.default)) or "",
         readwrite = (prop.readonly and "Read-only") or (prop.readwrite and "Read-write")
     })
@@ -227,38 +239,11 @@ local generate_list_html = function (heading, list, item_func, ...)
     return html
 end
 
-local generate_field_html = function (field, prefix)
-    local html_template = [==[
-        <h3 class=field id="field-{name}">
-            <a href="#field-{name}">{prefix}{name}</a>
-        </h3>
-        <div class="two-col field">
-            <div>
-                <div>{typestr}</div>
-                <div>{default}</div>
-                <div>{readwrite}</div>
-            </div>
-            <div>{desc}</div>
-        </div>
-    ]==]
-
-    assert(field.readonly or field.readwrite, "Field " .. field.name .. " missing RO/RW annotation")
-
-    local html = string.gsub(html_template, "{([%w_]+)}", {
-        prefix = prefix,
-        name = field.name,
-        typestr = "Type: " .. generate_typestr_html(field.typestr),
-        desc = html_unwrap_first_p(format_text(field.desc)),
-        default = field.default and "Default: " .. html_unwrap_first_p(format_text(field.default)) or "",
-        readwrite = (field.readonly and "Read-only") or (field.readwrite and "Read-write"),
-    })
-    return html
-end
-
 local generate_doc_html = function (doc)
     local html_template = [==[
         <h1>{type} <code>{title}</code></h1>
-        <h2 class=tagline>{tagline}</h2>
+        <!-- status indicator -->
+        <span class=tagline>{tagline}</span>
         {desc}
         {functions}
         <h2>Attribution</h2>
@@ -275,13 +260,13 @@ local generate_doc_html = function (doc)
         .. generate_list_html("Methods", doc.methods, generate_function_html, method_prefix)
         .. generate_list_html("Properties", doc.properties, generate_property_html, func_prefix)
         .. generate_list_html("Signals", doc.signals, generate_signal_html)
-        .. generate_list_html("Fields", doc.fields, generate_field_html, func_prefix)
+        .. generate_list_html("Callback Types", doc.callbacks, generate_function_html, "")
 
     local html = string.gsub(html_template, "{(%w+)}", {
         type = doc.module and "Module" or "Class",
         title = doc.name,
         tagline = doc.tagline:gsub("%.$",""),
-        desc = format_text(doc.desc),
+        desc = format_text(shift_hdr(doc.desc, 1)),
         functions = fhtml,
         attribution = generate_attribution_html(doc)
     })
@@ -293,12 +278,13 @@ local generate_sidebar_html = function (docs, current_doc)
     for _, name in ipairs{"pages", "modules", "classes"} do
         local section = assert(docs[name], "Missing " .. name .. " section")
         html = html .. ("<h3>%s</h3>\n"):format(name:gsub("^%l", string.upper))
-        html = html .. "<ul>\n"
+        html = html .. "<ul class=" .. name .. ">\n"
         for _, doc in ipairs(section) do
             if doc == current_doc then
                 html = html .. ('    <li><span>%s</span></li>\n'):format(doc.name)
             else
-                html = html .. ('    <li><a href="../%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
+                html = html .. ('    <li><a href="../%s/%s.html">%s</a></li>\n'):format(name,
+                    doc.filename or doc.name, doc.name)
             end
         end
         html = html .. "</ul>\n"
@@ -395,8 +381,8 @@ local generate_index_html = function (style, docs)
         <title>Luakit Documentation</title>
         <style>
         {style}
-        h2 { margin-top: 0; }
-        ul { column-count: 3; }
+        #wrap { padding-top: 0; }
+        ul { column-count: 3; list-style-position: inside; padding-left: 1.5rem; }
         @media (max-width: 650px) { ul { column-count: 2; } }
         @media (max-width: 400px) { ul { column-count: 1; } }
         </style>
@@ -424,8 +410,10 @@ local generate_index_html = function (style, docs)
         local section = assert(docs[name], "Missing " .. name .. " section")
         html = html .. "<ul>\n"
         for _, doc in ipairs(section) do
-            html = html .. ('    <li><a href="%s/%s.html">%s</a></li>\n'):format(name, doc.name, doc.name)
+            html = html .. ('    <li><a href="%s/%s.html">%s</a></li>\n'):format(name,
+                doc.filename or doc.name, doc.name)
         end
+        for _=1,(3-#section%3)%3 do html = html .. '    <li class=dummy></li>\n' end
         lists[name] = html .. "</ul>\n"
     end
 
@@ -460,12 +448,43 @@ local generate_documentation = function (docs, out_dir)
     out_dir = out_dir:match("/$") and out_dir or out_dir .. "/"
     mkdir(out_dir)
 
+    -- Build symbol index
+    do
+        local add_index_obj = function (doc, item)
+            local short_name = item and item.name or doc.name
+            local get_long_name = function (d, i)
+                return d.name .. "/" .. (i and i.name or "")
+            end
+            if index[short_name] then
+                -- Move any item already using the short name to its long name slot
+                local o = index[short_name]
+                local new_name = get_long_name(o.doc, o.item)
+                assert(not index[new_name])
+                index[new_name] = o
+                index[short_name] = false
+            end
+            if index[short_name] == false then
+                index[get_long_name(doc, item)] = { doc = doc, item = item }
+            else
+                index[short_name] = { doc = doc, item = item }
+            end
+        end
+        for _, doc in ipairs(lousy.util.table.join(docs.modules, docs.classes)) do
+            add_index_obj(doc)
+            for _, t in ipairs {"functions", "methods", "properties", "signals", "callbacks"} do
+                for _, item in ipairs(doc[t] or {}) do
+                    add_index_obj(doc, item)
+                end
+            end
+        end
+    end
+
     local pages = {}
     mkdir(out_dir .. "pages")
     for _, page in ipairs(docs.pages) do
         pages[#pages+1] = {
             doc = page, gen = generate_page_html,
-            path = "pages/" .. page.name .. ".html",
+            path = "pages/" .. page.filename .. ".html",
         }
     end
     for _, section_name in ipairs{"modules", "classes"} do

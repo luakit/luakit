@@ -1,6 +1,8 @@
 --- Provides functionality to auto-fill forms based on a Lua DSL.
 --
--- The configuration is stored in `$XDG_DATA_DIR/luakit/forms.lua`
+-- The formfiller provides support for filling out forms based on the contents
+-- of a forms file, which uses a domain-specific language to specify the content to
+-- fill forms with.
 --
 -- The following is an example for a formfiller definition:
 --
@@ -67,7 +69,12 @@
 --
 -- There is a conversion script in the luakit repository that converts
 -- from the old formfiller format to the new one. For more information,
--- see the converter script under <code>extras/convert_formfiller.rb</code>
+-- see the converter script under <code>extras/convert_formfiller.rb</code>.
+--
+-- # Files and Directories
+--
+-- - The formfiller configuration is loaded from the `forms.lua` file stored in
+--   the luakit data directory.
 --
 -- @module formfiller
 -- @copyright 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be>
@@ -78,17 +85,16 @@ local window = require("window")
 local webview = require("webview")
 local editor = require("editor")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
+local binds, modes = require("binds"), require("modes")
+local add_binds = modes.add_binds
 local menu_binds = binds.menu_binds
-local capi = { luakit = luakit }
 
 local _M = {}
 
 local formfiller_wm = require_web_module("formfiller_wm")
 
 -- The Lua DSL file containing the formfiller rules
-local file = capi.luakit.data_dir .. "/forms.lua"
+local file = luakit.data_dir .. "/forms.lua"
 
 -- The function environment for the formfiller script
 local DSL = {
@@ -135,6 +141,46 @@ local DSL = {
         return attrs
     end,
 }
+
+local dsl_extensions = {}
+
+formfiller_wm:add_signal("dsl_extension_query", function (_, k, arg, view_id)
+    local reply = dsl_extensions[k](unpack(arg))
+    formfiller_wm:emit_signal(view_id,"dsl_extension_reply", reply, view_id)
+end)
+
+--- Extend the formfiller DSL with additional functions. This takes a table of
+-- functions. For example, to use the `pass` storage manager:
+--
+--     formfiller.extend({
+--         pass = function(s) return io.popen("pass " .. s):read() end
+--     })
+--
+-- which will then be usable in the fields of `form.lua`:
+--
+--     input {
+--         name = "username",
+--         value = pass("emailpassword"),
+--     }
+--
+-- Functions used to extend the DSL will be called only when needed: when
+-- matching for attributes used in matching, or once a form is applied, for
+-- attributes used in form application.
+--
+-- @tparam table extensions The table of functions extending the formfiller DSL.
+_M.extend = function (extensions)
+    for k, v in pairs(extensions) do
+        assert(type(v) == "function", "bad DSL extension: values must be functions")
+        assert(type(k) == "string", "bad DSL extension: keys must be strings")
+        assert(k ~= "on" and k ~= "form" and k ~= "input", "bad DSL extension: don't shadow core DSL functions")
+    end
+    dsl_extensions = extensions
+    for k, _ in pairs(extensions) do
+        DSL[k] = function (_, ...)
+            return {sentinel = true, arg = {...}, key = k}
+        end
+    end
+end
 
 --- Reads the rules from the formfiller DSL file
 local function read_formfiller_rules_from_file()
@@ -257,9 +303,17 @@ webview.add_signal("init", function (view)
         local rules = read_formfiller_rules_from_file()
         local form_specs = form_specs_for_uri(rules, v.uri)
         for _, form_spec in ipairs(form_specs) do
+            if type(form_spec.autofill) == "table" and form_spec.autofill.sentinel then
+                form_spec.autofill = dsl_extensions[form_spec.autofill.key](unpack(form_spec.autofill.arg))
+            end
             if form_spec.autofill then
                 -- Precaution: pattern must contain full domain of page URI
-                local domain = lousy.util.lua_escape(lousy.uri.parse(v.uri).host .. "/")
+                local uri = lousy.uri.parse(v.uri)
+                local domain = uri.host
+                if uri.port ~= 80 and uri.port ~= 443 then
+                    domain = domain .. ":" .. uri.port
+                end
+                domain = lousy.util.lua_escape(domain .. "/")
                 if form_spec.pattern:find(domain, 1, true) then
                     msg.info("auto-filling form profile '%s'", form_spec.profile)
                     formfiller_wm:emit_signal(view, "apply_form", form_spec)
@@ -287,16 +341,15 @@ new_mode("formfiller-menu", {
     end,
 })
 
-local key = lousy.bind.key
 add_binds("formfiller-menu", lousy.util.table.join({
     -- use profile
-    key({}, "Return", "Select formfiller profile.",
+    { "<Return>", "Select formfiller profile.",
         function (w)
             local row = w.menu:get()
             local form = row.form
             w:set_mode()
             formfiller_wm:emit_signal(w.view, "apply_form", form)
-        end),
+        end },
 }, menu_binds))
 
 -- Visual form selection for adding a form
@@ -319,28 +372,24 @@ new_mode("formfiller-add", {
     end,
 })
 add_binds("formfiller-add", {
-    key({},          "Tab",    "Focus the next form hint.",
-        function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end),
-    key({"Shift"},   "Tab",    "Focus the previous form hint.",
-        function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end),
-    key({},          "Return", "Add the currently focused form to the formfiller file.",
-        function (w) formfiller_wm:emit_signal(w.view, "select") end),
+    { "<Tab>",    "Focus the next form hint.",
+        function (w) formfiller_wm:emit_signal(w.view, "focus",  1) end },
+    { "<Shift-Tab>",    "Focus the previous form hint.",
+        function (w) formfiller_wm:emit_signal(w.view, "focus", -1) end },
+    { "<Return>", "Add the currently focused form to the formfiller file.",
+        function (w) formfiller_wm:emit_signal(w.view, "select") end },
 })
 
 -- Setup formfiller binds
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^za$", "Add formfiller form.",
-        function (w) w:set_mode("formfiller-add") end),
-
-    buf("^ze$", "Edit formfiller forms for current domain.",
-        function (_) edit() end),
-
-    buf("^zl$", "Load formfiller form (use first profile).",
-        fill_form_fast),
-
-    buf("^zL$", "Load formfiller form.",
-        fill_form_menu),
+    { "za", "Add formfiller form.",
+       function (w) w:set_mode("formfiller-add") end },
+    { "ze", "Edit formfiller forms for current domain.",
+       function (_) edit() end },
+    { "zl", "Load formfiller form (use first profile).",
+       fill_form_fast },
+    { "zL", "Load formfiller form.",
+        fill_form_menu },
 })
 
 return _M

@@ -9,9 +9,8 @@
 -- @copyright 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org>
 
 local webview = require("webview")
-local lousy = require("lousy")
-local binds = require("binds")
-local add_binds = binds.add_binds
+local modes = require("modes")
+local add_binds = modes.add_binds
 
 local _M = {}
 
@@ -51,12 +50,9 @@ webview.methods.go_input = function(_, w, count)
 end
 
 -- Add `gi` binding to normal mode
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^gi$", "Focus the first text input on the current page and enter insert mode.",
-        function (w, _, m)
-            w:go_input(m.count)
-        end, {count=1})
+    { "gi", "Focus the first text input on the current page and enter insert mode.",
+        function (w, _, m) w:go_input(m.count) end, {count=1} }
 })
 
 return _M

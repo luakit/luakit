@@ -10,7 +10,6 @@
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require "lousy"
-local capi = { luakit = luakit, sqlite3 = sqlite3 }
 local keys = lousy.util.table.keys
 
 local _M = {}
@@ -19,11 +18,11 @@ lousy.signal.setup(_M, true)
 
 --- Path to bookmarks database.
 -- @readwrite
-_M.db_path = capi.luakit.data_dir .. "/bookmarks.db"
+_M.db_path = luakit.data_dir .. "/bookmarks.db"
 
 --- Connect to and initialize the bookmarks database.
 function _M.init()
-    _M.db = capi.sqlite3{ filename = _M.db_path }
+    _M.db = sqlite3{ filename = _M.db_path }
     _M.db:exec [[
         PRAGMA synchronous = OFF;
         PRAGMA secure_delete = 1;
@@ -40,7 +39,7 @@ function _M.init()
     ]]
 end
 
-capi.luakit.idle_add(_M.init)
+luakit.idle_add(_M.init)
 
 --- Get a bookmark entry by its ID number.
 -- @tparam number id The ID of the bookmark entry to get.

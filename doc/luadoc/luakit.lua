@@ -1,7 +1,10 @@
 --- Luakit core API
 --
--- DOCMACRO(builtin)
 -- DOCMACRO(alert:Some functions and fields are not available from web processes.)
+--
+-- This library provides a set of infrastructure and utility functions for
+-- controlling luakit, accessing and modifying current settings, running
+-- background programs, and more.
 --
 -- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina <mason.larobina@gmail.com>
@@ -10,57 +13,55 @@
 -- @copyright 2010 Mason Larobina, Paweł Zuzelski
 -- @module luakit
 
---- The configuration directory path (default: `$XDG_CONFIG_HOME`).
--- @field config_dir
+--- The path to the luakit configuration directory.
+-- @property config_dir
 -- @type string
 -- @readonly
 
---- The data directory path (default: `$XDG_DATA_HOME`).
--- @field data_dir
+--- The path to the luakit data directory.
+-- @property data_dir
 -- @type string
 -- @readonly
 
---- The cache directory path (default: `$XDG_CACHE_HOME`).
--- @field cache_dir
+--- The path to the luakit cache directory.
+-- @property cache_dir
 -- @type string
 -- @readonly
 
 --- Whether luakit is using verbose logging. `true` if logging in `verbose` or
 --`debug` mode.
--- @field verbose
+-- @property verbose
 -- @type boolean
 -- @readonly
 
 --- The luakit installation path.
--- @field install_path
+-- @property install_path
 -- @type string
 -- @readonly
 
 --- The luakit version.
--- @field version
+-- @property version
 -- @type string
 -- @readonly
 
 --- An array of all active window widgets.
--- @field windows
+-- @property windows
 -- @type {widget}
 -- @readonly
 
 --- Quit luakit immediately, without asking modules for confirmation.
 -- @function quit
 
---- Get the contents of the X selection.
--- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
--- @treturn string The contents of the named selection.
--- @function get_selection
-
---- Set the contents of the X selection.
--- @tparam string text The UTF-8 string to be copied to the named selection.
--- @tparam string clipboard The name of the X clipboard to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
--- @function set_selection
+--- Callback type for @ref{spawn}.
+-- @callback process_exit_cb
+-- @tparam string reason The reason for process termination. Can be one of `"exit"`, indicating normal termination;
+-- `"signal"`, indicating the process was killed with a signal; and `"unknown"`.
+-- @tparam integer status The exit status code of the process. Its meaning is system-dependent.
 
 --- Spawn a process asynchronously.
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
+-- @tparam[opt] function callback A callback function to execute when the spawned
+-- process is terminated, of type @ref{process_exit_cb}.
 -- @function spawn
 
 --- Spawn a process synchronously.
@@ -90,6 +91,13 @@
 -- @treturn string The unescaped/decoded string, or `nil` on error.
 -- @treturn string Error message.
 
+--- Idle callback function type.
+-- Return `true` to keep the callback running on idle.
+-- Returning `false` or `nil` will cause the callback to be
+-- automatically removed from the set of registered idle functions.
+-- @treturn boolean Whether the callback should be kept running on idle.
+-- @callback idle_cb
+
 --- Add a function to be called regularly when Luakit is idle. If the function
 -- returns `false`, or if an error is encountered during execution, the function
 -- is automatically removed from the set of registered idle functions, and will
@@ -99,9 +107,9 @@
 -- context to the callback function, use a closure.
 --
 -- @function idle_add
--- @tparam function cb The function to call when Luakit is idle.
+-- @tparam function cb The function to call when Luakit is idle, of type @ref{idle_cb}.
 
---- Remove a function previously registered with `idle_add`.
+--- Remove a function previously registered with @ref{idle_add}.
 --
 -- @function idle_remove
 -- @tparam function cb The function to removed from the set of idle callbacks.
@@ -120,7 +128,7 @@
 -- This interface is used to register the `luakit://` scheme, but is not limited
 -- to this prefix alone.
 --
--- #### Example
+-- # Example
 --
 -- Registering a scheme `foo` will cause URIs beginning with `foo://` to
 -- be redirected to Lua code. A signal `scheme-request::foo` will be emitted on
@@ -168,5 +176,33 @@
 -- @property spell_checking_languages
 -- @readwrite
 -- @type {string}
+
+--- The current contents of the different X selections.
+-- The key used to access this table must be the name of the X clipboard
+-- to use (one of `"primary"`, `"secondary"` or `"clipboard"`).
+-- # Primary
+-- When the user selects some text with the mouse, the primary selection
+-- is filled automatically with the contents of that text selection.
+-- # Secondary
+-- The secondary selection is not used as much as the primary and clipboard
+-- selections, but is included here for completeness.
+-- # Clipboard
+-- The clipboard selection is filled with the contents of the primary selection
+-- when the user explicitly requests a copy operation.
+-- @type {[string]=string}
+-- @readwrite
+-- @property selection
+
+--- Convert a key or key name to uppercase.
+-- @tparam string key The key or key name to convert.
+-- @treturn string The converted key. This will be the same as `key` if the key
+-- is already uppercase or if case conversion does not apply to the key.
+-- @function wch_upper
+
+--- Convert a key or key name to lowercase.
+-- @tparam string key The key or key name to convert.
+-- @treturn string The converted key. This will be the same as `key` if the key
+-- is already lowercase or if case conversion does not apply to the key.
+-- @function wch_lower
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

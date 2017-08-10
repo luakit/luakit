@@ -11,7 +11,6 @@
 local rstring = string
 local rtable = table
 local math = require "math"
-local capi = { luakit = luakit }
 
 local _M = {}
 
@@ -100,7 +99,7 @@ end
 -- @treturn table A new table containing all keys from the arguments.
 function table.join(...)
     local ret = {}
-    for _, t in pairs({...}) do
+    for _, t in ipairs({...}) do
         for k, v in pairs(t) do
             if type(k) == "number" then
                 rtable.insert(ret, v)
@@ -298,13 +297,14 @@ local function find_file(paths)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- `$XDG_CONFIG_HOME/luakit/`, or `/etc/xdg/luakit/`.
+-- the luakit configuration directory, or the system luakit configuration
+-- directory.
 -- @tparam string f The relative filepath.
 -- @treturn string The first valid filepath or an error.
 function _M.find_config(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { "config/"..f, capi.luakit.config_dir.."/"..f }
+    local paths = { "config/"..f, luakit.config_dir.."/"..f }
     for _, path in ipairs(xdg.system_config_dirs) do
         rtable.insert(paths, path.."/luakit/"..f)
     end
@@ -312,25 +312,25 @@ function _M.find_config(f)
 end
 
 --- Search and return the filepath of a file in the current working directory,
--- `$XDG_DATA_HOME/luakit/`, or the luakit install dir.
+-- the luakit data directory, or the luakit installation directory.
 -- @tparam string f The relative filepath.
 -- @treturn string The first valid filepath or an error.
 function _M.find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { f, capi.luakit.data_dir.."/"..f, capi.luakit.install_path.."/"..f }
+    local paths = { f, luakit.data_dir.."/"..f, luakit.install_path.."/"..f }
     return find_file(paths)
 end
 
 --- Search and return the filepath of a file in the current working directory
--- or `$XDG_CACHE_HOME/luakit/`.
+-- or the luakit cache directory.
 -- @tparam string f The relative filepath.
 -- @treturn string The first valid filepath or an error.
 function _M.find_cache(f)
     -- Ignore absolute paths
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { capi.luakit.cache_dir.."/"..f }
+    local paths = { luakit.cache_dir.."/"..f }
     return find_file(paths)
 end
 

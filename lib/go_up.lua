@@ -8,7 +8,7 @@
 --
 -- It is possible to go up multiple steps at once.
 --
--- ### Finer details
+-- # Finer details
 --
 -- When using this module to navigate websites, generally you don't need to
 -- worry about the finer details of how the current page URI is transformed.
@@ -34,9 +34,8 @@
 -- TODO check host against public TLD list to prevent returning only
 -- top-level domain.
 
-local lousy = require("lousy")
-local binds = require("binds")
-local add_binds = binds.add_binds
+local modes = require("modes")
+local add_binds = modes.add_binds
 local match = string.match
 
 local _M = {}
@@ -98,21 +97,20 @@ function _M.go_upmost(uri)
 end
 
 -- Add `gu` & `gU` binds to the normal mode.
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^gu$", "Go `[count=1]` step upward in the URI path structure.",
+    { "^gu$", "Go `[count=1]` step upward in the URI path structure.",
         function (w, _, m)
             local uri = w.view.uri
             if not uri or uri == "about:blank" then return end
             w.view.uri = _M.go_up(uri, m.count or 1)
-        end),
+        end },
 
-    buf("^gU$", "Go to up-most URI (maintains host).",
+    { "^gU$", "Go to up-most URI (maintains host).",
         function (w)
             local uri = w.view.uri
             if not uri or uri == "about:blank" then return end
             w.view.uri = _M.go_upmost(uri)
-        end),
+        end },
 })
 
 -- Return module table

@@ -11,11 +11,11 @@
 -- Another example would be hinting all images on the page, and opening the
 -- followed image in a new tab.
 --
--- ### Using a custom character set for hint labels
+-- # Using a custom character set for hint labels
 --
 -- If you prefer to use letters instead of numbers for hint labels (useful if
 -- you use a non-qwerty keyboard layout), this can be done by replacing the
--- `select.label_maker` function:
+-- @ref{label_maker} function:
 --
 --     -- Use "asdfqwerzxcv" for generating labels
 --     local select = require "select"
@@ -23,20 +23,21 @@
 --         return s.sort(s.reverse(s.charset("asdfqwerzxcv")))
 --     end
 --
--- Note: this requires modifying the `select` module because the actual
+-- Note: this requires modifying the @ref{select} module because the actual
 -- link hinting interface is implemented in the `select` module; the
 -- `follow` module provides the `follow` and `ex-follow` user interface on top
 -- of that.
 --
--- ### Matching only hint labels, not element text
+-- # Matching only hint labels, not element text
 --
 -- If you prefer not to match element text, and wish to select hints only by
--- their label, this can be done by specifying the `pattern_maker`:
+-- their label, this can be done by specifying the @ref{pattern_maker}:
 --
 --     -- Match only hint label text
 --     follow.pattern_maker = follow.pattern_styles.match_label
 --
--- ### Ignoring element text case
+-- # Ignoring element text case
+--
 -- To ignore element text case when filtering hints, set the following option:
 --
 --     -- Uncomment if you want to ignore case when matching
@@ -46,15 +47,11 @@
 -- @copyright 2010-2012 Mason Larobina  <mason.larobina@gmail.com>
 -- @copyright 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
 
-local lousy = require "lousy"
 local window = require("window")
 local new_mode = require("modes").new_mode
-local binds = require("binds")
-local add_binds = binds.add_binds
-local capi = {
-    luakit = luakit,
-    timer = timer
-}
+local modes = require("modes")
+local add_binds = modes.add_binds
+local lousy = require("lousy")
 
 local _M = {}
 
@@ -154,7 +151,7 @@ local function ignore_keys(w)
     if not delay or delay == 0 then return end
     -- Replace w:hit(..) with a no-op
     w.hit = hit_nop
-    local timer = capi.timer{ interval = delay }
+    local timer = timer{ interval = delay }
     timer:add_signal("timeout", function (t)
         t:stop()
         w.hit = nil
@@ -218,15 +215,22 @@ new_mode("follow", {
         assert(type(mode.pattern_maker or _M.pattern_maker) == "function",
             "invalid pattern_maker function")
 
+        local view = w.view
+
         local selector = mode.selector_func or _M.selectors[mode.selector]
         assert(type(selector) == "string", "invalid follow selector")
+
+        -- Append site-specific selector
+        local domain = lousy.uri.parse(view.uri).host
+        local sss = _M.site_specific_selectors[domain]
+        if sss and sss[mode.selector] then
+            selector = selector .. ", " .. sss[mode.selector]
+        end
         mode.selector = selector
 
         local stylesheet = mode.stylesheet or _M.stylesheet
         assert(type(stylesheet) == "string", "invalid stylesheet")
         mode.stylesheet = stylesheet
-
-        local view = w.view
 
         if w.follow_persist then
             mode.persist = true
@@ -270,16 +274,15 @@ new_mode("follow", {
     end,
 })
 
-local key = lousy.bind.key
 add_binds("follow", {
-    key({},          "Tab",    "Focus the next element hint.",
-        function (w) focus(w, 1) end),
-    key({"Shift"},   "Tab",    "Focus the previous element hint.",
-        function (w) focus(w, -1)        end),
-    key({},          "Return", "Activate the currently focused element hint.",
-        function (w) do_follow(w)        end),
-    key({"Shift"},   "Return", "Activate all currently visible element hints.",
-        function (w) follow_all_hints(w) end),
+    { "<Tab>",    "Focus the next element hint.",
+        function (w) focus(w, 1) end },
+    { "<Shift-Tab>",    "Focus the previous element hint.",
+        function (w) focus(w, -1)        end },
+    { "<Return>", "Activate the currently focused element hint.",
+        function (w) do_follow(w)        end },
+    { "<Shift-Return>", "Activate all currently visible element hints.",
+        function (w) follow_all_hints(w) end },
 })
 
 --- Element selectors used to filter elements to follow.
@@ -300,21 +303,31 @@ _M.selectors = {
     -- Image elements within a hyperlink.
 }
 
-local buf = lousy.bind.buf
+--- Site specific element selectors used to extend @ref{selectors}.
+-- Table keys should be website domains. Values are tables with the same
+-- structure as @ref{selectors}.
+-- @type {[string]=table}
+-- @readwrite
+_M.site_specific_selectors = {
+    ["github.com"] = {
+        clickable = "svg.js-menu-close, div.select-menu-item"
+    },
+}
+
 add_binds("normal", {
-    buf("^f$", [[Start `follow` mode. Hint all clickable elements
+    { "^f$", [[Start `follow` mode. Hint all clickable elements
         (as defined by the `follow.selectors.clickable`
-        selector) and open links in the current tab.]],
+            selector) and open links in the current tab.]],
         function (w)
             w:set_mode("follow", {
                 selector = "clickable", evaluator = "click",
                 func = function (s) w:emit_form_root_active_signal(s) end,
             })
-        end),
+        end },
 
     -- Open new tab
-    buf("^F$", [[Start follow mode. Hint all links (as defined by the
-        `follow.selectors.uri` selector) and open links in a new tab.]],
+    { "^F$", [[Start follow mode. Hint all links (as defined by the
+            `follow.selectors.uri` selector) and open links in a new tab.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "background tab", selector = "uri", evaluator = "uri",
@@ -323,20 +336,15 @@ add_binds("normal", {
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Start extended follow mode
-    buf("^;$", [[Start `ex-follow` mode. See the [ex-follow](#mode-ex-follow)
+    { "^;$", [[Start `ex-follow` mode. See the [ex-follow](#mode-ex-follow)
         help section for the list of follow modes.]],
-        function (w)
-            w:set_mode("ex-follow")
-        end),
+        function (w) w:set_mode("ex-follow") end },
 
-    buf("^g;$", [[Start `ex-follow` mode and stay there until `<Escape>` is
-        pressed.]],
-        function (w)
-            w:set_mode("ex-follow", true)
-        end),
+    { "^g;$", [[Start `ex-follow` mode and stay there until `<Escape>` is pressed.]],
+        function (w) w:set_mode("ex-follow", true) end },
 })
 
 -- Extended follow mode
@@ -347,17 +355,17 @@ new_mode("ex-follow", {
 })
 
 add_binds("ex-follow", {
-    key({}, ";", [[Hint all focusable elements (as defined by the
+    { ";", [[Hint all focusable elements (as defined by the
         `follow.selectors.focus` selector) and focus the matched element.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "focus", selector = "focus", evaluator = "focus",
                 func = function (s) w:emit_form_root_active_signal(s) end,
             })
-        end),
+        end },
 
     -- Yank element uri or description into primary selection
-    key({}, "y", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "y", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -365,28 +373,28 @@ add_binds("ex-follow", {
                 func = function (uri)
                     assert(type(uri) == "string")
                     uri = uri:gsub(" ", "%%20"):gsub("^mailto:", "")
-                    capi.luakit.selection.primary = uri
+                    luakit.selection.primary = uri
                     w:notify("Yanked uri: " .. uri, false)
                 end
             })
-        end),
+        end },
 
     -- Yank element description
-    key({}, "Y", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "Y", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and set the primary selection to the matched elements URI.]],
         function (w)
             w:set_mode("follow", {
                 prompt = "yank desc", selector = "desc", evaluator = "desc",
                 func = function (desc)
                     assert(type(desc) == "string")
-                    capi.luakit.selection.primary = desc
+                    luakit.selection.primary = desc
                     w:notify("Yanked desc: " .. desc)
                 end
             })
-        end),
+        end },
 
     -- Open image src
-    key({}, "i", [[Hint all images (as defined by the `follow.selectors.image`
+    { "i", [[Hint all images (as defined by the `follow.selectors.image`
         selector) and open matching image location in the current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -396,10 +404,10 @@ add_binds("ex-follow", {
                     w:navigate(src)
                 end
             })
-        end),
+        end },
 
     -- Open image src in new tab
-    key({}, "I", [[Hint all images (as defined by the
+    { "I", [[Hint all images (as defined by the
         `follow.selectors.image` selector) and open matching image location in
         a new tab.]],
         function (w)
@@ -410,10 +418,10 @@ add_binds("ex-follow", {
                     w:new_tab(src, { private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open thumbnail link
-    key({}, "x", [[Hint all thumbnails (as defined by the
+    { "x", [[Hint all thumbnails (as defined by the
         `follow.selectors.thumbnail` selector) and open link in current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -424,10 +432,10 @@ add_binds("ex-follow", {
                     w:navigate(uri)
                 end
             })
-        end),
+        end },
 
     -- Open thumbnail link in new tab
-    key({}, "X", [[Hint all thumbnails (as defined by the
+    { "X", [[Hint all thumbnails (as defined by the
         `follow.selectors.thumbnail` selector) and open link in a new tab.]],
         function (w)
             w:set_mode("follow", {
@@ -438,10 +446,10 @@ add_binds("ex-follow", {
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open link
-    key({}, "o", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "o", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in the current tab.]],
         function (w)
             w:set_mode("follow", {
@@ -451,10 +459,10 @@ add_binds("ex-follow", {
                     w:navigate(uri)
                 end
             })
-        end),
+        end },
 
     -- Open link in new tab
-    key({}, "t", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "t", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in a new tab.]],
         function (w)
             w:set_mode("follow", {
@@ -464,10 +472,10 @@ add_binds("ex-follow", {
                     w:new_tab(uri, { private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open link in background tab
-    key({}, "b", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "b", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in a background tab.]],
         function (w)
             w:set_mode("follow", {
@@ -477,10 +485,10 @@ add_binds("ex-follow", {
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 end
             })
-        end),
+        end },
 
     -- Open link in new window
-    key({}, "w", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "w", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and open its location in a new window.]],
         function (w)
             w:set_mode("follow", {
@@ -490,10 +498,10 @@ add_binds("ex-follow", {
                     window.new{uri}
                 end
             })
-        end),
+        end },
 
     -- Set command `:open <uri>`
-    key({}, "O", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "O", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and generate a `:open` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -503,10 +511,10 @@ add_binds("ex-follow", {
                     w:enter_cmd(":open " .. uri)
                 end
             })
-        end),
+        end },
 
     -- Set command `:tabopen <uri>`
-    key({}, "T", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "T", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and generate a `:tabopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -516,10 +524,10 @@ add_binds("ex-follow", {
                     w:enter_cmd(":tabopen " .. uri)
                 end
             })
-        end),
+        end },
 
     -- Set command `:winopen <uri>`
-    key({}, "W", [[Hint all links (as defined by the `follow.selectors.uri`
+    { "W", [[Hint all links (as defined by the `follow.selectors.uri`
         selector) and generate a `:winopen` command with the elements URI.]],
         function (w)
             w:set_mode("follow", {
@@ -529,7 +537,7 @@ add_binds("ex-follow", {
                     w:enter_cmd(":winopen " .. uri)
                 end
             })
-        end),
+        end },
 })
 
 return _M

@@ -11,10 +11,8 @@
 -- @copyright 2009 israellevin
 
 local window = require("window")
-local lousy = require("lousy")
-local binds = require("binds")
-local add_binds = binds.add_binds
-local key = lousy.bind.key
+local modes = require("modes")
+local add_binds = modes.add_binds
 
 local _M = {}
 
@@ -43,14 +41,14 @@ end)
 
 -- Add binding to normal mode to follow selected link
 add_binds("normal", {
-    key({},          "Return", "Follow the selected link in the current tab.",
-        function (w) wm:emit_signal(w.view, "follow_selected", "navigate", w.view.id) end),
-    key({"Control"}, "Return", "Follow the selected link in a new tab.",
-        function (w) wm:emit_signal(w.view, "follow_selected", "new_tab", w.view.id) end),
-    key({"Shift"},   "Return", "Follow the selected link in a new window.",
-        function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end),
-    key({"Mod1"},    "Return", "Download the selected link.",
-        function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end),
+    { "<Return>", "Follow the selected link in the current tab.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "navigate", w.view.id) end },
+    { "<Control-Return>", "Follow the selected link in a new tab.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "new_tab", w.view.id) end },
+    { "<Shift-Return>", "Follow the selected link in a new window.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "new_window", w.view.id) end },
+    { "<Mod1-Return>", "Download the selected link.",
+        function (w) wm:emit_signal(w.view, "follow_selected", "download", w.view.id) end },
 })
 
 return _M

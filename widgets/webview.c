@@ -59,9 +59,7 @@ typedef struct {
     guint htr_context;
     gboolean is_committed;
     gboolean is_failed;
-#if WEBKIT_CHECK_VERSION(2,16,0)
     gboolean private;
-#endif
 
     /** Document size */
     gint doc_w, doc_h;
@@ -536,13 +534,16 @@ luaH_webview_search(lua_State *L)
     gboolean forward = luaH_checkboolean(L, 4);
     gboolean wrap = luaH_checkboolean(L, 5);
 
+    size_t textlen = strlen(text);
+    guint max_match_count = textlen < 5 ? 100 : G_MAXUINT;
+
     WebKitFindController *webkit_fc = webkit_web_view_get_find_controller(d->view);
     webkit_find_controller_search_finish(webkit_fc);
     webkit_find_controller_search(webkit_fc, text,
             WEBKIT_FIND_OPTIONS_CASE_INSENSITIVE * (!case_sensitive) |
             WEBKIT_FIND_OPTIONS_BACKWARDS * (!forward) |
             WEBKIT_FIND_OPTIONS_WRAP_AROUND * wrap,
-            G_MAXUINT);
+            max_match_count);
     return 0;
 }
 
@@ -683,11 +684,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       PB_CASE(INSPECTOR,            d->inspector_open);
-#if WEBKIT_CHECK_VERSION(2,16,0)
       PB_CASE(PRIVATE,              d->private);
-#else
-      PB_CASE(PRIVATE,              FALSE);
-#endif
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -943,6 +940,31 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
     lua_pop(L, ret + 1);
     /* propagate event further */
     return FALSE;
+}
+
+static gboolean
+webview_scroll_cb(GtkWidget *view, GdkEventScroll *ev, widget_t *w)
+{
+    int button = 0, ret = FALSE;
+    if (ev->direction == GDK_SCROLL_UP || ev->direction == GDK_SCROLL_DOWN)
+        button = ev->direction == GDK_SCROLL_UP ? 4 : 5;
+    else if (ev->direction == GDK_SCROLL_SMOOTH) {
+        double dx, dy;
+        gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy);
+        if (dx == 0.0 && dy == -1.0) button = 4;
+        if (dx == 0.0 && dy ==  1.0) button = 5;
+    }
+    if (button) {
+        GdkEventButton btn_ev = {
+            .state = ev->state,
+            .button = button,
+            .type = GDK_BUTTON_PRESS,
+        };
+        ret |= webview_button_cb(view, &btn_ev, w);
+        btn_ev.type = GDK_BUTTON_RELEASE;
+        ret |= webview_button_cb(view, &btn_ev, w);
+    }
+    return ret;
 }
 
 static void
@@ -1224,12 +1246,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
     lua_rawget(L, prop_tbl_idx);
     gboolean private = lua_type(L, -1) == LUA_TNIL ? FALSE : lua_toboolean(L, -1);
     lua_pop(L, 1);
-#if WEBKIT_CHECK_VERSION(2,16,0)
     d->private = private;
-#else
-    if (private)
-        luaL_error(L, "private webview requires WebKitGTK >= 2.16.0");
-#endif
 
     /* keep a list of all webview widgets */
     if (!globalconf.webviews)
@@ -1246,9 +1263,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
     d->user_content = webkit_user_content_manager_new();
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
                  "web-context", web_context_get(),
-#if WEBKIT_CHECK_VERSION(2,16,0)
                  "is-ephemeral", d->private,
-#endif
                  "user-content-manager", d->user_content,
                  related_view ? "related-view" : NULL, related_view,
                  NULL);
@@ -1268,6 +1283,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
       "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
+      "signal::scroll-event",                         G_CALLBACK(webview_scroll_cb),            w,
       "signal::create",                               G_CALLBACK(create_cb),                    w,
       "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
       "signal::draw",                                 G_CALLBACK(expose_cb),                    w,

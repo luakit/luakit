@@ -34,10 +34,15 @@ ipc_channel_send(lua_State *L)
     guint64 page_id = 0;
     ipc_endpoint_t *ipc = NULL;
 
-    /* Optional first argument: view to send message to */
+    /* Optional first argument: view or view id to send message to */
     if (lua_isuserdata(L, 2)) {
         widget_t *w = luaH_checkwebview(L, 2);
         page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
+        ipc = webview_get_endpoint(w);
+        lua_remove(L, 2);
+    } else if (lua_isnumber(L, 2)) {
+        page_id = lua_tointeger(L, 2);
+        widget_t *w = webview_get_by_id(page_id);
         ipc = webview_get_endpoint(w);
         lua_remove(L, 2);
     }

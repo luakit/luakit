@@ -13,6 +13,12 @@ T.test_lousy_util_table_join = function ()
     local c = { "baz" }
     local sum = { 1, 2, "a", "b", "foo", "bar", 777, "baz" }
     assert.is_true(lousy.util.table.isclone(sum, lousy.util.table.join(a, b, c)))
+
+    a = { a = 1, b = 1, c = 1 }
+    b = { b = 2, c = 2 }
+    c = { c = 3 }
+    sum = { a = 1, b = 2, c = 3 }
+    assert.is_true(lousy.util.table.isclone(sum, lousy.util.table.join(a, b, c)))
 end
 
 T.test_lousy_util_table_isclone = function ()

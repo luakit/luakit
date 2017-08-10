@@ -11,6 +11,7 @@
 local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")
+local history = require("history")
 
 local _M = {}
 
@@ -129,6 +130,7 @@ local function on_finish(v, status)
     vs.finished = nil
     v:remove_signal("load-status", on_finish)
 
+    history.frozen[v] = false
     -- Start listening for button clicks
     error_page_wm:emit_signal(v, "listen")
     -- Mark current history index as showing an error page
@@ -245,6 +247,7 @@ local function load_error_page(v, error_page_info)
     -- the case, the first finish event to fire indicates the load has finished.
     local skip_count = (v.is_loading and not error_page_info.request) and 2 or 1
     attach_error_page_signals(v, skip_count)
+    history.frozen[v] = true
     if error_page_info.request then
         error_page_info.request:finish(html)
     else

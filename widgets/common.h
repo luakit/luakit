@@ -83,6 +83,7 @@
     "signal::parent-set",      G_CALLBACK(parent_set_cb), w,
 
 gboolean button_cb(GtkWidget*, GdkEventButton*, widget_t*);
+gboolean scroll_cb(GtkWidget*, GdkEventScroll*, widget_t*);
 gboolean mouse_cb(GtkWidget*, GdkEventCrossing*, widget_t*);
 gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
 gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);

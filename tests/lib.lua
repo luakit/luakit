@@ -23,7 +23,7 @@ function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
     shared_lib.traceback = debug.traceback("",2)
     repeat
-        local _, status, uri, err = _M.wait_for_signal(view, "load-status", 500)
+        local _, status, uri, err = _M.wait_for_signal(view, "load-status", 5000)
         if status == "failed" then
             local fmt = "tests.wait_for_view() failed loading '%s': %s"
             local msg = fmt:format(uri, err)
@@ -174,7 +174,7 @@ _M.find_files = find_files.find_files
 --
 -- @tparam {entry} entries A list of file error entries.
 --
--- #### `entry` format
+-- # `entry` format
 --
 --  - file: The path of the file.
 --  - err: The error string.

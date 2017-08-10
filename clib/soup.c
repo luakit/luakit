@@ -44,11 +44,7 @@ luaH_soup_index(lua_State *L)
     luakit_token_t token = l_tokenize(prop);
 
     switch (token) {
-#if WEBKIT_CHECK_VERSION(2,16,0)
         PS_CASE(PROXY_URI, proxy_uri)
-#else
-        case L_TK_PROXY_URI: luaL_error(L, "soup.proxy_uri requires WebKitGTK >= 2.16.0");
-#endif
         PS_CASE(ACCEPT_POLICY, accept_policy)
         PS_CASE(COOKIES_STORAGE, cookies_storage)
         default:
@@ -57,7 +53,6 @@ luaH_soup_index(lua_State *L)
     return 0;
 }
 
-#if WEBKIT_CHECK_VERSION(2,16,0)
 static void
 luaH_soup_set_proxy_uri(lua_State *L)
 {
@@ -76,7 +71,6 @@ luaH_soup_set_proxy_uri(lua_State *L)
         webkit_network_proxy_settings_free(proxy_settings);
     }
 }
-#endif
 
 static void
 luaH_soup_set_accept_policy(lua_State *L)
@@ -125,13 +119,8 @@ luaH_soup_newindex(lua_State *L)
 
     switch (token) {
         case L_TK_PROXY_URI:
-#if WEBKIT_CHECK_VERSION(2,16,0)
             luaH_soup_set_proxy_uri(L);
-#else
-            luaL_error(L, "soup.proxy_uri requires WebKitGTK >= 2.16.0");
-#endif
             break;
-
         case L_TK_ACCEPT_POLICY:
             luaH_soup_set_accept_policy(L);
             break;

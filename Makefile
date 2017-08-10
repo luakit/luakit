@@ -45,7 +45,9 @@ $(THEAD) $(TSRC): $(TLIST)
 	$(LUA_BIN_NAME) ./build-utils/gentokens.lua $(TLIST) $@
 
 buildopts.h: buildopts.h.in
-	sed 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' buildopts.h.in > buildopts.h
+	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' \
+		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' buildopts.h.in \
+		> buildopts.h
 
 $(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
 
@@ -73,7 +75,7 @@ luakit.1: luakit.1.in
 luakit.1.gz: luakit.1
 	@gzip -c $< > $@
 
-doc/apidocs/index.html: $(DOC_SRCS) $(wildcard build-utils/docgen/*.lua)
+doc/apidocs/index.html: $(DOC_SRCS) $(wildcard build-utils/docgen/*)
 	rm -rf doc/apidocs
 	mkdir doc/apidocs
 	$(LUA_BIN_NAME) ./build-utils/docgen/makedoc.lua
@@ -119,7 +121,7 @@ uninstall:
 	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
-	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $(LDFLAGS) $< -o $@
+	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $< $(LDFLAGS) -o $@
 
 run-tests: luakit luakit.so tests/util.so
 	@$(LUA_BIN_NAME) tests/run_test.lua

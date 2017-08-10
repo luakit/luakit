@@ -23,6 +23,9 @@
  * all system Lua module loading paths. */
 #define LUAKIT_INSTALL_PATH "/usr/local/share/luakit"
 
+/** Install location of default configuration files */
+#define LUAKIT_CONFIG_PATH "/etc/xdg"
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -7,7 +7,6 @@
 
 -- Get luakit environment
 local util = require "lousy.util"
-local capi = { soup = soup }
 local uri_encode = luakit.uri_encode
 local uri_decode = luakit.uri_decode
 
@@ -81,7 +80,7 @@ local uri_metatable = {
     __tostring = function (uri)
         local t = util.table.clone(uri)
         t.query = tostring(t.opts)
-        return capi.soup.uri_tostring(t)
+        return soup.uri_tostring(t)
     end,
     __add = function (op1, op2)
         assert(type(op1) == "table" and type(op2) == "table",
@@ -104,7 +103,7 @@ local uri_metatable = {
 -- @treturn table The URI as a table.
 function _M.parse(uri)
     -- Get uri table
-    uri = capi.soup.parse_uri(uri)
+    uri = soup.parse_uri(uri)
     if not uri then return end
     -- Parse uri.query and set uri.opts
     uri.opts = _M.parse_query(uri.query)

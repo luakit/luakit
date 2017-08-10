@@ -26,6 +26,7 @@
 #include "common/ipc.h"
 #include "common/signal.h"
 #include "luah.h"
+#include "log.h"
 #include "web_context.h"
 #include "globalconf.h"
 
@@ -388,7 +389,6 @@ luaH_luakit_push_options_table(lua_State *L)
     return 1;
 }
 
-#if WEBKIT_CHECK_VERSION(2,16,0)
 static WebKitWebsiteDataTypes
 luaH_parse_website_data_types_table(lua_State *L, gint idx)
 {
@@ -613,7 +613,33 @@ luaH_luakit_push_website_data_table(lua_State *L)
     lua_setmetatable(L, -2);
     return 1;
 }
-#endif
+
+static gint
+luaH_string_wch_convert_case(lua_State *L, const char *key, gboolean upper)
+{
+    guint kval = gdk_keyval_from_name(key);
+    if (kval == GDK_KEY_VoidSymbol) {
+        debug("unrecognized key symbol '%s'", key);
+        lua_pushstring(L, key);
+        return 1;
+    }
+    guint cased;
+    gdk_keyval_convert_case(kval, upper ? NULL : &cased, upper ? &cased : NULL);
+    luaH_keystr_push(L, cased);
+    return 1;
+}
+
+static gint
+luaH_luakit_wch_lower(lua_State *L)
+{
+    return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), FALSE);
+}
+
+static gint
+luaH_luakit_wch_upper(lua_State *L)
+{
+    return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), TRUE);
+}
 
 /** luakit module index metamethod.
  *
@@ -639,7 +665,7 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
       /* push boolean properties */
-      PB_CASE(VERBOSE,          log_get_verbosity() >= LOG_LEVEL_verbose)
+      PB_CASE(VERBOSE,          log_get_verbosity("all") >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
       PB_CASE(ENABLE_SPELL_CHECKING,    webkit_web_context_get_spell_checking_enabled(web_context_get()))
       /* push integer properties */
@@ -647,11 +673,7 @@ luaH_luakit_index(lua_State *L)
       case L_TK_OPTIONS:
         return luaH_luakit_push_options_table(L);
       case L_TK_WEBSITE_DATA:
-#if WEBKIT_CHECK_VERSION(2,16,0)
         return luaH_luakit_push_website_data_table(L);
-#else
-        return luaL_error(L, "luakit.website_data requires WebKitGTK >= 2.16.0");
-#endif
 
       PB_CASE(WEBKIT2,          true)
 
@@ -836,6 +858,8 @@ luakit_lib_setup(lua_State *L)
         { "spawn_sync",        luaH_luakit_spawn_sync },
         { "register_scheme",   luaH_luakit_register_scheme },
         { "allow_certificate", luaH_luakit_allow_certificate },
+        { "wch_lower",         luaH_luakit_wch_lower },
+        { "wch_upper",         luaH_luakit_wch_upper },
         { NULL,              NULL }
     };
 

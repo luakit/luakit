@@ -43,7 +43,7 @@ globals.domain_props = {
         enable_webgl               = true,
         -- enable_scripts          = false,
         -- enable_plugins          = false,
-        -- zoom-text-only          = true,
+        -- zoom_text_only          = true,
     }, --[[
     ["youtube.com"] = {
         enable_scripts = true,

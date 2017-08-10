@@ -34,7 +34,7 @@ _M.recovery_file = luakit.data_dir .. "/recovery_session"
 
 --- Save the current session state to a file.
 --
--- If no file is specified, the path specified by `session_file` is used.
+-- If no file is specified, the path specified by @ref{session_file} is used.
 --
 -- @tparam[opt] string file The file path in which to save the session state.
 _M.save = function (file)
@@ -46,7 +46,9 @@ _M.save = function (file)
         local current = w.tabs:current()
         state[w] = { open = {} }
         for ti, tab in ipairs(w.tabs.children) do
-            if not tab.private then
+            if tab.private then
+                table.insert(state[w].open, { private = true })
+            else
                 table.insert(state[w].open, {
                     ti = ti,
                     current = (current == ti),
@@ -57,6 +59,12 @@ _M.save = function (file)
         end
     end
     _M.emit_signal("save", state)
+
+    for _, ws in pairs(state) do
+        for i=#ws.open,1,-1 do
+            if ws.open[i].private then table.remove(ws.open, i) end
+        end
+    end
 
     -- Convert state keys from w to an index
     local istate = {}
@@ -80,7 +88,7 @@ end
 -- The session state is *not* restored. This function only loads the state into
 -- a table and returns it.
 --
--- If no file is specified, the path specified by `session_file` is used.
+-- If no file is specified, the path specified by @ref{session_file} is used.
 --
 -- If `delete` is not `false`, then the session file is deleted.
 --
@@ -138,7 +146,7 @@ end
 
 --- Restore the session state, optionally deleting the session file.
 --
--- This will first attempt to restore the session saved at `session_file`. If
+-- This will first attempt to restore the session saved at @ref{session_file}. If
 -- that does not succeed, the session saved at `recovery_file` will be loaded.
 --
 -- If `delete` is not `false`, then the loaded session file is deleted.

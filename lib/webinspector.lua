@@ -8,9 +8,8 @@
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
-local lousy = require("lousy")
-local binds = require("binds")
-local add_cmds = binds.add_cmds
+local modes     = require("modes")
+local add_cmds  = modes.add_cmds
 
 local _M = {}
 
@@ -18,16 +17,15 @@ webview.add_signal("init", function (view)
     view.enable_developer_extras = true
 end)
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("in[spect]", "Open the DOM inspector.", function (w, _, o)
+    { ":in[spect]", "Open the DOM inspector.", function (w, o)
         local v = w.view
         if o.bang then -- "inspect!" toggles inspector
             (v.inspector and v.close_inspector or v.show_inspector)(v)
         else
             w.view:show_inspector()
         end
-    end),
+    end },
 })
 
 return _M

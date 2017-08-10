@@ -3,7 +3,7 @@
 -- @author Aidan Holm
 -- @copyright 2017 Aidan Holm
 --
--- ### Creating a new regex instance
+-- # Creating a new regex instance
 --
 -- To create a new regex instance, use the `regex` constructor:
 --

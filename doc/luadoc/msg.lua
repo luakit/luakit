@@ -1,7 +1,5 @@
 --- Message logging support for Lua.
 --
--- DOCMACRO(builtin)
---
 -- This built-in library offers support for logging messages from Lua code. Five
 -- verbosity levels are available. By default, _verbose_ and _debug_ messages
 -- are not shown, but this can be changed when launching Luakit.
@@ -39,5 +37,12 @@
 -- @function debug
 -- @tparam string format Format string.
 -- @param ... Additional arguments referenced from the format string.
+
+--- @signal log
+-- Emitted when a message is logged. This signal is not emitted for messages
+-- below the current log level.
+-- @tparam string level The level at which the message was logged.
+-- @tparam string group The origin of the message.
+-- @tparam string msg The message itself. May contain ANSI color escape codes.
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

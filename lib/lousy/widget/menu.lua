@@ -4,9 +4,6 @@
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Mason Larobina
 
--- Grab environment we need
-local capi = { widget = widget }
-local math = require "math"
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 
@@ -40,8 +37,8 @@ local function update(menu)
         if row and not rw then
             -- Row widget struct
             rw = {
-                ebox = capi.widget{type = "eventbox"},
-                hbox = capi.widget{type = "hbox"},
+                ebox = widget{type = "eventbox"},
+                hbox = widget{type = "hbox"},
                 cols = {},
             }
             rw.ebox.child = rw.hbox
@@ -105,7 +102,7 @@ local function update(menu)
 
                 -- Make new row column widget
                 if text and not cell then
-                    cell = capi.widget{type = "label"}
+                    cell = widget{type = "label"}
                     rw.hbox:pack(cell, { expand = true, fill = true })
                     rw.cols[c] = cell
                     cell.font = font
@@ -265,7 +262,7 @@ local function new(args)
     args = args or {}
 
     local menu = {
-        widget    = capi.widget{type = "vbox"},
+        widget    = widget{type = "vbox"},
         -- Add widget methods
         build     = build,
         update    = update,

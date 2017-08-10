@@ -10,6 +10,20 @@
 -- refreshing the web pages they affect, and it is possible to reload external
 -- changes to stylesheets into luakit, without restarting the browser.
 --
+-- @usage
+--
+-- 1. Ensure the @ref{styles} module is enabled in your `rc.lua`.
+-- 2. Locate the @ref{styles} sub-directory within luakit's data storage directory.
+--    Normally, this is located at `~/.local/share/luakit/styles/`. Create the
+--    directory if it does not already exist.
+-- 3. Move any CSS rules to a new file within that directory. In order for the
+--    @ref{styles} module to load the stylesheet, the filename must end in `.css`.
+-- 4. Make sure you specify which sites your stylesheet should apply to. The way to
+--    do this is to use `@-moz-document` rules. The Stylish wiki page [Applying styles to specific sites
+--    ](https://github.com/stylish-userstyles/stylish/wiki/Applying-styles-to-specific-sites) may be helpful.
+-- 5. Run `:styles-reload` to detect new stylesheet files and reload any changes to
+--    existing stylesheet files; it isn't necessary to restart luakit.
+--
 -- @module styles
 -- @copyright 2016 Aidan Holm
 
@@ -19,24 +33,18 @@ local lousy   = require("lousy")
 local lfs     = require("lfs")
 local editor  = require("editor")
 local globals = require("globals")
-local binds = require("binds")
+local binds, modes = require("binds"), require("modes")
 local new_mode = require("modes").new_mode
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
-local key     = lousy.bind.key
-
-local capi = {
-    luakit = luakit,
-    sqlite3 = sqlite3
-}
 
 local _M = {}
 
-local styles_dir = capi.luakit.data_dir .. "/styles/"
+local styles_dir = luakit.data_dir .. "/styles/"
 
 local stylesheets = {}
 
-local db = capi.sqlite3{ filename = capi.luakit.data_dir .. "/styles.db" }
+local db = sqlite3{ filename = luakit.data_dir .. "/styles.db" }
 db:exec("PRAGMA synchronous = OFF; PRAGMA secure_delete = 1;")
 
 local query_create = db:compile [[
@@ -283,7 +291,8 @@ _M.load_file = function (path)
     file:close()
 
     if file_looks_like_old_format(source) then
-        msg.error("Not loading stylesheet '%s'", path)
+        msg.error("stylesheet '%s' is global, refusing to load", path)
+        msg.error("to load anyway, add %s to the file", global_comment)
         return true
     end
 
@@ -305,38 +314,41 @@ end
 
 --- Detect all files in the stylesheets directory and automatically load them.
 _M.detect_files = function ()
+    -- Create styles directory if it doesn't exist
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
-        msg.info(string.format("Stylesheet directory '%s' doesn't exist", styles_dir))
-        return
+        lfs.mkdir(styles_dir)
+        lfs.chdir(styles_dir)
     end
 
-    for _, stylesheet in pairs(stylesheets or {}) do
+    for _, stylesheet in ipairs(stylesheets or {}) do
         for _, part in ipairs(stylesheet.parts) do
             part.ss.source = ""
         end
     end
     stylesheets = {}
 
+    msg.verbose("searching for user stylesheets in %s", styles_dir)
     for filename in lfs.dir(styles_dir) do
         if string.find(filename, ".css$") then
+            msg.verbose("found user stylesheet: " .. filename)
             _M.load_file(filename)
         end
     end
+    msg.info("found " .. #stylesheets .. " user stylesheet" .. (#stylesheets == 1 and "" or "s"))
 
     update_all_stylesheet_applications()
     lfs.chdir(cwd)
 end
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd({"styles-reload", "sr"}, "Reload user stylesheets.", function (w)
-        w:notify("styles: Reloading files...")
-        _M.detect_files()
-        w:notify("styles: Reloading files complete.")
-    end),
-    cmd({"styles-list"}, "List installed userstyles.",
-        function (w) w:set_mode("styles-list") end),
+    { ":styles-reload, :sr", "Reload user stylesheets.", function (w)
+            w:notify("styles: Reloading files...")
+            _M.detect_files()
+            w:notify("styles: Reloading files complete.")
+        end },
+    { ":styles-list", "List installed userstyles.",
+        function (w) w:set_mode("styles-list") end },
 })
 
 -- Add mode to display all userscripts in menu
@@ -357,22 +369,21 @@ new_mode("styles-list", {
 
 add_binds("styles-list", lousy.util.table.join({
     -- Delete userscript
-    key({}, "space", "Enable/disable the currently highlighted userstyle.",
-        function (w)
-        local row = w.menu:get()
-        if row and row.stylesheet then
-            row.stylesheet.enabled = not row.stylesheet.enabled
-            db_set(row.stylesheet.file, row.stylesheet.enabled)
-            update_all_stylesheet_applications()
-        end
-    end),
-    key({}, "e", "Edit the currently highlighted userstyle.", function (w)
-        local row = w.menu:get()
-        if row and row.stylesheet then
-            local file = capi.luakit.data_dir .. "/styles/" .. row.stylesheet.file
-            editor.edit(file)
-        end
-    end),
+    { "<space>", "Enable/disable the currently highlighted userstyle.", function (w)
+            local row = w.menu:get()
+            if row and row.stylesheet then
+                row.stylesheet.enabled = not row.stylesheet.enabled
+                db_set(row.stylesheet.file, row.stylesheet.enabled)
+                update_all_stylesheet_applications()
+            end
+        end },
+    { "e", "Edit the currently highlighted userstyle.", function (w)
+            local row = w.menu:get()
+            if row and row.stylesheet then
+                local file = luakit.data_dir .. "/styles/" .. row.stylesheet.file
+                editor.edit(file)
+            end
+        end },
 }, menu_binds))
 
 _M.detect_files()

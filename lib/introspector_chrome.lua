@@ -16,7 +16,7 @@ local history = require("history")
 local markdown = require("markdown")
 local editor = require("editor")
 local get_modes = require("modes").get_modes
-local add_cmds = require("binds").add_cmds
+local add_cmds = require("modes").add_cmds
 
 local _M = {}
 
@@ -273,13 +273,14 @@ local help_get_modes = function ()
         local binds = {}
 
         if mode.binds then
-            for i, b in pairs(mode.binds) do
-                local info = debug.getinfo(b.func, "uS")
+            for i, m in pairs(mode.binds) do
+                local b, a = unpack(m)
+                local info = debug.getinfo(a.func, "uS")
                 info.source = info.source:sub(2)
                 binds[i] = {
                     type = b.type,
-                    key = lousy.bind.bind_to_string(b),
-                    desc = b.desc and markdown(dedent(b.desc)) or nil,
+                    key = lousy.bind.bind_to_string(b) or "???",
+                    desc = a.desc and markdown(dedent(a.desc)) or nil,
                     filename = info.source,
                     linedefined = info.linedefined,
                     lastlinedefined = info.lastlinedefined,
@@ -334,10 +335,9 @@ end, nil, {
     open_editor = function(_, ...) return editor.edit(...) end,
 })
 
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("introspector", "Open <luakit://introspector/> in a new tab.",
-        function (w) w:new_tab("luakit://introspector/") end),
+    { ":introspector", "Open <luakit://introspector/> in a new tab.",
+        function (w) w:new_tab("luakit://introspector/") end },
 })
 
 -- Prevent history items from turning up in history

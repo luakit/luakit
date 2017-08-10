@@ -8,7 +8,7 @@ end
 
 local peel_off_text_block = function (block)
     local lines = {}
-    while block[1] and not block[1]:match("^@%w+") do
+    while block[1] and not (block[1]:match("^@%w+") and not block[1]:match("^@ref{")) do
         table.insert(lines, advance(block))
     end
     return table.concat(lines, "\n")
@@ -87,7 +87,7 @@ local function parse_first_file_block(doc, block)
     -- Separate block into markdown and @-lines
     local atlines = {}
     for i, line in ipairs(block) do
-        if line:match("^@%w+") then
+        if line:match("^@%w+") and not line:match("^@ref{") then
             table.insert(atlines, line)
             block[i] = ""
         end
@@ -108,13 +108,15 @@ end
 
 local function parse_at_function_line(item, block, func_type)
     if item.type then parse_error(block, "@%s line inside %s block", func_type, item.type) end
-    item.type = func_type -- "function" / "method" / "signal"
+    item.type = func_type -- "function" / "method" / "signal" / "callback"
     item.params = item.params or {}
     item.returns = item.returns or {}
     item.name = block[1]:match("^%@function (%S+)$")
              or block[1]:match("^%@method (%S+)$")
              or block[1]:match("^%@signal (%S+)$")
+             or block[1]:match("^%@callback (%S+)$")
              or parse_error(block, "Missing %s name", func_type)
+    if item.type == "callback" then assert(item.name:match("_cb$")) end
     advance(block)
 end
 
@@ -145,17 +147,6 @@ local function parse_at_param_line(item, block)
     table.insert(item.params, param)
 end
 
-local function parse_at_field_line(item, block)
-    if item.type then parse_error(block, "@field line inside %s block", item.type) end
-    item.type = "field"
-    local line = block[1]
-    local typestr
-    line, typestr = peel_off_type_string(line)
-    item.typestr = item.typestr or typestr
-    item.name = line:match("^%@field (%S+)$")
-    advance(block)
-end
-
 local function parse_at_property_line(item, block)
     assert(not item.type, "Misplaced @property line")
     item.type = "property"
@@ -182,12 +173,10 @@ end
 
 local function parse_file_block_part(item, block)
     local at = block[1]:match("^@(%w+)")
-    if at == "function" or at == "method" or at == "signal" then
+    if at == "function" or at == "method" or at == "signal" or at == "callback" then
         parse_at_function_line(item, block, at)
     elseif at == "param" or at == "tparam" then
         parse_at_param_line(item, block)
-    elseif at == "field" or at == "tfield" then
-        parse_at_field_line(item, block)
     elseif at == "return" or at == "treturn" then
         parse_at_return_line(item, block)
     elseif at == "property" then
@@ -256,7 +245,7 @@ local function convert_comment_block_last_line(block)
 
     local name = line:match("_M%.([%w%d_]+)") or line:match("^function ([%w%d_]+)")
     local is_function = line:match("^function ") or line:match("= ?function")
-    local type = is_function and "function" or "field"
+    local type = is_function and "function" or "property"
     if name then
         return string.format("-- @%s %s", type, name)
     end

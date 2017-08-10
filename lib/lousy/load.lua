@@ -6,9 +6,6 @@
 -- @module lousy.load
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Mason Larobina
-local capi = {
-    luakit = luakit
-}
 
 local _M = {}
 
@@ -47,11 +44,11 @@ local function search_load(path, memorize)
 
     if string.sub(path, 1, 1) ~= "/" then
         -- Can we search relative paths?
-        if capi.luakit.dev_paths then
+        if luakit.dev_paths then
             local dat = load_resource("./"..path, memorize)
             if dat then return dat end
         end
-        path = capi.luakit.install_path.."/"..path
+        path = luakit.install_path.."/"..path
     end
 
     return assert(load_resource(path, memorize),

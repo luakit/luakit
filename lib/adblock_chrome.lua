@@ -24,8 +24,8 @@ local chrome     = require("chrome")
 local window     = require("window")
 local webview    = require("webview")
 local error_page = require("error_page")
-local binds      = require("binds")
-local add_binds, add_cmds = binds.add_binds, binds.add_cmds
+local modes      = require("modes")
+local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 
 local _M = {}
 
@@ -289,7 +289,14 @@ webview.add_signal("init", function (view)
                     <p>AdBlock has prevented the page at {uri} from loading</p>
                 </div>
             ]==],
-            buttons = {},
+            buttons = {{
+                label = "Continue anyway",
+                callback = function(vv)
+                    webview.modify_load_block(v, "adblock", true)
+                    webview.set_location(vv, uri)
+                    adblock.whitelist_domain_access(lousy.uri.parse(uri).host)
+                end
+            }},
             uri = uri,
             request = request,
         })
@@ -298,25 +305,21 @@ webview.add_signal("init", function (view)
 end)
 
 -- Add chrome binds.
-local buf = lousy.bind.buf
 add_binds("normal", {
-    buf("^ga$", "Open <luakit://adblock/> in the current tab.", function (w)
-        w:navigate(_M.chrome_page)
-    end),
-
-    buf("^gA$", "Open <luakit://adblock/> in a new tab.", function (w, _, m)
-        for _=1, m.count do
-            w:new_tab(_M.chrome_page)
-        end
-    end, {count=1}),
+    { "ga", "Open <luakit://adblock/> in the current tab.",
+        function (w) w:navigate(_M.chrome_page) end },
+    { "gA", "Open <luakit://adblock/> in a new tab.",
+        function (w, _, m)
+            for _=1, m.count do
+                w:new_tab(_M.chrome_page)
+            end
+        end, {count=1} },
 })
 
 -- Add chrome commands.
-local cmd = lousy.bind.cmd
 add_cmds({
-    cmd("adblock", "Open <luakit://adblock/> in the current tab.", function (w)
-        w:navigate(_M.chrome_page)
-    end),
+    { ":adblock", "Open <luakit://adblock/> in the current tab.",
+        function (w) w:navigate(_M.chrome_page) end },
 })
 
 return _M
