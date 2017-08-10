@@ -382,7 +382,7 @@ local generate_index_html = function (style, docs)
         <style>
         {style}
         #wrap { padding-top: 0; }
-        ul { column-count: 3; }
+        ul { column-count: 3; list-style-position: inside; padding-left: 1.5rem; }
         @media (max-width: 650px) { ul { column-count: 2; } }
         @media (max-width: 400px) { ul { column-count: 1; } }
         </style>
