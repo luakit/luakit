@@ -139,13 +139,37 @@ function _M.delall(save_file)
     if save_file ~= false then _M.save() end
 end
 
+local actions = {
+    quickmark_delete = {
+        desc = "Delete a quickmark or all quickmarks.",
+        func = function (w, o)
+            if o.bang then
+                _M.delall()
+                return
+            end
+            local a = o.arg
+            if not a or a == "" then w:error("missing argument") return end
+            -- Find and del all range specifiers
+            string.gsub(a, "(%w%-%w)", function (range)
+                range = "["..range.."]"
+                for _, token in ipairs(_M.get_tokens()) do
+                    if string.match(token, range) then _M.del(token, false) end
+                end
+            end)
+            -- Delete lone tokens
+            string.gsub(a, "(%w)", function (token) _M.del(token, false) end)
+            _M.save()
+        end,
+    },
+}
+
 -- Add quickmarking binds to normal mode
 add_binds("normal", {
     { "^g[onw][a-zA-Z0-9]$", [[Jump to quickmark in current tab with `go{a-zA-Z0-9}`,
             `gn{a-zA-Z0-9}` to open in new tab and or `gw{a-zA-Z0-9}` to open a
             quickmark in a new window.]],
-            function (w, b, m)
-                local mode, token = string.match(b, "^g(.)(.)$")
+            function (w, o, m)
+                local mode, token = string.match(o.buffer, "^g(.)(.)$")
                 local uris = lousy.util.table.clone(_M.get(token) or {})
                 for i, uri in ipairs(uris) do uris[i] = w:search_open(uri) end
                 for c=1,m.count do
@@ -160,9 +184,9 @@ add_binds("normal", {
             end
         end, {count=1} },
 
-    { "^M[a-zA-Z0-9]$", [[Add quickmark for current URL.]],
-        function (w, b)
-            local token = string.match(b, "^M(.)$")
+    { "^M[a-zA-Z0-9]$", "Add quickmark for current URL.",
+        function (w, o)
+            local token = string.match(o.buffer, "^M(.)$")
             local uri = w.view.uri
             _M.set(token, {uri})
             w:notify(string.format("Quickmarked %q: %s", token, uri))
@@ -191,25 +215,10 @@ add_cmds({
     end },
 
     -- Quickmark del (`:delqmarks b-p Aa z 4-9`)
-    { ":delqm[arks]", "Delete a quickmark.", function (_, o)
-            local a = o.arg
-            -- Find and del all range specifiers
-            string.gsub(a, "(%w%-%w)", function (range)
-                range = "["..range.."]"
-                for _, token in ipairs(_M.get_tokens()) do
-                    if string.match(token, range) then _M.del(token, false) end
-                end
-            end)
-            -- Delete lone tokens
-            string.gsub(a, "(%w)", function (token) _M.del(token, false) end)
-            _M.save()
-        end },
+    { ":delqm[arks]", actions.quickmark_delete },
 
     -- View all quickmarks in an interactive menu
     { ":qmarks", "List all quickmarks.", function (w) w:set_mode("qmarklist") end },
-
-    -- Delete all quickmarks
-    { ":delqmarks!, :delqm!", "Delete all quickmarks.", function () _M.delall() end },
 })
 
 -- Add mode to display all quickmarks in an interactive menu
