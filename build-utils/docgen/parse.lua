@@ -243,7 +243,7 @@ local function convert_comment_block_last_line(block)
     local line = block[#block]
     if line == "" then return nil end
 
-    local name = line:match("_M%.([%w%d_]+)") or line:match("^function ([%w%d_]+)")
+    local name = line:match("_M%.([%w%d_.]+)") or line:match("^function ([%w%d_.]+)")
     local is_function = line:match("^function ") or line:match("= ?function")
     local type = is_function and "function" or "property"
     if name then
