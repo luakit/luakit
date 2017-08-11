@@ -215,6 +215,7 @@ local generate_property_html = function (prop, prefix)
             <h3>
                 <a href="#property-{name}">{prefix}{name}</a>
             </h3>
+            {deprecated}
             <div class="two-col property-body">
                 <div>
                     <div>{typestr}</div>
@@ -231,6 +232,7 @@ local generate_property_html = function (prop, prefix)
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
         name = prop.name,
+        deprecated = generate_deprecated_html(prop),
         typestr = "Type: " .. generate_typestr_html(prop.typestr),
         desc = html_unwrap_first_p(format_text(shift_hdr(prop.desc, 3))),
         default = prop.default and "Default: " .. html_unwrap_first_p(format_text(prop.default)) or "",
