@@ -1,6 +1,6 @@
-@name Quick-start guide
+@name Quick-start Guide
 
-# Quick-start guide
+# Quick-start Guide
 
 ## Using Luakit
 
