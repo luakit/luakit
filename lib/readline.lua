@@ -12,6 +12,8 @@ local lousy = require "lousy"
 
 local _M = {}
 
+local yank_ring = ""
+
 local actions =  {
     paste = {
         func = function (w)
@@ -50,6 +52,7 @@ local actions =  {
         func = function (w)
             local i = w.ibar.input
             if not string.match(i.text, "^[:/?]$") then
+                yank_ring = string.sub(i.text, 2)
                 i.text = string.sub(i.text, 1, 1)
                 i.position = -1
             end
@@ -141,6 +144,17 @@ local actions =  {
         end,
         desc = "Move cursor backward one word.",
     },
+    yank_text = {
+        func = function (w)
+            local i = w.ibar.input
+            local text = i.text
+            local pos = i.position
+            local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
+            i.text = left .. yank_ring .. right
+            i.position = pos + #yank_ring
+        end,
+        desc = "Yank the most recently killed text into the input bar, at the cursor.",
+    },
 }
 
 --- Table of bindings that are added to the input bar.
@@ -158,6 +172,7 @@ _M.bindings = {
     { "<Control-b>",    actions.backward_char    , {} },
     { "<Mod1-f>",       actions.forward_word     , {} },
     { "<Mod1-b>",       actions.backward_word    , {} },
+    { "<Control-y>",    actions.yank_text        , {} },
 }
 
 window.add_signal("init", function (w)
