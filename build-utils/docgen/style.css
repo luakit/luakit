@@ -251,6 +251,7 @@ pre > code {
 pre {
     padding: 1rem 1.2rem;
     border-left: 2px solid #69c;
+    overflow-x: scroll;
 }
 
 /*
