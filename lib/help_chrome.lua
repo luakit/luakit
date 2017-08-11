@@ -184,7 +184,7 @@ local help_doc_page = function (v, path, request)
     end
 
     local extract_doc_html = function (file)
-        local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_paths.doc_dir
+        local prefix = luakit.dev_paths and "doc/apidocs/" or (luakit.install_paths.doc_dir .. "/")
         local ok, blob = pcall(lousy.load, prefix .. file)
         if not ok then return nil, prefix .. file end
         local style = blob:match("<style>(.*)</style>")
