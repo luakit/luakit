@@ -3,7 +3,7 @@
 --- Main test runner.
 --
 -- @script run_test
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 -- Add ./tests to package.path
 package.path = package.path .. ';./tests/?.lua'

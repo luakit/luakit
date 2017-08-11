@@ -4,8 +4,8 @@
 -- tabs in the window.
 --
 -- @module lousy.widget.tabi
--- @copyright 2017 Aidan Holm
--- @copyright 2010 Mason Larobina
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local webview = require("webview")

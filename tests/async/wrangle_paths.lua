@@ -1,7 +1,7 @@
 --- Test runner path wrangler.
 --
 -- @script async.wrangle_paths
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local system_paths, luakit_paths = {}, {}
 for path in string.gmatch(package.path, "[^;]+") do

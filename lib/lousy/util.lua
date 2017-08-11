@@ -5,7 +5,8 @@
 -- @module lousy.util
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Julien Danjou <julien@danjou.info>
--- @copyright 2010 Mason Larobina, 2008 Julien Danjou
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2008 Julien Danjou <julien@danjou.info>
 
 --- Grab environment we need
 local rstring = string

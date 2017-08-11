@@ -18,7 +18,7 @@
 -- @class widget:webview
 -- @prefix view
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property inspector
 -- Whether the web inspector is open for the webview.

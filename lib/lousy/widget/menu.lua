@@ -2,7 +2,7 @@
 --
 -- @module lousy.widget.menu
 -- @author Mason Larobina <mason.larobina@gmail.com>
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get

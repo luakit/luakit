@@ -6,7 +6,7 @@
 -- is also supported.
 --
 -- @module error_page
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
 local webview = require("webview")

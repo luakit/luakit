@@ -7,7 +7,7 @@
 -- @class widget:window
 -- @prefix window
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method set_default_size
 -- Set the default size of the window. If this is not called, the default size

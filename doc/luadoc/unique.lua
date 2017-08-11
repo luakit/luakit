@@ -8,7 +8,7 @@
 --
 -- @module unique
 -- @author Mason Larobina
--- @copyright 2011 Mason Larobina
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 --- @function new
 -- Set up an application with a shared identifier used to locate

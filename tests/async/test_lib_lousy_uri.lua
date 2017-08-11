@@ -1,6 +1,6 @@
 --- Test lousy.uri functionality.
 --
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local assert = require "luassert"
 local lousy = require "lousy"

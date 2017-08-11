@@ -7,7 +7,7 @@
 --
 -- @module soup
 -- @author Mason Larobina
--- @copyright 2012 Mason Larobina
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 --- Parse a URI.
 -- @function parse_uri

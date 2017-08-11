@@ -15,8 +15,8 @@
 -- @author Mason Larobina
 -- @author Plaque FCC
 -- @copyright 2010 Henning Hasemann
--- @copyright 2010 Mason Larobina (mason-l) (mason.larobina@gmail.com)
--- @copyright 2010 Plaque FCC (Reslayer@ya.ru)
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Plaque FCC <Reslayer@ya.ru>
 
 local adblock    = require("adblock")
 local lousy      = require("lousy")

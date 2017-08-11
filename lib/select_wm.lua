@@ -6,7 +6,7 @@
 -- this module is used by the `formfiller` module when selecting a form to add.
 --
 -- @module select_wm
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local floor, max = math.floor, math.max
 

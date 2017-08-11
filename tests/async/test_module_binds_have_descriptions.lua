@@ -1,6 +1,6 @@
 --- Ensure all module bindings have descriptions.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local test = require("tests.lib")
 local lousy = require("lousy")

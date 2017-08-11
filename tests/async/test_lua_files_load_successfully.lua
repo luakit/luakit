@@ -1,6 +1,6 @@
 --- Test that all files in config/ and lib/ can be included.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local test = require("tests.lib")
 

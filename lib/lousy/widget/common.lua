@@ -1,7 +1,7 @@
 --- Common functions for implementing widgets.
 --
 -- @module lousy.widget.common
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
 local lousy = require("lousy")

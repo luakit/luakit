@@ -5,8 +5,8 @@
 -- specific text input other than the first.
 --
 -- @module go_input
--- @copyright 2009 Aldrik Dunbar  (n30n)
--- @copyright 2010 Paweł Zuzelski (pawelz) <pawelz@pld-linux.org>
+-- @copyright 2009 Aldrik Dunbar
+-- @copyright 2010 Paweł Zuzelski <pawelz@pld-linux.org>
 
 local webview = require("webview")
 local modes = require("modes")

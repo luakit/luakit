@@ -5,7 +5,7 @@
 -- a keybinding for a particular task.
 --
 -- @module introspector_chrome
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require("lousy")

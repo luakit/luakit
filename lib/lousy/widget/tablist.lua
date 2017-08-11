@@ -1,8 +1,8 @@
 --- Luakit tablist widget.
 --
 -- @module lousy.widget.tablist
--- @copyright 2016 Aidan Holm
--- @copyright 2010 Mason Larobina
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get

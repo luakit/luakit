@@ -8,7 +8,7 @@
 -- @class widget:socket
 -- @prefix socket
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property id
 -- When reading, this returns the window ID of this socket widget.

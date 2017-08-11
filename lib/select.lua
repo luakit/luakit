@@ -5,7 +5,7 @@
 -- overlay.
 --
 -- @module select
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local _M = {}
 

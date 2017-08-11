@@ -5,9 +5,9 @@
 -- for the text of the link, and then press `<Return>` to follow it.
 --
 -- @module follow_selected
--- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
--- @copyright 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>
+-- @copyright 2010 Chris van Dijk <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Paweł Zuzelski <pawelz@pld-linux.org>
 -- @copyright 2009 israellevin
 
 local window = require("window")

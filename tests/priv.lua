@@ -1,7 +1,7 @@
 --- Utilities for use in tests.
 --
 -- @module tests.util
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local M = {}
 

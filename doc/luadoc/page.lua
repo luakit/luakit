@@ -8,7 +8,7 @@
 --
 -- @class page
 -- @author Aidan Holm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 --- Emitted when the DOM document of the page has finished loading.
 -- @signal document-loaded

@@ -1,7 +1,7 @@
 -- Luakit formfiller - web module.
 --
 -- @submodule formfiller_wm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local select = require("select_wm")
 local lousy = require("lousy")

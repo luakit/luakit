@@ -44,7 +44,7 @@
 --     follow.ignore_case = true
 --
 -- @module follow
--- @copyright 2010-2012 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
 
 local window = require("window")

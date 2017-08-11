@@ -3,8 +3,8 @@
 -- Shows the load progress of the current web page as a percentage.
 --
 -- @module lousy.widget.progress
--- @copyright 2017 Aidan Holm
--- @copyright 2010 Mason Larobina
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
 local lousy = require("lousy")

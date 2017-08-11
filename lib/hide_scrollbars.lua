@@ -3,7 +3,7 @@
 -- Hides all element scrollbars. Elements can still be scrolled as usual.
 --
 -- @module hide_scrollbars
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local webview = require("webview")
 

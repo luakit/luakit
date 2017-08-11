@@ -3,7 +3,7 @@
 -- Shows the zoom levle of the current web page as a percentage.
 --
 -- @module lousy.widget.zoom
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 -- @copyright 2014 Justin Forest
 
 local webview = require("webview")

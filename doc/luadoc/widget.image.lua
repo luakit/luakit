@@ -8,7 +8,7 @@
 -- @class widget:image
 -- @prefix image
 -- @author Aidan Holm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 --- @method filename
 -- Show an image from a file. On HiDPI screens, a file with "@2x" before

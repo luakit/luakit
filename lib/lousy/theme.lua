@@ -6,7 +6,9 @@
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Damien Leone <damien.leone@gmail.com>
 -- @author Julien Danjou <julien@danjou.info>
--- @copyright 2008-2009 Damien Leone, Julien Danjou, 2010 Mason Larobina
+-- @copyright 2008-2009 Damien Leone <damien.leone@gmail.com>
+-- @copyright 2008-2009 Julien Danjou <julien@danjou.info>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local util = require "lousy.util"
 

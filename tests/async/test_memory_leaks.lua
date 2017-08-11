@@ -1,6 +1,6 @@
 --- Check for some memory leaks.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 uris = {"about:blank"}
 require "config.rc"

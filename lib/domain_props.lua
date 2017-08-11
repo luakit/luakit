@@ -100,7 +100,7 @@
 --
 -- @module domain_props
 -- @author Mason Larobina
--- @copyright 2012 Mason Larobina
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
 local webview = require("webview")

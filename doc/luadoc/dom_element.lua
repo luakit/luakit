@@ -6,7 +6,7 @@
 --
 -- @class dom_element
 -- @author Aidan Holm
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 -- @prefix element
 
 --- @method query

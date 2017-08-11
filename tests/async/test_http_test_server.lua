@@ -1,6 +1,6 @@
 --- Tests the http test server.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local T = {}
 local test = require "tests.lib"

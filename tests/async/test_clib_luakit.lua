@@ -1,6 +1,6 @@
 --- Test luakit clib functionality.
 --
--- @copyright Mason Larobina
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local assert = require "luassert"
 local test = require "tests.lib"

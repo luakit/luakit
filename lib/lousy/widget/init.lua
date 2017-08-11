@@ -2,7 +2,7 @@
 --
 -- @module lousy.widget
 -- @author Mason Larobina <mason.larobina@gmail.com>
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local wrap = function (modname)
     return function () return require(modname) end

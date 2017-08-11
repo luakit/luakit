@@ -25,7 +25,7 @@
 --    existing stylesheet files; it isn't necessary to restart luakit.
 --
 -- @module styles
--- @copyright 2016 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
 local webview = require("webview")

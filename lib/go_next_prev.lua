@@ -5,8 +5,8 @@
 -- and clicking them for you on demand.
 --
 -- @module go_next_prev
--- @copyright 2009 Aldrik Dunbar  (n30n)
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2009 Aldrik Dunbar
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local modes = require("modes")
 local add_binds = modes.add_binds

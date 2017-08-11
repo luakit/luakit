@@ -9,8 +9,9 @@
 -- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Paweł Zuzelski <pawelz@pld-linux.org>
--- @copyright 2016 Aidan Holm
--- @copyright 2010 Mason Larobina, Paweł Zuzelski
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright Paweł Zuzelski <pawelz@pld-linux.org>
 -- @module luakit
 
 --- The path to the luakit configuration directory.

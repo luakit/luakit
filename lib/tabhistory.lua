@@ -7,7 +7,7 @@
 --
 -- @module tabhistory
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
--- @copyright 2010 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local new_mode = require("modes").new_mode

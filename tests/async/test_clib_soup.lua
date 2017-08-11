@@ -1,6 +1,6 @@
 --- Test luakit soup functionality.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local assert = require "luassert"
 

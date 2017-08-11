@@ -52,8 +52,8 @@
 -- @author Chris van Dijk (quigybo) <quigybo@hotmail.com>
 -- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
 -- @author Plaque FCC <Reslayer@ya.ru>
--- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010 Chris van Dijk <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2012 Plaque FCC <Reslayer@ya.ru>
 
 local webview   = require("webview")

@@ -5,7 +5,7 @@
 -- specifying the page background color.
 --
 -- @module image_css
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local webview = require("webview")
 local window = require("window")

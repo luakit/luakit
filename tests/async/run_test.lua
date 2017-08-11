@@ -1,7 +1,7 @@
 --- Test runner for async tests.
 --
 -- @script async.run_test
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 -- Adjust paths to work when running with DEVELOPMENT_PATHS=0
 dofile("tests/async/wrangle_paths.lua")

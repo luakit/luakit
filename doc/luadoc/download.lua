@@ -5,8 +5,8 @@
 -- @class download
 -- @author Fabian Streitel
 -- @author Mason Larobina
--- @copyright 2011 Fabian Streitel
--- @copyright 2011 Mason Larobina
+-- @copyright 2011 Fabian Streitel <karottenreibe@gmail.com>
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property allow_overwrite
 -- Whether this download should be permitted to overwrite any file already

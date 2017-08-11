@@ -5,9 +5,9 @@
 --
 -- @module modes
 -- @author Aidan Holm <aidanholm@gmail.com>
--- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local _M = {}
 

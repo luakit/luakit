@@ -4,7 +4,7 @@
 -- and opens them with `xdg-open`.
 --
 -- @module viewpdf
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local downloads = require("downloads")
 

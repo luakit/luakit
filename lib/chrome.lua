@@ -5,8 +5,8 @@
 -- and Lua to JavaScript function bridge management.
 --
 -- @module chrome
--- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
--- @copyright 2010 Fabian Streitel (karottenreibe@gmail.com)
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 local error_page = require("error_page")
 local webview = require("webview")

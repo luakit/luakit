@@ -77,8 +77,8 @@
 --   the luakit data directory.
 --
 -- @module formfiller
--- @copyright 2011 Fabian Streitel (karottenreibe) <luakit@rottenrei.be>
--- @copyright 2011 Mason Larobina  (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2011 Fabian Streitel <luakit@rottenrei.be>
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
 local window = require("window")
