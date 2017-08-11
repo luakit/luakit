@@ -194,6 +194,7 @@ local generate_attribution_html = function (doc)
     table.insert(html, "<div class=attr-wrap>")
     table.insert(html, "    <h4>Copyright</h4><ul class=copyright>")
     for _, copy in ipairs(doc.copyright) do
+        copy = copy:gsub(" %<.-%>$", ""):gsub("(%d+)%-(%d+)", "%1&ndash;%2")
         table.insert(html, "        <li>" .. copy)
     end
     table.insert(html, "    </ul>")
