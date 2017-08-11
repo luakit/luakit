@@ -1,5 +1,13 @@
 #!/usr/bin/env luajit
 
+local function_set
+
+local check_unique = function (name, t)
+    local prefix = t == "signal" and "s" or "-"
+    assert(not function_set[name .. prefix], "Duplicate name " .. name)
+    function_set[name .. prefix] = true
+end
+
 local advance = function (block)
     local ret = table.remove(block, 1)
     block.i = block.i + 1
@@ -116,6 +124,7 @@ local function parse_at_function_line(item, block, func_type)
              or block[1]:match("^%@signal (%S+)$")
              or block[1]:match("^%@callback (%S+)$")
              or parse_error(block, "Missing %s name", func_type)
+    check_unique(item.name, item.type)
     if item.type == "callback" then assert(item.name:match("_cb$")) end
     advance(block)
 end
@@ -151,6 +160,7 @@ local function parse_at_property_line(item, block)
     assert(not item.type, "Misplaced @property line")
     item.type = "property"
     item.name = advance(block):match("^%@property (%S+)$")
+    check_unique(item.name, item.type)
 end
 
 local function parse_at_return_line(item, block)
@@ -277,6 +287,7 @@ end
 
 return {
     parse_file = function (path)
+        function_set = {}
         local blocks = read_file_comment_blocks(path)
         if #blocks == 0 then error("no comment blocks found in file") end
         convert_file_comment_blocks(blocks)

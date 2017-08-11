@@ -40,7 +40,7 @@
 -- @default `false`
 -- @readwrite
 
---- @property fullscreen
+--- @property maximized
 -- Whether the window is maximized.
 -- @type boolean
 -- @default `false`

@@ -93,7 +93,7 @@
 -- Returns the unescaped string, or `nil` if the string contains illegal
 -- characters.
 --
--- @function uri_encode
+-- @function uri_decode
 -- @tparam string str The string to decode.
 -- @treturn string The unescaped/decoded string, or `nil` on error.
 -- @treturn string Error message.
