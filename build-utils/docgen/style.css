@@ -48,6 +48,12 @@ div.function > h3 > a, div.property > h3 > a {
     text-decoration: none;
     font-size: 1rem;
 }
+div.function > div > h4, div.property > div > h4 {
+    margin: 0.9em 0 0.5em;
+}
+div.function > div > ul, div.property > div > ul, .property-body {
+    margin: 0.5em 0;
+}
 
 span.parameter, span.type {
     font-family: monospace;
@@ -68,8 +74,9 @@ span.optional, span.any_type {
 }
 
 div.function, div.property {
-    margin: -10px;
-    padding: 10px;
+    margin: 0 -0.5rem 1rem;
+    padding: 0 0.5rem;
+    overflow: auto;
 }
 
 div.function > div, div.property > div {
