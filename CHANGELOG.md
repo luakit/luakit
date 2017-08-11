@@ -5,10 +5,18 @@
 ### Added
 
  - Added `luakit.install_paths` table. `luakit.install_path` is now deprecated.
+ - Added `Control-Y` readline binding.
+
+### Changed
+
+ - It is no longer necessary to add bindings to tables with `lousy.bind.add_binds()`
+ - Readline bindings have been moved to `readline.lua`
+ - Readline bindings are now automatically bound when the input bar is visible.
 
 ### Fixed
 
  - Fixed <luakit://help/> not finding documentation with custom DOCDIR
+ - Various minor documentation fixes.
 
 ## [2017-08-10]
 
