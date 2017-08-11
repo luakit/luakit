@@ -189,7 +189,8 @@ local generate_signal_html = function (func)
 end
 
 local generate_attribution_html = function (doc)
-    local html = {}
+    if #doc.copyright == 0 then return "" end
+    local html = { "<h2>Attribution</h2>" }
     table.insert(html, "<div class=attr-wrap>")
     table.insert(html, "    <h4>Copyright</h4><ul class=copyright>")
     for _, copy in ipairs(doc.copyright) do
@@ -246,7 +247,6 @@ local generate_doc_html = function (doc)
         <span class=tagline>{tagline}</span>
         {desc}
         {functions}
-        <h2>Attribution</h2>
         {attribution}
     ]==]
 
