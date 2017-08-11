@@ -158,23 +158,20 @@ web_extension_connect_thread(gpointer UNUSED(data))
 static void
 initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 {
-#if DEVELOPMENT_PATHS
-    gchar *extension_dir = g_get_current_dir();
-#else
-    const gchar *extension_dir = LUAKIT_INSTALL_PATH;
-#endif
+    char *dirs[] = { g_get_current_dir(), LUAKIT_INSTALL_PATH }, *dir = NULL;
 
-    char *extension_file = g_build_filename(extension_dir,  "luakit.so", NULL);
-    if (access(extension_file, R_OK)) {
-#if DEVELOPMENT_PATHS
-#  define DEVPATHS "\nLuakit was built with DEVELOPMENT_PATHS=1; are you running luakit correctly?"
-#else
-#  define DEVPATHS ""
-#endif
-        fatal("Cannot access luakit extension '%s': %s" DEVPATHS, extension_file, strerror(errno));
-#undef DEVPATHS
+    for (unsigned i = 0; !dir && i < LENGTH(dirs); ++i) {
+        char *extension_file = g_build_filename(dirs[i],  "luakit.so", NULL);
+        verbose("checking for luakit extension at '%s'", dirs[i]);
+        if (!access(extension_file, R_OK))
+            dir = dirs[i];
+        g_free(extension_file);
     }
-    g_free(extension_file);
+
+    if (dir)
+        verbose("found luakit extension at '%s'", dir);
+    else
+        fatal("cannot find luakit extension 'luakit.so'");
 
     const char *path;
     g_mutex_lock (&socket_path_lock);
@@ -185,10 +182,9 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 
     GVariant *payload = g_variant_new_string(path);
     webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
-    webkit_web_context_set_web_extensions_directory(context, extension_dir);
-#if DEVELOPMENT_PATHS
-    g_free(extension_dir);
-#endif
+    webkit_web_context_set_web_extensions_directory(context, dir);
+
+    g_free(dirs[0]);
 }
 
 static void

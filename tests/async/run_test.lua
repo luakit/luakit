@@ -3,6 +3,10 @@
 -- @script async.run_test
 -- @copyright 2017 Aidan Holm
 
+-- Adjust paths to work when running with DEVELOPMENT_PATHS=0
+dofile("tests/async/wrangle_paths.lua")
+require_web_module("tests/async/wrangle_paths")
+
 local shared_lib = {}
 local priv = require "tests.priv"
 local test = require("tests.lib")
