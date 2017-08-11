@@ -125,7 +125,7 @@ local function parse_at_function_line(item, block, func_type)
              or block[1]:match("^%@callback (%S+)$")
              or parse_error(block, "Missing %s name", func_type)
     check_unique(item.name, item.type)
-    if item.type == "callback" then assert(item.name:match("_cb$")) end
+    assert((not not item.name:match("_cb$")) == (item.type == "callback"), "Only/all callback names end in _cb")
     advance(block)
 end
 
