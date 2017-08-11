@@ -641,6 +641,25 @@ luaH_luakit_wch_upper(lua_State *L)
     return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), TRUE);
 }
 
+static gint
+luaH_luakit_push_install_paths_table(lua_State *L)
+{
+    lua_createtable(L, 0, 6);
+    lua_pushliteral(L, LUAKIT_INSTALL_PATH);
+    lua_setfield(L, -2, "install_dir");
+    lua_pushliteral(L, LUAKIT_CONFIG_PATH);
+    lua_setfield(L, -2, "config_dir");
+    lua_pushliteral(L, LUAKIT_DOC_PATH);
+    lua_setfield(L, -2, "doc_dir");
+    lua_pushliteral(L, LUAKIT_MAN_PATH);
+    lua_setfield(L, -2, "man_dir");
+    lua_pushliteral(L, LUAKIT_PIXMAP_PATH);
+    lua_setfield(L, -2, "pixmap_dir");
+    lua_pushliteral(L, LUAKIT_APP_PATH);
+    lua_setfield(L, -2, "app_dir");
+    return 1;
+}
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -700,8 +719,12 @@ luaH_luakit_index(lua_State *L)
         return luaH_luakit_selection_table_push(L);
 
       case L_TK_INSTALL_PATH:
+        warn("luakit.install_path is deprecated: use luakit.install_paths.install_dir instead");
         lua_pushliteral(L, LUAKIT_INSTALL_PATH);
         return 1;
+
+      case L_TK_INSTALL_PATHS:
+        return luaH_luakit_push_install_paths_table(L);
 
       case L_TK_VERSION:
         lua_pushliteral(L, VERSION);

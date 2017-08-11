@@ -48,7 +48,7 @@ local function search_load(path, memorize)
             local dat = load_resource("./"..path, memorize)
             if dat then return dat end
         end
-        path = luakit.install_path.."/"..path
+        path = luakit.install_paths.install_dir.."/"..path
     end
 
     return assert(load_resource(path, memorize),

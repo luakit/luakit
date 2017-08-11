@@ -46,8 +46,12 @@ $(THEAD) $(TSRC): $(TLIST)
 
 buildopts.h: buildopts.h.in
 	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' \
-		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' buildopts.h.in \
-		> buildopts.h
+		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' \
+		-e 's#LUAKIT_DOC_PATH .*#LUAKIT_DOC_PATH "$(DOCDIR)"#' \
+		-e 's#LUAKIT_MAN_PATH .*#LUAKIT_MAN_PATH "$(MANPREFIX)"#' \
+		-e 's#LUAKIT_PIXMAP_PATH .*#LUAKIT_PIXMAP_PATH "$(PIXMAPDIR)"#' \
+		-e 's#LUAKIT_APP_PATH .*#LUAKIT_APP_PATH "$(APPDIR)"#' \
+		buildopts.h.in > buildopts.h
 
 $(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
 

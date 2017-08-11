@@ -117,6 +117,14 @@ T.test_website_data = function ()
     v:destroy()
 end
 
+T.test_luakit_install_paths = function ()
+    local paths = assert(luakit.install_paths)
+    assert.equal(paths.install_dir, luakit.install_path)
+    for _, k in ipairs {"install_dir", "config_dir", "doc_dir", "man_dir", "pixmap_dir", "app_dir"} do
+        assert(type(paths[k]) == "string")
+    end
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

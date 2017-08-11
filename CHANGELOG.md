@@ -1,5 +1,15 @@
 # Changelog
 
+## [Unreleased]
+
+### Added
+
+ - Added `luakit.install_paths` table. `luakit.install_path` is now deprecated.
+
+### Fixed
+
+ - Fixed <luakit://help/> not finding documentation with custom DOCDIR
+
 ## [2017-08-10]
 
  - Required WebKitGTK+ version: 2.16+

@@ -93,6 +93,7 @@ indexof
 insert
 inspector
 install_path
+install_paths
 interval
 javascript_can_access_clipboard
 javascript_can_open_windows_automatically

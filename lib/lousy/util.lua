@@ -318,7 +318,7 @@ end
 function _M.find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { f, luakit.data_dir.."/"..f, luakit.install_path.."/"..f }
+    local paths = { f, luakit.data_dir.."/"..f, luakit.install_paths.install_dir.."/"..f }
     return find_file(paths)
 end
 

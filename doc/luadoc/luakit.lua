@@ -35,8 +35,14 @@
 -- @readonly
 
 --- The luakit installation path.
+-- @deprecated use @ref{install_paths|install_paths.install_dir} instead.
 -- @property install_path
 -- @type string
+-- @readonly
+
+--- The paths to where luakit's files are installed.
+-- @property install_paths
+-- @type table
 -- @readonly
 
 --- The luakit version.
