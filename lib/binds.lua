@@ -387,24 +387,10 @@ modes.add_binds("insert", {
 })
 
 --- Readline bindings for the luakit input bar.
+-- @deprecated use @ref{readline/bindings} instead
 -- @readwrite
 -- @type table
-_M.readline_bindings = {
-    { "<Shift-Insert>", "Insert contents of primary selection at cursor position.",
-        function (w) w:insert_cmd(luakit.selection.primary) end },
-    { "<Control-w>", "Delete previous word.", function (w) w:del_word() end },
-    { "<Control-u>", "Delete until beginning of current line.", function (w) w:del_line() end },
-    { "<Control-h>", "Delete character to the left.", function (w) w:del_backward_char() end },
-    { "<Control-d>", "Delete character to the right.", function (w) w:del_forward_char() end },
-    { "<Control-a>", "Move cursor to beginning of current line.", function (w) w:beg_line() end },
-    { "<Control-e>", "Move cursor to end of current line.", function (w) w:end_line() end },
-    { "<Control-f>", "Move cursor forward one character.", function (w) w:forward_char() end },
-    { "<Control-b>", "Move cursor backward one character.", function (w) w:backward_char() end },
-    { "<Mod1-f>", "Move cursor forward one word.", function (w) w:forward_word() end },
-    { "<Mod1-b>", "Move cursor backward one word.", function (w) w:backward_word() end },
-}
-
-modes.add_binds("command", _M.readline_bindings)
+_M.readline_bindings = require("readline").bindings
 
 -- Switching tabs with Mod1+{1,2,3,...}
 do

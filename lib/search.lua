@@ -10,8 +10,7 @@
 
 local webview = require("webview")
 local new_mode = require("modes").new_mode
-local modes, binds = require("modes"), require("binds")
-local add_binds = modes.add_binds
+local add_binds = require("modes").add_binds
 
 local _M = {}
 
@@ -94,8 +93,6 @@ add_binds("search", {
         w:search(w.search_state.last_search, false)
     end },
 })
-
-modes.add_binds("search", binds.readline_bindings)
 
 -- Add search functions to webview
 for k, m in pairs({
