@@ -33,6 +33,15 @@ local function convert_bind_syntax(b)
     return string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
 end
 
+local function convert_binds_table(binds)
+    if binds.converted then return binds end
+    local converted = { converted = true }
+    for i, bind in ipairs(binds) do
+        converted[i] =  { convert_bind_syntax(bind[1]), bind[2], bind[3] }
+    end
+    return converted
+end
+
 --- Set of modifiers to ignore.
 -- @readwrite
 _M.ignore_mask = {
@@ -96,6 +105,7 @@ end
 -- called.
 -- @treturn boolean `true` if an 'any' binding was ran successfully.
 function _M.match_any(object, binds, args)
+    binds = convert_binds_table(binds)
     for _, m in ipairs(binds) do
         local b, a, o = unpack(m)
         if b == "<any>" then
@@ -123,6 +133,7 @@ end
 -- called.
 -- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_key(object, binds, mods, key, args)
+    binds = convert_binds_table(binds)
     for _, m in ipairs(binds) do
         local b, a, o = unpack(m)
         if b == "<".. (mods and (mods.."-") or "") .. key .. ">" then
@@ -150,6 +161,7 @@ end
 -- called.
 -- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_but(object, binds, mods, button, args)
+    binds = convert_binds_table(binds)
     for _, m in ipairs(binds) do
         local b, a, o = unpack(m)
         if b == "<" .. (mods and (mods.."-") or "") .. "Mouse" .. button .. ">" then
@@ -195,6 +207,7 @@ end
 -- @treturn boolean `true` if a partial match exists.
 function _M.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+    binds = convert_binds_table(binds)
 
     local has_partial_match = false
     for _, m in ipairs(binds) do
@@ -225,6 +238,7 @@ end
 -- @treturn boolean `true` if either type of binding was matched and called.
 function _M.match_cmd(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+    binds = convert_binds_table(binds)
 
     -- The command is the first word in the buffer string
     local command  = string.match(buffer, "^(%S+)")
@@ -297,6 +311,7 @@ end
 function _M.hit(object, binds, mods, key, args)
     -- Convert keys using map
     key = _M.map[key] or key
+    binds = convert_binds_table(binds)
 
     if not key then return false end
     local len = string.wlen(key)
