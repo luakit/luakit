@@ -27,7 +27,7 @@ In your `rc.lua` after `require "downloads"` add (or modify) the following:
 
 ### How do I stop some links opening in new windows?
 
-Add your own @ref{new-window-decision} webview signal handler which always opens
+Add your own @ref{"new-window-decision"} webview signal handler which always opens
 links in new tabs.
 
 In your `rc.lua` after `require "webview"` add (or modify) the following:

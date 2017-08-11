@@ -461,22 +461,17 @@ local generate_documentation = function (docs, out_dir)
     -- Build symbol index
     do
         local add_index_obj = function (doc, item)
-            local short_name = item and item.name or doc.name
-            local get_long_name = function (d, i)
-                return d.name .. "/" .. (i and i.name or "")
-            end
-            if index[short_name] then
-                -- Move any item already using the short name to its long name slot
-                local o = index[short_name]
-                local new_name = get_long_name(o.doc, o.item)
-                assert(not index[new_name])
-                index[new_name] = o
-                index[short_name] = false
-            end
-            if index[short_name] == false then
-                index[get_long_name(doc, item)] = { doc = doc, item = item }
-            else
+            local name = item and (item.type == "signal" and '"'..item.name..'"' or item.name)
+            local short_name = name or doc.name
+            local long_name = doc.name .. "/" .. (name or "")
+            -- Always allow using the long name
+            assert(not index[long_name], "Name conflict for " .. long_name)
+            index[long_name] = { doc = doc, item = item }
+            -- Allow using the short name, but blacklist it on collision
+            if index[short_name] == nil then
                 index[short_name] = { doc = doc, item = item }
+            else
+                index[short_name] = false
             end
         end
         for _, doc in ipairs(lousy.util.table.join(docs.modules, docs.classes)) do
