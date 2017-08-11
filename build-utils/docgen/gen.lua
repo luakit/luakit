@@ -132,7 +132,7 @@ end
 
 local generate_function_body_html = function (func)
     local html_template = [==[
-        <div class=function>
+        <div>
             {deprecated}
             {desc}
             {params}
@@ -154,10 +154,12 @@ local generate_function_html = function (func, prefix)
         func.name = ""
     end
     local html_template = [==[
-        <h3 class=function>
-            <span class=target id="{type}-{name}"></span>
-            <a href="#{type}-{name}">{prefix}{name} ({param_names})</a>
-        </h3>
+        <div class=function id="{type}-{name}">
+            <h3>
+                <a href="#{type}-{name}">{prefix}{name} ({param_names})</a>
+            </h3>
+            {body}
+        </div>
     ]==]
 
     local param_names = {}
@@ -170,21 +172,25 @@ local generate_function_html = function (func, prefix)
         type = func.type,
         name = func.name,
         param_names = table.concat(param_names, ", "),
-    }) .. generate_function_body_html(func)
+        body = generate_function_body_html(func),
+    })
     return html
 end
 
 local generate_signal_html = function (func)
     local html_template = [==[
-        <h3 class=function>
-            <span class=target id="signal-{name}"></span>
-            <a href="#signal-{name}">"{name}"</a>
-        </h3>
+        <div class=function id="signal-{name}">
+            <h3>
+                <a href="#signal-{name}">"{name}"</a>
+            </h3>
+            {body}
+        </div>
     ]==]
 
     local html = string.gsub(html_template, "{([%w_]+)}", {
         name = func.name,
-    }) .. generate_function_body_html(func)
+        body = generate_function_body_html(func),
+    })
     return html
 end
 
@@ -205,17 +211,18 @@ end
 
 local generate_property_html = function (prop, prefix)
     local html_template = [==[
-        <h3 class=property>
-            <span class=target id="property-{name}"></span>
-            <a href="#property-{name}">{prefix}{name}</a>
-        </h3>
-        <div class="two-col property">
-            <div>
-                <div>{typestr}</div>
-                <div>{default}</div>
-                <div>{readwrite}</div>
+        <div class=property id="property-{name}">
+            <h3>
+                <a href="#property-{name}">{prefix}{name}</a>
+            </h3>
+            <div class="two-col property-body">
+                <div>
+                    <div>{typestr}</div>
+                    <div>{default}</div>
+                    <div>{readwrite}</div>
+                </div>
+                <div>{desc}</div>
             </div>
-            <div>{desc}</div>
         </div>
     ]==]
 
