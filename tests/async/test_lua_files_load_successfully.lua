@@ -7,9 +7,10 @@ local test = require("tests.lib")
 local T = {}
 
 T.test_all_lua_files_load_successfully = function ()
-    local exclude_files = { "config/rc.lua", "_wm%.lua$" }
+    local exclude_files = { "config/rc.lua", "_wm%.lua$", "unique_instance%.lua" }
     local files = test.find_files({"config/", "lib/"}, ".+%.lua$", exclude_files)
 
+    require "unique_instance"
     for _, file in ipairs(files) do
         local pkg = file:gsub("^%a+/", ""):gsub("%.lua$", ""):gsub("/", ".")
         require(pkg)

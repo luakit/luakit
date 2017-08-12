@@ -4,21 +4,7 @@
 
 require "lfs"
 
-if unique then
-    unique.new("org.luakit")
-    -- Check for a running luakit instance
-    if unique.is_running() then
-        if uris[1] then
-            for _, uri in ipairs(uris) do
-                if lfs.attributes(uri) then uri = os.abspath(uri) end
-                unique.send_message("tabopen " .. uri)
-            end
-        else
-            unique.send_message("winopen")
-        end
-        luakit.quit()
-    end
-end
+require "unique_instance"
 
 -- Set the number of web processes to use. A value of 0 means 'no limit'.
 luakit.process_limit = 4
@@ -190,24 +176,6 @@ if w then
 else
     -- Or open new window
     window.new(uris)
-end
-
--------------------------------------------
--- Open URIs from other luakit instances --
--------------------------------------------
-
-if unique then
-    unique.add_signal("message", function (msg, screen)
-        local cmd, arg = string.match(msg, "^(%S+)%s*(.*)")
-        local ww = lousy.util.table.values(window.bywidget)[1]
-        if cmd == "tabopen" then
-            ww:new_tab(arg)
-        elseif cmd == "winopen" then
-            ww = window.new((arg ~= "") and { arg } or {})
-        end
-        ww.win.screen = screen
-        ww.win.urgency_hint = true
-    end)
 end
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
