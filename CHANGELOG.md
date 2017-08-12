@@ -2,6 +2,11 @@
 
 ## [Unreleased]
 
+### Migrating from version 2017-08-10
+
+ 1. Remove the two `if unique then ... end` blocks from your `rc.lua`.
+ 2. Add `require "unique_instance"` to your `rc.lua`, before all other `require` statements.
+
 ### Added
 
  - Added `luakit.install_paths` table. `luakit.install_path` is now deprecated.
@@ -12,6 +17,7 @@
  - It is no longer necessary to add bindings to tables with `lousy.bind.add_binds()`
  - Readline bindings have been moved to `readline.lua`
  - Readline bindings are now automatically bound when the input bar is visible.
+ - Unique instance support has been moved to `unique_instance.lua`.
 
 ### Fixed
 
