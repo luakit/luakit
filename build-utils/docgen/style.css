@@ -121,7 +121,6 @@ div.good.alert {
 #content {
     flex: 1;
     position: relative;
-    max-width: 41rem;
 }
 #sidebar {
     flex: 0 0 13rem;
@@ -131,7 +130,6 @@ div.good.alert {
 
 @media (max-width: 55rem) {
     #sidebar { display: none; }
-    #content { max-width: 100vw; }
 }
 
 #sidebar > h2 {
