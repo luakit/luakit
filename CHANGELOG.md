@@ -14,6 +14,7 @@
 
  - Added `luakit.install_paths` table. `luakit.install_path` is now deprecated.
  - Added `Control-Y` readline binding.
+ - Added ability to control whether links from secondary instances open in a new window.
 
 ### Changed
 

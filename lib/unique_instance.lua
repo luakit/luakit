@@ -20,6 +20,14 @@ end
 local lfs = require "lfs"
 local unique = luakit.unique
 
+--- Whether links from secondary luakit instances should open in a new
+-- window; if `true`, links will be opened in a new window, if `false`,
+-- links will be opened in an existing luakit window.
+-- @type boolean
+-- @readwrite
+-- @default `false`
+_M.open_links_in_new_window = false
+
 if not unique then
     msg.verbose("luakit started with no-unique")
     return _M
@@ -30,30 +38,45 @@ unique.new("org.luakit")
 -- Check for a running luakit instance
 if unique.is_running() then
     msg.verbose("a primary instance is already running")
-    if uris[1] then
-        for _, uri in ipairs(uris) do
-            if lfs.attributes(uri) then uri = os.abspath(uri) end
-            unique.send_message("tabopen " .. uri)
-        end
-    else
-        unique.send_message("winopen")
+    local pickle = require("lousy.pickle")
+
+    local u = {}
+    for i, uri in ipairs(uris) do
+        u[i] = lfs.attributes(uri) and os.abspath(uri) or uri
     end
+
+    unique.send_message("open-uri-set " .. pickle.pickle(u))
     luakit.quit()
 end
 
 unique.add_signal("message", function (message, screen)
     msg.verbose("received message from secondary instance")
-    local lousy = require "lousy"
-    local window = require "window"
+    local lousy, window = require "lousy", require "window"
     local cmd, arg = string.match(message, "^(%S+)%s*(.*)")
-    local ww = lousy.util.table.values(window.bywidget)[1]
-    if cmd == "tabopen" then
-        ww:new_tab(arg)
+    local w
+
+    if cmd == "open-uri-set" then
+        local u = lousy.pickle.unpickle(arg)
+        -- Get the window to use
+        if #u == 0 or _M.open_links_in_new_window then
+            w = window.new(u)
+        else
+            w = lousy.util.table.values(window.bywidget)[1]
+        end
+
+        if not _M.open_links_in_new_window then
+            for _, uri in ipairs(u) do
+                w:new_tab(w:search_open(uri))
+            end
+        end
+    elseif cmd == "tabopen" then
+        w = lousy.util.table.values(window.bywidget)[1]
+        w:new_tab(arg)
     elseif cmd == "winopen" then
-        ww = window.new((arg ~= "") and { arg } or {})
+        w = window.new((arg ~= "") and { arg } or {})
     end
-    ww.win.screen = screen
-    ww.win.urgency_hint = true
+    w.win.screen = screen
+    w.win.urgency_hint = true
 end)
 
 return _M
