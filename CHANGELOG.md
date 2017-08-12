@@ -6,6 +6,9 @@
 
  1. Remove the two `if unique then ... end` blocks from your `rc.lua`.
  2. Add `require "unique_instance"` to your `rc.lua`, before all other `require` statements.
+ 3. Remove the following items from the `window.methods` table in your `window.lua`:
+    `insert_cmd`, `del_word`, `del_line`, `del_backward_char`, `del_forward_char`, `beg_line`,
+    `end_line`, `forward_char`, `backward_char`, `forward_word`, `backward_word`, `yank_text`.
 
 ### Added
 
@@ -14,8 +17,8 @@
 
 ### Changed
 
- - It is no longer necessary to add bindings to tables with `lousy.bind.add_binds()`
- - Readline bindings have been moved to `readline.lua`
+ - It is no longer necessary to add bindings to tables with `lousy.bind.add_binds()`.
+ - Readline bindings have been moved to `readline.lua`.
  - Readline bindings are now automatically bound when the input bar is visible.
  - Unique instance support has been moved to `unique_instance.lua`.
 
