@@ -6,7 +6,7 @@
 -- luakit and open requested links on that instance, instead of opening
 -- two separate and independent instances.
 --
--- @module unique
+-- @module luakit.unique
 -- @author Mason Larobina
 -- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
