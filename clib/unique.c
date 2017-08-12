@@ -126,6 +126,75 @@ luaH_unique_send_message(lua_State *L)
     return 0;
 }
 
+static void
+luaH_open_luakit_unique(lua_State *L, const struct luaL_Reg methods[], const struct luaL_Reg meta[])
+{
+    luaL_newmetatable(L, "unique");                                    /* 1 */
+    lua_pushvalue(L, -1);           /* dup metatable                      2 */
+    lua_setfield(L, -2, "__index"); /* metatable.__index = metatable      1 */
+
+    luaL_register(L, NULL, meta);                                      /* 1 */
+
+    /* No point checking for package.loaded["luakit.unique"] here */
+    lua_newtable(L);
+    luaL_register(L, NULL, methods);
+    /* Set package.loaded["luakit.unique"] */
+    lua_getfield(L, LUA_GLOBALSINDEX, "package");
+    lua_getfield(L, -1, "loaded");
+    lua_pushvalue(L, -3);
+    lua_setfield(L, -2, "luakit.unique");
+    lua_pop(L, 2);
+    /* Set luakit.unique: rawset since lib has an __index metamethod */
+    lua_getfield(L, LUA_GLOBALSINDEX, "luakit");
+    lua_pushliteral(L, "unique");
+    lua_pushvalue(L, -3);
+    lua_rawset(L, -3);
+    lua_pop(L, 1);
+
+    lua_pushvalue(L, -1);           /* dup self as metatable              3 */
+    lua_setmetatable(L, -2);        /* set self as metatable              2 */
+    lua_pop(L, 2);
+}
+
+static gboolean warned = FALSE;
+
+static int
+luaH_unique_proxy_index(lua_State *L)
+{
+    if (!warned) {
+        warned = TRUE;
+        warn("the unique library has been moved to luakit.unique");
+        warn("this compatibility wrapper will be removed in a future version");
+        warn("you should remove the two `if unique then ... end` blocks from your rc.lua");
+        warn("then, at the start of your rc.lua, add `require \"unique_instance\"`");
+    }
+
+    lua_getfield(L, LUA_GLOBALSINDEX, "luakit");
+    lua_getfield(L, -1, "unique");
+    lua_pushvalue(L, 2);
+    lua_gettable(L, -2);
+    return 1;
+}
+
+static void
+luaH_open_unique_proxy(lua_State *L)
+{
+    /* Construct proxy metatable */
+    lua_newtable(L);
+    lua_newtable(L);
+    lua_pushcfunction(L, &luaH_unique_proxy_index);
+    lua_setfield(L, -2, "__index");
+    lua_setmetatable(L, -2);
+    /* Set package.loaded["unique"] */
+    lua_getfield(L, LUA_GLOBALSINDEX, "package");
+    lua_getfield(L, -1, "loaded");
+    lua_pushvalue(L, -3);
+    lua_setfield(L, -2, "unique");
+    lua_pop(L, 2);
+    /* Set luakit.unique: rawset since lib has an __index metamethod */
+    lua_setglobal(L, "unique");
+}
+
 void
 unique_lib_setup(lua_State *L)
 {
@@ -141,8 +210,8 @@ unique_lib_setup(lua_State *L)
     /* create signals array */
     unique_class.signals = signal_new();
 
-    /* export unique lib */
-    luaH_openlib(L, "unique", unique_lib, unique_lib);
+    luaH_open_luakit_unique(L, unique_lib, unique_lib);
+    luaH_open_unique_proxy(L);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
