@@ -24,6 +24,7 @@
 #include "common/luaserialize.h"
 #include "common/luayield.h"
 #include "common/ipc.h"
+#include "common/resource.h"
 #include "common/signal.h"
 #include "luah.h"
 #include "log.h"
@@ -683,6 +684,7 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(DATA_DIR,         globalconf.data_dir)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
+      PS_CASE(RESOURCE_PATH,    resource_path_get())
       /* push boolean properties */
       PB_CASE(VERBOSE,          log_get_verbosity("all") >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
@@ -778,7 +780,11 @@ luaH_luakit_newindex(lua_State *L)
                 if (!g_strv_contains(accepted, *lang))
                     warn("unrecognized language code '%s'", *lang);
             g_free(langs);
+            break;
         }
+        case L_TK_RESOURCE_PATH:
+            resource_path_set(luaL_checkstring(L, 3));
+            break;
         default:
             break;
     }

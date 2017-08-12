@@ -23,6 +23,7 @@
 #include "extension/clib/luakit.h"
 #include "extension/clib/page.h"
 #include "common/clib/luakit.h"
+#include "common/resource.h"
 #include "common/signal.h"
 
 #include <glib.h>
@@ -69,8 +70,27 @@ luaH_luakit_index(lua_State *L)
 
     switch (token) {
         PI_CASE(WEB_PROCESS_ID, getpid())
+        PS_CASE(RESOURCE_PATH, resource_path_get())
         default: return 0;
     }
+}
+
+static gint
+luaH_luakit_newindex(lua_State *L)
+{
+    if (!lua_isstring(L, 2))
+        return 0;
+    luakit_token_t token = l_tokenize(lua_tostring(L, 2));
+
+    switch (token) {
+        case L_TK_RESOURCE_PATH:
+            resource_path_set(luaL_checkstring(L, 3));
+            break;
+        default:
+            break;
+    }
+
+    return 0;
 }
 
 static gint
@@ -101,6 +121,7 @@ luakit_lib_setup(lua_State *L)
         LUA_CLASS_METHODS(luakit)
         LUAKIT_LIB_COMMON_METHODS
         { "__index",           luaH_luakit_index },
+        { "__newindex",        luaH_luakit_newindex },
         { "register_function", luaH_luakit_register_function },
         { NULL,              NULL }
     };

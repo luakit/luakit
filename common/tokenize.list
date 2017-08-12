@@ -312,3 +312,4 @@ system_config_dirs
 get_source
 is_alive
 can_focus
+resource_path

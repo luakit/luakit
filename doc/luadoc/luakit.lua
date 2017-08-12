@@ -212,4 +212,15 @@
 -- is already lowercase or if case conversion does not apply to the key.
 -- @function wch_lower
 
+--- The set of paths used by luakit to search for resource files.
+-- This property is similar to `package.path`; it is a semicolon-separated list
+-- of paths, and paths appearing earlier in the list will be searched first when
+-- looking for resource files.
+--
+-- By default, it includes the current directory and the luakit installation
+-- directory.
+-- @type string
+-- @readwrite
+-- @property resource_path
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80
