@@ -1,6 +1,15 @@
 @name Migration Guide
 #Migration Guide
 
+## Migrating from version 2017-08-10
+
+### Remove unique instance code from `rc.lua`
+
+Unique instance support has been moved to a module. To update, follow these steps:
+
+ 1. Remove the two `if unique then ... end` blocks from your `rc.lua`.
+ 2. Add `require "unique_instance"` to your `rc.lua`, before all other `require` statements.
+
 ## Migrating from a pre-WebKit2 Version
 
 The latest luakit release is built around the WebKit 2 APIs. Changes in the APIs
