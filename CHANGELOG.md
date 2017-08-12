@@ -23,6 +23,7 @@
  - Readline bindings have been moved to `readline.lua`.
  - Readline bindings are now automatically bound when the input bar is visible.
  - Unique instance support has been moved to `unique_instance.lua`.
+ - The `image` widget now uses `luakit.resource_path` to locate local files.
 
 ### Fixed
 

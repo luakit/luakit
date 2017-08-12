@@ -21,6 +21,7 @@
 #include "luah.h"
 #include "widgets/common.h"
 #include "web_context.h"
+#include "common/resource.h"
 
 static widget_t*
 luaH_checkimage(lua_State *L, gint udx)
@@ -39,13 +40,10 @@ luaH_image_set_from_file_name(lua_State *L)
 
     float scale = gtk_widget_get_scale_factor(w->widget);
 
-#if !DEVELOPMENT_PATHS
-    /* Convert relative paths to install location */
-    if (path[0] != '/')
-        path = g_build_filename(LUAKIT_INSTALL_PATH, path, NULL);
-    else
-#endif
-    path = g_strdup(path);
+    path = resource_find_file(path);
+
+    if (!path)
+        return luaL_error(L, "unable to find image file");
 
     /* Detect @2x file if on HiDPI screen */
     if (scale == 2) {
