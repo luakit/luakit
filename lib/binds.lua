@@ -94,8 +94,8 @@ modes.add_binds("all", {
 
     { "<Control-Scroll>", "Increase/decrease zoom level.", function (w, o)
         scroll_acc = scroll_acc + o.dy
-        while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in() end
-        while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out() end
+        while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in(zoom_step) end
+        while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out(zoom_step) end
     end },
     { "<Shift-Scroll>", "Scroll the current page left/right.", function (w, o)
         w:scroll{ xrel = scroll_step*o.dy }
