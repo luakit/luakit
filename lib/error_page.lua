@@ -24,7 +24,7 @@ _M.html_template = [==[
     <html>
         <head>
             <title>{title}</title>
-            <link rel="icon" type="image/png" href="luakit://resources/icons/tab-icon-{error_icon}.png" />
+            <link rel="icon" type="image/png" href="luakit://icons/tab-icon-{error_icon}.png" />
             <style type="text/css">
                 {style}
             </style>

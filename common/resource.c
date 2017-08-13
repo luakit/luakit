@@ -71,7 +71,7 @@ resource_find_file(const gchar *path)
 __attribute__((constructor)) static void
 resource_init(void)
 {
-    resource_path = g_strdup("./;"LUAKIT_INSTALL_PATH);
+    resource_path = g_strdup("./resources;"LUAKIT_INSTALL_PATH"/resources");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

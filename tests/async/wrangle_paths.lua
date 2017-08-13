@@ -17,6 +17,6 @@ rel_paths = table.concat(rel_paths, ";")
 luakit_paths = table.concat(luakit_paths, ";")
 package.path = string.format("./?.lua;%s;%s;%s", system_paths, rel_paths, luakit_paths)
 
-luakit.resource_path = "./" -- Don't use installed luakit when testing
+luakit.resource_path = "./resources" -- Don't use installed luakit when testing
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -38,10 +38,10 @@ tab.add_signal("build", function (tl, view)
             assert(not err, err)
             favicon_uri = favicon_uri:match("^luakit://(.*)")
             if favicon_uri then fav:filename(favicon_uri)
-            elseif v.private then fav:filename("resources/icons/tab-icon-private.png")
-            elseif uri:match("^luakit://") then fav:filename("resources/icons/tab-icon-chrome.png")
+            elseif v.private then fav:filename("icons/tab-icon-private.png")
+            elseif uri:match("^luakit://") then fav:filename("icons/tab-icon-chrome.png")
             elseif not fav:set_favicon_for_uri(uri) then
-                fav:filename("resources/icons/tab-icon-page.png")
+                fav:filename("icons/tab-icon-page.png")
             end
         end})
     end
