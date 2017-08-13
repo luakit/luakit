@@ -35,7 +35,6 @@ local widgets = {
 webview.add_signal("init", function (view)
     -- Update widget when current page changes status
     view:add_signal("property::zoom_level", function (v)
-        print("!!!!!!!!")
         local w = webview.window(v)
         if w and w.view == v then
             wc.update_widgets_on_w(widgets, w)
