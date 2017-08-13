@@ -44,6 +44,7 @@ resource_path_get()
 gchar *
 resource_find_file(const gchar *path)
 {
+    g_assert(path);
     verbose("finding resource file '%s'", path);
     if (!resource_paths)
         resource_paths = g_strsplit(resource_path, ";", 0);
