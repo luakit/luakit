@@ -12,7 +12,6 @@
 local _M = {}
 
 local window = require("window")
-local webview = require("webview")
 local globals = require("globals")
 
 -- Binding aliases
@@ -139,15 +138,19 @@ local actions = { scroll = {
     zoom_set = {
         desc = "Zoom to a specific percentage when specifying a count, and reset the page zoom otherwise.",
         func = function (w, m)
+            if not m.count then
+                -- Hack: zoom to 100% if it's an image page
+                local image_css = package.loaded.image_css
+                if image_css and w.view.stylesheets[image_css.stylesheet] then
+                    w:zoom_set(1)
+                    return
+                end
+            end
             local zoom_level = m.count or globals.default_zoom_level or 100
             w:zoom_set(zoom_level/100)
         end,
     },
 }}
-
-webview.add_signal("init", function (view)
-    view.zoom_level = (globals.default_zoom_level or 100)/100
-end)
 
 modes.add_binds("normal", {
     -- Autoparse the `[count]` before a binding and re-call the hit function

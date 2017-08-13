@@ -109,6 +109,12 @@ local domain_props = globals.domain_props
 
 local _M = {}
 
+-- Automatically reset to the default zoom
+if globals.default_zoom_level then
+    domain_props.all = domain_props.all or {}
+    domain_props.all.zoom_level = domain_props.all.zoom_level or (globals.default_zoom_level/100)
+end
+
 webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)
         if status ~= "committed" or v.uri == "about:blank" then return end
