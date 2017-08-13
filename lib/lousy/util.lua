@@ -335,6 +335,18 @@ function _M.find_cache(f)
     return find_file(paths)
 end
 
+--- Search for and return the filepath of a file in luakit's resource directories.
+-- @tparam string f The relative filepath.
+-- @treturn string The first valid filepath or an error.
+function _M.find_resource(f)
+    -- Ignore absolute paths
+    if rstring.match(f, "^/") then return f end
+    -- Search locations
+    local paths = string.split(luakit.resource_path, ";")
+    for i in ipairs(paths) do paths[i] = paths[i]:gsub("/*$", "") .. "/" .. f end
+    return find_file(paths)
+end
+
 --- Recursively traverse widget tree and return all widgets.
 -- @tparam widget wi The widget.
 function _M.recursive_remove(wi)
