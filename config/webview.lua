@@ -84,6 +84,12 @@ local init_funcs = {
                 return true
             end
         end)
+        view:add_signal("scroll", function (v, mods, dx, dy, context)
+            local w = webview.window(v)
+            if w:hit(mods, "Scroll", { context = context, dx = dx, dy = dy }) then
+                return true
+            end
+        end)
     end,
 
     -- Reset the mode on navigation
