@@ -20,6 +20,7 @@
  - Added `lousy.util.find_resource` function.
  - Added `scroll` signal.
  - Added ability to bind actions to webview scroll events.
+ - Added ability to set the default zoom level.
 
 ### Changed
 

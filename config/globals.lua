@@ -8,6 +8,7 @@ local globals = {
     max_srch_history    = 100,
     default_window_size = "800x600",
     vertical_tab_width  = 200,
+    default_zoom_level  = 100,
 
  -- Disables loading of hostnames from /etc/hosts (for large host files)
  -- load_etc_hosts      = false,

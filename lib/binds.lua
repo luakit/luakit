@@ -12,6 +12,7 @@
 local _M = {}
 
 local window = require("window")
+local webview = require("webview")
 local globals = require("globals")
 
 -- Binding aliases
@@ -126,7 +127,27 @@ local actions = { scroll = {
         desc = "Scroll the current page down a full screen.",
         func = function (w, m) w:scroll{ ypagerel =  page_step*(m.count or 1) } end,
     },
+}, zoom = {
+    zoom_in = {
+        desc = "Zoom in to the current page.",
+        func = function (w, m) w:zoom_in(zoom_step * (m.count or 1)) end,
+    },
+    zoom_out = {
+        desc = "Zoom out from the current page.",
+        func = function (w, m) w:zoom_out(zoom_step * (m.count or 1)) end,
+    },
+    zoom_set = {
+        desc = "Zoom to a specific percentage when specifying a count, and reset the page zoom otherwise.",
+        func = function (w, m)
+            local zoom_level = m.count or globals.default_zoom_level or 100
+            w:zoom_set(zoom_level/100)
+        end,
+    },
 }}
+
+webview.add_signal("init", function (view)
+    view.zoom_level = (globals.default_zoom_level or 100)/100
+end)
 
 modes.add_binds("normal", {
     -- Autoparse the `[count]` before a binding and re-call the hit function
@@ -214,13 +235,12 @@ modes.add_binds("normal", {
     { "%", "Go to `[count]` percent of the document.", function (w, m) w:scroll{ ypct = m.count } end },
 
     -- Zoom
-    { "+", "Enlarge text zoom of the current page.", function (w, m) w:zoom_in(zoom_step * m.count) end, {count=1} },
-    { "-", "Reduce text zom of the current page.", function (w, m) w:zoom_out(zoom_step * m.count) end, {count=1} },
-    { "=", "Reset zoom level.", function (w, _) w:zoom_set() end },
-    { "zi", "Enlarge text zoom of current page.", function (w, m) w:zoom_in(zoom_step  * m.count) end, {count=1} },
-    { "zo", "Reduce text zoom of current page.", function (w, _, m) w:zoom_out(zoom_step * m.count) end, {count=1} },
-    { "zz", [[Set current page zoom to `[count]` percent with `[count]zz`, use `[count]zZ` to set full zoom percent.]],
-        function (w, _, m) w:zoom_set(m.count/100) end, {count=100} },
+    { "+", actions.zoom.zoom_in },
+    { "-", actions.zoom.zoom_out },
+    { "=", actions.zoom.zoom_set },
+    { "zi", actions.zoom.zoom_in },
+    { "zo", actions.zoom.zoom_out },
+    { "zz", actions.zoom.zoom_set },
     { "<F11>", "Toggle fullscreen mode.", function (w) w.win.fullscreen = not w.win.fullscreen end },
 
     -- Open primary selection contents.
