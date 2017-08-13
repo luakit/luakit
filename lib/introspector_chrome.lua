@@ -223,28 +223,41 @@ local mode_bind_template = [==[
 ]==]
 
 local main_js = [=[
-$(document).ready(function () {
-    var $body = $(document.body);
+window.onload=function () {
+    // toggle source display
+    let bindClass = document.getElementsByClassName("bind");
+    for (let b = 0; b < bindClass.length; b++) {
+        bindClass[b].onclick = function (event) {
+            let func_sourceStyle = bindClass[b].getElementsByClassName("func-source")[0].style;
+            if (func_sourceStyle.display == "none") {
+                func_sourceStyle.display = "block";
+            } else {
+                func_sourceStyle.display = "none";
+            }
+        }
+    }
 
-    $body.on("click", ".bind .linedefined", function (event) {
-        event.preventDefault();
-        var $e = $(this);
-        open_editor($e.attr("filename"), $e.attr("line"));
-        return false;
-    })
+    // open a file
+    let filenameClass = document.getElementsByClassName("filename");
+    for (let f = 0; f < filenameClass.length; l++) {
+        filenameClass[f].onclick = function (event) {
+            event.preventDefault();
+            open_editor(event.target.innerText);
+            return false;
+        }
+    }
 
-    $body.on("click", ".bind .desc a", function (event) {
-        event.stopPropagation(); // prevent source toggling
-    })
-
-    $body.on("click", ".bind", function (e) {
-        var $src = $(this).find(".func-source");
-        if ($src.is(":visible"))
-            $src.slideUp();
-        else
-            $src.slideDown();
-    })
-});
+    // open a file with a custom line
+    let linedefinedClass = document.getElementsByClassName("linedefined");
+    for (let l = 0; l < linedefinedClass.length; l++) {
+        linedefinedClass[l].onclick = function (event) {
+            event.preventDefault();
+            let t = event.target;
+            open_editor(t.getAttribute("filename"), t.getAttribute("line"));
+            return false;
+        }
+    }
+}
 ]=]
 
 local source_lines = {}
