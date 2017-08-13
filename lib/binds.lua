@@ -57,6 +57,8 @@ _M.menu_binds = {
     { "<Shift-Tab>", "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
 }
 
+local scroll_acc = 0
+
 -- Add binds to special mode "all" which adds its binds to all modes.
 modes.add_binds("all", {
     { "<Escape>", "Return to `normal` mode.", function (w) w:set_prompt(); w:set_mode() end },
@@ -89,10 +91,14 @@ modes.add_binds("all", {
             end
         end },
 
-    { "<Control-Mouse4>", "Increase text zoom level.", function (w) w:zoom_in() end },
-    { "<Control-Mouse5>", "Reduce text zoom level.", function (w) w:zoom_out() end },
-    { "<Shift-Mouse4>", "Scroll left.", function (w) w:scroll{ xrel = -scroll_step } end },
-    { "<Shift-Mouse5>", "Scroll right.", function (w) w:scroll{ xrel = scroll_step } end },
+    { "<Control-Scroll>", "Increase/decrease zoom level.", function (w, o)
+        scroll_acc = scroll_acc + o.dy
+        while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in() end
+        while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out() end
+    end },
+    { "<Shift-Scroll>", "Scroll the current page left/right.", function (w, o)
+        w:scroll{ xrel = scroll_step*o.dy }
+    end },
 })
 
 local actions = { scroll = {

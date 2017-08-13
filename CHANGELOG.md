@@ -9,6 +9,7 @@
  3. Remove the following items from the `window.methods` table in your `window.lua`:
     `insert_cmd`, `del_word`, `del_line`, `del_backward_char`, `del_forward_char`, `beg_line`,
     `end_line`, `forward_char`, `backward_char`, `forward_word`, `backward_word`, `yank_text`.
+ 4. Migrate changes to `button_bind_match` to your `webview.lua`.
 
 ### Added
 
@@ -17,6 +18,8 @@
  - Added ability to control whether links from secondary instances open in a new window.
  - Added `luakit.resource_path` property to control where luakit searches for resource files.
  - Added `lousy.util.find_resource` function.
+ - Added `scroll` signal.
+ - Added ability to bind actions to webview scroll events.
 
 ### Changed
 
@@ -30,6 +33,7 @@
 
  - Fixed <luakit://help/> not finding documentation with custom DOCDIR
  - Various minor documentation fixes.
+ - Fixed `Control-Scroll` and `Shift-Scroll` key bindings not working with smooth scrolling.
 
 ## [2017-08-10]
 
