@@ -947,25 +947,25 @@ webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 static gboolean
 webview_scroll_cb(GtkWidget *view, GdkEventScroll *ev, widget_t *w)
 {
-    int button = 0, ret = FALSE;
-    if (ev->direction == GDK_SCROLL_UP || ev->direction == GDK_SCROLL_DOWN)
-        button = ev->direction == GDK_SCROLL_UP ? 4 : 5;
-    else if (ev->direction == GDK_SCROLL_SMOOTH) {
-        double dx, dy;
-        gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy);
-        if (dx == 0.0 && dy == -1.0) button = 4;
-        if (dx == 0.0 && dy ==  1.0) button = 5;
+    double dx, dy;
+    switch (ev->direction) {
+        case GDK_SCROLL_UP:     dx =  0; dy = -1; break;
+        case GDK_SCROLL_DOWN:   dx =  0; dy =  1; break;
+        case GDK_SCROLL_LEFT:   dx = -1; dy =  0; break;
+        case GDK_SCROLL_RIGHT:  dx =  1; dy =  0; break;
+        case GDK_SCROLL_SMOOTH: gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy); break;
+        default: g_assert_not_reached();
     }
-    if (button) {
-        GdkEventButton btn_ev = {
-            .state = ev->state,
-            .button = button,
-            .type = GDK_BUTTON_PRESS,
-        };
-        ret |= webview_button_cb(view, &btn_ev, w);
-        btn_ev.type = GDK_BUTTON_RELEASE;
-        ret |= webview_button_cb(view, &btn_ev, w);
-    }
+
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
+    lua_pushnumber(L, dx);
+    lua_pushnumber(L, dy);
+    luaH_push_hit_test(L, WEBKIT_WEB_VIEW(view), w);
+
+    gboolean ret = luaH_object_emit_signal(L, -5, "scroll", 4, 1);
+    lua_pop(L, ret + 1);
     return ret;
 }
 
