@@ -36,7 +36,7 @@ T.test_luakit_index = function ()
 end
 
 T.test_webkit_version = function ()
-    assert.is_match("^%d+%.%d+%.%d$", luakit.webkit_version,
+    assert.is_match("^%d+%.%d+%.%d+$", luakit.webkit_version,
         "Invalid format: luakit.webkit_version")
     assert.is_match("^%d+%.%d+$", luakit.webkit_user_agent_version,
         "Invalid format: luakit.webkit_user_agent_version")
