@@ -72,11 +72,6 @@ window.add_signal("init", function (w)
         w.last_mode_entered = mode
 
         w:emit_signal("mode-entered", mode)
-
-        -- Block tab and shift-tab from changing widget focus
-        for _, b in ipairs { "<Tab>", "<shift-Tab>" } do
-            table.insert(w.binds, { b, { func = function () end, }, {}})
-        end
     end)
 
     local input = w.ibar.input

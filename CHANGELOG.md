@@ -35,6 +35,7 @@
  - Fixed <luakit://help/> not finding documentation with custom DOCDIR
  - Various minor documentation fixes.
  - Fixed `Control-Scroll` and `Shift-Scroll` key bindings not working with smooth scrolling.
+ - Fixed inability to switch focus between web page elements with `Tab` and `Shift-Tab`.
 
 ## [2017-08-10]
 
