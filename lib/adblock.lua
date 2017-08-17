@@ -294,7 +294,8 @@ local function write_subscriptions(file)
     assert(file and file ~= "", "Cannot write subscriptions to empty path")
 
     local lines = {}
-    for _, list in pairs(_M.subscriptions) do
+    for _, filename in ipairs(filterfiles) do
+        local list = _M.subscriptions[filename]
         local subs = { uri = list.uri, title = list.title, opts = table.concat(list.opts or {}, " "), }
         local line = string.gsub("{title}\t{uri}\t{opts}", "{(%w+)}", subs)
         table.insert(lines, line)
