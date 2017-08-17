@@ -36,6 +36,7 @@
  - Various minor documentation fixes.
  - Fixed `Control-Scroll` and `Shift-Scroll` key bindings not working with smooth scrolling.
  - Fixed inability to switch focus between web page elements with `Tab` and `Shift-Tab`.
+ - Fixed log page bug when logging messages with newlines.
 
 ## [2017-08-10]
 
