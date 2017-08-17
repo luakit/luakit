@@ -397,7 +397,7 @@ _M.load = function (reload, single_list, no_sync)
         local files_list = {}
         for _, filename in ipairs(filterfiles) do
             local list = _M.subscriptions[filename]
-            if list and util.table.hasitem(list.opts, "Enabled") then
+            if list then
                 table.insert(files_list, filename)
             else
                 add_list(list and list.uri or "", filename, "Enabled", true, false)
