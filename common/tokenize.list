@@ -313,3 +313,4 @@ get_source
 is_alive
 can_focus
 resource_path
+hardware_acceleration_policy

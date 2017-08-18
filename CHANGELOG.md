@@ -22,6 +22,7 @@
  - Added ability to bind actions to webview scroll events.
  - Added ability to set the default zoom level.
  - Added `webview` widget `"permission-request"` signal.
+ - Added `webview` widget `hardware_acceleration_policy` property.
 
 ### Changed
 

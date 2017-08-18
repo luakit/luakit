@@ -178,6 +178,12 @@
 -- @type string
 -- @readonly
 
+--- @property hardware_acceleration_policy
+-- The policy for using hardware acceleration. Can be one of
+-- `"on-demand"`, `"always"`, and `"never"`.
+-- @type string
+-- @readwrite
+
 --- @signal scheme-request::*
 --
 -- Emitted when the webview attempts to load a URI on a custom URI scheme.

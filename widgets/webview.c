@@ -790,6 +790,17 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
             G_OBJECT(d->view))))
         return ret;
 
+    if (token == L_TK_HARDWARE_ACCELERATION_POLICY) {
+        /* HACK: there's only one exposed property that has an enum type, so we
+         * special-case it; this should be refactored if there's more than one */
+        switch (webkit_settings_get_hardware_acceleration_policy(webkit_web_view_get_settings(d->view))) {
+            case WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND: lua_pushstring (L, "on-demand"); return 1;
+            case WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS: lua_pushstring (L, "always"); return 1;
+            case WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER: lua_pushstring (L, "never"); return 1;
+            default: g_assert_not_reached();
+        }
+    }
+
     if ((ret = luaH_gobject_index(L, webview_settings_properties, token,
             G_OBJECT(webkit_web_view_get_settings(d->view)))))
         return ret;
@@ -862,6 +873,23 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     /* check for webview widget gobject properties */
     gboolean emit = luaH_gobject_newindex(L, webview_properties, token, 3,
             G_OBJECT(d->view));
+
+    if (token == L_TK_HARDWARE_ACCELERATION_POLICY) {
+        /* HACK: there's only one exposed property that has an enum type, so we
+         * special-case it; this should be refactored if there's more than one */
+        const char *str = luaL_checkstring(L, 3);
+        WebKitHardwareAccelerationPolicy value;
+        if (g_str_equal(str, "on-demand"))
+            value = WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND;
+        else if (g_str_equal(str, "always"))
+            value = WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS;
+        else if (g_str_equal(str, "never"))
+            value = WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER;
+        else
+            return luaL_error(L, "invalid value (expected one of 'on-demand', 'always', 'never')");
+        webkit_settings_set_hardware_acceleration_policy(webkit_web_view_get_settings(d->view), value);
+        emit = TRUE;
+    }
 
     /* check for webkit widget's settings gobject properties */
     if (!emit)
