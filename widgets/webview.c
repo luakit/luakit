@@ -675,6 +675,45 @@ uri_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
     update_uri(w, NULL);
 }
 
+static gboolean
+permission_request_cb(WebKitWebView *UNUSED(v), WebKitPermissionRequest *request, widget_t *w)
+{
+    lua_State *L = common.L;
+    gint top = lua_gettop(L);
+
+    if (WEBKIT_IS_NOTIFICATION_PERMISSION_REQUEST(request))
+        lua_pushliteral(L, "notification");
+    else if (WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(request))
+        lua_pushliteral(L, "geolocation");
+    else if (WEBKIT_IS_INSTALL_MISSING_MEDIA_PLUGINS_PERMISSION_REQUEST(request)) {
+        lua_pushliteral(L, "install-missing-media-plugins");
+        WebKitInstallMissingMediaPluginsPermissionRequest* ummpr = (WebKitInstallMissingMediaPluginsPermissionRequest*)request;
+        lua_pushstring(L, webkit_install_missing_media_plugins_permission_request_get_description(ummpr));
+    } else if (WEBKIT_IS_USER_MEDIA_PERMISSION_REQUEST(request)) {
+        lua_pushliteral(L, "user-media");
+        lua_createtable(L, 0, 2);
+        WebKitUserMediaPermissionRequest* umpr = (WebKitUserMediaPermissionRequest*)request;
+        lua_pushboolean(L, webkit_user_media_permission_is_for_audio_device(umpr));
+        lua_setfield(L, -2, "audio");
+        lua_pushboolean(L, webkit_user_media_permission_is_for_video_device(umpr));
+        lua_setfield(L, -2, "video");
+    } else
+        return FALSE;
+
+    gint argc = lua_gettop(L) - top;
+    luaH_object_push(L, w->ref);
+    lua_insert(L, top+1);
+    gint ret = luaH_object_emit_signal(L, top+1, "permission-request", argc, 1);
+    if (ret) {
+        if (lua_toboolean(L, -1))
+            webkit_permission_request_allow(request);
+        else
+            webkit_permission_request_deny(request);
+    }
+    lua_pop(L, 1);
+    return ret > 0;
+}
+
 static gint
 luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
@@ -1301,6 +1340,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
       "signal::notify::uri",                          G_CALLBACK(uri_cb),                       w,
       "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
+      "signal::permission-request",                   G_CALLBACK(permission_request_cb),        w,
       NULL);
 
     g_object_connect(G_OBJECT(webkit_web_view_get_find_controller(d->view)),

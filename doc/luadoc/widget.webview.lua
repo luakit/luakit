@@ -342,4 +342,16 @@
 -- @treturn boolean `true` if the event has been handled and should not be
 -- propagated further.
 
+--- @signal permission-request
+-- Emitted when the webview is requesting user permisison to perform some
+-- action.
+-- @tparam string type The type of permission requested. Can be one of
+-- `"notification"`, `"geolocation"`, `"install-missing-media-plugins"`, and `"user-media"`.
+-- @param arg Additional information about the permission request. For
+-- `"user-media"` requests, this is a table with boolean `audio` and `video`
+-- fields. For `"install-missing-media-plugins"` requests, this is a string
+-- description.
+-- @treturn boolean `true` to grant the permission request, and `false` to deny
+-- it. If no value is returned, a default action is used.
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

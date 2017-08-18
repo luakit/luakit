@@ -21,6 +21,7 @@
  - Added `scroll` signal.
  - Added ability to bind actions to webview scroll events.
  - Added ability to set the default zoom level.
+ - Added `webview` widget `"permission-request"` signal.
 
 ### Changed
 
