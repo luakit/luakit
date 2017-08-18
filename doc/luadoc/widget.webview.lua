@@ -178,6 +178,19 @@
 -- @type string
 -- @readonly
 
+--- @property allow_file_access_from_file_urls
+-- Whether `file://` access is allowed for `file://` URIs.
+-- @type boolean
+-- @default `false`
+-- @readwrite
+
+--- @property allow_universal_access_from_file_urls
+-- Whether Javascript running in the `file://` scheme is allowed to access
+-- content from any origin.
+-- @type boolean
+-- @default `false`
+-- @readwrite
+
 --- @property hardware_acceleration_policy
 -- The policy for using hardware acceleration. Can be one of
 -- `"on-demand"`, `"always"`, and `"never"`.

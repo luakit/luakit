@@ -23,6 +23,7 @@
  - Added ability to set the default zoom level.
  - Added `webview` widget `"permission-request"` signal.
  - Added `webview` widget `hardware_acceleration_policy` property.
+ - Added `webview` widget `allow_file_access_from_file_urls` and `allow_universal_access_from_file_urls` properties.
 
 ### Changed
 

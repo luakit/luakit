@@ -95,7 +95,9 @@ static property_t webview_properties[] = {
 };
 
 static property_t webview_settings_properties[] = {
+  { L_TK_ALLOW_FILE_ACCESS_FROM_FILE_URLS,          "allow-file-access-from-file-urls",          BOOL,  TRUE },
   { L_TK_ALLOW_MODAL_DIALOGS,                       "allow-modal-dialogs",                       BOOL,  TRUE },
+  { L_TK_ALLOW_UNIVERSAL_ACCESS_FROM_FILE_URLS,     "allow-universal-access-from-file-urls",     BOOL,  TRUE },
   { L_TK_AUTO_LOAD_IMAGES,                          "auto-load-images",                          BOOL,  TRUE },
   { L_TK_CURSIVE_FONT_FAMILY,                       "cursive-font-family",                       CHAR,  TRUE },
   { L_TK_DEFAULT_CHARSET,                           "default-charset",                           CHAR,  TRUE },
