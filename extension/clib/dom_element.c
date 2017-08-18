@@ -87,13 +87,9 @@ dom_element_selector(dom_element_t *element)
     GPtrArray *parts = g_ptr_array_new_full(10, g_free);
 
     while ((parent = webkit_dom_node_get_parent_node(elem))) {
-        char *id = webkit_dom_element_get_id(WEBKIT_DOM_ELEMENT(elem));
         char *tag = webkit_dom_element_get_tag_name(WEBKIT_DOM_ELEMENT(elem));
         if (!strcmp(tag, "BODY") || !strcmp(tag, "HEAD")) {
             g_ptr_array_add(parts, g_strdup(tag));
-            break;
-        } else if (id) {
-            g_ptr_array_add(parts, g_strdup_printf("#%s", id));
             break;
         } else {
             int c = 1;
