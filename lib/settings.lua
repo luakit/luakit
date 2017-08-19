@@ -84,6 +84,30 @@ local function S_set(section, k, v)
     tree[k] = v
 end
 
+local uri_domain_cache = {}
+
+--- Retrieve the value of a setting for a URI, based on the setting's domain-specific values.
+--
+-- This does not take into account the non-domain-specific value _or_ the default
+-- value for the setting.
+--
+-- The settings key must be a valid settings key.
+-- @tparam string uri The URI.
+-- @tparam string key The key of the setting to retrieve.
+-- @return The value of the setting, or `nil` if no domain-specific value is set.
+_M.get_setting_for_uri = function (uri, key)
+    if uri ~= uri_domain_cache.uri then
+        uri_domain_cache.uri = uri
+        uri_domain_cache.domains = lousy.uri.domains_from_uri(uri)
+        table.insert(uri_domain_cache.domains, "all")
+    end
+    local domains = uri_domain_cache.domains
+    for _, domain in ipairs(domains) do
+        local value = (S.domain[domain] or {})[key] -- S_get uses default
+        if value then return value, domain end
+    end
+end
+
 local new_settings_node
 
 local function new_domain_node()
