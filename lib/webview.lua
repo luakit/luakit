@@ -1,15 +1,19 @@
---------------------------
--- WebKit WebView class --
---------------------------
+--- Webview widget wrapper.
+--
+-- The webview module wraps the webview widget provided by luakit, adding
+-- several convenience APIs and providing basic functionality.
+--
+-- @module webview
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local lousy = require("lousy")
 local globals = require("globals")
 
--- Webview class table
-local webview = {}
+local _M = {}
 
-lousy.signal.setup(webview, true)
+lousy.signal.setup(_M, true)
 
 local web_module = require_web_module("webview_wm")
 
@@ -40,7 +44,7 @@ local init_funcs = {
     -- Update window and tab titles
     title_update = function (view)
         view:add_signal("property::title", function (v)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w and w.view == v then
                 w:update_win_title()
             end
@@ -57,13 +61,13 @@ local init_funcs = {
             end
         end)
         view:add_signal("form-active", function (v)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if not w.mode.passthrough then
                 w:set_mode("insert")
             end
         end)
         view:add_signal("root-active", function (v)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w.mode.reset_on_focus ~= false then
                 w:set_mode()
             end
@@ -79,13 +83,13 @@ local init_funcs = {
     -- press hit the webview.
     button_bind_match = function (view)
         view:add_signal("button-release", function (v, mods, button, context)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w:hit(mods, button, { context = context }) then
                 return true
             end
         end)
         view:add_signal("scroll", function (v, mods, dx, dy, context)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w:hit(mods, "Scroll", { context = context, dx = dx, dy = dy }) then
                 return true
             end
@@ -95,7 +99,7 @@ local init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view)
         view:add_signal("load-status", function (v, status)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if status == "provisional" and w and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
@@ -131,7 +135,7 @@ local init_funcs = {
     create_webview = function (view)
         -- Return a newly created webview in a new tab
         view:add_signal("create-web-view", function (v)
-            return webview.window(v):new_tab(nil, { private = v.private })
+            return _M.window(v):new_tab(nil, { private = v.private })
         end)
     end,
 
@@ -147,12 +151,14 @@ local init_funcs = {
     end,
 }
 
--- These methods are present when you index a window instance and no window
+--- These methods are present when you index a window instance and no window
 -- method is found in `window.methods`. The window then checks if there is an
 -- active webview and calls the following methods with the given view instance
 -- as the first argument. All methods must take `view` & `w` as the first two
 -- arguments.
-webview.methods = {
+-- @readwrite
+-- @type {[string]=function}
+_M.methods = {
     -- Reload with or without ignoring cache
     reload = function (view, _, bypass_cache)
         if bypass_cache then
@@ -199,7 +205,11 @@ webview.methods = {
     end,
 }
 
-function webview.methods.scroll(view, w, new)
+--- Scroll the current webview by a given amount.
+-- @tparam widget view The webview widget to scroll.
+-- @tparam table w The window class table for the window containing `view`.
+-- @tparam table new Table of scroll information.
+function _M.methods.scroll(view, w, new)
     local s = view.scroll
     for _, axis in ipairs{ "x", "y" } do
         -- Relative px movement
@@ -268,7 +278,11 @@ do
     end
 end
 
-function webview.new(opts)
+--- Create a new webview instance.
+-- @tparam table opts Table of options. Currently only `private` is recognized
+-- as a key.
+-- @treturn table The newly-created webview widget.
+function _M.new(opts)
     assert(opts)
     local view = widget{type = "webview", private = opts.private}
 
@@ -279,7 +293,7 @@ function webview.new(opts)
     for _, func in pairs(init_funcs) do
         func(view)
     end
-    webview.emit_signal("init", view)
+    _M.emit_signal("init", view)
 
     return view
 end
@@ -292,12 +306,23 @@ luakit.idle_add(function ()
     end)
 end)
 
-function webview.window(view)
+--- Wrapper for @ref{window/ancestor|window.ancestor}.
+-- @tparam widget view The webview whose ancestor to find.
+-- @treturn table|nil The window class table for the window that contains `view`,
+-- or `nil` if `view` is not contained within a window.
+function _M.window(view)
     assert(type(view) == "widget" and view.type == "webview")
     return window.ancestor(view)
 end
 
-function webview.modify_load_block(view, name, enable)
+--- Add/remove a load block on the given webview.
+-- If a block is enabled on a webview, load requests will be suspended until the
+-- block is removed. This is useful for pausing network operations while a
+-- module is initializing.
+-- @tparam widget view The view on which to add/remove the load block.
+-- @tparam string name The name of the block to add/remove.
+-- @tparam boolean enable Whether the block should be enabled.
+function _M.modify_load_block(view, name, enable)
     assert(type(view) == "widget" and view.type == "webview")
     assert(type(name) == "string")
 
@@ -309,11 +334,16 @@ function webview.modify_load_block(view, name, enable)
         msg.verbose("fully unblocked %s", view)
         local queued = ws.queued_location
         ws.queued_location = nil
-        webview.set_location(view, queued)
+        _M.set_location(view, queued)
     end
 end
 
-function webview.set_location(view, arg)
+--- Set the location of the webview. This method will respect any load blocks in
+-- place (see @ref{modify_load_block}).
+-- @tparam widget view The view whose location to modify.
+-- @tparam table arg The new location. Can be a URI, a JavaScript URI, or a
+-- table with `session_state` and `uri` keys.
+function _M.set_location(view, arg)
     assert(type(view) == "widget" and view.type == "webview")
     assert(type(arg) == "string" or type(arg) == "table")
 
@@ -353,7 +383,7 @@ table.insert(window.indexes, 1, function (w, k)
         end
     end
     -- Lookup webview method
-    local func = webview.methods[k]
+    local func = _M.methods[k]
     if not func then return end
     local view = w.view
     if view then
@@ -361,6 +391,6 @@ table.insert(window.indexes, 1, function (w, k)
     end
 end)
 
-return webview
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

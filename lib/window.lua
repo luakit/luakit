@@ -1,6 +1,11 @@
-------------------
--- Window class --
-------------------
+--- Main window UI.
+--
+-- The window module builds the UI for each luakit window, and manages modes,
+-- keybind state, and common functions like tab navigation and management.
+--
+-- @module window
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 require "lfs"
 local lousy = require("lousy")
@@ -8,13 +13,14 @@ local globals = require("globals")
 local search_engines = globals.search_engines
 local theme = lousy.theme.get()
 
--- Window class table
-local window = {}
+local _M = {}
 
-lousy.signal.setup(window, true)
+lousy.signal.setup(_M, true)
 
--- List of active windows by window widget
-window.bywidget = setmetatable({}, { __mode = "k" })
+--- Map of `window` widgets to window class tables.
+-- @type table
+-- @readonly
+_M.bywidget = setmetatable({}, { __mode = "k" })
 
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
@@ -25,8 +31,9 @@ local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
 local function overlay()  return widget{type="overlay"}  end
 
--- Build and pack window widgets
-function window.build(w)
+--- Construction function which will build and arrange the window's widgets.
+-- @tparam table w The initial window class table.
+function _M.build(w)
     -- Create a table for widgets and state variables for a window
     local ww = {
         win    = widget{type="window"},
@@ -127,7 +134,7 @@ function window.build(w)
     w.ibar.prompt.selectable = true
 
     -- Allows indexing of window struct by window widget
-    window.bywidget[w.win] = w
+    _M.bywidget[w.win] = w
 end
 
 -- Table of functions to call on window creation. Normally used to add signal
@@ -243,8 +250,10 @@ local init_funcs = {
     end,
 }
 
--- Helper functions which operate on the window widgets or structure.
-window.methods = {
+--- Helper functions which operate on the window widgets or structure.
+-- @type {[string]=function}
+-- @readwrite
+_M.methods = {
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
         opts = lousy.util.table.join(opts or {}, {
@@ -465,7 +474,7 @@ window.methods = {
         w.tablist:destroy()
 
         -- Remove from window index
-        window.bywidget[w.win] = nil
+        _M.bywidget[w.win] = nil
 
         -- Clear window struct
         w = setmetatable(w, {})
@@ -615,25 +624,29 @@ window.methods = {
     end,
 }
 
--- Ordered list of class index functions. Other classes (E.g. webview) are able
+--- Ordered list of class index functions. Other classes (E.g. webview) are able
 -- to add their own index functions to this list.
-window.indexes = {
+-- @type {function}
+-- @readwrite
+_M.indexes = {
     -- Find function in window.methods first
-    function (_, k) return window.methods[k] end
+    function (_, k) return _M.methods[k] end
 }
 
-window.add_signal("build", window.build)
+_M.add_signal("build", _M.build)
 
--- Create new window
-function window.new(args)
+--- Create a new window table instance.
+-- @tparam table args Array of initial tab arguments.
+-- @treturn table The newly-created window table.
+function _M.new(args)
     local w = {}
-    window.emit_signal("build", w)
+    _M.emit_signal("build", w)
 
     -- Set window metatable
     setmetatable(w, {
         __index = function (_, k)
             -- Call each window index function
-            for _, index in ipairs(window.indexes) do
+            for _, index in ipairs(_M.indexes) do
                 local v = index(w, k)
                 if v then return v end
             end
@@ -647,7 +660,7 @@ function window.new(args)
     for _, func in pairs(init_funcs) do
         func(w)
     end
-    window.emit_signal("init", w)
+    _M.emit_signal("init", w)
 
     -- Populate notebook with tabs
     for _, arg in ipairs(args or {}) do
@@ -671,13 +684,17 @@ function window.new(args)
     return w
 end
 
-function window.ancestor(w)
+--- Get the window that contains the given widget.
+-- @tparam widget w The widget whose ancestor to find.
+-- @treturn table|nil The window class table for the window that contains `w`,
+-- or `nil` if the given widget is not contained within a window.
+function _M.ancestor(w)
     repeat
         w = w.parent
     until w == nil or w.type == "window"
-    return w and window.bywidget[w] or nil
+    return w and _M.bywidget[w] or nil
 end
 
-return window
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
