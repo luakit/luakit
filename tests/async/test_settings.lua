@@ -21,6 +21,8 @@ T.test_settings = function ()
     settings.test.setting.with.long.path = "bar"
     assert.equal(settings.test.setting.with.long.path, "bar")
     assert.has_error(function () settings.test.setting = "baz" end)
+
+    assert.has_error(function () settings.non_existent_setting = 1 end)
 end
 
 return T

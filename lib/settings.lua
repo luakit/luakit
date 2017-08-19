@@ -84,14 +84,19 @@ local function new_settings_node(prefix)
     meta.__newindex = function (_, k, v)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
-        if type == "group" then error("cannot assign a value to a settings group") end
-        if type == "value" then settings_list[full_path].value = v end
+        if type == "value" then
+            settings_list[full_path].value = v
+        elseif type == "group" then
+            error("cannot assign a value to a settings group")
+        else
+            error("cannot assign a value to invalid setting path '"..full_path.."'")
+        end
     end
     return setmetatable({}, meta)
 end
 
 local root = new_settings_node()
 
-return setmetatable(_M, { __index = root })
+return setmetatable(_M, { __index = root, __newindex = root })
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
