@@ -12,6 +12,7 @@ T.test_lousy_uri_properties = function ()
         parse_query = true,
         parse = true,
         copy = true,
+        domains_from_uri = true,
     }
     for k in pairs(keys) do
         assert.is_function(lousy.uri[k], "Missing/invalid property: lousy.uri." .. k)
@@ -68,6 +69,12 @@ T.test_lousy_uri_parse = function ()
     assert.is_equal(tostring(parsed + props), props_uri)
     props_uri = "luakit://baz@random-domain.com:888/"
     assert.is_equal(tostring(parsed + props + {query = ""}), props_uri)
+end
+
+T.test_lousy_uri_domains_from_uri = function ()
+    local f = lousy.uri.domains_from_uri
+    assert.are.same({".example.com", "example.com", ".com"}, f("example.com"))
+    assert.are.same({".example.com", "example.com", ".com"}, f("www.example.com"))
 end
 
 return T

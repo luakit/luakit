@@ -119,6 +119,25 @@ function _M.copy(uri)
     return _M.parse(tostring(uri))
 end
 
+--- Find the domains that a given URI belongs to.
+-- @tparam string uri The URI.
+-- @treturn {string} An array of domains.
+function _M.domains_from_uri(uri)
+    local domain = soup.parse_uri(uri).host
+    -- Strip leading www.
+    domain = string.match(domain or "", "^www%.(.+)") or domain
+    if not domain then return {} end
+    -- I.e. for example.com load { .example.com, example.com, .com }
+    local domains = { domain }
+    repeat
+        table.insert(domains, "."..domain)
+        domain = string.match(domain, "%.(.+)")
+    until not domain
+    -- Sort by specificity
+    table.sort(domains, function (a, b) return #a > #b end)
+    return domains
+end
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
