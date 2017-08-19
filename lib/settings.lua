@@ -14,12 +14,18 @@ local _M = {}
 local settings_list = {}
 local settings_groups
 
+local S = {
+    root = {}, -- Values for settings.foo
+    domain = {}, -- Values for settings.on["domain"].foo
+}
+
 local function validate_settings_path (k)
     assert(type(k) == "string", "invalid settings path type: " .. type(k))
     local parts = lousy.util.string.split(k, "%.")
     assert(#parts >= 2, "settings path must have at least two sections")
     for _, part in ipairs(parts) do
-        assert(part:match("^[%w_]+$"), "invalid settings path component '" .. k .."'")
+        assert(part ~= "on" and part:match("^[%w_]+$"),
+            "invalid settings path component '" .. k .."'")
     end
 end
 
@@ -60,24 +66,54 @@ _M.register_settings = function (list)
     end
 
     for k, s in pairs(list) do
-        settings_list[k] = {
-            meta = s,
-            value = s.default,
-        }
+        settings_list[k] = s
     end
 
     settings_groups = nil
 end
 
-local function new_settings_node(prefix)
+local function S_get(section, k)
+    local tree = not section and S.root or S.domain[section]
+    if not tree then return nil end -- no rules for this domain
+    return tree[k] or settings_list[k].default
+end
+
+local function S_set(section, k, v)
+    if section then S.domain[section] = S.domain[section] or {} end
+    local tree = not section and S.root or S.domain[section]
+    tree[k] = v
+end
+
+local new_settings_node
+
+local function new_domain_node()
     local meta = { __metatable = false, subnodes = {} }
+    meta.__index = function (_, k)
+        if meta.subnodes[k] then return meta.subnodes[k] end
+        assert(type(k) == "string" and #k > 0, "invalid domain name")
+        meta.subnodes[k] = new_settings_node(nil, k)
+        return meta.subnodes[k]
+    end
+    meta.__newindex = function ()
+        error("cannot assign a value to a settings group")
+    end
+    return setmetatable({}, meta)
+end
+
+new_settings_node = function (prefix, section)
+    local meta = { __metatable = false, subnodes = {}, section = section }
+
+    if not prefix and not section then -- True root node generates on[] subnode
+        meta.subnodes.on = new_domain_node()
+    end
+
     meta.__index = function (_, k)
         if meta.subnodes[k] then return meta.subnodes[k] end
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
-        if type == "value" then return settings_list[full_path].value end
+        if type == "value" then return S_get(meta.section, full_path) end
         if type == "group" then
-            meta.subnodes[k] = new_settings_node(full_path)
+            meta.subnodes[k] = new_settings_node(full_path, meta.section)
             return meta.subnodes[k]
         end
     end
@@ -85,7 +121,7 @@ local function new_settings_node(prefix)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
         if type == "value" then
-            settings_list[full_path].value = v
+            S_set(meta.section, full_path, v)
         elseif type == "group" then
             error("cannot assign a value to a settings group")
         else

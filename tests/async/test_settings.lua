@@ -14,7 +14,8 @@ T.test_settings = function ()
     settings.register_settings({
         ["test.setting.with.long.path"] = {
             default = "foo",
-        }
+        },
+        ["foo.bar"] = {},
     })
 
     assert.equal(settings.test.setting.with.long.path, "foo")
@@ -23,6 +24,14 @@ T.test_settings = function ()
     assert.has_error(function () settings.test.setting = "baz" end)
 
     assert.has_error(function () settings.non_existent_setting = 1 end)
+    assert.has_error(function () return settings.on["foo"].on["foo"] end)
+
+    settings.foo.bar = 1
+    assert.equal(settings.foo.bar, 1)
+    settings.on["example.com"].foo.bar = 2
+    assert.equal(settings.foo.bar, 1)
+    assert.equal(settings.on["example.com"].foo.bar, 2)
+    assert.equal(settings.on[".com"].foo.bar, nil)
 end
 
 return T
