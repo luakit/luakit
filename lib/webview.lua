@@ -9,7 +9,6 @@
 
 local window = require("window")
 local lousy = require("lousy")
-local globals = require("globals")
 local settings = require("settings")
 
 local _M = {}
@@ -37,11 +36,6 @@ local webview_state = setmetatable({}, { __mode = "k" })
 
 -- Table of functions which are called on new webview widgets.
 local init_funcs = {
-    -- Set useragent
-    set_useragent = function (view)
-        view.user_agent = globals.useragent
-    end,
-
     -- Update window and tab titles
     title_update = function (view)
         view:add_signal("property::title", function (v)
@@ -181,12 +175,12 @@ _M.methods = {
 
     -- Zoom functions
     zoom_in = function (view, _, step)
-        step = step or globals.zoom_step or 0.1
+        step = step or settings.window.zoom_step
         view.zoom_level = view.zoom_level + step
     end,
 
     zoom_out = function (view, _, step)
-        step = step or globals.zoom_step or 0.1
+        step = step or settings.window.zoom_step
         view.zoom_level = math.max(0.01, view.zoom_level) - step
     end,
 
@@ -585,6 +579,22 @@ _M.add_signal("init", function (view)
         end
     end)
 end)
+
+settings.migrate_global("webview.zoom_level", "default_zoom_level")
+settings.migrate_global("webview.user_agent", "user_agent")
+
+-- Migrate from globals.domain_props
+local globals = package.loaded.globals or {}
+if globals.domain_props then
+    msg.warn("domain_props.lua is deprecated, and will be removed in the next release!")
+    msg.warn("to migrate, add the following:")
+end
+for domain, props in pairs(globals.domain_props or {}) do
+    for k, v in pairs(props) do
+        msg.warn("  settings.on[\"%s\"].webview.%s = %s", domain, k, v)
+        settings.on[domain].webview[k] = v
+    end
+end
 
 return _M
 

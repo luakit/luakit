@@ -9,8 +9,7 @@
 
 require "lfs"
 local lousy = require("lousy")
-local globals = require("globals")
-local search_engines = globals.search_engines
+local settings = require("settings")
 local theme = lousy.theme.get()
 
 local _M = {}
@@ -215,7 +214,7 @@ local init_funcs = {
     end,
 
     set_default_size = function (w)
-        local size = globals.default_window_size or "800x600"
+        local size = settings.window.new_window_size
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
@@ -375,7 +374,7 @@ _M.methods = {
     update_win_title = function (w)
         local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
-        local max = globals.max_title_len or 80
+        local max = settings.window.max_title_len
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
     end,
@@ -533,6 +532,7 @@ _M.methods = {
     search_open = function (_, arg)
         local lstring = lousy.util.string
         local match, find = string.match, string.find
+        local search_engines = settings.window.search_engines
 
         -- Detect blank uris
         if not arg or match(arg, "^%s*$") then return "luakit://newtab/" end
@@ -553,7 +553,7 @@ _M.methods = {
 
             -- Valid hostnames to check
             local hosts = { "localhost" }
-            if globals.load_etc_hosts ~= false then
+            if settings.window.load_etc_hosts then
                 hosts = lousy.util.get_etc_hosts()
             end
 
@@ -563,7 +563,7 @@ _M.methods = {
             end
 
             -- Check for file in filesystem
-            if globals.check_filepath ~= false then
+            if settings.window.check_filepath then
                 if lfs.attributes(uri) then return "file://" .. uri end
             end
         end
@@ -678,7 +678,7 @@ function _M.new(args)
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(w:search_open(globals.homepage), false)
+        w:new_tab(w:search_open(settings.window.home_page), false)
     end
 
     return w
@@ -693,6 +693,67 @@ function _M.ancestor(w)
         w = w.parent
     until w == nil or w.type == "window"
     return w and _M.bywidget[w] or nil
+end
+
+settings.register_settings({
+    ["window.new_window_size"] = {
+        type = "string",
+        default = "800x600",
+        validator = function (v)
+            local x, y = v:match("^(%d+)x(%d+)$")
+            if not x or not y then return false end
+            return x > 0 and y > 0
+        end,
+    },
+    ["window.home_page"] = {
+        type = "string",
+        default = "http://luakit.org/",
+    },
+    ["window.search_engines"] = {
+        type = "table",
+        default = {
+            duckduckgo  = "https://duckduckgo.com/?q=%s",
+            github      = "https://github.com/search?q=%s",
+            google      = "https://google.com/search?q=%s",
+            imdb        = "http://www.imdb.com/find?s=all&q=%s",
+            wikipedia   = "https://en.wikipedia.org/wiki/Special:Search?search=%s",
+
+            default     = "https://google.com/search?q=%s",
+        },
+    },
+    ["window.scroll_step"] = {
+        type = "number", min = 0,
+        default = 40,
+    },
+    ["window.zoom_step"] = {
+        type = "number", min = 0,
+        default = 0.1,
+    },
+    ["window.load_etc_hosts"] = {
+        type = "boolean",
+        default = true,
+    },
+    ["window.check_filepath"] = {
+        type = "boolean",
+        default = true,
+    },
+    ["window.max_title_len"] = {
+        type = "number",
+        default = 80,
+    },
+})
+
+settings.migrate_global("window.new_window_size", "default_window_size")
+settings.migrate_global("window.home_page", "homepage")
+settings.migrate_global("window.scroll_step", "scroll_step")
+settings.migrate_global("window.zoom_step", "zoom_step")
+settings.migrate_global("window.load_etc_hosts", "load_etc_hosts")
+settings.migrate_global("window.check_filepath", "check_filepath")
+settings.migrate_global("window.max_title_len", "max_title_len")
+
+local globals = package.loaded.globals
+if globals then
+    settings.window.search_engines = globals.search_engines
 end
 
 return _M

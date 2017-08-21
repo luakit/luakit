@@ -12,7 +12,7 @@
 local _M = {}
 
 local window = require("window")
-local globals = require("globals")
+local settings = require("settings")
 
 -- Binding aliases
 local lousy = require("lousy")
@@ -20,11 +20,6 @@ local modes = require("modes")
 
 -- Util aliases
 local join, split = lousy.util.table.join, lousy.util.string.split
-
--- Globals or defaults that are used in binds
-local scroll_step = globals.scroll_step or 20
-local page_step = globals.page_step or 1.0
-local zoom_step = globals.zoom_step or 0.1
 
 --- Compatibility wrapper for @ref{modes/add_binds|modes.add_binds()}.
 -- @deprecated use @ref{modes/add_binds|modes.add_binds()} instead.
@@ -93,47 +88,47 @@ modes.add_binds("all", {
 
     { "<Control-Scroll>", "Increase/decrease zoom level.", function (w, o)
         scroll_acc = scroll_acc + o.dy
-        while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in(zoom_step) end
-        while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out(zoom_step) end
+        while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in() end
+        while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out() end
     end },
     { "<Shift-Scroll>", "Scroll the current page left/right.", function (w, o)
-        w:scroll{ xrel = scroll_step*o.dy }
+        w:scroll{ xrel = settings.window.scroll_step*o.dy }
     end },
 })
 
 local actions = { scroll = {
     up = {
         desc = "Scroll the current page up.",
-        func = function (w, m) w:scroll{ yrel = -scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ yrel = -settings.window.scroll_step*(m.count or 1) } end,
     },
     down = {
         desc = "Scroll the current page down.",
-        func = function (w, m) w:scroll{ yrel =  scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ yrel =  settings.window.scroll_step*(m.count or 1) } end,
     },
     left = {
         desc = "Scroll the current page left.",
-        func = function (w, m) w:scroll{ xrel = -scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ xrel = -settings.window.scroll_step*(m.count or 1) } end,
     },
     right = {
         desc = "Scroll the current page right.",
-        func = function (w, m) w:scroll{ xrel =  scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ xrel =  settings.window.scroll_step*(m.count or 1) } end,
     },
     page_up = {
         desc = "Scroll the current page up a full screen.",
-        func = function (w, m) w:scroll{ ypagerel = -page_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ ypagerel = (m.count or 1) } end,
     },
     page_down = {
         desc = "Scroll the current page down a full screen.",
-        func = function (w, m) w:scroll{ ypagerel =  page_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ ypagerel =  (m.count or 1) } end,
     },
 }, zoom = {
     zoom_in = {
         desc = "Zoom in to the current page.",
-        func = function (w, m) w:zoom_in(zoom_step * (m.count or 1)) end,
+        func = function (w, m) w:zoom_in(settings.window.zoom_step * (m.count or 1)) end,
     },
     zoom_out = {
         desc = "Zoom out from the current page.",
-        func = function (w, m) w:zoom_out(zoom_step * (m.count or 1)) end,
+        func = function (w, m) w:zoom_out(settings.window.zoom_step * (m.count or 1)) end,
     },
     zoom_set = {
         desc = "Zoom to a specific percentage when specifying a count, and reset the page zoom otherwise.",
@@ -146,7 +141,7 @@ local actions = { scroll = {
                     return
                 end
             end
-            local zoom_level = m.count or globals.default_zoom_level or 100
+            local zoom_level = m.count or settings.webview.zoom_level
             w:zoom_set(zoom_level/100)
         end,
     },
@@ -388,8 +383,8 @@ modes.add_binds("normal", {
                 (w.tabs:current() + m.count) % w.tabs:count())
         end, {count=1} },
 
-    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(globals.homepage) end },
-    { "^gh$", "Open homepage.", function (w) w:navigate(globals.homepage) end },
+    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(settings.window.home_page) end },
+    { "^gh$", "Open homepage.", function (w) w:navigate(settings.window.home_page) end },
     { "^gy$", "Duplicate current tab.",
         function (w)
             w:new_tab({ session_state = w.view.session_state }, { private = w.view.private })
