@@ -1,6 +1,7 @@
 local ui = ipc_channel("webview_wm")
 
 ui:add_signal("load-finished", function(_, page)
+    if not page then return end
     local doc = page.document
 
     -- do nothing if loaded document is not HTML
