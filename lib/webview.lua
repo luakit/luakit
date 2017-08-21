@@ -10,6 +10,7 @@
 local window = require("window")
 local lousy = require("lousy")
 local globals = require("globals")
+local settings = require("settings")
 
 local _M = {}
 
@@ -389,6 +390,200 @@ table.insert(window.indexes, 1, function (w, k)
     if view then
         return function (_, ...) return func(view, w, ...) end
     end
+end)
+
+local webview_settings = {
+    ["webview.allow_file_access_from_file_uris"] = {
+        type = "boolean",
+    },
+    ["webview.allow_modal_dialogs"] = {
+        type = "boolean",
+    },
+    ["webview.allow_universal_access_from_file_uris"] = {
+        type = "boolean",
+    },
+    ["webview.auto_load_images"] = {
+        type = "boolean",
+    },
+    ["webview.cursive_font_family"] = {
+        type = "string",
+    },
+    ["webview.default_charset"] = {
+        type = "string",
+    },
+    ["webview.default_font_family"] = {
+        type = "string",
+    },
+    ["webview.default_font_size"] = {
+        type = "number", min = 0,
+    },
+    ["webview.default_monospace_font_size"] = {
+        type = "number", min = 0,
+    },
+    ["webview.draw_compositing_indicators"] = {
+        type = "boolean",
+    },
+    ["webview.editable"] = {
+        type = "boolean",
+    },
+    ["webview.enable_accelerated_2d_canvas"] = {
+        type = "boolean",
+    },
+    ["webview.enable_caret_browsing"] = {
+        type = "boolean",
+    },
+    ["webview.enable_developer_extras"] = {
+        type = "boolean",
+    },
+    ["webview.enable_dns_prefetching"] = {
+        type = "boolean",
+    },
+    ["webview.enable_frame_flattening"] = {
+        type = "boolean",
+    },
+    ["webview.enable_fullscreen"] = {
+        type = "boolean",
+    },
+    ["webview.enable_html5_database"] = {
+        type = "boolean",
+    },
+    ["webview.enable_html5_local_storage"] = {
+        type = "boolean",
+    },
+    ["webview.enable_hyperlink_auditing"] = {
+        type = "boolean",
+    },
+    ["webview.enable_java"] = {
+        type = "boolean",
+    },
+    ["webview.enable_javascript"] = {
+        type = "boolean",
+    },
+    ["webview.enable_mediasource"] = {
+        type = "boolean",
+    },
+    ["webview.enable_media_stream"] = {
+        type = "boolean",
+    },
+    ["webview.enable_offline_web_application_cache"] = {
+        type = "boolean",
+    },
+    ["webview.enable_page_cache"] = {
+        type = "boolean",
+    },
+    ["webview.enable_plugins"] = {
+        type = "boolean",
+    },
+    ["webview.enable_private_browsing"] = {
+        type = "boolean",
+    },
+    ["webview.enable_resizable_text_areas"] = {
+        type = "boolean",
+    },
+    ["webview.enable_site_specific_quirks"] = {
+        type = "boolean",
+    },
+    ["webview.enable_smooth_scrolling"] = {
+        type = "boolean",
+    },
+    ["webview.enable_spatial_navigation"] = {
+        type = "boolean",
+    },
+    ["webview.enable_tabs_to_links"] = {
+        type = "boolean",
+    },
+    ["webview.enable_webaudio"] = {
+        type = "boolean",
+    },
+    ["webview.enable_webgl"] = {
+        type = "boolean",
+    },
+    ["webview.enable_write_console_messages_to_stdout"] = {
+        type = "boolean",
+    },
+    ["webview.enable_xss_auditor"] = {
+        type = "boolean",
+    },
+    ["webview.fantasy_font_family"] = {
+        type = "string",
+    },
+    ["webview.hardware_acceleration_policy"] = {
+        type = "enum",
+        options = {
+            ["on-demand"] = { desc = "Enable/disable hardware acceleration as necessary." },
+            ["always"] = { desc = "Always enable hardware acceleration." },
+            ["never"] = { desc = "Always disable hardware acceleration." },
+        },
+    },
+    ["webview.javascript_can_access_clipboard"] = {
+        type = "boolean",
+    },
+    ["webview.javascript_can_open_windows_automatically"] = {
+        type = "boolean",
+    },
+    ["webview.load_icons_ignoring_image_load_setting"] = {
+        type = "boolean",
+    },
+    ["webview.media_playback_allows_inline"] = {
+        type = "boolean",
+    },
+    ["webview.media_playback_requires_user_gesture"] = {
+        type = "boolean",
+    },
+    ["webview.minimum_font_size"] = {
+        type = "number", min = 0,
+    },
+    ["webview.monospace_font_family"] = {
+        type = "string",
+    },
+    ["webview.pictograph_font_family"] = {
+        type = "string",
+    },
+    ["webview.print_backgrounds"] = {
+        type = "boolean",
+    },
+    ["webview.sans_serif_font_family"] = {
+        type = "string",
+    },
+    ["webview.serif_font_family"] = {
+        type = "string",
+    },
+    ["webview.user_agent"] = {
+        type = "string",
+    },
+    ["webview.zoom_level"] = {
+        type = "number", min = 0,
+        default = 100,
+    },
+    ["webview.zoom_text_only"] = {
+        type = "boolean",
+    },
+}
+settings.register_settings(webview_settings)
+
+_M.add_signal("init", function (view)
+    local set = function (wv, k, v, match)
+        if v then
+            k = k:sub(9) -- Strip off "webview." prefix
+            if k == "zoom_level" then v = v/100.0 end
+            match = match and (" (matched '"..match.."')") or ""
+            msg.verbose("setting property %s = %s" .. match, k, v, match)
+            wv[k] = v
+        end
+    end
+    -- Set initial values
+    for k in pairs(webview_settings) do
+        local v = settings.get_setting(k)
+        set(view, k, v)
+    end
+    -- Set domain-specific values on page load
+    view:add_signal("load-status", function (v, status)
+        if status ~= "committed" or v.uri == "about:blank" then return end
+        for k in pairs(webview_settings) do
+            local val, match = settings.get_setting_for_uri(v.uri, k)
+            set(v, k, val, match)
+        end
+    end)
 end)
 
 return _M
