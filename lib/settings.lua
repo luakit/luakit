@@ -108,6 +108,17 @@ _M.get_setting_for_uri = function (uri, key)
     end
 end
 
+--- Retrieve the value of a setting, whether it's explicitly set or the default.
+--
+-- This does not take into account any domain-specific values.
+--
+-- The settings key must be a valid settings key.
+-- @tparam string key The key of the setting to retrieve.
+-- @return The value of the setting.
+_M.get_setting = function (key)
+    return S_get(nil, key)
+end
+
 local new_settings_node
 
 local function new_domain_node()
