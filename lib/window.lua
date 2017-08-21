@@ -440,7 +440,7 @@ _M.methods = {
         view.parent:remove(view)
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 0 then
-            w:new_tab("luakit://newtab/", false)
+            w:new_tab(settings.window.new_tab_page, false)
         end
     end,
 
@@ -535,7 +535,7 @@ _M.methods = {
         local search_engines = settings.window.search_engines
 
         -- Detect blank uris
-        if not arg or match(arg, "^%s*$") then return "luakit://newtab/" end
+        if not arg or match(arg, "^%s*$") then return settings.window.new_tab_page end
 
         -- Strip whitespace and split by whitespace into args table
         local args = lstring.split(lstring.strip(arg))
@@ -708,6 +708,10 @@ settings.register_settings({
     ["window.home_page"] = {
         type = "string",
         default = "http://luakit.org/",
+    },
+    ["window.new_tab_page"] = {
+        type = "string",
+        default = "about:blank",
     },
     ["window.search_engines"] = {
         type = "table",

@@ -366,7 +366,7 @@ modes.add_binds("normal", {
     { "g0", "Go to first tab.", function (w) w:goto_tab(1) end },
     { "g$", "Go to last tab.", function (w) w:goto_tab(-1) end },
 
-    { "<Control-t>", "Open a new tab.", function (w) w:new_tab("luakit://newtab/") end },
+    { "<Control-t>", "Open a new tab.", function (w) w:new_tab(settings.window.new_tab_page) end },
     { "<Control-w>", "Close current tab.", function (w) w:close_tab() end },
     { "d", "Close current tab (or `[count]` tabs).",
         function (w, m) for _=1,m.count do w:close_tab() end end, {count=1} },
