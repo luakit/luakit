@@ -166,6 +166,18 @@ new_settings_node = function (prefix, section)
     return setmetatable({}, meta)
 end
 
+--- Migration helper function.
+-- @deprecated should be used only for existing code.
+_M.migrate_global = function (sk, gk)
+    local globals = package.loaded.globals or {}
+    if globals[gk] and (globals[gk] ~= settings_list[sk].default) then
+        msg.warn("globals.lua is deprecated, and will be removed in the next release!")
+        msg.warn("globals.%s has a non-default value; to migrate, add the following:", gk)
+        msg.warn("  settings.%s = %s", sk, globals[gk])
+        S_set(nil, gk, globals[gk])
+    end
+end
+
 local root = new_settings_node()
 
 return setmetatable(_M, { __index = root, __newindex = root })
