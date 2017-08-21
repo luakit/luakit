@@ -40,6 +40,7 @@
  - Fixed `Control-Scroll` and `Shift-Scroll` key bindings not working with smooth scrolling.
  - Fixed inability to switch focus between web page elements with `Tab` and `Shift-Tab`.
  - Fixed log page bug when logging messages with newlines.
+ - Fixed `Up` and `Down` keybindings being broken on completion menu.
 
 ## [2017-08-10]
 
