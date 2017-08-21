@@ -52,6 +52,8 @@ end)
 local modes = require "modes"
 local binds = require "binds"
 
+local settings = require "settings"
+
 ----------------------------------
 -- Optional user script loading --
 ----------------------------------
@@ -147,9 +149,6 @@ local styles = require "styles"
 
 -- Hide scrollbars on all pages
 local hide_scrollbars = require "hide_scrollbars"
-
--- Automatically apply per-domain webview properties
-local domain_props = require "domain_props"
 
 -- Add a stylesheet when showing images
 local image_css = require "image_css"
