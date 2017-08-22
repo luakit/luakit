@@ -84,6 +84,21 @@ local function S_set(section, k, v)
     tree[k] = v
 end
 
+local function S_get_table(section, k)
+    local tbl = S_get(section, k)
+    return setmetatable({}, {
+        __index = tbl,
+        __newindex = tbl,
+        __metatable = false,
+    })
+end
+
+local function S_set_table(section, k, v)
+    local tbl = {}
+    S_set(section, k, tbl)
+    for kk, vv in pairs(v) do tbl[kk] = vv end
+end
+
 local uri_domain_cache = {}
 
 --- Retrieve the value of a setting for a URI, based on the setting's domain-specific values.
@@ -146,7 +161,10 @@ new_settings_node = function (prefix, section)
         if meta.subnodes[k] then return meta.subnodes[k] end
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
-        if type == "value" then return S_get(meta.section, full_path) end
+        if type == "value" then
+            local getter = (settings_list[full_path].type == "table") and S_get_table or S_get
+            return (getter)(meta.section, full_path)
+        end
         if type == "group" then
             meta.subnodes[k] = new_settings_node(full_path, meta.section)
             return meta.subnodes[k]
@@ -156,7 +174,8 @@ new_settings_node = function (prefix, section)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
         if type == "value" then
-            S_set(meta.section, full_path, v)
+            local setter = (settings_list[full_path].type == "table") and S_set_table or S_set
+            setter(meta.section, full_path, v)
         elseif type == "group" then
             error("cannot assign a value to a settings group")
         else
