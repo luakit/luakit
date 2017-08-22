@@ -8,13 +8,11 @@ require "unique_instance"
 
 -- Set the number of web processes to use. A value of 0 means 'no limit'.
 luakit.process_limit = 4
+-- Set the cookie storage location
+soup.cookies_storage = luakit.data_dir .. "/cookies.db"
 
 -- Load library of useful functions for luakit
 local lousy = require "lousy"
-
--- Load users global config
--- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
-local globals = require "globals"
 
 -- Load users theme
 -- ("$XDG_CONFIG_HOME/luakit/theme.lua" or "/etc/xdg/luakit/theme.lua")
