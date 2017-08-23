@@ -589,11 +589,19 @@ if globals.domain_props then
     msg.warn("domain_props.lua is deprecated, and will be removed in the next release!")
     msg.warn("to migrate, add the following:")
 end
+local warn_rename = false
 for domain, props in pairs(globals.domain_props or {}) do
     for k, v in pairs(props) do
+        if k == "enable_scripts" then
+            k = "enable_javascript"
+            warn_rename = true
+        end
         msg.warn("  settings.on[\"%s\"].webview.%s = %s", domain, k, v)
         settings.on[domain].webview[k] = v
     end
+end
+if warn_rename then
+    msg.warn("note: enable_scripts has been renamed enable_javascript")
 end
 
 return _M
