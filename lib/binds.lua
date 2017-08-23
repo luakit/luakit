@@ -115,7 +115,7 @@ local actions = { scroll = {
     },
     page_up = {
         desc = "Scroll the current page up a full screen.",
-        func = function (w, m) w:scroll{ ypagerel = (m.count or 1) } end,
+        func = function (w, m) w:scroll{ ypagerel = -(m.count or 1) } end,
     },
     page_down = {
         desc = "Scroll the current page down a full screen.",
