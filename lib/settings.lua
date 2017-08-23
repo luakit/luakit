@@ -17,6 +17,7 @@ local settings_groups
 local S = {
     root = {}, -- Values for settings.foo
     domain = {}, -- Values for settings.on["domain"].foo
+    view_overrides = setmetatable({}, { __mode = "k" }),
 }
 
 local function validate_settings_path (k)
@@ -97,6 +98,42 @@ local function S_set_table(section, k, v)
     local tbl = {}
     S_set(section, k, tbl)
     for kk, vv in pairs(v) do tbl[kk] = vv end
+end
+
+--- Retrieve the value of a setting for a webview.
+--
+-- This function considers, in order:
+--
+-- 1. any view-specific overrides
+-- 2. the setting's domain-specific values
+-- 3. the setting's non-domain-specific value
+-- 4. the setting's default value
+--
+-- The settings key must be a valid settings key.
+-- @tparam widget view The webview.
+-- @tparam string key The key of the setting to retrieve.
+-- @return The value of the setting.
+_M.get_setting_for_view = function (view, key)
+    assert(type(view) == "widget" and view.type == "webview")
+    local tree = S.view_overrides[view]
+    if tree and tree[key] then return tree[key] end
+    local val = _M.get_setting_for_uri(view.uri, key)
+    if val then return val end
+    return _M.get_setting(key)
+end
+
+--- Add or remove a view-specific override for a setting.
+-- Passing `nil` as the `value` will clear any override.
+--
+-- The settings key must be a valid settings key.
+-- @tparam widget view The webview.
+-- @tparam string key The key of the setting to override.
+-- @return The new value of the setting override.
+_M.override_setting_for_view = function (view, key, value)
+    assert(type(view) == "widget" and view.type == "webview")
+    local vo = S.view_overrides
+    vo[view] = vo[view] or {}
+    vo[view][key] = value
 end
 
 local uri_domain_cache = {}
