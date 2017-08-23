@@ -45,6 +45,7 @@
  - Fixed inability to switch focus between web page elements with `Tab` and `Shift-Tab`.
  - Fixed log page bug when logging messages with newlines.
  - Fixed `Up` and `Down` keybindings being broken on completion menu.
+ - Fixed hardcoded path to luakit icon.
 
 ## [2017-08-10]
 
