@@ -10,6 +10,30 @@ Unique instance support has been moved to a module. To update, follow these step
  1. Remove the two `if unique then ... end` blocks from your `rc.lua`.
  2. Add `require "unique_instance"` to your `rc.lua`, before all other `require` statements.
 
+### Move `globals` settings to `rc.lua`
+
+The `globals.lua` configuration file has been removed. In its place
+is the new `settings` module, which provides a central place to set
+settings with validation and domain-specific setting support.
+
+All modified fields of the `globals` table need to be migrated to
+equivalent settings. When starting luakit, a warning will be logged
+for each setting that must be migrated, showing the new code for that
+setting.
+
+### Remove old configuration files
+
+The `window.lua`, `webview.lua`, and `webview_wm.lua` configuration
+files have been made core modules, and any configuration files are
+ignored.
+
+If you have made extensive changes to these files, please open an issue
+on the luakit GitHub repository to discuss adding new APIs to support
+your changes. As an interim solution, you can still override the core
+modules by modifying the `package.path` variable; note that this is
+_not_ officially supported, and unless you carefully keep your modified
+files synchronized with new changes, unpredictable errors may result.
+
 ## Migrating from a pre-WebKit2 Version
 
 The latest luakit release is built around the WebKit 2 APIs. Changes in the APIs
