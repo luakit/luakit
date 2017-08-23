@@ -1,5 +1,5 @@
-@name Tests
-#Luakit's Tests
+@name Running the Test Suite
+#Running the Test Suite
 
 ##Test System
 
