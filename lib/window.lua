@@ -702,7 +702,7 @@ settings.register_settings({
         validator = function (v)
             local x, y = v:match("^(%d+)x(%d+)$")
             if not x or not y then return false end
-            return x > 0 and y > 0
+            return tonumber(x) > 0 and tonumber(y) > 0
         end,
     },
     ["window.home_page"] = {
