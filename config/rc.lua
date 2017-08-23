@@ -128,8 +128,8 @@ local open_editor = require "open_editor"
 
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
--- Remove all "enable_scripts" & "enable_plugins" lines from your
--- domain_props table (in config/globals.lua) as this module will conflict.
+-- If you use this module, don't use any site-specific `enable_scripts` or
+-- `enable_plugins` settings, as these will conflict.
 --require "noscript"
 
 local follow_selected = require "follow_selected"
