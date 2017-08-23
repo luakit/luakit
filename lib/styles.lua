@@ -32,7 +32,6 @@ local webview = require("webview")
 local lousy   = require("lousy")
 local lfs     = require("lfs")
 local editor  = require("editor")
-local globals = require("globals")
 local binds, modes = require("binds"), require("modes")
 local new_mode = require("modes").new_mode
 local add_binds, add_cmds = modes.add_binds, modes.add_cmds
@@ -387,22 +386,6 @@ add_binds("styles-list", lousy.util.table.join({
 }, menu_binds))
 
 _M.detect_files()
-
--- Warn about domain_props being broken
-local domains = {}
-for domain, prop in pairs(globals.domain_props) do
-    if type(prop) == "table" and prop.user_stylesheet_uri then
-        domains[#domains+1] = domain
-    end
-end
-
-if #domains > 0 then
-    msg.warn("using domain_props for user stylesheets is non-functional")
-    for _, domain in ipairs(domains) do
-        msg.warn("found user_stylesheet_uri property for domain '%s'", domain)
-    end
-    msg.warn("use styles module instead")
-end
 
 return _M
 

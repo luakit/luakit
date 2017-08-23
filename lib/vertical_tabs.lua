@@ -9,7 +9,7 @@ local _M = {}
 
 local window = require("window")
 local lousy = require("lousy")
-local globals = require("globals")
+local settings = require("settings")
 
 window.add_signal("build", function (w)
     -- Replace the existing tablist with a vertical one
@@ -21,10 +21,19 @@ window.add_signal("build", function (w)
     paned:pack1(w.tablist.widget, { resize = false, shrink = true })
     w.tabs.parent.child = nil
     paned:pack2(w.tabs)
-    paned.position = globals.vertical_tab_width or 200
+    paned.position = settings.vertical_tabs.sidebar_width
 
     w.menu_tabs.child = paned
 end)
+
+settings.register_settings({
+    ["vertical_tabs.sidebar_width"] = {
+        type = "number", min = 0,
+        default = 200,
+    },
+})
+
+settings.migrate_global("vertical_tabs.sidebar_width", "vertical_tab_width")
 
 return _M
 

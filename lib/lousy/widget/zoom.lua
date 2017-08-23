@@ -10,7 +10,7 @@ local webview = require("webview")
 local lousy = require("lousy")
 local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
-local globals = require("globals")
+local settings = require("settings")
 
 local _M = {}
 
@@ -23,7 +23,7 @@ _M.format = "[zoom:%d%%]"
 local widgets = {
     update = function (w, zoom)
         local zl = w.view.zoom_level
-        if zl == (globals.default_zoom_level or 100)/100 then
+        if zl == settings.webview.zoom_level/100 then
             zoom:hide()
         else
             zoom:show()

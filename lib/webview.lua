@@ -1,15 +1,19 @@
---------------------------
--- WebKit WebView class --
---------------------------
+--- Webview widget wrapper.
+--
+-- The webview module wraps the webview widget provided by luakit, adding
+-- several convenience APIs and providing basic functionality.
+--
+-- @module webview
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local window = require("window")
 local lousy = require("lousy")
-local globals = require("globals")
+local settings = require("settings")
 
--- Webview class table
-local webview = {}
+local _M = {}
 
-lousy.signal.setup(webview, true)
+lousy.signal.setup(_M, true)
 
 local web_module = require_web_module("webview_wm")
 
@@ -32,15 +36,10 @@ local webview_state = setmetatable({}, { __mode = "k" })
 
 -- Table of functions which are called on new webview widgets.
 local init_funcs = {
-    -- Set useragent
-    set_useragent = function (view)
-        view.user_agent = globals.useragent
-    end,
-
     -- Update window and tab titles
     title_update = function (view)
         view:add_signal("property::title", function (v)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w and w.view == v then
                 w:update_win_title()
             end
@@ -57,13 +56,13 @@ local init_funcs = {
             end
         end)
         view:add_signal("form-active", function (v)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if not w.mode.passthrough then
                 w:set_mode("insert")
             end
         end)
         view:add_signal("root-active", function (v)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w.mode.reset_on_focus ~= false then
                 w:set_mode()
             end
@@ -79,13 +78,13 @@ local init_funcs = {
     -- press hit the webview.
     button_bind_match = function (view)
         view:add_signal("button-release", function (v, mods, button, context)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w:hit(mods, button, { context = context }) then
                 return true
             end
         end)
         view:add_signal("scroll", function (v, mods, dx, dy, context)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if w:hit(mods, "Scroll", { context = context, dx = dx, dy = dy }) then
                 return true
             end
@@ -95,7 +94,7 @@ local init_funcs = {
     -- Reset the mode on navigation
     mode_reset_on_nav = function (view)
         view:add_signal("load-status", function (v, status)
-            local w = webview.window(v)
+            local w = _M.window(v)
             if status == "provisional" and w and w.view == v then
                 if w.mode.reset_on_navigation ~= false then
                     w:set_mode()
@@ -131,7 +130,7 @@ local init_funcs = {
     create_webview = function (view)
         -- Return a newly created webview in a new tab
         view:add_signal("create-web-view", function (v)
-            return webview.window(v):new_tab(nil, { private = v.private })
+            return _M.window(v):new_tab(nil, { private = v.private })
         end)
     end,
 
@@ -147,12 +146,14 @@ local init_funcs = {
     end,
 }
 
--- These methods are present when you index a window instance and no window
+--- These methods are present when you index a window instance and no window
 -- method is found in `window.methods`. The window then checks if there is an
 -- active webview and calls the following methods with the given view instance
 -- as the first argument. All methods must take `view` & `w` as the first two
 -- arguments.
-webview.methods = {
+-- @readwrite
+-- @type {[string]=function}
+_M.methods = {
     -- Reload with or without ignoring cache
     reload = function (view, _, bypass_cache)
         if bypass_cache then
@@ -174,12 +175,12 @@ webview.methods = {
 
     -- Zoom functions
     zoom_in = function (view, _, step)
-        step = step or globals.zoom_step or 0.1
+        step = step or settings.window.zoom_step
         view.zoom_level = view.zoom_level + step
     end,
 
     zoom_out = function (view, _, step)
-        step = step or globals.zoom_step or 0.1
+        step = step or settings.window.zoom_step
         view.zoom_level = math.max(0.01, view.zoom_level) - step
     end,
 
@@ -199,7 +200,11 @@ webview.methods = {
     end,
 }
 
-function webview.methods.scroll(view, w, new)
+--- Scroll the current webview by a given amount.
+-- @tparam widget view The webview widget to scroll.
+-- @tparam table w The window class table for the window containing `view`.
+-- @tparam table new Table of scroll information.
+function _M.methods.scroll(view, w, new)
     local s = view.scroll
     for _, axis in ipairs{ "x", "y" } do
         -- Relative px movement
@@ -268,7 +273,11 @@ do
     end
 end
 
-function webview.new(opts)
+--- Create a new webview instance.
+-- @tparam table opts Table of options. Currently only `private` is recognized
+-- as a key.
+-- @treturn table The newly-created webview widget.
+function _M.new(opts)
     assert(opts)
     local view = widget{type = "webview", private = opts.private}
 
@@ -279,7 +288,7 @@ function webview.new(opts)
     for _, func in pairs(init_funcs) do
         func(view)
     end
-    webview.emit_signal("init", view)
+    _M.emit_signal("init", view)
 
     return view
 end
@@ -292,12 +301,23 @@ luakit.idle_add(function ()
     end)
 end)
 
-function webview.window(view)
+--- Wrapper for @ref{window/ancestor|window.ancestor}.
+-- @tparam widget view The webview whose ancestor to find.
+-- @treturn table|nil The window class table for the window that contains `view`,
+-- or `nil` if `view` is not contained within a window.
+function _M.window(view)
     assert(type(view) == "widget" and view.type == "webview")
     return window.ancestor(view)
 end
 
-function webview.modify_load_block(view, name, enable)
+--- Add/remove a load block on the given webview.
+-- If a block is enabled on a webview, load requests will be suspended until the
+-- block is removed. This is useful for pausing network operations while a
+-- module is initializing.
+-- @tparam widget view The view on which to add/remove the load block.
+-- @tparam string name The name of the block to add/remove.
+-- @tparam boolean enable Whether the block should be enabled.
+function _M.modify_load_block(view, name, enable)
     assert(type(view) == "widget" and view.type == "webview")
     assert(type(name) == "string")
 
@@ -309,11 +329,16 @@ function webview.modify_load_block(view, name, enable)
         msg.verbose("fully unblocked %s", view)
         local queued = ws.queued_location
         ws.queued_location = nil
-        webview.set_location(view, queued)
+        _M.set_location(view, queued)
     end
 end
 
-function webview.set_location(view, arg)
+--- Set the location of the webview. This method will respect any load blocks in
+-- place (see @ref{modify_load_block}).
+-- @tparam widget view The view whose location to modify.
+-- @tparam table arg The new location. Can be a URI, a JavaScript URI, or a
+-- table with `session_state` and `uri` keys.
+function _M.set_location(view, arg)
     assert(type(view) == "widget" and view.type == "webview")
     assert(type(arg) == "string" or type(arg) == "table")
 
@@ -353,7 +378,7 @@ table.insert(window.indexes, 1, function (w, k)
         end
     end
     -- Lookup webview method
-    local func = webview.methods[k]
+    local func = _M.methods[k]
     if not func then return end
     local view = w.view
     if view then
@@ -361,6 +386,216 @@ table.insert(window.indexes, 1, function (w, k)
     end
 end)
 
-return webview
+local webview_settings = {
+    ["webview.allow_file_access_from_file_uris"] = {
+        type = "boolean",
+    },
+    ["webview.allow_modal_dialogs"] = {
+        type = "boolean",
+    },
+    ["webview.allow_universal_access_from_file_uris"] = {
+        type = "boolean",
+    },
+    ["webview.auto_load_images"] = {
+        type = "boolean",
+    },
+    ["webview.cursive_font_family"] = {
+        type = "string",
+    },
+    ["webview.default_charset"] = {
+        type = "string",
+    },
+    ["webview.default_font_family"] = {
+        type = "string",
+    },
+    ["webview.default_font_size"] = {
+        type = "number", min = 0,
+    },
+    ["webview.default_monospace_font_size"] = {
+        type = "number", min = 0,
+    },
+    ["webview.draw_compositing_indicators"] = {
+        type = "boolean",
+    },
+    ["webview.editable"] = {
+        type = "boolean",
+    },
+    ["webview.enable_accelerated_2d_canvas"] = {
+        type = "boolean",
+    },
+    ["webview.enable_caret_browsing"] = {
+        type = "boolean",
+    },
+    ["webview.enable_developer_extras"] = {
+        type = "boolean",
+    },
+    ["webview.enable_dns_prefetching"] = {
+        type = "boolean",
+    },
+    ["webview.enable_frame_flattening"] = {
+        type = "boolean",
+    },
+    ["webview.enable_fullscreen"] = {
+        type = "boolean",
+    },
+    ["webview.enable_html5_database"] = {
+        type = "boolean",
+    },
+    ["webview.enable_html5_local_storage"] = {
+        type = "boolean",
+    },
+    ["webview.enable_hyperlink_auditing"] = {
+        type = "boolean",
+    },
+    ["webview.enable_java"] = {
+        type = "boolean",
+    },
+    ["webview.enable_javascript"] = {
+        type = "boolean",
+    },
+    ["webview.enable_mediasource"] = {
+        type = "boolean",
+    },
+    ["webview.enable_media_stream"] = {
+        type = "boolean",
+    },
+    ["webview.enable_offline_web_application_cache"] = {
+        type = "boolean",
+    },
+    ["webview.enable_page_cache"] = {
+        type = "boolean",
+    },
+    ["webview.enable_plugins"] = {
+        type = "boolean",
+    },
+    ["webview.enable_private_browsing"] = {
+        type = "boolean",
+    },
+    ["webview.enable_resizable_text_areas"] = {
+        type = "boolean",
+    },
+    ["webview.enable_site_specific_quirks"] = {
+        type = "boolean",
+    },
+    ["webview.enable_smooth_scrolling"] = {
+        type = "boolean",
+    },
+    ["webview.enable_spatial_navigation"] = {
+        type = "boolean",
+    },
+    ["webview.enable_tabs_to_links"] = {
+        type = "boolean",
+    },
+    ["webview.enable_webaudio"] = {
+        type = "boolean",
+    },
+    ["webview.enable_webgl"] = {
+        type = "boolean",
+    },
+    ["webview.enable_write_console_messages_to_stdout"] = {
+        type = "boolean",
+    },
+    ["webview.enable_xss_auditor"] = {
+        type = "boolean",
+    },
+    ["webview.fantasy_font_family"] = {
+        type = "string",
+    },
+    ["webview.hardware_acceleration_policy"] = {
+        type = "enum",
+        options = {
+            ["on-demand"] = { desc = "Enable/disable hardware acceleration as necessary." },
+            ["always"] = { desc = "Always enable hardware acceleration." },
+            ["never"] = { desc = "Always disable hardware acceleration." },
+        },
+    },
+    ["webview.javascript_can_access_clipboard"] = {
+        type = "boolean",
+    },
+    ["webview.javascript_can_open_windows_automatically"] = {
+        type = "boolean",
+    },
+    ["webview.load_icons_ignoring_image_load_setting"] = {
+        type = "boolean",
+    },
+    ["webview.media_playback_allows_inline"] = {
+        type = "boolean",
+    },
+    ["webview.media_playback_requires_user_gesture"] = {
+        type = "boolean",
+    },
+    ["webview.minimum_font_size"] = {
+        type = "number", min = 0,
+    },
+    ["webview.monospace_font_family"] = {
+        type = "string",
+    },
+    ["webview.pictograph_font_family"] = {
+        type = "string",
+    },
+    ["webview.print_backgrounds"] = {
+        type = "boolean",
+    },
+    ["webview.sans_serif_font_family"] = {
+        type = "string",
+    },
+    ["webview.serif_font_family"] = {
+        type = "string",
+    },
+    ["webview.user_agent"] = {
+        type = "string",
+    },
+    ["webview.zoom_level"] = {
+        type = "number", min = 0,
+        default = 100,
+    },
+    ["webview.zoom_text_only"] = {
+        type = "boolean",
+    },
+}
+settings.register_settings(webview_settings)
+
+_M.add_signal("init", function (view)
+    local set = function (wv, k, v, match)
+        if v then
+            k = k:sub(9) -- Strip off "webview." prefix
+            if k == "zoom_level" then v = v/100.0 end
+            match = match and (" (matched '"..match.."')") or ""
+            msg.verbose("setting property %s = %s" .. match, k, v, match)
+            wv[k] = v
+        end
+    end
+    -- Set initial values
+    for k in pairs(webview_settings) do
+        local v = settings.get_setting(k)
+        set(view, k, v)
+    end
+    -- Set domain-specific values on page load
+    view:add_signal("load-status", function (v, status)
+        if status ~= "committed" or v.uri == "about:blank" then return end
+        for k in pairs(webview_settings) do
+            local val, match = settings.get_setting_for_uri(v.uri, k)
+            set(v, k, val, match)
+        end
+    end)
+end)
+
+settings.migrate_global("webview.zoom_level", "default_zoom_level")
+settings.migrate_global("webview.user_agent", "user_agent")
+
+-- Migrate from globals.domain_props
+local globals = package.loaded.globals or {}
+if globals.domain_props then
+    msg.warn("domain_props.lua is deprecated, and will be removed in the next release!")
+    msg.warn("to migrate, add the following:")
+end
+for domain, props in pairs(globals.domain_props or {}) do
+    for k, v in pairs(props) do
+        msg.warn("  settings.on[\"%s\"].webview.%s = %s", domain, k, v)
+        settings.on[domain].webview[k] = v
+    end
+end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

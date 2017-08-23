@@ -123,17 +123,10 @@ Now we can create a new file, `/home/$USER/.config/luakit/userconf.lua`,
 where we can introduce all the changes we want; these changes will not have to
 be merged with any future changes to the `rc.lua` file.
 
-### Changing the theme and other settings
+### Changing the theme
 
-Apart from `rc.lua`, there are some other configuration files of interest.
-
- - `theme.lua` specifies the fonts and colours used by the interface widgets.
- - `globals.lua` contains global options like the size of the scroll
-   and zoom steps, the default window size, the useragent string, search
-   engines, and more.
-
-Just copy the files you wish to change into your personal luakit configuration
-directory, and luakit will load those files when you next launch it.
+Apart from `rc.lua`, the other configuration file is `theme.lua`, which
+specifies the fonts and colours used by the interface widgets.
 
 ### Changing key bindings
 

@@ -8,13 +8,11 @@ require "unique_instance"
 
 -- Set the number of web processes to use. A value of 0 means 'no limit'.
 luakit.process_limit = 4
+-- Set the cookie storage location
+soup.cookies_storage = luakit.data_dir .. "/cookies.db"
 
 -- Load library of useful functions for luakit
 local lousy = require "lousy"
-
--- Load users global config
--- ("$XDG_CONFIG_HOME/luakit/globals.lua" or "/etc/xdg/luakit/globals.lua")
-local globals = require "globals"
 
 -- Load users theme
 -- ("$XDG_CONFIG_HOME/luakit/theme.lua" or "/etc/xdg/luakit/theme.lua")
@@ -51,6 +49,8 @@ end)
 -- Load luakit binds and modes
 local modes = require "modes"
 local binds = require "binds"
+
+local settings = require "settings"
 
 ----------------------------------
 -- Optional user script loading --
@@ -128,8 +128,8 @@ local open_editor = require "open_editor"
 
 -- NoScript plugin, toggle scripts and or plugins on a per-domain basis.
 -- `,ts` to toggle scripts, `,tp` to toggle plugins, `,tr` to reset.
--- Remove all "enable_scripts" & "enable_plugins" lines from your
--- domain_props table (in config/globals.lua) as this module will conflict.
+-- If you use this module, don't use any site-specific `enable_scripts` or
+-- `enable_plugins` settings, as these will conflict.
 --require "noscript"
 
 local follow_selected = require "follow_selected"
@@ -147,9 +147,6 @@ local styles = require "styles"
 
 -- Hide scrollbars on all pages
 local hide_scrollbars = require "hide_scrollbars"
-
--- Automatically apply per-domain webview properties
-local domain_props = require "domain_props"
 
 -- Add a stylesheet when showing images
 local image_css = require "image_css"

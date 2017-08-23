@@ -102,53 +102,10 @@
 -- @author Mason Larobina
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
-local lousy = require("lousy")
-local webview = require("webview")
-local globals = require("globals")
-local domain_props = globals.domain_props
-
 local _M = {}
 
--- Automatically reset to the default zoom
-if globals.default_zoom_level then
-    domain_props.all = domain_props.all or {}
-    domain_props.all.zoom_level = domain_props.all.zoom_level or (globals.default_zoom_level/100)
-end
-
-webview.add_signal("init", function (view)
-    view:add_signal("load-status", function (v, status)
-        if status ~= "committed" or v.uri == "about:blank" then return end
-        -- Get domain
-        local domain = lousy.uri.parse(v.uri).host
-        -- Strip leading www.
-        domain = string.match(domain or "", "^www%.(.+)") or domain or "all"
-        -- Build list of domain props tables to join & load.
-        -- I.e. for example.com load { .example.com, example.com, .com }
-        local prop_sets = { { domain = "all", props = domain_props.all or {} } }
-        if domain ~= "all" then
-            table.insert(prop_sets, { domain = domain, props = domain_props[domain] or {} })
-        end
-        repeat
-            table.insert(prop_sets, { domain = "."..domain, props = domain_props["."..domain] or {} })
-            domain = string.match(domain, "%.(.+)")
-        until not domain
-
-        -- Sort by rule precedence: "all" first, then by increasing specificity
-        table.sort(prop_sets, function (a, b)
-            if a.domain == "all" then return true end
-            if b.domain == "all" then return false end
-            return #a.domain < #b.domain
-        end)
-
-        -- Apply all properties
-        for _, props in ipairs(prop_sets) do
-            for k, prop in pairs(props.props) do
-                msg.info("setting property %s = %s (matched %s)", k, prop, props.domain)
-                view[k] = prop
-            end
-        end
-    end)
-end)
+msg.warn("domain_props.lua is deprecated, and will be removed in the next release!")
+msg.warn("all functionality (and more!) has been moved to settings.lua")
 
 return _M
 

@@ -1,20 +1,25 @@
-------------------
--- Window class --
-------------------
+--- Main window UI.
+--
+-- The window module builds the UI for each luakit window, and manages modes,
+-- keybind state, and common functions like tab navigation and management.
+--
+-- @module window
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 require "lfs"
 local lousy = require("lousy")
-local globals = require("globals")
-local search_engines = globals.search_engines
+local settings = require("settings")
 local theme = lousy.theme.get()
 
--- Window class table
-local window = {}
+local _M = {}
 
-lousy.signal.setup(window, true)
+lousy.signal.setup(_M, true)
 
--- List of active windows by window widget
-window.bywidget = setmetatable({}, { __mode = "k" })
+--- Map of `window` widgets to window class tables.
+-- @type table
+-- @readonly
+_M.bywidget = setmetatable({}, { __mode = "k" })
 
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
@@ -25,8 +30,9 @@ local function notebook() return widget{type="notebook"} end
 local function vbox()     return widget{type="vbox"}     end
 local function overlay()  return widget{type="overlay"}  end
 
--- Build and pack window widgets
-function window.build(w)
+--- Construction function which will build and arrange the window's widgets.
+-- @tparam table w The initial window class table.
+function _M.build(w)
     -- Create a table for widgets and state variables for a window
     local ww = {
         win    = widget{type="window"},
@@ -127,7 +133,7 @@ function window.build(w)
     w.ibar.prompt.selectable = true
 
     -- Allows indexing of window struct by window widget
-    window.bywidget[w.win] = w
+    _M.bywidget[w.win] = w
 end
 
 -- Table of functions to call on window creation. Normally used to add signal
@@ -208,7 +214,7 @@ local init_funcs = {
     end,
 
     set_default_size = function (w)
-        local size = globals.default_window_size or "800x600"
+        local size = settings.window.new_window_size
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
@@ -243,8 +249,10 @@ local init_funcs = {
     end,
 }
 
--- Helper functions which operate on the window widgets or structure.
-window.methods = {
+--- Helper functions which operate on the window widgets or structure.
+-- @type {[string]=function}
+-- @readwrite
+_M.methods = {
     -- Wrapper around the bind plugin's hit method
     hit = function (w, mods, key, opts)
         opts = lousy.util.table.join(opts or {}, {
@@ -366,7 +374,7 @@ window.methods = {
     update_win_title = function (w)
         local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
-        local max = globals.max_title_len or 80
+        local max = settings.window.max_title_len
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
     end,
@@ -432,7 +440,7 @@ window.methods = {
         view.parent:remove(view)
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 0 then
-            w:new_tab("luakit://newtab/", false)
+            w:new_tab(settings.window.new_tab_page, false)
         end
     end,
 
@@ -465,7 +473,7 @@ window.methods = {
         w.tablist:destroy()
 
         -- Remove from window index
-        window.bywidget[w.win] = nil
+        _M.bywidget[w.win] = nil
 
         -- Clear window struct
         w = setmetatable(w, {})
@@ -524,9 +532,10 @@ window.methods = {
     search_open = function (_, arg)
         local lstring = lousy.util.string
         local match, find = string.match, string.find
+        local search_engines = settings.window.search_engines
 
         -- Detect blank uris
-        if not arg or match(arg, "^%s*$") then return "luakit://newtab/" end
+        if not arg or match(arg, "^%s*$") then return settings.window.new_tab_page end
 
         -- Strip whitespace and split by whitespace into args table
         local args = lstring.split(lstring.strip(arg))
@@ -544,7 +553,7 @@ window.methods = {
 
             -- Valid hostnames to check
             local hosts = { "localhost" }
-            if globals.load_etc_hosts ~= false then
+            if settings.window.load_etc_hosts then
                 hosts = lousy.util.get_etc_hosts()
             end
 
@@ -554,7 +563,7 @@ window.methods = {
             end
 
             -- Check for file in filesystem
-            if globals.check_filepath ~= false then
+            if settings.window.check_filepath then
                 if lfs.attributes(uri) then return "file://" .. uri end
             end
         end
@@ -615,25 +624,29 @@ window.methods = {
     end,
 }
 
--- Ordered list of class index functions. Other classes (E.g. webview) are able
+--- Ordered list of class index functions. Other classes (E.g. webview) are able
 -- to add their own index functions to this list.
-window.indexes = {
+-- @type {function}
+-- @readwrite
+_M.indexes = {
     -- Find function in window.methods first
-    function (_, k) return window.methods[k] end
+    function (_, k) return _M.methods[k] end
 }
 
-window.add_signal("build", window.build)
+_M.add_signal("build", _M.build)
 
--- Create new window
-function window.new(args)
+--- Create a new window table instance.
+-- @tparam table args Array of initial tab arguments.
+-- @treturn table The newly-created window table.
+function _M.new(args)
     local w = {}
-    window.emit_signal("build", w)
+    _M.emit_signal("build", w)
 
     -- Set window metatable
     setmetatable(w, {
         __index = function (_, k)
             -- Call each window index function
-            for _, index in ipairs(window.indexes) do
+            for _, index in ipairs(_M.indexes) do
                 local v = index(w, k)
                 if v then return v end
             end
@@ -647,7 +660,7 @@ function window.new(args)
     for _, func in pairs(init_funcs) do
         func(w)
     end
-    window.emit_signal("init", w)
+    _M.emit_signal("init", w)
 
     -- Populate notebook with tabs
     for _, arg in ipairs(args or {}) do
@@ -665,19 +678,88 @@ function window.new(args)
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(w:search_open(globals.homepage), false)
+        w:new_tab(w:search_open(settings.window.home_page), false)
     end
 
     return w
 end
 
-function window.ancestor(w)
+--- Get the window that contains the given widget.
+-- @tparam widget w The widget whose ancestor to find.
+-- @treturn table|nil The window class table for the window that contains `w`,
+-- or `nil` if the given widget is not contained within a window.
+function _M.ancestor(w)
     repeat
         w = w.parent
     until w == nil or w.type == "window"
-    return w and window.bywidget[w] or nil
+    return w and _M.bywidget[w] or nil
 end
 
-return window
+settings.register_settings({
+    ["window.new_window_size"] = {
+        type = "string",
+        default = "800x600",
+        validator = function (v)
+            local x, y = v:match("^(%d+)x(%d+)$")
+            if not x or not y then return false end
+            return x > 0 and y > 0
+        end,
+    },
+    ["window.home_page"] = {
+        type = "string",
+        default = "http://luakit.org/",
+    },
+    ["window.new_tab_page"] = {
+        type = "string",
+        default = "about:blank",
+    },
+    ["window.search_engines"] = {
+        type = "table",
+        default = {
+            duckduckgo  = "https://duckduckgo.com/?q=%s",
+            github      = "https://github.com/search?q=%s",
+            google      = "https://google.com/search?q=%s",
+            imdb        = "http://www.imdb.com/find?s=all&q=%s",
+            wikipedia   = "https://en.wikipedia.org/wiki/Special:Search?search=%s",
+
+            default     = "https://google.com/search?q=%s",
+        },
+    },
+    ["window.scroll_step"] = {
+        type = "number", min = 0,
+        default = 40,
+    },
+    ["window.zoom_step"] = {
+        type = "number", min = 0,
+        default = 0.1,
+    },
+    ["window.load_etc_hosts"] = {
+        type = "boolean",
+        default = true,
+    },
+    ["window.check_filepath"] = {
+        type = "boolean",
+        default = true,
+    },
+    ["window.max_title_len"] = {
+        type = "number",
+        default = 80,
+    },
+})
+
+settings.migrate_global("window.new_window_size", "default_window_size")
+settings.migrate_global("window.home_page", "homepage")
+settings.migrate_global("window.scroll_step", "scroll_step")
+settings.migrate_global("window.zoom_step", "zoom_step")
+settings.migrate_global("window.load_etc_hosts", "load_etc_hosts")
+settings.migrate_global("window.check_filepath", "check_filepath")
+settings.migrate_global("window.max_title_len", "max_title_len")
+
+local globals = package.loaded.globals
+if globals then
+    settings.window.search_engines = globals.search_engines
+end
+
+return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
