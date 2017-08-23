@@ -82,6 +82,28 @@ end
 local function S_set(section, k, v)
     if section then S.domain[section] = S.domain[section] or {} end
     local tree = not section and S.root or S.domain[section]
+
+    local meta = settings_list[k]
+    if meta.type == "enum" then
+        if not meta.options[v] then
+            local opts = table.concat(lousy.util.table.keys(meta.options), ", ")
+            error(string.format("Wrong type for setting '%s': expected one of %s",
+                k, opts))
+        end
+    elseif meta.type and type(v) ~= meta.type then
+        error(string.format("Wrong type for setting '%s': expected %s, got %s",
+            k, meta.type, type(v)))
+    end
+    if meta.type == "number" then
+        if (meta.min and v < meta.min) or (meta.max and v > meta.max) then
+            local range = "[" .. tostring(meta.min or "") .. ".." .. tostring(meta.max or "") .. "]"
+            error(string.format("Value outside accepted range %s for setting '%s': %s", range, k))
+        end
+    end
+    if meta.validator and not meta.validator(v) then
+        error(string.format("Invalid value for setting '%s'", k))
+    end
+
     tree[k] = v
 end
 
@@ -96,7 +118,10 @@ end
 
 local function S_set_table(section, k, v)
     local tbl = {}
-    S_set(section, k, tbl)
+    if section then S.domain[section] = S.domain[section] or {} end
+    local tree = not section and S.root or S.domain[section]
+    tree[k] = tbl
+    -- TODO: add validation for tables
     for kk, vv in pairs(v) do tbl[kk] = vv end
 end
 
