@@ -36,7 +36,7 @@ commands will be written prefixed by a `:`; so `:open` means to first press
 ### Go to a URL in the current tab
 
 Type `:open` followed by a space and the URL to navigate to, and press `<Enter>`.
-For example, to open the luakit website, type `:open www.luakit.org` and then
+For example, to open the luakit website, type `:open luakit.github.io` and then
 press press `<Enter>`.
 
 _Shortcut_: press `o` to switch to command mode with `open ` already typed.

@@ -707,7 +707,7 @@ settings.register_settings({
     },
     ["window.home_page"] = {
         type = "string",
-        default = "http://luakit.org/",
+        default = "https://luakit.github.io/",
     },
     ["window.new_tab_page"] = {
         type = "string",
