@@ -46,6 +46,7 @@
  - Fixed log page bug when logging messages with newlines.
  - Fixed `Up` and `Down` keybindings being broken on completion menu.
  - Fixed hardcoded path to luakit icon.
+ - Fixed luakit:// pages not working and spewing errors when not using LuaJIT.
 
 ## [2017-08-10]
 

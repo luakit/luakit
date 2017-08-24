@@ -307,8 +307,9 @@ wm:add_signal("function-call", function (_, page_id, page_name, func_name, id, a
         end
     end
     -- Call Lua function, return result
-    local ok, ret = xpcall(func, debug.traceback, view, unpack(args))
-    if not ok then msg.error(ret) end
+    local ok, ret = xpcall(
+        function () return func(view, unpack(args)) end,
+        function (err)  msg.error(debug.traceback(err, 3)) end)
     wm:emit_signal(view, "function-return", id, ok, ret)
 end)
 
