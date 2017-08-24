@@ -262,7 +262,14 @@ _M.methods = {
 
         local caught, newbuf = lousy.bind.hit(w, w.binds, mods, key, opts)
         if w.win then -- Check binding didn't cause window to exit
+            local oldbuf = (w.buffer or "") .. key
             w.buffer = newbuf
+            if not (newbuf or caught or w.ibar.input.focused or w:is_mode("insert"))
+                and type(key) == "string" and key:len() == 1 then
+                w:notify("no binding matched for " .. oldbuf)
+            elseif key ~= "Scroll" then
+                w:set_prompt()
+            end
             w:update_buf()
         end
         return caught
