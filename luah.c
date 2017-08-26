@@ -20,6 +20,7 @@
  */
 
 #include "luah.h"
+#include "log.h"
 #include "common/luah.h"
 #include "common/luautil.h"
 #include "common/luayield.h"
@@ -255,6 +256,12 @@ luaH_parserc(const gchar *confpath, gboolean run)
     g_ptr_array_add(argv, NULL);
 
     verbose("exec: %s", g_strjoinv(" ", (gchar**)argv->pdata));
+
+    char *log_dump_file = log_dump_queued_emissions();
+    if (log_dump_file) {
+        setenv("LUAKIT_QUEUED_EMISSIONS_FILE", log_dump_file, TRUE);
+        g_free(log_dump_file);
+    }
     execvp(escaped_execpath, (gchar**)argv->pdata);
 
 bailout:
