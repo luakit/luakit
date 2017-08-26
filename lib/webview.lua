@@ -495,10 +495,6 @@ local webview_settings = {
         type = "boolean",
         default = true,
     },
-    ["webview.enable_private_browsing"] = {
-        type = "boolean",
-        default = false,
-    },
     ["webview.enable_resizable_text_areas"] = {
         type = "boolean",
         default = true,

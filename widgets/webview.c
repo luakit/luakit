@@ -121,7 +121,6 @@ static property_t webview_settings_properties[] = {
   { L_TK_ENABLE_OFFLINE_WEB_APPLICATION_CACHE,      "enable-offline-web-application-cache",      BOOL,  TRUE },
   { L_TK_ENABLE_PAGE_CACHE,                         "enable-page-cache",                         BOOL,  TRUE },
   { L_TK_ENABLE_PLUGINS,                            "enable-plugins",                            BOOL,  TRUE },
-  { L_TK_ENABLE_PRIVATE_BROWSING,                   "enable-private-browsing",                   BOOL,  TRUE },
   /* replaces resizable-text-areas */
   { L_TK_ENABLE_RESIZABLE_TEXT_AREAS,               "enable-resizable-text-areas",               BOOL,  TRUE },
   { L_TK_ENABLE_SITE_SPECIFIC_QUIRKS,               "enable-site-specific-quirks",               BOOL,  TRUE },

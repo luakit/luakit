@@ -37,6 +37,7 @@
 
  - Removed `domain_props` module. It is replaced by the `settings` module and its APIs.
  - Removed all configuration files except `rc.lua` and `theme.lua`.
+ - Removed `enable_private_browsing` webview property.
 
 ### Fixed
 

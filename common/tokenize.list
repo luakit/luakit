@@ -50,7 +50,6 @@ enable_java_applet
 enable_offline_web_application_cache
 enable_page_cache
 enable_plugins
-enable_private_browsing
 enable_scripts
 enable_site_specific_quirks
 enable_spatial_navigation
