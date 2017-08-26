@@ -26,6 +26,7 @@
 #include "common/ipc.h"
 #include "common/resource.h"
 #include "common/signal.h"
+#include "ipc.h"
 #include "luah.h"
 #include "log.h"
 #include "web_context.h"
@@ -370,6 +371,7 @@ luaH_luakit_exec(lua_State *L)
     static const gchar *shell = NULL;
     if (!shell && !(shell = g_getenv("SHELL")))
         shell = "/bin/sh";
+    ipc_remove_socket_file();
     execl(shell, shell, "-c", luaL_checkstring(L, 1), NULL);
     return 0;
 }
