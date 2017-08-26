@@ -389,117 +389,155 @@ end)
 local webview_settings = {
     ["webview.allow_file_access_from_file_uris"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.allow_modal_dialogs"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.allow_universal_access_from_file_uris"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.auto_load_images"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.cursive_font_family"] = {
         type = "string",
+        default = "serif",
     },
     ["webview.default_charset"] = {
         type = "string",
+        default = "iso-8859-1",
     },
     ["webview.default_font_family"] = {
         type = "string",
+        default = "sans-serif",
     },
     ["webview.default_font_size"] = {
         type = "number", min = 0,
+        default = "16",
     },
     ["webview.default_monospace_font_size"] = {
         type = "number", min = 0,
+        default = "13",
     },
     ["webview.draw_compositing_indicators"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.editable"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_accelerated_2d_canvas"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_caret_browsing"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_developer_extras"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_dns_prefetching"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_frame_flattening"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_fullscreen"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_html5_database"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_html5_local_storage"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_hyperlink_auditing"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_java"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_javascript"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_mediasource"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_media_stream"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_offline_web_application_cache"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_page_cache"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_plugins"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_private_browsing"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_resizable_text_areas"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_site_specific_quirks"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_smooth_scrolling"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_spatial_navigation"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_tabs_to_links"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.enable_webaudio"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_webgl"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_write_console_messages_to_stdout"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.enable_xss_auditor"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.fantasy_font_family"] = {
         type = "string",
+        default = "serif",
     },
     ["webview.hardware_acceleration_policy"] = {
         type = "enum",
@@ -508,39 +546,51 @@ local webview_settings = {
             ["always"] = { desc = "Always enable hardware acceleration." },
             ["never"] = { desc = "Always disable hardware acceleration." },
         },
+        default = "on-demand",
     },
     ["webview.javascript_can_access_clipboard"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.javascript_can_open_windows_automatically"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.load_icons_ignoring_image_load_setting"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.media_playback_allows_inline"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.media_playback_requires_user_gesture"] = {
         type = "boolean",
+        default = false,
     },
     ["webview.minimum_font_size"] = {
         type = "number", min = 0,
+        default = 0,
     },
     ["webview.monospace_font_family"] = {
         type = "string",
+        default = "monospace",
     },
     ["webview.pictograph_font_family"] = {
         type = "string",
+        default = "serif",
     },
     ["webview.print_backgrounds"] = {
         type = "boolean",
+        default = true,
     },
     ["webview.sans_serif_font_family"] = {
         type = "string",
+        default = "sans-serif",
     },
     ["webview.serif_font_family"] = {
         type = "string",
+        default = "serif",
     },
     ["webview.user_agent"] = {
         type = "string",
@@ -551,6 +601,7 @@ local webview_settings = {
     },
     ["webview.zoom_text_only"] = {
         type = "boolean",
+        default = false,
     },
 }
 settings.register_settings(webview_settings)
