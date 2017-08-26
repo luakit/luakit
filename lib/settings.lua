@@ -255,7 +255,7 @@ _M.migrate_global = function (sk, gk)
         msg.warn("globals.lua is deprecated, and will be removed in the next release!")
         msg.warn("globals.%s has a non-default value; to migrate, add the following:", gk)
         msg.warn("  settings.%s = %s", sk, globals[gk])
-        S_set(nil, gk, globals[gk])
+        S_set(nil, sk, globals[gk])
     end
 end
 
