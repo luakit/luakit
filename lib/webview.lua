@@ -590,9 +590,6 @@ local webview_settings = {
         type = "string",
         default = "serif",
     },
-    ["webview.user_agent"] = {
-        type = "string",
-    },
     ["webview.zoom_level"] = {
         type = "number", min = 0,
         default = 100,
@@ -603,12 +600,19 @@ local webview_settings = {
     },
 }
 settings.register_settings(webview_settings)
+settings.register_settings({
+    ["webview.user_agent"] = {
+        type = "string",
+        default = "",
+    },
+})
 
 _M.add_signal("init", function (view)
     local set = function (wv, k, v, match)
         if v then
             k = k:sub(9) -- Strip off "webview." prefix
             if k == "zoom_level" then v = v/100.0 end
+            if k == "user_agent" and v == "" then v = nil end
             match = match and (" (matched '"..match.."')") or ""
             msg.verbose("setting property %s = %s" .. match, k, v, match)
             wv[k] = v
@@ -622,8 +626,12 @@ _M.add_signal("init", function (view)
     end
     -- Set domain-specific values on page load
     view:add_signal("load-status", function (v, status)
-        if status ~= "committed" or v.uri == "about:blank" then return end
-        set_all(v)
+        if v.uri == "about:blank" then
+            return
+        elseif status == "provisional" or status == "redirected" then
+            local val, match = settings.get_setting_for_view(v, "webview.user_agent")
+            set(v, "webview.user_agent", val, match)
+        elseif status == "committed" then set_all(v) end
     end)
     view:add_signal("web-extension-loaded", function (v)
         -- Explicitly set the zoom, due to a WebKit bug that resets the
