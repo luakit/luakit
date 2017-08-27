@@ -23,7 +23,6 @@
  - Added `webview` widget `hardware_acceleration_policy` property.
  - Added `webview` widget `allow_file_access_from_file_urls` and `allow_universal_access_from_file_urls` properties.
  - Added `settings` module and APIs. This replaces the `domain_props` module.
- - Added warning when no binding is matched for input.
 
 ### Changed
 
