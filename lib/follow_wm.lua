@@ -55,7 +55,7 @@ local evaluators = {
         return element.src
     end,
     parent_href = function(element)
-        return element.parent.src
+        return element.parent.href
     end,
 }
 
