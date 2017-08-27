@@ -32,9 +32,6 @@ T.test_settings = function ()
     assert.equal(settings.foo.bar, 1)
     assert.equal(settings.on["example.com"].foo.bar, 2)
     assert.equal(settings.on[".com"].foo.bar, nil)
-
-    assert.equal(settings.get_setting_for_uri("example.com", "foo.bar"), 2)
-    assert.equal(settings.get_setting_for_uri(".com", "foo.bar"), nil)
 end
 
 return T

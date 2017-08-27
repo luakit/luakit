@@ -130,6 +130,8 @@ local function S_set_table(section, k, v)
     for kk, vv in pairs(v) do tbl[kk] = vv end
 end
 
+local uri_domain_cache = {}
+
 --- Retrieve the value of a setting for a webview.
 --
 -- This function considers, in order:
@@ -145,11 +147,18 @@ end
 -- @return The value of the setting.
 _M.get_setting_for_view = function (view, key)
     assert(type(view) == "widget" and view.type == "webview")
-    local tree = S.view_overrides[view]
+    local tree, uri = S.view_overrides[view], view.uri
     if tree and tree[key] then return tree[key] end
-    local val, match = _M.get_setting_for_uri(view.uri, key)
-    if val then return val, match end
-    return _M.get_setting(key)
+    if uri ~= uri_domain_cache.uri then
+        uri_domain_cache.uri = uri
+        uri_domain_cache.domains = lousy.uri.domains_from_uri(uri)
+    end
+    local domains = uri_domain_cache.domains
+    for _, domain in ipairs(domains) do
+        local value = (S.domain[domain] or {})[key] -- S_get uses default
+        if value then return value, domain end
+    end
+    return S_get(nil, key)
 end
 
 --- Add or remove a view-specific override for a setting.
@@ -164,29 +173,6 @@ _M.override_setting_for_view = function (view, key, value)
     local vo = S.view_overrides
     vo[view] = vo[view] or {}
     vo[view][key] = value
-end
-
-local uri_domain_cache = {}
-
---- Retrieve the value of a setting for a URI, based on the setting's domain-specific values.
---
--- This does not take into account the non-domain-specific value _or_ the default
--- value for the setting.
---
--- The settings key must be a valid settings key.
--- @tparam string uri The URI.
--- @tparam string key The key of the setting to retrieve.
--- @return The value of the setting, or `nil` if no domain-specific value is set.
-_M.get_setting_for_uri = function (uri, key)
-    if uri ~= uri_domain_cache.uri then
-        uri_domain_cache.uri = uri
-        uri_domain_cache.domains = lousy.uri.domains_from_uri(uri)
-    end
-    local domains = uri_domain_cache.domains
-    for _, domain in ipairs(domains) do
-        local value = (S.domain[domain] or {})[key] -- S_get uses default
-        if value then return value, domain end
-    end
 end
 
 --- Retrieve the value of a setting, whether it's explicitly set or the default.
