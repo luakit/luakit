@@ -390,6 +390,7 @@ local webview_settings = {
     ["webview.allow_file_access_from_file_uris"] = {
         type = "boolean",
         default = false,
+        domain_specific = false,
     },
     ["webview.allow_modal_dialogs"] = {
         type = "boolean",
@@ -398,6 +399,7 @@ local webview_settings = {
     ["webview.allow_universal_access_from_file_uris"] = {
         type = "boolean",
         default = false,
+        domain_specific = false,
     },
     ["webview.auto_load_images"] = {
         type = "boolean",

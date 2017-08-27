@@ -84,6 +84,11 @@ local function S_set(section, k, v)
     local tree = not section and S.root or S.domain[section]
 
     local meta = settings_list[k]
+    if meta.domain_specific == true and not section then
+        error(string.format("Setting '%s' is domain-specific", k))
+    elseif meta.domain_specific == false and section then
+        error(string.format("Setting '%s' cannot be domain-specific", k))
+    end
     if meta.type == "enum" then
         if not meta.options[v] then
             local opts = table.concat(lousy.util.table.keys(meta.options), ", ")
