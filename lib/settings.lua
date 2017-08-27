@@ -142,8 +142,8 @@ _M.get_setting_for_view = function (view, key)
     assert(type(view) == "widget" and view.type == "webview")
     local tree = S.view_overrides[view]
     if tree and tree[key] then return tree[key] end
-    local val = _M.get_setting_for_uri(view.uri, key)
-    if val then return val end
+    local val, match = _M.get_setting_for_uri(view.uri, key)
+    if val then return val, match end
     return _M.get_setting(key)
 end
 
@@ -176,7 +176,6 @@ _M.get_setting_for_uri = function (uri, key)
     if uri ~= uri_domain_cache.uri then
         uri_domain_cache.uri = uri
         uri_domain_cache.domains = lousy.uri.domains_from_uri(uri)
-        table.insert(uri_domain_cache.domains, "all")
     end
     local domains = uri_domain_cache.domains
     for _, domain in ipairs(domains) do
@@ -196,13 +195,17 @@ _M.get_setting = function (key)
     return S_get(nil, key)
 end
 
-local new_settings_node
+local new_settings_node, root
 
 local function new_domain_node()
     local meta = { __metatable = false, subnodes = {} }
     meta.__index = function (_, k)
         if meta.subnodes[k] then return meta.subnodes[k] end
         assert(type(k) == "string" and #k > 0, "invalid domain name")
+        if k == "all" then
+            msg.warn("settings.on[\"all\"].foo is deprecated: instead, use settings.foo")
+            return root
+        end
         meta.subnodes[k] = new_settings_node(nil, k)
         return meta.subnodes[k]
     end

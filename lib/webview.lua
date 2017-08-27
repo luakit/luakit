@@ -612,18 +612,16 @@ _M.add_signal("init", function (view)
             wv[k] = v
         end
     end
-    -- Set initial values
-    for k in pairs(webview_settings) do
-        local v = settings.get_setting(k)
-        set(view, k, v)
+    local set_all = function (vv)
+        for k in pairs(webview_settings) do
+            local v, match = settings.get_setting_for_view(vv, k)
+            set(vv, k, v, match)
+        end
     end
     -- Set domain-specific values on page load
     view:add_signal("load-status", function (v, status)
         if status ~= "committed" or v.uri == "about:blank" then return end
-        for k in pairs(webview_settings) do
-            local val, match = settings.get_setting_for_uri(v.uri, k)
-            set(v, k, val, match)
-        end
+        set_all(v)
     end)
     view:add_signal("web-extension-loaded", function (v)
         -- Explicitly set the zoom, due to a WebKit bug that resets the
