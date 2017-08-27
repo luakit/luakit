@@ -637,23 +637,20 @@ settings.migrate_global("webview.user_agent", "user_agent")
 
 -- Migrate from globals.domain_props
 local globals = package.loaded.globals or {}
-if globals.domain_props then
-    msg.warn("domain_props.lua is deprecated, and will be removed in the next release!")
-    msg.warn("to migrate, add the following:")
-end
-local warn_rename = false
-for domain, props in pairs(globals.domain_props or {}) do
+local dp = globals.domain_props or {}
+local dp_all = dp.all or {}
+dp.all = nil
+for domain, props in pairs(dp) do
     for k, v in pairs(props) do
-        if k == "enable_scripts" then
-            k = "enable_javascript"
-            warn_rename = true
-        end
-        msg.warn("  settings.on[\"%s\"].webview.%s = %s", domain, k, v)
+        if k == "enable_scripts" then k = "enable_javascript" end
+        settings.add_migration_warning(string.format('on["%s"].webview.%s', domain, k), v)
         settings.on[domain].webview[k] = v
     end
 end
-if warn_rename then
-    msg.warn("note: enable_scripts has been renamed enable_javascript")
+for k, v in pairs(dp_all) do
+    if k == "enable_scripts" then k = "enable_javascript" end
+    settings.add_migration_warning("webview.".. k, v)
+    settings.webview[k] = v
 end
 
 return _M

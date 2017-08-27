@@ -247,19 +247,36 @@ new_settings_node = function (prefix, section)
     return setmetatable({}, meta)
 end
 
+local migration_warnings = {}
+
+--- Migration helper function.
+-- @deprecated should be used only for existing code.
+_M.add_migration_warning = function (k, v)
+    if #migration_warnings == 0 then
+        table.insert(migration_warnings, "Globals.lua is deprecated, and will be removed in the next release!")
+        table.insert(migration_warnings, "To migrate, add the following to your rc.lua:")
+        table.insert(migration_warnings, "")
+        luakit.idle_add(function ()
+            table.insert(migration_warnings, "")
+            table.insert(migration_warnings, "Warnings have only been printed for settings with non-default values")
+            msg.warn("%s", table.concat(migration_warnings, "\n"))
+        end)
+    end
+    if type(v) == "string" then v = string.format("%q", v) end
+    table.insert(migration_warnings, string.format("  settings.%s = %s", k, v))
+end
+
 --- Migration helper function.
 -- @deprecated should be used only for existing code.
 _M.migrate_global = function (sk, gk)
     local globals = package.loaded.globals or {}
     if globals[gk] and (globals[gk] ~= settings_list[sk].default) then
-        msg.warn("globals.lua is deprecated, and will be removed in the next release!")
-        msg.warn("globals.%s has a non-default value; to migrate, add the following:", gk)
-        msg.warn("  settings.%s = %s", sk, globals[gk])
+        _M.add_migration_warning(sk, globals[gk])
         S_set(nil, sk, globals[gk])
     end
 end
 
-local root = new_settings_node()
+root = new_settings_node()
 
 return setmetatable(_M, { __index = root, __newindex = root })
 
