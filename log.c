@@ -321,8 +321,13 @@ log_dump_queued_emissions(void)
     char *name_used = NULL;
     int log_dump_fd = g_file_open_tmp("luakit-log-dump.XXXXXX", &name_used, NULL);
     if (log_dump_fd != -1) {
-        write(log_dump_fd, dump->str, dump->len);
+        ssize_t written = write(log_dump_fd, dump->str, dump->len);
         close(log_dump_fd);
+        if (written != (ssize_t)dump->len) {
+            unlink(name_used);
+            g_free(name_used);
+            name_used = NULL;
+        }
     }
     g_string_free(dump, TRUE);
 
