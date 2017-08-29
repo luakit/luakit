@@ -651,12 +651,14 @@ dp.all = nil
 for domain, props in pairs(dp) do
     for k, v in pairs(props) do
         if k == "enable_scripts" then k = "enable_javascript" end
+        if k == "zoom_level" then v = v*100 end
         settings.add_migration_warning(string.format('on["%s"].webview.%s', domain, k), v)
         settings.on[domain].webview[k] = v
     end
 end
 for k, v in pairs(dp_all) do
     if k == "enable_scripts" then k = "enable_javascript" end
+    if k == "zoom_level" then v = v*100 end
     settings.add_migration_warning("webview.".. k, v)
     settings.webview[k] = v
 end
