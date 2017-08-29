@@ -31,13 +31,6 @@ downloads.add_signal("download::status", function(dl)
     end
 end)
 
-downloads.add_signal("open-file", function (file, mime_type)
-    if mime_type == "application/pdf" then
-        luakit.spawn(string.format("xdg-open %q", file))
-        return true
-    end
-end)
-
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
