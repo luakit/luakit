@@ -257,6 +257,7 @@ _M.add_migration_warning = function (k, v)
         end)
     end
     if type(v) == "string" then v = string.format("%q", v) end
+    if k == "webview.zoom_level" then v = v*100 end
     table.insert(migration_warnings, string.format("  settings.%s = %s", k, v))
 end
 
