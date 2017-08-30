@@ -35,6 +35,7 @@
  - Luakit will now remove its IPC socket file before restarting.
  - The editor command now defaults to using `xdg-open` to edit files.  The `default` builtin
    command has been renamed `autodetect`.
+ - Changed `luakit://introspector/` to `luakit://binds/`.
 
 ### Removed
 
