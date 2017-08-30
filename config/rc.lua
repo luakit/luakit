@@ -117,7 +117,7 @@ local history = require "history"
 local history_chrome = require "history_chrome"
 
 local help_chrome = require "help_chrome"
-local introspector_chrome = require "introspector_chrome"
+local binds_chrome = require "binds_chrome"
 
 -- Add command completion
 local completion = require "completion"

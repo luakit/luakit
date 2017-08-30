@@ -175,9 +175,10 @@ end
 
 function T.test_lua_module_uses_M ()
     local exclude_files = {
-        "lib/markdown%.lua",   -- External file
-        "lib/.*/init%.lua$",   -- Module groupings
-        "lib/widget/%S*%.lua", -- Status bar widgets
+        "lib/markdown%.lua",           -- External file
+        "lib/.*/init%.lua$",           -- Module groupings
+        "lib/widget/%S*%.lua",         -- Status bar widgets
+        "lib/introspector_chrome.lua", -- Deprecated module
     }
 
     local errors = {}

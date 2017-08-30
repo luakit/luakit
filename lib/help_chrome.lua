@@ -38,11 +38,10 @@ local index_html_template = [==[
             license.  It is primarily targeted at power users, developers and any people with too much time
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
-        <h2>Introspector</h2>
-        <p> To view the automatically generated documentation for currently loaded
-        modules and available keybinds, open the Luakit introspector.</p>
+        <h2>Key bindings</h2>
+        <p>Currently active key bindings are listed in the following page.</p>
         <ul>
-            <li><a href="luakit://introspector/">Introspector</a></li>
+            <li><a href="luakit://binds/">Key bindings</a></li>
         </ul>
         <h2>API Documentation</h2>
         <ul>
