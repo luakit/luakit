@@ -1,8 +1,8 @@
 --- Provides luakit://binds/ page.
 --
 -- This module provides the luakit://binds/ page. It is useful for viewing all
--- keybindings and modes on a single page, as well as searching for a
--- keybinding for a particular task.
+-- bindings and modes on a single page, as well as searching for a
+-- binding for a particular task.
 --
 -- @module binds_chrome
 -- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
@@ -25,7 +25,7 @@ local html_template = [==[
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Luakit Key Bindings</title>
+    <title>Luakit Bindings</title>
     <style type="text/css">
         {style}
         body {
@@ -181,7 +181,7 @@ local html_template = [==[
 </head>
 <body>
     <header id="page-header">
-        <h1>Luakit Key Bindings</h1>
+        <h1>Luakit Bindings</h1>
     </header>
     <div class="content-margin">
         {sections}
