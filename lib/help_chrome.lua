@@ -39,9 +39,9 @@ local index_html_template = [==[
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
         <h2>Key bindings</h2>
-        <p>Currently active key bindings are listed in the following page.</p>
+        <p>Currently active bindings are listed in the following page.</p>
         <ul>
-            <li><a href="luakit://binds/">Key bindings</a></li>
+            <li><a href="luakit://binds/">Bindings</a></li>
         </ul>
         <h2>API Documentation</h2>
         <ul>
