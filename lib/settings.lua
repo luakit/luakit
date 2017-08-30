@@ -76,7 +76,8 @@ end
 local function S_get(section, k)
     local tree = not section and S.root or S.domain[section]
     if not tree then return nil end -- no rules for this domain
-    return tree[k] or settings_list[k].default
+    if tree[k] ~= nil then return tree[k] end
+    return settings_list[k].default
 end
 
 local function S_set(section, k, v)
