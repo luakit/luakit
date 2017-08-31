@@ -54,6 +54,7 @@ _M.map = {
     ISO_Left_Tab = "Tab",
     PgUp = "Page_Up",
     PgDn = "Page_Down",
+    ["-"] = "Minus",
 }
 
 --- A table that contains mappings for modifier names.
