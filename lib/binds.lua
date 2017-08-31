@@ -347,6 +347,8 @@ modes.add_binds("normal", {
     { "<Control-Page_Down>", "Go to next tab.", function (w) w:next_tab() end },
     { "<Control-Tab>", "Go to next tab.", function (w) w:next_tab() end },
     { "<Shift-Control-Tab>", "Go to previous tab.", function (w) w:prev_tab() end },
+    { "J", "Go to next tab.", function (w) w:next_tab() end },
+    { "K", "Go to previous tab.", function (w) w:prev_tab() end },
     { "<F1>", "Show help.", function (w) w:run_cmd(":help") end },
     { "<F12>", "Toggle web inspector.", function (w) w:run_cmd(":inspect!") end },
     { "gT", "Go to previous tab.", function (w) w:prev_tab() end },
