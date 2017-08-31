@@ -20,6 +20,7 @@ local function convert_bind_syntax(b)
         b = b:match("^<(.+)>$") or b
         local mods = b == "-" and {"-"} or util.string.split(b, "%-")
         local key = table.remove(mods)
+        if key == "" then key = table.remove(mods) .. "-" end
         -- Convert upper-case keys to shift+lower-case
         local lc = luakit.wch_lower(key)
         if lc ~= key then
