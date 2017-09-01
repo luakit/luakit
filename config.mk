@@ -77,13 +77,13 @@ endif
 
 LUA_BIN_NAMES += lua-5.1 lua5.1 lua51
 ifneq ($(USE_LUAJIT),0)
-	LUA_BIN_NAMES := luajit $(LUA_BIN_NAMES)
+	LUA_BIN_NAMES := luajit luajit51 $(LUA_BIN_NAMES)
 endif
 
 # Search for Lua binary name if not forced by user.
 ifeq ($(LUA_BIN_NAME),)
 	LUA_BIN_NAME := $(shell sh -c '(for name in $(LUA_BIN_NAMES); do \
-	       hash $$name 2>/dev/null && ($$name -v 2>&1 | grep -q "^Lua 5\.1\|^LuaJIT") && echo $$name; done) | head -n 1')
+	       hash $$name 2>/dev/null && ($$name -v 2>&1 | grep -Eq "^Lua 5\.1|^LuaJIT") && echo $$name; done) | head -n 1')
 endif
 
 ifeq ($(LUA_BIN_NAME),)
