@@ -1,11 +1,7 @@
 --- Provides luakit://introspector/ page.
 --
--- This module provides the luakit://introspector/ page. It is useful for
--- viewing all keybindings and modes on a single page, as well as searching for
--- a keybinding for a particular task.
---
 -- @module introspector_chrome
--- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2016 Aidan Holm
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
@@ -16,7 +12,7 @@ local history = require("history")
 local markdown = require("markdown")
 local editor = require("editor")
 local get_modes = require("modes").get_modes
-local add_cmds = require("modes").add_cmds
+local add_cmds = require("binds").add_cmds
 
 local _M = {}
 
@@ -69,6 +65,7 @@ local html_template = [==[
         pre {
             margin: 0;
             padding: 0;
+            overflow-wrap: break-word;
         }
 
 
@@ -84,6 +81,10 @@ local html_template = [==[
         .mode .binds {
             clear: both;
             display: block;
+        }
+
+        .hidden {
+            display: none;
         }
 
         .bind {
@@ -145,10 +146,11 @@ local html_template = [==[
         }
 
         .bind pre {
-            padding: 1rem 1.2rem;
-            border-left: 2px solid #69c;
-            background: #f5f7f9;
-            color: #334;
+            margin: 1em;
+            padding: 0.5em;
+            background-color: #EFC;
+            border-top: 1px solid #AC9;
+            border-bottom: 1px solid #AC9;
         }
 
         .bind pre code {
@@ -181,7 +183,7 @@ local html_template = [==[
 </head>
 <body>
     <header id="page-header">
-        <h1>Luakit Introspector</h1>
+        <h1>Luakit Help</h1>
     </header>
     <div class="content-margin">
         {sections}
@@ -193,6 +195,7 @@ local html_template = [==[
         {javascript}
     </script>
 </body>
+</html>
 ]==]
 
 local mode_section_template = [==[
@@ -209,8 +212,8 @@ local mode_section_template = [==[
 local mode_bind_template = [==[
     <li class="bind bind_type_{type}">
         <div class="link-box">
-            <a href="#" class="filename">{filename}</a>
-            <a href="#" class="linedefined" filename="{filename}" line="{linedefined}">{linedefined}</a>
+            <a href="#" class="openeditor" data-filename="{filename}">{filename}</a>
+            <a href="#" class="openeditor" data-filename="{filename}" data-line="{linedefined}">{linedefined}</a>
         </div>
         <hr class="clear" />
         <div class="key">{key}</div>
@@ -223,28 +226,24 @@ local mode_bind_template = [==[
 ]==]
 
 local main_js = [=[
-$(document).ready(function () {
-    var $body = $(document.body);
+window.addEventListener("load", function () {
+    document.body.addEventListener("click", function (event) {
+        let targ = event.target;
 
-    $body.on("click", ".bind .linedefined", function (event) {
-        event.preventDefault();
-        var $e = $(this);
-        open_editor($e.attr("filename"), $e.attr("line"));
-        return false;
-    })
+        // open a file
+        if (targ.classList.contains("openeditor")) {
+            event.preventDefault();
+            open_editor(targ.getAttribute("data-filename"), targ.getAttribute("data-line"));
+            return false;
+        }
 
-    $body.on("click", ".bind .desc a", function (event) {
-        event.stopPropagation(); // prevent source toggling
+        // toggle source display
+        if (targ.classList.contains("bind")) {
+            targ.getElementsByClassName("func-source")[0].classList.toggle("hidden");
+            return false;
+        }
     })
-
-    $body.on("click", ".bind", function (e) {
-        var $src = $(this).find(".func-source");
-        if ($src.is(":visible"))
-            $src.slideUp();
-        else
-            $src.slideDown();
-    })
-});
+})
 ]=]
 
 local source_lines = {}
@@ -273,14 +272,13 @@ local help_get_modes = function ()
         local binds = {}
 
         if mode.binds then
-            for i, m in pairs(mode.binds) do
-                local b, a = unpack(m)
-                local info = debug.getinfo(a.func, "uS")
+            for i, b in pairs(mode.binds) do
+                local info = debug.getinfo(b.func, "uS")
                 info.source = info.source:sub(2)
                 binds[i] = {
                     type = b.type,
-                    key = lousy.bind.bind_to_string(b) or "???",
-                    desc = a.desc and markdown(dedent(a.desc)) or nil,
+                    key = lousy.bind.bind_to_string(b),
+                    desc = b.desc and markdown(dedent(b.desc)) or nil,
                     filename = info.source,
                     linedefined = info.linedefined,
                     lastlinedefined = info.lastlinedefined,
@@ -335,9 +333,10 @@ end, nil, {
     open_editor = function(_, ...) return editor.edit(...) end,
 })
 
+local cmd = lousy.bind.cmd
 add_cmds({
-    { ":introspector", "Open <luakit://introspector/> in a new tab.",
-        function (w) w:new_tab("luakit://introspector/") end },
+    cmd("introspector", "Open [luakit://introspector/](luakit://introspector/) in a new tab.",
+        function (w) w:new_tab("luakit://introspector/") end),
 })
 
 -- Prevent history items from turning up in history
