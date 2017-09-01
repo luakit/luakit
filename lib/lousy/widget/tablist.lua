@@ -7,6 +7,7 @@
 local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 local tab = require "lousy.widget.tab"
+local settings = require "settings"
 
 local _M = {}
 
@@ -123,8 +124,11 @@ function _M.new(notebook, orientation)
 
     -- Attach notebook signal handlers
     local function update_tablist_visibility()
-        if tlist.visible and notebook:count() >= 2 then tlist.widget:show() end
-        if not tlist.visible or notebook:count() < 2 then tlist.widget:hide() end
+        if settings.get_setting("tablist.always_visible") then
+            tlist.widget.visible = true
+        else
+            tlist.widget.visible = notebook:count() > 1
+        end
     end
 
     data[tlist].handlers = {
@@ -210,6 +214,14 @@ function _M.new(notebook, orientation)
 
     return tlist
 end
+
+settings.register_settings({
+    ["tablist.always_visible"] = {
+        type = "boolean",
+        default = false,
+        domain_specific = false,
+    },
+})
 
 return setmetatable(_M, { __call = function(_, ...) return _M.new(...) end })
 
