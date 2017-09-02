@@ -18,7 +18,7 @@ local function convert_bind_syntax(b)
     -- Keys have sorted modifiers and uppercase -> lowercase+shift conversion
     if string.wlen(b) == 1 or b:match("^<.+>$") then
         b = b:match("^<(.+)>$") or b
-        local mods = b == "-" and {"-"} or util.string.split(b, "%-")
+        local mods = b == "-" and {"Minus"} or util.string.split(b, "%-")
         local key = table.remove(mods)
         -- Convert upper-case keys to shift+lower-case
         local lc = luakit.wch_lower(key)
