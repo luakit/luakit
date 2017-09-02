@@ -15,10 +15,20 @@ local settings_list = {}
 local settings_groups
 
 local S = {
-    root = {}, -- Values for settings.foo
+    global = {}, -- Values for settings.foo
     domain = {}, -- Values for settings.on["domain"].foo
     view_overrides = setmetatable({}, { __mode = "k" }),
 }
+
+local persisted_settings
+do
+    local ok
+    ok, persisted_settings = pcall(function ()
+        local path = luakit.data_dir .. "/settings"
+        return lousy.pickle.unpickle(lousy.load(path))
+    end)
+    if not ok then persisted_settings = { global = {}, domain = {}} end
+end
 
 local function validate_settings_path (k)
     assert(type(k) == "string", "invalid settings path type: " .. type(k))
@@ -101,18 +111,36 @@ local function setting_validate_new_value (section, k, v)
     end
 end
 
-local function S_get(section, k)
-    local tree = not section and S.root or S.domain[section]
-    if not tree then return nil end -- no rules for this domain
-    if tree[k] ~= nil then return tree[k] end
-    return settings_list[k].default
+local function S_get(domain, key, persist)
+    local function get(root, d, k)
+        local tree = not d and root.global or root.domain[d]
+        if not tree then return nil end -- no rules for this domain
+        if tree[k] ~= nil then return tree[k] end
+    end
+    local val = get(S, domain, key)
+    if val then return val end
+    if persist then
+        val = get(persisted_settings, domain, key)
+        if val then return val end
+    end
+    return settings_list[key].default
 end
 
-local function S_set(section, k, v)
-    setting_validate_new_value(section, k, v)
-    if section then S.domain[section] = S.domain[section] or {} end
-    local tree = not section and S.root or S.domain[section]
-    tree[k] = v
+local function S_set(domain, key, val, persist)
+    setting_validate_new_value(domain, key, val)
+    local function set(root, d, k, v)
+        if d then root.domain[d] = root.domain[d] or {} end
+        local tree = not d and root.global or root.domain[d]
+        tree[k] = v
+    end
+    if persist then
+        set(persisted_settings, domain, key, val)
+        local fh = io.open(luakit.data_dir .. "/settings", "wb")
+        fh:write(lousy.pickle.pickle(persisted_settings))
+        io.close(fh)
+    else
+        set(S, domain, key, val)
+    end
 end
 
 local function S_get_table(section, k)
@@ -127,7 +155,7 @@ end
 local function S_set_table(section, k, v)
     local tbl = {}
     if section then S.domain[section] = S.domain[section] or {} end
-    local tree = not section and S.root or S.domain[section]
+    local tree = not section and S.global or S.domain[section]
     tree[k] = tbl
     -- TODO: add validation for tables
     for kk, vv in pairs(v) do tbl[kk] = vv end
@@ -161,7 +189,7 @@ _M.get_setting_for_view = function (view, key)
         local value = (S.domain[domain] or {})[key] -- S_get uses default
         if value then return value, domain end
     end
-    return S_get(nil, key)
+    return S_get(nil, key, true)
 end
 
 --- Add or remove a view-specific override for a setting.
@@ -186,7 +214,20 @@ end
 -- @tparam string key The key of the setting to retrieve.
 -- @return The value of the setting.
 _M.get_setting = function (key)
-    return S_get(nil, key)
+    return S_get(nil, key, true)
+end
+
+--- Assign a value to a setting. Values assigned in this way are persisted to
+-- disk, and automatically set when luakit starts.
+--
+-- The settings key must be a valid settings key.
+-- @tparam string key The key of the setting to retrieve.
+-- @param value The new value of the setting.
+-- @tparam table opts Table of options. Currently the only valid field is
+-- `domain`, which allows setting a domain-specific setting value.
+_M.set_setting = function (key, value, opts)
+    opts = opts or {}
+    S_set(opts.domain, key, value, true)
 end
 
 local new_settings_node, root
