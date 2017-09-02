@@ -73,17 +73,7 @@ _M.register_settings = function (list)
     settings_groups = nil
 end
 
-local function S_get(section, k)
-    local tree = not section and S.root or S.domain[section]
-    if not tree then return nil end -- no rules for this domain
-    if tree[k] ~= nil then return tree[k] end
-    return settings_list[k].default
-end
-
-local function S_set(section, k, v)
-    if section then S.domain[section] = S.domain[section] or {} end
-    local tree = not section and S.root or S.domain[section]
-
+local function setting_validate_new_value (section, k, v)
     local meta = settings_list[k]
     if meta.domain_specific == true and not section then
         error(string.format("Setting '%s' is domain-specific", k))
@@ -109,7 +99,19 @@ local function S_set(section, k, v)
     if meta.validator and not meta.validator(v) then
         error(string.format("Invalid value for setting '%s'", k))
     end
+end
 
+local function S_get(section, k)
+    local tree = not section and S.root or S.domain[section]
+    if not tree then return nil end -- no rules for this domain
+    if tree[k] ~= nil then return tree[k] end
+    return settings_list[k].default
+end
+
+local function S_set(section, k, v)
+    setting_validate_new_value(section, k, v)
+    if section then S.domain[section] = S.domain[section] or {} end
+    local tree = not section and S.root or S.domain[section]
     tree[k] = v
 end
 
