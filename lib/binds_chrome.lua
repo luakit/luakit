@@ -336,13 +336,13 @@ end, nil, {
 })
 
 add_cmds({
-    { ":introspector", "Open <luakit://introspector/> in a new tab.",
-        function (w) w:new_tab("luakit://introspector/") end },
+    { ":binds", "Open <luakit://binds/> in a new tab.",
+        function (w) w:new_tab("luakit://binds/") end },
 })
 
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)
-    if string.match(uri, "^luakit://introspector/") then return false end
+    if string.match(uri, "^luakit://binds/") then return false end
 end)
 
 return _M
