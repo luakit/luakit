@@ -103,7 +103,7 @@ local function setting_validate_new_value (section, k, v)
     if meta.type == "number" then
         if (meta.min and v < meta.min) or (meta.max and v > meta.max) then
             local range = "[" .. tostring(meta.min or "") .. ".." .. tostring(meta.max or "") .. "]"
-            error(string.format("Value outside accepted range %s for setting '%s': %s", range, k))
+            error(string.format("Value outside accepted range %s for setting '%s': %s", range, k, v))
         end
     end
     if meta.validator and not meta.validator(v) then
