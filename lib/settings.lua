@@ -230,6 +230,22 @@ _M.set_setting = function (key, value, opts)
     S_set(opts.domain, key, value, true)
 end
 
+--- Retrieve information about all registered settings and their values.
+-- @treturn table A table of records, one for each setting.
+_M.get_settings = function ()
+    local ret = {}
+    for k, meta in pairs(settings_list) do
+        ret[#ret+1] = {
+            type = meta.type,
+            desc = meta.desc,
+            key = k,
+            value = _M.get_setting(k),
+            options = meta.options,
+        }
+    end
+    return ret
+end
+
 local new_settings_node, root
 
 local function new_domain_node()
