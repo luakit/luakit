@@ -51,6 +51,7 @@ local modes = require "modes"
 local binds = require "binds"
 
 local settings = require "settings"
+require "settings_chrome"
 
 ----------------------------------
 -- Optional user script loading --
