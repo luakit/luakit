@@ -8,6 +8,7 @@ local signal = require "lousy.signal"
 local get_theme = require("lousy.theme").get
 local tab = require "lousy.widget.tab"
 local settings = require "settings"
+local window = require "window"
 
 local _M = {}
 
@@ -223,6 +224,15 @@ settings.register_settings({
         desc = "Whether the tab list should be visible with only a single tab open.",
     },
 })
+
+settings.add_signal("setting-changed", function (e)
+    if e.key == "tablist.always_visible" then
+        -- Hack: cause update_tablist_visibility() to be called for all windows
+        for _, w in pairs(window.bywidget) do
+            w.tablist.visible = w.tablist.visible
+        end
+    end
+end)
 
 return setmetatable(_M, { __call = function(_, ...) return _M.new(...) end })
 
