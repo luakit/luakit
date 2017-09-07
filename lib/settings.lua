@@ -11,6 +11,8 @@ local lousy = require("lousy")
 
 local _M = {}
 
+lousy.signal.setup(_M, true)
+
 local settings_list = {}
 local settings_groups
 
@@ -141,6 +143,9 @@ local function S_set(domain, key, val, persist)
     else
         set(S, domain, key, val)
     end
+    _M.emit_signal("setting-changed", {
+        key = key, value = val, domain = domain,
+    })
 end
 
 local function S_get_table(section, k)
