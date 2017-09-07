@@ -391,151 +391,225 @@ local webview_settings = {
         type = "boolean",
         default = false,
         domain_specific = false,
+        desc = "Whether `file://` URIs are allowed to access other local files via JavaScript.",
     },
     ["webview.allow_modal_dialogs"] = {
         type = "boolean",
         default = false,
+        desc = "Whether JavaScript will be able to create and run modal dialogs with `window.showModalDialog`.",
     },
     ["webview.allow_universal_access_from_file_urls"] = {
         type = "boolean",
         default = false,
         domain_specific = false,
+        desc = "Whether `file://` URIs are allowed to access content from any origin via JavaScript.",
     },
     ["webview.auto_load_images"] = {
         type = "boolean",
         default = true,
+        desc = "Whether images should be automatically loaded. Disabling this is useful for reducing data transfer.",
     },
     ["webview.cursive_font_family"] = {
         type = "string",
         default = "serif",
+        desc = "The font family used for content using the `cursive` font.",
     },
     ["webview.default_charset"] = {
         type = "string",
         default = "iso-8859-1",
+        desc = "The default text character set used when content does not explicitly specify a character set.",
     },
     ["webview.default_font_family"] = {
         type = "string",
         default = "sans-serif",
+        desc = "The font family used for content that does not specify a font.",
     },
     ["webview.default_font_size"] = {
         type = "number", min = 0,
         default = "16",
+        desc = "The default font size (in pixels) to use for web content that does not specify a main font size.",
     },
     ["webview.default_monospace_font_size"] = {
         type = "number", min = 0,
         default = "13",
+        desc = ([=[
+            The default font size (in pixels) to use for monospace web content when no main font size is specified.
+        ]=])
     },
     ["webview.draw_compositing_indicators"] = {
         type = "boolean",
         default = false,
-    },
-    ["webview.editable"] = {
-        type = "boolean",
-        default = false,
+        desc = [=[
+            Whether compositing indicators should be shown. These,
+            indicators show composited regions on the page as well as a repaint,
+            counter for each; this is mostly useful for debugging.
+        ]=],
     },
     ["webview.enable_accelerated_2d_canvas"] = {
         type = "boolean",
         default = false,
+        desc = [=[
+            Whether 2d canvas rendering should use hardware acceleration.
+            This setting requires WebKit support that may not be available.
+        ]=],
     },
     ["webview.enable_caret_browsing"] = {
         type = "boolean",
         default = false,
+        desc = "Whether keyboard navigation should be enabled.",
     },
     ["webview.enable_developer_extras"] = {
         type = "boolean",
         default = false,
+        desc = "Whether developer tools should be enabled.",
     },
     ["webview.enable_dns_prefetching"] = {
         type = "boolean",
         default = false,
+        desc = [=[
+            Whether domain names should be resolved speculatively. If
+            enabled, DNS prefetching attempts to resolve domain names before any
+            links are clicked, making web browsing faster.
+        ]=],
     },
     ["webview.enable_frame_flattening"] = {
         type = "boolean",
         default = false,
+        desc = [=[
+            Whether frame flattening should be enabled. If enabled, the
+            content of all subframes is shown directly in the main page.
+        ]=],
     },
     ["webview.enable_fullscreen"] = {
         type = "boolean",
         default = true,
+        desc = [=[
+            Whether web pages should be allowed to request fullscreen display,
+            via the JavaScript Fullscreen API.
+        ]=],
     },
     ["webview.enable_html5_database"] = {
         type = "boolean",
         default = true,
+        desc = [=[
+            Whether web pages should be allowed access to a client-side SQL databse.
+            This provides structured data storage.
+
+            Web pages from one site cannot access data stored in the database by pages from other sites.
+        ]=],
     },
     ["webview.enable_html5_local_storage"] = {
         type = "boolean",
         default = true,
+        desc = [=[
+            Whether web pages should be allowed to access HTML5 local storage support.
+            This provides a simple synchronous database.
+
+            Web pages from one site cannot access data stored in the database by pages from other sites.
+        ]=],
     },
     ["webview.enable_hyperlink_auditing"] = {
         type = "boolean",
         default = false,
+        desc = [=[
+            Whether hyperlink auditing is enabled.
+
+            See <https://html.spec.whatwg.org/multipage/links.html#hyperlink-auditing> for more information.
+        ]=],
     },
     ["webview.enable_java"] = {
         type = "boolean",
         default = true,
+        desc = "Whether the Java plugin is enabled.",
     },
     ["webview.enable_javascript"] = {
         type = "boolean",
         default = true,
+        desc = "Whether JavaScript content is executed.",
     },
     ["webview.enable_mediasource"] = {
         type = "boolean",
         default = false,
+        desc = "Whether MediaSource content is enabled.",
     },
     ["webview.enable_media_stream"] = {
         type = "boolean",
         default = false,
+        desc = "Whether to allow web pages to access audio and video devices for capture.",
     },
     ["webview.enable_offline_web_application_cache"] = {
         type = "boolean",
         default = true,
+        desc = "Whether to enable offline web application support." ,
     },
     ["webview.enable_page_cache"] = {
         type = "boolean",
         default = true,
+        desc = [=[
+            Whether the page cache should be enabled. This speeds up
+            forward/backward navigation considerably.
+
+            Disabling this setting is only useful to conserve memory.
+        ]=],
     },
     ["webview.enable_plugins"] = {
         type = "boolean",
         default = true,
+        desc = "Whether plugins are enabled."
     },
     ["webview.enable_resizable_text_areas"] = {
         type = "boolean",
         default = true,
+        desc = "Whether text areas in web pages can be resized."
     },
     ["webview.enable_site_specific_quirks"] = {
         type = "boolean",
         default = true,
+        desc = [=[
+            Whether WebKit should use site-specific quirks to work around websites with known compatibility issues.
+        ]=],
     },
     ["webview.enable_smooth_scrolling"] = {
         type = "boolean",
         default = false,
+        desc = "Whether smooth scrolling should be used."
     },
     ["webview.enable_spatial_navigation"] = {
         type = "boolean",
         default = false,
+        desc = "Whether spatial navigation should be enabled.",
     },
     ["webview.enable_tabs_to_links"] = {
         type = "boolean",
         default = true,
+        desc = "Whether pressing the `Tab` key on the web page should cycle through link elements.",
     },
     ["webview.enable_webaudio"] = {
         type = "boolean",
         default = false,
+        desc = "Whether support for WebAudio should be enabled.",
     },
     ["webview.enable_webgl"] = {
         type = "boolean",
         default = false,
+        desc = "Whether support for WebGL should be enabled.",
     },
     ["webview.enable_write_console_messages_to_stdout"] = {
         type = "boolean",
         default = false,
+        desc = "Whether console messages from JavaScript should be written to standard output.",
     },
     ["webview.enable_xss_auditor"] = {
         type = "boolean",
         default = true,
+        desc = [=[
+            Whether XSS auditing should be enabled. This helps protect against some attacks on vulnerable websites.
+        ]=],
     },
     ["webview.fantasy_font_family"] = {
         type = "string",
         default = "serif",
+        desc = "The font family used for content using the `fantasy` font.",
     },
     ["webview.hardware_acceleration_policy"] = {
         type = "enum",
@@ -545,58 +619,72 @@ local webview_settings = {
             ["never"] = { desc = "Always disable hardware acceleration.", label = "Never", },
         },
         default = "on-demand",
+        desc = "The policy used to determine when hardware acceleration should be used to render web content.",
     },
     ["webview.javascript_can_access_clipboard"] = {
         type = "boolean",
         default = false,
+        desc = "Whether JavaScript should be able to access the clipboard.",
     },
     ["webview.javascript_can_open_windows_automatically"] = {
         type = "boolean",
         default = false,
+        desc = "Whether JavaScript can open windows without user intervention.",
     },
     ["webview.load_icons_ignoring_image_load_setting"] = {
         type = "boolean",
         default = false,
+        desc = "Whether web page favicons should be loaded, even if `webview.auto_load_images` is disabled.",
     },
     ["webview.media_playback_allows_inline"] = {
         type = "boolean",
         default = true,
+        desc = "Whether media playback is allowed in an inline window; the alternative is fullscreen playback.",
     },
     ["webview.media_playback_requires_gesture"] = {
         type = "boolean",
         default = false,
+        desc = "Whether a user gesture is required before media playback/loading can start.",
     },
     ["webview.minimum_font_size"] = {
         type = "number", min = 0,
         default = 0,
+        desc = "The minimum font size (in pixels) at which text should be rendered.",
     },
     ["webview.monospace_font_family"] = {
         type = "string",
         default = "monospace",
+        desc = "The font family used for content using a monospace font.",
     },
     ["webview.pictograph_font_family"] = {
         type = "string",
         default = "serif",
+        desc = "The font family used for content using the `pictograph` font.",
     },
     ["webview.print_backgrounds"] = {
         type = "boolean",
         default = true,
+        desc = "Whether background images should be shown when printing a web page.",
     },
     ["webview.sans_serif_font_family"] = {
         type = "string",
         default = "sans-serif",
+        desc = "The font family used for content using a sans-serif font.",
     },
     ["webview.serif_font_family"] = {
         type = "string",
         default = "serif",
+        desc = "The font family used for content using a serif font.",
     },
     ["webview.zoom_level"] = {
         type = "number", min = 0,
         default = 100,
+        desc = "The default zoom level, as a percentage, at which to draw content.",
     },
     ["webview.zoom_text_only"] = {
         type = "boolean",
         default = false,
+        desc = "Whether zooming the page should affect the size of all elements, or only the text content.",
     },
 }
 settings.register_settings(webview_settings)
@@ -604,6 +692,11 @@ settings.register_settings({
     ["webview.user_agent"] = {
         type = "string",
         default = "",
+        desc = [=[
+            The user agent used when making HTTP requests.
+
+            If left blank, the default WebKit user agent is used.
+        ]=],
     },
 })
 

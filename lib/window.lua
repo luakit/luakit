@@ -704,14 +704,21 @@ settings.register_settings({
             if not x or not y then return false end
             return tonumber(x) > 0 and tonumber(y) > 0
         end,
+        desc = [=[
+            The size (in pixels) of newly-opened windows.
+
+            Must be in the form `WxY`, where `W` and `H` are the width and height respectively.
+        ]=],
     },
     ["window.home_page"] = {
         type = "string",
         default = "https://luakit.github.io/",
+        desc = "The URI of the home page.",
     },
     ["window.new_tab_page"] = {
         type = "string",
         default = "about:blank",
+        desc = "The URI to open when opening a new tab.",
     },
     ["window.search_engines"] = {
         type = "table",
@@ -724,26 +731,32 @@ settings.register_settings({
 
             default     = "https://google.com/search?q=%s",
         },
+        desc = "The set of search engine shortcuts.",
     },
     ["window.scroll_step"] = {
         type = "number", min = 0,
         default = 40,
+        desc = "The size (in pixels) of the scroll step.",
     },
     ["window.zoom_step"] = {
         type = "number", min = 0,
         default = 0.1,
+        desc = "The size of the zoom step, expressed as a multiplicative factor.",
     },
     ["window.load_etc_hosts"] = {
         type = "boolean",
         default = true,
+        desc = "Whether `/etc/hosts` should be used when parsing URIs.",
     },
     ["window.check_filepath"] = {
         type = "boolean",
         default = true,
+        desc = "Whether opening a URI should check for local files.",
     },
     ["window.max_title_len"] = {
         type = "number",
         default = 80,
+        desc = "The maximum length of the window title.",
     },
 })
 

@@ -220,6 +220,7 @@ settings.register_settings({
         type = "boolean",
         default = false,
         domain_specific = false,
+        desc = "Whether the tab list should be visible with only a single tab open.",
     },
 })
 
