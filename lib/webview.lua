@@ -387,7 +387,7 @@ table.insert(window.indexes, 1, function (w, k)
 end)
 
 local webview_settings = {
-    ["webview.allow_file_access_from_file_uris"] = {
+    ["webview.allow_file_access_from_file_urls"] = {
         type = "boolean",
         default = false,
         domain_specific = false,
@@ -396,7 +396,7 @@ local webview_settings = {
         type = "boolean",
         default = false,
     },
-    ["webview.allow_universal_access_from_file_uris"] = {
+    ["webview.allow_universal_access_from_file_urls"] = {
         type = "boolean",
         default = false,
         domain_specific = false,
@@ -562,7 +562,7 @@ local webview_settings = {
         type = "boolean",
         default = true,
     },
-    ["webview.media_playback_requires_user_gesture"] = {
+    ["webview.media_playback_requires_gesture"] = {
         type = "boolean",
         default = false,
     },
