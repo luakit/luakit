@@ -540,9 +540,9 @@ local webview_settings = {
     ["webview.hardware_acceleration_policy"] = {
         type = "enum",
         options = {
-            ["on-demand"] = { desc = "Enable/disable hardware acceleration as necessary." },
-            ["always"] = { desc = "Always enable hardware acceleration." },
-            ["never"] = { desc = "Always disable hardware acceleration." },
+            ["on-demand"] = { desc = "Enable/disable hardware acceleration as necessary.", label = "On-demand", },
+            ["always"] = { desc = "Always enable hardware acceleration.", label = "Always", },
+            ["never"] = { desc = "Always disable hardware acceleration.", label = "Never", },
         },
         default = "on-demand",
     },
