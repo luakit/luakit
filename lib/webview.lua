@@ -609,7 +609,7 @@ settings.register_settings({
 
 _M.add_signal("init", function (view)
     local set = function (wv, k, v, match)
-        if v then
+        if v ~= nil then
             k = k:sub(9) -- Strip off "webview." prefix
             if k == "zoom_level" then v = v/100.0 end
             if k == "user_agent" and v == "" then v = nil end

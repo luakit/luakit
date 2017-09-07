@@ -121,7 +121,7 @@ local function S_get(domain, key, persist)
     if val then return val end
     if persist then
         val = get(persisted_settings, domain, key)
-        if val then return val end
+        if val ~= nil then return val end
     end
     return settings_list[key].default
 end
@@ -187,7 +187,7 @@ _M.get_setting_for_view = function (view, key)
     local domains = uri_domain_cache.domains
     for _, domain in ipairs(domains) do
         local value = (S.domain[domain] or {})[key] -- S_get uses default
-        if value then return value, domain end
+        if value ~= nil then return value, domain end
     end
     return S_get(nil, key, true)
 end
