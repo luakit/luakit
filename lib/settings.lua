@@ -250,6 +250,19 @@ _M.get_settings = function ()
     return ret
 end
 
+_M.get_settings_map = function ()
+    local ret = {}
+    for k, meta in pairs(settings_list) do
+        ret[k] = {
+            type = meta.type,
+            desc = meta.desc,
+            value = _M.get_setting(k),
+            options = meta.options,
+        }
+    end
+    return ret
+end
+
 local new_settings_node, root
 
 local function new_domain_node()

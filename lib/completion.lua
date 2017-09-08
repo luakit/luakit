@@ -12,6 +12,7 @@ local lousy = require("lousy")
 local history = require("history")
 local bookmarks = require("bookmarks")
 local modes = require("modes")
+local settings = require("settings")
 local new_mode, get_mode = modes.new_mode, modes.get_mode
 local add_binds = modes.add_binds
 local escape = lousy.util.escape
@@ -333,6 +334,23 @@ completers.bookmarks = {
 
 completers.uri = {
     func = function () return { { format = "{history}" }, { format = "{bookmarks}" }, } end,
+}
+
+completers.setting = {
+    header = { "Setting", "Value" },
+    func = function ()
+        local setting_list = settings.get_settings()
+        local ret = {}
+
+        for _, setting in ipairs(setting_list) do
+            table.insert(ret, {
+                setting.key, tostring(setting.value),
+                format = setting.key,
+            })
+        end
+
+        return ret
+    end,
 }
 
 return _M

@@ -544,6 +544,45 @@ end
         end },
 })
 
+local function convert (str, new_type)
+    local convertion_table = {
+        number = tonumber,
+        boolean = function (val)
+            if val == "true" then return true
+            elseif val == "false" then return false
+            else error("'"..val.."' is not a boolean")
+            end
+        end,
+        string = function (val)
+            return val
+        end,
+        enum = function (val)
+            return val
+        end,
+    }
+
+    return convertion_table[new_type](str)
+end
+
+modes.add_cmds({
+    { ":set", "Change a setting.", {
+        func = function (_, o)
+            local setting, value = unpack(split(o.arg))
+            value = convert(value, settings.get_settings_map()[setting].type)
+            settings.set_setting(setting, value)
+        end,
+        format = "{setting}",
+    }},
+    { ":seton", "Change a setting for a specific domain.", {
+        func = function (_, o)
+            local domain, setting, value = unpack(split(o.arg))
+            value = convert(value, settings.get_settings_map()[setting].type)
+            settings.set_setting(setting, value, { domain = domain })
+        end,
+        format = "{uri} {setting}",
+    }}
+})
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
