@@ -240,10 +240,9 @@ end
 _M.get_settings = function ()
     local ret = {}
     for k, meta in pairs(settings_list) do
-        ret[#ret+1] = {
+        ret[k] = {
             type = meta.type,
             desc = meta.desc,
-            key = k,
             value = _M.get_setting(k),
             options = meta.options,
         }

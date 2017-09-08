@@ -191,7 +191,11 @@ local build_settings_entry_html = function (meta)
 end
 
 chrome.add("settings", function ()
-    local rows, sm = {}, settings.get_settings()
+    local rows, sm = {}, {}
+    for k, meta in pairs(settings.get_settings()) do
+        meta.key = k
+        sm[#sm+1] = meta
+    end
     table.sort(sm, function (a, b) return a.key < b.key end)
     for i, meta in ipairs(sm) do
         rows[i] = build_settings_entry_html(meta)
