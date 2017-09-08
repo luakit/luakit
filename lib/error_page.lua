@@ -314,7 +314,7 @@ local function handle_error(v, uri, err)
                 label = "Ignore danger",
                 callback = function(vv)
                     local host = lousy.uri.parse(vv.uri).host
-                    vv:allow_certificate(host, cert)
+                    luakit.allow_certificate(host, cert)
                     vv:reload()
                 end,
             }},
