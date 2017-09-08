@@ -339,16 +339,13 @@ completers.uri = {
 completers.setting = {
     header = { "Setting", "Value" },
     func = function ()
-        local setting_list = settings.get_settings()
         local ret = {}
-
-        for _, setting in ipairs(setting_list) do
+        for key, setting in pairs(settings.get_settings()) do
             table.insert(ret, {
-                setting.key, tostring(setting.value),
-                format = setting.key,
+                key, tostring(setting.value),
+                format = key,
             })
         end
-
         return ret
     end,
 }

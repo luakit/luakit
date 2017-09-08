@@ -553,12 +553,8 @@ local function convert (str, new_type)
             else error("'"..val.."' is not a boolean")
             end
         end,
-        string = function (val)
-            return val
-        end,
-        enum = function (val)
-            return val
-        end,
+        string = function (val) return val end,
+        enum = function (val) return val end,
     }
 
     return convertion_table[new_type](str)
@@ -567,16 +563,16 @@ end
 modes.add_cmds({
     { ":set", "Change a setting.", {
         func = function (_, o)
-            local setting, value = unpack(split(o.arg))
-            value = convert(value, settings.get_settings_map()[setting].type)
+            local setting, value = o.arg:match("^%s+(%S+)%s+(.*)$")
+            value = convert(value, settings.get_settings()[setting].type)
             settings.set_setting(setting, value)
         end,
         format = "{setting}",
     }},
     { ":seton", "Change a setting for a specific domain.", {
         func = function (_, o)
-            local domain, setting, value = unpack(split(o.arg))
-            value = convert(value, settings.get_settings_map()[setting].type)
+            local domain, setting, value = o.arg:match("^%s+(%S+)%s+(%S+)%s+(.*)$")
+            value = convert(value, settings.get_settings()[setting].type)
             settings.set_setting(setting, value, { domain = domain })
         end,
         format = "{uri} {setting}",
