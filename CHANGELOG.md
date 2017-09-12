@@ -25,6 +25,7 @@
  - Added `settings` module and APIs. This replaces the `domain_props` module.
  - Added `tablist.always_visible` setting.
  - Added `utf8.len` (same as `string.wlen`) and `utf8.offset` methods.
+ - Added `:set` and `:seton` commands, for changing settings.
 
 ### Changed
 
