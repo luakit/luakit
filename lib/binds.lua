@@ -563,7 +563,10 @@ end
 modes.add_cmds({
     { ":set", "Change a setting.", {
         func = function (_, o)
-            local setting, value = o.arg:match("^%s+(%S+)%s+(.*)$")
+            o.arg = o.arg or ""
+            local setting, value = o.arg:match("^%s*(%S+)%s+(.*)$")
+            assert(setting and value, "Usage: ':set <setting> <value>'")
+            assert(settings.get_settings()[setting], "Setting not found: "..setting)
             value = convert(value, settings.get_settings()[setting].type)
             settings.set_setting(setting, value)
         end,
@@ -571,7 +574,10 @@ modes.add_cmds({
     }},
     { ":seton", "Change a setting for a specific domain.", {
         func = function (_, o)
-            local domain, setting, value = o.arg:match("^%s+(%S+)%s+(%S+)%s+(.*)$")
+            o.arg = o.arg or ""
+            local domain, setting, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            assert(domain and setting and value, "Usage: ':seton <domain> <setting> <value>'")
+            assert(settings.get_settings()[setting], "Setting not found: "..setting)
             value = convert(value, settings.get_settings()[setting].type)
             settings.set_setting(setting, value, { domain = domain })
         end,
