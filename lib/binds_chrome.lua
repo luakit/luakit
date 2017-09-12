@@ -187,9 +187,6 @@ local html_template = [==[
         {sections}
     </div>
     <script>
-        {jquery}
-    </script>
-    <script>
         {javascript}
     </script>
 </body>
@@ -210,7 +207,7 @@ local mode_bind_template = [==[
     <li class="bind bind_type_{type}">
         <div class="link-box">
             <a href="#" class="filename">{filename}</a>
-            <a href="#" class="linedefined" filename="{filename}" line="{linedefined}">{linedefined}</a>
+            <a href="#" class="linedefined" data-filename="{filename}" data-line="{linedefined}">{linedefined}</a>
         </div>
         <hr class="clear" />
         <div class="key">{key}</div>
@@ -223,28 +220,29 @@ local mode_bind_template = [==[
 ]==]
 
 local main_js = [=[
-$(document).ready(function () {
-    var $body = $(document.body);
+function listen (elements, eventType, action) {
+  for (let $el of elements) {
+    $el.addEventListener(eventType, action)
+  }
+}
 
-    $body.on("click", ".bind .linedefined", function (event) {
-        event.preventDefault();
-        var $e = $(this);
-        open_editor($e.attr("filename"), $e.attr("line"));
-        return false;
-    })
+window.addEventListener('load', () => {
+  listen(document.getElementsByClassName('linedefined'), 'click', event => {
+    event.preventDefault()
+    let { filename, line } = event.target.dataset
+    open_editor(filename, line)
+  })
 
-    $body.on("click", ".bind .desc a", function (event) {
-        event.stopPropagation(); // prevent source toggling
-    })
+  listen(document.querySelectorAll('.desc a'), 'click', event => {
+    event.stopPropagation()
+  })
 
-    $body.on("click", ".bind", function (e) {
-        var $src = $(this).find(".func-source");
-        if ($src.is(":visible"))
-            $src.slideUp();
-        else
-            $src.slideDown();
-    })
-});
+  listen(document.getElementsByClassName('bind'), 'click', event => {
+    let src = event.currentTarget.getElementsByClassName('func-source')[0]
+    if (!src) return
+    src.style.display = src.style.display !== 'block' ? 'block' : 'none'
+  })
+})
 ]=]
 
 local source_lines = {}
@@ -327,7 +325,6 @@ chrome.add("binds", function ()
         sections = sections_html,
         style  = chrome.stylesheet,
         javascript = main_js,
-        jquery = lousy.load("lib/jquery.min.js")
     }
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
     return html
