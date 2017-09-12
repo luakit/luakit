@@ -337,7 +337,7 @@ completers.uri = {
 }
 
 completers.setting = {
-    header = { "Setting", "Value" },
+    header = { "Setting", "Current value" },
     func = function ()
         local ret = {}
         for key, setting in pairs(settings.get_settings()) do
