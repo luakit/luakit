@@ -180,7 +180,14 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
     path = socket_path;
     g_mutex_unlock (&socket_path_lock);
 
-    GVariant *payload = g_variant_new_string(path);
+    lua_getglobal(common.L, "package");
+    lua_getfield(common.L, -1, "path");
+    const char *package_path = lua_tostring(common.L, -1);
+    lua_getfield(common.L, -2, "cpath");
+    const char *package_cpath = lua_tostring(common.L, -1);
+    lua_pop(common.L, 3);
+
+    GVariant *payload = g_variant_new("(sss)", path, package_path, package_cpath);
     webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
     webkit_web_context_set_web_extensions_directory(context, dir);
 
