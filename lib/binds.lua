@@ -562,24 +562,38 @@ end
 
 modes.add_cmds({
     { ":set", "Change a setting.", {
-        func = function (_, o)
+        func = function (w, o)
             o.arg = o.arg or ""
-            local setting, value = o.arg:match("^%s*(%S+)%s+(.*)$")
-            assert(setting and value, "Usage: ':set <setting> <value>'")
-            assert(settings.get_settings()[setting], "Setting not found: "..setting)
-            value = convert(value, settings.get_settings()[setting].type)
-            settings.set_setting(setting, value)
+            local key, value = o.arg:match("^%s*(%S+)%s+(.*)$")
+            if (key and value) == nil then
+                w:error("Usage: ':set <setting> <value>'")
+                return
+            end
+            local setting = settings.get_settings()[key]
+            if setting == nil then
+                w:error("Setting not found: "..key)
+                return
+            end
+            value = convert(value, setting.type)
+            settings.set_setting(key, value)
         end,
         format = "{setting}",
     }},
     { ":seton", "Change a setting for a specific domain.", {
-        func = function (_, o)
+        func = function (w, o)
             o.arg = o.arg or ""
-            local domain, setting, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
-            assert(domain and setting and value, "Usage: ':seton <domain> <setting> <value>'")
-            assert(settings.get_settings()[setting], "Setting not found: "..setting)
-            value = convert(value, settings.get_settings()[setting].type)
-            settings.set_setting(setting, value, { domain = domain })
+            local domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            if (domain and key and value) == nil then
+                w:error("Usage: ':seton <domain> <setting> <value>'")
+                return
+            end
+            local setting = settings.get_settings()[key]
+            if setting == nil then
+                w:error("Setting not found: "..key)
+                return
+            end
+            value = convert(value, setting.type)
+            settings.set_setting(key, value, { domain = domain })
         end,
         format = "{uri} {setting}",
     }}
