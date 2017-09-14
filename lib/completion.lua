@@ -350,6 +350,14 @@ completers.setting = {
     end,
 }
 
+completers.domain = {
+    header = { "Domain", "" },
+    func = function (buf)
+        local prefix = buf:match("^%S+")
+        return prefix and {{ prefix, "", format = {{ lit = prefix }} }} or {}
+    end,
+}
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

@@ -595,7 +595,7 @@ modes.add_cmds({
             value = convert(value, setting.type)
             settings.set_setting(key, value, { domain = domain })
         end,
-        format = "{uri} {setting}",
+        format = "{domain} {setting}",
     }}
 })
 
