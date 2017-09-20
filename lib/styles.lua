@@ -10,7 +10,7 @@
 -- refreshing the web pages they affect, and it is possible to reload external
 -- changes to stylesheets into luakit, without restarting the browser.
 --
--- @usage
+-- # Adding user stylesheets
 --
 -- 1. Ensure the @ref{styles} module is enabled in your `rc.lua`.
 -- 2. Locate the @ref{styles} sub-directory within luakit's data storage directory.
@@ -23,6 +23,18 @@
 --    ](https://github.com/stylish-userstyles/stylish/wiki/Applying-styles-to-specific-sites) may be helpful.
 -- 5. Run `:styles-reload` to detect new stylesheet files and reload any changes to
 --    existing stylesheet files; it isn't necessary to restart luakit.
+--
+-- # Using the styles menu
+--
+-- To open the styles menu, run the command `:styles-list`. Here you can
+-- enable/disable stylesheets, open stylesheets in your text editor, and view
+-- which stylesheets are active.
+--
+-- If a stylesheet is disabled for all pages, its state will be listed as
+-- "Disabled". If a stylesheet is enabled for all pages, but does not apply to
+-- the current page, its state will be listed as "Enabled". If a stylesheet is
+-- enbaled for all pages _and_ it applies to the current page, its state will be
+-- listed as "Active".
 --
 -- @module styles
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
