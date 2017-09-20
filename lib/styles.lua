@@ -133,7 +133,7 @@ local function describe_stylesheet_affected_pages(stylesheet)
     local affects = {}
     for _, part in ipairs(stylesheet.parts) do
         for _, w in ipairs(part.when) do
-            local w2 = w[1] == "regexp" and w[2].pattern or w[2]
+            local w2 = w[1] == "regexp" and w[2].pattern:gsub("\\/", "/") or w[2]
             local desc = w[1] .. " " .. w2
             if not lousy.util.table.hasitem(affects, desc) then
                 table.insert(affects, desc)
@@ -240,7 +240,10 @@ local parse_moz_document_section = function (file, parts)
         local valid_words = { url = true, ["url-prefix"] = true, domain = true, regexp = true }
 
         if valid_words[word] then
-            if word == "regexp" then param = regex{pattern=param} end
+            if word == "regexp" then
+                param = param:gsub("\\\\", "\\"):gsub("/","\\/")
+                param = regex{pattern=param}
+            end
             when[#when+1] = {word, param}
         else
             msg.warn("Ignoring unrecognized @-moz-document rule '%s'", word)
