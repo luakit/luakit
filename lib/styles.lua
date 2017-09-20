@@ -322,7 +322,11 @@ _M.detect_files = function ()
 
     for _, stylesheet in ipairs(stylesheets or {}) do
         for _, part in ipairs(stylesheet.parts) do
-            part.ss.source = ""
+            for _, ww in pairs(window.bywidget) do
+                for _, v in pairs(ww.tabs.children) do
+                    v.stylesheets[part.ss] = false
+                end
+            end
         end
     end
     stylesheets = {}
