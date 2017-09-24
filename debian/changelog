@@ -1,5 +1,6 @@
 luakit (2:2.0) unstable; urgency=medium
 
+   * Initial new release with Webkit2GTK+
    * Package adopted by Grégory David <groolot@groolot.net>
 
   [ Yuriy Melnyk ]
