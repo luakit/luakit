@@ -42,7 +42,7 @@ if unique.is_running() then
 
     local u = {}
     for i, uri in ipairs(uris) do
-        u[i] = lfs.attributes(uri) and os.abspath(uri) or uri
+        u[i] = lfs.attributes(uri) and ("file://"..os.abspath(uri):gsub(" ","%%20")) or uri
     end
 
     unique.send_message("open-uri-set " .. pickle.pickle(u))
