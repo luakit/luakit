@@ -1,5 +1,3 @@
-#!/usr/bin/env lua
-
 --[[
 # markdown.lua -- version 0.32
 
