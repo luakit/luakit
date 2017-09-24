@@ -1,0 +1,19 @@
+#!/usr/bin/make -f
+export DH_VERBOSE = 1
+export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic -fstack-protector-strong -Wformat -Werror=format-security
+export DEB_CPPFLAGS_MAINT_APPEND  = -Wdate-time -D_FORTIFY_SOURCE=2
+export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed,-z,relro
+
+export VERSION='2.0.0'
+export PREFIX=/usr
+export DEVELOPMENT_PATHS=0
+export USE_LUAJIT=1
+
+%:
+	dh $@
+
+override_dh_auto_build:
+	dh_auto_build -- PREFIX=/usr DEVELOPMENT_PATHS=0 USE_LUAJIT=1
+
+override_dh_auto_install:
+	dh_auto_install -- PREFIX=/usr
