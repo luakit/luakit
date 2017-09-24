@@ -51,6 +51,7 @@ buildopts.h: buildopts.h.in
 		-e 's#LUAKIT_MAN_PATH .*#LUAKIT_MAN_PATH "$(MANPREFIX)"#' \
 		-e 's#LUAKIT_PIXMAP_PATH .*#LUAKIT_PIXMAP_PATH "$(PIXMAPDIR)"#' \
 		-e 's#LUAKIT_APP_PATH .*#LUAKIT_APP_PATH "$(APPDIR)"#' \
+		-e 's#LUAKIT_LIB_PATH .*#LUAKIT_LIB_PATH "$(LIBDIR)"#' \
 		buildopts.h.in > buildopts.h
 
 $(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
@@ -104,7 +105,7 @@ install: all
 	install -m644 lib/*.* $(INSTALLDIR)/share/luakit/lib
 	install -m644 lib/lousy/*.* $(INSTALLDIR)/share/luakit/lib/lousy
 	install -m644 lib/lousy/widget/*.* $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install -m644 luakit.so $(INSTALLDIR)/share/luakit/luakit.so
+	install -m644 luakit.so $(INSTALLDIR)/lib/luakit/luakit.so
 	install -d $(INSTALLDIR)/bin
 	install luakit $(INSTALLDIR)/bin/luakit
 	install -d $(XDGPREFIX)/luakit/

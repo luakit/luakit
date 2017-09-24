@@ -158,7 +158,7 @@ web_extension_connect_thread(gpointer UNUSED(data))
 static void
 initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 {
-    char *dirs[] = { g_get_current_dir(), LUAKIT_INSTALL_PATH }, *dir = NULL;
+    char *dirs[] = { g_get_current_dir(), LUAKIT_LIB_PATH }, *dir = NULL;
 
     for (unsigned i = 0; !dir && i < LENGTH(dirs); ++i) {
         char *extension_file = g_build_filename(dirs[i],  "luakit.so", NULL);

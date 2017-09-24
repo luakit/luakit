@@ -38,6 +38,9 @@
 /** Install location of luakit's application file */
 #define LUAKIT_APP_PATH "/usr/local/share/applications"
 
+/** Install location of luakit's compiled lib files */
+#define LUAKIT_LIB_PATH "/usr/local/lib/luakit"
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
