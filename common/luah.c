@@ -35,6 +35,24 @@ luaH_utf8_strlen(lua_State *L)
     return 1;
 }
 
+/* UTF-8 aware string offset calculation.
+ * Returns the number of elements pushed on the stack. */
+static gint
+luaH_utf8_offset(lua_State *L)
+{
+    const gchar *cmd = luaL_checkstring(L, 1);
+    const gint widx = luaL_checkint(L, 2);
+    const gint len = g_utf8_strlen(NONULL(cmd), -1);
+    gint ret = 0;
+    if(len >= widx) {
+        gchar *pos = g_utf8_offset_to_pointer(NONULL(cmd), widx);
+        if (pos != NULL)
+            ret = (gint) (pos - cmd) + 1;
+    }
+    lua_pushnumber(L, (ssize_t) ret);
+    return 1;
+}
+
 /* Overload standard Lua next function to use __next key on metatable.
  * Returns the number of elements pushed on stack. */
 static gint
@@ -199,6 +217,11 @@ luaH_fixups(lua_State *L)
     lua_getglobal(L, "string");
     lua_pushcfunction(L, &luaH_utf8_strlen);
     lua_setfield(L, -2, "wlen");
+    lua_pop(L, 1);
+    /* export string.woffset */
+    lua_getglobal(L, "string");
+    lua_pushcfunction(L, &luaH_utf8_offset);
+    lua_setfield(L, -2, "woffset");
     lua_pop(L, 1);
     /* export os.abspath */
     lua_getglobal(L, "os");
