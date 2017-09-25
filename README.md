@@ -107,6 +107,10 @@ Just copy the files you wish to change (and the rc.lua) into
 `$XDG_CONFIG_HOME/luakit` (defaults to `~/.config/luakit/`) and luakit will
 use those files when you next launch it.
 
+## HiDPI Monitor Configuration
+
+If you have a HiDPI monitor (> 1920x1080p) and need to increase the size of the font loaded, you can do so by changing the webview.zoom_level on the settings page (luakit://settings/) to 150 or 200 as per your taste.
+
 ## Uninstall
 
 To delete luakit from your system run:
