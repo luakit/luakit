@@ -2,7 +2,7 @@
 
 ## Submitting trivial fixes
 
-If you notice a small issue that's easy to fix, you're free to submut
+If you notice a small issue that's easy to fix, you're free to submit
 a pull request or patch directly, without asking or opening an issue
 first. This includes spelling / grammar mistakes, whitespace /
 formatting fixes, and any tweaks needed to get luakit to run.
