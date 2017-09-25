@@ -109,7 +109,9 @@ use those files when you next launch it.
 
 ## HiDPI Monitor Configuration
 
-If you have a HiDPI monitor (> 1920x1080p) and need to increase the size of the font loaded, you can do so by changing the webview.zoom_level on the settings page (luakit://settings/) to 150 or 200 as per your taste.
+If you have a HiDPI monitor (> 1920x1080) and find that web pages are too small,
+you can change the `webview.zoom_level` on the settings page (luakit://settings/)
+to 150 or 200 as per your taste.
 
 ## Uninstall
 
