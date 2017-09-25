@@ -33,9 +33,9 @@ local actions =  {
             local i = w.ibar.input
             local text = i.text
             local pos = i.position
-            if text and string.wlen(text) > 1 and pos > 1 then
-                local left = string.sub(text, 2, string.woffset(text, pos - 1))
-                local right = string.sub(text, string.woffset(text, pos))
+            if text and utf8.len(text) > 1 and pos > 1 then
+                local left = string.sub(text, 2, utf8.offset(text, pos))
+                local right = string.sub(text, utf8.offset(text, pos + 1))
                 if not string.find(left, "%s") then
                     left = ""
                 elseif string.find(left, "%S+%s*$") then
@@ -44,7 +44,7 @@ local actions =  {
                     left = string.sub(left, 0, string.find(left, "%W+%s*$") - 1)
                 end
                 i.text =  string.sub(text, 1, 1) .. left .. right
-                i.position = string.wlen(left) + 1
+                i.position = utf8.len(left) + 1
             end
         end,
         desc = "Delete previous word.",
