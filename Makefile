@@ -122,7 +122,7 @@ install: all
 	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(INSTALLDIR)/share/luakit/$$(dirname $$f)"' \;
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
+	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/lib/luakit
 	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(XDGPREFIX)/luakit
 	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
 
