@@ -323,6 +323,9 @@ window.addEventListener('load', () => {
     $page.value = $page.value || 1
 
     function makeBookmark (b) {
+        b.tags = b.tags || ''
+        let tagArray = b.tags.split(' ').filter(tag => tag)
+
         return createElement('div', { 'data-id': b.id, class: 'bookmark' }, [
 
             createElement('div', { class: 'title' }, [
@@ -347,7 +350,7 @@ window.addEventListener('load', () => {
                     document.createTextNode(b.date)
                 ]),
 
-                createElement('span', { class: 'tags' }, b.tags.split(' ').map(tag => {
+                createElement('span', { class: 'tags' }, tagArray.map(tag => {
                     let $tag = document.createElement('a')
                     $tag.textContent = tag
                     $tag.addEventListener('click', event => {
