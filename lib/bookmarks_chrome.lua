@@ -278,7 +278,7 @@ local html_template = [==[
 ]==]
 
 local main_js = [=[
-function createElementsFromHtml (html) {
+function createElementsFromHTML (html) {
     let $node = document.createElement('div')
     $node.innerHTML = html
     return Array.from($node.childNodes)
@@ -339,7 +339,7 @@ window.addEventListener('load', () => {
             createElement('div', {
                 class: 'desc',
                 style: b.markdown_desc ? 'display: block;' : ''
-            }, createElementsFromHtml(b.markdown_desc)),
+            }, createElementsFromHTML(b.markdown_desc)),
 
             createElement('div', { class: 'bottom' }, [
 
