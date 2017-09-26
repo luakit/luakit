@@ -206,8 +206,7 @@ local mode_section_template = [==[
 local mode_bind_template = [==[
     <li class="bind bind_type_{type}">
         <div class="link-box">
-            <a href="#" class="filename">{filename}</a>
-            <a href="#" class="linedefined" data-filename="{filename}" data-line="{linedefined}">{linedefined}</a>
+            <a href="#" class="linedefined" data-filename="{filename}" data-line="{linedefined}">{filename}:{linedefined}</a>
         </div>
         <hr class="clear" />
         <div class="key">{key}</div>
