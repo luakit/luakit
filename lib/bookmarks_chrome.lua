@@ -449,13 +449,7 @@ window.addEventListener('load', () => {
         let tags = $editDialog.tags.value
         let desc = $editDialog.desc.value
 
-        try {
-            bookmarks_add(uri, { title, tags, desc, created })
-        } catch (err) {
-            window.alert(err)
-            return
-        }
-
+        bookmarks_add(uri, { title, tags, desc, created })
         if (id) bookmarks_remove(parseInt(id))
         search()
         $editView.style.display = 'none'
