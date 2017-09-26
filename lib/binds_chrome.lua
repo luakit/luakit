@@ -114,10 +114,6 @@ local html_template = [==[
             text-decoration: underline;
         }
 
-        .bind .func-source {
-            display: none;
-        }
-
         .bind .key {
             font-family: monospace, sans-serif;
             float: left;
@@ -177,6 +173,10 @@ local html_template = [==[
         #templates {
             display: none;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -211,7 +211,7 @@ local mode_bind_template = [==[
         <hr class="clear" />
         <div class="key">{key}</div>
         <div class="box desc">{desc}</div>
-        <div class="box func-source">
+        <div class="box func-source hidden">
             <h4>Function source:</h4>
             <pre><code>{func}</code></pre>
         </div>
@@ -234,8 +234,7 @@ window.addEventListener('load', () => {
 
     listen(document.getElementsByClassName('bind'), 'click', event => {
         let src = event.currentTarget.getElementsByClassName('func-source')[0]
-        if (!src) return
-        src.style.display = src.style.display !== 'block' ? 'block' : 'none'
+        if (src) src.classList.toggle('hidden')
     })
 })
 ]=]
