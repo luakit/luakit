@@ -122,187 +122,187 @@ local html_template = [==[
 
 local main_js = [=[
 function createElement (tag, attributes, children, events) {
-  let $node = document.createElement(tag)
+    let $node = document.createElement(tag)
 
-  for (let a in attributes) {
-    $node.setAttribute(a, attributes[a])
-  }
-
-  for (let $child of children) {
-    $node.appendChild($child)
-  }
-
-  if (events) {
-    for (let eventType in events) {
-      let action = events[eventType]
-      $node.addEventListener(eventType, action)
+    for (let a in attributes) {
+        $node.setAttribute(a, attributes[a])
     }
-  }
 
-  return $node
+    for (let $child of children) {
+        $node.appendChild($child)
+    }
+
+    if (events) {
+        for (let eventType in events) {
+            let action = events[eventType]
+            $node.addEventListener(eventType, action)
+        }
+    }
+
+    return $node
 }
 
 function empty ($el) {
-  while ($el.firstChild) $el.removeChild($el.firstChild)
+    while ($el.firstChild) $el.removeChild($el.firstChild)
 }
 
 window.addEventListener('load', () => {
-  const limit = 100
-  let resultsLen = 0
-  const $clearAll = document.getElementById('clear-all-button')
-  const $clearResults = document.getElementById('clear-results-button')
-  const $clearSelected = document.getElementById('clear-selected-button')
-  const $next = document.getElementById('nav-next')
-  const $page = document.getElementById('page')
-  const $prev = document.getElementById('nav-prev')
-  const $results = document.getElementById('results')
-  const $search = document.getElementById('search')
+    const limit = 100
+    let resultsLen = 0
+    const $clearAll = document.getElementById('clear-all-button')
+    const $clearResults = document.getElementById('clear-results-button')
+    const $clearSelected = document.getElementById('clear-selected-button')
+    const $next = document.getElementById('nav-next')
+    const $page = document.getElementById('page')
+    const $prev = document.getElementById('nav-prev')
+    const $results = document.getElementById('results')
+    const $search = document.getElementById('search')
 
-  $page.value = $page.value || 1
+    $page.value = $page.value || 1
 
-  function makeHistoryItem (h) {
-    let domain = /:\/\/([^/]+)\//.exec(h.uri)
+    function makeHistoryItem (h) {
+        let domain = /:\/\/([^/]+)\//.exec(h.uri)
 
-    return createElement('div', { class: 'item', 'data-id': h.id }, [
+        return createElement('div', { class: 'item', 'data-id': h.id }, [
 
-      createElement('span', { class: 'time' }, [
-        document.createTextNode(h.time)
-      ]),
+            createElement('span', { class: 'time' }, [
+                document.createTextNode(h.time)
+            ]),
 
-      createElement('span', { class: 'title' }, [
-        createElement('a', { href: h.uri }, [
-          document.createTextNode(h.title || h.uri)
-        ])
-      ]),
+            createElement('span', { class: 'title' }, [
+                createElement('a', { href: h.uri }, [
+                    document.createTextNode(h.title || h.uri)
+                ])
+            ]),
 
-      createElement('span', { class: 'domain' }, [
-        createElement('a', {}, [
-          document.createTextNode(domain[1] || '')
+            createElement('span', { class: 'domain' }, [
+                createElement('a', {}, [
+                    document.createTextNode(domain[1] || '')
+                ], {
+                    click: event => {
+                        $search.value = event.target.textContent
+                        search()
+                    }
+                })
+            ])
         ], {
-          click: event => {
-            $search.value = event.target.textContent
-            search()
-          }
+            click: event => {
+                event.target.classList.toggle('selected')
+                $clearSelected.disabled = $results.getElementsByClassName('selected').length === 0
+            }
         })
-      ])
-    ], {
-      click: event => {
-        event.target.classList.toggle('selected')
-        $clearSelected.disabled = $results.getElementsByClassName('selected').length === 0
-      }
-    })
-  }
-
-  function updateClearButtons (all, results, selected) {
-    $clearAll.disabled = !!all
-    $clearResults.disabled = !!results
-    $clearSelected.disabled = !!selected
-  }
-
-  function updateNavButtons () {
-    $next.style.display = resultsLen === limit ? 'block' : 'none'
-    $prev.style.display = parseInt($age.value, 10) > 1 ? 'block' : 'none'
-  }
-
-  function search () {
-    let query = $search.value
-    history_search({
-      query: query,
-      limit: limit,
-      page: parseInt($page.value, 10)
-    }).then(results => {
-      resultsLen = results.length || 0
-      updateClearButtons(query, !query, true)
-      empty($results)
-
-      if (!results.length) {
-        updateNavButtons()
-        return
-      }
-
-      for (let i = 0; i < results.length; i++) {
-        let lastItem = results[i - 1] || {}
-        let item = results[i]
-
-        if (item.date !== lastItem.date) {
-          $results.appendChild(createElement('div', { class: 'day-heading' }, [
-            document.createTextNode(item.date)
-          ]))
-        } else if ((lastItem.last_visit - item.last_visit) > 3600) {
-          $results.appendChild(createElement('div', { class: 'day-sep' }, []))
-        }
-
-        $results.appendChild(makeHistoryItem(item))
-      }
-
-      updateNavButtons()
-    })
-  }
-
-  function clearEls (className) {
-    let ids = Array.from(document.getElementsByClassName(className))
-      .map($el => $el.dataset.id)
-
-    if (ids.length > 0) history_clear_list(ids)
-
-    search()
-  }
-
-  $search.addEventListener('keydown', event => {
-    if (event.which === 13) { // 13 is the code for the 'Return' key
-      $page.value = 1
-      search()
-      $search.blur()
-      reset_mode()
     }
-  })
 
-  document.getElementById('clear-button')
-    .addEventListener('click', () => {
-      $search.value = ''
-      $page.value = 1
-      search()
+    function updateClearButtons (all, results, selected) {
+        $clearAll.disabled = !!all
+        $clearResults.disabled = !!results
+        $clearSelected.disabled = !!selected
+    }
+
+    function updateNavButtons () {
+        $next.style.display = resultsLen === limit ? 'block' : 'none'
+        $prev.style.display = parseInt($age.value, 10) > 1 ? 'block' : 'none'
+    }
+
+    function search () {
+        let query = $search.value
+        history_search({
+            query: query,
+            limit: limit,
+            page: parseInt($page.value, 10)
+        }).then(results => {
+            resultsLen = results.length || 0
+            updateClearButtons(query, !query, true)
+            empty($results)
+
+            if (!results.length) {
+                updateNavButtons()
+                return
+            }
+
+            for (let i = 0; i < results.length; i++) {
+                let lastItem = results[i - 1] || {}
+                let item = results[i]
+
+                if (item.date !== lastItem.date) {
+                    $results.appendChild(createElement('div', { class: 'day-heading' }, [
+                        document.createTextNode(item.date)
+                    ]))
+                } else if ((lastItem.last_visit - item.last_visit) > 3600) {
+                    $results.appendChild(createElement('div', { class: 'day-sep' }, []))
+                }
+
+                $results.appendChild(makeHistoryItem(item))
+            }
+
+            updateNavButtons()
+        })
+    }
+
+    function clearEls (className) {
+        let ids = Array.from(document.getElementsByClassName(className))
+            .map($el => $el.dataset.id)
+
+        if (ids.length > 0) history_clear_list(ids)
+
+        search()
+    }
+
+    $search.addEventListener('keydown', event => {
+        if (event.which === 13) { // 13 is the code for the 'Return' key
+            $page.value = 1
+            search()
+            $search.blur()
+            reset_mode()
+        }
     })
 
-  document.getElementById('search-button')
-    .addEventListener('click', () => {
-      $page.value = 1
-      search()
+    document.getElementById('clear-button')
+        .addEventListener('click', () => {
+            $search.value = ''
+            $page.value = 1
+            search()
+        })
+
+    document.getElementById('search-button')
+        .addEventListener('click', () => {
+            $page.value = 1
+            search()
+        })
+
+    $clearAll.addEventListener('click', () => {
+        if (!window.confirm('Clear all browser history?')) return
+        history_clear_all()
+        search()
+        $clearAll.blur()
     })
 
-  $clearAll.addEventListener('click', () => {
-    if (!window.confirm('Clear all browser history?')) return
-    history_clear_all()
-    search()
-    $clearAll.blur()
-  })
+    $clearResults.addEventListener('click', () => {
+        clearEls('item')
+        $clearResults.blur()
+    })
 
-  $clearResults.addEventListener('click', () => {
-    clearEls('item')
-    $clearResults.blur()
-  })
+    $clearSelected.addEventListener('click', () => {
+        clearEls('selected')
+        $clearSelected.blur()
+    })
 
-  $clearSelected.addEventListener('click', () => {
-    clearEls('selected')
-    $clearSelected.blur()
-  })
+    $next.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = page + 1
+        search()
+    })
 
-  $next.addEventListener('click', () => {
-    let page = parseInt($page.value, 10)
-    $page.value = page + 1
-    search()
-  })
+    $prev.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = Math.max(page - 1, 1)
+        search()
+    })
 
-  $prev.addEventListener('click', () => {
-    let page = parseInt($page.value, 10)
-    $page.value = Math.max(page - 1, 1)
-    search()
-  })
-
-  initial_search_term().then(query => {
-    if (query) $search.value = query
-    search(query)
-  })
+    initial_search_term().then(query => {
+        if (query) $search.value = query
+        search(query)
+    })
 })
 ]=]
 

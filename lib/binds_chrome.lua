@@ -221,27 +221,27 @@ local mode_bind_template = [==[
 
 local main_js = [=[
 function listen (elements, eventType, action) {
-  for (let $el of elements) {
-    $el.addEventListener(eventType, action)
-  }
+    for (let $el of elements) {
+        $el.addEventListener(eventType, action)
+    }
 }
 
 window.addEventListener('load', () => {
-  listen(document.getElementsByClassName('linedefined'), 'click', event => {
-    event.preventDefault()
-    let { filename, line } = event.target.dataset
-    open_editor(filename, line)
-  })
+    listen(document.getElementsByClassName('linedefined'), 'click', event => {
+        event.preventDefault()
+        let { filename, line } = event.target.dataset
+        open_editor(filename, line)
+    })
 
-  listen(document.querySelectorAll('.desc a'), 'click', event => {
-    event.stopPropagation()
-  })
+    listen(document.querySelectorAll('.desc a'), 'click', event => {
+        event.stopPropagation()
+    })
 
-  listen(document.getElementsByClassName('bind'), 'click', event => {
-    let src = event.currentTarget.getElementsByClassName('func-source')[0]
-    if (!src) return
-    src.style.display = src.style.display !== 'block' ? 'block' : 'none'
-  })
+    listen(document.getElementsByClassName('bind'), 'click', event => {
+        let src = event.currentTarget.getElementsByClassName('func-source')[0]
+        if (!src) return
+        src.style.display = src.style.display !== 'block' ? 'block' : 'none'
+    })
 })
 ]=]
 

@@ -279,221 +279,221 @@ local html_template = [==[
 
 local main_js = [=[
 function createElementsFromHtml (html) {
-  let $node = document.createElement('div')
-  $node.innerHTML = html
-  return Array.from($node.childNodes)
+    let $node = document.createElement('div')
+    $node.innerHTML = html
+    return Array.from($node.childNodes)
 }
 
 function createElement (tag, attributes, children, events) {
-  let $node = document.createElement(tag)
+    let $node = document.createElement(tag)
 
-  for (let a in attributes) {
-    $node.setAttribute(a, attributes[a])
-  }
-
-  for (let $child of children) {
-    $node.appendChild($child)
-  }
-
-  if (events) {
-    for (let eventType in events) {
-      let action = events[eventType]
-      $node.addEventListener(eventType, action)
+    for (let a in attributes) {
+        $node.setAttribute(a, attributes[a])
     }
-  }
 
-  return $node
+    for (let $child of children) {
+        $node.appendChild($child)
+    }
+
+    if (events) {
+        for (let eventType in events) {
+            let action = events[eventType]
+            $node.addEventListener(eventType, action)
+        }
+    }
+
+    return $node
 }
 
 function empty ($el) {
-  while ($el.firstChild) $el.removeChild($el.firstChild)
+    while ($el.firstChild) $el.removeChild($el.firstChild)
 }
 
 window.addEventListener('load', () => {
-  const limit = 100
-  let resultsLen = 0
-  const $editDialog = document.getElementById('edit-dialog')
-  const $editView = document.getElementById('edit-view')
-  const $next = document.getElementById('nav-next')
-  const $page = document.getElementById('page')
-  const $prev = document.getElementById('nav-prev')
-  const $results = document.getElementById('results')
-  const $search = document.getElementById('search')
+    const limit = 100
+    let resultsLen = 0
+    const $editDialog = document.getElementById('edit-dialog')
+    const $editView = document.getElementById('edit-view')
+    const $next = document.getElementById('nav-next')
+    const $page = document.getElementById('page')
+    const $prev = document.getElementById('nav-prev')
+    const $results = document.getElementById('results')
+    const $search = document.getElementById('search')
 
-  $page.value = $page.value || 1
+    $page.value = $page.value || 1
 
-  function makeBookmark (b) {
-    return createElement('div', { 'data-id': b.id, class: 'bookmark' }, [
+    function makeBookmark (b) {
+        return createElement('div', { 'data-id': b.id, class: 'bookmark' }, [
 
-      createElement('div', { class: 'title' }, [
-        createElement('a', { href: b.uri }, [
-          document.createTextNode(b.title || b.uri)
+            createElement('div', { class: 'title' }, [
+                createElement('a', { href: b.uri }, [
+                    document.createTextNode(b.title || b.uri)
+                ])
+            ]),
+
+            createElement('div', {
+                class: 'uri',
+                style: b.title ? 'display: block;' : ''
+            }, [ document.createTextNode(b.uri) ]),
+
+            createElement('div', {
+                class: 'desc',
+                style: b.markdown_desc ? 'display: block;' : ''
+            }, createElementsFromHtml(b.markdown_desc)),
+
+            createElement('div', { class: 'bottom' }, [
+
+                createElement('span', { class: 'date' }, [
+                    document.createTextNode(b.date)
+                ]),
+
+                createElement('span', { class: 'tags' }, b.tags.split(' ').map(tag => {
+                    let $tag = document.createElement('a')
+                    $tag.textContent = tag
+                    $tag.addEventListener('click', event => {
+                        $search.value = event.target.textContent
+                        search()
+                    })
+                    return $tag
+                })),
+
+                createElement('span', { class: 'controls' }, [
+
+                    createElement('a', { class: 'edit-button' }, [
+                        document.createTextNode('edit')
+                    ], {
+                        click: event => {
+                            let $b = findBookmarkParent(event.target)
+                            bookmarks_get(parseInt($b.dataset.id, 10))
+                                .then(showEdit)
+                        }
+                    }),
+
+                    createElement('a', { class: 'delete-button' }, [
+                        document.createTextNode('delete')
+                    ], {
+                        click: event => {
+                            let $b = findBookmarkParent(event.target)
+                            bookmarks_remove(parseInt($b.dataset.id))
+                            $b.parentNode.removeChild($b)
+                        }
+                    })
+
+                ])
+
+            ])
         ])
-      ]),
+    }
 
-      createElement('div', {
-        class: 'uri',
-        style: b.title ? 'display: block;' : ''
-      }, [ document.createTextNode(b.uri) ]),
+    function search () {
+        bookmarks_search({
+            query: $search.value,
+            limit: limit,
+            page: parseInt($page.value, 10)
+        }).then(results => {
+            resultsLen = results.length || 0
+            empty($results)
 
-      createElement('div', {
-        class: 'desc',
-        style: b.markdown_desc ? 'display: block;' : ''
-      }, createElementsFromHtml(b.markdown_desc)),
+            if (results.length == null) {
+                updateNavButtons()
+                return
+            }
 
-      createElement('div', { class: 'bottom' }, [
+            results.map(makeBookmark).forEach($b => $results.appendChild($b))
+        })
+    }
 
-        createElement('span', { class: 'date' }, [
-          document.createTextNode(b.date)
-        ]),
+    function updateNavButtons () {
+        $next.style.display = resultsLen === limit ? 'inline' : 'none'
+        $prev.style.display = parseInt($page.value, 10) > 1 ? 'inline' : 'none'
+    }
 
-        createElement('span', { class: 'tags' }, b.tags.split(' ').map(tag => {
-          let $tag = document.createElement('a')
-          $tag.textContent = tag
-          $tag.addEventListener('click', event => {
-            $search.value = event.target.textContent
+    function findBookmarkParent ($el) {
+        let $b = $el.parentNode
+        while ($b && !$b.classList.contains('bookmark')) $b = $b.parentNode
+        return $b
+    }
+
+    function showEdit (b) {
+        b = b || {}
+        $editDialog.id.value = b.id || ''
+        $editDialog.created.value = b.created || ''
+        $editDialog.title.value = b.title || ''
+        $editDialog.uri.value = b.uri || ''
+        $editDialog.tags.value = b.tags || ''
+        $editDialog.desc.value = b.desc || ''
+        $editView.style.display = 'block'
+        $editDialog.title.focus()
+    }
+
+    $search.addEventListener('keydown', event => {
+        if (event.which === 13) { // 13 is the code for the 'Return' key
+            $page.value = 1
             search()
-          })
-          return $tag
-        })),
-
-        createElement('span', { class: 'controls' }, [
-
-          createElement('a', { class: 'edit-button' }, [
-            document.createTextNode('edit')
-          ], {
-            click: event => {
-              let $b = findBookmarkParent(event.target)
-              bookmarks_get(parseInt($b.dataset.id, 10))
-                .then(showEdit)
-            }
-          }),
-
-          createElement('a', { class: 'delete-button' }, [
-            document.createTextNode('delete')
-          ], {
-            click: event => {
-              let $b = findBookmarkParent(event.target)
-              bookmarks_remove(parseInt($b.dataset.id))
-              $b.parentNode.removeChild($b)
-            }
-          })
-
-        ])
-
-      ])
-    ])
-  }
-
-  function search () {
-    bookmarks_search({
-      query: $search.value,
-      limit: limit,
-      page: parseInt($page.value, 10)
-    }).then(results => {
-      resultsLen = results.length || 0
-      empty($results)
-
-      if (results.length == null) {
-        updateNavButtons()
-        return
-      }
-
-      results.map(makeBookmark).forEach($b => $results.appendChild($b))
+            $search.blur()
+            reset_mode()
+        }
     })
-  }
 
-  function updateNavButtons () {
-    $next.style.display = resultsLen === limit ? 'inline' : 'none'
-    $prev.style.display = parseInt($page.value, 10) > 1 ? 'inline' : 'none'
-  }
+    $editDialog.addEventListener('submit', event => {
+        event.preventDefault()
+        let id = $editDialog.id.value
+        let created = $editDialog.created.value
+            ? parseInt($editDialog.created.value)
+            : undefined
+        let title = $editDialog.title.value
+        let uri = $editDialog.uri.value
+        let tags = $editDialog.tags.value
+        let desc = $editDialog.desc.value
 
-  function findBookmarkParent ($el) {
-    let $b = $el.parentNode
-    while ($b && !$b.classList.contains('bookmark')) $b = $b.parentNode
-    return $b
-  }
+        try {
+            bookmarks_add(uri, { title, tags, desc, created })
+        } catch (err) {
+            window.alert(err)
+            return
+        }
 
-  function showEdit (b) {
-    b = b || {}
-    $editDialog.id.value = b.id || ''
-    $editDialog.created.value = b.created || ''
-    $editDialog.title.value = b.title || ''
-    $editDialog.uri.value = b.uri || ''
-    $editDialog.tags.value = b.tags || ''
-    $editDialog.desc.value = b.desc || ''
-    $editView.style.display = 'block'
-    $editDialog.title.focus()
-  }
+        if (id) bookmarks_remove(parseInt(id))
+        search()
+        $editView.style.display = 'none'
+    })
 
-  $search.addEventListener('keydown', event => {
-    if (event.which === 13) { // 13 is the code for the 'Return' key
-      $page.value = 1
-      search()
-      $search.blur()
-      reset_mode()
-    }
-  })
+    document.getElementsByClassName('cancel-button')[0]
+        .addEventListener('click', () => {
+            $editView.style.display = 'none'
+        })
 
-  $editDialog.addEventListener('submit', event => {
-    event.preventDefault()
-    let id = $editDialog.id.value
-    let created = $editDialog.created.value
-      ? parseInt($editDialog.created.value)
-      : undefined
-    let title = $editDialog.title.value
-    let uri = $editDialog.uri.value
-    let tags = $editDialog.tags.value
-    let desc = $editDialog.desc.value
+    document.getElementById('new-button').addEventListener('click', showEdit)
 
-    try {
-      bookmarks_add(uri, { title, tags, desc, created })
-    } catch (err) {
-      window.alert(err)
-      return
-    }
+    document.getElementById('clear-button')
+        .addEventListener('click', () => {
+            $search.value = ''
+            $page.value = 1
+            search()
+        })
 
-    if (id) bookmarks_remove(parseInt(id))
+    document.getElementById('search-button')
+        .addEventListener('click', () => {
+            $page.value = 1
+            search()
+        })
+
+    $next.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = page + 1
+        search()
+    })
+
+    $prev.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = Math.max(page - 1, 1)
+        search()
+    })
+
     search()
-    $editView.style.display = 'none'
-  })
-
-  document.getElementsByClassName('cancel-button')[0]
-    .addEventListener('click', () => {
-      $editView.style.display = 'none'
+    new_bookmark_values().then(values => {
+        if (values) showEdit(values)
     })
-
-  document.getElementById('new-button').addEventListener('click', showEdit)
-
-  document.getElementById('clear-button')
-    .addEventListener('click', () => {
-      $search.value = ''
-      $page.value = 1
-      search()
-    })
-
-  document.getElementById('search-button')
-    .addEventListener('click', () => {
-      $page.value = 1
-      search()
-    })
-
-  $next.addEventListener('click', () => {
-    let page = parseInt($page.value, 10)
-    $page.value = page + 1
-    search()
-  })
-
-  $prev.addEventListener('click', () => {
-    let page = parseInt($page.value, 10)
-    $page.value = Math.max(page - 1, 1)
-    search()
-  })
-
-  search()
-  new_bookmark_values().then(values => {
-    if (values) showEdit(values)
-  })
 })
 ]=]
 
