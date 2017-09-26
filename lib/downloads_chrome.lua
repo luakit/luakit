@@ -124,9 +124,8 @@ function readableSize (bytes, precision) {
 }
 
 function getId ($child) {
-    let $d = $child.parentNode
-    while ($d && !$d.classList.contains('download')) $d = $d.parentNode
-    return $d.id
+    do { $el = $el.parentNode } while ($el && !$el.classList.contains('download'))
+    return $el
 }
 
 function makeDownload (d) {

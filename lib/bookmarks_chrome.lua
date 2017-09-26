@@ -412,9 +412,8 @@ window.addEventListener('load', () => {
     }
 
     function findBookmarkParent ($el) {
-        let $b = $el.parentNode
-        while ($b && !$b.classList.contains('bookmark')) $b = $b.parentNode
-        return $b
+        do { $el = $el.parentNode } while ($el && !$el.classList.contains('bookmark'))
+        return $el
     }
 
     function showEdit (b) {
