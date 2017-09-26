@@ -23,7 +23,7 @@
 
 #include <lua.h>
 
-void utf8_class_setup(lua_State *);
+void utf8_lib_setup(lua_State *);
 
 #endif
 

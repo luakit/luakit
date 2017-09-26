@@ -14,6 +14,10 @@ T.test_utf8_len = function ()
     assert(utf8.len("")==0)
     assert(utf8.len("ä")==1)
     assert(utf8.len("äa")==2)
+    assert(utf8.len("äa",-1)==1)
+    assert(utf8.len("äa",-3)==2)
+    assert(utf8.len("äa",1,2)==1)
+    assert(utf8.len("äa",1,3)==2)
 end
 
 T.test_utf8_offset = function ()
@@ -21,6 +25,8 @@ T.test_utf8_offset = function ()
     assert(utf8.offset("äaäaä",2)==3)
     assert(utf8.offset("äaäaä",5)==7)
     assert(utf8.offset("äaäaä",6)==9)
+    assert(utf8.offset("äaäaä",2,3)==4) --!
+    assert(utf8.offset("äaäaä",2,-3)==7) --!
 end
 
 return T

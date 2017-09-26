@@ -19,27 +19,32 @@
  */
 
 #include "common/clib/utf8.h"
-#include "common/luaobject.h"
 #include "luah.h"
 
 #include <glib.h>
 
-typedef struct {
-    LUA_OBJECT_HEADER
-} lutf8_t;
-
 static lua_class_t utf8_class;
-LUA_OBJECT_FUNCS(utf8_class, lutf8_t, utf8)
+LUA_CLASS_FUNCS(utf8, utf8_class)
 
-#define UTF8_STOPPED -1
-
-#define luaH_checkutf8(L, idx) luaH_checkudata(L, idx, &(utf8_class))
-
-static int
-luaH_utf8_new(lua_State *L)
+lua_class_t *
+utf8_lib_get_utf8_class(void)
 {
-    luaH_class_new(L, &utf8_class);
-    return 1;
+    return &utf8_class;
+}
+
+/* Convert 1-based into 0-based byte offset,
+ * counted from back of string if negative */
+static ssize_t
+luaH_utf8_convert_offset(ssize_t offset, ssize_t length) {
+    if(offset > 0)
+        offset--;
+    if(offset < 0)
+        offset += length;
+    if(offset < 0)
+        return 0;
+    if(offset > length)
+        return length;
+    return offset;
 }
 
 /* UTF8 aware string length computing.
@@ -47,8 +52,31 @@ luaH_utf8_new(lua_State *L)
 static gint
 luaH_utf8_len(lua_State *L)
 {
-    const gchar *cmd = luaL_checkstring(L, 1);
-    lua_pushnumber(L, (ssize_t) g_utf8_strlen(NONULL(cmd), -1));
+    const int nargs = lua_gettop(L);
+    const gchar *str = luaL_checkstring(L, 1);
+    ssize_t blen = strlen(str);
+    ssize_t bbeg = 0;
+    ssize_t bend = blen;
+    gchar *valend;
+
+    /* parse optional begin/end parameters */
+    if(nargs > 1) {
+        bbeg = luaH_utf8_convert_offset(luaL_checkint(L, 2), blen);
+        if(nargs > 2) {
+            bend = luaH_utf8_convert_offset(luaL_checkint(L, 3), blen) + 1;
+            if(bend < bbeg)
+                bend = blen;
+        }
+    }
+
+    /* is the string valid UTF8? */
+    if(!g_utf8_validate(str + bbeg, bend - bbeg, (const gchar **) &valend)) {
+        lua_pushnil(L);
+        lua_pushnumber(L, (ssize_t) (valend - str) + 1);
+        return 2;
+    }
+
+    lua_pushnumber(L, (ssize_t) g_utf8_strlen(str + bbeg, bend - bbeg));
     return 1;
 }
 
@@ -58,59 +86,56 @@ luaH_utf8_len(lua_State *L)
 static gint
 luaH_utf8_offset(lua_State *L)
 {
-    const gchar *cmd = luaL_checkstring(L, 1);
-    gint widx = luaL_checkint(L, 2);
-    const gint len = g_utf8_strlen(NONULL(cmd), -1);
-    gint ret = 0;
+    const int nargs = lua_gettop(L);
+    const gchar *str = luaL_checkstring(L, 1);
+    const ssize_t blen = strlen(str);
+    ssize_t widx = luaL_checkint(L, 2);
+    if(widx > 0) widx--; /* adjust to 0-based */
+    ssize_t bbase = (widx>=0) ? 0 : blen;
+    ssize_t ret = 0;
+    ssize_t bbeg = 0;
+    ssize_t wseglen;
 
-    /* convert negative to positive index */
-    if(widx < 0 && -widx <= len)
-        widx = len + widx + 1;
+    /* parse optional parameter (base index) */
+    if(nargs > 2)
+        bbase = luaH_utf8_convert_offset(luaL_checkint(L, 3), blen);
 
-    /* convert positive UTF8 offset to byte offset */
-    if(widx > 0 && widx <= len + 1) {
-        gchar *pos = g_utf8_offset_to_pointer(NONULL(cmd), widx - 1);
-        if (pos != NULL)
-            ret = (gint) (pos - cmd) + 1;
+    /* convert negative index parameter to positive */
+    if(widx < 0) {
+        wseglen = g_utf8_strlen(str, bbase);
+        widx += wseglen;
+    } else {
+        wseglen = g_utf8_strlen(str + bbase, blen - bbase);
+        bbeg = bbase;
     }
 
-    /* imitate Lua 5.3 utf8.offset in corner case */
-    if(widx == 0)
-        ret = 1;
+    /* convert positive UTF8 offset to byte offset */
+    if(widx >= 0 && widx <= wseglen) {
+        gchar *pos = g_utf8_offset_to_pointer(str + bbeg, widx);
+        if (pos != NULL)
+            ret = (ssize_t) (pos - str) + 1;
+    }
 
     /* if conversion was successful, output result (else output nil) */
     if(ret > 0)
-        lua_pushnumber(L, (ssize_t) ret);
+        lua_pushnumber(L, ret);
     else
         lua_pushnil(L);
     return 1;
 }
 
 void
-utf8_class_setup(lua_State *L)
+utf8_lib_setup(lua_State *L)
 {
-    static const struct luaL_Reg utf8_methods[] =
+    static const struct luaL_Reg utf8_lib[] =
     {
         LUA_CLASS_METHODS(utf8)
-        { "__call", luaH_utf8_new },
         { "len", luaH_utf8_len },
         { "offset", luaH_utf8_offset },
-        { NULL, NULL }
+        { NULL,              NULL }
     };
 
-    static const struct luaL_Reg utf8_meta[] =
-    {
-        LUA_OBJECT_META(utf8)
-        LUA_CLASS_META
-        { NULL, NULL },
-    };
-
-    luaH_class_setup(L, &utf8_class, "utf8",
-            (lua_class_allocator_t) utf8_new,
-            NULL, NULL,
-            utf8_methods, utf8_meta);
+    luaH_openlib(L, "utf8", utf8_lib, utf8_lib);
 }
-
-#undef luaH_checkutf8
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

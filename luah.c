@@ -136,7 +136,7 @@ luaH_init(gchar ** uris)
     regex_class_setup(L);
 
     /* Export utf8 */
-    utf8_class_setup(L);
+    utf8_lib_setup(L);
 
     /* Export request */
     request_class_setup(L);
