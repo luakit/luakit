@@ -232,10 +232,6 @@ window.addEventListener('load', () => {
         open_editor(filename, line)
     })
 
-    listen(document.querySelectorAll('.desc a'), 'click', event => {
-        event.stopPropagation()
-    })
-
     listen(document.getElementsByClassName('bind'), 'click', event => {
         let src = event.currentTarget.getElementsByClassName('func-source')[0]
         if (!src) return
