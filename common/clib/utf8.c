@@ -23,27 +23,17 @@
 
 #include <glib.h>
 
-static lua_class_t utf8_class;
-LUA_CLASS_FUNCS(utf8, utf8_class)
-
-lua_class_t *
-utf8_lib_get_utf8_class(void)
-{
-    return &utf8_class;
-}
-
 /* Convert 1-based into 0-based byte offset,
- * counted from back of string if negative */
+ * counted from back of string if negative
+ * return -1 if offset is out of range */
 static ssize_t
 luaH_utf8_convert_offset(ssize_t offset, ssize_t length) {
     if(offset > 0)
         offset--;
     if(offset < 0)
         offset += length;
-    if(offset < 0)
-        return 0;
-    if(offset > length)
-        return length;
+    if(offset < 0 || offset > length)
+        return -1;
     return offset;
 }
 
@@ -52,31 +42,31 @@ luaH_utf8_convert_offset(ssize_t offset, ssize_t length) {
 static gint
 luaH_utf8_len(lua_State *L)
 {
-    const int nargs = lua_gettop(L);
-    const gchar *str = luaL_checkstring(L, 1);
-    ssize_t blen = strlen(str);
-    ssize_t bbeg = 0;
-    ssize_t bend = blen;
+    ssize_t blen;
+    const gchar *str = luaL_checklstring(L, 1, &blen);
     gchar *valend;
+    ssize_t bbeg, bend;
 
-    /* parse optional begin/end parameters */
-    if(nargs > 1) {
-        bbeg = luaH_utf8_convert_offset(luaL_checkint(L, 2), blen);
-        if(nargs > 2) {
-            bend = luaH_utf8_convert_offset(luaL_checkint(L, 3), blen) + 1;
-            if(bend < bbeg)
-                bend = blen;
-        }
-    }
+    /* parse optional begin/end parameters
+     * imitate Lua 5.3: raise an error if out of bounds
+     */
+    bbeg = luaL_optinteger(L, 2, 1);
+    bbeg = luaH_utf8_convert_offset(bbeg, blen);
+    luaL_argcheck(L, bbeg != -1, 2, "initial position out of string");
+    bend = luaL_optinteger(L, 3, blen) + 1;
+    bend = luaH_utf8_convert_offset(bend, blen);
+    luaL_argcheck(L, bend != -1, 3, "final position out of string");
+    if(bend < bbeg)
+        bend = blen;
 
     /* is the string valid UTF8? */
     if(!g_utf8_validate(str + bbeg, bend - bbeg, (const gchar **) &valend)) {
         lua_pushnil(L);
-        lua_pushnumber(L, (ssize_t) (valend - str) + 1);
+        lua_pushinteger(L, (ssize_t) (valend - str) + 1);
         return 2;
     }
 
-    lua_pushnumber(L, (ssize_t) g_utf8_strlen(str + bbeg, bend - bbeg));
+    lua_pushinteger(L, (ssize_t) g_utf8_strlen(str + bbeg, bend - bbeg));
     return 1;
 }
 
@@ -86,19 +76,23 @@ luaH_utf8_len(lua_State *L)
 static gint
 luaH_utf8_offset(lua_State *L)
 {
-    const int nargs = lua_gettop(L);
-    const gchar *str = luaL_checkstring(L, 1);
-    const ssize_t blen = strlen(str);
-    ssize_t widx = luaL_checkint(L, 2);
+    ssize_t blen;
+    const gchar *str = luaL_checklstring(L, 1, &blen);
+    ssize_t widx = luaL_checkinteger(L, 2);
     if(widx > 0) widx--; /* adjust to 0-based */
-    ssize_t bbase = (widx>=0) ? 0 : blen;
+    ssize_t bbase;
     ssize_t ret = 0;
     ssize_t bbeg = 0;
     ssize_t wseglen;
 
-    /* parse optional parameter (base index) */
-    if(nargs > 2)
-        bbase = luaH_utf8_convert_offset(luaL_checkint(L, 3), blen);
+    /* parse optional parameter (base index)
+     * imitate Lua 5.3: raise an error if out of bounds
+     * or if initial position points inside a UTF8 encoding */
+    bbase = luaL_optinteger(L, 3, (widx>=0) ? 1 : blen + 1);
+    bbase = luaH_utf8_convert_offset(bbase, blen);
+    luaL_argcheck(L, bbase != -1, 3, "position out of range");
+    if(g_utf8_get_char_validated(str + bbase, -1) == (gunichar) -1)
+        luaL_error(L, "initial position is a continuation byte");
 
     /* convert negative index parameter to positive */
     if(widx < 0) {
@@ -118,7 +112,7 @@ luaH_utf8_offset(lua_State *L)
 
     /* if conversion was successful, output result (else output nil) */
     if(ret > 0)
-        lua_pushnumber(L, ret);
+        lua_pushinteger(L, ret);
     else
         lua_pushnil(L);
     return 1;
@@ -129,7 +123,6 @@ utf8_lib_setup(lua_State *L)
 {
     static const struct luaL_Reg utf8_lib[] =
     {
-        LUA_CLASS_METHODS(utf8)
         { "len", luaH_utf8_len },
         { "offset", luaH_utf8_offset },
         { NULL,              NULL }
