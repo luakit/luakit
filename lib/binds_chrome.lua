@@ -114,10 +114,6 @@ local html_template = [==[
             text-decoration: underline;
         }
 
-        .bind .func-source {
-            display: none;
-        }
-
         .bind .key {
             font-family: monospace, sans-serif;
             float: left;
@@ -177,6 +173,10 @@ local html_template = [==[
         #templates {
             display: none;
         }
+
+        .hidden {
+            display: none;
+        }
     </style>
 </head>
 <body>
@@ -186,9 +186,6 @@ local html_template = [==[
     <div class="content-margin">
         {sections}
     </div>
-    <script>
-        {jquery}
-    </script>
     <script>
         {javascript}
     </script>
@@ -209,13 +206,12 @@ local mode_section_template = [==[
 local mode_bind_template = [==[
     <li class="bind bind_type_{type}">
         <div class="link-box">
-            <a href="#" class="filename">{filename}</a>
-            <a href="#" class="linedefined" filename="{filename}" line="{linedefined}">{linedefined}</a>
+            <a href="#" class="linedefined" data-filename="{filename}" data-line="{linedefined}">{filename}:{linedefined}</a>
         </div>
         <hr class="clear" />
         <div class="key">{key}</div>
         <div class="box desc">{desc}</div>
-        <div class="box func-source">
+        <div class="box func-source hidden">
             <h4>Function source:</h4>
             <pre><code>{func}</code></pre>
         </div>
@@ -223,28 +219,18 @@ local mode_bind_template = [==[
 ]==]
 
 local main_js = [=[
-$(document).ready(function () {
-    var $body = $(document.body);
-
-    $body.on("click", ".bind .linedefined", function (event) {
-        event.preventDefault();
-        var $e = $(this);
-        open_editor($e.attr("filename"), $e.attr("line"));
-        return false;
-    })
-
-    $body.on("click", ".bind .desc a", function (event) {
-        event.stopPropagation(); // prevent source toggling
-    })
-
-    $body.on("click", ".bind", function (e) {
-        var $src = $(this).find(".func-source");
-        if ($src.is(":visible"))
-            $src.slideUp();
-        else
-            $src.slideDown();
-    })
-});
+document.addEventListener('click', event => {
+    if (event.target.matches('.linedefined')) {
+        event.preventDefault()
+        let { filename, line } = event.target.dataset
+        open_editor(filename, line)
+    } else if (event.target.matches('.bind, .bind *')) {
+        let $el = event.target
+        while ($el && !$el.classList.contains('bind')) $el = $el.parentNode
+        let src = $el.getElementsByClassName('func-source')[0]
+        if (src) src.classList.toggle('hidden')
+    }
+})
 ]=]
 
 local source_lines = {}
@@ -327,7 +313,6 @@ chrome.add("binds", function ()
         sections = sections_html,
         style  = chrome.stylesheet,
         javascript = main_js,
-        jquery = lousy.load("lib/jquery.min.js")
     }
     local html = string.gsub(html_template, "{(%w+)}", html_subs)
     return html

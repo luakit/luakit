@@ -195,7 +195,7 @@ _M.stylesheet = [===[
     padding: 0.5em;
 }
 
-#edit-dialog input[type="button"] {
+#edit-dialog input[type="button"], #edit-dialog input[type="submit"] {
     padding: 0.5em 1em;
     margin-right: 0.5em;
     color: #444;
@@ -254,240 +254,243 @@ local html_template = [==[
 
     <div id="edit-view" stlye="position: absolute;">
         <div id="blackout"></div>
-        <div id="edit-dialog">
+        <form id="edit-dialog" method="get" action="#">
+            <input name="id"      type="hidden" />
+            <input name="created" type="hidden" />
             <table>
-                <tr><td>Title:</td> <td><input class="title" type="text" /></td> </tr>
-                <tr><td>URI:</td>   <td><input class="uri"   type="text" /></td> </tr>
-                <tr><td>Tags:</td>  <td><input class="tags"  type="text" /></td> </tr>
-                <tr><td>Info:</td>  <td><textarea class="desc"></textarea></td>  </tr>
+                <tr><td>Title:</td> <td><input name="title" type="text" /></td> </tr>
+                <tr><td>URI:</td>   <td><input name="uri"   type="text" /></td> </tr>
+                <tr><td>Tags:</td>  <td><input name="tags"  type="text" /></td> </tr>
+                <tr><td>Info:</td>  <td><textarea name="desc"></textarea></td>  </tr>
                 <tr>
                     <td></td>
                     <td>
-                        <input type="button" class="submit-button" value="Save" />
+                        <input type="submit" class="submit-button" value="Save" />
                         <input type="button" class="cancel-button" value="Cancel" />
                     </td>
                 </tr>
             </table>
-        </div>
+        </form>
     </div>
 
-    <div id="templates" class="hidden">
-        <div id="bookmark-skelly">
-            <div class="bookmark">
-                <div class="title"><a></a></div>
-                <div class="uri"></div>
-                <div class="desc"></div>
-                <div class="bottom">
-                    <span class="date"></span>
-                    <span class="tags"></span>
-                    <span class="controls">
-                        <a class="edit-button">edit</a>
-                        <a class="delete-button">delete</a>
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>{%javascript}</script>
 </body>
 ]==]
 
 local main_js = [=[
-$(document).ready(function () { 'use strict';
+function createElementsFromHTML (html) {
+    let $node = document.createElement('div')
+    $node.innerHTML = html
+    return Array.from($node.childNodes)
+}
 
-    var limit = 100, results_len = 0;
+function createElement (tag, attributes, children, events) {
+    let $node = document.createElement(tag)
 
-    var bookmark_html = $("#bookmark-skelly").html(),
-        $results = $("#results"), $search = $("#search"),
-        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog"),
-        $next = $("#nav-next").eq(0), $prev = $("#nav-prev").eq(0),
-        $page = $("#page").eq(0);
+    for (let a in attributes) {
+        $node.setAttribute(a, attributes[a])
+    }
 
-    if ($page.val() == "")
-        $page.val(1);
+    for (let $child of children) {
+        $node.appendChild($child)
+    }
 
-    function make_bookmark(b) {
-        var $b = $(bookmark_html);
-
-        $b.attr("bookmark_id", b.id);
-        $b.find(".title a").attr("href", b.uri).text(b.title || b.uri);
-        $b.find(".date").text(b.date);
-
-        if (b.title)
-            $b.find(".uri").text(b.uri).show();
-
-        if (b.markdown_desc)
-            $b.find(".desc").html(b.markdown_desc).show();
-
-        if (b.tags) {
-            var $tags = $b.find(".tags"), tags = b.tags.split(" "),
-                len = tags.length, i = 0;
-            for (; i < len;)
-                $tags.append($("<a></a>").text(tags[i++]));
+    if (events) {
+        for (let eventType in events) {
+            let action = events[eventType]
+            $node.addEventListener(eventType, action)
         }
-
-        return $b.prop("outerHTML");
     }
 
-    function show_edit(b) {
-        b = b || {};
-        var $e = $edit_dialog;
-        $e.attr("bookmark_id", b.id);
-        $e.attr("created", b.created);
-        $e.find(".title").val(b.title);
-        $e.find(".uri").val(b.uri);
-        $e.find(".tags").val(b.tags);
-        $e.find(".desc").val(b.desc);
-        $edit_view.fadeIn("fast", function () {
-            $edit_dialog.find(".title").focus();
-        });
+    return $node
+}
+
+function empty ($el) {
+    while ($el.firstChild) $el.removeChild($el.firstChild)
+}
+
+window.addEventListener('load', () => {
+    const limit = 100
+    let resultsLen = 0
+    const $editDialog = document.getElementById('edit-dialog')
+    const $editView = document.getElementById('edit-view')
+    const $next = document.getElementById('nav-next')
+    const $page = document.getElementById('page')
+    const $prev = document.getElementById('nav-prev')
+    const $results = document.getElementById('results')
+    const $search = document.getElementById('search')
+
+    $page.value = $page.value || 1
+
+    function makeBookmark (b) {
+        b.tags = b.tags || ''
+        let tagArray = b.tags.split(' ').filter(tag => tag)
+
+        return createElement('div', { 'data-id': b.id, class: 'bookmark' }, [
+
+            createElement('div', { class: 'title' }, [
+                createElement('a', { href: b.uri }, [
+                    document.createTextNode(b.title || b.uri)
+                ])
+            ]),
+
+            createElement('div', {
+                class: 'uri',
+                style: b.title ? 'display: block;' : ''
+            }, [ document.createTextNode(b.uri) ]),
+
+            createElement('div', {
+                class: 'desc',
+                style: b.markdown_desc ? 'display: block;' : ''
+            }, createElementsFromHTML(b.markdown_desc)),
+
+            createElement('div', { class: 'bottom' }, [
+
+                createElement('span', { class: 'date' }, [
+                    document.createTextNode(b.date)
+                ]),
+
+                createElement('span', { class: 'tags' }, tagArray.map(tag => {
+                    let $tag = document.createElement('a')
+                    $tag.textContent = tag
+                    $tag.addEventListener('click', event => {
+                        $search.value = event.target.textContent
+                        search()
+                    })
+                    return $tag
+                })),
+
+                createElement('span', { class: 'controls' }, [
+
+                    createElement('a', { class: 'edit-button', href: '#' }, [
+                        document.createTextNode('edit')
+                    ], {
+                        click: event => {
+                            let $b = findBookmarkParent(event.target)
+                            bookmarks_get(parseInt($b.dataset.id, 10))
+                                .then(showEdit)
+                        }
+                    }),
+
+                    createElement('a', { class: 'delete-button', href: '#' }, [
+                        document.createTextNode('delete')
+                    ], {
+                        click: event => {
+                            let $b = findBookmarkParent(event.target)
+                            bookmarks_remove(parseInt($b.dataset.id))
+                            $b.parentNode.removeChild($b)
+                        }
+                    })
+
+                ])
+
+            ])
+        ])
     }
 
-    function find_bookmark_parent(that) {
-        return $(that).parents(".bookmark").eq(0);
-    }
+    function search () {
+        bookmarks_search({
+            query: $search.value,
+            limit: limit,
+            page: parseInt($page.value, 10)
+        }).then(results => {
+            resultsLen = results.length || 0
+            empty($results)
 
-    function update_nav_buttons() {
-        if (results_len === limit)
-            $next.show();
-        else
-            $next.hide();
-        if (parseInt($page.val(), 10) > 1)
-            $prev.show();
-        else
-            $prev.hide();
-    }
-
-    function search() {
-            var query = $search.val();
-            bookmarks_search({
-                query: query,
-                limit: limit,
-                page: parseInt($page.val(), 10)
-            }).then(function (results) {
-
-            // Used to trigger hiding of next nav button when results_len < limit
-            results_len = results.length || 0;
-
-            if (results.length === "undefined") {
-                $results.empty();
-                update_nav_buttons();
-                return;
+            if (results.length == null) {
+                updateNavButtons()
+                return
             }
 
-            /* display results */
-            var html = "";
-            for (var i = 0; i < results.length; i++)
-                html += make_bookmark(results[i]);
+            results.map(makeBookmark).forEach($b => $results.appendChild($b))
+        })
+    }
 
-            update_nav_buttons();
+    function updateNavButtons () {
+        $next.style.display = resultsLen === limit ? 'inline' : 'none'
+        $prev.style.display = parseInt($page.value, 10) > 1 ? 'inline' : 'none'
+    }
 
-            $results.get(0).innerHTML = html;
-        });
-    };
+    function findBookmarkParent ($el) {
+        do { $el = $el.parentNode } while ($el && !$el.classList.contains('bookmark'))
+        return $el
+    }
 
-    /* input field callback */
-    $search.keydown(function(ev) {
-        if (ev.which == 13) { /* Return */
-            $page.val(1);
-            search();
-            $search.blur();
-            reset_mode();
+    function showEdit (b) {
+        b = b || {}
+        $editDialog.id.value = b.id || ''
+        $editDialog.created.value = b.created || ''
+        $editDialog.title.value = b.title || ''
+        $editDialog.uri.value = b.uri || ''
+        $editDialog.tags.value = b.tags || ''
+        $editDialog.desc.value = b.desc || ''
+        $editView.style.display = 'block'
+        $editDialog.title.focus()
+    }
+
+    $search.addEventListener('keydown', event => {
+        if (event.which === 13) { // 13 is the code for the 'Return' key
+            $page.value = 1
+            search()
+            $search.blur()
+            reset_mode()
         }
-    });
+    })
 
-    // 'delete' callback
-    $results.on("click", ".bookmark .controls .delete-button", function (e) {
-        var $b = find_bookmark_parent(this);
-        // delete bookmark from database
-        bookmarks_remove(parseInt($b.attr("bookmark_id")));
-        // remove/hide bookmark from list
-        $b.slideUp(function() { $b.remove(); });
-    });
+    $editDialog.addEventListener('submit', event => {
+        event.preventDefault()
+        let id = $editDialog.id.value
+        let created = $editDialog.created.value
+            ? parseInt($editDialog.created.value)
+            : undefined
+        let title = $editDialog.title.value
+        let uri = $editDialog.uri.value
+        let tags = $editDialog.tags.value
+        let desc = $editDialog.desc.value
 
-    $results.on("click", ".bookmark .tags a", function () {
-        $search.val($(this).text());
-        search();
-    });
+        bookmarks_add(uri, { title, tags, desc, created })
+        if (id) bookmarks_remove(parseInt(id))
+        search()
+        $editView.style.display = 'none'
+    })
 
-    $results.on("click", ".bookmark .controls .edit-button", function (e) {
-        var $b = find_bookmark_parent(this);
-        bookmarks_get(parseInt($b.attr("bookmark_id"))).then(function (b) {
-            show_edit(b);
-        });
-    });
+    document.getElementsByClassName('cancel-button')[0]
+        .addEventListener('click', () => {
+            $editView.style.display = 'none'
+        })
 
-    function edit_submit() {
-        var $e = $edit_dialog, id = $e.attr("bookmark_id"),
-            created = $e.attr("created");
+    document.getElementById('new-button').addEventListener('click', showEdit)
 
-        try {
-            bookmarks_add($e.find(".uri").val(), {
-                title: $e.find(".title").val(),
-                tags: $e.find(".tags").val(),
-                desc: $e.find(".desc").val(),
-                created: created ? parseInt(created) : undefined,
-            });
-        } catch (err) {
-            alert(err);
-            return;
-        }
+    document.getElementById('clear-button')
+        .addEventListener('click', () => {
+            $search.value = ''
+            $page.value = 1
+            search()
+        })
 
-        // Delete existing bookmark (only when editing bookmark)
-        if (id)
-            bookmarks_remove(parseInt(id));
+    document.getElementById('search-button')
+        .addEventListener('click', () => {
+            $page.value = 1
+            search()
+        })
 
-        search();
+    $next.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = page + 1
+        search()
+    })
 
-        $edit_view.fadeOut("fast");
-    };
+    $prev.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = Math.max(page - 1, 1)
+        search()
+    })
 
-    $edit_dialog.on("click", ".submit-button", function (e) {
-        edit_submit();
-    });
-
-    $edit_dialog.find('input[type="text"]').keydown(function(ev) {
-        if (ev.which == 13) /* Return */
-            edit_submit();
-    });
-
-    $edit_dialog.on("click", ".cancel-button", function (e) {
-        $edit_view.fadeOut("fast");
-    });
-
-    $("#new-button").click(function () {
-        show_edit();
-    });
-
-    $("#clear-button").click(function () {
-        $search.val("");
-        $page.val(1);
-        search();
-    });
-
-    $("#search-button").click(function () {
-        $page.val(1);
-        search();
-    });
-
-    $next.click(function () {
-        var page = parseInt($page.val(), 10);
-        $page.val(page + 1);
-        search();
-    });
-
-    $prev.click(function () {
-        var page = parseInt($page.val(), 10);
-        $page.val(Math.max(page - 1,1));
-        search();
-    });
-
-    search();
-
-    new_bookmark_values().then(function (values) {
-        if (values)
-            show_edit(values);
-    });
-});
+    search()
+    new_bookmark_values().then(values => {
+        if (values) showEdit(values)
+    })
+})
 ]=]
 
 local new_bookmark_values
@@ -561,18 +564,12 @@ chrome.add("bookmarks", function ()
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
-    local html = string.gsub(html_template, "{%%(%w+)}", { stylesheet = style })
+    local html = string.gsub(html_template, "{%%(%w+)}", {
+        stylesheet = style,
+        javascript = main_js,
+    })
     return html
-end,
-function (view)
-    -- Load jQuery JavaScript library
-    local jquery = lousy.load("lib/jquery.min.js")
-    view:eval_js(jquery, { no_return = true })
-
-    -- Load main luakit://bookmarks/ JavaScript
-    view:eval_js(main_js, { no_return = true })
-end,
-export_funcs)
+end, nil, export_funcs)
 
 --- URI of the bookmarks chrome page.
 -- @type string
