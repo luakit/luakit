@@ -176,7 +176,7 @@ window.addEventListener('load', () => {
             ]),
 
             createElement('span', { class: 'domain' }, [
-                createElement('a', {}, [
+                createElement('a', { href: '#' }, [
                     document.createTextNode(domain[1] || '')
                 ], {
                     click: event => {

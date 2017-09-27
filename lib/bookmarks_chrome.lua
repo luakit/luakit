@@ -362,7 +362,7 @@ window.addEventListener('load', () => {
 
                 createElement('span', { class: 'controls' }, [
 
-                    createElement('a', { class: 'edit-button' }, [
+                    createElement('a', { class: 'edit-button', href: '#' }, [
                         document.createTextNode('edit')
                     ], {
                         click: event => {
@@ -372,7 +372,7 @@ window.addEventListener('load', () => {
                         }
                     }),
 
-                    createElement('a', { class: 'delete-button' }, [
+                    createElement('a', { class: 'delete-button', href: '#' }, [
                         document.createTextNode('delete')
                     ], {
                         click: event => {
