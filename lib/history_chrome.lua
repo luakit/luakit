@@ -161,7 +161,8 @@ window.addEventListener('load', () => {
     $page.value = $page.value || 1
 
     function makeHistoryItem (h) {
-        let domain = /:\/\/([^/]+)\//.exec(h.uri)
+        let domain = /https?:\/\/([^/]+)\//.exec(h.uri)
+        domain = domain ? domain[1] : ''
 
         return createElement('div', { class: 'item', 'data-id': h.id }, [
 
@@ -177,7 +178,7 @@ window.addEventListener('load', () => {
 
             createElement('span', { class: 'domain' }, [
                 createElement('a', { href: '#' }, [
-                    document.createTextNode(domain[1] || '')
+                    document.createTextNode(domain)
                 ], {
                     click: event => {
                         $search.value = event.target.textContent
