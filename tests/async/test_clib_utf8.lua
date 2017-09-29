@@ -23,9 +23,9 @@ T.test_utf8_len = function ()
     assert.equal(0, utf8.len("", 1, 0))
     assert.equal(0, utf8.len("äa", 4))
     assert.equal(0, utf8.len("äa", 3, 2))
-    assert.has.errors(utf8.len("", 1, 1))
-    assert.has.errors(utf8.len("äa", 0))
-    assert.has.errors(utf8.len("äa", 5))
+    assert.has.errors(function() utf8.len("", 1, 1) end)
+    assert.has.errors(function() utf8.len("äa", 0) end)
+    assert.has.errors(function() utf8.len("äa", 5) end)
 end
 
 T.test_utf8_offset = function ()
@@ -36,8 +36,8 @@ T.test_utf8_offset = function ()
     assert.equal(4, utf8.offset("äaäaä", 2, 3))
     assert.equal(7, utf8.offset("äaäaä", 2, -3))
     -- corner cases and errors
-    assert.has.errors(utf8.offset("äaäaä", 1, 2))
-    assert.has.errors(utf8.offset("äaäaä", 1, 5))
+    assert.has.errors(function() utf8.offset("äaäaä", 1, 2) end)
+    assert.has.errors(function() utf8.offset("äaäaä", 1, 5) end)
 end
 
 return T

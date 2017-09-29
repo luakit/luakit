@@ -30,7 +30,7 @@ static size_t
 abspos(ssize_t offset, size_t length) {
     if (offset == 0)
         return (size_t) -1;
-    offset = (offset > 0) ? offset - 1 : offset + length;
+    offset = (offset > 0) ? offset - 1 : offset + (ssize_t) length;
     if (offset < 0 || (size_t) offset > length)
         return (size_t) -1;
     return (size_t) offset;
@@ -51,8 +51,8 @@ luaH_utf8_len(lua_State *L)
     /* setting end position requires extra work to imitate Lua 5.3 */
     size_t bend = bbeg;
     ssize_t sbend = luaL_optinteger(L, 3, blen); /* may be negative */
-    sbend = (sbend > 0) ? sbend - 1 : sbend + blen;
-    luaL_argcheck(L, sbend <= (ssize_t) blen, 3, "final position out of string");
+    sbend = (sbend >= 0) ? sbend - 1 : sbend + (ssize_t) blen;
+    luaL_argcheck(L, sbend < (ssize_t) blen, 3, "final position out of string");
     if (sbend >= (ssize_t) bbeg && (size_t) sbend < blen)
         bend = g_utf8_find_next_char(str + (size_t) sbend, NULL) - str;
 
