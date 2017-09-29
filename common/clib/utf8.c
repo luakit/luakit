@@ -25,16 +25,15 @@
 
 /* Convert 1-based into 0-based byte offset,
  * counted from back of string if negative
- * return -1 if offset is out of range */
-static ssize_t
-luaH_utf8_convert_offset(ssize_t offset, ssize_t length) {
-    if(offset > 0)
-        offset--;
-    if(offset < 0)
-        offset += length;
-    if(offset < 0 || offset > length)
-        return -1;
-    return offset;
+ * return (size_t) -1 if offset is out of range */
+static size_t
+abspos(ssize_t offset, size_t length) {
+    if (offset == 0)
+        return (size_t) -1;
+    offset = (offset > 0) ? offset - 1 : offset + length;
+    if (offset < 0 || (size_t) offset > length)
+        return (size_t) -1;
+    return (size_t) offset;
 }
 
 /* UTF8 aware string length computing.
@@ -42,25 +41,24 @@ luaH_utf8_convert_offset(ssize_t offset, ssize_t length) {
 static gint
 luaH_utf8_len(lua_State *L)
 {
-    ssize_t blen;
+    size_t blen;
     const gchar *str = luaL_checklstring(L, 1, &blen);
-    gchar *valend;
-    ssize_t bbeg, bend;
 
     /* parse optional begin/end parameters
-     * imitate Lua 5.3: raise an error if out of bounds
-     */
-    bbeg = luaL_optinteger(L, 2, 1);
-    bbeg = luaH_utf8_convert_offset(bbeg, blen);
-    luaL_argcheck(L, bbeg != -1, 2, "initial position out of string");
-    bend = luaL_optinteger(L, 3, blen) + 1;
-    bend = luaH_utf8_convert_offset(bend, blen);
-    luaL_argcheck(L, bend != -1, 3, "final position out of string");
-    if(bend < bbeg)
-        bend = blen;
+     * raise an error if out of bounds */
+    size_t bbeg = abspos(luaL_optinteger(L, 2, 1), blen);
+    luaL_argcheck(L, bbeg != (size_t) -1, 2, "initial position out of string");
+    /* setting end position requires extra work to imitate Lua 5.3 */
+    size_t bend = bbeg;
+    ssize_t sbend = luaL_optinteger(L, 3, blen); /* may be negative */
+    sbend = (sbend > 0) ? sbend - 1 : sbend + blen;
+    luaL_argcheck(L, sbend <= (ssize_t) blen, 3, "final position out of string");
+    if (sbend >= (ssize_t) bbeg && (size_t) sbend < blen)
+        bend = g_utf8_find_next_char(str + (size_t) sbend, NULL) - str;
 
     /* is the string valid UTF8? */
-    if(!g_utf8_validate(str + bbeg, bend - bbeg, (const gchar **) &valend)) {
+    gchar *valend;
+    if (!g_utf8_validate(str + bbeg, bend - bbeg, (const gchar **) &valend)) {
         lua_pushnil(L);
         lua_pushinteger(L, (ssize_t) (valend - str) + 1);
         return 2;
@@ -76,26 +74,25 @@ luaH_utf8_len(lua_State *L)
 static gint
 luaH_utf8_offset(lua_State *L)
 {
-    ssize_t blen;
+    size_t blen;
     const gchar *str = luaL_checklstring(L, 1, &blen);
     ssize_t widx = luaL_checkinteger(L, 2);
-    if(widx > 0) widx--; /* adjust to 0-based */
-    ssize_t bbase;
-    ssize_t ret = 0;
-    ssize_t bbeg = 0;
-    ssize_t wseglen;
+    if (widx > 0) widx--; /* adjust to 0-based */
 
     /* parse optional parameter (base index)
-     * imitate Lua 5.3: raise an error if out of bounds
+     * raise an error if out of bounds
      * or if initial position points inside a UTF8 encoding */
+    size_t bbase;
     bbase = luaL_optinteger(L, 3, (widx>=0) ? 1 : blen + 1);
-    bbase = luaH_utf8_convert_offset(bbase, blen);
-    luaL_argcheck(L, bbase != -1, 3, "position out of range");
-    if(g_utf8_get_char_validated(str + bbase, -1) == (gunichar) -1)
+    bbase = abspos(bbase, blen);
+    luaL_argcheck(L, bbase != (size_t) -1, 3, "position out of range");
+    if (g_utf8_get_char_validated(str + bbase, -1) == (gunichar) -1)
         luaL_error(L, "initial position is a continuation byte");
 
     /* convert negative index parameter to positive */
-    if(widx < 0) {
+    size_t wseglen;
+    size_t bbeg = 0;
+    if (widx < 0) {
         wseglen = g_utf8_strlen(str, bbase);
         widx += wseglen;
     } else {
@@ -104,14 +101,15 @@ luaH_utf8_offset(lua_State *L)
     }
 
     /* convert positive UTF8 offset to byte offset */
-    if(widx >= 0 && widx <= wseglen) {
+    ssize_t ret = 0;
+    if (widx >= 0 && (size_t) widx <= wseglen) {
         gchar *pos = g_utf8_offset_to_pointer(str + bbeg, widx);
         if (pos != NULL)
             ret = (ssize_t) (pos - str) + 1;
     }
 
     /* if conversion was successful, output result (else output nil) */
-    if(ret > 0)
+    if (ret > 0)
         lua_pushinteger(L, ret);
     else
         lua_pushnil(L);
@@ -125,7 +123,7 @@ utf8_lib_setup(lua_State *L)
     {
         { "len", luaH_utf8_len },
         { "offset", luaH_utf8_offset },
-        { NULL,              NULL }
+        { NULL, NULL }
     };
 
     luaH_openlib(L, "utf8", utf8_lib, utf8_lib);
