@@ -66,7 +66,7 @@ modes.add_binds("all", {
                 -- Open hovered uri in new tab
                 local uri = w.view.hovered_uri
                 if uri then
-                    w:new_tab(uri, { switch = false })
+                    w:new_tab(uri, { switch = false, private = w.view.private })
                 else -- Open selection in current tab
                     uri = luakit.selection.primary
                     -- Ignore multi-line selection contents
