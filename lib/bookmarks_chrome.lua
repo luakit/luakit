@@ -161,12 +161,12 @@ _M.stylesheet = [===[
     left: 50%;
     margin-left: -20em;
     margin-bottom: 6em;
-    padding: 2em;
-    width: 36em;
+    padding: 1em;
+    width: 36.6em;
 
     background-color: #eee;
-    border-radius: 0.5em;
-    box-shadow: 0 0.5em 1em #000;
+    border-radius: 0.3em;
+    box-shadow: 0 0.5em 2em rgba(0, 0, 0, 0.3);
 }
 
 #edit-dialog td:first-child {
@@ -195,7 +195,7 @@ _M.stylesheet = [===[
     padding: 0.5em;
 }
 
-#edit-dialog input[type="button"] {
+#edit-dialog input[type="button"], #edit-dialog input[type="submit"] {
     padding: 0.5em 1em;
     margin-right: 0.5em;
     color: #444;
@@ -254,240 +254,195 @@ local html_template = [==[
 
     <div id="edit-view" stlye="position: absolute;">
         <div id="blackout"></div>
-        <div id="edit-dialog">
+        <form id="edit-dialog" method="get" action="#">
+            <input name="id"      type="hidden" />
+            <input name="created" type="hidden" />
             <table>
-                <tr><td>Title:</td> <td><input class="title" type="text" /></td> </tr>
-                <tr><td>URI:</td>   <td><input class="uri"   type="text" /></td> </tr>
-                <tr><td>Tags:</td>  <td><input class="tags"  type="text" /></td> </tr>
-                <tr><td>Info:</td>  <td><textarea class="desc"></textarea></td>  </tr>
+                <tr><td>Title:</td> <td><input name="title" type="text" /></td> </tr>
+                <tr><td>URI:</td>   <td><input name="uri"   type="text" /></td> </tr>
+                <tr><td>Tags:</td>  <td><input name="tags"  type="text" /></td> </tr>
+                <tr><td>Info:</td>  <td><textarea name="desc"></textarea></td>  </tr>
                 <tr>
                     <td></td>
                     <td>
-                        <input type="button" class="submit-button" value="Save" />
+                        <input type="submit" class="submit-button" value="Save" />
                         <input type="button" class="cancel-button" value="Cancel" />
                     </td>
                 </tr>
             </table>
-        </div>
+        </form>
     </div>
 
-    <div id="templates" class="hidden">
-        <div id="bookmark-skelly">
-            <div class="bookmark">
-                <div class="title"><a></a></div>
-                <div class="uri"></div>
-                <div class="desc"></div>
-                <div class="bottom">
-                    <span class="date"></span>
-                    <span class="tags"></span>
-                    <span class="controls">
-                        <a class="edit-button">edit</a>
-                        <a class="delete-button">delete</a>
-                    </span>
-                </div>
-            </div>
-        </div>
-    </div>
+    <script>{%javascript}</script>
 </body>
 ]==]
 
 local main_js = [=[
-$(document).ready(function () { 'use strict';
+function empty ($el) {
+    while ($el.firstChild) $el.removeChild($el.firstChild)
+}
 
-    var limit = 100, results_len = 0;
+window.addEventListener('load', () => {
+    const limit = 100
+    let resultsLen = 0
+    const $editDialog = document.getElementById('edit-dialog')
+    const $editView = document.getElementById('edit-view')
+    const $next = document.getElementById('nav-next')
+    const $page = document.getElementById('page')
+    const $prev = document.getElementById('nav-prev')
+    const $results = document.getElementById('results')
+    const $search = document.getElementById('search')
 
-    var bookmark_html = $("#bookmark-skelly").html(),
-        $results = $("#results"), $search = $("#search"),
-        $edit_view = $("#edit-view"), $edit_dialog = $("#edit-dialog"),
-        $next = $("#nav-next").eq(0), $prev = $("#nav-prev").eq(0),
-        $page = $("#page").eq(0);
+    $page.value = $page.value || 1
 
-    if ($page.val() == "")
-        $page.val(1);
+    function makeBookmark (b) {
+        b.tags = b.tags || ''
+        let tagArray = b.tags.split(' ').filter(tag => tag)
 
-    function make_bookmark(b) {
-        var $b = $(bookmark_html);
-
-        $b.attr("bookmark_id", b.id);
-        $b.find(".title a").attr("href", b.uri).text(b.title || b.uri);
-        $b.find(".date").text(b.date);
-
-        if (b.title)
-            $b.find(".uri").text(b.uri).show();
-
-        if (b.markdown_desc)
-            $b.find(".desc").html(b.markdown_desc).show();
-
-        if (b.tags) {
-            var $tags = $b.find(".tags"), tags = b.tags.split(" "),
-                len = tags.length, i = 0;
-            for (; i < len;)
-                $tags.append($("<a></a>").text(tags[i++]));
+        function escapeHTML(string) {
+            let entityMap = {
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+                "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;'
+            }
+            return String(string).replace(/[&<>"'`=\/]/g, s => entityMap[s]);
         }
 
-        return $b.prop("outerHTML");
+        return `
+            <div class=bookmark data-id="${b.id}">
+                <div class=title>
+                    <a href="${b.uri}">${escapeHTML(b.title || b.uri)}</a>
+                </div>
+                <div class=uri style="${b.title ? 'display: block;' : ''}">${b.uri}</div>
+                <div class=desc style="${b.markdown_desc ? 'display: block;' : ''}">
+                    ${b.markdown_desc}
+                </div>
+                <div class=bottom>
+                    <span class=date>${b.date}</span>
+                    <span class=tags>${ tagArray.map(tag => '<a href=#>'+tag+'</a>').join('') }</span>
+                    <span class=controls>
+                        <a href=# class=edit>edit</a>
+                        <a href=# class=delete>delete</a>
+                    </span>
+                </div>
+            </div>
+        `
     }
 
-    function show_edit(b) {
-        b = b || {};
-        var $e = $edit_dialog;
-        $e.attr("bookmark_id", b.id);
-        $e.attr("created", b.created);
-        $e.find(".title").val(b.title);
-        $e.find(".uri").val(b.uri);
-        $e.find(".tags").val(b.tags);
-        $e.find(".desc").val(b.desc);
-        $edit_view.fadeIn("fast", function () {
-            $edit_dialog.find(".title").focus();
-        });
-    }
+    function search () {
+        bookmarks_search({
+            query: $search.value,
+            limit: limit,
+            page: parseInt($page.value, 10)
+        }).then(results => {
+            resultsLen = results.length || 0
+            empty($results)
 
-    function find_bookmark_parent(that) {
-        return $(that).parents(".bookmark").eq(0);
-    }
-
-    function update_nav_buttons() {
-        if (results_len === limit)
-            $next.show();
-        else
-            $next.hide();
-        if (parseInt($page.val(), 10) > 1)
-            $prev.show();
-        else
-            $prev.hide();
-    }
-
-    function search() {
-            var query = $search.val();
-            bookmarks_search({
-                query: query,
-                limit: limit,
-                page: parseInt($page.val(), 10)
-            }).then(function (results) {
-
-            // Used to trigger hiding of next nav button when results_len < limit
-            results_len = results.length || 0;
-
-            if (results.length === "undefined") {
-                $results.empty();
-                update_nav_buttons();
-                return;
+            if (results.length == null) {
+                updateNavButtons()
+                return
             }
 
-            /* display results */
-            var html = "";
-            for (var i = 0; i < results.length; i++)
-                html += make_bookmark(results[i]);
+            $results.innerHTML = results.map(makeBookmark).join('')
+        })
+    }
 
-            update_nav_buttons();
+    function updateNavButtons () {
+        $next.style.display = resultsLen === limit ? 'inline' : 'none'
+        $prev.style.display = parseInt($page.value, 10) > 1 ? 'inline' : 'none'
+    }
 
-            $results.get(0).innerHTML = html;
-        });
-    };
+    function getID ($el) {
+        do { $el = $el.parentNode } while ($el && !$el.classList.contains('bookmark'))
+        return parseInt($el.dataset.id, 10)
+    }
 
-    /* input field callback */
-    $search.keydown(function(ev) {
-        if (ev.which == 13) { /* Return */
-            $page.val(1);
-            search();
-            $search.blur();
-            reset_mode();
+    function showEdit (b) {
+        b = b || {}
+        $editDialog.id.value = b.id || ''
+        $editDialog.created.value = b.created || ''
+        $editDialog.title.value = b.title || ''
+        $editDialog.uri.value = b.uri || ''
+        $editDialog.tags.value = b.tags || ''
+        $editDialog.desc.value = b.desc || ''
+        $editView.style.display = 'block'
+        $editDialog.title.focus()
+    }
+
+    $search.addEventListener('keydown', event => {
+        if (event.which === 13) { // 13 is the code for the 'Return' key
+            $page.value = 1
+            search()
+            $search.blur()
+            reset_mode()
         }
-    });
+    })
 
-    // 'delete' callback
-    $results.on("click", ".bookmark .controls .delete-button", function (e) {
-        var $b = find_bookmark_parent(this);
-        // delete bookmark from database
-        bookmarks_remove(parseInt($b.attr("bookmark_id")));
-        // remove/hide bookmark from list
-        $b.slideUp(function() { $b.remove(); });
-    });
+    $editDialog.addEventListener('submit', event => {
+        event.preventDefault()
+        let id = $editDialog.id.value
+        let created = $editDialog.created.value
+            ? parseInt($editDialog.created.value)
+            : undefined
+        let title = $editDialog.title.value
+        let uri = $editDialog.uri.value
+        let tags = $editDialog.tags.value
+        let desc = $editDialog.desc.value
 
-    $results.on("click", ".bookmark .tags a", function () {
-        $search.val($(this).text());
-        search();
-    });
+        bookmarks_add(uri, { title, tags, desc, created })
+        if (id) bookmarks_remove(parseInt(id))
+        search()
+        $editView.style.display = 'none'
+    })
 
-    $results.on("click", ".bookmark .controls .edit-button", function (e) {
-        var $b = find_bookmark_parent(this);
-        bookmarks_get(parseInt($b.attr("bookmark_id"))).then(function (b) {
-            show_edit(b);
-        });
-    });
+    document.getElementsByClassName('cancel-button')[0]
+        .addEventListener('click', () => {
+            $editView.style.display = 'none'
+        })
 
-    function edit_submit() {
-        var $e = $edit_dialog, id = $e.attr("bookmark_id"),
-            created = $e.attr("created");
+    document.getElementById('new-button').addEventListener('click', showEdit)
 
-        try {
-            bookmarks_add($e.find(".uri").val(), {
-                title: $e.find(".title").val(),
-                tags: $e.find(".tags").val(),
-                desc: $e.find(".desc").val(),
-                created: created ? parseInt(created) : undefined,
-            });
-        } catch (err) {
-            alert(err);
-            return;
+    document.getElementById('clear-button')
+        .addEventListener('click', () => {
+            $search.value = ''
+            $page.value = 1
+            search()
+        })
+
+    document.getElementById('search-button')
+        .addEventListener('click', () => {
+            $page.value = 1
+            search()
+        })
+
+    $next.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = page + 1
+        search()
+    })
+
+    $prev.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = Math.max(page - 1, 1)
+        search()
+    })
+
+    document.addEventListener('click', event => {
+        if (event.target.matches('.tags > a')) {
+            $search.value = event.target.textContent
+            search()
+        } else if (event.target.matches('.controls > .edit')) {
+            bookmarks_get(getID(event.target)).then(showEdit)
+        } else if (event.target.matches('.controls > .delete')) {
+            bookmarks_remove(getID(event.target))
+            search()
         }
+    })
 
-        // Delete existing bookmark (only when editing bookmark)
-        if (id)
-            bookmarks_remove(parseInt(id));
-
-        search();
-
-        $edit_view.fadeOut("fast");
-    };
-
-    $edit_dialog.on("click", ".submit-button", function (e) {
-        edit_submit();
-    });
-
-    $edit_dialog.find('input[type="text"]').keydown(function(ev) {
-        if (ev.which == 13) /* Return */
-            edit_submit();
-    });
-
-    $edit_dialog.on("click", ".cancel-button", function (e) {
-        $edit_view.fadeOut("fast");
-    });
-
-    $("#new-button").click(function () {
-        show_edit();
-    });
-
-    $("#clear-button").click(function () {
-        $search.val("");
-        $page.val(1);
-        search();
-    });
-
-    $("#search-button").click(function () {
-        $page.val(1);
-        search();
-    });
-
-    $next.click(function () {
-        var page = parseInt($page.val(), 10);
-        $page.val(page + 1);
-        search();
-    });
-
-    $prev.click(function () {
-        var page = parseInt($page.val(), 10);
-        $page.val(Math.max(page - 1,1));
-        search();
-    });
-
-    search();
-
-    new_bookmark_values().then(function (values) {
-        if (values)
-            show_edit(values);
-    });
-});
+    search()
+    new_bookmark_values().then(values => {
+        if (values) showEdit(values)
+    })
+})
 ]=]
 
 local new_bookmark_values
@@ -561,18 +516,12 @@ chrome.add("bookmarks", function ()
         style = style .. " .bookmark .uri { display: none !important; } "
     end
 
-    local html = string.gsub(html_template, "{%%(%w+)}", { stylesheet = style })
+    local html = string.gsub(html_template, "{%%(%w+)}", {
+        stylesheet = style,
+        javascript = main_js,
+    })
     return html
-end,
-function (view)
-    -- Load jQuery JavaScript library
-    local jquery = lousy.load("lib/jquery.min.js")
-    view:eval_js(jquery, { no_return = true })
-
-    -- Load main luakit://bookmarks/ JavaScript
-    view:eval_js(main_js, { no_return = true })
-end,
-export_funcs)
+end, nil, export_funcs)
 
 --- URI of the bookmarks chrome page.
 -- @type string
