@@ -41,6 +41,7 @@
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"
+#include "common/clib/utf8.h"
 #include "globalconf.h"
 
 #include <glib.h>
@@ -133,6 +134,9 @@ luaH_init(gchar ** uris)
 
     /* Export regex */
     regex_class_setup(L);
+
+    /* Export utf8 */
+    utf8_lib_setup(L);
 
     /* Export request */
     request_class_setup(L);

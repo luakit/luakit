@@ -19,6 +19,7 @@ function T.test_luacheck ()
         "ipc_channel",
         "string.wlen",
         "regex",
+        "utf8",
     }
     local ui_globals = {
         "sqlite3",

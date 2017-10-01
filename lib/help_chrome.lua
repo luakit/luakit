@@ -90,6 +90,7 @@ local builtin_module_set = {
     luakit = true,
     msg = true,
     soup = true,
+    utf8 = true,
 }
 
 local help_doc_index_page_preprocess = function (inner, style)

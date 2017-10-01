@@ -37,6 +37,7 @@
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"
+#include "common/clib/utf8.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
@@ -69,6 +70,7 @@ web_lua_init(const char *package_path, const char *package_cpath)
     ipc_channel_class_setup(L);
     timer_class_setup(L);
     regex_class_setup(L);
+    utf8_lib_setup(L);
     dom_document_class_setup(L);
     dom_element_class_setup(L);
     page_class_setup(L);
