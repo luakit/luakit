@@ -48,6 +48,7 @@ end
 -- @treturn table The download object's private data.
 function _M.to_download(id)
     if type(id) == "download" then return id end
+    id = tostring(id)
     for d, data in pairs(dls) do
         if id == data.id then return d end
     end
