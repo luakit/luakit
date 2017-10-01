@@ -544,6 +544,61 @@ end
         end },
 })
 
+local function convert (str, new_type)
+    local convertion_table = {
+        number = tonumber,
+        boolean = function (val)
+            if val == "true" then return true
+            elseif val == "false" then return false
+            else error("'"..val.."' is not a boolean")
+            end
+        end,
+        string = function (val) return val end,
+        enum = function (val) return val end,
+    }
+
+    return convertion_table[new_type](str)
+end
+
+modes.add_cmds({
+    { ":set", "Change a setting.", {
+        func = function (w, o)
+            o.arg = o.arg or ""
+            local key, value = o.arg:match("^%s*(%S+)%s+(.*)$")
+            if (key and value) == nil then
+                w:error("Usage: ':set <setting> <value>'")
+                return
+            end
+            local setting = settings.get_settings()[key]
+            if setting == nil then
+                w:error("Setting not found: "..key)
+                return
+            end
+            value = convert(value, setting.type)
+            settings.set_setting(key, value)
+        end,
+        format = "{setting}",
+    }},
+    { ":seton", "Change a setting for a specific domain.", {
+        func = function (w, o)
+            o.arg = o.arg or ""
+            local domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            if (domain and key and value) == nil then
+                w:error("Usage: ':seton <domain> <setting> <value>'")
+                return
+            end
+            local setting = settings.get_settings()[key]
+            if setting == nil then
+                w:error("Setting not found: "..key)
+                return
+            end
+            value = convert(value, setting.type)
+            settings.set_setting(key, value, { domain = domain })
+        end,
+        format = "{domain} {setting}",
+    }}
+})
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
