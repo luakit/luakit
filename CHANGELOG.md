@@ -57,6 +57,7 @@
  - Fixed luakit:// pages not working and spewing errors when not using LuaJIT.
  - Fixed thumbnail hinting not retrieving thumbnail links correctly.
  - Fixed inability to bind `Modifier-Minus`.
+ - Fixed readline handling of wide characters.
 
 ## [2017-08-10]
 
