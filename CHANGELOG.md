@@ -24,6 +24,7 @@
  - Added `webview` widget `allow_file_access_from_file_urls` and `allow_universal_access_from_file_urls` properties.
  - Added `settings` module and APIs. This replaces the `domain_props` module.
  - Added `tablist.always_visible` setting.
+ - Added `utf8.len` (same as `string.wlen`) and `utf8.offset` methods.
 
 ### Changed
 
@@ -56,6 +57,7 @@
  - Fixed luakit:// pages not working and spewing errors when not using LuaJIT.
  - Fixed thumbnail hinting not retrieving thumbnail links correctly.
  - Fixed inability to bind `Modifier-Minus`.
+ - Fixed readline handling of wide characters.
 
 ## [2017-08-10]
 

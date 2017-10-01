@@ -16,7 +16,7 @@ local function convert_bind_syntax(b)
     -- commands are a no-op
     if b:match("^:") and b ~= ":" then return b end
     -- Keys have sorted modifiers and uppercase -> lowercase+shift conversion
-    if string.wlen(b) == 1 or b:match("^<.+>$") then
+    if utf8.len(b) == 1 or b:match("^<.+>$") then
         b = b:match("^<(.+)>$") or b
         local mods = b == "-" and {"Minus"} or util.string.split(b, "%-")
         local key = table.remove(mods)
@@ -315,7 +315,7 @@ function _M.hit(object, binds, mods, key, args)
     binds = convert_binds_table(binds)
 
     if not key then return false end
-    local len = string.wlen(key)
+    local len = utf8.len(key)
 
     -- Compile metadata table
     args = join(args or {}, {
