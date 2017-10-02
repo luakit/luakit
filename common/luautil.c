@@ -152,12 +152,6 @@ luaH_add_paths(lua_State *L, const gchar *config_dir)
     /* compile list of package search paths */
     GPtrArray *paths = g_ptr_array_new_with_free_func(g_free);
 
-#if DEVELOPMENT_PATHS
-    /* allows for testing luakit in the project directory */
-    g_ptr_array_add(paths, g_strdup("./lib"));
-    g_ptr_array_add(paths, g_strdup("./config"));
-#endif
-
     /* add luakit install path */
     g_ptr_array_add(paths, g_build_filename(LUAKIT_INSTALL_PATH, "lib", NULL));
 
@@ -165,10 +159,7 @@ luaH_add_paths(lua_State *L, const gchar *config_dir)
     if (config_dir)
         g_ptr_array_add(paths, g_strdup(config_dir));
 
-    /* add system config dirs (see: XDG_CONFIG_DIRS) */
-    const gchar* const *config_dirs = g_get_system_config_dirs();
-    for (; *config_dirs; config_dirs++)
-        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", NULL));
+    g_ptr_array_add(paths, g_strdup(LUAKIT_CONFIG_PATH));
 
     const gchar *path;
     for (guint i = 0; i < paths->len; i++) {
