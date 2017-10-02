@@ -124,7 +124,7 @@ install: all
 
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/luakit $(DESTDIR)$(INSTALLDIR) $(DESTDIR)$(PREFIX)/lib/luakit
-	rm -rf $(DESTDIR)$(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)$(XDGPREFIX)/luakit
+	rm -rf $(DESTDIR)$(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)$(CONFIGDIR)/luakit
 	rm -rf $(DESTDIR)$(APPDIR)/luakit.desktop $(DESTDIR)$(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
