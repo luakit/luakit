@@ -27,7 +27,8 @@ options:
 	@echo "CFLAGS       = $(CFLAGS)"
 	@echo "CPPFLAGS     = $(CPPFLAGS)"
 	@echo "LDFLAGS      = $(LDFLAGS)"
-	@echo "PREFIX   = $(PREFIX)"
+	@echo "PREFIX       = $(PREFIX)"
+	@echo "INSTALLDIR   = $(INSTALLDIR)"
 	@echo "MANPREFIX    = $(MANPREFIX)"
 	@echo "DOCDIR       = $(DOCDIR)"
 	@echo "CONFIGDIR    = $(CONFIGDIR)"
@@ -45,7 +46,7 @@ $(THEAD) $(TSRC): $(TLIST)
 	$(LUA_BIN_NAME) ./build-utils/gentokens.lua $(TLIST) $@
 
 buildopts.h: buildopts.h.in
-	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(DEVELOPMENT_PATH)$(PREFIX)/share/luakit"#' \
+	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(DEVELOPMENT_PATH)$(INSTALLDIR)"#' \
 		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(DEVELOPMENT_PATH)$(CONFIGDIR)"#' \
 		-e 's#LUAKIT_DOC_PATH .*#LUAKIT_DOC_PATH "$(DEVELOPMENT_PATH)$(DOCDIR)"#' \
 		-e 's#LUAKIT_MAN_PATH .*#LUAKIT_MAN_PATH "$(DEVELOPMENT_PATH)$(MANPREFIX)"#' \
@@ -94,17 +95,17 @@ clean:
 	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
 install: all
-	install -d $(DESTDIR)$(PREFIX)/share/luakit/
+	install -d $(DESTDIR)$(INSTALLDIR)/
 	install -d $(DESTDIR)$(DOCDIR) $(DESTDIR)$(DOCDIR)/classes $(DESTDIR)$(DOCDIR)/modules $(DESTDIR)$(DOCDIR)/pages
 	install -m644 README.md AUTHORS COPYING.GPLv3 $(DESTDIR)$(DOCDIR)
 	install -m644 doc/apidocs/classes/* $(DESTDIR)$(DOCDIR)/classes
 	install -m644 doc/apidocs/modules/* $(DESTDIR)$(DOCDIR)/modules
 	install -m644 doc/apidocs/pages/* $(DESTDIR)$(DOCDIR)/pages
 	install -m644 doc/apidocs/*.html $(DESTDIR)$(DOCDIR)
-	install -d $(DESTDIR)$(PREFIX)/share/luakit/lib $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
-	install -m644 lib/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib
-	install -m644 lib/lousy/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy
-	install -m644 lib/lousy/widget/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
+	install -d $(DESTDIR)$(INSTALLDIR)/lib $(DESTDIR)$(INSTALLDIR)/lib/lousy $(DESTDIR)$(INSTALLDIR)/lib/lousy/widget
+	install -m644 lib/*.* $(DESTDIR)$(INSTALLDIR)/lib
+	install -m644 lib/lousy/*.* $(DESTDIR)$(INSTALLDIR)/lib/lousy
+	install -m644 lib/lousy/widget/*.* $(DESTDIR)$(INSTALLDIR)/lib/lousy/widget
 	install -d $(DESTDIR)$(PREFIX)/lib/luakit
 	install -m644 luakit.so $(DESTDIR)$(PREFIX)/lib/luakit/luakit.so
 	install -d $(DESTDIR)$(PREFIX)/bin
@@ -118,11 +119,11 @@ install: all
 	install -d $(DESTDIR)$(MANPREFIX)/man1/
 	install -m644 luakit.1.gz $(DESTDIR)$(MANPREFIX)/man1/
 	mkdir -p resources
-	find resources -type d -exec install -d $(DESTDIR)$(PREFIX)/share/luakit/'{}' \;
-	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(PREFIX)/share/luakit/$$(dirname $$f)"' \;
+	find resources -type d -exec install -d $(DESTDIR)$(INSTALLDIR)/'{}' \;
+	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(INSTALLDIR)/$$(dirname $$f)"' \;
 
 uninstall:
-	rm -rf $(DESTDIR)$(PREFIX)/bin/luakit $(DESTDIR)$(PREFIX)/share/luakit $(DESTDIR)$(PREFIX)/lib/luakit
+	rm -rf $(DESTDIR)$(PREFIX)/bin/luakit $(DESTDIR)$(INSTALLDIR) $(DESTDIR)$(PREFIX)/lib/luakit
 	rm -rf $(DESTDIR)$(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)$(XDGPREFIX)/luakit
 	rm -rf $(DESTDIR)$(APPDIR)/luakit.desktop $(DESTDIR)$(PIXMAPDIR)/luakit.png
 
