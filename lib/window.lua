@@ -223,8 +223,7 @@ local init_funcs = {
     end,
 
     set_window_icon = function (w)
-        local path = (luakit.dev_paths and os.exists("./extras/luakit.png")) or
-            os.exists(luakit.install_paths.pixmap_dir .. "/luakit.png")
+        local path = os.exists(luakit.install_paths.pixmap_dir .. "/luakit.png")
         if path then w.win.icon = path end
     end,
 
