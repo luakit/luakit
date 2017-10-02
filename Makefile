@@ -94,37 +94,37 @@ clean:
 	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
 install: all
-	install -d $(INSTALLDIR)/share/luakit/
-	install -d $(DOCDIR) $(DOCDIR)/classes $(DOCDIR)/modules $(DOCDIR)/pages
-	install -m644 README.md AUTHORS COPYING.GPLv3 $(DOCDIR)
-	install -m644 doc/apidocs/classes/* $(DOCDIR)/classes
-	install -m644 doc/apidocs/modules/* $(DOCDIR)/modules
-	install -m644 doc/apidocs/pages/* $(DOCDIR)/pages
-	install -m644 doc/apidocs/*.html $(DOCDIR)
-	install -d $(INSTALLDIR)/share/luakit/lib $(INSTALLDIR)/share/luakit/lib/lousy $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install -m644 lib/*.* $(INSTALLDIR)/share/luakit/lib
-	install -m644 lib/lousy/*.* $(INSTALLDIR)/share/luakit/lib/lousy
-	install -m644 lib/lousy/widget/*.* $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install -d $(INSTALLDIR)/lib/luakit
-	install -m644 luakit.so $(INSTALLDIR)/lib/luakit/luakit.so
-	install -d $(INSTALLDIR)/bin
-	install luakit $(INSTALLDIR)/bin/luakit
-	install -d $(XDGPREFIX)/luakit/
-	install -m644 config/*.lua $(XDGPREFIX)/luakit/
-	install -d $(PIXMAPDIR)
-	install -m644 extras/luakit.png $(PIXMAPDIR)
-	install -d $(APPDIR)
-	install -m644 extras/luakit.desktop $(APPDIR)
-	install -d $(MANPREFIX)/man1/
-	install -m644 luakit.1.gz $(MANPREFIX)/man1/
+	install -d $(DESTDIR)$(INSTALLDIR)/share/luakit/
+	install -d $(DESTDIR)$(DOCDIR) $(DESTDIR)$(DOCDIR)/classes $(DESTDIR)$(DOCDIR)/modules $(DESTDIR)$(DOCDIR)/pages
+	install -m644 README.md AUTHORS COPYING.GPLv3 $(DESTDIR)$(DOCDIR)
+	install -m644 doc/apidocs/classes/* $(DESTDIR)$(DOCDIR)/classes
+	install -m644 doc/apidocs/modules/* $(DESTDIR)$(DOCDIR)/modules
+	install -m644 doc/apidocs/pages/* $(DESTDIR)$(DOCDIR)/pages
+	install -m644 doc/apidocs/*.html $(DESTDIR)$(DOCDIR)
+	install -d $(DESTDIR)$(INSTALLDIR)/share/luakit/lib $(DESTDIR)$(INSTALLDIR)/share/luakit/lib/lousy $(DESTDIR)$(INSTALLDIR)/share/luakit/lib/lousy/widget
+	install -m644 lib/*.* $(DESTDIR)$(INSTALLDIR)/share/luakit/lib
+	install -m644 lib/lousy/*.* $(DESTDIR)$(INSTALLDIR)/share/luakit/lib/lousy
+	install -m644 lib/lousy/widget/*.* $(DESTDIR)$(INSTALLDIR)/share/luakit/lib/lousy/widget
+	install -d $(DESTDIR)$(INSTALLDIR)/lib/luakit
+	install -m644 luakit.so $(DESTDIR)$(INSTALLDIR)/lib/luakit/luakit.so
+	install -d $(DESTDIR)$(INSTALLDIR)/bin
+	install luakit $(DESTDIR)$(INSTALLDIR)/bin/luakit
+	install -d $(DESTDIR)$(XDGPREFIX)
+	install -m644 config/*.lua $(DESTDIR)$(XDGPREFIX)/luakit/
+	install -d $(DESTDIR)$(PIXMAPDIR)
+	install -m644 extras/luakit.png $(DESTDIR)$(PIXMAPDIR)
+	install -d $(DESTDIR)$(APPDIR)
+	install -m644 extras/luakit.desktop $(DESTDIR)$(APPDIR)
+	install -d $(DESTDIR)$(MANPREFIX)/man1/
+	install -m644 luakit.1.gz $(DESTDIR)$(MANPREFIX)/man1/
 	mkdir -p resources
-	find resources -type d -exec install -d $(INSTALLDIR)/share/luakit/'{}' \;
-	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(INSTALLDIR)/share/luakit/$$(dirname $$f)"' \;
+	find resources -type d -exec install -d $(DESTDIR)$(INSTALLDIR)/share/luakit/'{}' \;
+	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(INSTALLDIR)/share/luakit/$$(DESTDIR)$(dirname $$f)"' \;
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/lib/luakit
-	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(XDGPREFIX)/luakit
-	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
+	rm -rf $(DESTDIR)$(INSTALLDIR)/bin/luakit $(DESTDIR)$(INSTALLDIR)/share/luakit $(DESTDIR)$(INSTALLDIR)/lib/luakit
+	rm -rf $(DESTDIR)$(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)$(XDGPREFIX)/luakit
+	rm -rf $(DESTDIR)$(APPDIR)/luakit.desktop $(DESTDIR)$(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
 	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $< $(LDFLAGS) -o $@
