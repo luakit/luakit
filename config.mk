@@ -12,8 +12,9 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
 # === Default build options ==================================================
 
-DEVELOPMENT_PATHS ?= 0
-USE_LUAJIT        ?= 1
+DEVELOPMENT_PATHS   ?= 0
+PREFIX_WITH_DESTDIR ?= 0
+USE_LUAJIT          ?= 1
 
 # === Paths ==================================================================
 
@@ -26,10 +27,20 @@ PIXMAPDIR  ?= $(PREFIX)/share/pixmaps
 APPDIR     ?= $(PREFIX)/share/applications
 LIBDIR     ?= $(PREFIX)/lib/luakit
 
-# Set DEVELOPMENT_PATHS to include DESTDIR in buildopts.h substitutions
-DEVELOPMENT_PATH = ""
 ifneq ($(DEVELOPMENT_PATHS),0)
-	DEVELOPMENT_PATH := $(DESTDIR)
+	PREFIX =
+	DESTDIR = $(PWD)
+	INSTALLDIR =
+	LIBDIR =
+	PREFIX_WITH_DESTDIR = 1
+endif
+
+# Set PREFIX_WITH_DESTDIR=1 to include DESTDIR in buildopts.h substitutions
+ifneq ($(PREFIX_WITH_DESTDIR),1)
+	PREFIX_WITH_DESTDIR =
+endif
+ifeq ($(PREFIX_WITH_DESTDIR),1)
+	PREFIX_WITH_DESTDIR := $(DESTDIR)
 endif
 
 # === Platform specific ======================================================
