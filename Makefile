@@ -119,7 +119,7 @@ install: all
 	install -m644 luakit.1.gz $(DESTDIR)$(MANPREFIX)/man1/
 	mkdir -p resources
 	find resources -type d -exec install -d $(DESTDIR)$(INSTALLDIR)/share/luakit/'{}' \;
-	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(INSTALLDIR)/share/luakit/$$(DESTDIR)$(dirname $$f)"' \;
+	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(INSTALLDIR)/share/luakit/$$(dirname $$f)"' \;
 
 uninstall:
 	rm -rf $(DESTDIR)$(INSTALLDIR)/bin/luakit $(DESTDIR)$(INSTALLDIR)/share/luakit $(DESTDIR)$(INSTALLDIR)/lib/luakit
