@@ -25,11 +25,10 @@ PIXMAPDIR  ?= $(PREFIX)/share/pixmaps
 APPDIR     ?= $(PREFIX)/share/applications
 LIBDIR     ?= $(PREFIX)/lib/luakit
 
-
-# Should luakit be built to load relative config paths (./lib ./config) ?
-# (Useful when running luakit from it's source directory, disable otherwise).
+# Set DEVELOPMENT_PATHS to include DESTDIR in buildopts.h substitutions
+DEVELOPMENT_PATH = ""
 ifneq ($(DEVELOPMENT_PATHS),0)
-	CPPFLAGS += -DDEVELOPMENT_PATHS
+	DEVELOPMENT_PATH := $(DESTDIR)
 endif
 
 # === Platform specific ======================================================
