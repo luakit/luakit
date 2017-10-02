@@ -30,7 +30,7 @@ options:
 	@echo "INSTALLDIR   = $(INSTALLDIR)"
 	@echo "MANPREFIX    = $(MANPREFIX)"
 	@echo "DOCDIR       = $(DOCDIR)"
-	@echo "XDGPREFIX    = $(XDGPREFIX)"
+	@echo "CONFIGDIR    = $(CONFIGDIR)"
 	@echo "PIXMAPDIR    = $(PIXMAPDIR)"
 	@echo "APPDIR       = $(APPDIR)"
 	@echo
@@ -46,7 +46,7 @@ $(THEAD) $(TSRC): $(TLIST)
 
 buildopts.h: buildopts.h.in
 	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(DEVELOPMENT_PATH)$(PREFIX)/share/luakit"#' \
-		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(DEVELOPMENT_PATH)$(XDGPREFIX)"#' \
+		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(DEVELOPMENT_PATH)$(CONFIGDIR)"#' \
 		-e 's#LUAKIT_DOC_PATH .*#LUAKIT_DOC_PATH "$(DEVELOPMENT_PATH)$(DOCDIR)"#' \
 		-e 's#LUAKIT_MAN_PATH .*#LUAKIT_MAN_PATH "$(DEVELOPMENT_PATH)$(MANPREFIX)"#' \
 		-e 's#LUAKIT_PIXMAP_PATH .*#LUAKIT_PIXMAP_PATH "$(DEVELOPMENT_PATH)$(PIXMAPDIR)"#' \
@@ -109,8 +109,8 @@ install: all
 	install -m644 luakit.so $(DESTDIR)$(INSTALLDIR)/lib/luakit/luakit.so
 	install -d $(DESTDIR)$(INSTALLDIR)/bin
 	install luakit $(DESTDIR)$(INSTALLDIR)/bin/luakit
-	install -d $(DESTDIR)$(XDGPREFIX)
-	install -m644 config/*.lua $(DESTDIR)$(XDGPREFIX)/luakit/
+	install -d $(DESTDIR)$(CONFIGDIR)
+	install -m644 config/*.lua $(DESTDIR)$(CONFIGDIR)/
 	install -d $(DESTDIR)$(PIXMAPDIR)
 	install -m644 extras/luakit.png $(DESTDIR)$(PIXMAPDIR)
 	install -d $(DESTDIR)$(APPDIR)
