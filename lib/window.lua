@@ -438,6 +438,9 @@ _M.methods = {
     detach_tab = function (w, view, blank_last)
         view = view or w.view
         view.parent:remove(view)
+        if settings.window.quit_on_last_tab_close == true and w.tabs:count() == 0 then
+            w:close_win()
+        end
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 0 then
             w:new_tab(settings.window.new_tab_page, false)
@@ -719,6 +722,11 @@ settings.register_settings({
         type = "string",
         default = "about:blank",
         desc = "The URI to open when opening a new tab.",
+    },
+    ["window.quit_on_last_tab_close"] = {
+        type = "boolean",
+        default = false,
+        desc = "Luakit will quit the current window when it does not contain any more tabs.",
     },
     ["window.search_engines"] = {
         type = "table",
