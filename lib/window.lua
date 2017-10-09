@@ -726,7 +726,7 @@ settings.register_settings({
     ["window.close_with_last_tab"] = {
         type = "boolean",
         default = false,
-        desc = "Whether luakit windows should close after all of their tabs are closed.",
+        desc = "Luakit windows should close after all of their tabs are closed.",
     },
     ["window.search_engines"] = {
         type = "table",
