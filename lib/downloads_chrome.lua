@@ -117,6 +117,13 @@ function makeDownloadHTML (d) {
     let uri = encodeURI(d.uri)
     let showCancel = d.status !== 'finished' && d.status !== 'cancelled'
 
+    let RS = readableSize
+    let status_text
+        = d.status == 'started'  ? `downloading - ${RS(d.current_size)}/${RS(d.total_size)} @ ${RS(d.speed)}/s`
+        : d.status == 'finished' ? `finished - ${RS(d.total_size)}`
+        : d.status == 'created'  ? 'waiting'
+        : d.status
+
     function escapeHTML(string) {
         let entityMap = {
             '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
@@ -131,7 +138,7 @@ function makeDownloadHTML (d) {
             <div class=details>
                 <div class=title>
                     <a href="file://${escape(d.destination)}">${escapeHTML(href)}</a>
-                    <div class=status>${d.status}</div>
+                    <div class=status>${status_text}</div>
                 </div>
                 <div class=uri>
                     <a href="${uri}">${uri}</a>
