@@ -158,10 +158,8 @@ function updateListFinish (downloads) {
     const $list = document.getElementById('downloads-list')
     empty($list)
 
-    if (downloads.length == null) {
-        setTimeout(update, 1000)
+    if (downloads.length == null)
         return
-    }
 
     $list.innerHTML = downloads
         .sort((a, b) => b.created - a.created)

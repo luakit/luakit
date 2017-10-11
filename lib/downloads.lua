@@ -79,7 +79,7 @@ function _M.do_open(d, w)
     end
 end
 
-local status_timer = timer{interval=1000}
+local status_timer = timer{interval=300}
 status_timer:add_signal("timeout", function ()
     local running = 0
     for d, data in pairs(dls) do
