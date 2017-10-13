@@ -283,7 +283,7 @@ new_settings_node = function (prefix, section)
         local type = get_settings_path_type(full_path)
         if type == "value" then
             local getter = (settings_list[full_path].type == "table") and S_get_table or S_get
-            return (getter)(meta.section, full_path)
+            return (getter)(meta.section, full_path, true) -- true is for S_get only (persisted vars)
         end
         if type == "group" then
             meta.subnodes[k] = new_settings_node(full_path, meta.section)
