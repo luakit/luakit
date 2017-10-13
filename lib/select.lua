@@ -21,7 +21,7 @@ local wrapped = { label_maker = nil }
 --
 --     local select = require "select"
 --     select.label_maker = function (s)
---         return s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+--         return s.trim(s.sort(s.reverse(s.charset("asdfqwerzxcv"))))
 --     end
 --
 -- @readwrite
