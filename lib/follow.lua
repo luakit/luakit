@@ -172,11 +172,14 @@ local function follow_func_cb(w, ret)
 
     if mode.func then mode.func(ret) end
 
-    if mode.persist then
-        w:set_input("")
-        w:set_mode("follow", mode)
-    elseif ret ~= "form-active" and ret ~= "root-active" then
-        w:set_mode()
+    -- don't set mode if func() changed it (e.g. to command mode)
+    if w:is_mode("follow") or w:is_mode("ex-follow") then
+        if mode.persist then
+            w:set_input("")
+            w:set_mode("follow", mode)
+        elseif ret ~= "form-active" and ret ~= "root-active" then
+            w:set_mode()
+        end
     end
 
     ignore_keys(w)
