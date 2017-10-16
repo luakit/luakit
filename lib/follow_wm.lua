@@ -24,7 +24,7 @@ local evaluators = {
         if element.child_count > 0 then
             local r = element.rect
             local doc = element.owner_document
-            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2)
+            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2) or element
             tag = element.tag_name
         end
         -- Handle <a target=_blank> indirectly; WebKit prevents opening a new
