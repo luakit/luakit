@@ -287,7 +287,7 @@ completers.command = {
 
 local function sql_like_globber(term)
     local escaped = term:gsub("[\\%%_]", { ["\\"] = "\\\\", ["%"] = "\\%", ["_"] = "\\_" })
-    return "%" .. escaped:gsub("%s", "%%") .. "%"
+    return "%" .. escaped:gsub("%s+", "%%") .. "%"
 end
 
 completers.history = {
