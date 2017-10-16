@@ -285,16 +285,21 @@ completers.command = {
     end,
 }
 
+local function sql_like_globber(term)
+    local escaped = term:gsub("[\\%%_]", { ["\\"] = "\\\\", ["%"] = "\\%", ["_"] = "\\_" })
+    return "%" .. escaped:gsub("%s", "%%") .. "%"
+end
+
 completers.history = {
     header = { "History", "URI" },
     func = function (buf)
         local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||title) AS text
-            FROM history WHERE text GLOB ?
+            FROM history WHERE text LIKE ? ESCAPE '\'
             ORDER BY visits DESC LIMIT 25
         ]]
 
-        local rows = history.db:exec(sql, { string.format("*%s*", term) })
+        local rows = history.db:exec(sql, { sql_like_globber(term) })
         if not rows[1] then return {} end
 
         for _, row in ipairs(rows) do
@@ -313,11 +318,11 @@ completers.bookmarks = {
     func = function (buf)
         local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||title||tags) AS text
-            FROM bookmarks WHERE text GLOB ?
+            FROM bookmarks WHERE text LIKE ? ESCAPE '\'
             ORDER BY title DESC LIMIT 25
         ]]
 
-        local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
+        local rows = bookmarks.db:exec(sql, { sql_like_globber(term) })
         if not rows[1] then return {} end
 
         for _, row in ipairs(rows) do

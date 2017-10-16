@@ -41,6 +41,7 @@
  - The editor command now defaults to using `xdg-open` to edit files.  The `default` builtin
    command has been renamed `autodetect`.
  - Changed `luakit://introspector/` to `luakit://binds/`.
+ - URL completion now uses word-based fuzzy matching.
 
 ### Removed
 
