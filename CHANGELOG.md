@@ -2,6 +2,8 @@
 
 ## [Unreleased]
 
+ - Required WebKitGTK+ version: 2.18+
+
 ### Migrating from version 2017-08-10
 
  1. Remove the two `if unique then ... end` blocks from your `rc.lua`.
@@ -59,6 +61,7 @@
  - Fixed thumbnail hinting not retrieving thumbnail links correctly.
  - Fixed inability to bind `Modifier-Minus`.
  - Fixed readline handling of wide characters.
+ - Follow mode now renders hints much faster.
 
 ## [2017-08-10]
 

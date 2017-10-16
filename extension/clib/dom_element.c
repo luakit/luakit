@@ -400,6 +400,33 @@ luaH_dom_element_add_event_listener(lua_State *L)
 }
 
 static gint
+luaH_dom_element_client_rects(lua_State *L)
+{
+    dom_element_t *element = luaH_check_dom_element(L, 1);
+    WebKitDOMClientRectList *rects = webkit_dom_element_get_client_rects(element->element);
+    int num_rects = webkit_dom_client_rect_list_get_length(rects);
+
+    lua_createtable(L, num_rects, 0);
+    for (int i = 0; i < num_rects; ++i) {
+        WebKitDOMClientRect* rect = webkit_dom_client_rect_list_item(rects, i);
+        lua_newtable(L);
+#define PROP(prop) \
+            lua_pushnumber(L, webkit_dom_client_rect_get_##prop(rect)); \
+            lua_setfield(L, -2, #prop);
+        PROP(top)
+        PROP(right)
+        PROP(bottom)
+        PROP(left)
+        PROP(width)
+        PROP(height)
+#undef PROP
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+
+static gint
 luaH_dom_element_push_src(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
@@ -587,6 +614,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
         PF_CASE(ADD_EVENT_LISTENER, luaH_dom_element_add_event_listener)
+        PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
 
         PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
 
