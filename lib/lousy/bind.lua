@@ -420,6 +420,9 @@ end
 --- Remove any binding with a specific trigger from the given array of bindings.
 -- @tparam table binds The array of bindings to remove the named binding from.
 -- @tparam string bind The trigger to unbind.
+-- @treturn table The associated action of the binding that was removed, or `nil` if
+-- not found.
+-- @treturn table The options of the binding that was removed, or `nil` if not found.
 function _M.remove_bind (binds, bind)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
     assert(bind and type(bind) == "string", "invalid bind type: " .. type(bind))
@@ -428,10 +431,11 @@ function _M.remove_bind (binds, bind)
         if m[1] == bind then
             table.remove(binds, i)
             msg.verbose("removed bind %s", bind)
-            return
+            return m[2], m[3]
         end
     end
     msg.verbose("no bind %s to remove", bind)
+    return nil, nil
 end
 
 return _M
