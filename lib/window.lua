@@ -464,10 +464,13 @@ _M.methods = {
     end,
 
     close_win = function (w, force)
+        if w_priv[w].closing then return end
+
         if not force and (#luakit.windows == 1) and not w:can_quit() then
             return false
         end
 
+        w_priv[w].closing = true
         w:emit_signal("close")
 
         -- Close all tabs
