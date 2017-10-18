@@ -21,6 +21,9 @@ lousy.signal.setup(_M, true)
 -- @readonly
 _M.bywidget = setmetatable({}, { __mode = "k" })
 
+-- Private data for windows
+local w_priv = setmetatable({}, { __mode = "k" })
+
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
 local function eventbox() return widget{type="eventbox"} end
@@ -477,6 +480,7 @@ _M.methods = {
 
         -- Remove from window index
         _M.bywidget[w.win] = nil
+        w_priv[w] = nil
 
         -- Clear window struct
         w = setmetatable(w, {})
@@ -643,7 +647,7 @@ _M.add_signal("build", _M.build)
 -- @treturn table The newly-created window table.
 function _M.new(args)
     local w = {}
-    _M.emit_signal("build", w)
+    w_priv[w] = {}
 
     -- Set window metatable
     setmetatable(w, {
@@ -658,6 +662,8 @@ function _M.new(args)
 
     -- Setup window widget for signals
     lousy.signal.setup(w)
+
+    _M.emit_signal("build", w)
 
     -- Call window init functions
     for _, func in pairs(init_funcs) do
