@@ -1078,12 +1078,12 @@ table_from_context_menu(lua_State *L, WebKitContextMenu *menu, widget_t *w)
         if (webkit_context_menu_item_is_separator(item))
             lua_pushboolean(L, TRUE);
         else {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             GtkAction *action = webkit_context_menu_item_get_action(item);
             WebKitContextMenuAction stock_action = webkit_context_menu_item_get_stock_action(item);
             WebKitContextMenu *submenu = webkit_context_menu_item_get_submenu(item);
             lua_createtable(L, 2, 0);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             lua_pushstring(L, gtk_action_get_label(action));
 #pragma GCC diagnostic pop
             lua_rawseti(L, -2, 1);
@@ -1136,8 +1136,8 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
 #pragma GCC diagnostic ignored "-Wdeprecated-declarations"
                 GtkAction *action = gtk_action_new(label, label,
                         NULL, NULL);
-#pragma GCC diagnostic pop
                 item = webkit_context_menu_item_new(action);
+#pragma GCC diagnostic pop
                 ref = luaH_object_ref(L, -1);
                 last_popup.refs = g_slist_prepend(last_popup.refs, ref);
                 g_object_set_data(G_OBJECT(action), "lua_callback", ref);
@@ -1153,7 +1153,10 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
                 lua_pop(L, 1);
             } else if(lua_type(L, -1) == LUA_TLIGHTUSERDATA) {
                 GtkAction *action = (void*)lua_topointer(L, -1);
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
                 item = webkit_context_menu_item_new(action);
+#pragma GCC diagnostic pop
                 webkit_context_menu_append(menu, item);
                 lua_pop(L, 1);
             }
