@@ -225,7 +225,7 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 --         end},
 --     })
 --
--- ## Bind format
+-- # Bind format
 --
 -- Every item in the `binds` array must be a table that defines a single binding
 -- between a trigger and an action. Each entry must have the following form:
@@ -279,6 +279,40 @@ _M.remove_binds = function (mode, binds)
         local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
         for _, bind in ipairs(binds) do
             lousy.bind.remove_bind(mdata.binds or {} , bind)
+        end
+    end
+end
+
+--- Bind an existing key or command to a new binding.
+--
+-- # Example
+--
+--     -- Add an additional zooming command binding
+--     modes.rebind("normal", {
+--         { "<Control-=>", "zi", true },
+--     })
+--
+-- # Bind format
+--
+-- Every item in the `binds` array must be a table that defines a single rebind
+-- from an existing trigger to a new one. Each entry must have the following form:
+--
+--     { new, old, keep }
+--
+-- - `new` is a string describing the combination of keys/modifiers/buttons
+--   that will trigger the associated action.
+-- - `old` is a string describing the previous trigger of the action.
+-- - `keep` is an optional argument that determines whether the existing binding
+--   should remain. Defaults to `false` if not present.
+--
+-- @tparam table|string mode The name of the mode, or an array of mode names.
+-- @tparam table binds An array of binds to remap
+_M.remap_binds = function(mode, binds)
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, name in ipairs(mode) do
+        for _, bind in ipairs(binds) do
+            local new, old, keep = unpack(bind)
+            lousy.bind.remap_bind(mdata.binds or {}, new, old, keep)
         end
     end
 end
