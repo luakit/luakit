@@ -438,6 +438,34 @@ function _M.remove_bind (binds, bind)
     return nil, nil
 end
 
+--- Remap a binding from a given trigger to a new trigger, optionally keeping
+-- the original binding. In both cases, the new binding will have the same
+-- options as the original binding.
+-- @tparam table binds The array of bindings to remap within.
+-- @tparam string new The new trigger to map from.
+-- @tparam string old The existing trigger to remap.
+-- @tparam[opt] boolean keep Retain the existing binding.
+-- @default `false`
+function _M.remap_bind (binds, new, old, keep)
+    assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
+    assert(new and type(new) == "string", "invalid bind type: " .. type(new))
+    assert(old and type(old) == "string", "invalid bind type: " .. type(old))
+    new = convert_bind_syntax(new)
+    old = convert_bind_syntax(old)
+    for _, m in ipairs(binds) do
+        if m[1] == old then
+            msg.verbose("remapping bind to %s, %s %s", new, keep and "keeping" or "removing", old)
+            if keep then
+                _M.add_bind(binds, new, m[2], m[3])
+            else
+                m[1] = new
+            end
+            return
+        end
+    end
+    msg.verbose("no bind %s to remap", old)
+end
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
