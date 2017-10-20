@@ -14,6 +14,8 @@ local _M = {}
 
 local ui = ipc_channel("select_wm")
 
+local has_client_rects_api = tonumber(luakit.webkit_version:match("^2%.(%d+)%.")) > 16
+
 -- Label making
 
 -- Calculates the minimum number of characters needed in a hint given a
@@ -118,9 +120,35 @@ end
 
 local function get_element_bb_if_visible(element, wbb, page)
     -- Find the element bounding box
-    local r = element:client_rects()
-    if #r == 0 then return nil end
-    r = r[1]
+    local r
+
+    if has_client_rects_api then
+        r = element:client_rects()
+        if #r == 0 then return nil end
+        r = r[1]
+    else
+        local client_rects = page:wrap_js([=[
+            var rects = element.getClientRects();
+            if (rects.length == 0)
+                return undefined;
+            var rect = {
+                "top": rects[0].top,
+                "bottom": rects[0].bottom,
+                "left": rects[0].left,
+                "right": rects[0].right,
+            };
+            for (var i = 1; i < rects.length; i++) {
+                rect.top = Math.min(rect.top, rects[i].top);
+                rect.bottom = Math.max(rect.bottom, rects[i].bottom);
+                rect.left = Math.min(rect.left, rects[i].left);
+                rect.right = Math.max(rect.right, rects[i].right);
+            }
+            rect.width = rect.right - rect.left;
+            rect.height = rect.bottom - rect.top;
+            return rect;
+        ]=], {"element"})
+        r = client_rects(element) or element.rect
+    end
 
     local rbb = {
         x = wbb.x + r.left,

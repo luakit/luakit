@@ -399,6 +399,7 @@ luaH_dom_element_add_event_listener(lua_State *L)
     return 1;
 }
 
+#if WEBKIT_CHECK_VERSION(2,18,0)
 static gint
 luaH_dom_element_client_rects(lua_State *L)
 {
@@ -425,6 +426,7 @@ luaH_dom_element_client_rects(lua_State *L)
 
     return 1;
 }
+#endif
 
 static gint
 luaH_dom_element_push_src(lua_State *L)
@@ -614,7 +616,9 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
         PF_CASE(ADD_EVENT_LISTENER, luaH_dom_element_add_event_listener)
+#if WEBKIT_CHECK_VERSION(2,18,0)
         PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
+#endif
 
         PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
 
