@@ -310,6 +310,7 @@ end
 _M.remap_binds = function(mode, binds)
     mode = type(mode) ~= "table" and {mode} or mode
     for _, name in ipairs(mode) do
+        local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
         for _, bind in ipairs(binds) do
             local new, old, keep = unpack(bind)
             lousy.bind.remap_bind(mdata.binds or {}, new, old, keep)
