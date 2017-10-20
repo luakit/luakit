@@ -51,6 +51,11 @@
 -- @type string
 -- @readonly
 
+--- The WebKitGTK version that luakit was built with.
+-- @property webkit_version
+-- @type string
+-- @readonly
+
 --- An array of all active window widgets.
 -- @property windows
 -- @type {widget}

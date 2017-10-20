@@ -71,6 +71,12 @@ luaH_luakit_index(lua_State *L)
     switch (token) {
         PI_CASE(WEB_PROCESS_ID, getpid())
         PS_CASE(RESOURCE_PATH, resource_path_get())
+
+        case L_TK_WEBKIT_VERSION:
+            lua_pushfstring(L, "%d.%d.%d", WEBKIT_MAJOR_VERSION,
+                    WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
+            return 1;
+
         default: return 0;
     }
 }
