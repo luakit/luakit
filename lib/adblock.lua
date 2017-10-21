@@ -71,7 +71,7 @@ local adblock_wm = require_web_module("adblock_wm")
 -- Adblock Plus compatible filter lists.
 local adblock_dir = luakit.data_dir .. "/adblock/"
 local filterfiles = {}
-local subscriptions_file = adblock_dir .. "/subscriptions"
+local subscriptions_file = adblock_dir .. "subscriptions"
 
 --- The set of ad blocking subscriptions that are active.
 -- @type table
