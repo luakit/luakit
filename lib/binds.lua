@@ -325,9 +325,23 @@ modes.add_binds("normal", {
 
     -- Commands
     { "<Control-a>", "Increment last number in URL.",
-        function (w, m) w:navigate(w:inc_uri(m.count)) end, {count = 1} },
+        function (w, m)
+            local uri = w:inc_uri(m.count)
+            if uri ~= w.view.uri then
+                w:navigate(uri)
+            else
+                w:warning("No number in URL")
+            end
+        end, {count = 1} },
     { "<Control-x>", "Decrement last number in URL.",
-        function (w, m) w:navigate(w:inc_uri(-m.count)) end, {count = 1} },
+        function (w, m)
+            local uri = w:inc_uri(-m.count)
+            if uri ~= w.view.uri then
+                w:navigate(uri)
+            else
+                w:warning("No number in URL")
+            end
+        end, {count = 1} },
     { "o", "Open one or more URLs.", function (w) w:enter_cmd(":open ") end },
     { "t", "Open one or more URLs in a new tab.", function (w) w:enter_cmd(":tabopen ") end },
     { "w", "Open one or more URLs in a new window.", function (w) w:enter_cmd(":winopen ") end },
