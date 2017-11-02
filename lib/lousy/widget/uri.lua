@@ -48,6 +48,7 @@ end)
 local function new()
     local uri = widget{type="label"}
     uri.selectable = true
+    uri.can_focus = false
     uri.fg = theme.uri_sbar_fg
     uri.font = theme.uri_sbar_font
     return wc.add_widget(widgets, uri)
