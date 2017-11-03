@@ -392,17 +392,12 @@ _M.load = function (reload, single_list, no_sync)
     detect_files()
     if not single_list then
         read_subscriptions()
-        local files_list = {}
         for _, filename in ipairs(filterfiles) do
             local list = _M.subscriptions[filename]
-            if list then
-                table.insert(files_list, filename)
-            else
+            if not list then
                 add_list(list and list.uri or "", filename, "Enabled", true, false)
             end
         end
-        filterfiles = files_list
-        -- Yes we may have changed subscriptions and even fixed something with them.
         write_subscriptions()
     end
 
