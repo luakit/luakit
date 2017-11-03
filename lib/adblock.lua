@@ -357,10 +357,7 @@ local function add_list(uri, title, opts, replace, save_lists)
         end
     else
         -- Insert new adblock list
-        local list = { uri = uri, title = title, opts = opts }
-        if not (title == "" or title == nil) then
-            _M.subscriptions[title] = list
-        end
+        _M.subscriptions[title] = { uri = uri, title = title, opts = opts }
     end
 
     -- Save by default
