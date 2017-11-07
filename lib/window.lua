@@ -580,7 +580,7 @@ _M.methods = {
 
         -- Find search engine (or use search_engines.default)
         local engine = "default"
-        if args[1] and search_engines[args[1]] then
+        if args[1] and args[1] ~= "default" and search_engines[args[1]] then
             engine = args[1]
             table.remove(args, 1)
         end
