@@ -288,7 +288,7 @@ end
 -- # Example
 --
 --     -- Add an additional zooming command binding
---     modes.rebind("normal", {
+--     modes.remap_binds("normal", {
 --         { "<Control-=>", "zi", true },
 --     })
 --
