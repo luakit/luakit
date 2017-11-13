@@ -60,6 +60,7 @@
  - Fixed thumbnail hinting not retrieving thumbnail links correctly.
  - Fixed inability to bind `Modifier-Minus`.
  - Fixed readline handling of wide characters.
+ - Fixed completion not suggesting history/bookmarks items without titles/tags.
  - Follow mode now renders hints much faster.
 
 ## [2017-08-10]

@@ -294,7 +294,7 @@ completers.history = {
     header = { "History", "URI" },
     func = function (buf)
         local term, ret, sql = buf, {}, [[
-            SELECT uri, title, lower(uri||title) AS text
+            SELECT uri, title, lower(uri||ifnull(title,'')) AS text
             FROM history WHERE text LIKE ? ESCAPE '\'
             ORDER BY visits DESC LIMIT 25
         ]]
@@ -317,7 +317,7 @@ completers.bookmarks = {
     header = { "Bookmarks", "URI" },
     func = function (buf)
         local term, ret, sql = buf, {}, [[
-            SELECT uri, title, lower(uri||title||tags) AS text
+            SELECT uri, title, lower(uri||ifnull(title,'')||ifnull(tags,'')) AS text
             FROM bookmarks WHERE text LIKE ? ESCAPE '\'
             ORDER BY title DESC LIMIT 25
         ]]
