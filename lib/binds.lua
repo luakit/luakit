@@ -558,10 +558,14 @@ end
             local file = o.arg or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
             if file then
                 local fd = assert(io.open(file, "w"), "failed to open: " .. file)
-                local html = assert(w.view.source, "Unable to get HTML")
-                assert(fd:write(html), "unable to save html")
-                io.close(fd)
-                w:notify("Dumped HTML to: " .. file)
+                local view = w.view
+                local co = coroutine.create(function ()
+                    local html = assert(view:get_source(), "Unable to get HTML")
+                    assert(fd:write(html), "unable to save html")
+                    io.close(fd)
+                    w:notify("Dumped HTML to: " .. file)
+                end)
+                luakit.idle_add(function () coroutine.resume(co) end)
             end
         end },
 })

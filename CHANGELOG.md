@@ -61,6 +61,7 @@
  - Fixed inability to bind `Modifier-Minus`.
  - Fixed readline handling of wide characters.
  - Fixed completion not suggesting history/bookmarks items without titles/tags.
+ - Fixed `:dump` command not working due to use of a removed API.
  - Follow mode now renders hints much faster.
 
 ## [2017-08-10]
