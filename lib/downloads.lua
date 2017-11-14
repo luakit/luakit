@@ -285,8 +285,17 @@ add_binds("normal", {
 
 -- Download commands
 add_cmds({
-    { ":down[load]", "Download the given URI.", {
-        func = function (w, o) _M.add(o.arg, { window = w.win }) end,
+    { ":down[load]", "Download a webpage by URI, defaulting to the current page.", {
+        func = function (w, o)
+            local uri = o.arg or w.view.uri
+            if uri and not uri:match("^luakit://")
+                then _M.add(uri, { window = w.win })
+            elseif uri then
+                w:error("cannot download URI '"..uri.."'")
+            else
+                w:error("cannot retrieve current page URI")
+            end
+        end,
         format = "{uri}",
     }},
 })
