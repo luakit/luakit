@@ -63,6 +63,7 @@
  - Fixed readline handling of wide characters.
  - Fixed completion not suggesting history/bookmarks items without titles/tags.
  - Fixed `:dump` command not working due to use of a removed API.
+ - Fixed follow hints being sometimes truncated by the viewport edge.
  - Follow mode now renders hints much faster.
 
 ## [2017-08-10]

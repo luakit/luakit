@@ -405,13 +405,15 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     end
 
     for _, frame in ipairs(state.frames) do
+        local fwr = frame.doc.window
+        local fsx, fsy = fwr.scroll_x, fwr.scroll_y
         for _, hint in ipairs(frame.hints) do
             -- Append hint elements to overlay
             local e = hint.elem
             local r = hint.bb
 
             local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
-            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, 0), max(r.y-10, 0), r.w, r.h)
+            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, fsx), max(r.y-10, fsy), r.w, r.h)
 
             local overlay_class = "hint_overlay hint_overlay_" .. e.tag_name
             local label_class = "hint_label hint_label_" .. e.tag_name
