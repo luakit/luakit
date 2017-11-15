@@ -26,6 +26,7 @@
  - Added `tablist.always_visible` setting.
  - Added `utf8.len` (same as `string.wlen`) and `utf8.offset` methods.
  - Added `:set` and `:seton` commands, for changing settings.
+ - Added ability to always save session before exiting luakit.
 
 ### Changed
 

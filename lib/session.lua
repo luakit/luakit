@@ -13,6 +13,7 @@ local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")
 local pickle = lousy.pickle
+local settings = require("settings")
 
 local _M = {}
 
@@ -191,6 +192,12 @@ window.add_signal("init", function (w)
         end
     end)
 
+    w:add_signal("close", function ()
+        if #luakit.windows == 1 and settings.get_setting("session.always_save") then
+            w:save_session()
+        end
+    end)
+
     w.tabs:add_signal("page-reordered", function ()
         start_timeout()
     end)
@@ -208,6 +215,17 @@ webview.add_signal("init", function (view)
         start_timeout()
     end)
 end)
+
+settings.register_settings({
+    ["session.always_save"] = {
+        type = "boolean",
+        default = false,
+        desc = [[
+            Whether the current browsing session should always be saved
+            just before luakit is exited.
+        ]],
+    },
+})
 
 return _M
 
