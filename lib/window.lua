@@ -339,7 +339,7 @@ _M.methods = {
         if layout.bg ~= bg then layout.bg = bg end
         -- Set text or remain hidden
         if text then
-            prompt.text = lousy.util.escape(text)
+            prompt.text = opts.markup and text or lousy.util.escape(text)
             prompt:show()
         end
         w.ibar.prompt_text = text
