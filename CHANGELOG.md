@@ -43,6 +43,7 @@
  - Changed `luakit://introspector/` to `luakit://binds/`.
  - URL completion now uses word-based fuzzy matching.
  - `:download` now uses the current page URI by default.
+ - `gy` now accepts a count.
 
 ### Removed
 

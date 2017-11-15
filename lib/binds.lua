@@ -398,8 +398,9 @@ modes.add_binds("normal", {
     { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(settings.window.home_page) end },
     { "^gh$", "Open homepage.", function (w) w:navigate(settings.window.home_page) end },
     { "^gy$", "Duplicate current tab.",
-        function (w)
-            w:new_tab({ session_state = w.view.session_state }, { private = w.view.private })
+        function (w, m)
+            local params = {{ session_state = w.view.session_state }, { private = w.view.private }}
+            for _=1,m.count do w:new_tab(unpack(params)) end
         end },
 
     { "r", "Reload current tab.", function (w) w:reload() end },
