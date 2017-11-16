@@ -269,3 +269,5 @@ client_rects
 root_win_xid
 win_xid
 replace
+stack
+visible_child
