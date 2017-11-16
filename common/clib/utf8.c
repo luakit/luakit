@@ -127,6 +127,11 @@ utf8_lib_setup(lua_State *L)
     };
 
     luaH_openlib(L, "utf8", utf8_lib, utf8_lib);
+
+    lua_getglobal(L, "utf8");
+    lua_pushstring(L, "[%z\1-\x7F\xC2-\xF4][\x80-\xBF]*");
+    lua_setfield(L, -2, "charpattern");
+    lua_pop(L, 1);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
