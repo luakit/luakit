@@ -95,10 +95,6 @@ _M.stylesheet = [===[
     opacity: 0.4;
 }
 
-#luakit_select_overlay .hint_overlay_body {
-    background-color: #ff0000;
-}
-
 #luakit_select_overlay .hint_selected {
     background-color: #00ff00 !important;
 }
