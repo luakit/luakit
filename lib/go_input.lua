@@ -32,6 +32,8 @@ local go_input = [=[
                         el.click();
                     } else {
                         el.focus();
+                        el.setSelectionRange(el.value.length, el.value.length);
+                        el.scrollIntoViewIfNeeded();
                     }
                     return "form-active";
                 }
