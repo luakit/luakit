@@ -25,6 +25,7 @@
  - Added `settings` module and APIs. This replaces the `domain_props` module.
  - Added `tablist.always_visible` setting.
  - Added `utf8.len` (same as `string.wlen`) and `utf8.offset` methods.
+ - Added `utf8.charpattern` property.
  - Added `:set` and `:seton` commands, for changing settings.
  - Added ability to always save session before exiting luakit.
  - Added `markup` option to window `set_prompt()` method.
