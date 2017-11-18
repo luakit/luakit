@@ -354,8 +354,8 @@ modes.add_binds("normal", {
 
     { "H", "Go back in the browser history `[count=1]` items.", function (w, m) w:back(m.count) end },
     { "L", "Go forward in the browser history `[count=1]` times.", function (w, m) w:forward(m.count) end },
-    { "<XF86Back>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
-    { "<XF86Forward>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
+    { "<Back>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
+    { "<Forward>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
 
     { "<Control-o>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
     { "<Control-i>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
