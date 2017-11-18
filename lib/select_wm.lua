@@ -8,7 +8,7 @@
 -- @module select_wm
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
-local floor, max = math.floor, math.max
+local ceil, floor, max = math.ceil, math.floor, math.max
 
 local _M = {}
 
@@ -58,6 +58,34 @@ local label_styles = {
 
     numbers = function ()
         return function (size) return charset("0123456789", size) end
+    end,
+
+    -- Interleave style
+    interleave = function ()
+        return function (size)
+            local sub, concat = string.sub, table.concat
+            local left, right = "dsrewvcxg", "kluionmhb" -- equal length
+            local base, digits, labels = #left, {}, {}
+            digits[0], digits[1] = {}, {}
+            for i = 1, base do
+                rawset(digits[1], i, sub(left, i, i))
+                rawset(digits[0], i, sub(right, i, i))
+            end
+            local maxlen = max_hint_len(ceil(size/2), base)
+            local zeroseq = string.rep("fj", maxlen)
+            for n = 1, size do
+                local idx, j, t, i, d = n % 2, floor((n + 1) / 2), {}, 1
+                repeat
+                    d, j = (j % base) + 1, floor(j / base)
+                    rawset(t, i, rawget(digits[idx], d))
+                    i = i + 1
+                    idx = 1 - idx
+                until j == 0
+                rawset(labels, n, sub(zeroseq, n % 2 + 1, n % 2 + maxlen - i + 1)
+                           .. concat(t, ""))
+            end
+            return labels
+        end
     end,
 
     -- Chainable style: sorts labels
