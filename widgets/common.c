@@ -33,7 +33,8 @@ key_press_cb(GtkWidget* UNUSED(win), GdkEventKey *ev, widget_t *w)
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     luaH_keystr_push(L, ev->keyval);
-    gint ret = luaH_object_emit_signal(L, -3, "key-press", 2, 1);
+    lua_pushboolean(L, ev->send_event);
+    gint ret = luaH_object_emit_signal(L, -4, "key-press", 3, 1);
     gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
     lua_pop(L, ret + 1);
     return catch;

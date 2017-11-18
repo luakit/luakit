@@ -61,9 +61,6 @@ require "settings_chrome"
 local adblock = require "adblock"
 local adblock_chrome = require "adblock_chrome"
 
--- Add ability to send keystrokes to the window
-require "keysym"
-
 local webinspector = require "webinspector"
 
 -- Add uzbl-like form filling

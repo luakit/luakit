@@ -15,6 +15,15 @@
 -- @tparam integer width The default width of the window, in pixels.
 -- @tparam integer height The default height of the window, in pixels.
 
+--- @method send_key
+-- Send synthetic key events to given window. This function parses a vim-like
+-- keystring into single keys and sends them to the window. When
+-- `window.act_on_synthetic_keys` is disabled, synthetic key events will not trigger
+-- other key bindings.
+-- @tparam w The window object.
+-- @tparam string keystring The key string representing synthetic keys.
+-- @tparam table modifiers The key modifiers table
+
 --- @property title
 -- The window title, as displayed on its title bar.
 -- @type string
