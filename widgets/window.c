@@ -76,60 +76,57 @@ luaH_window_send_key(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     const gchar *key_name = luaL_checkstring(L, 2);
+    if (lua_gettop(L) >= 3)
+        luaH_checktable(L, 3);
+    else
+        lua_newtable(L);
 
-    if (!g_utf8_validate(key_name, -1, NULL)) {
-        lua_pushboolean(L, FALSE);
-        return 1;
-    }
+    if (!g_utf8_validate(key_name, -1, NULL))
+        return luaL_error(L, "key name isn't a utf-8 string");
 
     guint keyval;
-    if (g_utf8_strlen(key_name, -1) == 1) {
+    if (g_utf8_strlen(key_name, -1) == 1)
         keyval = gdk_unicode_to_keyval(g_utf8_get_char(key_name));
-    } else {
+    else
         keyval = gdk_keyval_from_name(key_name);
-    }
 
-    if (!keyval || keyval == GDK_KEY_VoidSymbol) {
-        lua_pushboolean(L, FALSE);
-        return 1;
-    }
+    if (!keyval || keyval == GDK_KEY_VoidSymbol)
+        return luaL_error(L, "failed to get a valid key value");
 
     guint state = 0;
-    luaH_checktable(L, 3);
-
+    GString *state_string = g_string_sized_new(32);
     lua_pushnil(L);
-    while(lua_next(L, 3)) {
+    while (lua_next(L, 3)) {
         const gchar *mod = luaL_checkstring(L, -1);
+        g_string_append_printf(state_string, "%s-", mod);
 
 #define MODKEY(modstr, modconst) \
         if (strcmp(modstr, mod) == 0) { \
             state = state | GDK_##modconst##_MASK; \
         }
 
-        MODKEY("S", SHIFT);
-        MODKEY("C", CONTROL);
-        MODKEY("L", LOCK);
-        MODKEY("M1", MOD1);
-        MODKEY("M2", MOD2);
-        MODKEY("M3", MOD3);
-        MODKEY("M4", MOD4);
-        MODKEY("M5", MOD5);
+        MODKEY("shift", SHIFT);
+        MODKEY("control", CONTROL);
+        MODKEY("lock", LOCK);
+        MODKEY("mod1", MOD1);
+        MODKEY("mod2", MOD2);
+        MODKEY("mod3", MOD3);
+        MODKEY("mod4", MOD4);
+        MODKEY("mod5", MOD5);
 
 #undef MODKEY
 
         lua_pop(L, 1);
     }
 
-    GdkKeymapKey* keys = NULL;
+    GdkKeymapKey *keys = NULL;
     gint n_keys;
-
-    if (!gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(), keyval, &keys, &n_keys)) {
-        lua_pushboolean(L, FALSE);
-        return 1;
+    if (!gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
+                                           keyval, &keys, &n_keys)) {
+        g_string_free(state_string, TRUE);
+        return luaL_error(L, "cannot type '%s' on current keyboard layout",
+                          key_name);
     }
-
-    g_assert(n_keys == 1);
-    g_assert(keys);
 
     GdkEvent *event = gdk_event_new(GDK_KEY_PRESS);
     GdkEventKey *event_key = (GdkEventKey *) event;
@@ -140,13 +137,14 @@ luaH_window_send_key(lua_State *L)
     event_key->keyval = keyval;
     event_key->hardware_keycode = keys[0].keycode;
     event_key->group = keys[0].group;
-
-    g_free(keys);
-
+    GdkSeat *seat = gdk_display_get_default_seat(gdk_display_get_default());
+    gdk_event_set_device(event, gdk_seat_get_keyboard(seat));
     gdk_event_put(event);
+    debug("sending key '%s%s' to window %p", state_string->str, key_name, w);
 
-    lua_pushboolean(L, TRUE);
-    return 1;
+    g_string_free(state_string, TRUE);
+    g_free(keys);
+    return 0;
 }
 
 static gint
