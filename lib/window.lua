@@ -440,6 +440,7 @@ _M.methods = {
 
     detach_tab = function (w, view, blank_last)
         view = view or w.view
+        w:emit_signal("detach-tab", view)
         view.parent:remove(view)
         if settings.window.close_with_last_tab == true and w.tabs:count() == 0 then
             w:close_win()

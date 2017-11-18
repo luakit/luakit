@@ -29,6 +29,7 @@
  - Added `:set` and `:seton` commands, for changing settings.
  - Added ability to always save session before exiting luakit.
  - Added `markup` option to window `set_prompt()` method.
+ - Added `detach-tab` signal.
 
 ### Changed
 
