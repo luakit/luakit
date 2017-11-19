@@ -791,6 +791,14 @@ if globals then
     settings.window.search_engines = globals.search_engines
 end
 
+local vulnerable_luakit = tonumber(luakit.webkit_version:match("^2%.(%d+)%.")) < 18
+if vulnerable_luakit then
+    luakit.idle_add(function ()
+        msg.warn([[your version of WebKit (%s) is outdated and vulnerable!
+See https://webkitgtk.org/security/WSA-2017-0009.html for details.]], luakit.webkit_version)
+    end)
+end
+
 return _M
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
