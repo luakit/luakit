@@ -22,6 +22,7 @@ local has_client_rects_api = tonumber(luakit.webkit_version:match("^2%.(%d+)%.")
 -- charset of a certain length (I.e. the base)
 local function max_hint_len(size, base)
     local len = 0
+    if base == 1 then return size end
     while size > 0 do size, len = floor(size / base), len + 1 end
     return len
 end
@@ -66,24 +67,26 @@ local label_styles = {
         assert(#left == #right, "left sequence and right sequence should be equal length")
         return function (size)
             local sub, concat = string.sub, table.concat
-            local l, r = sub(left, 1, 1), sub(right, 1, 1)
-            left, right = sub(left, 2, #left), sub(right, 2, #right)
+            local l, left = string.match(left, "(.)(.*)")
+            local r, right = string.match(right, "(.)(.*)")
             local base, digits, labels = #left, {}, {}
             digits[0], digits[1] = {}, {}
             for i = 1, base do
                 rawset(digits[1], i, sub(left, i, i))
                 rawset(digits[0], i, sub(right, i, i))
             end
-            local maxlen = max_hint_len(ceil(size/2), base)
+            local maxlen = max_hint_len(ceil(size/2), base+1)
             local zeroseq = string.rep(l..r, maxlen)
             for n = 1, size do
                 local idx, j, t, i, d = n % 2, floor((n + 1) / 2), {}, 1
-                repeat
-                    d, j = (j % base) + 1, floor(j / base)
-                    rawset(t, i, rawget(digits[idx], d))
-                    i = i + 1
-                    idx = 1 - idx
-                until j == 0
+                if #left > 0 then
+                    repeat
+                        d, j = (j % base) + 1, floor(j / base)
+                        rawset(t, i, rawget(digits[idx], d))
+                        i = i + 1
+                        idx = 1 - idx
+                    until j == 0
+                end
                 rawset(labels, n, sub(zeroseq, n % 2 + 1, n % 2 + maxlen - i + 1)
                            .. concat(t, ""))
             end
