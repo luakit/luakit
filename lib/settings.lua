@@ -32,6 +32,8 @@ do
     if not ok then persisted_settings = { global = {}, domain = {}} end
 end
 
+local module_overrides = {}
+
 local function validate_settings_path (k)
     assert(type(k) == "string", "invalid settings path type: " .. type(k))
     local parts = lousy.util.string.split(k, "%.")
@@ -113,6 +115,10 @@ local function setting_validate_new_value (section, k, v)
     end
 end
 
+local function setting_src(d, k)
+    return (not d) and module_overrides[k] or "rc"
+end
+
 local function S_get(domain, key, persist)
     local function get(root, d, k)
         local tree = not d and root.global or root.domain[d]
@@ -120,12 +126,12 @@ local function S_get(domain, key, persist)
         if tree[k] ~= nil then return tree[k] end
     end
     local val = get(S, domain, key)
-    if val then return val end
+    if val then return val, setting_src(domain, key) end
     if persist then
         val = get(persisted_settings, domain, key)
-        if val ~= nil then return val end
+        if val ~= nil then return val, "persisted" end
     end
-    return settings_list[key].default
+    return settings_list[key].default, "default"
 end
 
 local function S_set(domain, key, val, persist)
@@ -141,6 +147,7 @@ local function S_set(domain, key, val, persist)
         fh:write(lousy.pickle.pickle(persisted_settings))
         io.close(fh)
     else
+        if setting_src(domain, key) ~= "rc" then return end
         set(S, domain, key, val)
     end
     _M.emit_signal("setting-changed", {
@@ -211,6 +218,20 @@ _M.override_setting_for_view = function (view, key, value)
     vo[view][key] = value
 end
 
+--- Add an override for a setting.
+--
+-- The settings key must be a valid settings key.
+-- @tparam string key The key of the setting to override.
+-- @param The value of the setting override.
+_M.override_setting = function (key, value)
+    local mod = debug.getinfo(2, "S").short_src:gsub(".*/", ""):gsub("%.lua$","")
+    if module_overrides[key] and module_overrides[key] ~= mod then
+        error("already overriden by '"..module_overrides[key].."'")
+    end
+    S_set(nil, key, value)
+    module_overrides[key] = mod
+end
+
 --- Retrieve the value of a setting, whether it's explicitly set or the default.
 --
 -- This does not take into account any domain-specific values.
@@ -218,6 +239,8 @@ end
 -- The settings key must be a valid settings key.
 -- @tparam string key The key of the setting to retrieve.
 -- @return The value of the setting.
+-- @treturn string The source of the setting value. One of
+-- `"persisted"`, `"rc"`, `"default"`, or a module name.
 _M.get_setting = function (key)
     return S_get(nil, key, true)
 end
@@ -240,10 +263,12 @@ end
 _M.get_settings = function ()
     local ret = {}
     for k, meta in pairs(settings_list) do
+        local value, src = _M.get_setting(k)
         ret[k] = {
             type = meta.type,
             desc = meta.desc,
-            value = _M.get_setting(k),
+            value = value,
+            src = src,
             options = meta.options,
         }
     end

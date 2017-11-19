@@ -72,7 +72,7 @@ luakit.idle_add(function ()
 end)
 
 require "window"
-settings.window.new_tab_page = "luakit://newtab/"
+settings.override_setting("window.new_tab_page", "luakit://newtab/")
 
 return _M
 

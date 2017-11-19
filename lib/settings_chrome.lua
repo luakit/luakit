@@ -101,6 +101,15 @@ _M.html_style = [===[
     visibility: visible;
     opacity: 1.0;
 }
+.setting.disabled {
+    background: repeating-linear-gradient(
+        45deg,
+        #fafafa,
+        #fafafa 10px,
+        #f6f6f6 10px,
+        #f6f6f6 20px
+    );
+}
 
 .tooltip {
     background: #121215;
@@ -144,7 +153,7 @@ _M.html_style = [===[
 
 local build_settings_entry_html = function (meta)
     local settings_entry_fmt = [==[
-        <tr class="setting" data-type={type}>
+        <tr class="setting {disabled}" data-type={type}>
             <td style="position: relative;">
                 <div class=title>{key}</div>
                 <div class=desc>{desc}</div>
@@ -162,13 +171,18 @@ local build_settings_entry_html = function (meta)
     desc = ("\n" .. desc):gsub("\n" .. string.rep(" ", fl), "\n"):sub(2)
     meta.desc = markdown(desc)
 
+    local disabled_attr = (meta.src ~= "persisted" and meta.src ~= "default") and "disabled" or ""
+
     local input
     if meta.type == "boolean" then
-        input = ([==[<input type=checkbox {checked}/>]==]):gsub("{checked}", meta.value and "checked=true " or "")
+        input = ([==[<input type=checkbox {checked} {disabled} />]==]):gsub("{(%w+)}", {
+                checked = meta.value and "checked=true" or "",
+            })
     elseif meta.type == "enum" then
         input = ""
         for k, opt in pairs(meta.options) do
-            local tmpl = [==[<label><input type=radio name="{name}" value="{value}" {checked}/>{label}</label>]==]
+            local tmpl = [==[<label>
+            <input type=radio name="{name}" value="{value}" {checked} {disabled} />{label}</label>]==]
             input = input ..  tmpl:gsub("{(%w+)}", {
                     name = meta.key,
                     value = k,
@@ -179,10 +193,11 @@ local build_settings_entry_html = function (meta)
     elseif meta.type == "table" then
         input = "<i>Not yet implemented</i>"
     else
-        input = [==[<input type=text value="{value}" />]==]
+        input = [==[<input type=text value="{value}" {disabled} />]==]
     end
 
     return settings_entry_fmt:gsub("{input}", input):gsub("{(%w+)}", {
+            disabled = disabled_attr,
             type = meta.type,
             key = meta.key,
             desc = meta.desc,
