@@ -12,6 +12,7 @@
 local _M = {}
 
 local window = require("window")
+local taborder = require("taborder")
 local settings = require("settings")
 
 -- Binding aliases
@@ -400,7 +401,7 @@ modes.add_binds("normal", {
     { "^gy$", "Duplicate current tab.",
         function (w, m)
             local params = {{ session_state = w.view.session_state }, { private = w.view.private }}
-            for _=1,m.count do w:new_tab(unpack(params)) end
+            for _=1,m.count do w:new_tab(unpack(params), { order = taborder.after_current }) end
         end, {count=1} },
 
     { "r", "Reload current tab.", function (w) w:reload() end },
