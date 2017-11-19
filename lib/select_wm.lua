@@ -66,7 +66,8 @@ local label_styles = {
         assert(#left == #right, "left sequence and right sequence should be equal length")
         return function (size)
             local sub, concat = string.sub, table.concat
-            local l, r, left, right = sub(left, 1, 1), sub(right, 1, 1), sub(left, 2, #left), sub(right, 2, #right)
+            local l, r = sub(left, 1, 1), sub(right, 1, 1)
+            left, right = sub(left, 2, #left), sub(right, 2, #right)
             local base, digits, labels = #left, {}, {}
             digits[0], digits[1] = {}, {}
             for i = 1, base do
