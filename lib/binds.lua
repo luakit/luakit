@@ -401,7 +401,7 @@ modes.add_binds("normal", {
         function (w, m)
             local params = {{ session_state = w.view.session_state }, { private = w.view.private }}
             for _=1,m.count do w:new_tab(unpack(params)) end
-        end },
+        end, {count=1} },
 
     { "r", "Reload current tab.", function (w) w:reload() end },
     { "R", "Reload current tab (skipping cache).", function (w) w:reload(true) end },
