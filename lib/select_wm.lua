@@ -61,10 +61,12 @@ local label_styles = {
     end,
 
     -- Interleave style
-    interleave = function ()
+    interleave = function (left, right)
+        assert(type(left) == "string" and type(right) == "string" and #left > 0 and #right > 0, "invalid sequence")
+        assert(#left == #right, "left sequence and right sequence should be equal length")
         return function (size)
             local sub, concat = string.sub, table.concat
-            local left, right = "dsrewvcxg", "kluionmhb" -- equal length
+            local l, r, left, right = sub(left, 1, 1), sub(right, 1, 1), sub(left, 2, #left), sub(right, 2, #right)
             local base, digits, labels = #left, {}, {}
             digits[0], digits[1] = {}, {}
             for i = 1, base do
@@ -72,7 +74,7 @@ local label_styles = {
                 rawset(digits[0], i, sub(right, i, i))
             end
             local maxlen = max_hint_len(ceil(size/2), base)
-            local zeroseq = string.rep("fj", maxlen)
+            local zeroseq = string.rep(l..r, maxlen)
             for n = 1, size do
                 local idx, j, t, i, d = n % 2, floor((n + 1) / 2), {}, 1
                 repeat
