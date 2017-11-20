@@ -195,7 +195,6 @@ window.add_signal("init", function (w)
     w:add_signal("close", function ()
         if not settings.get_setting("session.always_save") then return end
         if #window.bywidget > 1 then return end
-        local w = select(2, next(window.bywidget))
         if w.tabs:count() == 0 then return end -- window.close_with_last_tab...
         w:save_session()
     end)
