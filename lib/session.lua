@@ -138,7 +138,7 @@ local restore_file = function (file, delete)
             v:add_signal("switched-page", unblock)
         end
         -- Convert state keys from index to w table
-        state[w] = win
+        if w then state[w] = win end
     end
     _M.emit_signal("restore", state)
 
@@ -193,9 +193,11 @@ window.add_signal("init", function (w)
     end)
 
     w:add_signal("close", function ()
-        if #luakit.windows == 1 and settings.get_setting("session.always_save") then
-            w:save_session()
-        end
+        if not settings.get_setting("session.always_save") then return end
+        if #window.bywidget > 1 then return end
+        local w = select(2, next(window.bywidget))
+        if w.tabs:count() == 0 then return end -- window.close_with_last_tab...
+        w:save_session()
     end)
 
     w.tabs:add_signal("page-reordered", function ()
