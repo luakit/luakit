@@ -201,7 +201,7 @@ _M.get_setting_for_view = function (view, key)
         local value = (S.domain[domain] or {})[key] -- S_get uses default
         if value ~= nil then return value, domain end
     end
-    return S_get(nil, key, true)
+    return ({S_get(nil, key, true)})[1]
 end
 
 --- Add or remove a view-specific override for a setting.
