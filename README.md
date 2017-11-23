@@ -84,28 +84,25 @@ There are several files of interest:
 
  * rc.lua      -- is the main config file which dictates which and in what
                   order different parts of the browser are loaded.
- * binds.lua   -- defines every action the browser takes when you press a
-                  button or combination of buttons (even mouse buttons,
-                  direction key, etc) and the browser commands (I.e.
-                  `:quit`, `:restart`, `:open`, `:lua <code>`, etc).
  * theme.lua   -- change fonts and colours used by the interface widgets.
- * window.lua  -- is responsible for building the luakit browser window and
-                  defining several helper methods (I.e. `w:new_tab(uri)`,
-                  `w:close_tab()`, `w:close_win()`, etc).
- * webview.lua -- is a wrapper around the webview widget object and is
-                  responsible for watching webview signals (I.e. "key-press",
-                  "load-status", "resource-load-started", etc). This file
-                  also provides several window methods which operate on the
-                  current webview tab (I.e. `w:reload()`,
-                  `w:eval_js("code here..")`, `w:back()`, `w:forward()`).
- * modes.lua   -- manages the modal aspect of the browser and the actions
-                  that occur when switching modes.
- * globals.lua -- change global options like scroll/zoom step, default
-                  window size, useragent, search engines, etc.
 
 Just copy the files you wish to change (and the rc.lua) into
 `$XDG_CONFIG_HOME/luakit` (defaults to `~/.config/luakit/`) and luakit will
 use those files when you next launch it.
+
+The following files used to be configuration files, but are not anymore:
+
+ * binds.lua      -- is now a built-in module providing the default bindings.
+                     Bindings should be changed with the `modes` APIs.
+ * modes.lua      -- is now a built-in module providing built-in modes, as well
+                     as providing APIs to manage bindings within those modes.
+ * window.lua     -- is now a built-in module.
+ * webview.lua    -- is now a built-in module.
+ * webview_wm.lua -- is now a built-in module.
+ * globals.lua    -- global settings have been moved to other modules.
+
+These files will be silently ignored on startup so as to prevent errors; users
+wishing to override the built-in modules should change `package.path`.
 
 ## HiDPI Monitor Configuration
 
