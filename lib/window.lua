@@ -548,10 +548,19 @@ _M.methods = {
         -- Detect blank uris
         if not arg or match(arg, "^%s*$") then return settings.window.new_tab_page end
 
-        -- Strip whitespace and split by whitespace into args table
-        local args = lstring.split(lstring.strip(arg))
+        arg = lstring.strip(arg)
 
-        -- Guess if single argument is an address, file, etc
+        -- handle file paths before splitting arg (absolute paths only)
+        if settings.window.check_filepath then
+            local path = arg:gsub("^file://", "")
+            if path:match("^/") and lfs.attributes(path) then
+                return "file://" .. path
+            end
+        end
+
+        local args = lstring.split(arg)
+
+        -- Guess if single argument is an address, etc
         if #args == 1 and not search_engines[args[1]] then
             local uri = args[1]
             if uri == "about:blank" then return uri end
@@ -571,11 +580,6 @@ _M.methods = {
             -- Check hostnames
             for _, h in pairs(hosts) do
                 if h == uri or match(uri, "^"..h..":%d+$") then return uri end
-            end
-
-            -- Check for file in filesystem
-            if settings.window.check_filepath then
-                if lfs.attributes(uri) then return "file://" .. uri end
             end
         end
 

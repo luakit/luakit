@@ -46,6 +46,7 @@
  - URL completion now uses word-based fuzzy matching.
  - `:download` now uses the current page URI by default.
  - `gy` now accepts a count.
+ - `:tabopen` will now only open local files when given an absolute path.
 
 ### Removed
 
@@ -71,6 +72,7 @@
  - Fixed follow hints being sometimes truncated by the viewport edge.
  - Follow mode now renders hints much faster.
  - Fixed Forward/Back keys not working due to outdated bind syntax.
+ - Fixed opening local files with names containing spaces from `:tabopen` and the command-line.
 
 ## [2017-08-10]
 
