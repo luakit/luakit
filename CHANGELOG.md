@@ -47,6 +47,7 @@
  - `:download` now uses the current page URI by default.
  - `gy` now accepts a count.
  - `:tabopen` will now only open local files when given an absolute path.
+ - `:styles-list` now lists active styles first and disabled styles last.
 
 ### Removed
 

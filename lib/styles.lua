@@ -189,9 +189,12 @@ local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
 
 local function create_stylesheet_menu_for_w(w)
     local rows = {{ "Stylesheets", "State", "Affects", title = true }}
+    local groups = { Disabled = {}, Enabled = {}, Active = {}, }
     for _, stylesheet in ipairs(stylesheets) do
-        table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
+        local row = menu_row_for_stylesheet(w, stylesheet)
+        table.insert(groups[row[2]], row)
     end
+    rows = lousy.util.table.join(rows, groups.Active, groups.Enabled, groups.Disabled)
     w.menu:build(rows)
     stylesheets_menu_rows[w] = rows
 end
