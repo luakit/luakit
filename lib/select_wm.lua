@@ -65,33 +65,62 @@ local label_styles = {
 
     -- Interleave style
     interleave = function (left, right)
-        assert(type(left) == "string" and type(right) == "string" and #left > 0 and #right > 0, "invalid sequence")
-        assert(#left == #right, "left sequence and right sequence should be equal length")
-        return function (size)
-            local sub, concat = string.sub, table.concat
-            local l, r
-            l, left = string.match(left, "(.)(.*)")
-            r, right = string.match(right, "(.)(.*)")
-            local base, digits, labels = #left, {}, {}
-            digits[0], digits[1] = {}, {}
-            for i = 1, base do
-                rawset(digits[1], i, sub(left, i, i))
-                rawset(digits[0], i, sub(right, i, i))
+        assert(type(left) == "string" and type(right) == "string",
+               "left and right parameters must be strings")
+        assert(#left > 1 or #right > 1,
+               "either left or right parameters' length must be greater than 1")
+        local cmap = {}
+        for ch in (left..right):gmatch(utf8.charpattern) do
+            if cmap[ch] then
+                error("duplicate characters %s in hint strings %s, %s", ch, left, right)
+            else
+                cmap[ch] = 1
             end
-            local maxlen = max_hint_len(ceil(size/2), base+1)
-            local zeroseq = string.rep(l..r, maxlen)
-            for n = 1, size do
-                local idx, j, t, i, d = n % 2, floor((n + 1) / 2), {}, 1
-                if #left > 0 then
-                    repeat
-                        d, j = (j % base) + 1, floor(j / base)
-                        rawset(t, i, rawget(digits[idx], d))
-                        i = i + 1
-                        idx = 1 - idx
-                    until j == 0
+        end
+        return function (size)
+            local function allstrings(n, t, k, s)
+                k, s = k or 1, s or {}
+                if k > n then
+                    coroutine.yield(table.concat(s))
+                else
+                    for i = 1, #t do
+                        s[k] = t[i]
+                        allstrings(n, t, k+1, s)
+                    end
                 end
-                rawset(labels, n, sub(zeroseq, n % 2 + 1, n % 2 + maxlen - i + 1)
-                           .. concat(t, ""))
+            end
+            local function permute(n, t)
+                return coroutine.wrap(allstrings), n, t
+            end
+
+            -- calculate the hinting length
+            local hint_len = 1
+            while true do
+                local lo, hi = floor(hint_len/2), ceil(hint_len/2)
+                if (#left)^lo * (#right)^hi + (#left)^hi * (#right)^lo >= size then break end
+                hint_len = hint_len + 1
+            end
+
+            local tleft, tright = {}, {}
+            left:gsub(utf8.charpattern, function(c) table.insert(tleft, c) end)
+            right:gsub(utf8.charpattern, function(c) table.insert(tright, c) end)
+            local labels = {}
+            local lo, hi = floor(hint_len/2), ceil(hint_len/2)
+            for a in permute(hi, tleft) do
+                for b in permute(lo, tright) do
+                    rawset(labels, size, a:gsub('()('..utf8.charpattern..')',
+                                                function(p, c) return c..b:sub(p, p+#c-1) end))
+                    size = size - 1
+                    if size == 0 then return labels end
+                end
+            end
+            for a in permute(hi, tright) do
+                for b in permute(lo, tleft) do
+                    rawset(labels, size, a:gsub('()('..utf8.charpattern..')',
+                                                function(p, c) return c..b:sub(p, p+#c-1) end))
+                    size = size - 1
+                    if size == 0 then return labels end
+                end
             end
             return labels
         end
@@ -143,7 +172,7 @@ local label_styles = {
 local label_maker
 do
     local s = label_styles
-    label_maker = s.trim(s.sort(s.reverse(s.numbers())))
+    label_maker = s.trim(s.sort(s.interleave("12345", "67890")))
 end
 
 local function bounding_boxes_intersect(a, b)
