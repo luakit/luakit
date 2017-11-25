@@ -137,8 +137,23 @@ luaH_window_send_key(lua_State *L)
     event_key->keyval = keyval;
     event_key->hardware_keycode = keys[0].keycode;
     event_key->group = keys[0].group;
+
+    GdkDevice *kbd = NULL;
+#if GTK_CHECK_VERSION(3,20,0)
     GdkSeat *seat = gdk_display_get_default_seat(gdk_display_get_default());
-    gdk_event_set_device(event, gdk_seat_get_keyboard(seat));
+    kbd = gdk_seat_get_keyboard(seat);
+#else
+    GdkDeviceManager *dev_mgr = gdk_display_get_device_manager(gdk_display_get_default());
+    GList *devices = gdk_device_manager_list_devices(dev_mgr, GDK_DEVICE_TYPE_MASTER);
+    for (GList *dev = devices; dev && !kbd; dev = dev->next)
+        if (gdk_device_get_source(dev->data) == GDK_SOURCE_KEYBOARD)
+            kbd = dev->data;
+    g_list_free(devices);
+#endif
+    if (!kbd)
+        return luaL_error(L, "failed to find a keyboard device");
+    gdk_event_set_device(event, kbd);
+
     gdk_event_put(event);
     debug("sending key '%s%s' to window %p", state_string->str, key_name, w);
 
