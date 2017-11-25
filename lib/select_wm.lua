@@ -27,14 +27,17 @@ local function max_hint_len(size, base)
     return len
 end
 
-local function charset(seq, size)
-    local sub, reverse, concat = string.sub, string.reverse, table.concat
+-- Reverse a UTF8 string: multibyte sequences are reversed twice
+local function utf8_rev (s)
+    s = s:gsub(utf8.charpattern, function (ch) return #ch > 1 and ch:reverse() end)
+    return s:reverse()
+end
 
-    local base, digits, labels = #seq, {}, {}
-    for i = 1, base do rawset(digits, i, sub(seq, i, i)) end
+local function charset(seq, size)
+    local base, digits, labels = utf8.len(seq), {}, {}
+    for ch in seq:gmatch(utf8.charpattern) do digits[#digits+1] = ch end
 
     local maxlen = max_hint_len(size, base)
-    local zeroseq = string.rep(rawget(digits, 1), maxlen)
 
     for n = 1, size do
         local t, i, j, d = {}, 1, n
@@ -44,8 +47,7 @@ local function charset(seq, size)
             i = i + 1
         until n == 0
 
-        rawset(labels, j, sub(zeroseq, 1, maxlen - i + 1)
-            .. reverse(concat(t, "")))
+        rawset(labels, j, string.rep(digits[1], maxlen-i+1) .. utf8_rev(table.concat(t, "")))
     end
     return labels
 end
@@ -107,10 +109,9 @@ local label_styles = {
     -- Chainable style: reverses label strings
     reverse = function (make_labels)
         return function (size)
-            local rawset, rawget, reverse = rawset, rawget, string.reverse
             local labels = make_labels(size)
             for i = 1, #labels do
-                rawset(labels, i, reverse(rawget(labels, i)))
+                rawset(labels, i, utf8_rev(rawget(labels, i)))
             end
             return labels
         end
@@ -121,7 +122,7 @@ local label_styles = {
             local labels = make_labels(size)
             for n = 1, #labels do
                 local cur = rawget(labels, n)
-                local rep = cur:sub(1, #cur-1)
+                local rep = cur:gsub(utf8.charpattern.."$", "")
                 local is_prefix = false
                 for nn = 1, #labels do
                     if nn ~= n and rawget(labels, nn):find(rep, 1, true) == 1 then

@@ -28,6 +28,16 @@
 -- `follow` module provides the `follow` and `ex-follow` user interface on top
 -- of that.
 --
+-- ## Hinting with non-latin letters
+--
+-- If you use a keyboard layout with non-latin keys, you may prefer to use
+-- non-latin letters to hint. For example, using the Cyrillic alphabet, the
+-- above code could be changed to the following:
+--
+--     ...
+--     return s.sort(s.reverse(s.charset("ФЫВАПРОЛДЖЭ")))
+--     ...
+--
 -- # Matching only hint labels, not element text
 --
 -- If you prefer not to match element text, and wish to select hints only by
