@@ -126,7 +126,7 @@ local function S_get(domain, key, persist)
         if tree[k] ~= nil then return tree[k] end
     end
     local val = get(S, domain, key)
-    if val then return val, setting_src(domain, key) end
+    if val ~= nil then return val, setting_src(domain, key) end
     if persist then
         val = get(persisted_settings, domain, key)
         if val ~= nil then return val, "persisted" end
