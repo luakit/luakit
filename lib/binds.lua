@@ -546,6 +546,7 @@ modes.add_cmds({
                     setfenv(ret, setmetatable({}, { __index = function (_, k)
                         if _G[k] ~= nil then return _G[k] end
                         if k == "w" then return w end
+                        if package.loaded[k] then return package.loaded[k] end
             end, __newindex = _G }))
         ret()
     end
