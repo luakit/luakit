@@ -295,7 +295,7 @@ end
 
 local global_comment = "/* i really want this to be global */"
 local file_looks_like_old_format = function (source)
-    return not source:find("@-moz-document",1,true) and not source:lower():find(global_comment)
+    return not source:find("@-moz-document",1,true) and not source:lower():find(global_comment, 1, true)
 end
 
 --- Load the contents of a file as a stylesheet for a given domain.
