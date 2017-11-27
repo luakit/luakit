@@ -488,7 +488,7 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         end
     end
 
-    page.document:add_signal("destroy", function () _M.leave(page_id) end)
+    page.document:add_signal("destroy", function () page_states[page_id] = nil end)
 
     filter(state, "", "")
     return focus(state, 0), state.num_visible_hints
