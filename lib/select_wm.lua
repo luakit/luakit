@@ -120,18 +120,16 @@ local label_styles = {
     trim = function (make_labels)
         return function (size)
             local labels = make_labels(size)
-            for n = 1, #labels do
-                local cur = rawget(labels, n)
-                local rep = cur:gsub(utf8.charpattern.."$", "")
-                local is_prefix = false
-                for nn = 1, #labels do
-                    if nn ~= n and rawget(labels, nn):find(rep, 1, true) == 1 then
-                        is_prefix = true
-                        break
+            local P = {}
+            for _, l in ipairs(labels) do
+                local p = l:gsub(utf8.charpattern.."$", "")
+                P[p] = (P[p] or 0) + 1
+            end
+            for p, count in pairs(P) do
+                if count == 1 then
+                    for i, l in ipairs(labels) do
+                        if l:sub(1, #p) == p then labels[i] = p end
                     end
-                end
-                if not is_prefix and rep ~= "" then
-                    rawset(labels, n, rep)
                 end
             end
             return labels
