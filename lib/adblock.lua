@@ -377,7 +377,9 @@ local function read_subscriptions(file)
     -- Read lines into subscriptions data table
     for line in io.lines(file) do
         local title, uri, opts = unpack(util.string.split(line, "\t"))
-        if title ~= "" then add_list(uri, title, opts, false, false) end
+        if title ~= "" and os.exists(adblock_dir..title) then
+            add_list(uri, title, opts, false, false)
+        end
     end
 end
 
