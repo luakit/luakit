@@ -564,6 +564,7 @@ function _M.focused_hint(page)
 end
 
 ui:add_signal("set_label_maker", function (_, _, f)
+    setfenv(f, label_styles)
     label_maker = f(label_styles)
 end)
 
