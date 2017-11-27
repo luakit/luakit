@@ -11,17 +11,23 @@
 -- Another example would be hinting all images on the page, and opening the
 -- followed image in a new tab.
 --
--- # Using a custom character set for hint labels
+-- # Customizing hint labels
 --
 -- If you prefer to use letters instead of numbers for hint labels (useful if
 -- you use a non-qwerty keyboard layout), this can be done by replacing the
 -- @ref{label_maker} function:
 --
---     -- Use "asdfqwerzxcv" for generating labels
 --     local select = require "select"
---     select.label_maker = function (s)
---         return s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+--
+--     select.label_maker = function ()
+--         local chars = charset("asdfqwerzxcv")
+--         return trim(sort(reverse(chars)))
 --     end
+--
+-- Here, the `charset()` function generates hints using the specified letters.
+-- For a full explanation of what the `trim(sort(reverse(...)))` construction
+-- does, see the @ref{select} module documentation; the short explanation is
+-- that it makes hints as short as possible, saving you typing.
 --
 -- Note: this requires modifying the @ref{select} module because the actual
 -- link hinting interface is implemented in the `select` module; the
@@ -35,7 +41,17 @@
 -- above code could be changed to the following:
 --
 --     ...
---     return s.sort(s.reverse(s.charset("ФЫВАПРОЛДЖЭ")))
+--     local chars = charset("ФЫВАПРОЛДЖЭ")
+--     ...
+--
+-- ## Alternating between left- and right-handed letters
+--
+-- To make link hints easier to type, you may prefer to have them alternate
+-- between letters on the left and right side of your keyboard. This is easy to
+-- do with the `interleave()` label composer function.
+--
+--     ...
+--     local chars = interleave("qwertasdfgzxcvb", "yuiophjklnm")
 --     ...
 --
 -- # Matching only hint labels, not element text
