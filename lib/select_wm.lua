@@ -333,10 +333,14 @@ local function init_frame(frame, stylesheet)
 end
 
 local function cleanup_frame(frame)
-    frame.overlay:remove()
-    frame.stylesheet:remove()
-    frame.overlay = nil
-    frame.stylesheet = nil
+    if frame.overlay then
+        frame.overlay:remove()
+        frame.overlay = nil
+    end
+    if frame.stylesheet then
+        frame.stylesheet:remove()
+        frame.stylesheet = nil
+    end
 end
 
 local function hint_matches(hint, hint_pat, text_pat)
@@ -488,7 +492,11 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         end
     end
 
-    page.document:add_signal("destroy", function () page_states[page_id] = nil end)
+    for _, frame in ipairs(state.frames) do
+        frame.doc:add_signal("destroy", function ()
+            cleanup_frame(frame)
+        end)
+    end
 
     filter(state, "", "")
     return focus(state, 0), state.num_visible_hints
