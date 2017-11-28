@@ -317,3 +317,5 @@ hardware_acceleration_policy
 allow_file_access_from_file_urls
 allow_universal_access_from_file_urls
 client_rects
+root_win_xid
+win_xid
