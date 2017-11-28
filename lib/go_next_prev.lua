@@ -30,7 +30,8 @@ local go_next = [=[
     if (e) // Wow a developer that knows what he's doing!
         click(e);
     else { // Search from the bottom of the page up for a next link.
-        var els = document.getElementsByTagName("a");
+        var els = Array.from(document.getElementsByTagName("a")).filter(
+            elem => elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
         var res = "^\\s*(下一页|下一章|下一张|下一篇|下页|后页)>?\\s*$,\\bnext\\b," +
                   "^>$,^(>>|»|→|≫)$,^(>|»),(>|»)$,\\bmore\\b,\\bnewer\\b"
         for (let r of res.split(",").map(r => new RegExp(r, "i"))) {
@@ -63,7 +64,8 @@ local go_prev = [=[
     if (e)
         click(e);
     else {
-        var els = document.getElementsByTagName("a");
+        var els = Array.from(document.getElementsByTagName("a")).filter(
+            elem => elem.offsetWidth || elem.offsetHeight || elem.getClientRects().length);
         var res = "^\\s*<?(上一页|上一章|上一张|上一篇|上页|前页)\\s*$," +
                   "\\b(prev|previous)\\b,^<$,^(<<|«|←|≪)$,^(<|«),(<|«)$,\\bolder\\b"
         for (let r of res.split(",").map(r => new RegExp(r, "i"))) {
