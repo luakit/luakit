@@ -304,6 +304,10 @@ local function make_labels(num)
 end
 
 local function find_frames(root_frame)
+    if not root_frame.body then
+        return {}
+    end
+
     local subframes = root_frame.body:query("frame, iframe")
     local frames = { root_frame }
 
