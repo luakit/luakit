@@ -139,24 +139,36 @@ function _M.build(w)
     _M.bywidget[w.win] = w
 end
 
+local function window_notebook_page_switch_cb (nb)
+    local w = _M.ancestor(nb)
+    if not w or w.tabs ~= nb then return end
+
+    w:set_mode()
+    w.view = nil
+    -- Update widgets after tab switch
+    luakit.idle_add(function ()
+        -- Cancel if window already destroyed
+        if not w.win then return end
+        w.view:emit_signal("switched-page")
+        w:update_win_title()
+    end)
+end
+
+local function set_window_notebook(w, nb)
+    assert(w_priv[w], "invalid window table")
+    assert(type(nb) == "widget" and nb.type, "invalid notebook widget")
+
+    local old_nb = w_priv[w].tabs
+    if old_nb then
+        old_nb:remove_signal("switch-page", window_notebook_page_switch_cb)
+    end
+    nb:add_signal("switch-page", window_notebook_page_switch_cb)
+    w_priv[w].tabs = nb
+end
+
 -- Table of functions to call on window creation. Normally used to add signal
 -- handlers to the new windows widgets.
 local init_funcs = {
-    -- Attach notebook widget signals
-    notebook_signals = function (w)
-        w.tabs:add_signal("switch-page", function ()
-            w:set_mode()
-            w.view = nil
-            -- Update widgets after tab switch
-            luakit.idle_add(function ()
-                -- Cancel if window already destroyed
-                if not w.win then return end
-                w.view:emit_signal("switched-page")
-                w:update_win_title()
-            end)
-        end)
-    end,
-
     last_win_check = function (w)
         w.win:add_signal("destroy", function ()
             -- call the quit function if this was the last window left
@@ -648,7 +660,8 @@ _M.methods = {
 -- @readwrite
 _M.indexes = {
     -- Find function in window.methods first
-    function (_, k) return _M.methods[k] end
+    function (_, k) return _M.methods[k] end,
+    function (w, k) return k == "tabs" and w_priv[w].tabs or nil end,
 }
 
 _M.add_signal("build", _M.build)
@@ -669,6 +682,10 @@ function _M.new(args)
                 if v then return v end
             end
         end,
+        __newindex = function (_, k, v)
+            if k == "tabs" then return set_window_notebook(w, v) end
+            rawset(w, k, v)
+        end
     })
 
     -- Setup window widget for signals
