@@ -22,7 +22,6 @@ T.test_undo_close_works = function ()
     test.wait_for_view(w.view)
 
     -- Try to open the menu
-    assert(#w.closed_tabs == 0 or w.closed_tabs == nil)
     local notify_spy = spy.on(window.methods, "notify")
     w:run_cmd(":undolist")
     assert.spy(notify_spy).was.called_with(match._, "No closed tabs to display")
@@ -31,17 +30,12 @@ T.test_undo_close_works = function ()
     -- Close the tab
     w:close_tab()
     assert(w.tabs:current() == 1)
-    assert(#w.closed_tabs == 1)
-    local tab = w.closed_tabs[1]
-    assert(tab.uri == uri)
-    assert(tab.title == "undoclose_page")
 
     -- Try to open the menu again
     notify_spy = spy.on(window.methods, "notify")
     w:run_cmd(":undolist")
     assert.spy(notify_spy).was_not_called_with(match._, "No closed tabs to display")
     assert(w:is_mode("undolist"))
-    assert(w.menu:nrows() == #w.closed_tabs + 1) -- +1 for heaeding
     w:set_mode("normal")
 
     -- Undo-close the tab
@@ -49,7 +43,6 @@ T.test_undo_close_works = function ()
     assert(w.tabs:current() == 2)
     test.wait_for_view(w.view)
 
-    assert(#w.closed_tabs == 0)
     assert(w.view.uri == uri)
     assert(w.view.title == "undoclose_page")
 
