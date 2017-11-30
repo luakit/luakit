@@ -157,6 +157,14 @@
 --- @method destroy
 -- Destroy the widget.
 
+--- @method replace
+-- Remove the widget from its parent, replacing it with `other`. All child
+-- properties, such as the arrangement and relative position of the widget
+-- within its parent, are maintained.
+--
+-- If the widget does not have a parent, this method does nothing.
+-- @tparam widget other The replacement widget.
+
 --- @method remove
 -- Remove a specific child widget from the widget. Only certain types of
 -- widgets have this property: specifically, the box, event box, notebook,

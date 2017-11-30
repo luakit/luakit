@@ -31,6 +31,7 @@
  - Added `markup` option to window `set_prompt()` method.
  - Added `detach-tab` signal.
  - Added support for multi-byte characters in hints.
+ - Added widget `replace` method.
 
 ### Changed
 

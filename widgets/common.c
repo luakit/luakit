@@ -271,6 +271,44 @@ luaH_widget_get_children(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_replace(lua_State *L)
+{
+    widget_t *och = luaH_checkwidget(L, 1);
+    widget_t *nch = luaH_checkwidget(L, 2);
+
+    GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(och->widget));
+    if (!parent)
+        return 0;
+
+    guint num_props;
+    GParamSpec **props = gtk_container_class_list_child_properties(
+            G_OBJECT_GET_CLASS(parent), &num_props);
+
+    GValue *values = g_new0(GValue, num_props);
+    for (guint i = 0; i < num_props; i++)
+    {
+        g_value_init(&values[i], G_PARAM_SPEC_VALUE_TYPE(props[i]));
+        gtk_container_child_get_property(GTK_CONTAINER(parent),
+                GTK_WIDGET(och->widget), props[i]->name, &values[i]);
+    }
+
+    g_object_ref(G_OBJECT(och->widget));
+    gtk_container_remove(GTK_CONTAINER(parent), GTK_WIDGET(och->widget));
+
+    gtk_container_add(GTK_CONTAINER(parent), GTK_WIDGET(nch->widget));
+    for (guint i = 0; i < num_props; i++)
+    {
+        gtk_container_child_set_property(GTK_CONTAINER(parent),
+                GTK_WIDGET(nch->widget), props[i]->name, &values[i]);
+        g_value_unset(&values[i]);
+    }
+
+    g_free(props);
+    g_free(values);
+    return 0;
+}
+
+gint
 luaH_widget_show(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
