@@ -203,6 +203,8 @@ local abp_to_pattern = function (s)
             v = string.lower(v)
             s[k] = v
         end
+    else
+        s = {""}
     end
 
     return s, opts, domain, false
