@@ -30,7 +30,13 @@ local function convert_bind_syntax(b)
         return "<".. (mods and (mods.."-") or "") .. key .. ">"
     end
     -- Otherwise, make it a buffer bind; wrap in ^$ if necessary
-    return string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
+    b = string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
+    if utf8.len(b) == 3 then
+        local nb = convert_bind_syntax(b:sub(2,-2))
+        msg.verbose("implicitly converting bind '%s' to '%s'", b, nb)
+        b = nb
+    end
+    return b
 end
 
 local function convert_binds_table(binds)
