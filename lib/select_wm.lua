@@ -187,6 +187,9 @@ local function get_element_bb_if_visible(element, wbb, page)
 
     if has_client_rects_api then
         r = element:client_rects()
+        for i=#r,1,-1 do
+            if r[i].width == 0 or r[i].height == 0 then table.remove(r, i) end
+        end
         if #r == 0 then return nil end
         r = r[1]
     else
