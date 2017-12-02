@@ -43,13 +43,15 @@ local settings_chrome_JS = [=[
     function on_change (event) {
         let i = event.target;
         if (!i.matches(".setting input")) return;
-        let root = i.parentElement.parentElement;
+        let root = i.closest(".setting");
         let type = root.dataset.type;
         let key = root.querySelector(".title").innerHTML;
         let value;
         if (type == "boolean")
+        {
             value = i.checked;
-        else
+            root.querySelector("label>span").innerHTML = value ? "Enabled" : "Disabled";
+        } else
             value = i.value;
         set_setting(key, value, type).then(function(error) {
             root.classList.toggle("has-error", error)
@@ -175,8 +177,15 @@ local build_settings_entry_html = function (meta)
 
     local input
     if meta.type == "boolean" then
-        input = ([==[<input type=checkbox {checked} {disabled} />]==]):gsub("{(%w+)}", {
+        local fmt = ([==[
+            <label>
+                <input type=checkbox {checked} {disabled} />
+                <span>{text}</span>
+            </label>
+        ]==])
+        input = fmt:gsub("{(%w+)}", {
                 checked = meta.value and "checked=true" or "",
+                text = meta.value and "Enabled" or "Disabled",
             })
     elseif meta.type == "enum" then
         input = ""
