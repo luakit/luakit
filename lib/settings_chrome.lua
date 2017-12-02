@@ -157,7 +157,7 @@ local build_settings_entry_html = function (meta)
             <td style="position: relative;">
                 <div class=title>{key}</div>
                 <div class=desc>{desc}</div>
-                <span class=tooltip><b>Error: </b><span class="error-message"></span><span>
+                <span class=tooltip><b>Error: </b><span class="error-message"></span></span>
             </td>
             <td class=input>
                 {input}
