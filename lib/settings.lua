@@ -17,7 +17,8 @@ local settings_list = {}
 local settings_groups
 
 local S = {
-    domain = {}, -- keyed by domain, then by setting name
+    domain = { [""] = {}, }, -- keyed by domain, then by setting name
+    source = { [""] = {}, }, -- can be default, persisted, config, or a module name
     view_overrides = setmetatable({}, { __mode = "k" }),
 }
 
@@ -37,10 +38,9 @@ do
         for sn, v in pairs(persisted_settings.global) do
             pgs[sn] = v
         end
+        persisted_settings.global = nil
     end
 end
-
-local module_overrides = {}
 
 local function validate_settings_path (k)
     assert(type(k) == "string", "invalid settings path type: " .. type(k))
@@ -90,6 +90,13 @@ _M.register_settings = function (list)
 
     for k, s in pairs(list) do
         settings_list[k] = s
+
+        local default, source = s.default, "default"
+        if persisted_settings.domain[""][k] ~= nil then
+            default, source = persisted_settings.domain[""][k], "persisted"
+        end
+        S.domain[""][k] = default
+        S.source[""][k] = source
     end
 
     settings_groups = nil
@@ -123,58 +130,92 @@ local function setting_validate_new_value (section, k, v)
     end
 end
 
-local function setting_src(d, k)
-    return (not d) and module_overrides[k] or "rc"
+local function S_get(domain, key)
+    domain = domain or ""
+    local tree = S.domain[domain] or {}
+    return tree[key] ~= nil and tree[key] or nil
 end
 
-local function S_get(domain, key, persist)
-    domain = domain or ""
-    local function get(root, d, k)
-        local tree = root.domain[d]
-        if not tree then return nil end -- no rules for this domain
-        if tree[k] ~= nil then return tree[k] end
+local function get_overriding_module(domain, sn)
+    local om = S.source[domain][sn]
+    if om ~= "persisted" and om ~= "config" and om ~= "default" then
+        return om
     end
-    local val = get(S, domain, key)
-    if val ~= nil then return val, setting_src(domain, key) end
-    if persist then
-        val = get(persisted_settings, domain, key)
-        if val ~= nil then return val, "persisted" end
-    end
-    return settings_list[key].default, "default"
 end
 
 local function S_set(domain, key, val, persist)
     domain = domain or ""
     setting_validate_new_value(domain, key, val)
+
     local function set(root, d, k, v)
         local tree = root.domain[d] or {}
         root.domain[d] = tree
         tree[k] = v
     end
+
     if persist then
         set(persisted_settings, domain, key, val)
         local fh = io.open(luakit.data_dir .. "/settings", "wb")
         fh:write(lousy.pickle.pickle(persisted_settings))
         io.close(fh)
-    else
-        if setting_src(domain, key) ~= "rc" then return end
-        set(S, domain, key, val)
     end
+
+    S.source[domain] = S.source[domain] or {}
+    local source = S.source[domain][key]
+    if get_overriding_module(domain, key) then return end
+    if persist and source == "config" then return end
+
+    set(S, domain, key, val)
+    S.source[domain][key] = persist and "persisted" or "config"
     _M.emit_signal("setting-changed", {
         key = key, value = val, domain = domain,
     })
 end
 
-local function S_get_table(section, k)
-    local tbl = S_get(section, k)
+local function S_set_table(domain, sn, key, val, persist)
+    assert(not domain, "unimplemented")
+    assert(not persist, "unimplemented")
+    domain = domain or ""
+
+    local meta = assert(settings_list[sn], "bad setting name "..sn)
+    assert(meta.type:find(":"), sn .. " isn't a table setting")
+    -- TODO: validation of key, val
+
+    if persist then
+        local tbl = persisted_settings[domain][sn]
+        tbl[key] = val
+        local fh = io.open(luakit.data_dir .. "/settings", "wb")
+        fh:write(lousy.pickle.pickle(persisted_settings))
+        io.close(fh)
+    end
+
+    local source = S.source[domain][sn]
+    if get_overriding_module(domain, sn) then return end
+    if persist and source == "config" then return end
+
+    local tbl = S.domain[domain][sn]
+    tbl[key] = val
+    S.source[domain][sn] = persist and "persisted" or "config"
+    _M.emit_signal("setting-changed", {
+        key = sn, value = val, domain = domain,
+    })
+end
+
+local function new_settings_table_node(domain, sn)
+    domain = domain or ""
     return setmetatable({}, {
-        __index = tbl,
-        __newindex = tbl,
+        __index = function (_, k)
+            local tbl = (S.domain[domain] or {})[sn] or {}
+            return tbl[k]
+        end,
+        __newindex = function (_, k, v)
+            S_set_table(nil, sn, k, v)
+        end,
         __metatable = false,
     })
 end
 
-local function S_set_table(section, k, v)
+local function S_overwrite_table(section, k, v)
     assert(section)
     local tree, tbl = S.domain[section] or {}, {}
     S.domain[section] = tree
@@ -200,18 +241,21 @@ local uri_domain_cache = {}
 -- @return The value of the setting.
 _M.get_setting_for_view = function (view, key)
     assert(type(view) == "widget" and view.type == "webview")
+    -- view-specific overrides
     local tree, uri = S.view_overrides[view], view.uri
     if tree and tree[key] then return tree[key] end
+    -- domain-specific values
     if uri ~= uri_domain_cache.uri then
         uri_domain_cache.uri = uri
         uri_domain_cache.domains = lousy.uri.domains_from_uri(uri)
     end
     local domains = uri_domain_cache.domains
     for _, domain in ipairs(domains) do
-        local value = (S.domain[domain] or {})[key] -- S_get uses default
+        local value = (S.domain[domain] or {})[key]
         if value ~= nil then return value, domain end
     end
-    return ({S_get(nil, key, true)})[1]
+    -- non-domain-specific / default value
+    return S.domain[""][key]
 end
 
 --- Add or remove a view-specific override for a setting.
@@ -235,11 +279,11 @@ end
 -- @param The value of the setting override.
 _M.override_setting = function (key, value)
     local mod = debug.getinfo(2, "S").short_src:gsub(".*/", ""):gsub("%.lua$","")
-    if module_overrides[key] and module_overrides[key] ~= mod then
-        error("already overriden by '"..module_overrides[key].."'")
-    end
+    local override = get_overriding_module("", key)
+    if override and override ~= mod then error("already overriden by '"..override.."'") end
+    S.source[""][key] = "default"
     S_set(nil, key, value)
-    module_overrides[key] = mod
+    S.source[""][key] = mod
 end
 
 --- Retrieve the value of a setting, whether it's explicitly set or the default.
@@ -249,10 +293,8 @@ end
 -- The settings key must be a valid settings key.
 -- @tparam string key The key of the setting to retrieve.
 -- @return The value of the setting.
--- @treturn string The source of the setting value. One of
--- `"persisted"`, `"rc"`, `"default"`, or a module name.
 _M.get_setting = function (key)
-    return S_get(nil, key, true)
+    return S_get(nil, key)
 end
 
 --- Assign a value to a setting. Values assigned in this way are persisted to
@@ -273,7 +315,7 @@ end
 _M.get_settings = function ()
     local ret = {}
     for k, meta in pairs(settings_list) do
-        local value, src = _M.get_setting(k)
+        local value, src = _M.get_setting(k), S.source[""][k]
         ret[k] = {
             type = meta.type,
             desc = meta.desc,
@@ -318,8 +360,8 @@ new_settings_node = function (prefix, section)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
         if type == "value" then
-            local getter = (settings_list[full_path].type == "table") and S_get_table or S_get
-            return (getter)(meta.section, full_path, true) -- true is for S_get only (persisted vars)
+            local getter = (settings_list[full_path].type == "table") and new_settings_table_node or S_get
+            return (getter)(meta.section, full_path)
         end
         if type == "group" then
             meta.subnodes[k] = new_settings_node(full_path, meta.section)
@@ -330,7 +372,7 @@ new_settings_node = function (prefix, section)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
         if type == "value" then
-            local setter = (settings_list[full_path].type == "table") and S_set_table or S_set
+            local setter = (settings_list[full_path].type == "table") and S_overwrite_table or S_set
             setter(meta.section, full_path, v)
         elseif type == "group" then
             error("cannot assign a value to a settings group")
