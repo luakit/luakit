@@ -80,9 +80,6 @@ _M.html_style = [===[
 .setting {
     padding: 1rem;
 }
-.setting:hover {
-    background: #f6f6f6;
-}
 .setting .title {
     font-family: monospace;
     font-size: 1.3rem;
@@ -103,7 +100,9 @@ _M.html_style = [===[
     visibility: visible;
     opacity: 1.0;
 }
-.setting.disabled {
+
+/* ensures that the gradient connects between <td> */
+#settings {
     background: repeating-linear-gradient(
         45deg,
         #fafafa,
@@ -111,6 +110,15 @@ _M.html_style = [===[
         #f6f6f6 10px,
         #f6f6f6 20px
     );
+}
+.setting:not(.disabled) {
+    background: white;
+}
+.setting:hover {
+    background: #f6f6f6;
+}
+.setting.disabled {
+    background: transparent;
 }
 
 .tooltip {
