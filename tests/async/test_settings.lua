@@ -14,8 +14,11 @@ T.test_settings = function ()
     settings.register_settings({
         ["test.setting.with.long.path"] = {
             default = "foo",
+            type = "string",
         },
-        ["foo.bar"] = {},
+        ["foo.bar"] = {
+            type = "number",
+        },
     })
 
     assert.equal(settings.test.setting.with.long.path, "foo")

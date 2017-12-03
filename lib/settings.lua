@@ -86,6 +86,7 @@ _M.register_settings = function (list)
         validate_settings_path(k)
         assert(type(s) == "table", "setting '"..k.."' not a table")
         assert(not settings_list[k], "setting '"..k.."' already registered")
+        assert(type(s.type) == "string", "setting '"..k.."' missing type")
     end
 
     for k, s in pairs(list) do
@@ -120,7 +121,7 @@ local function setting_validate_new_kv_pair (meta, k, v)
 end
 
 local function setting_validate_new_value (section, k, v)
-    local meta = settings_list[k]
+    local meta = assert(settings_list[k], "bad setting " .. k)
     if meta.domain_specific == true and not section then
         error(string.format("Setting '%s' is domain-specific", k))
     elseif meta.domain_specific == false and section then
