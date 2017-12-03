@@ -17,8 +17,7 @@ local settings_list = {}
 local settings_groups
 
 local S = {
-    global = {}, -- Values for settings.foo
-    domain = {}, -- Values for settings.on["domain"].foo
+    domain = {}, -- keyed by domain, then by setting name
     view_overrides = setmetatable({}, { __mode = "k" }),
 }
 
@@ -29,7 +28,16 @@ do
         local path = luakit.data_dir .. "/settings"
         return lousy.pickle.unpickle(lousy.load(path))
     end)
-    if not ok then persisted_settings = { global = {}, domain = {}} end
+    if not ok then persisted_settings = { domain = {}, } end
+
+    -- move .domain to .global[""]
+    local pgs = persisted_settings.domain[""] or {}
+    persisted_settings.domain[""] = pgs
+    if persisted_settings.global then
+        for sn, v in pairs(persisted_settings.global) do
+            pgs[sn] = v
+        end
+    end
 end
 
 local module_overrides = {}
@@ -120,8 +128,9 @@ local function setting_src(d, k)
 end
 
 local function S_get(domain, key, persist)
+    domain = domain or ""
     local function get(root, d, k)
-        local tree = not d and root.global or root.domain[d]
+        local tree = root.domain[d]
         if not tree then return nil end -- no rules for this domain
         if tree[k] ~= nil then return tree[k] end
     end
@@ -135,10 +144,11 @@ local function S_get(domain, key, persist)
 end
 
 local function S_set(domain, key, val, persist)
+    domain = domain or ""
     setting_validate_new_value(domain, key, val)
     local function set(root, d, k, v)
-        if d then root.domain[d] = root.domain[d] or {} end
-        local tree = not d and root.global or root.domain[d]
+        local tree = root.domain[d] or {}
+        root.domain[d] = tree
         tree[k] = v
     end
     if persist then
@@ -165,9 +175,9 @@ local function S_get_table(section, k)
 end
 
 local function S_set_table(section, k, v)
-    local tbl = {}
-    if section then S.domain[section] = S.domain[section] or {} end
-    local tree = not section and S.global or S.domain[section]
+    assert(section)
+    local tree, tbl = S.domain[section] or {}, {}
+    S.domain[section] = tree
     tree[k] = tbl
     -- TODO: add validation for tables
     for kk, vv in pairs(v) do tbl[kk] = vv end
@@ -296,6 +306,7 @@ local function new_domain_node()
 end
 
 new_settings_node = function (prefix, section)
+    assert(section ~= "")
     local meta = { __metatable = false, subnodes = {}, section = section }
 
     if not prefix and not section then -- True root node generates on[] subnode
