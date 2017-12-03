@@ -199,7 +199,7 @@ local build_settings_entry_html = function (meta)
                     checked = (meta.value == k) and "checked=true " or "",
                 })
         end
-    elseif meta.type == "table" then
+    elseif meta.type:find(":") then
         input = "<i>Not yet implemented</i>"
     else
         input = [==[<input type=text value="{value}" {disabled} />]==]

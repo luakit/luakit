@@ -95,11 +95,28 @@ _M.register_settings = function (list)
         if persisted_settings.domain[""][k] ~= nil then
             default, source = persisted_settings.domain[""][k], "persisted"
         end
+        if s.type:find(":") then
+            default = lousy.util.table.clone(default)
+        end
         S.domain[""][k] = default
         S.source[""][k] = source
     end
 
     settings_groups = nil
+end
+
+local function setting_validate_new_kv_pair (meta, k, v)
+    local ktype, vtype = meta.type:match("^(.*):(.*)$")
+    for kk, vv in pairs(v) do
+        if ktype ~= "" and type(kk) ~= ktype then
+            error(string.format("Wrong type for setting '%s' key: expected %s, got %s",
+                k, ktype, type(kk)))
+        end
+        if vtype ~= "" and type(vv) ~= vtype then
+            error(string.format("Wrong type for setting '%s' value (key %s): expected %s, got %s",
+                k, kk, vtype, type(vv)))
+        end
+    end
 end
 
 local function setting_validate_new_value (section, k, v)
@@ -115,9 +132,11 @@ local function setting_validate_new_value (section, k, v)
             error(string.format("Wrong type for setting '%s': expected one of %s",
                 k, opts))
         end
-    elseif meta.type and type(v) ~= meta.type then
+    elseif not meta.type:find(":") and type(v) ~= meta.type then
         error(string.format("Wrong type for setting '%s': expected %s, got %s",
             k, meta.type, type(v)))
+    elseif meta.type:find(":") then
+        setting_validate_new_kv_pair(meta, k, v)
     end
     if meta.type == "number" then
         if (meta.min and v < meta.min) or (meta.max and v > meta.max) then
@@ -179,7 +198,7 @@ local function S_set_table(domain, sn, key, val, persist)
 
     local meta = assert(settings_list[sn], "bad setting name "..sn)
     assert(meta.type:find(":"), sn .. " isn't a table setting")
-    -- TODO: validation of key, val
+    setting_validate_new_kv_pair(meta, sn, { [key]=val })
 
     if persist then
         local tbl = persisted_settings[domain][sn]
@@ -316,6 +335,7 @@ _M.get_settings = function ()
     local ret = {}
     for k, meta in pairs(settings_list) do
         local value, src = _M.get_setting(k), S.source[""][k]
+        if meta.type:find(":") then value = lousy.util.table.clone(value) end
         ret[k] = {
             type = meta.type,
             desc = meta.desc,
@@ -360,7 +380,7 @@ new_settings_node = function (prefix, section)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
         if type == "value" then
-            local getter = (settings_list[full_path].type == "table") and new_settings_table_node or S_get
+            local getter = settings_list[full_path].type:find(":") and new_settings_table_node or S_get
             return (getter)(meta.section, full_path)
         end
         if type == "group" then
@@ -372,7 +392,7 @@ new_settings_node = function (prefix, section)
         local full_path = (prefix and (prefix..".") or "") .. k
         local type = get_settings_path_type(full_path)
         if type == "value" then
-            local setter = (settings_list[full_path].type == "table") and S_overwrite_table or S_set
+            local setter = settings_list[full_path].type:find(":") and S_overwrite_table or S_set
             setter(meta.section, full_path, v)
         elseif type == "group" then
             error("cannot assign a value to a settings group")
