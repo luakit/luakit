@@ -11,6 +11,7 @@ local chrome = require "chrome"
 local modes = require "modes"
 local settings = require "settings"
 local markdown = require "markdown"
+local lousy = require "lousy"
 
 local _M = {}
 
@@ -58,15 +59,21 @@ local settings_chrome_JS = [=[
             root.querySelector(".error-message").innerHTML = error;
         });
     }
+    function on_click (event) {
+        let btn = event.target;
+        if (!btn.matches("td.tbl_row_actions > a")) return;
+        event.preventDefault();
+    }
     document.body.addEventListener("input", on_change)
     document.body.addEventListener("change", on_change)
+    document.body.addEventListener("click", on_click)
 ]=]
 
 --- CSS applied to the settings chrome page.
 -- @type string
 -- @readwrite
 _M.html_style = [===[
-#settings {
+#settings, table.input {
     width: 100%;
     border-collapse: collapse;
 }
@@ -159,7 +166,51 @@ _M.html_style = [===[
     display: block;
 }
 
+table.input td {
+    font-family: monospace;
+    padding: 0.1rem 0.3rem;
+}
+table.input th {
+    padding: 0.3rem;
+    font-size: 0.9rem;
+    font-weight: normal;
+    text-align: left;
+    padding-bottom: 0.3rem;
+    border-bottom: 1px solid #777;
+}
+
 ]===]
+
+local function build_settings_entry_table_html(meta)
+    local rows = {}
+    for k, v in pairs(meta.value) do
+        rows[#rows+1] = { key = k, value = v }
+    end
+    table.sort(rows, function (a, b) return a.key < b.key end)
+
+    local rows_html = ""
+    for _, row in ipairs(rows) do
+        local k = lousy.util.escape(tostring(row.key))
+        local v = lousy.util.escape(tostring(row.value))
+        local row_html = [==[
+            <tr>
+                <td>{key}</td><td>{val}</td>
+            </tr>
+        ]==]
+        rows_html = rows_html .. row_html:gsub("{(%w+)}", { key = k, val = v })
+    end
+
+    return ([==[
+        <table class=input>
+            <thead>
+                <tr><th>Key</th><th>Value</th></tr>
+            </thead>
+            <tbody>
+                {rows}
+            </tbody>
+        </table>
+    ]==]):gsub("{(%w+)}", { rows = rows_html:gsub("%%","%%%%") } )
+end
 
 local build_settings_entry_html = function (meta)
     local settings_entry_fmt = [==[
@@ -170,6 +221,16 @@ local build_settings_entry_html = function (meta)
                 <span class=tooltip><b>Error: </b><span class="error-message"></span></span>
             </td>
             <td class=input>
+                {input}
+            </td>
+        </tr>
+    ]==]
+    local settings_table_entry_fmt = [==[
+        <tr class="setting {disabled}" data-type={type}>
+            <td colspan=2 style="position: relative;">
+                <div class=title>{key}</div>
+                <div class=desc>{desc}</div>
+                <span class=tooltip><b>Error: </b><span class="error-message"></span></span>
                 {input}
             </td>
         </tr>
@@ -208,12 +269,13 @@ local build_settings_entry_html = function (meta)
                 })
         end
     elseif meta.type:find(":") then
-        input = "<i>Not yet implemented</i>"
+        input = build_settings_entry_table_html(meta)
     else
         input = [==[<input type=text value="{value}" {disabled} />]==]
     end
 
-    return settings_entry_fmt:gsub("{input}", input):gsub("{(%w+)}", {
+    local fmt = meta.type:find(":") and settings_table_entry_fmt or settings_entry_fmt
+    return fmt:gsub("{input}", input):gsub("{(%w+)}", {
             disabled = disabled_attr,
             type = meta.type,
             key = meta.key,
