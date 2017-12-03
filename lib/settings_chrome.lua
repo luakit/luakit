@@ -80,6 +80,9 @@ _M.html_style = [===[
 .setting > td {
     padding: 0.7rem 1rem;
 }
+.setting > td.input {
+    -webkit-user-select: none;
+}
 .content-margin {
     padding-left: 0;
     padding-right: 0;
@@ -104,7 +107,7 @@ _M.html_style = [===[
     background: #fdd;
 }
 .setting.has-error .tooltip {
-    visibility: visible;
+    display: block;
     opacity: 1.0;
 }
 
@@ -136,7 +139,7 @@ _M.html_style = [===[
     padding: 0.6em 0.75rem;
     border-radius: 4px;
     position: absolute;
-    visibility: hidden;
+    display: none;
     opacity: 0;
     transition: opacity 0.2s;
     white-space: nowrap;
