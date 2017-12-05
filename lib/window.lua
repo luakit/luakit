@@ -356,14 +356,15 @@ _M.methods = {
 
     -- Set and display the prompt
     set_prompt = function (w, text, opts)
-        local input, layout = w.ibar.input, w.ibar.layout
         opts = opts or {}
+
+        -- Set theme
+        local fg, bg = opts.fg or theme.ok.fg, opts.bg or theme.ok.bg
+        w.ibar.input.fg = fg
+
         local function set_widget (prompt)
-            -- Set theme
-            local fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
-            if input.fg ~= fg then input.fg = fg end
-            if prompt.fg ~= fg then prompt.fg = fg end
-            if layout.bg ~= bg then layout.bg = bg end
+            prompt.fg = fg
+            prompt.parent.bg = bg
             -- Set text, or hide
             if text then
                 prompt.text = opts.markup and text or lousy.util.escape(text)
