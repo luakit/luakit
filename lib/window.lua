@@ -558,7 +558,7 @@ _M.methods = {
     search_open = function (_, arg)
         local lstring = lousy.util.string
         local match, find = string.match, string.find
-        local search_engines = settings.window.search_engines
+        local search_engines = settings.get_setting("window.search_engines")
 
         -- Detect blank uris
         if not arg or match(arg, "^%s*$") then return settings.window.new_tab_page end
@@ -598,9 +598,9 @@ _M.methods = {
             end
         end
 
-        -- Find search engine (or use search_engines.default)
-        local engine = "default"
-        if args[1] and args[1] ~= "default" and search_engines[args[1]] then
+        -- Find search engine (or use default_search_engine)
+        local engine = settings.get_setting("window.default_search_engine")
+        if args[1] and search_engines[args[1]] then
             engine = args[1]
             table.remove(args, 1)
         end
@@ -784,6 +784,16 @@ settings.register_settings({
             default     = "https://google.com/search?q=%s",
         },
         desc = "The set of search engine shortcuts.",
+    },
+    ["window.default_search_engine"] = {
+        type = "string",
+        default = "default",
+        validator = function (v) return settings.window.search_engines[v] end,
+        desc = [=[
+            The default search engine alias.
+
+            Must be a key of `window.search_engines`.
+        ]=],
     },
     ["window.scroll_step"] = {
         type = "number", min = 0,
