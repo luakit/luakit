@@ -235,10 +235,10 @@ local function new_settings_table_node(domain, sn)
     })
 end
 
-local function S_overwrite_table(section, k, v)
-    assert(section)
-    local tree, tbl = S.domain[section] or {}, {}
-    S.domain[section] = tree
+local function S_overwrite_table(domain, k, v)
+    domain = domain or ""
+    local tree, tbl = S.domain[domain] or {}, {}
+    S.domain[domain] = tree
     tree[k] = tbl
     -- TODO: add validation for tables
     for kk, vv in pairs(v) do tbl[kk] = vv end
