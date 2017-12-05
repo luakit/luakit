@@ -70,8 +70,6 @@ function _M.build(w)
             ebox    = eventbox(),
             prompt  = label(),
             input   = entry(),
-            prompt_text = "",
-            input_text = "",
         },
         bar_layout = vbox(),
     }
@@ -331,7 +329,7 @@ _M.methods = {
     end,
 
     update_sbar_visibility = function (w)
-        if w.ibar.prompt_text or w.ibar.input_text then
+        if w_priv[w].prompt_text or w_priv[w].input_text then
             w.ibar.ebox:show()
             w.sbar.ebox:hide()
         else
@@ -357,7 +355,7 @@ _M.methods = {
             prompt.text = opts.markup and text or lousy.util.escape(text)
             prompt:show()
         end
-        w.ibar.prompt_text = text
+        w_priv[w].prompt_text = text
         w:update_sbar_visibility()
     end,
 
@@ -377,7 +375,7 @@ _M.methods = {
             input:focus()
             input.position = opts.pos or -1
         end
-        w.ibar.input_text = text
+        w_priv[w].input_text = text
         w:update_sbar_visibility()
     end,
 
