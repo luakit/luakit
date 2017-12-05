@@ -606,9 +606,15 @@ _M.methods = {
         end
         local e = search_engines[engine] or "%s"
 
-        -- URI encode search terms
         local terms = table.concat(args, " ")
-        return type(e) == "string" and string.format(e, luakit.uri_encode(terms)) or e(terms)
+        if type(e) == "string" then
+            -- concatenate manually to ignore other string.format() escapes
+            local l, r = e:match("^(.-)%%s(.-)$")
+            l, r = l or "", r or "" -- silently fallback to "%s" on error
+            return l .. luakit.uri_encode(terms) .. r
+        else
+            return e(terms)
+        end
     end,
 
     -- Increase (or decrease) the last found number in the current uri
