@@ -64,6 +64,11 @@ function _M.build(w)
         menu = lousy.widget.menu(),
         menu_tabs = overlay(),
 
+        mbar = {
+            ebox = eventbox(),
+            label = label(),
+        },
+
         -- Input bar widgets
         ibar = {
             layout  = hbox(),
@@ -71,7 +76,7 @@ function _M.build(w)
             prompt  = label(),
             input   = entry(),
         },
-        bar_layout = vbox(),
+        bar_layout = widget{type="stack"},
     }
 
     -- Replace values in w
@@ -106,6 +111,11 @@ function _M.build(w)
     s.ebox.child = s.layout
     w.bar_layout:pack(s.ebox)
 
+    -- Pack message bar
+    local m = w.mbar
+    m.ebox.child = m.label
+    w.bar_layout:pack(m.ebox)
+
     -- Pack menu widget
     w.menu_tabs:pack(w.menu.widget, { halign = "fill", valign = "end" })
     w.menu:hide()
@@ -121,6 +131,7 @@ function _M.build(w)
     i.layout.css = "transition: 0.0s ease-in-out;"
     i.input.css = "transition: 0.0s ease-in-out;"
 
+    w.bar_layout.homogeneous = true
     w.layout:pack(w.bar_layout)
 
     -- Other settings
@@ -204,7 +215,7 @@ local init_funcs = {
     end,
 
     apply_window_theme = function (w)
-        local s, i = w.sbar, w.ibar
+        local s, m, i = w.sbar, w.mbar, w.ibar
 
         -- Set foregrounds
         for wi, v in pairs({
@@ -224,6 +235,7 @@ local init_funcs = {
 
         -- Set fonts
         for wi, v in pairs({
+            [m.label]    = theme.prompt_ibar_font,
             [i.prompt]   = theme.prompt_ibar_font,
             [i.input]    = theme.input_ibar_font,
         }) do wi.font = v end
@@ -252,7 +264,6 @@ local init_funcs = {
 
     hide_ui_on_fullscreen = function (w)
         w.win:add_signal("property::fullscreen", function (win)
-            w.sbar.layout.visible = not win.fullscreen
             w:update_sbar_visibility()
             w.tablist.visible = not win.fullscreen
         end)
@@ -329,32 +340,40 @@ _M.methods = {
     end,
 
     update_sbar_visibility = function (w)
-        if w_priv[w].prompt_text or w_priv[w].input_text then
-            w.ibar.ebox:show()
-            w.sbar.ebox:hide()
+        if (not w.win.fullscreen) or w_priv[w].prompt_text or w_priv[w].input_text then
+            w.bar_layout.visible = true
         else
-            w.ibar.ebox:hide()
-            if not w.win.fullscreen then
-                w.sbar.ebox:show()
-            end
+            w.bar_layout.visible = false
+        end
+        if w_priv[w].input_text then
+            w.bar_layout.visible_child = w.ibar.ebox
+        elseif w_priv[w].prompt_text then
+            w.bar_layout.visible_child = w.mbar.ebox
+        else
+            w.bar_layout.visible_child = w.sbar.ebox
         end
     end,
 
     -- Set and display the prompt
     set_prompt = function (w, text, opts)
-        local input, prompt, layout = w.ibar.input, w.ibar.prompt, w.ibar.layout
+        local input, layout = w.ibar.input, w.ibar.layout
         opts = opts or {}
-        prompt:hide()
-        -- Set theme
-        local fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
-        if input.fg ~= fg then input.fg = fg end
-        if prompt.fg ~= fg then prompt.fg = fg end
-        if layout.bg ~= bg then layout.bg = bg end
-        -- Set text or remain hidden
-        if text then
-            prompt.text = opts.markup and text or lousy.util.escape(text)
-            prompt:show()
+        local function set_widget (prompt)
+            -- Set theme
+            local fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
+            if input.fg ~= fg then input.fg = fg end
+            if prompt.fg ~= fg then prompt.fg = fg end
+            if layout.bg ~= bg then layout.bg = bg end
+            -- Set text, or hide
+            if text then
+                prompt.text = opts.markup and text or lousy.util.escape(text)
+                prompt:show()
+            else
+                prompt:hide()
+            end
         end
+        set_widget(w.ibar.prompt)
+        set_widget(w.mbar.label)
         w_priv[w].prompt_text = text
         w:update_sbar_visibility()
     end,
@@ -363,7 +382,6 @@ _M.methods = {
     set_input = function (w, text, opts)
         local input = w.ibar.input
         opts = opts or {}
-        input:hide()
         -- Set theme
         local fg, bg = opts.fg or theme.ibar_fg, opts.bg or theme.ibar_bg
         if input.fg ~= fg then input.fg = fg end
@@ -371,7 +389,6 @@ _M.methods = {
         -- Set text or remain hidden
         if text then
             input.text = text
-            input:show()
             input:focus()
             input.position = opts.pos or -1
         end
