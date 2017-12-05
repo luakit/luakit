@@ -798,7 +798,7 @@ settings.register_settings({
         desc = "Luakit windows should close after all of their tabs are closed.",
     },
     ["window.search_engines"] = {
-        type = "string:string",
+        type = "string:",
         default = {
             duckduckgo  = "https://duckduckgo.com/?q=%s",
             github      = "https://github.com/search?q=%s",
