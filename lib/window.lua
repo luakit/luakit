@@ -436,6 +436,7 @@ _M.methods = {
 
     -- close the current tab
     close_tab = function (w, view, blank_last)
+        assert(view == nil or (type(view) == "widget" and view.type == "webview"))
         view = view or w.view
         w:emit_signal("close-tab", view)
         w:detach_tab(view, blank_last)
@@ -443,6 +444,7 @@ _M.methods = {
     end,
 
     attach_tab = function (w, view, switch, order)
+        assert(view == nil or (type(view) == "widget" and view.type == "webview"))
         local taborder = package.loaded.taborder
         -- Get tab order function
         if not order and taborder then
@@ -454,6 +456,7 @@ _M.methods = {
     end,
 
     detach_tab = function (w, view, blank_last)
+        assert(view == nil or (type(view) == "widget" and view.type == "webview"))
         view = view or w.view
         w:emit_signal("detach-tab", view)
         view.parent:remove(view)
@@ -521,6 +524,7 @@ _M.methods = {
 
     -- Navigate current view or open new tab
     navigate = function (w, arg, view)
+        assert(view == nil or (type(view) == "widget" and view.type == "webview"))
         view = view or w.view
         if not view then return w:new_tab(arg) end
         require("webview").set_location(view, arg)
