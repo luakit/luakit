@@ -40,6 +40,8 @@
       return luaH_widget_get_min_size(L, widget);     \
     case L_TK_ALIGN:                                  \
       return luaH_widget_get_align(L, widget);        \
+    case L_TK_CHILDREN:                               \
+      return luaH_widget_get_children(L, widget);     \
     case L_TK_SHOW:                                   \
       lua_pushcfunction(L, luaH_widget_show);         \
       return 1;                                       \
@@ -79,8 +81,6 @@
     case L_TK_REMOVE:                                 \
       lua_pushcfunction(L, luaH_widget_remove);       \
       return 1;                                       \
-    case L_TK_CHILDREN:                               \
-      return luaH_widget_get_children(L, widget);
 
 #define LUAKIT_WIDGET_SIGNAL_COMMON(w)                       \
     "signal::destroy",         G_CALLBACK(destroy_cb),    w, \
