@@ -374,6 +374,54 @@ luaH_widget_set_min_size(lua_State *L, widget_t *w)
 }
 
 gint
+luaH_widget_get_align(lua_State *L, widget_t *w)
+{
+    GtkAlign halign = gtk_widget_get_halign(GTK_WIDGET(w->widget)),
+             valign = gtk_widget_get_valign_with_baseline(GTK_WIDGET(w->widget));
+    lua_createtable(L, 0, 2);
+    /* set align.h */
+    lua_pushliteral(L, "h");
+    lua_pushnumber(L, halign);
+    lua_rawset(L, -3);
+    /* set align.v */
+    lua_pushliteral(L, "v");
+    lua_pushnumber(L, valign);
+    lua_rawset(L, -3);
+    return 1;
+}
+
+gint
+luaH_widget_set_align(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+    GtkAlign halign = gtk_widget_get_halign(GTK_WIDGET(w->widget)),
+             valign = gtk_widget_get_valign_with_baseline(GTK_WIDGET(w->widget));
+    if (luaH_rawfield(L, 3, "h"))
+        switch (l_tokenize(lua_tostring(L, -1))) {
+            case L_TK_FILL:     halign = GTK_ALIGN_FILL;     break;
+            case L_TK_START:    halign = GTK_ALIGN_START;    break;
+            case L_TK_END:      halign = GTK_ALIGN_END;      break;
+            case L_TK_CENTER:   halign = GTK_ALIGN_CENTER;   break;
+            case L_TK_BASELINE: halign = GTK_ALIGN_BASELINE; break;
+            default:
+                return luaL_error(L, "Bad alignment value (expected fill, start, end, center, or baseline)");
+        }
+    if (luaH_rawfield(L, 3, "v"))
+        switch (l_tokenize(lua_tostring(L, -1))) {
+            case L_TK_FILL:     valign = GTK_ALIGN_FILL;     break;
+            case L_TK_START:    valign = GTK_ALIGN_START;    break;
+            case L_TK_END:      valign = GTK_ALIGN_END;      break;
+            case L_TK_CENTER:   valign = GTK_ALIGN_CENTER;   break;
+            case L_TK_BASELINE: valign = GTK_ALIGN_BASELINE; break;
+            default:
+                return luaL_error(L, "Bad alignment value (expected fill, start, end, center, or baseline)");
+        }
+    gtk_widget_set_halign(GTK_WIDGET(w->widget), halign);
+    gtk_widget_set_valign(GTK_WIDGET(w->widget), valign);
+    return 0;
+}
+
+gint
 luaH_widget_set_tooltip(lua_State *L, widget_t *w)
 {
     gtk_widget_set_tooltip_markup(w->widget, lua_tostring(L, 3) ?: "");
