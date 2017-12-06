@@ -131,6 +131,10 @@ function _M.build(w)
     i.layout.css = "transition: 0.0s ease-in-out;"
     i.input.css = "transition: 0.0s ease-in-out;"
 
+    m.label.align = { v = "center" }
+    i.prompt.align = { v = "center" }
+    s.layout.align = { v = "center" }
+
     w.bar_layout.homogeneous = true
     w.layout:pack(w.bar_layout)
 
