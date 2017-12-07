@@ -192,7 +192,7 @@ local init_funcs = {
 
     key_press_match = function (w)
         w.win:add_signal("key-press", function (_, mods, key, synthetic)
-            if synthetic and settings.window.act_on_synthetic_keys then
+            if synthetic and settings.get_setting("window.act_on_synthetic_keys") then
                 return false
             end
             -- Match & exec a bind
@@ -246,7 +246,7 @@ local init_funcs = {
     end,
 
     set_default_size = function (w)
-        local size = settings.window.new_window_size
+        local size = settings.get_setting("window.new_window_size")
         if string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
@@ -412,7 +412,7 @@ _M.methods = {
     update_win_title = function (w)
         local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
-        local max = settings.window.max_title_len
+        local max = settings.get_setting("window.max_title_len")
         if #title > max then title = string.sub(title, 1, max) .. "..." end
         w.win.title = title
     end,
@@ -480,12 +480,12 @@ _M.methods = {
         view = view or w.view
         w:emit_signal("detach-tab", view)
         view.parent:remove(view)
-        if settings.window.close_with_last_tab == true and w.tabs:count() == 0 then
+        if settings.get_setting("window.close_with_last_tab") == true and w.tabs:count() == 0 then
             w:close_win()
         end
         -- Treat a blank last tab as an empty notebook (if blank_last=true)
         if blank_last ~= false and w.tabs:count() == 0 then
-            w:new_tab(settings.window.new_tab_page, false)
+            w:new_tab(settings.get_setting("window.new_tab_page"), false)
         end
     end,
 
@@ -585,12 +585,12 @@ _M.methods = {
         local search_engines = settings.get_setting("window.search_engines")
 
         -- Detect blank uris
-        if not arg or match(arg, "^%s*$") then return settings.window.new_tab_page end
+        if not arg or match(arg, "^%s*$") then return settings.get_setting("window.new_tab_page") end
 
         arg = lstring.strip(arg)
 
         -- handle file paths before splitting arg (absolute paths only)
-        if settings.window.check_filepath then
+        if settings.get_setting("window.check_filepath") then
             local path = arg:gsub("^file://", "")
             if path:match("^/") and lfs.attributes(path) then
                 return "file://" .. path
@@ -612,7 +612,7 @@ _M.methods = {
 
             -- Valid hostnames to check
             local hosts = { "localhost" }
-            if settings.window.load_etc_hosts then
+            if settings.get_setting("window.load_etc_hosts") then
                 hosts = lousy.util.get_etc_hosts()
             end
 
@@ -745,7 +745,7 @@ function _M.new(args)
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(w:search_open(settings.window.home_page), false)
+        w:new_tab(w:search_open(settings.get_setting("window.home_page")), false)
     end
 
     return w
@@ -818,7 +818,7 @@ settings.register_settings({
     ["window.default_search_engine"] = {
         type = "string",
         default = "default",
-        validator = function (v) return settings.window.search_engines[v] end,
+        validator = function (v) return settings.get_setting("window.search_engines")[v] end,
         desc = [=[
             The default search engine alias.
 
