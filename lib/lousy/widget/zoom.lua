@@ -23,7 +23,7 @@ _M.format = "[zoom:%d%%]"
 local widgets = {
     update = function (w, zoom)
         local zl = w.view.zoom_level
-        if zl == settings.webview.zoom_level/100 then
+        if zl == settings.get_setting("webview.zoom_level") / 100 then
             zoom:hide()
         else
             zoom:show()

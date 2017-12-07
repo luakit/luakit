@@ -97,26 +97,26 @@ modes.add_binds("all", {
         while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out() end
     end },
     { "<Shift-Scroll>", "Scroll the current page left/right.", function (w, o)
-        w:scroll{ xrel = settings.window.scroll_step*o.dy }
+        w:scroll{ xrel = settings.get_setting("window.scroll_step")*o.dy }
     end },
 })
 
 local actions = { scroll = {
     up = {
         desc = "Scroll the current page up.",
-        func = function (w, m) w:scroll{ yrel = -settings.window.scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ yrel = -settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     down = {
         desc = "Scroll the current page down.",
-        func = function (w, m) w:scroll{ yrel =  settings.window.scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ yrel =  settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     left = {
         desc = "Scroll the current page left.",
-        func = function (w, m) w:scroll{ xrel = -settings.window.scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ xrel = -settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     right = {
         desc = "Scroll the current page right.",
-        func = function (w, m) w:scroll{ xrel =  settings.window.scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ xrel =  settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     page_up = {
         desc = "Scroll the current page up a full screen.",
@@ -129,11 +129,11 @@ local actions = { scroll = {
 }, zoom = {
     zoom_in = {
         desc = "Zoom in to the current page.",
-        func = function (w, m) w:zoom_in(settings.window.zoom_step * (m.count or 1)) end,
+        func = function (w, m) w:zoom_in(settings.get_setting("window.zoom_step") * (m.count or 1)) end,
     },
     zoom_out = {
         desc = "Zoom out from the current page.",
-        func = function (w, m) w:zoom_out(settings.window.zoom_step * (m.count or 1)) end,
+        func = function (w, m) w:zoom_out(settings.get_setting("window.zoom_step") * (m.count or 1)) end,
     },
     zoom_set = {
         desc = "Zoom to a specific percentage when specifying a count, and reset the page zoom otherwise.",
@@ -379,7 +379,7 @@ modes.add_binds("normal", {
     { "g0", "Go to first tab.", function (w) w:goto_tab(1) end },
     { "g$", "Go to last tab.", function (w) w:goto_tab(-1) end },
 
-    { "<Control-t>", "Open a new tab.", function (w) w:new_tab(settings.window.new_tab_page) end },
+    { "<Control-t>", "Open a new tab.", function (w) w:new_tab(settings.get_setting("window.new_tab_page")) end },
     { "<Control-w>", "Close current tab.", function (w) w:close_tab() end },
     { "d", "Close current tab (or `[count]` tabs).",
         function (w, m) for _=1,m.count do w:close_tab() end end, {count=1} },
@@ -396,8 +396,8 @@ modes.add_binds("normal", {
                 (w.tabs:current() + m.count) % w.tabs:count())
         end, {count=1} },
 
-    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(settings.window.home_page) end },
-    { "^gh$", "Open homepage.", function (w) w:navigate(settings.window.home_page) end },
+    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(settings.get_setting("window.home_page")) end },
+    { "^gh$", "Open homepage.", function (w) w:navigate(settings.get_setting("window.home_page")) end },
     { "^gy$", "Duplicate current tab.",
         function (w, m)
             local params = {{ session_state = w.view.session_state }, { private = w.view.private }}
