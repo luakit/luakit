@@ -13,6 +13,7 @@
 local _M = {}
 
 local tab = require("lousy.widget.tab")
+local webview = require("webview")
 
 tab.add_signal("build", function (tl, view)
     local label = tl.widget.child
@@ -49,7 +50,8 @@ tab.add_signal("build", function (tl, view)
     view:add_signal("favicon", update_favicon)
     -- luakit:// URIs don't emit favicon signal
     view:add_signal("property::uri", function (v)
-        if v.uri:match("^luakit://") then update_favicon(v) end
+        if webview.has_load_block(v) then update_favicon(v) return end
+        if v.uri:match("^luakit://") then update_favicon(v) return end
     end)
 
     local is_loading_cb = function (v)
