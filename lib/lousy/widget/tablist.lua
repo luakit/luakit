@@ -233,7 +233,7 @@ function _M.new(notebook, orientation)
         __newindex = function (tbl, key, val)
             if key == "visible" then
                 data[tbl].visible = val
-                update_tablist_visibility()
+                update_tablist_visibility(tlist)
             end
         end,
         __index = function (tbl, key)
