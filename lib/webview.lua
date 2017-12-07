@@ -175,12 +175,12 @@ _M.methods = {
 
     -- Zoom functions
     zoom_in = function (view, _, step)
-        step = step or settings.window.zoom_step
+        step = step or settings.get_setting("window.zoom_step")
         view.zoom_level = view.zoom_level + step
     end,
 
     zoom_out = function (view, _, step)
-        step = step or settings.window.zoom_step
+        step = step or settings.get_setting("window.zoom_step")
         view.zoom_level = math.max(0.01, view.zoom_level) - step
     end,
 
