@@ -144,6 +144,7 @@ luaH_scrolled_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
       LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       case L_TK_SCROLLBARS:
         return luaH_widget_get_scrollbars(L, w);
