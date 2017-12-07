@@ -333,6 +333,14 @@ function _M.modify_load_block(view, name, enable)
     end
 end
 
+--- Check whether the given webview has a load block.
+-- @tparam widget view The webview.
+-- @treturn boolean `true` if the given webview has a load block.
+function _M.has_load_block(view)
+    assert(type(view) == "widget" and view.type == "webview")
+    return next(webview_state[view].blockers) ~= nil
+end
+
 --- Set the location of the webview. This method will respect any load blocks in
 -- place (see @ref{modify_load_block}).
 -- @tparam widget view The view whose location to modify.
