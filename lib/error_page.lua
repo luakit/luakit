@@ -49,13 +49,9 @@ _M.style = [===[
         display: flex;
         align-items: center;
         justify-content: center;
-        background: repeating-linear-gradient(
-            45deg,
-            #ddd,
-            #ddd 10px,
-            #dadada 10px,
-            #dadada 20px
-        );
+        background: url('data:image/gif;base64,R0lGODlhHAAcAPAAANra2t3d3SH5BAAAAAAALAAAA \
+            AAcABwAAAI+DI6Zwe2vInrUSVnzjblu1VHfElrjUZpn2pwoa7hwvMIuMN+5zt54z0v5bMHSEChD1 \
+            oTF0JGZhC6Nzc6zVAAAOw==');
     }
 
     #errorContainer {
@@ -88,13 +84,9 @@ _M.style = [===[
 -- @readwrite
 _M.cert_style = [===[
     body {
-        background: repeating-linear-gradient(
-            45deg,
-            #bf5959,
-            #bf5959 10px,
-            #b55 10px,
-            #b55 20px
-        );
+        background: url('data:image/gif;base64,R0lGODlhHAAcAPAAAL9ZWbtVVSH5BAAAAAAALAAAA \
+            AAcABwAAAI+RI6ZwO2vInrUSVnzjblu1VHfElrjUZpn2pwoa7hwvMJuMN+5zt54z0v5bMHSEChD1 \
+            oTF0JGZhC6Nzc6zVAAAOw==');
     }
     #errorContainer {
         border: 2px solid #666;

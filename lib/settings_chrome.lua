@@ -113,13 +113,9 @@ _M.html_style = [===[
 
 /* ensures that the gradient connects between <td> */
 #settings {
-    background: repeating-linear-gradient(
-        45deg,
-        #fafafa,
-        #fafafa 10px,
-        #f6f6f6 10px,
-        #f6f6f6 20px
-    );
+    background: url('data:image/gif;base64,R0lGODlhHAAcAPAAAPb29vr6+iH5BAAAAAAALAAAA \
+        AAcABwAAAI+DI6Zwe2vInrUSVnzjblu1VHfElrjUZpn2pwoa7hwvMIuMN+5zt54z0v5bMHSEChD1 \
+        oTF0JGZhC6Nzc6zVAAAOw==');
 }
 .setting:not(.disabled) {
     background: white;
