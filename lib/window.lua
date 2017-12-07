@@ -632,10 +632,11 @@ _M.methods = {
 
         local terms = table.concat(args, " ")
         if type(e) == "string" then
-            -- concatenate manually to ignore other string.format() escapes
-            local l, r = e:match("^(.-)%%s(.-)$")
-            l, r = l or "", r or "" -- silently fallback to "%s" on error
-            return l .. luakit.uri_encode(terms) .. r
+            if e:find("%%", 1, true) then
+                return string.format(e, luakit.uri_encode(terms))
+            end
+            terms = luakit.uri_encode(terms):gsub("%%", "%%%%")
+            return ({e:gsub("%%s", terms)})[1]
         else
             return e(terms)
         end
