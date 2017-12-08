@@ -186,6 +186,7 @@ local function set_notebook(tlist, nb)
             end
         end
         data[tlist].notebook = nb
+        update_tablist_visibility(tlist)
     end
 end
 
