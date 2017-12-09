@@ -362,7 +362,7 @@ webview.add_signal("init", function (view)
         end
     end)
     view:add_signal("crashed", function(v)
-        handle_error(v, v.uri, { code = "crash", message = "Web process crashed" })
+        handle_error(v, v.uri or "about:blank", { code = "crash", message = "Web process crashed" })
     end)
     view:add_signal("go-back-forward", function (v, n)
         local vs = view_state[v]
