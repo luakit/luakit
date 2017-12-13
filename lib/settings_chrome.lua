@@ -193,16 +193,22 @@ local function build_settings_entry_table_html(meta)
     end
     table.sort(rows, function (a, b) return a.key < b.key end)
 
+    local formatter = meta.formatter or function (t, k)
+        return {
+            key = lousy.util.escape(tostring(k)),
+            value = lousy.util.escape(tostring(t[k])),
+        }
+    end
+
     local rows_html = ""
     for _, row in ipairs(rows) do
-        local k = lousy.util.escape(tostring(row.key))
-        local v = lousy.util.escape(tostring(row.value))
         local row_html = [==[
             <tr>
-                <td>{key}</td><td>{val}</td>
+                <td>{key}</td><td>{value}</td>
             </tr>
         ]==]
-        rows_html = rows_html .. row_html:gsub("{(%w+)}", { key = k, val = v })
+        local subs = formatter(meta.value, row.key)
+        rows_html = rows_html .. row_html:gsub("{(%w+)}", subs)
     end
 
     return ([==[

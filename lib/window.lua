@@ -815,6 +815,18 @@ settings.register_settings({
             default     = "https://google.com/search?q=%s",
         },
         desc = "The set of search engine shortcuts.",
+        formatter = function (t, k)
+            local v
+            if type(t[k]) == "string" then
+                v = t[k]:gsub("%%s", [[<span style="color:#060;font-weight:bold;">%%s</span>]])
+            else
+                v = [[<span style="font-style:italic;color:#333;">function</span>]]
+            end
+            return {
+                key = [==[<span style="font-family:monospace;">]==]..k..[==[</span>]==],
+                value = [==[<span style="font-family:monospace;">]==]..v..[==[</span>]==],
+            }
+        end,
     },
     ["window.default_search_engine"] = {
         type = "string",

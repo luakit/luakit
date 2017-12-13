@@ -344,6 +344,7 @@ _M.get_settings = function ()
             value = value,
             src = src,
             options = meta.options,
+            formatter = meta.formatter,
         }
     end
     return ret
