@@ -7,3 +7,4 @@ Terminal=false
 Type=Application
 Categories=Network;WebBrowser;
 MimeType=text/html;text/xml;application/xhtml+xml;x-scheme-handler/http;x-scheme-handler/https;
+Keywords=browser;network;navigator;micro-browser;keyboard;lua;fast;webbrowser;web;webkit;webkit2;webkit2gtk
