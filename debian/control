@@ -18,6 +18,8 @@ Package: luakit2
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}, lua-filesystem
+Conflicts: luakit (<= 2017.08.10)
+Replaces: luakit (<= 2017.08.10)
 Description: fast and small web browser extensible by Lua, WebKit2 based
  Luakit is a highly-configurable browser framework based on WebKit2GTK+.
  It is very fast and extensible by Lua.  It is primarily targeted at power

@@ -1,6 +1,6 @@
 [Desktop Entry]
 Name=Luakit
-Comment=Fast, small, webkit based micro-browser extensible by Lua
+Comment=Fast, small, webkit2 based micro-browser extensible by Lua
 Exec=luakit %u
 Icon=luakit
 Terminal=false
