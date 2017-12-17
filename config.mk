@@ -25,6 +25,7 @@ MANPREFIX  ?= $(PREFIX)/share/man
 DOCDIR     ?= $(PREFIX)/share/luakit/doc
 XDGPREFIX  ?= /etc/xdg
 PIXMAPDIR  ?= $(PREFIX)/share/pixmaps
+ICONDIR    ?= $(PREFIX)/share/icons
 APPDIR     ?= $(PREFIX)/share/applications
 LIBDIR     ?= $(PREFIX)/lib/luakit
 

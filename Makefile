@@ -32,6 +32,7 @@ options:
 	@echo "DOCDIR       = $(DOCDIR)"
 	@echo "XDGPREFIX    = $(XDGPREFIX)"
 	@echo "PIXMAPDIR    = $(PIXMAPDIR)"
+	@echo "ICONDIR      = $(ICONDIR)"
 	@echo "APPDIR       = $(APPDIR)"
 	@echo
 	@echo build targets:
@@ -113,6 +114,8 @@ install: all
 	install -m644 config/*.lua $(XDGPREFIX)/luakit/
 	install -d $(PIXMAPDIR)
 	install -m644 extras/luakit.png $(PIXMAPDIR)
+	install -d $(ICONDIR)
+	install -m644 extras/luakit.svg $(ICONDIR)
 	install -d $(APPDIR)
 	install -m644 extras/luakit.desktop $(APPDIR)
 	install -d $(MANPREFIX)/man1/
