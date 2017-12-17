@@ -4,7 +4,7 @@ export DEB_CFLAGS_MAINT_APPEND  = -Wall -pedantic -fstack-protector-strong -Wfor
 export DEB_CPPFLAGS_MAINT_APPEND  = -Wdate-time -D_FORTIFY_SOURCE=2
 export DEB_LDFLAGS_MAINT_APPEND = -Wl,--as-needed,-z,relro
 
-export VERSION='2.0.0'
+export VERSION='1.0'
 export PREFIX=/usr
 export DEVELOPMENT_PATHS=0
 export USE_LUAJIT=1
