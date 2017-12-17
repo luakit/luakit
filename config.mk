@@ -10,6 +10,9 @@ CPPFLAGS   +=
 VERSION    ?= $(shell ./build-utils/getversion.sh)
 CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
+# Debian specific's configuration
+DEB_BRANCH ?= $(shell ./build-utils/getdebbranch.sh)
+
 # === Default build options ==================================================
 
 DEVELOPMENT_PATHS ?= 0

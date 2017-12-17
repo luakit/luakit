@@ -91,7 +91,7 @@ doc: buildopts.h $(THEAD) $(TSRC)
 	doxygen -s doc/luakit.doxygen
 
 clean:
-	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
+	-rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
 install: all
 	install -d $(INSTALLDIR)/share/luakit/
@@ -134,3 +134,18 @@ run-tests: luakit luakit.so tests/util.so
 
 newline: options;@echo
 .PHONY: all clean options install newline apidoc doc default
+
+deb:
+	git rebase $(VERSION) $(DEB_BRANCH)
+	gbp buildpackage --git-pristine-tar --git-pristine-tar-commit -us -uc
+
+snapshot:
+	git fetch
+	git checkout $(DEB_BRANCH)
+	git merge $(VERSION)
+	gbp dch --snapshot --auto debian/
+	gbp buildpackage --git-ignore-new --git-pristine-tar --git-pristine-tar-commit -us -uc
+
+release:
+	gbp dch --commit --release --auto
+	gbp buildpackage -us -uc
