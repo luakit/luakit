@@ -193,6 +193,9 @@ local function parse_header(header, file)
         -- Parse `// @key value` lines in header.
         local key, val = string.match(line, "^// @([%w%-]+)%s+(.+)$")
         if key then
+            -- XXX: compatibility shim. @match and @include should have
+            -- different behaviour
+            if key == "match" then key = "include" end
             val = util.string.strip(val or "")
             if singles[key] then
                 -- Only grab the first of its kind
