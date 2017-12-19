@@ -140,6 +140,11 @@ local lstate = setmetatable({}, { __mode = "k" })
 -- @readonly
 _M.dir = luakit.data_dir .. "/scripts"
 
+local function match_pat(uri, p)
+    if type(p) == "regex" then uri, p = p, uri end
+    return uri:match(p)
+end
+
 -- Userscript class methods
 local prototype = {
     -- Run the userscript on the given webview widget
@@ -164,14 +169,14 @@ local prototype = {
     match = function (s, uri)
         local matches = false
         for _, p in ipairs(s.include) do
-            if string.match(uri, p) then
+            if match_pat(uri, p) then
                 matches = true
                 break
             end
         end
         if matches then
             for _, p in ipairs(s.exclude) do
-                if string.match(uri, p) then return false end
+                if match_pat(uri, p) then return false end
             end
         end
         return matches
@@ -181,8 +186,12 @@ local prototype = {
 -- Parse and convert a simple glob matching pattern in the `@include`,
 -- `@exclude` or `@match` userscript header options into an RE.
 local function parse_pattern(pat)
-    pat = string.gsub(string.gsub(pat, "[%^%$%(%)%%%.%[%]%+%-%?]", "%%%1"), "*", ".*")
-    return '^' .. pat .. '$'
+    if pat:match("^/.+/$") then
+        return regex{pattern = pat:sub(2, -2)}
+    else
+        pat = string.gsub(string.gsub(pat, "[%^%$%(%)%%%.%[%]%+%-%?]", "%%%1"), "*", ".*")
+        return '^' .. pat .. '$'
+    end
 end
 
 local function parse_header(header, file)
