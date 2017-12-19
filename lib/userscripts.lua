@@ -167,19 +167,12 @@ local prototype = {
     end,
     -- Check if the given uri matches the userscripts include/exclude patterns
     match = function (s, uri)
-        local matches = false
+        for _, p in ipairs(s.exclude) do
+            if match_pat(uri, p) then return false end
+        end
         for _, p in ipairs(s.include) do
-            if match_pat(uri, p) then
-                matches = true
-                break
-            end
+            if match_pat(uri, p) then return true end
         end
-        if matches then
-            for _, p in ipairs(s.exclude) do
-                if match_pat(uri, p) then return false end
-            end
-        end
-        return matches
     end,
 }
 
