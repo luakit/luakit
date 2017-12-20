@@ -152,7 +152,7 @@ local label_styles = {
             local P = {}
             for _, l in ipairs(labels) do
                 local p = l:gsub(utf8.charpattern.."$", "")
-                P[p] = (P[p] or 0) + 1
+                if #p > 0 then P[p] = (P[p] or 0) + 1 end
             end
             for p, count in pairs(P) do
                 if count == 1 then
