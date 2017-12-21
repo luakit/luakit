@@ -1,6 +1,15 @@
 @name Frequently Asked Questions
 # Frequently Asked Questions
 
+## General
+
+### How do I set luakit as my default browser?
+
+On systems that use `xdg-settings`, you can run the following command to set
+luakit as your default browser:
+
+    xdg-settings set default-web-browser luakit.desktop
+
 ## Downloads
 
 ### How do I change the default download location?
