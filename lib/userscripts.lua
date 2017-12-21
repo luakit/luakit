@@ -21,6 +21,7 @@ local new_mode = require("modes").new_mode
 local binds, modes = require("binds"), require("modes")
 local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
+local editor = require("editor")
 
 local _M = {}
 
@@ -345,7 +346,7 @@ new_mode("uscriptlist", {
             return
         end
         w.menu:build(rows)
-        w:notify("Use j/k to move, d delete, '*' indicates active scripts.",
+        w:notify("Use j/k to move, d delete, e edit. '*' indicates active scripts.",
             false)
     end,
 
@@ -361,6 +362,12 @@ add_binds("uscriptlist", util.table.join({
             if row and row.script then
                 _M.del(row.script.file)
                 w.menu:del()
+            end
+        end },
+    { "e", "Edit the currently highlighted userscript.", function (w)
+            local row = w.menu:get()
+            if row and row.script then
+                editor.edit(row.script.file)
             end
         end },
 }, menu_binds))
