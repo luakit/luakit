@@ -408,7 +408,7 @@ new_mode("uscriptlist", {
         end
         w.menu:build(rows)
         scripts_menu_rows[w] = rows
-        w:notify("Use j/k to move, d delete, e edit, <space> enable/disable.",
+        w:notify("Use j/k to move, e edit, <space> enable/disable.",
             false)
     end,
 
@@ -418,14 +418,6 @@ new_mode("uscriptlist", {
 })
 
 add_binds("uscriptlist", util.table.join({
-    { "d", "Delete the currently highlighted userscript.",
-        function (w)
-            local row = w.menu:get()
-            if row and row.script then
-                _M.del(row.script.file)
-                w.menu:del()
-            end
-        end },
     { "<space>", "Enable/disable the currently highlighted userscript.", function (w)
             local row = w.menu:get()
             if row and row.script then
