@@ -345,7 +345,7 @@ new_mode("uscriptlist", {
             return
         end
         w.menu:build(rows)
-        w:notify("Use j/k to move, d delete, o visit website, t tabopen, w winopen. '*' indicates active scripts.",
+        w:notify("Use j/k to move, d delete, '*' indicates active scripts.",
             false)
     end,
 
@@ -355,40 +355,12 @@ new_mode("uscriptlist", {
 })
 
 add_binds("uscriptlist", util.table.join({
-    -- Delete userscript
     { "d", "Delete the currently highlighted userscript.",
         function (w)
             local row = w.menu:get()
             if row and row.script then
                 _M.del(row.script.file)
                 w.menu:del()
-            end
-        end },
-
-    -- Open userscript homepage
-    { "o", "Open the currently highlighted userscript's homepage in the current tab.",
-        function (w)
-            local row = w.menu:get()
-            if row and row.script and row.script.homepage then
-                w:navigate(row.script.homepage)
-            end
-        end },
-
-    -- Open userscript homepage in new tab
-    { "t", "Open the currently highlighted userscript's homepage in a new tab.",
-        function (w)
-            local row = w.menu:get()
-            if row and row.script and row.script.homepage then
-                w:new_tab(row.script.homepage, { switch = false })
-            end
-        end },
-
-    -- Open userscript homepage in new window
-    { "w", "Open the currently highlighted userscript's homepage in a new window.",
-        function (w)
-            local row = w.menu:get()
-            if row and row.script and row.script.homepage then
-                window.new(row.script.homepage)
             end
         end },
 }, menu_binds))
