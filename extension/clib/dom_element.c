@@ -377,6 +377,38 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
         lua_rawset(L, -3);
     }
 
+    if (WEBKIT_DOM_IS_KEYBOARD_EVENT(event)) {
+        lua_pushliteral(L, "key");
+        gchar *key = webkit_dom_keyboard_event_get_key_identifier(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushstring(L, key);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "code");
+        glong code = webkit_dom_ui_event_get_char_code(WEBKIT_DOM_UI_EVENT(event));
+        lua_pushinteger(L, code);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "ctrl_key");
+        gboolean ctrl = webkit_dom_keyboard_event_get_ctrl_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, ctrl);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "alt_key");
+        gboolean alt = webkit_dom_keyboard_event_get_alt_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, alt);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "shift_key");
+        gboolean shift = webkit_dom_keyboard_event_get_shift_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, shift);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "meta_key");
+        gboolean meta = webkit_dom_keyboard_event_get_meta_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, meta);
+        lua_rawset(L, -3);
+    }
+
     luaH_object_push(L, func);
     luaH_dofunction(L, 1, 0);
 }
