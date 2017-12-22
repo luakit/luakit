@@ -365,9 +365,15 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
     lua_State *L = common.L;
 
     lua_createtable(L, 0, 1);
+    lua_pushvalue(L, -1); /* pushing copy of cb argument */
     lua_pushliteral(L, "target");
     WebKitDOMEventTarget *target = webkit_dom_event_get_src_element(event);
     luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "type");
+    gchar *type = webkit_dom_event_get_event_type(event);
+    lua_pushstring(L, type);
     lua_rawset(L, -3);
 
     if (WEBKIT_DOM_IS_MOUSE_EVENT(event)) {
@@ -411,6 +417,20 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
 
     luaH_object_push(L, func);
     luaH_dofunction(L, 1, 0);
+
+    /* after calling callback examine field 'cancel' in argument
+       passed to callback and if it set to true then call
+       stopPropagation */
+    lua_pushliteral(L, "cancel");
+    lua_rawget(L, -2);
+    if (lua_isboolean(L, -1)) {
+        lua_pushboolean(L, true);
+        if (lua_equal(L, -1, -2)) {
+            webkit_dom_event_stop_propagation(event);
+        }
+        lua_pop(L, 1);
+    }
+    lua_pop(L, 2);
 }
 
 static gint
