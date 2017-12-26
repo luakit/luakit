@@ -431,6 +431,28 @@ luaH_dom_element_add_event_listener(lua_State *L)
     return 1;
 }
 
+/* because we processing all events in one signle event_listener_cb
+   removing even listener will removes all listeners of this type on
+   element, probably we can somehow scan registered listeners and
+   remove only those one that have func as user data */
+static gint
+luaH_dom_element_remove_event_listener(lua_State *L)
+{
+    dom_element_t *element = luaH_check_dom_element(L, 1);
+    const gchar *type = luaL_checkstring(L, 2);
+    gboolean capture = lua_toboolean(L, 3);
+    /*luaH_checkfunction(L, 4);
+      gpointer func = luaH_object_ref(L, 4);*/
+
+    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
+
+    gboolean ret = webkit_dom_event_target_remove_event_listener(target, type,
+            G_CALLBACK(event_listener_cb), capture);
+
+    lua_pushboolean(L, ret);
+    return 1;
+}
+
 #if WEBKIT_CHECK_VERSION(2,18,0)
 static gint
 luaH_dom_element_client_rects(lua_State *L)
@@ -648,6 +670,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
         PF_CASE(ADD_EVENT_LISTENER, luaH_dom_element_add_event_listener)
+        PF_CASE(REMOVE_EVENT_LISTENER, luaH_dom_element_remove_event_listener)
 #if WEBKIT_CHECK_VERSION(2,18,0)
         PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
 #endif
