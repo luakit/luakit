@@ -161,6 +161,12 @@ local tab_favicons = require "tab_favicons"
 -- Add :view-source command
 local view_source = require "view_source"
 
+-- Add: custom rc file.
+-- Put "userrc.lua" in your Luakit config dir with your own tweaks; if this is
+-- permanent, no need to copy/paste/modify the default rc.lua whenever you
+-- update Luakit.
+local userrc = lousy.util.find_config("userrc.lua")
+if userrc then require "userrc" end
 -----------------------------
 -- End user script loading --
 -----------------------------
