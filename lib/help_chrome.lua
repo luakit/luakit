@@ -38,11 +38,18 @@ local index_html_template = [==[
             license.  It is primarily targeted at power users, developers and any people with too much time
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
-        <h2>Key bindings</h2>
+        <h2>Configuration</h2>
+        <h3>Settings</h3>
+        <p>The available settings are displayed at:</p>
+        <ul>
+            <li><a href="luakit://settings/">Settings</a></li>
+        </ul>
+        <h3>Key bindings</h3>
         <p>Currently active bindings are listed in the following page.</p>
         <ul>
             <li><a href="luakit://binds/">Bindings</a></li>
         </ul>
+        {chromepageshtml}
         <h2>API Documentation</h2>
         <ul>
             <li><a href="luakit://help/doc/index.html">API Index</a></li>
@@ -78,8 +85,24 @@ local index_html_template = [==[
 </body>
 ]==]
 
+local gen_html_chrome_pages = function()
+    local links = ""
+    for _, v in ipairs(chrome.available_handlers()) do
+        links = links .. "<li><a href=\"luakit://" .. v .. "\">" .. v .. "</a></li>\n"
+    end
+    return [==[
+        <h3>luakit:// pages</h3>
+        <p>These are all the available <code>luakit://</code> pages:</p>
+        <ul>
+]==] .. links .. "</ul>"
+end
+
 local help_index_page = function ()
-    local html_subs = { style = chrome.stylesheet, version = luakit.version, }
+    local html_subs = {
+        style = chrome.stylesheet,
+        version = luakit.version,
+        chromepageshtml = gen_html_chrome_pages(),
+    }
     local html = string.gsub(index_html_template, "{(%w+)}", html_subs)
     return html
 end
