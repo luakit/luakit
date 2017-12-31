@@ -9,6 +9,7 @@
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 local error_page = require("error_page")
+local lousy = require("lousy")
 local webview = require("webview")
 local window = require("window")
 local wm = require_web_module("chrome_wm")
@@ -169,6 +170,12 @@ _M.stylesheet = [===[
 local handlers = {}
 local on_first_visual_handlers = {}
 local page_funcs = {}
+
+--- Retrieve a list of the currently registered luakit:// handlers.
+-- @treturn {string} A list of `luakit://` handler names, in alphabetical order.
+function _M.available_handlers()
+    return lousy.util.table.keys(handlers)
+end
 
 --- Register a chrome page URI with an associated handler function.
 -- @tparam string page The name of the chrome page to register.
