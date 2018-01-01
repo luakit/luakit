@@ -290,6 +290,33 @@ function string.dedent(text, first)
     return first and rstring.sub(text, min + 1) or text
 end
 
+--- Find glyph backward (used in readline.lua).
+-- @tparam string s The string to be searched.
+-- @tparam number o The starting offset to search a glyph backward.
+-- @treturn number string Offset and glyph if found, otherwise nil.
+function string.prev_glyph (s, o)
+    if not o or not s or o > s:len() or o < 1 then return nil end
+    local glen = 0
+    for i = o, 1, -1 do
+        if s:sub(i):match("^"..utf8.charpattern) then
+            return i - 1, s:sub(i,i+glen)
+        else
+            glen = glen + 1
+        end
+    end
+    return nil
+end
+
+--- Find glyph forward (used in readline.lua).
+-- @tparam string s The string to be searched.
+-- @tparam number o The starting offset to search a glyph forward.
+-- @treturn number string Offset and glyph if found, otherwise nil.
+function string.next_glyph (s, o)
+    if not o or not s or o > s:len() or o < 1 then return nil end
+    local m = s:match(utf8.charpattern, o)
+    return o + #m, m
+end
+
 local function find_file(paths)
     for _, p in ipairs(paths) do
         if os.exists(p) then return p end

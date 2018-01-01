@@ -9,6 +9,8 @@
 
 local window = require "window"
 local lousy = require "lousy"
+local prev_glyph = lousy.util.string.prev_glyph
+local next_glyph = lousy.util.string.next_glyph
 
 local _M = {}
 
@@ -48,6 +50,62 @@ local actions =  {
             end
         end,
         desc = "Delete previous word.",
+    },
+    del_word_backward = {
+        func = function (w)
+            local i = w.ibar.input
+            local text = i.text
+            local pos = i.position
+            if text and utf8.len(text) > 1 and pos > 1 then
+                local right = string.sub(text, utf8.offset(text, pos + 1))
+                pos = utf8.offset(text, pos) - 1
+                while true
+                do
+                    local new_pos, glyph = prev_glyph(text, pos)
+                    if not new_pos or (glyph:len() == 1 and not glyph:find("%w")) then
+                        break
+                    end
+                    pos = new_pos
+                end
+                local left = ""
+                if pos then
+                    left = text:sub(2, pos)
+                end
+                i.text =  text:sub(1, 1) .. left .. right
+                i.position = utf8.len(left) + 1
+            end
+        end,
+        desc = "Delete word backward.",
+    },
+    del_word_forward = {
+        func = function (w)
+            local i = w.ibar.input
+            local text = i.text
+            local pos = i.position
+            if text and utf8.len(text) > 1 and pos < utf8.len(text) then
+                -- include current character
+                local left = text:sub(1, utf8.offset(text, pos + 1) - 1)
+                -- at least delete one character
+                pos = utf8.offset(text, pos + 2)
+                while true
+                do
+                    local new_pos, glyph = next_glyph(text, pos)
+                    if not new_pos or (glyph:len() == 1 and not glyph:find("%w")) then
+                        break
+                    end
+                    pos = new_pos
+                end
+                local right
+                if pos then
+                    right = text:sub(pos)
+                else
+                    right = ""
+                end
+                i.text = left .. right
+                i.position = utf8.len(left)
+            end
+        end,
+        desc = "Delete word forward.",
     },
     del_line = {
         func = function (w)
@@ -120,12 +178,19 @@ local actions =  {
             local i = w.ibar.input
             local text = i.text
             local pos = i.position
-            if text and #text > 1 then
-                local right = string.sub(text, pos+1)
-                if string.find(right, "%w+") then
-                    local _, move = string.find(right, "%w+")
-                    i.position = pos + move
+            if text and utf8.len(text) > 1 then
+                pos = pos + 1
+                local raw_pos = utf8.offset(text, pos + 1)
+                while true
+                do
+                    local glyph
+                    raw_pos, glyph = next_glyph(text, raw_pos)
+                    if not raw_pos or (glyph:len() == 1 and not glyph:find("%w")) then
+                        break
+                    end
+                    pos = pos + 1
                 end
+                i.position = pos
             end
         end,
         desc = "Move cursor forward one word.",
@@ -135,16 +200,27 @@ local actions =  {
             local i = w.ibar.input
             local text = i.text
             local pos = i.position
-            if text and #text > 1 and pos > 1 then
-                local left = string.reverse(string.sub(text, 2, pos))
-                if string.find(left, "%w+") then
-                    local _, move = string.find(left, "%w+")
-                    i.position = pos - move
+            if text and utf8.len(text) > 1 and pos > 1 then
+                local raw_pos = utf8.offset(text, pos) - 1
+                while true
+                do
+                    local glyph
+                    raw_pos, glyph = prev_glyph(text, raw_pos)
+                    pos = pos - 1
+                    if not raw_pos or (glyph:len() == 1 and not glyph:find("%w")) then
+                        break
+                    end
+                end
+                if not pos then
+                    i.position = 1
+                else
+                    i.position = pos
                 end
             end
         end,
         desc = "Move cursor backward one word.",
     },
+
     yank_text = {
         func = function (w)
             local i = w.ibar.input
@@ -162,18 +238,20 @@ local actions =  {
 -- @readwrite
 -- @type table
 _M.bindings = {
-    { "<Shift-Insert>", actions.paste            , {} },
-    { "<Control-w>",    actions.del_word         , {} },
-    { "<Control-u>",    actions.del_line         , {} },
-    { "<Control-h>",    actions.del_backward_char, {} },
-    { "<Control-d>",    actions.del_forward_char , {} },
-    { "<Control-a>",    actions.beg_line         , {} },
-    { "<Control-e>",    actions.end_line         , {} },
-    { "<Control-f>",    actions.forward_char     , {} },
-    { "<Control-b>",    actions.backward_char    , {} },
-    { "<Mod1-f>",       actions.forward_word     , {} },
-    { "<Mod1-b>",       actions.backward_word    , {} },
-    { "<Control-y>",    actions.yank_text        , {} },
+    { "<Shift-Insert>",       actions.paste                , {} },
+    { "<Control-w>",          actions.del_word             , {} },
+    { "<Mod1-BackSpace>",     actions.del_word_backward    , {} },
+    { "<Mod1-d>",             actions.del_word_forward     , {} },
+    { "<Control-u>",          actions.del_line             , {} },
+    { "<Control-h>",          actions.del_backward_char    , {} },
+    { "<Control-d>",          actions.del_forward_char     , {} },
+    { "<Control-a>",          actions.beg_line             , {} },
+    { "<Control-e>",          actions.end_line             , {} },
+    { "<Control-f>",          actions.forward_char         , {} },
+    { "<Control-b>",          actions.backward_char        , {} },
+    { "<Mod1-f>",             actions.forward_word         , {} },
+    { "<Mod1-b>",             actions.backward_word        , {} },
+    { "<Control-y>",          actions.yank_text            , {} },
 }
 
 window.add_signal("init", function (w)
