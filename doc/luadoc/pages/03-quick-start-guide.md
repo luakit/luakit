@@ -81,27 +81,6 @@ To customize luakit, you can define your own configuration by creating a
 is loaded automatically by luakit, if it exists. Any changes made to it will
 take effect after restarting luakit.
 
-### Location of configuration files
-
-When looking for a `.lua` file by name, luakit checks the following locations,
-in the order specified here:
-
-1. The current directory.
-2. System directories for Lua files.
-3. Luakit's collection of included modules (`/usr/share/luakit/lib/`).
-4. The user's personal luakit configuration directory (`/home/$USER/.config/luakit/`).
-5. The system configuration directories (`/etc/xdg/luakit/`).
-
-To list the directories luakit will search when loading modules, run the
-following command:
-
-    :lua w:notify(package.path:gsub(";","\n"))
-
-### Changing the theme
-
-Apart from `rc.lua`, the other configuration file is `theme.lua`, which
-specifies the fonts and colours used by the interface widgets.
-
 ### Changing key bindings
 
 To add/remove key bindings, use @ref{modes/add_binds} and @ref{remove_binds}
@@ -133,5 +112,26 @@ You can also check all the currently available key bindings in the
 <a href="luakit://binds">luakit://binds</a> page, for each of luakit's modes,
 along with their documentation and links to the exact location where they
 were defined.
+
+### Changing the theme
+
+Apart from `rc.lua`, the other configuration file is `theme.lua`, which
+specifies the fonts and colours used by the interface widgets.
+
+### Location of configuration files
+
+When looking for a `.lua` file by name, luakit checks the following locations,
+in the order specified here:
+
+1. The current directory.
+2. System directories for Lua files.
+3. Luakit's collection of included modules (`/usr/share/luakit/lib/`).
+4. The user's personal luakit configuration directory (`/home/$USER/.config/luakit/`).
+5. The system configuration directories (`/etc/xdg/luakit/`).
+
+To list the directories luakit will search when loading modules, run the
+following command:
+
+    :lua w:notify(package.path:gsub(";","\n"))
 
 <!-- vim: et:sw=4:ts=8:sts=4:tw=79 -->
