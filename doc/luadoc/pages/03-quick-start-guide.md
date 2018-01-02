@@ -130,7 +130,34 @@ specifies the fonts and colours used by the interface widgets.
 
 ### Changing key bindings
 
-To change key bindings, use @ref{modes/add_binds} and @ref{remove_binds}
-to add and remove key bindings.
+To add/remove key bindings, use @ref{modes/add_binds} and @ref{remove_binds}
+methods from the @ref{modes} module to do so.  For example, the following code
+re-binds `<Control-c>` so the selected text gets copied to the clipboard:
+
+    --- userconf.lua
+
+    local modes = require "modes"
+
+    modes.add_binds("normal", {{
+        "<Control-c>",
+        "Copy selected text.",
+        function ()
+            luakit.selection.clipboard = luakit.selection.primary
+        end
+    }})
+
+If you just want to re-map an existing action to a new keybinding, you can use
+the @ref{modes/remap_binds} method. For example:
+
+    -- maps "<Control-p>" to the same action as "gT" (go to previous tab), and
+    -- keeps "gT" binded as well
+    modes.remap_binds("normal", {
+        {"<Control-p>", "gT", true}
+    })
+
+You can also check all the currently available key bindings in the
+<a href="luakit://binds">luakit://binds</a> page, for each of luakit's modes,
+along with their documentation and links to the exact location where they
+were defined.
 
 <!-- vim: et:sw=4:ts=8:sts=4:tw=79 -->
