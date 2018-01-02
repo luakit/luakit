@@ -76,13 +76,15 @@ There are several different keys to scroll a webview:
 
 ### Beginning a custom configuration
 
-Luakit loads only one configuration file: `rc.lua`; that's the entry
-point for loading all the other configuration files and modules one might need,
-which are all written in Lua.
+To customize luakit, you can define your own configuration by creating a
+`userconf.lua` file in the `/home/$USER/.config/luakit/` directory. This file
+is loaded automatically by luakit, if it exists. Any changes made to it will
+take effect after restarting luakit.
 
-Any configuration file can load ("require") another Lua configuration file by
-specifying its name. When looking for a `.lua` file by name, luakit
-checks the following locations, in the order specified here:
+### Location of configuration files
+
+When looking for a `.lua` file by name, luakit checks the following locations,
+in the order specified here:
 
 1. The current directory.
 2. System directories for Lua files.
@@ -90,38 +92,10 @@ checks the following locations, in the order specified here:
 4. The user's personal luakit configuration directory (`/home/$USER/.config/luakit/`).
 5. The system configuration directories (`/etc/xdg/luakit/`).
 
-When launching luakit after a fresh install, it will look for the file
-`rc.lua` in these directories in order. If there is no such file in the
-personal luakit configuration directory, luakit will fall back to the
-global `/etc/xdg/luakit/rc.lua` file.
-
 To list the directories luakit will search when loading modules, run the
 following command:
 
     :lua w:notify(package.path:gsub(";","\n"))
-
-To customize luakit, we can define our own configuration by creating a
-`rc.lua` file in the `/home/$USER/.config/luakit/` directory. The easiest
-way of creating a proper functional configuration is copying the global
-configuration file:
-
-    mkdir -p ~/.config/luakit/
-    cp /etc/xdg/luakit/rc.lua ~/.config/luakit/
-
-Now we can modify the configuration file, and any changes will take effect
-after restarting luakit. The official `rc.lua` file might be changed in
-future releases, however, and if we modify our copy
-extensively, it may be difficult to merge any changes to the configuration
-file into our setup. One way of minimizing the impact of future upgrades
-is to add only a single line like the following to our personal copy of
-`rc.lua`:
-
-    require "userconf"
-
-This should be added just before the end of the "User script loading" section.
-Now we can create a new file, `/home/$USER/.config/luakit/userconf.lua`,
-where we can introduce all the changes we want; these changes will not have to
-be merged with any future changes to the `rc.lua` file.
 
 ### Changing the theme
 
