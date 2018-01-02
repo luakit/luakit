@@ -33,12 +33,13 @@ local format_text = function (text)
     -- Format with markdown
     ret = markdown(ret)
     ret = ret:gsub("<pre><code>(.-)</code></pre>", function (code)
-        -- Fix < and > being escaped inside code -_- fail
-        code = lousy.util.unescape(code)
         -- Add syntax highlighting if lxsh is installed
         local ok, lxsh = pcall(require, "lxsh")
         if ok then
-            code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true })
+            code = lxsh.highlighters.lua(
+                lousy.util.unescape(code),  -- Fix < and > being escaped inside code -_- fail
+                { formatter = lxsh.formatters.html, external = true }
+            )
         else
             code = "<pre class='sourcecode lua'>" .. code .. "</pre>"
         end
