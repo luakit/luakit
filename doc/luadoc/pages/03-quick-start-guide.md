@@ -74,6 +74,11 @@ There are several different keys to scroll a webview:
 
 ## Configuration
 
+It is possible to configure most of the global Luakit settings in the
+<a href="luakit://settings">luakit://settings</a> page. For further
+adjustments (per-domain settings, adjusting/defining bindings or commands) you
+should create a custom configuration file.
+
 ### Beginning a custom configuration
 
 To customize luakit, you can define your own configuration by creating a
