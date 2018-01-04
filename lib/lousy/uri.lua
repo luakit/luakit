@@ -56,6 +56,55 @@ local opts_metatable = {
     end,
 }
 
+--- Guess if a string is an URI.
+-- @tparam string s The input string.
+-- @treturn boolean true if the string could be a URI, false otherwise.
+function _M.is_uri(s)
+    if s == "about:blank" then return true end
+
+    -- Navigate if the string contains . or /; or if it is a javascript-uri
+    if s:find("[%./]") or s:find("^javascript:") then return true end
+
+    -- Valid hostnames to check
+    local get_setting = require("settings").get_setting
+    local hosts = {"localhost"}
+    if get_setting("window.load_etc_hosts") then
+        hosts = util.get_etc_hosts()
+    end
+
+    -- Check hostnames
+    for _, h in pairs(hosts) do
+        if h == s or s:match("^" .. h .. ":%d+$") then return true end
+    end
+
+    return false
+end
+
+--- Split a string into URIs or group of words.
+-- @tparam string s The string to split.
+-- @treturn table A table of strings whose member is either a group of words to
+-- be searched or a URI
+function _M.split(s)
+    local get_setting = require("settings").get_setting
+    local search_engine = get_setting("window.default_search_engine")
+    local tmp, ret = "", {}
+    for p in s:gmatch("%S+") do
+        if _M.is_uri(p) then
+            if tmp ~= "" then
+                -- "google announces a new project" shouldn't make the browser
+                -- search for "announces a new project" on Google
+                table.insert(ret, search_engine .. tmp)
+                tmp = ""
+            end
+            table.insert(ret, p)
+        else
+            tmp = tmp .. " " .. p
+        end
+    end
+    if tmp ~= "" then table.insert(ret, search_engine .. tmp) end
+    return ret
+end
+
 --- Parse the query component of a URI and return it as a table.
 -- @tparam string query The query component of a URI.
 -- @treturn table The parsed table of query options.

@@ -241,16 +241,13 @@ modes.add_binds("normal", {
     -- Open primary selection contents.
     { "pp", [[Open URLs based on the current primary selection contents in the current tab.]],
         function (w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
-                table.insert(uris, uri)
-            end
-            if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            w:navigate(w:search_open(uris[1]))
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            local uris = lousy.uri.split(luakit.selection.primary or "")
+            i, uri = next(uris)
+            if not i then w:notify("Nothing in primary selection...") return end
+            w:navigate(w:search_open(uri))
+            while next(uris, i) do
+                i, uri = next(uris, i)
+                w:new_tab(w:search_open(uri))
             end
         end },
     { "pt", [[Open a URL based on the current primary selection contents in `[count=1]` new tab(s).]],
@@ -261,32 +258,26 @@ modes.add_binds("normal", {
         end, {count = 1} },
     { "^pw$", [[Open URLs based on the current primary selection contents in a new window.]],
         function(w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
-                table.insert(uris, uri)
-            end
-            if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            w = window.new{w:search_open(uris[1])}
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            local uris = lousy.uri.split(luakit.selection.primary or "")
+            i, uri = next(uris)
+            if not i then w:notify("Nothing in primary selection...") return end
+            w = window.new{w:search_open(uri)}
+            while next(uris, i) do
+                i, uri = next(uris, i)
+                w:new_tab(w:search_open(uri))
             end
         end },
 
     -- Open clipboard contents.
     { "^PP$", [[Open URLs based on the current clipboard selection contents in the current tab.]],
         function (w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
-                table.insert(uris, uri)
-            end
-            if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            w:navigate(w:search_open(uris[1]))
-            if #uris > 1 then
-                for _=2,#uris do
-                    w:new_tab(w:search_open(uris[1]))
-                end
+            local uris = lousy.uri.split(luakit.selection.clipboard or "")
+            i, uri = next(uris)
+            if not i then w:notify("Nothing in clipboard...") return end
+            w:navigate(w:search_open(uri))
+            while next(uris, i) do
+                i, uri = next(uris, i)
+                w:new_tab(w:search_open(uri))
             end
         end },
 
@@ -299,16 +290,13 @@ modes.add_binds("normal", {
 
     { "^PW$", [[Open URLs based on the current clipboard selection contents in a new window.]],
         function(w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
-                table.insert(uris, uri)
-            end
-            if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            w = window.new{w:search_open(uris[1])}
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            local uris = lousy.uri.split(luakit.selection.clipboard or "")
+            i, uri = next(uris)
+            if not i then w:notify("Nothing in clipboard...") return end
+            w = window.new{w:search_open(uri)}
+            while next(uris, i) do
+                i, uri = next(uris, i)
+                w:new_tab(w:search_open(uri))
             end
         end },
 
