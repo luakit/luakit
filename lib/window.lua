@@ -581,45 +581,25 @@ _M.methods = {
     -- Intelligent open command which can detect a uri or search argument.
     search_open = function (_, arg)
         local lstring = lousy.util.string
-        local match, find = string.match, string.find
         local search_engines = settings.get_setting("window.search_engines")
 
         -- Detect blank uris
-        if not arg or match(arg, "^%s*$") then return settings.get_setting("window.new_tab_page") end
+        if not arg or arg:match("^%s*$") then return settings.get_setting("window.new_tab_page") end
 
         arg = lstring.strip(arg)
 
-        -- handle file paths before splitting arg (absolute paths only)
+        -- Handle JS and file URI before splitting arg
+        if arg:find("^javascript:") then return arg end
         if settings.get_setting("window.check_filepath") then
             local path = arg:gsub("^file://", "")
-            if path:match("^/") and lfs.attributes(path) then
-                return "file://" .. path
-            end
+            if lfs.attributes(path) then return "file://" .. path end
         end
 
         local args = lstring.split(arg)
 
-        -- Guess if single argument is an address, etc
-        if #args == 1 and not search_engines[args[1]] then
-            local uri = args[1]
-            if uri == "about:blank" then return uri end
-
-            -- Navigate if . or / in uri (I.e. domains, IP's, scheme://)
-            if find(uri, "%.") or find(uri, "/") then return uri end
-
-            -- Navigate if this is a javascript-uri
-            if find(uri, "^javascript:") then return uri end
-
-            -- Valid hostnames to check
-            local hosts = { "localhost" }
-            if settings.get_setting("window.load_etc_hosts") then
-                hosts = lousy.util.get_etc_hosts()
-            end
-
-            -- Check hostnames
-            for _, h in pairs(hosts) do
-                if h == uri or match(uri, "^"..h..":%d+$") then return uri end
-            end
+        -- Guess if single argument is an address, etc.
+        if #args == 1 and not search_engines[arg] and lousy.uri.is_uri(arg) then
+            return arg
         end
 
         -- Find search engine (or use default_search_engine)
