@@ -139,4 +139,4 @@ following command:
 
     :lua w:notify(package.path:gsub(";","\n"))
 
-<!-- vim: et:sw=4:ts=8:sts=4:tw=79 -->
+<!-- vim: set et sw=4 ts=8 sts=4 tw=79 :-->
