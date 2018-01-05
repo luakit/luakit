@@ -82,7 +82,7 @@ should create a custom configuration file.
 ### Beginning a custom configuration
 
 To customize luakit, you can define your own configuration by creating a
-`userconf.lua` file in the `/home/$USER/.config/luakit/` directory. This file
+`userconf.lua` file in the `~/.config/luakit/` directory. This file
 is loaded automatically by luakit, if it exists. Any changes made to it will
 take effect after restarting luakit.
 
@@ -131,7 +131,7 @@ in the order specified here:
 1. The current directory.
 2. System directories for Lua files.
 3. Luakit's collection of included modules (`/usr/share/luakit/lib/`).
-4. The user's personal luakit configuration directory (`/home/$USER/.config/luakit/`).
+4. The user's personal luakit configuration directory (`~/.config/luakit/`).
 5. The system configuration directories (`/etc/xdg/luakit/`).
 
 To list the directories luakit will search when loading modules, run the
