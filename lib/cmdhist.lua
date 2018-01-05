@@ -16,36 +16,44 @@ local _M = {}
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when
 -- a mode contains a `history` table item (with history settings therein).
-local hist_binds = {
-    { "<Up>", function (w)
-        local h = w.mode.history
-        local lc = h.cursor
-        if not h.cursor and h.len > 0 then
-            h.cursor = h.len
-        elseif (h.cursor or 0) > 1 then
-            h.cursor = h.cursor - 1
-        end
-        if h.cursor and h.cursor ~= lc then
-            if not h.orig then h.orig = w.ibar.input.text end
-            w:set_input(h.items[h.cursor])
-        end
-    end },
+--- Key binding for history prev command
+-- @type string
+-- @readwrite
+_M.history_prev = "<Up>"
 
-    { "<Down>", function (w)
-        local h = w.mode.history
-        if not h.cursor then return end
-        if h.cursor >= h.len then
-            w:set_input(h.orig)
-            h.cursor = nil
-            h.orig = nil
-        else
-            h.cursor = h.cursor + 1
-            w:set_input(h.items[h.cursor])
-        end
-    end },
-}
+--- Key binding for history next command
+-- @type string
+-- @readwrite
+_M.history_next = "<Down>"
 
--- Add the Up & Down keybindings to modes which support command history
+local history_prev_func = function (w)
+    local h = w.mode.history
+    local lc = h.cursor
+    if not h.cursor and h.len > 0 then
+        h.cursor = h.len
+    elseif (h.cursor or 0) > 1 then
+        h.cursor = h.cursor - 1
+    end
+    if h.cursor and h.cursor ~= lc then
+        if not h.orig then h.orig = w.ibar.input.text end
+        w:set_input(h.items[h.cursor])
+    end
+end
+
+local history_next_func = function (w)
+    local h = w.mode.history
+    if not h.cursor then return end
+    if h.cursor >= h.len then
+        w:set_input(h.orig)
+        h.cursor = nil
+        h.orig = nil
+    else
+        h.cursor = h.cursor + 1
+        w:set_input(h.items[h.cursor])
+    end
+end
+
+-- Add the Prev & Next keybindings to modes which support command history
 window.add_signal("init", function (w)
     w:add_signal("mode-entered", function ()
         local mode = w.mode
@@ -56,7 +64,9 @@ window.add_signal("init", function (w)
             h.len = #(h.items)
             h.cursor = nil
             h.orig = nil
-            -- Add Up & Down history bindings
+            -- Add Prev & Next history bindings
+            local hist_binds = {{_M.history_prev, history_prev_func},
+                {_M.history_next, history_next_func}}
             for _, b in ipairs(hist_binds) do
                 lousy.bind.add_bind(w.binds, b[1], { func = b[2] })
             end
