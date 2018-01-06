@@ -5,6 +5,8 @@
 -- @module lousy.uri
 -- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
+local lfs = require "lfs"
+
 -- Get luakit environment
 local util = require "lousy.util"
 local uri_encode = luakit.uri_encode
@@ -60,13 +62,17 @@ local opts_metatable = {
 -- @tparam string s The input string.
 -- @treturn boolean true if the string could be a URI, false otherwise.
 function _M.is_uri(s)
-    if s == "about:blank" then return true end
+    local get_setting = require("settings").get_setting
 
-    -- Navigate if the string contains . or /; or if it is a javascript-uri
-    if s:find("[%./]") or s:find("^javascript:") then return true end
+    if get_setting("window.check_filepath") and lfs.attributes(s:gsub("^file://", "")) then
+        return true
+    end
+
+    if s == "about:blank" or s:find("[%./]") or s:find("^javascript:") then
+        return true
+    end
 
     -- Valid hostnames to check
-    local get_setting = require("settings").get_setting
     local hosts = {"localhost"}
     if get_setting("window.load_etc_hosts") then
         hosts = util.get_etc_hosts()
@@ -85,23 +91,20 @@ end
 -- @treturn table A table of strings whose member is either a group of words to
 -- be searched or a URI
 function _M.split(s)
-    local get_setting = require("settings").get_setting
-    local search_engine = get_setting("window.default_search_engine")
     local tmp, ret = "", {}
     for p in s:gmatch("%S+") do
-        if _M.is_uri(p) then
+        local uri = p:gsub("^[{%[%(<\"']+", ""):gsub("[:,;%.!%?'\">%)%]}]+$", "")
+        if _M.is_uri(uri) then
             if tmp ~= "" then
-                -- "google announces a new project" shouldn't make the browser
-                -- search for "announces a new project" on Google
-                table.insert(ret, search_engine .. tmp)
+                table.insert(ret, tmp)
                 tmp = ""
             end
-            table.insert(ret, p)
+            table.insert(ret, uri)
         else
             tmp = tmp .. " " .. p
         end
     end
-    if tmp ~= "" then table.insert(ret, search_engine .. tmp) end
+    if tmp ~= "" then table.insert(ret, tmp) end
     return ret
 end
 
