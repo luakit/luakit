@@ -62,7 +62,14 @@ local evaluators = {
 local page_mode = {}
 
 local function follow_hint(page, mode, hint)
-    local evaluator = evaluators[mode.evaluator]
+    local evaluator
+    if type(mode.evaluator) == "string" then
+        evaluator = evaluators[mode.evaluator]
+    elseif type(mode.evaluator) == "function" then
+        evaluator = mode.evaluator
+    else
+        error("bad evaluator type '%s'", type(mode.evaluator))
+    end
 
     local overlay_style = hint.overlay_elem.attr.style
     hint.overlay_elem.attr.style = "display: none;"
