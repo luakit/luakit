@@ -16,6 +16,7 @@ local _M = {}
 -- Input bar history binds, these are only present in modes with a history
 -- table so we can make some assumptions. This auto-magic is present when
 -- a mode contains a `history` table item (with history settings therein).
+
 --- Key binding for history prev command
 -- @type string
 -- @readwrite
