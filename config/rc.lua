@@ -4,6 +4,22 @@
 
 require "lfs"
 
+local old_require = require
+local function require (module)
+    local f = package.searchpath(module, package.path)
+    local lf = luakit.config_dir .. "/" .. module .. ".lua"
+    if f ==  lf then
+        msg.warn("Loading local version of '" .. module .. "' module: " .. lf)
+    elseif lfs.attributes(lf) then
+        msg.warn("Found local version " .. lf
+            .. " for core module '" .. module
+            .. "', but it won't be used, unless you update 'package.path' accordingly.")
+    end
+
+    local r = old_require(module)
+    return r
+end
+
 require "unique_instance"
 
 -- Set the number of web processes to use. A value of 0 means 'no limit'.
@@ -165,7 +181,7 @@ local view_source = require "view_source"
 -- permanent, no need to copy/paste/modify the default rc.lua whenever you
 -- update Luakit.
 if pcall(function () lousy.util.find_config("userconf.lua") end) then
-    require "userconf"
+    old_require "userconf"
 end
 
 -----------------------------
