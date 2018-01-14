@@ -599,9 +599,8 @@ _M.methods = {
         local args = lstring.split(arg)
 
         -- Guess if single argument is an address, etc.
-        if #args == 1 then
-            local arg = args[1]
-            if not search_engines[arg] and lousy.uri.is_uri(arg) then return arg end
+        if #args == 1 and not search_engines[arg] and lousy.uri.is_uri(arg) then
+            return arg
         end
 
         -- Find search engine (or use default_search_engine)

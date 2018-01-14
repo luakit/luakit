@@ -247,8 +247,8 @@ modes.add_binds("normal", {
             local engine = settings.get_setting("window.default_search_engine")
             local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            local uri = table.remove(uris, 1)
-            w:navigate(is_uri(uri) and uri or w:search_open(engine .. uri))
+            local uri1 = table.remove(uris, 1)
+            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
             for _, uri in ipairs(uris) do
                 w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
@@ -267,8 +267,8 @@ modes.add_binds("normal", {
             local engine = settings.get_setting("window.default_search_engine")
             local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            local uri = table.remove(uris, 1)
-            w = window.new{is_uri(uri) and uri or w:search_open(engine .. uri)}
+            local uri1 = table.remove(uris, 1)
+            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
             for _, uri in ipairs(uris) do
                 w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
@@ -280,8 +280,8 @@ modes.add_binds("normal", {
             local engine = settings.get_setting("window.default_search_engine")
             local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            local uri = table.remove(uris, 1)
-            w:navigate(is_uri(uri) and uri or w:search_open(engine .. uri))
+            local uri1 = table.remove(uris, 1)
+            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
             for _, uri in ipairs(uris) do
                 w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
@@ -300,8 +300,8 @@ modes.add_binds("normal", {
             local engine = settings.get_setting("window.default_search_engine")
             local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            local uri = table.remove(uris, 1)
-            w = window.new{is_uri(uri) and uri or w:search_open(engine .. uri)}
+            local uri1 = table.remove(uris, 1)
+            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
             for _, uri in ipairs(uris) do
                 w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
