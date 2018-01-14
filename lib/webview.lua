@@ -353,7 +353,13 @@ function _M.set_location(view, arg)
     -- Always execute JS URIs immediately, even when webview is blocked
     if type(arg) == "string" and arg:match("^javascript:") then
         local js = string.match(arg, "^javascript:(.+)$")
-        return view:eval_js(luakit.uri_decode(js))
+        return view:eval_js(luakit.uri_decode(js), {
+                no_return = true,
+                callback = function (_, err)
+                    local w = window.ancestor(view)
+                    w:error(err)
+                end,
+            })
     end
 
     if type(arg) == "string" then arg = { uri = arg } end
