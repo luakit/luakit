@@ -314,8 +314,6 @@ settings.register_settings({
     }
 })
 
-
-
 completers.history = {
     header = { "History", "URI" },
     func = function (buf)
