@@ -68,6 +68,8 @@ function _M.is_uri(s)
         return true
     end
 
+    -- Only file URI may have leading punctuation
+    if s:find("^%p") then return false end
     if s == "about:blank" or s:find("[%./]") or s:find("^javascript:") then
         return true
     end

@@ -22,6 +22,12 @@ T.test_lousy_uri_properties = function ()
     end
 end
 
+T.test_lousy_uri_parse_is_uri = function()
+    local is_uri = lousy.uri.is_uri
+    assert.is_true(
+    -- File URIs can't be tested here because they are system-dependant
+end
+
 T.test_lousy_uri_parse = function ()
     local uri = "http://test-user:p4ssw0rd@example.com:777/some~path?a=b&foo=bar#frag"
     local uri_without_password = "http://test-user@example.com:777/some~path?a=b&foo=bar#frag"
