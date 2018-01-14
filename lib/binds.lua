@@ -22,6 +22,9 @@ local modes = require("modes")
 -- Util aliases
 local join, split = lousy.util.table.join, lousy.util.string.split
 
+-- URI aliases
+local is_uri, split_uri = lousy.uri.is_uri, lousy.uri.split
+
 --- Compatibility wrapper for @ref{modes/add_binds|modes.add_binds()}.
 -- @deprecated use @ref{modes/add_binds|modes.add_binds()} instead.
 _M.add_binds = function (...)
@@ -241,74 +244,66 @@ modes.add_binds("normal", {
     -- Open primary selection contents.
     { "pp", [[Open URLs based on the current primary selection contents in the current tab.]],
         function (w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
-                table.insert(uris, uri)
-            end
+            local engine = settings.get_setting("window.default_search_engine")
+            local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            w:navigate(w:search_open(uris[1]))
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            local uri1 = table.remove(uris, 1)
+            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
-    { "pt", [[Open a URL based on the current primary selection contents in `[count=1]` new tab(s).]],
-            function (w, _, m)
-                local uri = luakit.selection.primary
-                if not uri then w:notify("No primary selection...") return end
-                for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
-        end, {count = 1} },
-    { "^pw$", [[Open URLs based on the current primary selection contents in a new window.]],
-        function(w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
-                table.insert(uris, uri)
-            end
+    { "pt", [[Open URLs based on the current primary selection contents in new tabs.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine")
+            local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            w = window.new{w:search_open(uris[1])}
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+            end
+        end },
+    { "pw", [[Open URLs based on the current primary selection contents in a new window.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine")
+            local uris = split_uri(luakit.selection.primary or "")
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            local uri1 = table.remove(uris, 1)
+            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
 
     -- Open clipboard contents.
-    { "^PP$", [[Open URLs based on the current clipboard selection contents in the current tab.]],
+    { "PP", [[Open URLs based on the current clipboard selection contents in the current tab.]],
         function (w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
-                table.insert(uris, uri)
-            end
-            if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            w:navigate(w:search_open(uris[1]))
-            if #uris > 1 then
-                for _=2,#uris do
-                    w:new_tab(w:search_open(uris[1]))
-                end
+            local engine = settings.get_setting("window.default_search_engine")
+            local uris = split_uri(luakit.selection.clipboard or "")
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            local uri1 = table.remove(uris, 1)
+            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
-
-    { "^PT$", [[Open a URL based on the current clipboard selection contents in `[count=1]` new tab(s).]],
-        function (w, _, m)
-            local uri = luakit.selection.clipboard
-            if not uri then w:notify("Nothing in clipboard...") return end
-            for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
-    end, {count = 1} },
-
-    { "^PW$", [[Open URLs based on the current clipboard selection contents in a new window.]],
-        function(w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
-                table.insert(uris, uri)
-            end
+    { "PT", [[Open URLs based on the current clipboard selection contents in new tabs.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine")
+            local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            w = window.new{w:search_open(uris[1])}
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+            end
+        end },
+    { "PW", [[Open URLs based on the current clipboard selection contents in a new window.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine")
+            local uris = split_uri(luakit.selection.clipboard or "")
+            if #uris == 0 then w:notify("Nothing in clipboard...") return end
+            local uri1 = table.remove(uris, 1)
+            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
 
