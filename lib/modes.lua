@@ -104,6 +104,18 @@ window.add_signal("init", function (w)
             -- Check if last history item is identical
             if hist and hist.items and hist.items[hist.len or -1] ~= text then
                 table.insert(hist.items, text)
+                -- Dump history
+                local t = {}
+                for k, v in pairs(modes) do
+                    if v.history then
+                        t[k] = v.history.items
+                    end
+                end
+                local f = io.open(luakit.data_dir .. "/command-history", "w")
+                if f then
+                    f:write(lousy.pickle.pickle(t))
+                    f:close()
+                end
             end
         end
     end)

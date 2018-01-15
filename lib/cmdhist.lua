@@ -27,30 +27,42 @@ _M.history_prev = "<Up>"
 -- @readwrite
 _M.history_next = "<Down>"
 
+local function filter (t, f)
+    local T = {}
+    for _, v in ipairs(t) do
+        if v:find(f, 1, true) then
+            table.insert(T, v)
+        end
+    end
+    return T
+end
+
 local history_prev_func = function (w)
     local h = w.mode.history
+    h.filtered = h.filtered or filter(h.items, w.ibar.input.text)
     local lc = h.cursor
-    if not h.cursor and h.len > 0 then
-        h.cursor = h.len
+    if not h.cursor and #h.filtered > 0 then
+        h.cursor = #h.filtered
     elseif (h.cursor or 0) > 1 then
         h.cursor = h.cursor - 1
     end
     if h.cursor and h.cursor ~= lc then
         if not h.orig then h.orig = w.ibar.input.text end
-        w:set_input(h.items[h.cursor])
+        w:set_input(h.filtered[h.cursor])
     end
 end
 
 local history_next_func = function (w)
     local h = w.mode.history
     if not h.cursor then return end
-    if h.cursor >= h.len then
+    if h.cursor >= #h.filtered then
         w:set_input(h.orig)
         h.cursor = nil
         h.orig = nil
+        h.filtered = nil
     else
         h.cursor = h.cursor + 1
-        w:set_input(h.items[h.cursor])
+        w:set_input(h.filtered[h.cursor])
     end
 end
 
@@ -61,10 +73,20 @@ window.add_signal("init", function (w)
         -- Setup history state
         if mode and mode.history then
             local h = mode.history
-            if not h.items then h.items = {} end
+            -- Load history
+            if not h.items then
+                local f = io.open(luakit.data_dir .. "/command-history")
+                if f then
+                    h.items = lousy.pickle.unpickle(f:read("*a"))[mode.name]
+                    f:close()
+                end
+                -- The function could return if history is empty
+                h.items = h.items or {}
+            end
             h.len = #(h.items)
             h.cursor = nil
             h.orig = nil
+            h.filtered = nil
             -- Add Prev & Next history bindings
             local hist_binds = {{_M.history_prev, history_prev_func},
                 {_M.history_next, history_next_func}}
