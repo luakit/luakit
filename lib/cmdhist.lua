@@ -61,7 +61,18 @@ window.add_signal("init", function (w)
         -- Setup history state
         if mode and mode.history then
             local h = mode.history
-            if not h.items then h.items = {} end
+            -- Load history
+            if not h.items then
+                local items = {}
+                local f = io.open(luakit.data_dir .. "/" .. mode.name .. "-history")
+                if f then
+                    for l in f:lines() do
+                        table.insert(items, l)
+                    end
+                    f:close()
+                end
+                h.items = items
+            end
             h.len = #(h.items)
             h.cursor = nil
             h.orig = nil
