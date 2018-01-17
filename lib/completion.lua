@@ -290,14 +290,44 @@ local function sql_like_globber(term)
     return "%" .. escaped:gsub("%s+", "%%") .. "%"
 end
 
+settings.register_settings({
+    ["completion.history.order"] = {
+        type = "string",
+        default = "visits",
+        desc = [=[
+            A string indicating how history items should be sorted in
+            completion. Possible values are:
+
+            - `visits`:     most visited URI's first
+
+            - `last_visit`: most recent URI's first
+            
+            - `title`:      alphabetical sort
+
+            - `uri`:        alphabetical sort
+        ]=],
+        validator = function (v)
+            local t = {visits = true, last_visit = true, title = true, uri = true}
+            return t[v]
+        end
+    },
+    ["completion.max_items"] = {
+        type = "number", min = 1,
+        default = 25,
+        desc = "Number of completion items for history and bookmarks."
+    }
+})
+
 completers.history = {
     header = { "History", "URI" },
     func = function (buf)
+        local order = settings.get_setting("completion.history.order")
+        local desc = (order == "visits" or order == "last_visit") and " DESC" or ""
         local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||ifnull(title,'')) AS text
             FROM history WHERE text LIKE ? ESCAPE '\'
-            ORDER BY visits DESC LIMIT 25
-        ]]
+            ORDER BY
+        ]] .. order .. desc .. " LIMIT " .. settings.get_setting("completion.max_items")
 
         local rows = history.db:exec(sql, { sql_like_globber(term) })
         if not rows[1] then return {} end
@@ -319,8 +349,8 @@ completers.bookmarks = {
         local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||ifnull(title,'')||ifnull(tags,'')) AS text
             FROM bookmarks WHERE text LIKE ? ESCAPE '\'
-            ORDER BY title DESC LIMIT 25
-        ]]
+            ORDER BY title DESC LIMIT
+        ]] .. settings.get_setting("completion.max_items")
 
         local rows = bookmarks.db:exec(sql, { sql_like_globber(term) })
         if not rows[1] then return {} end
