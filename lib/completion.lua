@@ -291,16 +291,20 @@ local function sql_like_globber(term)
 end
 
 settings.register_settings({
-    ["completion.history_order"] = {
+    ["completion.history.order"] = {
         type = "string",
         default = "visits",
         desc = [=[
             A string indicating how history items should be sorted in
-            completion. Possible values are:<br>
-            - visits:     most visited URI's first<br>
-            - last_visit: most recent URI's first<br>
-            - title:      alphabetical sort<br>
-            - uri:        alphabetical sort
+            completion. Possible values are:
+
+            - `visits`:     most visited URI's first
+
+            - `last_visit`: most recent URI's first
+            
+            - `title`:      alphabetical sort
+
+            - `uri`:        alphabetical sort
         ]=],
         validator = function (v)
             local t = {visits = true, last_visit = true, title = true, uri = true}
@@ -317,7 +321,7 @@ settings.register_settings({
 completers.history = {
     header = { "History", "URI" },
     func = function (buf)
-        local order = settings.get_setting("completion.history_order")
+        local order = settings.get_setting("completion.history.order")
         local desc = (order == "visits" or order == "last_visit") and " DESC" or ""
         local term, ret, sql = buf, {}, [[
             SELECT uri, title, lower(uri||ifnull(title,'')) AS text
