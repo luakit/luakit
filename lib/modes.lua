@@ -99,10 +99,15 @@ window.add_signal("init", function (w)
     input:add_signal("activate", function ()
         local mode = w.mode
         if mode and mode.activate then
-            local text, hist = input.text, mode.history
+            local text = input.text
+            -- Activates the mode.
             if mode.activate(w, text) == false then return end
-            -- Check if last history item should be recorded.
-            if not w.view.private and hist and hist.items and hist.items[hist.len or -1] ~= text then
+            -- Prevents recording command history if in a private tab, or
+            -- recording the `:priv-tabopen` command itself.
+            if w.view.private then return end
+            local hist = mode.history
+            -- Check if last history is identical
+            if hist and hist.items and hist.items[hist.len or -1] ~= text then
                 table.insert(hist.items, text)
                 -- Dump history
                 local t = {}
