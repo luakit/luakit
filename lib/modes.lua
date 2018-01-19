@@ -105,9 +105,15 @@ window.add_signal("init", function (w)
             if not w.view.private and hist and hist.items and hist.items[hist.len or -1] ~= text then
                 table.insert(hist.items, text)
                 -- Dump history
-                local f = io.open(luakit.data_dir .. "/" .. mode.name .. "-history", "w")
+                local t = {}
+                for k, v in pairs(modes) do
+                    if v.history then
+                        t[k] = v.history.items
+                    end
+                end
+                local f = io.open(luakit.data_dir .. "/command-history", "w")
                 if f then
-                    f:write(table.concat(hist.items, "\n"))
+                    f:write(lousy.pickle.pickle(t))
                     f:close()
                 end
             end

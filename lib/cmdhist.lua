@@ -75,15 +75,13 @@ window.add_signal("init", function (w)
             local h = mode.history
             -- Load history
             if not h.items then
-                local items = {}
-                local f = io.open(luakit.data_dir .. "/" .. mode.name .. "-history")
+                local f = io.open(luakit.data_dir .. "/command-history")
                 if f then
-                    for l in f:lines() do
-                        table.insert(items, l)
-                    end
+                    h.items = lousy.pickle.unpickle(f:read("*a"))[mode.name]
                     f:close()
                 end
-                h.items = items
+                -- The function could return if history is empty
+                h.items = h.items or {}
             end
             h.len = #(h.items)
             h.cursor = nil
