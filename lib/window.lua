@@ -441,12 +441,27 @@ _M.methods = {
             view = arg
             local ww = webview.window(view)
             ww:detach_tab(view)
-        else
-            -- Make new webview widget
-            view = webview.new({ private = opts.private })
+            w:attach_tab(view, switch, order)
         end
 
-        w:attach_tab(view, switch, order)
+        if not view and settings.get_setting("window.reuse_new_tab_pages") then
+            for tabindex, tab in ipairs(w.tabs.children) do
+                if tab.uri == settings.get_setting("window.new_tab_page") then
+                    msg.verbose("new_tab: using existing blank tab, %s", tab.uri)
+                    view = tab
+                    break
+                end
+            end
+        end
+
+        if not view then
+            -- Make new webview widget
+            view = webview.new({ private = opts.private })
+            w:attach_tab(view, switch, order)
+        end
+
+        if switch ~= false then w.tabs:switch(w.tabs:indexof(view)) end
+
         if arg and not (type(arg) == "widget" and arg.type == "webview") then
             webview.set_location(view, arg)
         end
@@ -471,8 +486,7 @@ _M.methods = {
             order = (switch == false and taborder.default_bg)
                 or taborder.default
         end
-        local pos = w.tabs:insert((order and order(w, view)) or -1, view)
-        if switch ~= false then w.tabs:switch(pos) end
+        w.tabs:insert((order and order(w, view)) or -1, view)
     end,
 
     detach_tab = function (w, view, blank_last)
@@ -777,6 +791,14 @@ settings.register_settings({
         type = "string",
         default = "about:blank",
         desc = "The URI to open when opening a new tab.",
+    },
+    ["window.reuse_new_tab_pages"] = {
+        type = "boolean",
+        default = false,
+        desc = [=[
+            Let w:new_tab use an existing view that is on `window.new_tab_page`.
+            Avoids unnecessarily creating new tabs, possibly multiple instances of `window.new_tab_page`.
+        ]=],
     },
     ["window.close_with_last_tab"] = {
         type = "boolean",
