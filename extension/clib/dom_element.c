@@ -423,13 +423,13 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
        stopPropagation */
     lua_pushliteral(L, "cancel");
     lua_rawget(L, -2);
-    if (lua_isboolean(L, -1)) {
-        lua_pushboolean(L, true);
-        if (lua_equal(L, -1, -2)) {
-            webkit_dom_event_stop_propagation(event);
-        }
-        lua_pop(L, 1);
-    }
+    if (lua_toboolean(L, -1)) webkit_dom_event_stop_propagation(event);
+    lua_pop(L, 1);
+    /* also check if prevent_default set to true and if it's set then
+       call webkit_dom_event_prevent_default for event */
+    lua_pushliteral(L, "prevent_default");
+    lua_rawget(L, -2);
+    if (lua_toboolean(L, -1)) webkit_dom_event_prevent_default(event);
     lua_pop(L, 2);
 }
 
