@@ -282,7 +282,8 @@ local init_funcs = {
 
 local table_keys, filter_array = lousy.util.table.keys, lousy.util.table.filter_array
 local function check_search_engine (str)
-    if not str or #str < settings.get_setting("window.search_engine_min_length") then return end
+    local l = settings.get_setting("window.search_engine_min_length")
+    if not str or l < 1 or #str < l then return end
     local engines = table_keys(settings.get_setting("window.search_engines"))
     local t = filter_array(engines, function (_, n)
         return n:sub(1, #str) == str
@@ -832,8 +833,12 @@ settings.register_settings({
     },
     ["window.search_engine_min_length"] = {
         type = "number", min = 1,
-        default = 100,
-        desc = "How many letters make a valid search engine abbreviation.",
+        default = 0,
+        desc = [=[
+            How many letters make a valid search engine abbreviation.
+
+            A nonpositive value disables abbreviations.
+        ]=],
     },
     ["window.scroll_step"] = {
         type = "number", min = 0,
