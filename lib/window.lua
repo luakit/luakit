@@ -832,7 +832,7 @@ settings.register_settings({
     },
     ["window.search_engine_min_length"] = {
         type = "number", min = 1,
-        default = 2,
+        default = 100,
         desc = "How many letters make a valid search engine abbreviation.",
     },
     ["window.scroll_step"] = {
