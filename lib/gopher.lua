@@ -189,11 +189,16 @@ local function parse_url(url)
     if not selector then
         selector = gopher_path:sub(2)
     end
+    selector = luakit.uri_decode(selector)
     local search, gopher_plus_string
     if after_selector then
         search, gopher_plus_string = after_selector:match("^(.-)%%09(.*)$")
         if not search then
             search = after_selector
+        end
+        search = luakit.uri_decode(search)
+        if gopher_plus_string then
+            gopher_plus_string = luakit.uri_decode(gopher_plus_string)
         end
     end
     -- TODO chunks should be decoded
@@ -226,21 +231,100 @@ do
     assert(url.gopher_plus_string == nil)
 end
 
+-- establish connection, wait for the socket to become writable
+local function _net_establish_connection(host, port)
+    local conn = socket.tcp()
+    conn:settimeout(0)
+    local res, err, _ = conn:connect(host, port)
+    if not res then
+        if err ~= "timeout" then
+            return error(err)
+        end
+        while true do
+            coroutine.yield()
+            _, res, err = socket.select(nil, {conn}, 0)
+            if (res or {})[conn] then
+                break
+            end
+            if err ~= "timeout" then
+                return error(err)
+            end
+        end
+    end
+    return conn
+end
+
+-- non-blocking sending
+local function _net_send_message(conn, msg)
+    local res, err, last
+    local sent = 0
+    while true do
+        res, err, last = conn:send(msg, sent + 1)
+        if res == #msg then
+            break
+        end
+        if not res then
+            if err ~= "timeout" then
+                return error(err)
+            end
+        end
+        sent = res or last
+        coroutine.yield()
+    end
+    return sent
+end
+
+-- non-blocking reading
+local function _net_read_data(conn)
+    local chunks = {}
+    while true do
+        local res, err, last = conn:receive("*a")
+        if err == "closed" then
+            res = last
+        end
+        if res then
+            chunks[#chunks + 1] = res
+            break
+        end
+        if err ~= "timeout" then
+            return error(err)
+        end
+        chunks[#chunks + 1] = last
+        coroutine.yield()
+    end
+    return table.concat(chunks)
+end
+
+-- perform network transaction in non-blocking mode
+local function net_request(host, port, msg)
+    local conn = _net_establish_connection(host, port)
+    _net_send_message(conn, msg)
+    local data = _net_read_data(conn)
+    conn:shutdown("both")
+    return data
+end
+
 webview.add_signal("init", function(view)
     view:add_signal("scheme-request::gopher", function(_, uri, request)
-        -- Match "gopher://"
         local url = assert(parse_url(uri))
-        local s = assert(socket.connect(url.host, url.port))
         local msg = table.concat({url.selector, url.search}, "\t")
-        -- TODO should retry if partially sent
-        assert(s:send(msg .. "\r\n"))
-        -- TODO should have upper limit
-        local data = assert(s:receive("*a"))
-        s:shutdown("both")
-        if not request.finished then
-            request:finish(data_to_browser(data, url))
-        end
-        return
+        local net = coroutine.wrap(function()
+            return net_request(url.host, url.port, msg .. "\r\n")
+        end)
+        luakit.idle_add(function()
+            local status, res = pcall(net)
+            if not status then
+                request:finish("Error: " .. tostring(res), "text/plain")
+                return false
+            end
+            if not res then
+                return true
+            end
+            if not request.finished then
+                request:finish(data_to_browser(res, url))
+            end
+            return false
+        end)
     end)
 end)
 
