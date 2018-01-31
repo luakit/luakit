@@ -67,6 +67,11 @@
 -- @type integer
 -- @readonly
 
+--- @property root_win_xid
+-- The X11 root window's window ID. Available only when using the X11 windowing system.
+-- @type integer
+-- @readonly
+
 --- @property screen
 -- The screen the window is on.
 -- @type userdata
