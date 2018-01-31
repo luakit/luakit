@@ -189,9 +189,6 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PN_CASE(ID,           d->id)
 
 # ifdef GDK_WINDOWING_X11
-      case L_TK_XID:
-        warn("window.xid is deprecated: use window.root_win_xid instead");
-        __attribute__ ((fallthrough));
       case L_TK_ROOT_WIN_XID:
         lua_pushinteger(L, GDK_WINDOW_XID(
 #  if GTK_CHECK_VERSION(3,12,0)
