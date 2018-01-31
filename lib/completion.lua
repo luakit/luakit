@@ -331,7 +331,7 @@ completers.history = {
 
         for _, row in ipairs(rows) do
             table.insert(ret, {
-                escape(row.title), escape(row.uri),
+                escape(row.title) or "", escape(row.uri),
                 format = {{ lit = row.uri }},
                 buf = row.uri
             })
