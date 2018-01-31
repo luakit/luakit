@@ -62,7 +62,7 @@
 -- @type integer
 -- @readonly
 
---- @property xid
+--- @property win_xid
 -- The window's X11 window ID. Available only when using the X11 windowing system.
 -- @type integer
 -- @readonly
