@@ -445,7 +445,7 @@ _M.methods = {
         end
 
         if not view and settings.get_setting("window.reuse_new_tab_pages") then
-            for tabindex, tab in ipairs(w.tabs.children) do
+            for _, tab in ipairs(w.tabs.children) do
                 if tab.uri == settings.get_setting("window.new_tab_page") then
                     msg.verbose("new_tab: using existing blank tab, %s", tab.uri)
                     view = tab
