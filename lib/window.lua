@@ -280,6 +280,17 @@ local init_funcs = {
     end,
 }
 
+local table_keys, filter_array = lousy.util.table.keys, lousy.util.table.filter_array
+local function check_search_engine (str)
+    local l = settings.get_setting("window.search_engine_min_length")
+    if not str or l < 1 or #str < l then return end
+    local engines = table_keys(settings.get_setting("window.search_engines"))
+    local t = filter_array(engines, function (_, n)
+        return n:sub(1, #str) == str
+    end)
+    return t[1]
+end
+
 --- Helper functions which operate on the window widgets or structure.
 -- @type {[string]=function}
 -- @readwrite
@@ -581,7 +592,6 @@ _M.methods = {
     -- Intelligent open command which can detect a uri or search argument.
     search_open = function (_, arg)
         local lstring = lousy.util.string
-        local search_engines = settings.get_setting("window.search_engines")
 
         -- Detect blank uris
         if not arg or arg:match("^%s*$") then return settings.get_setting("window.new_tab_page") end
@@ -598,17 +608,20 @@ _M.methods = {
         local args = lstring.split(arg)
 
         -- Guess if single argument is an address, etc.
-        if #args == 1 and not search_engines[arg] and lousy.uri.is_uri(arg) then
+        local engine_name = check_search_engine(args[1])
+        if #args == 1 and not engine_name and lousy.uri.is_uri(arg) then
             return arg
         end
 
         -- Find search engine (or use default_search_engine)
-        local engine = settings.get_setting("window.default_search_engine")
-        if args[1] and search_engines[args[1]] then
-            engine = args[1]
+        local engine
+        if engine_name then
+            engine = engine_name
             table.remove(args, 1)
+        else
+            engine = settings.get_setting("window.default_search_engine")
         end
-        local e = search_engines[engine] or "%s"
+        local e = settings.get_setting("window.search_engines")[engine] or "%s"
 
         local terms = table.concat(args, " ")
         if type(e) == "string" then
@@ -816,6 +829,15 @@ settings.register_settings({
             The default search engine alias.
 
             Must be a key of `window.search_engines`.
+        ]=],
+    },
+    ["window.search_engine_min_length"] = {
+        type = "number", min = 1,
+        default = 0,
+        desc = [=[
+            How many letters make a valid search engine abbreviation.
+
+            A nonpositive value disables abbreviations.
         ]=],
     },
     ["window.scroll_step"] = {
