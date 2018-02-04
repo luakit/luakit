@@ -79,7 +79,7 @@ modes.add_binds("all", {
                     uri = luakit.selection.primary
                     -- Ignore multi-line selection contents
                     if uri and not string.match(uri, "\n.+") then
-                        w:navigate(w:search_open(uri))
+                        w:navigate(uri)
                     end
                 end
             end
@@ -244,66 +244,60 @@ modes.add_binds("normal", {
     -- Open primary selection contents.
     { "pp", [[Open URLs based on the current primary selection contents in the current tab.]],
         function (w)
-            local engine = settings.get_setting("window.default_search_engine") .. " "
             local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
             local uri1 = table.remove(uris, 1)
-            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
+            w:navigate(uri1)
             for _, uri in ipairs(uris) do
-                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+                w:new_tab(uri)
             end
         end },
     { "pt", [[Open URLs based on the current primary selection contents in new tabs.]],
         function (w)
-            local engine = settings.get_setting("window.default_search_engine") .. " "
             local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
             for _, uri in ipairs(uris) do
-                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+                w:new_tab(uri)
             end
         end },
     { "pw", [[Open URLs based on the current primary selection contents in a new window.]],
         function (w)
-            local engine = settings.get_setting("window.default_search_engine") .. " "
             local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
             local uri1 = table.remove(uris, 1)
-            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
+            w = window.new({uri1})
             for _, uri in ipairs(uris) do
-                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+                w:new_tab(uri)
             end
         end },
 
     -- Open clipboard contents.
     { "PP", [[Open URLs based on the current clipboard selection contents in the current tab.]],
         function (w)
-            local engine = settings.get_setting("window.default_search_engine") .. " "
             local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
             local uri1 = table.remove(uris, 1)
-            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
+            w:navigate(uri1)
             for _, uri in ipairs(uris) do
-                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+                w:new_tab(uri)
             end
         end },
     { "PT", [[Open URLs based on the current clipboard selection contents in new tabs.]],
         function (w)
-            local engine = settings.get_setting("window.default_search_engine") .. " "
             local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
             for _, uri in ipairs(uris) do
-                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+                w:new_tab(uri)
             end
         end },
     { "PW", [[Open URLs based on the current clipboard selection contents in a new window.]],
         function (w)
-            local engine = settings.get_setting("window.default_search_engine") .. " "
             local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
             local uri1 = table.remove(uris, 1)
-            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
+            w = window.new({uri1})
             for _, uri in ipairs(uris) do
-                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+                w:new_tab(uri)
             end
         end },
 
@@ -476,19 +470,19 @@ modes.add_cmds({
         function (w, o) w:forward(tonumber(o.arg) or 1) end },
     { ":inc[rease]", "Increment last number in URL.", function (w, o) w:navigate(w:inc_uri(tonumber(o.arg) or 1)) end },
     { ":o[pen]", "Open one or more URLs.", {
-        func = function (w, o) w:navigate(w:search_open(o.arg)) end,
+        func = function (w, o) w:navigate(o.arg) end,
         format = "{uri}",
     }},
     { ":t[abopen]", "Open one or more URLs in a new tab.", {
-        func = function (w, o) w:new_tab(w:search_open(o.arg)) end,
+        func = function (w, o) w:new_tab(o.arg, { switch = true }) end,
         format = "{uri}",
     }},
     { ":priv-t[abopen]", "Open one or more URLs in a new private tab.", {
-        func = function (w, o) w:new_tab(w:search_open(o.arg), { private = true }) end,
+        func = function (w, o) w:new_tab(o.arg, { private = true }) end,
         format = "{uri}",
     }},
     { ":w[inopen]", "Open one or more URLs in a new window.", {
-        func = function (w, o) window.new{w:search_open(o.arg)} end,
+        func = function (w, o) window.new({o.arg}) end,
         format = "{uri}",
     }},
     { ":javascript, :js", "Evaluate JavaScript snippet.",
