@@ -57,6 +57,9 @@
     case L_TK_REPLACE:                                \
       lua_pushcfunction(L, luaH_widget_replace);      \
       return 1;                                       \
+    case L_TK_SEND_KEY:                               \
+      lua_pushcfunction(L, luaH_widget_send_key);     \
+      return 1;                                       \
 
 #define LUAKIT_WIDGET_NEWINDEX_COMMON(widget)         \
     case L_TK_VISIBLE:                                \
@@ -106,6 +109,7 @@ gint luaH_widget_remove(lua_State*);
 gint luaH_widget_set_child(lua_State*, widget_t*);
 gint luaH_widget_show(lua_State*);
 gint luaH_widget_replace(lua_State*);
+gint luaH_widget_send_key(lua_State *);
 gint luaH_widget_get_parent(lua_State *L, widget_t *w);
 gint luaH_widget_get_focused(lua_State *L, widget_t*);
 gint luaH_widget_get_visible(lua_State *L, widget_t*);

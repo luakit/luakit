@@ -72,97 +72,6 @@ luaH_window_set_default_size(lua_State *L)
 }
 
 static gint
-luaH_window_send_key(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    const gchar *key_name = luaL_checkstring(L, 2);
-    if (lua_gettop(L) >= 3)
-        luaH_checktable(L, 3);
-    else
-        lua_newtable(L);
-
-    if (!g_utf8_validate(key_name, -1, NULL))
-        return luaL_error(L, "key name isn't a utf-8 string");
-
-    guint keyval;
-    if (g_utf8_strlen(key_name, -1) == 1)
-        keyval = gdk_unicode_to_keyval(g_utf8_get_char(key_name));
-    else
-        keyval = gdk_keyval_from_name(key_name);
-
-    if (!keyval || keyval == GDK_KEY_VoidSymbol)
-        return luaL_error(L, "failed to get a valid key value");
-
-    guint state = 0;
-    GString *state_string = g_string_sized_new(32);
-    lua_pushnil(L);
-    while (lua_next(L, 3)) {
-        const gchar *mod = luaL_checkstring(L, -1);
-        g_string_append_printf(state_string, "%s-", mod);
-
-#define MODKEY(modstr, modconst) \
-        if (strcmp(modstr, mod) == 0) { \
-            state = state | GDK_##modconst##_MASK; \
-        }
-
-        MODKEY("shift", SHIFT);
-        MODKEY("control", CONTROL);
-        MODKEY("lock", LOCK);
-        MODKEY("mod1", MOD1);
-        MODKEY("mod2", MOD2);
-        MODKEY("mod3", MOD3);
-        MODKEY("mod4", MOD4);
-        MODKEY("mod5", MOD5);
-
-#undef MODKEY
-
-        lua_pop(L, 1);
-    }
-
-    GdkKeymapKey *keys = NULL;
-    gint n_keys;
-    if (!gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
-                                           keyval, &keys, &n_keys)) {
-        g_string_free(state_string, TRUE);
-        return luaL_error(L, "cannot type '%s' on current keyboard layout",
-                          key_name);
-    }
-
-    GdkEvent *event = gdk_event_new(GDK_KEY_PRESS);
-    GdkEventKey *event_key = (GdkEventKey *) event;
-    event_key->window = gtk_widget_get_window(w->widget);
-    event_key->send_event = TRUE;
-    event_key->time = GDK_CURRENT_TIME;
-    event_key->state = state;
-    event_key->keyval = keyval;
-    event_key->hardware_keycode = keys[0].keycode;
-    event_key->group = keys[0].group;
-
-    GdkDevice *kbd = NULL;
-#if GTK_CHECK_VERSION(3,20,0)
-    GdkSeat *seat = gdk_display_get_default_seat(gdk_display_get_default());
-    kbd = gdk_seat_get_keyboard(seat);
-#else
-    GdkDeviceManager *dev_mgr = gdk_display_get_device_manager(gdk_display_get_default());
-    GList *devices = gdk_device_manager_list_devices(dev_mgr, GDK_DEVICE_TYPE_MASTER);
-    for (GList *dev = devices; dev && !kbd; dev = dev->next)
-        if (gdk_device_get_source(dev->data) == GDK_SOURCE_KEYBOARD)
-            kbd = dev->data;
-    g_list_free(devices);
-#endif
-    if (!kbd)
-        return luaL_error(L, "failed to find a keyboard device");
-    gdk_event_set_device(event, kbd);
-
-    gdk_event_put(event);
-    debug("sending key '%s%s' to window %p", state_string->str, key_name, w);
-
-    g_string_free(state_string, TRUE);
-    g_free(keys);
-    return 0;
-}
-
-static gint
 luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     window_data_t *d = w->data;
@@ -174,7 +83,6 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       /* push window class methods */
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
-      PF_CASE(SEND_KEY,         luaH_window_send_key)
 
       /* push string properties */
       PS_CASE(TITLE, gtk_window_get_title(d->win))
