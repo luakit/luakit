@@ -104,7 +104,7 @@ window.add_signal("init", function (w)
             if mode.activate(w, text) == false then return end
             -- Prevents recording command history if in a private tab, or
             -- recording the `:priv-tabopen` command itself.
-            if w.view.private then return end
+            if w.view and w.view.private then return end
             local hist = mode.history
             -- Check if last history is identical
             if hist and hist.items and hist.items[hist.len or -1] ~= text then
