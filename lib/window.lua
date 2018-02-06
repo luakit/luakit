@@ -413,7 +413,11 @@ _M.methods = {
         local uri, title = w.view.uri, w.view.title
         title = (title or "luakit") .. ((uri and " - " .. uri) or "")
         local max = settings.get_setting("window.max_title_len")
-        if #title > max then title = string.sub(title, 1, max) .. "..." end
+        if utf8.len(title) > max then
+            local suffix = "..."
+            title = title:sub(1, utf8.offset(title, max+1-#suffix)-1) .. suffix
+            assert(utf8.len(title) == max)
+        end
         w.win.title = title
     end,
 
