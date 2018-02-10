@@ -5,29 +5,92 @@
 -- @module gopher
 -- @author Ygrex <ygrex@ygrex.ru>
 
-local socket = require("socket")
+local socket_loaded, socket = pcall(require, "socket")
+if not socket_loaded then
+    msg.error("Failed to load LuaSocket: %s", tostring(socket))
+    return
+end
+
 local webview = require("webview")
 
 local _M = {}
 
 luakit.register_scheme("gopher")
 
+-- menu entry button's inner HTML representing the type of the item
 local function gophertype_to_icon(gophertype)
     -- TODO unicode symbols look different
     return ({
         ["0"] = '🖹', -- text file
         ["1"] = '🗁', -- submenu
+        ["4"] = '🗞', -- BinHex-encoded
+        ["5"] = '🖫', -- DOS file
         ["7"] = '🔍', -- search
+        ["8"] = '🖳', -- telnet
+        ["9"] = '🖫', -- binary
+        ["d"] = '🖫', -- any document format
         ["g"] = '🖼', -- gif
+        ["h"] = '🖄',  -- html
         ["I"] = '🖼', -- image
-        ["9"] = '🖫', -- image
-        ["p"] = '🖫', -- image
+        ["M"] = '📬', -- mbox
+        ["p"] = '🖼', -- image
         ["s"] = '🔉', -- sound
         ["T"] = '🖳', -- telnet
-        ["h"] = '🖄',  -- html
     })[gophertype] or "?"
 end
 
+-- parse Gopher menu entry, return its structure
+local function parse_gopher_line(line, url)
+    local ret = {
+        line = line,
+        item_type = nil,
+        display_string = nil,
+        selector = nil,
+        host = nil,
+        port = nil,
+        scheme = nil,
+    }
+    if not line:match("\t") then
+        ret.item_type = "i"
+        ret.display_string = line
+        return ret
+    end
+    ret.item_type = line:sub(1, 1)
+    local fields = {};
+    for chunk in line:sub(2):gmatch("([^\t]*)\t?") do
+        fields[#fields + 1] = chunk
+    end
+    ret.display_string = fields[1] or ""
+    ret.selector = fields[2] or ""
+    ret.host = fields[3] or url.host
+    ret.port = (fields[4] or tostring(url.port)):gsub("[^0-9]", "")
+    ret.scheme = "gopher"
+    if ret.item_type == "T" or ret.item_type == "8" then
+        ret.scheme = "telnet"
+    end
+    return ret
+end
+
+-- evaluate a hyperlink for a gopher menu entry
+local function href_source(entry)
+    local src = entry.selector:match("^URL:(.+)$")
+    if not src then
+        if entry.scheme == "telnet" then
+            src = ([[telnet://%s:%s/]]):format(entry.host, entry.port)
+        else
+            src = ([[%s://%s:%s/%s%s]]):format(
+                entry.scheme,
+                entry.host,
+                entry.port,
+                entry.item_type,
+                luakit.uri_encode(entry.selector, "/")
+            )
+        end
+    end
+    return src
+end
+
+-- present Gopher menu as an HTML page
 -- TODO huge function
 local function menu_to_html(data, url)
     -- fix new-line
@@ -63,54 +126,36 @@ local function menu_to_html(data, url)
     local line_num = 0
     for line in data:gmatch("(.-)\n\r?") do
         line_num = line_num + 1
-        if not line:match("\t") then
-            html[#html + 1] = ("<pre>%s</pre>"):format(line)
+        local entry = parse_gopher_line(line, url)
+        if entry.item_type == "i" then
+            html[#html + 1] = ("<pre>%s</pre>"):format(entry.display_string)
         else
-            local item_type = line:sub(1, 1)
-            if item_type == "i" then
-                html[#html + 1] = ("<pre>%s</pre>"):format(line:sub(2):match("(.-)\t"))
-            else
-                local fields = {};
-                for chunk in line:sub(2):gmatch("([^\t]*)\t?") do
-                    fields[#fields + 1] = chunk
-                end
-                local display_string = fields[1] or ""
-                local selector = fields[2] or ""
-                local host = fields[3] or url.host
-                local port = (fields[4] or tostring(url.port)):gsub("[^0-9]", "")
-                -- TODO injected string should be escaped
-                local src = ([[gopher://%s:%s/%s%s]]):format(
-                    host,
-                    port,
-                    item_type,
-                    selector
-                )
-                local frame_name = "iframe_" .. tostring(line_num)
-                local iframe = [[<iframe
-                    style="display:none; width:100%"
-                    id="]] .. frame_name .. [["></iframe>
-                ]]
-                local button = ([[<button onclick="showIFrame('%s', '%s')">%s</button>]]):format(
-                    frame_name,
-                    src,
-                    gophertype_to_icon(item_type)
-                )
-                local anchor_name = "anchor_" .. tostring(line_num)
-                local input = [[<br/>
-                    <input
-                        type="text"
-                        style="width:100%"
-                        onKeyPress="runSearch(this, event, ']] .. anchor_name .. [[')"
-                    />]]
-                if item_type ~= "7" then input = "" end
-                html[#html + 1] = ([[<li>%s <a href="%s" id="%s">%s</a>%s</li>]]):format(
-                    button,
-                    src,
-                    anchor_name,
-                    display_string,
-                    input
-                ) .. iframe
-            end
+            local src = href_source(entry)
+            local frame_name = "iframe_" .. tostring(line_num)
+            local iframe = [[<iframe
+                style="display:none; width:100%"
+                id="]] .. frame_name .. [["></iframe>
+            ]]
+            local button = ([[<button onclick="showIFrame('%s', '%s')">%s</button>]]):format(
+                frame_name,
+                src,
+                gophertype_to_icon(entry.item_type)
+            )
+            local anchor_name = "anchor_" .. tostring(line_num)
+            local input = [[<br/>
+                <input
+                    type="text"
+                    style="width:100%"
+                    onKeyPress="runSearch(this, event, ']] .. anchor_name .. [[')"
+                />]]
+            if entry.item_type ~= "7" then input = "" end
+            html[#html + 1] = ([[<li>%s <a href="%s" id="%s">%s</a>%s</li>]]):format(
+                button,
+                src,
+                anchor_name,
+                entry.display_string,
+                input
+            ) .. iframe
             -- TODO nasty in-place HTML edit
             if html[#html]:sub(1, 5) == "<pre>" and (html[#html - 1] or ""):sub(-6) == "</pre>" then
                 html[#html] = html[#html]:sub(6)
@@ -122,6 +167,7 @@ local function menu_to_html(data, url)
     return table.concat(html, "\n")
 end
 
+-- guess the image MIME type by a filename suffix
 local function image_mime_type(ext)
     return ({
         gif = "image/gif",
@@ -148,6 +194,7 @@ do
     assert("application/octet-stream" == image_mime_type())
 end
 
+-- convert raw data received from server into the browser's representation
 local function data_to_browser(data, url)
     local mime = "text/html"
     local converted = data
@@ -155,21 +202,30 @@ local function data_to_browser(data, url)
         converted = menu_to_html(data, url)
     elseif url.gophertype == "0" then
         mime = "text/plain"
+    elseif url.gophertype == "4" then
+        mime = "application/mac-binhex40"
+    elseif url.gophertype == "5" then
+        mime = "application/octet-stream"
     elseif url.gophertype == "9" then
+        mime = "application/octet-stream"
+    elseif url.gophertype == "d" then
         mime = "application/octet-stream"
     elseif url.gophertype == "g" then
         mime = "image/gif"
+    elseif url.gophertype == "M" then
+        mime = "application/mbox"
     elseif url.gophertype == "p" then
         mime = "image/png"
     elseif url.gophertype == "I" then
         mime = image_mime_type(url.selector:lower():match("%.(.-)$"))
     elseif url.gophertype ~= "h" then
-        print("Unsupported item type: '" .. url.gophertype .. "'")
+        msg.error("Unsupported item type: '%s'", url.gophertype)
         error("Unsupported item type")
     end
     return converted, mime
 end
 
+-- parse Gopher URL, return its structure
 local function parse_url(url)
     local host_port, gopher_path = url:match("gopher://([^/]+)/?(.-)$")
     if not host_port then return end
@@ -201,7 +257,6 @@ local function parse_url(url)
             gopher_plus_string = luakit.uri_decode(gopher_plus_string)
         end
     end
-    -- TODO chunks should be decoded
     return {
         host = host,
         port = port,
@@ -241,7 +296,10 @@ local function _net_establish_connection(host, port)
             return error(err)
         end
         while true do
-            coroutine.yield()
+            if coroutine.yield() then
+                conn:shutdown("both")
+                return
+            end
             _, res, err = socket.select(nil, {conn}, 0)
             if (res or {})[conn] then
                 break
@@ -255,12 +313,12 @@ local function _net_establish_connection(host, port)
 end
 
 -- non-blocking sending
-local function _net_send_message(conn, msg)
+local function _net_send_message(conn, message)
     local res, err, last
     local sent = 0
     while true do
-        res, err, last = conn:send(msg, sent + 1)
-        if res == #msg then
+        res, err, last = conn:send(message, sent + 1)
+        if res == #message then
             break
         end
         if not res then
@@ -269,7 +327,10 @@ local function _net_send_message(conn, msg)
             end
         end
         sent = res or last
-        coroutine.yield()
+        if coroutine.yield() then
+            conn:shutdown("both")
+            return
+        end
     end
     return sent
 end
@@ -290,41 +351,77 @@ local function _net_read_data(conn)
             return error(err)
         end
         chunks[#chunks + 1] = last
-        coroutine.yield()
+        if coroutine.yield() then
+            conn:shutdown("both")
+            return
+        end
     end
     return table.concat(chunks)
 end
 
 -- perform network transaction in non-blocking mode
-local function net_request(host, port, msg)
+local function net_request(host, port, message)
     local conn = _net_establish_connection(host, port)
-    _net_send_message(conn, msg)
+    if not conn then return end
+    local sent = _net_send_message(conn, message)
+    if not sent then return end
     local data = _net_read_data(conn)
     conn:shutdown("both")
     return data
 end
 
-webview.add_signal("init", function(view)
-    view:add_signal("scheme-request::gopher", function(_, uri, request)
+local load_timer = timer{interval = 50}
+local loads = {}
+load_timer:add_signal("timeout", function ()
+    if not next(loads) then load_timer:stop() end
+end)
+
+-- remove a background loader
+local function remove_loader(v, loader)
+    local corou = loads[v]
+    if corou then
+        loads[v] = nil
+        coroutine.resume(corou, "stop")
+    end
+    if loader then
+        load_timer:remove_signal("timeout", loader)
+    end
+end
+
+webview.add_signal("init", function (view)
+    view:add_signal("scheme-request::gopher", function (v, uri, request)
         local url = assert(parse_url(uri))
-        local msg = table.concat({url.selector, url.search}, "\t")
-        local net = coroutine.wrap(function()
-            return net_request(url.host, url.port, msg .. "\r\n")
+        local message = table.concat({url.selector, url.search}, "\t")
+        local net = coroutine.create(function ()
+            return net_request(url.host, url.port, message .. "\r\n")
         end)
-        luakit.idle_add(function()
-            local status, res = pcall(net)
+        if not load_timer.started then load_timer:start() end
+        loads[v] = net
+        local function loader ()
+            if loads[v] ~= net then
+                remove_loader(v, loader)
+                return
+            end
+            local alive, _ = pcall(function() return v.is_loading end)
+            local status, res = coroutine.resume(net, not alive)
             if not status then
                 request:finish("Error: " .. tostring(res), "text/plain")
-                return false
+                return remove_loader(v, loader)
             end
             if not res then
-                return true
+                return
             end
             if not request.finished then
                 request:finish(data_to_browser(res, url))
             end
-            return false
-        end)
+            remove_loader(v, loader)
+        end
+        load_timer:add_signal("timeout", loader)
+    end)
+    view:add_signal("load-status", function (v, status)
+            if status == "failed" then
+                remove_loader(v)
+            end
     end)
 end)
 
