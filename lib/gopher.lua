@@ -100,10 +100,7 @@ local function menu_to_html(data, url)
     local html = {
         "<html>",
         "<head>",
-            [[<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />]],
-            -- TODO injected string should be encoded
-            "<title>" .. url.host .. "/" .. url.selector .. "</title>",
-            [[
+            [[<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
             <script type="text/javascript">
                 function showIFrame(iframe_id, source) {
                     var iframe = document.getElementById(iframe_id);
@@ -156,11 +153,11 @@ local function menu_to_html(data, url)
                 entry.display_string,
                 input
             ) .. iframe
-            -- TODO nasty in-place HTML edit
-            if html[#html]:sub(1, 5) == "<pre>" and (html[#html - 1] or ""):sub(-6) == "</pre>" then
-                html[#html] = html[#html]:sub(6)
-                html[#html - 1] = html[#html - 1]:sub(1, -7)
-            end
+        end
+        -- TODO nasty in-place HTML edit
+        if html[#html]:sub(1, 5) == "<pre>" and (html[#html - 1] or ""):sub(-6) == "</pre>" then
+            html[#html] = html[#html]:sub(6)
+            html[#html - 1] = html[#html - 1]:sub(1, -7)
         end
     end
     html[#html + 1] = "</ul></body></html>"
@@ -405,7 +402,9 @@ webview.add_signal("init", function (view)
             local alive, _ = pcall(function() return v.is_loading end)
             local status, res = coroutine.resume(net, not alive)
             if not status then
-                request:finish("Error: " .. tostring(res), "text/plain")
+                if not request.finished then
+                    request:finish("Error: " .. tostring(res), "text/plain")
+                end
                 return remove_loader(v, loader)
             end
             if not res then
