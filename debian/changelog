@@ -7,10 +7,6 @@ luakit (2017.08.10) unstable; urgency=medium
 
   [ Peter Hofmann ]
   * Fixed compiler warning regarding ncol.
-    Original warning:
-    	cc -c clib/sqlite3.c -o clib/sqlite3.o
-    	clib/sqlite3.c: In function ‘luaH_sqlite3_do_exec’:
-    	clib/sqlite3.c:237:9: warning: ‘ncol’ may be used uninitialized in this function [-Wmaybe-uninitialized]
 
   [ Mason Larobina ]
   * Check new cookie host not null
@@ -44,7 +40,9 @@ luakit (2017.08.10) unstable; urgency=medium
     - add a binding comment (viewable in :help)
 
   [ Ambrevar ]
-  * Man page: first issue Description, Options, Keybindings, Commands, Files, Configuration. help2man is no more required, hence the removal from README.md. Changed Makefile to generate the manpage and install it properly.
+  * Man page: first issue Description, Options, Keybindings, Commands, Files,
+    Configuration. help2man is no more required, hence the removal from
+    README.md. Changed Makefile to generate the manpage and install it properly
   * Man page: polished first issue.
   * Manpage: removed non-default binding.
 
@@ -73,11 +71,7 @@ luakit (2017.08.10) unstable; urgency=medium
 
   [ Plaque-fcc ]
   * Fix mason-larobina/luakit#135.
-    Applying https://gist.github.com/3777735 to fix short paths in lib/introspector.lua.
-    Signed-off-by: Plaque-fcc <Plaque-fcc@github.com>
   * Fix mason-larobina/luakit#135.
-    Applying https://gist.github.com/3777735 to fix short paths in lib/introspector.lua.
-    Signed-off-by: Plaque-fcc <Plaque-fcc@github.com>
 
   [ Robbie Smith ]
   * Added PKGBUILD and .install for Arch Linux.
@@ -104,7 +98,7 @@ luakit (2017.08.10) unstable; urgency=medium
   [ Jenny Wong ]
   * fix deprecated icon warnings for gtk3.10
   * GtkTable -> GtkGrid
-  * GtkObject isn't a thing any more, and it was unused in parent_set_cb() anyway
+  * GtkObject isn't a thing any more and it was unused in parent_set_cb() anyway
   * sockets
   * GtkEntry GT3-ification
   * undid changes to widgets/common.{c,h}; GtkNotebookPage no longer exists
@@ -129,7 +123,7 @@ luakit (2017.08.10) unstable; urgency=medium
   * remove call to gtk_dialog_set_has_separator()
   * (properly) avoid compiling libunique support if built with USE_GTK=1
   * gtk3 libunique -> GtkApplication
-  * gtk3 soup auth dialog integrate "store password" into GtkGrid; add gtk3 equivalent to border_width to grid; use gtk3 equivalents of GTK_FILL and GTK_EXPAND
+  * gtk3 soup auth dialog integrate "store password" into GtkGrid
   * -USE_WEBKIT2 Makefile flag to compile with webkit2 API
   * use correct version of javascriptcoregtk when compiling
   * simplify X11 check
@@ -142,7 +136,8 @@ luakit (2017.08.10) unstable; urgency=medium
     indent GTK_CHECK_VERSION macros
   * webkit_web_view_set_view_source_mode() -> webkit_web_view_set_view_mode()
   * WebKitWebBackForwardList -> WebKitBackForwardList for webkit2 API
-  * policy decisions (mime-type, navigation, new-window) compiled together in the callback for decide-policy
+  * policy decisions (mime-type, navigation, new-window) compiled together
+    in the callback for decide-policy
     stop using deprecated navigation_policy_decision_* functions
   * update the exposed WebKitSettings properties
   * loading() -> is-loading property
@@ -163,23 +158,27 @@ luakit (2017.08.10) unstable; urgency=medium
     disable soup stuff on the lua side
   * fix up load callbacks and start fixing up ssl support
   * mouse-target-changed signal
-  * webkit_web_view_{set,get}_view_mode no longer exist. Comment them out for now
+  * webkit_web_view_{set,get}_view_mode no longer exist
   * make incompatible pointer types warning go away
   * rofl remove conditional around a switch case
-  * GtkLabel align/padding deprecated. Use margin/alignment properties of GtkWidgets instead.
+  * GtkLabel align/padding deprecated. Use margin/alignment properties of
+    GtkWidgets instead.
   * gtk_dialog_get_*_area() deprecated; comment out
   * lua signal name change: load-status -> load-changed
   * asdlfkslkgjlskdj
   * make incompatible pointer types warning go away
-  * GtkLabel align/padding deprecated. Use margin/alignment properties of GtkWidgets instead.
+  * GtkLabel align/padding deprecated. Use margin/alignment properties of
+    GtkWidgets instead.
   * gtk_dialog_get_*_area() deprecated; comment out
   * use webkit's uri scheme handling for luakit://*
   * copy navigation-request documentation into WITH_WEBKIT block
   * fix typo: memorise -> memorize
-  * do not connect focus-{in,out}-event and parent-set signals for WebKitWebContexts and WebKitFindControllers.
-  * set button spacing in soup auth dialog and label alignment for gtk 3.14 and up
+  * do not connect focus-{in,out}-event and parent-set signals for
+    WebKitWebContexts and WebKitFindControllers.
+  * set button spacing in soup auth dialog and label alignment for gtk 3.14+
   * add padding back to token list so that luakit still compiles with gtk2
-  * document how to build with GTK3 and fix some bugs in code that checks whether luakit has registered itself or not
+  * document how to build with GTK3 and fix some bugs in code that checks
+    whether luakit has registered itself or not
   * use gtk_widget_set_{h,v}align instead of GValues
   * fix input bar
   * remove inner border of input GtkEntry in GTK3 build using CSS
@@ -214,7 +213,8 @@ luakit (2017.08.10) unstable; urgency=medium
   * documented the rest of common/luaclass.c
 
   [ walt ]
-  * Fixed click() in follow.lua to trigger more events. Only 'click' doesn't work for all elements
+  * Fixed click() in follow.lua to trigger more events.
+    Only 'click' doesn't work for all elements
 
   [ Aidan Holm ]
   * Implement linear smooth scrolling
@@ -1920,9 +1920,6 @@ luakit (2017.08.10) unstable; urgency=medium
   * Add tab favicons
   * Fix signals being emitted for dead tab widget
   * Fix use-after-free of destroyed widgets (#381, #382)
-    Some widget wrappers were not connecting to the "destroy" signal.
-    Some widget wrappers connected to some signals in LUAKIT_WIDGET_SIGNAL_COMMON,
-    but not all of them; not sure why.
   * Add destroy signal for page, dom_document, dom_element (#390)
   * image_css: remove handler on page destruction
   * tab_favicons: remove signal handlers on tab destruction
@@ -2256,18 +2253,6 @@ luakit (2017.08.10) unstable; urgency=medium
   * add numpad keys to default config
   * detect effective locale
   * Fixed warnings reported by Clang scan-build-4.0
-    common/luaobject.c:312:46: warning: Access to field 'signals' results in a dereference of a null pointer (loaded from variable 'obj')
-        signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
-                                                 ^~~~~~~~~~~~
-    1 warning generated.
-    widgets/image.c:55:5: warning: Value stored to 'pixbuf' is never read
-        pixbuf = scaled_pixbuf;
-        ^        ~~~~~~~~~~~~~
-    1 warning generated.
-    extension/luajs.c:80:5: warning: Undefined or garbage value returned to caller
-        return ret;
-        ^~~~~~~~~~
-    1 warning generated.
   * free display detection fixed
     - do not try opening a socket
     - look into /tmp/.X11-unix as well
@@ -2275,7 +2260,7 @@ luakit (2017.08.10) unstable; urgency=medium
   * workaround for outdated posix module in tests
   * Unit tests fixes.
     Four unit-tests failures fixed:
-    1. test_module_binds_have_descriptions: Some bindings are missing descriptions
+    1. test_module_binds_have_descriptions: Some bindings miss descriptions
     2. test_undo_close_works: Timed out while waiting for signal 'load-status'
     3. test_undo_close_restores_tab_history: Expected objects to be equal
     4. test_website_data: Timed out while waiting
@@ -2296,20 +2281,25 @@ luakit (2017.08.10) unstable; urgency=medium
     this complies with the Debian recommandations
   * This fixes #368
   * Revert "makefile: add default target"
-    See #359 for details that explain why the 'default' target is a nonsens as there is the 'all' target already existing.
+    See #359 for details that explain why the 'default' target is a nonsens as
+    there is the 'all' target already existing.
     This reverts commit ece896913e46069bb1d9b044d21d4b16824c34fb.
   * Makefile 'default' target is deprecated. Use target 'all' as a replacement.
-    Keep 'default' target to ensure retro-compatibility, so let it sounds as .PHONY target
-  * Widely use 'install' commands instead of several and sparse commands like 'cp' or 'chmod'. This is to ensure homogenity and comply with Debian precepts.
+    Keep 'default' target to ensure retro-compatibility, so let it sounds
+    as .PHONY target
+  * Widely use 'install' commands instead of several and sparse commands
+    like 'cp' or 'chmod'. This is to ensure homogenity and comply with
+    Debian precepts.
     This fixes #371
   * Remove executability check on 'luakit.so' from 'ipc.c'
     This fixes #384
   * Debianization
-  * Adopt package
+  * Package adopted by Grégory David <groolot@groolot.net>
 
   [ gleachkr ]
   * Fix for #349.
-    This is a quick fix for #349. It also fixes some issue with this script on the google search-results page.
+    This is a quick fix for #349. It also fixes some issue with this script on
+    the google search-results page.
     Update go_next_prev.lua
     Deleted empty line
   * remove unneeded requires

@@ -7,7 +7,7 @@
 -- @class widget:overlay
 -- @prefix overlay
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method pack
 -- Add a widget to the overlay; it will be stacked on top of the main child

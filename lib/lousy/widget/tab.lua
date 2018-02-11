@@ -1,7 +1,7 @@
 --- Luakit tab widget.
 --
 -- @module lousy.widget.tab
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local get_theme = require("lousy.theme").get
 local escape = require("lousy.util").escape

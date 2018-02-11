@@ -33,7 +33,8 @@ key_press_cb(GtkWidget* UNUSED(win), GdkEventKey *ev, widget_t *w)
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, ev->state);
     luaH_keystr_push(L, ev->keyval);
-    gint ret = luaH_object_emit_signal(L, -3, "key-press", 2, 1);
+    lua_pushboolean(L, ev->send_event);
+    gint ret = luaH_object_emit_signal(L, -4, "key-press", 3, 1);
     gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
     lua_pop(L, ret + 1);
     return catch;
@@ -66,27 +67,26 @@ button_cb(GtkWidget* UNUSED(win), GdkEventButton *ev, widget_t *w)
 }
 
 gboolean
-scroll_cb(GtkWidget *view, GdkEventScroll *ev, widget_t *w)
+scroll_cb(GtkWidget *UNUSED(wid), GdkEventScroll *ev, widget_t *w)
 {
-    int button = 0, ret = FALSE;
-    if (ev->direction == GDK_SCROLL_UP || ev->direction == GDK_SCROLL_DOWN)
-        button = ev->direction == GDK_SCROLL_UP ? 4 : 5;
-    else if (ev->direction == GDK_SCROLL_SMOOTH) {
-        double dx, dy;
-        gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy);
-        if (dx == 0.0 && dy == -1.0) button = 4;
-        if (dx == 0.0 && dy ==  1.0) button = 5;
+    double dx, dy;
+    switch (ev->direction) {
+        case GDK_SCROLL_UP:     dx =  0; dy = -1; break;
+        case GDK_SCROLL_DOWN:   dx =  0; dy =  1; break;
+        case GDK_SCROLL_LEFT:   dx = -1; dy =  0; break;
+        case GDK_SCROLL_RIGHT:  dx =  1; dy =  0; break;
+        case GDK_SCROLL_SMOOTH: gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy); break;
+        default: g_assert_not_reached();
     }
-    if (button) {
-        GdkEventButton btn_ev = {
-            .state = ev->state,
-            .button = button,
-            .type = GDK_BUTTON_PRESS,
-        };
-        ret |= button_cb(view, &btn_ev, w);
-        btn_ev.type = GDK_BUTTON_RELEASE;
-        ret |= button_cb(view, &btn_ev, w);
-    }
+
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, ev->state);
+    lua_pushnumber(L, dx);
+    lua_pushnumber(L, dy);
+
+    gboolean ret = luaH_object_emit_signal(L, -4, "scroll", 3, 1);
+    lua_pop(L, ret + 1);
     return ret;
 }
 
@@ -257,6 +257,9 @@ luaH_widget_remove(lua_State *L)
 gint
 luaH_widget_get_children(lua_State *L, widget_t *w)
 {
+    if (!GTK_IS_CONTAINER(w->widget))
+        return 0;
+
     GList *children = gtk_container_get_children(GTK_CONTAINER(w->widget));
     GList *iter = children;
 
@@ -268,6 +271,44 @@ luaH_widget_get_children(lua_State *L, widget_t *w)
     }
     g_list_free(children);
     return 1;
+}
+
+gint
+luaH_widget_replace(lua_State *L)
+{
+    widget_t *och = luaH_checkwidget(L, 1);
+    widget_t *nch = luaH_checkwidget(L, 2);
+
+    GtkWidget *parent = gtk_widget_get_parent(GTK_WIDGET(och->widget));
+    if (!parent)
+        return 0;
+
+    guint num_props;
+    GParamSpec **props = gtk_container_class_list_child_properties(
+            G_OBJECT_GET_CLASS(parent), &num_props);
+
+    GValue *values = g_new0(GValue, num_props);
+    for (guint i = 0; i < num_props; i++)
+    {
+        g_value_init(&values[i], G_PARAM_SPEC_VALUE_TYPE(props[i]));
+        gtk_container_child_get_property(GTK_CONTAINER(parent),
+                GTK_WIDGET(och->widget), props[i]->name, &values[i]);
+    }
+
+    g_object_ref(G_OBJECT(och->widget));
+    gtk_container_remove(GTK_CONTAINER(parent), GTK_WIDGET(och->widget));
+
+    gtk_container_add(GTK_CONTAINER(parent), GTK_WIDGET(nch->widget));
+    for (guint i = 0; i < num_props; i++)
+    {
+        gtk_container_child_set_property(GTK_CONTAINER(parent),
+                GTK_WIDGET(nch->widget), props[i]->name, &values[i]);
+        g_value_unset(&values[i]);
+    }
+
+    g_free(props);
+    g_free(values);
+    return 0;
 }
 
 gint
@@ -283,6 +324,100 @@ luaH_widget_hide(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     gtk_widget_hide(w->widget);
+    return 0;
+}
+
+gint
+luaH_widget_send_key(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    const gchar *key_name = luaL_checkstring(L, 2);
+    if (!lua_istable(L, 3))
+    {
+        lua_newtable(L);
+        lua_insert(L, 3);
+    }
+    const gboolean is_release = lua_toboolean(L, 4);
+
+    if (!g_utf8_validate(key_name, -1, NULL))
+        return luaL_error(L, "key name isn't a utf-8 string");
+
+    guint keyval;
+    if (g_utf8_strlen(key_name, -1) == 1)
+        keyval = gdk_unicode_to_keyval(g_utf8_get_char(key_name));
+    else
+        keyval = gdk_keyval_from_name(key_name);
+
+    if (!keyval || keyval == GDK_KEY_VoidSymbol)
+        return luaL_error(L, "failed to get a valid key value");
+
+    guint state = 0;
+    GString *state_string = g_string_sized_new(32);
+    lua_pushnil(L);
+    while (lua_next(L, 3)) {
+        const gchar *mod = luaL_checkstring(L, -1);
+        g_string_append_printf(state_string, "%s-", mod);
+
+#define MODKEY(modstr, modconst) \
+        if (strcmp(modstr, mod) == 0) { \
+            state = state | GDK_##modconst##_MASK; \
+        }
+
+        MODKEY("shift", SHIFT);
+        MODKEY("control", CONTROL);
+        MODKEY("lock", LOCK);
+        MODKEY("mod1", MOD1);
+        MODKEY("mod2", MOD2);
+        MODKEY("mod3", MOD3);
+        MODKEY("mod4", MOD4);
+        MODKEY("mod5", MOD5);
+
+#undef MODKEY
+
+        lua_pop(L, 1);
+    }
+
+    GdkKeymapKey *keys = NULL;
+    gint n_keys;
+    if (!gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
+                                           keyval, &keys, &n_keys)) {
+        g_string_free(state_string, TRUE);
+        return luaL_error(L, "cannot type '%s' on current keyboard layout",
+                          key_name);
+    }
+
+    GdkEvent *event = gdk_event_new(is_release ? GDK_KEY_RELEASE : GDK_KEY_PRESS);
+    GdkEventKey *event_key = (GdkEventKey *) event;
+    event_key->window = gtk_widget_get_window(w->widget);
+    event_key->send_event = FALSE;
+    event_key->time = GDK_CURRENT_TIME;
+    event_key->state = state;
+    event_key->keyval = keyval;
+    event_key->hardware_keycode = keys[0].keycode;
+    event_key->group = keys[0].group;
+
+    GdkDevice *kbd = NULL;
+#if GTK_CHECK_VERSION(3,20,0)
+    GdkSeat *seat = gdk_display_get_default_seat(gdk_display_get_default());
+    kbd = gdk_seat_get_keyboard(seat);
+#else
+    GdkDeviceManager *dev_mgr = gdk_display_get_device_manager(gdk_display_get_default());
+    GList *devices = gdk_device_manager_list_devices(dev_mgr, GDK_DEVICE_TYPE_MASTER);
+    for (GList *dev = devices; dev && !kbd; dev = dev->next)
+        if (gdk_device_get_source(dev->data) == GDK_SOURCE_KEYBOARD)
+            kbd = dev->data;
+    g_list_free(devices);
+#endif
+    if (!kbd)
+        return luaL_error(L, "failed to find a keyboard device");
+    gdk_event_set_device(event, kbd);
+
+    gboolean ret;
+    debug("sending key '%s%s' to widget %p", state_string->str, key_name, w->widget);
+    g_signal_emit_by_name(w->widget, is_release ? "key-release-event" : "key-press-event", event, &ret);
+
+    g_string_free(state_string, TRUE);
+    g_free(keys);
     return 0;
 }
 
@@ -333,6 +468,54 @@ luaH_widget_set_min_size(lua_State *L, widget_t *w)
 
     gtk_widget_set_size_request(w->widget, width, height);
     return 1;
+}
+
+gint
+luaH_widget_get_align(lua_State *L, widget_t *w)
+{
+    GtkAlign halign = gtk_widget_get_halign(GTK_WIDGET(w->widget)),
+             valign = gtk_widget_get_valign_with_baseline(GTK_WIDGET(w->widget));
+    lua_createtable(L, 0, 2);
+    /* set align.h */
+    lua_pushliteral(L, "h");
+    lua_pushnumber(L, halign);
+    lua_rawset(L, -3);
+    /* set align.v */
+    lua_pushliteral(L, "v");
+    lua_pushnumber(L, valign);
+    lua_rawset(L, -3);
+    return 1;
+}
+
+gint
+luaH_widget_set_align(lua_State *L, widget_t *w)
+{
+    luaH_checktable(L, 3);
+    GtkAlign halign = gtk_widget_get_halign(GTK_WIDGET(w->widget)),
+             valign = gtk_widget_get_valign_with_baseline(GTK_WIDGET(w->widget));
+    if (luaH_rawfield(L, 3, "h"))
+        switch (l_tokenize(lua_tostring(L, -1))) {
+            case L_TK_FILL:     halign = GTK_ALIGN_FILL;     break;
+            case L_TK_START:    halign = GTK_ALIGN_START;    break;
+            case L_TK_END:      halign = GTK_ALIGN_END;      break;
+            case L_TK_CENTER:   halign = GTK_ALIGN_CENTER;   break;
+            case L_TK_BASELINE: halign = GTK_ALIGN_BASELINE; break;
+            default:
+                return luaL_error(L, "Bad alignment value (expected fill, start, end, center, or baseline)");
+        }
+    if (luaH_rawfield(L, 3, "v"))
+        switch (l_tokenize(lua_tostring(L, -1))) {
+            case L_TK_FILL:     valign = GTK_ALIGN_FILL;     break;
+            case L_TK_START:    valign = GTK_ALIGN_START;    break;
+            case L_TK_END:      valign = GTK_ALIGN_END;      break;
+            case L_TK_CENTER:   valign = GTK_ALIGN_CENTER;   break;
+            case L_TK_BASELINE: valign = GTK_ALIGN_BASELINE; break;
+            default:
+                return luaL_error(L, "Bad alignment value (expected fill, start, end, center, or baseline)");
+        }
+    gtk_widget_set_halign(GTK_WIDGET(w->widget), halign);
+    gtk_widget_set_valign(GTK_WIDGET(w->widget), valign);
+    return 0;
 }
 
 gint

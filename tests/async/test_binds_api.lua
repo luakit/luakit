@@ -1,6 +1,6 @@
 --- Test binds APIs.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local assert = require "luassert"
 local lousy = require "lousy"

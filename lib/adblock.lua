@@ -52,8 +52,8 @@
 -- @author Chris van Dijk (quigybo) <quigybo@hotmail.com>
 -- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
 -- @author Plaque FCC <Reslayer@ya.ru>
--- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010 Chris van Dijk <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2012 Plaque FCC <Reslayer@ya.ru>
 
 local webview   = require("webview")
@@ -71,7 +71,7 @@ local adblock_wm = require_web_module("adblock_wm")
 -- Adblock Plus compatible filter lists.
 local adblock_dir = luakit.data_dir .. "/adblock/"
 local filterfiles = {}
-local subscriptions_file = adblock_dir .. "/subscriptions"
+local subscriptions_file = adblock_dir .. "subscriptions"
 
 --- The set of ad blocking subscriptions that are active.
 -- @type table
@@ -203,6 +203,8 @@ local abp_to_pattern = function (s)
             v = string.lower(v)
             s[k] = v
         end
+    else
+        s = {""}
     end
 
     return s, opts, domain, false
@@ -294,7 +296,8 @@ local function write_subscriptions(file)
     assert(file and file ~= "", "Cannot write subscriptions to empty path")
 
     local lines = {}
-    for _, list in pairs(_M.subscriptions) do
+    for _, filename in ipairs(filterfiles) do
+        local list = _M.subscriptions[filename]
         local subs = { uri = list.uri, title = list.title, opts = table.concat(list.opts or {}, " "), }
         local line = string.gsub("{title}\t{uri}\t{opts}", "{(%w+)}", subs)
         table.insert(lines, line)
@@ -356,10 +359,7 @@ local function add_list(uri, title, opts, replace, save_lists)
         end
     else
         -- Insert new adblock list
-        local list = { uri = uri, title = title, opts = opts }
-        if not (title == "" or title == nil) then
-            _M.subscriptions[title] = list
-        end
+        _M.subscriptions[title] = { uri = uri, title = title, opts = opts }
     end
 
     -- Save by default
@@ -379,7 +379,9 @@ local function read_subscriptions(file)
     -- Read lines into subscriptions data table
     for line in io.lines(file) do
         local title, uri, opts = unpack(util.string.split(line, "\t"))
-        if title ~= "" then add_list(uri, title, opts, false, false) end
+        if title ~= "" and os.exists(adblock_dir..title) then
+            add_list(uri, title, opts, false, false)
+        end
     end
 end
 
@@ -394,17 +396,12 @@ _M.load = function (reload, single_list, no_sync)
     detect_files()
     if not single_list then
         read_subscriptions()
-        local files_list = {}
         for _, filename in ipairs(filterfiles) do
             local list = _M.subscriptions[filename]
-            if list and util.table.hasitem(list.opts, "Enabled") then
-                table.insert(files_list, filename)
-            else
+            if not list then
                 add_list(list and list.uri or "", filename, "Enabled", true, false)
             end
         end
-        filterfiles = files_list
-        -- Yes we may have changed subscriptions and even fixed something with them.
         write_subscriptions()
     end
 

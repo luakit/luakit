@@ -4,7 +4,7 @@
 -- including the built-in documentation browser.
 --
 -- @module help_chrome
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local lousy = require("lousy")
@@ -38,12 +38,18 @@ local index_html_template = [==[
             license.  It is primarily targeted at power users, developers and any people with too much time
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
-        <h2>Introspector</h2>
-        <p> To view the automatically generated documentation for currently loaded
-        modules and available keybinds, open the Luakit introspector.</p>
+        <h2>Configuration</h2>
+        <h3>Settings</h3>
+        <p>The available settings are displayed at:</p>
         <ul>
-            <li><a href="luakit://introspector/">Introspector</a></li>
+            <li><a href="luakit://settings/">Settings</a></li>
         </ul>
+        <h3>Key bindings</h3>
+        <p>Currently active bindings are listed in the following page.</p>
+        <ul>
+            <li><a href="luakit://binds/">Bindings</a></li>
+        </ul>
+        {chromepageshtml}
         <h2>API Documentation</h2>
         <ul>
             <li><a href="luakit://help/doc/index.html">API Index</a></li>
@@ -79,8 +85,24 @@ local index_html_template = [==[
 </body>
 ]==]
 
+local gen_html_chrome_pages = function()
+    local links = ""
+    for _, v in ipairs(chrome.available_handlers()) do
+        links = links .. "<li><a href=\"luakit://" .. v .. "\">" .. v .. "</a></li>\n"
+    end
+    return [==[
+        <h3>luakit:// pages</h3>
+        <p>These are all the available <code>luakit://</code> pages:</p>
+        <ul>
+]==] .. links .. "</ul>"
+end
+
 local help_index_page = function ()
-    local html_subs = { style = chrome.stylesheet, version = luakit.version, }
+    local html_subs = {
+        style = chrome.stylesheet,
+        version = luakit.version,
+        chromepageshtml = gen_html_chrome_pages(),
+    }
     local html = string.gsub(index_html_template, "{(%w+)}", html_subs)
     return html
 end
@@ -91,6 +113,7 @@ local builtin_module_set = {
     luakit = true,
     msg = true,
     soup = true,
+    utf8 = true,
 }
 
 local help_doc_index_page_preprocess = function (inner, style)
@@ -184,7 +207,7 @@ local help_doc_page = function (v, path, request)
     end
 
     local extract_doc_html = function (file)
-        local prefix = luakit.dev_paths and "doc/apidocs/" or luakit.install_path  .. "/doc/"
+        local prefix = luakit.dev_paths and "doc/apidocs/" or (luakit.install_paths.doc_dir .. "/")
         local ok, blob = pcall(lousy.load, prefix .. file)
         if not ok then return nil, prefix .. file end
         local style = blob:match("<style>(.*)</style>")

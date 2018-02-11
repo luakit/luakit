@@ -9,8 +9,9 @@
 -- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Paweł Zuzelski <pawelz@pld-linux.org>
--- @copyright 2016 Aidan Holm
--- @copyright 2010 Mason Larobina, Paweł Zuzelski
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright Paweł Zuzelski <pawelz@pld-linux.org>
 -- @module luakit
 
 --- The path to the luakit configuration directory.
@@ -35,12 +36,23 @@
 -- @readonly
 
 --- The luakit installation path.
+-- @deprecated use @ref{install_paths|install_paths.install_dir} instead.
 -- @property install_path
 -- @type string
 -- @readonly
 
+--- The paths to where luakit's files are installed.
+-- @property install_paths
+-- @type table
+-- @readonly
+
 --- The luakit version.
 -- @property version
+-- @type string
+-- @readonly
+
+--- The WebKitGTK version that luakit was built with.
+-- @property webkit_version
 -- @type string
 -- @readonly
 
@@ -86,7 +98,7 @@
 -- Returns the unescaped string, or `nil` if the string contains illegal
 -- characters.
 --
--- @function uri_encode
+-- @function uri_decode
 -- @tparam string str The string to decode.
 -- @treturn string The unescaped/decoded string, or `nil` on error.
 -- @treturn string Error message.
@@ -204,5 +216,16 @@
 -- @treturn string The converted key. This will be the same as `key` if the key
 -- is already lowercase or if case conversion does not apply to the key.
 -- @function wch_lower
+
+--- The set of paths used by luakit to search for resource files.
+-- This property is similar to `package.path`; it is a semicolon-separated list
+-- of paths, and paths appearing earlier in the list will be searched first when
+-- looking for resource files.
+--
+-- By default, it includes the current directory and the luakit installation
+-- directory.
+-- @type string
+-- @readwrite
+-- @property resource_path
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

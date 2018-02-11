@@ -1,7 +1,7 @@
 --- Regex support
 -- @class regex
 -- @author Aidan Holm
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 --
 -- # Creating a new regex instance
 --

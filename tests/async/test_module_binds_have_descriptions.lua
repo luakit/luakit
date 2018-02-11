@@ -1,6 +1,6 @@
 --- Ensure all module bindings have descriptions.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local test = require("tests.lib")
 local lousy = require("lousy")
@@ -47,7 +47,7 @@ local function add_file_error(errors, file, error, ...)
 end
 
 T.test_module_binds_have_descriptions = function ()
-    local files = test.find_files({"lib/"}, ".+%.lua$", {"_wm%.lua$", "modes%.lua"})
+    local files = test.find_files({"lib/"}, ".+%.lua$", {"_wm%.lua$", "modes%.lua", "unique_instance%.lua"})
 
     local errors = {}
 

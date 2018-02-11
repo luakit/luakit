@@ -1,7 +1,7 @@
 --- Web process Lua interface to the DOM
 -- @class dom_document
 -- @author Aidan Holm
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 -- @prefix document
 --
 -- DOCMACRO(available:web)

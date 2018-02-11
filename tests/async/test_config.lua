@@ -1,6 +1,6 @@
 --- Test that the default config works.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local T = {}
 

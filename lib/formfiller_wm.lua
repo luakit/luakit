@@ -1,7 +1,7 @@
 -- Luakit formfiller - web module.
 --
 -- @submodule formfiller_wm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local select = require("select_wm")
 local lousy = require("lousy")
@@ -111,10 +111,6 @@ local stylesheet = [===[
     font-size: 10px;
     font-family: monospace, courier, sans-serif;
     opacity: 0.4;
-}
-
-#luakit_select_overlay .hint_overlay_body {
-    background-color: #ff0000;
 }
 
 #luakit_select_overlay .hint_selected {

@@ -46,8 +46,13 @@ $(THEAD) $(TSRC): $(TLIST)
 
 buildopts.h: buildopts.h.in
 	sed -e 's#LUAKIT_INSTALL_PATH .*#LUAKIT_INSTALL_PATH "$(PREFIX)/share/luakit"#' \
-		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' buildopts.h.in \
-		> buildopts.h
+		-e 's#LUAKIT_CONFIG_PATH .*#LUAKIT_CONFIG_PATH "$(XDGPREFIX)"#' \
+		-e 's#LUAKIT_DOC_PATH .*#LUAKIT_DOC_PATH "$(DOCDIR)"#' \
+		-e 's#LUAKIT_MAN_PATH .*#LUAKIT_MAN_PATH "$(MANPREFIX)"#' \
+		-e 's#LUAKIT_PIXMAP_PATH .*#LUAKIT_PIXMAP_PATH "$(PIXMAPDIR)"#' \
+		-e 's#LUAKIT_APP_PATH .*#LUAKIT_APP_PATH "$(APPDIR)"#' \
+		-e 's#LUAKIT_LIB_PATH .*#LUAKIT_LIB_PATH "$(LIBDIR)"#' \
+		buildopts.h.in > buildopts.h
 
 $(filter-out $(EXT_OBJS),$(OBJS)) $(EXT_OBJS): $(HEADS) config.mk
 
@@ -100,7 +105,8 @@ install: all
 	install -m644 lib/*.* $(INSTALLDIR)/share/luakit/lib
 	install -m644 lib/lousy/*.* $(INSTALLDIR)/share/luakit/lib/lousy
 	install -m644 lib/lousy/widget/*.* $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install -m644 luakit.so $(INSTALLDIR)/share/luakit/luakit.so
+	install -d $(INSTALLDIR)/lib/luakit
+	install -m644 luakit.so $(INSTALLDIR)/lib/luakit/luakit.so
 	install -d $(INSTALLDIR)/bin
 	install luakit $(INSTALLDIR)/bin/luakit
 	install -d $(XDGPREFIX)/luakit/
@@ -116,7 +122,7 @@ install: all
 	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(INSTALLDIR)/share/luakit/$$(dirname $$f)"' \;
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit
+	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/lib/luakit
 	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(XDGPREFIX)/luakit
 	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
 

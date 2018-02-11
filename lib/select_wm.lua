@@ -6,13 +6,15 @@
 -- this module is used by the `formfiller` module when selecting a form to add.
 --
 -- @module select_wm
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
-local floor, max = math.floor, math.max
+local ceil, floor, max = math.ceil, math.floor, math.max
 
 local _M = {}
 
 local ui = ipc_channel("select_wm")
+
+local has_client_rects_api = tonumber(luakit.webkit_version:match("^2%.(%d+)%.")) > 16
 
 -- Label making
 
@@ -20,18 +22,22 @@ local ui = ipc_channel("select_wm")
 -- charset of a certain length (I.e. the base)
 local function max_hint_len(size, base)
     local len = 0
+    if base == 1 then return size end
     while size > 0 do size, len = floor(size / base), len + 1 end
     return len
 end
 
-local function charset(seq, size)
-    local sub, reverse, concat = string.sub, string.reverse, table.concat
+-- Reverse a UTF8 string: multibyte sequences are reversed twice
+local function utf8_rev (s)
+    s = s:gsub(utf8.charpattern, function (ch) return #ch > 1 and ch:reverse() end)
+    return s:reverse()
+end
 
-    local base, digits, labels = #seq, {}, {}
-    for i = 1, base do rawset(digits, i, sub(seq, i, i)) end
+local function charset(seq, size)
+    local base, digits, labels = utf8.len(seq), {}, {}
+    for ch in seq:gmatch(utf8.charpattern) do digits[#digits+1] = ch end
 
     local maxlen = max_hint_len(size, base)
-    local zeroseq = string.rep(rawget(digits, 1), maxlen)
 
     for n = 1, size do
         local t, i, j, d = {}, 1, n
@@ -41,8 +47,7 @@ local function charset(seq, size)
             i = i + 1
         until n == 0
 
-        rawset(labels, j, sub(zeroseq, 1, maxlen - i + 1)
-            .. reverse(concat(t, "")))
+        rawset(labels, j, string.rep(digits[1], maxlen-i+1) .. utf8_rev(table.concat(t, "")))
     end
     return labels
 end
@@ -58,6 +63,69 @@ local label_styles = {
         return function (size) return charset("0123456789", size) end
     end,
 
+    -- Interleave style
+    interleave = function (left, right)
+        assert(type(left) == "string" and type(right) == "string",
+               "left and right parameters must be strings")
+        assert(#left > 1 or #right > 1,
+               "either left or right parameters' length must be greater than 1")
+        local cmap = {}
+        for ch in (left..right):gmatch(utf8.charpattern) do
+            if cmap[ch] then
+                error("duplicate characters %s in hint strings %s, %s", ch, left, right)
+            else
+                cmap[ch] = 1
+            end
+        end
+        return function (size)
+            local function allstrings(n, t, k, s)
+                k, s = k or 1, s or {}
+                if k > n then
+                    coroutine.yield(table.concat(s))
+                else
+                    for i = 1, #t do
+                        s[k] = t[i]
+                        allstrings(n, t, k+1, s)
+                    end
+                end
+            end
+            local function permute(n, t)
+                return coroutine.wrap(allstrings), n, t
+            end
+
+            -- calculate the hinting length
+            local hint_len = 1
+            while true do
+                local lo, hi = floor(hint_len/2), ceil(hint_len/2)
+                if (#left)^lo * (#right)^hi + (#left)^hi * (#right)^lo >= size then break end
+                hint_len = hint_len + 1
+            end
+
+            local tleft, tright = {}, {}
+            left:gsub(utf8.charpattern, function(c) table.insert(tleft, c) end)
+            right:gsub(utf8.charpattern, function(c) table.insert(tright, c) end)
+            local labels = {}
+            local lo, hi = floor(hint_len/2), ceil(hint_len/2)
+            for a in permute(hi, tleft) do
+                for b in permute(lo, tright) do
+                    rawset(labels, size, a:gsub('()('..utf8.charpattern..')',
+                                                function(p, c) return c..b:sub(p, p+#c-1) end))
+                    size = size - 1
+                    if size == 0 then return labels end
+                end
+            end
+            for a in permute(hi, tright) do
+                for b in permute(lo, tleft) do
+                    rawset(labels, size, a:gsub('()('..utf8.charpattern..')',
+                                                function(p, c) return c..b:sub(p, p+#c-1) end))
+                    size = size - 1
+                    if size == 0 then return labels end
+                end
+            end
+            return labels
+        end
+    end,
+
     -- Chainable style: sorts labels
     sort = function (make_labels)
         return function (size)
@@ -70,10 +138,9 @@ local label_styles = {
     -- Chainable style: reverses label strings
     reverse = function (make_labels)
         return function (size)
-            local rawset, rawget, reverse = rawset, rawget, string.reverse
             local labels = make_labels(size)
             for i = 1, #labels do
-                rawset(labels, i, reverse(rawget(labels, i)))
+                rawset(labels, i, utf8_rev(rawget(labels, i)))
             end
             return labels
         end
@@ -82,18 +149,16 @@ local label_styles = {
     trim = function (make_labels)
         return function (size)
             local labels = make_labels(size)
-            for n = 1, #labels do
-                local cur = rawget(labels, n)
-                local rep = cur:sub(1, #cur-1)
-                local is_prefix = false
-                for nn = 1, #labels do
-                    if nn ~= n and rawget(labels, nn):find(rep, 1, true) == 1 then
-                        is_prefix = true
-                        break
+            local P = {}
+            for _, l in ipairs(labels) do
+                local p = l:gsub(utf8.charpattern.."$", "")
+                if #p > 0 then P[p] = (P[p] or 0) + 1 end
+            end
+            for p, count in pairs(P) do
+                if count == 1 then
+                    for i, l in ipairs(labels) do
+                        if l:sub(1, #p) == p then labels[i] = p end
                     end
-                end
-                if not is_prefix and rep ~= "" then
-                    rawset(labels, n, rep)
                 end
             end
             return labels
@@ -105,7 +170,7 @@ local label_styles = {
 local label_maker
 do
     local s = label_styles
-    label_maker = s.trim(s.sort(s.reverse(s.numbers())))
+    label_maker = s.trim(s.sort(s.interleave("12345", "67890")))
 end
 
 local function bounding_boxes_intersect(a, b)
@@ -118,27 +183,39 @@ end
 
 local function get_element_bb_if_visible(element, wbb, page)
     -- Find the element bounding box
-    local client_rects = page:wrap_js([=[
-        var rects = element.getClientRects();
-        if (rects.length == 0)
-            return undefined;
-        var rect = {
-            "top": rects[0].top,
-            "bottom": rects[0].bottom,
-            "left": rects[0].left,
-            "right": rects[0].right,
-        };
-        for (var i = 1; i < rects.length; i++) {
-            rect.top = Math.min(rect.top, rects[i].top);
-            rect.bottom = Math.max(rect.bottom, rects[i].bottom);
-            rect.left = Math.min(rect.left, rects[i].left);
-            rect.right = Math.max(rect.right, rects[i].right);
-        }
-        rect.width = rect.right - rect.left;
-        rect.height = rect.bottom - rect.top;
-        return rect;
-    ]=], {"element"})
-    local r = client_rects(element) or element.rect
+    local r
+
+    if has_client_rects_api then
+        r = element:client_rects()
+        for i=#r,1,-1 do
+            if r[i].width == 0 or r[i].height == 0 then table.remove(r, i) end
+        end
+        if #r == 0 then return nil end
+        r = r[1]
+    else
+        local client_rects = page:wrap_js([=[
+            var rects = element.getClientRects();
+            if (rects.length == 0)
+                return undefined;
+            var rect = {
+                "top": rects[0].top,
+                "bottom": rects[0].bottom,
+                "left": rects[0].left,
+                "right": rects[0].right,
+            };
+            for (var i = 1; i < rects.length; i++) {
+                rect.top = Math.min(rect.top, rects[i].top);
+                rect.bottom = Math.max(rect.bottom, rects[i].bottom);
+                rect.left = Math.min(rect.left, rects[i].left);
+                rect.right = Math.max(rect.right, rects[i].right);
+            }
+            rect.width = rect.right - rect.left;
+            rect.height = rect.bottom - rect.top;
+            return rect;
+        ]=], {"element"})
+        r = client_rects(element) or element.rect
+    end
+
     local rbb = {
         x = wbb.x + r.left,
         y = wbb.y + r.top,
@@ -166,17 +243,6 @@ local function get_element_bb_if_visible(element, wbb, page)
     end
 
     if not bounding_boxes_intersect(wbb, rbb) then return nil end
-
-    -- Check whether element is visible
-    -- Heuristic: get element at center of bbox, and check if that is a
-    -- descendant of the hinted element
-    local is_ancestor = false
-    local ce = page.document:element_from_point(r.left + rbb.w/2, r.top + rbb.h/2)
-    while ce and not is_ancestor do
-        is_ancestor = ce == element
-        ce = ce.tag_name ~= "HTML" and ce.parent or nil
-    end
-    if not is_ancestor then return nil end
 
     -- If a link element contains one image, use the image dimensions
     if element.tag_name == "A" then
@@ -241,6 +307,10 @@ local function make_labels(num)
 end
 
 local function find_frames(root_frame)
+    if not root_frame.body then
+        return {}
+    end
+
     local subframes = root_frame.body:query("frame, iframe")
     local frames = { root_frame }
 
@@ -270,10 +340,14 @@ local function init_frame(frame, stylesheet)
 end
 
 local function cleanup_frame(frame)
-    frame.overlay:remove()
-    frame.stylesheet:remove()
-    frame.overlay = nil
-    frame.stylesheet = nil
+    if frame.overlay then
+        frame.overlay:remove()
+        frame.overlay = nil
+    end
+    if frame.stylesheet then
+        frame.stylesheet:remove()
+        frame.stylesheet = nil
+    end
 end
 
 local function hint_matches(hint, hint_pat, text_pat)
@@ -405,13 +479,15 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     end
 
     for _, frame in ipairs(state.frames) do
+        local fwr = frame.doc.window
+        local fsx, fsy = fwr.scroll_x, fwr.scroll_y
         for _, hint in ipairs(frame.hints) do
             -- Append hint elements to overlay
             local e = hint.elem
             local r = hint.bb
 
             local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
-            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, 0), max(r.y-10, 0), r.w, r.h)
+            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, fsx), max(r.y-10, fsy), r.w, r.h)
 
             local overlay_class = "hint_overlay hint_overlay_" .. e.tag_name
             local label_class = "hint_label hint_label_" .. e.tag_name
@@ -423,7 +499,11 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         end
     end
 
-    page.document:add_signal("destroy", function () _M.leave(page_id) end)
+    for _, frame in ipairs(state.frames) do
+        frame.doc:add_signal("destroy", function ()
+            cleanup_frame(frame)
+        end)
+    end
 
     filter(state, "", "")
     return focus(state, 0), state.num_visible_hints
@@ -528,6 +608,7 @@ function _M.focused_hint(page)
 end
 
 ui:add_signal("set_label_maker", function (_, _, f)
+    setfenv(f, label_styles)
     label_maker = f(label_styles)
 end)
 

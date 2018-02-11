@@ -9,7 +9,7 @@
 -- @class widget:scrolled
 -- @prefix scrolled
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property scrollbars
 -- The scrollbar policy. Two fields, `h` and `v`, specify the scrollbar policy

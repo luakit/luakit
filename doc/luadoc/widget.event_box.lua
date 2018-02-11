@@ -7,7 +7,7 @@
 -- @class widget:event_box
 -- @prefix ebox
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property bg
 -- The background color of the box widget.

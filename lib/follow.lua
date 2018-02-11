@@ -11,22 +11,48 @@
 -- Another example would be hinting all images on the page, and opening the
 -- followed image in a new tab.
 --
--- # Using a custom character set for hint labels
+-- # Customizing hint labels
 --
 -- If you prefer to use letters instead of numbers for hint labels (useful if
 -- you use a non-qwerty keyboard layout), this can be done by replacing the
 -- @ref{label_maker} function:
 --
---     -- Use "asdfqwerzxcv" for generating labels
 --     local select = require "select"
---     select.label_maker = function (s)
---         return s.sort(s.reverse(s.charset("asdfqwerzxcv")))
+--
+--     select.label_maker = function ()
+--         local chars = charset("asdfqwerzxcv")
+--         return trim(sort(reverse(chars)))
 --     end
+--
+-- Here, the `charset()` function generates hints using the specified letters.
+-- For a full explanation of what the `trim(sort(reverse(...)))` construction
+-- does, see the @ref{select} module documentation; the short explanation is
+-- that it makes hints as short as possible, saving you typing.
 --
 -- Note: this requires modifying the @ref{select} module because the actual
 -- link hinting interface is implemented in the `select` module; the
 -- `follow` module provides the `follow` and `ex-follow` user interface on top
 -- of that.
+--
+-- ## Hinting with non-latin letters
+--
+-- If you use a keyboard layout with non-latin keys, you may prefer to use
+-- non-latin letters to hint. For example, using the Cyrillic alphabet, the
+-- above code could be changed to the following:
+--
+--     ...
+--     local chars = charset("ФЫВАПРОЛДЖЭ")
+--     ...
+--
+-- ## Alternating between left- and right-handed letters
+--
+-- To make link hints easier to type, you may prefer to have them alternate
+-- between letters on the left and right side of your keyboard. This is easy to
+-- do with the `interleave()` label composer function.
+--
+--     ...
+--     local chars = interleave("qwertasdfgzxcvb", "yuiophjklnm")
+--     ...
 --
 -- # Matching only hint labels, not element text
 --
@@ -44,7 +70,7 @@
 --     follow.ignore_case = true
 --
 -- @module follow
--- @copyright 2010-2012 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010-2011 Fabian Streitel <karottenreibe@gmail.com>
 
 local window = require("window")
@@ -93,10 +119,6 @@ _M.stylesheet = [===[
     font-size: 10px;
     font-family: monospace, courier, sans-serif;
     opacity: 0.4;
-}
-
-#luakit_select_overlay .hint_overlay_body {
-    background-color: #ff0000;
 }
 
 #luakit_select_overlay .hint_selected {
@@ -172,11 +194,14 @@ local function follow_func_cb(w, ret)
 
     if mode.func then mode.func(ret) end
 
-    if mode.persist then
-        w:set_input("")
-        w:set_mode("follow", mode)
-    elseif ret ~= "form-active" and ret ~= "root-active" then
-        w:set_mode()
+    -- don't set mode if func() changed it (e.g. to command mode)
+    if w:is_mode("follow") or w:is_mode("ex-follow") then
+        if mode.persist then
+            w:set_input("")
+            w:set_mode("follow", mode)
+        elseif ret ~= "form-active" and ret ~= "root-active" then
+            w:set_mode()
+        end
     end
 
     ignore_keys(w)
@@ -289,7 +314,7 @@ add_binds("follow", {
 -- @type {[string]=string}
 -- @readwrite
 _M.selectors = {
-    clickable = 'a, area, textarea, select, input:not([type=hidden]), button',
+    clickable = 'a, area, textarea, select, input:not([type=hidden]), button, label',
     -- Elements that can be clicked.
     focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
     -- Elements that can be given input focus.

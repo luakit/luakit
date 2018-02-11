@@ -1,6 +1,6 @@
 --- Test lousy.uri functionality.
 --
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local assert = require "luassert"
 local lousy = require "lousy"
@@ -9,9 +9,12 @@ local T = {}
 
 T.test_lousy_uri_properties = function ()
     local keys = {
+        is_uri = true,
+        split = true,
         parse_query = true,
         parse = true,
         copy = true,
+        domains_from_uri = true,
     }
     for k in pairs(keys) do
         assert.is_function(lousy.uri[k], "Missing/invalid property: lousy.uri." .. k)
@@ -19,6 +22,32 @@ T.test_lousy_uri_properties = function ()
     for k in pairs(lousy.uri) do
         assert.is_true(keys[k], "Extra property: lousy.uri." .. k)
     end
+end
+
+T.test_lousy_uri_parse_is_uri = function()
+    -- File URIs and /etc/hosts are system-dependant so they won't be tested
+    local is_uri = lousy.uri.is_uri
+    assert.is_true(is_uri("localhost"))
+    assert.is_true(is_uri("localhost:8080"))
+    assert.is_true(is_uri("about:blank"))
+    assert.is_true(is_uri("javascript:alert('message')"))
+    assert.is_false(is_uri(".example.com"))
+    assert.is_true(is_uri("https://github.com/luakit/luakit"))
+    assert.is_true(is_uri("http://localhost:8000/tests/"))
+    assert.is_true(is_uri("luakit.github.io"))
+    assert.is_true(is_uri("http://www.shareprice.co.uk/TW."))
+    assert.is_false(is_uri("etc."))
+end
+
+T.test_lousy_uri_parse_split = function()
+    local s = [[github.com Monsters,   Inc. (http://i.imgur.com/BxXBmVL.gif),
+                I love localhost	ice cream. ]]
+    local t = {"github.com", "Monsters, Inc.", "http://i.imgur.com/BxXBmVL.gif",
+               "I love", "localhost", "ice cream."}
+    assert.are.same(t, lousy.uri.split(s))
+
+    local js = "javascript:alert('foo'); confirm('bar')"
+    assert.are.same({js}, lousy.uri.split(js))
 end
 
 T.test_lousy_uri_parse = function ()
@@ -68,6 +97,12 @@ T.test_lousy_uri_parse = function ()
     assert.is_equal(tostring(parsed + props), props_uri)
     props_uri = "luakit://baz@random-domain.com:888/"
     assert.is_equal(tostring(parsed + props + {query = ""}), props_uri)
+end
+
+T.test_lousy_uri_domains_from_uri = function ()
+    local f = lousy.uri.domains_from_uri
+    assert.are.same({".example.com", "example.com", ".com"}, f("example.com"))
+    assert.are.same({".example.com", "example.com", ".com"}, f("www.example.com"))
 end
 
 return T

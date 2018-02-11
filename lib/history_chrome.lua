@@ -8,7 +8,6 @@
 
 -- Grab the luakit environment we need
 local history = require("history")
-local lousy = require("lousy")
 local chrome = require("chrome")
 local modes     = require("modes")
 local add_cmds  = modes.add_cmds
@@ -117,210 +116,218 @@ local html_template = [==[
         <a id="nav-next">next</a>
     </div>
 
-    <div id="templates" class="hidden">
-        <div id="item-skelly">
-            <div class="item">
-                <span class="time"></span>
-                <span class="title"><a></a></span>
-                <span class="domain"><a></a></span>
-            </div>
-        </div>
-    </div>
+    <script>{%javascript}</script>
 </body>
 ]==]
 
 local main_js = [=[
-$(document).ready(function () { 'use strict';
+function createElement (tag, attributes, children, events) {
+    let $node = document.createElement(tag)
 
-    var limit = 100, results_len = 0;
-
-    var months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
-    var days = ['Sunday', 'Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday'];
-
-    var item_html = $("#item-skelly").html();
-
-    function make_history_item(h) {
-        var $e = $(item_html);
-        $e.attr("history_id", h.id);
-        $e.find(".time").text(h.time);
-        $e.find(".title a")
-            .attr("href", h.uri)
-            .text(h.title || h.uri);
-        var domain = /:\/\/([^/]+)\//.exec(h.uri);
-        $e.find(".domain a").text(domain && domain[1] || "");
-        return $e.prop("outerHTML");
-    };
-
-    var $search = $('#search').eq(0),
-        $results = $('#results').eq(0),
-        $results_header = $("#results-header").eq(0),
-        $clear_all = $("#clear-all-button").eq(0),
-        $clear_results = $("#clear-results-button").eq(0),
-        $clear_selected = $("#clear-selected-button").eq(0),
-        $next = $("#nav-next").eq(0),
-        $prev = $("#nav-prev").eq(0),
-        $page = $("#page").eq(0);
-
-    if ($page.val() == "")
-        $page.val(1);
-
-    function update_clear_buttons(all, results, selected) {
-        $clear_all.attr("disabled", !!all);
-        $clear_results.attr("disabled", !!results);
-        $clear_selected.attr("disabled", !!selected);
+    for (let a in attributes) {
+        $node.setAttribute(a, attributes[a])
     }
 
-    function update_nav_buttons() {
-        if (results_len === limit)
-            $next.show();
-        else
-            $next.hide();
-        if (parseInt($page.val(), 10) > 1)
-            $prev.show();
-        else
-            $prev.hide();
+    for (let $child of children) {
+        $node.appendChild($child)
     }
 
-    function search() {
-        var query = $search.val();
+    if (events) {
+        for (let eventType in events) {
+            let action = events[eventType]
+            $node.addEventListener(eventType, action)
+        }
+    }
+
+    return $node
+}
+
+function empty ($el) {
+    while ($el.firstChild) $el.removeChild($el.firstChild)
+}
+
+window.addEventListener('load', () => {
+    const limit = 100
+    let resultsLen = 0
+    const $clearAll = document.getElementById('clear-all-button')
+    const $clearResults = document.getElementById('clear-results-button')
+    const $clearSelected = document.getElementById('clear-selected-button')
+    const $next = document.getElementById('nav-next')
+    const $page = document.getElementById('page')
+    const $prev = document.getElementById('nav-prev')
+    const $results = document.getElementById('results')
+    const $search = document.getElementById('search')
+
+    $page.value = $page.value || 1
+
+    function makeHistoryItem (h) {
+        let domain = /https?:\/\/([^/]+)\//.exec(h.uri)
+        domain = domain ? domain[1] : ''
+
+        function escapeHTML(string) {
+            let entityMap = {
+                '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;',
+                "'": '&#39;', '/': '&#x2F;', '`': '&#x60;', '=': '&#x3D;'
+            }
+            return String(string).replace(/[&<>"'`=\/]/g, s => entityMap[s]);
+        }
+
+        return `
+            <div class=item data-id="${h.id}">
+                <span class=time>${h.time}</span>
+                <span class=title>
+                    <a href="${h.uri}">${escapeHTML(h.title || h.uri)}</a>
+                </span>
+                <span class=domain>
+                    <a href=#>${domain}</a>
+                </span>
+            </div>
+        `
+
+        // return createElement('div', { class: 'item', 'data-id': h.id }, [
+
+        //     createElement('span', { class: 'time' }, [
+        //         document.createTextNode(h.time)
+        //     ]),
+
+        //     createElement('span', { class: 'title' }, [
+        //         createElement('a', { href: h.uri }, [
+        //             document.createTextNode(h.title || h.uri)
+        //         ])
+        //     ]),
+
+        //     createElement('span', { class: 'domain' }, [
+        //         createElement('a', { href: '#' }, [
+        //             document.createTextNode(domain)
+        //         ], {
+        //             click: event => {
+        //                 $search.value = event.target.textContent
+        //                 search()
+        //             }
+        //         })
+        //     ])
+        // ], {
+        //     click: event => {
+        //         event.target.classList.toggle('selected')
+        //         $clearSelected.disabled = $results.getElementsByClassName('selected').length === 0
+        //     }
+        // })
+    }
+
+    function updateClearButtons (all, results, selected) {
+        $clearAll.disabled = !!all
+        $clearResults.disabled = !!results
+        $clearSelected.disabled = !!selected
+    }
+
+    function updateNavButtons () {
+        $next.style.display = resultsLen === limit ? 'inline-block' : 'none'
+        $prev.style.display = parseInt($page.value, 10) > 1 ? 'inline-block' : 'none'
+    }
+
+    function search () {
+        let query = $search.value
         history_search({
-            query: query, limit: limit, page: parseInt($page.val(), 10),
-        }).then(function (results) {
-            // Used to trigger hiding of next nav button when results_len < limit
-            results_len = results.length || 0;
-
-            update_clear_buttons(query, !query, true);
+            query: query,
+            limit: limit,
+            page: parseInt($page.value, 10)
+        }).then(results => {
+            resultsLen = results.length || 0
+            updateClearButtons(query, !query, true)
+            empty($results)
 
             if (!results.length) {
-                $results.empty();
-                update_nav_buttons();
-                return;
+                updateNavButtons()
+                return
             }
 
-            var last_date, last_time = 0, group_html;
+            $results.innerHTML = results.map((item, i) => {
+                let lastItem = results[i - 1] || {}
+                let html = item.date !== lastItem.date ? `<div class=day-heading>${item.date}</div>`
+                    : (lastItem.last_visit - item.last_visit) > 3600 ? `<div class=day-sep></div>`
+                    : "";
+                return html + makeHistoryItem(item)
+            }).join('')
 
-            var i = 0, len = results.length, html = "";
-
-            var sep = $("<div/>").addClass("day-sep").prop("outerHTML"),
-                $heading = $("<div/>").addClass("day-heading");
-
-            for (; i < len;) {
-                var h = results[i++];
-
-                if (h.date !== last_date) {
-                    last_date = h.date;
-                    html += $heading.text(h.date).prop("outerHTML");
-
-                } else if ((last_time - h.last_visit) > 3600)
-                    html += sep;
-
-                last_time = h.last_visit;
-                html += make_history_item(h);
-            }
-
-            update_nav_buttons(query);
-
-            $results.get(0).innerHTML = html;
-        });
+            updateNavButtons()
+        })
     }
 
-    /* input field callback */
-    $search.keydown(function(ev) {
-        if (ev.which == 13) { /* Return */
-            reset_mode();
-            $page.val(1);
-            search();
-            $search.blur();
+    function clearEls (className) {
+        let ids = Array.from(document.getElementsByClassName(className))
+            .map($el => $el.dataset.id)
+
+        if (ids.length > 0) history_clear_list(ids)
+
+        search()
+    }
+
+    $search.addEventListener('keydown', event => {
+        if (event.which === 13) { // 13 is the code for the 'Return' key
+            $page.value = 1
+            search()
+            $search.blur()
+            reset_mode()
         }
-    });
+    })
 
-    $("#clear-button").click(function () {
-        $search.val("");
-        $page.val(1);
-        search();
-    });
+    document.getElementById('clear-button')
+        .addEventListener('click', () => {
+            $search.value = ''
+            $page.value = 1
+            search()
+        })
 
-    $("#search-button").click(function () {
-        $page.val(1);
-        search();
-    });
+    document.getElementById('search-button')
+        .addEventListener('click', () => {
+            $page.value = 1
+            search()
+        })
 
-    // Auto search history by domain when clicking on domain
-    $results.on("click", ".item .domain a", function (e) {
-        $search.val($(this).text());
-        search();
-    });
+    $clearAll.addEventListener('click', () => {
+        if (!window.confirm('Clear all browser history?')) return
+        history_clear_all()
+        search()
+        $clearAll.blur()
+    })
 
-    // Select items & enable/disable clear all selected button
-    $results.on("click", ".item", function (e) {
-        var $e = $(this);
-        if ($e.hasClass("selected")) {
-            $(this).removeClass("selected");
-            if ($results.find(".selected").length === 0)
-                $clear_selected.attr("disabled", true);
-        } else {
-            $(this).addClass("selected");
-            $clear_selected.attr("disabled", false);
+    $clearResults.addEventListener('click', () => {
+        clearEls('item')
+        $clearResults.blur()
+    })
+
+    $clearSelected.addEventListener('click', () => {
+        clearEls('selected')
+        $clearSelected.blur()
+    })
+
+    $next.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = page + 1
+        search()
+    })
+
+    $prev.addEventListener('click', () => {
+        let page = parseInt($page.value, 10)
+        $page.value = Math.max(page - 1, 1)
+        search()
+    })
+
+    document.addEventListener('click', event => {
+        if (event.target.matches(".item > .domain > a")) {
+            $search.value = event.target.textContent
+            search()
+        } else if (event.target.matches(".item")) {
+            event.target.classList.toggle('selected')
+            $clearSelected.disabled = $results.getElementsByClassName('selected').length === 0
         }
-    });
+    })
 
-    $clear_all.click(function () {
-        if (confirm("Clear all browsing history?")) {
-            history_clear_all();
-            $results.fadeOut("fast", function () {
-                $results.empty();
-                $results.show();
-                search();
-            });
-            $clear_all.blur();
-        }
-    });
-
-    $next.click(function () {
-        var page = parseInt($page.val(), 10);
-        $page.val(page + 1);
-        search();
-    });
-
-    $prev.click(function () {
-        var page = parseInt($page.val(), 10);
-        $page.val(Math.max(page - 1,1));
-        search();
-    });
-
-    function clear_elems($elems) {
-        var ids = [], last = $elems.length - 1;
-
-        $elems.each(function (index) {
-            var $e = $(this);
-            ids.push($e.attr("history_id"));
-            if (index == last)
-                $e.fadeOut("fast", function () { search(); });
-            else
-                $e.fadeOut("fast");
-        });
-
-        if (ids.length)
-            history_clear_list(ids);
-    };
-
-    $clear_results.click(function () {
-        clear_elems($results.find(".item"));
-        $clear_results.blur();
-    });
-
-    $clear_selected.click(function () {
-        clear_elems($results.find(".selected"));
-        $clear_selected.blur();
-    });
-
-    initial_search_term().then(function (query) {
-        if (query)
-            $search.val(query);
-        search();
-    });
-});
-
+    initial_search_term().then(query => {
+        if (query) $search.value = query
+        search(query)
+    })
+})
 ]=]
 
 local initial_search_term
@@ -392,21 +399,11 @@ local export_funcs = {
 chrome.add("history", function ()
     local html = string.gsub(html_template, "{%%(%w+)}", {
         -- Merge common chrome stylesheet and history stylesheet
-        stylesheet = chrome.stylesheet .. _M.stylesheet
+        stylesheet = chrome.stylesheet .. _M.stylesheet,
+        javascript = main_js,
     })
     return html
-end,
-function (view)
-    -- Load jQuery JavaScript library
-    local jquery = lousy.load("lib/jquery.min.js")
-    local _, err = view:eval_js(jquery, { no_return = true })
-    assert(not err, err)
-
-    -- Load main luakit://history/ JavaScript
-    _, err = view:eval_js(main_js, { no_return = true })
-    assert(not err, err)
-end,
-export_funcs)
+end, nil, export_funcs)
 
 -- Prevent history items from turning up in history
 history.add_signal("add", function (uri)

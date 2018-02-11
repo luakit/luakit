@@ -1,49 +1,8 @@
 # Contributing to luakit
 
-## How to ask for help
-
-If you're having difficulty with any aspect of luakit, a good place to
-ask is [here](https://github.com/luakit/luakit/issues) on the luakit issue
-tracker. This will require making a GitHub user account if you do not
-already have one.
-
-It's a good idea to search the issue tracker before asking, in case your
-question has already been asked and answered.
-
-## How to report a bug
-
-Please report any bugs or issues you find
-[here](https://github.com/luakit/luakit/issues) on the luakit issue tracker.
-This will require making a GitHub user account if you do not already
-have one.
-
-Please search the issue tracker before opening a new issue; if someone
-has already reported the same issue, it's better to comment on that
-issue instead of opening a new one.
-
-Please include the following information in your bug report:
-
- - Current luakit version; this can be found by running `luakit --version` in the terminal.
-
-   Example: `luakit 2012.09.13-r1-1722-gca2571be`
-
- - Current operating system, version, and CPU architecture, if applicable. E.g
-
-   Examples: "Ubuntu 16.04 on i386", "Arch 64-bit"
-
- - If luakit was working recently but broke in an update, please also include
-   the version number for the most recent known-working build.
-
-## How to request a new feature / make a suggestion
-
-Feature requests can be made [here](https://github.com/luakit/luakit/issues)
-on the luakit issue tracker. It's always a good idea to search before
-opening a new issue, in case anyone has already requested that feature
-or made a similar/related suggestion.
-
 ## Submitting trivial fixes
 
-If you notice a small issue that's easy to fix, you're free to submut
+If you notice a small issue that's easy to fix, you're free to submit
 a pull request or patch directly, without asking or opening an issue
 first. This includes spelling / grammar mistakes, whitespace /
 formatting fixes, and any tweaks needed to get luakit to run.

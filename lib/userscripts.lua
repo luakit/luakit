@@ -11,18 +11,39 @@
 -- @module userscripts
 -- @copyright 2011 Constantin Schomburg <me@xconstruct.net>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
--- @copyright 2010 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
 local window = require("window")
+local lousy = require("lousy")
 local util = require("lousy.util")
 local lfs = require("lfs")
 local new_mode = require("modes").new_mode
 local binds, modes = require("binds"), require("modes")
 local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
+local editor = require("editor")
 
 local _M = {}
+
+local _, db = pcall(function ()
+    local path = luakit.data_dir .. "/scripts/scripts"
+    return lousy.pickle.unpickle(lousy.load(path))
+end)
+if type(db) == "string" then db = {} end
+
+local function db_get(file)
+    assert(file)
+    return db[file] ~= false
+end
+
+local function db_set(file, enabled)
+    assert(file)
+    if enabled then db[file] = nil else db[file] = false end
+    local fh = io.open(luakit.data_dir .. "/scripts/scripts", "wb")
+    fh:write(lousy.pickle.pickle(db))
+    io.close(fh)
+end
 
 -- Pure JavaScript implementation of greasemonkey methods commonly used
 -- in chome/firefox userscripts.
@@ -140,6 +161,11 @@ local lstate = setmetatable({}, { __mode = "k" })
 -- @readonly
 _M.dir = luakit.data_dir .. "/scripts"
 
+local function match_pat(uri, p)
+    if type(p) == "regex" then uri, p = p, uri end
+    return uri:match(p)
+end
+
 -- Userscript class methods
 local prototype = {
     -- Run the userscript on the given webview widget
@@ -162,27 +188,24 @@ local prototype = {
     end,
     -- Check if the given uri matches the userscripts include/exclude patterns
     match = function (s, uri)
-        local matches = false
+        for _, p in ipairs(s.exclude) do
+            if match_pat(uri, p) then return false end
+        end
         for _, p in ipairs(s.include) do
-            if string.match(uri, p) then
-                matches = true
-                break
-            end
+            if match_pat(uri, p) then return true end
         end
-        if matches then
-            for _, p in ipairs(s.exclude) do
-                if string.match(uri, p) then return false end
-            end
-        end
-        return matches
     end,
 }
 
 -- Parse and convert a simple glob matching pattern in the `@include`,
 -- `@exclude` or `@match` userscript header options into an RE.
 local function parse_pattern(pat)
-    pat = string.gsub(string.gsub(pat, "[%^%$%(%)%%%.%[%]%+%-%?]", "%%%1"), "*", ".*")
-    return '^' .. pat .. '$'
+    if pat:match("^/.+/$") then
+        return regex{pattern = pat:sub(2, -2)}
+    else
+        pat = string.gsub(string.gsub(pat, "[%^%$%(%)%%%.%[%]%+%-%?]", "%%%1"), "*", ".*")
+        return '^' .. pat .. '$'
+    end
 end
 
 local function parse_header(header, file)
@@ -193,6 +216,9 @@ local function parse_header(header, file)
         -- Parse `// @key value` lines in header.
         local key, val = string.match(line, "^// @([%w%-]+)%s+(.+)$")
         if key then
+            -- XXX: compatibility shim. @match and @include should have
+            -- different behaviour
+            if key == "match" then key = "include" end
             val = util.string.strip(val or "")
             if singles[key] then
                 -- Only grab the first of its kind
@@ -220,6 +246,7 @@ local function load_js(file)
         local script = parse_header(header, file)
         script.js = js
         script.file = file
+        script.enabled = db_get(file)
         scripts[file] = setmetatable(script, { __index = prototype })
     else
         msg.warn("invalid userscript header in file: %s", file)
@@ -239,7 +266,7 @@ end
 local function view_has_userscripts(view)
     local uri = view.uri or "about:blank"
     for _, script in pairs(scripts) do
-        if script:match(uri) then
+        if script.enabled and script:match(uri) then
             return true
         end
     end
@@ -250,7 +277,7 @@ end
 local function invoke(view, on_start)
     local uri = view.uri or "about:blank"
     for _, script in pairs(scripts) do
-        if on_start == script.on_start then
+        if script.enabled and on_start == script.on_start then
             if script:match(uri) then
                 script:run(view)
             end
@@ -325,22 +352,63 @@ add_cmds({
         function (w) w:set_mode("uscriptlist") end },
 })
 
+local scripts_menu_rows = setmetatable({}, { __mode = "k" })
+
+local menu_row_for_script = function (w, script)
+    local theme = lousy.theme.get()
+    local title = (script.name or script.file) .. " " .. (script.version or "")
+    local desc = (script.description or "<i>no description</i>")
+    local enabled = script.enabled
+    local active = enabled and script:match(w.view.uri)
+
+    -- Determine state label and row colours
+    local state, fg, bg
+    if not enabled then
+        state, fg, bg = "Disabled", theme.menu_disabled_fg, theme.menu_disabled_bg
+    elseif not active then
+        state, fg, bg = "Enabled", theme.menu_enabled_fg, theme.menu_enabled_bg
+    else
+        state, fg, bg = "Active", theme.menu_active_fg, theme.menu_active_bg
+    end
+
+    return { title, state, desc, script = script, fg = fg, bg = bg }
+end
+
+local function update_scripts_menu_for_w(w)
+    local rows = assert(scripts_menu_rows[w])
+    for i=2,#rows do
+        rows[i] = menu_row_for_script(w, rows[i].script)
+    end
+    w.menu:update()
+end
+
+local function update_scripts_menus()
+    -- Update any windows in styles-list mode
+    for _, w in pairs(window.bywidget) do
+        if w:is_mode("uscriptlist") then
+            update_scripts_menu_for_w(w)
+        end
+    end
+end
+
 -- Add mode to display all userscripts in menu
 new_mode("uscriptlist", {
     enter = function (w)
-        local rows = {{ "Userscripts", "Description", title = true }}
-        for file, script in pairs(scripts) do
-            local active = script:match(w.view.uri) and "*" or " "
-            local title = (script.name or file) .. " " .. (script.version or "")
-            table.insert(rows, { " " .. active .. title, " " .. script.description, script = script })
+        local rows = {{ "Userscripts", "State", "Description", title = true }}
+        local groups = { Disabled = {}, Enabled = {}, Active = {}, }
+        for _, script in pairs(scripts) do
+            local row = menu_row_for_script(w, script)
+            table.insert(groups[row[2]], row)
         end
+        rows = lousy.util.table.join(rows, groups.Active, groups.Enabled, groups.Disabled)
         if #rows == 1 then
             w:notify(string.format("No userscripts installed. Use `:usinstall`"
                 .. "or place .user.js files in %q manually.", _M.dir))
             return
         end
         w.menu:build(rows)
-        w:notify("Use j/k to move, d delete, o visit website, t tabopen, w winopen. '*' indicates active scripts.",
+        scripts_menu_rows[w] = rows
+        w:notify("Use j/k to move, e edit, <space> enable/disable.",
             false)
     end,
 
@@ -350,40 +418,18 @@ new_mode("uscriptlist", {
 })
 
 add_binds("uscriptlist", util.table.join({
-    -- Delete userscript
-    { "d", "Delete the currently highlighted userscript.",
-        function (w)
+    { "<space>", "Enable/disable the currently highlighted userscript.", function (w)
             local row = w.menu:get()
             if row and row.script then
-                _M.del(row.script.file)
-                w.menu:del()
+                row.script.enabled = not row.script.enabled
+                db_set(row.script.file, row.script.enabled)
+                update_scripts_menus()
             end
         end },
-
-    -- Open userscript homepage
-    { "o", "Open the currently highlighted userscript's homepage in the current tab.",
-        function (w)
+    { "e", "Edit the currently highlighted userscript.", function (w)
             local row = w.menu:get()
-            if row and row.script and row.script.homepage then
-                w:navigate(row.script.homepage)
-            end
-        end },
-
-    -- Open userscript homepage in new tab
-    { "t", "Open the currently highlighted userscript's homepage in a new tab.",
-        function (w)
-            local row = w.menu:get()
-            if row and row.script and row.script.homepage then
-                w:new_tab(row.script.homepage, { switch = false })
-            end
-        end },
-
-    -- Open userscript homepage in new window
-    { "w", "Open the currently highlighted userscript's homepage in a new window.",
-        function (w)
-            local row = w.menu:get()
-            if row and row.script and row.script.homepage then
-                window.new(row.script.homepage)
+            if row and row.script then
+                editor.edit(row.script.file)
             end
         end },
 }, menu_binds))

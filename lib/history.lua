@@ -111,8 +111,6 @@ _M.frozen = setmetatable({}, { __mode = "k" })
 webview.add_signal("init", function (view)
     -- Add items & update visit count
     view:add_signal("load-status", function (_, status)
-        -- Don't add history items when in private browsing mode
-        if view.enable_private_browsing then return end
         if view.private then return end
         if _M.frozen[view] then return end
 
@@ -122,8 +120,6 @@ webview.add_signal("init", function (view)
     end)
     -- Update titles
     view:add_signal("property::title", function ()
-        -- Don't add history items when in private browsing mode
-        if view.enable_private_browsing then return end
         if view.private then return end
         if _M.frozen[view] then return end
 

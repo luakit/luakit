@@ -48,6 +48,7 @@ end
 -- @treturn table The download object's private data.
 function _M.to_download(id)
     if type(id) == "download" then return id end
+    id = tostring(id)
     for d, data in pairs(dls) do
         if id == data.id then return d end
     end
@@ -78,7 +79,7 @@ function _M.do_open(d, w)
     end
 end
 
-local status_timer = timer{interval=1000}
+local status_timer = timer{interval=300}
 status_timer:add_signal("timeout", function ()
     local running = 0
     for d, data in pairs(dls) do
@@ -284,8 +285,17 @@ add_binds("normal", {
 
 -- Download commands
 add_cmds({
-    { ":down[load]", "Download the given URI.", {
-        func = function (w, o) _M.add(o.arg, { window = w.win }) end,
+    { ":down[load]", "Download a webpage by URI, defaulting to the current page.", {
+        func = function (w, o)
+            local uri = o.arg or w.view.uri
+            if uri and not uri:match("^luakit://")
+                then _M.add(uri, { window = w.win })
+            elseif uri then
+                w:error("cannot download URI '"..uri.."'")
+            else
+                w:error("cannot retrieve current page URI")
+            end
+        end,
         format = "{uri}",
     }},
 })

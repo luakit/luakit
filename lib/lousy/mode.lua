@@ -4,7 +4,7 @@
 --
 -- @module lousy.mode
 -- @author Mason Larobina <mason.larobina@gmail.com>
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local _M = {}
 

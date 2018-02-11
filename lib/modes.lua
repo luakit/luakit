@@ -5,9 +5,9 @@
 --
 -- @module modes
 -- @author Aidan Holm <aidanholm@gmail.com>
--- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local _M = {}
 
@@ -72,11 +72,6 @@ window.add_signal("init", function (w)
         w.last_mode_entered = mode
 
         w:emit_signal("mode-entered", mode)
-
-        -- Block tab and shift-tab from changing widget focus
-        for _, b in ipairs { "<Tab>", "<shift-Tab>" } do
-            table.insert(w.binds, { b, { func = function () end, }, {}})
-        end
     end)
 
     local input = w.ibar.input
@@ -104,11 +99,28 @@ window.add_signal("init", function (w)
     input:add_signal("activate", function ()
         local mode = w.mode
         if mode and mode.activate then
-            local text, hist = input.text, mode.history
+            local text = input.text
+            -- Activates the mode.
             if mode.activate(w, text) == false then return end
-            -- Check if last history item is identical
+            -- Prevents recording command history if in a private tab, or
+            -- recording the `:priv-tabopen` command itself.
+            if w.view and w.view.private then return end
+            local hist = mode.history
+            -- Check if last history is identical
             if hist and hist.items and hist.items[hist.len or -1] ~= text then
                 table.insert(hist.items, text)
+                -- Dump history
+                local t = {}
+                for k, v in pairs(modes) do
+                    if v.history then
+                        t[k] = v.history.items
+                    end
+                end
+                local f = io.open(luakit.data_dir .. "/command-history", "w")
+                if f then
+                    f:write(lousy.pickle.pickle(t))
+                    f:close()
+                end
             end
         end
     end)
@@ -230,7 +242,7 @@ _M.new_mode("lua", [[Execute arbitrary Lua commands within the luakit
 --         end},
 --     })
 --
--- ## Bind format
+-- # Bind format
 --
 -- Every item in the `binds` array must be a table that defines a single binding
 -- between a trigger and an action. Each entry must have the following form:
@@ -284,6 +296,41 @@ _M.remove_binds = function (mode, binds)
         local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
         for _, bind in ipairs(binds) do
             lousy.bind.remove_bind(mdata.binds or {} , bind)
+        end
+    end
+end
+
+--- Bind an existing key or command to a new binding.
+--
+-- # Example
+--
+--     -- Add an additional zooming command binding
+--     modes.remap_binds("normal", {
+--         { "<Control-=>", "zi", true },
+--     })
+--
+-- # Bind format
+--
+-- Every item in the `binds` array must be a table that defines a single rebind
+-- from an existing trigger to a new one. Each entry must have the following form:
+--
+--     { new, old, keep }
+--
+-- - `new` is a string describing the combination of keys/modifiers/buttons
+--   that will trigger the associated action.
+-- - `old` is a string describing the previous trigger of the action.
+-- - `keep` is an optional argument that determines whether the existing binding
+--   should remain. Defaults to `false` if not present.
+--
+-- @tparam table|string mode The name of the mode, or an array of mode names.
+-- @tparam table binds An array of binds to remap
+_M.remap_binds = function(mode, binds)
+    mode = type(mode) ~= "table" and {mode} or mode
+    for _, name in ipairs(mode) do
+        local mdata = assert(_M.get_mode(name), "mode '"..name.."' doesn't exist")
+        for _, bind in ipairs(binds) do
+            local new, old, keep = unpack(bind)
+            lousy.bind.remap_bind(mdata.binds or {}, new, old, keep)
         end
     end
 end

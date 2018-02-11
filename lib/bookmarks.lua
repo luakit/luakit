@@ -62,7 +62,7 @@ end
 
 local function parse_tags(tags)
     local ret = {}
-    local remains = string.gsub(tags, "%w[%w-]*",
+    local remains = string.gsub(tags, "%S+",
         function (tag) ret[tag] = true return "" end)
     return ret, remains
 end

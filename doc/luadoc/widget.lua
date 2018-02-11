@@ -47,7 +47,7 @@
 --
 -- @class widget
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @function __call
 -- Create a new widget. It is mandatory to specify a `type` as an
@@ -157,11 +157,27 @@
 --- @method destroy
 -- Destroy the widget.
 
+--- @method replace
+-- Remove the widget from its parent, replacing it with `other`. All child
+-- properties, such as the arrangement and relative position of the widget
+-- within its parent, are maintained.
+--
+-- If the widget does not have a parent, this method does nothing.
+-- @tparam widget other The replacement widget.
+
 --- @method remove
 -- Remove a specific child widget from the widget. Only certain types of
 -- widgets have this property: specifically, the box, event box, notebook,
 -- paned, and window widgets.
 -- @tparam widget child The child widget to remove.
+
+--- @method send_key
+-- Send synthetic key events to the widget. This function parses a vim-like
+-- keystring into single keys and sends them to the widget. When
+-- `window.act_on_synthetic_keys` is disabled, synthetic key events will not trigger
+-- other key bindings.
+-- @tparam string keystring The string representing the keys to send.
+-- @tparam table modifiers The key modifiers table.
 
 --- @signal create
 -- Emitted on the `widget` library when a new widget has been created.

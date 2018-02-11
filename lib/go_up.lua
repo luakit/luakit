@@ -28,7 +28,7 @@
 --    For example: `www.example.com` will become `example.com`.
 --
 -- @module go_up
--- @copyright 2010-2012 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2012 LokiChaos <loki.chaos@gmail.com>
 
 -- TODO check host against public TLD list to prevent returning only

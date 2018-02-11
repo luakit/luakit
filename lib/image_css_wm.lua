@@ -1,7 +1,7 @@
 -- Customize how single images are displayed in the browser.
 --
 -- @submodule image_css
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local ui = ipc_channel("image_css_wm")
 

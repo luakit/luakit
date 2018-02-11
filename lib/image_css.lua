@@ -5,10 +5,11 @@
 -- specifying the page background color.
 --
 -- @module image_css
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local webview = require("webview")
 local window = require("window")
+local settings = require("settings")
 local wm = require_web_module("image_css_wm")
 
 local _M = {}
@@ -57,6 +58,7 @@ webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)
         if status == "provisional" then
             top_level[v] = true
+            settings.override_setting_for_view(view, "webview.zoom_level", nil)
         elseif status == "committed" then
             top_level[v] = nil
             local mime = uri_mime_cache[v.uri]
@@ -64,11 +66,8 @@ webview.add_signal("init", function (view)
             view.stylesheets[_M.stylesheet] = is_image
             if is_image then
                 wm:emit_signal(view, "image")
-                -- Hack: ensure that domain_props doesn't muck with the image
-                -- See https://github.com/luakit/luakit/issues/387
-                luakit.idle_add(function ()
-                    if view.is_alive then view.zoom_level = 1.0 end
-                end)
+                view.zoom_level = 1.0
+                settings.override_setting_for_view(view, "webview.zoom_level", 100)
             end
         end
     end)

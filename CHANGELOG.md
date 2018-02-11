@@ -1,5 +1,83 @@
 # Changelog
 
+## [Unreleased]
+
+### Migrating from version 2017-08-10
+
+ 1. Remove the two `if unique then ... end` blocks from your `rc.lua`.
+ 2. Add `require "unique_instance"` to your `rc.lua`, before all other `require` statements.
+ 4. Remove all configuration files except `rc.lua` and `theme.lua`. Any changes to `globals.lua`
+    need to be migrated to `rc.lua` and changed to use the `settings` API.
+
+### Added
+
+ - Added `luakit.install_paths` table. `luakit.install_path` is now deprecated.
+ - Added `Control-Y` readline binding.
+ - Added ability to control whether links from secondary instances open in a new window.
+ - Added `luakit.resource_path` property to control where luakit searches for resource files.
+ - Added `lousy.util.find_resource` function.
+ - Added `scroll` signal.
+ - Added ability to bind actions to webview scroll events.
+ - Added ability to set the default zoom level.
+ - Added `webview` widget `"permission-request"` signal.
+ - Added `webview` widget `hardware_acceleration_policy` property.
+ - Added `webview` widget `allow_file_access_from_file_urls` and `allow_universal_access_from_file_urls` properties.
+ - Added `settings` module and APIs. This replaces the `domain_props` module.
+ - Added `tablist.always_visible` setting.
+ - Added `utf8.len` (same as `string.wlen`) and `utf8.offset` methods.
+ - Added `utf8.charpattern` property.
+ - Added `:set` and `:seton` commands, for changing settings.
+ - Added ability to always save session before exiting luakit.
+ - Added `markup` option to window `set_prompt()` method.
+ - Added `detach-tab` signal.
+ - Added support for multi-byte characters in hints.
+ - Added widget `replace` method.
+
+### Changed
+
+ - It is no longer necessary to add bindings to tables with `lousy.bind.add_binds()`.
+ - Readline bindings have been moved to `readline.lua`.
+ - Readline bindings are now automatically bound when the input bar is visible.
+ - Unique instance support has been moved to `unique_instance.lua`.
+ - The `image` widget now uses `luakit.resource_path` to locate local files.
+ - The log viewer now shows errors logged by a user-defined rc.lua failing to load.
+ - Luakit will now remove its IPC socket file before restarting.
+ - The editor command now defaults to using `xdg-open` to edit files.  The `default` builtin
+   command has been renamed `autodetect`.
+ - Changed `luakit://introspector/` to `luakit://binds/`.
+ - URL completion now uses word-based fuzzy matching.
+ - `:download` now uses the current page URI by default.
+ - `gy` now accepts a count.
+ - `:tabopen` will now only open local files when given an absolute path.
+ - `:styles-list` now lists active styles first and disabled styles last.
+
+### Removed
+
+ - Removed `domain_props` module. It is replaced by the `settings` module and its APIs.
+ - Removed all configuration files except `rc.lua` and `theme.lua`.
+ - Removed `enable_private_browsing` webview property.
+ - Removed `w.closed_tabs` field. It is now private to the `undoclose` module.
+
+### Fixed
+
+ - Fixed <luakit://help/> not finding documentation with custom DOCDIR
+ - Various minor documentation fixes.
+ - Fixed `Control-Scroll` and `Shift-Scroll` key bindings not working with smooth scrolling.
+ - Fixed inability to switch focus between web page elements with `Tab` and `Shift-Tab`.
+ - Fixed log page bug when logging messages with newlines.
+ - Fixed `Up` and `Down` keybindings being broken on completion menu.
+ - Fixed hardcoded path to luakit icon.
+ - Fixed luakit:// pages not working and spewing errors when not using LuaJIT.
+ - Fixed thumbnail hinting not retrieving thumbnail links correctly.
+ - Fixed inability to bind `Modifier-Minus`.
+ - Fixed readline handling of wide characters.
+ - Fixed completion not suggesting history/bookmarks items without titles/tags.
+ - Fixed `:dump` command not working due to use of a removed API.
+ - Fixed follow hints being sometimes truncated by the viewport edge.
+ - Follow mode now renders hints much faster.
+ - Fixed Forward/Back keys not working due to outdated bind syntax.
+ - Fixed opening local files with names containing spaces from `:tabopen` and the command-line.
+
 ## [2017-08-10]
 
  - Required WebKitGTK+ version: 2.16+

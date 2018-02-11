@@ -7,7 +7,7 @@
 -- @class widget:window
 -- @prefix window
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method set_default_size
 -- Set the default size of the window. If this is not called, the default size
@@ -40,7 +40,7 @@
 -- @default `false`
 -- @readwrite
 
---- @property fullscreen
+--- @property maximized
 -- Whether the window is maximized.
 -- @type boolean
 -- @default `false`
@@ -53,8 +53,13 @@
 -- @type integer
 -- @readonly
 
---- @property xid
+--- @property win_xid
 -- The window's X11 window ID. Available only when using the X11 windowing system.
+-- @type integer
+-- @readonly
+
+--- @property root_win_xid
+-- The X11 root window's window ID. Available only when using the X11 windowing system.
 -- @type integer
 -- @readonly
 

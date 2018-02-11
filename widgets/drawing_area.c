@@ -67,6 +67,7 @@ drawing_area_draw_cb(GtkWidget *UNUSED(widget), cairo_t *cr, widget_t *w)
     gint error = lua_pcall(L, 2, 1, 0);
     g_assert(error == 0);
     luaH_object_emit_signal(L, -2, "draw", 1, 0);
+    lua_pop(L, 1);
     return FALSE;
 }
 

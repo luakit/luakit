@@ -1,6 +1,15 @@
 @name Frequently Asked Questions
 # Frequently Asked Questions
 
+## General
+
+### How do I set luakit as my default browser?
+
+On systems that use `xdg-settings`, you can run the following command to set
+luakit as your default browser:
+
+    xdg-settings set default-web-browser luakit.desktop
+
 ## Downloads
 
 ### How do I change the default download location?
@@ -23,11 +32,54 @@ In your `rc.lua` after `require "downloads"` add (or modify) the following:
         return downloads.default_dir .. "/" .. file
     end)
 
+## Keybindings
+
+### What's the syntax for defining a keybinding?
+
+The syntax for specifying a keybinding is fairly straightforward:
+
+  * Regular keys are represented by themselves.
+  * Modifiers are represented as `<ModifierName-key>`, e.g., `<Control-c>`.
+  * Modifier names are case-insensitive, e.g., `<CONTROL-c>` and `<Control-c>`
+    are the same.
+
+The available modifiers are:
+
+  * `Control`. It is also possible to spell it as `Ctrl`, or `C`, so `<C-c>` is
+    a valid binding.
+  * `Mod1`, the `Alt` or `Meta` key.
+  * `Mod4`, the Windows key.
+
+It is also possible to use the keys for system commands (`Insert`, `Home`,
+`Pause`, etc.) in keybindings. Just indicate the key name between angle
+brackets. For example, the syntax for the `Insert` key is `<Insert>`.
+
+If you don't know the name for a given key, you can use the
+[xev](https://linux.die.net/man/1/xev) utility to find it out and use the
+syntax described above to define the keybinding.
+
+The mouse buttons can be used in bindings, too. If you want to define a binding
+for a particular mouse button, indicate it as a "named key", just like with
+system keys; the buttons are named using the following convention: `Mouse{n}`,
+with `n` being the button number. For example, to bind the buttons 8 and 9 to
+the previous/next tab commands, use the following code:
+
+    modes.remap_binds("normal", {
+        {"<Mouse8>", "gt", true},
+        {"<Mouse9>", "gT", true},
+    })
+
+Modifier keys can also be used in bindings using mouse buttons, so things like,
+e.g., `<C-mod1-Mouse1>` will work.
+
+Once again, if you don't know the number of a particular mouse button, the xev
+utility will help you find it.
+
 ## Behaviour
 
 ### How do I stop some links opening in new windows?
 
-Add your own @ref{new-window-decision} webview signal handler which always opens
+Add your own @ref{"new-window-decision"} webview signal handler which always opens
 links in new tabs.
 
 In your `rc.lua` after `require "webview"` add (or modify) the following:

@@ -1,10 +1,10 @@
 -- Add {A,C,S,}-Return binds to follow selected link (or link in selection) - web module.
 --
 -- @submodule follow_selected_wm
--- @copyright 2016 Aidan Holm
--- @copyright 2010 Chris van Dijk (quigybo) <quigybo@hotmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
--- @copyright 2010 Paweł Zuzelski (pawelz)  <pawelz@pld-linux.org>
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Chris van Dijk <quigybo@hotmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Paweł Zuzelski <pawelz@pld-linux.org>
 -- @copyright 2009 israellevin
 
 local ui = ipc_channel("follow_selected_wm")

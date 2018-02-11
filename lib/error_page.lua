@@ -6,7 +6,7 @@
 -- is also supported.
 --
 -- @module error_page
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
 local webview = require("webview")
@@ -24,7 +24,7 @@ _M.html_template = [==[
     <html>
         <head>
             <title>{title}</title>
-            <link rel="icon" type="image/png" href="luakit://resources/icons/tab-icon-{error_icon}.png" />
+            <link rel="icon" type="image/png" href="luakit://icons/tab-icon-{error_icon}.png" />
             <style type="text/css">
                 {style}
             </style>
@@ -49,13 +49,9 @@ _M.style = [===[
         display: flex;
         align-items: center;
         justify-content: center;
-        background: repeating-linear-gradient(
-            45deg,
-            #ddd,
-            #ddd 10px,
-            #dadada 10px,
-            #dadada 20px
-        );
+        background: url('data:image/gif;base64,R0lGODlhHAAcAPAAANra2t3d3SH5BAAAAAAALAAAA \
+            AAcABwAAAI+DI6Zwe2vInrUSVnzjblu1VHfElrjUZpn2pwoa7hwvMIuMN+5zt54z0v5bMHSEChD1 \
+            oTF0JGZhC6Nzc6zVAAAOw==');
     }
 
     #errorContainer {
@@ -88,13 +84,9 @@ _M.style = [===[
 -- @readwrite
 _M.cert_style = [===[
     body {
-        background: repeating-linear-gradient(
-            45deg,
-            #bf5959,
-            #bf5959 10px,
-            #b55 10px,
-            #b55 20px
-        );
+        background: url('data:image/gif;base64,R0lGODlhHAAcAPAAAL9ZWbtVVSH5BAAAAAAALAAAA \
+            AAcABwAAAI+RI6ZwO2vInrUSVnzjblu1VHfElrjUZpn2pwoa7hwvMJuMN+5zt54z0v5bMHSEChD1 \
+            oTF0JGZhC6Nzc6zVAAAOw==');
     }
     #errorContainer {
         border: 2px solid #666;
@@ -314,7 +306,7 @@ local function handle_error(v, uri, err)
                 label = "Ignore danger",
                 callback = function(vv)
                     local host = lousy.uri.parse(vv.uri).host
-                    vv:allow_certificate(host, cert)
+                    luakit.allow_certificate(host, cert)
                     vv:reload()
                 end,
             }},
@@ -370,7 +362,7 @@ webview.add_signal("init", function (view)
         end
     end)
     view:add_signal("crashed", function(v)
-        handle_error(v, v.uri, { code = "crash", message = "Web process crashed" })
+        handle_error(v, v.uri or "about:blank", { code = "crash", message = "Web process crashed" })
     end)
     view:add_signal("go-back-forward", function (v, n)
         local vs = view_state[v]

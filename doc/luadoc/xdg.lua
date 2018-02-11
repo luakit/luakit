@@ -18,8 +18,8 @@
 -- @module xdg
 -- @author Aidan Holm
 -- @author Mason Larobina
--- @copyright 2017 Aidan Holm
--- @copyright 2011 Mason Larobina
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property cache_dir
 -- Get the base directory in which Luakit stores non-essential cached

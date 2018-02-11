@@ -38,6 +38,10 @@
       return luaH_widget_get_height(L, widget);       \
     case L_TK_MIN_SIZE:                               \
       return luaH_widget_get_min_size(L, widget);     \
+    case L_TK_ALIGN:                                  \
+      return luaH_widget_get_align(L, widget);        \
+    case L_TK_CHILDREN:                               \
+      return luaH_widget_get_children(L, widget);     \
     case L_TK_SHOW:                                   \
       lua_pushcfunction(L, luaH_widget_show);         \
       return 1;                                       \
@@ -49,7 +53,13 @@
       return 1;                                       \
     case L_TK_DESTROY:                                \
       lua_pushcfunction(L, luaH_widget_destroy);      \
-      return 1;
+      return 1;                                       \
+    case L_TK_REPLACE:                                \
+      lua_pushcfunction(L, luaH_widget_replace);      \
+      return 1;                                       \
+    case L_TK_SEND_KEY:                               \
+      lua_pushcfunction(L, luaH_widget_send_key);     \
+      return 1;                                       \
 
 #define LUAKIT_WIDGET_NEWINDEX_COMMON(widget)         \
     case L_TK_VISIBLE:                                \
@@ -58,6 +68,8 @@
       return luaH_widget_set_tooltip(L, widget);      \
     case L_TK_MIN_SIZE:                               \
       return luaH_widget_set_min_size(L, widget);     \
+    case L_TK_ALIGN:                                  \
+      return luaH_widget_set_align(L, widget);        \
 
 #define LUAKIT_WIDGET_BIN_INDEX_COMMON(widget)        \
     case L_TK_CHILD:                                  \
@@ -72,8 +84,6 @@
     case L_TK_REMOVE:                                 \
       lua_pushcfunction(L, luaH_widget_remove);       \
       return 1;                                       \
-    case L_TK_CHILDREN:                               \
-      return luaH_widget_get_children(L, widget);
 
 #define LUAKIT_WIDGET_SIGNAL_COMMON(w)                       \
     "signal::destroy",         G_CALLBACK(destroy_cb),    w, \
@@ -98,6 +108,8 @@ gint luaH_widget_hide(lua_State*);
 gint luaH_widget_remove(lua_State*);
 gint luaH_widget_set_child(lua_State*, widget_t*);
 gint luaH_widget_show(lua_State*);
+gint luaH_widget_replace(lua_State*);
+gint luaH_widget_send_key(lua_State *);
 gint luaH_widget_get_parent(lua_State *L, widget_t *w);
 gint luaH_widget_get_focused(lua_State *L, widget_t*);
 gint luaH_widget_get_visible(lua_State *L, widget_t*);
@@ -108,6 +120,8 @@ gint luaH_widget_set_tooltip(lua_State *L, widget_t *w);
 gint luaH_widget_get_tooltip(lua_State *L, widget_t *w);
 gint luaH_widget_set_min_size(lua_State *L, widget_t *w);
 gint luaH_widget_get_min_size(lua_State *L, widget_t *w);
+gint luaH_widget_set_align(lua_State *L, widget_t *w);
+gint luaH_widget_get_align(lua_State *L, widget_t *w);
 
 
 void add_cb(GtkContainer*, GtkWidget*, widget_t*);

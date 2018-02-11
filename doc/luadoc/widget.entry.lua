@@ -7,7 +7,7 @@
 -- @class widget:entry
 -- @prefix entry
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property position
 -- The position of the caret within the entry widget.

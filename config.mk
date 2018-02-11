@@ -23,6 +23,7 @@ DOCDIR     ?= $(PREFIX)/share/luakit/doc
 XDGPREFIX  ?= /etc/xdg
 PIXMAPDIR  ?= $(PREFIX)/share/pixmaps
 APPDIR     ?= $(PREFIX)/share/applications
+LIBDIR     ?= $(PREFIX)/lib/luakit
 
 INSTALLDIR := $(DESTDIR)$(PREFIX)
 MANPREFIX  := $(DESTDIR)$(MANPREFIX)
@@ -30,6 +31,7 @@ DOCDIR     := $(DESTDIR)$(DOCDIR)
 XDGPREFIX  := $(DESTDIR)$(XDGPREFIX)
 PIXMAPDIR  := $(DESTDIR)$(PIXMAPDIR)
 APPDIR     := $(DESTDIR)$(APPDIR)
+LIBDIR     := $(DESTDIR)$(LIBDIR)
 
 # Should luakit be built to load relative config paths (./lib ./config) ?
 # (Useful when running luakit from it's source directory, disable otherwise).
@@ -77,13 +79,13 @@ endif
 
 LUA_BIN_NAMES += lua-5.1 lua5.1 lua51
 ifneq ($(USE_LUAJIT),0)
-	LUA_BIN_NAMES := luajit $(LUA_BIN_NAMES)
+	LUA_BIN_NAMES := luajit luajit51 $(LUA_BIN_NAMES)
 endif
 
 # Search for Lua binary name if not forced by user.
 ifeq ($(LUA_BIN_NAME),)
 	LUA_BIN_NAME := $(shell sh -c '(for name in $(LUA_BIN_NAMES); do \
-	       hash $$name 2>/dev/null && ($$name -v 2>&1 | grep -q "^Lua 5\.1\|^LuaJIT") && echo $$name; done) | head -n 1')
+	       hash $$name 2>/dev/null && ($$name -v 2>&1 | grep -Eq "^Lua 5\.1|^LuaJIT") && echo $$name; done) | head -n 1')
 endif
 
 ifeq ($(LUA_BIN_NAME),)

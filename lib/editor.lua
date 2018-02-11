@@ -18,7 +18,7 @@
 --
 -- @module editor
 -- @copyright 2017 Graham Leach-Krouse
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local _M = {}
 
@@ -33,7 +33,7 @@ end
 
 --- Built in substitution strings. Includes
 --
--- * `default` (attempts to extract a terminal and editor from environment
+-- * `autodetect` (attempts to extract a terminal and editor from environment
 -- variables, and otherwise falls back to xterm and vim)
 -- * `xterm`
 -- * `urxvt`
@@ -42,17 +42,18 @@ end
 -- @type table
 -- @readonly
 _M.builtin = {
-    default = env_sub("{term} -e '{editor} {file} +{line}'"),
+    autodetect = env_sub("{term} -e '{editor} {file} +{line}'"),
     xterm = env_sub("xterm -e {editor} {file} +{line}"),
     urxvt = env_sub("urxvt -e {editor} {file} +{line}"),
-    xdg_open = env_sub("xdg-open {file}")
+    xdg_open = env_sub("xdg-open {file}"),
 }
 
---- The shell command used to open the editor.
+--- The shell command used to open the editor. The default setting is to
+-- use `editor.builtin.xdg_open`.
 --
 -- @type string
 -- @readwrite
-_M.editor_cmd = _M.builtin.default
+_M.editor_cmd = _M.builtin.xdg_open
 
 --- Edit a file in a terminal editor in a new window.
 --

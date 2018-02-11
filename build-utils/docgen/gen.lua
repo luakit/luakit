@@ -28,17 +28,18 @@ local format_text = function (text)
         local doc, item = index[ref].doc, index[ref].item
         local group, name = doc.module and "modules" or "classes", doc.name
         local fragment = item and ("#%s-%s"):format(item.type, item.name) or ""
-        return ('<a href="../%s/%s.html%s">`%s`</code></a>'):format(group, name, fragment, reftext)
+        return ('<a href="../%s/%s.html%s">`%s`</a>'):format(group, name, fragment, reftext)
     end)
     -- Format with markdown
     ret = markdown(ret)
     ret = ret:gsub("<pre><code>(.-)</code></pre>", function (code)
-        -- Fix < and > being escaped inside code -_- fail
-        code = lousy.util.unescape(code)
         -- Add syntax highlighting if lxsh is installed
         local ok, lxsh = pcall(require, "lxsh")
         if ok then
-            code = lxsh.highlighters.lua(code, { formatter = lxsh.formatters.html, external = true })
+            code = lxsh.highlighters.lua(
+                lousy.util.unescape(code),  -- Fix < and > being escaped inside code -_- fail
+                { formatter = lxsh.formatters.html, external = true }
+            )
         else
             code = "<pre class='sourcecode lua'>" .. code .. "</pre>"
         end
@@ -132,7 +133,7 @@ end
 
 local generate_function_body_html = function (func)
     local html_template = [==[
-        <div class=function>
+        <div>
             {deprecated}
             {desc}
             {params}
@@ -154,10 +155,12 @@ local generate_function_html = function (func, prefix)
         func.name = ""
     end
     local html_template = [==[
-        <h3 class=function>
-            <span class=target id="{type}-{name}"></span>
-            <a href="#{type}-{name}">{prefix}{name} ({param_names})</a>
-        </h3>
+        <div class=function id="{type}-{name}">
+            <h3>
+                <a href="#{type}-{name}">{prefix}{name} ({param_names})</a>
+            </h3>
+            {body}
+        </div>
     ]==]
 
     local param_names = {}
@@ -170,29 +173,35 @@ local generate_function_html = function (func, prefix)
         type = func.type,
         name = func.name,
         param_names = table.concat(param_names, ", "),
-    }) .. generate_function_body_html(func)
+        body = generate_function_body_html(func),
+    })
     return html
 end
 
 local generate_signal_html = function (func)
     local html_template = [==[
-        <h3 class=function>
-            <span class=target id="signal-{name}"></span>
-            <a href="#signal-{name}">"{name}"</a>
-        </h3>
+        <div class=function id="signal-{name}">
+            <h3>
+                <a href="#signal-{name}">"{name}"</a>
+            </h3>
+            {body}
+        </div>
     ]==]
 
     local html = string.gsub(html_template, "{([%w_]+)}", {
         name = func.name,
-    }) .. generate_function_body_html(func)
+        body = generate_function_body_html(func),
+    })
     return html
 end
 
 local generate_attribution_html = function (doc)
-    local html = {}
+    if #doc.copyright == 0 then return "" end
+    local html = { "<h2>Attribution</h2>" }
     table.insert(html, "<div class=attr-wrap>")
     table.insert(html, "    <h4>Copyright</h4><ul class=copyright>")
     for _, copy in ipairs(doc.copyright) do
+        copy = copy:gsub(" %<.-%>$", ""):gsub("(%d+)%-(%d+)", "%1&ndash;%2")
         table.insert(html, "        <li>" .. copy)
     end
     table.insert(html, "    </ul>")
@@ -203,17 +212,19 @@ end
 
 local generate_property_html = function (prop, prefix)
     local html_template = [==[
-        <h3 class=property>
-            <span class=target id="property-{name}"></span>
-            <a href="#property-{name}">{prefix}{name}</a>
-        </h3>
-        <div class="two-col property">
-            <div>
-                <div>{typestr}</div>
-                <div>{default}</div>
-                <div>{readwrite}</div>
+        <div class=property id="property-{name}">
+            <h3>
+                <a href="#property-{name}">{prefix}{name}</a>
+            </h3>
+            {deprecated}
+            <div class="two-col property-body">
+                <div>
+                    <div>{typestr}</div>
+                    <div>{default}</div>
+                    <div>{readwrite}</div>
+                </div>
+                <div>{desc}</div>
             </div>
-            <div>{desc}</div>
         </div>
     ]==]
 
@@ -222,6 +233,7 @@ local generate_property_html = function (prop, prefix)
     local html = string.gsub(html_template, "{([%w_]+)}", {
         prefix = prefix,
         name = prop.name,
+        deprecated = generate_deprecated_html(prop),
         typestr = "Type: " .. generate_typestr_html(prop.typestr),
         desc = html_unwrap_first_p(format_text(shift_hdr(prop.desc, 3))),
         default = prop.default and "Default: " .. html_unwrap_first_p(format_text(prop.default)) or "",
@@ -246,7 +258,6 @@ local generate_doc_html = function (doc)
         <span class=tagline>{tagline}</span>
         {desc}
         {functions}
-        <h2>Attribution</h2>
         {attribution}
     ]==]
 
@@ -294,8 +305,8 @@ end
 
 local generate_pagination_html = function (pagination)
     return ("<div style='display:none'>{prv}{nxt}</div>"):gsub("{(%w+)}", {
-        prv = pagination.prv and ("<a rel=prev href='../" .. pagination.prv .. "'>") or "",
-        nxt = pagination.nxt and ("<a rel=next href='../" .. pagination.nxt .. "'>") or "",
+        prv = pagination.prv and ("<a rel=prev href='../" .. pagination.prv .. "'></a>") or "",
+        nxt = pagination.nxt and ("<a rel=next href='../" .. pagination.nxt .. "'></a>") or "",
     })
 end
 
@@ -451,22 +462,17 @@ local generate_documentation = function (docs, out_dir)
     -- Build symbol index
     do
         local add_index_obj = function (doc, item)
-            local short_name = item and item.name or doc.name
-            local get_long_name = function (d, i)
-                return d.name .. "/" .. (i and i.name or "")
-            end
-            if index[short_name] then
-                -- Move any item already using the short name to its long name slot
-                local o = index[short_name]
-                local new_name = get_long_name(o.doc, o.item)
-                assert(not index[new_name])
-                index[new_name] = o
-                index[short_name] = false
-            end
-            if index[short_name] == false then
-                index[get_long_name(doc, item)] = { doc = doc, item = item }
-            else
+            local name = item and (item.type == "signal" and '"'..item.name..'"' or item.name)
+            local short_name = name or doc.name
+            local long_name = doc.name .. "/" .. (name or "")
+            -- Always allow using the long name
+            assert(not index[long_name], "Name conflict for " .. long_name)
+            index[long_name] = { doc = doc, item = item }
+            -- Allow using the short name, but blacklist it on collision
+            if index[short_name] == nil then
                 index[short_name] = { doc = doc, item = item }
+            else
+                index[short_name] = false
             end
         end
         for _, doc in ipairs(lousy.util.table.join(docs.modules, docs.classes)) do

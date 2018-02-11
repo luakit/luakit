@@ -13,6 +13,7 @@ local window = require("window")
 local webview = require("webview")
 local lousy = require("lousy")
 local pickle = lousy.pickle
+local settings = require("settings")
 
 local _M = {}
 
@@ -137,7 +138,7 @@ local restore_file = function (file, delete)
             v:add_signal("switched-page", unblock)
         end
         -- Convert state keys from index to w table
-        state[w] = win
+        if w then state[w] = win end
     end
     _M.emit_signal("restore", state)
 
@@ -191,6 +192,13 @@ window.add_signal("init", function (w)
         end
     end)
 
+    w:add_signal("close", function ()
+        if not settings.get_setting("session.always_save") then return end
+        if #window.bywidget > 1 then return end
+        if w.tabs:count() == 0 then return end -- window.close_with_last_tab...
+        w:save_session()
+    end)
+
     w.tabs:add_signal("page-reordered", function ()
         start_timeout()
     end)
@@ -208,6 +216,17 @@ webview.add_signal("init", function (view)
         start_timeout()
     end)
 end)
+
+settings.register_settings({
+    ["session.always_save"] = {
+        type = "boolean",
+        default = false,
+        desc = [[
+            Whether the current browsing session should always be saved
+            just before luakit is exited.
+        ]],
+    },
+})
 
 return _M
 

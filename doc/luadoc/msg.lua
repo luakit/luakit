@@ -11,7 +11,7 @@
 --     end)
 --
 -- @module msg
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 --- Log a fatal error message, and abort the program.
 -- @function fatal

@@ -1,6 +1,6 @@
 --- Test luakit clib functionality.
 --
--- @copyright Mason Larobina
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local assert = require "luassert"
 local test = require "tests.lib"
@@ -36,7 +36,7 @@ T.test_luakit_index = function ()
 end
 
 T.test_webkit_version = function ()
-    assert.is_match("^%d+%.%d+%.%d$", luakit.webkit_version,
+    assert.is_match("^%d+%.%d+%.%d+$", luakit.webkit_version,
         "Invalid format: luakit.webkit_version")
     assert.is_match("^%d+%.%d+$", luakit.webkit_user_agent_version,
         "Invalid format: luakit.webkit_user_agent_version")
@@ -115,6 +115,14 @@ T.test_website_data = function ()
     test.wait()
 
     v:destroy()
+end
+
+T.test_luakit_install_paths = function ()
+    local paths = assert(luakit.install_paths)
+    assert.equal(paths.install_dir, luakit.install_path)
+    for _, k in ipairs {"install_dir", "config_dir", "doc_dir", "man_dir", "pixmap_dir", "app_dir"} do
+        assert(type(paths[k]) == "string")
+    end
 end
 
 return T

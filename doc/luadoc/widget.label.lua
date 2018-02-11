@@ -8,7 +8,7 @@
 -- @class widget:label
 -- @prefix label
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property padding
 -- The widget padding. Table has two fields, `x` and `y`, representing the

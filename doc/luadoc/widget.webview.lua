@@ -18,7 +18,7 @@
 -- @class widget:webview
 -- @prefix view
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @property inspector
 -- Whether the web inspector is open for the webview.
@@ -177,6 +177,25 @@
 -- The certificate of the webview.
 -- @type string
 -- @readonly
+
+--- @property allow_file_access_from_file_urls
+-- Whether `file://` access is allowed for `file://` URIs.
+-- @type boolean
+-- @default `false`
+-- @readwrite
+
+--- @property allow_universal_access_from_file_urls
+-- Whether Javascript running in the `file://` scheme is allowed to access
+-- content from any origin.
+-- @type boolean
+-- @default `false`
+-- @readwrite
+
+--- @property hardware_acceleration_policy
+-- The policy for using hardware acceleration. Can be one of
+-- `"on-demand"`, `"always"`, and `"never"`.
+-- @type string
+-- @readwrite
 
 --- @signal scheme-request::*
 --
@@ -341,5 +360,17 @@
 -- otherwise.
 -- @treturn boolean `true` if the event has been handled and should not be
 -- propagated further.
+
+--- @signal permission-request
+-- Emitted when the webview is requesting user permisison to perform some
+-- action.
+-- @tparam string type The type of permission requested. Can be one of
+-- `"notification"`, `"geolocation"`, `"install-missing-media-plugins"`, and `"user-media"`.
+-- @param arg Additional information about the permission request. For
+-- `"user-media"` requests, this is a table with boolean `audio` and `video`
+-- fields. For `"install-missing-media-plugins"` requests, this is a string
+-- description.
+-- @treturn boolean `true` to grant the permission request, and `false` to deny
+-- it. If no value is returned, a default action is used.
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

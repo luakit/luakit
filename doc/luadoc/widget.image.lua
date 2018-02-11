@@ -8,12 +8,13 @@
 -- @class widget:image
 -- @prefix image
 -- @author Aidan Holm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 --- @method filename
 -- Show an image from a file. On HiDPI screens, a file with "@2x" before
--- the extension will be used instead, if it is present. Relative paths
--- will be relative to the luakit installation directory.
+-- the extension will be used instead, if it is present.
+--
+-- The filename is used to search the directories specified by @ref{luakit/resource_path}.
 -- @tparam string path The path to the image file.
 
 --- @method icon

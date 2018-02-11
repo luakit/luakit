@@ -4,7 +4,7 @@
 -- also provides the `view-source:` URI scheme.
 --
 -- @module view_source
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local lousy = require("lousy")
 local webview = require("webview")

@@ -5,10 +5,11 @@
 -- and Lua to JavaScript function bridge management.
 --
 -- @module chrome
--- @copyright 2010-2012 Mason Larobina (mason.larobina@gmail.com)
--- @copyright 2010 Fabian Streitel (karottenreibe@gmail.com)
+-- @copyright 2010-2012 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 local error_page = require("error_page")
+local lousy = require("lousy")
 local webview = require("webview")
 local window = require("window")
 local wm = require_web_module("chrome_wm")
@@ -170,6 +171,12 @@ local handlers = {}
 local on_first_visual_handlers = {}
 local page_funcs = {}
 
+--- Retrieve a list of the currently registered luakit:// handlers.
+-- @treturn {string} A list of `luakit://` handler names, in alphabetical order.
+function _M.available_handlers()
+    return lousy.util.table.keys(handlers)
+end
+
 --- Register a chrome page URI with an associated handler function.
 -- @tparam string page The name of the chrome page to register.
 -- @tparam function func The handler function for the chrome page.
@@ -307,8 +314,9 @@ wm:add_signal("function-call", function (_, page_id, page_name, func_name, id, a
         end
     end
     -- Call Lua function, return result
-    local ok, ret = xpcall(func, debug.traceback, view, unpack(args))
-    if not ok then msg.error(ret) end
+    local ok, ret = xpcall(
+        function () return func(view, unpack(args)) end,
+        function (err)  msg.error(debug.traceback(err, 3)) end)
     wm:emit_signal(view, "function-return", id, ok, ret)
 end)
 

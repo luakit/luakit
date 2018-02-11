@@ -15,8 +15,8 @@
 -- @author Mason Larobina
 -- @author Plaque FCC
 -- @copyright 2010 Henning Hasemann
--- @copyright 2010 Mason Larobina (mason-l) (mason.larobina@gmail.com)
--- @copyright 2010 Plaque FCC (Reslayer@ya.ru)
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Plaque FCC <Reslayer@ya.ru>
 
 local adblock    = require("adblock")
 local lousy      = require("lousy")
@@ -318,8 +318,8 @@ add_binds("normal", {
 
 -- Add chrome commands.
 add_cmds({
-    { ":adblock", "Open <luakit://adblock/> in the current tab.",
-        function (w) w:navigate(_M.chrome_page) end },
+    { ":adblock", "Open <luakit://adblock/> in a new tab.",
+        function (w) w:new_tab(_M.chrome_page) end },
 })
 
 return _M

@@ -7,7 +7,7 @@
 -- @class widget:box
 -- @prefix box
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method pack
 -- Add a widget to the box. There are several valid options that can be set in

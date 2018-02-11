@@ -266,6 +266,72 @@ void
 log_init(void)
 {
     queued_emissions = g_async_queue_new();
+
+    const char *log_dump_file = getenv("LUAKIT_QUEUED_EMISSIONS_FILE");
+    unsetenv("LUAKIT_QUEUED_EMISSIONS_FILE");
+
+    if (!log_dump_file || !file_exists(log_dump_file))
+        return;
+
+    char *dump;
+    size_t len;
+    GError *error = NULL;
+
+    if (!g_file_get_contents(log_dump_file, &dump, &len, &error)) {
+        error("unable to load previous log messages: %s", error->message);
+        g_error_free(error);
+        return;
+    }
+    unlink(log_dump_file);
+    char *end = dump + len;
+
+    g_async_queue_lock(queued_emissions);
+    while (dump < end) {
+        queued_log_t *entry = g_slice_new0(queued_log_t);
+        entry->lvl = *dump++;
+        entry->time = g_ascii_strtod(dump, &dump);
+        entry->group = g_strdup(dump);
+        dump += strlen(dump)+1;
+        entry->msg = g_strdup(dump);
+        dump += strlen(dump)+1;
+        g_async_queue_push_unlocked(queued_emissions, entry);
+    }
+    g_async_queue_unlock(queued_emissions);
+}
+
+char *
+log_dump_queued_emissions(void)
+{
+    GString *dump = g_string_new(NULL);
+    g_async_queue_lock(queued_emissions);
+    queued_log_t *entry;
+    while ((entry = g_async_queue_try_pop_unlocked(queued_emissions))) {
+        g_string_append_c(dump, (char) entry->lvl);
+        g_string_append_printf(dump, "%f", entry->time);
+        g_string_append(dump, entry->group);
+        g_string_append_c(dump, '\0');
+        g_string_append(dump, entry->msg);
+        g_string_append_c(dump, '\0');
+        g_free(entry->group);
+        g_free(entry->msg);
+        g_slice_free(queued_log_t, entry);
+    }
+    g_async_queue_unlock(queued_emissions);
+
+    char *name_used = NULL;
+    int log_dump_fd = g_file_open_tmp("luakit-log-dump.XXXXXX", &name_used, NULL);
+    if (log_dump_fd != -1) {
+        ssize_t written = write(log_dump_fd, dump->str, dump->len);
+        close(log_dump_fd);
+        if (written != (ssize_t)dump->len) {
+            unlink(name_used);
+            g_free(name_used);
+            name_used = NULL;
+        }
+    }
+    g_string_free(dump, TRUE);
+
+    return name_used;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

@@ -5,7 +5,7 @@
 --
 -- @module log_chrome
 -- @author Aidan Holm
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local chrome = require "chrome"
 local window = require "window"
@@ -150,6 +150,7 @@ local sync_view = function (v)
     for i, row in ipairs(rows) do
         -- only the msg contains literal newlines: escape them
         -- has to be done outside of %q formatting
+        row = row:gsub("\n", "<br>")
         rows[i] = string.format("%q", row):gsub("\\\n", "\n")
     end
     js = js:format(table.concat(rows,"+"), _M.buffer_size)

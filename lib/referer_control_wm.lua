@@ -24,7 +24,7 @@
 --     require_web_module("referer_control_wm")
 --
 -- @module referer_control_wm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local _M = {}
 

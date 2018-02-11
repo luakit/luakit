@@ -4,8 +4,8 @@
 -- the mouse, the target URI of that link will be shown temporarily.
 --
 -- @module lousy.widget.uri
--- @copyright 2017 Aidan Holm
--- @copyright 2010 Mason Larobina
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local _M = {}
 
@@ -48,6 +48,7 @@ end)
 local function new()
     local uri = widget{type="label"}
     uri.selectable = true
+    uri.can_focus = false
     uri.fg = theme.uri_sbar_fg
     uri.font = theme.uri_sbar_font
     return wc.add_widget(widgets, uri)

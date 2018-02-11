@@ -37,13 +37,14 @@
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"
+#include "common/clib/utf8.h"
 
 #include "extension/scroll.h"
 #include "extension/luajs.h"
 #include "extension/script_world.h"
 
-void
-web_lua_init(void)
+static void
+web_lua_init(const char *package_path, const char *package_cpath)
 {
     debug("Lua initializing...");
 
@@ -56,12 +57,20 @@ web_lua_init(void)
     luaH_fixups(L);
     luaH_object_setup(L);
     luaH_uniq_setup(L, NULL, "v");
-    luaH_add_paths(L, NULL);
+
+    lua_getglobal(L, "package");
+    lua_pushstring(L, package_path);
+    lua_setfield(L, -2, "path");
+    lua_pushstring(L, package_cpath);
+    lua_setfield(L, -2, "cpath");
+    lua_pop(L, 1);
+
     luakit_lib_setup(L);
     soup_lib_setup(L);
     ipc_channel_class_setup(L);
     timer_class_setup(L);
     regex_class_setup(L);
+    utf8_lib_setup(L);
     dom_document_class_setup(L);
     dom_element_class_setup(L);
     page_class_setup(L);
@@ -73,7 +82,8 @@ web_lua_init(void)
 G_MODULE_EXPORT void
 webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant *payload)
 {
-    const gchar *socket_path = g_variant_get_string(payload, NULL);
+    gchar *socket_path, *package_path, *package_cpath;
+    g_variant_get(payload, "(sss)", &socket_path, &package_path, &package_cpath);
 
     common.L = luaL_newstate();
     common.L = common.L;
@@ -85,7 +95,7 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
         exit(EXIT_FAILURE);
     }
 
-    web_lua_init();
+    web_lua_init(package_path, package_cpath);
     web_scroll_init();
     web_luajs_init();
     web_script_world_init();

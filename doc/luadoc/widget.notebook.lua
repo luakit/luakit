@@ -8,7 +8,7 @@
 -- @class widget:notebook
 -- @prefix notebook
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method count
 -- Get the number of pages in the notebook.

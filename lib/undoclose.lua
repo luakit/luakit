@@ -28,6 +28,9 @@ local reopening = {}
 -- Map of view widgets to UIDs that are restored after reopening a web view
 local view_uids = setmetatable({}, { __mode = "k" })
 
+-- Map of notebook widgets to closed tab lists
+local closed_tabs = setmetatable({}, { __mode = "k" })
+
 --- Returns a webview widget's UID, creating one if necessary.
 -- @tparam widget view The webview.
 -- @treturn number The UID for the webview.
@@ -82,16 +85,18 @@ local on_tab_close = function (w, view)
         view_uids[view] = nil
         if view.uri ~= hist_item.uri then tab.next_uri = view.uri end
     end
-    table.insert(w.closed_tabs, tab)
+    closed_tabs[w.tabs] = closed_tabs[w.tabs] or {}
+    table.insert(closed_tabs[w.tabs], tab)
 end
 
 -- Undo a closed tab (with complete tab history)
 window.methods.undo_close_tab = function (w, index)
+    local ctabs = closed_tabs[w.tabs] or {}
     -- Convert negative indexes
     if index and index < 0 then
-        index = #(w.closed_tabs) + index + 1
+        index = #ctabs + index + 1
     end
-    local tab = table.remove(w.closed_tabs, index)
+    local tab = table.remove(ctabs, index)
     if not tab then
         w:notify("No closed tabs to reopen")
         return
@@ -128,7 +133,7 @@ session.add_signal("save", function (state)
         assert(state[w])
         assert(not state[w].closed)
         state[w].closed = {}
-        for i, tab in ipairs(w.closed_tabs) do
+        for i, tab in ipairs(closed_tabs[w.tabs] or {}) do
             state[w].closed[i] = tab
         end
         -- Save view uids for each view
@@ -145,7 +150,7 @@ session.add_signal("restore", function (state)
     view_uids.next = 0
     for w, win in pairs(state) do
         -- Restore closed tabs for each window
-        w.closed_tabs = win.closed
+        closed_tabs[w.tabs] = win.closed
         -- Save view uids for each view, reconstruct view_uids.next
         for i, v in ipairs(w.tabs.children) do
             local uid = win.open[i].view_uid
@@ -158,7 +163,6 @@ session.add_signal("restore", function (state)
 end)
 
 window.add_signal("init", function (w)
-    w.closed_tabs = {}
     w:add_signal("close-tab", on_tab_close)
 end)
 
@@ -171,7 +175,7 @@ add_binds("normal", {
 new_mode("undolist", {
     enter = function (w)
         local rows = {{ "Title", " URI", title = true }}
-        for uid, tab in ipairs(w.closed_tabs) do
+        for uid, tab in ipairs(closed_tabs[w.tabs] or {}) do
             tab.uid = uid
             local title = lousy.util.escape(tab.title)
             local uri = lousy.util.escape(tab.uri)
@@ -191,10 +195,11 @@ add_binds("undolist", lousy.util.table.join({
     -- Delete closed tab history
     { "d", "Delete closed tab history item.", function (w)
         local row = w.menu:get()
+        local ctabs = closed_tabs[w.tabs] or {}
         if row and row.uid then
-            for i, tab in ipairs(w.closed_tabs) do
+            for i, tab in ipairs(ctabs) do
                 if tab.uid == row.uid then
-                    table.remove(w.closed_tabs, i)
+                    table.remove(ctabs, i)
                     break
                 end
             end
@@ -207,10 +212,11 @@ add_binds("undolist", lousy.util.table.join({
 
     { "u", "Undo closed tab in new background tab.", function (w)
         local row = w.menu:get()
+        local ctabs = closed_tabs[w.tabs] or {}
         if row and row.uid then
-            for i, tab in ipairs(w.closed_tabs) do
+            for i, tab in ipairs(ctabs) do
                 if tab.uid == row.uid then
-                    w:new_tab(table.remove(w.closed_tabs, i), { switch = false })
+                    w:new_tab(table.remove(ctabs, i), { switch = false })
                     break
                 end
             end
@@ -224,11 +230,12 @@ add_binds("undolist", lousy.util.table.join({
     -- Undo closed tab in new window
     { "w", "Undo closed tab in new window.", function (w)
         local row = w.menu:get()
+        local ctabs = closed_tabs[w.tabs] or {}
         w:set_mode()
         if row and row.uid then
-            for i, tab in ipairs(w.closed_tabs) do
+            for i, tab in ipairs(ctabs) do
                 if tab.uid == row.uid then
-                    window.new({table.remove(w.closed_tabs, i)})
+                    window.new({table.remove(ctabs, i)})
                     return
                 end
             end
@@ -240,7 +247,7 @@ add_binds("undolist", lousy.util.table.join({
         local row = w.menu:get()
         w:set_mode()
         if row and row.uid then
-            for i, tab in ipairs(w.closed_tabs) do
+            for i, tab in ipairs(closed_tabs[w.tabs] or {}) do
                 if tab.uid == row.uid then
                     w:undo_close_tab(i)
                 end
@@ -253,7 +260,7 @@ add_binds("undolist", lousy.util.table.join({
 add_cmds({
     { ":undolist", "Undo closed tabs menu.",
         function (w)
-            if #(w.closed_tabs) == 0 then
+            if #(closed_tabs[w.tabs] or {}) == 0 then
                 w:notify("No closed tabs to display")
             else
                 w:set_mode("undolist")

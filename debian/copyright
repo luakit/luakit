@@ -7,10 +7,6 @@ Copyright: 2010-2012 Mason Larobina <mason.larobina@gmail.com>
            2016-2017 Aidan Holm <aidanholm@gmail.com>
 License:   GPL-3.0+
 
-Files: lib/jquery.min.js
-Copyright: 2011 The jQuery Foundation
-License: MIT
-
 Files: lib/markdown.lua
 Copyright: 2008 Niklas Frykholm, <niklas@frykholm.se>
 License: MIT

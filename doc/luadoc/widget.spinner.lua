@@ -7,7 +7,7 @@
 -- @class widget:spinner
 -- @prefix spinner
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method start
 -- Start spinning.

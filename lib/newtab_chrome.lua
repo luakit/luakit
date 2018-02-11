@@ -25,6 +25,7 @@
 local chrome = require "chrome"
 local theme = require "theme"
 local luakit = require "luakit"
+local settings = require "settings"
 
 local _M = {}
 
@@ -69,6 +70,9 @@ luakit.idle_add(function ()
         end
     end)
 end)
+
+require "window"
+settings.override_setting("window.new_tab_page", "luakit://newtab/")
 
 return _M
 

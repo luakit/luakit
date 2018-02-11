@@ -49,6 +49,7 @@ static widget_info_t widgets_list[] = {
   { L_TK_IMAGE,     "image",    widget_image    },
   { L_TK_SPINNER,   "spinner",  widget_spinner  },
   { L_TK_DRAWING_AREA, "drawing_area", widget_drawing_area },
+  { L_TK_STACK,     "stack",    widget_stack    },
 };
 
 LUA_OBJECT_FUNCS(widget_class, widget_t, widget);

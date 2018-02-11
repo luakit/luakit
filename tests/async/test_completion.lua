@@ -1,6 +1,6 @@
 --- Tests for the input completions module.
 --
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local T = {}
 local assert = require("luassert")

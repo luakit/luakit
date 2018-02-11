@@ -61,22 +61,6 @@ luaH_notebook_indexof(lua_State *L)
     return 1;
 }
 
-static gint
-luaH_notebook_remove(lua_State *L)
-{
-    widget_t *w = luaH_checkwidget(L, 1);
-    widget_t *child = luaH_checkwidget(L, 2);
-    gint i = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
-
-    if (i == -1)
-        luaL_argerror(L, 2, "child not in notebook");
-
-    GtkWidget *widget = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
-    g_object_ref(G_OBJECT(widget));
-    gtk_notebook_remove_page(GTK_NOTEBOOK(w->widget), i);
-    return 0;
-}
-
 /* Inserts a widget into the notebook widget at an index */
 static gint
 luaH_notebook_insert(lua_State *L)
@@ -171,6 +155,7 @@ luaH_notebook_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
 
       /* push class methods */
       PF_CASE(COUNT,        luaH_notebook_count)
@@ -178,13 +163,9 @@ luaH_notebook_index(lua_State *L, widget_t *w, luakit_token_t token)
       PF_CASE(GET_TITLE,    luaH_notebook_get_title)
       PF_CASE(INDEXOF,      luaH_notebook_indexof)
       PF_CASE(INSERT,       luaH_notebook_insert)
-      PF_CASE(REMOVE,       luaH_notebook_remove)
       PF_CASE(SET_TITLE,    luaH_notebook_set_title)
       PF_CASE(SWITCH,       luaH_notebook_switch)
       PF_CASE(REORDER,      luaH_notebook_reorder)
-
-      case L_TK_CHILDREN:
-        return luaH_widget_get_children(L, w);
 
       /* push boolean properties */
       PB_CASE(SHOW_TABS,    gtk_notebook_get_show_tabs(GTK_NOTEBOOK(w->widget)))

@@ -4,7 +4,7 @@
 --
 -- @module lousy.bind
 -- @author Mason Larobina <mason.larobina@gmail.com>
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local util = require("lousy.util")
 local join = util.table.join
@@ -16,9 +16,9 @@ local function convert_bind_syntax(b)
     -- commands are a no-op
     if b:match("^:") and b ~= ":" then return b end
     -- Keys have sorted modifiers and uppercase -> lowercase+shift conversion
-    if string.wlen(b) == 1 or b:match("^<.+>$") then
+    if utf8.len(b) == 1 or b:match("^<.+>$") then
         b = b:match("^<(.+)>$") or b
-        local mods = b == "-" and {"-"} or util.string.split(b, "%-")
+        local mods = b == "-" and {"Minus"} or util.string.split(b, "%-")
         local key = table.remove(mods)
         -- Convert upper-case keys to shift+lower-case
         local lc = luakit.wch_lower(key)
@@ -30,7 +30,22 @@ local function convert_bind_syntax(b)
         return "<".. (mods and (mods.."-") or "") .. key .. ">"
     end
     -- Otherwise, make it a buffer bind; wrap in ^$ if necessary
-    return string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
+    b = string.sub(b,1,1) == "^" and b or "^" .. b .. "$"
+    if utf8.len(b) == 3 then
+        local nb = convert_bind_syntax(b:sub(2,-2))
+        msg.verbose("implicitly converting bind '%s' to '%s'", b, nb)
+        b = nb
+    end
+    return b
+end
+
+local function convert_binds_table(binds)
+    if binds.converted then return binds end
+    local converted = { converted = true }
+    for i, bind in ipairs(binds) do
+        converted[i] =  { convert_bind_syntax(bind[1]), bind[2], bind[3] }
+    end
+    return converted
 end
 
 --- Set of modifiers to ignore.
@@ -45,6 +60,7 @@ _M.map = {
     ISO_Left_Tab = "Tab",
     PgUp = "Page_Up",
     PgDn = "Page_Down",
+    ["-"] = "Minus",
 }
 
 --- A table that contains mappings for modifier names.
@@ -96,6 +112,7 @@ end
 -- called.
 -- @treturn boolean `true` if an 'any' binding was ran successfully.
 function _M.match_any(object, binds, args)
+    binds = convert_binds_table(binds)
     for _, m in ipairs(binds) do
         local b, a, o = unpack(m)
         if b == "<any>" then
@@ -123,6 +140,7 @@ end
 -- called.
 -- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_key(object, binds, mods, key, args)
+    binds = convert_binds_table(binds)
     for _, m in ipairs(binds) do
         local b, a, o = unpack(m)
         if b == "<".. (mods and (mods.."-") or "") .. key .. ">" then
@@ -150,6 +168,7 @@ end
 -- called.
 -- @treturn boolean `true` if a key binding was ran successfully.
 function _M.match_but(object, binds, mods, button, args)
+    binds = convert_binds_table(binds)
     for _, m in ipairs(binds) do
         local b, a, o = unpack(m)
         if b == "<" .. (mods and (mods.."-") or "") .. "Mouse" .. button .. ">" then
@@ -195,6 +214,7 @@ end
 -- @treturn boolean `true` if a partial match exists.
 function _M.match_buf(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+    binds = convert_binds_table(binds)
 
     local has_partial_match = false
     for _, m in ipairs(binds) do
@@ -225,6 +245,7 @@ end
 -- @treturn boolean `true` if either type of binding was matched and called.
 function _M.match_cmd(object, binds, buffer, args)
     assert(buffer and string.match(buffer, "%S"), "invalid buffer")
+    binds = convert_binds_table(binds)
 
     -- The command is the first word in the buffer string
     local command  = string.match(buffer, "^(%S+)")
@@ -297,9 +318,10 @@ end
 function _M.hit(object, binds, mods, key, args)
     -- Convert keys using map
     key = _M.map[key] or key
+    binds = convert_binds_table(binds)
 
     if not key then return false end
-    local len = string.wlen(key)
+    local len = utf8.len(key)
 
     -- Compile metadata table
     args = join(args or {}, {
@@ -404,6 +426,9 @@ end
 --- Remove any binding with a specific trigger from the given array of bindings.
 -- @tparam table binds The array of bindings to remove the named binding from.
 -- @tparam string bind The trigger to unbind.
+-- @treturn table The associated action of the binding that was removed, or `nil` if
+-- not found.
+-- @treturn table The options of the binding that was removed, or `nil` if not found.
 function _M.remove_bind (binds, bind)
     assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
     assert(bind and type(bind) == "string", "invalid bind type: " .. type(bind))
@@ -412,10 +437,39 @@ function _M.remove_bind (binds, bind)
         if m[1] == bind then
             table.remove(binds, i)
             msg.verbose("removed bind %s", bind)
-            return
+            return m[2], m[3]
         end
     end
     msg.verbose("no bind %s to remove", bind)
+    return nil, nil
+end
+
+--- Remap a binding from a given trigger to a new trigger, optionally keeping
+-- the original binding. In both cases, the new binding will have the same
+-- options as the original binding.
+-- @tparam table binds The array of bindings to remap within.
+-- @tparam string new The new trigger to map from.
+-- @tparam string old The existing trigger to remap.
+-- @tparam[opt] boolean keep Retain the existing binding.
+-- @default `false`
+function _M.remap_bind (binds, new, old, keep)
+    assert(binds and type(binds) == "table", "invalid binds table type: " .. type(binds))
+    assert(new and type(new) == "string", "invalid bind type: " .. type(new))
+    assert(old and type(old) == "string", "invalid bind type: " .. type(old))
+    new = convert_bind_syntax(new)
+    old = convert_bind_syntax(old)
+    for _, m in ipairs(binds) do
+        if m[1] == old then
+            msg.verbose("remapping bind to %s, %s %s", new, keep and "keeping" or "removing", old)
+            if keep then
+                _M.add_bind(binds, new, m[2], m[3])
+            else
+                m[1] = new
+            end
+            return
+        end
+    end
+    msg.verbose("no bind %s to remap", old)
 end
 
 return _M

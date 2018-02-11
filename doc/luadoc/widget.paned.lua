@@ -8,7 +8,7 @@
 -- @class widget:paned
 -- @prefix paned
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method pack1
 -- Add a widget to the left/top panel. There are two options that can be set:

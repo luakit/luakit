@@ -27,6 +27,7 @@ void log_init(void);
 int log_level_from_string(log_level_t *out, const char *str);
 void log_set_verbosity(const char *group, log_level_t lvl);
 log_level_t log_get_verbosity(char *group);
+char * log_dump_queued_emissions(void);
 
 #endif
 

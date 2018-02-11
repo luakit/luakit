@@ -1,6 +1,16 @@
+-- Webview widget wrapper - web module.
+--
+-- The webview module wraps the webview widget provided by luakit, adding
+-- several convenience APIs and providing basic functionality.
+--
+-- @submodule webview
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
+
 local ui = ipc_channel("webview_wm")
 
 ui:add_signal("load-finished", function(_, page)
+    if not page then return end
     local doc = page.document
 
     -- do nothing if loaded document is not HTML

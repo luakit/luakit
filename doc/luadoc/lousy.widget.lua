@@ -33,7 +33,7 @@
 -- @module lousy.widget
 -- @author Aidan Holm <aidanholm@gmail.com>
 -- @author Mason Larobina <mason.larobina@gmail.com>
--- @copyright 2017 Aidan Holm
--- @copyright 2010 Mason Larobina
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

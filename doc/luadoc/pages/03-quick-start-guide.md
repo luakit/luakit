@@ -1,6 +1,6 @@
-@name Quick-start guide
+@name Quick-start Guide
 
-# Quick-start guide
+# Quick-start Guide
 
 ## Using Luakit
 
@@ -36,7 +36,7 @@ commands will be written prefixed by a `:`; so `:open` means to first press
 ### Go to a URL in the current tab
 
 Type `:open` followed by a space and the URL to navigate to, and press `<Enter>`.
-For example, to open the luakit website, type `:open www.luakit.org` and then
+For example, to open the luakit website, type `:open luakit.github.io` and then
 press press `<Enter>`.
 
 _Shortcut_: press `o` to switch to command mode with `open ` already typed.
@@ -74,70 +74,69 @@ There are several different keys to scroll a webview:
 
 ## Configuration
 
+It is possible to configure most of the global Luakit settings in the
+<a href="luakit://settings">luakit://settings</a> page. For further
+adjustments (per-domain settings, adjusting/defining bindings or commands) you
+should create a custom configuration file.
+
 ### Beginning a custom configuration
 
-Luakit loads only one configuration file: `rc.lua`; that's the entry
-point for loading all the other configuration files and modules one might need,
-which are all written in Lua.
+To customize luakit, you can define your own configuration by creating a
+`userconf.lua` file in the `~/.config/luakit/` directory. This file
+is loaded automatically by luakit, if it exists. Any changes made to it will
+take effect after restarting luakit.
 
-Any configuration file can load ("require") another Lua configuration file by
-specifying its name. When looking for a `.lua` file by name, luakit
-checks the following locations, in the order specified here:
+### Changing key bindings
+
+To add/remove key bindings, use @ref{modes/add_binds} and @ref{remove_binds}
+methods from the @ref{modes} module to do so.  For example, the following code
+re-binds `<Control-c>` so the selected text gets copied to the clipboard:
+
+    --- userconf.lua
+
+    local modes = require "modes"
+
+    modes.add_binds("normal", {{
+        "<Control-c>",
+        "Copy selected text.",
+        function ()
+            luakit.selection.clipboard = luakit.selection.primary
+        end
+    }})
+
+If you just want to re-map an existing action to a new keybinding, you can use
+the @ref{modes/remap_binds} method. For example:
+
+    -- maps "<Control-p>" to the same action as "gT" (go to previous tab), and
+    -- keeps "gT" binded as well
+    modes.remap_binds("normal", {
+        {"<Control-p>", "gT", true}
+    })
+
+You can also check all the currently available key bindings in the
+<a href="luakit://binds">luakit://binds</a> page, for each of luakit's modes,
+along with their documentation and links to the exact location where they
+were defined.
+
+### Changing the theme
+
+Apart from `rc.lua`, the other configuration file is `theme.lua`, which
+specifies the fonts and colours used by the interface widgets.
+
+### Location of configuration files
+
+When looking for a `.lua` file by name, luakit checks the following locations,
+in the order specified here:
 
 1. The current directory.
 2. System directories for Lua files.
 3. Luakit's collection of included modules (`/usr/share/luakit/lib/`).
-4. The user's personal luakit configuration directory (`/home/$USER/.config/luakit/`).
+4. The user's personal luakit configuration directory (`~/.config/luakit/`).
 5. The system configuration directories (`/etc/xdg/luakit/`).
-
-When launching luakit after a fresh install, it will look for the file
-`rc.lua` in these directories in order. If there is no such file in the
-personal luakit configuration directory, luakit will fall back to the
-global `/etc/xdg/luakit/rc.lua` file.
 
 To list the directories luakit will search when loading modules, run the
 following command:
 
     :lua w:notify(package.path:gsub(";","\n"))
 
-To customize luakit, we can define our own configuration by creating a
-`rc.lua` file in the `/home/$USER/.config/luakit/` directory. The easiest
-way of creating a proper functional configuration is copying the global
-configuration file:
-
-    mkdir -p ~/.config/luakit/
-    cp /etc/xdg/luakit/rc.lua ~/.config/luakit/
-
-Now we can modify the configuration file, and any changes will take effect
-after restarting luakit. The official `rc.lua` file might be changed in
-future releases, however, and if we modify our copy
-extensively, it may be difficult to merge any changes to the configuration
-file into our setup. One way of minimizing the impact of future upgrades
-is to add only a single line like the following to our personal copy of
-`rc.lua`:
-
-    require "userconf"
-
-This should be added just before the end of the "User script loading" section.
-Now we can create a new file, `/home/$USER/.config/luakit/userconf.lua`,
-where we can introduce all the changes we want; these changes will not have to
-be merged with any future changes to the `rc.lua` file.
-
-### Changing the theme and other settings
-
-Apart from `rc.lua`, there are some other configuration files of interest.
-
- - `theme.lua` specifies the fonts and colours used by the interface widgets.
- - `globals.lua` contains global options like the size of the scroll
-   and zoom steps, the default window size, the useragent string, search
-   engines, and more.
-
-Just copy the files you wish to change into your personal luakit configuration
-directory, and luakit will load those files when you next launch it.
-
-### Changing key bindings
-
-To change key bindings, use @ref{modes/add_binds} and @ref{remove_binds}
-to add and remove key bindings.
-
-<!-- vim: et:sw=4:ts=8:sts=4:tw=79 -->
+<!-- vim: set et sw=4 ts=8 sts=4 tw=79 :-->

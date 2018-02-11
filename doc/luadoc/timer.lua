@@ -12,7 +12,7 @@
 --
 -- @class timer
 -- @author Mason Larobina
--- @copyright 2010 Mason Larobina
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 --- @function __call
 -- Create a new timer instance.

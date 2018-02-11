@@ -24,7 +24,9 @@
 #include "common/luaserialize.h"
 #include "common/luayield.h"
 #include "common/ipc.h"
+#include "common/resource.h"
 #include "common/signal.h"
+#include "ipc.h"
 #include "luah.h"
 #include "log.h"
 #include "web_context.h"
@@ -369,6 +371,7 @@ luaH_luakit_exec(lua_State *L)
     static const gchar *shell = NULL;
     if (!shell && !(shell = g_getenv("SHELL")))
         shell = "/bin/sh";
+    ipc_remove_socket_file();
     execl(shell, shell, "-c", luaL_checkstring(L, 1), NULL);
     return 0;
 }
@@ -641,6 +644,25 @@ luaH_luakit_wch_upper(lua_State *L)
     return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), TRUE);
 }
 
+static gint
+luaH_luakit_push_install_paths_table(lua_State *L)
+{
+    lua_createtable(L, 0, 6);
+    lua_pushliteral(L, LUAKIT_INSTALL_PATH);
+    lua_setfield(L, -2, "install_dir");
+    lua_pushliteral(L, LUAKIT_CONFIG_PATH);
+    lua_setfield(L, -2, "config_dir");
+    lua_pushliteral(L, LUAKIT_DOC_PATH);
+    lua_setfield(L, -2, "doc_dir");
+    lua_pushliteral(L, LUAKIT_MAN_PATH);
+    lua_setfield(L, -2, "man_dir");
+    lua_pushliteral(L, LUAKIT_PIXMAP_PATH);
+    lua_setfield(L, -2, "pixmap_dir");
+    lua_pushliteral(L, LUAKIT_APP_PATH);
+    lua_setfield(L, -2, "app_dir");
+    return 1;
+}
+
 /** luakit module index metamethod.
  *
  * \param  L The Lua VM state.
@@ -664,6 +686,7 @@ luaH_luakit_index(lua_State *L)
       PS_CASE(DATA_DIR,         globalconf.data_dir)
       PS_CASE(EXECPATH,         globalconf.execpath)
       PS_CASE(CONFPATH,         globalconf.confpath)
+      PS_CASE(RESOURCE_PATH,    resource_path_get())
       /* push boolean properties */
       PB_CASE(VERBOSE,          log_get_verbosity("all") >= LOG_LEVEL_verbose)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
@@ -700,8 +723,12 @@ luaH_luakit_index(lua_State *L)
         return luaH_luakit_selection_table_push(L);
 
       case L_TK_INSTALL_PATH:
+        warn("luakit.install_path is deprecated: use luakit.install_paths.install_dir instead");
         lua_pushliteral(L, LUAKIT_INSTALL_PATH);
         return 1;
+
+      case L_TK_INSTALL_PATHS:
+        return luaH_luakit_push_install_paths_table(L);
 
       case L_TK_VERSION:
         lua_pushliteral(L, VERSION);
@@ -755,7 +782,11 @@ luaH_luakit_newindex(lua_State *L)
                 if (!g_strv_contains(accepted, *lang))
                     warn("unrecognized language code '%s'", *lang);
             g_free(langs);
+            break;
         }
+        case L_TK_RESOURCE_PATH:
+            resource_path_set(luaL_checkstring(L, 3));
+            break;
         default:
             break;
     }

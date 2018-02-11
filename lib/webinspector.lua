@@ -8,13 +8,14 @@
 -- @copyright 2012 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
+local settings = require("settings")
 local modes     = require("modes")
 local add_cmds  = modes.add_cmds
 
 local _M = {}
 
 webview.add_signal("init", function (view)
-    view.enable_developer_extras = true
+    settings.override_setting_for_view(view, "webview.enable_developer_extras", true)
 end)
 
 add_cmds({

@@ -4,8 +4,9 @@
 --
 -- @module lousy.signal
 -- @author Fabian Streitel <karottenreibe@gmail.com>
--- @author Mason Larobina  <mason.larobina@gmail.com>
--- @copyright 2010 Fabian Streitel, Mason Larobina
+-- @author Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local _M = {}
 

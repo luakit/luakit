@@ -26,6 +26,21 @@
 /** Install location of default configuration files */
 #define LUAKIT_CONFIG_PATH "/etc/xdg"
 
+/** Install location of luakit's documentation */
+#define LUAKIT_DOC_PATH "/usr/local/share/luakit/doc"
+
+/** Install location of luakit's man pages */
+#define LUAKIT_MAN_PATH "/usr/local/share/man"
+
+/** Install location of luakit's pixmaps */
+#define LUAKIT_PIXMAP_PATH "/usr/local/share/pixmaps"
+
+/** Install location of luakit's application file */
+#define LUAKIT_APP_PATH "/usr/local/share/applications"
+
+/** Install location of luakit's compiled lib files */
+#define LUAKIT_LIB_PATH "/usr/local/lib/luakit"
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

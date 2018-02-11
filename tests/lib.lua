@@ -3,7 +3,7 @@
 -- This module provides useful functions for use in luakit tests.
 --
 -- @module tests.lib
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local find_files = require "build-utils.find_files"
 

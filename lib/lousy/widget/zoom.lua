@@ -3,13 +3,14 @@
 -- Shows the zoom levle of the current web page as a percentage.
 --
 -- @module lousy.widget.zoom
--- @copyright 2017 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 -- @copyright 2014 Justin Forest
 
 local webview = require("webview")
 local lousy = require("lousy")
 local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
+local settings = require("settings")
 
 local _M = {}
 
@@ -22,7 +23,7 @@ _M.format = "[zoom:%d%%]"
 local widgets = {
     update = function (w, zoom)
         local zl = w.view.zoom_level
-        if zl == 1.0 then
+        if zl == settings.get_setting("webview.zoom_level") / 100 then
             zoom:hide()
         else
             zoom:show()
@@ -34,7 +35,6 @@ local widgets = {
 webview.add_signal("init", function (view)
     -- Update widget when current page changes status
     view:add_signal("property::zoom_level", function (v)
-        print("!!!!!!!!")
         local w = webview.window(v)
         if w and w.view == v then
             wc.update_widgets_on_w(widgets, w)

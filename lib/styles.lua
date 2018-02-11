@@ -10,7 +10,7 @@
 -- refreshing the web pages they affect, and it is possible to reload external
 -- changes to stylesheets into luakit, without restarting the browser.
 --
--- @usage
+-- # Adding user stylesheets
 --
 -- 1. Ensure the @ref{styles} module is enabled in your `rc.lua`.
 -- 2. Locate the @ref{styles} sub-directory within luakit's data storage directory.
@@ -24,15 +24,26 @@
 -- 5. Run `:styles-reload` to detect new stylesheet files and reload any changes to
 --    existing stylesheet files; it isn't necessary to restart luakit.
 --
+-- # Using the styles menu
+--
+-- To open the styles menu, run the command `:styles-list`. Here you can
+-- enable/disable stylesheets, open stylesheets in your text editor, and view
+-- which stylesheets are active.
+--
+-- If a stylesheet is disabled for all pages, its state will be listed as
+-- "Disabled". If a stylesheet is enabled for all pages, but does not apply to
+-- the current page, its state will be listed as "Enabled". If a stylesheet is
+-- enbaled for all pages _and_ it applies to the current page, its state will be
+-- listed as "Active".
+--
 -- @module styles
--- @copyright 2016 Aidan Holm
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
 local webview = require("webview")
 local lousy   = require("lousy")
 local lfs     = require("lfs")
 local editor  = require("editor")
-local globals = require("globals")
 local binds, modes = require("binds"), require("modes")
 local new_mode = require("modes").new_mode
 local add_binds, add_cmds = modes.add_binds, modes.add_cmds
@@ -134,7 +145,7 @@ local function describe_stylesheet_affected_pages(stylesheet)
     local affects = {}
     for _, part in ipairs(stylesheet.parts) do
         for _, w in ipairs(part.when) do
-            local w2 = w[1] == "regexp" and w[2].pattern or w[2]
+            local w2 = w[1] == "regexp" and w[2].pattern:gsub("\\/", "/") or w[2]
             local desc = w[1] .. " " .. w2
             if not lousy.util.table.hasitem(affects, desc) then
                 table.insert(affects, desc)
@@ -178,9 +189,12 @@ local stylesheets_menu_rows = setmetatable({}, { __mode = "k" })
 
 local function create_stylesheet_menu_for_w(w)
     local rows = {{ "Stylesheets", "State", "Affects", title = true }}
+    local groups = { Disabled = {}, Enabled = {}, Active = {}, }
     for _, stylesheet in ipairs(stylesheets) do
-        table.insert(rows, menu_row_for_stylesheet(w, stylesheet))
+        local row = menu_row_for_stylesheet(w, stylesheet)
+        table.insert(groups[row[2]], row)
     end
+    rows = lousy.util.table.join(rows, groups.Active, groups.Enabled, groups.Disabled)
     w.menu:build(rows)
     stylesheets_menu_rows[w] = rows
 end
@@ -241,7 +255,10 @@ local parse_moz_document_section = function (file, parts)
         local valid_words = { url = true, ["url-prefix"] = true, domain = true, regexp = true }
 
         if valid_words[word] then
-            if word == "regexp" then param = regex{pattern=param} end
+            if word == "regexp" then
+                param = param:gsub("\\\\", "\\"):gsub("/","\\/")
+                param = regex{pattern=param}
+            end
             when[#when+1] = {word, param}
         else
             msg.warn("Ignoring unrecognized @-moz-document rule '%s'", word)
@@ -278,7 +295,7 @@ end
 
 local global_comment = "/* i really want this to be global */"
 local file_looks_like_old_format = function (source)
-    return not source:find("@-moz-document",1,true) and not source:lower():find(global_comment)
+    return not source:find("@-moz-document",1,true) and not source:lower():find(global_comment, 1, true)
 end
 
 --- Load the contents of a file as a stylesheet for a given domain.
@@ -323,7 +340,11 @@ _M.detect_files = function ()
 
     for _, stylesheet in ipairs(stylesheets or {}) do
         for _, part in ipairs(stylesheet.parts) do
-            part.ss.source = ""
+            for _, ww in pairs(window.bywidget) do
+                for _, v in pairs(ww.tabs.children) do
+                    v.stylesheets[part.ss] = false
+                end
+            end
         end
     end
     stylesheets = {}
@@ -387,22 +408,6 @@ add_binds("styles-list", lousy.util.table.join({
 }, menu_binds))
 
 _M.detect_files()
-
--- Warn about domain_props being broken
-local domains = {}
-for domain, prop in pairs(globals.domain_props) do
-    if type(prop) == "table" and prop.user_stylesheet_uri then
-        domains[#domains+1] = domain
-    end
-end
-
-if #domains > 0 then
-    msg.warn("using domain_props for user stylesheets is non-functional")
-    for _, domain in ipairs(domains) do
-        msg.warn("found user_stylesheet_uri property for domain '%s'", domain)
-    end
-    msg.warn("use styles module instead")
-end
 
 return _M
 

@@ -15,7 +15,7 @@
 --
 -- @class sqlite3
 -- @author Mason Larobina
--- @copyright 2011 Mason Larobina
+-- @copyright 2011 Mason Larobina <mason.larobina@gmail.com>
 
 --- @method exec
 --

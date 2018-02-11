@@ -23,6 +23,7 @@
 
 void ipc_init(void);
 void ipc_endpoint_remove_from_endpoints(ipc_endpoint_t *);
+void ipc_remove_socket_file(void);
 
 #endif
 

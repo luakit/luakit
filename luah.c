@@ -19,7 +19,9 @@
  *
  */
 
+#include "ipc.h"
 #include "luah.h"
+#include "log.h"
 #include "common/luah.h"
 #include "common/luautil.h"
 #include "common/luayield.h"
@@ -39,6 +41,7 @@
 #include "common/clib/ipc.h"
 #include "common/clib/timer.h"
 #include "common/clib/regex.h"
+#include "common/clib/utf8.h"
 #include "globalconf.h"
 
 #include <glib.h>
@@ -131,6 +134,9 @@ luaH_init(gchar ** uris)
 
     /* Export regex */
     regex_class_setup(L);
+
+    /* Export utf8 */
+    utf8_lib_setup(L);
 
     /* Export request */
     request_class_setup(L);
@@ -255,6 +261,13 @@ luaH_parserc(const gchar *confpath, gboolean run)
     g_ptr_array_add(argv, NULL);
 
     verbose("exec: %s", g_strjoinv(" ", (gchar**)argv->pdata));
+
+    char *log_dump_file = log_dump_queued_emissions();
+    if (log_dump_file) {
+        setenv("LUAKIT_QUEUED_EMISSIONS_FILE", log_dump_file, TRUE);
+        g_free(log_dump_file);
+    }
+    ipc_remove_socket_file();
     execvp(escaped_execpath, (gchar**)argv->pdata);
 
 bailout:

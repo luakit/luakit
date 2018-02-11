@@ -87,13 +87,9 @@ dom_element_selector(dom_element_t *element)
     GPtrArray *parts = g_ptr_array_new_full(10, g_free);
 
     while ((parent = webkit_dom_node_get_parent_node(elem))) {
-        char *id = webkit_dom_element_get_id(WEBKIT_DOM_ELEMENT(elem));
         char *tag = webkit_dom_element_get_tag_name(WEBKIT_DOM_ELEMENT(elem));
         if (!strcmp(tag, "BODY") || !strcmp(tag, "HEAD")) {
             g_ptr_array_add(parts, g_strdup(tag));
-            break;
-        } else if (id) {
-            g_ptr_array_add(parts, g_strdup_printf("#%s", id));
             break;
         } else {
             int c = 1;
@@ -369,9 +365,15 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
     lua_State *L = common.L;
 
     lua_createtable(L, 0, 1);
+    lua_pushvalue(L, -1); /* pushing copy of cb argument */
     lua_pushliteral(L, "target");
     WebKitDOMEventTarget *target = webkit_dom_event_get_src_element(event);
     luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
+    lua_rawset(L, -3);
+
+    lua_pushliteral(L, "type");
+    gchar *type = webkit_dom_event_get_event_type(event);
+    lua_pushstring(L, type);
     lua_rawset(L, -3);
 
     if (WEBKIT_DOM_IS_MOUSE_EVENT(event)) {
@@ -381,8 +383,54 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointe
         lua_rawset(L, -3);
     }
 
+    if (WEBKIT_DOM_IS_KEYBOARD_EVENT(event)) {
+        lua_pushliteral(L, "key");
+        gchar *key = webkit_dom_keyboard_event_get_key_identifier(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushstring(L, key);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "code");
+        glong code = webkit_dom_ui_event_get_char_code(WEBKIT_DOM_UI_EVENT(event));
+        lua_pushinteger(L, code);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "ctrl_key");
+        gboolean ctrl = webkit_dom_keyboard_event_get_ctrl_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, ctrl);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "alt_key");
+        gboolean alt = webkit_dom_keyboard_event_get_alt_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, alt);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "shift_key");
+        gboolean shift = webkit_dom_keyboard_event_get_shift_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, shift);
+        lua_rawset(L, -3);
+
+        lua_pushliteral(L, "meta_key");
+        gboolean meta = webkit_dom_keyboard_event_get_meta_key(WEBKIT_DOM_KEYBOARD_EVENT(event));
+        lua_pushboolean(L, meta);
+        lua_rawset(L, -3);
+    }
+
     luaH_object_push(L, func);
     luaH_dofunction(L, 1, 0);
+
+    /* after calling callback examine field 'cancel' in argument
+       passed to callback and if it set to true then call
+       stopPropagation */
+    lua_pushliteral(L, "cancel");
+    lua_rawget(L, -2);
+    if (lua_toboolean(L, -1)) webkit_dom_event_stop_propagation(event);
+    lua_pop(L, 1);
+    /* also check if prevent_default set to true and if it's set then
+       call webkit_dom_event_prevent_default for event */
+    lua_pushliteral(L, "prevent_default");
+    lua_rawget(L, -2);
+    if (lua_toboolean(L, -1)) webkit_dom_event_prevent_default(event);
+    lua_pop(L, 2);
 }
 
 static gint
@@ -402,6 +450,54 @@ luaH_dom_element_add_event_listener(lua_State *L)
     lua_pushboolean(L, ret);
     return 1;
 }
+
+/* because we processing all events in one signle event_listener_cb
+   removing even listener will removes all listeners of this type on
+   element, probably we can somehow scan registered listeners and
+   remove only those one that have func as user data */
+static gint
+luaH_dom_element_remove_event_listener(lua_State *L)
+{
+    dom_element_t *element = luaH_check_dom_element(L, 1);
+    const gchar *type = luaL_checkstring(L, 2);
+    gboolean capture = lua_toboolean(L, 3);
+
+    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
+    gboolean ret = webkit_dom_event_target_remove_event_listener(target, type,
+            G_CALLBACK(event_listener_cb), capture);
+
+    lua_pushboolean(L, ret);
+    return 1;
+}
+
+#if WEBKIT_CHECK_VERSION(2,18,0)
+static gint
+luaH_dom_element_client_rects(lua_State *L)
+{
+    dom_element_t *element = luaH_check_dom_element(L, 1);
+    WebKitDOMClientRectList *rects = webkit_dom_element_get_client_rects(element->element);
+    int num_rects = webkit_dom_client_rect_list_get_length(rects);
+
+    lua_createtable(L, num_rects, 0);
+    for (int i = 0; i < num_rects; ++i) {
+        WebKitDOMClientRect* rect = webkit_dom_client_rect_list_item(rects, i);
+        lua_newtable(L);
+#define PROP(prop) \
+            lua_pushnumber(L, webkit_dom_client_rect_get_##prop(rect)); \
+            lua_setfield(L, -2, #prop);
+        PROP(top)
+        PROP(right)
+        PROP(bottom)
+        PROP(left)
+        PROP(width)
+        PROP(height)
+#undef PROP
+        lua_rawseti(L, -2, i+1);
+    }
+
+    return 1;
+}
+#endif
 
 static gint
 luaH_dom_element_push_src(lua_State *L)
@@ -591,6 +687,10 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(FOCUS, luaH_dom_element_focus)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
         PF_CASE(ADD_EVENT_LISTENER, luaH_dom_element_add_event_listener)
+        PF_CASE(REMOVE_EVENT_LISTENER, luaH_dom_element_remove_event_listener)
+#if WEBKIT_CHECK_VERSION(2,18,0)
+        PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
+#endif
 
         PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
 

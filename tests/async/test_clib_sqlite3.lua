@@ -1,6 +1,6 @@
 --- Test sqlite clib functionality.
 --
--- @copyright Mason Larobina
+-- @copyright Mason Larobina <mason.larobina@gmail.com>
 
 local assert = require "luassert"
 

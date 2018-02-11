@@ -5,14 +5,15 @@
 --
 -- @module binds
 -- @author Aidan Holm <aidanholm@gmail.com>
--- @author Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @author Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
--- @copyright 2010 Mason Larobina (mason-l) <mason.larobina@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local _M = {}
 
 local window = require("window")
-local globals = require("globals")
+local taborder = require("taborder")
+local settings = require("settings")
 
 -- Binding aliases
 local lousy = require("lousy")
@@ -21,10 +22,8 @@ local modes = require("modes")
 -- Util aliases
 local join, split = lousy.util.table.join, lousy.util.string.split
 
--- Globals or defaults that are used in binds
-local scroll_step = globals.scroll_step or 20
-local page_step = globals.page_step or 1.0
-local zoom_step = globals.zoom_step or 0.1
+-- URI aliases
+local is_uri, split_uri = lousy.uri.is_uri, lousy.uri.split
 
 --- Compatibility wrapper for @ref{modes/add_binds|modes.add_binds()}.
 -- @deprecated use @ref{modes/add_binds|modes.add_binds()} instead.
@@ -57,9 +56,15 @@ _M.menu_binds = {
     { "<Shift-Tab>", "Move the menu row focus upwards.",   function (w) w.menu:move_up()   end },
 }
 
+local scroll_acc = 0
+
 -- Add binds to special mode "all" which adds its binds to all modes.
 modes.add_binds("all", {
-    { "<Escape>", "Return to `normal` mode.", function (w) w:set_prompt(); w:set_mode() end },
+    { "<Escape>", "Return to `normal` mode.",
+        function (w)
+            if not w:is_mode("passthrough") then w:set_prompt(); w:set_mode() end
+            return not w:is_mode("passthrough")
+        end },
     { "<Control-[>", "Return to `normal` mode.", function (w) w:set_mode() end },
     { "<Mouse2>", [[Open link under mouse cursor in new tab or navigate to the
         contents of `luakit.selection.primary`.]],
@@ -69,7 +74,7 @@ modes.add_binds("all", {
                 -- Open hovered uri in new tab
                 local uri = w.view.hovered_uri
                 if uri then
-                    w:new_tab(uri, { switch = false })
+                    w:new_tab(uri, { switch = false, private = w.view.private })
                 else -- Open selection in current tab
                     uri = luakit.selection.primary
                     -- Ignore multi-line selection contents
@@ -89,36 +94,56 @@ modes.add_binds("all", {
             end
         end },
 
-    { "<Control-Mouse4>", "Increase text zoom level.", function (w) w:zoom_in() end },
-    { "<Control-Mouse5>", "Reduce text zoom level.", function (w) w:zoom_out() end },
-    { "<Shift-Mouse4>", "Scroll left.", function (w) w:scroll{ xrel = -scroll_step } end },
-    { "<Shift-Mouse5>", "Scroll right.", function (w) w:scroll{ xrel = scroll_step } end },
+    { "<Control-Scroll>", "Increase/decrease zoom level.", function (w, o)
+        scroll_acc = scroll_acc + o.dy
+        while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in() end
+        while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out() end
+    end },
+    { "<Shift-Scroll>", "Scroll the current page left/right.", function (w, o)
+        w:scroll{ xrel = settings.get_setting("window.scroll_step")*o.dy }
+    end },
 })
 
 local actions = { scroll = {
     up = {
         desc = "Scroll the current page up.",
-        func = function (w, m) w:scroll{ yrel = -scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ yrel = -settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     down = {
         desc = "Scroll the current page down.",
-        func = function (w, m) w:scroll{ yrel =  scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ yrel =  settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     left = {
         desc = "Scroll the current page left.",
-        func = function (w, m) w:scroll{ xrel = -scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ xrel = -settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     right = {
         desc = "Scroll the current page right.",
-        func = function (w, m) w:scroll{ xrel =  scroll_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ xrel =  settings.get_setting("window.scroll_step")*(m.count or 1) } end,
     },
     page_up = {
         desc = "Scroll the current page up a full screen.",
-        func = function (w, m) w:scroll{ ypagerel = -page_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ ypagerel = -(m.count or 1) } end,
     },
     page_down = {
         desc = "Scroll the current page down a full screen.",
-        func = function (w, m) w:scroll{ ypagerel =  page_step*(m.count or 1) } end,
+        func = function (w, m) w:scroll{ ypagerel =  (m.count or 1) } end,
+    },
+}, zoom = {
+    zoom_in = {
+        desc = "Zoom in to the current page.",
+        func = function (w, m) w:zoom_in(settings.get_setting("window.zoom_step") * (m.count or 1)) end,
+    },
+    zoom_out = {
+        desc = "Zoom out from the current page.",
+        func = function (w, m) w:zoom_out(settings.get_setting("window.zoom_step") * (m.count or 1)) end,
+    },
+    zoom_set = {
+        desc = "Zoom to a specific percentage when specifying a count, and reset the page zoom otherwise.",
+        func = function (w, m)
+            local zoom_level = m.count or settings.get_setting_for_view(w.view, "webview.zoom_level")
+            w:zoom_set(zoom_level/100)
+        end,
     },
 }}
 
@@ -208,86 +233,77 @@ modes.add_binds("normal", {
     { "%", "Go to `[count]` percent of the document.", function (w, m) w:scroll{ ypct = m.count } end },
 
     -- Zoom
-    { "+", "Enlarge text zoom of the current page.", function (w, m) w:zoom_in(zoom_step * m.count) end, {count=1} },
-    { "-", "Reduce text zom of the current page.", function (w, m) w:zoom_out(zoom_step * m.count) end, {count=1} },
-    { "=", "Reset zoom level.", function (w, _) w:zoom_set() end },
-    { "zi", "Enlarge text zoom of current page.", function (w, m) w:zoom_in(zoom_step  * m.count) end, {count=1} },
-    { "zo", "Reduce text zoom of current page.", function (w, _, m) w:zoom_out(zoom_step * m.count) end, {count=1} },
-    { "zz", [[Set current page zoom to `[count]` percent with `[count]zz`, use `[count]zZ` to set full zoom percent.]],
-        function (w, _, m) w:zoom_set(m.count/100) end, {count=100} },
+    { "+", actions.zoom.zoom_in },
+    { "-", actions.zoom.zoom_out },
+    { "=", actions.zoom.zoom_set },
+    { "zi", actions.zoom.zoom_in },
+    { "zo", actions.zoom.zoom_out },
+    { "zz", actions.zoom.zoom_set },
     { "<F11>", "Toggle fullscreen mode.", function (w) w.win.fullscreen = not w.win.fullscreen end },
 
     -- Open primary selection contents.
     { "pp", [[Open URLs based on the current primary selection contents in the current tab.]],
         function (w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
-                table.insert(uris, uri)
-            end
+            local engine = settings.get_setting("window.default_search_engine") .. " "
+            local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            w:navigate(w:search_open(uris[1]))
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            local uri1 = table.remove(uris, 1)
+            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
-    { "pt", [[Open a URL based on the current primary selection contents in `[count=1]` new tab(s).]],
-            function (w, _, m)
-                local uri = luakit.selection.primary
-                if not uri then w:notify("No primary selection...") return end
-                for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
-        end, {count = 1} },
-    { "^pw$", [[Open URLs based on the current primary selection contents in a new window.]],
-        function(w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.primary or "", "%S+") do
-                table.insert(uris, uri)
-            end
+    { "pt", [[Open URLs based on the current primary selection contents in new tabs.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine") .. " "
+            local uris = split_uri(luakit.selection.primary or "")
             if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            w = window.new{w:search_open(uris[1])}
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+            end
+        end },
+    { "pw", [[Open URLs based on the current primary selection contents in a new window.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine") .. " "
+            local uris = split_uri(luakit.selection.primary or "")
+            if #uris == 0 then w:notify("Nothing in primary selection...") return end
+            local uri1 = table.remove(uris, 1)
+            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
 
     -- Open clipboard contents.
-    { "^PP$", [[Open URLs based on the current clipboard selection contents in the current tab.]],
+    { "PP", [[Open URLs based on the current clipboard selection contents in the current tab.]],
         function (w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
-                table.insert(uris, uri)
-            end
+            local engine = settings.get_setting("window.default_search_engine") .. " "
+            local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            w:navigate(w:search_open(uris[1]))
-            if #uris > 1 then
-                for _=2,#uris do
-                    w:new_tab(w:search_open(uris[1]))
-                end
+            local uri1 = table.remove(uris, 1)
+            w:navigate(is_uri(uri1) and uri1 or w:search_open(engine .. uri1))
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
-
-    { "^PT$", [[Open a URL based on the current clipboard selection contents in `[count=1]` new tab(s).]],
-        function (w, _, m)
-            local uri = luakit.selection.clipboard
-            if not uri then w:notify("Nothing in clipboard...") return end
-            for _ = 1, m.count do w:new_tab(w:search_open(uri)) end
-    end, {count = 1} },
-
-    { "^PW$", [[Open URLs based on the current clipboard selection contents in a new window.]],
-        function(w)
-            local uris = {}
-            for uri in string.gmatch(luakit.selection.clipboard or "", "%S+") do
-                table.insert(uris, uri)
-            end
+    { "PT", [[Open URLs based on the current clipboard selection contents in new tabs.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine") .. " "
+            local uris = split_uri(luakit.selection.clipboard or "")
             if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            w = window.new{w:search_open(uris[1])}
-            if #uris > 1 then
-                for i=2,#uris do
-                    w:new_tab(w:search_open(uris[i]))
-                end
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
+            end
+        end },
+    { "PW", [[Open URLs based on the current clipboard selection contents in a new window.]],
+        function (w)
+            local engine = settings.get_setting("window.default_search_engine") .. " "
+            local uris = split_uri(luakit.selection.clipboard or "")
+            if #uris == 0 then w:notify("Nothing in clipboard...") return end
+            local uri1 = table.remove(uris, 1)
+            w = window.new{is_uri(uri1) and uri1 or w:search_open(engine .. uri1)}
+            for _, uri in ipairs(uris) do
+                w:new_tab(is_uri(uri) and uri or w:search_open(engine .. uri))
             end
         end },
 
@@ -305,9 +321,23 @@ modes.add_binds("normal", {
 
     -- Commands
     { "<Control-a>", "Increment last number in URL.",
-        function (w, m) w:navigate(w:inc_uri(m.count)) end, {count = 1} },
+        function (w, m)
+            local uri = w:inc_uri(m.count)
+            if uri ~= w.view.uri then
+                w:navigate(uri)
+            else
+                w:warning("No number in URL")
+            end
+        end, {count = 1} },
     { "<Control-x>", "Decrement last number in URL.",
-        function (w, m) w:navigate(w:inc_uri(-m.count)) end, {count = 1} },
+        function (w, m)
+            local uri = w:inc_uri(-m.count)
+            if uri ~= w.view.uri then
+                w:navigate(uri)
+            else
+                w:warning("No number in URL")
+            end
+        end, {count = 1} },
     { "o", "Open one or more URLs.", function (w) w:enter_cmd(":open ") end },
     { "t", "Open one or more URLs in a new tab.", function (w) w:enter_cmd(":tabopen ") end },
     { "w", "Open one or more URLs in a new window.", function (w) w:enter_cmd(":winopen ") end },
@@ -320,8 +350,8 @@ modes.add_binds("normal", {
 
     { "H", "Go back in the browser history `[count=1]` items.", function (w, m) w:back(m.count) end },
     { "L", "Go forward in the browser history `[count=1]` times.", function (w, m) w:forward(m.count) end },
-    { "<XF86Back>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
-    { "<XF86Forward>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
+    { "<Back>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
+    { "<Forward>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
 
     { "<Control-o>", "Go back in the browser history.", function (w, m) w:back(m.count) end },
     { "<Control-i>", "Go forward in the browser history.", function (w, m) w:forward(m.count) end },
@@ -331,6 +361,8 @@ modes.add_binds("normal", {
     { "<Control-Page_Down>", "Go to next tab.", function (w) w:next_tab() end },
     { "<Control-Tab>", "Go to next tab.", function (w) w:next_tab() end },
     { "<Shift-Control-Tab>", "Go to previous tab.", function (w) w:prev_tab() end },
+    { "J", "Go to next tab.", function (w) w:next_tab() end },
+    { "K", "Go to previous tab.", function (w) w:prev_tab() end },
     { "<F1>", "Show help.", function (w) w:run_cmd(":help") end },
     { "<F12>", "Toggle web inspector.", function (w) w:run_cmd(":inspect!") end },
     { "gT", "Go to previous tab.", function (w) w:prev_tab() end },
@@ -342,7 +374,7 @@ modes.add_binds("normal", {
     { "g0", "Go to first tab.", function (w) w:goto_tab(1) end },
     { "g$", "Go to last tab.", function (w) w:goto_tab(-1) end },
 
-    { "<Control-t>", "Open a new tab.", function (w) w:new_tab("luakit://newtab/") end },
+    { "<Control-t>", "Open a new tab.", function (w) w:new_tab(settings.get_setting("window.new_tab_page")) end },
     { "<Control-w>", "Close current tab.", function (w) w:close_tab() end },
     { "d", "Close current tab (or `[count]` tabs).",
         function (w, m) for _=1,m.count do w:close_tab() end end, {count=1} },
@@ -359,12 +391,13 @@ modes.add_binds("normal", {
                 (w.tabs:current() + m.count) % w.tabs:count())
         end, {count=1} },
 
-    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(globals.homepage) end },
-    { "^gh$", "Open homepage.", function (w) w:navigate(globals.homepage) end },
+    { "^gH$", "Open homepage in new tab.", function (w) w:new_tab(settings.get_setting("window.home_page")) end },
+    { "^gh$", "Open homepage.", function (w) w:navigate(settings.get_setting("window.home_page")) end },
     { "^gy$", "Duplicate current tab.",
-        function (w)
-            w:new_tab({ session_state = w.view.session_state }, { private = w.view.private })
-        end },
+        function (w, m)
+            local params = {{ session_state = w.view.session_state }, { private = w.view.private }}
+            for _=1,m.count do w:new_tab(unpack(params), { order = taborder.after_current }) end
+        end, {count=1} },
 
     { "r", "Reload current tab.", function (w) w:reload() end },
     { "R", "Reload current tab (skipping cache).", function (w) w:reload(true) end },
@@ -386,25 +419,15 @@ modes.add_binds("insert", {
         function (w) w:set_mode("passthrough") end },
 })
 
+modes.add_binds("passthrough", {
+    { "<Escape>", "Return to `normal` mode.", function (w) w:set_prompt(); w:set_mode() end },
+})
+
 --- Readline bindings for the luakit input bar.
+-- @deprecated use @ref{readline/bindings} instead
 -- @readwrite
 -- @type table
-_M.readline_bindings = {
-    { "<Shift-Insert>", "Insert contents of primary selection at cursor position.",
-        function (w) w:insert_cmd(luakit.selection.primary) end },
-    { "<Control-w>", "Delete previous word.", function (w) w:del_word() end },
-    { "<Control-u>", "Delete until beginning of current line.", function (w) w:del_line() end },
-    { "<Control-h>", "Delete character to the left.", function (w) w:del_backward_char() end },
-    { "<Control-d>", "Delete character to the right.", function (w) w:del_forward_char() end },
-    { "<Control-a>", "Move cursor to beginning of current line.", function (w) w:beg_line() end },
-    { "<Control-e>", "Move cursor to end of current line.", function (w) w:end_line() end },
-    { "<Control-f>", "Move cursor forward one character.", function (w) w:forward_char() end },
-    { "<Control-b>", "Move cursor backward one character.", function (w) w:backward_char() end },
-    { "<Mod1-f>", "Move cursor forward one word.", function (w) w:forward_word() end },
-    { "<Mod1-b>", "Move cursor backward one word.", function (w) w:backward_word() end },
-}
-
-modes.add_binds("command", _M.readline_bindings)
+_M.readline_bindings = require("readline").bindings
 
 -- Switching tabs with Mod1+{1,2,3,...}
 do
@@ -518,6 +541,7 @@ modes.add_cmds({
                     setfenv(ret, setmetatable({}, { __index = function (_, k)
                         if _G[k] ~= nil then return _G[k] end
                         if k == "w" then return w end
+                        if package.loaded[k] then return package.loaded[k] end
             end, __newindex = _G }))
         ret()
     end
@@ -532,12 +556,71 @@ end
             local file = o.arg or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
             if file then
                 local fd = assert(io.open(file, "w"), "failed to open: " .. file)
-                local html = assert(w.view.source, "Unable to get HTML")
-                assert(fd:write(html), "unable to save html")
-                io.close(fd)
-                w:notify("Dumped HTML to: " .. file)
+                local view = w.view
+                local co = coroutine.create(function ()
+                    local html = assert(view:get_source(), "Unable to get HTML")
+                    assert(fd:write(html), "unable to save html")
+                    io.close(fd)
+                    w:notify("Dumped HTML to: " .. file)
+                end)
+                luakit.idle_add(function () coroutine.resume(co) end)
             end
         end },
+})
+
+local function convert (str, new_type)
+    local convertion_table = {
+        number = tonumber,
+        boolean = function (val)
+            if val == "true" then return true
+            elseif val == "false" then return false
+            else error("'"..val.."' is not a boolean")
+            end
+        end,
+        string = function (val) return val end,
+        enum = function (val) return val end,
+    }
+
+    return convertion_table[new_type](str)
+end
+
+modes.add_cmds({
+    { ":set", "Change a setting.", {
+        func = function (w, o)
+            o.arg = o.arg or ""
+            local key, value = o.arg:match("^%s*(%S+)%s+(.*)$")
+            if (key and value) == nil then
+                w:error("Usage: ':set <setting> <value>'")
+                return
+            end
+            local setting = settings.get_settings()[key]
+            if setting == nil then
+                w:error("Setting not found: "..key)
+                return
+            end
+            value = convert(value, setting.type)
+            settings.set_setting(key, value)
+        end,
+        format = "{setting}",
+    }},
+    { ":seton", "Change a setting for a specific domain.", {
+        func = function (w, o)
+            o.arg = o.arg or ""
+            local domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            if (domain and key and value) == nil then
+                w:error("Usage: ':seton <domain> <setting> <value>'")
+                return
+            end
+            local setting = settings.get_settings()[key]
+            if setting == nil then
+                w:error("Setting not found: "..key)
+                return
+            end
+            value = convert(value, setting.type)
+            settings.set_setting(key, value, { domain = domain })
+        end,
+        format = "{domain} {setting}",
+    }}
 })
 
 return _M

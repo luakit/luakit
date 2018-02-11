@@ -22,7 +22,7 @@
 --
 -- @class stylesheet
 -- @author Aidan Holm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 --- @property source
 -- The CSS source of the stylesheet. Modification will cause reapplication to any attached `webview` widgets.

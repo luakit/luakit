@@ -5,7 +5,8 @@
 -- @module lousy.util
 -- @author Mason Larobina <mason.larobina@gmail.com>
 -- @author Julien Danjou <julien@danjou.info>
--- @copyright 2010 Mason Larobina, 2008 Julien Danjou
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
+-- @copyright 2008 Julien Danjou <julien@danjou.info>
 
 --- Grab environment we need
 local rstring = string
@@ -289,6 +290,33 @@ function string.dedent(text, first)
     return first and rstring.sub(text, min + 1) or text
 end
 
+--- Find glyph backward (used in readline.lua).
+-- @tparam string s The string to be searched.
+-- @tparam number o The starting offset to search a glyph backward.
+-- @treturn number string Offset and glyph if found, otherwise nil.
+function string.prev_glyph (s, o)
+    if not o or not s or o > s:len() or o < 1 then return nil end
+    local glen = 0
+    for i = o, 1, -1 do
+        if s:sub(i):match("^"..utf8.charpattern) then
+            return i - 1, s:sub(i,i+glen)
+        else
+            glen = glen + 1
+        end
+    end
+    return nil
+end
+
+--- Find glyph forward (used in readline.lua).
+-- @tparam string s The string to be searched.
+-- @tparam number o The starting offset to search a glyph forward.
+-- @treturn number string Offset and glyph if found, otherwise nil.
+function string.next_glyph (s, o)
+    if not o or not s or o > s:len() or o < 1 then return nil end
+    local m = s:match(utf8.charpattern, o)
+    return o + #m, m
+end
+
 local function find_file(paths)
     for _, p in ipairs(paths) do
         if os.exists(p) then return p end
@@ -318,7 +346,7 @@ end
 function _M.find_data(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
-    local paths = { f, luakit.data_dir.."/"..f, luakit.install_path.."/"..f }
+    local paths = { f, luakit.data_dir.."/"..f, luakit.install_paths.install_dir.."/"..f }
     return find_file(paths)
 end
 
@@ -331,6 +359,18 @@ function _M.find_cache(f)
     if rstring.match(f, "^/") then return f end
     -- Search locations
     local paths = { luakit.cache_dir.."/"..f }
+    return find_file(paths)
+end
+
+--- Search for and return the filepath of a file in luakit's resource directories.
+-- @tparam string f The relative filepath.
+-- @treturn string The first valid filepath or an error.
+function _M.find_resource(f)
+    -- Ignore absolute paths
+    if rstring.match(f, "^/") then return f end
+    -- Search locations
+    local paths = string.split(luakit.resource_path, ";")
+    for i in ipairs(paths) do paths[i] = paths[i]:gsub("/*$", "") .. "/" .. f end
     return find_file(paths)
 end
 

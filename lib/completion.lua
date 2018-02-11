@@ -5,13 +5,14 @@
 -- supports completing partially typed commands.
 --
 -- @module completion
--- @copyright 2010-2011 Mason Larobina  <mason.larobina@gmail.com>
+-- @copyright 2010-2011 Mason Larobina <mason.larobina@gmail.com>
 -- @copyright 2010 Fabian Streitel <karottenreibe@gmail.com>
 
 local lousy = require("lousy")
 local history = require("history")
 local bookmarks = require("bookmarks")
 local modes = require("modes")
+local settings = require("settings")
 local new_mode, get_mode = modes.new_mode, modes.get_mode
 local add_binds = modes.add_binds
 local escape = lousy.util.escape
@@ -223,9 +224,9 @@ add_binds("completion", {
         function (w) w.menu:move_down() end },
     { "<Shift-Tab>", "Select previous matching completion item.",
         function (w) w.menu:move_up() end },
-    { "Up", "Select next matching completion item.",
+    { "<Up>", "Select next matching completion item.",
         function (w) w.menu:move_up() end },
-    { "Down", "Select previous matching completion item.",
+    { "<Down>", "Select previous matching completion item.",
         function (w) w.menu:move_down() end },
     { "<Control-j>", "Select next matching completion item.",
         function (w) w.menu:move_down() end },
@@ -284,21 +285,53 @@ completers.command = {
     end,
 }
 
+local function sql_like_globber(term)
+    local escaped = term:gsub("[\\%%_]", { ["\\"] = "\\\\", ["%"] = "\\%", ["_"] = "\\_" })
+    return "%" .. escaped:gsub("%s+", "%%") .. "%"
+end
+
+settings.register_settings({
+    ["completion.history.order"] = {
+        type = "string",
+        default = "visits",
+        desc = [=[
+            A string indicating how history items should be sorted in
+            completion. Possible values are:
+
+            - `visits`: most visited websites first
+            - `last_visit`: most recent websites first
+            - `title`: sort by title, alphabetically
+            - `uri`: sort by website address, alphabetically
+        ]=],
+        validator = function (v)
+            local t = {visits = true, last_visit = true, title = true, uri = true}
+            return t[v]
+        end
+    },
+    ["completion.max_items"] = {
+        type = "number", min = 1,
+        default = 25,
+        desc = "Number of completion items for history and bookmarks."
+    }
+})
+
 completers.history = {
     header = { "History", "URI" },
     func = function (buf)
+        local order = settings.get_setting("completion.history.order")
+        local desc = (order == "visits" or order == "last_visit") and " DESC" or ""
         local term, ret, sql = buf, {}, [[
-            SELECT uri, title, lower(uri||title) AS text
-            FROM history WHERE text GLOB ?
-            ORDER BY visits DESC LIMIT 25
-        ]]
+            SELECT uri, title, lower(uri||ifnull(title,'')) AS text
+            FROM history WHERE text LIKE ? ESCAPE '\'
+            ORDER BY
+        ]] .. order .. desc .. " LIMIT " .. settings.get_setting("completion.max_items")
 
-        local rows = history.db:exec(sql, { string.format("*%s*", term) })
+        local rows = history.db:exec(sql, { sql_like_globber(term) })
         if not rows[1] then return {} end
 
         for _, row in ipairs(rows) do
             table.insert(ret, {
-                escape(row.title), escape(row.uri),
+                escape(row.title) or "", escape(row.uri),
                 format = {{ lit = row.uri }},
                 buf = row.uri
             })
@@ -311,12 +344,12 @@ completers.bookmarks = {
     header = { "Bookmarks", "URI" },
     func = function (buf)
         local term, ret, sql = buf, {}, [[
-            SELECT uri, title, lower(uri||title||tags) AS text
-            FROM bookmarks WHERE text GLOB ?
-            ORDER BY title DESC LIMIT 25
-        ]]
+            SELECT uri, title, lower(uri||ifnull(title,'')||ifnull(tags,'')) AS text
+            FROM bookmarks WHERE text LIKE ? ESCAPE '\'
+            ORDER BY title DESC LIMIT
+        ]] .. settings.get_setting("completion.max_items")
 
-        local rows = bookmarks.db:exec(sql, { string.format("*%s*", term) })
+        local rows = bookmarks.db:exec(sql, { sql_like_globber(term) })
         if not rows[1] then return {} end
 
         for _, row in ipairs(rows) do
@@ -333,6 +366,28 @@ completers.bookmarks = {
 
 completers.uri = {
     func = function () return { { format = "{history}" }, { format = "{bookmarks}" }, } end,
+}
+
+completers.setting = {
+    header = { "Setting", "Current value" },
+    func = function ()
+        local ret = {}
+        for key, setting in pairs(settings.get_settings()) do
+            table.insert(ret, {
+                key, tostring(setting.value),
+                format = key,
+            })
+        end
+        return ret
+    end,
+}
+
+completers.domain = {
+    header = { "Domain", "" },
+    func = function (buf)
+        local prefix = buf:match("^%S+")
+        return prefix and {{ prefix, "", format = {{ lit = prefix }} }} or {}
+    end,
 }
 
 return _M

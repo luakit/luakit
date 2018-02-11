@@ -51,6 +51,7 @@ luakit_store_password(LuakitAuthData *auth_data, const gchar *login, const gchar
     lua_pushstring(L, login);
     lua_pushstring(L, password);
     luaH_object_emit_signal(L, -4, "store-password", 3, 0);
+    lua_pop(L, 1);
 }
 
 static void
@@ -65,7 +66,7 @@ luakit_find_password(LuakitAuthData *auth_data, const gchar **login, const gchar
         *password = luaL_checkstring(L, -1);
         *login = luaL_checkstring(L, -2);
     }
-    lua_pop(L, ret);
+    lua_pop(L, 1 + ret);
 }
 
 static void

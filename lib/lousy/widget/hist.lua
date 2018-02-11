@@ -5,8 +5,8 @@
 -- The widget will not be shown if the current page cannot go back or forward.
 --
 -- @module lousy.widget.hist
--- @copyright 2017 Aidan Holm
--- @copyright 2010 Mason Larobina
+-- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
+-- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
 local webview = require("webview")
 local lousy = require("lousy")

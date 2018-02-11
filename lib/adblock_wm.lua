@@ -1,7 +1,7 @@
 -- Simple URI-based content filter - web module.
 --
 -- @submodule adblock_wm
--- @copyright 2016 Aidan Holm
+-- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 -- @author Aidan Holm <aidanholm@gmail.com>
 
 local ui = ipc_channel("adblock_wm")
@@ -167,6 +167,9 @@ end
 
 luakit.add_signal("page-created", function(page)
     page:add_signal("send-request", function(p, uri)
+        -- Prevent adblock-blocked: pages from being blocked themselves
+        if uri:match("^adblock%-blocked:") then return end
+
         local allow = filter(p.uri, uri)
         if allow == false and p.uri == uri then
             if not lousy.util.table.hasitem(page_whitelist, lousy.uri.parse(uri).host) then
