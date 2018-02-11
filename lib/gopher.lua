@@ -90,6 +90,20 @@ local function href_source(entry)
     return src
 end
 
+local function text_to_html(data)
+    return [[
+        <html>
+        <head>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+        </head>
+        <body>
+            <pre style="word-wrap: break-word; white-space: pre-wrap;">
+]] .. data .. [[</pre>
+        </body>
+        </html>
+    ]];
+end;
+
 -- present Gopher menu as an HTML page
 -- TODO huge function
 local function menu_to_html(data, url)
@@ -198,7 +212,7 @@ local function data_to_browser(data, url)
     if url.gophertype == "1" or url.gophertype == "7" then
         converted = menu_to_html(data, url)
     elseif url.gophertype == "0" then
-        mime = "text/plain"
+        converted = text_to_html(data)
     elseif url.gophertype == "4" then
         mime = "application/mac-binhex40"
     elseif url.gophertype == "5" then
