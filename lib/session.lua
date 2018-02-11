@@ -184,8 +184,7 @@ end)
 window.add_signal("init", function (w)
     w.win:add_signal("destroy", function ()
         -- Hack: should add a luakit shutdown hook...
-        local num_windows = 0
-        for _, _ in pairs(window.bywidget) do num_windows = num_windows + 1 end
+        local num_windows = #lousy.util.table.values(window.bywidget)
         -- Remove the recovery session on a successful exit
         if num_windows == 0 and os.exists(_M.recovery_file) then
             rm(_M.recovery_file)
@@ -193,8 +192,11 @@ window.add_signal("init", function (w)
     end)
 
     w:add_signal("close", function ()
+        if #lousy.util.table.values(window.bywidget) > 1 then
+            start_timeout()
+            return
+        end
         if not settings.get_setting("session.always_save") then return end
-        if #window.bywidget > 1 then return end
         if w.tabs:count() == 0 then return end -- window.close_with_last_tab...
         w:save_session()
     end)
