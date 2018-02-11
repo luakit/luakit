@@ -96,7 +96,7 @@ clean:
 install: all
 	install -d $(INSTALLDIR)/share/luakit/
 	install -d $(DOCDIR) $(DOCDIR)/classes $(DOCDIR)/modules $(DOCDIR)/pages
-	install -m644 README.md AUTHORS COPYING.GPLv3 $(DOCDIR)
+	install -m644 README.md AUTHORS $(DOCDIR)
 	install -m644 doc/apidocs/classes/* $(DOCDIR)/classes
 	install -m644 doc/apidocs/modules/* $(DOCDIR)/modules
 	install -m644 doc/apidocs/pages/* $(DOCDIR)/pages

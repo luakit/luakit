@@ -1,5 +1,7 @@
 luakit (2017.08.10) unstable; urgency=medium
 
+  * Package adopted by Grégory David <groolot@groolot.net>
+
   [ Yuriy Melnyk ]
   * Allow user to configure whether to ignore case in follow mode or not
   * Wrap follow_js into function so that it returns null instead of object.
@@ -221,7 +223,7 @@ luakit (2017.08.10) unstable; urgency=medium
   * Add GtkPaned position getter + setter
   * Add widget wdth/height getters.
     Since the label widget uses the 'width' property to get the text width in
-    characters, this has been moved to to the 'textwidth' property.
+    characters, this has been moved to the 'textwidth' property.
   * Add bg property to box widget
   * Add missing widget width/height getter declarations
   * Define smooth scrolling functions in better order.
@@ -376,7 +378,7 @@ luakit (2017.08.10) unstable; urgency=medium
     Delays the stylesheet signal until the load is committed.
   * Add web extension Lua state
   * Link common/*.c files into luakit.so
-  * Correct Makefile dependancy
+  * Correct Makefile dependency
   * Add basic Lua dom_document class
   * Add basic Lua dom_element class
   * Set Lua panic function for web process
@@ -548,7 +550,7 @@ luakit (2017.08.10) unstable; urgency=medium
   * Implement scrolling without JavaScript
   * Reduce repetition in dom element attr getter
   * Clean up warnings in dom_element.c
-  * Add callback paramater to run_javascript()
+  * Add callback parameter to run_javascript()
   * Get follow_selected.lua working again
   * Add no_return = true to go_next_prev.lua
   * Get :userscriptinstall working again
@@ -2293,8 +2295,6 @@ luakit (2017.08.10) unstable; urgency=medium
     This fixes #371
   * Remove executability check on 'luakit.so' from 'ipc.c'
     This fixes #384
-  * Debianization
-  * Package adopted by Grégory David <groolot@groolot.net>
 
   [ gleachkr ]
   * Fix for #349.
