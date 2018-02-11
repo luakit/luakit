@@ -1,0 +1,25 @@
+#!/bin/sh
+# postinst script for luakit
+#
+# see: dh_installdeb(1)
+
+set -e
+
+case "$1" in
+    configure)
+	update-alternatives --install /usr/bin/x-www-browser x-www-browser /usr/bin/luakit 30 --slave /usr/share/man/man1/x-www-browser.1.gz x-www-browser.1.gz /usr/share/man/man1/luakit.1.gz
+	update-alternatives --install /usr/bin/gnome-www-browser gnome-www-browser /usr/bin/luakit 30 --slave /usr/share/man/man1/gnome-www-browser.1.gz gnome-www-browser.1.gz /usr/share/man/man1/luakit.1.gz
+	;;
+
+    abort-upgrade|abort-remove|abort-deconfigure)
+	;;
+
+    *)
+        echo "postinst called with unknown argument \`$1'" >&2
+        exit 1
+	;;
+esac
+
+#DEBHELPER#
+
+exit 0

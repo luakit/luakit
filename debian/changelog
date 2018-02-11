@@ -1,0 +1,2658 @@
+luakit (2017.08.10) unstable; urgency=medium
+
+  [ Yuriy Melnyk ]
+  * Allow user to configure whether to ignore case in follow mode or not
+  * Wrap follow_js into function so that it returns null instead of object.
+    This fixes #151
+
+  [ Peter Hofmann ]
+  * Fixed compiler warning regarding ncol.
+    Original warning:
+    	cc -c clib/sqlite3.c -o clib/sqlite3.o
+    	clib/sqlite3.c: In function ‘luaH_sqlite3_do_exec’:
+    	clib/sqlite3.c:237:9: warning: ‘ncol’ may be used uninitialized in this function [-Wmaybe-uninitialized]
+
+  [ Mason Larobina ]
+  * Check new cookie host not null
+  * Persistent follow not working (fixes #134)
+  * Fix "navigation-request" blocking, off-by-one error in C code
+  * Fixes #138: persistent follow mode persisting too well
+  * .gitignore luakit.1.gz
+  * Cleanup patch
+  * Add option to specify exact download filename (paired with suggested fn)
+  * Add mkaito to authors
+  * Add option to store session cookies in db (closes #154)
+  * Make sure `query_delete_expired` doesn't delete session cookies (#154)
+  * Remove inaccuracies from AUTHORS & COPYING files, correct wording.
+  * Fix typo, luakit icon should be 0644
+  * Remove deprecated `g_thread_init` usage.
+    From the docs:
+      `g_thread_init` has been deprecated since version 2.32 and should not
+      be used in newly-written code. This function is not longer necessary.
+      The GLib threading system is automatically initialized at the start of
+      your program.
+  * Change behaviour of middle-click navigation, ignore multi-line "urls"
+    Rationale: The previous behaviour was extremely annoying for people (me)
+    using luakit on laptops with sensitive track-pads when two-finger
+    scrolling. Occasionally while two-finger scrolling a middle-click will
+    register causing people (me) to lose page position, state and form data.
+  * Fix indent.
+  * Update the [pP]* bind comments.
+  * Move Control+Enter binding into the add_cmds block.
+    - Use shorter variable names
+    - inline the .com value
+    - add a binding comment (viewable in :help)
+
+  [ Ambrevar ]
+  * Man page: first issue Description, Options, Keybindings, Commands, Files, Configuration. help2man is no more required, hence the removal from README.md. Changed Makefile to generate the manpage and install it properly.
+  * Man page: polished first issue.
+  * Manpage: removed non-default binding.
+
+  [ Michishige Kaito ]
+  * Check for suggested_filename in opts table.
+    If the opts table contains a key suggested_filename,
+    it will override the one that webkit would provide
+    based on uri and headers. The suggested file name will
+    be passed down to signals for further processing, just
+    like the one webkit suggests.
+  * Removed encodeURI from the file name display.
+    The uri needs to be escaped in internal fields, but for
+    display purposes, it's garbage.
+  * Download chrome now displays file size stats
+  * Size info on finished downloads
+
+  [ eshizhan ]
+  * Fix input non-English word error (closes #150)
+
+  [ Bartłomiej Piotrowski ]
+  * The icon shouldn't be executable
+
+  [ Daniel Bolgheroni ]
+  * Typo.
+  * Home goes to top, End goes to end.
+
+  [ Plaque-fcc ]
+  * Fix mason-larobina/luakit#135.
+    Applying https://gist.github.com/3777735 to fix short paths in lib/introspector.lua.
+    Signed-off-by: Plaque-fcc <Plaque-fcc@github.com>
+  * Fix mason-larobina/luakit#135.
+    Applying https://gist.github.com/3777735 to fix short paths in lib/introspector.lua.
+    Signed-off-by: Plaque-fcc <Plaque-fcc@github.com>
+
+  [ Robbie Smith ]
+  * Added PKGBUILD and .install for Arch Linux.
+    Modified PKGBUILD so that configuration files won’t be overwritten on
+    update.
+  * Added fix for Issue #200.
+    Another option is to hardcode the architecture, but that is somewhat
+    less flexible.
+  * Fixed PKGBUILD issues.
+  * Modified yank/paste bindings to include clipboard.
+    Also has logical support for tabs and windows. Lower-case binds use
+    primary selection, upper-case binds use clipboard.
+    * `pp` / `PP` Open in current tab
+    * `pt` / `PT` Open in [count=1] new tab(s)
+    * `pw` / `PW` Open in new window
+
+  [ nmeum ]
+  * Document globals.term used by formfiller to determine terminal emulator
+
+  [ Robbie ]
+  * Update PKGBUILD.
+    Removed my local build source line.
+
+  [ Jenny Wong ]
+  * fix deprecated icon warnings for gtk3.10
+  * GtkTable -> GtkGrid
+  * GtkObject isn't a thing any more, and it was unused in parent_set_cb() anyway
+  * sockets
+  * GtkEntry GT3-ification
+  * undid changes to widgets/common.{c,h}; GtkNotebookPage no longer exists
+  * colour, font deprecation warnings cleared in widget/label.c
+  * gtk_set_locale() deprecated in GTK 2.24
+  * vbox/hbox -> box, vpanel/hpanel ->panel
+  * expose-event -> draw signal
+  * hide scrollbar in gtk3
+  * GtkObject -> GtkWidget; get root window from widget properly
+  * be careful about bad GtkAlignment values
+  * don't send size-request signal
+  * vboxes default nonhomogeneous; hboxes default homogeneous
+  * ellipsize tab labels and menu labels
+  * togglable gtk3 support
+  * toggle gtk2/gtk3 usage
+  * fix gtk2 build process
+  * only get window XID if X11 backend is being used
+  * GdkNativeWindow for gtk2, Window for gtk3
+  * with gtk3, can no longer directly access entry->im_context
+  * rejigger order of gtk version check and X11 check in widget/window.c
+  * sorta half-working GtkGrid authentication dialog
+  * remove call to gtk_dialog_set_has_separator()
+  * (properly) avoid compiling libunique support if built with USE_GTK=1
+  * gtk3 libunique -> GtkApplication
+  * gtk3 soup auth dialog integrate "store password" into GtkGrid; add gtk3 equivalent to border_width to grid; use gtk3 equivalents of GTK_FILL and GTK_EXPAND
+  * -USE_WEBKIT2 Makefile flag to compile with webkit2 API
+  * use correct version of javascriptcoregtk when compiling
+  * simplify X11 check
+  * fix webkit2 header #include stuff
+  * WEBKIT_USER_AGENT_MINOR_VERSION -> WEBKIT_MINOR_VERSION
+  * comment out references to frames to get this thing to compile
+    stop using win, the GtkScrolledWindow
+    fix WebKitWebView create callback
+    more view -> win
+    indent GTK_CHECK_VERSION macros
+  * webkit_web_view_set_view_source_mode() -> webkit_web_view_set_view_mode()
+  * WebKitWebBackForwardList -> WebKitBackForwardList for webkit2 API
+  * policy decisions (mime-type, navigation, new-window) compiled together in the callback for decide-policy
+    stop using deprecated navigation_policy_decision_* functions
+  * update the exposed WebKitSettings properties
+  * loading() -> is-loading property
+    progress -> estimated_load_progress
+  * get context menu callbacks working
+    mark WebKitWebView UNUSED in context_menu_cb parameters
+  * fix an X11 check
+  * get downloads into a functioning state
+  * restore search functionality
+    squash me onto the search fixes
+  * preliminary inspector code
+  * asynchronous javascript-running
+  * reimplement scrolling with javascript
+    lua code changes for reimplemented scrolling
+  * comment out scroll_event_cb()
+  * config.mk webkitgtk-3.0 -> webkitgtk-4.0 and webkit2gtk-4.0
+  * soup session not exposed in webkit2 API. Comment out relevant code
+    disable soup stuff on the lua side
+  * fix up load callbacks and start fixing up ssl support
+  * mouse-target-changed signal
+  * webkit_web_view_{set,get}_view_mode no longer exist. Comment them out for now
+  * make incompatible pointer types warning go away
+  * rofl remove conditional around a switch case
+  * GtkLabel align/padding deprecated. Use margin/alignment properties of GtkWidgets instead.
+  * gtk_dialog_get_*_area() deprecated; comment out
+  * lua signal name change: load-status -> load-changed
+  * asdlfkslkgjlskdj
+  * make incompatible pointer types warning go away
+  * GtkLabel align/padding deprecated. Use margin/alignment properties of GtkWidgets instead.
+  * gtk_dialog_get_*_area() deprecated; comment out
+  * use webkit's uri scheme handling for luakit://*
+  * copy navigation-request documentation into WITH_WEBKIT block
+  * fix typo: memorise -> memorize
+  * do not connect focus-{in,out}-event and parent-set signals for WebKitWebContexts and WebKitFindControllers.
+  * set button spacing in soup auth dialog and label alignment for gtk 3.14 and up
+  * add padding back to token list so that luakit still compiles with gtk2
+  * document how to build with GTK3 and fix some bugs in code that checks whether luakit has registered itself or not
+  * use gtk_widget_set_{h,v}align instead of GValues
+  * fix input bar
+  * remove inner border of input GtkEntry in GTK3 build using CSS
+
+  [ Kane Wallmann ]
+  * Ignore hidden elements when showing follow hints
+
+  [ Babken Vardanyan ]
+  * fixed link to bugtracker in README.md
+
+  [ windowsrefund ]
+  * move cookie whitelist and blacklist to XDG_DATA_DIR
+
+  [ Jasper den Ouden ]
+  * Page step as global value
+
+  [ feivel ]
+  * fix default useragent
+
+  [ Nuno Vieira ]
+  * Add support for URI expansion on Ctrl+Enter
+
+  [ karottenreibe ]
+  * fixed luaH_class_new to use the table on the top of the stack
+    used to use the table at index 2, which makes it difficult to
+    instantiate objects from C code that already has stuff on the stack
+  * documented luaH_class_new
+  * enhanced some comments in common/luaclass.c for doxygen and readability
+  * documented luaH_openlib
+  * documented some more luaclass functions
+  * documented signal emitting functions
+  * documented the rest of common/luaclass.c
+
+  [ walt ]
+  * Fixed click() in follow.lua to trigger more events. Only 'click' doesn't work for all elements
+
+  [ Aidan Holm ]
+  * Implement linear smooth scrolling
+  * Add GtkPaned position getter + setter
+  * Add widget wdth/height getters.
+    Since the label widget uses the 'width' property to get the text width in
+    characters, this has been moved to to the 'textwidth' property.
+  * Add bg property to box widget
+  * Add missing widget width/height getter declarations
+  * Define smooth scrolling functions in better order.
+    Removes undeclared function warnings; actual body of both moved
+    functions is the same
+  * Fix scrolling on gtk2
+  * Remove mouse forward/backward bindings
+  * Add keybinds for help and web inspector
+  * Clear user stylesheet when not in use
+  * Make follow mode filtering case-insensitive
+  * Add support for setting custom useragent
+  * Add site_styles() helper function
+  * Implement Lua remove_cookies()
+  * Add initial profile support
+  * Remove incorrect use of UNUSED macro
+  * Fix compilation errors when using webkit1
+  * Fix assertion failure when there's no history
+  * Return boolean indicating history traversal success
+  * Add label alignment for GTK >= 3.16.
+    Now supported for GTK >= 3.16 and GTK < 3.14, which leaves an
+    interesting gap in the middle...
+    Are alignments merely deprecated for GTK 3.14, 3.15? If so, might as
+    well use them since it's an old version anyway...
+  * Correct label widget .width to .textwidth
+  * Add CSS for chrome page h1 tags
+  * Fix go_up on file:// URIs
+  * Add adblock and adblock_chrome modules
+  * Fix adblock parsing of || rules.
+    Since Lua pattern matching doesn't support grouping, the previous
+    conversion of the || domain-matching rule resulted in overly-eager
+    patterns that would match any URL with a domain _ending with the
+    specified domain name. For example, a rule ||bar.com would block
+    foobar.com as well as foo.bar.com.
+    In order to work around this limitation, abp_to_pattern now returns a
+    table of patterns. Should the current rule be a ||-rule, two patterns
+    will be returned; one which matches that domain exactly, and one that
+    matches all subdomains.
+  * Make adblock_chrome HTML easier to read
+  * Make adblock_chrome use consistent CSS
+  * Colour-code adblock_chrome enabled/disabled text
+  * Add enable/disable button to adblock_chrome
+  * Add links for easy adblock filter list toggling.
+    This reverts commit 5e99d978d375e15bb8764bdac8632fa778066e2d.
+  * Move adblock rule stats to adblock_chrome header
+  * Improve adblock_chrome CSS
+  * Don't adblock on local files
+  * Correct typo nul -> nil
+  * Optimize adblock domain name anchor rules.
+    Previously, domain name anchor matches were made by using two Lua
+    patterns, for matching the exact domain name and for matching subdomains
+    respectively. This bloated the pattern lists.
+    By storing domain name anchor rules in a table, we can very quickly
+    retrieve matching rules since tables are backed by a hash-table. This
+    dramatically increases performance on whitelisted URLs, and URLs which
+    do not match any rule also take substantially less time to process,
+    due to the large reduction in pattern matches.
+    Rough testing showed a mean 58%, median 60% speed increase over the
+    previous version, with more than 95% of queries receiving a speed
+    increase of 35% or more.
+  * adblock: skip matching data URIs.
+    Data URI are often fairly long, and matching them seems to be causing
+    long (2+ seconds) matching times due to their length. As a preemptive
+    measure, skip matching them for now.
+  * adblock: split blacklist patterns into two sets
+    "ad", not surprisingly, tends to be a fairly common word in blacklisted
+    patterns, occurring in roughly half the non-domain-anchored rules.
+    Therefore, we can split the pattern set into those that contain "ad" and
+    those that don't, then only test the former set if the URI contains "ad"
+    as well.
+    Assuming that many non-blacklisted web URIs don't contain the string
+    "ad", testing these URIs should take roughly half the time. Of course,
+    this strategy will have no effect on domains containing the string "ad",
+    since all same-domain requests will take the full time.
+    Unscientific testing seems to yield a mean 50% speed improvement on
+    requests not containing the substring "ad".
+  * Use table to display adblock lists
+  * Improve adblock_chrome filter list display
+  * adblock: Match simpler patterns with string.find()
+    Rough testing showed a ~1.5x speed increase
+  * adblock: refactor filter list parsing
+  * adblock: refactor filter list matching
+  * adblock: optimize plain matching wrt 'ad'
+    Similar to how the list of patterns which require the URI to contain
+    "ad" to match are skipped if the URI does not in fact contain "ad", we
+    also group all plain strings to compare which have this requirement and
+    skip comparison if possible.
+  * adblock: refactor list length/ignore tally
+  * Initial work on cookie filter module
+  * Align action link right
+  * Improve adblock chrome layout
+  * Add mixed content blocker module.
+    Automatically blocks requests to insecure content from secure pages.
+    Page navigations are excluded from this; this is necessary to allow
+    navigation to e.g. Google search results, where a secure Google page
+    redirects to the insecure destination page.
+    Temporarily enabling mixed content for a view can be done via a call
+    to w:toggle_mixed_content().
+    Tested with https://www.bennish.net/mixed-content.html
+    Areas for improvement:
+     - Memory leak: has_mixed and allow_mixed entries are not freed when
+       views are closed
+     - Not currently possible to query allow_mixed status for a view
+     - allow_mixed status sticks until the view is closed; should perhaps be
+       reset on page / domain navigation, possibly with a cache
+     - No domain_props support
+  * Allow accept-cookie hooks to accept per-session only
+  * Add per-session cookie filtering support
+  * Clean cookie_filter_chrome CSS
+  * Fix stupid table index bug
+  * Unblock window.open() for follow mode.
+    Temporarily enabling window.open for the duration of the follow mode
+    evaluator execution allows onclick=window.open(...) and similar links to
+    be followed. Without this, such links work when clicked but not when
+    followed.
+    This *should* be secure enough
+  * Add editor module
+  * Use editor module in formfiller module
+  * Use editor module in introspector module
+  * Use consistent design for downloads_chrome
+  * Refactor noscript, add widget/interface hooks
+  * Remove URI validity assert (fails on about:blank)
+  * Add shim for view:loading()
+  * Fix compilation with webkit2
+  * Add useless webkit web extension
+  * Fix typo in noscript module
+  * Add modeline to extension/main.c
+  * Remove (apparent?) debugging logging
+  * Add webkit2 token translation layer (fix noscript)
+    Some property names changed; e.g. "enable-scripts" to "enable-javascript"
+    This commit adds a translation layer so that e.g. noscript and other
+    plugins can use the old names.
+  * Move Javascript signal table entry
+  * Fix memory leak in mixed_content.lua
+  * Fix noscript URI nil test
+  * Add unix socket between web and ui processes
+  * Add user content manager to web view
+  * Add global stylesheet set
+  * Add per-view toggling of stylesheets
+  * Fix hardcoded webkit extension dir
+  * Add stylesheet Lua class and signal.
+    Stylesheets can now be added from Lua code, which must specify the CSS
+    source code to load. Lua code can change a stylesheet's source code, and
+    the change will be reflected automatically.
+    Stylesheets should be enabled/disabled for a view only in the stylesheet
+    signal emitted on that view. TODO: add enforcement
+    Lua code must maintain a list of stylesheets: this is by design to help
+    ensure that separate regions of Lua code can each manage user stylesheets
+    they add without inadvertently affecting the other.
+  * Fix stylesheet signal handler timing.
+    The view uri is not yet set during the provisional event, which makes
+    matching stylesheets against the view URI challenging, to say the least.
+    Delays the stylesheet signal until the load is committed.
+  * Add web extension Lua state
+  * Link common/*.c files into luakit.so
+  * Correct Makefile dependancy
+  * Add basic Lua dom_document class
+  * Add basic Lua dom_element class
+  * Set Lua panic function for web process
+  * Isolate luaH_add_paths()
+  * Move luaH_add_paths() into common/
+  * Add Lua paths in web extension
+  * Add web extension Lua require() message handler
+  * Implement inter-process Lua modules and signals.
+    This commit adds support for instantiating modules in the WebKit web
+    process, as well as allowing signals to be sent from modules in the main
+    UI Lua instance to modules running on the web process Lua instance, over
+    the Unix socket.
+    To accomplish this, two classes are defined; the web_module class, only
+    available from UI process Lua, and the ui_process class, only available
+    from web process Lua. A web_module instantiation require()s a module on
+    the web thread, and subsequent emit_signal() and add_signal() calls work
+    as usual.
+  * Add basic Lua stack serialization for Lua IPC
+  * Add support for serializing Lua tables.
+    Note that attempting to serialize tables with cycles will blow the
+    stack, and multiple references to the same items are not deduplicated
+  * Add serialization to Lua inter-process signals
+  * Set error function in web Lua
+  * Add global access to WebExtension pointer
+  * Fix extension target collection in Makefile
+  * Add EXT_SRCS and EXT_OBJS to Makefile output
+  * Remove excess Lua stack items in constructor
+  * Add view.id getter and document(id) constructor
+  * Refactor strcmp into token comparison
+  * Add luaH_dom_element_from_node()
+  * Clean up luaH_dom_document_push_body()
+  * Add basic document element creation from Lua
+  * Add element:query(selector)
+  * Add Lua element:append(element)
+  * Add initial implementation of pos/size retrieval
+  * Add document and element libraries to Lua
+  * Add element inner text initialization
+  * Add element removal
+  * Add element.tag_name getter
+  * Add DOM element attribute access from Lua
+  * Add DOM element click() and focus()
+  * Add DOM element text_content property
+  * Make element.rect always supply up-do-date valeus
+  * Include element scroll offsets in position
+  * Add basic document.window interface
+  * Add remove_signals method to Lua objects
+  * Add global web extension include
+  * Remove some warnings in common/msg
+  * More warning fixes in Lua DOM API
+  * Warning removal
+  * Update webview scroll interface for webkit2.
+    There is no way to quicky find the current scroll information on the
+    UI-thread; as a workaround, we listen to DOM events related to window
+    resizing and scrolling and document resizing on the Web process, and
+    send updated values to the UI thread. This method allows us to keep the
+    old Lua scrolling interface. Currently this seems to perform well,
+    even though the document height is recalculated on each DOM
+    modification...
+  * Add Lua window unique id property
+  * Initial port of follow.lua.
+    In WebKit 2, there is no way to access the JavaScript contexts of
+    sub-frames, which makes it impossible to use the existing JS-based
+    follow mode implementation. The WebKitDOM API, however, provides the
+    access previously provided by JS. Therefore, a Lua wrapper in the form
+    of the dom_document and dom_element classes has been implemented, and is
+    used here to port follow mode to run on the WebKit Lua web process.
+    This is more of a reimplementation than a port; some features behave
+    slightly differently, some may not work perfectly yet, performance is
+    probably sub-optimal initially, etc.
+  * Oops... fix leftover reference
+  * Fix incorrect create_cb() parameters
+  * Fix copy-paste mangled comment
+  * Add luakit.webkit2 property
+  * Fix noscript.lua for Webkit 2
+  * Enable JS temporarily for scrolling
+  * Fix Lua stack memory leak
+  * Remove useless leave() call in follow_webmodule
+  * Add luauniq registry system
+  * Fix leftover items on Lua stack
+  * Add Lua object <-> gobject binding mechanism
+  * Don't send useless document resize messages
+  * Add DOM element style property getter
+  * Hide follow hints for invisible elements
+  * Ensure uniqueness of DOM element instances
+  * Don't barf on nested table serialization
+  * Clean up assertions
+  * Fix IO channel error handling
+  * Tell web process when config has loaded
+  * Add page and extension Lua classes
+  * Port adblock module to webkit2.
+    Instead of listening to the navigation-request signal, which fires after
+    the request has begun, we listen to the send-request signal on the web
+    process, which fires before the request begins; the difference is vital
+    when blocking tracking URLs.
+    The rule parsing and UI remain the same; when the rule tables are
+    updated, they are sent to the web module over the IPC channel. This
+    doesn't appear to affect startup time adversely at all, since the
+    serialized rules table (for my lists) currently clocks in at around 4 Mb.
+  * Reduce serialized Lua size.
+    Using int8 instead of int for type markers reduces transfer size by 17%
+    for my adblock rule set.
+  * Fix luakit:// scheme handler crash
+  * Fix introspector not displaying
+  * Add DOM element src, href, parent getters
+  * Fix some follow mode bugs
+  * Add chrome.lua on_first_visual hook.
+    Lots of chrome pages have a hook that runs once when the webview has
+    finished loading, usually in order to export JS functions. These are all
+    implemented in the same copy-pasteish way, so unifying this simplifies a
+    fair amount of code.
+    I'm a little unhappy with how chrome.add() takes two functions with the
+    same signature... could also do with some small wrappers for the webview:
+    view:register_functions() and view:load_js_library() could cut back code
+    size.
+  * Add DOM element inner_html getter/setter
+  * Remove unneeded check in ui_process library
+  * Actually show chrome error tracebacks
+  * Tidy chrome error HTML
+  * Allow mix of pos/neg indices in Lua serializer.
+    The lua_serialize_range() call was replaced to avoid needless
+    conversions when serializing large tables, such as the adblock rule
+    table.
+  * luaH_absindex; keep zero as zero
+  * fixup_5d12eeb
+  * Allow valid Lua deserialization of nothing
+  * Declare message types as powers of two
+  * Move Lua (de)serializing to separate files
+  * Include JS directly in introspector HTML
+  * Add missing attributes to introspector markup.
+    Clicking them still doesn't work though... well, not in this branch
+    anyway
+  * Allow delaying IPC message handling via type mask.
+    Currently, the grand plan is to add support for exporting Lua functions
+    to JavaScript; since these functions must now run on the web process in
+    WebKit 2, and current uses often require returning values to JavaScript
+    (and not mere value passing to Lua), the only viable solution seems to
+    be to send an IPC message to the UI process, which executes the Lua
+    function, and block while waiting for a response.
+    In the interest of not blocking the web process for too long, and just
+    generally retaining our sanity, we need to ignore all other messages
+    while we wait for the reply containing the value to return to JS. The
+    last thing we need is to start loading some web module or running some
+    web Lua signal handler while we're blocking the whole process.
+    This commit supports that; unwanted messages are added to a queue and
+    dispatched later.
+  * Unify some common message handling stuff
+  * Clean up msg_recv_scroll() warnings
+  * Dispatch queued messages on idle
+  * Support (de)serializing light userdata
+  * Fix Lua function Javascript export mechanism
+  * Add export_funcs argument to chrome.add()
+  * Export JS functions in bookmarks_chrome.lua
+  * Export JS functions in cookie_filter_chrome.lua
+  * Export JS functions in downloads_chrome.lua
+  * Export JS functions in history_chrome.lua
+  * Export JS functions in adblock_chrome.lua
+  * Add webkit2 include guards to msg.c and msg.h
+  * Only include web_module class with webkit2
+  * More webkit2 ifdefs
+  * Add webkit2 checks to Makefile rules
+  * Add missing webkit2 guard
+  * Fix warnings in clib/web_module.c
+  * Export JS functions in introspector.lua
+  * Add msg_send_lua() wrapper function
+  * Use msg_send_lua() in a few places
+  * Move Lua JS stuff to common/
+  * Remove duplicate JS in introspector.lib
+  * Serialize booleans as one byte, not four
+  * Implement scrolling without JavaScript
+  * Reduce repetition in dom element attr getter
+  * Clean up warnings in dom_element.c
+  * Add callback paramater to run_javascript()
+  * Get follow_selected.lua working again
+  * Add no_return = true to go_next_prev.lua
+  * Get :userscriptinstall working again
+  * Get go_input.lua working again
+  * Clean up warnings and memory leak in luajs.c
+  * Remove unneeded do-while from macros
+  * Fix warning in luaserialize.c
+  * Silence unused value warning
+  * Fix warnings, add argument validation
+  * Improve JavaScript error handling
+  * Fix warnings, add error logging to msg.c
+  * Remove warnings
+  * Remove warnings
+  * Uncomment web_page constructor
+  * Remove unused variable
+  * Follow mode: clip overlay of inline elements
+  * Follow mode: remove print() spam
+  * Remove unused JavaScript scrolling function
+  * Fix conflation of inspector signal names
+  * Fix webkit2 inspector.
+    For WebKit 2, the inspector basically just works, and from the API it
+    doesn't seem like there's all that much you can do with it anyway. The
+    documentation makes some mention of getting a GtkWidget but of course
+    completely fails to specify how one might do so.
+    The iview parameter is now useless, and it's been replaced with a
+    boolean inspector_open property.
+  * Clean up warning
+  * Fix incorrect return value check causing segfault
+  * Remove view.history for WebKit 2
+  * Remove view.show_scrollbars for WebKit 2
+  * Replace deprecated function
+  * Add widget_set_css()
+  * Add widget_set_css_properties()
+  * Update widget CSS instead of replacing it
+  * Remove deprecated function in widgets/label.c
+  * Remove deprecated function in widgets/box.c
+  * Remove deprecated function in widgets/entry.c
+  * Remove deprecated function in widgets/eventbox.c
+  * Fix segfault on JS exception with callback
+  * Remove view:loading() deprecated spam.
+    Although new code _should_ use is_loading, it doesn't matter all that
+    much. Plus this is filling up my terminal window and it's been a little
+    irritating, so out it goes.
+  * Swap out asprintf for g_strdup_printf
+  * Remove print call in scrolling.
+    No idea how that snuck in there...
+  * Fix link-unhover signal not being emitted
+  * Hack search so it works... probably.
+    Honestly this whole bit of code is kind of hairy and this may be a
+    little buggy, but from rough testing this commit should make it work the
+    same as with WebKit1; it was completely broken before anyway so it's a
+    step in the right direction.
+  * Work around userscripts not loading
+  * Report source in JavaScript error messages
+  * Rename 'load-changed' to 'load-status' (compat)
+    Although the signal name from WebKit has changed, there's no need to
+    change the signal name for Lua, since the signal semantics are the same,
+    with the exception of the first-visual update, which is never sent for
+    WebKit 2.
+  * Don't send load-status finished after failed (compat)
+  * Rename load-failed to load-status failed (compat)
+  * Fix view:load_string() when called from load_failed_cb()
+    Using the regular load_html() call in a load-status failed signal
+    handler causes luakit to get stuck in a loop if you reload the page
+    while it is already reloading. Switching to load_alternate_html() fixes
+    that case.
+  * Add signals for per-view js/plugin override
+  * Add styles library
+  * Add error page library.
+    Allows customization of the luakit error page. Disables custom
+    stylesheets and enables javascript when showing an error page; the
+    former to prevent per-page CSS mangling the error page, and the latter
+    to ensure the retry button works
+    Also improves upon the default WebKit error page somewhat; centres the
+    box, improves margins/paddings somewhat, and darkens the background
+    slightly.
+  * Require error-page and styles by default
+  * Fix broken conditional in noscript.lua
+  * Add uri check in get_domain()
+  * Add WITH_WEBKIT2 check
+  * Make registering functions work in WebKit 1 again
+  * Fix compilation error for WebKit 1
+  * Fix follow mode clicking on <input> elements
+  * Fix double refresh causing load cancelled error
+  * Align column heading and cell text
+  * Simplify CSS
+  * Fix double load causing load cancelled error
+  * Don't display error page for load cancelled errors
+  * Don't display error page for plugin errors
+  * Add dom_element:submit()
+  * Add dom_element.value
+  * Add dom_element.checked
+  * Add dom_element.type
+  * Start port of formfiller
+  * Fix incorrect argument order
+  * Move check for empty/null uri
+  * Add JS regex -> Lua pattern conversion step.
+    This is very hacky and I'm sure it's easy to find patterns that break
+    this. The idea is to have a quick fix that lets me use both WebKit1
+    and WebKit 2 builds, although this conversion step should eventually be
+    fleshed out, or removed entirely.
+  * Use plain string matching for form attributes
+  * Add menu for multiple forms
+  * Add 'add formfiller form' functionality again
+  * Remove unused imports
+  * Fix logical and bitwise OR confusion
+  * Remove useless return value on webkit2
+  * Fix borked boolean
+  * Get bidirectional search working
+  * Shorten error message
+  * Fix saving of search history
+  * Add shortcut to clear search results
+  * Fix segfault when removing nonexistent signal
+  * Add widget.css setter
+  * Fix height difference on input bar
+  * Add wrapper for setting input bar theme
+  * Use set_ibar_theme() in lib/search.lua
+  * Improve follow mode match reporting and ibar colours
+  * Remove find controller warnings
+  * Link javascriptcoregtk-4.0 for webkit2 builds
+  * Enable WebGL by default
+  * Add enable-webkit property to WebKit 1
+  * Fix HTML input cursor not showing
+  * Remove unused argument warning
+  * Add webview session_state getter/setter
+  * Restore tab session state when reopening
+  * Update URI after restoring web view session state
+  * Remove commented path
+  * Styles.lib: restore current directory afteer loading
+  * Load web extension from current directory during dev
+  * editor.lib: fall back to termite and nvim
+  * editor.lib: don't fall back to line number = 0
+  * Remove text input spam
+  * Rename estimated_load_progress to progress (compat)
+  * Automatically detect user stylesheet files
+  * styles.lib: add :styles-reload command
+  * Add full stop to keybind description
+  * Fix keybinds descriptions
+  * adblock: Add error message when blocking navigation
+  * Use NULL base uri for alternate html loads.
+    Fixes loops with view:load_string() triggering send-request signals
+  * Add default build options to config.mk
+  * adblock: add error page for blocked navigations
+  * Expose session state as string, not userdata
+  * Pass non-string arguments through w:search_open()
+  * Add rudimentary pickling/unpickling library
+  * Save tab history in session file
+  * Fix memory leak
+  * Save closed tabs in session file
+  * Report pickling errors for unsupported types
+  * Only serialize closed tab session state
+  * Add notification to undoclose.lua
+  * Fix signals not firing in follow module
+  * Fix warning
+  * Specify reason in navigation-request signal
+  * Remove event watches when IPC channel closes
+  * Unlink socket file after opening IPC channel
+  * Avoid segfault if web process crashes
+  * Add webview crashed signal
+  * Include missing library in picke.lua
+  * Add nrows() getter to menu widget
+  * undoclose: close menu after removing last item
+  * Add support for independent sets to luauniq
+  * Update status bar with hovered uri over page switches
+  * Allow Lua keys in luauniq
+  * Fix misleading comment
+  * Use module names instead of ids over IPC
+  * Reload web modules on web process crash
+  * Queue page-created signals when web process crashes
+  * Reload adblock state when web process crashes
+  * Add error page for web process crashes
+  * Reregister Lua <-> JavaScript functions after crash
+  * Add enable-userscripts hook
+  * Disable userscripts on error pages
+  * Issue a warning when noscript blocks userscripts
+  * Fix unused argument warning
+  * Improve search behavior across views
+  * Don't discard search direction/wrap on tab switch
+  * Fix typo
+  * Add web-extension-loaded signal on webview
+  * Defer view loads until after web extension loads
+  * Fix :javascript command
+  * Remove status bar transition
+  * Fix window set_prompt() theming
+  * Add support for widget tooltips
+  * Add noscript state indicator to status bar
+  * Remove leftover value on Lua stack
+  * Replace status bar with input bar
+  * Fix focusing via follow mode
+  * Add overlay widget type
+  * Overlay completion menu over webview
+  * Return retrieved tooltip markup
+  * Exit follow mode after following item
+  * Fix follow mode when opening on background tab
+  * Only emit download signal on initiating web view
+  * Clean up downloads_chrome JS
+  * Add isolated script world
+  * Add DOM page eval_js() method.
+    JavaScript return values are returned synchronously, and evaluation
+    works even when JavaScript is disabled for the webview.
+  * Add document-loaded signal to DOM page
+  * Fix noscript error on luakit chrome pages
+  * Fix warnings
+  * Ignore frame load interrupted errors
+  * Add allow_overwrite property to downloads
+  * Allow overwrites for all downloads
+  * Add basic PDF auto-downloader-opener
+  * Make follow_selected work with JS disabled
+  * Make go_next_prev work without JS enabled
+  * Add missing token
+  * Return value from page:eval_js() calls
+  * Emit signal switched-page on view after switch
+  * Fix noscript indicator performance problem
+  * Update noscript indicator after setting permissions
+  * Fix NoScript permission setting time, remove WK1 support
+  * Remove extra crash check preventing recovery
+  * Don't crash when quickly opening and closing tabs
+  * Allow deletion from Lua uniq sets
+  * Remove web_page entry from uniq table upon deletion
+  * Make :lua work with both expressions and statements
+  * Add luaH_dom_document_from_webkit_dom_document()
+  * Add frame/iframe element document getter
+  * Add sub-frame support to follow mode
+  * Remove warning
+  * Add scrolled widget wrapper
+  * Add scrolled widget scrollbars property
+  * Add widget min_size property
+  * Add minimum tab width property to tablist widget
+  * Add scrolled widget scroll getter and setter
+  * Scroll current tab into view
+  * Don't add chrome URIs to history
+  * Add header modification support to send-request signal
+  * Follow mode: focus inputs by value attribute
+  * Follow mode: focus empty inputs by placeholder text
+  * Add crash recovery session support
+  * Modularize lib/session.lua
+  * Fix shadowed variable breaking :restart
+  * Fix search box on history and bookmarks pages
+  * Use IPC for view:eval_js()
+  * Uncouple eval_js no_return and callback options.
+    This allows you to run JavaScript without evaluating the return value,
+    and still specify a callback for error messages.
+  * Add userscript error alerts
+  * Allow userscripts to run on pages with JS disabled
+  * Fix missing anchor hrefs on introspector page
+  * Add error handling to :javascript command
+  * Formfiller: click radio buttons and checkboxes.
+    Fixes page with JavaScript onclick hooks
+  * Follow mode: click radio buttons and checkboxes
+  * Add vertical tabs module to repo
+  * Add config option to use vertitabs
+  * Try to load session file before recovery file
+  * Use vertitabs if module loaded
+  * Add DOM element child and sibling getters
+  * Follow mode: add heuristic for links containing a single image
+  * Add image widget wrapper
+  * Add basic favicon support to webview
+  * Add TLS error info to signal
+  * Show precise certificate error message
+  * Revert "Make go_next_prev work without JS enabled"
+    This reverts commit 9f384608f38a8345b1ff5532ffe8ce93ad16fb8e.
+  * Remove debug code
+  * Remove unused parameter warning
+  * Add spinner widget
+  * Remove USE_WEBKIT2 build setting
+  * Remove WebKit 1 webview scrolling support
+  * Remove WebKit 1 webview JavaScript interface
+  * Remove WebKit 1 webview inspector support
+  * Remove WebKit 1 webview downloads support
+  * Remove WebKit 1 webview frames support
+  * Remove WebKit 1 webview history support
+  * Remove WebKit 1 webview widget implementation
+  * Remove WebKit 1 download support
+  * Remove WebKit 1 support for clib.luakit
+  * Remove misc WITH_WEBKIT2 ifdefs
+  * Remove USE_GTK3 build setting
+  * Remove Pre-GTK3 authentication support
+  * Remove Pre-GTK3 unique instance support
+  * Remove Pre-GTK3 paned widget support
+  * Remove Pre-GTK3 socket widget support
+  * Remove Pre-GTK3 entry widget support
+  * Remove Pre-GTK3 window widget support
+  * Remove Pre-GTK3 label widget support
+  * Remove Pre-GTK3 box widget support
+  * Remove Pre-GTK3 eventbox widget support
+  * Remove Pre-GTK3 notebook widget support
+  * Remove Pre-GTK3 webview widget support
+  * Update README
+  * Fix eval_js() call in :print command
+  * Hide UI elements when fullscreen
+  * Fix HTTP authentication signals
+  * Always update URI on load-changed signal
+  * Fix noscript not triggered early enough
+  * Fix inclusions of old header file
+  * Add rudimentary Referer control module
+  * Follow mode: use maximum z-index available
+  * Fix segfault in webview download_started_cb()
+  * Add DOM document:element_from_point() getter
+  * Add DOM element.owner_document getter
+  * Follow mode: click child element at centre of target
+  * Fix element:click() for SVG elements
+  * Remove commented code
+  * Change dom_element to wrap any WK DOM element
+  * Use whole input in history/bookmark completion
+  * Fix broken command completion
+  * Fix completion menu not closing
+  * Remove default user agent customization.
+    Improves site compatibility, e.g. Google Maps, and decreases fingerprint
+    information.
+  * Add DOM element:add_event_listener() wrapper
+  * Remove stylesheets shim for WebKit 1
+  * Add stylesheets to user content manager only once
+  * Allow modifying existing context menu items.
+    Semantics of populate-popup have also changed; menu table should be
+    modified directly, to allow multiple signal handlers to incrementally
+    modify the menu.
+  * Fix incorrect context menu label
+  * Don't exit completion if cursor isn't in a word
+  * Fix webview.is_committed not being updated
+  * Remove unused empty struct
+  * Send web_lua_loaded from common place
+  * Add common msg_send() wrapper
+  * Add IPC send thread
+  * Add Lua msg library
+  * Use msg.info for signal.lua logging
+  * Move logging functions to common/log.c
+  * Isolate logging message construction
+  * Remove redundant 'luakit: ' prefix from logs
+  * Use _warn and _debug for Lua msg functions
+  * Add va_list versions of logging functions
+  * Use va_warn() for luaH_warn()
+  * Use warn() for configuration loading messages
+  * Improve signal.lua logging messages
+  * Fix up adblock logging for consistency
+  * Use luaH_warn() for unknown widget properties
+  * Use debug() instead of printf() in extension
+  * Add send/recv logging to IPC
+  * Use single function for logging, with multiple levels
+  * Log from main process only
+  * Pre-instantiate Lua state to allow logging
+  * Add log message queue for Web process
+  * Make 'UI' the default process name for logging
+  * Assert process name is set
+  * Remove trailing newlines from debug messages
+  * Remove GTK2-specific code
+  * Delete failing tests
+    tests/test_clib_soup.lua is for an as-yet-unimplemented set of features
+    that depend on WebKit API support.
+    tests/test_webview_javascript.lua requires testing return values in
+    callbacks---currently not sure if this is possible.
+  * Remove globalconf.verbose
+  * Remove SIGCHLD handler
+  * Add --log command
+  * Add verbose log level
+  * Remove invalid property modification
+  * Locally silence deprecated declaration warning
+  * Add signal_array_emit()
+  * Fix logging verbosity check
+  * Free webview user content manager
+  * Fix clib/unique.c padding warning
+  * Use named parameters for GActionEntry
+  * Fix code style
+  * Add WebKit script message Lua interface
+  * Display (notrust) on http pages
+  * Add red background to certificate error page
+  * Change heading on certificate error page
+  * Cache webview TLS certificate, add cert getter
+  * Add webview:allow_certificate() method
+  * Isolate certificate error description building
+  * Add error category table
+  * Use single error page building function
+  * Make load_error_page() arguments table-based
+  * Add customizable error page buttons
+  * Use Lua callbacks for error page buttons
+  * Add 'Ignore danger' button to security error page
+  * Remove require statements
+  * Run error page JS from finish callback.
+    For some reason, JS from the page source doesn't run all the time
+  * Add public error page interface
+  * Use error_page.lua for adblock error page
+  * Allow request header editing via signal argument
+  * Fix warning spam
+  * Use correct heading on WebKit crash page
+  * Improve webkit crash page button label
+  * Use JavaScript for scroll position indicator
+  * Fix unref'ing null certificate
+  * Remove webview URI property wrapper
+  * Use JavaScript for webview:scroll() method
+  * Fix formfiller checkbox clicking behavior
+  * Set --verbose to match LOG_LEVEL_verbose
+  * Add info log level
+  * Construct Lua logging interface with X macro
+  * Use debug logging for signal messages
+  * Add verbose widget creation logging
+  * Add web process PID debug logging
+  * Revert "Remove webview URI property wrapper"
+    This reverts commit a43f97c86fd13cf12fc4e5029b0e86bda04b5c6d.
+  * Update uri property with callback
+  * Set uri to failing uri on load fail
+  * Remove buggy chrome page reset_mode()
+  * Adjust adblock logging levels
+  * Emit undo-close signal on reopened views
+  * Call chrome page handler for all views
+  * Only emit mode-changed if it actually changed
+  * Add view argument to Lua JS callbacks
+  * Add JS 'reset_mode()' on luakit:// pages
+  * Remove useless message
+  * Use error_page.lua for chrome page errors
+  * Adjust error page backgrounds
+  * Concat base and custom error page CSS
+  * Add show_error_page() argument checking
+  * Fix error page button and text margins
+  * Remove old smooth scrolling code
+  * Store website data in profile directory
+  * Close prompt on <ESC> key press
+  * Strip ANSI escape codes if not logging to tty
+  * Disable GTK_POLICY_EXTERNAL on GTK < 3.16
+  * Disable widget.css property on GTK < 3.16
+  * Fix label.align for older GTK versions
+  * Add luakit.options property
+  * Use parsed options when restarting luakit
+  * Don't restore sessions when using -U
+  * Add support for pasting multiple URIs
+  * Fix memory leak when requests were blocked
+  * Show userdata type in Lua stack dumps
+  * Pass through custom items in context menu
+  * Fix minor eval_js() race condition
+  * Implement widget.focused property
+  * Add getter for luakit library class
+  * Emit download-started signal on luakit object
+  * Remove WebKit1-specific download code
+  * Allow cancelling downloads from save dialog
+  * Refactor tablist implementation.
+    Splits tabs off into their own isolated widget, and unifies
+    vertitabs.lua and tablist.lua
+    Tablist updating is now much more efficient with large (>500) numbers of
+    tabs open, as only the tabs that change are regenerated.
+  * Add tablist.visible property for correct UI hiding
+  * Change default tabs to horizontal on top
+  * Check widget is still alive in getters/setters
+  * Make input:focus() not select all text
+  * Add webview_get_by_id()
+  * Fix tab labels when loading new pages
+  * Add mouse-enter and mouse-leave widget signals
+  * Fix not emitting property::textwidth
+  * Add luaH_traceback()
+  * Add webview.source property
+  * Add rudimentary :view-source command
+  * Fix assertion failure when loading about:blank
+  * Show some table keys in luaH_dumpstack()
+  * Remove superfluous return statement
+  * Add tab hover highlight effect
+  * Correct extension/log.c header comment
+  * Add test for source file modeline
+  * Fix wrong argument name in adblocker
+  * Fix broken 'adblock-reload' command
+  * Fix stylesheets overriding adblock error page
+  * GM_addStyle: add CSS to body if there's no head
+  * Fix error when view has nil uri
+  * Fall back to URI if loading session stae fails
+  * Fix completion for hyphenated commands
+  * Fix parsing of adblock rules containing '#'
+  * Tidy adblock.lua code
+  * Remove adblock simple mode
+  * Simplify adblock code
+  * Fix adblock command indentation
+  * Remove unreachable code
+  * Remove unused variable
+  * Remove unused chrome module from adblock.lua
+  * Use ternary expression
+  * Fix file corruption when loading adblock filters.
+    Adblock subscriptions file had duplicate entries inserted when loading
+    if a disabled list had an associated URI.
+  * Adblock: key subscriptions by title only
+  * Remove superfluous fallback case
+  * Add some assertions about subscription list
+  * Add widget.parent getter
+  * Fix race condition when starting IPC thread
+  * Fix spelling mistake
+  * Fix missing flag to g_spawn_async()
+  * Fix memory leak when spawning without a callback.
+    Without a callback function, async_callback_handler() would never be
+    called, and g_spawn_close_pid() would not be called to release GLib
+    resources.
+  * Fix code style issues in clib/luakit.c
+  * Remove old :viewsource command binding
+  * Enable link-time optimization
+  * Fix some code style issues
+  * Avoid setting global variables
+  * Don't declare mod1binds as global
+  * Add lib/open_editor.lua
+  * Allow toggling webview stylesheets at any time
+  * Hide webview scrollbars
+  * Fix broken download chrome page API
+  * Add webview.window() utility function
+  * Show error if no inode/directory handler
+  * Enable xdg-open download handler by default
+  * Fix graphical glitch in status bar
+  * Fix possible crash when download finishes
+  * Update download chrome pages only when necessary
+  * Remove broken download creation API
+  * Add luaH_uniq_del_ptr() helper
+  * Use luaH_uniq for Lua downloads
+  * Only set download uri in decision callback
+  * Set download status once download starts
+  * Implemenent working download-uri function
+  * Use webview.window() to get download window
+  * Remove unused signal handler
+  * Show download size on finished downloads
+  * Remove debugging print()
+  * Keep web extension accept thread running
+  * Improve function name
+  * Add msg_endpoint_t struct
+  * Add CPP definition for web extension
+  * Add endpoint parameter to msg_send()
+  * Add msg_endpoint_init()
+  * Add endpoint parameter to msg_recv_*()
+  * Allow simultaneous incoming messages
+  * Unify msg_endpoint_t definitions
+  * Unify msg_send() implementations
+  * Move message recv state into msg_endpoint_t
+  * Improve msg_endpoint_t interface
+  * Add NO_HANDLER() macro
+  * Add page_created IPC message
+  * Keep queued_emissions array alive
+  * Add webview msg_endpoint_t struct
+  * Add msg_endpoint_replace()
+  * Add webview endpoint interface
+  * Add endpoint param to web_module_restart()
+  * Add endpoint param to luaH_reregister_functions()
+  * Switch to multiple processes
+  * Add optional page param to wm:emit_signal()
+  * Add debug method to force web process crash
+  * Remove endpoint on channel hang up
+  * Add endpoint disconnect() and free() functions
+  * Manage endpoints on webview close/crash
+  * Fix not saving enqueued messages properly
+  * Fix lua stack item not popped
+  * Remove unneeded log queueing system
+  * Fix not creating related view in 'create' callback
+  * Port extensions to multiprocess API.
+    Very rough port - some code could be improved
+  * Call init funcs only once for each webview
+  * Set initial web view location only once
+  * Fix race condition in webview destructor
+  * Use single allocation for IPC message queueing
+  * Remove duplicated endpoint removal
+  * Make globalconf.endpoints private.
+    Makes concurrent access easier to reason about
+  * Remove old TODO comment
+  * Ensure endpoints are created with memory slices
+  * Support any number of web processes
+  * Fix use after free in webview destructor
+  * Fix possible use of uninitialized memory
+  * Make js registrations array static
+  * Don't free IPC endpoints that have queued messages
+  * Make msg_endpoint_t* name consistent
+  * Add assertion to channel HUP handler
+  * Remove info() and warn() global helpers
+  * Fix use-after-free causing segfault
+  * Set WebKit process limit from static var
+  * Log WebKit process limit on startup
+  * Add web process limit getter and setter
+  * Add clib.luakit.process_limit property
+  * Fix removing non-existent download table entry
+  * Fix up misc code issues in clib/download.c
+  * Fix getting page ID of null WebKit webview
+  * Set process limit from config file
+  * Specify explicit process limit in config file
+  * Ensure Lua stack is empty if loading config fails
+  * Fix crash when downloading files
+  * Remove pcall() for webview eval JS cb
+  * Use settop instead of pop
+  * Replace pcall with dofunction for event listeners
+  * Replace pcall in Lua JS function interface
+  * Replace pcall usages with dofunction
+  * Replace pcall with luaH_dofunction_from_registry()
+  * adblock: only send changed list over IPC
+  * Fix context menu 'New Window' items
+  * fixup adblock
+  * Fix incorrect documented viewsource command
+  * Allow copying popup error messages
+  * Fix errors when handling tabs with empty titles
+  * Fix inability to reopen single closed tab
+  * Fix tablist error when no tabs in list
+  * Move closed-tab handling into undoclose.lua
+  * Avoid crash when webview doesn't have a URI
+  * Don't crash when opening already-closed view
+  * Add w:tab_detach(), w:tab_attach()
+  * Add :tabdetach command
+  * Show error when formfiller fails
+  * Fix not removing formfiller signals
+  * Remove idle cb functions that cause errors
+  * Add web-extension-created signal
+  * Only load adblock rules on new web processes
+  * Don't lose state when closing just-opened tabs
+  * Error when setting invalid tab session state
+  * Fix failing webkit assertions
+  * Add referer control logging
+  * Remove unused reference to print()
+  * Show signal name when emitting on non-object
+  * Remove deprecated call to gtk_window_set_wmclass()
+    NOTE: changes X11 window class from 'luakit' --> 'Luakit'
+  * Make < and > binds wrap around consistently
+  * Ref webview resource while loading source
+  * Workaround web modules unloading when out of scope
+  * Return nil when creating proxy for nonexistent node
+  * Fix follow mode heuristic to work with text nodes
+  * Start recovery session timer on tab rearrange
+  * WIP: add dom_element_js_ref()
+  * Implement luaH_page_wrap_js()
+  * Implement luaH_page_js_func()
+  * Implement luaH_to_dom_element()
+  * Use correct element page
+  * Follow: Use elem.getClientRects() if possible
+  * Add dom_element_selector() method.
+    On test pages, computes an element selector in roughly 0.025ms
+  * Use element selector in dom_element_js_ref()
+  * Follow: force hint labels to be in viewport
+  * Don't assert Lua IPC page still exists
+  * Fix race condition when fetching webview source
+  * Remove unnecessary if statements
+  * Fix race condition when handling custom scheme
+  * Fix race condition when opening IPC channel
+  * Remove duplicated function call.
+    Function call is repeated in subsequent call to
+    msg_endpoint_disconnect().
+  * Fix code style
+  * Disconnect on HUP in msg_endpoint_decref()
+  * Don't remove history item template
+  * Use hidden input for current history page.
+    Input values are maintained automatically on page navigation
+  * Allow exit prevention when quitting through wm
+  * Add windows to luakit application
+  * Include process id in IPC socket name
+  * Fix unused argument warning
+  * Move search-related signal handlers to search.lua
+  * Add event.button to DOM MouseEvent
+  * Don't activate input mode for disabled elements
+  * Release page-created after loading web modules
+  * Remove unused IPC message name
+  * Fix page creation signals on multi-page endpoints
+  * Don't enter insert mode for button <input>s
+  * Replace postMessage() with webmodule
+  * Remove postMessage() interface
+  * Fix error when <input> has no type attr
+  * Fix serializing Lua strings with embedded zeroes
+  * Fix broken IPC for crashed webpages.
+    Old endpoint is freed by HUP handler.
+    Fixes segfault when opening a webpage in the same process crashed
+    and webview reconnection would use-after-free the old endpoint.
+  * Fix race conditions with IPC refcounts
+  * Fix another page close race condition
+  * Fix not saving closed tab state correctly
+  * Give full backtrace on startup failure
+  * Warn if falling back to alternate config file
+  * Handle trying to load corrupted sessions
+  * Abort startup if web extension not found
+  * Allow running from any dir with development paths
+  * Add dev warning if luakit.so not found.
+    Seems some people are installing luakit with DEVELOPMENT_PATHS=1; this
+    should make it clearer what the problem is.
+  * Silence warning
+  * Fix formfiller silently failing to add forms
+  * Make lua log src relative to execdir
+  * Remove old WITH_UNIQUE build option
+  * Some minor README updates
+  * Silence GTK theme warnings
+  * Make luakit lib partially usable from web process
+  * Remove webkit 1 soup lib code
+  * Make soup lib usable from web process
+  * Remove remaining soup cookiejar code
+  * Fix long source paths appearing in lua log output
+  * Fix web process crash when redirecting request URIs
+  * Allow removing fields from URI query strings
+  * Remove module(): config/webview_webmodule.lua
+  * Make webview.lua a module
+  * Remove module(): lib/error_page_webmodule.lua
+  * Remove module(): lib/hide_scrollbars.lua
+  * Remove module(): lib/referer_control_webmodule.lua
+  * Remove module(): lib/viewpdf.lua
+  * Revert "Allow running from any dir with development paths"
+    This reverts commit f9d2351a4f42f9596b78e24251ebac710bb1741d.
+    This reverts commit 306dc65402290fc2ece979e5fdee89ec146a2ddd.
+    This reverts commit f04ee12fea25f8da04c568dc99638ec358545ba6.
+    Reverted due to unreliability of finding path to executable, which
+    caused some segfaults.
+  * Fix long source paths appearing in lua log output
+  * Make window.lua a module
+  * Make lousy/bind.lua a module
+  * Make lousy/util.lua a module
+  * Add missing require("lousy") statements
+  * Make lousy/mode.lua a module
+  * Make lousy/theme.lua a module
+  * Make lousy/signal.lua a module
+  * Make lousy/uri.lua a module
+  * Make lousy/load.lua a module
+  * Make lousy/pickle.lua a module
+  * Make lousy/widget/tablist.lua a module
+  * Make lousy/widget/menu.lua a module
+  * Make lousy/widget/tab.lua a module
+  * Remove all module() calls from lousy
+  * Remove module(): lib/follow_selected.lua
+  * Remove module(): lib/session.lua
+  * Remove module(): lib/adblock_webmodule.lua
+  * Remove module(): lib/open_editor.lua
+  * Remove module(): lib/follow_webmodule.lua
+  * Remove module(): lib/formfiller_webmodule.lua
+  * Remove module(): lib/bookmarks.lua
+  * Remove module(): lib/bookmarks_chrome.lua
+  * Remove module(): lib/adblock.lua
+  * Remove module(): lib/downloads.lua
+  * Remove module(): lib/error_page.lua
+  * Remove module(): lib/formfiller.lua
+  * Remove module(): lib/styles.lua
+  * Remove module(): lib/chrome.lua
+  * Remove module(): lib/quickmarks.lua
+  * Remove module(): lib/adblock_chrome.lua
+  * Remove module(): lib/userscripts.lua
+  * Remove module(): lib/history_chrome.lua
+  * Remove module(): lib/follow.lua
+  * Remove module(): lib/introspector.lua
+  * Remove module(): lib/mixed_content.lua
+  * Remove module(): lib/noscript.lua
+  * Remove module(): lib/editor.lua
+  * Remove module(): lib/history.lua
+  * Remove module(): lib/completion.lua
+  * Fix trashing of global namespace
+  * Fix bug in URI __add operation
+  * Fix override of argument name
+  * Cosmetic fixes and general tidying
+  * Implement missing menu delete-at-index functionality
+  * Remove global variable taborder
+  * Fix more global namespace trashing
+  * Add missing modeline
+  * Allow modification of lousy uri port
+  * Add some tests for lousy lib
+  * Add test for header file include guards
+  * Fix header file include guard formats
+  * Improve test_source_format output
+  * Deprecate broken cookie libraries
+  * Remove broken proxy module from default config
+  * WIP: Add IPC lua class
+  * Enable IPC lua class
+  * Implement old IPC API with IPC channels
+  * Keep required web modules in non-weak array
+  * Remove clunky ui_process() interface
+  * web_module class -> require_web_module() lib
+  * Rename *_webmodule.lua -> *_wm.lua
+  * Add Lua fixups to web process
+  * Check for errors when loading web modules
+  * Split page element selection into select_wm.lua
+  * Don't emit signals on nil IPC channels
+  * noscript: enable JS/plugins on file://
+  * Add lousy.util.table.filter_array()
+  * Make equal DOM documents equal in Lua
+  * select_wm: support selecting from list of elements
+  * select_wm: remove bad assertion
+  * select_wm: support nil hint_pat / text_pat
+  * formfiller: refactor to use visual selection
+  * adblock: make paths in log messages consistent
+  * Add luakit.so as run-tests dependency
+  * Add buildopts.h
+  * Add test for use of globalconf in common/
+  * Lua idle_add: remove globalconf access
+  * follow: Fix some UI bugs
+    - The hint selection UI now closes after a hint is selected
+    - In persistent mode, the input is reset after a hint is activated
+  * select: merge multiple client rects
+  * Move Lua error messages before stack traces
+  * msg: pre-convert non-numerical arguments to strings
+  * Fix luaH_deprecate()
+  * Remove globalconf from web process
+  * Remove common/signal.h from globalconf.h includes
+  * Update luakit.doxygen
+  * Add workaround for #189
+  * Add window and webview init signals
+  * webview: warn on unknown property get/set
+  * Remove some accesses of old view properties
+  * Remove broken domain_props user_stylesheet_uri stuff
+  * Move progress widget into lib/widget/progress.lua
+  * Move ssl widget into lib/widget/ssl.lua
+  * Move scroll widget into lib/widget/scroll.lua
+  * Move uri widget into lib/widget/uri.lua
+  * Move hist widget into lib/widget/hist.lua
+  * Move buf widget into lib/widget/buf.lua
+  * Move tabi widget into lib/widget/tabi.lua
+  * Restore default widget order
+  * How have I not noticed this typo yet!?
+  * Remove useless code from buffer widget
+  * Add editable, is_playing_audio properties to webview
+  * Add me to AUTHORS file
+  * Update AUTHORs links and text
+  * Add test for header comment format
+  * Fix up header comments
+  * Remove 'accessing undefined variable' warning
+  * Make add_binds, add_cmds, menu_binds non-global
+  * Remove unused arguments in lib/viewpdf.lua
+  * Remove unused argument in lib/webinspector.lua
+  * Make new_mode, get_mode, get_modes non-global
+  * Remove unused argument in lib/userscripts.lua
+  * Remove unused argument in lib/undoclose.lua
+  * Remove shadowing in lib/taborder.lua
+  * Clean up lib/session.lua
+  * Clean up lib/select_wm.lua
+  * Remove unused variables in lib/search.lua
+  * Remove some more unused variables
+  * Clean up adblocking a little
+  * Remove unused function
+  * Remove some more unused variable
+  * Fix bookmarks update signal
+  * Clean up lib/bookmarks_chrome.lua a little
+  * Remove outdated stuff from globals.lua
+  * Clean up lib/adblock.lua
+  * Make globals, search_engines, domain_props non-global
+  * Make theme non-global
+  * Remove shadowed variables
+  * Clean up config/window.lua
+  * Clean up config/webview.lua
+  * Clean up config/binds.lua
+  * Clean up config/config.lua
+  * Add luacheck test
+  * Move file finder to tests.util module
+  * Add test for Lua header comment
+  * Add format_file_errors() test helper
+  * Update lib/ header comments for new format
+  * Switch to LDoc
+  * tests: Factor out get_first_paragraph_of_file()
+  * tests: Improve format_file_errors() output
+  * tests: Clean up code a little
+  * Mark most web modules as submodules
+  * tests: test that modules use _M as module table
+  * Use _M in lib modules
+  * Remove lib/proxy.lua from luacheck excludes
+  * tests: add test for Lua vim modeline
+  * Add missing Lua modelines
+  * Fix documentation of lousy.util
+  * Move documentation stuff into doc/
+  * Fix AUTHORS grammar
+  * doc: Add 00-authors.md
+  * Fix config.ld formatting
+  * Add common/clib to LDoc
+  * doc: Document ipc library
+  * fixup-a0952404
+  * doc: Document common portion of luakit library
+  * doc: Document msg library
+  * doc: Document soup library
+  * doc: Document select_wm module
+  * Update Makefile and gitignore for docs
+  * Prettier docs
+  * Thin tests/util.lua deps
+  * Add tests.util.spawn()
+  * Add new testing script
+  * Move async tests to tests/async/
+  * Improve error message on test timeout
+  * Use Xvfb instead of Xephyr
+  * Move style tests into tests/style/
+  * Migrate luacheck tests to new testing system
+  * Add legacy tests
+  * Update makefile for new testing system
+  * tests: Collect lines from child processes
+  * tests: Improve test report appearance
+  * tests: Clean up tests/util.lua
+  * tests: add tests/lib.lua
+  * Tests: clean up test warnings
+  * tests: Add non-legacy tests to luacheck test
+  * tests: add test.wait_for_signal()
+  * tests: Move test_common.lua to tests/style/
+  * tests: fix logging indentation
+  * tests: add 'run' status line, fix async printing
+  * tests: Add test for tabs in indentation
+  * Remove tabs from indentation
+  * tests: Add test for trailing whitespace
+  * Remove trailing whitespace
+  * styles: Add warning about broken user_stylesheet_uri
+  * tests: Add test directory, child process autocleanup
+  * Make webview local within config/rc.lua
+  * tests: Add static HTTP server for tests
+  * tests: Clean up test_about_blank_loads_successfully
+  * tests: Add quick hack to shut GStreamer up, ugh
+  * Clean up socket file at program exit
+  * Fix variable rename snafu
+  * Clear input buffer when no keybindings are possible
+  * Add luaH_check_dom_element() helper
+  * dom_element: Fix style bugs, missing break statements
+  * formfiller: always click submit input if it has onclick()
+  * dom_element: Don't error out when removing dead elements
+  * widgets: Add drawing area widget
+  * fixup! dom_element: Fix style bugs, missing break statements
+  * Add luaH_check_dom_document() helper
+  * More style fixes
+  * Add luaH_check_page() helper
+  * Fix web process connection race condition.
+    Previously, the socket file was created and removed with each connection
+    from a web process. This caused web processes to abort on startup when
+    they attempted to connect to a socket which wasn't present on disk. This
+    resulted in tabs occasionally failing to load.
+    Now, a single socket is opened and kept open for the duration of the
+    program.
+  * Add format attribute to logging functions
+  * Improve session save/load interface
+  * Add w:can_quit() helper
+  * make :wq command close all windows
+  * Call w:can_quit() before force-restarting browser
+  * Rename IPC stuff: msg.c -> ipc.c, etc
+  * Fix numeric keybind prefixes not working
+  * Reopen tabs in correct position after restart
+  * Fix errors when closing windows with multiple tabs
+  * Fix malformed documentation comment
+  * tests: Add test for function documentation
+  * tests: Fix async test output indentation
+  * docs: Improve adblock documentation
+  * docs: Improve bookmarks documentation
+  * docs: Improve downloads documentation
+  * docs: Improve history documentation
+  * docs: Improve lousy library documentation
+  * docs: add some chrome documentation
+  * docs: Add/improve a lot of misc documentation
+  * docs: Fix formfiller documentation format
+  * docs: Fix luakit documentation format
+  * tests: Add test that config/rc.lua loads
+  * Move webgl config to globals.lua
+  * Remove external uses of webview.init_funcs
+  * Remove external uses of window.init_funcs
+  * Deprecate webview.init_funcs and window.init_funcs.
+    See https://github.com/aidanholm/luakit/issues/191 for rationale.
+  * Set webview location immediately on tab creation
+  * Remove useless case.
+    WebKit 2 does not support setting webview history, so this is useless.
+  * Undoclose: only store and resture with view URI
+  * Fix broken :adblock-reload command
+  * tests: Add test for lib/undoclose.lua
+  * tests: Fix overly specific patterns in test runner
+  * tests: Migrate tests/lunit/test_clib_luakit.lua
+  * tests: Migrate tests/lunit/test_clib_sqlite3.lua
+  * tests: Include test file name in output
+  * tests: Migrate tests/lunit/test_lib_lousy_uri.lua
+  * tests: Migrate tests/lunit/test_lib_lousy_util.lua
+  * tests: remove lunit
+  * tests: Add check for luassert
+  * Fix bin.child always returning self
+  * tests: Fail testcase when file load fails
+  * undoclose: Fix tab session not being restored
+  * webview: Make view source less crashy
+  * widgets: Prevent creation of widgets with no type
+  * docs: Fix innacuracy in lib/editor.lua docs
+  * adblock: Don't break config if subscriptions file is missing
+  * styles: Change print -> msg.info
+  * Revert "adblock: Don't break config if subscriptions file is missing"
+    This reverts commit ed135b7d0958ae757a061b62e8ce3df0452bc287.
+  * Adblock: Fix connecting to wrong signal
+  * adblock: Don't break config if subscriptions file is missing
+  * Rename introspector.lua -> help_chrome.lua
+  * tests: Error out when loading test chunk fails
+  * tests: Remove test.fail()
+  * tests: Reorganize tests.lib and tests.util
+  * tests: Unify test file loading
+  * tests: Ensure a window is opened when running testcase
+  * tests: Ensure every module loads without errors
+  * Prevent segfault when collecting invalid widget
+  * tests: Overwrite LOAD status lines
+  * tests: Add basic interrupt handler
+  * tests: Allow specifying tests on command line
+  * tests: Spruce up find_files()
+  * tests: Redirect print() to log_test_output()
+    Fixes erroneously overwriting the previous status line that is actually
+    test output.
+  * tests: Clear up find_files() usage
+  * tests: Add error reporting to spawn()
+  * tests: add shebang to run_test.lua
+  * log: Add error logging level
+  * log: Clean up convenience macros
+  * log: Change line param from int to string
+  * log: funnel GLib logs through luakit log system
+  * log: improve lua error messages
+  * undolist: escape markup in menu
+  * adblock: Handle new filter files correctly
+  * adblock: Enable new filter lists by default
+  * msg: Fix off-by-one in argument conversion
+  * tests: Allow tests to run with non-LuaJIT builds
+  * widgets: Add bg property to label
+  * widgets: force lua error on invalid color
+  * log: indent lines in multiline log entries
+  * Update ssl widget only when necessary
+  * Remove outdated code
+  * Break domain_props out into its own module
+  * lib: Add lousy.util.lua_escape()
+  * docs: Add lousy.util.sql_escape() to docs
+  * formfiller: remove JS -> Lua pattern conversion hack
+  * formfiller: Fix documentation
+  * formfiller: add autofill feature
+  * formfiller: Fix documentation format
+  * widgets: add resize signal
+  * Add image_css.lua
+  * tablist: fix tab margins
+  * Add global struct 'common'
+  * Fix idle callbacks not always called on main Lua thread
+  * tests: refactor a little
+  * tests: Add wait() and continue()
+  * tests: Add default timeout
+  * tests: add wait_for_view() helper
+  * tests: simple refactor
+  * tests: Clarify assertion text
+  * tests: Adjust error censoring levels
+  * Refactor webview uri scheme error handling
+  * Add mimetype to webview uri scheme
+  * Fix viewing data streams with embedded zeroes
+  * tests: Add delay() and wait_until()
+  * tests: refactor test_http_server_returns_file_contents
+  * docs: Add tests.lib documentation
+  * tests: Add test for page scrolling
+  * Add small status bar margins
+  * Fix clicking inputs sometimes not entering insert mode
+  * tests: Fix timeout being 1000x too long
+  * tests: Add mime-type to httpd
+  * tests: Add tracebacks
+  * tests: fix wrong URI in test
+  * tests: Bump up timeout on flaky test
+  * image_css: Make robust against rapid page nav spam
+  * tests: Bump webview loading timeout to 500ms.
+    Loading any URI with an empty WebKit cache seems to take ~250ms on
+    average, which causes tests to flake out. This should work around that.
+  * tests: Merge test_whitespace into test_source_format
+  * Fix scroll widget sometimes crashing web process.
+    Some websites monkey with the Object prototype, which can make all
+    objects have recursive sub-properties. The easy way to work around this
+    is to return the needed properties here as a string.
+  * Reorganize gitignore
+  * Add tags file to gitignore
+  * tests: warn about untracked files
+  * Change warn() to error()
+  * Remove call to luaH_dumpstack()
+  * Rename debug dumping functions to luaH_dump_*
+  * Add missing ANSI color #defines
+  * Add nicer traceback function
+  * Use nice traceback in error logging
+  * Move Lua-GObject ref binding stuff
+  * Use nice traceback in luaH_dump_traceback()
+  * Bump up font size by default
+  * Remove slice alloc from Lua-GObject binding
+  * Refactor luaH_loadrc()
+  * Minor code tidy
+  * Refactor of Lua initialization
+  * Make function static
+  * Validate application names
+  * Don't raise error if application already registered
+  * Recreate Lua state when config fails to load
+  * Error when getting/setting unknown webview prop
+  * Revamp domain_props
+  * Clean up :lua error display
+  * Add trim() to select mode label makers
+  * Sanitize argv as soon as possible
+  * image_css: Fix occasional image clipping
+    - CSS needs to be updated when zoom level changes
+    - CSS needs to be updated on resize; current view only
+    - Update when switching to view, because resize callback only continues
+      on current views.
+  * Fix style issues in lib/select_wm.lua
+  * Handle empty output in luaH_traceback()
+  * Adjust traceback in Lua error handler
+  * Manually navigate on luakit:// -> file:// link clicks
+  * select_wm: Fix code style issue
+  * select_wm: Fix hint labels being trimmed to nothing
+  * webview: Tidy up URI scheme request error handling
+  * Remove useless cast
+  * Remove old WK1->WK2 explanatory comments
+  * Remove unused signal_t from webview class
+  * Remove unused gulong from webview class
+  * Make timer usable from web extension
+  * docs: Fix grammar
+  * docs: Document timer class
+  * Fix tab widgets not being destroyed correctly
+  * Fix error page click signal handling
+  * Remove DOM location href getter
+  * Remove HTML media element src getter
+  * tests: Remove most of the newproxy hacks
+  * tests: Set non-zero exit status on test failure
+  * Update lib/proxy.lua a little
+  * Add missing soup.proxy_uri API
+  * Clean up error page markup
+  * Support multiple lines in error page info
+  * Add proxy info on error pages
+  * Add proxy manager back to config/rc.lua
+  * Fix broken build on WebKitGTK 2.14
+  * proxy: notify if webkit too old
+  * Error page: fix breakage with a nil message
+  * error page: move IPC call to the right place
+  * error_page: fix errors on refresh mashing
+  * error page: add comments to unintuitive part
+  * Correctly check for destroyed widget use
+  * Add check for widget destruction
+  * Fix keybinds sometimes being ignored
+  * Update default home page to fork website
+  * Replace instances of luakit.org
+  * Remove useless code
+    __index is only ever called for keys not present in the table; so this
+    code is useless.
+  * Move find_files() to build-utils
+  * docs: Add new docgen scripts
+  * docs: convert @table to @field entries
+  * doc: Misc. minor documentation improvements
+  * docs: Add documentation for page class
+  * docs: Add documentation for timer class
+  * docs: Add documentation for extension class
+  * docs: Add documentation for widget.webview class
+  * docs: Move C doc comments to doc/luadoc/
+  * docs: Add simple macro system
+  * docs: Add some availability notes
+  * docs: Remove LDoc
+  * docs: Don't escape entities in <code><pre> blocks
+  * docs: add Authors page
+  * Refactor docgen
+  * Fix find_files() treating dir names as patterns
+  * tests: Run luacheck on build-utils/
+  * Make generated markup slightly less atrocious
+  * Fix code style issues
+  * Include documentation in installation
+  * completion: restore correct input text
+  * tests: Add traceback to failing test output
+  * Remove deprecated cookie stuff
+  * Remove custom exit menu bindings
+  * docs: Fix up some issues
+  * Move bind_tostring into lousy.bind
+  * Add descriptions to menu binds
+  * Improve some documentation and bind descriptions
+  * Add missing descriptions for binds
+  * docs: Increase list margin
+  * tests: Ensure all bindings have descriptions
+  * docs: Include modes and binds in documentation
+  * docs: Update easylist website URI
+  * docs: Improve visual design
+  * docs: Minor cleanup
+  * Properly unescape binding strings
+  * Remove code duplication
+  * Fix segfault on startup
+  * Add newtab chrome page
+  * Add newtab_chrome to config/rc.lua
+  * newtab_chrome: Add title to new tab page
+  * Remove w.has_blank hack
+  * Open new tab page by default in a few places
+  * Don't remember new tab page in undoclose
+  * docs: Improve newtab_chrome documentation
+  * docs; Add some type annotations
+  * Fix :tabduplicate and gy binding
+  * Remove commented code
+  * Add workaround for webkit bug
+  * Use correct Lua string syntax for HTML
+  * Fix images sometimes being clipped.
+    Specifically; when user clicked to zoom in on an image taller than the
+    viewport while the image was still loading, previously it would be
+    clipped until the user zoomed out again.
+  * follow: refactor click follow action
+  * follow: handle <a target=_blank> correctly
+  * Fix status code mixup
+  * run_cmd: don't add to mode history
+  * tab: Always use monospace for tab number
+  * tabs: Align tab numbers with vertical tabs
+  * Fix build depending on DEVELOPMENT_PATHS=1
+  * docs: require() included markdown, not system markdown
+  * tests: Add string.wlen to known globals
+  * style: Fix overly long lines
+  * tests: Print debug info for view load failure
+  * Fix various memory leaks
+  * Add support for custom URI schemes
+  * Add checks that webview is in window, where needed
+  * noscript: Improve noscript indicator.
+    Now uses cached state for each view, reducing lookup_domain() hits.
+  * Move luakit:// check to chrome.lua
+  * Add error handling to IPC recv handler
+  * Fix dispatching messages twice (#259)
+  * Use GOBJECT_TO_LUAKIT_WIDGET API
+  * run_cmd: prefix colon if missing
+  * ipc: return early if channel isn't ready for read
+  * Add PID to web process IPC name
+  * scheme-request: add wrapper class 'request'
+  * scheme-request: add request instance parameter
+  * tests: Fix tests not seeing files to check
+  * Fix make bailing out on package error
+  * Use correct Lua/LuaJIT binary for build scripts
+  * Add adblock to default config (#261)
+  * Simplify blank class object creation
+  * Prevent segfault on stale instance accesses (#263)
+  * tests: fix error when XDG_CACHE_HOME not set
+  * Fix segfault on race when freeing objects
+  * proxy: add a few improvements.
+    Isolate menu row colors
+    Add menu entry for system proxy
+    Allow setting no proxy
+    Fix :proxy command description and error text
+    Fix notification when using system proxy
+  * scheme-request: Fix race between Lua GC and WebKit (#261)
+  * Hide spurious error message on tab close
+  * binds: fix broken :dump command
+  * Strip redundant short_src from luaL_error() message
+  * Fix luaH_traceback() on Lua stack overflow (#270)
+  * Free webkit stylesheets on GC
+  * Add regex class (#268)
+  * Add new stylesheet parser
+  * Factor out update_stylesheet_applications()
+  * Fix domain matching for new format
+  * Switch to new format, add old format handling
+  * styles: Apply new styles immediately on styles_toggle()
+  * Ensure custom schemes conform to RFC 3986 (#273)
+  * soup: Improve URI parsing, add tests
+  * styles: correctly handle custom schemes
+  * Emit 'destroy' signal for all widget types (#275)
+  * Add checks for destroyed widget use (#276)
+  * undoclose: fix access of destroyed webview (#274)
+  * webview: add hack to prevent segfault
+  * Refactor widget destructor system (#271)
+  * undoclose: add signal for tab save decisions
+  * downloads: auto-close about:blank tabs (#277)
+  * Fix w.view not updated on tab switch (#278)
+  * Reexec luakit on config failure.
+    Loading a config file can fail at any point, leaving luakit in a messy
+    state. Rather than try to clean up the application state, we just reexec
+    luakit, which is simple and robust.
+  * Revert "Recreate Lua state when config fails to load"
+    This reverts commit abaedee147a3c07c383caf889196424f4aca5fc9.
+  * fixup! Reexec luakit on config failure
+  * Don't delete session file if config load fails
+  * restart: check current config for syntax errors
+  * theme: add menu row state colors
+  * styles: Add initial implementation of menu
+  * styles: persist stylesheet state into DB
+  * styles-menu: indicate active styles
+  * styles: refactor menu updating a little
+  * styles: add edit-stylesheet menu binding
+  * menu: remove required ncols state from rows
+  * styles: more refactoring
+  * error_page: require use of custom URI schemes.
+    External use of show_error_page() now requires a request object, which
+    requires use of a custom scheme. This change is used because the
+    alternative would be to completely replace the currently loaded page,
+    which seems impossible without mangling the view history.
+  * webview: add go-back-forward signal
+  * error_page: correctly intercept enable- signals
+  * styles: fix parsing of stylesheets with global rules
+  * styles: add 'Affects' column to styles-list
+  * webview: add modify_load_block() API (#285)
+    This API allows Lua modules to add/remove named blocks from a webview.
+    If a webview is blocked, it will queue navigations (only those via
+    webview.set_location() and whatever calls that) and dispatch them later.
+    The view URI will appear to update immediately, however, due to some
+    metatable trickery that'd be nice to remove.
+  * session: load restored tabs ony after focus (#115)
+  * webview: emit property::uri when set_location blocked
+  * Refactor, fix JS handling
+  * Add {webview,extension}.web_process_id API
+  * adblock: block pages until rules loaded
+  * Fix #286
+  * adblock: reduce IPC calls
+  * adblock: remove unused IPC emission
+  * adblock: remove adblock.state()
+  * adblock: make adblock.enabled writeable
+  * help_chrome: add luakit chrome header bar
+  * Clean up global variables
+  * Remove lualib_dofunction_on_error() (#290)
+  * Move luah.h helpers to common/luah.h
+  * Move common/clib/soup to clib/soup (#291)
+  * soup.proxy_uri: fix segfault, add tests
+  * Add soup.accept_policy
+  * Add soup.cookies_storage
+  * Split soup library into UI, Web, and shared parts
+  * Fix views being perpetually blocked (#294)
+  * Remove globalconf.L and extension.WL (#296)
+  * Use pretty traceback for debug.traceback()
+  * docs: render more annotations, improve markup (#303)
+  * docs: improve adblock docs
+  * Add page.document (#254)
+  * docs: add @deprecated (#304)
+  * adblock: add @deprecated annotations
+  * Move extension clib into luakit (#288)
+  * Strip colors from debug.traceback() (#305)
+  * Rename local WL -> L
+  * Fix debug.traceback() when inspecting a thread
+  * Replace ',,,' with ellipsis
+  * Add private webkit web context
+  * webview: retrieve private constructor param
+  * Add hooks to private web context
+  * webview: add view.private property
+  * Add lua_State param to widget constructor.
+    This is necessary to retrieve the widget property table if the caller is
+    a coroutine.
+  * tests: Add test for webview privacy
+  * history: don't save history for private tabs
+  * Add options table to w:new_tab()
+  * Don't save private tabs in session
+  * Don't save private tabs in undoclose list
+  * Allow private tab creation from w:new_tab()
+  * Fix binds for hyphenated commands (#308)
+  * binds: Add priv-tabopen command
+  * Make private tabs purple
+  * Ensure sub-tabs of private tabs are private
+  * Add compile-time check for old webkit
+  * Add language globs to .gitattributes
+  * Make global variable static
+  * Make C and Lua emit_signal() behavior consistent (#313)
+  * Fix error message grammar
+  * ipc: add function serialization support (#314)
+  * ipc: fix segfault if no endpoints are loaded (#322)
+  * select: Add label_maker property (#315)
+  * Move docs into single directory ../doc/
+  * chrome: revamp chrome CSS and pages
+  * Move help_chrome -> introspector_chrome
+  * docs: add index to auto-generated documentation (#311)
+  * Add help chrome page
+  * select: fix label_maker being erased
+  * Add tests.util clib, remove posix.mkdtemp use
+  * Add test.util.spawn_async()
+  * Add test.util.getenv()
+  * Add test.util.kill()
+  * Improve tests interrupt handler
+  * Fix major bustage on WebKit 2.14 (#329)
+  * widget: make creation signal actually useful
+  * tests: replace httpd with custom URI scheme (#319)
+  * Fix install failure (#331)
+  * makefile: add default target
+  * Add documentation on running tests (#321)
+  * Fix luakit://help/doc/ not showing
+  * Makefile: include documentation index.html in installation
+  * help_chrome: improve error output
+  * help_chrome: Use luakit.dev_paths to determine doc dir
+  * help_chrome: indicate loaded modules
+  * request: add finished property (#332)
+  * chrome: allow finishing chrome pages with an error page
+  * help_chrome: show error page on failure
+  * Fix incorrect chrome page header z-index (#336)
+  * docs: add builtin macro (#335)
+  * lousy.signal: collect handlers prior to emission (#333)
+  * docs: add xdg documentation (#235)
+  * docs: move old extension docs to luakit page
+  * Fix warning text
+  * docs: finish documenting page module (#235)
+  * docs: make page header for classes say 'Class Foo'
+  * docs: add docs for sqlite3 class (#235)
+  * docs: improve docgen error handling
+  * docs: indicate optional parameters (#338)
+  * docs: ensure fields are marked readonly or readwrite (#340)
+  * Improve private browsing implementation
+  * Add window build signal
+  * Move sbar widgets to lib/lousy/widget
+  * Move webview.window() -> window.ancestor()
+  * Add sbar widgets from window build signal
+  * Remove webview:favicon()
+  * widget: add API for customizing tab label (#345)
+  * go_input: don't focus file inputs (#346)
+  * widgets: add build signal to tab
+  * widgets: add image:set_favicon_for_uri()
+  * Add missing annotations
+  * bookmarks_chrome: add pagination UI (#347)
+  * Fix not pushing error message on Lua JS call fail (#348)
+  * Don't assume loaded document is HTML (#349)
+  * ipc: fix race causing corript messages
+  * Run Lua JS functions in web process
+  * Update chrome page JS
+  * Remove unused Lua JS function
+  * ipc: remove message queue
+  * config_wm: don't assume anchors have href attribute
+  * Fix inverted boolean return code for signals (#351)
+  * Make gy binding create private tab when appropriate (#355)
+  * luajs: fix js calls in background tabs
+  * ipc: use queue instead of byte array for message queue
+  * Fix non-generic paths in Makefile (#370)
+  * image: add HiDPI support (#376)
+  * Add resources/ directory (#377)
+  * image: don't log error if favicon not found
+  * image: convert relative paths to install dir
+  * Add tab favicons
+  * Fix signals being emitted for dead tab widget
+  * Fix use-after-free of destroyed widgets (#381, #382)
+    Some widget wrappers were not connecting to the "destroy" signal.
+    Some widget wrappers connected to some signals in LUAKIT_WIDGET_SIGNAL_COMMON,
+    but not all of them; not sure why.
+  * Add destroy signal for page, dom_document, dom_element (#390)
+  * image_css: remove handler on page destruction
+  * tab_favicons: remove signal handlers on tab destruction
+  * Add missing metatable methods to DOM wrappers
+  * select: Fix destroyed element accesses (#356)
+  * Move process_limit=0 to start of config.rc
+  * config.rc: Add view_source
+  * Reimplement view-source as uri-scheme
+  * Fix insert mode not being entered on input click (#391)
+  * Fix not being able to install luakit
+  * Disable link-time optimization.
+    LTO mangles stack traces, and profiling indicates that almost all CPU
+    time is spent within WebKit code.
+  * select: add overlay as child of <html>
+    Prevents body CSS positioning interfering with overlay.
+    A better solution would be to draw the overlay via GTK.
+  * image: fix race condition when setting image
+  * Fix property::uri emitted for nil URI
+  * Fix blank favicon after click on link with fragment URI (#398)
+  * Add website data fetch API
+  * tests: add error condition testing for website_data:fetch()
+  * noscript: improve webview update method.
+    Previous method had issues with downloads being initiated in current
+    tab. This method should also reduce the frequency of updates.
+  * Remove 'require lfs' from config/rc.lua
+  * Remove bug notice
+  * docs: add documentation to follow.lua
+  * window: fix initial window focus
+  * Add automatic w variable to :lua command
+  * Fix contributor emails
+  * tablist: remove signal handlers on destroy()
+  * vertitabs: move to lib/vertical_tabs.lua
+  * Fix follow.pattern_styles.match_label
+  * ipc: enable SO_REUSEADDR on IPC socket
+  * xdg: add system_data_dirs, system_config_dirs
+  * xdg: ensure all paths have no trailing slash
+  * find_config(): fix assumption of /etc/xdg/ dir
+  * Don't reexec luakit when config file not found
+  * find_config(): fix wrong search directory
+  * build: add options for system paths
+  * docs: improve css
+  * Revert "Remove 'require lfs' from config/rc.lua"
+    This reverts commit 07600a5e73ec2bee2cbc732fbb980b23f9cc1a62.
+    Reverted because
+     - lfs uses module()
+     - unique instance code in config/rc.lua requires lfs
+  * build: remove old WITH_WEBKIT2 from CPPFLAGS
+  * Silence maybe-uninitialized warning
+  * Update luaL_reg -> luaL_Reg
+  * luajs: pre-initialize callback class wrappers
+  * docs: Add docs for domain_props
+  * Simplify search_open()
+  * Allow defining search engines with functions (#396)
+  * Change search engine handler signature (#396)
+  * Fix documentation build deps (#394)
+  * Remove extra COPYING file
+  * Move PATCHES -> CONTRIBUTING.md, add more stuff
+  * Fix formatting
+  * JS: don't include source in evaluated scripts.
+    Prevents appearance in the web inspector debugger tab.
+  * follow: strip mailto: when yanking email links
+  * Allow setting luakit as default browser for GNOME
+  * Fix crash when cancelling downloads
+  * Add changelog for July 2017 release
+  * Remove deprecated APIs
+  * Update website mentions
+  * Set a sensible default process limit
+  * Make view.source API asynchronous
+  * Remove outdated mixed_content.lua module
+  * Use Lua yield wrapper for website data fetch API
+  * Fix API documentation chrome page header size
+  * Fix license formatting in authors page
+  * Fix API documentation index CSS
+  * help_chrome: add version number to page header
+  * introspector: fix page header text
+  * help_chrome: update CSS
+  * Fix release date in changelog
+  * Add missing request class methods
+  * Silence spurious warnings when building with clang
+  * Improve webview crash() implementation
+  * Add luakit.website_data:remove() API
+  * Use yield wrapper for website_data.fetch()
+  * Make website_data APIs use . instead of :
+  * Fix website_data.fetch() error reporting
+  * Add luaH_resume wrapper with error logging
+  * Add website_data API tests
+  * Fix assertion when website_data.remove() is a no-op
+  * Generate modes+binds documentation at page load
+  * Improve documentation page style
+  * Improve error handling in documentation chrome
+  * Remove luakit from doc dependencies
+  * Hide 'Return to Index' button on index page
+  * Update user_stylesheet_uri warning text
+  * Fix README.md URI
+  * Remove README section about defunct mailing list
+  * Remove README.md fork text
+  * Use named chunk for :lua command
+  * Add NO_HANDLER decls to extension IPC
+  * Fix download list not updating
+  * Update xdg docs
+  * docs: add pagination
+  * docs: document adblock_chrome
+  * docs: add bookmarks documentation
+  * docs: add more new documentation
+  * Add luaH_push_gerror()
+  * Add luakit GError domain
+  * Use error table for load-failed signal.
+    This fixes issues switching on strings when the language is not English
+    https://github.com/aidanholm/luakit/issues/404
+  * Reduce error page warning spam
+  * Add luaH_push_strv(), luaH_checkstrv()
+  * Add spell checking API
+  * Automatically detect spell checking language
+  * Warn about unrecognized spell checking language codes
+  * Add spell checking API documentation
+  * Remove unused header
+  * Move webview:allow_certificate() -> luakit.allow_certificate()
+  * select_wm: fix use of stale page object on page close
+  * luajs: add check for stale promise
+  * docs: remove available:both macro
+  * Ensure default cookie policy is set
+  * Remove possible g_strjoinv() on null pointer
+  * luajs: fix crash on luakit:// pages when using CC=clang
+  * Fix :styles-list error with no styles/ directory
+  * Fix socket widget signal nargs
+  * Don't delete socket widget on disconnect
+  * Remove deprecated dom_document() constructor
+  * Exclude lib/lousy/init.lua from documentation
+  * Reorganize lousy.widget documentation pages
+  * Fix up some formatting issues
+  * Fix select_wm documentation
+  * Minor documentation formatting fixes
+  * Fix luakit module documentation
+  * Fix up missing types in docs
+  * Add missing documentation to all modules
+  * documentation: add __call function special case
+  * Add more missing documentation
+  * Add missing documentation
+  * Fix some docgen infinite loops
+  * Add test for documentation
+  * fixup! Add missing documentation
+  * Add customization options to hist widget
+  * Fix image_wm.lua keeping stale reference
+    page objects are only destroyed when the tab is closed, not when the tab
+    has been switched.
+  * Fix view.zoom_level doing nothing after view crash
+  * Fix domain_props setting props twice for local files
+  * luaH_yield: add protection against external resumes.
+    Async APIs work by suspending the calling coroutine and resuming it when
+    a result is ready. This change ensures that if the yield wrapper is
+    resumed ahead of time, by an external coroutine, it does not return the
+    value received, but continues to wait for the correct result.
+  * Add assertions that async coroutine is yielded
+  * Amp up garbage collection on flaky test
+  * Fix up minor documentation formatting issues
+  * Improve widget subtype documentation names
+  * Add doc build scripts as build deps
+  * Add luakit:// to markdown auto-links
+  * go_next_prev: match elements against regexes in order
+  * Update changelog for July 2017 release
+  * Replace git_files() with luakit_files()
+  * Revert "Replace git_files() with luakit_files()"
+    Reverted due to issues on BSD
+    This reverts commit 969dc36d3a72c684b5e6fa6f8e4075cb486e166c.
+  * Replace git_files() with luakit_files()
+  * Remove source of randomness in build
+  * Fix memory leak in view:eval_js()
+  * Free enqueued messages on never-connected endpoints
+  * eval_js: avoid memory leak on IPC endpoint close
+    https://github.com/luakit/luakit/issues/362
+  * tab-favicons: Use JS to get luakit:// favicon URI
+  * Add new error page favicons
+  * Slightly improve default tab icons
+  * Update changelog
+  * Changelog formatting fixes
+  * Add unreleased section to changelog
+  * docs: fix broken code blocks without lxsh
+  * Remove capi wrapper tables
+  * Add dummy <li>s to docs index to ensure alignment
+  * Fix documentation build deps
+  * Improve reusability of documentation CSS
+  * Document luakit.spawn callback parameter
+  * Make DEVELOPMENT_PATHS=0 by default
+  * log: print C file instead of function name
+  * Add log group level hash table
+  * Implement log level hierarchy
+  * Add log level option parsing
+  * fixup! Implement log level hierarchy
+  * Show log group in output instead of file
+  * Add changelog entry
+  * Clean up some log messages
+  * Add @callback to documentation
+  * Document some callback types
+  * Add ability to @ref documentation items
+  * Add @ref{} to existing documentation
+  * Fix abort on signal emission from .h file
+  * Add ignore button to adblock-blocked page
+  * Improve message formatting
+  * Add missing changelog entry
+  * luaserialize: serialize function upvalues
+  * Fix runaway serialization, add changelog entry
+  * webview: improve search performance
+  * Add changelog entry
+  * Remove support for WebKitGTK+ < 2.16
+  * Add history.frozen API
+  * Freeze history while showing error pages
+  * Improve adblock and styles logging
+  * Fix broken function upvalue serializing
+  * docs: move wiki content to docs (#382)
+  * config: require everything to local scope (#383)
+  * Fix inaccurate documentation
+  * config/binds: Add optional count to URI inc/dec
+  * Re-enable check for accidental DEVELOPMENT_PATHS
+  * ipc: move socket to a random file in /tmp/
+  * Fix lousy.util.table.join merge order
+  * Add more missing changelog entries
+  * Add zoom level widget
+  * Revert "ipc: move socket to a random file in /tmp/"
+    Broken on non-linux systems.
+    This reverts commit dfffd5aeca467c6ca40ae5305aff68969672346b.
+  * ipc: move socket to a random file in /tmp/; take two.
+    Now uses a condition variable to avoid cross-thread mutex bustage
+  * docs: Add ability to change reference text
+  * Add log_string_from_level()
+  * Move UI-only log declarations to log.h
+  * Add msg 'log' signal
+  * Add log_chrome.lua
+  * Fix installation prefixes appearing in log groups (#396)
+  * log_chrome: Fix rendering of dynamically-added multi-line messages
+  * Fix stripping of incorrect prefix
+  * Tidy code
+  * ipc: support webview id as dest parameter in wm:emit_signal()
+  * Fix buildopts.h breaking installation
+  * Fix copy-paste bug in log_chrome docs
+  * Fix documentation formatting
+  * log_chrome: add error/warning status bar widget
+  * log_chrome: add click-to-dismiss to status bar widget
+  * log_chrome: add tooltip text to status bar widget
+  * log_chrome: open luakit://log/ tab on widget click
+  * Add lua error/warning widget by default
+  * widget: add is_alive property
+  * Work around zoom_level breaking image_css (#387)
+  * image_css: Fix error on zoom in/out
+  * Add more missing changelog entries
+  * Revert "Fixing the IPC socket truncation"
+    This reverts commit e7baf1c19adc839dfd989b1304ce5f69ab0c76bb.
+  * docs: improve doc page filenames
+  * Add migration guide (#339)
+  * Fix GLib assertions when checking config syntax
+  * Remove dead code
+  * Add styles usage to migration guide, docs
+  * migration guide: minor improvement
+  * lua package paths: search in lib/ before user config
+  * lousy.bind: use strings as binding triggers
+  * Sort key modifiers before comparison
+  * Convert config/binds.lua to new format
+  * add_cmds: add check for incorrect format
+  * Convert library bindings
+  * Move modes and binds to lib/
+  * completion: support new binds format
+  * help_chrome: support new binds format
+  * introspector_chrome: support new binds format
+  * tests: update bind description test
+  * Fix use of old function parameters in bindings
+  * Silently replace bindings, add API for binding unmap
+  * Add basic bind matching test
+  * Add luakit.wch_upper, luakit.wch_lower
+  * Ignore capslock when matching binds
+  * modes.add_binds: ensure modes already exist
+  * Add docs, logging, modes.remove_binds()
+  * Correctly handle binding -
+  * Deduplicate code, ensure parsed mod string is sorted
+  * binds: Add some key aliases
+  * Use case-insensitive comparison for modifiers
+  * Check for incorrect modifier names
+  * Add separate modifier mapping table
+  * Update changelog with breaking changes
+  * docs: fix and extend modes documentation
+  * docs: switch to using mostly rems
+  * convert tabs -> spaces in style.css
+  * docs: unfix API docs chrome page header
+  * docs: remove authors from attribution
+  * docs: add loaded indicator to docs pages
+  * docs: break long example code line
+  * docs: remove redundant builtin docmacro
+  * docs: add blurb text to luakit lib
+  * fixup! docs: remove redundant builtin docmacro
+  * docs: convert fields to properties
+  * docs: break two-col list into single column
+  * docs: improve sidebar appearance
+  * docs: sort pages by filename
+  * docs: add FAQ
+  * docs: add note about init_funcs vs init signal
+  * fixup! docs: add FAQ
+  * fixup! fixup! docs: add FAQ
+  * docs: add quick-start guide
+  * docs: add more CSS refactorings
+  * docs: add CSS for keybinds and commands
+  * log_chrome: add :log command
+  * formfiller: tidy up doc formatting and indentation
+  * session: fix save bug with private tabs
+  * widget: add can_focus property
+  * Fix webview stealing focus on click
+  * completion: complete with format strings
+  * completion: activate immediately on <Return>
+  * completion: add group headings
+  * completion: automatically suggest URIs
+  * completion: unify input-changed handler
+  * completion: add uri (bookmarks+history) completion
+  * binds: add format strings
+  * Add changelog entry
+  * Block GTK's focus-changing keybinds
+  * modes: fix error parsing binds table entry
+  * binds: add check for invalid action table
+  * binds: add counts, convert to actions
+  * Add changelog entry
+  * follow: add site-specific quirks (#407)
+  * select: don't hint elements not currently visible
+  * tests: update tested files for bind description test
+  * log_chrome: don't access destroyed widgets
+  * widgets: add scroll -> button event conversion
+  * docs: make heading level context-dependent
+  * docs: Improve documentation on files and directories
+  * docs: add command to list Lua search paths
+  * Update changelog
+  * docs: workaround chrome rendering bug
+  * Fix quickmark bindings (#386)
+  * Update changelog for August 10 release
+
+  [ Ygrex ]
+  * add numpad keys to default config
+  * detect effective locale
+  * Fixed warnings reported by Clang scan-build-4.0
+    common/luaobject.c:312:46: warning: Access to field 'signals' results in a dereference of a null pointer (loaded from variable 'obj')
+        signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
+                                                 ^~~~~~~~~~~~
+    1 warning generated.
+    widgets/image.c:55:5: warning: Value stored to 'pixbuf' is never read
+        pixbuf = scaled_pixbuf;
+        ^        ~~~~~~~~~~~~~
+    1 warning generated.
+    extension/luajs.c:80:5: warning: Undefined or garbage value returned to caller
+        return ret;
+        ^~~~~~~~~~
+    1 warning generated.
+  * free display detection fixed
+    - do not try opening a socket
+    - look into /tmp/.X11-unix as well
+  * set reuseaddr on httpd socket in tests
+  * workaround for outdated posix module in tests
+  * Unit tests fixes.
+    Four unit-tests failures fixed:
+    1. test_module_binds_have_descriptions: Some bindings are missing descriptions
+    2. test_undo_close_works: Timed out while waiting for signal 'load-status'
+    3. test_undo_close_restores_tab_history: Expected objects to be equal
+    4. test_website_data: Timed out while waiting
+
+  [ donlzx ]
+  * Fix compilation with older Glib version.
+    Disable funnel GLib logs through luakit log system if Glib version is
+    lower than 2.50
+
+  [ loblik ]
+  * fix compilation with webkit version less than 2.16.0
+  * generate doc in build target
+
+  [ Grégory DAVID ]
+  * fixes aidanholm/luakit#358
+  * clean target rule now removes luakit.1.gz and luakit.so, then fixes #365
+  * install target rule depends now on the all target, then fixes #363
+    this complies with the Debian recommandations
+  * This fixes #368
+  * Revert "makefile: add default target"
+    See #359 for details that explain why the 'default' target is a nonsens as there is the 'all' target already existing.
+    This reverts commit ece896913e46069bb1d9b044d21d4b16824c34fb.
+  * Makefile 'default' target is deprecated. Use target 'all' as a replacement.
+    Keep 'default' target to ensure retro-compatibility, so let it sounds as .PHONY target
+  * Widely use 'install' commands instead of several and sparse commands like 'cp' or 'chmod'. This is to ensure homogenity and comply with Debian precepts.
+    This fixes #371
+  * Remove executability check on 'luakit.so' from 'ipc.c'
+    This fixes #384
+  * Debianization
+  * Adopt package
+
+  [ gleachkr ]
+  * Fix for #349.
+    This is a quick fix for #349. It also fixes some issue with this script on the google search-results page.
+    Update go_next_prev.lua
+    Deleted empty line
+  * remove unneeded requires
+  * refactor editor.lua to use substitution strings
+  * update changelog
+  * fix code style
+  * add callback to editor
+  * use editor.edit rather than luakit.spawn in editor
+  * remove urxvtc builtin, which won't work with a callback
+  * updated changelog
+  * Add method for extending formfiller dsl
+  * update changelog
+
+  [ Stefan Hagen ]
+  * FreeBSD socket cleanup workaround
+  * Fixing the IPC socket truncation
+  * Fix IPC socket truncation on FreeBSD (#402)
+
+  [ Zhong Jianxin ]
+  * Fix typo in globals.domain_props example
+  * Add missing `end` in formfiller.extend example
+  * Make formfiller work with non-default ports
+  * Really make formfiller work with non-default ports.
+    Port should be compared by number, not string
+
+  [ Aric Belsito ]
+  * Fix linker error when running tests
+
+ -- Grégory DAVID <groolot@groolot.net>  Sun, 11 Feb 2018 12:46:20 +0100
+
+luakit (2012.09.13-r1-8) unstable; urgency=medium
+
+  * QA upload.
+  * Repackage source without source-less jquery.min.js.
+  * Use libjs-jquery instead. Closes: #737435.
+
+ -- Víctor Cuadrado Juan <me@viccuad.me>  Tue, 08 Sep 2015 18:05:00 +0200
+
+luakit (2012.09.13-r1-7) unstable; urgency=medium
+
+  * QA upload.
+  * Change debian/patches/2012.09.13-r1-1.diff to use https on several
+    search engines allowing it.
+  * Add debian/patches/soup-ssl-strict-true.diff to not allow navigation
+    on sites with invalid/expired ssl certificates. Closes: #790324.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 03 Sep 2015 23:35:48 +0200
+
+luakit (2012.09.13-r1-6) unstable; urgency=medium
+
+  * QA upload.
+  * Tidy up debian/patches a little bit.
+  * Calculate md5sums in a deterministic way.
+
+ -- Santiago Vila <sanvila@debian.org>  Fri, 28 Aug 2015 22:27:52 +0200
+
+luakit (2012.09.13-r1-5) unstable; urgency=medium
+
+  * QA upload.
+  [ Maria Valentina Marin ]
+  * Fix mtimes before building binary packages. Closes: #792977.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 27 Aug 2015 19:37:18 +0200
+
+luakit (2012.09.13-r1-4) unstable; urgency=medium
+
+  * Patch from Chris Lamb to make the build reproducible.
+    closes: #777491.
+  * Orphan the package.
+
+ -- Clint Adams <clint@debian.org>  Mon, 25 May 2015 21:45:51 -0400
+
+luakit (2012.09.13-r1-3) unstable; urgency=low
+
+  [ Enrico Tassi ]
+  * Use post-wheezy Lua package names in Depends:
+    - liblua5.1-filesystem0 -> lua5.1-filesystem
+
+ -- Clint Adams <clint@debian.org>  Thu, 19 Sep 2013 18:20:31 +0200
+
+luakit (2012.09.13-r1-2) unstable; urgency=low
+
+  * Cherry-pick 105530f1542d568a6cf8d236eb1dc84fa982703b and
+    d24b8d230c2377e5ee015cbda78098d1da72c899 from luakit-crowd.
+
+ -- Clint Adams <clint@debian.org>  Sat, 13 Jul 2013 11:51:49 -0400
+
+luakit (2012.09.13-r1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Bump to Standards-Version 3.9.4.
+  * Add build-arch and build-indep targets.
+  * Use dpkg-buildflags.
+  * Change Homepage to http://luakit.org/ .  closes: #695288.
+  * Call update-menus in postinst.
+  * Add watch file.
+  * Update descriptions.
+
+ -- Clint Adams <clint@debian.org>  Sun, 30 Dec 2012 19:34:33 -0500
+
+luakit (2012.03.25-1) unstable; urgency=low
+
+  * New upstream version.
+  * Make DuckDuckGo default search engine.
+  * Add Debian tag to DDG query string.
+
+ -- Clint Adams <clint@debian.org>  Tue, 27 Mar 2012 16:08:46 -0400
+
+luakit (2011.07.22-r1+1015-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Sun, 30 Oct 2011 19:14:53 -0400
+
+luakit (2011.07.22-r1-1) unstable; urgency=medium
+
+  * New upstream bugfix release.
+
+ -- Clint Adams <clint@debian.org>  Thu, 28 Jul 2011 09:39:24 +0200
+
+luakit (2011.07.22-2) unstable; urgency=low
+
+  * Change WebKitGTK+ build dependency to libwebkitgtk-dev.  closes:
+    #635418.
+
+ -- Clint Adams <clint@debian.org>  Tue, 26 Jul 2011 14:36:08 +0200
+
+luakit (2011.07.22-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@debian.org>  Fri, 22 Jul 2011 15:27:45 +0200
+
+luakit (2011.05.06+unique-1) unstable; urgency=low
+
+  * Add libunique support and corresponding build dependency.
+  * Fix popup inactivity problem.  closes: #622594.
+  * Bump to Standards-Version 3.9.2.
+
+ -- Clint Adams <clint@debian.org>  Wed, 15 Jun 2011 19:18:41 -0400
+
+luakit (2011.05.06-2) unstable; urgency=low
+
+  * Add Debian menu entry from Jonathan Lane.  closes: #629103.
+
+ -- Clint Adams <clint@debian.org>  Sat, 04 Jun 2011 12:27:05 -0400
+
+luakit (2011.05.06-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@debian.org>  Fri, 06 May 2011 10:19:05 -0400
+
+luakit (2011.04.13-1) unstable; urgency=low
+
+  * New upstream bugfix release.
+  * Set term to x-terminal-emulator instead of xterm.  closes: #604899.
+
+ -- Clint Adams <clint@debian.org>  Wed, 13 Apr 2011 12:43:47 -0400
+
+luakit (2011.04.04-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@debian.org>  Sun, 03 Apr 2011 12:30:16 -0400
+
+luakit (2010.12.25+0329-1) unstable; urgency=medium
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Thu, 31 Mar 2011 15:22:37 -0400
+
+luakit (2010.12.25+0327-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Sun, 27 Mar 2011 13:11:21 -0400
+
+luakit (2010.12.25+0310-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Sat, 12 Mar 2011 11:02:40 -0500
+
+luakit (2010.12.25+0225-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add build dependency on libsqlite3-dev.
+
+ -- Clint Adams <clint@debian.org>  Fri, 25 Feb 2011 10:33:39 -0500
+
+luakit (2010.12.25-2) unstable; urgency=low
+
+  * New upstream bugfix release (2010.12.25-r1).
+
+ -- Clint Adams <clint@gnu.org>  Sun, 26 Dec 2010 21:24:58 -0500
+
+luakit (2010.12.25-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@gnu.org>  Sat, 25 Dec 2010 09:14:36 -0500
+
+luakit (2010.09.24+whatthelol-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@gnu.org>  Fri, 03 Dec 2010 21:20:41 -0500
+
+luakit (2010.09.24+veterans-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Remove misleading http_proxy line from globals.lua.
+    closes: #603037.
+
+ -- Clint Adams <clint@gnu.org>  Thu, 11 Nov 2010 18:26:21 -0500
+
+luakit (2010.09.24+halloween-2) unstable; urgency=low
+
+  * Add dependency on liblua5.1-filesystem0.  closes: #602046.
+
+ -- Clint Adams <schizo@debian.org>  Wed, 03 Nov 2010 16:01:51 -0400
+
+luakit (2010.09.24+halloween-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Sun, 31 Oct 2010 11:13:58 -0400
+
+luakit (2010.09.24-1) unstable; urgency=low
+
+  * New upstream release.
+    - Drop build-dependency on gperf.
+    - Add build dependency on lua5.1.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 24 Sep 2010 06:31:14 -0400
+
+luakit (2010.08.30-2) unstable; urgency=low
+
+  * Patch from Kumar Appaiah to add AppleWebKit and Webkit-build
+    specific version to user agent string, thereby encouraging
+    websites like Flickr and Google Maps to behave in a more
+    effective manner.  closes: #596653, #595289.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 18 Sep 2010 10:39:05 -0400
+
+luakit (2010.08.30-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <schizo@debian.org>  Mon, 30 Aug 2010 21:25:35 -0400
+
+luakit (0~20100813-10) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add /etc/xdg/luakit/modes.lua as a conffile.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 28 Aug 2010 17:39:26 -0400
+
+luakit (0~20100813-9) unstable; urgency=low
+
+  * New upstream development snapshot.
+    - Adds autogenerated man page.  closes: #593762.
+  * Add build dependency on help2man.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 27 Aug 2010 11:15:06 -0400
+
+luakit (0~20100813-8) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Fix typo in installation of postinst.
+
+ -- Clint Adams <schizo@debian.org>  Wed, 25 Aug 2010 11:24:41 -0400
+
+luakit (0~20100813-7) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add /etc/xdg/luakit/{binds,globals,theme,webview,window}.lua
+    as conffiles.
+
+ -- Clint Adams <schizo@debian.org>  Tue, 24 Aug 2010 16:24:18 -0400
+
+luakit (0~20100813-6) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 20 Aug 2010 14:33:36 -0400
+
+luakit (0~20100813-5) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add /usr/bin/luakit to x-www-browser alternative.  closes: #593418.
+
+ -- Clint Adams <schizo@debian.org>  Wed, 18 Aug 2010 10:15:54 -0700
+
+luakit (0~20100813-4) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add Debian PTS/BTS/Packages websearch shortcuts from
+    Kumar Appaiah.  closes: #593307.
+
+ -- Clint Adams <schizo@debian.org>  Tue, 17 Aug 2010 09:03:16 -0700
+
+luakit (0~20100813-3) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Drop README.Debian file.
+
+ -- Clint Adams <schizo@debian.org>  Mon, 16 Aug 2010 09:30:10 -0700
+
+luakit (0~20100813-2) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Drop build dependency on libxdg-basedir-dev.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 13 Aug 2010 12:19:13 -0400
+
+luakit (0~20100813-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <schizo@debian.org>  Thu, 12 Aug 2010 15:33:49 -0400
+
+luakit (0~20100807-2) unstable; urgency=low
+
+  * Fix build prefix.
+
+ -- Clint Adams <schizo@debian.org>  Sun, 08 Aug 2010 21:12:34 -0400
+
+luakit (0~20100807-1) experimental; urgency=low
+
+  * New upstream snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 07 Aug 2010 10:10:44 -0400
+
+luakit (0~20100806-1) experimental; urgency=low
+
+  * New upstream snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 06 Aug 2010 08:04:16 -0400
+
+luakit (0~20100725-1) experimental; urgency=low
+
+  * Initial snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Thu, 29 Jul 2010 09:40:48 -0400
