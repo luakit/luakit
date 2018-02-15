@@ -1,6 +1,0 @@
-luakit (2.0-1) unstable; urgency=medium
-
-   * Initial new release with Webkit2GTK+
-   * Package adopted by Grégory David <groolot@groolot.net>
-
- -- Grégory DAVID <groolot@groolot.net>  Sun, 24 Sep 2017 14:40:00 +0200
