@@ -23,7 +23,7 @@ local modes = require("modes")
 local join, split = lousy.util.table.join, lousy.util.string.split
 
 -- URI aliases
-local is_uri, split_uri = lousy.uri.is_uri, lousy.uri.split
+local split_uri = lousy.uri.split
 
 --- Compatibility wrapper for @ref{modes/add_binds|modes.add_binds()}.
 -- @deprecated use @ref{modes/add_binds|modes.add_binds()} instead.
@@ -482,7 +482,7 @@ modes.add_cmds({
         format = "{uri}",
     }},
     { ":w[inopen]", "Open one or more URLs in a new window.", {
-        func = function (w, o) window.new({o.arg}) end,
+        func = function (_, o) window.new({o.arg}) end,
         format = "{uri}",
     }},
     { ":javascript, :js", "Evaluate JavaScript snippet.",

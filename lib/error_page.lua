@@ -17,6 +17,9 @@ local _M = {}
 
 local error_page_wm = require_web_module("error_page_wm")
 
+--- Path to the whitelist of allowed invalid certificates.
+-- @type string
+-- @readwrite
 _M.cert_db_path = luakit.data_dir .. "/allowed_certificates.db"
 
 --- Connect to and initialize the bookmarks database.
