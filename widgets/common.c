@@ -389,7 +389,7 @@ luaH_widget_send_key(lua_State *L)
     GdkEvent *event = gdk_event_new(is_release ? GDK_KEY_RELEASE : GDK_KEY_PRESS);
     GdkEventKey *event_key = (GdkEventKey *) event;
     event_key->window = gtk_widget_get_window(w->widget);
-    event_key->send_event = FALSE;
+    event_key->send_event = TRUE;
     event_key->time = GDK_CURRENT_TIME;
     event_key->state = state;
     event_key->keyval = keyval;
