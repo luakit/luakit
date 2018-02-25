@@ -464,7 +464,7 @@ _M.methods = {
 
         if switch ~= false then w.tabs:switch(w.tabs:indexof(view)) end
 
-        w:search_open_navigate(view, arg or "")
+        if arg then w:search_open_navigate(view, arg) end
 
         return view
     end,
