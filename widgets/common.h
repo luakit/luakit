@@ -63,13 +63,17 @@
 
 #define LUAKIT_WIDGET_NEWINDEX_COMMON(widget)         \
     case L_TK_VISIBLE:                                \
-      return luaH_widget_set_visible(L, widget);      \
+      luaH_widget_set_visible(L, widget);             \
+      break;                                          \
     case L_TK_TOOLTIP:                                \
-      return luaH_widget_set_tooltip(L, widget);      \
+      luaH_widget_set_tooltip(L, widget);             \
+      break;                                          \
     case L_TK_MIN_SIZE:                               \
-      return luaH_widget_set_min_size(L, widget);     \
+      luaH_widget_set_min_size(L, widget);            \
+      break;                                          \
     case L_TK_ALIGN:                                  \
-      return luaH_widget_set_align(L, widget);        \
+      luaH_widget_set_align(L, widget);               \
+      break;                                          \
 
 #define LUAKIT_WIDGET_BIN_INDEX_COMMON(widget)        \
     case L_TK_CHILD:                                  \

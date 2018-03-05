@@ -100,7 +100,7 @@ luaH_overlay_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
 
       default:
-        break;;
+        return 0;
     }
 
     return luaH_object_property_signal(L, 1, token);

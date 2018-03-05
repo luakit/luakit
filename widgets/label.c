@@ -158,14 +158,18 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     PangoFontDescription *font;
 
     if (token == L_TK_ALIGN)
-        return luaH_label_set_align(L, w);
+    {
+        luaH_label_set_align(L, w);
+        return luaH_object_property_signal(L, 1, token);
+    }
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
 #if !GTK_CHECK_VERSION(3,14,0)
       case L_TK_PADDING:
-        return luaH_label_set_padding(L, w);
+        luaH_label_set_padding(L, w);
+        break;
 #endif
 
       case L_TK_TEXT:

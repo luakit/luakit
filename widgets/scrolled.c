@@ -166,13 +166,15 @@ luaH_scrolled_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
 
       case L_TK_SCROLLBARS:
-        return luaH_widget_set_scrollbars(L, w);
+        luaH_widget_set_scrollbars(L, w);
+        break;
 
       case L_TK_SCROLL:
-        return luaH_scrolled_set_scroll(L, w);
+        luaH_scrolled_set_scroll(L, w);
+        break;
 
       default:
-        break;;
+        break;
     }
 
     return luaH_object_property_signal(L, 1, token);
