@@ -342,7 +342,7 @@ _M.site_specific_selectors = {
 add_binds("normal", {
     { "^f$", [[Start `follow` mode. Hint all clickable elements
         (as defined by the `follow.selectors.clickable`
-            selector) and open links in the current tab.]],
+        selector) and open links in the current tab.]],
         function (w)
             w:set_mode("follow", {
                 selector = "clickable", evaluator = "click",
