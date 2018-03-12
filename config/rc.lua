@@ -4,23 +4,19 @@
 
 require "lfs"
 
--- Checks whether there exist module files in the local config dir and warns
--- that it's deprecated, unless you really want to use them. It's not really a
--- searchers function, it simply issues a warning, then the next function in
--- package.searchers is used to load the module.
-local searchers = package.searchers or package.loaders
-local function deprecated_files (module)
-    local f = package.searchpath(module, package.path)
-    local lf = luakit.config_dir .. "/" .. module .. ".lua"
-    if f ==  lf then
-        msg.warn("Loading local version of '" .. module .. "' module: " .. lf)
+-- Check for lua configuration files that will never be loaded because they are
+-- shadowed by builtin modules.
+table.insert(package.loaders, 2, function (modname)
+    local f = package.searchpath(modname, package.path)
+    local lf = luakit.config_dir .. "/" .. modname .. ".lua"
+    if f == lf then
+        msg.warn("Loading local version of '" .. modname .. "' module: " .. lf)
     elseif lfs.attributes(lf) then
         msg.warn("Found local version " .. lf
-            .. " for core module '" .. module
+            .. " for core module '" .. modname
             .. "', but it won't be used, unless you update 'package.path' accordingly.")
     end
-end
-table.insert(searchers, 2, deprecated_files) 
+end)
 
 require "unique_instance"
 
@@ -179,15 +175,8 @@ local tab_favicons = require "tab_favicons"
 -- Add :view-source command
 local view_source = require "view_source"
 
--- Perhaps paranoid, but you never know.
-local i
-for j, f in ipairs(searchers) do
-    if f == deprecated_files then
-        i = j
-        break
-    end
-end
-if i then table.remove(searchers, i) end
+-- Remove the check for config files.
+table.remove(package.loaders, 2)
 
 -- Put "userconf.lua" in your Luakit config dir with your own tweaks; if this is
 -- permanent, no need to copy/paste/modify the default rc.lua whenever you
