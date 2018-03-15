@@ -8,7 +8,10 @@ require "lfs"
 -- shadowed by builtin modules.
 table.insert(package.loaders, 2, function (modname)
     local f = package.searchpath(modname, package.path)
-    local lf = luakit.config_dir .. "/" .. modname .. ".lua"
+    if not f or f:find(luakit.install_paths.install_dir .. "/", 0, true) ~= 1 then
+        return
+    end
+    local lf = luakit.config_dir .. "/" .. modname:gsub("%.","/") .. ".lua"
     if f == lf then
         msg.warn("Loading local version of '" .. modname .. "' module: " .. lf)
     elseif lfs.attributes(lf) then
