@@ -162,9 +162,12 @@ _M.restore = function(delete)
 end
 
 local recovery_save_timer = timer{ interval = 10*1000 }
+local session_dirty = true
 
 -- Save current window session helper
 window.methods.save_session = function ()
+    if not session_dirty then return end
+    session_dirty = false
     _M.save(_M.session_file)
 end
 
@@ -174,6 +177,7 @@ local function start_timeout()
         recovery_save_timer:stop()
     end
     recovery_save_timer:start()
+    session_dirty = true
 end
 
 recovery_save_timer:add_signal("timeout", function ()
