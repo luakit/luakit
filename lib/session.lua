@@ -161,8 +161,32 @@ _M.restore = function(delete)
         or restore_file(_M.recovery_file, delete)
 end
 
-local recovery_save_timer = timer{ interval = 10*1000 }
 local session_dirty = true
+local recovery_save_timer
+
+settings.register_settings({
+    ["session.recovery_save_interval"] = {
+        type = "number",
+        default = 30,
+        validator = function (v)
+            return tonumber(v) >= 0
+        end,
+        desc = [[
+            The minimum time to wait in seconds after a browsing action before
+            saving the recovery session. Must be non-negative.
+        ]],
+    },
+})
+
+settings.add_signal("setting-changed", function (e)
+    if e.key == "session.recovery_save_interval" then
+        recovery_save_timer.interval = e.value*1000
+    end
+end)
+
+recovery_save_timer = timer{
+    interval = settings.get_setting("session.recovery_save_interval")*1000
+}
 
 -- Save current window session helper
 window.methods.save_session = function ()
