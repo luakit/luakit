@@ -99,7 +99,7 @@ end
 -- Add `gu` & `gU` binds to the normal mode.
 add_binds("normal", {
     { "^gu$", "Go `[count=1]` step upward in the URI path structure.",
-        function (w, _, m)
+        function (w, m)
             local uri = w.view.uri
             if not uri or uri == "about:blank" then return end
             w.view.uri = _M.go_up(uri, m.count or 1)
