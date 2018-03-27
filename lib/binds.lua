@@ -363,7 +363,7 @@ modes.add_binds("normal", {
 
     { "gt", "Go to next tab (or `[count]` nth tab).",
         function (w, m)
-            if m.count then w:goto_tab(m.count) else w:next_tab() end
+            if not w:goto_tab(m.count) then w:next_tab() end
     end, {count=0} },
     { "g0", "Go to first tab.", function (w) w:goto_tab(1) end },
     { "g$", "Go to last tab.", function (w) w:goto_tab(-1) end },
