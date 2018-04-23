@@ -19,6 +19,13 @@ local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 
 local _M = {}
 
+--- Path to downloads database.
+-- @readwrite
+_M.db_path = luakit.data_dir .. "/downloads.db"
+
+local query_insert
+
+-- Setup signals on downloads module
 lousy.signal.setup(_M, true)
 
 -- Unique ids for downloads in this luakit instance
@@ -35,6 +42,44 @@ _M.default_dir = xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 
 -- Private data for the download instances (speed tracking)
 local dls = {}
+
+--- Connect to and initialize the downloads database.
+function _M.init()
+    -- Return if database handle already open
+    if _M.db then return end
+
+    _M.db = sqlite3{ filename = _M.db_path }
+    _M.db:exec [[
+        PRAGMA synchronous = OFF;
+        PRAGMA secure_delete = 1;
+
+        CREATE TABLE IF NOT EXISTS downloads (
+            finished_time INTEGER PRIMARY KEY,
+            created_time INTEGER,
+            uri TEXT,
+            destination TEXT,
+            total_size INTEGER
+        );
+    ]]
+
+    query_insert = _M.db:compile [[
+        INSERT INTO downloads
+        VALUES (?, ?, ?, ?, ?)
+    ]]
+
+    local rows = _M.db:exec("SELECT * FROM downloads")
+    for _, row in ipairs(rows) do
+        local d = {uri = rawget(row, "uri"), destination = rawget(row, "destination"),
+                   total_size = rawget(row, "total_size"), status = "finished"}
+        local data = {
+            created = rawget(row, "created_time"),
+            id = next_download_id(),
+        }
+        dls[d] = data
+    end
+end
+
+luakit.idle_add(_M.init)
 
 --- Get all download objects.
 -- @treturn table The table of all download objects.
@@ -147,11 +192,14 @@ function _M.add(uri, opts)
                 if not status_timer.started then status_timer:start() end
                 _M.emit_signal("download::status", ddd, dls[ddd])
             end)
-            --return true
         else
             dd:cancel()
         end
         return true
+    end)
+
+    d:add_signal("finished", function(dd)
+        query_insert:exec{os.time(), dls[dd].created, dd.uri, dd.destination, dd.total_size}
     end)
 end
 
