@@ -362,6 +362,17 @@ _M.detect_files = function ()
     lfs.chdir(cwd)
 end
 
+--- Watch a stylesheet in the styles directory for changes and apply them immediately.
+-- @tparam table guard a table that controls the watch process. Set `guard[1]
+-- = nil` to turn off the watch.
+-- @tparam string path the path of the watched style.
+_M.watch_styles = function (guard, path)
+    luakit.spawn("bash -c 'inotifywait -t 10 \"" .. path .. "\" || sleep 1'", function ()
+        _M.detect_files()
+        if guard[1] then _M.watch_styles(guard, path) end
+    end)
+end
+
 add_cmds({
     { ":styles-reload, :sr", "Reload user stylesheets.", function (w)
             w:notify("styles: Reloading files...")
