@@ -11,6 +11,9 @@
 
 ### Added
 
+ - Added `styles.new_style` function.
+ - Added `styles.toggle_sheet` function.
+ - Added `styles.watch_styles` function, and enabled live-editing of user styles.
  - Added `luakit.install_paths` table. `luakit.install_path` is now deprecated.
  - Added `Control-Y` readline binding.
  - Added ability to control whether links from secondary instances open in a new window.
