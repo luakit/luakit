@@ -375,7 +375,7 @@ end
 
 --- Create and immediately edit a new style for the current uri.
 -- @tparam table w The window table for the window providing the uri.
-M.new_style = function (w)
+_M.new_style = function (w)
     -- Create styles directory if it doesn't exist
     local cwd = lfs.currentdir()
     if not lfs.chdir(styles_dir) then
@@ -398,6 +398,19 @@ M.new_style = function (w)
             local guard = {0}
             _M.watch_styles(guard, path)
             editor.edit(path, 2, function() guard[1] = nil end)
+        end
+    end
+    lfs.chdir(cwd)
+end
+
+--- Toggle the enabled status of a style by filename.
+-- @tparam string title the style to toggle.
+_M.toggle_sheet = function(title)
+    for _, stylesheet in ipairs(stylesheets) do
+        if stylesheet.file == title then
+            stylesheet.enabled = not stylesheet.enabled
+            db_set(stylesheet.file, stylesheet.enabled)
+            update_all_stylesheet_applications()
         end
     end
 end
