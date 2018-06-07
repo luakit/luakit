@@ -413,7 +413,9 @@ add_binds("styles-list", lousy.util.table.join({
             local row = w.menu:get()
             if row and row.stylesheet then
                 local file = luakit.data_dir .. "/styles/" .. row.stylesheet.file
-                editor.edit(file)
+                local guard = {0}
+                _M.watch_styles(guard, file)
+                editor.edit(file, 1, function() guard[1] = nil end)
             end
         end },
 }, menu_binds))
