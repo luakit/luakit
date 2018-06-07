@@ -373,6 +373,35 @@ _M.watch_styles = function (guard, path)
     end)
 end
 
+--- Create and immediately edit a new style for the current uri.
+-- @tparam table w The window table for the window providing the uri.
+M.new_style = function (w)
+    -- Create styles directory if it doesn't exist
+    local cwd = lfs.currentdir()
+    if not lfs.chdir(styles_dir) then
+        lfs.mkdir(styles_dir)
+        lfs.chdir(styles_dir)
+    end
+    local path = string.match(w.view.uri, "//([%w*%.]+)") .. ".css"
+    local exists = io.open(path, "r")
+    if exists then
+        exists:close()
+        local guard = {0}
+        _M.watch_styles(guard, path)
+        editor.edit(path, 1, function() guard[1] = nil end)
+    else
+        local f = io.open(path, "w")
+        if nil == f then w:notify(path)
+        else
+            f:write("@-moz-document url-prefix(\"" .. w.view.uri .. "\") {\n\n}")
+            f:close()
+            local guard = {0}
+            _M.watch_styles(guard, path)
+            editor.edit(path, 2, function() guard[1] = nil end)
+        end
+    end
+end
+
 add_cmds({
     { ":styles-reload, :sr", "Reload user stylesheets.", function (w)
             w:notify("styles: Reloading files...")
@@ -381,6 +410,7 @@ add_cmds({
         end },
     { ":styles-list", "List installed userstyles.",
         function (w) w:set_mode("styles-list") end },
+    { ":styles-new", "Create new userstyle for this domain.", _M.new_style},
 })
 
 -- Add mode to display all userscripts in menu
