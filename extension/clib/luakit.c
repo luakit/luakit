@@ -93,7 +93,7 @@ luaH_luakit_newindex(lua_State *L)
             resource_path_set(luaL_checkstring(L, 3));
             break;
         default:
-            break;
+            return 0;
     }
 
     return 0;

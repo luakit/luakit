@@ -433,6 +433,8 @@ _M.methods = {
     end,
 
     new_tab = function (w, arg, opts)
+        assert(arg == nil or type(arg) == "string" or type(arg) == "table"
+                   or (type(arg) == "widget" and arg.type == "webview"))
         opts = opts or {}
         assert(type(opts) == "table")
         local switch, order = opts.switch, opts.order
@@ -467,7 +469,7 @@ _M.methods = {
         if switch ~= false then w.tabs:switch(w.tabs:indexof(view)) end
 
         if arg and not (type(arg) == "widget" and arg.type == "webview") then
-            webview.set_location(view, arg)
+            w:search_open_navigate(view, arg)
         end
 
         return view
@@ -562,9 +564,25 @@ _M.methods = {
 
     -- Navigate current view or open new tab
     navigate = function (w, arg, view)
+        assert(arg == nil or type(arg) == "string" or type(arg) == "table")
         assert(view == nil or (type(view) == "widget" and view.type == "webview"))
-        view = view or w.view
-        if not view then return w:new_tab(arg) end
+        if not view then view = w.view end
+        if view and arg then
+            w:search_open_navigate(view, arg)
+        else
+            w:new_tab(arg)
+        end
+    end,
+
+    -- Wrap @ref{set_location} to filter a string argument through @ref{search_open}
+    -- @tparam widget view The view whose location to modify.
+    -- @tparam table arg The new location. Can be a query to search, a URI,
+    -- a JavaScript URI, or a table with `session_state` and `uri` keys.
+    search_open_navigate = function (w, view, arg)
+        assert(type(view) == "widget" and view.type == "webview")
+        assert(type(arg) == "string" or type(arg) == "table" or type(arg) == "widget")
+        if type(arg) == "widget" then assert(arg.type == "webview") end
+        if type(arg) == "string" then arg = w:search_open(arg) end
         require("webview").set_location(view, arg)
     end,
 
@@ -730,10 +748,7 @@ function _M.new(args)
 
     -- Populate notebook with tabs
     for _, arg in ipairs(args or {}) do
-        if type(arg) == "string" then
-            arg = w:search_open(arg)
-        end
-        w:new_tab(arg, false)
+        w:new_tab(arg)
     end
 
     -- Show window
@@ -744,7 +759,7 @@ function _M.new(args)
 
     -- Make sure something is loaded
     if w.tabs:count() == 0 then
-        w:new_tab(w:search_open(settings.get_setting("window.home_page")), false)
+        w:new_tab(settings.get_setting("window.home_page"), false)
     end
 
     return w

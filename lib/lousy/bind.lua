@@ -68,7 +68,9 @@ _M.map = {
 _M.mod_map = {
     C = "Control",
     S = "Shift",
+    A = "Mod1",
     Ctrl = "Control",
+    Alt = "Mod1",
 }
 
 --- Parse a table of modifier keys into a string.

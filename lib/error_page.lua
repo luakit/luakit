@@ -17,6 +17,32 @@ local _M = {}
 
 local error_page_wm = require_web_module("error_page_wm")
 
+--- Path to the whitelist of allowed invalid certificates.
+-- @type string
+-- @readwrite
+_M.cert_db_path = luakit.data_dir .. "/allowed_certificates.db"
+
+--- Connect to and initialize the bookmarks database.
+local function init_cert_db()
+    _M.cert_db = sqlite3{ filename = _M.cert_db_path }
+    _M.cert_db:exec [[
+        PRAGMA synchronous = OFF;
+        PRAGMA secure_delete = 1;
+
+        CREATE TABLE IF NOT EXISTS allowed_certificates (
+            id INTEGER PRIMARY KEY,
+            host TEXT NOT NULL,
+            cert TEXT NOT NULL,
+            created INTEGER NOT NULL,
+            allowed INTEGER
+        );
+
+        CREATE UNIQUE INDEX IF NOT EXISTS idx_host ON allowed_certificates (host);
+    ]]
+end
+init_cert_db()
+_M.cert_db:exec("UPDATE allowed_certificates SET allowed = 0")
+
 --- HTML template for error page content.
 -- @type string
 -- @readwrite
@@ -294,6 +320,21 @@ local function handle_error(v, uri, err)
             error_page_info.msg = {error_page_info.msg, "Proxy in use: " .. p}
         end
     elseif category == "security" then
+        -- if we got cert error -- let's try to scan our cert db and
+        -- allow any certificates for this host that are not allowed
+        -- yet. if there's no such certificates in db -- show error
+        -- page
+        local host = lousy.uri.parse(v.uri).host
+        local certs = _M.cert_db:exec("SELECT cert AS cert FROM allowed_certificates WHERE host=? and allowed=0",
+            {host})
+        if certs and #certs > 0 then
+            luakit.allow_certificate(host, certs[1].cert)
+            _M.cert_db:exec("UPDATE allowed_certificates SET allowed = ? WHERE host=?",
+                {os.time(), host})
+            webview.set_location(v, uri)
+            return
+        end
+
         local cert = v.certificate
 
         error_page_info = {
@@ -303,10 +344,19 @@ local function handle_error(v, uri, err)
             style = _M.cert_style,
             heading = "Your connection may be insecure!",
             buttons = {{
-                label = "Ignore danger",
+                label = "Ignore danger until luakit restart",
                 callback = function(vv)
-                    local host = lousy.uri.parse(vv.uri).host
                     luakit.allow_certificate(host, cert)
+                    vv:reload()
+                end,
+            },
+            {
+                label = "Ignore danger permanently",
+                callback = function(vv)
+                    luakit.allow_certificate(host, cert)
+                    -- save certificate to trusted store
+                    _M.cert_db:exec("INSERT OR REPLACE INTO allowed_certificates VALUES (NULL, ?, ?, ?, ?)",
+                        {host, cert, os.time(), os.time()})
                     vv:reload()
                 end,
             }},

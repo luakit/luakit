@@ -744,12 +744,12 @@ luaH_dom_element_newindex(lua_State *L)
             webkit_dom_html_input_element_set_checked(
                     WEBKIT_DOM_HTML_INPUT_ELEMENT(element->element),
                     lua_toboolean(L, 3));
-            return 0;
-        default:
             break;
+        default:
+            return 0;
     }
 
-    return 0;
+    return luaH_object_property_signal(L, 1, token);
 }
 
 void

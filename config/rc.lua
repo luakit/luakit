@@ -4,6 +4,24 @@
 
 require "lfs"
 
+-- Check for lua configuration files that will never be loaded because they are
+-- shadowed by builtin modules.
+table.insert(package.loaders, 2, function (modname)
+    if not package.searchpath then return end
+    local f = package.searchpath(modname, package.path)
+    if not f or f:find(luakit.install_paths.install_dir .. "/", 0, true) ~= 1 then
+        return
+    end
+    local lf = luakit.config_dir .. "/" .. modname:gsub("%.","/") .. ".lua"
+    if f == lf then
+        msg.warn("Loading local version of '" .. modname .. "' module: " .. lf)
+    elseif lfs.attributes(lf) then
+        msg.warn("Found local version " .. lf
+            .. " for core module '" .. modname
+            .. "', but it won't be used, unless you update 'package.path' accordingly.")
+    end
+end)
+
 require "unique_instance"
 
 -- Set the number of web processes to use. A value of 0 means 'no limit'.

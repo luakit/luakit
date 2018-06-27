@@ -161,10 +161,37 @@ _M.restore = function(delete)
         or restore_file(_M.recovery_file, delete)
 end
 
-local recovery_save_timer = timer{ interval = 10*1000 }
+local session_dirty = true
+local recovery_save_timer
+
+settings.register_settings({
+    ["session.recovery_save_interval"] = {
+        type = "number",
+        default = 30,
+        validator = function (v)
+            return tonumber(v) >= 0
+        end,
+        desc = [[
+            The minimum time to wait in seconds after a browsing action before
+            saving the recovery session. Must be non-negative.
+        ]],
+    },
+})
+
+settings.add_signal("setting-changed", function (e)
+    if e.key == "session.recovery_save_interval" then
+        recovery_save_timer.interval = e.value*1000
+    end
+end)
+
+recovery_save_timer = timer{
+    interval = settings.get_setting("session.recovery_save_interval")*1000
+}
 
 -- Save current window session helper
 window.methods.save_session = function ()
+    if not session_dirty then return end
+    session_dirty = false
     _M.save(_M.session_file)
 end
 
@@ -174,6 +201,7 @@ local function start_timeout()
         recovery_save_timer:stop()
     end
     recovery_save_timer:start()
+    session_dirty = true
 end
 
 recovery_save_timer:add_signal("timeout", function ()
@@ -184,8 +212,7 @@ end)
 window.add_signal("init", function (w)
     w.win:add_signal("destroy", function ()
         -- Hack: should add a luakit shutdown hook...
-        local num_windows = 0
-        for _, _ in pairs(window.bywidget) do num_windows = num_windows + 1 end
+        local num_windows = #lousy.util.table.values(window.bywidget)
         -- Remove the recovery session on a successful exit
         if num_windows == 0 and os.exists(_M.recovery_file) then
             rm(_M.recovery_file)
@@ -193,8 +220,11 @@ window.add_signal("init", function (w)
     end)
 
     w:add_signal("close", function ()
+        if #lousy.util.table.values(window.bywidget) > 1 then
+            start_timeout()
+            return
+        end
         if not settings.get_setting("session.always_save") then return end
-        if #window.bywidget > 1 then return end
         if w.tabs:count() == 0 then return end -- window.close_with_last_tab...
         w:save_session()
     end)

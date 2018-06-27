@@ -66,7 +66,7 @@ unique.add_signal("message", function (message, screen)
 
         if not _M.open_links_in_new_window then
             for _, uri in ipairs(u) do
-                w:new_tab(w:search_open(uri))
+                w:new_tab(uri)
             end
         end
     elseif cmd == "tabopen" then

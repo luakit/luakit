@@ -54,7 +54,7 @@ end
 -- Add `gi` binding to normal mode
 add_binds("normal", {
     { "gi", "Focus the first text input on the current page and enter insert mode.",
-        function (w, _, m) w:go_input(m.count) end, {count=1} }
+        function (w, m) w:go_input(m.count) end, {count=1} }
 })
 
 return _M

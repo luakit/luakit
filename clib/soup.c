@@ -128,7 +128,7 @@ luaH_soup_newindex(lua_State *L)
             luaH_soup_set_cookies_storage(L);
             break;
         default:
-            break;
+            return 0;
     }
     return 0;
 }

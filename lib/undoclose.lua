@@ -18,6 +18,7 @@ local add_binds, add_cmds = modes.add_binds, modes.add_cmds
 local menu_binds = binds.menu_binds
 local new_mode = require("modes").new_mode
 local session = require("session")
+local settings = require("settings")
 
 local _M = {}
 
@@ -87,6 +88,10 @@ local on_tab_close = function (w, view)
     end
     closed_tabs[w.tabs] = closed_tabs[w.tabs] or {}
     table.insert(closed_tabs[w.tabs], tab)
+    local max_saved_tabs = settings.get_setting("undoclose.max_saved_tabs")
+    while max_saved_tabs >= 0 and #closed_tabs[w.tabs] > max_saved_tabs do
+        table.remove(closed_tabs[w.tabs], 1)
+    end
 end
 
 -- Undo a closed tab (with complete tab history)
@@ -266,6 +271,21 @@ add_cmds({
                 w:set_mode("undolist")
             end
         end },
+})
+
+settings.register_settings({
+    ["undoclose.max_saved_tabs"] = {
+        type = "number",
+        default = 100,
+        validator = function (v)
+            return tonumber(v) >= -1
+        end,
+        desc = [[
+            The maximum number of closed tabs that should be saved, or `-1` for no limit.
+
+            When the number of closed tabs reaches this limit, the oldest closed tabs are discarded.
+        ]],
+    },
 })
 
 return _M

@@ -309,7 +309,7 @@ add_binds("normal", {
     { "ga", "Open <luakit://adblock/> in the current tab.",
         function (w) w:navigate(_M.chrome_page) end },
     { "gA", "Open <luakit://adblock/> in a new tab.",
-        function (w, _, m)
+        function (w, m)
             for _=1, m.count do
                 w:new_tab(_M.chrome_page)
             end

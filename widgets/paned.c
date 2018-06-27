@@ -120,12 +120,14 @@ luaH_paned_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_POSITION:
-        return luaH_paned_set_position(L, w);
+        luaH_paned_set_position(L, w);
+        break;
 
       default:
-        break;
+        return 0;
     }
-    return 0;
+
+    return luaH_object_property_signal(L, 1, token);
 }
 
 widget_t *

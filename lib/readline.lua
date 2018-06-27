@@ -118,6 +118,18 @@ local actions =  {
         end,
         desc = "Delete until beginning of current line.",
     },
+    del_to_eol = {
+        func = function (w)
+            local i = w.ibar.input
+            local text = i.text
+            local pos = i.position
+            if not string.match(text, "^[:/?]$") then
+                i.text = string.sub(text, 1, pos)
+                i.position = pos
+            end
+        end,
+        desc = "Delete to the end of current line.",
+    },
     del_backward_char = {
         func = function (w)
             local i = w.ibar.input
@@ -243,6 +255,7 @@ _M.bindings = {
     { "<Mod1-BackSpace>",     actions.del_word_backward    , {} },
     { "<Mod1-d>",             actions.del_word_forward     , {} },
     { "<Control-u>",          actions.del_line             , {} },
+    { "<Control-o>",          actions.del_to_eol           , {} },
     { "<Control-h>",          actions.del_backward_char    , {} },
     { "<Control-d>",          actions.del_forward_char     , {} },
     { "<Control-a>",          actions.beg_line             , {} },
