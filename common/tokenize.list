@@ -164,7 +164,6 @@ textwidth
 window
 windows
 x
-xid
 xmax
 xpage_size
 y
@@ -238,6 +237,7 @@ spinner
 element_from_point
 owner_document
 add_event_listener
+remove_event_listener
 certificate
 allow_certificate
 options

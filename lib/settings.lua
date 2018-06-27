@@ -121,10 +121,11 @@ local function setting_validate_new_kv_pair (meta, k, v)
 end
 
 local function setting_validate_new_value (section, k, v)
+    section = section or ""
     local meta = assert(settings_list[k], "bad setting " .. k)
     if meta.domain_specific == true and not section then
         error(string.format("Setting '%s' is domain-specific", k))
-    elseif meta.domain_specific == false and section then
+    elseif meta.domain_specific == false and section ~= "" then
         error(string.format("Setting '%s' cannot be domain-specific", k))
     end
     if meta.type == "enum" then
@@ -343,6 +344,7 @@ _M.get_settings = function ()
             value = value,
             src = src,
             options = meta.options,
+            formatter = meta.formatter,
         }
     end
     return ret

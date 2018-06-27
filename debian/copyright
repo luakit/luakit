@@ -11,8 +11,28 @@ Files: lib/markdown.lua
 Copyright: 2008 Niklas Frykholm, <niklas@frykholm.se>
 License: MIT
 
+Files: resources/icons/tab-icon-chrome.png
+       resources/icons/tab-icon-chrome@2x.png
+       resources/icons/tab-icon-private.png
+       resources/icons/tab-icon-private@2x.png
+Copyright: https://github.com/horst3180/arc-icon-theme
+License: GPL-3.0+
+
+Files: resources/icons/tab-icon-page.png
+       resources/icons/tab-icon-page@2x.png
+       resources/icons/tab-icon-crash.png
+       resources/icons/tab-icon-crash@2x.png
+       resources/icons/tab-icon-error.png
+       resources/icons/tab-icon-error@2x.png
+       resources/icons/tab-icon-security-error.png
+       resources/icons/tab-icon-security-error@2x.png
+Copyright:
+	2017-2018 Aidan Holm <aidanholm@gmail.com>
+	2017 https://github.com/horst3180/arc-icon-theme
+License: GPL-3.0+
+
 Files: debian/*
-Copyright: 2017 Grégory DAVID <groolot@groolot.net>
+Copyright: 2017-2018 Grégory DAVID <groolot@groolot.net>
 License: GPL-3.0+
 
 License: GPL-3.0+

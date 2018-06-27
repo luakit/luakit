@@ -51,7 +51,9 @@ local settings_chrome_JS = [=[
         if (type == "boolean")
         {
             value = i.checked;
-            root.querySelector("label>span").innerHTML = value ? "Enabled" : "Disabled";
+            let span = root.querySelector(".input > label > span");
+            span.dataset.value = value;
+            span.innerHTML = value ? "Enabled" : "Disabled";
         } else
             value = i.value;
         set_setting(key, value, type).then(function(error) {
@@ -178,6 +180,10 @@ table.input th {
     border-bottom: 1px solid #777;
 }
 
+.boolean > input { margin-left: 0; }
+.boolean > span { font-weight: bold; }
+.boolean > span[data-value=true] { color: #799D6A; }
+.boolean > span[data-value=false] { color: #CF6A4C; }
 ]===]
 
 local function build_settings_entry_table_html(meta)
@@ -187,16 +193,22 @@ local function build_settings_entry_table_html(meta)
     end
     table.sort(rows, function (a, b) return a.key < b.key end)
 
+    local formatter = meta.formatter or function (t, k)
+        return {
+            key = lousy.util.escape(tostring(k)),
+            value = lousy.util.escape(tostring(t[k])),
+        }
+    end
+
     local rows_html = ""
     for _, row in ipairs(rows) do
-        local k = lousy.util.escape(tostring(row.key))
-        local v = lousy.util.escape(tostring(row.value))
         local row_html = [==[
             <tr>
-                <td>{key}</td><td>{val}</td>
+                <td>{key}</td><td>{value}</td>
             </tr>
         ]==]
-        rows_html = rows_html .. row_html:gsub("{(%w+)}", { key = k, val = v })
+        local subs = formatter(meta.value, row.key)
+        rows_html = rows_html .. row_html:gsub("{(%w+)}", subs)
     end
 
     return ([==[
@@ -246,14 +258,15 @@ local build_settings_entry_html = function (meta)
     local input
     if meta.type == "boolean" then
         local fmt = ([==[
-            <label>
+            <label class=boolean>
                 <input type=checkbox {checked} {disabled} />
-                <span>{text}</span>
+                <span data-value={value}>{text}</span>
             </label>
         ]==])
         input = fmt:gsub("{(%w+)}", {
                 checked = meta.value and "checked=true" or "",
                 text = meta.value and "Enabled" or "Disabled",
+                value = meta.value and "true" or "false",
             })
     elseif meta.type == "enum" then
         input = ""

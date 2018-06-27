@@ -99,11 +99,28 @@ window.add_signal("init", function (w)
     input:add_signal("activate", function ()
         local mode = w.mode
         if mode and mode.activate then
-            local text, hist = input.text, mode.history
+            local text = input.text
+            -- Activates the mode.
             if mode.activate(w, text) == false then return end
-            -- Check if last history item is identical
+            -- Prevents recording command history if in a private tab, or
+            -- recording the `:priv-tabopen` command itself.
+            if w.view and w.view.private then return end
+            local hist = mode.history
+            -- Check if last history is identical
             if hist and hist.items and hist.items[hist.len or -1] ~= text then
                 table.insert(hist.items, text)
+                -- Dump history
+                local t = {}
+                for k, v in pairs(modes) do
+                    if v.history then
+                        t[k] = v.history.items
+                    end
+                end
+                local f = io.open(luakit.data_dir .. "/command-history", "w")
+                if f then
+                    f:write(lousy.pickle.pickle(t))
+                    f:close()
+                end
             end
         end
     end)

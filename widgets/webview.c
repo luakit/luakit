@@ -1235,6 +1235,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
     lua_pushstring(L, uri);
     luaH_request_push_uri_scheme_request(L, request);
     luaH_object_emit_signal(L, -3, sig, 2, 0);
+    lua_pop(L, 1);
     g_free(sig);
 }
 
@@ -1249,6 +1250,7 @@ webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "crashed", 0, 0);
+    lua_pop(L, 1);
 
     return FALSE;
 }

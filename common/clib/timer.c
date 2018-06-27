@@ -57,7 +57,8 @@ timer_handle_timeout(gpointer data)
 {
     ltimer_t *timer = (ltimer_t *) data;
     luaH_object_push(common.L, timer->ref);
-    luaH_object_emit_signal(common.L, -1, "timeout", 1, 0);
+    luaH_object_emit_signal(common.L, -1, "timeout", 0, 0);
+    lua_pop(common.L, 1);
     return TRUE;
 }
 

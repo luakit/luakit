@@ -22,7 +22,7 @@ Conflicts: luakit (<= 2017.08.10)
 Replaces: luakit (<= 2017.08.10)
 Description: fast and small web browser extensible by Lua, WebKit2 based
  Luakit is a highly-configurable browser framework based on WebKit2GTK+.
- It is very fast and extensible by Lua.  It is primarily targeted at power
+ It is very fast and extensible by Lua. It is primarily targeted at power
  users, developers and any people with too much time on their hands who
  want to have fine-grained control over their web browser's behaviour and
  interface.

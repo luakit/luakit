@@ -20,18 +20,17 @@ local evaluators = {
                 return "form-active"
             end
         end
-        -- Find the element directly in the centre of the link
-        if element.child_count > 0 then
-            local r = element.rect
-            local doc = element.owner_document
-            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2) or element
-            tag = element.tag_name
-        end
         -- Handle <a target=_blank> indirectly; WebKit prevents opening a new
         -- window if not initiated by the user directly
         if tag == "A" and element.attr.target == "_blank" then
             ui:emit_signal("click_a_target_blank", page.id, element.href)
             return
+        end
+        -- Find the element directly in the centre of the link
+        if element.child_count > 0 then
+            local r = element.rect
+            local doc = element.owner_document
+            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2) or element
         end
         element:click()
     end,
@@ -62,7 +61,14 @@ local evaluators = {
 local page_mode = {}
 
 local function follow_hint(page, mode, hint)
-    local evaluator = evaluators[mode.evaluator]
+    local evaluator
+    if type(mode.evaluator) == "string" then
+        evaluator = evaluators[mode.evaluator]
+    elseif type(mode.evaluator) == "function" then
+        evaluator = mode.evaluator
+    else
+        error("bad evaluator type '%s'", type(mode.evaluator))
+    end
 
     local overlay_style = hint.overlay_elem.attr.style
     hint.overlay_elem.attr.style = "display: none;"

@@ -171,6 +171,14 @@
 -- paned, and window widgets.
 -- @tparam widget child The child widget to remove.
 
+--- @method send_key
+-- Send synthetic key events to the widget. This function parses a vim-like
+-- keystring into single keys and sends them to the widget. When
+-- `window.act_on_synthetic_keys` is disabled, synthetic key events will not trigger
+-- other key bindings.
+-- @tparam string keystring The string representing the keys to send.
+-- @tparam table modifiers The key modifiers table.
+
 --- @signal create
 -- Emitted on the `widget` library when a new widget has been created.
 -- @tparam widget widget The newly-created widget.
