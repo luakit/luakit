@@ -11,6 +11,7 @@ if not socket_loaded then
     return
 end
 
+local error_page = require("error_page")
 local webview = require("webview")
 
 local _M = {}
@@ -39,8 +40,11 @@ local function gophertype_to_icon(gophertype)
     })[gophertype] or "?"
 end
 
--- parse Gopher menu entry, return its structure
-local function parse_gopher_line(line, url)
+--- Parse Gopher menu entry.
+-- @tparam string line Literal string line representing a Gopher menu entry.
+-- @tparam table url Parsed URL structure from parse_url().
+-- @treturn table Structure representing the menu entry tokens.
+_M.parse_gopher_line = function(line, url)
     local ret = {
         line = line,
         item_type = nil,
@@ -70,10 +74,13 @@ local function parse_gopher_line(line, url)
     end
     return ret
 end
+local parse_gopher_line = _M.parse_gopher_line
 
--- evaluate a hyperlink for a gopher menu entry
-local function href_source(entry)
-    local src = entry.selector:match("^URL:(.+)$")
+--- Evaluate a hyperlink for a gopher menu entry.
+-- @tparam table entry Gopher menu entry structure from parse_gopher_line().
+-- @treturn string Valid URL for the menu entry.
+_M.href_source = function(entry)
+    local src = entry.selector:match("^/?URL:(.+)$")
     if not src then
         if entry.scheme == "telnet" then
             src = ([[telnet://%s:%s/]]):format(entry.host, entry.port)
@@ -89,32 +96,68 @@ local function href_source(entry)
     end
     return src
 end
+local href_source = _M.href_source
 
-local function text_to_html(data)
+-- chop periods per RFC1436
+local function chop_periods(data)
+    -- trailing \n is always expected
+    if data:sub(-1) ~= "\n" then
+        data = data .. "\n"
+    end
+    -- the trailing period on a line itself is chopped off
+    local dot_pos, _, prefix = data:find("(\r?\n)%.\r?\n$")
+    if dot_pos then
+        data = data:sub(1, dot_pos - 1 + #prefix)
+    elseif data:match("^%.\r?\n$") then
+        -- even if there is nothing else
+        data = "\n"
+    end
+    -- on every line any leading period is chopped off
+    data = data:gsub("(\r?\n)%.", "%1")
+    if data:sub(1, 1) == "." then
+        -- and on the first line
+        data = data:sub(2)
+    end
+    return data
+end
+
+local function text_to_html(data, url)
     return [[
         <html>
         <head>
+            <title>]] .. url.title .. [[</title>
             <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
         </head>
         <body>
             <pre style="word-wrap: break-word; white-space: pre-wrap;">
-]] .. data .. [[</pre>
+]] .. chop_periods(data) .. [[</pre>
         </body>
         </html>
     ]];
 end;
 
--- present Gopher menu as an HTML page
--- TODO huge function
-local function menu_to_html(data, url)
-    -- fix new-line
-    if not ({["\r"] = true, ["\n"] = true})[data:sub(-1) or ""] then
-        data = data .. "\n"
-    end
-    local html = {
-        "<html>",
-        "<head>",
-            [[<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+local function menu_entry_iframe(name)
+    return '<iframe style="display:none; width:100%" id="' .. name .. '"></iframe>'
+end
+
+local function menu_entry_button(frame_name, src, item_type)
+    return ([[<button onclick="showIFrame('%s', '%s')">%s</button>]]):format(
+        frame_name,
+        src,
+        gophertype_to_icon(item_type)
+    )
+end
+
+local function menu_entry_input(anchor_name)
+    return [[<br/><input type="text" style="width:100%"
+        onKeyPress="runSearch(this, event, ']] .. anchor_name .. [[')"/>]]
+end
+
+local function menu_html_header(title)
+    return [[
+        <head>
+            <title>]] .. title .. [[</title>
+            <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
             <script type="text/javascript">
                 function showIFrame(iframe_id, source) {
                     var iframe = document.getElementById(iframe_id);
@@ -130,37 +173,32 @@ local function menu_to_html(data, url)
                     return false;
                 }
             </script>
-            ]],
-        "</head>",
-        "<body><ul>"
+        </head>]]
+end
+
+-- present Gopher menu as an HTML page
+local function menu_to_html(data, url)
+    data = chop_periods(data)
+    local html = {
+        "<html>",
+        menu_html_header(url.title),
+        "<body><pre>"
     };
     local line_num = 0
-    for line in data:gmatch("(.-)\n\r?") do
+    for line in data:gmatch("(.-)\r?\n") do
         line_num = line_num + 1
         local entry = parse_gopher_line(line, url)
         if entry.item_type == "i" then
-            html[#html + 1] = ("<pre>%s</pre>"):format(entry.display_string)
+            html[#html + 1] = ("%s"):format(entry.display_string)
         else
             local src = href_source(entry)
             local frame_name = "iframe_" .. tostring(line_num)
-            local iframe = [[<iframe
-                style="display:none; width:100%"
-                id="]] .. frame_name .. [["></iframe>
-            ]]
-            local button = ([[<button onclick="showIFrame('%s', '%s')">%s</button>]]):format(
-                frame_name,
-                src,
-                gophertype_to_icon(entry.item_type)
-            )
+            local iframe = menu_entry_iframe(frame_name)
+            local button = menu_entry_button(frame_name, src, entry.item_type)
             local anchor_name = "anchor_" .. tostring(line_num)
-            local input = [[<br/>
-                <input
-                    type="text"
-                    style="width:100%"
-                    onKeyPress="runSearch(this, event, ']] .. anchor_name .. [[')"
-                />]]
+            local input = menu_entry_input(anchor_name)
             if entry.item_type ~= "7" then input = "" end
-            html[#html + 1] = ([[<li>%s <a href="%s" id="%s">%s</a>%s</li>]]):format(
+            html[#html + 1] = ([[%s <a href="%s" id="%s">%s</a>%s]]):format(
                 button,
                 src,
                 anchor_name,
@@ -168,18 +206,15 @@ local function menu_to_html(data, url)
                 input
             ) .. iframe
         end
-        -- TODO nasty in-place HTML edit
-        if html[#html]:sub(1, 5) == "<pre>" and (html[#html - 1] or ""):sub(-6) == "</pre>" then
-            html[#html] = html[#html]:sub(6)
-            html[#html - 1] = html[#html - 1]:sub(1, -7)
-        end
     end
-    html[#html + 1] = "</ul></body></html>"
+    html[#html + 1] = "</pre></body></html>"
     return table.concat(html, "\n")
 end
 
--- guess the image MIME type by a filename suffix
-local function image_mime_type(ext)
+--- Guess the image MIME type by a filename suffix.
+-- @tparam string ext The filename suffix (without leading dot).
+-- @treturn string Appropriate MIME type.
+_M.image_mime_type = function(ext)
     return ({
         gif = "image/gif",
         jpeg = "image/jpeg",
@@ -195,15 +230,9 @@ local function image_mime_type(ext)
         pgm = "image/x-portable-graymap",
         ppm = "image/x-portable-pixmap",
         xwd = "image/x-xwindowdump",
-    })[tostring(ext)] or "application/octet-stream"
+    })[tostring(ext):lower()] or "application/octet-stream"
 end
-
-do
-    assert("image/gif" == image_mime_type("gif"))
-    assert("image/jpeg" == image_mime_type("jpg"))
-    assert("image/svg+xml" == image_mime_type("svg"))
-    assert("application/octet-stream" == image_mime_type())
-end
+local image_mime_type = _M.image_mime_type
 
 -- convert raw data received from server into the browser's representation
 local function data_to_browser(data, url)
@@ -212,7 +241,7 @@ local function data_to_browser(data, url)
     if url.gophertype == "1" or url.gophertype == "7" then
         converted = menu_to_html(data, url)
     elseif url.gophertype == "0" then
-        converted = text_to_html(data)
+        converted = text_to_html(data, url)
     elseif url.gophertype == "4" then
         mime = "application/mac-binhex40"
     elseif url.gophertype == "5" then
@@ -228,16 +257,18 @@ local function data_to_browser(data, url)
     elseif url.gophertype == "p" then
         mime = "image/png"
     elseif url.gophertype == "I" then
-        mime = image_mime_type(url.selector:lower():match("%.(.-)$"))
+        mime = image_mime_type(url.selector:match("%.(.-)$"))
     elseif url.gophertype ~= "h" then
-        msg.error("Unsupported item type: '%s'", url.gophertype)
-        error("Unsupported item type")
+        msg.error("Unsupported Gopher item type: '%s'", url.gophertype)
+        error("Unsupported Gopher item type", 0)
     end
     return converted, mime
 end
 
--- parse Gopher URL, return its structure
-local function parse_url(url)
+--- Parse Gopher URL.
+-- @tparam string url Gopher URL starting with gopher://
+-- @treturn table A structure representing the URL tokens.
+_M.parse_url = function(url)
     local host_port, gopher_path = url:match("gopher://([^/]+)/?(.-)$")
     if not host_port then return end
     local host = host_port
@@ -268,6 +299,11 @@ local function parse_url(url)
             gopher_plus_string = luakit.uri_decode(gopher_plus_string)
         end
     end
+    local title = selector
+    if title:sub(1, 1) ~= "/" then
+        title = "/" .. title
+    end
+    title = ("/%s%s"):format(gophertype, title)
     return {
         host = host,
         port = port,
@@ -276,26 +312,10 @@ local function parse_url(url)
         selector = selector,
         search = search,
         gopher_plus_string = gopher_plus_string,
+        title = title,
     }
 end
-
-do
-    local url
-    url = parse_url("gopher://ygrex.ru:80/0/file.txt%09please/search%09plus/command")
-    assert(url.host == "ygrex.ru")
-    assert(url.port == 80)
-    assert(url.gophertype == "0")
-    assert(url.selector == "/file.txt")
-    assert(url.search == "please/search")
-    assert(url.gopher_plus_string == "plus/command")
-    url = parse_url("gopher://ygrex.ru")
-    assert(url.host == "ygrex.ru")
-    assert(url.port == 70)
-    assert(url.gophertype == "1")
-    assert(url.selector == "")
-    assert(url.search == nil)
-    assert(url.gopher_plus_string == nil)
-end
+local parse_url = _M.parse_url
 
 -- establish connection, wait for the socket to become writable
 local function _net_establish_connection(host, port)
@@ -304,7 +324,7 @@ local function _net_establish_connection(host, port)
     local res, err, _ = conn:connect(host, port)
     if not res then
         if err ~= "timeout" then
-            return error(err)
+            return error("Socket error: " .. tostring(err), 0)
         end
         while true do
             if coroutine.yield() then
@@ -316,7 +336,7 @@ local function _net_establish_connection(host, port)
                 break
             end
             if err ~= "timeout" then
-                return error(err)
+                return error("Socket error: " .. tostring(err), 0)
             end
         end
     end
@@ -334,7 +354,7 @@ local function _net_send_message(conn, message)
         end
         if not res then
             if err ~= "timeout" then
-                return error(err)
+                return error("Socket error: " .. tostring(err), 0)
             end
         end
         sent = res or last
@@ -359,7 +379,7 @@ local function _net_read_data(conn)
             break
         end
         if err ~= "timeout" then
-            return error(err)
+            return error("Socket error: " .. tostring(err), 0)
         end
         chunks[#chunks + 1] = last
         if coroutine.yield() then
@@ -399,6 +419,25 @@ local function remove_loader(v, loader)
     end
 end
 
+-- forward request to error_page module
+local function show_error_page(v, request, reason)
+    pcall(error_page.show_error_page, v, {
+        heading = "Gopher Site Loading Failed",
+        content = reason,
+        request = request
+    })
+end
+
+-- finish request with appropriate page content
+local function send_data_to_browser(v, request, data, url)
+    local res, html, mime = pcall(data_to_browser, data, url)
+    if res then
+        request:finish(html, mime)
+    else
+        show_error_page(v, request, html)
+    end
+end
+
 webview.add_signal("init", function (view)
     view:add_signal("scheme-request::gopher", function (v, uri, request)
         local url = assert(parse_url(uri))
@@ -417,7 +456,7 @@ webview.add_signal("init", function (view)
             local status, res = coroutine.resume(net, not alive)
             if not status then
                 if not request.finished then
-                    request:finish("Error: " .. tostring(res), "text/plain")
+                    show_error_page(v, request, res)
                 end
                 return remove_loader(v, loader)
             end
@@ -425,7 +464,7 @@ webview.add_signal("init", function (view)
                 return
             end
             if not request.finished then
-                request:finish(data_to_browser(res, url))
+                send_data_to_browser(v, request, res, url)
             end
             remove_loader(v, loader)
         end
