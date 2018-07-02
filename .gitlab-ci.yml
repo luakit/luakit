@@ -1,0 +1,27 @@
+image: debian:sid
+
+before_script:
+  - apt-get update -qq && apt-get install -y -qq debhelper libluajit-5.1-dev libsqlite3-dev libwebkit2gtk-4.0-dev lua-filesystem-dev luajit pkg-config build-essential git-buildpackage xvfb lua-luassert lua-check make
+
+luakit:
+  stage: build
+  script:
+    - git checkout $CI_COMMIT_REF_NAME
+    - make
+    
+run-tests:
+  stage: test
+  script:
+    - git checkout $CI_COMMIT_REF_NAME
+    - make run-tests
+
+debian:
+  stage: deploy
+  only:
+    - /^debian\/[0-9]+(\.[0-9]+)*$/
+  script:
+    - git checkout $CI_COMMIT_REF_NAME
+    - gbp buildpackage -us -uc
+  artifacts:
+    paths:
+      - build/*
