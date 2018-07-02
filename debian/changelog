@@ -1,7 +1,5 @@
-luakit (2:2.0~1.gbpb6b8db) UNRELEASED; urgency=medium
+luakit (2:2.0) unstable; urgency=medium
 
-  ** SNAPSHOT build @b6b8db81afef03d536ad9bcb3ac2f742f9888eb7 **
-   * Initial new release with Webkit2GTK+
    * Package adopted by Grégory David <groolot@groolot.net>
 
   [ Yuriy Melnyk ]
@@ -2678,6 +2676,7 @@ luakit (2:2.0~1.gbpb6b8db) UNRELEASED; urgency=medium
   * Move debian/ controling directory inside debian/sid branch.
     See #540
   * Upstream update 2.1
+  * Adopt and update to upstream 2.0
 
   [ gleachkr ]
   * Fix for #349.
@@ -2832,7 +2831,7 @@ luakit (2:2.0~1.gbpb6b8db) UNRELEASED; urgency=medium
     Switch to the tab being reused
   * Filter all strings to w:navigate and w:new_tab through w:search_open
 
- -- Grégory DAVID <groolot@groolot.net>  Mon, 02 Jul 2018 21:17:30 +0200
+ -- Grégory DAVID <groolot@groolot.net>  Mon, 02 Jul 2018 21:53:59 +0200
 
 luakit (2012.09.13-r1-8) unstable; urgency=medium
 
