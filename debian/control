@@ -1,4 +1,4 @@
-Source: luakit2
+Source: luakit
 Section: web
 Priority: optional
 Maintainer: Grégory DAVID <groolot@groolot.net>
@@ -14,7 +14,7 @@ Homepage: https://luakit.github.io/
 Vcs-Git: https://github.com/luakit/luakit.git
 Vcs-Browser: https://github.com/luakit/luakit
 
-Package: luakit2
+Package: luakit
 Architecture: any
 Multi-Arch: foreign
 Depends: ${misc:Depends}, ${shlibs:Depends}, lua-filesystem

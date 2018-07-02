@@ -1,13 +1,8 @@
-luakit2 (2.0) unstable; urgency=medium
+luakit (2:2.0~1.gbpb6b8db) UNRELEASED; urgency=medium
 
+  ** SNAPSHOT build @b6b8db81afef03d536ad9bcb3ac2f742f9888eb7 **
    * Initial new release with Webkit2GTK+
    * Package adopted by Grégory David <groolot@groolot.net>
-
- -- Grégory DAVID <groolot@groolot.net>  Sun, 24 Sep 2017 14:40:00 +0200
-
-luakit (2017.08.10) unstable; urgency=medium
-
-  * Package adopted by Grégory David <groolot@groolot.net>
 
   [ Yuriy Melnyk ]
   * Allow user to configure whether to ignore case in follow mode or not
@@ -47,6 +42,8 @@ luakit (2017.08.10) unstable; urgency=medium
     - Use shorter variable names
     - inline the .com value
     - add a binding comment (viewable in :help)
+  * Validate utf8 input to the window send_Key method.
+  * Check gdk_keymap_get_entries_for_keyval return value.
 
   [ Ambrevar ]
   * Man page: first issue Description, Options, Keybindings, Commands, Files,
@@ -220,6 +217,20 @@ luakit (2017.08.10) unstable; urgency=medium
   * documented some more luaclass functions
   * documented signal emitting functions
   * documented the rest of common/luaclass.c
+  * added function to simulate keystrokes on the window
+  * addded some guards for bad keys
+  * also converting unicode chars like ":" etc.
+  * added lua lib to parse keystrings
+  * send_key now returns true/false based on sending success
+    instead of issuing a console warning
+  * fixed minor bug in keystring sending
+  * moved keysym.lua out of lousy and fixed some bugs
+    *   it needs the window object, so it can't be in lousy
+    *   fixed some typos
+  * added the ability to send modifiers as well
+  * added modifier shortcuts like S for Shift or M3 for Mod3
+  * added modifier handling on the C side and fixed modifiers
+    on the lua side
 
   [ walt ]
   * Fixed click() in follow.lua to trigger more events.
@@ -385,7 +396,7 @@ luakit (2017.08.10) unstable; urgency=medium
     Delays the stylesheet signal until the load is committed.
   * Add web extension Lua state
   * Link common/*.c files into luakit.so
-  * Correct Makefile dependency
+  * Correct Makefile dependancy
   * Add basic Lua dom_document class
   * Add basic Lua dom_element class
   * Set Lua panic function for web process
@@ -557,7 +568,7 @@ luakit (2017.08.10) unstable; urgency=medium
   * Implement scrolling without JavaScript
   * Reduce repetition in dom element attr getter
   * Clean up warnings in dom_element.c
-  * Add callback parameter to run_javascript()
+  * Add callback paramater to run_javascript()
   * Get follow_selected.lua working again
   * Add no_return = true to go_next_prev.lua
   * Get :userscriptinstall working again
@@ -1929,6 +1940,9 @@ luakit (2017.08.10) unstable; urgency=medium
   * Add tab favicons
   * Fix signals being emitted for dead tab widget
   * Fix use-after-free of destroyed widgets (#381, #382)
+    Some widget wrappers were not connecting to the "destroy" signal.
+    Some widget wrappers connected to some signals in LUAKIT_WIDGET_SIGNAL_COMMON,
+    but not all of them; not sure why.
   * Add destroy signal for page, dom_document, dom_element (#390)
   * image_css: remove handler on page destruction
   * tab_favicons: remove signal handlers on tab destruction
@@ -2257,11 +2271,352 @@ luakit (2017.08.10) unstable; urgency=medium
   * docs: workaround chrome rendering bug
   * Fix quickmark bindings (#386)
   * Update changelog for August 10 release
+  * docs: fix broken relative link html
+  * Fix application/x-extension-html files being downloaded
+  * docs: fix broken ref html
+  * Add support for tests with DEVELOPMENT_PATHS=0
+  * Revert "select: don't hint elements not currently visible"
+    Heuristic sometimes breaks for multi-line text elements.
+    This reverts commit cb6f06040afb941dc008216ba550b7a108ae6cfe.
+  * Add luakit.install_paths table
+  * Made @copyright headers consistently formatted
+  * docs: correctly parse function names with dots
+  * docs: hide attribution if no info available
+  * docs: fix items having the same name
+  * docs: ensure only callbacks end in _cb
+  * docs: improve copyright line formatting
+  * docs: highlight referenced item
+  * docs: fix main content width
+  * docs: scroll long code blocks
+  * docs: improve item margins
+  * docs: make @deprecated work for properties
+  * docs: improve index generation
+  * binds: pre-convert binds table syntax.
+    This lets you use bind tables with loose syntax directly with
+    lousy.bind.hit() and friends.
+  * Move readline bindings to readline.lua
+  * docs: deduplicate shell commands
+  * docs: fix title case
+  * readline: add ctrl-y binding
+  * I always forget to update the changelog...
+  * help_chrome: fix documentation not loading
+  * help_chrome: fix documentation not loading, for real this time
+  * unique: move to luakit.unique, add proxy
+  * unique: move Lua code to unique_instance.lua
+  * Add migration instructions, changelog entries
+  * Add changelog entries, fix formatting
+  * Add unique_instance.open_links_in_new_window property
+  * Update unique documentation name
+  * Revert "docs: fix main content width"
+    This reverts commit 04db4f25205e0c4a7dd6a32eb40f86121026a077.
+  * resources: add resource path searcher
+  * Add luakit.resource_path property
+  * image: use resource_path to find files
+  * tests: fix tests when using DEVELOPMENT_PATHS=0 (#419)
+  * resource: add path assertion
+  * resource: wrangle relative paths only
+  * resource: modify default resource directories
+  * Add lousy.util.find_resource() function
+  * widget: add scroll signal
+  * webview: add support for binding to scroll events
+  * binds: make scrolling binds work with smooth scrolling
+  * Update changelog
+  * Add globals.default_zoom_level
+  * Remove zoom widget print spam
+  * binds: make control-scroll use zoom_step to zoom
+  * Improve zoom handling on image pages
+  * Revert "Block GTK's focus-changing keybinds"
+    This reverts commit e5f1d320026aebc8e6148f116a71783693241650.
+  * adblock: fix state corruption on reload (#439)
+  * adblock: fix subscriptions entries being reordered
+  * docs: re-enable lousy.widget docs (#442)
+  * Fix log chrome page error spam (#433)
+  * Don't assume DOM element IDs are unique (#443)
+  * webview: add permission-request signal
+  * webview: add hardware_acceleration_policy property
+  * webview: add missing allow_foo_access_from_file_urls properties
+  * follow: add label to clickable selector
+  * Fix arrow keys not working on completion menu (#453)
+  * Fix error on race with webview close
+  * Update documentation page name
+  * Add basic settings.lua module
+  * Move window, webview config into lib
+  * settings: catch assignments to invalid paths
+  * settings: add on[domain] nodes
+  * Add lousy.uri.domains_from_uri()
+  * settings: add get_setting_for_uri()
+  * Add settings.get_settings()
+  * webview: add settings-based domain_props replacement
+  * settings: add migrate_global() helper
+  * Migrate globals to settings
+  * Add settings.window.new_tab_page
+  * Deprecate domain_props.lua
+  * styles: remove check for old API
+  * Remove globals.lua
+  * settings: add table value proxy
+  * Add view-specific settings overrides
+  * Update changelog
+  * settings: validate new setting values
+  * Update documentation
+  * Update config/rc.lua comment
+  * Fix window.new_window_size setting validation
+  * Fix hard-coded window icon path
+  * Fix Page-Up scrolling downwards
+  * Warn about property name change
+  * Update luakit.org -> luakit.github.io (#463)
+  * Remove help stuff from contributing file
+  * Fix chrome pages breaking when not using LuaJIT (#466)
+  * Fix error in settings migration shim (#468)
+  * Fix zoom level reset to 100% after view crash (#469)
+  * Emit queued log signals after reexec (#467)
+  * webview: add settings defaults (#462)
+  * webview: remove enable_private_browsing property
+  * Remove IPC socket files on restart (#400)
+  * settings: improve migration warnings
+  * settings: remove settings.on['all']
+  * settings: add setting domain_specific option
+  * Fix webview.user_agent setting
+  * Check log serializer return value
+  * Fix follow mode parent_href evaluator
+  * Remove settings.get_setting_for_uri()
+  * Revert "add a bind-match-failure warning to the window widget's hit method"
+    This reverts commit be08edd238e4da65a3b53be9bcafdbbe9de39886.
+  * Use xdg-open for the default editor command (#473)
+  * Add changelog entry
+  * Fix zoom_level migration issue (#479)
+  * Revert "Fix zoom_level migration output"
+    This reverts commit 3b2ccb59b0169573cec4978d75d6da5004facd5e.
+  * settings: refactor new value validation into function
+  * Fix test failure
+  * settings: add persisted settings storage
+  * Fix several incorrect comparisons
+  * Fix error in error handling
+  * Fix incorrect setting names
+  * Add label values for webview setting
+  * settings: add get_settings() API
+  * Add descriptions for all settings
+  * Add settings chrome page
+  * Add setting-changed signal
+  * tablist: respond to tablist.always_visible setting changes
+  * settings: improve get_settings() return format
+  * Remove use of deprecated function
+  * Sync package path/cpath to web extensions
+  * Fix inspector not working (#512)
+  * styles: fix leak of stale stylesheets
+  * styles: fix regex escaping issue
+  * styles: improve documentation
+  * Remove #! from non-executable script (#536)
+  * Move luakit.so from /usr/share to /usr/lib (#520)
+  * Fix installation error
+  * Fix error opening local files with paths containing spaces
+  * Remove jQuery use from binds_chrome
+  * Remove jQuery use from bookmarks_chrome
+  * Remove jQuery use from downloads_chrome
+  * Remove jQuery use from history_chrome
+  * Remove jQuery
+  * downloads: fix implementation not matching docs
+  * Add UTF-8 compatibility library
+  * Make readline del_word handle wide characters correctly (#525)
+  * Preserve private state for mouse binding (#548)
+  * Fix bug when refreshing adblock-blocked page (#487)
+  * downloads_chrome: fix status text not being shown
+  * downloads_chrome: speed up download refresh interval
+  * doc: Add s.trim to custom hints example
+  * settings: fix simple API not getting persisted values (#554)
+  * follow: fix hint modes that switch to command mode (#556)
+  * Follow: replace hacky workaround with new shiny API
+  * completion: use word-based fuzzy matching (#559)
+  * completion: fix pattern
+  * window: add private state, fix build signal time
+  * Fix window close error with close_with_last_tab (#558)
+  * Ignore moe deprecated stuff.
+    There doesn't appear to be a way to get the label text for a GAction, so
+    we stick with the old way for now...
+  * Let 2.16 work again for now
+  * Add missing luakit.webkit_version impl and docs
+  * Make exit-passthrough binding separate.
+    This makes it possible to remap leave-passthrough-mode without changing
+    the usual go-back-to-normal-mode binding, for sites where you might wish
+    to input <Esc>
+  * bookmarks: allow any chars in tags, not just a-zA-Z-
+  * Add error messages to inc/dec URI
+  * Fix URI bar clobbering X selection on :winopen (#577)
+  * Remove useless if-test.
+    Assertion at start of function already ensures a valid title
+  * adblock: fix new lists not being added to subscriptions (#573)
+  * Blacklist automatic use of default search engine (#584)
+  * Fix documentation
+  * Fix completion not showing items without titles.
+    The || operator returns null if either of its parameters are null, which
+    breaks URI matching when the title is null.
+  * Fix :dump command using removed API
+  * Default to current page URI for :download (#593)
+  * select: ensure labels are within frame region.
+    Previous code did not take scrolling into account.
+  * session: add setting to always save session
+  * Add markup option to w:set_prompt()
+  * Add count support to gy command
+  * Remove dead CSS
+  * utf8: add charpattern
+  * Fix Forward/Back keybind syntax
+  * Add missing changelog entry
+  * Add detach-tab signal
+  * settings: add explicit override API, improve chrome page
+  * Fix gy binding not working without a count
+  * Make gy binding open tabs after current tab
+  * Add nag warning for vulnerable webkit
+  * Fix test failure
+  * Fix test failure
+  * session: fix some save/load corner cases.
+    If window.close_with_last_tab and session.always_save are both enabled,
+    session saving used to write a session file with no tabs in a window,
+    confusing the session loader and preventing startup. Both save and load
+    have been fixed.
+  * Fix test failure, take 3
+  * settings: fix extra return values
+  * Update incorrect README information
+  * Fix opening local files with names containing spaces (#579)
+  * Sort rows in :styles-list menu
+  * Fix falsy settings not overriding persisted values (#607)
+  * Fix window send_key() for GTK < 3.20
+  * select: support unicode characters as hints (#608)
+  * Fix trim() label composer requiring sorted labels
+  * Add loaded modules to :lua index metafunction (#609)
+  * Add label composers to label maker fenv (#610)
+  * Improve hinting documentation (#610)
+  * adblock: fix removed lists being saved to subscriptions
+  * follow: don't try to clean up on destroyed pages
+  * styles: fix global comment matching
+  * follow: fix double-cleanup of subframes
+  * window: add root_win_xid, win_xid properties
+  * follow: fix entering follow mode without document body
+  * undoclose: store closed tabs in per-notebook table
+    - moves state out of window table w
+    - allows mods which manage multiple tab notebooks per window, such as a
+    WIP tab groups module
+  * window: auto-swap signals for w.tabs.
+    Assigning a notebook widget to w.tabs now makes that widget the
+    'current' notebook for the window: i.e. switching between its pages will
+    update w.view
+  * adblock: fix error when loading lists (#587)
+    Fixes loading filters like $third-party,domain=rusplt.ru
+  * binds: auto-convert single-key buffer bindings
+  * widget: add replace() method
+  * settings_chrome: fix bad html generation
+  * settings_chrome: add text label to boolean inputs
+  * select_wm: filter zero-size client rects
+  * Remove unused tokens
+  * settings: store global+domain settings together
+  * settings: refactor setting source tracking
+  * settings: make table settings typed
+  * settings: add some assertions
+  * settings_chrome: improve disabled setting CSS
+  * settings_chrome: add table setting view
+  * settings_chrome: improve text selection behaviour
+  * settings: fix table overwriting being broken (#614)
+  * Fix issues with % in search engine patterns (#616)
+  * window: add some assertions
+  * Add stack widget
+  * window: make input_text, prompt_text private
+  * window: maintain constant status/input bar height (#594)
+    Uses the newly-wrapped stack widget. This necessitates moving from a
+    widget structure with two possible bar states (sbar and ibar) to one
+    with three (sbar, mbar, and ibar), to avoid showing and hiding the input
+    bar widget (necessary for the stack widget to work). Moving to this
+    structure is also necessary to keep the same API.
+    This still shows and hides the prompt text labels: this is unlikely to
+    cause an issue, as they're almost certain to have the same height as the
+    sbar labels.
+  * Fix inability to add search engine functions
+  * window: fix sbar background setting
+  * widget: wrap align properties
+  * tab_favicons: fix race condition when tab is removed
+  * widget: add missing container index macro
+  * window: vertically center status bar labels
+  * widget: use container index macro for notebook
+  * widget: ensure children property is always error-free
+    i.e. that it can be accessed (and will return nil) on non-container
+    widgets.
+  * tablist: add set_notebook() method
+  * Add webview.has_load_block()
+  * tab_favicons: show favicons for not-yet-loaded tabs
+  * window: transparently support old-format search engines
+  * Replace CSS gradients with data: URIs.
+    Makes webview resizing much snappier
+  * Fix missing argument
+  * tablist: update visibility when changing notebook
+  * error_page: fix rare error on webview crash
+  * settings: fix incorrect validation
+  * settings: improve boolean input CSS
+  * settings: add formatting for table settings
+  * userscripts: make @match work like @include (#632)
+  * userscripts: properly handle regex patterns
+  * userscripts: refactor matching code
+  * select: fix trim() making zero-length hints
+  * userscripts: remove o, t, w bindings
+  * userscripts: add e-to-edit keybind
+  * userscripts: support toggling scripts on/off, improve menu
+  * userscripts: remove delete keybinding
+  * docs: add default browser question to FAQ
+  * Fix userrc error handling, change filename
+  * Add new luakit icon to repo (#363)
+  * ex-follow: allow mode evaluators to be a function (#650)
+  * follow: fix intermittent failure on target=_blank links (#651)
+    Failure was caused by checking after the element at the centre had been
+    determined.
+  * Fix code format
+  * Fix error when :open-ing JS URIs (#655)
+  * Fix several lua stack memory leaks (amosbird)
+  * Move window:send_key() to widget:send_key()
+  * Fix window title truncation producing invalid utf8 (#673)
+  * Don't save session on non-last-window close
+  * Poll for document resize with requestAnimationFrame.
+    Still waiting on https://bugs.webkit.org/show_bug.cgi?id=157743
+    This slightly improves performance due to the removal of the
+    DOMSubtreeModified event observer, and slightly increases idle CPU.
+    TODO: add more throttling. Already throttled to visible tabs only.
+    Also fixes a bug where DOM updates cause a scroll to the top of the page
+    on some websites.
+  * Make luaH_dump_stack() non-inline
+  * Fix synthetic key events not marked as such (amosbird)
+  * Fix test failures
+  * Revert "Filter all strings to w:navigate and w:new_tab through w:search_open"
+    This reverts commit 44aebb0ca3de127af51de1c0aef39b77899e9398.
+  * Filter all strings to w:navigate and w:new_tab through w:search_open.
+    This reverts commit 9fffc6e0f5337904c17ab8f6d508c51208bc12bf.
+  * Add alt keybind aliases
+  * Fix some widget property changes not being notified
+  * Add vertical_tabs.side setting
+  * Improve config-ignored warning (zappathustra)
+    - correctly handles requires with . in the module name
+    - only warns if the module being overriden is a core luakit module
+  * Don't re-save session unnecessarily.
+    The main reason for this is to avoid saving the session twice when
+    luakit is quit with :wq and session.always_save = true
+  * Add undoclose.max_saved_tabs
+  * Add session.recovery_save_interval setting
+  * Fix some bindings ignoring counts
+  * Fix rc.lua breaking for non-LuaJIT builds (#691)
+  * Fix gt not cycling through tabs
+  * Fix gy not keeping private tabs private
+  * Fix :tabdetach not working
 
   [ Ygrex ]
   * add numpad keys to default config
   * detect effective locale
   * Fixed warnings reported by Clang scan-build-4.0
+    common/luaobject.c:312:46: warning: Access to field 'signals' results in a dereference of a null pointer (loaded from variable 'obj')
+        signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
+                                                 ^~~~~~~~~~~~
+    1 warning generated.
+    widgets/image.c:55:5: warning: Value stored to 'pixbuf' is never read
+        pixbuf = scaled_pixbuf;
+        ^        ~~~~~~~~~~~~~
+    1 warning generated.
+    extension/luajs.c:80:5: warning: Undefined or garbage value returned to caller
+        return ret;
+        ^~~~~~~~~~
+    1 warning generated.
   * free display detection fixed
     - do not try opening a socket
     - look into /tmp/.X11-unix as well
@@ -2269,10 +2624,22 @@ luakit (2017.08.10) unstable; urgency=medium
   * workaround for outdated posix module in tests
   * Unit tests fixes.
     Four unit-tests failures fixed:
-    1. test_module_binds_have_descriptions: Some bindings miss descriptions
+    1. test_module_binds_have_descriptions: Some bindings are missing descriptions
     2. test_undo_close_works: Timed out while waiting for signal 'load-status'
     3. test_undo_close_restores_tab_history: Expected objects to be equal
     4. test_website_data: Timed out while waiting
+  * false positive with webkit-2.17.90
+    the following false positive fixed:
+    FAIL async/test_clib_luakit / test_webkit_version
+      tests/async/test_clib_luakit.lua:39: Invalid format: luakit.webkit_version
+      Expected strings to match.
+      Passed in:
+      (string) '2.17.90'
+      Expected:
+      (string) '^%d+%.%d+%.%d$'
+      Traceback:
+      (1) /usr/share/lua/5.1/luassert/assert.lua:51 in function is_match
+      (2) tests/async/test_clib_luakit.lua:39       in function [anonymous]
 
   [ donlzx ]
   * Fix compilation with older Glib version.
@@ -2290,23 +2657,31 @@ luakit (2017.08.10) unstable; urgency=medium
     this complies with the Debian recommandations
   * This fixes #368
   * Revert "makefile: add default target"
-    See #359 for details that explain why the 'default' target is a nonsens as
-    there is the 'all' target already existing.
+    See #359 for details that explain why the 'default' target is a nonsens as there is the 'all' target already existing.
     This reverts commit ece896913e46069bb1d9b044d21d4b16824c34fb.
   * Makefile 'default' target is deprecated. Use target 'all' as a replacement.
-    Keep 'default' target to ensure retro-compatibility, so let it sounds
-    as .PHONY target
-  * Widely use 'install' commands instead of several and sparse commands
-    like 'cp' or 'chmod'. This is to ensure homogenity and comply with
-    Debian precepts.
+    Keep 'default' target to ensure retro-compatibility, so let it sounds as .PHONY target
+  * Widely use 'install' commands instead of several and sparse commands like 'cp' or 'chmod'. This is to ensure homogenity and comply with Debian precepts.
     This fixes #371
   * Remove executability check on 'luakit.so' from 'ipc.c'
     This fixes #384
+  * debian: add debian/
+  * Debianization with git-buildpackage
+  * Add the new fresh logo designed by Aidan Holm
+  * Define the newly package as conflicting with old luakit package as it is name luakit2 now
+  * Add 'Keyword' entry inside 'luakit.desktop' file.
+    Fixes #538
+  * Change version number according to new tag versionning
+  * Change SVG logo destination directory to comply with https://specifications.freedesktop.org/icon-theme-spec/icon-theme-spec-latest.html
+  * Debianization
+  * Lintian corrections
+  * Move debian/ controling directory inside debian/sid branch.
+    See #540
+  * Upstream update 2.1
 
   [ gleachkr ]
   * Fix for #349.
-    This is a quick fix for #349. It also fixes some issue with this script on
-    the google search-results page.
+    This is a quick fix for #349. It also fixes some issue with this script on the google search-results page.
     Update go_next_prev.lua
     Deleted empty line
   * remove unneeded requires
@@ -2319,11 +2694,20 @@ luakit (2017.08.10) unstable; urgency=medium
   * updated changelog
   * Add method for extending formfiller dsl
   * update changelog
+  * add a bind-match-failure warning to the window widget's hit method
+  * update changelog
 
   [ Stefan Hagen ]
   * FreeBSD socket cleanup workaround
   * Fixing the IPC socket truncation
   * Fix IPC socket truncation on FreeBSD (#402)
+  * Fix zoom_level migration output
+  * Remove LIBDIR on uninstall target
+  * Add settings.window.quit_on_last_tab_close.
+    Setting this to true will close the luakit window when no more tab is
+    left.
+  * Rework close_with_last_tab.
+  * Setting description in proper English
 
   [ Zhong Jianxin ]
   * Fix typo in globals.domain_props example
@@ -2331,12 +2715,441 @@ luakit (2017.08.10) unstable; urgency=medium
   * Make formfiller work with non-default ports
   * Really make formfiller work with non-default ports.
     Port should be compared by number, not string
+  * doc: Add build-debian-package.md
 
   [ Aric Belsito ]
   * Fix linker error when running tests
 
- -- Grégory DAVID <groolot@groolot.net>  Sun, 11 Feb 2018 12:46:20 +0100
+  [ hofheinz ]
+  * Fix false-valued user settings being ignored (#484)
+  * Fix inability to bind Modifier-Minus (#489)
+  * Fix compilation under OpenBSD (#495)
+  * Add `tablist.always_visible` setting (#497)
 
+  [ taiite ]
+  * Fix #449
+  * Changed `luakit://introspector/` to `luakit://binds/` (#446)
+  * Changed 'Key bindings' to 'Bindings'
+  * Add :set command, for changing settings (#460)
+  * Added a changelog entry for :set and :seton
+
+  [ Jonas Schievink ]
+  * Make :adblock open a new tab.
+    Fixes #503
+  * Change :introspector to :binds.
+    Fixes #504
+
+  [ Ryan Volz ]
+  * Fix typo in CONTRIBUTING.md
+
+  [ IWriteThings ]
+  * Update README with config for HiDPI.
+    Adds configuration instructions for HiDPI monitors.
+
+  [ arcnmx ]
+  * Fall back to parent when the centre is off-screen
+  * remove_bind now returns the removed binding
+  * Add lousy.bind.remap_bind(), modes.remap_binds()
+  * Fix missing line from modes.remap_binds()
+
+  [ curioussavage ]
+  * Fix path to subscriptions file
+
+  [ Amos Bird ]
+  * Better gi behavior
+  * Interleaving url hinting.
+  * Add hinting string params to interleaving style.
+  * Fix corner cases of interleaving hinting.
+  * Fake keys in luakit!
+    This patch is a rebase of the keysym branches, with some improvements and tenderly care of @aidanholm :)
+  * Refactoring the interleaving hint style.
+  * Add Chinese prev/next regex.
+  * Ignore hidden elements in go_next_prev.
+  * export history_prev/next key binding options in cmdhist.
+  * Add forward/backward word deletion to readline.lua.
+    This patch adds word deletion commands. It also provides support
+    for utf-8 word movements.
+  * add del_to_eol action to readline.
+  * add downloads.db.
+    This commit adds downloads.db to store all finished download items.
+
+  [ Raphael McSinyx ]
+  * Add window.default_search_engine option
+
+  [ Nguyễn Gia Phong ]
+  * Use settings.get_setting instead of direct attribute access
+  * Improve mechanism of opening selection contents
+
+  [ Sergey Kozhemyakin ]
+  * added details about keyborad event
+  * added even type and cancel events
+  * added remove_even_listener()
+  * added prevent_default handling for dom events
+  * added permanent db for exceptions of invalid certificates
+
+  [ zappathustra ]
+  * Added mechanism to load user rc file if present.
+  * Add settings for completion
+  * replace null title with emtpy string
+  * added permanent history to command and lua modes
+  * disable history with private browsing
+  * fixed wrong indentation (messed with the output)
+  * add warning when deprecated module file is found in config dir
+
+  [ Javier Rojas ]
+  * correct escaping of HTML entities in documentation pages
+    when the lxsh rock is not available, the HTML escaping must be kept, or
+    else the text in code samples is not rendered correctly when it contains
+    HTML special chars.
+  * chrome functionality for getting already registered handlers
+  * show list of all available luakit:// pages in help page
+  * extend docs for keybindings in the quickstart guide
+  * remove obsolete desc. about custom luakit config
+  * reorganize topics in quickstart config
+  * intro for configuration, mention chrome settings page
+  * adjust paths in suggested locations for userconf file in quickstart guide
+  * correct modeline syntax in userguide file
+  * FAQ entry for how to define keybindings
+
+  [ vlnx ]
+  * Complete the deprecation of w.win.xid -> w.win.root_win_xid.
+    Removes compiler(gcc version 6.4.0) warning:
+    cc -c widgets/window.c -o widgets/window.o
+    widgets/window.c: In function 'luaH_window_index':
+    widgets/window.c:194:9: warning: empty declaration
+             __attribute__ ((fallthrough));
+    Seems fallthrough isn't available until gcc 7
+  * Update documention for window's xid -> win_xid.
+    Plain 'xid' referred to the xid of the root window.
+    Now available through 'root_win_xid'
+    Now the docstring is correct, win_xid is the window's xid
+  * Add documention for root_win_xid
+  * w:new_tab: re-use blank tabs.
+    Change log level used in new_tab when reusing a tab
+    Respect 'switch' when reusing a new_tab view
+    Make new_tab_page re-usage a setting
+    Off by default
+    Switch to the tab being reused
+  * Filter all strings to w:navigate and w:new_tab through w:search_open
+
+ -- Grégory DAVID <groolot@groolot.net>  Mon, 02 Jul 2018 21:17:30 +0200
+
+luakit (2012.09.13-r1-8) unstable; urgency=medium
+
+  * QA upload.
+  * Repackage source without source-less jquery.min.js.
+  * Use libjs-jquery instead. Closes: #737435.
+
+ -- Víctor Cuadrado Juan <me@viccuad.me>  Tue, 08 Sep 2015 18:05:00 +0200
+
+luakit (2012.09.13-r1-7) unstable; urgency=medium
+
+  * QA upload.
+  * Change debian/patches/2012.09.13-r1-1.diff to use https on several
+    search engines allowing it.
+  * Add debian/patches/soup-ssl-strict-true.diff to not allow navigation
+    on sites with invalid/expired ssl certificates. Closes: #790324.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 03 Sep 2015 23:35:48 +0200
+
+luakit (2012.09.13-r1-6) unstable; urgency=medium
+
+  * QA upload.
+  * Tidy up debian/patches a little bit.
+  * Calculate md5sums in a deterministic way.
+
+ -- Santiago Vila <sanvila@debian.org>  Fri, 28 Aug 2015 22:27:52 +0200
+
+luakit (2012.09.13-r1-5) unstable; urgency=medium
+
+  * QA upload.
+  [ Maria Valentina Marin ]
+  * Fix mtimes before building binary packages. Closes: #792977.
+
+ -- Santiago Vila <sanvila@debian.org>  Thu, 27 Aug 2015 19:37:18 +0200
+
+luakit (2012.09.13-r1-4) unstable; urgency=medium
+
+  * Patch from Chris Lamb to make the build reproducible.
+    closes: #777491.
+  * Orphan the package.
+
+ -- Clint Adams <clint@debian.org>  Mon, 25 May 2015 21:45:51 -0400
+
+luakit (2012.09.13-r1-3) unstable; urgency=low
+
+  [ Enrico Tassi ]
+  * Use post-wheezy Lua package names in Depends:
+    - liblua5.1-filesystem0 -> lua5.1-filesystem
+
+ -- Clint Adams <clint@debian.org>  Thu, 19 Sep 2013 18:20:31 +0200
+
+luakit (2012.09.13-r1-2) unstable; urgency=low
+
+  * Cherry-pick 105530f1542d568a6cf8d236eb1dc84fa982703b and
+    d24b8d230c2377e5ee015cbda78098d1da72c899 from luakit-crowd.
+
+ -- Clint Adams <clint@debian.org>  Sat, 13 Jul 2013 11:51:49 -0400
+
+luakit (2012.09.13-r1-1) unstable; urgency=low
+
+  * New upstream version.
+  * Bump to Standards-Version 3.9.4.
+  * Add build-arch and build-indep targets.
+  * Use dpkg-buildflags.
+  * Change Homepage to http://luakit.org/ .  closes: #695288.
+  * Call update-menus in postinst.
+  * Add watch file.
+  * Update descriptions.
+
+ -- Clint Adams <clint@debian.org>  Sun, 30 Dec 2012 19:34:33 -0500
+
+luakit (2012.03.25-1) unstable; urgency=low
+
+  * New upstream version.
+  * Make DuckDuckGo default search engine.
+  * Add Debian tag to DDG query string.
+
+ -- Clint Adams <clint@debian.org>  Tue, 27 Mar 2012 16:08:46 -0400
+
+luakit (2011.07.22-r1+1015-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Sun, 30 Oct 2011 19:14:53 -0400
+
+luakit (2011.07.22-r1-1) unstable; urgency=medium
+
+  * New upstream bugfix release.
+
+ -- Clint Adams <clint@debian.org>  Thu, 28 Jul 2011 09:39:24 +0200
+
+luakit (2011.07.22-2) unstable; urgency=low
+
+  * Change WebKitGTK+ build dependency to libwebkitgtk-dev.  closes:
+    #635418.
+
+ -- Clint Adams <clint@debian.org>  Tue, 26 Jul 2011 14:36:08 +0200
+
+luakit (2011.07.22-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@debian.org>  Fri, 22 Jul 2011 15:27:45 +0200
+
+luakit (2011.05.06+unique-1) unstable; urgency=low
+
+  * Add libunique support and corresponding build dependency.
+  * Fix popup inactivity problem.  closes: #622594.
+  * Bump to Standards-Version 3.9.2.
+
+ -- Clint Adams <clint@debian.org>  Wed, 15 Jun 2011 19:18:41 -0400
+
+luakit (2011.05.06-2) unstable; urgency=low
+
+  * Add Debian menu entry from Jonathan Lane.  closes: #629103.
+
+ -- Clint Adams <clint@debian.org>  Sat, 04 Jun 2011 12:27:05 -0400
+
+luakit (2011.05.06-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@debian.org>  Fri, 06 May 2011 10:19:05 -0400
+
+luakit (2011.04.13-1) unstable; urgency=low
+
+  * New upstream bugfix release.
+  * Set term to x-terminal-emulator instead of xterm.  closes: #604899.
+
+ -- Clint Adams <clint@debian.org>  Wed, 13 Apr 2011 12:43:47 -0400
+
+luakit (2011.04.04-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@debian.org>  Sun, 03 Apr 2011 12:30:16 -0400
+
+luakit (2010.12.25+0329-1) unstable; urgency=medium
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Thu, 31 Mar 2011 15:22:37 -0400
+
+luakit (2010.12.25+0327-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Sun, 27 Mar 2011 13:11:21 -0400
+
+luakit (2010.12.25+0310-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@debian.org>  Sat, 12 Mar 2011 11:02:40 -0500
+
+luakit (2010.12.25+0225-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add build dependency on libsqlite3-dev.
+
+ -- Clint Adams <clint@debian.org>  Fri, 25 Feb 2011 10:33:39 -0500
+
+luakit (2010.12.25-2) unstable; urgency=low
+
+  * New upstream bugfix release (2010.12.25-r1).
+
+ -- Clint Adams <clint@gnu.org>  Sun, 26 Dec 2010 21:24:58 -0500
+
+luakit (2010.12.25-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <clint@gnu.org>  Sat, 25 Dec 2010 09:14:36 -0500
+
+luakit (2010.09.24+whatthelol-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <clint@gnu.org>  Fri, 03 Dec 2010 21:20:41 -0500
+
+luakit (2010.09.24+veterans-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Remove misleading http_proxy line from globals.lua.
+    closes: #603037.
+
+ -- Clint Adams <clint@gnu.org>  Thu, 11 Nov 2010 18:26:21 -0500
+
+luakit (2010.09.24+halloween-2) unstable; urgency=low
+
+  * Add dependency on liblua5.1-filesystem0.  closes: #602046.
+
+ -- Clint Adams <schizo@debian.org>  Wed, 03 Nov 2010 16:01:51 -0400
+
+luakit (2010.09.24+halloween-1) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Sun, 31 Oct 2010 11:13:58 -0400
+
+luakit (2010.09.24-1) unstable; urgency=low
+
+  * New upstream release.
+    - Drop build-dependency on gperf.
+    - Add build dependency on lua5.1.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 24 Sep 2010 06:31:14 -0400
+
+luakit (2010.08.30-2) unstable; urgency=low
+
+  * Patch from Kumar Appaiah to add AppleWebKit and Webkit-build
+    specific version to user agent string, thereby encouraging
+    websites like Flickr and Google Maps to behave in a more
+    effective manner.  closes: #596653, #595289.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 18 Sep 2010 10:39:05 -0400
+
+luakit (2010.08.30-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <schizo@debian.org>  Mon, 30 Aug 2010 21:25:35 -0400
+
+luakit (0~20100813-10) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add /etc/xdg/luakit/modes.lua as a conffile.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 28 Aug 2010 17:39:26 -0400
+
+luakit (0~20100813-9) unstable; urgency=low
+
+  * New upstream development snapshot.
+    - Adds autogenerated man page.  closes: #593762.
+  * Add build dependency on help2man.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 27 Aug 2010 11:15:06 -0400
+
+luakit (0~20100813-8) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Fix typo in installation of postinst.
+
+ -- Clint Adams <schizo@debian.org>  Wed, 25 Aug 2010 11:24:41 -0400
+
+luakit (0~20100813-7) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add /etc/xdg/luakit/{binds,globals,theme,webview,window}.lua
+    as conffiles.
+
+ -- Clint Adams <schizo@debian.org>  Tue, 24 Aug 2010 16:24:18 -0400
+
+luakit (0~20100813-6) unstable; urgency=low
+
+  * New upstream development snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 20 Aug 2010 14:33:36 -0400
+
+luakit (0~20100813-5) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add /usr/bin/luakit to x-www-browser alternative.  closes: #593418.
+
+ -- Clint Adams <schizo@debian.org>  Wed, 18 Aug 2010 10:15:54 -0700
+
+luakit (0~20100813-4) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Add Debian PTS/BTS/Packages websearch shortcuts from
+    Kumar Appaiah.  closes: #593307.
+
+ -- Clint Adams <schizo@debian.org>  Tue, 17 Aug 2010 09:03:16 -0700
+
+luakit (0~20100813-3) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Drop README.Debian file.
+
+ -- Clint Adams <schizo@debian.org>  Mon, 16 Aug 2010 09:30:10 -0700
+
+luakit (0~20100813-2) unstable; urgency=low
+
+  * New upstream development snapshot.
+  * Drop build dependency on libxdg-basedir-dev.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 13 Aug 2010 12:19:13 -0400
+
+luakit (0~20100813-1) unstable; urgency=low
+
+  * New upstream release.
+
+ -- Clint Adams <schizo@debian.org>  Thu, 12 Aug 2010 15:33:49 -0400
+
+luakit (0~20100807-2) unstable; urgency=low
+
+  * Fix build prefix.
+
+ -- Clint Adams <schizo@debian.org>  Sun, 08 Aug 2010 21:12:34 -0400
+
+luakit (0~20100807-1) experimental; urgency=low
+
+  * New upstream snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Sat, 07 Aug 2010 10:10:44 -0400
+
+luakit (0~20100806-1) experimental; urgency=low
+
+  * New upstream snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Fri, 06 Aug 2010 08:04:16 -0400
+
+luakit (0~20100725-1) experimental; urgency=low
+
+  * Initial snapshot.
+
+ -- Clint Adams <schizo@debian.org>  Thu, 29 Jul 2010 09:40:48 -0400
 luakit (2012.09.13-r1-8) unstable; urgency=medium
 
   * QA upload.
