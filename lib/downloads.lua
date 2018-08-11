@@ -74,6 +74,7 @@ function _M.init()
         local data = {
             created = rawget(row, "created_time"),
             id = next_download_id(),
+            old = true,
         }
         dls[d] = data
     end
@@ -133,7 +134,7 @@ status_timer:add_signal("timeout", function ()
 
         -- Raise "download::status" signals
         local status = d.status
-        if status ~= data.last_status then
+        if (not data.old) and (status ~= data.last_status) then
             data.last_status = status
             _M.emit_signal("download::status", d, data)
 
