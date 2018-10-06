@@ -481,7 +481,6 @@ _M.methods = {
         view = view or w.view
         w:emit_signal("close-tab", view)
         w:detach_tab(view, blank_last)
-        view:destroy()
     end,
 
     attach_tab = function (w, view, switch, order)
