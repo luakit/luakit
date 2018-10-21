@@ -122,6 +122,8 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     /* print version and exit */
     if (version_only) {
         g_printf("luakit %s\n", VERSION);
+        g_printf("  built with webkit %i.%i.%i ", WEBKIT_MAJOR_VERSION, WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
+        g_printf("(installed version: %u.%u.%u)\n", webkit_get_major_version(), webkit_get_minor_version(), webkit_get_micro_version());
         exit(EXIT_SUCCESS);
     }
 
