@@ -24,6 +24,7 @@
 #include "common/signal.h"
 #include "web_context.h"
 
+#include <glib/gstdio.h>
 #include <libsoup/soup.h>
 #include <webkit2/webkit2.h>
 
@@ -100,10 +101,16 @@ static void
 luaH_soup_set_cookies_storage(lua_State *L)
 {
     const gchar *new_path = luaL_checkstring(L, 3);
+    FILE *f;
     if (g_str_equal(new_path, ""))
         luaL_error(L, "cookies_storage cannot be empty");
     g_free(cookies_storage);
     cookies_storage = g_strdup(new_path);
+    
+    if ((f = g_fopen(cookies_storage, "a")) != NULL) {
+        g_chmod(cookies_storage, 0600);
+        fclose(f);
+    }
 
     WebKitWebContext * web_context = web_context_get();
     WebKitCookieManager *cookie_mgr = webkit_web_context_get_cookie_manager(web_context);
