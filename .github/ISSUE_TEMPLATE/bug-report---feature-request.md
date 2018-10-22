@@ -1,6 +1,6 @@
 ---
 name: Bug Report / Feature Request
-about: Bug Report / Feature Request
+about: Use this form to create issues.
 
 ---
 
