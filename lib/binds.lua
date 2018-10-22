@@ -489,12 +489,18 @@ modes.add_cmds({
         format = "{uri}",
     }},
     { ":javascript, :js", "Evaluate JavaScript snippet.",
-        function (w, o) w.view:eval_js(o.arg, {
+        function (w, o)
+            if o.arg then
+                w.view:eval_js(o.arg, {
                     no_return = true,
                     callback = function (_, err)
                         w:error(err)
                     end,
-                }) end },
+                }) 
+            else
+                w:error("No argument provided")
+            end
+        end },
 
     -- Tab manipulation commands
     { ":tab", "Execute command and open result in new tab.", {
