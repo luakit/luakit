@@ -12,31 +12,35 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
 # === Default build options ==================================================
 
-DEVELOPMENT_PATHS ?= 0
-USE_LUAJIT        ?= 1
+DEVELOPMENT_PATHS   ?= 0
+PREFIX_WITH_DESTDIR ?= 0
+USE_LUAJIT          ?= 1
 
 # === Paths ==================================================================
 
 PREFIX     ?= /usr/local
+INSTALLDIR ?= $(PREFIX)/share/luakit
 MANPREFIX  ?= $(PREFIX)/share/man
-DOCDIR     ?= $(PREFIX)/share/luakit/doc
-XDGPREFIX  ?= /etc/xdg
+DOCDIR     ?= $(INSTALLDIR)/doc
+CONFIGDIR  ?= $(INSTALLDIR)/config
 PIXMAPDIR  ?= $(PREFIX)/share/pixmaps
 APPDIR     ?= $(PREFIX)/share/applications
 LIBDIR     ?= $(PREFIX)/lib/luakit
 
-INSTALLDIR := $(DESTDIR)$(PREFIX)
-MANPREFIX  := $(DESTDIR)$(MANPREFIX)
-DOCDIR     := $(DESTDIR)$(DOCDIR)
-XDGPREFIX  := $(DESTDIR)$(XDGPREFIX)
-PIXMAPDIR  := $(DESTDIR)$(PIXMAPDIR)
-APPDIR     := $(DESTDIR)$(APPDIR)
-LIBDIR     := $(DESTDIR)$(LIBDIR)
-
-# Should luakit be built to load relative config paths (./lib ./config) ?
-# (Useful when running luakit from it's source directory, disable otherwise).
 ifneq ($(DEVELOPMENT_PATHS),0)
-	CPPFLAGS += -DDEVELOPMENT_PATHS
+	PREFIX =
+	DESTDIR = $(PWD)
+	INSTALLDIR =
+	LIBDIR =
+	PREFIX_WITH_DESTDIR = 1
+endif
+
+# Set PREFIX_WITH_DESTDIR=1 to include DESTDIR in buildopts.h substitutions
+ifneq ($(PREFIX_WITH_DESTDIR),1)
+	PREFIX_WITH_DESTDIR =
+endif
+ifeq ($(PREFIX_WITH_DESTDIR),1)
+	PREFIX_WITH_DESTDIR := $(DESTDIR)
 endif
 
 # === Platform specific ======================================================

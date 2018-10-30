@@ -734,14 +734,6 @@ luaH_luakit_index(lua_State *L)
         lua_pushliteral(L, VERSION);
         return 1;
 
-      case L_TK_DEV_PATHS:
-#ifdef DEVELOPMENT_PATHS
-        lua_pushboolean(L, TRUE);
-#else
-        lua_pushboolean(L, FALSE);
-#endif
-        return 1;
-
       case L_TK_SPELL_CHECKING_LANGUAGES:
         luaH_push_strv(L, webkit_web_context_get_spell_checking_languages(web_context_get()));
         return 1;

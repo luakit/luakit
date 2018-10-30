@@ -27,7 +27,7 @@ T.test_luakit_index = function ()
         assert.is_string(luakit[p], "Missing/invalid property: luakit."..p)
     end
 
-    local boolprops = { "dev_paths", "verbose", "nounique" }
+    local boolprops = { "verbose", "nounique" }
     for _, p in ipairs(boolprops) do
         assert.is_boolean(luakit[p], "Missing/invalid property: luakit."..p)
     end

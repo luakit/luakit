@@ -43,11 +43,6 @@ local function search_load(path, memorize)
     memorize = not not memorize
 
     if string.sub(path, 1, 1) ~= "/" then
-        -- Can we search relative paths?
-        if luakit.dev_paths then
-            local dat = load_resource("./"..path, memorize)
-            if dat then return dat end
-        end
         path = luakit.install_paths.install_dir.."/"..path
     end
 

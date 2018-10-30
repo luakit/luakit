@@ -190,7 +190,6 @@ luaH_loadrc(const gchar *confpath, gboolean run)
 gboolean
 luaH_parserc(const gchar *confpath, gboolean run)
 {
-    const gchar* const *config_dirs = NULL;
     gboolean ret = FALSE;
     GPtrArray *paths = NULL;
 
@@ -203,18 +202,10 @@ luaH_parserc(const gchar *confpath, gboolean run)
     /* compile list of config search paths */
     paths = g_ptr_array_new_with_free_func(g_free);
 
-#if DEVELOPMENT_PATHS
-    /* allows for testing luakit in the project directory */
-    g_ptr_array_add(paths, g_strdup("./config/rc.lua"));
-#endif
-
     /* search users config dir (see: XDG_CONFIG_HOME) */
     g_ptr_array_add(paths, g_build_filename(globalconf.config_dir, "rc.lua", NULL));
 
-    /* search system config dirs (see: XDG_CONFIG_DIRS) */
-    config_dirs = g_get_system_config_dirs();
-    for(; *config_dirs; config_dirs++)
-        g_ptr_array_add(paths, g_build_filename(*config_dirs, "luakit", "rc.lua", NULL));
+    g_ptr_array_add(paths, g_build_filename(LUAKIT_CONFIG_PATH, "rc.lua", NULL));
 
     /* get continuation variable; bail out if invalid */
     char *i_str = getenv("LUAKIT_NEXT_CONFIG_INDEX");

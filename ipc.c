@@ -158,20 +158,13 @@ web_extension_connect_thread(gpointer UNUSED(data))
 static void
 initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 {
-    char *dirs[] = { g_get_current_dir(), LUAKIT_LIB_PATH }, *dir = NULL;
-
-    for (unsigned i = 0; !dir && i < LENGTH(dirs); ++i) {
-        char *extension_file = g_build_filename(dirs[i],  "luakit.so", NULL);
-        verbose("checking for luakit extension at '%s'", dirs[i]);
-        if (!access(extension_file, R_OK))
-            dir = dirs[i];
-        g_free(extension_file);
-    }
-
-    if (dir)
-        verbose("found luakit extension at '%s'", dir);
+    char *extension_file = g_build_filename(LUAKIT_LIB_PATH, "luakit.so", NULL);
+    verbose("checking for luakit extension at '%s'", extension_file);
+    if (access(extension_file, R_OK) == 0)
+      verbose("found luakit extension at '%s'", extension_file);
     else
-        fatal("cannot find luakit extension 'luakit.so'");
+      fatal("cannot find luakit extension '%s'", extension_file);
+    g_free(extension_file);
 
     const char *path;
     g_mutex_lock (&socket_path_lock);
@@ -189,9 +182,7 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 
     GVariant *payload = g_variant_new("(sss)", path, package_path, package_cpath);
     webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
-    webkit_web_context_set_web_extensions_directory(context, dir);
-
-    g_free(dirs[0]);
+    webkit_web_context_set_web_extensions_directory(context, LUAKIT_LIB_PATH);
 }
 
 void
