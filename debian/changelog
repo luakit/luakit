@@ -1,3 +1,46 @@
+luakit (2:2.1) unstable; urgency=medium
+
+  [ Grégory DAVID ]
+  * Add gitlab-ci configuration for salsa.debian.org
+  * debian: fix prerm error on upgrade due to uncaught situation
+  * debian/gbp: update GPG key ID for package signing
+
+  [ gleachkr ]
+  * Add watch_styles function.
+  * use watch_styles to continously update styles during edit.
+  * add new_style function and command.
+  * Add toggle function for stylesheets.
+  * update CHANGELOG.md
+
+  [ Amos Bird ]
+  * Avoid emiting stale download::status signals.
+
+  [ c0dev0id ]
+  * Add webkit version to :help header.
+    This makes it easier for users to find out which webkit version they are
+    using.
+  * Show nicer error when calling :js without argument
+
+  [ sdk ]
+  * Adding webkit version to "--version" output
+  * Change default directories to be only accessible by the owner.
+    From pull request #730
+  * Update issue templates
+  * Change issue template subtitle
+
+  [ Leonardo Taccari ]
+  * Adjust permissions of cookies.db
+    cookies.db by default is created with 0644 permissions leading to
+    possible sensitive information disclosure on multi user systems.
+    Pointed out in issue #77 by @mason-larobina and with suggestions
+    from @c0dev0id, thanks!
+  * Avoid DESTDIR in buildopts.h definitions.
+    Improve DESTDIR support and use it only in install and deinstall target.
+    The various paths are used in buildopts.h and there having the
+    DESTDIR is not desiderable.
+
+ -- Grégory DAVID <groolot@groolot.net>  Wed, 21 Nov 2018 23:18:01 +0100
+
 luakit (2:2.0) unstable; urgency=medium
 
    * Initial new release with Webkit2GTK+
