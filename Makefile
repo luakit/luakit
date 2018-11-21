@@ -27,7 +27,6 @@ options:
 	@echo "CFLAGS       = $(CFLAGS)"
 	@echo "CPPFLAGS     = $(CPPFLAGS)"
 	@echo "LDFLAGS      = $(LDFLAGS)"
-	@echo "INSTALLDIR   = $(INSTALLDIR)"
 	@echo "MANPREFIX    = $(MANPREFIX)"
 	@echo "DOCDIR       = $(DOCDIR)"
 	@echo "XDGPREFIX    = $(XDGPREFIX)"
@@ -95,39 +94,39 @@ clean:
 	-rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
 install: all
-	install -d $(INSTALLDIR)/share/luakit/
-	install -d $(DOCDIR) $(DOCDIR)/classes $(DOCDIR)/modules $(DOCDIR)/pages
-	install -m644 README.md AUTHORS $(DOCDIR)
-	install -m644 doc/apidocs/classes/* $(DOCDIR)/classes
-	install -m644 doc/apidocs/modules/* $(DOCDIR)/modules
-	install -m644 doc/apidocs/pages/* $(DOCDIR)/pages
-	install -m644 doc/apidocs/*.html $(DOCDIR)
-	install -d $(INSTALLDIR)/share/luakit/lib $(INSTALLDIR)/share/luakit/lib/lousy $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install -m644 lib/*.* $(INSTALLDIR)/share/luakit/lib
-	install -m644 lib/lousy/*.* $(INSTALLDIR)/share/luakit/lib/lousy
-	install -m644 lib/lousy/widget/*.* $(INSTALLDIR)/share/luakit/lib/lousy/widget
-	install -d $(INSTALLDIR)/lib/luakit
-	install -m644 luakit.so $(INSTALLDIR)/lib/luakit/luakit.so
-	install -d $(INSTALLDIR)/bin
-	install luakit $(INSTALLDIR)/bin/luakit
-	install -d $(XDGPREFIX)/luakit/
-	install -m644 config/*.lua $(XDGPREFIX)/luakit/
-	install -d $(PIXMAPDIR)
-	install -m644 extras/luakit.png $(PIXMAPDIR)
-	install -d $(ICONDIR)
-	install -m644 extras/luakit.svg $(ICONDIR)
-	install -d $(APPDIR)
-	install -m644 extras/luakit.desktop $(APPDIR)
-	install -d $(MANPREFIX)/man1/
-	install -m644 luakit.1.gz $(MANPREFIX)/man1/
+	install -d $(DESTDIR)$(PREFIX)/share/luakit/
+	install -d $(DESTDIR)$(DOCDIR) $(DESTDIR)$(DOCDIR)/classes $(DESTDIR)$(DOCDIR)/modules $(DESTDIR)$(DOCDIR)/pages
+	install -m644 README.md AUTHORS COPYING.GPLv3 $(DESTDIR)$(DOCDIR)
+	install -m644 doc/apidocs/classes/* $(DESTDIR)$(DOCDIR)/classes
+	install -m644 doc/apidocs/modules/* $(DESTDIR)$(DOCDIR)/modules
+	install -m644 doc/apidocs/pages/* $(DESTDIR)$(DOCDIR)/pages
+	install -m644 doc/apidocs/*.html $(DESTDIR)$(DOCDIR)
+	install -d $(DESTDIR)$(PREFIX)/share/luakit/lib $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
+	install -m644 lib/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib
+	install -m644 lib/lousy/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy
+	install -m644 lib/lousy/widget/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
+	install -d $(DESTDIR)$(PREFIX)/lib/luakit
+	install -m644 luakit.so $(DESTDIR)$(PREFIX)/lib/luakit/luakit.so
+	install -d $(DESTDIR)$(PREFIX)/bin
+	install luakit $(DESTDIR)$(PREFIX)/bin/luakit
+	install -d $(DESTDIR)$(XDGPREFIX)/luakit/
+	install -m644 config/*.lua $(DESTDIR)$(XDGPREFIX)/luakit/
+	install -d $(DESTDIR)$(PIXMAPDIR)
+	install -m644 extras/luakit.png $(DESTDIR)$(PIXMAPDIR)
+	install -d $(DESTDIR)$(ICONDIR)
+	install -m644 extras/luakit.svg $(DESTDIR)$(ICONDIR)
+	install -d $(DESTDIR)$(APPDIR)
+	install -m644 extras/luakit.desktop $(DESTDIR)$(APPDIR)
+	install -d $(DESTDIR)$(MANPREFIX)/man1/
+	install -m644 luakit.1.gz $(DESTDIR)$(MANPREFIX)/man1/
 	mkdir -p resources
-	find resources -type d -exec install -d $(INSTALLDIR)/share/luakit/'{}' \;
-	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(INSTALLDIR)/share/luakit/$$(dirname $$f)"' \;
+	find resources -type d -exec install -d $(DESTDIR)$(PREFIX)/share/luakit/'{}' \;
+	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(PREFIX)/share/luakit/$$(dirname $$f)"' \;
 
 uninstall:
-	rm -rf $(INSTALLDIR)/bin/luakit $(INSTALLDIR)/share/luakit $(INSTALLDIR)/lib/luakit
-	rm -rf $(MANPREFIX)/man1/luakit.1.gz $(XDGPREFIX)/luakit
-	rm -rf $(APPDIR)/luakit.desktop $(PIXMAPDIR)/luakit.png
+	rm -rf $(DESTDIR)$(PREFIX)/bin/luakit $(DESTDIR)$(PREFIX)/share/luakit $(DESTDIR)$(PREFIX)/lib/luakit
+	rm -rf $(DESTDIR)$(MANPREFIX)/man1/luakit.1.gz $(DESTDIR)$(XDGPREFIX)/luakit
+	rm -rf $(DESTDIR)$(APPDIR)/luakit.desktop $(DESTDIR)$(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
 	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $< $(LDFLAGS) -o $@
@@ -137,18 +136,3 @@ run-tests: luakit luakit.so tests/util.so
 
 newline: options;@echo
 .PHONY: all clean options install newline apidoc doc default
-
-deb:
-	git rebase $(VERSION) $(DEB_BRANCH)
-	gbp buildpackage --git-pristine-tar --git-pristine-tar-commit -us -uc
-
-snapshot:
-	git fetch
-	git checkout $(DEB_BRANCH)
-	git merge $(VERSION)
-	gbp dch --snapshot --auto debian/
-	gbp buildpackage --git-ignore-new --git-pristine-tar --git-pristine-tar-commit -us -uc
-
-release:
-	gbp dch --commit --release --auto
-	gbp buildpackage -us -uc

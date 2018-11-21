@@ -362,6 +362,59 @@ _M.detect_files = function ()
     lfs.chdir(cwd)
 end
 
+--- Watch a stylesheet in the styles directory for changes and apply them immediately.
+-- @tparam table guard a table that controls the watch process. Set `guard[1]
+-- = nil` to turn off the watch.
+-- @tparam string path the path of the watched style.
+_M.watch_styles = function (guard, path)
+    luakit.spawn("bash -c 'inotifywait -t 10 \"" .. path .. "\" || sleep 1'", function ()
+        _M.detect_files()
+        if guard[1] then _M.watch_styles(guard, path) end
+    end)
+end
+
+--- Create and immediately edit a new style for the current uri.
+-- @tparam table w The window table for the window providing the uri.
+_M.new_style = function (w)
+    -- Create styles directory if it doesn't exist
+    local cwd = lfs.currentdir()
+    if not lfs.chdir(styles_dir) then
+        lfs.mkdir(styles_dir)
+        lfs.chdir(styles_dir)
+    end
+    local path = string.match(w.view.uri, "//([%w*%.]+)") .. ".css"
+    local exists = io.open(path, "r")
+    if exists then
+        exists:close()
+        local guard = {0}
+        _M.watch_styles(guard, path)
+        editor.edit(path, 1, function() guard[1] = nil end)
+    else
+        local f = io.open(path, "w")
+        if nil == f then w:notify(path)
+        else
+            f:write("@-moz-document url-prefix(\"" .. w.view.uri .. "\") {\n\n}")
+            f:close()
+            local guard = {0}
+            _M.watch_styles(guard, path)
+            editor.edit(path, 2, function() guard[1] = nil end)
+        end
+    end
+    lfs.chdir(cwd)
+end
+
+--- Toggle the enabled status of a style by filename.
+-- @tparam string title the style to toggle.
+_M.toggle_sheet = function(title)
+    for _, stylesheet in ipairs(stylesheets) do
+        if stylesheet.file == title then
+            stylesheet.enabled = not stylesheet.enabled
+            db_set(stylesheet.file, stylesheet.enabled)
+            update_all_stylesheet_applications()
+        end
+    end
+end
+
 add_cmds({
     { ":styles-reload, :sr", "Reload user stylesheets.", function (w)
             w:notify("styles: Reloading files...")
@@ -370,6 +423,7 @@ add_cmds({
         end },
     { ":styles-list", "List installed userstyles.",
         function (w) w:set_mode("styles-list") end },
+    { ":styles-new", "Create new userstyle for this domain.", _M.new_style},
 })
 
 -- Add mode to display all userscripts in menu
@@ -402,7 +456,9 @@ add_binds("styles-list", lousy.util.table.join({
             local row = w.menu:get()
             if row and row.stylesheet then
                 local file = luakit.data_dir .. "/styles/" .. row.stylesheet.file
-                editor.edit(file)
+                local guard = {0}
+                _M.watch_styles(guard, file)
+                editor.edit(file, 1, function() guard[1] = nil end)
             end
         end },
 }, menu_binds))

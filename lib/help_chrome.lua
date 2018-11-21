@@ -27,7 +27,7 @@ local index_html_template = [==[
     </style>
 </head>
 <body>
-    <header id="page-header"><h1>Luakit Help</h1><div class="rhs">version {version}</div></header>
+    <header id="page-header"><h1>Luakit Help</h1><div class="rhs">version {version} / webkit {webkitversion}</div></header>
     <div class=content-margin>
         <h2>About Luakit</h2>
             <p>Luakit is a highly configurable, browser framework based on the <a
@@ -101,6 +101,7 @@ local help_index_page = function ()
     local html_subs = {
         style = chrome.stylesheet,
         version = luakit.version,
+        webkitversion = luakit.webkit_version,
         chromepageshtml = gen_html_chrome_pages(),
     }
     local html = string.gsub(index_html_template, "{(%w+)}", html_subs)
