@@ -7,14 +7,20 @@ set -e
 
 case "$1" in
     remove|deconfigure)
-	update-alternatives --remove x-www-browser /usr/bin/luakit
-	update-alternatives --remove gnome-www-browser /usr/bin/luakit
-	;;
+        update-alternatives --remove x-www-browser /usr/bin/luakit
+        update-alternatives --remove gnome-www-browser /usr/bin/luakit
+        ;;
+
+    upgrade)
+        ;;
+
+    failed-upgrade)
+        ;;
 
     *)
         echo "prerm called with unknown argument \`$1'" >&2
         exit 1
-	;;
+        ;;
 esac
 
 #DEBHELPER#
