@@ -269,7 +269,7 @@ local init_funcs = {
     hide_ui_on_fullscreen = function (w)
         w.win:add_signal("property::fullscreen", function (win)
             w:update_sbar_visibility()
-            w.tablist.visible = not win.fullscreen
+            w.tablist.widget.visible = not win.fullscreen
         end)
     end,
 
