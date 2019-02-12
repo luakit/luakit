@@ -85,7 +85,9 @@ end
 
 local function update_tablist_visibility(tlist)
     if not data[tlist].notebook then return end -- switching notebook
-    if settings.get_setting("tablist.always_visible") then
+    if not data[tlist].visible then
+        tlist.widget.visible = false
+    elseif settings.get_setting("tablist.always_visible") then
         tlist.widget.visible = true
     else
         tlist.widget.visible = data[tlist].notebook:count() > 1
