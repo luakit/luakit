@@ -1,6 +1,6 @@
 # Changelog
 
-## [Unreleased]
+## [2.0/2.1]
 
 ### Migrating from version 2017-08-10
 
