@@ -18,7 +18,6 @@
  *
  */
 
-#include <gdk/gdkx.h>
 #include <gdk/gdkkeysyms.h>
 #include "luah.h"
 #include "widgets/common.h"
