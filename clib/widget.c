@@ -39,7 +39,6 @@ static widget_info_t widgets_list[] = {
   { L_TK_HPANED,    "hpaned",   widget_paned    },
   { L_TK_LABEL,     "label",    widget_label    },
   { L_TK_NOTEBOOK,  "notebook", widget_notebook },
-  { L_TK_SOCKET,    "socket",   widget_socket   },
   { L_TK_VBOX,      "vbox",     widget_box      },
   { L_TK_VPANED,    "vpaned",   widget_paned    },
   { L_TK_WEBVIEW,   "webview",  widget_webview  },
