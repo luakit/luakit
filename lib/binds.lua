@@ -404,7 +404,6 @@ modes.add_binds("normal", {
     -- Window
     { "^ZZ$", "Quit and save the session.", function (w) w:save_session() w:close_win() end },
     { "^ZQ$", "Quit and don't save the session.", function (w) w:close_win() end },
-    { "^D$",  "Quit and don't save the session.", function (w) w:close_win() end },
 
     -- Enter passthrough mode
     { "<Control-z>", "Enter `passthrough` mode, ignores all luakit keybindings.",
