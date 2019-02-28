@@ -18,6 +18,10 @@
  *
  */
 
+#ifdef GDK_WINDOWING_X11
+#include <gdk/gdkx.h>
+#endif
+
 #include <gdk/gdkkeysyms.h>
 #include "luah.h"
 #include "widgets/common.h"
