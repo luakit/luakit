@@ -31,14 +31,13 @@ To build with a custom compiler run:
 
     make CC=clang
 
-Note to packagers: you may wish to build luakit with:
+To build with local paths (interesting for package maintainer and contributers). You may wish to build luakit with:
 
-    make DEVELOPMENT_PATHS=0
+    make DEVELOPMENT_PATHS=1
 
-To prevent luakit searching in relative paths (`./config` & `./lib`) for
-user configs.
+This lets you start luakit from the build directory, using the config and libraries within the same.
 
-The `USE_LUAJIT=1`, `PREFIX=/path`, `DEVELOPMENT_PATHS=0`, `CC=clang`
+The `USE_LUAJIT=1`, `PREFIX=/path`, `DEVELOPMENT_PATHS=1`, `CC=clang`
 build options do not conflict. You can use whichever you desire.
 
 ## Installing
