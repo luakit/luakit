@@ -76,6 +76,16 @@ theme.private_tab_bg    = "#22254a"
 theme.trust_fg          = "#0F0"
 theme.notrust_fg        = "#F00"
 
+-- Follow mode hints
+theme.hint_font = "10px monospace, courier, sans-serif"
+theme.hint_fg = "#fff"
+theme.hint_bg = "#000088"
+theme.hint_border = "1px dashed #000"
+theme.hint_overlay_bg = "rgba(255,255,153,0.3)"
+theme.hint_overlay_border = "1px dotted #000"
+theme.hint_overlay_selected_bg = "rgba(0,255,0,0.3)"
+theme.hint_overlay_selected_border = theme.hint_overlay_border
+
 -- General colour pairings
 theme.ok = { fg = "#000", bg = "#FFF" }
 theme.warn = { fg = "#F00", bg = "#FFF" }
