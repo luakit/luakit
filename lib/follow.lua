@@ -106,22 +106,22 @@ _M.stylesheet = [[
 #luakit_select_overlay .hint_overlay {
     display: block;
     position: absolute;
-    background-color: ]] .. theme.hint_overlay_bg .. [[;
-    border:           ]] .. theme.hint_overlay_border .. [[;
+    background-color: ]] .. (theme.hint_overlay_bg     or "rgba(255,255,153,0.3)") .. [[;
+    border:           ]] .. (theme.hint_overlay_border or "1px dotted #000")       .. [[;
 }
 
 #luakit_select_overlay .hint_label {
     display: block;
     position: absolute;
-    background-color: ]] .. theme.hint_bg     .. [[;
-    border:           ]] .. theme.hint_border .. [[;
-    color:            ]] .. theme.hint_fg     .. [[;
-    font:             ]] .. theme.hint_font   .. [[;
+    background-color: ]] .. (theme.hint_bg     or "#000088")                             .. [[;
+    border:           ]] .. (theme.hint_border or "1px dashed #000")                     .. [[;
+    color:            ]] .. (theme.hint_fg     or "#fff")                                .. [[;
+    font:             ]] .. (theme.hint_font   or "10px monospace, courier, sans-serif") .. [[;
 }
 
 #luakit_select_overlay .hint_selected {
-    background-color: ]] .. theme.hint_overlay_selected_bg .. [[ !important;
-    border:           ]] .. theme.hint_overlay_selected_border .. [[;
+    background-color: ]] .. (theme.hint_overlay_selected_bg     or "rgba(0,255,0,0.3)") .. [[ !important;
+    border:           ]] .. (theme.hint_overlay_selected_border or "1px dotted #000")   .. [[;
 }
 ]]
 
