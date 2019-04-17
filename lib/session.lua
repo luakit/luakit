@@ -76,9 +76,11 @@ _M.save = function (file)
     state = istate
 
     if #state > 0 then
-        local fh = io.open(file, "wb")
+        local tempfile = file .. ".new"
+        local fh = io.open(tempfile, "wb")
         fh:write(pickle.pickle(state))
         io.close(fh)
+        os.rename(tempfile, file)
     else
         rm(file)
     end
@@ -91,7 +93,8 @@ end
 --
 -- If no file is specified, the path specified by @ref{session_file} is used.
 --
--- If `delete` is not `false`, then the session file is deleted.
+-- If `delete` is not `false` and the session file is not the recovery file,
+-- then the session file is backed up into the recovery file.
 --
 -- @tparam[opt] boolean delete Whether to delete the file after the session is
 -- loaded.
@@ -104,8 +107,10 @@ _M.load = function (delete, file)
     local fh = io.open(file, "rb")
     local state = pickle.unpickle(fh:read("*all"))
     io.close(fh)
-    -- Delete file on idle (i.e. only if config loads successfully)
-    if delete ~= false then luakit.idle_add(function() rm(file) end) end
+    -- Backup file on idle (i.e. only if config loads successfully)
+    if delete ~= false and file ~= _M.recovery_file then
+        luakit.idle_add(function() os.rename(file, _M.recovery_file) end)
+    end
 
     return state
 end
