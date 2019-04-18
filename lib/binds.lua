@@ -12,6 +12,7 @@
 local _M = {}
 
 local window = require("window")
+local webview = require("webview")
 local taborder = require("taborder")
 local settings = require("settings")
 
@@ -566,6 +567,20 @@ end
                     w:notify("Dumped HTML to: " .. file)
                 end)
                 luakit.idle_add(function () coroutine.resume(co) end)
+            end
+        end },
+
+    { ":save", "Save page as shown to file,",
+        function (w, o)
+            local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.mhtml' -- sanitize filename
+            local file = o.arg or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
+            if file then
+                local view = w.view
+                view:add_signal("save-finished", function(v, file, err)
+                    local ww = webview.window(v)
+                    ww:notify(err or ("Saved to: " .. file))
+                end)
+                view:save(file)
             end
         end },
 })

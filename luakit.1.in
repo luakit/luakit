@@ -286,6 +286,9 @@ Open Download page, which displays all downloads along with their status.
 .B :dump
 Download current page.
 .TP
+.B :save
+Save the complete page as a single mhtml file.
+.TP
 .B :help
 Display all commands and bindings, along with their description. The help page
 also features some details about modes.

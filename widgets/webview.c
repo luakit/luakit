@@ -189,6 +189,45 @@ luaH_webview_load_string(lua_State *L)
     return 0;
 }
 
+struct save_cb_s {
+    const gchar *filename;
+    widget_t *window;
+};
+
+static void
+save_cb(GObject *o, GAsyncResult *res, gpointer user_data) {
+    WebKitWebView *view = (WebKitWebView *) o;
+    struct save_cb_s *scbs = (struct save_cb_s *) user_data;
+    lua_State *L = common.L;
+    GError *err = NULL;
+    gboolean result;
+
+    result = webkit_web_view_save_to_file_finish(view, res, &err);
+
+    luaH_object_push(L, scbs->window->ref);
+    lua_pushstring(L, scbs->filename);
+    if (result)
+        lua_pushnil(L);
+    else
+        lua_pushstring(L, err->message);
+    luaH_object_emit_signal(L, -3, "save-finished", 2, 0);
+    lua_pop(L, 1);
+
+    g_free(scbs);
+}
+
+static gint
+luaH_webview_save(lua_State *L)
+{
+    struct save_cb_s *scbs = g_new0(struct save_cb_s, 1);
+    webview_data_t *d = luaH_checkwvdata(L, 1);
+    scbs->filename = luaL_checkstring(L, 2);
+    scbs->window = d->widget;
+    GFile *fd = g_file_new_for_path(scbs->filename);
+    webkit_web_view_save_to_file(d->view, fd, WEBKIT_SAVE_MODE_MHTML, NULL, save_cb, (gpointer) scbs);
+    return 0;
+}
+
 static void
 notify_cb(WebKitWebView* UNUSED(v), GParamSpec *ps, widget_t *w)
 {
@@ -745,6 +784,7 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       /* push misc webview methods */
       PF_CASE(EVAL_JS,              luaH_webview_eval_js)
       PF_CASE(LOAD_STRING,          luaH_webview_load_string)
+      PF_CASE(SAVE,                 luaH_webview_save)
       /* use is_loading property instead of this function */
       PF_CASE(LOADING,              luaH_webview_loading)
       PF_CASE(RELOAD,               luaH_webview_reload)
