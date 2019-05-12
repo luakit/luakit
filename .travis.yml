@@ -1,0 +1,6 @@
+dist: xenial
+language: c
+compiler:
+  - gcc
+install: sudo apt-get install luajit luajit-5.1 libluajit-5.1-dev lua-filesystem lua-luassert lua-check libwebkit2gtk-4.0-dev sqlite3
+script: make run-tests

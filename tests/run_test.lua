@@ -183,7 +183,7 @@ end
 -- Check for luassert
 if not pcall(require, "luassert") then
     print("Running tests requires installing luassert")
-    return
+    os.exit(1)
 end
 
 -- Check for untracked files in Git
