@@ -159,6 +159,11 @@ widget.add_signal("create", function (w)
     end
 end)
 
+require('unique_instance')
+local lousy = require('lousy')
+-- Some lib files assume that a theme has been loaded
+lousy.theme.init(lousy.util.find_config("theme.lua"))
+
 do_test_file(test_file)
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

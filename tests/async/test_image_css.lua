@@ -29,6 +29,14 @@ local view_wait_for_status = function (v, status)
     until s == status
 end
 
+local function wait_for_view(v)
+    -- mime-type-decision isn't emitted for luakit-test://, so we simulate it
+    view_wait_for_status(v, "provisional")
+    local mime = v.uri:match("%.png$") and "image/png" or "text/html"
+    v:emit_signal("mime-type-decision", v.uri, mime)
+    view_wait_for_status(v, "committed")
+end
+
 T.test_image_css = function ()
     local image_uri = test.http_server() .. "image_css/image.png"
     local page_uri = test.http_server() .. "image_css/default.html"
@@ -36,24 +44,24 @@ T.test_image_css = function ()
 
     -- Load HTML page: stylesheet must be inactive
     view.uri = page_uri
-    view_wait_for_status(view, "committed")
+    wait_for_view(view)
     assert.is_false(view.stylesheets[image_ss])
 
     -- Load image page: stylesheet must be active
     view.uri = image_uri
-    view_wait_for_status(view, "committed")
+    wait_for_view(view)
     assert.is_true(view.stylesheets[image_ss])
 
     view:go_back(1)
-    view_wait_for_status(view, "committed")
+    wait_for_view(view)
     assert.is_false(view.stylesheets[image_ss])
 
     view:go_forward(1)
-    view_wait_for_status(view, "committed")
+    wait_for_view(view)
     assert.is_true(view.stylesheets[image_ss])
 
     view:go_back(1)
-    view_wait_for_status(view, "committed")
+    wait_for_view(view)
     assert.is_false(view.stylesheets[image_ss])
 end
 

@@ -570,15 +570,20 @@ end
             end
         end },
 
-    { ":save", "Save page as shown to file,",
+    { ":save", "Save page as shown to file.",
         function (w, o)
             local fname = string.gsub(w.win.title, '[^%w%.%-]', '_')..'.mhtml' -- sanitize filename
             local file = o.arg or luakit.save_file("Save file", w.win, xdg.download_dir or '.', fname)
             if file then
                 local view = w.view
-                view:add_signal("save-finished", function(v, file, err)
+                -- FIXME: note that this is called after all calls
+                -- to luakit.save_file(), including those not called
+                -- by :save; the better way to do this is to make
+                -- save_file() return an ID, store that in a table, and
+                -- check that table before showing a notification.
+                view:add_signal("save-finished", function(v, f, err)
                     local ww = webview.window(v)
-                    ww:notify(err or ("Saved to: " .. file))
+                    ww:notify(err or ("Saved to: " .. f))
                 end)
                 view:save(file)
             end
