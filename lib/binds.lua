@@ -496,7 +496,7 @@ modes.add_cmds({
                     callback = function (_, err)
                         w:error(err)
                     end,
-                }) 
+                })
             else
                 w:error("No argument provided")
             end

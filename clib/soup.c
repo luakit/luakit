@@ -106,7 +106,7 @@ luaH_soup_set_cookies_storage(lua_State *L)
         luaL_error(L, "cookies_storage cannot be empty");
     g_free(cookies_storage);
     cookies_storage = g_strdup(new_path);
-    
+
     if ((f = g_fopen(cookies_storage, "a")) != NULL) {
         g_chmod(cookies_storage, 0600);
         fclose(f);
