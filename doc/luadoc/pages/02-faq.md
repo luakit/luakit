@@ -163,13 +163,21 @@ This is not currently possible, as with WebKit 2 there is no way to give a webvi
 
 ### How do I change the default zoom level?
 
-The best way to change the default zoom level is to add a rule to `domain_props`:
+Set the `webview.zoom_level`, in one of three ways.
 
-    globals.domain_props.all = {
-        ...
-        zoom_level = 1.5, -- a 50% zoom
-        ...
-    }
+Probably the easiest way is with the `:set ` command:
+
+    set webview.zoom_level 150
+    seton example.com webview.zoom_level 200
+
+This sets the zoom level to 150% by default, and 200% on
+<https://example.com>. You can also change the zoom level at the
+<luakit://settings/> page. Finally, if you prefer to specify the zoom
+level in your configuration file, you may also do so:
+
+    local settings = require "settings"
+    settings.webview.zoom_level = 150
+    settings.on["example.com"].webview.zoom_level = 200
 
 ### How do I set a custom `about:blank` page?
 

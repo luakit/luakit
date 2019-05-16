@@ -1,7 +1,7 @@
 --- NoScript plugin for luakit.
 --
--- This module provides an alternative method of restricting web page access to
--- JavaScript and plugins, in addition to using the `domain_props` module.
+-- This module provides a method of restricting web page access to JavaScript
+-- and plugins.
 --
 -- This module provides keybindings for enabling/disabling either plugins or
 -- JavaScript for the current web page, as well as a status bar widget that
