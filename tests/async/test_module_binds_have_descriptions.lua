@@ -47,7 +47,10 @@ local function add_file_error(errors, file, error, ...)
 end
 
 T.test_module_binds_have_descriptions = function ()
-    local files = test.find_files({"lib/"}, ".+%.lua$", {"_wm%.lua$", "modes%.lua", "unique_instance%.lua"})
+    -- settings.lua must be excluded because re-requiring it will clear all
+    -- registered settings, causing modules tested after it to crash
+    local excludes = {"_wm%.lua$", "modes%.lua", "unique_instance%.lua", "settings%.lua"}
+    local files = test.find_files({"lib/"}, ".+%.lua$", excludes)
 
     local errors = {}
 
