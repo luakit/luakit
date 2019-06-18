@@ -22,19 +22,19 @@ function Pickle:pickle_(root)
     self._refToTable = {}
     local savecount = 0
     self:ref_(root)
-    local s = ""
+    local buf = {}
 
     while table.getn(self._refToTable) > savecount do
         savecount = savecount + 1
         local t = self._refToTable[savecount]
-        s = s.."{\n"
+        buf[#buf+1] = "{"
         for i, v in pairs(t) do
-                s = string.format("%s[%s]=%s,\n", s, self:value_(i), self:value_(v))
+                buf[#buf+1] = string.format("[%s]=%s,", self:value_(i), self:value_(v))
         end
-        s = s.."},\n"
+        buf[#buf+1] = "},"
     end
 
-    return string.format("{%s}", s)
+    return string.format("{%s\n}", table.concat(buf,"\n"))
 end
 
 function Pickle:value_(v)
