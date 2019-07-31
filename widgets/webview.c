@@ -1438,7 +1438,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       NULL);
 
     /* show widgets */
-    gtk_widget_show(GTK_WIDGET(d->view));
+    //gtk_widget_show(GTK_WIDGET(d->view));
 
     return w;
 }
