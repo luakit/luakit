@@ -1437,9 +1437,6 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::open-window",                          G_CALLBACK(inspector_open_window_cb),     w,
       NULL);
 
-    /* show widgets */
-    //gtk_widget_show(GTK_WIDGET(d->view));
-
     return w;
 }
 
