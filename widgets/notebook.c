@@ -127,8 +127,6 @@ luaH_notebook_switch(lua_State *L)
     gint i = luaL_checknumber(L, 2);
     /* correct index */
     if (i != -1) i--;
-    GtkWidget* page = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
-    gtk_widget_show(page);
     gtk_notebook_set_current_page(GTK_NOTEBOOK(w->widget), i);
     lua_pushnumber(L, gtk_notebook_get_current_page(GTK_NOTEBOOK(w->widget)));
     return 1;
