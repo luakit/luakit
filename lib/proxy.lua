@@ -165,6 +165,7 @@ function _M.set_active(name)
     else
         active = noproxy
     end
+    soup.proxy_uri = active.address
     _M.save()
     return true
 end
@@ -233,9 +234,12 @@ add_binds("proxymenu", lousy.util.table.join({
         function (w)
             local row = w.menu:get()
             if row and row.address then
-                _M.set_active(row.name)
+                if row.name then
+                    _M.set_active(row.name)
+                else
+                    soup.proxy_uri = row.address
+                end
                 w:set_mode()
-                soup.proxy_uri = row.address
                 update_proxy_indicators()
                 if row.name then
                     w:notify(string.format("Using proxy: %s (%s)", row.name, row.address))
