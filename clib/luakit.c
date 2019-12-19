@@ -694,6 +694,15 @@ luaH_luakit_wch_upper(lua_State *L)
 }
 
 static gint
+luaH_luakit_clear_favicon_database(lua_State *UNUSED(L))
+{
+    WebKitWebContext *ctx = web_context_get();
+    WebKitFaviconDatabase *fdb = webkit_web_context_get_favicon_database(ctx);
+    webkit_favicon_database_clear(fdb);
+    return 0;
+}
+
+static gint
 luaH_luakit_push_install_paths_table(lua_State *L)
 {
     lua_createtable(L, 0, 6);
@@ -929,18 +938,19 @@ luakit_lib_setup(lua_State *L)
     {
         LUA_CLASS_METHODS(luakit)
         LUAKIT_LIB_COMMON_METHODS
-        { "__index",           luaH_luakit_index },
-        { "__newindex",        luaH_luakit_newindex },
-        { "exec",              luaH_luakit_exec },
-        { "quit",              luaH_luakit_quit },
-        { "save_file",         luaH_luakit_save_file },
-        { "spawn",             luaH_luakit_spawn },
-        { "spawn_sync",        luaH_luakit_spawn_sync },
-        { "register_scheme",   luaH_luakit_register_scheme },
-        { "allow_certificate", luaH_luakit_allow_certificate },
-        { "wch_lower",         luaH_luakit_wch_lower },
-        { "wch_upper",         luaH_luakit_wch_upper },
-        { NULL,              NULL }
+        { "__index",                luaH_luakit_index },
+        { "__newindex",             luaH_luakit_newindex },
+        { "exec",                   luaH_luakit_exec },
+        { "quit",                   luaH_luakit_quit },
+        { "save_file",              luaH_luakit_save_file },
+        { "spawn",                  luaH_luakit_spawn },
+        { "spawn_sync",             luaH_luakit_spawn_sync },
+        { "register_scheme",        luaH_luakit_register_scheme },
+        { "allow_certificate",      luaH_luakit_allow_certificate },
+        { "wch_lower",              luaH_luakit_wch_lower },
+        { "wch_upper",              luaH_luakit_wch_upper },
+        { "clear_favicon_database", luaH_luakit_clear_favicon_database },
+        { NULL,                     NULL }
     };
 
     /* create signals array */
