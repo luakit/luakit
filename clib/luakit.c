@@ -416,6 +416,12 @@ luaH_parse_website_data_types_table(lua_State *L, gint idx)
         TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
         TYPE(PLUGIN_DATA, plugin_data)
         TYPE(COOKIES, cookies)
+#if WEBKIT_CHECK_VERSION(2,24,0)
+        TYPE(DEVICE_ID_HASH_SALT, device_id_hash_salt)
+#endif
+#if WEBKIT_CHECK_VERSION(2,26,0)
+        TYPE(HSTS_CACHE, hsts_cache)
+#endif
         TYPE(ALL, all)
 #undef TYPE
 
@@ -461,6 +467,12 @@ website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resul
             TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
             TYPE(PLUGIN_DATA, plugin_data)
             TYPE(COOKIES, cookies)
+#if WEBKIT_CHECK_VERSION(2,24,0)
+            TYPE(DEVICE_ID_HASH_SALT, device_id_hash_salt)
+#endif
+#if WEBKIT_CHECK_VERSION(2,26,0)
+            TYPE(HSTS_CACHE, hsts_cache)
+#endif
 #undef TYPE
             lua_rawset(L, -3);
 
