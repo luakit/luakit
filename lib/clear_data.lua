@@ -113,6 +113,11 @@ modes.add_cmds({
         function (w)
             w:set_mode("clear-data")
         end },
+
+    { ":clear-favicon-db", "Clear the favicon cache database.",
+        function ()
+            luakit.clear_favicon_database()
+        end },
 })
 
 return _M
