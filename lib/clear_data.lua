@@ -45,7 +45,7 @@ modes.new_mode("clear-data", {
                 table.insert(rows, {domain, list_data_types(website_data[domain])})
             end
             w.menu:build(rows)
-            w:notify("Use j/k to move, Return to clear all data, or c/d/i/l/m/o/p/s/w for a specific type.", false)
+            w:notify("Use j/k to move, Return to clear all data, or c/D/d/h/i/l/m/o/p/s/w for a specific type.", false)
         end)()
     end,
 
@@ -100,6 +100,8 @@ for _, args in ipairs({
     {"i", "indexeddb_databases"},
     {"p", "plugin_data"},
     {"c", "cookies"},
+    {"D", "device_id_hash_salt"},
+    {"h", "hsts_cache"},
 }) do
     add_clear_bind(unpack(args))
 end
