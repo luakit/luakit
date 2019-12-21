@@ -16,8 +16,18 @@ local wc = require("lousy.widget.common")
 
 local widgets = {
     update = function (w, uri, link)
-        local text = (link and "Link: " .. link) or (w.view and w.view.uri) or "about:blank"
-        uri.text = lousy.util.escape(text)
+        uri.text = lousy.util.escape((function ()
+            if link then
+                return "Link: " .. link
+            end
+            if w.view then
+                if w.view.uri == "about:force-web-process-load" then
+                    return "Initializing tab web process..."
+                end
+                return w.view.uri
+            end
+            return "about:blank"
+        end)())
     end,
 }
 

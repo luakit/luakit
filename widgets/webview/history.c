@@ -30,6 +30,8 @@ luaH_webview_push_history(lua_State *L, WebKitWebView *view)
     gint forwardlen = g_list_length(
             webkit_back_forward_list_get_forward_list(bflist));
 
+    backlen -= 1;
+
     /* compose an overall table with the history list and the position thereof */
     lua_createtable(L, 0, 2);
     /* Set hist[index] = pos */
@@ -65,7 +67,11 @@ static gint
 luaH_webview_can_go_back(lua_State *L)
 {
     webview_data_t *d = luaH_checkwvdata(L, 1);
-    lua_pushboolean(L, webkit_web_view_can_go_back(d->view));
+    WebKitBackForwardList *bflist = webkit_web_view_get_back_forward_list(d->view);
+    GList *blist = webkit_back_forward_list_get_back_list(bflist);
+    const gint backlen = g_list_length(blist);
+    lua_pushboolean(L, backlen > 1);
+    g_list_free(blist);
     return 1;
 }
 
@@ -84,7 +90,7 @@ webview_history_go(lua_State *L, gint direction)
     gint steps = (gint) luaL_checknumber(L, 2) * direction;
     WebKitBackForwardListItem *item = webkit_back_forward_list_get_nth_item(
             webkit_web_view_get_back_forward_list(d->view), steps);
-    if (item)
+    if (item && !g_str_equal(webkit_back_forward_list_item_get_uri(item), "about:force-web-process-load"))
         webkit_web_view_go_to_back_forward_list_item(d->view, item);
     lua_pushboolean(L, item != NULL);
     return 1;

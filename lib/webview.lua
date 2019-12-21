@@ -144,6 +144,26 @@ local init_funcs = {
             end
         end)
     end,
+
+    ensure_web_process_loaded = function(view)
+        view:add_signal("switched-page", function (v)
+            if not webview_state[v].process_loaded then
+                webview_state[v].process_loaded = true
+
+                -- load blank page with dummy URL to force web process start
+                view:load_string("", "about:force-web-process-load")
+
+                -- block any other page loads until this has gone through
+                -- i.e. until the web extension has been loaded
+                _M.modify_load_block(v, "force-web-process-load", true)
+                local function unblock(vv)
+                    _M.modify_load_block(v, "force-web-process-load", false)
+                    vv:remove_signal("session-restore", unblock)
+                end
+                v:add_signal("web-extension-loaded", unblock)
+            end
+        end)
+    end,
 }
 
 --- These methods are present when you index a window instance and no window

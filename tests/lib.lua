@@ -29,7 +29,7 @@ function _M.wait_for_view(view)
             local msg = fmt:format(uri, err)
             assert(false, msg)
         end
-    until status == "finished"
+    until status == "finished" and view.uri ~= "about:force-web-process-load"
 end
 
 --- Pause test execution for a short time.
