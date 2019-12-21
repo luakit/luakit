@@ -20,9 +20,6 @@
 #define LUAKIT_EXTENSION_LUAJS_H
 
 #include <glib.h>
-#include <JavaScriptCore/JavaScript.h>
-
-JSObjectRef js_make_closure(JSContextRef context, JSClassRef callback_class, gpointer user_data);
 
 void web_luajs_init(void);
 void luaJS_register_function(lua_State *L);

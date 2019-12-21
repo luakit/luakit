@@ -39,7 +39,7 @@ static gint lua_string_find_ref = LUA_REFNIL;
 static JSClassRef promise_executor_cb_class;
 static JSClassRef luaJS_registered_function_callback_class;
 
-JSObjectRef
+static JSObjectRef
 js_make_closure(JSContextRef context, JSClassRef callback_class, gpointer user_data)
 {
     g_assert(context);
