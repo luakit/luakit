@@ -236,7 +236,7 @@ end)
 
 local parse_moz_document_subrule = function (file)
     local word, param, i
-    word, i = file:match("^%s+([%w-]+)%s*()")
+    word, i = file:match("^%s*([%w-]+)%s*()")
     file = file:sub(i)
     param, i = file:match("(%b())()")
     file = file:sub(i)
@@ -245,7 +245,7 @@ local parse_moz_document_subrule = function (file)
 end
 
 local parse_moz_document_section = function (file, parts)
-    file = file:gsub("^%s*%@%-moz%-document", "")
+    file = file:gsub("^%s*%@%-moz%-document%f[^%s]", "")
     local when = {}
     local word, param
 
