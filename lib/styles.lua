@@ -245,7 +245,7 @@ local parse_moz_document_subrule = function (file)
 end
 
 local parse_moz_document_section = function (file, parts)
-    file = file:gsub("^%s*%@%-moz%-document%f[^%s]", "")
+    file = file:gsub("^%s*%@%-moz%-document%f[^%w]", "")
     local when = {}
     local word, param
 
