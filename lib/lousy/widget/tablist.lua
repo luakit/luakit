@@ -85,8 +85,10 @@ end
 
 local function update_tablist_visibility(tlist)
     if not data[tlist].notebook then return end -- switching notebook
-    if settings.get_setting("tablist.always_visible") or
-       settings.get_setting("tablist.visibility") == "always" then
+    if not data[tlist].visible then
+	tlist.widget.visible = false
+    elseif settings.get_setting("tablist.always_visible") or
+           settings.get_setting("tablist.visibility") == "always" then
         tlist.widget.visible = true
     elseif settings.get_setting("tablist.visibility") == "never" then
         tlist.widget.visible = false
@@ -254,7 +256,8 @@ settings.register_settings({
         type = "boolean",
         default = false,
         domain_specific = false,
-        desc = "This is deprecated in favour of tablist.visibility.",
+        desc = "Whether the tab list should be visible with only a single tab open. "..
+	       "This is deprecated in favour of tablist.visibility and may be removed in the future.",
     },
     ["tablist.visibility"] = {
         type = "enum",
