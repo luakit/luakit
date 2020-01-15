@@ -257,7 +257,7 @@ settings.register_settings({
         default = false,
         domain_specific = false,
         desc = "Whether the tab list should be visible with only a single tab open. "..
-	       "This is deprecated in favour of tablist.visibility and may be removed in the future.",
+               "This is deprecated in favour of tablist.visibility and may be removed in the future.",
     },
     ["tablist.visibility"] = {
         type = "enum",
