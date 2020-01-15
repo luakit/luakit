@@ -44,6 +44,34 @@
 --     local chars = charset("ФЫВАПРОЛДЖЭ")
 --     ...
 --
+-- ## Hint text direction
+--
+-- Hints consisting entirely of characters which are drawn Left-to-Right
+-- (eg Latin, Cyrillic) or characters drawn Right-to-Left (eg Arabic, Hebrew),
+-- will render intuitively in the appropriate direction.
+-- Hints will be drawn non-intuitively if they contain a mix of Left-to-Right
+-- and Right-to-Left characters.
+--
+-- Punctuation characters do not have an intrinsic direction, and will be drawn
+-- using the direction specified by the HTML/CSS context in which they appear.
+-- This leads to corner cases if the hint charset contains punctuation characters,
+-- for example:
+--
+--     ...
+--     local chars = charset("fjdksla;ghutnvir")
+--     ...
+--
+-- In this case, hints will display intuitively if used on pages which are
+-- drawn Left-to-Right, but not on pages drawn Right-to-Left.
+--
+-- To guard against this, it is recommended that if punctuation characters
+-- are used in hints, a clause should be added to a user stylesheet giving
+-- an explicit text direction eg:
+--
+--     ...
+--     #luakit_select_overlay .hint_label { direction: ltr; }
+--     ...
+--
 -- ## Alternating between left- and right-handed letters
 --
 -- To make link hints easier to type, you may prefer to have them alternate
