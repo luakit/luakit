@@ -158,7 +158,7 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
         return g_strdupv(argv + 1);
 }
 
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 50
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
 static GLogWriterOutput
 glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n_fields, gpointer UNUSED(user_data))
 {
@@ -232,7 +232,7 @@ main(gint argc, gchar *argv[])
 
     gtk_init(&argc, &argv);
 
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 50
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
 #endif
     init_directories();
