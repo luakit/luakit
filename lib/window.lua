@@ -475,7 +475,7 @@ _M.methods = {
             w:search_open_navigate(view, arg)
         end
 
-        w:reload()
+        view:reload()
         return view
     end,
 
