@@ -463,6 +463,9 @@ _M.methods = {
         if not view then
             -- Make new webview widget
             view = webview.new({ private = opts.private })
+            if not arg then
+                view.uri = settings.get_setting("window.new_tab_page")
+            end
             w:attach_tab(view, switch, order)
         end
 
