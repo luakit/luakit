@@ -128,10 +128,10 @@ local restore_file = function (file, delete)
         for _, item in ipairs(win.open) do
             local v
             if not w then
-                w = window.new({"about:blank"})
+                w = window.new({settings.get_setting("window.new_tab_page")})
                 v = w.view
             else
-                v = w:new_tab("about:blank", { switch = item.current })
+                v = w:new_tab(settings.get_setting("window.new_tab_page"), { switch = item.current })
             end
             -- Block the tab load, then set its location
             webview.modify_load_block(v, "session-restore", true)
