@@ -541,8 +541,23 @@ add_binds("normal", {
 })
 
 add_cmds({
-    { ":bookmarks", "Open the bookmarks manager in a new tab.",
-        function (w) w:new_tab(_M.chrome_page) end },
+    { ":bookmarks", "Open the bookmarks manager in a new tab.", {
+        func = function (w)
+            local view
+            for _, tab in ipairs(w.tabs.children) do
+                if tab.uri == _M.chrome_page then
+                    msg.verbose("bookmarks: using existing bookmarks manager tab")
+                    view = tab
+                    break
+                end
+            end
+            if view then
+                w.tabs:switch(w.tabs:indexof(view))
+            else
+                w:new_tab(_M.chrome_page)
+            end
+        end,
+    }},
     { ":bookmark", "Add a bookmark for the current URL.", {
         func = function (w, o)
             local a = o.arg
