@@ -171,15 +171,11 @@ static GLogWriterOutput
 glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n_fields, gpointer UNUSED(user_data))
 {
     const gchar *log_domain = "(unknown)",
-                *message = "(empty)",
-                *code_file = "(unknown)",
-                *code_line = "(unknown)";
+                *message = "(empty)";
 
     for (gsize i = 0; i < n_fields; ++i) {
         if (!strcmp(fields[i].key, "GLIB_DOMAIN")) log_domain = fields[i].value;
         if (!strcmp(fields[i].key, "MESSAGE")) message = fields[i].value;
-        if (!strcmp(fields[i].key, "CODE_FILE")) code_file = fields[i].value;
-        if (!strcmp(fields[i].key, "CODE_LINE")) code_line = fields[i].value;
     }
 
     /* Probably not necessary, but just in case... */
@@ -195,7 +191,7 @@ glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n
         [G_LOG_LEVEL_DEBUG]    = LOG_LEVEL_debug,
     })[log_level_flags];
 
-    _log(log_level, code_line, code_file, "%s: %s", log_domain, message);
+    _log(log_level, "glib", "%s: %s", log_domain, message);
     return G_LOG_WRITER_HANDLED;
 }
 #endif
