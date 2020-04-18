@@ -38,6 +38,13 @@
 #error Your version of WebKit is outdated!
 #endif
 
+/* Define the three globals; their extern declarations are in
+common/common.h, globalconf.h, and clib/widget.h; they can only be
+defined non-extern in one module starting with gcc 10. */
+common_t common;
+globalconf_t globalconf;
+lua_class_t widget_class;
+
 static void
 init_directories(void)
 {

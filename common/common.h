@@ -26,7 +26,7 @@ typedef struct _common_t {
     lua_State *L;
 } common_t;
 
-common_t common;
+extern common_t common;
 
 #endif
 
