@@ -43,6 +43,16 @@
 #include "extension/luajs.h"
 #include "extension/script_world.h"
 
+/* This is the global definition of common; it's also visible
+everwhere common/common.h is included, which probably is about
+everywhere in extensions; note that this common is separate
+from the common visible on the UI side. */
+common_t common;
+
+/* Similarly, this is the global definition of extension */
+extension_t extension;
+
+
 static void
 web_lua_init(const char *package_path, const char *package_cpath)
 {

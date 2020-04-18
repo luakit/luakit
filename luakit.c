@@ -38,6 +38,14 @@
 #error Your version of WebKit is outdated!
 #endif
 
+/* Define two globals of the UI side; their extern declarations are in
+globalconf.h, and clib/widget.h, and so they're visible pretty much
+everywhere; there's also common for lua communication; there's a second
+definition of that in extension/extension (which is a separate process). */
+common_t common;
+globalconf_t globalconf;
+lua_class_t widget_class;
+
 static void
 init_directories(void)
 {
