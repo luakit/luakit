@@ -31,7 +31,7 @@ do
     end)
     if not ok then persisted_settings = { domain = {}, } end
 
-    -- move .domain to .global[""]
+    -- move .global to .domain[""]
     local pgs = persisted_settings.domain[""] or {}
     persisted_settings.domain[""] = pgs
     if persisted_settings.global then
@@ -73,6 +73,17 @@ end
 -- Entries in the table of settings to register should be keyed by the setting
 -- path string.
 -- @tparam {[string]=table} settings The table of settings to register.
+--
+-- ## Parameter table format
+--
+-- Each value elements of the `settings` argument is in the following format:
+--
+--     { type, default }
+--
+-- * `type`: _string_, the type of the setting value. When a container, use
+--   `conatiner_name:inner_type` (the colon is the important part). Example for
+--   an array of strings: `"array:string"`
+-- * `default`: _`type`_, the default setting value when it isn't set manually
 _M.register_settings = function (list)
     assert(type(list) == "table")
 
@@ -89,18 +100,25 @@ _M.register_settings = function (list)
         assert(type(s.type) == "string", "setting '"..k.."' missing type")
     end
 
+    -- Set default or load from persisted_settings
+    local clone = lousy.util.table.clone
     for k, s in pairs(list) do
         settings_list[k] = s
 
-        local default, source = s.default, "default"
-        if persisted_settings.domain[""][k] ~= nil then
-            default, source = persisted_settings.domain[""][k], "persisted"
+        S.domain[""][k] = s.type:find(":") and clone(s.default) or s.default
+        S.source[""][k] = "default"
+
+        for domain, settings in pairs(persisted_settings.domain) do
+            if settings[k] ~= nil then
+                if S.domain[domain] == nil then
+                    S.domain[domain] = {}
+                    S.source[domain] = {}
+                end
+                local v = settings[k]
+                S.domain[domain][k] = type(v) == "table" and clone(v) or v
+                S.source[domain][k] = "persisted"
+            end
         end
-        if s.type:find(":") then
-            default = lousy.util.table.clone(default)
-        end
-        S.domain[""][k] = default
-        S.source[""][k] = source
     end
 
     settings_groups = nil
