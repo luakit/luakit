@@ -160,7 +160,7 @@ local function regex_escape(s)
     return s:gsub(escape_pat, "%%%1")
 end
 
-local re_match_text = function (text) return "", text end
+local re_match_text = function (text) return nil, text end
 local re_match_both = function (text) return text, text end
 local match_label_re_text = function (text)
     return #text > 0 and "^"..regex_escape(text) or "", text
