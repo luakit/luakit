@@ -70,7 +70,8 @@ function _M.is_uri(s)
     -- Valid hostnames to check
     local hosts = {"localhost"}
     if get_setting("window.load_etc_hosts") then
-        hosts = util.get_etc_hosts()
+        ok, hosts = pcall(util.get_etc_hosts)
+        if not ok then hosts = {} end
     end
     -- Check hostnames
     for _, h in pairs(hosts) do
