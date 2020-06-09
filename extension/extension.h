@@ -41,7 +41,7 @@ typedef struct _extension_t {
     WebKitScriptWorld *script_world;
 } extension_t;
 
-extension_t extension;
+extern extension_t extension;
 
 #endif
 
