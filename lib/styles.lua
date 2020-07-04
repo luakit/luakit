@@ -228,7 +228,7 @@ end
 
 webview.add_signal("init", function (view)
     view:add_signal("stylesheet", function (v)
-        if not view.uri:match("view%-source") then
+        if not view.uri:match("^view%-source:") then
             update_stylesheet_applications(v)
         end
     end)
