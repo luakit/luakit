@@ -526,7 +526,8 @@ decide_policy_cb(WebKitWebView* UNUSED(v), WebKitPolicyDecision *p,
         const gchar *uri = webkit_uri_response_get_uri(r);
         const gchar *mime = webkit_uri_response_get_mime_type(r);
 
-        if(!SOUP_STATUS_IS_SUCCESSFUL(webkit_uri_response_get_status_code(r)))
+        if(webkit_uri_response_get_status_code(r)
+            && !SOUP_STATUS_IS_SUCCESSFUL(webkit_uri_response_get_status_code(r)))
             return FALSE;
 
         luaH_object_push(L, w->ref);
