@@ -136,6 +136,7 @@ _M.stylesheet = [[
     position: absolute;
     background-color: ]] .. (theme.hint_overlay_bg     or "rgba(255,255,153,0.3)") .. [[;
     border:           ]] .. (theme.hint_overlay_border or "1px dotted #000")       .. [[;
+    opacity: 0.3;
 }
 
 #luakit_select_overlay .hint_label {
