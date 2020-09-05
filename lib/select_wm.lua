@@ -185,7 +185,7 @@ local function get_element_bb_if_visible(element, wbb, page)
     -- Find the element bounding box
     local r
 
-    if has_client_rects_api then
+    if has_client_rects_api and not element.first_child then
         r = element:client_rects()
         for i=#r,1,-1 do
             if r[i].width == 0 or r[i].height == 0 then table.remove(r, i) end
