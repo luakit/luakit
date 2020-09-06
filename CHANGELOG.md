@@ -1,5 +1,16 @@
 # Changelog
 
+## [develop]
+
+### Added
+
+### Changed
+
+### Fixed
+
+- Fixed bouding box not spanning over whole element.
+- Fixed an issue where styled hint labels caused instransparent bounding boxes.
+
 ## [2.2]
 
 ### Added
