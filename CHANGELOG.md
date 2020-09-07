@@ -5,6 +5,7 @@
 ### Added
 
 ### Changed
+- Removed debug symbol generation for default make.
 
 ### Fixed
 
