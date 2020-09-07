@@ -2,7 +2,7 @@
 
 # Compile/link options.
 CC         ?= gcc
-CFLAGS     += -std=gnu99 -ggdb -W -Wall -Wextra -Werror=unused-result
+CFLAGS     += -std=gnu99 -W -Wall -Wextra -Werror=unused-result
 LDFLAGS    +=
 CPPFLAGS   +=
 
@@ -29,6 +29,7 @@ LIBDIR     ?= $(PREFIX)/lib/luakit
 # (Useful when running luakit from it's source directory, disable otherwise).
 ifneq ($(DEVELOPMENT_PATHS),0)
 	CPPFLAGS += -DDEVELOPMENT_PATHS
+	CFLAGS += -ggdb
 endif
 
 # === Platform specific ======================================================
