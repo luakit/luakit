@@ -22,10 +22,11 @@ local function format_bytes(bytes)
     end
 end
 
+local data_type_binds = {}
 local function list_data_types(data)
     local s = ""
     for _, data_type in ipairs(lousy.util.table.keys(data)) do
-        s = s .. ", " .. data_type
+        s = s .. ", " .. data_type:gsub(data_type_binds[data_type], "<b>%0</b>", 1)
         if data[data_type] ~= 0 then
             s = s .. " (" .. format_bytes(data[data_type]) .. ")"
         end
@@ -45,7 +46,7 @@ modes.new_mode("clear-data", {
                 table.insert(rows, {domain, list_data_types(website_data[domain])})
             end
             w.menu:build(rows)
-            w:notify("Use j/k to move, Return to clear all data, or c/D/d/h/i/l/m/o/p/s/w for a specific type.", false)
+            w:notify("Use j/k to move, Return to clear all data, or c/d/e/h/i/l/m/o/p/s/w for a specific type.", false)
         end)()
     end,
 
@@ -55,6 +56,8 @@ modes.new_mode("clear-data", {
 })
 
 local function add_clear_bind(bind, data_type)
+    data_type_binds[data_type] = bind
+
     modes.add_binds("clear-data", {
         { bind, "Clear `"..data_type.."` for the focused domain.",
             function (w)
@@ -100,7 +103,7 @@ for _, args in ipairs({
     {"i", "indexeddb_databases"},
     {"p", "plugin_data"},
     {"c", "cookies"},
-    {"D", "device_id_hash_salt"},
+    {"e", "device_id_hash_salt"},
     {"h", "hsts_cache"},
 }) do
     add_clear_bind(unpack(args))
