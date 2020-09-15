@@ -19,10 +19,6 @@ local _M = {}
 
 lousy.signal.setup(_M, true)
 
-local function rm(file)
-    luakit.spawn(string.format("rm %q", file))
-end
-
 --- Path to session file.
 -- @type string
 -- @readwrite
@@ -82,7 +78,7 @@ _M.save = function (file)
         io.close(fh)
         os.rename(tempfile, file)
     else
-        rm(file)
+        os.remove(file)
     end
 end
 
@@ -220,7 +216,7 @@ window.add_signal("init", function (w)
         local num_windows = #lousy.util.table.values(window.bywidget)
         -- Remove the recovery session on a successful exit
         if num_windows == 0 and os.exists(_M.recovery_file) then
-            rm(_M.recovery_file)
+            os.remove(_M.recovery_file)
         end
     end)
 
