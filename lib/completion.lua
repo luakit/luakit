@@ -172,7 +172,11 @@ local function input_change_cb (w)
         local input = w.ibar.input
         data[w].orig_text = input.text
         data[w].orig_pos = input.position
-        _M.update_completions(w)
+        if input.position == 0 then
+            _M.exit_completion(w)
+        else
+            _M.update_completions(w)
+        end
     end
 end
 
