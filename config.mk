@@ -2,7 +2,7 @@
 
 # Compile/link options.
 CC         ?= gcc
-CFLAGS     += -std=gnu99 -W -Wall -Wextra -Werror=unused-result
+CFLAGS     += -std=c11 -W -Wall -Wextra -Werror=unused-result
 LDFLAGS    +=
 CPPFLAGS   +=
 
@@ -95,12 +95,7 @@ PKGS += gthread-2.0
 PKGS += webkit2gtk-4.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
-
-# For systems using older WebKit-GTK versions which bundle JavaScriptCore
-# within the WebKit-GTK package.
-ifneq ($(NO_JAVASCRIPTCORE),1)
-	PKGS += javascriptcoregtk-4.0
-endif
+PKGS += javascriptcoregtk-4.0
 
 # Check user has correct packages installed (and found by pkg-config).
 PKGS_OK := $(shell pkg-config --print-errors --exists $(PKGS) && echo 1)
