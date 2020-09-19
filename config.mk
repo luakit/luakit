@@ -2,7 +2,7 @@
 
 # Compile/link options.
 CC         ?= gcc
-CFLAGS     += -std=c11 -W -Wall -Wextra -Werror=unused-result
+CFLAGS     += -std=c11 -D_POSIX_C_SOURCE -W -Wall -Wextra -Werror=unused-result
 LDFLAGS    +=
 CPPFLAGS   +=
 
