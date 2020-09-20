@@ -5,6 +5,7 @@ CC         ?= gcc
 CFLAGS     += -std=c11 -D_XOPEN_SOURCE=600 -W -Wall -Wextra -Werror=unused-result
 LDFLAGS    +=
 CPPFLAGS   +=
+PKG_CONFIG ?= pkg-config
 
 # Get current luakit version.
 VERSION    ?= $(shell ./build-utils/getversion.sh)
@@ -65,7 +66,7 @@ endif
 # Search for Lua package name if not forced by user.
 ifeq ($(LUA_PKG_NAME),)
 LUA_PKG_NAME = $(shell sh -c '(for name in $(LUA_PKG_NAMES); do \
-	       pkg-config --exists $$name && echo $$name; done) | head -n 1')
+	       $(PKG_CONFIG) --exists $$name && echo $$name; done) | head -n 1')
 endif
 
 # === Lua binary name detection =============================================
@@ -98,15 +99,15 @@ PKGS += $(LUA_PKG_NAME)
 PKGS += javascriptcoregtk-4.0
 
 # Check user has correct packages installed (and found by pkg-config).
-PKGS_OK := $(shell pkg-config --print-errors --exists $(PKGS) && echo 1)
+PKGS_OK := $(shell $(PKG_CONFIG) --print-errors --exists $(PKGS) && echo 1)
 ifneq ($(PKGS_OK),1)
     $(error Cannot find required package(s\) to build luakit. Please \
     check you have the above packages installed and try again)
 endif
 
 # Add pkg-config options to compile flags.
-CFLAGS  += $(shell pkg-config --cflags $(PKGS))
+CFLAGS  += $(shell $(PKG_CONFIG) --cflags $(PKGS))
 CFLAGS  += -I./
 
 # Add pkg-config options to linker flags.
-LDFLAGS += $(shell pkg-config --libs $(PKGS))
+LDFLAGS += $(shell $(PKG_CONFIG) --libs $(PKGS))
