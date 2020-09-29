@@ -12,6 +12,7 @@
 
 - Fixed bounding box not spanning over whole element.
 - Fixed an issue where styled hint labels caused intransparent bounding boxes.
+- Fixed a race condition when a tab is closed on NetBSD.
 
 ## [2.2]
 
