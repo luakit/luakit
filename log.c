@@ -90,13 +90,13 @@ log_group_from_fct(const char *fct)
     int len = strlen(fct);
     gboolean core = !strcmp(&fct[len-2], ".c") || !strcmp(&fct[len-2], ".h"),
              lua = !strcmp(&fct[len-4], ".lua") || !strncmp(fct, "[string \"", 9);
-    if (core == lua)
-        warn("not sure how to handle this one: '%s'", fct);
 
     if (core) /* Strip .c or .lua off the end */
         return g_strdup_printf("core/%.*s", len-2, fct);
-    else
+    else if (lua)
         return g_strdup_printf("lua/%.*s", len-4, fct);
+    else
+        return g_strdup(fct);
 }
 
 int

@@ -130,7 +130,8 @@ local init_funcs = {
     create_webview = function (view)
         -- Return a newly created webview in a new tab
         view:add_signal("create-web-view", function (v)
-            return _M.window(v):new_tab(nil, { private = v.private })
+            local opts = { private = v.private, no_initial_url = true }
+            return _M.window(v):new_tab(nil, opts)
         end)
     end,
 

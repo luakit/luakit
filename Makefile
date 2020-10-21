@@ -74,7 +74,7 @@ luakit.so: $(EXT_OBJS)
 	@$(CC) -o $@ $(EXT_OBJS) -shared $(LDFLAGS)
 
 luakit.1: luakit.1.in
-	@sed "s/LUAKITVERSION/$(VERSION)/" $< > $@
+	@sed "s|LUAKITVERSION|$(VERSION)|" $< > $@
 
 luakit.1.gz: luakit.1
 	@gzip -c $< > $@

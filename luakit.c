@@ -38,6 +38,14 @@
 #error Your version of WebKit is outdated!
 #endif
 
+/* Define two globals of the UI side; their extern declarations are in
+globalconf.h, and clib/widget.h, and so they're visible pretty much
+everywhere; there's also common for lua communication; there's a second
+definition of that in extension/extension (which is a separate process). */
+common_t common;
+globalconf_t globalconf;
+lua_class_t widget_class;
+
 static void
 init_directories(void)
 {
@@ -158,20 +166,16 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
         return g_strdupv(argv + 1);
 }
 
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 50
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
 static GLogWriterOutput
 glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n_fields, gpointer UNUSED(user_data))
 {
     const gchar *log_domain = "(unknown)",
-                *message = "(empty)",
-                *code_file = "(unknown)",
-                *code_line = "(unknown)";
+                *message = "(empty)";
 
     for (gsize i = 0; i < n_fields; ++i) {
         if (!strcmp(fields[i].key, "GLIB_DOMAIN")) log_domain = fields[i].value;
         if (!strcmp(fields[i].key, "MESSAGE")) message = fields[i].value;
-        if (!strcmp(fields[i].key, "CODE_FILE")) code_file = fields[i].value;
-        if (!strcmp(fields[i].key, "CODE_LINE")) code_line = fields[i].value;
     }
 
     /* Probably not necessary, but just in case... */
@@ -187,7 +191,7 @@ glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n
         [G_LOG_LEVEL_DEBUG]    = LOG_LEVEL_debug,
     })[log_level_flags];
 
-    _log(log_level, code_line, code_file, "%s: %s", log_domain, message);
+    _log(log_level, "glib", "%s: %s", log_domain, message);
     return G_LOG_WRITER_HANDLED;
 }
 #endif
@@ -232,7 +236,7 @@ main(gint argc, gchar *argv[])
 
     gtk_init(&argc, &argv);
 
-#if __GLIBC__ == 2 && __GLIBC_MINOR__ >= 50
+#if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
 #endif
     init_directories();

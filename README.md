@@ -23,9 +23,9 @@ To compile the stock luakit run:
 
     make
 
-To link against LuaJIT (if you have LuaJIT installed) run:
+Luakit uses `luajit` by default, to use `lua` you can turn off luajit with:
 
-    make USE_LUAJIT=1
+    make USE_LUAJIT=0
 
 To build with a custom compiler run:
 
@@ -37,8 +37,8 @@ To build with local paths (interesting for package maintainer and contributers).
 
 This lets you start luakit from the build directory, using the config and libraries within the same.
 
-The `USE_LUAJIT=1`, `PREFIX=/path`, `DEVELOPMENT_PATHS=1`, `CC=clang`
-build options do not conflict. You can use whichever you desire.
+The `USE_LUAJIT`, `PREFIX`, `DEVELOPMENT_PATHS`, `CC`
+build options do not conflict. You can use whichever you desire. Take a look at `config.mk` to find all options and their defaults.
 
 ## Installing
 
@@ -88,6 +88,12 @@ There are several files of interest:
 Just copy the files you wish to change (and the rc.lua) into
 `$XDG_CONFIG_HOME/luakit` (defaults to `~/.config/luakit/`) and luakit will
 use those files when you next launch it.
+
+## Migration information
+
+Luakit has undergone some major refactorings in the last years. If you're
+coming from a luakit version older than July 2017, you need to redo your
+configuration.
 
 The following files used to be configuration files, but are not anymore:
 

@@ -136,7 +136,7 @@ local function spawn_luakit_instance(config, ...)
     end
 
     -- Build env prefix
-    local cmd = "env --ignore-environment - "
+    local cmd = "env -i - "
     for k, v in pairs(env) do
         cmd = cmd .. k .."=" .. v .. " "
     end

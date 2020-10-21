@@ -44,6 +44,34 @@
 --     local chars = charset("ФЫВАПРОЛДЖЭ")
 --     ...
 --
+-- ## Hint text direction
+--
+-- Hints consisting entirely of characters which are drawn Left-to-Right
+-- (eg Latin, Cyrillic) or characters drawn Right-to-Left (eg Arabic, Hebrew),
+-- will render intuitively in the appropriate direction.
+-- Hints will be drawn non-intuitively if they contain a mix of Left-to-Right
+-- and Right-to-Left characters.
+--
+-- Punctuation characters do not have an intrinsic direction, and will be drawn
+-- using the direction specified by the HTML/CSS context in which they appear.
+-- This leads to corner cases if the hint charset contains punctuation characters,
+-- for example:
+--
+--     ...
+--     local chars = charset("fjdksla;ghutnvir")
+--     ...
+--
+-- In this case, hints will display intuitively if used on pages which are
+-- drawn Left-to-Right, but not on pages drawn Right-to-Left.
+--
+-- To guard against this, it is recommended that if punctuation characters
+-- are used in hints, a clause should be added to a user stylesheet giving
+-- an explicit text direction eg:
+--
+--     ...
+--     #luakit_select_overlay .hint_label { direction: ltr; }
+--     ...
+--
 -- ## Alternating between left- and right-handed letters
 --
 -- To make link hints easier to type, you may prefer to have them alternate
@@ -108,6 +136,7 @@ _M.stylesheet = [[
     position: absolute;
     background-color: ]] .. (theme.hint_overlay_bg     or "rgba(255,255,153,0.3)") .. [[;
     border:           ]] .. (theme.hint_overlay_border or "1px dotted #000")       .. [[;
+    opacity:          ]] .. (theme.hint_opacity        or "0.3")                   .. [[;
 }
 
 #luakit_select_overlay .hint_label {
@@ -132,7 +161,7 @@ local function regex_escape(s)
     return s:gsub(escape_pat, "%%%1")
 end
 
-local re_match_text = function (text) return "", text end
+local re_match_text = function (text) return nil, text end
 local re_match_both = function (text) return text, text end
 local match_label_re_text = function (text)
     return #text > 0 and "^"..regex_escape(text) or "", text

@@ -1,5 +1,48 @@
 # Changelog
 
+## [develop]
+
+### Added
+
+### Changed
+- Removed debug symbol generation for default make.
+- Changed the C standard from gnu99 to c11 because Webkit wants it.
+
+### Fixed
+
+- Fixed bounding box not spanning over whole element.
+- Fixed an issue where styled hint labels caused intransparent bounding boxes.
+- Fixed a race condition when a tab is closed on NetBSD.
+
+## [2.2]
+
+### Added
+
+- Hint CSS can now be customized via `theme.lua`.
+- Added the `:save` command, to save the complete page as a single MHTML file.
+
+### Changed
+
+- `mime-type-decision` is now only emitted for a successful response.
+- Removed the default Shift-d binding for deleting the current session.
+- Removed the `socket` widget for Wayland compatibility.
+- `:bookmarks` will now reuse an existing bookmarks tab if present.
+- `tablist.always_visible` has been deprecated in favour of `tablist.visibility`.
+- Empty tabs are no longer saved to history.
+- Session recovery has been made slightly more robust.
+
+### Fixed
+
+- Fixed the tablist not being hidden in fullscreen mode.
+- Fixed poor performance when loading/saving data with `lousy.pickle`.
+- Fixed poor memory usage behaviour caused by excessive numbers of Web Views.
+- Fixed proxy not being set from `proxy.set_active()`.
+- Fixed `window.new_tab_page` being ignored for bare `:open`/`:tabopen` commands.
+- Fixed `re_match_text` always matching everything.
+- Fixed panic when `/etc/hosts` cannot be read.
+- Fixed `view-source:` pages being inadvertently affected by stylesheets.
+- Fixed domain-specific keys not being loaded from persisted settings.
+
 ## [2.1]
 
 ### Added

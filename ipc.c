@@ -129,10 +129,10 @@ web_extension_connect_thread(gpointer UNUSED(data))
     unlink(local.sun_path);
 
     if (bind(sock, (struct sockaddr *)&local, len) == -1)
-        fatal("Error calling bind(): %s", strerror(errno));
+        fatal("Error calling bind() on socket %s: %s", path, strerror(errno));
 
     if (listen(sock, 5) == -1)
-        fatal("Error calling listen(): %s", strerror(errno));
+        fatal("Error calling listen() on socket %s: %s", path, strerror(errno));
 
     g_mutex_lock(&socket_path_lock);
     socket_path = path;

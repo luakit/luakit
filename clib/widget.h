@@ -87,7 +87,7 @@ struct widget_t
     gpointer data;
 };
 
-lua_class_t widget_class;
+extern lua_class_t widget_class;
 void widget_class_setup(lua_State *);
 void widget_set_css_properties(widget_t *, ...);
 gint luaH_widget_new(lua_State *L);

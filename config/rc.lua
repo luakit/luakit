@@ -24,7 +24,8 @@ end)
 
 require "unique_instance"
 
--- Set the number of web processes to use. A value of 0 means 'no limit'.
+-- Set the number of web processes to use. A value of 0 means 'no limit'. This
+-- has no effect since WebKit 2.26
 luakit.process_limit = 4
 -- Set the cookie storage location
 soup.cookies_storage = luakit.data_dir .. "/cookies.db"

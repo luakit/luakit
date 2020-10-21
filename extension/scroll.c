@@ -18,14 +18,10 @@
 
 #define WEBKIT_DOM_USE_UNSTABLE_API
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
-#include <JavaScriptCore/JavaScript.h>
 
 #include "extension/extension.h"
 #include "extension/scroll.h"
 #include "extension/ipc.h"
-#include "extension/luajs.h"
-
-static JSClassRef resize_observer_cb_class;
 
 static void
 send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t subtype)
@@ -61,14 +57,13 @@ window_resize_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebK
 static gint scroll_width_prev = -1, scroll_height_prev = -1;
 
 static void
-check_for_document_resize(WebKitWebPage *web_page)
+document_resize_cb(WebKitDOMElement *html, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
 {
-    WebKitDOMDocument *document = webkit_web_page_get_dom_document(web_page);
-    WebKitDOMElement *html = webkit_dom_document_get_document_element(document);
     gint h = webkit_dom_element_get_scroll_width(html);
     gint v = webkit_dom_element_get_scroll_height(html);
 
     /* Only send message if the size changes */
+    /* This still isn't that performant... needs a better solution really */
     if (h == scroll_width_prev && v == scroll_height_prev)
         return;
     scroll_width_prev = h;
@@ -77,32 +72,11 @@ check_for_document_resize(WebKitWebPage *web_page)
     send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_docresize);
 }
 
-static void queue_resize_observer(WebKitWebPage *web_page)
-{
-    JSGlobalContextRef context = webkit_frame_get_javascript_global_context(
-            webkit_web_page_get_main_frame(web_page));
-    JSObjectRef global = JSContextGetGlobalObject(context);
-    JSStringRef key = JSStringCreateWithUTF8CString("requestAnimationFrame");
-    JSObjectRef raf = JSValueToObject(context, JSObjectGetProperty(context, global, key, NULL), NULL);
-    JSStringRelease(key);
-    g_assert(JSObjectIsFunction(context, raf));
-    JSValueRef argv[] = { js_make_closure(context, resize_observer_cb_class, web_page) };
-    JSObjectCallAsFunction(context, raf, NULL, 1, argv, NULL);
-}
-
-static JSValueRef
-resize_observer_cb(JSContextRef context, JSObjectRef function, JSObjectRef UNUSED(thisObject), size_t UNUSED(argc), const JSValueRef UNUSED(argv[]), JSValueRef *UNUSED(exception))
-{
-    WebKitWebPage *web_page = JSObjectGetPrivate(function);
-    queue_resize_observer(web_page);
-    check_for_document_resize(web_page);
-    return JSValueMakeUndefined(context);
-}
-
 static void
 web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     WebKitDOMDocument *document = webkit_web_page_get_dom_document(web_page);
+    WebKitDOMElement *html = webkit_dom_document_get_document_element(document);
     WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
 
     /* Add event listeners... */
@@ -111,13 +85,14 @@ web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
         "scroll", G_CALLBACK(window_scroll_cb), FALSE, web_page);
     webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
         "resize", G_CALLBACK(window_resize_cb), FALSE, web_page);
-    queue_resize_observer(web_page);
+    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(html),
+        "DOMSubtreeModified", G_CALLBACK(document_resize_cb), FALSE, web_page);
 
     /* ... and make sure initial values are set */
 
     window_scroll_cb(window, NULL, web_page);
     window_resize_cb(window, NULL, web_page);
-    check_for_document_resize(web_page);
+    document_resize_cb(html, NULL, web_page);
 }
 
 static void
@@ -142,11 +117,6 @@ void
 web_scroll_init(void)
 {
     g_signal_connect(extension.ext, "page-created", G_CALLBACK(web_page_created_cb), NULL);
-
-    JSClassDefinition def;
-    def = kJSClassDefinitionEmpty;
-    def.callAsFunction = resize_observer_cb;
-    resize_observer_cb_class = JSClassCreate(&def);
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

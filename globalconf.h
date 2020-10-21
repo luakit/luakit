@@ -68,7 +68,7 @@ typedef struct {
     gdouble starttime;
 } globalconf_t;
 
-globalconf_t globalconf;
+extern globalconf_t globalconf;
 
 #endif
 

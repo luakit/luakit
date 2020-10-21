@@ -87,8 +87,11 @@ local function update_tablist_visibility(tlist)
     if not data[tlist].notebook then return end -- switching notebook
     if not data[tlist].visible then
         tlist.widget.visible = false
-    elseif settings.get_setting("tablist.always_visible") then
+    elseif settings.get_setting("tablist.always_visible") or
+           settings.get_setting("tablist.visibility") == "always" then
         tlist.widget.visible = true
+    elseif settings.get_setting("tablist.visibility") == "never" then
+        tlist.widget.visible = false
     else
         tlist.widget.visible = data[tlist].notebook:count() > 1
     end
@@ -253,12 +256,24 @@ settings.register_settings({
         type = "boolean",
         default = false,
         domain_specific = false,
-        desc = "Whether the tab list should be visible with only a single tab open.",
+        desc = "Whether the tab list should be visible with only a single tab open. "..
+               "This is deprecated in favour of tablist.visibility and may be removed in the future.",
+    },
+    ["tablist.visibility"] = {
+        type = "enum",
+        options = {
+            ["always"] = { desc = "Always display the tab list.", label = "Always", },
+            ["multiple"] = { desc = "Hide tab list if there's only one tab.", label = "If multiple tabs", },
+            ["never"] = { desc = "Never display tab list.", label = "Never", },
+        },
+        default = false,
+        domain_specific = false,
+        desc = "When should the tab list be visible?",
     },
 })
 
 settings.add_signal("setting-changed", function (e)
-    if e.key == "tablist.always_visible" then
+    if e.key == "tablist.always_visible" or e.key == "tablist.visibility" then
         -- Hack: cause update_tablist_visibility() to be called for all windows
         for _, w in pairs(window.bywidget) do
             w.tablist.visible = w.tablist.visible

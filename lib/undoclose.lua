@@ -69,12 +69,17 @@ local on_tab_close = function (w, view)
         local index = w.tabs:indexof(view)
         local hist = view.history
         local hist_item = hist.items[hist.index]
-        local title = lousy.util.escape(hist_item.title) or ""
 
+        -- Don't save tabs with no history
+        if not index or not hist_item then
+            return
+        end
         -- Don't save the "New Tab" page in undoclose history
         if _M.emit_signal("save", view) == false then
             return
         end
+
+        local title = lousy.util.escape(hist_item.title) or ""
 
         tab = {
             session_state = view.session_state,
