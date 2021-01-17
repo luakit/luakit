@@ -225,6 +225,12 @@ widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     hints.min_height = 1;
     gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
 
+    if(globalconf.darkmode) {
+        printf("DARKMODE ACTIVATED\n");
+        g_object_set(gtk_widget_get_settings(GTK_WIDGET(d->win)),
+                "gtk-application-prefer-dark-theme", (gboolean)TRUE, NULL);
+    }
+
     g_object_connect(G_OBJECT(w->widget),
       "signal::destroy",            G_CALLBACK(destroy_win_cb),  w,
       LUAKIT_WIDGET_SIGNAL_COMMON(w)

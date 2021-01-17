@@ -54,6 +54,8 @@ typedef struct {
     gchar *execpath;
     /** Ignore loading libunqiue bindings (for a single instance session) */
     gboolean nounique;
+    /** Use GTK3 darkmode */
+    gboolean darkmode;
     /** Arguments provided to luakit */
     GPtrArray *argv;
 
