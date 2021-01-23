@@ -100,6 +100,9 @@ local undoclose = require "undoclose"
 -- Add command to list tab history items
 local tabhistory = require "tabhistory"
 
+-- Add gopher protocol support
+-- local gopher = require "gopher"
+
 -- Add greasemonkey-like javascript userscript support
 local userscripts = require "userscripts"
 

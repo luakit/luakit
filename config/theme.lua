@@ -92,6 +92,11 @@ theme.ok = { fg = "#000", bg = "#FFF" }
 theme.warn = { fg = "#F00", bg = "#FFF" }
 theme.error = { fg = "#FFF", bg = "#F00" }
 
+-- Gopher page style
+theme.gopher_fg = "#17181C"
+theme.gopher_bg = "#E8E8E8"
+theme.gopher_link = "#03478D"
+
 return theme
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

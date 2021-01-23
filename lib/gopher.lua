@@ -5,6 +5,9 @@
 -- @module gopher
 -- @author Ygrex <ygrex@ygrex.ru>
 
+local lousy = require("lousy")
+local theme = lousy.theme.get()
+
 local socket_loaded, socket = pcall(require, "socket")
 if not socket_loaded then
     msg.error("Failed to load LuaSocket: %s", tostring(socket))
@@ -18,9 +21,8 @@ local _M = {}
 
 luakit.register_scheme("gopher")
 
--- menu entry button's inner HTML representing the type of the item
-local function gophertype_to_icon(gophertype)
-    -- TODO unicode symbols look different
+-- menu entry representing the type of the item
+local function gophertype_to_text(gophertype)
     return ({
         ["0"] = 'TXT ', -- text file
         ["1"] = 'DIR ', -- submenu
@@ -31,7 +33,7 @@ local function gophertype_to_icon(gophertype)
         ["9"] = 'BIN ', -- binary
         ["d"] = 'DOC ', -- any document format
         ["g"] = 'GIF ', -- gif
-        ["h"] = 'HTML',  -- html
+        ["h"] = 'HTML', -- html
         ["I"] = 'IMG ', -- image
         ["M"] = 'MBOX', -- mbox
         ["p"] = 'IMG ', -- image
@@ -76,7 +78,7 @@ _M.parse_gopher_line = function(line, url)
 end
 local parse_gopher_line = _M.parse_gopher_line
 
---- Evaluate a hyperlink for a gopher menu entry.
+--- Evaluate hyperlink for a gopher menu entry.
 -- @tparam table entry Gopher menu entry structure from parse_gopher_line().
 -- @treturn string Valid URL for the menu entry.
 _M.href_source = function(entry)
@@ -124,10 +126,20 @@ end
 local function stylesheet()
     return [[
         <style>
-            body, pre, input, { font-family: Monaco, monospace; }
-            body { max-width: 80ex; margin: 0; padding: 5px; background-color: #E8E8E8; color: #17181C; }
-            a { color: #03478D; text-decoration: none; }
-            a:active, a:visited { color: #03278D; }
+            body, pre, input, {
+                font-family: Monaco, monospace;
+            }
+            body {
+                max-width: 80ex;
+                margin: 0;
+                padding: 5px;
+                color: ]] .. theme.gopher_fg .. [[;
+                background-color: ]] .. theme.gopher_bg .. [[;
+            }
+            a, a:active, a:visited {
+                color: ]] .. theme.gopher_link .. [[;
+                text-decoration: none;
+            }
         </style>
     ]];
 end;
@@ -188,12 +200,12 @@ local function menu_to_html(data, url)
             html[#html + 1] = ("    | %s"):format(entry.display_string)
         else
             local src = href_source(entry)
-            local button = gophertype_to_icon(entry.item_type) .. "+"
+            local type_text = gophertype_to_text(entry.item_type) .. "+"
             local anchor_name = "anchor_" .. tostring(line_num)
             local input = menu_entry_input(anchor_name)
             if entry.item_type ~= "7" then input = "" end
             html[#html + 1] = ([[%s <a href="%s" id="%s">%s</a>%s]]):format(
-                button,
+                type_text,
                 src,
                 anchor_name,
                 entry.display_string,
@@ -210,20 +222,20 @@ end
 -- @treturn string Appropriate MIME type.
 _M.image_mime_type = function(ext)
     return ({
-        gif = "image/gif",
+        gif  = "image/gif",
         jpeg = "image/jpeg",
-        jpg = "image/jpeg",
-        pcx = "image/pcx",
-        png = "image/png",
-        svg = "image/svg+xml",
+        jpg  = "image/jpeg",
+        pcx  = "image/pcx",
+        png  = "image/png",
+        svg  = "image/svg+xml",
         svgz = "image/svg+xml",
-        tif = "image/tiff",
+        tif  = "image/tiff",
         tiff = "image/tiff",
-        bmp = "image/x-ms-bmp",
-        pbm = "image/x-portable-bitmap",
-        pgm = "image/x-portable-graymap",
-        ppm = "image/x-portable-pixmap",
-        xwd = "image/x-xwindowdump",
+        bmp  = "image/x-ms-bmp",
+        pbm  = "image/x-portable-bitmap",
+        pgm  = "image/x-portable-graymap",
+        ppm  = "image/x-portable-pixmap",
+        xwd  = "image/x-xwindowdump",
     })[tostring(ext):lower()] or "application/octet-stream"
 end
 local image_mime_type = _M.image_mime_type
