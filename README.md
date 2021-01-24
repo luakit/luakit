@@ -1,13 +1,15 @@
 # Luakit
 
-luakit is a fast, light and simple to use micro-browser framework extensible
-by Lua using the WebKit web content engine and the GTK+ toolkit.
+luakit is a fast, light and simple to use micro-browser framework
+extensible by Lua using the WebKit web content engine and the GTK+
+toolkit.
 
-## Don't Panic!
+### Don't Panic!
 
-You don't have to be a developer to use luakit on a daily basis. If you are
-familiar with vimperator, pentadactyl, jumanji, uzbl & etc you will find
-luakit behaves similarly out of the box.
+You don't have to be a developer to use luakit on a daily basis. If you
+are familiar with vimperator, pentadactyl, jumanji, uzbl & etc you will
+find luakit behaves similarly out of the box.
+
 
 ## Requirements
 
@@ -16,53 +18,36 @@ luakit behaves similarly out of the box.
  * lfs (lua file system)
  * webkit2gtk
  * sqlite3
+ * gstreamer (for video playback)
 
-## Compiling
-
-To compile the stock luakit run:
-
-    make
-
-Luakit uses `luajit` by default, to use `lua` you can turn off luajit with:
-
-    make USE_LUAJIT=0
-
-To build with a custom compiler run:
-
-    make CC=clang
-
-To build with local paths (interesting for package maintainer and contributers). You may wish to build luakit with:
-
-    make DEVELOPMENT_PATHS=1
-
-This lets you start luakit from the build directory, using the config and libraries within the same.
-
-The `USE_LUAJIT`, `PREFIX`, `DEVELOPMENT_PATHS`, `CC`
-build options do not conflict. You can use whichever you desire. Take a look at `config.mk` to find all options and their defaults.
 
 ## Installing
 
-To install luakit run:
+Luakit is available on most Linux Distributions and BSD system via their
+package managers.
 
-    sudo make install
+ * Debian/Ubuntu: apt-get install luakit
+ * Gentoo: emerge luakit
+ * Arch: pacman -S luakit
+ * FreeBSD: pkg install luakit
+ * OpenBSD: pkg\_add luakit
 
-The luakit binary will be installed at:
 
-    /usr/local/bin/luakit
+## Installing from source
 
-And configs to:
+Make sure you system fulfills the requirements listed above, then
+install luakit with the following commands:
 
-    /etc/xdg/luakit/
+    $ git clone https://github.com/luakit/luakit.git
+    $ cd luakit
+    $ make
+    $ sudo make install
 
-And the luakit libraries to:
+Uninstall with:
 
-    /usr/local/share/luakit/lib/
+    $ sudo make uninstall
 
-To change the install prefix you will need to re-compile luakit (after a
-`make clean`) with the following option:
-
-    make PREFIX=/usr
-    sudo make PREFIX=/usr install
+Note: If you are on BSD, you might need to use `gmake`.
 
 ## Use Luakit
 
@@ -74,64 +59,117 @@ Or to see the full list of luakit launch options run:
 
     luakit -h
 
+Luakit works with vim-style bindings. To find out more, type `:help`
+within luakit.
+
+
 ## Configuration
 
-The configuration options are endless, the entire browser is constructed by
-the config files present in `/etc/xdg/luakit`
+Luakit configuration files are written in `lua`. This means you can
+program within the config files, which make the configuration options
+endless.
 
-There are several files of interest:
+There are three ways to customize luakit.
 
- * rc.lua      -- is the main config file which dictates which and in what
-                  order different parts of the browser are loaded.
- * theme.lua   -- change fonts and colours used by the interface widgets.
+**1. within luakit**
 
-Just copy the files you wish to change (and the rc.lua) into
-`$XDG_CONFIG_HOME/luakit` (defaults to `~/.config/luakit/`) and luakit will
-use those files when you next launch it.
+After starting luakit, type `:settings`. Changes in this page are saved.
 
-## Migration information
+**2. userconf.lua**
 
-Luakit has undergone some major refactorings in the last years. If you're
-coming from a luakit version older than July 2017, you need to redo your
-configuration.
+Create a file called `$HOME/.config/luakit/userconf.lua`. Then add
+your configuration there. Configuration is this file supersedes
+configuration set in `:settings`
 
-The following files used to be configuration files, but are not anymore:
+**3. copy rc.lua**
 
- * binds.lua      -- is now a built-in module providing the default bindings.
-                     Bindings should be changed with the `modes` APIs.
- * modes.lua      -- is now a built-in module providing built-in modes, as well
-                     as providing APIs to manage bindings within those modes.
- * window.lua     -- is now a built-in module.
- * webview.lua    -- is now a built-in module.
- * webview_wm.lua -- is now a built-in module.
- * globals.lua    -- global settings have been moved to other modules.
+The most powerful customization is to copy `rc.lua` from
+`/etc/xdg/luakit/rc.lua` to `$HOME/.config/luakit/rc.lua`
 
-These files will be silently ignored on startup so as to prevent errors; users
-wishing to override the built-in modules should change `package.path`.
+When this file is found, `/etc/xdg/luakit/rc.lua` is ignored.
+
+Be informed that when luakit is updated, you may need to adapt changes
+from `/etc/xdg/luakit/rc.lua` to your own copy.
+
+
+## Colors and fonts
+
+Copy the `/etc/xdg/luakit/theme.lua` to
+`$HOME/.config/luakit/theme.lua`. You can change fonts and colors there.
+
+
+## Development Information
+
+This section contains information about the compile and testing process.
+
+Luakit honors the PREFIX variable. The default is `/usr/local`.
+
+    make PREFIX=/usr
+    sudo make PREFIX=/usr install
+
+Note that you also have to set the PREFIX when uninstalling!
+
+Luakit uses `luajit` by default, to use `lua` you can turn off luajit
+with:
+
+    make USE_LUAJIT=0
+
+To build with local paths (interesting for package maintainer and
+contributers). You may wish to build luakit with:
+
+    make DEVELOPMENT_PATHS=1
+
+This lets you start luakit from the build directory, using the config
+and libraries within the same.
+
+Take a look at `config.mk` for more options.
+
+If you made changes and want to know if luakit is still working properly,
+you can execute the test suite with:
+
+    make test
+
 
 ## HiDPI Monitor Configuration
 
-If you have a HiDPI monitor (> 1920x1080) and find that web pages are too small,
-you can change the `webview.zoom_level` on the settings page (luakit://settings/)
-to 150 or 200 as per your taste.
+If you have a HiDPI monitor (> 1920x1080) and find that web pages are
+too small, you can change the `webview.zoom_level` on the settings page
+(luakit://settings/) to 150 or 200 as per your taste.
 
-## Uninstall
 
-To delete luakit from your system run:
+## Tipps and fixes:
 
-    sudo make uninstall
+If you're having issues with video playback, this is often related to
+buggy graphic drivers. It often helps to set LIBGL\_DRI3\_DISABLE before
+starting luakit:
 
-If you installed with a custom prefix remember to add the identical prefix
-here also, example:
+    $ export LIBGL_DRI3_DISABLE=1
 
-    sudo make PREFIX=/usr uninstall
+Since Webkit 2.26, the webkit engine used in luakit is creating a new
+process for each tab. This has the benefit that a webkit webview crash
+will only crash one tab. The downside is lower performance and increased
+memory use.
+
+If you value speed over stability, you can ask webkit to use one process
+for all tabs by setting WEBKIT\_USE\_SINGLE\_WEB\_PROCESS before
+starting luakit:
+
+    $ export WEBKIT_USE_SINGLE_WEB_PROCESS=1
+
 
 ## Reporting Bugs
 
-Please use the bug tracker at:
+Please note that most rendering related issues come from the used webkit
+engine and can not be fixed by luakit. If you think your issue is luakit
+related, please use the bug tracker at:
 
   https://github.com/luakit/luakit/issues
+
+Coming from a very old luakit version? Look at the
+[MIGRATION](MIGRATE.md) document.
+
 
 ## IRC
 
 Join us in `#luakit` on the `irc.oftc.net` network.
+
