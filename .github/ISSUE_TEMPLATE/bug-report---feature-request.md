@@ -1,31 +1,27 @@
 ---
-name: Bug Report / Feature Request
-about: Use this form to create issues.
+name: Report luakit issue
+about: Use this template to create issues.
 
 ---
 
-<!--
-HELP US TO HELP YOU BY PROVIDING THE FOLLOWING INFORMATION
--->
+**Current Behavior:**
 
-<!--
-Information about WebKit Bugs:
-Luakit is a built around the WebKit rendering engine. Some issues may therefore not be luakit related. Before opening a bug report here, please test if your issue also happens in epiphany (the gnome browser), which uses the same engine. If the issue happens there too, it is not a luakit bug.
--->
 
-## I'm submitting a…
-<!-- Bug Report / Feature Request / Other (please describe) -->
+**Desired Behavior:**
 
-## Current Behavior
-<!-- Describe the current behavior -->
 
-## Expected Behavior
-<!-- Describe the expected/desired behavior -->
+**How can we reproduce it (step by step):**
 
-## Reproduction Instructions
-<!-- How can a developer reproduce the issue? Please explain step by step. -->
 
-## Environment
-<!-- Please provide information about your OS -->
+**Environment:**
+
 Linux Distribution & Version:
 Output of `luakit --version`:
+
+
+**Note about webkit issues:**
+
+If you're reporting a rendering issue, please test it with the gnome
+browser ephiphany as well. If the issue occurs there too, we're very
+likely not able to help. These issues should be reported to webkit:
+https://bugs.webkit.org
