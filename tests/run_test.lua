@@ -187,20 +187,24 @@ if not pcall(require, "luassert") then
 end
 
 -- Check for untracked files in Git
-do
-    local untracked = {}
-    local f = io.popen("git ls-files --others --exclude-standard")
-    for line in f:lines() do
-        table.insert(untracked, line)
-    end
-    f:close()
+local git=io.open(".git","r")
+if git~=nil then
+    io.close(git)
+    do
+        local untracked = {}
+        local f = io.popen("git ls-files --others --exclude-standard")
+        for line in f:lines() do
+            table.insert(untracked, line)
+        end
+        f:close()
 
-    if #untracked > 0 then
-        local c_yellow = string.char(27) .. "[0;33m"
-        local c_reset = string.char(27) .. "[0;0m"
-        print(c_yellow .. "WARN" .. c_reset .. " The following files are untracked:")
-        for _, line in ipairs(untracked) do
-            print("  " .. line)
+        if #untracked > 0 then
+            local c_yellow = string.char(27) .. "[0;33m"
+            local c_reset = string.char(27) .. "[0;0m"
+            print(c_yellow .. "WARN" .. c_reset .. " The following files are untracked:")
+            for _, line in ipairs(untracked) do
+                print("  " .. line)
+            end
         end
     end
 end
