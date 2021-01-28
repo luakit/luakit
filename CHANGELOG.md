@@ -7,6 +7,7 @@
 ### Changed
 - Removed debug symbol generation for default make.
 - Changed the C standard from gnu99 to c11 because Webkit wants it.
+- Added Gopher protocol support, see comment in rc.lua.
 
 ### Fixed
 
