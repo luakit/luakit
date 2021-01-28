@@ -228,4 +228,7 @@
 -- @readwrite
 -- @property resource_path
 
+--- Clear the favicon cache database.
+-- @function clear_favicon_database
+
 -- vim: et:sw=4:ts=8:sts=4:tw=80

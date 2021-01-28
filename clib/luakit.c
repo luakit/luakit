@@ -416,6 +416,12 @@ luaH_parse_website_data_types_table(lua_State *L, gint idx)
         TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
         TYPE(PLUGIN_DATA, plugin_data)
         TYPE(COOKIES, cookies)
+#if WEBKIT_CHECK_VERSION(2,24,0)
+        TYPE(DEVICE_ID_HASH_SALT, device_id_hash_salt)
+#endif
+#if WEBKIT_CHECK_VERSION(2,26,0)
+        TYPE(HSTS_CACHE, hsts_cache)
+#endif
         TYPE(ALL, all)
 #undef TYPE
 
@@ -461,6 +467,12 @@ website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resul
             TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
             TYPE(PLUGIN_DATA, plugin_data)
             TYPE(COOKIES, cookies)
+#if WEBKIT_CHECK_VERSION(2,24,0)
+            TYPE(DEVICE_ID_HASH_SALT, device_id_hash_salt)
+#endif
+#if WEBKIT_CHECK_VERSION(2,26,0)
+            TYPE(HSTS_CACHE, hsts_cache)
+#endif
 #undef TYPE
             lua_rawset(L, -3);
 
@@ -584,6 +596,39 @@ luaH_luakit_website_data_remove(lua_State *L)
     return luaH_yield(L);
 }
 
+static void
+website_data_clear_finish(WebKitWebsiteDataManager *manager, GAsyncResult *result, lua_State *L)
+{
+    g_assert_cmpint(lua_status(L),==,LUA_YIELD);
+
+    GError *error = NULL;
+    webkit_website_data_manager_clear_finish(manager, result, &error);
+    if (error) {
+        lua_pushnil(L);
+        lua_pushstring(L, error->message);
+        g_error_free(error);
+    } else
+        lua_pushboolean(L, TRUE);
+
+    luaH_resume(L, lua_gettop(L));
+}
+
+static gint
+luaH_luakit_website_data_clear(lua_State *L)
+{
+    WebKitWebsiteDataTypes data_types = luaH_parse_website_data_types_table(L, 1);
+    if (data_types == 0)
+        return luaL_error(L, "no website data types specified");
+    GTimeSpan timespan = luaL_optinteger(L, 2, 0);
+
+    WebKitWebContext *web_context = web_context_get();
+    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    webkit_website_data_manager_clear(data_manager, data_types, timespan, NULL,
+            (GAsyncReadyCallback)website_data_clear_finish, L);
+
+    return luaH_yield(L);
+}
+
 static gint
 luaH_luakit_website_data_index(lua_State *L)
 {
@@ -596,6 +641,10 @@ luaH_luakit_website_data_index(lua_State *L)
             return 1;
         case L_TK_REMOVE:
             lua_pushcfunction(L, luaH_luakit_website_data_remove);
+            luaH_yield_wrap_function(L);
+            return 1;
+        case L_TK_CLEAR:
+            lua_pushcfunction(L, luaH_luakit_website_data_clear);
             luaH_yield_wrap_function(L);
             return 1;
         default: return 0;
@@ -642,6 +691,15 @@ static gint
 luaH_luakit_wch_upper(lua_State *L)
 {
     return luaH_string_wch_convert_case(L, luaL_checkstring(L, 1), TRUE);
+}
+
+static gint
+luaH_luakit_clear_favicon_database(lua_State *UNUSED(L))
+{
+    WebKitWebContext *ctx = web_context_get();
+    WebKitFaviconDatabase *fdb = webkit_web_context_get_favicon_database(ctx);
+    webkit_favicon_database_clear(fdb);
+    return 0;
 }
 
 static gint
@@ -880,18 +938,19 @@ luakit_lib_setup(lua_State *L)
     {
         LUA_CLASS_METHODS(luakit)
         LUAKIT_LIB_COMMON_METHODS
-        { "__index",           luaH_luakit_index },
-        { "__newindex",        luaH_luakit_newindex },
-        { "exec",              luaH_luakit_exec },
-        { "quit",              luaH_luakit_quit },
-        { "save_file",         luaH_luakit_save_file },
-        { "spawn",             luaH_luakit_spawn },
-        { "spawn_sync",        luaH_luakit_spawn_sync },
-        { "register_scheme",   luaH_luakit_register_scheme },
-        { "allow_certificate", luaH_luakit_allow_certificate },
-        { "wch_lower",         luaH_luakit_wch_lower },
-        { "wch_upper",         luaH_luakit_wch_upper },
-        { NULL,              NULL }
+        { "__index",                luaH_luakit_index },
+        { "__newindex",             luaH_luakit_newindex },
+        { "exec",                   luaH_luakit_exec },
+        { "quit",                   luaH_luakit_quit },
+        { "save_file",              luaH_luakit_save_file },
+        { "spawn",                  luaH_luakit_spawn },
+        { "spawn_sync",             luaH_luakit_spawn_sync },
+        { "register_scheme",        luaH_luakit_register_scheme },
+        { "allow_certificate",      luaH_luakit_allow_certificate },
+        { "wch_lower",              luaH_luakit_wch_lower },
+        { "wch_upper",              luaH_luakit_wch_upper },
+        { "clear_favicon_database", luaH_luakit_clear_favicon_database },
+        { NULL,                     NULL }
     };
 
     /* create signals array */

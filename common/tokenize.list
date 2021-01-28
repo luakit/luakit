@@ -9,6 +9,7 @@ can_go_back
 can_go_forward
 child
 children
+clear
 clear_search
 clipboard
 close_inspector
