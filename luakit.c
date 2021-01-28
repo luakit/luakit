@@ -89,7 +89,6 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     gchar **uris = NULL;
     globalconf.profile = NULL;
     gboolean verbose = FALSE;
-    globalconf.darkmode = FALSE;
     gchar *log_lvl = NULL;
 
     /* save luakit exec path */
@@ -100,7 +99,6 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     const GOptionEntry entries[] = {
         { "check",    'k', 0, G_OPTION_ARG_NONE,         &check_only,          "check config and exit",     NULL   },
         { "config",   'c', 0, G_OPTION_ARG_STRING,       &globalconf.confpath, "configuration file to use", "FILE" },
-        { "darkmode", 'd', 0, G_OPTION_ARG_NONE,         &globalconf.darkmode, "activate dark-mode",        NULL },
         { "profile",  'p', 0, G_OPTION_ARG_STRING,       &globalconf.profile,  "profile name to use",       "NAME" },
         { "nonblock", 'n', 0, G_OPTION_ARG_NONE,         nonblock,             "run in background",         NULL   },
         { "nounique", 'U', 0, G_OPTION_ARG_NONE,         &globalconf.nounique, "ignore libunique bindings", NULL   },
