@@ -65,6 +65,16 @@ can_close_cb(GtkWidget* UNUSED(win), GdkEvent *UNUSED(event), widget_t *w)
 }
 
 static gint
+luaH_window_set_dark_mode(lua_State *L)
+{
+   window_data_t *d = luaH_checkwindata(L, 1);
+   gboolean dark_mode = lua_toboolean(L, 2);
+   g_object_set(gtk_widget_get_settings(GTK_WIDGET(d->win)),
+           "gtk-application-prefer-dark-theme", dark_mode, NULL);
+    return 0;
+}
+
+static gint
 luaH_window_set_default_size(lua_State *L)
 {
     window_data_t *d = luaH_checkwindata(L, 1);
@@ -91,10 +101,11 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PS_CASE(TITLE, gtk_window_get_title(d->win))
 
       /* push boolean properties */
-      PB_CASE(DECORATED,    gtk_window_get_decorated(d->win))
-      PB_CASE(URGENCY_HINT, gtk_window_get_urgency_hint(d->win))
-      PB_CASE(FULLSCREEN,   d->state & GDK_WINDOW_STATE_FULLSCREEN)
-      PB_CASE(MAXIMIZED,    d->state & GDK_WINDOW_STATE_MAXIMIZED)
+      PB_CASE(DECORATED,     gtk_window_get_decorated(d->win))
+      PB_CASE(URGENCY_HINT,  gtk_window_get_urgency_hint(d->win))
+      PB_CASE(FULLSCREEN,    d->state & GDK_WINDOW_STATE_FULLSCREEN)
+      PB_CASE(MAXIMIZED,     d->state & GDK_WINDOW_STATE_MAXIMIZED)
+      PF_CASE(SET_DARK_MODE, luaH_window_set_dark_mode)
 
       /* push integer properties */
       PN_CASE(ID,           d->id)

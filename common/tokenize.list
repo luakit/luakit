@@ -122,6 +122,7 @@ selection
 select_region
 serif_font_family
 send_key
+set_dark_mode
 set_default_size
 set_title
 show

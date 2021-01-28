@@ -245,6 +245,11 @@ local init_funcs = {
         }) do wi.font = v end
     end,
 
+    set_dark_mode = function (w)
+        local dark_mode = settings.get_setting("application.prefer_dark_mode")
+            w.win:set_dark_mode(dark_mode)
+    end,
+
     set_default_size = function (w)
         local size = settings.get_setting("window.new_window_size")
         if string.match(size, "^%d+x%d+$") then
@@ -781,6 +786,11 @@ function _M.ancestor(w)
 end
 
 settings.register_settings({
+    ["application.prefer_dark_mode"] = {
+        type = "boolean",
+        default = false,
+        desc = "Perfer dark CSS when the website supports it (requires restart).",
+    },
     ["window.act_on_synthetic_keys"] = {
         type = "boolean",
         default = false,
