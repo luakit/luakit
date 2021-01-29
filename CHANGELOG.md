@@ -22,7 +22,7 @@
 
 ### Update information
 
-- The gopher module needs `luasocket` installed. Also make sure to use the updated `rc.lua` and `theme.lua`
+- The gopher module needs `luasocket` installed.
 
 ## [2.2]
 

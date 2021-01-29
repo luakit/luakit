@@ -92,10 +92,9 @@ theme.ok = { fg = "#000", bg = "#FFF" }
 theme.warn = { fg = "#F00", bg = "#FFF" }
 theme.error = { fg = "#FFF", bg = "#F00" }
 
--- Gopher page style
-theme.gopher_fg = "#17181C"
-theme.gopher_bg = "#E8E8E8"
-theme.gopher_link = "#03478D"
+-- Gopher page style (override defaults)
+theme.gopher_light = { bg = "#E8E8E8", fg = "#17181C", link = "#03678D" }
+theme.gopher_dark  = { bg = "#17181C", fg = "#E8E8E8", link = "#f90" }
 
 return theme
 
