@@ -27,6 +27,7 @@ local function gophertype_to_text(gophertype)
     return ({
         ["0"] = 'TXT ', -- text file
         ["1"] = 'DIR ', -- submenu
+        ["2"] = 'CCSO', -- CCSO Nameserver, not really supported type
         ["4"] = 'HEX ', -- BinHex-encoded
         ["5"] = 'DOS ', -- DOS file
         ["7"] = 'FIND', -- search
@@ -38,6 +39,7 @@ local function gophertype_to_text(gophertype)
         ["I"] = 'IMG ', -- image
         ["M"] = 'MBOX', -- mbox
         ["p"] = 'IMG ', -- image
+        ["P"] = 'PDF ', -- binary pdf document
         ["s"] = 'SND ', -- sound
         ["T"] = 'TEL ', -- telnet
     })[gophertype] or "UNKN"
@@ -169,7 +171,7 @@ local function text_to_html(data, url)
         </head>
         <body>
             <pre style="word-wrap: break-word; white-space: pre-wrap;">
-]] .. chop_periods(data) .. [[</pre>
+]] .. lousy.util.escape(chop_periods(data)) .. [[</pre>
         </body>
         </html>
     ]];
@@ -212,7 +214,7 @@ local function menu_to_html(data, url)
         line_num = line_num + 1
         local entry = parse_gopher_line(line, url)
         if entry.item_type == "i" then
-            html[#html + 1] = ("    | %s"):format(entry.display_string)
+            html[#html + 1] = ("    | %s"):format(lousy.util.escape(entry.display_string))
         else
             local src = href_source(entry)
             local type_text = gophertype_to_text(entry.item_type) .. "+"
@@ -223,7 +225,7 @@ local function menu_to_html(data, url)
                 type_text,
                 src,
                 anchor_name,
-                entry.display_string,
+                lousy.util.escape(entry.display_string),
                 input
             )
         end
@@ -277,6 +279,8 @@ local function data_to_browser(data, url)
         mime = "application/mbox"
     elseif url.gophertype == "p" then
         mime = "image/png"
+    elseif url.gophertype == "P" then
+        mime = "application/pdf"
     elseif url.gophertype == "I" then
         mime = image_mime_type(url.selector:match("%.(.-)$"))
     elseif url.gophertype ~= "h" then
