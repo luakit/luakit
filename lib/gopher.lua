@@ -30,6 +30,7 @@ local function gophertype_to_text(gophertype)
         ["2"] = 'CCSO', -- CCSO Nameserver, not really supported type
         ["4"] = 'HEX ', -- BinHex-encoded
         ["5"] = 'DOS ', -- DOS file
+        ["6"] = 'UENC', -- uuencoded data
         ["7"] = 'FIND', -- search
         ["8"] = 'TEL ', -- telnet
         ["9"] = 'BIN ', -- binary
@@ -269,6 +270,8 @@ local function data_to_browser(data, url)
         mime = "application/mac-binhex40"
     elseif url.gophertype == "5" then
         mime = "application/octet-stream"
+    elseif url.gophertype == "6" then
+        mime = "text/x-uuencode"
     elseif url.gophertype == "9" then
         mime = "application/octet-stream"
     elseif url.gophertype == "d" then
