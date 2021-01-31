@@ -25,25 +25,30 @@ luakit.register_scheme("gopher")
 -- menu entry representing the type of the item
 local function gophertype_to_text(gophertype)
     return ({
+        -- canonical types according to rfc1436
         ["0"] = 'TXT ', -- text file
         ["1"] = 'DIR ', -- submenu
         ["2"] = 'CCSO', -- CCSO Nameserver, not really supported type
+     -- ["3"] = 'ERR ", -- Error
         ["4"] = 'HEX ', -- BinHex-encoded
         ["5"] = 'DOS ', -- DOS file
         ["6"] = 'UENC', -- uuencoded data
         ["7"] = 'FIND', -- search
         ["8"] = 'TEL ', -- telnet
         ["9"] = 'BIN ', -- binary
-        ["d"] = 'DOC ', -- any document format
+     -- ["+"] = 'SRV ', -- redundant server
+        ["T"] = 'TEL ', -- telnet
         ["g"] = 'GIF ', -- gif
-        ["h"] = 'HTML', -- html
         ["I"] = 'IMG ', -- image
+        -- well known types
+        ["h"] = 'HTML', -- html
+        -- additional types seen in the wild
+        ["d"] = 'DOC ', -- any document format
         ["M"] = 'MBOX', -- mbox
         ["p"] = 'IMG ', -- image
         ["P"] = 'PDF ', -- binary pdf document
         ["s"] = 'SND ', -- sound
-        ["T"] = 'TEL ', -- telnet
-    })[gophertype] or "UNKN"
+    })[gophertype] or "??? "
 end
 
 --- Parse Gopher menu entry.
