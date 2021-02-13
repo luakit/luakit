@@ -54,7 +54,7 @@ local active = noproxy
 local update_proxy_indicator = function (w)
     local name = _M.get_active().name
     local proxyi = w.sbar.r.proxyi
-    if name then
+    if name and name ~= "None" then
         local text = string.format("[%s]", name)
         if proxyi.text ~= text then proxyi.text = text end
         proxyi:show()
