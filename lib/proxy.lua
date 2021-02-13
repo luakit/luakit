@@ -111,6 +111,10 @@ function _M.load(fd_name)
         soup.proxy_uri = active.address
         update_proxy_indicators()
     end
+
+    -- always add default entries
+    proxies["None"]   = "no_proxy"
+    proxies["System"] = "default"
 end
 
 --- Save the proxies list to a file.
@@ -180,10 +184,6 @@ window.add_signal("init", function (w)
     r.proxyi.fg = theme.proxyi_sbar_fg
     r.proxyi.font = theme.proxyi_sbar_font
     update_proxy_indicators()
-
-    -- always add default entries
-    proxies["None"]   = "no_proxy"
-    proxies["System"] = "default"
 end)
 
 new_mode("proxymenu", {
