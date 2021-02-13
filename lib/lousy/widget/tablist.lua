@@ -266,7 +266,7 @@ settings.register_settings({
             ["multiple"] = { desc = "Hide tab list if there's only one tab.", label = "If multiple tabs", },
             ["never"] = { desc = "Never display tab list.", label = "Never", },
         },
-        default = false,
+        default = "multiple",
         domain_specific = false,
         desc = "When should the tab list be visible?",
     },
