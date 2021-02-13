@@ -181,19 +181,14 @@ window.add_signal("init", function (w)
     r.proxyi.font = theme.proxyi_sbar_font
     update_proxy_indicators()
 
-    -- on first load, place default proxies in proxy file
-    local fd = io.open(proxies_file, "r")
-    if fd~=nil then
-        io.close(fd)
-    else
-        proxies["None"] = "no_proxy"
-        proxies["System"] = "default"
-    end
+    -- always add default entries
+    proxies["None"]   = "no_proxy"
+    proxies["System"] = "default"
 end)
 
 new_mode("proxymenu", {
     enter = function (w)
-        local rows = {{ "Proxy Name", " Server address", title = true },}
+        local rows = {{ "Proxy Name", " Server address", title = true }}
         for _, name in ipairs(_M.get_names()) do
             local address = _M.get(name)
             table.insert(rows, {
