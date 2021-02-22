@@ -1,19 +1,19 @@
 # Changelog
 
-## [develop]
+## [2.3]
 
 ### Added
 
 - Added Gopher protocol support, see comment in rc.lua.
-- Added two commands to clear website data (:clear-data, :clear-favicon-db)
-- Added dark mode support as setting `application.prefer_dark_mode`.
-- The tabmenu plugin is now included with luakit (:tabmenu)
+- Added two commands to clear website data (:clear-data, :clear-favicon-db).
+- Added dark mode support setting `application.prefer_dark_mode`.
+- The tabmenu plugin is now included in luakit (:tabmenu).
 
 ### Changed
 
 - Removed debug symbol generation for default make.
 - Changed the C standard from gnu99 to c11 because Webkit wants it.
-- The proxy module saves when no proxy or system proxy was used last.
+- The proxy module remembers when no proxy or system proxy was used last.
 - The proxy widget is hidden when proxy "None" is active.
 
 ### Fixed
