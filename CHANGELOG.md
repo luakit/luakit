@@ -12,6 +12,8 @@
 
 - Removed debug symbol generation for default make.
 - Changed the C standard from gnu99 to c11 because Webkit wants it.
+- The proxy module saves when no proxy or system proxy was used last.
+- The proxy widget is hidden when proxy "None" is active.
 
 ### Fixed
 

@@ -54,7 +54,7 @@ local active = noproxy
 local update_proxy_indicator = function (w)
     local name = _M.get_active().name
     local proxyi = w.sbar.r.proxyi
-    if name then
+    if name and name ~= "None" then
         local text = string.format("[%s]", name)
         if proxyi.text ~= text then proxyi.text = text end
         proxyi:show()
@@ -111,6 +111,10 @@ function _M.load(fd_name)
         soup.proxy_uri = active.address
         update_proxy_indicators()
     end
+
+    -- always add default entries
+    proxies["None"]   = "no_proxy"
+    proxies["System"] = "default"
 end
 
 --- Save the proxies list to a file.
@@ -184,9 +188,7 @@ end)
 
 new_mode("proxymenu", {
     enter = function (w)
-        local rows = {{ "Proxy Name", " Server address", title = true },
-            {"  None",   "", address = "no_proxy", },
-            {"  System", "", address = "default",  },}
+        local rows = {{ "Proxy Name", " Server address", title = true }}
         for _, name in ipairs(_M.get_names()) do
             local address = _M.get(name)
             table.insert(rows, {
