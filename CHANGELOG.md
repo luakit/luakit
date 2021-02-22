@@ -7,6 +7,7 @@
 - Added Gopher protocol support, see comment in rc.lua.
 - Added two commands to clear website data (:clear-data, :clear-favicon-db)
 - Added dark mode support as setting `application.prefer_dark_mode`.
+- The tabmenu plugin is now included with luakit (:tabmenu)
 
 ### Changed
 

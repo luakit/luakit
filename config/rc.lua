@@ -103,6 +103,9 @@ local undoclose = require "undoclose"
 -- Add command to list tab history items
 local tabhistory = require "tabhistory"
 
+-- Add command to list open tabs
+local tabmenu = require "tabmenu"
+
 -- Add gopher protocol support (this module needs luasocket)
 -- local gopher = require "gopher"
 
