@@ -350,6 +350,10 @@ add_cmds({
 
     { ":userscripts, :uscripts", "List installed userscripts.",
         function (w) w:set_mode("uscriptlist") end },
+
+    { ":userscripts-reload, :uscripts-reload", "Reload installed userscripts.",
+        function (w) scripts = {}; load_all() end },
+
 })
 
 local scripts_menu_rows = setmetatable({}, { __mode = "k" })
