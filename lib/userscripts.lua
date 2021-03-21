@@ -352,7 +352,7 @@ add_cmds({
         function (w) w:set_mode("uscriptlist") end },
 
     { ":userscripts-reload, :uscripts-reload", "Reload installed userscripts.",
-        function (w) scripts = {}; load_all() end },
+        function () scripts = {}; load_all() end },
 
 })
 
