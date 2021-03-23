@@ -1,5 +1,16 @@
 # Changelog
 
+## [develop]
+
+### Added
+
+- Added command `:userscripts-reload` to reload lua scripts
+
+### Changed
+
+### Fixed
+
+
 ## [2.3]
 
 ### Added
