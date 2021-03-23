@@ -158,12 +158,12 @@ modes.add_binds("normal", {
 
         #### Example binding
 
-        lousy.bind.key({}, "%", function (w, state)
-            w:scroll{ ypct = state.count }
-        end, { count = 0 })
+            lousy.bind.key({}, "%", function (w, state)
+                w:scroll{ ypct = state.count }
+            end, { count = 0 })
 
-    This binding demonstrates several concepts. Firstly that you are able to
-    specify per-binding default values of `count`. In this case if the user
+        This binding demonstrates several concepts. Firstly that you are able to
+        specify per-binding default values of `count`. In this case if the user
         types `"%"` the document will be scrolled vertically to `0%` (the top).
 
         If the user types `"100%"` then the document will be scrolled to `100%`
