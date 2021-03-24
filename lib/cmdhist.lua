@@ -10,6 +10,7 @@
 
 local window = require("window")
 local lousy = require("lousy")
+local modes = require("modes")
 
 local _M = {}
 
@@ -37,7 +38,8 @@ local function filter (t, f)
     return T
 end
 
-local history_prev_func = function (w)
+--- Go to prev cmdhist item
+_M.history_prev_func = function (w)
     local h = w.mode.history
     h.filtered = h.filtered or filter(h.items, w.ibar.input.text)
     local lc = h.cursor
@@ -52,7 +54,8 @@ local history_prev_func = function (w)
     end
 end
 
-local history_next_func = function (w)
+--- Go to next cmdhist item
+_M.history_next_func = function (w)
     local h = w.mode.history
     if not h.cursor then return end
     if h.cursor >= #h.filtered then
@@ -66,8 +69,24 @@ local history_next_func = function (w)
     end
 end
 
--- Add the Prev & Next keybindings to modes which support command history
+modes.new_mode("cmdhist", [[A meta-mode to allow `modes.add_binds()` style key bindings for command history.
+                            They will be applied to any other mode which has a `history` table.
+                            The cmdhist mode should not be entered/activated.]], {
+    enter = function (w) w:error("cmdhist mode was entered") end,
+})
+modes.add_binds("cmdhist", {
+    { _M.history_prev, "Previous in command history.", _M.history_prev_func },
+    { _M.history_next, "Next in command history.", _M.history_next_func },
+})
+
 window.add_signal("init", function (w)
+    -- Add Prev & Next (and other user-specified) keybindings to modes which support command history
+    for name,m in pairs(modes.get_modes()) do
+        if m.history then
+            modes.add_binds(name, modes.get_mode("cmdhist").binds)
+        end
+    end
+
     w:add_signal("mode-entered", function ()
         local mode = w.mode
         -- Setup history state
@@ -87,12 +106,6 @@ window.add_signal("init", function (w)
             h.cursor = nil
             h.orig = nil
             h.filtered = nil
-            -- Add Prev & Next history bindings
-            local hist_binds = {{_M.history_prev, history_prev_func},
-                {_M.history_next, history_next_func}}
-            for _, b in ipairs(hist_binds) do
-                lousy.bind.add_bind(w.binds, b[1], { func = b[2] })
-            end
             -- Trim history
             if h.maxlen and h.len > (h.maxlen * 1.5) then
                 local items = {}
