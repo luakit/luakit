@@ -10,6 +10,7 @@
 
 local window = require("window")
 local lousy = require("lousy")
+local modes = require "modes"
 
 local _M = {}
 
@@ -37,7 +38,9 @@ local function filter (t, f)
     return T
 end
 
-local history_prev_func = function (w)
+--- Go to prev cmdhist item
+_M.history_prev_func = function (w)
+    if not w.mode or not w.mode.history then return end
     local h = w.mode.history
     h.filtered = h.filtered or filter(h.items, w.ibar.input.text)
     local lc = h.cursor
@@ -52,7 +55,9 @@ local history_prev_func = function (w)
     end
 end
 
-local history_next_func = function (w)
+--- Go to next cmdhist item
+_M.history_next_func = function (w)
+    if not w.mode or not w.mode.history then return end
     local h = w.mode.history
     if not h.cursor then return end
     if h.cursor >= #h.filtered then
@@ -65,6 +70,11 @@ local history_next_func = function (w)
         w:set_input(h.filtered[h.cursor])
     end
 end
+
+modes.add_binds("all", {
+    { _M.history_prev, "Previous in command history.", _M.history_prev_func },
+    { _M.history_next, "Next in command history.", _M.history_next_func },
+})
 
 -- Add the Prev & Next keybindings to modes which support command history
 window.add_signal("init", function (w)
@@ -87,12 +97,6 @@ window.add_signal("init", function (w)
             h.cursor = nil
             h.orig = nil
             h.filtered = nil
-            -- Add Prev & Next history bindings
-            local hist_binds = {{_M.history_prev, history_prev_func},
-                {_M.history_next, history_next_func}}
-            for _, b in ipairs(hist_binds) do
-                lousy.bind.add_bind(w.binds, b[1], { func = b[2] })
-            end
             -- Trim history
             if h.maxlen and h.len > (h.maxlen * 1.5) then
                 local items = {}
