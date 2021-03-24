@@ -18,6 +18,7 @@ local wrapped = {
     tabi     = wrap("lousy.widget.tabi"),
     tablist  = wrap("lousy.widget.tablist"),
     tab      = wrap("lousy.widget.tab"),
+    tgname   = wrap("lousy.widget.tgname"),
     uri      = wrap("lousy.widget.uri"),
     zoom     = wrap("lousy.widget.zoom"),
 }
