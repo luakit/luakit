@@ -106,6 +106,10 @@ local tabhistory = require "tabhistory"
 -- Add command to list open tabs
 local tabmenu = require "tabmenu"
 
+-- Allow for tabs to be grouped together.
+-- One tab group is displayed in a window at any given time.
+--local tabgroups = require "tabgroups"
+
 -- Add gopher protocol support (this module needs luasocket)
 -- local gopher = require "gopher"
 
