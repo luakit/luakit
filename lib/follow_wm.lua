@@ -30,7 +30,10 @@ local evaluators = {
         if element.child_count > 0 then
             local r = element.rect
             local doc = element.owner_document
-            element = doc:element_from_point(r.left + r.width/2, r.top + r.height/2) or element
+            local scroll = page:eval_js([=[ window.scrollX + ' ' + window.scrollY; ]=])
+            local scrollX, scrollY = scroll:match("^(%S+) (%S+)$")
+            element = doc:element_from_point(r.left - scrollX + r.width/2,
+                                             r.top - scrollY + r.height/2)
         end
         element:click()
     end,
