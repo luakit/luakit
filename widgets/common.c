@@ -379,8 +379,12 @@ luaH_widget_send_key(lua_State *L)
 
     GdkKeymapKey *keys = NULL;
     gint n_keys;
-    if (!gdk_keymap_get_entries_for_keyval(gdk_keymap_get_default(),
-                                           keyval, &keys, &n_keys)) {
+#if GTK_CHECK_VERSION(3,22,0)
+    GdkKeymap *keymap = gdk_keymap_get_for_display(gdk_display_get_default());
+#else
+    GdkKeymap *keymap = gdk_keymap_get_default();
+#endif
+    if (!gdk_keymap_get_entries_for_keyval(keymap, keyval, &keys, &n_keys)) {
         g_string_free(state_string, TRUE);
         return luaL_error(L, "cannot type '%s' on current keyboard layout",
                           key_name);

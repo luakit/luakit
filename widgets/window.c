@@ -112,7 +112,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
 # ifdef GDK_WINDOWING_X11
       case L_TK_ROOT_WIN_XID:
-        lua_pushinteger(L, GDK_WINDOW(
+        lua_pushlightuserdata(L, GDK_WINDOW(
 #  if GTK_CHECK_VERSION(3,12,0)
                 gdk_screen_get_root_window(gtk_widget_get_screen(GTK_WIDGET(d->win)))
 #  else
@@ -121,7 +121,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
         ));
         return 1;
 
-      PI_CASE(WIN_XID, GDK_WINDOW(gtk_widget_get_window(GTK_WIDGET(d->win))));
+      PD_CASE(WIN_XID, GDK_WINDOW(gtk_widget_get_window(GTK_WIDGET(d->win))));
 # endif
 
       case L_TK_SCREEN:
