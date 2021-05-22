@@ -18,9 +18,9 @@
 
 local _M = {}
 
---- Send synthetic keys to given window.
+--- Send synthetic keys to given widget.
 -- This function parses a vim-like keystring into single keys and sends
--- them to the window. A keystring is a string of keys to press, with
+-- them to the widget. A keystring is a string of keys to press, with
 -- special keys denoted in between angle brackets:
 --
 --     keysym.send(w, "<Shift-Home><BackSpace>")
@@ -29,12 +29,21 @@ local _M = {}
 -- Sending special unicode characters needs related keyboard layout to be set.
 --     keysym.send(w, "Приветствую, мир")
 --
--- When `window.act_on_synthetic_keys` is disabled, synthetic key events will
--- not trigger other key bindings.
--- @tparam w The window object.
+-- When `window.act_on_synthetic_keys` is disabled, synthetic key events sent to
+-- a window widget will not trigger other key bindings.
+-- @tparam w The widget to send keys to.
 -- @tparam string keystring The key string representing synthetic keys.
 _M.send = function (w, keystring)
-    assert(type(w) == "table", "table expected, found "..type(w))
+    assert(w)
+
+    -- _M.send previously took a window object/table, and sent keys to w.win.
+    -- It can now take any widget, and send keys to that.
+    -- If w is a table, assume that the old interface is desired,
+    -- and re-assign w to w.win to retain backwards compatibility.
+    if type(w) == "table" then
+        w = w.win
+    end
+
     assert(type(keystring) == "string", "string expected, found "..type(keystring))
     local symbol = nil
     local modifiers = {}
@@ -76,7 +85,7 @@ _M.send = function (w, keystring)
     end
     if symbol then error("unterminated symbol: " .. symbol) end
     for _, key in ipairs(keys) do
-        w.win:send_key(key.key, key.mods)
+        w:send_key(key.key, key.mods)
     end
 end
 
