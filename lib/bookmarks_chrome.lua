@@ -343,6 +343,7 @@ window.addEventListener('load', () => {
             }
 
             $results.innerHTML = results.map(makeBookmark).join('')
+            updateNavButtons()
         })
     }
 
