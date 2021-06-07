@@ -4,12 +4,20 @@
 
 ### Added
 
-- Added command `:userscripts-reload` to reload lua scripts
+- Added command `:userscripts-reload` to reload lua scripts.
+- The tabgroup plugin is now included in luakit (:tabmenu).
+- Allow configuration of shortcuts that should be passed through (https://github.com/luakit/luakit/pull/921).
 
 ### Changed
 
+- Allow functions to be bound to more than one key (https://github.com/luakit/luakit/issues/913).
+- 
+
 ### Fixed
 
+- No more `gdk_keymap_get_default()` compiler warning.
+- Fixed an issue where links were hinted, but then could be followed.
+- Fixed the paging on the the bookmarks page.
 
 ## [2.3]
 
