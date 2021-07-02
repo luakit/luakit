@@ -28,6 +28,7 @@ package managers.
 
  * Debian/Ubuntu: apt-get install luakit
  * Gentoo: emerge luakit
+ * Guix: guix install luakit
  * Arch: pacman -S luakit
  * FreeBSD: pkg install luakit
  * OpenBSD: pkg\_add luakit
