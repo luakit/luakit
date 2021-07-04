@@ -32,6 +32,7 @@ options:
 	@echo "XDGPREFIX    = $(XDGPREFIX)"
 	@echo "PIXMAPDIR    = $(PIXMAPDIR)"
 	@echo "APPDIR       = $(APPDIR)"
+	@echo "APPDIR       = $(LIBDIR)"
 	@echo
 	@echo build targets:
 	@echo "SRCS     = $(SRCS)"
