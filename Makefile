@@ -61,7 +61,7 @@ $(filter-out $(EXT_OBJS),$(OBJS)) : %.o : %.c
 
 $(EXT_OBJS) : %.o : %.c
 	@echo $(CC) -c $< -o $@
-	@$(CC) -c $(CFLAGS) -DLUAKIT_WEB_EXTENSION -fpic $(CPPFLAGS) $< -o $@
+	@$(CC) -c $(CFLAGS) -DLUAKIT_WEB_EXTENSION -fPIC $(CPPFLAGS) $< -o $@
 
 widgets/webview.o: $(wildcard widgets/webview/*.c)
 
@@ -126,7 +126,7 @@ uninstall:
 	rm -rf $(DESTDIR)$(APPDIR)/luakit.desktop $(DESTDIR)$(PIXMAPDIR)/luakit.png
 
 tests/util.so: tests/util.c Makefile
-	$(CC) -fpic $(CFLAGS) $(CPPFLAGS) -shared $< $(LDFLAGS) -o $@
+	$(CC) -fPIC $(CFLAGS) $(CPPFLAGS) -shared $< $(LDFLAGS) -o $@
 
 run-tests: luakit luakit.so tests/util.so
 	@$(LUA_BIN_NAME) tests/run_test.lua
