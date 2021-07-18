@@ -9,8 +9,8 @@
 #   ./build-utils/getversion.sh export-subst
 #
 # This tells git to replace the format string in the following line with the
-# current short hash upon the calling of the `git archive <hash/tag>` command.
-VERSION_FROM_ARCHIVE=$Format:%h$
+# current hash upon the calling of the `git archive <hash/tag>` command.
+VERSION_FROM_ARCHIVE=$Format:%H$
 
 # The preferred method is to use the git describe command but this is only
 # possible if the .git directory is present.
@@ -23,8 +23,8 @@ if [ x"$VERSION_FROM_GIT" != x ]; then
     echo $VERSION_FROM_GIT; exit 0;
 fi
 
-if [ "$VERSION_FROM_ARCHIVE" != ':%h$' ]; then
-    echo $VERSION_FROM_ARCHIVE; exit 0;
+if [ "$VERSION_FROM_ARCHIVE" != ':%H$' ]; then
+    expr substr $VERSION_FROM_ARCHIVE 1 8; exit 0;
 fi
 
 echo "ERROR: Commit hash detection failure. Dear packager, please figure out"\
