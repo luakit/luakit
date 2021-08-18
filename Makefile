@@ -113,6 +113,7 @@ install: all
 	install -m644 config/*.lua $(DESTDIR)$(XDGPREFIX)/luakit/
 	install -d $(DESTDIR)$(PIXMAPDIR)
 	install -m644 extras/luakit.png $(DESTDIR)$(PIXMAPDIR)
+	install -m644 extras/luakit.svg $(DESTDIR)$(PIXMAPDIR)
 	install -d $(DESTDIR)$(APPDIR)
 	install -m644 extras/luakit.desktop $(DESTDIR)$(APPDIR)
 	install -d $(DESTDIR)$(MANPREFIX)/man1/
