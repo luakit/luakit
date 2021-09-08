@@ -72,7 +72,10 @@ luaH_traceback(lua_State *L, lua_State *T, gint min_level)
         } else {
             const char *src = AR_SRC(ar);
             int n;
-            g_string_append_printf(tb, "%s:%d%n", src, ar.currentline, &n);
+            char cl[8] = "";
+            snprintf(cl, sizeof(cl), "%d", ar.currentline);
+            n = strlen(src) + strlen(cl) + 1;
+            g_string_append_printf(tb, "%s:%d", src, ar.currentline);
             g_string_append_printf(tb, "%*.*s", loc_pad-n, loc_pad-n, "");
         }
 
