@@ -99,7 +99,6 @@ for _, args in ipairs({
     {"o", "offline_application_cache"},
     {"s", "session_storage"},
     {"l", "local_storage"},
-    {"w", "websql_databases"},
     {"i", "indexeddb_databases"},
     {"p", "plugin_data"},
     {"c", "cookies"},
