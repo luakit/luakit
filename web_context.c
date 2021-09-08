@@ -26,6 +26,8 @@
 
 /** WebKit context common to all web views */
 static WebKitWebContext *web_context;
+/** WebKit data storage manager for all web views */
+static WebKitWebsiteDataManager *data_mgr;
 /** WebKit process count; default to unlimited */
 static guint process_limit = 0;
 /** Whether the web context startup function has been run */
@@ -33,6 +35,13 @@ static gboolean web_context_started = FALSE;
 
 /** Defined in widgets/webview/downloads.c */
 gboolean download_start_cb(WebKitWebContext *, WebKitDownload *, gpointer);
+
+WebKitWebsiteDataManager *
+web_data_manager_get(void)
+{
+    g_assert(data_mgr);
+    return data_mgr;
+}
 
 WebKitWebContext *
 web_context_get(void)
@@ -65,7 +74,7 @@ website_data_dir_init(void)
     gchar *local_storage_dir = g_build_filename(globalconf.data_dir, "local_storage", NULL);
     gchar *applications_dir = g_build_filename(globalconf.data_dir, "applications", NULL);
 
-    WebKitWebsiteDataManager *data_mgr = webkit_website_data_manager_new(
+    data_mgr = webkit_website_data_manager_new(
             "disk-cache-directory", globalconf.cache_dir,
             "indexeddb-directory", indexeddb_dir,
             "local-storage-directory", local_storage_dir,

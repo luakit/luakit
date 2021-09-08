@@ -25,6 +25,7 @@
 
 void web_context_init(void);
 void web_context_init_finish(void);
+WebKitWebsiteDataManager *web_data_manager_get(void);
 WebKitWebContext *web_context_get(void);
 WebKitWebContext *web_context_get_private(void);
 guint web_context_process_limit_get(void);
