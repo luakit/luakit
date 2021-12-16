@@ -71,14 +71,14 @@
 -- @tparam integer status The exit status code of the process. Its meaning is system-dependent.
 
 --- Spawn a process asynchronously.
--- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
+-- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser ([`g_shell_parse_argv`](https://docs.gtk.org/glib/func.shell_parse_argv.html)).
 -- @tparam[opt] function callback A callback function to execute when the spawned
 -- process is terminated, of type @ref{process_exit_cb}.
 -- @function spawn
 
 --- Spawn a process synchronously.
 -- DOCMACRO(alert:This will block the luakit UI until the process exits.)
--- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser.
+-- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser ([`g_shell_parse_argv`](https://docs.gtk.org/glib/func.shell_parse_argv.html)).
 -- @treturn number The exit status of the command.
 -- @treturn string A string containig data printed on `stdout`.
 -- @treturn string A string containig data printed on `stderr`.
