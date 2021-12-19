@@ -92,6 +92,13 @@ end
 --- Load the proxies list from a file.
 -- @tparam string fd_name Custom proxy storage or `nil` to use default.
 function _M.load(fd_name)
+
+    -- always add default entries
+    -- they will be overwritten when loaded from the file
+    proxies["None"]   = "no_proxy"
+    proxies["System"] = "default"
+
+    -- load file, if it exists
     fd_name = fd_name or proxies_file
     if not os.exists(fd_name) then return end
     local strip = lousy.util.string.strip
@@ -111,10 +118,6 @@ function _M.load(fd_name)
         soup.proxy_uri = active.address
         update_proxy_indicators()
     end
-
-    -- always add default entries
-    proxies["None"]   = "no_proxy"
-    proxies["System"] = "default"
 end
 
 --- Save the proxies list to a file.
