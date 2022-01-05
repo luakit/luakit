@@ -44,6 +44,7 @@ endif
 # Solaris Derivates
 ifeq ($(uname_s),SunOS)
 	LINKER_EXPORT_DYNAMIC = 0
+	LDFLAGS += -lsocket
 endif
 
 # Some systems need the --export-dynamic linker option to load other
