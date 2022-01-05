@@ -118,9 +118,8 @@ install: all
 	install -m644 extras/luakit.desktop $(DESTDIR)$(APPDIR)
 	install -d $(DESTDIR)$(MANPREFIX)/man1/
 	install -m644 luakit.1.gz $(DESTDIR)$(MANPREFIX)/man1/
-	mkdir -p resources
-	find resources -type d -exec install -d $(DESTDIR)$(PREFIX)/share/luakit/'{}' \;
-	find resources -type f -exec sh -c 'f="{}"; install -m644 "$$f" "$(DESTDIR)$(PREFIX)/share/luakit/$$(dirname $$f)"' \;
+	install -d $(DESTDIR)$(PREFIX)/share/luakit/resources/icons
+	for i in resources/icons/*; do install -m644 "$$i" "$(DESTDIR)$(PREFIX)/share/luakit/resources/icons"; done
 
 uninstall:
 	rm -rf $(DESTDIR)$(PREFIX)/bin/luakit $(DESTDIR)$(PREFIX)/share/luakit $(DESTDIR)$(PREFIX)/lib/luakit
