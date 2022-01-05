@@ -94,14 +94,15 @@ clean:
 	rm -rf doc/apidocs doc/html luakit $(OBJS) $(EXT_OBJS) $(TSRC) $(THEAD) buildopts.h luakit.1 luakit.1.gz luakit.so
 
 install: all
-	install -d $(DESTDIR)$(PREFIX)/share/luakit/
-	install -d $(DESTDIR)$(DOCDIR) $(DESTDIR)$(DOCDIR)/classes $(DESTDIR)$(DOCDIR)/modules $(DESTDIR)$(DOCDIR)/pages
+	install -d $(DESTDIR)$(DOCDIR)/classes
+	install -d $(DESTDIR)$(DOCDIR)/modules
+	install -d $(DESTDIR)$(DOCDIR)/pages
 	install -m644 README.md AUTHORS COPYING.GPLv3 $(DESTDIR)$(DOCDIR)
 	install -m644 doc/apidocs/classes/* $(DESTDIR)$(DOCDIR)/classes
 	install -m644 doc/apidocs/modules/* $(DESTDIR)$(DOCDIR)/modules
 	install -m644 doc/apidocs/pages/* $(DESTDIR)$(DOCDIR)/pages
 	install -m644 doc/apidocs/*.html $(DESTDIR)$(DOCDIR)
-	install -d $(DESTDIR)$(PREFIX)/share/luakit/lib $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
+	install -d $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
 	install -m644 lib/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib
 	install -m644 lib/lousy/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy
 	install -m644 lib/lousy/widget/*.* $(DESTDIR)$(PREFIX)/share/luakit/lib/lousy/widget
