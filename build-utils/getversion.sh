@@ -16,7 +16,7 @@ VERSION_FROM_ARCHIVE=$Format:%H$
 # possible if the .git directory is present.
 if [ -d .git -a -r .git ]
 then
-    VERSION_FROM_GIT=$(git describe --tags --always)
+    VERSION_FROM_GIT=`git describe --tags --always`
 fi
 
 if [ x"$VERSION_FROM_GIT" != x ]; then

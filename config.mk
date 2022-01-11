@@ -41,6 +41,11 @@ uname_s := $(shell uname -s)
 ifeq ($(uname_s),Darwin)
 	LINKER_EXPORT_DYNAMIC = 0
 endif
+# Solaris Derivates
+ifeq ($(uname_s),SunOS)
+	LINKER_EXPORT_DYNAMIC = 0
+	LDFLAGS += -lsocket
+endif
 
 # Some systems need the --export-dynamic linker option to load other
 # dynamically linked C Lua modules (for example lua-filesystem).
