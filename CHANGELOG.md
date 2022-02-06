@@ -7,17 +7,31 @@
 - Added command `:userscripts-reload` to reload lua scripts.
 - The tabgroup plugin is now included in luakit (:tabmenu).
 - Allow configuration of shortcuts that should be passed through (https://github.com/luakit/luakit/pull/921).
+- Added scalable SVG desktop icon version.
 
 ### Changed
 
 - Allow functions to be bound to more than one key (https://github.com/luakit/luakit/issues/913).
-- 
 
 ### Fixed
 
 - No more `gdk_keymap_get_default()` compiler warning.
 - Fixed an issue where links were hinted, but then could be followed.
 - Fixed the paging on the the bookmarks page.
+- Fixed build on Solaris.
+- Fixed relocation errors on Sparc64.
+- Fixed proxymenu to show default entries when proxymenu file is not present.
+
+### Contributors to this release:
+
+- taobert           (9 commits)
+- sdk               (9 commits)
+- Charadon          (1 commit)
+- Claes Nästén      (1 commit)
+- Samuel Walladge   (1 commit)
+- Tom Repetti       (1 commit)
+- arcnmx            (1 commit)
+- jgart             (1 commit)
 
 ## [2.3]
 
