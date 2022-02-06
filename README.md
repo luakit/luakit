@@ -109,7 +109,9 @@ Luakit honors the PREFIX variable. The default is `/usr/local`.
     $ make PREFIX=/usr
     $ sudo make PREFIX=/usr install
 
-Note that you also have to set the PREFIX when uninstalling!
+Notes:
+  - You also have to set the PREFIX when uninstalling.
+  - If you want to change PREFIX after a previous build, you need to `make clean` first.
 
 Luakit uses `luajit` by default, to use `lua` you can turn off luajit
 with:
