@@ -35,12 +35,12 @@
 -- If a filterlist is not being loaded for some reason, start luakit with
 --   the following:
 --
---     --log=lua/lib/adblock=debug
+--     --log=lua/adblock=debug
 --
 -- If a filterlist is not behaving correctly, by blocking too much or too
 --   little, start luakit with the following:
 --
---     --log=lua/lib/adblock_wm=debug
+--     --log=lua/adblock_wm=debug
 --
 -- # Files and Directories
 --
