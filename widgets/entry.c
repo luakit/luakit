@@ -102,6 +102,7 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         if (token == L_TK_FG) {
 #if GTK_CHECK_VERSION(3,16,0)
             widget_set_css_properties(w, "color", tmp, NULL);
+            widget_set_css_properties(w, "caret-color", tmp, NULL);
 #else
             gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
 #endif
