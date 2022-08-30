@@ -1,6 +1,6 @@
 # Changelog
 
-## [develop]
+## [2.3.1]
 
 ### Added
 
