@@ -16,7 +16,7 @@
 ### Fixed
 
 - No more `gdk_keymap_get_default()` compiler warning.
-- Fixed an issue where links were hinted, but then could be followed.
+- Fixed an issue where links were hinted, but then could not be followed.
 - Fixed the paging on the the bookmarks page.
 - Fixed build on Solaris.
 - Fixed relocation errors on Sparc64.
