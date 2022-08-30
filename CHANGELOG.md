@@ -25,7 +25,7 @@
 ### Contributors to this release:
 
 - taobert           (9 commits)
-- sdk               (9 commits)
+- Stefan Hagen      (9 commits)
 - Charadon          (1 commit)
 - Claes Nästén      (1 commit)
 - Samuel Walladge   (1 commit)
