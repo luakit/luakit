@@ -46,7 +46,7 @@ local window = require "window"
 -- ("$XDG_CONFIG_HOME/luakit/webview.lua" or "/etc/xdg/luakit/webview.lua")
 local webview = require "webview"
 
--- Add luakit;//log/ chrome page
+-- Add luakit://log/ chrome page
 local log_chrome = require "log_chrome"
 
 window.add_signal("build", function (w)
