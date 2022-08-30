@@ -21,7 +21,7 @@
 - Fixed build on Solaris.
 - Fixed relocation errors on Sparc64.
 - Fixed proxymenu to show default entries when proxymenu file is not present.
-- The command mode cursor is now drawn in the user-specified foreground colour.
+- The command mode cursor is now drawn in the user-specified foreground color.
 
 ### Contributors to this release:
 
