@@ -504,11 +504,13 @@ modes.add_cmds({
 
     -- Tab manipulation commands
     { ":tab", "Execute command and open result in new tab.", {
-        func = function (w, o) w:new_tab() w:run_cmd(":" .. o.arg) end,
+        func = function (w, o) if o.arg then w:new_tab() w:run_cmd(":" .. o.arg)
+                                else w:error("Parameter missing") end end,
         format = "{command}",
     }},
     { ":tabd[o]", "Execute command in each tab.", {
-        func = function (w, o) w:each_tab(function () w:run_cmd(":" .. o.arg) end) end,
+        func = function (w, o) if o.arg then w:each_tab(function () w:run_cmd(":" .. o.arg) end)
+                                else w:error("Parameter missing") end end,
         format = "{command}",
     }},
     { ":tabdu[plicate]", "Duplicate current tab.",
