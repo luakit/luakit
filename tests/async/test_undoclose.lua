@@ -42,6 +42,7 @@ T.test_undo_close_works = function ()
     w:undo_close_tab(1)
     assert(w.tabs:current() == 2)
     test.wait_for_view(w.view)
+    test.wait_for_signal(w.view, "property::title", 2000)
 
     assert(w.view.uri == uri)
     assert(w.view.title == "undoclose_page")
