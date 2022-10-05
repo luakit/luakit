@@ -41,6 +41,18 @@ local index_html_template = [==[
             license.  It is primarily targeted at power users, developers and any people with too much time
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
+            <p> 
+            Useful (though outdated) documentation can be found here:
+            <ul>
+            <li><a href="doc/pages/01-authors.html">Authors</a></li>
+            <li><a href="doc/pages/02-faq.html">Frequently Asked Questions</a></li>
+            <li><a href="doc/pages/03-quick-start-guide.html">Quick-start Guide</a></li>
+            <li><a href="doc/pages/04-migration-guide.html">Migration Guide</a></li>
+            <li><a href="doc/pages/05-configuration.html">Files and Directories</a></li>
+            <li><a href="doc/pages/06-tests.html">Running the Test Suite</a></li>
+            <li><a href="doc/pages/07-build-debian-package.html">Building a Debian Package</a></li>
+            </ul>
+            </p>
         <h2>Configuration</h2>
         <h3>Settings</h3>
         <p>The available settings are displayed at:</p>
