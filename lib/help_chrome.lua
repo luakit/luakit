@@ -41,7 +41,7 @@ local index_html_template = [==[
             license.  It is primarily targeted at power users, developers and any people with too much time
             on their hands who want to have fine-grained control over their web browser&rsquo;s behaviour and
             interface.</p>
-            <p> 
+            <p>
             Useful (though outdated) documentation can be found here:
             <ul>
             <li><a href="doc/pages/01-authors.html">Authors</a></li>
