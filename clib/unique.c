@@ -78,7 +78,7 @@ luaH_unique_new(lua_State *L)
 
     GError *error = NULL;
     if (!globalconf.application)
-        globalconf.application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
+        globalconf.application = gtk_application_new(name, G_APPLICATION_DEFAULT_FLAGS);
 
     g_application_register(G_APPLICATION(globalconf.application), NULL, &error);
     if (error != NULL) {

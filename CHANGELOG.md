@@ -1,5 +1,15 @@
 # Changelog
 
+## [2.3.3]
+
+### Fixed
+
+- Fixed a trailing white space, which fixes the test-suite.
+
+### Contributors to this release:
+
+- c0dev0id          (1 commits)
+
 ## [2.3.2]
 
 ### Changed
