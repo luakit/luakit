@@ -13,7 +13,7 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
 # === Default build options ==================================================
 
-DEVELOPMENT_PATHS ?= 0
+DEVELOPMENT_PATHS ?= 1
 USE_LUAJIT        ?= 1
 
 # === Paths ==================================================================
@@ -98,10 +98,10 @@ endif
 # Packages required to build luakit.
 PKGS += gtk+-3.0
 PKGS += gthread-2.0
-PKGS += webkit2gtk-4.0
+PKGS += webkit2gtk-4.1
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
-PKGS += javascriptcoregtk-4.0
+PKGS += javascriptcoregtk-4.1
 
 # Check user has correct packages installed (and found by pkg-config).
 PKGS_OK := $(shell $(PKG_CONFIG) --print-errors --exists $(PKGS) && echo 1)
