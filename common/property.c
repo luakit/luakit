@@ -22,7 +22,7 @@
 #include <lauxlib.h>
 #include "common/property.h"
 
-#include <libsoup/soup-uri.h>
+#include <libsoup/soup-uri-utils.h>
 #include <webkit2/webkit2.h>
 
 static gint
