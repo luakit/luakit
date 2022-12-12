@@ -28,7 +28,7 @@
 static gint
 luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 {
-    SoupURI *u;
+    GUri *u; // Per https://libsoup.org/libsoup-3.0/migrating-from-libsoup-2.html
     property_tmp_t tmp;
 
 #define TG_CASE(type, dest, pfunc)                    \
@@ -51,9 +51,10 @@ luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 
       case URI:
         g_object_get(object, p->name, &u, NULL);
-        tmp.c = u ? soup_uri_to_string(u, 0) : NULL;
+        tmp.c = u ? g_uri_to_string_partial (u, G_URI_HIDE_PASSWORD) : NULL;  // Per https://libsoup.org/libsoup-3.0/migrating-from-libsoup-2.html
         lua_pushstring(L, tmp.c);
-        if (u) soup_uri_free(u);
+        if (u) g_free(u); // This is just a guess.
+                          // Another ???_free might be more appropriate.
         g_free(tmp.c);
         return 1;
 
@@ -67,7 +68,7 @@ luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 static gboolean
 luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
 {
-    SoupURI *u;
+    GUri *u; // Per https://libsoup.org/libsoup-3.0/migrating-from-libsoup-2.html
     property_tmp_t tmp;
     size_t len;
 
@@ -103,13 +104,24 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
             tmp.c = g_strdup(tmp.c);
         else
             tmp.c = g_strdup_printf("http://%s", tmp.c);
-        u = soup_uri_new(tmp.c);
-        gboolean valid = !u || SOUP_URI_VALID_FOR_HTTP(u);
+        u = g_uri_parse(tmp.c, SOUP_HTTP_URI_FLAGS, NULL); // Per https://libsoup.org/libsoup-3.0/migrating-from-libsoup-2.html
+
+        /* For reference:
+#define SOUP_URI_VALID_FOR_HTTP(uri)                                                                 \
+        ((uri) && ((uri)->scheme == SOUP_URI_SCHEME_HTTP || (uri)->scheme == SOUP_URI_SCHEME_HTTPS)  \
+               && (uri)->host                                                                        \
+               && (uri)->path)
+         */
+        gboolean valid = !u || ( (!g_strcmp0(g_uri_get_scheme(u), "http")
+                                     || !g_strcmp0(g_uri_get_scheme(u), "https") )
+                                 && g_uri_get_host(u)
+                                 && g_uri_get_path(u) );
         if (valid) {
             g_object_set(object, p->name, u, NULL);
             g_free(tmp.c);
         }
-        soup_uri_free(u);
+        g_free(u); // This is just a guess.
+                   // Another ???_free might be more appropriate.
         if (!valid) {
             lua_pushfstring(L, "invalid uri: %s", tmp.c);
             g_free(tmp.c);
