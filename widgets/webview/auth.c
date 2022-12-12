@@ -24,7 +24,7 @@
 #include <gtk/gtk.h>
 #include <libsoup/soup-auth.h>
 #include <libsoup/soup-session-feature.h>
-#include <libsoup/soup-uri.h>
+//#include <libsoup/soup-uri.h>
 
 typedef struct {
     WebKitAuthenticationRequest *request;

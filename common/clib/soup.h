@@ -30,59 +30,68 @@ luaH_soup_uri_tostring(lua_State *L)
     gint port;
     /* check for uri table */
     luaH_checktable(L, 1);
-    /* create empty soup uri object */
-    SoupURI *uri = soup_uri_new(NULL);
-    soup_uri_set_scheme(uri, "http");
+    /* create empty(ish) uri object */
+    GUri * uri = g_uri_parse ("http://", SOUP_HTTP_URI_FLAGS, NULL);
+    GUri * old_uri = NULL;
 
-#define GET_PROP(prop)                                          \
-    lua_pushliteral(L, #prop);                                  \
-    lua_rawget(L, 1);                                           \
-    if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) \
-        soup_uri_set_##prop(uri, p);                            \
+#define GET_PROP(prop,PROP)                                              \
+    lua_pushliteral(L, #prop);                                           \
+    lua_rawget(L, 1);                                                    \
+    if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) {         \
+        old_uri = uri;                                                   \
+        uri = soup_uri_copy(old_uri, SOUP_URI_##PROP, p, SOUP_URI_NONE); \
+        g_free(old_uri);                                                 \
+    }                                                                    \
     lua_pop(L, 1);
 
-    GET_PROP(scheme)
+    GET_PROP(scheme, SCHEME)
 
     /* If this is a file:// uri, set a default host of ""
      * Without host set, a path of "/home/..." will become "file:/home/..."
      * instead of "file:///home/..."
      */
-    if (soup_uri_get_scheme(uri) == SOUP_URI_SCHEME_FILE) {
-        soup_uri_set_host(uri, "");
+    if (!g_strcmp0(g_uri_get_scheme(uri), "file")) {
+        uri = soup_uri_copy(uri, SOUP_URI_HOST, "", SOUP_URI_NONE);
     }
 
-    GET_PROP(user)
-    GET_PROP(password)
-    GET_PROP(host)
-    GET_PROP(path)
-    GET_PROP(query)
-    GET_PROP(fragment)
+    GET_PROP(user, USER)
+    GET_PROP(password, PASSWORD)
+    GET_PROP(host, HOST)
+    GET_PROP(path, PATH)
+    GET_PROP(query, QUERY)
+    GET_PROP(fragment, FRAGMENT)
 
     lua_pushliteral(L, "port");
     lua_rawget(L, 1);
-    if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1)))
-        soup_uri_set_port(uri, port);
+    if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1))) {
+        old_uri = uri;
+        uri = soup_uri_copy(old_uri, SOUP_URI_PORT, port, SOUP_URI_NONE);
+        g_free(old_uri);
+    }
     lua_pop(L, 1);
 
-    gchar *str = soup_uri_to_string(uri, FALSE);
+    gchar *str = g_uri_to_string(uri);
     lua_pushstring(L, str);
     g_free(str);
-    soup_uri_free(uri);
+    g_free(uri);  // GUri is a `struct _GUri` rather than a gobject,
+                  // so i'm guessing it should be `g_free`d rather than `g_object_unref`fed
+
     return 1;
 }
 
 static gint
-luaH_soup_push_uri(lua_State *L, SoupURI *uri)
+luaH_soup_push_uri(lua_State *L, GUri *uri)
 {
     const gchar *p;
+    gint port;
     /* create table for uri properties */
     lua_newtable(L);
 
-#define PUSH_PROP(prop)            \
-    if ((p = uri->prop) && p[0]) { \
-        lua_pushliteral(L, #prop); \
-        lua_pushstring(L, p);      \
-        lua_rawset(L, -3);         \
+#define PUSH_PROP(prop)                        \
+    if ((p = g_uri_get_##prop(uri)) && p[0]) { \
+        lua_pushliteral(L, #prop);             \
+        lua_pushstring(L, p);                  \
+        lua_rawset(L, -3);                     \
     }
 
     PUSH_PROP(scheme)
@@ -93,9 +102,9 @@ luaH_soup_push_uri(lua_State *L, SoupURI *uri)
     PUSH_PROP(query)
     PUSH_PROP(fragment)
 
-    if (uri->port) {
+    if ((port = g_uri_get_port(uri))) {
         lua_pushliteral(L, "port");
-        lua_pushnumber(L, uri->port);
+        lua_pushnumber(L, port);
         lua_rawset(L, -3);
     }
 
@@ -118,13 +127,14 @@ luaH_soup_parse_uri(lua_State *L)
         str = g_strdup(str);
 
     /* parse & push uri */
-    SoupURI *uri = soup_uri_new(str);
+    GUri *uri = g_uri_parse (str, SOUP_HTTP_URI_FLAGS, NULL);
     g_free(str);
     if (uri) {
         luaH_soup_push_uri(L, uri);
-        soup_uri_free(uri);
+        //g_free(uri);  // This free crashes with a double-free.
+        return 1;
     }
-    return uri ? 1 : 0;
+    return 0;
 }
 
 static void
