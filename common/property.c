@@ -53,7 +53,7 @@ luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
         g_object_get(object, p->name, &u, NULL);
         tmp.c = u ? g_uri_to_string_partial (u, G_URI_HIDE_PASSWORD) : NULL;  // Per https://libsoup.org/libsoup-3.0/migrating-from-libsoup-2.html
         lua_pushstring(L, tmp.c);
-        if (u) g_free(u); // This is just a guess.
+        if (u) g_uri_unref(u); // This is just a guess.
                           // Another ???_free might be more appropriate.
         g_free(tmp.c);
         return 1;
@@ -120,7 +120,7 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
             g_object_set(object, p->name, u, NULL);
             g_free(tmp.c);
         }
-        g_free(u); // This is just a guess.
+        g_uri_unref(u); // This is just a guess.
                    // Another ???_free might be more appropriate.
         if (!valid) {
             lua_pushfstring(L, "invalid uri: %s", tmp.c);
