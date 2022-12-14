@@ -40,7 +40,7 @@ luaH_soup_uri_tostring(lua_State *L)
     if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) {         \
         old_uri = uri;                                                   \
         uri = soup_uri_copy(old_uri, SOUP_URI_##PROP, p, SOUP_URI_NONE); \
-        g_free(old_uri);                                                 \
+        g_uri_unref(old_uri);                                                 \
     }                                                                    \
     lua_pop(L, 1);
 
@@ -66,14 +66,14 @@ luaH_soup_uri_tostring(lua_State *L)
     if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1))) {
         old_uri = uri;
         uri = soup_uri_copy(old_uri, SOUP_URI_PORT, port, SOUP_URI_NONE);
-        g_free(old_uri);
+        g_uri_unref(old_uri);
     }
     lua_pop(L, 1);
 
     gchar *str = g_uri_to_string(uri);
     lua_pushstring(L, str);
     g_free(str);
-    g_free(uri);  // GUri is a `struct _GUri` rather than a gobject,
+    g_uri_unref(uri);  // GUri is a `struct _GUri` rather than a gobject,
                   // so i'm guessing it should be `g_free`d rather than `g_object_unref`fed
 
     return 1;
@@ -131,7 +131,7 @@ luaH_soup_parse_uri(lua_State *L)
     g_free(str);
     if (uri) {
         luaH_soup_push_uri(L, uri);
-        //g_free(uri);  // This free crashes with a double-free.
+        g_uri_unref(uri);
         return 1;
     }
     return 0;
