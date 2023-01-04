@@ -283,8 +283,11 @@ local function frame_find_hints(page, frame, elements)
         local rbb = get_element_bb_if_visible(element,wbb, page)
 
         if rbb then
-            local text = element.text_content
-            if text == "" then text = element.value or "" end
+            local text = ""
+            if element.type ~= "password" then
+                text = element.text_content
+                if text == "" then text = element.value or "" end
+            end
             if text == "" then text = element.attr.placeholder or "" end
             hints[#hints+1] = { elem = element, bb = rbb, text = text }
         end
