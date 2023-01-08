@@ -70,7 +70,7 @@ luaH_soup_uri_tostring(lua_State *L)
     }
     lua_pop(L, 1);
 
-    gchar *str = g_uri_to_string(uri);
+    gchar *str = g_uri_to_string_partial(uri, G_URI_HIDE_PASSWORD);
     lua_pushstring(L, str);
     g_free(str);
     g_uri_unref(uri);  // GUri is a `struct _GUri` rather than a gobject,
