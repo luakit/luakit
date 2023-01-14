@@ -21,6 +21,19 @@
 #ifndef LUAKIT_COMMON_CLIB_SOUP_H
 #define LUAKIT_COMMON_CLIB_SOUP_H
 
+#include <libsoup/soup-version.h>
+#if SOUP_CHECK_VERSION(3,0,0)
+#include <libsoup/soup-uri-utils.h>
+#else
+#include <libsoup/soup-uri.h>
+#define SOUP_HTTP_URI_FLAGS (G_URI_FLAGS_HAS_PASSWORD     |\
+                             G_URI_FLAGS_ENCODED_PATH     |\
+                             G_URI_FLAGS_ENCODED_QUERY    |\
+                             G_URI_FLAGS_ENCODED_FRAGMENT |\
+                             G_URI_FLAGS_SCHEME_NORMALIZE)
+#endif
+
+
 static GRegex *scheme_reg;
 
 static gint
@@ -30,51 +43,57 @@ luaH_soup_uri_tostring(lua_State *L)
     gint port;
     /* check for uri table */
     luaH_checktable(L, 1);
-    /* create empty(ish) uri object */
-    GUri * uri = g_uri_parse ("http://", SOUP_HTTP_URI_FLAGS, NULL);
-    GUri * old_uri = NULL;
+    const gchar * scheme   = NULL;
+    const gchar * user     = NULL;
+    const gchar * host     = NULL;
+    const gchar * path     = NULL;
+    const gchar * query    = NULL;
+    const gchar * fragment = NULL;
+    gchar * uri;
 
-#define GET_PROP(prop,PROP)                                              \
-    lua_pushliteral(L, #prop);                                           \
-    lua_rawget(L, 1);                                                    \
-    if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) {         \
-        old_uri = uri;                                                   \
-        uri = soup_uri_copy(old_uri, SOUP_URI_##PROP, p, SOUP_URI_NONE); \
-        g_uri_unref(old_uri);                                                 \
-    }                                                                    \
+#define GET_PROP(prop)                                          \
+    lua_pushliteral(L, #prop);                                  \
+    lua_rawget(L, 1);                                           \
+    if (!lua_isnil(L, -1) && (p = lua_tostring(L, -1)) && p[0]) \
+        prop = p;                                               \
     lua_pop(L, 1);
 
-    GET_PROP(scheme, SCHEME)
+    GET_PROP(scheme)
 
     /* If this is a file:// uri, set a default host of ""
      * Without host set, a path of "/home/..." will become "file:/home/..."
      * instead of "file:///home/..."
      */
-    if (!g_strcmp0(g_uri_get_scheme(uri), "file")) {
-        uri = soup_uri_copy(uri, SOUP_URI_HOST, "", SOUP_URI_NONE);
-    }
+    if (!g_strcmp0(scheme, "file"))
+        host = ""; // I assume that this is strdup()ed by g_uri_join(),
+                   // so use some space on the stack rather than calloc()ing.
 
-    GET_PROP(user, USER)
-    GET_PROP(password, PASSWORD)
-    GET_PROP(host, HOST)
-    GET_PROP(path, PATH)
-    GET_PROP(query, QUERY)
-    GET_PROP(fragment, FRAGMENT)
+    GET_PROP(user)
+    GET_PROP(host)
+    GET_PROP(path)
+    GET_PROP(query)
+    GET_PROP(fragment)
 
     lua_pushliteral(L, "port");
     lua_rawget(L, 1);
-    if (!lua_isnil(L, -1) && (port = lua_tonumber(L, -1))) {
-        old_uri = uri;
-        uri = soup_uri_copy(old_uri, SOUP_URI_PORT, port, SOUP_URI_NONE);
-        g_uri_unref(old_uri);
-    }
+    if (lua_isnil(L, -1) || !(port = lua_tonumber(L, -1)))
+        port = -1; // g_uri_* use -1 if the port is absent.
     lua_pop(L, 1);
 
-    gchar *str = g_uri_to_string_partial(uri, G_URI_HIDE_PASSWORD);
-    lua_pushstring(L, str);
-    g_free(str);
-    g_uri_unref(uri);  // GUri is a `struct _GUri` rather than a gobject,
-                  // so i'm guessing it should be `g_free`d rather than `g_object_unref`fed
+    uri = g_uri_join_with_user (SOUP_HTTP_URI_FLAGS,
+                                scheme,
+                                user,
+                                NULL,  // password. Omitted to retain soup_uri_to_string()'s behaviour
+                                NULL,  // auth_params, whatever they are.
+                                host,
+                                port,
+                                path,
+                                query,
+                                fragment);
+
+    lua_pushstring(L, uri);
+    g_free(uri);
+    // Lua will clean up the `gchar*`s returned by lua_tostring().
 
     return 1;
 }
@@ -102,7 +121,8 @@ luaH_soup_push_uri(lua_State *L, GUri *uri)
     PUSH_PROP(query)
     PUSH_PROP(fragment)
 
-    if ((port = g_uri_get_port(uri))) {
+    port = g_uri_get_port(uri);
+    if (port > 0) { // g_uri_* use -1 if the port is absent.
         lua_pushliteral(L, "port");
         lua_pushnumber(L, port);
         lua_rawset(L, -3);
