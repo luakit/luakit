@@ -130,8 +130,12 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     /* print version and exit */
     if (version_only) {
         g_printf("luakit %s\n", VERSION);
-        g_printf("  built with webkit %i.%i.%i ", WEBKIT_MAJOR_VERSION, WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
+        g_printf("  built with: webkit %i.%i.%i ", WEBKIT_MAJOR_VERSION, WEBKIT_MINOR_VERSION, WEBKIT_MICRO_VERSION);
         g_printf("(installed version: %u.%u.%u)\n", webkit_get_major_version(), webkit_get_minor_version(), webkit_get_micro_version());
+        g_printf("                 GTK %i.%i.%i \n", GTK_MAJOR_VERSION, GTK_MINOR_VERSION, GTK_MICRO_VERSION);
+        g_printf("                GLIB %i.%i.%i \n", GLIB_MAJOR_VERSION, GLIB_MINOR_VERSION, GLIB_MICRO_VERSION);
+        g_printf("                SOUP %i.%i.%i \n", SOUP_MAJOR_VERSION, SOUP_MINOR_VERSION, SOUP_MICRO_VERSION);
+
         exit(EXIT_SUCCESS);
     }
 
