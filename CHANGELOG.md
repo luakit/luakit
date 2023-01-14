@@ -1,5 +1,11 @@
 # Changelog
 
+## Develop
+
+### Fixed
+
+- Update uri handling for SOUP3
+
 ## [2.3.3]
 
 ### Fixed
