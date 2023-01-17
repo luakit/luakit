@@ -532,27 +532,27 @@ modes.add_cmds({
     end },
 
     { ":lua", "Evaluate Lua snippet.", function (w, o)
-            local a = o.arg
-            if a then
-                -- Parse as expression first, then statement
-                -- With this order an error message won't contain the print() wrapper
-                local ret, err = loadstring("print(" .. a .. ")", "lua-cmd")
-                if err then
-                    ret, err = loadstring(a, "lua-cmd")
-                end
-                if err then
-                    w:error(err)
-                else
-                    setfenv(ret, setmetatable({}, { __index = function (_, k)
-                        if _G[k] ~= nil then return _G[k] end
-                        if k == "w" then return w end
-                        if package.loaded[k] then return package.loaded[k] end
-            end, __newindex = _G }))
-        ret()
-    end
-else
-    w:set_mode("lua")
-end
+        local a = o.arg
+        if a then
+            -- Parse as expression first, then statement
+            -- With this order an error message won't contain the print() wrapper
+            local ret, err = loadstring("print(" .. a .. ")", "lua-cmd")
+            if err then
+                ret, err = loadstring(a, "lua-cmd")
+            end
+            if err then
+                w:error(err)
+            else
+                setfenv(ret, setmetatable({}, { __index = function (_, k)
+                    if _G[k] ~= nil then return _G[k] end
+                    if k == "w" then return w end
+                    if package.loaded[k] then return package.loaded[k] end
+                end, __newindex = _G }))
+                ret()
+            end
+        else
+            w:set_mode("lua")
+        end
     end },
 
     { ":dump", "Dump current tabs html to file.",
