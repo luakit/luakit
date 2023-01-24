@@ -1,10 +1,12 @@
 # Changelog
 
-## Develop
+## [develop]
 
 ### Fixed
 
-- Update uri handling for SOUP3
+### Changed
+
+- Support SOUP3 and Webkit2gtk 4.1
 
 ## [2.3.3]
 

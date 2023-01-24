@@ -116,13 +116,6 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
             tmp.c = g_strdup_printf("http://%s", tmp.c);
         u = g_uri_parse(tmp.c, SOUP_HTTP_URI_FLAGS, NULL);
 
-        /* For reference:
-#define SOUP_URI_VALID_FOR_HTTP(uri)                                                                 \
-        ((uri) && ((uri)->scheme == SOUP_URI_SCHEME_HTTP ||
-                   (uri)->scheme == SOUP_URI_SCHEME_HTTPS   )
-               && (uri)->host                                                                        \
-               && (uri)->path)
-         */
         gboolean valid = !u || ( (!g_strcmp0(g_uri_get_scheme(u), "http")
                                      || !g_strcmp0(g_uri_get_scheme(u), "https") )
                                  && g_uri_get_host(u)
