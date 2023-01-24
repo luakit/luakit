@@ -13,7 +13,7 @@ CPPFLAGS   += -DVERSION=\"$(VERSION)\"
 
 # === Default build options ==================================================
 
-DEVELOPMENT_PATHS ?= 1
+DEVELOPMENT_PATHS ?= 0
 USE_LUAJIT        ?= 1
 
 # === Paths ==================================================================
