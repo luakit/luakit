@@ -64,9 +64,11 @@ luaH_soup_uri_tostring(lua_State *L)
      * Without host set, a path of "/home/..." will become "file:/home/..."
      * instead of "file:///home/..."
      */
-    if (!g_strcmp0(scheme, "file"))
-        host = ""; // I assume that this is strdup()ed by g_uri_join(),
-                   // so use some space on the stack rather than calloc()ing.
+    if (!g_strcmp0(scheme, "file")) {
+        /* I assume that this is strdup()ed by g_uri_join(), so use
+         * some space on the stack rather than calloc'ing */
+        host = "";
+    }
 
     GET_PROP(user)
     GET_PROP(host)
@@ -77,14 +79,14 @@ luaH_soup_uri_tostring(lua_State *L)
     lua_pushliteral(L, "port");
     lua_rawget(L, 1);
     if (lua_isnil(L, -1) || !(port = lua_tonumber(L, -1)))
-        port = -1; // g_uri_* use -1 if the port is absent.
+        port = -1;
     lua_pop(L, 1);
 
     uri = g_uri_join_with_user (SOUP_HTTP_URI_FLAGS,
                                 scheme,
                                 user,
-                                NULL,  // password. Omitted to retain soup_uri_to_string()'s behaviour
-                                NULL,  // auth_params, whatever they are.
+                                NULL,  // omit password to retain soup_uri_to_string()'s behaviour
+                                NULL,  // auth_params
                                 host,
                                 port,
                                 path,
@@ -93,7 +95,6 @@ luaH_soup_uri_tostring(lua_State *L)
 
     lua_pushstring(L, uri);
     g_free(uri);
-    // Lua will clean up the `gchar*`s returned by lua_tostring().
 
     return 1;
 }
@@ -122,7 +123,7 @@ luaH_soup_push_uri(lua_State *L, GUri *uri)
     PUSH_PROP(fragment)
 
     port = g_uri_get_port(uri);
-    if (port > 0) { // g_uri_* use -1 if the port is absent.
+    if (port > 0) {
         lua_pushliteral(L, "port");
         lua_pushnumber(L, port);
         lua_rawset(L, -3);
