@@ -43,7 +43,7 @@ luaH_soup_uri_tostring(lua_State *L)
     gint port;
     /* check for uri table */
     luaH_checktable(L, 1);
-    const gchar * scheme   = NULL;
+    const gchar * scheme   = "http";
     const gchar * user     = NULL;
     const gchar * host     = NULL;
     const gchar * path     = NULL;
