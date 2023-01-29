@@ -124,7 +124,7 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
             g_object_set(object, p->name, u, NULL);
             g_free(tmp.c);
         }
-        g_uri_unref(u);
+        if (u) g_uri_unref(u);
         if (!valid) {
             lua_pushfstring(L, "invalid uri: %s", tmp.c);
             g_free(tmp.c);
