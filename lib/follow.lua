@@ -19,9 +19,9 @@
 --
 --     local select = require "select"
 --
---     select.label_maker = function ()
---         local chars = charset("asdfqwerzxcv")
---         return trim(sort(reverse(chars)))
+--     select.label_maker = function (s)
+--         local chars = s.charset("asdfqwerzxcv")
+--         return s.trim(s.sort(s.reverse(chars)))
 --     end
 --
 -- Here, the `charset()` function generates hints using the specified letters.
@@ -41,7 +41,7 @@
 -- above code could be changed to the following:
 --
 --     ...
---     local chars = charset("ФЫВАПРОЛДЖЭ")
+--     local chars = s.charset("ФЫВАПРОЛДЖЭ")
 --     ...
 --
 -- ## Hint text direction
@@ -58,7 +58,7 @@
 -- for example:
 --
 --     ...
---     local chars = charset("fjdksla;ghutnvir")
+--     local chars = s.charset("fjdksla;ghutnvir")
 --     ...
 --
 -- In this case, hints will display intuitively if used on pages which are
@@ -79,7 +79,7 @@
 -- do with the `interleave()` label composer function.
 --
 --     ...
---     local chars = interleave("qwertasdfgzxcvb", "yuiophjklnm")
+--     local chars = s.interleave("qwertasdfgzxcvb", "yuiophjklnm")
 --     ...
 --
 -- # Matching only hint labels, not element text

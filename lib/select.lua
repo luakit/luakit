@@ -21,8 +21,8 @@
 -- composer functions, and all the label maker function does is chain them
 -- together and return the result.
 --
---     select.label_maker = function ()
---         return trim(sort(reverse(numbers())))
+--     select.label_maker = function (s)
+--         return s.trim(s.sort(s.reverse(s.numbers())))
 --     end
 --
 -- Conceptually, `numbers()` produces produces an array of numerical hints:
