@@ -24,7 +24,7 @@ find luakit behaves similarly out of the box.
 ## Installing
 
 Luakit is available on most Linux Distributions and BSD system via their
-package managers.
+package managers. A few examples below:
 
  * Debian/Ubuntu: apt-get install luakit
  * Gentoo: emerge luakit
@@ -32,7 +32,11 @@ package managers.
  * Arch: pacman -S luakit
  * FreeBSD: pkg install luakit
  * OpenBSD: pkg\_add luakit
+ * Void Linux: xbps-install luakit
 
+Packaging status:
+
+[![Packaging Status](https://repology.org/badge/vertical-allrepos/luakit.svg?header=)](https://repology.org/project/luakit/versions)
 
 ## Installing from source
 
@@ -134,7 +138,7 @@ you can execute the test suite with:
     $ make test
 
 
-## Tipps and fixes:
+## Tips and fixes:
 
 **Video playback**
 
