@@ -145,6 +145,12 @@ local init_funcs = {
             end
         end)
     end,
+
+    enable_pdfjs = function (view)
+        local pdfjs_enabled =
+            settings.get_setting("application.enable_pdfjs")
+        view:set_pdfjs(pdfjs_enabled or false)
+    end,
 }
 
 --- These methods are present when you index a window instance and no window
@@ -567,6 +573,14 @@ local webview_settings = {
             Disabling this setting is only useful to conserve memory.
         ]=],
     },
+    ["application.enable_pdfjs"] = {
+        type = "boolean",
+        default = false,
+        desc = [=[
+            Whether to load PDFs in a built-in javascript renderer.
+            The default is to pass them on to the OS.  This setting
+            only becomes active in new tabs.]=]
+    },
     ["webview.enable_plugins"] = {
         type = "boolean",
         default = true,
@@ -717,8 +731,9 @@ settings.register_settings({
 
 _M.add_signal("init", function (view)
     local set = function (wv, k, v, match)
-        if v ~= nil then
-            k = k:sub(9) -- Strip off "webview." prefix
+        -- hand through webview.-prefixed settings
+        if v ~= nil and k:find('webview.', 1, true) then
+            k = k:sub(9) -- Strip off prefix
             if k == "zoom_level" then v = v/100.0 end
             if k == "user_agent" and v == "" then v = nil end
             match = match and (" (matched '"..match.."')") or ""
