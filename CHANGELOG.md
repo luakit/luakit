@@ -1,8 +1,20 @@
 # Changelog
 
-## [2.3.3]
+## [2.3.4]
 
-- Support SOUP3 and Webkit2gtk 4.1
+### Added
+
+- Add Support for SOUP3 and Webkit2gtk 4.1
+
+### Fixed
+
+- label_styles table fixes for certain conditions
+
+### Contributors to this release:
+
+- c0dev0id
+- taobert
+- fosskers
 
 ## [2.3.3]
 
