@@ -1,10 +1,6 @@
 # Changelog
 
-## [develop]
-
-### Fixed
-
-### Changed
+## [2.3.3]
 
 - Support SOUP3 and Webkit2gtk 4.1
 
