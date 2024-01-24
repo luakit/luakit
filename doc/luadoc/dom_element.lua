@@ -34,7 +34,7 @@
 -- Add an event listener to this element. The callback will be called
 -- with a two arguments: dom element for which listener was added and
 -- table argument, which will have a `target` field containing the
--- event source element. If the event is a mouse event, it will also 
+-- event source element. If the event is a mouse event, it will also
 -- have a `button` field, containing the mouse button number.
 -- @tparam string type The type of event to listen for.
 -- @tparam boolean capture Whether the event should be captured.
