@@ -28,27 +28,8 @@
 
 #include <gtk/gtk.h>
 
-#define LUA_DOM_ELEMENT_FUNCS(lua_class, type, prefix)        \
-    LUA_CLASS_FUNCS(prefix, lua_class)                        \
-    static inline type *                                      \
-    prefix##_new(lua_State *L) {                              \
-        type *p = lua_newuserdata(L, sizeof(type));           \
-        p_clear(p, 1);                                        \
-        p->signals = signal_new();                            \
-        p->dom_events = signal_new();                         \
-        luaH_settype(L, &(lua_class));                        \
-        lua_newtable(L);                                      \
-        lua_newtable(L);                                      \
-        lua_setmetatable(L, -2);                              \
-        lua_setfenv(L, -2);                                   \
-        lua_pushvalue(L, -1);                                 \
-        luaH_class_emit_signal(L, &(lua_class), "new", 1, 0); \
-        return p;                                             \
-    }
-
 typedef struct _dom_element_t {
     LUA_OBJECT_HEADER
-    signal_t *dom_events;
     WebKitDOMElement *element;
 } dom_element_t;
 

@@ -31,7 +31,7 @@
 
 static lua_class_t dom_element_class;
 
-LUA_DOM_ELEMENT_FUNCS(dom_element_class, dom_element_t, dom_element);
+LUA_OBJECT_FUNCS(dom_element_class, dom_element_t, dom_element);
 
 static dom_element_t*
 luaH_check_dom_element(lua_State *L, gint udx)
@@ -42,42 +42,6 @@ luaH_check_dom_element(lua_State *L, gint udx)
     return element;
 }
 
-static gboolean
-dom_element_collect_event_keys(gpointer key, gpointer UNUSED(value), GPtrArray *keys)
-{
-    g_ptr_array_add(keys, key);
-    return FALSE;
-}
-
-/* forward declarations of callbacks */
-static void event_listener_capture_cb(WebKitDOMElement *elem, WebKitDOMEvent *event, dom_element_t *element);
-static void event_listener_bubble_cb(WebKitDOMElement *elem, WebKitDOMEvent *event, dom_element_t *element);
-
-static void
-dom_element_unregister_webkit_event_listeners(dom_element_t *element)
-{
-    if (element && element->element && element->dom_events) {
-        WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
-        if (target) {
-            guint i;
-            GPtrArray *keys = g_ptr_array_new();
-            /* collect all existing webkit listener's types registerd for this element */
-            g_tree_foreach(element->dom_events, (GTraverseFunc)dom_element_collect_event_keys, keys);
-            /* remove all registered webkit listeners for both capture and bubble phases */
-            for (i = 0; i < keys->len; i++) {
-                char *type = g_ptr_array_index(keys, i);
-                if ( g_str_has_suffix(type, "::capture" ) )
-                    webkit_dom_event_target_remove_event_listener(target, type,
-                                                                  G_CALLBACK(event_listener_capture_cb), TRUE);
-                else
-                    webkit_dom_event_target_remove_event_listener(target, type,
-                                                                  G_CALLBACK(event_listener_bubble_cb), FALSE);
-            }
-            g_ptr_array_free(keys, FALSE);
-        }
-    }
-}
-
 static void
 webkit_web_page_destroy_cb(dom_element_t *element, GObject *node)
 {
@@ -86,23 +50,8 @@ webkit_web_page_destroy_cb(dom_element_t *element, GObject *node)
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, 1);
 
-    dom_element_unregister_webkit_event_listeners(element);
-
     element->element = NULL;
     luaH_uniq_del_ptr(common.L, REG_KEY, node);
-}
-
-static gint
-luaH_dom_element_gc(lua_State *L)
-{
-    dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    if (element) {
-        dom_element_unregister_webkit_event_listeners(element);
-
-        if (element->dom_events)
-            signal_destroy(element->dom_events);
-    }
-    return luaH_object_gc(L);
 }
 
 gint
@@ -193,6 +142,12 @@ dom_element_js_ref(page_t *page, dom_element_t *element)
     g_free(sel);
 
     return ret;
+}
+
+static gint
+luaH_dom_element_gc(lua_State *L)
+{
+    return luaH_object_gc(L);
 }
 
 static gint
@@ -404,102 +359,13 @@ luaH_dom_element_submit(lua_State *L)
     return 0;
 }
 
-/* Emit a dom event to an object.
- * `event` is the webkit dom event.
- * `oud` is the object index on the stack.
- * `name` is the name of the signal.
- */
-static gint
-luaH_dom_element_emit_dom_event(lua_State *L, WebKitDOMEvent *event, gint oud, const gchar *name) {
-    gint nargs = 1;
-    gint nret = 0;
-    gint ret, top, bot = lua_gettop(L) - nargs + 1;
-    gint oud_abs = luaH_absindex(L, oud);
-    dom_element_t *obj = luaH_check_dom_element(L, oud);
-
-    gchar *origin = luaH_callerinfo(L);
-    debug("emit dom event " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-            " on %p from "
-            ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET " (%d args, %d nret)",
-            name, obj, origin ? origin : "<GTK>", nargs, nret);
-    g_free(origin);
-
-    if(!obj)
-        return luaL_error(L, "trying to emit dom event " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET " on non-object", name);
-
-    signal_array_t *sigfuncs = signal_lookup(obj->dom_events, name);
-    if (sigfuncs) {
-        guint nbfunc = sigfuncs->len;
-        luaL_checkstack(L, lua_gettop(L) + nbfunc + nargs + 2,
-                "too many signal handlers; need a new implementation!");
-        /* Push all functions and then execute, because this list can change
-         * while executing funcs. */
-        for (guint i = 0; i < nbfunc; i++)
-            luaH_object_push_item(L, oud_abs, sigfuncs->pdata[i]);
-
-        gboolean cancel = false;
-        for (guint i = 0; i < nbfunc; i++) {
-            /* push object */
-            lua_pushvalue(L, oud_abs);
-            /* push event arg */
-            lua_pushvalue(L, - nargs - nbfunc - 1 + i);
-            /* push first function */
-            lua_pushvalue(L, - nargs - nbfunc - 1 + i);
-            /* remove this first function */
-            lua_remove(L, - nargs - nbfunc - 2 + i);
-            top = lua_gettop(L) - 2 - nargs;
-
-            luaH_dofunction(L, nargs + 1, LUA_MULTRET);
-            ret = lua_gettop(L) - top;
-
-            /* ignore all return values */
-            lua_pop(L, ret);
-
-            /* push event arg */
-            lua_pushvalue(L, - nargs - nbfunc + 1 + i);
-
-            /* check if field 'prevent_default' set to true and if it's set then
-               call webkit_dom_event_prevent_default for event */
-            lua_pushliteral(L, "prevent_default");
-            lua_rawget(L, -2);
-
-            if (lua_toboolean(L, -1)) webkit_dom_event_prevent_default(event);
-            lua_pop(L, 1);
-
-            /* check if field 'cancel' and if it set to true then call
-               stopPropagation */
-            lua_pushliteral(L, "cancel");
-            lua_rawget(L, -2);
-
-            if (lua_toboolean(L, -1)) {
-                webkit_dom_event_stop_propagation(event);
-                cancel = true;
-            }
-
-            /* clean stack from cancel and table*/
-            lua_pop(L, 2);
-
-            /* if even should be canceled then cleanup stack */
-            if (cancel) {
-                for (gint i = bot; i < top; i++)
-                    lua_remove(L, bot);
-                break;
-            }
-        }
-    }
-    lua_pop(L, nargs);
-    return 0;
-}
-
 static void
-event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gboolean capture, dom_element_t *element)
+event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gpointer func)
 {
     lua_State *L = common.L;
 
-    /* pushing dom element object to lua stack */
-    luaH_uniq_get_ptr(L, REG_KEY, element->element);
-
     lua_createtable(L, 0, 1);
+    lua_pushvalue(L, -1); /* pushing copy of cb argument */
     lua_pushliteral(L, "target");
     WebKitDOMEventTarget *target = webkit_dom_event_get_src_element(event);
     luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
@@ -508,13 +374,6 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gboolea
     lua_pushliteral(L, "type");
     gchar *type = webkit_dom_event_get_event_type(event);
     lua_pushstring(L, type);
-    lua_rawset(L, -3);
-
-    gchar *staged_type = g_strjoin( "::", type, ( capture ? "capture" : "bubble" ), NULL);
-
-    lua_pushliteral(L, "phase");
-    gushort phase = webkit_dom_event_get_event_phase(event);
-    lua_pushinteger(L, phase);
     lua_rawset(L, -3);
 
     if (WEBKIT_DOM_IS_MOUSE_EVENT(event)) {
@@ -556,67 +415,22 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gboolea
         lua_rawset(L, -3);
     }
 
-    luaH_dom_element_emit_dom_event(L, event, -2, staged_type);
-    g_free(staged_type);
+    luaH_object_push(L, func);
+    luaH_dofunction(L, 1, 0);
 
-    /* pop dom element from stack */
+    /* after calling callback examine field 'cancel' in argument
+       passed to callback and if it set to true then call
+       stopPropagation */
+    lua_pushliteral(L, "cancel");
+    lua_rawget(L, -2);
+    if (lua_toboolean(L, -1)) webkit_dom_event_stop_propagation(event);
     lua_pop(L, 1);
-
-}
-
-static void
-event_listener_capture_cb(WebKitDOMElement *elem, WebKitDOMEvent *event, dom_element_t *element)
-{
-    return event_listener_cb(elem, event, TRUE, element);
-}
-
-static void
-event_listener_bubble_cb(WebKitDOMElement *elem, WebKitDOMEvent *event, dom_element_t *element)
-{
-    return event_listener_cb(elem, event, FALSE, element);
-}
-
-/* Add a dom event to an object.
- * `oud` is the object index on the stack.
- * `name` is the name of the signal.
- * `ud` is the index of function to call when dom event triggered. */
-void
-luaH_dom_element_add_dom_event(lua_State *L, gint oud,
-        const gchar *name, gint ud) {
-    luaH_checkfunction(L, ud);
-    dom_element_t *obj = luaH_check_dom_element(L, oud);
-
-    gchar *origin = luaH_callerinfo(L);
-    debug("add dom event " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-            " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
-            name, obj, origin);
-    g_free(origin);
-
-    signal_add(obj->dom_events, name, luaH_object_ref_item(L, oud, ud));
-}
-
-/* Remove a dom event from an object.
- * `oud` is the object index on the stack.
- * `name` is the name of the signal.
- * `ud` is the index of function that should be removed.
- */
-void
-luaH_dom_element_remove_dom_event(lua_State *L, gint oud,
-        const gchar *name, gint ud) {
-    luaH_checkfunction(L, ud);
-    dom_element_t *obj = luaH_check_dom_element(L, oud);
-    gpointer ref = (gpointer) lua_topointer(L, ud);
-
-    gchar *origin = luaH_callerinfo(L);
-    debug("remove dom event " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
-            " on %p from " ANSI_COLOR_GREEN "%s" ANSI_COLOR_RESET,
-            name, obj, origin);
-    g_free(origin);
-
-    signal_remove(obj->dom_events, name, ref);
-
-    luaH_object_unref_item(L, oud, ref);
-    lua_remove(L, ud);
+    /* also check if prevent_default set to true and if it's set then
+       call webkit_dom_event_prevent_default for event */
+    lua_pushliteral(L, "prevent_default");
+    lua_rawget(L, -2);
+    if (lua_toboolean(L, -1)) webkit_dom_event_prevent_default(event);
+    lua_pop(L, 2);
 }
 
 static gint
@@ -626,62 +440,31 @@ luaH_dom_element_add_event_listener(lua_State *L)
     const gchar *type = luaL_checkstring(L, 2);
     gboolean capture = lua_toboolean(L, 3);
     luaH_checkfunction(L, 4);
-    gboolean ret = true;
+    gpointer func = luaH_object_ref(L, 4);
 
     WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
 
-    gchar *staged_type = g_strjoin("::", type, (capture ? "capture" : "bubble" ), NULL);
+    gboolean ret = webkit_dom_event_target_add_event_listener(target, type,
+            G_CALLBACK(event_listener_cb), capture, func);
 
-    /* check if we already have any signals of required type in this dom element */
-    signal_array_t *signals = signal_lookup(element->dom_events, staged_type);
-
-    if (!signals || (signals && signals->len == 0)) {
-        if (capture)
-            ret = webkit_dom_event_target_add_event_listener(target, type,
-                                                             G_CALLBACK(event_listener_capture_cb), capture, element);
-        else
-            ret = webkit_dom_event_target_add_event_listener(target, type,
-                                                             G_CALLBACK(event_listener_bubble_cb), capture, element);
-    }
-
-    luaH_dom_element_add_dom_event(L, 1, staged_type, 4);
-    g_free(staged_type);
-
-    lua_pop(L, 3);
     lua_pushboolean(L, ret);
-
     return 1;
 }
 
+/* because we processing all events in one signle event_listener_cb
+   removing even listener will removes all listeners of this type on
+   element, probably we can somehow scan registered listeners and
+   remove only those one that have func as user data */
 static gint
 luaH_dom_element_remove_event_listener(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
     const gchar *type = luaL_checkstring(L, 2);
     gboolean capture = lua_toboolean(L, 3);
-    luaH_checkfunction(L, 4);
-    gboolean ret = true;
 
-    gchar *staged_type = g_strjoin("::", type, (capture ? "capture" : "bubble" ), NULL);
-
-    /* remove func from dom element`s signals */
-    luaH_dom_element_remove_dom_event(L, 1, staged_type, 4);
-
-    /* retrieve remaining signals for dom element */
-    signal_array_t *signals = signal_lookup(element->dom_events, staged_type);
-
-    g_free(staged_type);
-
-    /* if no more lua signal handlers registered -- remove it in webkit as well */
-    if (!signals || (signals && signals->len == 0)) {
-        WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
-        if (capture)
-            ret = webkit_dom_event_target_remove_event_listener(target, type,
-                                                                G_CALLBACK(event_listener_capture_cb), capture);
-        else
-            ret = webkit_dom_event_target_remove_event_listener(target, type,
-                                                                G_CALLBACK(event_listener_bubble_cb), capture);
-    }
+    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
+    gboolean ret = webkit_dom_event_target_remove_event_listener(target, type,
+            G_CALLBACK(event_listener_cb), capture);
 
     lua_pushboolean(L, ret);
     return 1;
