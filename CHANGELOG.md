@@ -1,5 +1,26 @@
 # Changelog
 
+## [develop]
+
+### Added
+
+- Manage dom events with luakit signals
+
+### Changed
+
+### Fixed
+
+- Disabled matching masked password field content when hinting
+- Fix assumptions about stack position of package and package.path
+
+### Contributors to this release:
+
+- PluMGMK
+- c0dev0id
+- mmmpx
+- serg-kozhemyakin
+
+
 ## [2.3.4]
 
 ### Added
