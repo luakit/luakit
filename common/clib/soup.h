@@ -161,7 +161,7 @@ luaH_soup_parse_uri(lua_State *L)
 static void
 soup_lib_setup_common(void)
 {
-    scheme_reg = g_regex_new("^[a-z][a-z0-9\\+\\-\\.]*:", G_REGEX_OPTIMIZE, 0, NULL);
+    scheme_reg = g_regex_new("^[a-z][a-z0-9\\+\\-\\.]*:", NULL, 0, NULL);
 }
 
 #endif

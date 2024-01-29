@@ -12,6 +12,7 @@
 
 - Disabled matching masked password field content when hinting
 - Fix assumptions about stack position of package and package.path
+- Fix crash with --log= argument (remove G_REGEX_OPTIMIZE)
 
 ### Contributors to this release:
 

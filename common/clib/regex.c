@@ -59,7 +59,7 @@ luaH_regenerate_regex(lua_State *L, lregex_t *regex)
 
     GError *error = NULL;
     regex->reg = g_regex_new(regex->pattern,
-            G_REGEX_DOTALL|G_REGEX_OPTIMIZE, 0, &error);
+            G_REGEX_DOTALL, 0, &error);
     if (error) {
         lua_pushstring(L, error->message);
         g_error_free(error);

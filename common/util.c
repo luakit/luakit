@@ -63,7 +63,7 @@ strip_ansi_escapes(const gchar *in)
     if (!reg) {
         const gchar *expr = "[\x1b\x9b][[()#;?]*(?:[0-9]{1,4}(?:;[0-9]{0,4})*)?[0-9A-ORZcf-nqry=><]";
         GError *err = NULL;
-        reg = g_regex_new(expr, G_REGEX_DOTALL | G_REGEX_EXTENDED | G_REGEX_RAW | G_REGEX_OPTIMIZE, 0, &err);
+        reg = g_regex_new(expr, G_REGEX_DOTALL | G_REGEX_EXTENDED | G_REGEX_RAW, 0, &err);
         g_assert_no_error(err);
     }
 
