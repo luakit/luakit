@@ -4,8 +4,6 @@
 
 ### Added
 
-- Manage dom events with luakit signals
-
 ### Changed
 
 ### Fixed
