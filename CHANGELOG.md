@@ -1,8 +1,12 @@
 # Changelog
 
-## [2.3.5]
+## [2.3.6]
 
-Bugfix release.
+### Fixed
+
+- Correct regex compile options type if none are passed (@jpalus)
+
+## [2.3.5]
 
 ### Fixed
 
