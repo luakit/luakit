@@ -222,7 +222,7 @@ va_log(log_level_t lvl, const gchar *fct, const gchar *fmt, va_list ap)
     static GRegex *indent_lines_reg;
     if (!indent_lines_reg) {
         GError *err = NULL;
-        indent_lines_reg = g_regex_new("\n", NULL, 0, &err);
+        indent_lines_reg = g_regex_new("\n", 0, 0, &err);
         g_assert_no_error(err);
     }
     gchar *wrapped = g_regex_replace_literal(indent_lines_reg, msg, -1, 0, "\n" LOG_IND, 0, NULL);
