@@ -1,10 +1,8 @@
 # Changelog
 
-## [develop]
+## [2.3.5]
 
-### Added
-
-### Changed
+Bugfix release.
 
 ### Fixed
 
@@ -17,8 +15,6 @@
 - PluMGMK
 - c0dev0id
 - mmmpx
-- serg-kozhemyakin
-
 
 ## [2.3.4]
 
