@@ -1,10 +1,24 @@
 # Changelog
 
+## [develop]
+
+### Changed
+
+- Don't compress man page. This should be done by maintainers.
+
+### Contributors to this release:
+
+- @sideeffect42
+
 ## [2.3.6]
 
 ### Fixed
 
-- Correct regex compile options type if none are passed (@jpalus)
+- Correct regex compile options type if none are passed
+
+### Contributors to this release:
+
+- @jpalus
 
 ## [2.3.5]
 
@@ -16,9 +30,9 @@
 
 ### Contributors to this release:
 
-- PluMGMK
-- c0dev0id
-- mmmpx
+- @PluMGMK
+- @c0dev0id
+- @mmmpx
 
 ## [2.3.4]
 
@@ -32,9 +46,9 @@
 
 ### Contributors to this release:
 
-- c0dev0id
-- taobert
-- fosskers
+- @c0dev0id
+- @taobert
+- @fosskers
 
 ## [2.3.3]
 
@@ -44,7 +58,7 @@
 
 ### Contributors to this release:
 
-- c0dev0id          (1 commits)
+- @c0dev0id          (1 commits)
 
 ## [2.3.2]
 
@@ -60,8 +74,8 @@
 
 ### Contributors to this release:
 
-- taobert           (2 commits)
-- c0dev0id          (2 commits)
+- @taobert           (2 commits)
+- @c0dev0id          (2 commits)
 
 ## [2.3.1]
 
