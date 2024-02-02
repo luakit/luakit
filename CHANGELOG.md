@@ -10,10 +10,16 @@
 
 - Don't compress man page. This should be done by maintainers.
 
+### Fixed
+
+- Fixed undoclose bug (and likely some other segfaults)
+- Fixed luaH_init() implicit prototype warning
+
 ### Contributors to this release:
 
-- @sideeffect42
+- @c0dev0id
 - @serg-kozhemyakin
+- @sideeffect42
 
 ## [2.3.6]
 
