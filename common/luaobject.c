@@ -181,6 +181,8 @@ luaH_object_remove_signal(lua_State *L, gint oud,
 void
 luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
     lua_object_t *obj = lua_touserdata(L, oud);
+    if (!obj)
+        return;
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if (!sigfuncs)
         return;
@@ -396,6 +398,30 @@ luaH_object_remove_signals_simple(lua_State *L) {
     return 0;
 }
 
+gboolean
+luaH_object_collect_signal_keys(gpointer key, gpointer UNUSED(value), GPtrArray *keys)
+{
+    g_ptr_array_add(keys, key);
+    return FALSE;
+}
+
+gint
+luaH_object_remove_all_signals(signal_t *signals)
+{
+    if (signals) {
+        lua_State *L = common.L;
+        GPtrArray *keys = g_ptr_array_new();
+        g_tree_foreach(signals, (GTraverseFunc)luaH_object_collect_signal_keys, keys);
+        for (guint i = 0; i < keys->len; i++) {
+            char *type = g_ptr_array_index(keys, i);
+            lua_pushstring(L, type);
+            luaH_object_remove_signals_simple(L);
+        }
+        g_ptr_array_free(keys, FALSE);
+    }
+    return 0;
+}
+
 gint
 luaH_object_emit_signal_simple(lua_State *L) {
     return luaH_object_emit_signal(L, 1, luaL_checkstring(L, 2), lua_gettop(L) - 2, LUA_MULTRET);
@@ -415,8 +441,10 @@ luaH_object_tostring(lua_State *L) {
 gint
 luaH_object_gc(lua_State *L) {
     lua_object_t *item = lua_touserdata(L, 1);
-    if (item->signals)
+    if (item->signals) {
+        luaH_object_remove_all_signals(item->signals);
         signal_destroy(item->signals);
+    }
     return 0;
 }
 

@@ -2,6 +2,10 @@
 
 ## [develop]
 
+### Added
+
+- Manage dom events with luakit signals.
+
 ### Changed
 
 - Don't compress man page. This should be done by maintainers.
@@ -9,6 +13,7 @@
 ### Contributors to this release:
 
 - @sideeffect42
+- @serg-kozhemyakin
 
 ## [2.3.6]
 
