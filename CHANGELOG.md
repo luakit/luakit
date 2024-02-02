@@ -1,6 +1,6 @@
 # Changelog
 
-## [develop]
+## Develop
 
 ### Added
 

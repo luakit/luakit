@@ -85,7 +85,7 @@ luaH_request_finish(lua_State *L)
     size_t length;
     const gchar *data = lua_tolstring(L, 2, &length);
     const gchar *mime = lua_tostring(L, 3) ?: "text/html";
-    GInputStream *stream = g_memory_input_stream_new_from_data(g_memdup2(data, length), length, g_free);
+    GInputStream *stream = g_memory_input_stream_new_from_data(g_memdup(data, length), length, g_free);
     webkit_uri_scheme_request_finish(request->request, stream, length, mime);
     g_object_unref(stream);
 

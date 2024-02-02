@@ -22,24 +22,13 @@
 #include <lauxlib.h>
 #include "common/property.h"
 
-#include <webkit2/webkit2.h>
-#include <libsoup/soup-version.h>
-#if SOUP_CHECK_VERSION(3,0,0)
-#include <libsoup/soup-uri-utils.h>
-#else
 #include <libsoup/soup-uri.h>
-#define SOUP_HTTP_URI_FLAGS (G_URI_FLAGS_HAS_PASSWORD     |\
-                             G_URI_FLAGS_ENCODED_PATH     |\
-                             G_URI_FLAGS_ENCODED_QUERY    |\
-                             G_URI_FLAGS_ENCODED_FRAGMENT |\
-                             G_URI_FLAGS_SCHEME_NORMALIZE)
-#endif
-
+#include <webkit2/webkit2.h>
 
 static gint
 luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 {
-    GUri *u;
+    SoupURI *u;
     property_tmp_t tmp;
 
 #define TG_CASE(type, dest, pfunc)                    \
@@ -62,9 +51,9 @@ luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 
       case URI:
         g_object_get(object, p->name, &u, NULL);
-        tmp.c = u ? g_uri_to_string_partial (u, G_URI_HIDE_PASSWORD) : NULL;
+        tmp.c = u ? soup_uri_to_string(u, 0) : NULL;
         lua_pushstring(L, tmp.c);
-        if (u) g_uri_unref(u);
+        if (u) soup_uri_free(u);
         g_free(tmp.c);
         return 1;
 
@@ -78,7 +67,7 @@ luaH_gobject_get(lua_State *L, property_t *p, GObject *object)
 static gboolean
 luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
 {
-    GUri *u;
+    SoupURI *u;
     property_tmp_t tmp;
     size_t len;
 
@@ -114,17 +103,13 @@ luaH_gobject_set(lua_State *L, property_t *p, gint vidx, GObject *object)
             tmp.c = g_strdup(tmp.c);
         else
             tmp.c = g_strdup_printf("http://%s", tmp.c);
-        u = g_uri_parse(tmp.c, SOUP_HTTP_URI_FLAGS, NULL);
-
-        gboolean valid = !u || ( (!g_strcmp0(g_uri_get_scheme(u), "http")
-                                     || !g_strcmp0(g_uri_get_scheme(u), "https") )
-                                 && g_uri_get_host(u)
-                                 && g_uri_get_path(u) );
+        u = soup_uri_new(tmp.c);
+        gboolean valid = !u || SOUP_URI_VALID_FOR_HTTP(u);
         if (valid) {
             g_object_set(object, p->name, u, NULL);
             g_free(tmp.c);
         }
-        if (u) g_uri_unref(u);
+        soup_uri_free(u);
         if (!valid) {
             lua_pushfstring(L, "invalid uri: %s", tmp.c);
             g_free(tmp.c);
