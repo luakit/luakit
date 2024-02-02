@@ -24,7 +24,7 @@ if [ x"$VERSION_FROM_GIT" != x ]; then
 fi
 
 if [ "$VERSION_FROM_ARCHIVE" != ':%H$' ]; then
-    expr substr $VERSION_FROM_ARCHIVE 1 8; exit 0;
+    echo $VERSION_FROM_ARCHIVE | cut -b1-8; exit 0;
 fi
 
 echo "ERROR: Commit hash detection failure. Dear packager, please figure out"\
