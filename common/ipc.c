@@ -78,11 +78,18 @@ ipc_send_thread(gpointer UNUSED(user_data))
         ipc_header_t *header = &out->header;
         gpointer data = out->payload;
 
-        g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
-        g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
+        /* On any step here, the channel can disappear */
+        if((ipc->channel != NULL) && (ipc->status == IPC_ENDPOINT_CONNECTED))
+            g_io_channel_write_chars(ipc->channel, (gchar*)header, sizeof(*header), NULL, NULL);
 
-        /* Message is sent; endpoint can be freed now */
-        ipc_endpoint_decref(ipc);
+        if((ipc->channel != NULL) && (ipc->status == IPC_ENDPOINT_CONNECTED))
+            g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
+
+        if((ipc->channel != NULL) && (ipc->status == IPC_ENDPOINT_CONNECTED))
+            ipc_endpoint_decref(ipc);
+        else
+            error("Trying to send an ipc message, but the endpoint went away.");
+
         g_free(out);
     }
 
