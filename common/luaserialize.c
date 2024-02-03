@@ -95,6 +95,10 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
         }
         case LUA_TLIGHTUSERDATA: {
             gpointer p = lua_touserdata(L, index);
+            if (!p) {
+                warn("serialize lua lightuserdata on non object");
+                break;
+            }
             g_byte_array_append(out, (guint8*)&p, sizeof(p));
             break;
         }

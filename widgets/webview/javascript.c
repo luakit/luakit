@@ -39,6 +39,10 @@ run_javascript_finished(const guint8 *msg, guint length)
     lua_remove(L, -n);
     n--;
     gpointer cb = lua_touserdata(L, -n);
+    if(!cb) {
+        warn("javascript finshed called on non object");
+        return;
+    }
     lua_remove(L, -n);
     n--;
 

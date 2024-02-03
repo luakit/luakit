@@ -148,6 +148,10 @@ luaH_object_add_signal(lua_State *L, gint oud,
         const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
+    if (!obj) {
+        warn("object add signal on non object");
+        return;
+    }
 
     gchar *origin = luaH_callerinfo(L);
     debug("add " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
@@ -168,6 +172,10 @@ luaH_object_remove_signal(lua_State *L, gint oud,
         const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
+    if (!obj) {
+        warn("object remove signal on non object");
+        return;
+    }
     gpointer ref = (gpointer) lua_topointer(L, ud);
     signal_remove(obj->signals, name, ref);
     luaH_object_unref_item(L, oud, ref);
@@ -181,8 +189,10 @@ luaH_object_remove_signal(lua_State *L, gint oud,
 void
 luaH_object_remove_signals(lua_State *L, gint oud, const gchar *name) {
     lua_object_t *obj = lua_touserdata(L, oud);
-    if (!obj)
+    if (!obj) {
+        warn("object remove signals on non object");
         return;
+    }
     signal_array_t *sigfuncs = signal_lookup(obj->signals, name);
     if (!sigfuncs)
         return;
@@ -304,6 +314,8 @@ luaH_object_emit_signal(lua_State *L, gint oud,
     gint ret, top, bot = lua_gettop(L) - nargs + 1;
     gint oud_abs = luaH_absindex(L, oud);
     lua_object_t *obj = lua_touserdata(L, oud);
+    if (!obj)
+        return luaL_error(L, "trying to emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET " on non-object", name);
 
     gchar *origin = luaH_callerinfo(L);
     debug("emit " ANSI_COLOR_BLUE "\"%s\"" ANSI_COLOR_RESET
@@ -441,6 +453,10 @@ luaH_object_tostring(lua_State *L) {
 gint
 luaH_object_gc(lua_State *L) {
     lua_object_t *item = lua_touserdata(L, 1);
+    if (!item) {
+        warn("garbage collect on non-object");
+        return 0;
+    }
     if (item->signals) {
         luaH_object_remove_all_signals(item->signals);
         signal_destroy(item->signals);
