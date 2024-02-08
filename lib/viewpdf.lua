@@ -1,7 +1,8 @@
 --- Automatic PDF viewing.
 --
 -- This module automatically downloads PDF files to the luakit cache directory,
--- and opens them with `xdg-open`.
+-- and opens them with `xdg-open`.  You must disable the enable_pdfjs
+-- setting for this to work.
 --
 -- @module viewpdf
 -- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
