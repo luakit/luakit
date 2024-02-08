@@ -78,7 +78,7 @@ luaH_unique_new(lua_State *L)
 
     GError *error = NULL;
     if (!globalconf.application) {
-#if GTK_CHECK_VERSION(2,74,0)
+#if GLIB_CHECK_VERSION(2,74,0)
         globalconf.application = gtk_application_new(name, G_APPLICATION_DEFAULT_FLAGS);
 #else
         globalconf.application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
