@@ -575,7 +575,7 @@ local webview_settings = {
     },
     ["application.enable_pdfjs"] = {
         type = "boolean",
-        default = false,
+        default = true,
         desc = [=[
             Whether to load PDFs in a built-in javascript renderer.
             The default is to pass them on to the OS.  This setting
