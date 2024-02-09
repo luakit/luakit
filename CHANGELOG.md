@@ -19,6 +19,7 @@
 ### Contributors to this release:
 
 - @c0dev0id
+- @msdemlei
 - @serg-kozhemyakin
 - @sideeffect42
 
