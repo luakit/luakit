@@ -5,7 +5,6 @@ doc/html
 # Build targets
 luakit
 luakit.so
-luakit.1.gz
 tests/util.so
 
 # Generated source files
@@ -20,4 +19,8 @@ buildopts.h
 # Miscellaneous
 *.swp
 *~
+.gdb_history
+.tags
 tags
+cscope.*
+
