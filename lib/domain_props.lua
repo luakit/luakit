@@ -85,7 +85,6 @@
 --  - `fantasy_font_family`
 --  - `javascript_can_access_clipboard`
 --  - `javascript_can_open_windows_automatically`
---  - `load_icons_ignoring_image_load_setting`
 --  - `media_playback_allows_inline`
 --  - `media_playback_requires_user_gesture`
 --  - `minimum_font_size`

@@ -660,11 +660,6 @@ local webview_settings = {
         default = false,
         desc = "Whether JavaScript can open windows without user intervention.",
     },
-    ["webview.load_icons_ignoring_image_load_setting"] = {
-        type = "boolean",
-        default = false,
-        desc = "Whether web page favicons should be loaded, even if `webview.auto_load_images` is disabled.",
-    },
     ["webview.media_playback_allows_inline"] = {
         type = "boolean",
         default = true,

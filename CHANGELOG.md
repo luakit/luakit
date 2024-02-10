@@ -10,6 +10,7 @@
 ### Changed
 
 - Don't compress man page. This should be done by maintainers.
+- Removed now unsupported/ignored load-icons-ignoring-image-load-setting.
 
 ### Fixed
 

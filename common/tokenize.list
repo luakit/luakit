@@ -193,7 +193,6 @@ enable_tabs_to_links
 enable_webaudio
 enable_webgl
 enable_write_console_messages_to_stdout
-load_icons_ignoring_image_load_setting
 media_playback_allows_inline
 media_playback_requires_gesture
 pictograph_font_family
