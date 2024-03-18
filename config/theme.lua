@@ -9,7 +9,7 @@ theme.font = "12px monospace"
 theme.fg   = "#fff"
 theme.bg   = "#000"
 
--- Genaral colours
+-- General colours
 theme.success_fg = "#0f0"
 theme.loaded_fg  = "#33AADD"
 theme.error_fg = "#FFF"
