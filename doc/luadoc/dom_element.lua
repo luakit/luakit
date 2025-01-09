@@ -118,9 +118,11 @@
 -- @readonly
 
 --- @property style
--- Table of computed styles. Index should be the name of a CSS property value.
+-- Table of styles. Index should be the name of a CSS property value. When
+-- indexed, returns the corresponding computed style. When assigned to an index,
+-- modifies the `style` property of the DOM element.
 -- @type table
--- @readonly
+-- @readwrite
 
 --- @property attr
 -- The attributes of the DOM element and their values, as key/value

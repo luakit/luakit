@@ -341,6 +341,28 @@ luaH_dom_element_style_index(lua_State *L)
     return 1;
 }
 
+static int luaH_dom_element_style_newindex(lua_State *L)
+{
+    dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
+    JSCValue *e = L_DOM_ELEMENT_TO_JSC_VALUE(element);
+    if (!jsc_value_object_is_instance_of(e, "HTMLElement"))
+        return luaL_error(L, "style can only be set on HTMLElements");
+
+    const char *property = luaL_checkstring(L, 2);
+
+    JSCValue *value = luajs_tovalue(L, 3, jsc_value_get_context(e));
+    if (!value)
+        return luaL_error(L, "failed to convert Lua value to JavaScript");
+
+    JSCValue *style = jsc_value_object_get_property(e, "style");
+    jsc_value_object_set_property(style, property, value);
+    g_object_unref(style);
+
+    g_object_unref(value);
+
+    return 0;
+}
+
 static gint
 luaH_dom_element_push_style_table(lua_State *L)
 {
@@ -352,6 +374,11 @@ luaH_dom_element_push_style_table(lua_State *L)
     lua_pushliteral(L, "__index");
     lua_pushvalue(L, 1); /* copy element userdata */
     lua_pushcclosure(L, luaH_dom_element_style_index, 1);
+    lua_rawset(L, -3);
+    /* push __newindex metafunction */
+    lua_pushliteral(L, "__newindex");
+    lua_pushvalue(L, 1); /* copy element userdata */
+    lua_pushcclosure(L, luaH_dom_element_style_newindex, 1);
     lua_rawset(L, -3);
     lua_setmetatable(L, -2);
     return 1;

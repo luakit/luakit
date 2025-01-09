@@ -5,6 +5,7 @@
 ### Added
 
 - Added GitHub Actions CI workflows with cross-platform testing across Linux distributions (Alpine, Arch, Debian, Ubuntu), BSDs (FreeBSD, OpenBSD, NetBSD), and other systems.
+- Keys of the `style` property table of instances of the `dom_element` Lua class are now writable.
 
 ### Changed
 
