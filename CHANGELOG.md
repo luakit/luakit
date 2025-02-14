@@ -1,8 +1,6 @@
 # Changelog
 
-
-## [develop]
-
+## [2.4.0]
 
 ### Added
 
@@ -43,9 +41,12 @@
 
 ### Contributors to this release:
 
+- @aidanholm
 - @balejk
 - @c0dev0id
+- @harishnkr
 - @msdemlei
+- @rdbo
 - @serg-kozhemyakin
 - @sideeffect42
 
