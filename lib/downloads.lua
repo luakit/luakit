@@ -67,9 +67,14 @@ function _M.init()
         VALUES (?, ?, ?, ?, ?)
     ]]
 
+    query_delete = _M.db:compile [[
+        DELETE FROM downloads
+        WHERE finished_time = (?)
+    ]]
+
     local rows = _M.db:exec("SELECT * FROM downloads")
     for _, row in ipairs(rows) do
-        local d = {uri = rawget(row, "uri"), destination = rawget(row, "destination"),
+        local d = {rowid = rawget(row, "finished_time"), uri = rawget(row, "uri"), destination = rawget(row, "destination"),
                    total_size = rawget(row, "total_size"), status = "finished"}
         local data = {
             created = rawget(row, "created_time"),
@@ -220,6 +225,7 @@ function _M.remove(id)
     local d = assert(_M.to_download(id),
         "download.remove() expected valid download object or id")
     if is_running(d) then _M.cancel(d) end
+        query_delete:exec{d.rowid} 
     _M.emit_signal("removed-download", d, dls[d])
     dls[d] = nil
 end
