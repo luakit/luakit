@@ -166,7 +166,8 @@ end)
 -- @tparam table opts A table of options.
 function _M.add(uri, opts)
     opts = opts or {}
-    local d = (type(uri) == "string" and download{uri=uri}) or uri
+    local d = uri
+    if type(uri) == "string" then download{uri=uri} return end
 
     assert(type(d) == "download",
         string.format("download.add() expected uri or download object "
@@ -205,6 +206,7 @@ function _M.add(uri, opts)
     end)
 
     d:add_signal("finished", function(dd)
+        if not dd.destination then return end
         query_insert:exec{os.time(), dls[dd].created, dd.uri, dd.destination, dd.total_size}
     end)
 end
