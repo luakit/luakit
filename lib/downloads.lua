@@ -24,6 +24,7 @@ local _M = {}
 _M.db_path = luakit.data_dir .. "/downloads.db"
 
 local query_insert
+local query_delete
 
 -- Setup signals on downloads module
 lousy.signal.setup(_M, true)
