@@ -26,6 +26,12 @@
 
 #include <lua.h>
 
+typedef struct proc_callback_data_t {
+    gpointer cb_ref;
+    gint stdout_fd;
+    gint stderr_fd;
+} proc_callback_data_t;
+
 void luakit_lib_setup(lua_State *L);
 void luaH_register_functions_on_endpoint(ipc_endpoint_t *ipc, lua_State *L);
 lua_class_t * luakit_lib_get_luakit_class(void);
