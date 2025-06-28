@@ -26,6 +26,9 @@
 
 #include <lua.h>
 
+/*
+ * Container for callback function and stdout / stderr file descriptors
+ */
 typedef struct proc_callback_data_t {
     gpointer cb_ref;
     gint stdout_fd;

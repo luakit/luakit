@@ -69,6 +69,8 @@
 -- @tparam string reason The reason for process termination. Can be one of `"exit"`, indicating normal termination;
 -- `"signal"`, indicating the process was killed with a signal; and `"unknown"`.
 -- @tparam integer status The exit status code of the process. Its meaning is system-dependent.
+-- @tparam string stdout Standard output of the process
+-- @tparam string stderr Standard error of the process
 
 --- Spawn a process asynchronously.
 -- @tparam string cmd The command to execute. It is parsed with a simple shell-like parser ([`g_shell_parse_argv`](https://docs.gtk.org/glib/func.shell_parse_argv.html)).
