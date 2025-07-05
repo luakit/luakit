@@ -24,6 +24,7 @@
 
 #include "extension/clib/dom_element.h"
 #include "extension/clib/dom_document.h"
+#include "common/luajs.h"
 #include "common/luauniq.h"
 #include "extension/extension.h"
 
@@ -32,6 +33,8 @@
 static lua_class_t dom_element_class;
 
 LUA_DOM_ELEMENT_FUNCS(dom_element_class, dom_element_t, dom_element);
+
+#define L_DOM_ELEMENT_TO_JSC_VALUE(e) webkit_frame_get_js_value_for_dom_object(webkit_web_page_get_main_frame(e->page), WEBKIT_DOM_OBJECT(e->element))
 
 static dom_element_t*
 luaH_check_dom_element(lua_State *L, gint udx)
@@ -136,23 +139,30 @@ static gint
 luaH_dom_element_query(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
     const char *query = luaL_checkstring(L, 2);
-    GError *error = NULL;
 
-    WebKitDOMNodeList *nodes = webkit_dom_element_query_selector_all(elem, query, &error);
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(element);
 
-    if (error)
-        return luaL_error(L, "query error: %s", error->message);
+    JSCValue *node_list = jsc_value_object_invoke_method(ref, "querySelectorAll", G_TYPE_STRING, query, G_TYPE_NONE);
+    JSCException *e = jsc_context_get_exception(jsc_value_get_context(ref));
+    if (e) {
+        g_object_unref(node_list);
+        return luaL_error(L, "query error: %s", jsc_exception_to_string(e));
+    }
 
-    gulong n = webkit_dom_node_list_get_length(nodes);
+    JSCValue *length = jsc_value_object_get_property(node_list, "length");
+    int n = jsc_value_to_int32(length);
+    g_object_unref(length);
 
     lua_createtable(L, n, 0);
     for (gulong i=0; i<n; i++) {
-        WebKitDOMNode *node = webkit_dom_node_list_item(nodes, i);
-        luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node), element->page);
+        JSCValue *node = jsc_value_object_get_property_at_index(node_list, i);
+        luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(webkit_dom_node_for_js_value(node)), element->page);
+        g_object_unref(node);
         lua_rawseti(L, 3, i+1);
     }
+
+    g_object_unref(node_list);
 
     return 1;
 }
@@ -162,36 +172,50 @@ luaH_dom_element_append(lua_State *L)
 {
     dom_element_t *parent = luaH_check_dom_element(L, 1),
                   *child = luaH_check_dom_element(L, 2);
-    WebKitDOMNode *p = WEBKIT_DOM_NODE(parent->element),
-                  *c = WEBKIT_DOM_NODE(child->element);
-    GError *error = NULL;
-    webkit_dom_node_append_child(p, c, &error);
-    return error ? luaL_error(L, "append element error: %s", error->message) : 0;
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(parent);
+
+    g_object_unref(jsc_value_object_invoke_method(ref, "appendChild", JSC_TYPE_VALUE, L_DOM_ELEMENT_TO_JSC_VALUE(child), G_TYPE_NONE));
+
+    JSCException *e = jsc_context_get_exception(jsc_value_get_context(ref));
+    return e ? luaL_error(L, "append element error: %s", jsc_exception_to_string(e)) : 0;
 }
 
 static gint
 luaH_dom_element_remove(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    if (!WEBKIT_DOM_IS_ELEMENT(element->element))
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(element);
+    if (!jsc_value_object_is_instance_of(ref, "Element"))
         return 0;
-    GError *error = NULL;
-    webkit_dom_element_remove(element->element, &error);
-    return error ? luaL_error(L, "remove element error: %s", error->message) : 0;
+    g_object_unref(jsc_value_object_invoke_method(ref, "remove", G_TYPE_NONE));
+    JSCException *e = jsc_context_get_exception(jsc_value_get_context(ref));
+    return e ? luaL_error(L, "remove element error: %s", jsc_exception_to_string(e)) : 0;
 }
 
 static void
-dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
+dom_element_get_left_and_top(JSCValue *elem, glong *l, glong *t)
 {
-    if (!elem) {
+    if (!elem || !jsc_value_object_is_instance_of(elem, "Element")) {
         *l = 0;
         *t = 0;
     } else {
-        dom_element_get_left_and_top(webkit_dom_element_get_offset_parent(elem), l, t);
-        *l += webkit_dom_element_get_offset_left(elem);
-        *l -= webkit_dom_element_get_scroll_left(elem);
-        *t += webkit_dom_element_get_offset_top(elem);
-        *t -= webkit_dom_element_get_scroll_top(elem);
+        JSCValue *offset_parent = jsc_value_object_get_property(elem, "offsetParent");
+        dom_element_get_left_and_top(offset_parent, l, t);
+        g_object_unref(offset_parent);
+
+        JSCValue *ret;
+        ret = jsc_value_object_get_property(elem, "offsetLeft");
+        *l += jsc_value_to_int32(ret);
+        g_object_unref(ret);
+        ret = jsc_value_object_get_property(elem, "scrollLeft");
+        *l -= jsc_value_to_int32(ret);
+        g_object_unref(ret);
+        ret = jsc_value_object_get_property(elem, "offsetTop");
+        *t += jsc_value_to_int32(ret);
+        g_object_unref(ret);
+        ret = jsc_value_object_get_property(elem, "scrollTop");
+        *t -= jsc_value_to_int32(ret);
+        g_object_unref(ret);
     }
 }
 
@@ -202,16 +226,26 @@ luaH_dom_element_rect_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMElement *elem = element->element;
-
     glong left, top;
 
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(element);
+
     switch (token) {
-        PI_CASE(WIDTH, webkit_dom_element_get_offset_width(elem));
-        PI_CASE(HEIGHT, webkit_dom_element_get_offset_height(elem));
+        case L_TK_WIDTH:
+            JSCValue *offsetWidth = jsc_value_object_get_property(ref, "offsetWidth");
+            int offset_width = jsc_value_to_int32(offsetWidth);
+            g_object_unref(offsetWidth);
+            lua_pushinteger(L, offset_width);
+            return 1;
+        case L_TK_HEIGHT:
+            JSCValue *offsetHeight = jsc_value_object_get_property(ref, "offsetHeight");
+            int offset_height = jsc_value_to_int32(offsetHeight);
+            g_object_unref(offsetHeight);
+            lua_pushinteger(L, offset_height);
+            return 1;
         case L_TK_LEFT:
         case L_TK_TOP:
-            dom_element_get_left_and_top(elem, &left, &top);
+            dom_element_get_left_and_top(ref, &left, &top);
             lua_pushinteger(L, token == L_TK_LEFT ? left : top);
             return 1;
         default:
@@ -311,17 +345,7 @@ static gint
 luaH_dom_element_click(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
-    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
-    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
-    GError *error = NULL;
-    WebKitDOMEvent *event = webkit_dom_document_create_event(doc, "MouseEvent", &error);
-    if (error)
-        return luaL_error(L, "create event error: %s", error->message);
-    webkit_dom_event_init_event(event, "click", TRUE, TRUE);
-    webkit_dom_event_target_dispatch_event(target, event, &error);
-    if (error)
-        return luaL_error(L, "dispatch event error: %s", error->message);
+    g_object_unref(jsc_value_object_invoke_method(L_DOM_ELEMENT_TO_JSC_VALUE(element), "click", G_TYPE_NONE));
     return 0;
 }
 
@@ -329,7 +353,7 @@ static gint
 luaH_dom_element_focus(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    webkit_dom_element_focus(element->element);
+    g_object_unref(jsc_value_object_invoke_method(L_DOM_ELEMENT_TO_JSC_VALUE(element), "focus", G_TYPE_NONE));
     return 0;
 }
 
@@ -337,7 +361,7 @@ static gint
 luaH_dom_element_submit(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    webkit_dom_html_form_element_submit(WEBKIT_DOM_HTML_FORM_ELEMENT(element->element));
+    g_object_unref(jsc_value_object_invoke_method(L_DOM_ELEMENT_TO_JSC_VALUE(element), "submit", G_TYPE_NONE));
     return 0;
 }
 
@@ -653,73 +677,13 @@ luaH_dom_element_client_rects(lua_State *L)
 }
 #endif
 
-static gint
-luaH_dom_element_push_src(lua_State *L)
+static int luaH_dom_element_push_attribute(lua_State *L, char *attribute)
 {
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-
-#define CHECK(lower, upper) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
-        lua_pushstring(L, webkit_dom_html_##lower##_element_get_src(WEBKIT_DOM_HTML_##upper##_ELEMENT(element->element))); \
-        return 1; \
-    }
-
-    CHECK(input, INPUT);
-    CHECK(frame, FRAME);
-    CHECK(iframe, IFRAME);
-    CHECK(embed, EMBED);
-    CHECK(image, IMAGE);
-    CHECK(script, SCRIPT);
-
-#undef CHECK
-
-    return 0;
-}
-
-static gint
-luaH_dom_element_push_href(lua_State *L)
-{
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-
-#define CHECK(lower, upper) \
-    if (WEBKIT_DOM_IS_##upper(element->element)) { \
-        lua_pushstring(L, webkit_dom_##lower##_get_href(WEBKIT_DOM_##upper(element->element))); \
-        return 1; \
-    }
-
-    CHECK(html_anchor_element, HTML_ANCHOR_ELEMENT);
-    CHECK(html_area_element, HTML_AREA_ELEMENT);
-    CHECK(html_link_element, HTML_LINK_ELEMENT);
-    CHECK(style_sheet, STYLE_SHEET);
-
-#undef CHECK
-
-    return 0;
-}
-
-static gint
-luaH_dom_element_push_value(lua_State *L)
-{
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-
-#define CHECK(lower, upper, type) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
-        lua_push##type(L, webkit_dom_html_##lower##_element_get_value( \
-                    WEBKIT_DOM_HTML_##upper##_ELEMENT(element->element))); \
-        return 1; \
-    }
-
-    CHECK(text_area, TEXT_AREA, string);
-    CHECK(input, INPUT, string);
-    CHECK(option, OPTION, string);
-    CHECK(param, PARAM, string);
-    CHECK(li, LI, integer);
-    CHECK(button, BUTTON, string);
-    CHECK(select, SELECT, string);
-
-#undef CHECK
-
-    return 0;
+    dom_element_t *elem = luaH_check_dom_element(L, 1);
+    JSCValue *value = jsc_value_object_invoke_method(L_DOM_ELEMENT_TO_JSC_VALUE(elem), "getAttribute", G_TYPE_STRING, attribute, G_TYPE_NONE);
+    int ret = luajs_pushvalue(L, value);
+    g_object_unref(value);
+    return ret;
 }
 
 static gint
@@ -747,48 +711,23 @@ dom_html_element_set_value(lua_State *L, WebKitDOMHTMLElement *element)
     return 0;
 }
 
-static gint
-luaH_dom_element_push_parent(lua_State *L)
+/*
+ * Pushes the element corresponding to the named property of the DOM element on
+ * the stack onto the stack. If the original element has no such property, nil
+ * is pushed instead.
+ */
+static int luaH_dom_element_push_element(lua_State *L, const char *property)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMNode *parent = webkit_dom_node_get_parent_node(WEBKIT_DOM_NODE(element->element));
-    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(parent), element->page);
-}
-
-static gint
-luaH_dom_element_push_first_child(lua_State *L)
-{
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
-    WebKitDOMElement *child = webkit_dom_element_get_first_element_child(elem);
-    return luaH_dom_element_from_node(L, child, element->page);
-}
-
-static gint
-luaH_dom_element_push_last_child(lua_State *L)
-{
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
-    WebKitDOMElement *child = webkit_dom_element_get_last_element_child(elem);
-    return luaH_dom_element_from_node(L, child, element->page);
-}
-
-static gint
-luaH_dom_element_push_prev_sibling(lua_State *L)
-{
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
-    WebKitDOMElement *child = webkit_dom_element_get_previous_element_sibling(elem);
-    return luaH_dom_element_from_node(L, child, element->page);
-}
-
-static gint
-luaH_dom_element_push_next_sibling(lua_State *L)
-{
-    dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
-    WebKitDOMElement *child = webkit_dom_element_get_next_element_sibling(elem);
-    return luaH_dom_element_from_node(L, child, element->page);
+    JSCValue *e = jsc_value_object_get_property(L_DOM_ELEMENT_TO_JSC_VALUE(element), property);
+    if (jsc_value_is_null(e)) {
+        g_object_unref(e);
+        lua_pushnil(L);
+        return 1;
+    }
+    int ret = luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(webkit_dom_node_for_js_value(e)), element->page);
+    g_object_unref(e);
+    return ret;
 }
 
 static gint
@@ -813,8 +752,19 @@ static gint
 luaH_dom_element_push_owner_document(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
-    return luaH_dom_document_from_webkit_dom_document(L, doc, element->page);
+    JSCValue *doc = jsc_value_object_get_property(L_DOM_ELEMENT_TO_JSC_VALUE(element), "ownerDocument");
+    int ret = luaH_dom_document_from_webkit_dom_document(L, WEBKIT_DOM_DOCUMENT(webkit_dom_node_for_js_value(doc)), element->page);
+    g_object_unref(doc);
+    return ret;
+}
+
+static int luaH_dom_element_push_property(lua_State *L, const char *property)
+{
+    dom_element_t *element = luaH_check_dom_element(L, 1);
+    JSCValue *value = jsc_value_object_get_property(L_DOM_ELEMENT_TO_JSC_VALUE(element), property);
+    int ret = luajs_pushvalue(L, value);
+    g_object_unref(value);
+    return ret;
 }
 
 static gint
@@ -827,12 +777,13 @@ luaH_dom_element_index(lua_State *L)
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMElement *elem = element->element;
-
     switch(token) {
-        PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
-        PS_CASE(TEXT_CONTENT, webkit_dom_node_get_text_content(WEBKIT_DOM_NODE(elem)))
-        PS_CASE(INNER_HTML, webkit_dom_element_get_inner_html(elem))
+        case L_TK_TAG_NAME:
+            return luaH_dom_element_push_property(L, "tagName");
+        case L_TK_TEXT_CONTENT:
+            return luaH_dom_element_push_property(L, "textContent");
+        case L_TK_INNER_HTML:
+            return luaH_dom_element_push_property(L, "innerHTML");
 
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
@@ -846,24 +797,46 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
 #endif
 
-        PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
+        case L_TK_CHILD_COUNT:
+            return luaH_dom_element_push_property(L, "childElementCount");
 
-        case L_TK_SRC: return luaH_dom_element_push_src(L);
-        case L_TK_HREF: return luaH_dom_element_push_href(L);
-        case L_TK_VALUE: return luaH_dom_element_push_value(L);
-        case L_TK_CHECKED: return webkit_dom_html_input_element_get_checked(
-                                   WEBKIT_DOM_HTML_INPUT_ELEMENT(elem));
-        case L_TK_TYPE: {
-            gchar *type;
-            g_object_get(element->element, "type", &type, NULL);
-            lua_pushstring(L, type);
-            return 1;
-        }
-        case L_TK_PARENT: return luaH_dom_element_push_parent(L);
-        case L_TK_FIRST_CHILD: return luaH_dom_element_push_first_child(L);
-        case L_TK_LAST_CHILD: return luaH_dom_element_push_last_child(L);
-        case L_TK_PREV_SIBLING: return luaH_dom_element_push_prev_sibling(L);
-        case L_TK_NEXT_SIBLING: return luaH_dom_element_push_next_sibling(L);
+        case L_TK_SRC:
+            /*
+             * Returning src as a property rather than attribute for backwards
+             * compatibility, despite it being documented as an attribute. The
+             * difference is that as an attribute, relative URLs will remain
+             * relative whereas like this the complete URI is obtained.
+             */
+            return luaH_dom_element_push_property(L, "src");
+        case L_TK_HREF:
+            /*
+             * Returning href as a property rather than attribute for backwards
+             * compatibility, despite it being documented as an attribute. The
+             * difference is that as an attribute, relative URLs will remain
+             * relative whereas like this the complete URI is obtained.
+             */
+            return luaH_dom_element_push_property(L, "href");
+        case L_TK_VALUE:
+            /*
+             * Handle value as a property to automatically get integer
+             * conversion for <li> elements which is necessary to maintain
+             * backwards compatibility.
+             */
+            return luaH_dom_element_push_property(L, "value");
+        case L_TK_CHECKED:
+            return luaH_dom_element_push_property(L, "checked");
+        case L_TK_TYPE:
+            return luaH_dom_element_push_attribute(L, "type");
+        case L_TK_PARENT:
+            return luaH_dom_element_push_element(L, "parentElement");
+        case L_TK_FIRST_CHILD:
+            return luaH_dom_element_push_element(L, "firstElementChild");
+        case L_TK_LAST_CHILD:
+            return luaH_dom_element_push_element(L, "lastElementChild");
+        case L_TK_PREV_SIBLING:
+            return luaH_dom_element_push_element(L, "previousElementSibling");
+        case L_TK_NEXT_SIBLING:
+            return luaH_dom_element_push_element(L, "nextElementSibling");
         case L_TK_RECT: return luaH_dom_element_push_rect_table(L);
         case L_TK_ATTR: return luaH_dom_element_push_attribute_table(L);
         case L_TK_STYLE: return luaH_dom_element_push_style_table(L);
