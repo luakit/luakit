@@ -106,7 +106,7 @@ luaH_dom_element_gc(lua_State *L)
 }
 
 gint
-luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
+luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node, WebKitWebPage *page)
 {
     if (!node) {
         lua_pushnil(L);
@@ -118,6 +118,7 @@ luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node)
 
     dom_element_t *element = dom_element_new(L);
     element->element = node;
+    element->page = page;
 
     luaH_uniq_add_ptr(L, REG_KEY, node, -1);
     g_object_weak_ref(G_OBJECT(node), (GWeakNotify)webkit_web_page_destroy_cb, element);
@@ -129,63 +130,6 @@ dom_element_t *
 luaH_to_dom_element(lua_State *L, gint idx)
 {
     return luaH_toudata(L, idx, &dom_element_class);
-}
-
-static char *
-dom_element_selector(dom_element_t *element)
-{
-    WebKitDOMNode *elem = WEBKIT_DOM_NODE(element->element), *parent;
-    GPtrArray *parts = g_ptr_array_new_full(10, g_free);
-
-    while ((parent = webkit_dom_node_get_parent_node(elem))) {
-        char *tag = webkit_dom_element_get_tag_name(WEBKIT_DOM_ELEMENT(elem));
-        if (!strcmp(tag, "BODY") || !strcmp(tag, "HEAD")) {
-            g_ptr_array_add(parts, g_strdup(tag));
-            break;
-        } else {
-            int c = 1;
-            WebKitDOMElement *e = WEBKIT_DOM_ELEMENT(elem), *ps;
-            while ((ps = webkit_dom_element_get_previous_element_sibling(e))) {
-                e = ps;
-                c++;
-            }
-            g_ptr_array_add(parts, g_strdup_printf("%s:nth-child(%d)", tag, c));
-        }
-        elem = parent;
-    }
-
-    /* Reverse array and add null terminator for g_strjoinv() */
-    for (guint i = 0, j = parts->len-1; i < j; i++, j--) {
-        char *tmp = parts->pdata[i];
-        parts->pdata[i] = parts->pdata[j];
-        parts->pdata[j] = tmp;
-    }
-    g_ptr_array_add(parts, NULL);
-
-    char *sel = g_strjoinv(" > ", (char **)parts->pdata);
-    g_ptr_array_free(parts, TRUE);
-    return sel;
-}
-
-JSCValue *
-dom_element_js_ref(page_t *page, dom_element_t *element)
-{
-    gchar *sel = dom_element_selector(element);
-
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
-
-    JSCValue *js_global = jsc_context_get_global_object(ctx);
-    JSCValue *js_doc = jsc_value_object_get_property(js_global, "document");
-    JSCValue *ret = jsc_value_object_invoke_method(js_doc, "querySelector", G_TYPE_STRING, sel, G_TYPE_NONE);
-
-    g_object_unref(js_doc);
-    g_object_unref(js_global);
-    g_object_unref(ctx);
-    g_free(sel);
-
-    return ret;
 }
 
 static gint
@@ -206,7 +150,7 @@ luaH_dom_element_query(lua_State *L)
     lua_createtable(L, n, 0);
     for (gulong i=0; i<n; i++) {
         WebKitDOMNode *node = webkit_dom_node_list_item(nodes, i);
-        luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node));
+        luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node), element->page);
         lua_rawseti(L, 3, i+1);
     }
 
@@ -495,7 +439,7 @@ event_listener_cb(WebKitDOMElement *UNUSED(elem), WebKitDOMEvent *event, gboolea
     lua_createtable(L, 0, 1);
     lua_pushliteral(L, "target");
     WebKitDOMEventTarget *target = webkit_dom_event_get_src_element(event);
-    luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target));
+    luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(target), element->page);
     lua_rawset(L, -3);
 
     lua_pushliteral(L, "type");
@@ -808,7 +752,7 @@ luaH_dom_element_push_parent(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMNode *parent = webkit_dom_node_get_parent_node(WEBKIT_DOM_NODE(element->element));
-    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(parent));
+    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(parent), element->page);
 }
 
 static gint
@@ -817,7 +761,7 @@ luaH_dom_element_push_first_child(lua_State *L)
     dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_first_element_child(elem);
-    return luaH_dom_element_from_node(L, child);
+    return luaH_dom_element_from_node(L, child, element->page);
 }
 
 static gint
@@ -826,7 +770,7 @@ luaH_dom_element_push_last_child(lua_State *L)
     dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_last_element_child(elem);
-    return luaH_dom_element_from_node(L, child);
+    return luaH_dom_element_from_node(L, child, element->page);
 }
 
 static gint
@@ -835,7 +779,7 @@ luaH_dom_element_push_prev_sibling(lua_State *L)
     dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_previous_element_sibling(elem);
-    return luaH_dom_element_from_node(L, child);
+    return luaH_dom_element_from_node(L, child, element->page);
 }
 
 static gint
@@ -844,7 +788,7 @@ luaH_dom_element_push_next_sibling(lua_State *L)
     dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMElement *elem = element->element;
     WebKitDOMElement *child = webkit_dom_element_get_next_element_sibling(elem);
-    return luaH_dom_element_from_node(L, child);
+    return luaH_dom_element_from_node(L, child, element->page);
 }
 
 static gint
@@ -862,7 +806,7 @@ luaH_dom_element_push_document(lua_State *L)
     } else
         doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
 
-    return luaH_dom_document_from_webkit_dom_document(L, doc);
+    return luaH_dom_document_from_webkit_dom_document(L, doc, element->page);
 }
 
 static gint
@@ -870,7 +814,7 @@ luaH_dom_element_push_owner_document(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
     WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
-    return luaH_dom_document_from_webkit_dom_document(L, doc);
+    return luaH_dom_document_from_webkit_dom_document(L, doc, element->page);
 }
 
 static gint
