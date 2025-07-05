@@ -53,13 +53,14 @@ webkit_dom_document_destroy_cb(dom_document_t *document, GObject *doc)
 }
 
 gint
-luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc)
+luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc, WebKitWebPage *page)
 {
     if (luaH_uniq_get_ptr(L, REG_KEY, doc))
         return 1;
 
     dom_document_t *document = dom_document_new(L);
     document->document = doc;
+    document->page = page;
 
     luaH_uniq_add_ptr(L, REG_KEY, doc, -1);
     g_object_weak_ref(G_OBJECT(doc), (GWeakNotify)webkit_dom_document_destroy_cb, document);
@@ -77,7 +78,7 @@ static gint
 luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 {
     WebKitDOMHTMLElement* node = webkit_dom_document_get_body(document->document);
-    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node));
+    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node), document->page);
 }
 
 static gint
@@ -147,7 +148,7 @@ luaH_dom_document_create_element(lua_State *L)
         webkit_dom_html_element_set_inner_text(WEBKIT_DOM_HTML_ELEMENT(elem), inner_text, NULL);
     }
 
-    return luaH_dom_element_from_node(L, elem);
+    return luaH_dom_element_from_node(L, elem, document->page);
 }
 
 static gint
@@ -159,7 +160,7 @@ luaH_dom_document_element_from_point(lua_State *L)
 
     WebKitDOMElement *elem = webkit_dom_document_element_from_point(document->document, x, y);
 
-    return luaH_dom_element_from_node(L, elem);
+    return luaH_dom_element_from_node(L, elem, document->page);
 }
 
 static gint
