@@ -315,13 +315,20 @@ static gint
 luaH_dom_element_style_index(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
-    WebKitDOMDocument *document = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
-    WebKitDOMCSSStyleDeclaration *style = webkit_dom_dom_window_get_computed_style(window, element->element, "");
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(element);
+    JSCValue *window = jsc_context_get_value(jsc_value_get_context(ref), "window");
+    JSCValue *computed_style = jsc_value_object_invoke_method(window, "getComputedStyle", JSC_TYPE_VALUE, ref, G_TYPE_NONE);
 
     const gchar *name = luaL_checkstring(L, 2);
-    const gchar *value = webkit_dom_css_style_declaration_get_property_value(style, name);
-    lua_pushstring(L, value);
+    JSCValue *value = jsc_value_object_invoke_method(computed_style, "getPropertyValue", G_TYPE_STRING, name, G_TYPE_NONE);
+    char *s = jsc_value_to_string(value);
+    lua_pushstring(L, s);
+    free(s);
+    g_object_unref(value);
+
+    g_object_unref(computed_style);
+    g_object_unref(window);
+
     return 1;
 }
 
