@@ -686,31 +686,6 @@ static int luaH_dom_element_push_attribute(lua_State *L, char *attribute)
     return ret;
 }
 
-static gint
-dom_html_element_set_value(lua_State *L, WebKitDOMHTMLElement *element)
-{
-
-#define CHECK(lower, upper, type) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element)) { \
-        webkit_dom_html_##lower##_element_set_value( \
-                WEBKIT_DOM_HTML_##upper##_ELEMENT(element), \
-                luaL_check##type(L, 3)); \
-        return 1; \
-    }
-
-    CHECK(text_area, TEXT_AREA, string);
-    CHECK(input, INPUT, string);
-    CHECK(option, OPTION, string);
-    CHECK(param, PARAM, string);
-    CHECK(li, LI, integer);
-    CHECK(button, BUTTON, string);
-    CHECK(select, SELECT, string);
-
-#undef CHECK
-
-    return 0;
-}
-
 /*
  * Pushes the element corresponding to the named property of the DOM element on
  * the stack onto the stack. If the original element has no such property, nil
@@ -854,27 +829,29 @@ luaH_dom_element_newindex(lua_State *L)
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    GError *error = NULL;
-
+    char *name;
     switch (token) {
         case L_TK_INNER_HTML:
-            webkit_dom_element_set_inner_html(element->element,
-                    luaL_checkstring(L, 3), &error);
-            if (error)
-                return luaL_error(L, "set inner html error: %s", error->message);
+            name = "innerHTML";
             break;
         case L_TK_VALUE:
-            if (!dom_html_element_set_value(L, WEBKIT_DOM_HTML_ELEMENT(element->element)))
-                return luaL_error(L, "set value error: wrong element type");
+            name = "value";
             break;
         case L_TK_CHECKED:
-            webkit_dom_html_input_element_set_checked(
-                    WEBKIT_DOM_HTML_INPUT_ELEMENT(element->element),
-                    lua_toboolean(L, 3));
+            name = "checked";
             break;
         default:
             return 0;
     }
+
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(element);
+
+    JSCValue *value = luajs_tovalue(L, 3, jsc_value_get_context(ref));
+    if (!value)
+        return luaL_error(L, "failed to convert the Lua value to JavaScript");
+
+    jsc_value_object_set_property(ref, name, value);
+    g_object_unref(value);
 
     return luaH_object_property_signal(L, 1, token);
 }
