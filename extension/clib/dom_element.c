@@ -274,9 +274,10 @@ luaH_dom_element_attribute_index(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *name = luaL_checkstring(L, 2);
-    const gchar *attr = webkit_dom_element_get_attribute(element->element, name);
-    lua_pushstring(L, attr);
-    return 1;
+    JSCValue *attribute = jsc_value_object_invoke_method(L_DOM_ELEMENT_TO_JSC_VALUE(element), "getAttribute", G_TYPE_STRING, name, G_TYPE_NONE);
+    int ret = luajs_pushvalue(L, attribute);
+    g_object_unref(attribute);
+    return ret;
 }
 
 static gint
@@ -285,9 +286,10 @@ luaH_dom_element_attribute_newindex(lua_State *L)
     dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *attr = luaL_checkstring(L, 2);
     const gchar *value = luaL_checkstring(L, 3);
-    GError *error = NULL;
-    webkit_dom_element_set_attribute(element->element, attr, value, &error);
-    return error ? luaL_error(L, "attribute error: %s", error->message) : 0;
+    JSCValue *ref = L_DOM_ELEMENT_TO_JSC_VALUE(element);
+    g_object_unref(jsc_value_object_invoke_method(ref, "setAttribute", G_TYPE_STRING, attr, G_TYPE_STRING, value, G_TYPE_NONE));
+    JSCException *e = jsc_context_get_exception(jsc_value_get_context(ref));
+    return e ? luaL_error(L, "attribute error: %s", jsc_exception_to_string(e)) : 0;
 }
 
 static gint
