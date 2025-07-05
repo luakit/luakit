@@ -26,6 +26,7 @@
 #include "extension/clib/dom_document.h"
 #include "common/luajs.h"
 #include "common/luauniq.h"
+#include "common/util.h"
 #include "extension/extension.h"
 
 #define REG_KEY "luakit.uniq.registry.dom_element"
@@ -657,34 +658,35 @@ luaH_dom_element_remove_event_listener(lua_State *L)
     return 1;
 }
 
-#if WEBKIT_CHECK_VERSION(2,18,0)
 static gint
 luaH_dom_element_client_rects(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMClientRectList *rects = webkit_dom_element_get_client_rects(element->element);
-    int num_rects = webkit_dom_client_rect_list_get_length(rects);
+    JSCValue *rects = jsc_value_object_invoke_method(L_DOM_ELEMENT_TO_JSC_VALUE(element), "getClientRects", G_TYPE_NONE);
+
+    JSCValue *length = jsc_value_object_get_property(rects, "length");
+    int num_rects = jsc_value_to_int32(length);
+    g_object_unref(length);
 
     lua_createtable(L, num_rects, 0);
     for (int i = 0; i < num_rects; ++i) {
-        WebKitDOMClientRect* rect = webkit_dom_client_rect_list_item(rects, i);
+        JSCValue *rect = jsc_value_object_get_property_at_index(rects, i);
         lua_newtable(L);
-#define PROP(prop) \
-            lua_pushnumber(L, webkit_dom_client_rect_get_##prop(rect)); \
-            lua_setfield(L, -2, #prop);
-        PROP(top)
-        PROP(right)
-        PROP(bottom)
-        PROP(left)
-        PROP(width)
-        PROP(height)
-#undef PROP
+        char *properties[] = {"top", "right", "bottom", "left", "width", "height"};
+        for (int j = 0; j < LENGTH(properties); j++) {
+            JSCValue *property = jsc_value_object_get_property(rect, properties[j]);
+            lua_pushnumber(L, jsc_value_to_int32(property));
+            lua_setfield(L, -2, properties[j]);
+            g_object_unref(property);
+        }
         lua_rawseti(L, -2, i+1);
+        g_object_unref(rect);
     }
+
+    g_object_unref(rects);
 
     return 1;
 }
-#endif
 
 static int luaH_dom_element_push_attribute(lua_State *L, char *attribute)
 {
@@ -777,9 +779,7 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(SUBMIT, luaH_dom_element_submit)
         PF_CASE(ADD_EVENT_LISTENER, luaH_dom_element_add_event_listener)
         PF_CASE(REMOVE_EVENT_LISTENER, luaH_dom_element_remove_event_listener)
-#if WEBKIT_CHECK_VERSION(2,18,0)
         PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
-#endif
 
         case L_TK_CHILD_COUNT:
             return luaH_dom_element_push_property(L, "childElementCount");
