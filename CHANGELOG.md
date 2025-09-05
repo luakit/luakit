@@ -1,5 +1,13 @@
 # Changelog
 
+## [develop]
+
+### Added
+
+- Add a `open_link_in_current_tab` option to the `unique_instance` plugin which
+  can be used to have URLs passed from secondary luakit instances be opened in
+  the current tab (rather than in a new one).
+
 ## [2.4.0]
 
 ### Added

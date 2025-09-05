@@ -28,6 +28,14 @@ local unique = luakit.unique
 -- @default `false`
 _M.open_links_in_new_window = false
 
+--- Whether links from secondary luakit instances should open in the current
+-- tab. This only has effect if only a single link is passed to the secondary
+-- instance and if `open_links_in_new_window` is `false`.
+-- @type boolean
+-- @readwrite
+-- @default `false`
+_M.open_link_in_current_tab = false
+
 if not unique then
     msg.verbose("luakit started with no-unique")
     return _M
@@ -65,8 +73,12 @@ unique.add_signal("message", function (message, screen)
         end
 
         if not _M.open_links_in_new_window then
-            for _, uri in ipairs(u) do
-                w:new_tab(uri)
+            if _M.open_link_in_current_tab and #u == 1 then
+                w:navigate(u[1])
+            else
+                for _, uri in ipairs(u) do
+                    w:new_tab(uri)
+                end
             end
         end
     elseif cmd == "tabopen" then
