@@ -51,7 +51,7 @@ local settings_chrome_JS = [=[
         if (type == "boolean")
         {
             value = i.checked;
-            let span = root.querySelector(".input > label > span");
+            let span = root.querySelector(".input label > span");
             span.dataset.value = value;
             span.innerHTML = value ? "Enabled" : "Disabled";
         } else
@@ -69,6 +69,13 @@ local settings_chrome_JS = [=[
     document.body.addEventListener("input", on_change)
     document.body.addEventListener("change", on_change)
     document.body.addEventListener("click", on_click)
+
+    // The enable_javascript setting still appears to allow the first run of javascript but nothing subsequent
+    setTimeout(function() {
+        document.querySelectorAll(".hide-with-js").forEach(function(element) {
+            element.parentElement.removeChild(element);
+        });
+    }, 5);
 ]=]
 
 --- CSS applied to the settings chrome page.
@@ -223,25 +230,33 @@ local function build_settings_entry_table_html(meta)
     ]==]):gsub("{(%w+)}", { rows = rows_html:gsub("%%","%%%%") } )
 end
 
+-- used to make sure any setting changes come from this page
+local rand
+
 local build_settings_entry_html = function (meta)
     local settings_entry_fmt = [==[
-        <tr class="setting {disabled}" data-type={type}>
+        <tr class="setting {disabled} {haserror}" data-type={type}>
             <td style="position: relative;">
-                <div class=title>{key}</div>
+                <div class=title id="{key}">{key}</div>
                 <div class=desc>{desc}</div>
-                <span class=tooltip><b>Error: </b><span class="error-message"></span></span>
+                <span class=tooltip><b>Error: </b><span class="error-message">{error}</span></span>
             </td>
             <td class=input>
+                <form method="GET">
+                <input type=hidden name="settingName" value="{key}" />
+                <input type=hidden name="randomVerif" value="{rand}" />
                 {input}
+                <input type=submit value="Save setting" class="hide-with-js" />
+                </form>
             </td>
         </tr>
     ]==]
     local settings_table_entry_fmt = [==[
-        <tr class="setting {disabled}" data-type={type}>
+        <tr class="setting {disabled} {haserror}" data-type={type}>
             <td colspan=2 style="position: relative;">
-                <div class=title>{key}</div>
+                <div class=title id="{key}">{key}</div>
                 <div class=desc>{desc}</div>
-                <span class=tooltip><b>Error: </b><span class="error-message"></span></span>
+                <span class=tooltip><b>Error: </b><span class="error-message">{error}</span></span>
                 {input}
             </td>
         </tr>
@@ -259,11 +274,12 @@ local build_settings_entry_html = function (meta)
     if meta.type == "boolean" then
         local fmt = ([==[
             <label class=boolean>
-                <input type=checkbox {checked} {disabled} />
+                <input type=checkbox name="{name}" {checked} {disabled} />
                 <span data-value={value}>{text}</span>
             </label>
         ]==])
         input = fmt:gsub("{(%w+)}", {
+                name = meta.key,
                 checked = meta.value and "checked=true" or "",
                 text = meta.value and "Enabled" or "Disabled",
                 value = meta.value and "true" or "false",
@@ -283,7 +299,7 @@ local build_settings_entry_html = function (meta)
     elseif meta.type:find(":") then
         input = build_settings_entry_table_html(meta)
     else
-        input = [==[<input type=text value="{value}" {disabled} />]==]
+        input = [==[<input type=text name="{key}" value="{value}" {disabled} />]==]
     end
 
     local fmt = meta.type:find(":") and settings_table_entry_fmt or settings_entry_fmt
@@ -293,17 +309,67 @@ local build_settings_entry_html = function (meta)
             key = meta.key,
             desc = meta.desc,
             value = tostring(meta.value),
+            error = meta.error or '',
+            haserror = meta.error and 'has-error' or '',
+            rand = rand,
         })
 end
 
-chrome.add("settings", function ()
+local function set_setting(_, key, value, type)
+    if type == "number" then
+        value = tonumber(value)
+        if not value then return "Not a number!" end
+    end
+    local ok, err = pcall(settings.set_setting, key, value)
+    if not ok then
+        err = err:gsub("^.-: ", "")
+        local range_err = err:match("Value outside accepted range (%[[%d%.]+%]) ")
+        if range_err then return "value outside accepted range " .. range_err end
+        return err
+    end
+end
+
+chrome.add("settings", function (w, data)
+    local path = data.path:match('%?(.*)') or ''
+
+    local decodedQuery = {}
+    for k, v in path:gmatch('([^&=]+)=?([^&]*)') do
+        decodedQuery[k] = v
+    end
+
+    local all_settings = settings.get_settings()
+
+    local setting_errs = {}
+
+    if decodedQuery.settingName and decodedQuery.randomVerif == rand then
+        local key = decodedQuery.settingName
+        local value = decodedQuery[key]
+
+        local meta = all_settings[key]
+        if meta then
+            if meta.type == 'boolean' then
+                value = value and true or false
+            elseif meta.type == 'number' then
+                value = tonumber(value)
+            end
+            local err = set_setting(nil, key, value, meta.type)
+            if err then
+                setting_errs[key] = err
+            end
+            -- update it on this page load
+            meta.value = value
+        end
+    end
+    rand = string.format('%07x', math.random(0, 0xfffffff))
+
     local rows, sm = {}, {}
-    for k, meta in pairs(settings.get_settings()) do
+    for k, meta in pairs(all_settings) do
         meta.key = k
         sm[#sm+1] = meta
     end
     table.sort(sm, function (a, b) return a.key < b.key end)
     for i, meta in ipairs(sm) do
+        meta.error = setting_errs[meta.key]
         rows[i] = build_settings_entry_html(meta)
     end
 
@@ -316,19 +382,7 @@ chrome.add("settings", function ()
     local html = string.gsub(_M.html_template, "{(%w+)}", html_subs)
     return html
 end, nil, {
-    set_setting = function (_, key, value, type)
-        if type == "number" then
-            value = tonumber(value)
-            if not value then return "Not a number!" end
-        end
-        local ok, err = pcall(settings.set_setting, key, value)
-        if not ok then
-            err = err:gsub("^.-: ", "")
-            local range_err = err:match("Value outside accepted range (%[[%d%.]+%]) ")
-            if range_err then return "value outside accepted range " .. range_err end
-            return err
-        end
-    end,
+    set_setting = set_setting,
 })
 
 modes.add_cmds({
