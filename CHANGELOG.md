@@ -1,5 +1,10 @@
 # Changelog
 
+##[Unreleased]
+
+### Added
+- Support for GTK native file chooser via XDG Desktop Portal
+
 ## [2.4.0]
 
 ### Added
