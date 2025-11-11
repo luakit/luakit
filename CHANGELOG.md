@@ -4,6 +4,7 @@
 
 ### Added
 - `status_bar.fullscreen_visible` setting to allow status bar to be visible in fullscreen  
+- `tablist.fullscreen_visible` setting to allow the tablist to be visible in fullscreen  
 
 ## [2.4.0]
 
