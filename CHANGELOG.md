@@ -1,5 +1,10 @@
 # Changelog
 
+##[Unreleased]
+
+### Added
+- `status_bar.fullscreen_visible` setting to allow status bar to be visible in fullscreen  
+
 ## [2.4.0]
 
 ### Added

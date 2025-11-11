@@ -349,7 +349,8 @@ _M.methods = {
     end,
 
     update_sbar_visibility = function (w)
-        if (not w.win.fullscreen) or w_priv[w].prompt_text or w_priv[w].input_text then
+        if (not w.win.fullscreen) or w_priv[w].prompt_text or w_priv[w].input_text 
+	    or settings.get_setting("status_bar.fullscreen_visible") then
             w.bar_layout.visible = true
         else
             w.bar_layout.visible = false
@@ -790,6 +791,11 @@ settings.register_settings({
         type = "boolean",
         default = false,
         desc = "Perfer dark CSS when the website supports it (requires restart).",
+    },
+    ["status_bar.fullscreen_visible"] = {
+        type = "boolean",
+        default = false,
+        desc = "Whether to show the status bar when fullscreen.",
     },
     ["window.act_on_synthetic_keys"] = {
         type = "boolean",
