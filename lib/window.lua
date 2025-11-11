@@ -274,7 +274,9 @@ local init_funcs = {
     hide_ui_on_fullscreen = function (w)
         w.win:add_signal("property::fullscreen", function (win)
             w:update_sbar_visibility()
-            w.tablist.visible = not win.fullscreen
+            if not settings.get_setting("tablist.fullscreen_visible") then
+                w.tablist.visible = not win.fullscreen
+	    end
         end)
     end,
 
@@ -349,7 +351,8 @@ _M.methods = {
     end,
 
     update_sbar_visibility = function (w)
-        if (not w.win.fullscreen) or w_priv[w].prompt_text or w_priv[w].input_text then
+        if (not w.win.fullscreen) or w_priv[w].prompt_text or w_priv[w].input_text 
+	    or settings.get_setting("status_bar.fullscreen_visible") then
             w.bar_layout.visible = true
         else
             w.bar_layout.visible = false
@@ -790,6 +793,16 @@ settings.register_settings({
         type = "boolean",
         default = false,
         desc = "Perfer dark CSS when the website supports it (requires restart).",
+    },
+    ["status_bar.fullscreen_visible"] = {
+        type = "boolean",
+        default = false,
+        desc = "Whether to show the status bar when fullscreen.",
+    },
+    ["tablist.fullscreen_visible"] = {
+        type = "boolean",
+        default = false,
+        desc = "Whether to show the tablist when fullscreen.",
     },
     ["window.act_on_synthetic_keys"] = {
         type = "boolean",
