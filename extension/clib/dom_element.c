@@ -594,6 +594,51 @@ dom_element_remove_from_dom(dom_element_t *element)
     return success;
 }
 
+/* Helper: Get client rects via JavaScript getClientRects() */
+static gchar *
+dom_element_get_client_rects_json(dom_element_t *element)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return g_strdup("[]");
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (!elem) return '[]';"
+        "  var rects = elem.getClientRects();"
+        "  var arr = [];"
+        "  for (var i = 0; i < rects.length; i++) {"
+        "    var r = rects[i];"
+        "    arr.push({"
+        "      top: r.top,"
+        "      right: r.right,"
+        "      bottom: r.bottom,"
+        "      left: r.left,"
+        "      width: r.width,"
+        "      height: r.height"
+        "    });"
+        "  }"
+        "  return JSON.stringify(arr);"
+        "})()",
+        sel
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gchar *json = jsc_value_is_string(result) ?
+                  g_strdup(jsc_value_to_string(result)) :
+                  g_strdup("[]");
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return json;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -1093,26 +1138,73 @@ static gint
 luaH_dom_element_client_rects(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMClientRectList *rects = webkit_dom_element_get_client_rects(element->element);
-    int num_rects = webkit_dom_client_rect_list_get_length(rects);
 
-    lua_createtable(L, num_rects, 0);
-    for (int i = 0; i < num_rects; ++i) {
-        WebKitDOMClientRect* rect = webkit_dom_client_rect_list_item(rects, i);
-        lua_newtable(L);
-#define PROP(prop) \
-            lua_pushnumber(L, webkit_dom_client_rect_get_##prop(rect)); \
-            lua_setfield(L, -2, #prop);
-        PROP(top)
-        PROP(right)
-        PROP(bottom)
-        PROP(left)
-        PROP(width)
-        PROP(height)
-#undef PROP
-        lua_rawseti(L, -2, i+1);
+    /* Use JavaScript getClientRects() instead of WebKitDOM */
+    gchar *json = dom_element_get_client_rects_json(element);
+
+    /* Parse JSON array and build Lua table */
+    /* JSON format: [{"top":N,"right":N,"bottom":N,"left":N,"width":N,"height":N},...] */
+
+    lua_newtable(L);
+
+    /* Simple JSON parser for our controlled format */
+    const char *p = json;
+    int rect_index = 1;
+
+    /* Skip opening '[' */
+    while (*p && *p != '[') p++;
+    if (*p == '[') p++;
+
+    while (*p) {
+        /* Skip whitespace */
+        while (*p && (*p == ' ' || *p == '\t' || *p == '\n')) p++;
+
+        if (*p == '{') {
+            p++;
+            lua_newtable(L);
+
+            /* Parse each property */
+            while (*p && *p != '}') {
+                /* Skip whitespace and commas */
+                while (*p && (*p == ' ' || *p == ',' || *p == '\n')) p++;
+
+                if (*p == '"') {
+                    p++;
+                    char prop_name[20];
+                    int i = 0;
+                    while (*p && *p != '"' && i < 19) {
+                        prop_name[i++] = *p++;
+                    }
+                    prop_name[i] = '\0';
+                    if (*p == '"') p++;
+
+                    /* Skip ':' */
+                    while (*p && *p != ':') p++;
+                    if (*p == ':') p++;
+
+                    /* Parse number */
+                    gdouble value = g_ascii_strtod(p, (char**)&p);
+
+                    /* Add to Lua table */
+                    lua_pushnumber(L, value);
+                    lua_setfield(L, -2, prop_name);
+                }
+            }
+
+            if (*p == '}') p++;
+
+            /* Add rect to array */
+            lua_rawseti(L, -2, rect_index++);
+        }
+
+        /* Skip comma */
+        while (*p && (*p == ',' || *p == ' ' || *p == '\n')) p++;
+
+        /* Check for end of array */
+        if (*p == ']') break;
     }
 
+    g_free(json);
     return 1;
 }
 #endif
