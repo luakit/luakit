@@ -16,7 +16,7 @@ local w = assert(select(2, next(window.bywidget)))
 
 --- Helper function to get the undoclose history
 local function get_undoclose_history()
-    local undoclose = package.loaded.undoclose
+    local undoclose = require("undoclose")
     if undoclose and undoclose.history then
         return #undoclose.history
     end

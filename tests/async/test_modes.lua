@@ -13,11 +13,25 @@ local window = require "window"
 local modes = require "modes"
 local w = assert(select(2, next(window.bywidget)))
 
+-- Helper to ensure test mode exists
+local function ensure_test_mode()
+    if not modes.get_mode("test_mode") then
+        modes.new_mode("test_mode", "Test mode description", {
+            enter = function (win)
+                win.test_mode_entered = true
+            end,
+            leave = function (win)
+                win.test_mode_left = true
+            end
+        })
+    end
+end
+
 T.test_mode_creation_and_retrieval = function ()
     test.debug("TEST", "=== Testing mode creation and retrieval ===")
 
     test.debug("STEP", "1. Creating a custom test mode")
-    modes.new_mode("test_mode", "Test mode description", {
+    modes.new_mode("creation_test_mode", "Test mode description", {
         enter = function (win)
             win.test_mode_entered = true
         end,
@@ -27,9 +41,9 @@ T.test_mode_creation_and_retrieval = function ()
     })
 
     test.debug("ASSERT", "Verifying mode was created")
-    local mode = modes.get_mode("test_mode")
+    local mode = modes.get_mode("creation_test_mode")
     assert.is_not_nil(mode)
-    assert.is_equal(mode.name, "test_mode")
+    assert.is_equal(mode.name, "creation_test_mode")
     assert.is_equal(mode.desc, "Test mode description")
     assert.is_function(mode.enter)
     assert.is_function(mode.leave)
@@ -40,7 +54,9 @@ end
 T.test_mode_switching = function ()
     test.debug("TEST", "=== Testing mode switching ===")
 
-    test.debug("STEP", "1. Verifying initial mode is normal")
+    test.debug("STEP", "1. Switching to normal mode first")
+    w:set_mode("normal")
+
     test.debug("ASSERT", "Checking if in normal mode")
     assert.is_true(w:is_mode("normal"))
 
@@ -62,18 +78,21 @@ end
 T.test_mode_hooks_are_called = function ()
     test.debug("TEST", "=== Testing mode enter/leave hooks ===")
 
-    test.debug("STEP", "1. Clearing hook flags")
+    test.debug("STEP", "1. Ensuring test mode exists")
+    ensure_test_mode()
+
+    test.debug("STEP", "2. Clearing hook flags")
     w.test_mode_entered = nil
     w.test_mode_left = nil
 
-    test.debug("STEP", "2. Entering test mode")
+    test.debug("STEP", "3. Entering test mode")
     w:set_mode("test_mode")
 
     test.debug("ASSERT", "Verifying enter hook was called")
     assert.is_true(w.test_mode_entered)
     assert.is_nil(w.test_mode_left)
 
-    test.debug("STEP", "3. Leaving test mode")
+    test.debug("STEP", "4. Leaving test mode")
     w:set_mode("normal")
 
     test.debug("ASSERT", "Verifying leave hook was called")
@@ -85,13 +104,16 @@ end
 T.test_get_all_modes = function ()
     test.debug("TEST", "=== Testing get_modes ===")
 
-    test.debug("STEP", "1. Getting all modes")
+    test.debug("STEP", "1. Ensuring test mode exists")
+    ensure_test_mode()
+
+    test.debug("STEP", "2. Getting all modes")
     local all_modes = modes.get_modes()
 
     test.debug("ASSERT", "Verifying modes table is returned")
     assert.is_table(all_modes)
 
-    test.debug("STEP", "2. Checking for standard modes")
+    test.debug("STEP", "3. Checking for standard modes")
     local expected_modes = {"normal", "insert", "command", "passthrough"}
 
     for _, mode_name in ipairs(expected_modes) do
@@ -100,7 +122,7 @@ T.test_get_all_modes = function ()
         assert.is_equal(all_modes[mode_name].name, mode_name)
     end
 
-    test.debug("STEP", "3. Verifying our test mode is in the list")
+    test.debug("STEP", "4. Verifying our test mode is in the list")
     assert.is_not_nil(all_modes["test_mode"])
 
     test.debug("TEST", "=== Get modes test completed ===")
