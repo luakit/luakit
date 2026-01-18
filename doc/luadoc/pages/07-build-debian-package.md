@@ -15,8 +15,8 @@ Next, create a `pbuilder` build chroot environment in which to build the
 package. The following commands all use Debian Stretch; to use Buster or
 Sid releases, change `stretch` to `buster` or `sid` in the commands below.
 
-    $ sudo pbuilder create --distribution strech \
-	      --basetgz /var/cache/pbuilder/base-strech.tgz \
+    $ sudo pbuilder create --distribution stretch \
+	      --basetgz /var/cache/pbuilder/base-stretch.tgz \
 		  --mirror http://ftp.debian.org/debian
 
 Clone the luakit source code to a local directory:
@@ -55,14 +55,14 @@ Now, debian source packages can be found in:
 
 Update the pbuilder build chroot environment:
 
-    $ sudo pbuilder update --distribution strech \
-	      --basetgz /var/cache/pbuilder/base-strech.tgz
+    $ sudo pbuilder update --distribution stretch \
+	      --basetgz /var/cache/pbuilder/base-stretch.tgz
 
 Finally, build the Debian source package:
 
-    $ sudo pbuilder build --distribution strech \
-	      --basetgz /var/cache/pbuilder/base-strech.tgz \
-		  --buildresult ../deb-packages/luakit/strech \
+    $ sudo pbuilder build --distribution stretch \
+	      --basetgz /var/cache/pbuilder/base-stretch.tgz \
+		  --buildresult ../deb-packages/luakit/stretch \
 		  ../deb-packages/luakit/luakit_2017.08.10-1.dsc
 
 The resulting binary package can now be found in the output directory:
