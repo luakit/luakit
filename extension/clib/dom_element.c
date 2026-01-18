@@ -306,6 +306,37 @@ dom_element_set_attribute(dom_element_t *element, const char *attr_name, const c
     return success;
 }
 
+/* Helper: Get element bounding rect via JavaScript */
+static gdouble
+dom_element_get_rect_property(dom_element_t *element, const char *property)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return 0.0;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (!elem) return 0;"
+        "  var rect = elem.getBoundingClientRect();"
+        "  return rect.%s || 0;"
+        "})()",
+        sel, property
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gdouble value = jsc_value_to_double(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return value;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -375,21 +406,6 @@ luaH_dom_element_remove(lua_State *L)
     return error ? luaL_error(L, "remove element error: %s", error->message) : 0;
 }
 
-static void
-dom_element_get_left_and_top(WebKitDOMElement *elem, glong *l, glong *t)
-{
-    if (!elem) {
-        *l = 0;
-        *t = 0;
-    } else {
-        dom_element_get_left_and_top(webkit_dom_element_get_offset_parent(elem), l, t);
-        *l += webkit_dom_element_get_offset_left(elem);
-        *l -= webkit_dom_element_get_scroll_left(elem);
-        *t += webkit_dom_element_get_offset_top(elem);
-        *t -= webkit_dom_element_get_scroll_top(elem);
-    }
-}
-
 static gint
 luaH_dom_element_rect_index(lua_State *L)
 {
@@ -397,21 +413,26 @@ luaH_dom_element_rect_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMElement *elem = element->element;
-
-    glong left, top;
-
+    /* Use JavaScript getBoundingClientRect instead of WebKitDOM offset properties */
+    gdouble value = 0.0;
     switch (token) {
-        PI_CASE(WIDTH, webkit_dom_element_get_offset_width(elem));
-        PI_CASE(HEIGHT, webkit_dom_element_get_offset_height(elem));
+        case L_TK_WIDTH:
+            value = dom_element_get_rect_property(element, "width");
+            break;
+        case L_TK_HEIGHT:
+            value = dom_element_get_rect_property(element, "height");
+            break;
         case L_TK_LEFT:
+            value = dom_element_get_rect_property(element, "left");
+            break;
         case L_TK_TOP:
-            dom_element_get_left_and_top(elem, &left, &top);
-            lua_pushinteger(L, token == L_TK_LEFT ? left : top);
-            return 1;
+            value = dom_element_get_rect_property(element, "top");
+            break;
         default:
             return 0;
     }
+    lua_pushinteger(L, (glong)value);
+    return 1;
 }
 
 static gint
