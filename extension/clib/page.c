@@ -329,7 +329,7 @@ luaH_page_register_js_callback(lua_State *L)
     guint64 page_id = webkit_web_page_get_id(page->page);
     JSCContext *ctx = js_context_cache_get(page_id);
     if (!ctx)
-        return;
+        return luaL_error(L, "page context not available");
 
     JSCValue *js_func = jsc_value_new_function_variadic(ctx, name,
                                                          G_CALLBACK(js_callback_handler),
