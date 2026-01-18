@@ -525,6 +525,75 @@ dom_element_set_js_bool_property(dom_element_t *element, const char *property, g
     return success;
 }
 
+/* Helper: Append one element to another via JavaScript */
+static gboolean
+dom_element_append_child(dom_element_t *parent, dom_element_t *child)
+{
+    JSCContext *ctx = dom_element_get_js_context(parent);
+    if (!ctx) {
+        return FALSE;
+    }
+
+    gchar *parent_sel = dom_element_selector(parent);
+    gchar *child_sel = dom_element_selector(child);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var parent = document.querySelector('%s');"
+        "  var child = document.querySelector('%s');"
+        "  if (parent && child) {"
+        "    parent.appendChild(child);"
+        "    return true;"
+        "  }"
+        "  return false;"
+        "})()",
+        parent_sel, child_sel
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gboolean success = jsc_value_is_boolean(result) && jsc_value_to_boolean(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(child_sel);
+    g_free(parent_sel);
+
+    return success;
+}
+
+/* Helper: Remove element from DOM via JavaScript */
+static gboolean
+dom_element_remove_from_dom(dom_element_t *element)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return FALSE;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (elem) {"
+        "    elem.remove();"
+        "    return true;"
+        "  }"
+        "  return false;"
+        "})()",
+        sel
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gboolean success = jsc_value_is_boolean(result) && jsc_value_to_boolean(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return success;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -576,22 +645,20 @@ luaH_dom_element_append(lua_State *L)
 {
     dom_element_t *parent = luaH_check_dom_element(L, 1),
                   *child = luaH_check_dom_element(L, 2);
-    WebKitDOMNode *p = WEBKIT_DOM_NODE(parent->element),
-                  *c = WEBKIT_DOM_NODE(child->element);
-    GError *error = NULL;
-    webkit_dom_node_append_child(p, c, &error);
-    return error ? luaL_error(L, "append element error: %s", error->message) : 0;
+    /* Use JavaScript appendChild instead of WebKitDOM */
+    if (!dom_element_append_child(parent, child))
+        return luaL_error(L, "append element error: elements not found");
+    return 0;
 }
 
 static gint
 luaH_dom_element_remove(lua_State *L)
 {
     dom_element_t *element = luaH_checkudata(L, 1, &dom_element_class);
-    if (!WEBKIT_DOM_IS_ELEMENT(element->element))
-        return 0;
-    GError *error = NULL;
-    webkit_dom_element_remove(element->element, &error);
-    return error ? luaL_error(L, "remove element error: %s", error->message) : 0;
+    /* Use JavaScript remove() instead of WebKitDOM */
+    if (element->element && !dom_element_remove_from_dom(element))
+        return luaL_error(L, "remove element error: element not found");
+    return 0;
 }
 
 static gint
