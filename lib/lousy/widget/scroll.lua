@@ -22,7 +22,13 @@ local widgets = {
                 return y + " " + max;
             })()
         ]=], { callback = function (scroll, err)
-            assert(not err, err)
+            if err then
+                -- Context not available yet (page still loading) - will retry on next update
+                if err ~= "page context not available" then
+                    assert(false, err)
+                end
+                return
+            end
             local y, max = scroll:match("^(%S+) (%S+)$")
             y, max = tonumber(y), tonumber(max)
             local text

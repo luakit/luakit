@@ -36,7 +36,13 @@ tab.add_signal("build", function (tl, view)
                 document, null, XPathResult.STRING_TYPE, null).stringValue || '/favicon.ico';
         ]=]
         v:eval_js(favicon_js, { callback = function (favicon_uri, err)
-            assert(not err, err)
+            if err then
+                -- Context not available yet (page still loading) - will retry later
+                if err ~= "page context not available" then
+                    assert(false, err)
+                end
+                return
+            end
             if not fav.is_alive then return end
             favicon_uri = favicon_uri:match("^luakit://(.*)")
             if favicon_uri then fav:filename(favicon_uri)
