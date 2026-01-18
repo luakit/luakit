@@ -11,9 +11,120 @@ local _M = {}
 
 local shared_lib = nil
 
+-- Debug output configuration
+_M.debug_enabled = os.getenv("LUAKIT_TEST_DEBUG") == "1"
+_M.debug_indent = 0
+
 function _M.init(arg)
     _M.init = nil
     shared_lib = arg
+end
+
+--- Output debug information during test execution.
+--
+-- When LUAKIT_TEST_DEBUG=1 environment variable is set, this function
+-- outputs detailed debug information with timestamps and indentation.
+--
+-- @tparam string category The category of the debug message (e.g., "STATE", "ASSERT", "TIMING")
+-- @param ... Values to output (will be converted to strings)
+function _M.debug(category, ...)
+    if not _M.debug_enabled then return end
+
+    local timestamp = os.date("%H:%M:%S")
+    local indent = string.rep("  ", _M.debug_indent)
+    local args = {...}
+    local parts = {}
+
+    for i, v in ipairs(args) do
+        if type(v) == "table" then
+            parts[i] = _M.table_to_string(v)
+        else
+            parts[i] = tostring(v)
+        end
+    end
+
+    local msg = table.concat(parts, " ")
+    print(string.format("__debug__ [%s] [%s] %s%s", timestamp, category, indent, msg))
+end
+
+--- Increase debug output indentation level.
+function _M.debug_push()
+    _M.debug_indent = _M.debug_indent + 1
+end
+
+--- Decrease debug output indentation level.
+function _M.debug_pop()
+    _M.debug_indent = math.max(0, _M.debug_indent - 1)
+end
+
+--- Convert a table to a human-readable string.
+--
+-- @tparam table t The table to convert
+-- @tparam[opt] number depth Current recursion depth (for internal use)
+-- @treturn string String representation of the table
+function _M.table_to_string(t, depth)
+    depth = depth or 0
+    if depth > 3 then return "{...}" end
+
+    if type(t) ~= "table" then
+        return tostring(t)
+    end
+
+    local parts = {}
+    local indent = string.rep("  ", depth)
+
+    for k, v in pairs(t) do
+        local key = type(k) == "string" and k or "[" .. tostring(k) .. "]"
+        local value
+        if type(v) == "table" then
+            value = _M.table_to_string(v, depth + 1)
+        else
+            value = tostring(v)
+        end
+        table.insert(parts, string.format("%s = %s", key, value))
+    end
+
+    if #parts == 0 then return "{}" end
+    if #parts <= 3 then
+        return "{ " .. table.concat(parts, ", ") .. " }"
+    end
+
+    return "{\n  " .. indent .. table.concat(parts, ",\n  " .. indent) .. "\n" .. indent .. "}"
+end
+
+--- Capture the state of a webview for debugging.
+--
+-- @tparam widget view The webview widget to inspect
+-- @treturn table A table containing the webview state
+function _M.capture_view_state(view)
+    if type(view) ~= "widget" or view.type ~= "webview" then
+        return {error = "Invalid view object"}
+    end
+
+    return {
+        uri = view.uri or "nil",
+        title = view.title or "nil",
+        is_loading = view.is_loading or false,
+        load_status = "unknown", -- Will be updated by signals
+    }
+end
+
+--- Capture the state of a window for debugging.
+--
+-- @tparam table w The window object to inspect
+-- @treturn table A table containing the window state
+function _M.capture_window_state(w)
+    if not w then
+        return {error = "Window is nil"}
+    end
+
+    return {
+        current_tab = w.tabs and w.tabs:current() or "nil",
+        tab_count = w.tabs and w.tabs:count() or "nil",
+        mode = w:is_mode() and tostring(w:is_mode()) or "unknown",
+        view_uri = w.view and w.view.uri or "nil",
+        view_title = w.view and w.view.title or "nil",
+    }
 end
 
 --- Pause test execution until a webview widget finishes loading.
@@ -22,14 +133,29 @@ end
 function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
     shared_lib.traceback = debug.traceback("",2)
+
+    _M.debug("WAIT", "Waiting for view to finish loading:", view.uri or "unknown")
+    _M.debug_push()
+
+    local iteration = 0
     repeat
+        iteration = iteration + 1
+        _M.debug("SIGNAL", string.format("Iteration %d: waiting for load-status signal", iteration))
+
         local _, status, uri, err = _M.wait_for_signal(view, "load-status", 5000)
+
+        _M.debug("SIGNAL", string.format("Received load-status: status=%s, uri=%s", status or "nil", uri or "nil"))
+
         if status == "failed" then
+            _M.debug("ERROR", string.format("Load failed: %s", err or "unknown error"))
             local fmt = "tests.wait_for_view() failed loading '%s': %s"
             local msg = fmt:format(uri, err)
             assert(false, msg)
         end
     until status == "finished"
+
+    _M.debug("WAIT", "View finished loading successfully")
+    _M.debug_pop()
 end
 
 --- Pause test execution for a short time.

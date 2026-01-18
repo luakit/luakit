@@ -14,57 +14,209 @@ require "config.rc"
 local window = require "window"
 local w = assert(select(2, next(window.bywidget)))
 
+--- Helper function to get the undoclose history
+local function get_undoclose_history()
+    local undoclose = package.loaded.undoclose
+    if undoclose and undoclose.history then
+        return #undoclose.history
+    end
+    return 0
+end
+
+--- Helper function to capture and log window state
+local function log_window_state(stage)
+    local state = test.capture_window_state(w)
+    test.debug("STATE", string.format("[%s] Window state:", stage))
+    test.debug_push()
+    test.debug("STATE", string.format("Current tab: %s/%s", state.current_tab, state.tab_count))
+    test.debug("STATE", string.format("Mode: %s", state.mode))
+    test.debug("STATE", string.format("View URI: %s", state.view_uri))
+    test.debug("STATE", string.format("View title: %s", state.view_title))
+    test.debug("STATE", string.format("Undoclose history size: %d", get_undoclose_history()))
+    test.debug_pop()
+end
+
 T.test_undo_close_restores_tab_history = function ()
-    -- Load page in new tab
+    test.debug("TEST", "=== Starting undoclose test ===")
+
+    -- Step 1: Initial state check
+    test.debug("STEP", "1. Checking initial state")
+    log_window_state("initial")
+    local initial_tab_count = w.tabs:count()
+    local initial_history_size = get_undoclose_history()
+    test.debug("INFO", string.format("Initial tabs: %d, undoclose history: %d",
+        initial_tab_count, initial_history_size))
+
+    -- Step 2: Load page in new tab
     local uri = test.http_server() .. "undoclose_page.html"
+    test.debug("STEP", string.format("2. Opening new tab with URI: %s", uri))
+
     w:new_tab(uri)
-    assert.is_equal(w.tabs:current(), 2)
-    test.wait_for_view(w.view)
+    local new_tab_index = w.tabs:current()
+    test.debug("INFO", string.format("New tab created at index: %d", new_tab_index))
 
-    -- Try to open the menu
+    test.debug("ASSERT", string.format("Checking new tab index is %d", initial_tab_count + 1))
+    assert.is_equal(w.tabs:current(), initial_tab_count + 1)
+
+    test.debug("INFO", "Waiting for view to load...")
+    test.wait_for_view(w.view)
+    log_window_state("after_new_tab")
+
+    -- Step 3: Try to open menu (should fail - no closed tabs yet)
+    test.debug("STEP", "3. Testing undolist command with no history")
     local notify_spy = spy.on(window.methods, "notify")
+
+    test.debug("INFO", "Running :undolist command")
     w:run_cmd(":undolist")
+
+    test.debug("ASSERT", "Verifying notification about no closed tabs")
     assert.spy(notify_spy).was.called_with(match._, "No closed tabs to display")
+
+    test.debug("ASSERT", "Verifying mode is still normal")
     assert(w:is_mode("normal"))
+    log_window_state("after_empty_undolist")
 
-    -- Navigate to about:blank
+    -- Step 4: Navigate to about:blank
+    test.debug("STEP", "4. Navigating to about:blank")
+    test.debug("INFO", string.format("Current URI before navigation: %s", w.view.uri))
+
     w.view.uri = "about:blank"
+    test.debug("INFO", "Waiting for navigation to complete...")
     test.wait_for_view(w.view)
 
-    -- Close
+    test.debug("ASSERT", "Verifying URI changed to about:blank")
+    assert.is_equal(w.view.uri, "about:blank")
+    log_window_state("after_navigation")
+
+    -- Step 5: Close the tab
+    local before_close_tab_count = w.tabs:count()
+    local before_close_history = get_undoclose_history()
+    test.debug("STEP", "5. Closing tab")
+    test.debug("INFO", string.format("Before close: tabs=%d, history=%d",
+        before_close_tab_count, before_close_history))
+
     w:close_tab()
 
-    -- Try to open the menu again
+    local after_close_tab_count = w.tabs:count()
+    local after_close_history = get_undoclose_history()
+    test.debug("INFO", string.format("After close: tabs=%d, history=%d",
+        after_close_tab_count, after_close_history))
+
+    test.debug("ASSERT", string.format("Verifying tab count decreased: %d -> %d",
+        before_close_tab_count, after_close_tab_count))
+    assert.is_equal(after_close_tab_count, before_close_tab_count - 1)
+
+    test.debug("ASSERT", string.format("Verifying history increased: %d -> %d",
+        before_close_history, after_close_history))
+    assert.is_equal(after_close_history, before_close_history + 1)
+
+    log_window_state("after_close_tab")
+
+    -- Step 6: Try to open the menu again (should succeed now)
+    test.debug("STEP", "6. Testing undolist command with history")
     notify_spy = spy.on(window.methods, "notify")
-    w:run_cmd(":undolist")
-    assert.spy(notify_spy).was_not_called_with(match._, "No closed tabs to display")
-    assert(w:is_mode("undolist"))
-    w:set_mode("normal")
 
-    -- Undo Close
+    test.debug("INFO", "Running :undolist command")
+    w:run_cmd(":undolist")
+
+    test.debug("ASSERT", "Verifying no 'no closed tabs' notification")
+    assert.spy(notify_spy).was_not_called_with(match._, "No closed tabs to display")
+
+    test.debug("ASSERT", "Verifying mode changed to undolist")
+    assert(w:is_mode("undolist"))
+
+    test.debug("INFO", "Returning to normal mode")
+    w:set_mode("normal")
+    log_window_state("after_undolist_menu")
+
+    -- Step 7: First undo close (without argument)
+    local before_undo_tab_count = w.tabs:count()
+    local before_undo_history = get_undoclose_history()
+    test.debug("STEP", "7. First undo close (no argument)")
+    test.debug("INFO", string.format("Before undo: tabs=%d, history=%d",
+        before_undo_tab_count, before_undo_history))
+
     w:undo_close_tab()
+    test.debug("INFO", "Waiting for restored view to load...")
     test.wait_for_view(w.view)
-    assert.is_equal(w.tabs:current(), 2)
+
+    local after_undo_tab_count = w.tabs:count()
+    local after_undo_history = get_undoclose_history()
+    test.debug("INFO", string.format("After undo: tabs=%d, history=%d, current_tab=%d, uri=%s",
+        after_undo_tab_count, after_undo_history, w.tabs:current(), w.view.uri))
+
+    test.debug("ASSERT", string.format("Verifying tab restored: current=%d, expected=%d",
+        w.tabs:current(), before_undo_tab_count + 1))
+    assert.is_equal(w.tabs:current(), before_undo_tab_count + 1)
+
+    test.debug("ASSERT", string.format("Verifying URI is about:blank, got: %s", w.view.uri))
     assert.is_equal(w.view.uri, 'about:blank')
 
-    -- Close again
+    test.debug("ASSERT", string.format("Verifying history decreased: %d -> %d",
+        before_undo_history, after_undo_history))
+    assert.is_equal(after_undo_history, before_undo_history - 1)
+
+    log_window_state("after_first_undo")
+
+    -- Step 8: Close tab again
+    test.debug("STEP", "8. Closing tab again")
+    local second_close_tab_count = w.tabs:count()
+
     w:close_tab()
 
-    -- Undo Close again with argument
+    test.debug("INFO", string.format("Closed tab, count: %d -> %d",
+        second_close_tab_count, w.tabs:count()))
+    log_window_state("after_second_close")
+
+    -- Step 9: Second undo close (with argument)
+    local before_undo2_history = get_undoclose_history()
+    test.debug("STEP", "9. Second undo close (with argument 1)")
+    test.debug("INFO", string.format("Before undo: history=%d", before_undo2_history))
+
     w:undo_close_tab(1)
+    test.debug("INFO", "Waiting for restored view to load...")
     test.wait_for_view(w.view)
+
+    local after_undo2_history = get_undoclose_history()
+    test.debug("INFO", string.format("After undo: tabs=%d, history=%d, current_tab=%d, uri=%s",
+        w.tabs:count(), after_undo2_history, w.tabs:current(), w.view.uri))
+
+    test.debug("ASSERT", string.format("Verifying current tab: %d", w.tabs:current()))
     assert.is_equal(w.tabs:current(), 2)
+
+    test.debug("ASSERT", string.format("Verifying URI is about:blank, got: %s", w.view.uri))
     assert.is_equal(w.view.uri, 'about:blank')
 
-    -- Navigate back
+    log_window_state("after_second_undo")
+
+    -- Step 10: Navigate back in history
+    test.debug("STEP", "10. Navigating back in tab history")
+    test.debug("INFO", string.format("Current URI before back: %s", w.view.uri))
+
     w:back(1)
+    test.debug("INFO", "Waiting for back navigation to complete...")
     test.wait_for_view(w.view)
+
+    test.debug("INFO", string.format("URI after back navigation: %s", w.view.uri))
+    test.debug("ASSERT", string.format("Verifying navigated back to: %s", uri))
     assert.is_equal(w.view.uri, uri)
 
-    -- Restore to initial state
+    log_window_state("after_back_navigation")
+
+    -- Step 11: Restore to initial state
+    test.debug("STEP", "11. Restoring to initial state")
+    test.debug("INFO", "Closing test tab")
+
     w:close_tab()
-    assert(w.tabs:current() == 1)
+
+    test.debug("ASSERT", string.format("Verifying back to %d tab(s)", initial_tab_count))
+    assert(w.tabs:current() == initial_tab_count)
+
+    test.debug("ASSERT", "Verifying on about:blank")
     assert(w.view.uri == "about:blank")
+
+    log_window_state("final")
+    test.debug("TEST", "=== Test completed successfully ===")
 end
 
 return T

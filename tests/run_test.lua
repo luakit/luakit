@@ -171,7 +171,12 @@ local function do_async_tests(test_files)
         for line in f:lines() do
             status, test_name = line:match("^__(%a+)__ (.*)$")
             if status and test_name then
-                update_test_status(status, test_name, test_file)
+                if status == "debug" then
+                    -- Handle debug output specially - always show if present
+                    log_test_output("[DEBUG] " .. test_name)
+                else
+                    update_test_status(status, test_name, test_file)
+                end
             else
                 log_test_output(line)
             end
