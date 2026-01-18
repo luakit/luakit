@@ -456,6 +456,75 @@ dom_element_call_js_method(dom_element_t *element, const char *method)
     g_free(sel);
 }
 
+/* Helper: Set JavaScript string property */
+static gboolean
+dom_element_set_js_string_property(dom_element_t *element, const char *property, const char *value)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return FALSE;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    /* Escape value for safe JavaScript string */
+    gchar *escaped_value = g_strescape(value, NULL);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (elem) {"
+        "    elem.%s = '%s';"
+        "    return true;"
+        "  }"
+        "  return false;"
+        "})()",
+        sel, property, escaped_value
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gboolean success = jsc_value_is_boolean(result) && jsc_value_to_boolean(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(escaped_value);
+    g_free(sel);
+
+    return success;
+}
+
+/* Helper: Set JavaScript boolean property */
+static gboolean
+dom_element_set_js_bool_property(dom_element_t *element, const char *property, gboolean value)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return FALSE;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (elem) {"
+        "    elem.%s = %s;"
+        "    return true;"
+        "  }"
+        "  return false;"
+        "})()",
+        sel, property, value ? "true" : "false"
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gboolean success = jsc_value_is_boolean(result) && jsc_value_to_boolean(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return success;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -1027,31 +1096,6 @@ luaH_dom_element_push_value(lua_State *L)
 }
 
 static gint
-dom_html_element_set_value(lua_State *L, WebKitDOMHTMLElement *element)
-{
-
-#define CHECK(lower, upper, type) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element)) { \
-        webkit_dom_html_##lower##_element_set_value( \
-                WEBKIT_DOM_HTML_##upper##_ELEMENT(element), \
-                luaL_check##type(L, 3)); \
-        return 1; \
-    }
-
-    CHECK(text_area, TEXT_AREA, string);
-    CHECK(input, INPUT, string);
-    CHECK(option, OPTION, string);
-    CHECK(param, PARAM, string);
-    CHECK(li, LI, integer);
-    CHECK(button, BUTTON, string);
-    CHECK(select, SELECT, string);
-
-#undef CHECK
-
-    return 0;
-}
-
-static gint
 luaH_dom_element_push_parent(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
@@ -1207,24 +1251,28 @@ luaH_dom_element_newindex(lua_State *L)
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    GError *error = NULL;
-
     switch (token) {
-        case L_TK_INNER_HTML:
-            webkit_dom_element_set_inner_html(element->element,
-                    luaL_checkstring(L, 3), &error);
-            if (error)
-                return luaL_error(L, "set inner html error: %s", error->message);
+        case L_TK_INNER_HTML: {
+            /* Use JavaScript innerHTML instead of WebKitDOM */
+            const char *html = luaL_checkstring(L, 3);
+            if (!dom_element_set_js_string_property(element, "innerHTML", html))
+                return luaL_error(L, "set inner html error: element not found");
             break;
-        case L_TK_VALUE:
-            if (!dom_html_element_set_value(L, WEBKIT_DOM_HTML_ELEMENT(element->element)))
-                return luaL_error(L, "set value error: wrong element type");
+        }
+        case L_TK_VALUE: {
+            /* Use JavaScript value property instead of WebKitDOM type checking */
+            const char *value = luaL_checkstring(L, 3);
+            if (!dom_element_set_js_string_property(element, "value", value))
+                return luaL_error(L, "set value error: element not found");
             break;
-        case L_TK_CHECKED:
-            webkit_dom_html_input_element_set_checked(
-                    WEBKIT_DOM_HTML_INPUT_ELEMENT(element->element),
-                    lua_toboolean(L, 3));
+        }
+        case L_TK_CHECKED: {
+            /* Use JavaScript checked property instead of WebKitDOM */
+            gboolean checked = lua_toboolean(L, 3);
+            if (!dom_element_set_js_bool_property(element, "checked", checked))
+                return luaL_error(L, "set checked error: element not found");
             break;
+        }
         default:
             return 0;
     }
