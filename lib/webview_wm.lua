@@ -11,19 +11,38 @@ local ui = ipc_channel("webview_wm")
 
 ui:add_signal("load-finished", function(_, page)
     if not page then return end
-    local doc = page.document
 
-    -- do nothing if loaded document is not HTML
-    if not doc.body then return end
+    -- Check if document has body using JavaScript
+    local has_body = page:eval_js('document.body !== null')
+    if not has_body then return end
 
     if page.uri:find("luakit://", 1, true) == 1 then
-        doc.body:add_event_listener("click", true, function (_, event)
-            if event.button ~= 0 then return end
-            if event.target.tag_name ~= "A" then return end
-            if (event.target.attr.href or ""):find("file://", 1, true) ~= 1 then return end
-
-            ui:emit_signal("navigate", page.id, event.target.attr.href)
+        -- Register callback for file:// link navigation
+        page:register_js_callback("luakit_navigate_file_link", function(href)
+            ui:emit_signal("navigate", page.id, href)
         end)
+
+        -- Use JavaScript to handle click events on file:// links
+        page:eval_js([[
+            (function() {
+                document.body.addEventListener('click', function(event) {
+                    // Only handle left-click (button 0)
+                    if (event.button !== 0) return;
+
+                    // Check if clicked element is an anchor tag
+                    if (event.target.tagName !== 'A') return;
+
+                    // Get href attribute
+                    var href = event.target.getAttribute('href') || '';
+
+                    // Check if it's a file:// link
+                    if (href.indexOf('file://') !== 0) return;
+
+                    // Call Lua callback to handle navigation
+                    luakit_navigate_file_link(href);
+                });
+            })();
+        ]])
     end
 
 end)
