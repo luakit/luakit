@@ -4,8 +4,18 @@
 -- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local select = require("select_wm")
-local lousy = require("lousy")
 local ui = ipc_channel("follow_wm")
+
+-- Local implementation of filter_array to avoid dependency on lousy.util
+local function filter_array(t, pred)
+    local ret = {}
+    for i, v in ipairs(t) do
+        if pred(i, v) then
+            ret[#ret+1] = v
+        end
+    end
+    return ret
+end
 
 local evaluators = {
     click = function(element, page)
@@ -84,7 +94,7 @@ end
 local function follow(page, all)
     -- Build array of hints to follow
     local hints = all and select.hints(page) or { select.focused_hint(page) }
-    hints = lousy.util.table.filter_array(hints, function (_, hint)
+    hints = filter_array(hints, function (_, hint)
         return not hint.hidden
     end)
 

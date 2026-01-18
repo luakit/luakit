@@ -276,8 +276,87 @@ Before removing a deprecated function:
 
 ---
 
+## lousy.util.table Functions
+
+### `lousy.util.table.filter_array(t, pred)`
+
+**Status:** Migrated to inline implementations (no longer used in core modules)
+
+**Reason:** Limited usage in only 3 files. Better to have local implementations
+to reduce dependencies on lousy.util.
+
+**Migration:**
+
+```lua
+-- OLD (using lousy.util):
+local filtered = lousy.util.table.filter_array(array, function(i, item)
+    return item.visible
+end)
+
+-- NEW (local implementation):
+local function filter_array(t, pred)
+    local ret = {}
+    for i, v in ipairs(t) do
+        if pred(i, v) then
+            ret[#ret+1] = v
+        end
+    end
+    return ret
+end
+
+local filtered = filter_array(array, function(i, item)
+    return item.visible
+end)
+```
+
+**Migrated In:**
+- `lib/formfiller_wm.lua` - local implementation added
+- `lib/follow_wm.lua` - local implementation added
+- `lib/formfiller.lua` - local implementation added
+
+**Timeline:** Migrated in Phase 3 (2026-01-18)
+
+**Note:** The function remains in `lousy.util.table` for backward compatibility
+with user configurations. Core modules no longer use it.
+
+---
+
+### `lousy.util.lua_escape(s)`
+
+**Status:** Migrated to inline implementations (no longer used in core modules)
+
+**Reason:** Limited usage in only 2 files. Better to have local implementations
+to reduce dependencies on lousy.util.
+
+**Migration:**
+
+```lua
+-- OLD (using lousy.util):
+local escaped = lousy.util.lua_escape(pattern_string)
+
+-- NEW (local implementation):
+local function lua_escape(s)
+    return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%%%1")
+end
+
+local escaped = lua_escape(pattern_string)
+```
+
+**Migrated In:**
+- `lib/formfiller_wm.lua` - local implementation added
+- `lib/formfiller.lua` - local implementation added
+
+**Timeline:** Migrated in Phase 3 (2026-01-18)
+
+**Note:** The function remains in `lousy.util` for backward compatibility
+with user configurations. Core modules no longer use it.
+
+---
+
 ## Changelog
 
+- **2026-01-18:** Completed Phase 3 migration of utility functions
+  (filter_array, lua_escape) - now use local implementations
 - **2026-01-18:** Added deprecation warnings to `lousy.util.mkdir()`,
   `lousy.util.eval()`, and `lousy.util.checkfile()`
 - **2026-01-18:** Completed Phase 1 migration of isolated web modules

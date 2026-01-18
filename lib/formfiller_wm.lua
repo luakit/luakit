@@ -4,9 +4,23 @@
 -- @copyright 2016 Aidan Holm <aidanholm@gmail.com>
 
 local select = require("select_wm")
-local lousy = require("lousy")
 local ui = ipc_channel("formfiller_wm")
-local filter = lousy.util.table.filter_array
+
+-- Local implementation of filter_array to avoid dependency on lousy.util
+local function filter(t, pred)
+    local ret = {}
+    for i, v in ipairs(t) do
+        if pred(i, v) then
+            ret[#ret+1] = v
+        end
+    end
+    return ret
+end
+
+-- Local implementation of lua_escape to avoid dependency on lousy.util
+local function lua_escape(s)
+    return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%%%1")
+end
 
 local function element_attributes_match(element, attrs)
     for attr, value in pairs(attrs) do
@@ -219,7 +233,7 @@ local function formfiller_add (page, form)
         return "'" .. str:gsub("([\\'])", "\\%1").. "'"
     end
     local function to_lua_pat(str)
-        return to_lua_str(lousy.util.lua_escape(str))
+        return to_lua_str(lua_escape(str))
     end
 
     local function add_attr(elem, attr, indent, tail)

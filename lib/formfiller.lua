@@ -93,6 +93,22 @@ local _M = {}
 
 local formfiller_wm = require_web_module("formfiller_wm")
 
+-- Local implementation of filter_array to avoid dependency on lousy.util
+local function filter_array(t, pred)
+    local ret = {}
+    for i, v in ipairs(t) do
+        if pred(i, v) then
+            ret[#ret+1] = v
+        end
+    end
+    return ret
+end
+
+-- Local implementation of lua_escape to avoid dependency on lousy.util
+local function lua_escape(s)
+    return s:gsub("([%^%$%(%)%%%.%[%]%*%+%-%?%)])", "%%%1")
+end
+
 -- The Lua DSL file containing the formfiller rules
 local file = luakit.data_dir .. "/forms.lua"
 
@@ -214,7 +230,7 @@ end
 
 local function form_specs_for_uri (all_rules, uri)
     -- Filter rules to the given uri
-    local rules = lousy.util.table.filter_array(all_rules, function(_, rule)
+    local rules = filter_array(all_rules, function(_, rule)
         return string.find(uri, rule.pattern)
     end)
 
@@ -313,7 +329,7 @@ webview.add_signal("init", function (view)
                 if uri.port ~= 80 and uri.port ~= 443 then
                     domain = domain .. ":" .. uri.port
                 end
-                domain = lousy.util.lua_escape(domain .. "/")
+                domain = lua_escape(domain .. "/")
                 if form_spec.pattern:find(domain, 1, true) then
                     msg.info("auto-filling form profile '%s'", form_spec.profile)
                     formfiller_wm:emit_signal(view, "apply_form", form_spec)
