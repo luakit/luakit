@@ -16,8 +16,8 @@
  *
  */
 
-#define WEBKIT_DOM_USE_UNSTABLE_API
-#include <webkitdom/WebKitDOMDOMWindowUnstable.h>
+#include <jsc/jsc.h>
+#include <webkit2/webkit-web-extension.h>
 
 #include "extension/extension.h"
 #include "extension/scroll.h"
@@ -27,7 +27,10 @@ static void
 send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t subtype)
 {
     const ipc_scroll_t data = {
-        .h = h, .v = v,.page_id = webkit_web_page_get_id(web_page), .subtype = subtype
+        .h = h,
+        .v = v,
+        .page_id = webkit_web_page_get_id(web_page),
+        .subtype = subtype
     };
 
     ipc_header_t header = {
@@ -38,61 +41,135 @@ send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t su
     ipc_send(extension.ipc, &header, &data);
 }
 
-static void
-window_scroll_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
+/* Callback data for JavaScript scroll callbacks */
+typedef struct {
+    WebKitWebPage *web_page;
+    ipc_scroll_subtype_t subtype;
+} scroll_callback_data_t;
+
+/* Handler called when JavaScript detects scroll event */
+static JSCValue *
+js_scroll_callback(GPtrArray *args, scroll_callback_data_t *cb_data)
 {
-    gint h = webkit_dom_dom_window_get_scroll_x(window);
-    gint v = webkit_dom_dom_window_get_scroll_y(window);
-    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_scroll);
+    /* JavaScript passes [h, v] as arguments */
+    if (args->len >= 2) {
+        JSCValue *h_val = g_ptr_array_index(args, 0);
+        JSCValue *v_val = g_ptr_array_index(args, 1);
+
+        gint h = jsc_value_to_int32(h_val);
+        gint v = jsc_value_to_int32(v_val);
+
+        send_scroll_msg(h, v, cb_data->web_page, cb_data->subtype);
+    }
+
+    return jsc_value_new_undefined(jsc_context_get_current());
 }
 
 static void
-window_resize_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
+scroll_callback_data_free(scroll_callback_data_t *cb_data)
 {
-    gint h = webkit_dom_dom_window_get_inner_width(window);
-    gint v = webkit_dom_dom_window_get_inner_height(window);
-    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_winresize);
-}
-
-static gint scroll_width_prev = -1, scroll_height_prev = -1;
-
-static void
-document_resize_cb(WebKitDOMElement *html, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
-{
-    gint h = webkit_dom_element_get_scroll_width(html);
-    gint v = webkit_dom_element_get_scroll_height(html);
-
-    /* Only send message if the size changes */
-    /* This still isn't that performant... needs a better solution really */
-    if (h == scroll_width_prev && v == scroll_height_prev)
-        return;
-    scroll_width_prev = h;
-    scroll_height_prev = v;
-
-    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_docresize);
+    g_slice_free(scroll_callback_data_t, cb_data);
 }
 
 static void
 web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
-    WebKitDOMDocument *document = webkit_web_page_get_dom_document(web_page);
-    WebKitDOMElement *html = webkit_dom_document_get_document_element(document);
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+    WebKitFrame *frame = webkit_web_page_get_main_frame(web_page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
 
-    /* Add event listeners... */
+    /* Register three JavaScript callbacks for different scroll events */
 
-    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
-        "scroll", G_CALLBACK(window_scroll_cb), FALSE, web_page);
-    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
-        "resize", G_CALLBACK(window_resize_cb), FALSE, web_page);
-    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(html),
-        "DOMSubtreeModified", G_CALLBACK(document_resize_cb), FALSE, web_page);
+    /* Callback for window scroll events */
+    scroll_callback_data_t *scroll_cb_data = g_slice_new(scroll_callback_data_t);
+    scroll_cb_data->web_page = web_page;
+    scroll_cb_data->subtype = IPC_SCROLL_TYPE_scroll;
 
-    /* ... and make sure initial values are set */
+    JSCValue *scroll_func = jsc_value_new_function_variadic(ctx, "luakit_scroll_callback",
+                                                             G_CALLBACK(js_scroll_callback),
+                                                             scroll_cb_data,
+                                                             (GDestroyNotify)scroll_callback_data_free,
+                                                             JSC_TYPE_VALUE);
+    jsc_context_set_value(ctx, "luakit_scroll_callback", scroll_func);
+    g_object_unref(scroll_func);
 
-    window_scroll_cb(window, NULL, web_page);
-    window_resize_cb(window, NULL, web_page);
-    document_resize_cb(html, NULL, web_page);
+    /* Callback for window resize events */
+    scroll_callback_data_t *resize_cb_data = g_slice_new(scroll_callback_data_t);
+    resize_cb_data->web_page = web_page;
+    resize_cb_data->subtype = IPC_SCROLL_TYPE_winresize;
+
+    JSCValue *resize_func = jsc_value_new_function_variadic(ctx, "luakit_resize_callback",
+                                                             G_CALLBACK(js_scroll_callback),
+                                                             resize_cb_data,
+                                                             (GDestroyNotify)scroll_callback_data_free,
+                                                             JSC_TYPE_VALUE);
+    jsc_context_set_value(ctx, "luakit_resize_callback", resize_func);
+    g_object_unref(resize_func);
+
+    /* Callback for document resize events */
+    scroll_callback_data_t *docresize_cb_data = g_slice_new(scroll_callback_data_t);
+    docresize_cb_data->web_page = web_page;
+    docresize_cb_data->subtype = IPC_SCROLL_TYPE_docresize;
+
+    JSCValue *docresize_func = jsc_value_new_function_variadic(ctx, "luakit_docresize_callback",
+                                                                 G_CALLBACK(js_scroll_callback),
+                                                                 docresize_cb_data,
+                                                                 (GDestroyNotify)scroll_callback_data_free,
+                                                                 JSC_TYPE_VALUE);
+    jsc_context_set_value(ctx, "luakit_docresize_callback", docresize_func);
+    g_object_unref(docresize_func);
+
+    /* Inject JavaScript to track scroll/resize events */
+    const char *js_code =
+        "(function() {"
+        "    var scrollWidthPrev = -1, scrollHeightPrev = -1;"
+        ""
+        "    /* Track window scroll events */"
+        "    function onScroll() {"
+        "        luakit_scroll_callback(window.scrollX, window.scrollY);"
+        "    }"
+        ""
+        "    /* Track window resize events */"
+        "    function onResize() {"
+        "        luakit_resize_callback(window.innerWidth, window.innerHeight);"
+        "    }"
+        ""
+        "    /* Track document resize events */"
+        "    function onDocResize() {"
+        "        var html = document.documentElement;"
+        "        if (!html) return;"
+        "        "
+        "        var scrollWidth = html.scrollWidth;"
+        "        var scrollHeight = html.scrollHeight;"
+        "        "
+        "        /* Only send if size actually changed */"
+        "        if (scrollWidth !== scrollWidthPrev || scrollHeight !== scrollHeightPrev) {"
+        "            scrollWidthPrev = scrollWidth;"
+        "            scrollHeightPrev = scrollHeight;"
+        "            luakit_docresize_callback(scrollWidth, scrollHeight);"
+        "        }"
+        "    }"
+        ""
+        "    /* Add event listeners */"
+        "    window.addEventListener('scroll', onScroll);"
+        "    window.addEventListener('resize', onResize);"
+        "    "
+        "    /* DOMSubtreeModified is deprecated but still supported */"
+        "    /* Consider using MutationObserver in the future */"
+        "    if (document.documentElement) {"
+        "        document.documentElement.addEventListener('DOMSubtreeModified', onDocResize);"
+        "    }"
+        ""
+        "    /* Send initial values */"
+        "    onScroll();"
+        "    onResize();"
+        "    onDocResize();"
+        "})();";
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    g_object_unref(result);
+
+    g_object_unref(ctx);
 }
 
 static void
@@ -105,12 +182,35 @@ void
 web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
 {
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
-    WebKitDOMDocument *document = webkit_web_page_get_dom_document(page);
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
 
-    /* Scroll, then tell UI process what the new scroll position is */
-    webkit_dom_dom_window_scroll_to(window, scroll_x, scroll_y);
-    window_scroll_cb(window, NULL, page);
+    /* Use JavaScript window.scrollTo() instead of WebKitDOM API */
+    gchar *js_code = g_strdup_printf("window.scrollTo(%d, %d);", scroll_x, scroll_y);
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    g_free(js_code);
+    g_object_unref(result);
+
+    /* Get new scroll position and send update */
+    const char *get_scroll_js = "[window.scrollX, window.scrollY]";
+    JSCValue *scroll_result = jsc_context_evaluate(ctx, get_scroll_js, -1);
+
+    if (jsc_value_is_array(scroll_result)) {
+        JSCValue *x_val = jsc_value_object_get_property_at_index(scroll_result, 0);
+        JSCValue *y_val = jsc_value_object_get_property_at_index(scroll_result, 1);
+
+        gint h = jsc_value_to_int32(x_val);
+        gint v = jsc_value_to_int32(y_val);
+
+        send_scroll_msg(h, v, page, IPC_SCROLL_TYPE_scroll);
+
+        g_object_unref(x_val);
+        g_object_unref(y_val);
+    }
+
+    g_object_unref(scroll_result);
+    g_object_unref(ctx);
 }
 
 void
