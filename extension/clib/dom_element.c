@@ -239,6 +239,73 @@ dom_element_get_js_string_property(dom_element_t *element, const char *property)
     return value;
 }
 
+/* Helper: Get element attribute via JavaScript */
+static gchar *
+dom_element_get_attribute(dom_element_t *element, const char *attr_name)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return g_strdup("");
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  return elem ? (elem.getAttribute('%s') || '') : '';"
+        "})()",
+        sel, attr_name
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gchar *value = jsc_value_is_string(result) ?
+                   g_strdup(jsc_value_to_string(result)) :
+                   g_strdup("");
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return value;
+}
+
+/* Helper: Set element attribute via JavaScript */
+static gboolean
+dom_element_set_attribute(dom_element_t *element, const char *attr_name, const char *attr_value)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return FALSE;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    /* Escape single quotes in attribute value */
+    gchar *escaped_value = g_strescape(attr_value, NULL);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (elem) {"
+        "    elem.setAttribute('%s', '%s');"
+        "    return true;"
+        "  }"
+        "  return false;"
+        "})()",
+        sel, attr_name, escaped_value
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gboolean success = jsc_value_is_boolean(result) && jsc_value_to_boolean(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(escaped_value);
+    g_free(sel);
+
+    return success;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -368,8 +435,10 @@ luaH_dom_element_attribute_index(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *name = luaL_checkstring(L, 2);
-    const gchar *attr = webkit_dom_element_get_attribute(element->element, name);
+    /* Use JavaScript instead of WebKitDOM */
+    gchar *attr = dom_element_get_attribute(element, name);
     lua_pushstring(L, attr);
+    g_free(attr);
     return 1;
 }
 
@@ -379,9 +448,9 @@ luaH_dom_element_attribute_newindex(lua_State *L)
     dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
     const gchar *attr = luaL_checkstring(L, 2);
     const gchar *value = luaL_checkstring(L, 3);
-    GError *error = NULL;
-    webkit_dom_element_set_attribute(element->element, attr, value, &error);
-    return error ? luaL_error(L, "attribute error: %s", error->message) : 0;
+    /* Use JavaScript instead of WebKitDOM */
+    gboolean success = dom_element_set_attribute(element, attr, value);
+    return success ? 0 : luaL_error(L, "attribute error: failed to set attribute");
 }
 
 static gint
