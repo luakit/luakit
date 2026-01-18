@@ -105,6 +105,7 @@ proxy_uri
 public_share_dir
 reload
 reload_bypass_cache
+register_js_callback
 remove
 reorder
 right

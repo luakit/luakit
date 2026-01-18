@@ -32,6 +32,8 @@ typedef struct _page_t {
     WebKitWebPage *page;
     /* Lua object ref */
     gpointer ref;
+    /* Registered JavaScript callbacks (name -> lua_ref) */
+    GHashTable *js_callbacks;
 } page_t;
 
 void page_class_setup(lua_State *);

@@ -227,6 +227,119 @@ luaH_page_wrap_js(lua_State *L)
     return luaH_page_eval_js(L);
 }
 
+/* Callback data for JS->Lua callbacks */
+typedef struct {
+    page_t *page;
+    gchar *callback_name;
+} js_callback_data_t;
+
+/* Handler called when JavaScript invokes a registered callback */
+static JSCValue *
+js_callback_handler(GPtrArray *args, js_callback_data_t *cb_data)
+{
+    lua_State *L = common.L;
+    gint top = lua_gettop(L);
+
+    /* Get the Lua callback function from the page's hash table */
+    gpointer lua_ref = g_hash_table_lookup(cb_data->page->js_callbacks, cb_data->callback_name);
+    if (!lua_ref) {
+        warn("JavaScript callback '%s' no longer registered", cb_data->callback_name);
+        return jsc_value_new_undefined(jsc_context_get_current());
+    }
+
+    /* Push the Lua callback function onto the stack */
+    luaH_object_push(L, lua_ref);
+
+    /* Convert JavaScript arguments to Lua */
+    guint argc = args->len;
+    for (guint i = 0; i < argc; i++) {
+        JSCValue *arg = g_ptr_array_index(args, i);
+        if (!luajs_pushvalue(L, arg)) {
+            warn("Failed to convert JavaScript argument #%d to Lua", i + 1);
+            lua_settop(L, top);
+            return jsc_value_new_undefined(jsc_context_get_current());
+        }
+    }
+
+    /* Call the Lua callback function */
+    if (lua_pcall(L, argc, 0, 0)) {
+        warn("Error calling Lua callback '%s': %s",
+             cb_data->callback_name, lua_tostring(L, -1));
+        lua_pop(L, 1);
+    }
+
+    lua_settop(L, top);
+    return jsc_value_new_undefined(jsc_context_get_current());
+}
+
+/* Cleanup function for callback data */
+static void
+js_callback_data_free(js_callback_data_t *cb_data)
+{
+    g_free(cb_data->callback_name);
+    g_slice_free(js_callback_data_t, cb_data);
+}
+
+/* Register a Lua function to be callable from JavaScript
+ * Usage: page:register_js_callback(name, function)
+ */
+/* Wrapper for luaH_object_unref that matches GDestroyNotify signature */
+static void
+lua_ref_destroy(gpointer ref)
+{
+    if (ref)
+        luaH_object_unref(common.L, ref);
+}
+
+static gint
+luaH_page_register_js_callback(lua_State *L)
+{
+    page_t *page = luaH_check_page(L, 1);
+    const gchar *name = luaL_checkstring(L, 2);
+    luaL_checktype(L, 3, LUA_TFUNCTION);
+
+    /* Initialize the hash table if this is the first callback */
+    if (!page->js_callbacks) {
+        page->js_callbacks = g_hash_table_new_full(g_str_hash, g_str_equal,
+                                                     g_free, lua_ref_destroy);
+    }
+
+    /* Check if callback with this name already exists */
+    gpointer existing_ref = g_hash_table_lookup(page->js_callbacks, name);
+    if (existing_ref) {
+        /* Unref the old callback */
+        luaH_object_unref(L, existing_ref);
+    }
+
+    /* Store the Lua function reference */
+    lua_pushvalue(L, 3);
+    gpointer lua_ref = luaH_object_ref(L, -1);
+    g_hash_table_insert(page->js_callbacks, g_strdup(name), lua_ref);
+
+    /* Create callback data structure */
+    js_callback_data_t *cb_data = g_slice_new(js_callback_data_t);
+    cb_data->page = page;
+    cb_data->callback_name = g_strdup(name);
+
+    /* Register the JavaScript function */
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+
+    JSCValue *js_func = jsc_value_new_function_variadic(ctx, name,
+                                                         G_CALLBACK(js_callback_handler),
+                                                         cb_data,
+                                                         (GDestroyNotify)js_callback_data_free,
+                                                         JSC_TYPE_VALUE);
+
+    jsc_context_set_value(ctx, name, js_func);
+
+    g_object_unref(js_func);
+    g_object_unref(ctx);
+
+    return 0;
+}
+
 static void
 webkit_web_page_destroy_cb(page_t *page, GObject *web_page)
 {
@@ -234,6 +347,12 @@ webkit_web_page_destroy_cb(page_t *page, GObject *web_page)
     luaH_uniq_get_ptr(L, REG_KEY, web_page);
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, 1);
+
+    /* Clean up JavaScript callbacks hash table */
+    if (page->js_callbacks) {
+        g_hash_table_destroy(page->js_callbacks);
+        page->js_callbacks = NULL;
+    }
 
     page->page = NULL;
     luaH_uniq_del_ptr(common.L, REG_KEY, web_page);
@@ -252,6 +371,7 @@ luaH_page_from_web_page(lua_State *L, WebKitWebPage *web_page)
 
     page_t *page = page_new(L);
     page->page = web_page;
+    page->js_callbacks = NULL;  /* Initialize callbacks hash table to NULL */
 
     g_signal_connect(page->page, "send-request", G_CALLBACK(send_request_cb), page);
     g_signal_connect(page->page, "document-loaded", G_CALLBACK(document_loaded_cb), page);
@@ -293,6 +413,7 @@ luaH_page_index(lua_State *L)
         PI_CASE(ID, webkit_web_page_get_id(page->page));
         PF_CASE(EVAL_JS, luaH_page_eval_js)
         PF_CASE(WRAP_JS, luaH_page_wrap_js)
+        PF_CASE(REGISTER_JS_CALLBACK, luaH_page_register_js_callback)
         case L_TK_DOCUMENT:
             return luaH_page_push_document(L, page);
         default:
