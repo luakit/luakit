@@ -12,6 +12,7 @@
 local rstring = string
 local rtable = table
 local math = require "math"
+local msg = require "msg"
 
 local _M = {}
 
@@ -46,25 +47,34 @@ function _M.unescape(text)
 end
 
 --- Create a directory.
+-- @deprecated use @ref{lfs/mkdir|lfs.mkdir()} or `os.execute()` directly.
 -- @tparam string dir The directory.
 -- @treturn number The status code returned by `mkdir`; 0 indicates success.
 function _M.mkdir(dir)
+    msg.warn("lousy.util.mkdir() is deprecated and will be removed in a future version!")
+    msg.warn("please use lfs.mkdir() or os.execute() directly")
     return os.execute(rstring.format("mkdir -p %q",  dir))
 end
 
 --- Evaluate Lua code.
+-- @deprecated use `load()` or `loadstring()` directly.
 -- @tparam string s The string of Lua code to evaluate.
 -- @return The return value of Lua code.
 function _M.eval(s)
+    msg.warn("lousy.util.eval() is deprecated and will be removed in a future version!")
+    msg.warn("please use load() or loadstring() directly")
     return assert(loadstring(s))()
 end
 
 --- Check if a file is a Lua valid file.
 -- This is done by loading the content and compiling it with `loadfile()`.
+-- @deprecated use `loadfile()` directly with error checking.
 -- @tparam string path The file path.
 -- @treturn function|nil A function if the file was loaded successfully,
 -- and a string with the error otherwise.
 function _M.checkfile(path)
+    msg.warn("lousy.util.checkfile() is deprecated and will be removed in a future version!")
+    msg.warn("please use loadfile() directly with error checking")
     local f, e = loadfile(path)
     -- Return function if function, otherwise return error.
     if f then return f end
