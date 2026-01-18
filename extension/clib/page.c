@@ -169,8 +169,11 @@ luaH_page_eval_js(lua_State *L)
     /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
     guint64 page_id = webkit_web_page_get_id(page->page);
     JSCContext *ctx = js_context_cache_get(page_id);
-    if (!ctx)
-        return luaL_error(L, "page context not available");
+    if (!ctx) {
+        lua_pushnil(L);
+        lua_pushstring(L, "page context not available");
+        return 2;
+    }
 
     JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, script, -1, source, 1);
     JSCException *exception = jsc_context_get_exception(ctx);
@@ -314,6 +317,15 @@ luaH_page_register_js_callback(lua_State *L)
         luaH_object_unref(L, existing_ref);
     }
 
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    guint64 page_id = webkit_web_page_get_id(page->page);
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (!ctx) {
+        /* Context not available yet - callback will not be registered
+         * Caller should check for errors and retry later if needed */
+        return 0;
+    }
+
     /* Store the Lua function reference */
     lua_pushvalue(L, 3);
     gpointer lua_ref = luaH_object_ref(L, -1);
@@ -323,13 +335,6 @@ luaH_page_register_js_callback(lua_State *L)
     js_callback_data_t *cb_data = g_slice_new(js_callback_data_t);
     cb_data->page = page;
     cb_data->callback_name = g_strdup(name);
-
-    /* Register the JavaScript function */
-    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
-    guint64 page_id = webkit_web_page_get_id(page->page);
-    JSCContext *ctx = js_context_cache_get(page_id);
-    if (!ctx)
-        return luaL_error(L, "page context not available");
 
     JSCValue *js_func = jsc_value_new_function_variadic(ctx, name,
                                                          G_CALLBACK(js_callback_handler),
