@@ -370,6 +370,64 @@ dom_element_get_computed_style(dom_element_t *element, const char *property)
     return value;
 }
 
+/* Helper: Get numeric property via JavaScript */
+static gint
+dom_element_get_js_int_property(dom_element_t *element, const char *property)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return 0;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  return elem ? (elem.%s || 0) : 0;"
+        "})()",
+        sel, property
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gint value = (gint)jsc_value_to_int32(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return value;
+}
+
+/* Helper: Get boolean property via JavaScript */
+static gboolean
+dom_element_get_js_bool_property(dom_element_t *element, const char *property)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return FALSE;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  return elem ? (elem.%s || false) : false;"
+        "})()",
+        sel, property
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gboolean value = jsc_value_to_boolean(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return value;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -906,22 +964,14 @@ static gint
 luaH_dom_element_push_src(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-
-#define CHECK(lower, upper) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
-        lua_pushstring(L, webkit_dom_html_##lower##_element_get_src(WEBKIT_DOM_HTML_##upper##_ELEMENT(element->element))); \
-        return 1; \
+    /* Use JavaScript instead of WebKitDOM type checking */
+    gchar *src = dom_element_get_js_string_property(element, "src");
+    if (src && src[0] != '\0') {
+        lua_pushstring(L, src);
+        g_free(src);
+        return 1;
     }
-
-    CHECK(input, INPUT);
-    CHECK(frame, FRAME);
-    CHECK(iframe, IFRAME);
-    CHECK(embed, EMBED);
-    CHECK(image, IMAGE);
-    CHECK(script, SCRIPT);
-
-#undef CHECK
-
+    g_free(src);
     return 0;
 }
 
@@ -929,20 +979,14 @@ static gint
 luaH_dom_element_push_href(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-
-#define CHECK(lower, upper) \
-    if (WEBKIT_DOM_IS_##upper(element->element)) { \
-        lua_pushstring(L, webkit_dom_##lower##_get_href(WEBKIT_DOM_##upper(element->element))); \
-        return 1; \
+    /* Use JavaScript instead of WebKitDOM type checking */
+    gchar *href = dom_element_get_js_string_property(element, "href");
+    if (href && href[0] != '\0') {
+        lua_pushstring(L, href);
+        g_free(href);
+        return 1;
     }
-
-    CHECK(html_anchor_element, HTML_ANCHOR_ELEMENT);
-    CHECK(html_area_element, HTML_AREA_ELEMENT);
-    CHECK(html_link_element, HTML_LINK_ELEMENT);
-    CHECK(style_sheet, STYLE_SHEET);
-
-#undef CHECK
-
+    g_free(href);
     return 0;
 }
 
@@ -950,24 +994,14 @@ static gint
 luaH_dom_element_push_value(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-
-#define CHECK(lower, upper, type) \
-    if (WEBKIT_DOM_IS_HTML_##upper##_ELEMENT(element->element)) { \
-        lua_push##type(L, webkit_dom_html_##lower##_element_get_value( \
-                    WEBKIT_DOM_HTML_##upper##_ELEMENT(element->element))); \
-        return 1; \
+    /* Use JavaScript instead of WebKitDOM type checking */
+    gchar *value = dom_element_get_js_string_property(element, "value");
+    if (value && value[0] != '\0') {
+        lua_pushstring(L, value);
+        g_free(value);
+        return 1;
     }
-
-    CHECK(text_area, TEXT_AREA, string);
-    CHECK(input, INPUT, string);
-    CHECK(option, OPTION, string);
-    CHECK(param, PARAM, string);
-    CHECK(li, LI, integer);
-    CHECK(button, BUTTON, string);
-    CHECK(select, SELECT, string);
-
-#undef CHECK
-
+    g_free(value);
     return 0;
 }
 
@@ -1076,8 +1110,6 @@ luaH_dom_element_index(lua_State *L)
     const char *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMElement *elem = element->element;
-
     switch(token) {
         case L_TK_TAG_NAME: {
             /* Use JavaScript instead of WebKitDOM */
@@ -1113,17 +1145,23 @@ luaH_dom_element_index(lua_State *L)
         PF_CASE(CLIENT_RECTS, luaH_dom_element_client_rects)
 #endif
 
-        PI_CASE(CHILD_COUNT, webkit_dom_element_get_child_element_count(elem))
+        case L_TK_CHILD_COUNT:
+            /* Use JavaScript childElementCount instead of WebKitDOM */
+            lua_pushinteger(L, dom_element_get_js_int_property(element, "childElementCount"));
+            return 1;
 
         case L_TK_SRC: return luaH_dom_element_push_src(L);
         case L_TK_HREF: return luaH_dom_element_push_href(L);
         case L_TK_VALUE: return luaH_dom_element_push_value(L);
-        case L_TK_CHECKED: return webkit_dom_html_input_element_get_checked(
-                                   WEBKIT_DOM_HTML_INPUT_ELEMENT(elem));
+        case L_TK_CHECKED:
+            /* Use JavaScript checked property instead of WebKitDOM */
+            lua_pushboolean(L, dom_element_get_js_bool_property(element, "checked"));
+            return 1;
         case L_TK_TYPE: {
-            gchar *type;
-            g_object_get(element->element, "type", &type, NULL);
+            /* Use JavaScript type property instead of g_object_get */
+            gchar *type = dom_element_get_js_string_property(element, "type");
             lua_pushstring(L, type);
+            g_free(type);
             return 1;
         }
         case L_TK_PARENT: return luaH_dom_element_push_parent(L);
