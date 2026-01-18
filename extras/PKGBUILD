@@ -8,25 +8,17 @@ pkgdesc="A fast, small, webkit-gtk based browser extensible by Lua"
 arch=('i686' 'x86_64')
 url="https://luakit.github.io/"
 license=('GPL3')
-depends=('libwebkit' 'lua-filesystem' 'libunique')
+depends=('webkit2gtk' 'lua-filesystem' 'sqlite' 'gtk3' 'glib2')
 makedepends=('git' 'lua' 'help2man')
-optdepends=('luajit2: Needed if use the luajit option in make')
-# Luakit crowd fork
-source=($_gitname.install 'luakit::git+https://github.com/luakit-crowd/luakit.git#branch=develop')
-# Mason Larobina’s master
-#source=($_gitname.install 'luakit::git+https://github.com/mason-larobina/luakit.git#branch=develop')
+optdepends=('luajit: Just-in-time compiler for Lua (recommended)')
+source=($_gitname.install 'luakit::git+https://github.com/luakit/luakit.git#branch=develop')
 md5sums=('184069a7264115726f73204d1d708e2c' 'SKIP')
 provides=(luakit)
 conflicts=('luakit' 'luakit-develop-git')
 install=$_gitname.install
 options=(!strip)
-backup=('etc/xdg/luakit/binds.lua' 
-        'etc/xdg/luakit/globals.lua' 
-        'etc/xdg/luakit/modes.lua' 
-        'etc/xdg/luakit/rc.lua' 
-        'etc/xdg/luakit/theme.lua' 
-        'etc/xdg/luakit/webview.lua' 
-        'etc/xdg/luakit/window.lua')
+backup=('etc/xdg/luakit/rc.lua'
+        'etc/xdg/luakit/theme.lua')
 
 _gitbranch="develop"
 
