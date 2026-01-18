@@ -6,8 +6,11 @@ This document summarizes the audit work performed on the luakit codebase to addr
 
 ### 1. Security Fixes
 
+**📋 See SECURITY_AUDIT.md for comprehensive security analysis**
+
 #### Critical: Buffer Overflow in IPC Socket Path Handling
 **Status:** ✅ Fixed
+**CVE Risk:** High (Memory corruption, potential RCE)
 **Files Modified:**
 - `ipc.c:125`
 - `extension/ipc.c:161`
@@ -19,6 +22,49 @@ This document summarizes the audit work performed on the luakit codebase to addr
 **Impact:** Prevents potential buffer overflow attacks through socket path manipulation.
 
 **Commit:** `131d70f` - "Fix critical buffer overflow vulnerability in IPC socket path handling"
+
+#### High: Command Injection in Style Watching
+**Status:** ✅ Fixed
+**CVE Risk:** High (Remote code execution)
+**File Modified:**
+- `lib/styles.lua:372`
+
+**Issue:** Direct string concatenation in shell command construction allowed injection of arbitrary shell commands through stylesheet paths.
+
+**Before (VULNERABLE):**
+```lua
+luakit.spawn("bash -c 'inotifywait -t 10 \"" .. path .. "\" || sleep 1'", ...)
+```
+
+**After (SECURE):**
+```lua
+luakit.spawn(string.format("bash -c 'inotifywait -t 10 %q || sleep 1'", path), ...)
+```
+
+**Impact:** Prevents arbitrary code execution through malicious stylesheet paths. Uses Lua's `%q` format specifier to properly escape all shell metacharacters.
+
+**Commit:** `469b468` - "Fix command injection vulnerabilities in shell command construction"
+
+#### Medium: Command Injection in Test Code
+**Status:** ✅ Fixed
+**CVE Risk:** Medium (Limited to test environment)
+**Files Modified:**
+- `tests/run_test.lua:134-135, 162`
+
+**Issue:** Test code concatenated environment variables and paths directly into shell commands without proper escaping.
+
+**Fix:** Applied proper shell escaping using `string.format("%q", ...)` for all command arguments.
+
+**Impact:** Prevents code execution if test environment is compromised. Defense in depth for CI/CD pipelines.
+
+**Commit:** `469b468` - "Fix command injection vulnerabilities in shell command construction"
+
+#### Security Review: SQL Injection
+**Status:** ✅ Secure
+
+**Findings:** Most database code properly uses parameterized queries with `?` placeholders. The few string-formatted queries in `lib/noscript.lua` use `sql_escape()` and only accept hardcoded field names, limiting risk.
+
+**Recommendation:** Refactor noscript.lua to use parameterized queries for consistency.
 
 ---
 
