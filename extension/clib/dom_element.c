@@ -428,6 +428,34 @@ dom_element_get_js_bool_property(dom_element_t *element, const char *property)
     return value;
 }
 
+/* Helper: Call a JavaScript method on element (no arguments) */
+static void
+dom_element_call_js_method(dom_element_t *element, const char *method)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return;
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (elem && elem.%s) {"
+        "    elem.%s();"
+        "  }"
+        "})()",
+        sel, method, method
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -618,17 +646,8 @@ static gint
 luaH_dom_element_click(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    WebKitDOMElement *elem = element->element;
-    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(elem));
-    WebKitDOMEventTarget *target = WEBKIT_DOM_EVENT_TARGET(element->element);
-    GError *error = NULL;
-    WebKitDOMEvent *event = webkit_dom_document_create_event(doc, "MouseEvent", &error);
-    if (error)
-        return luaL_error(L, "create event error: %s", error->message);
-    webkit_dom_event_init_event(event, "click", TRUE, TRUE);
-    webkit_dom_event_target_dispatch_event(target, event, &error);
-    if (error)
-        return luaL_error(L, "dispatch event error: %s", error->message);
+    /* Use JavaScript click() instead of WebKitDOM event creation/dispatch */
+    dom_element_call_js_method(element, "click");
     return 0;
 }
 
@@ -636,7 +655,8 @@ static gint
 luaH_dom_element_focus(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    webkit_dom_element_focus(element->element);
+    /* Use JavaScript focus() instead of WebKitDOM */
+    dom_element_call_js_method(element, "focus");
     return 0;
 }
 
@@ -644,7 +664,8 @@ static gint
 luaH_dom_element_submit(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
-    webkit_dom_html_form_element_submit(WEBKIT_DOM_HTML_FORM_ELEMENT(element->element));
+    /* Use JavaScript submit() instead of WebKitDOM */
+    dom_element_call_js_method(element, "submit");
     return 0;
 }
 
