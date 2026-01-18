@@ -259,32 +259,75 @@ The WebKitDOM API provided direct C-level access to the DOM from extension proce
 
 ## Remaining Tasks
 
-### 7. Deprecation Analysis and Removal Plan
+### 7. API Migration Strategy
 
-**Status:** ⏳ Pending
+**📋 See MIGRATION_STRATEGY.md for comprehensive phased migration plan**
+
+**Status:** ✅ Strategy Complete
 **Complexity:** High
-**Risk:** Medium-High (could break functionality)
+**Risk:** Variable (⭐ to ⭐⭐⭐⭐ depending on phase)
+**Estimated Timeline:** 12-16 weeks
 
-**Scope:**
-- 34+ Lua files use deprecated lousy functions
-- Several C files reference deprecated WebKit APIs
-- Need comprehensive testing after each deprecation removal
+#### Migration Overview
 
-**Recommended Approach:**
-1. Catalog all deprecated function usage
-2. Identify modern replacements
-3. Create migration guide
-4. Update incrementally with tests after each change
-5. Deprecate gracefully (warnings before removal)
+Comprehensive dependency analysis completed with phased migration strategy:
 
-**Files to Review:**
-- `lib/binds.lua`
-- `lib/domain_props.lua`
-- `lib/introspector_chrome.lua`
-- `lib/lousy/widget/tablist.lua`
-- `lib/settings.lua`
-- `widgets/label.c`
-- `widgets/webview.c`
+**5 Migration Phases:**
+
+| Phase | Timeline | Risk | Components |
+|-------|----------|------|------------|
+| **Phase 1** | Week 1 | ⭐ Minimal | Isolated web modules (error_page, image_css, webview) |
+| **Phase 2** | Week 1-2 | ⭐ Minimal | Unused lousy functions (mkdir, eval, checkfile) |
+| **Phase 3** | Week 2-3 | ⭐⭐ Low | Utility functions (filter_array, lua_escape) |
+| **Phase 4** | Week 4-6 | ⭐⭐⭐ Medium | DOM infrastructure (scroll.c, dom_document.c) |
+| **Phase 5** | Week 7-12 | ⭐⭐⭐⭐ High | Core features (select, follow, formfiller cluster) |
+
+#### Key Findings from Dependency Analysis
+
+**Critical Dependencies Identified:**
+- `dom_element.c` - Central hub, 60+ methods, affects all DOM features
+- `select_wm.lua` - Shared by follow and formfiller, must migrate atomically
+- `lousy.util.table.join()` - Used in 15+ files, critical utility
+- `lousy.util.escape()` - Used in 12+ files, must maintain
+
+**Isolated Components (Safe to Migrate First):**
+- `error_page_wm.lua` - Only 2 DOM methods, no dependencies
+- `image_css_wm.lua` - Only 3 DOM properties, no dependencies
+- `webview_wm.lua` - Only 3 DOM methods, no dependencies
+
+**Tightly-Coupled Cluster (Requires Atomic Migration):**
+```
+select_wm.lua (shared infrastructure)
+    ├── follow_wm.lua (link hints)
+    └── formfiller_wm.lua (form auto-fill)
+```
+
+#### Migration Approach
+
+1. **Start with Quick Wins** (Phases 1-2, Week 1-2)
+   - Low risk, isolated components
+   - Build confidence and patterns
+   - No impact on core features
+
+2. **Build Infrastructure** (Phase 4, Week 4-6)
+   - Create JavaScript helper library
+   - Implement Lua/JavaScript bridge
+   - Test communication layer
+
+3. **Atomic Core Migration** (Phase 5, Week 7-12)
+   - Migrate select + follow + formfiller together
+   - Extensive testing required
+   - Rollback plan with feature flags
+
+#### Success Metrics
+
+- ✅ Zero deprecation warnings
+- ✅ Performance within 10% of baseline
+- ✅ All tests passing (93 tests)
+- ✅ No memory leaks
+- ✅ User configs continue to work
+
+**Recommendation:** Begin Phase 1-2 immediately (low risk, 1-2 week effort), then evaluate resources for remaining phases
 
 ---
 
