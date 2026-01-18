@@ -40,19 +40,21 @@ end
 T.test_mode_switching = function ()
     test.debug("TEST", "=== Testing mode switching ===")
 
-    test.debug("STEP", "1. Recording initial mode")
-    local initial_mode = w:is_mode()
-    test.debug("INFO", string.format("Initial mode: %s", initial_mode))
+    test.debug("STEP", "1. Verifying initial mode is normal")
+    test.debug("ASSERT", "Checking if in normal mode")
+    assert.is_true(w:is_mode("normal"))
 
     test.debug("STEP", "2. Switching to insert mode")
     w:set_mode("insert")
     test.debug("ASSERT", "Verifying mode changed to insert")
-    assert.is_equal(w:is_mode(), "insert")
+    assert.is_true(w:is_mode("insert"))
+    assert.is_false(w:is_mode("normal"))
 
     test.debug("STEP", "3. Switching back to normal mode")
     w:set_mode("normal")
     test.debug("ASSERT", "Verifying mode changed to normal")
-    assert.is_equal(w:is_mode(), "normal")
+    assert.is_true(w:is_mode("normal"))
+    assert.is_false(w:is_mode("insert"))
 
     test.debug("TEST", "=== Mode switching test completed ===")
 end
