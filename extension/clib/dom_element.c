@@ -337,6 +337,39 @@ dom_element_get_rect_property(dom_element_t *element, const char *property)
     return value;
 }
 
+/* Helper: Get computed style property via JavaScript */
+static gchar *
+dom_element_get_computed_style(dom_element_t *element, const char *property)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        return g_strdup("");
+    }
+
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  if (!elem) return '';"
+        "  var style = window.getComputedStyle(elem);"
+        "  return style.getPropertyValue('%s') || '';"
+        "})()",
+        sel, property
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gchar *value = jsc_value_is_string(result) ?
+                   g_strdup(jsc_value_to_string(result)) :
+                   g_strdup("");
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return value;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -499,13 +532,11 @@ static gint
 luaH_dom_element_style_index(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, lua_upvalueindex(1));
-    WebKitDOMDocument *document = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
-    WebKitDOMCSSStyleDeclaration *style = webkit_dom_dom_window_get_computed_style(window, element->element, "");
-
     const gchar *name = luaL_checkstring(L, 2);
-    const gchar *value = webkit_dom_css_style_declaration_get_property_value(style, name);
+    /* Use JavaScript getComputedStyle instead of WebKitDOM */
+    gchar *value = dom_element_get_computed_style(element, name);
     lua_pushstring(L, value);
+    g_free(value);
     return 1;
 }
 
