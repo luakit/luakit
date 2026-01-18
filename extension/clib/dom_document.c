@@ -25,6 +25,9 @@
 #include "common/tokenize.h"
 #include "common/luauniq.h"
 
+#include <JavaScriptCore/JavaScript.h>
+#include <jsc/jsc.h>
+
 #define REG_KEY "luakit.uniq.registry.dom_document"
 
 static lua_class_t dom_document_class;
@@ -73,6 +76,49 @@ luaH_dom_document_gc(lua_State *L)
     return luaH_object_gc(L);
 }
 
+/* Helper: Get JavaScript context for a document */
+static JSCContext *
+dom_document_get_js_context(dom_document_t *document)
+{
+    WebKitDOMDocument *doc = document->document;
+    if (!doc) return NULL;
+
+    /* Find the WebKitWebPage that owns this document */
+    for (guint64 id = 1; id < 100; id++) {
+        WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, id);
+        if (!page) continue;
+
+        WebKitDOMDocument *page_doc = webkit_web_page_get_dom_document(page);
+        if (page_doc == doc) {
+            WebKitFrame *frame = webkit_web_page_get_main_frame(page);
+            return webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+        }
+    }
+
+    return NULL;
+}
+
+/* Helper: Get window numeric property via JavaScript */
+static gdouble
+dom_document_get_window_property(dom_document_t *document, const char *property)
+{
+    JSCContext *ctx = dom_document_get_js_context(document);
+    if (!ctx) {
+        return 0.0;
+    }
+
+    gchar *js_code = g_strdup_printf("window.%s || 0", property);
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gdouble value = jsc_value_to_double(result);
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+
+    return value;
+}
+
 static gint
 luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 {
@@ -87,13 +133,20 @@ luaH_dom_document_window_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document->document);
-
+    /* Use JavaScript window properties instead of WebKitDOM */
     switch (token) {
-        PI_CASE(SCROLL_X, webkit_dom_dom_window_get_scroll_x(window));
-        PI_CASE(SCROLL_Y, webkit_dom_dom_window_get_scroll_y(window));
-        PI_CASE(INNER_WIDTH, webkit_dom_dom_window_get_inner_width(window));
-        PI_CASE(INNER_HEIGHT, webkit_dom_dom_window_get_inner_height(window));
+        case L_TK_SCROLL_X:
+            lua_pushinteger(L, (glong)dom_document_get_window_property(document, "scrollX"));
+            return 1;
+        case L_TK_SCROLL_Y:
+            lua_pushinteger(L, (glong)dom_document_get_window_property(document, "scrollY"));
+            return 1;
+        case L_TK_INNER_WIDTH:
+            lua_pushinteger(L, (glong)dom_document_get_window_property(document, "innerWidth"));
+            return 1;
+        case L_TK_INNER_HEIGHT:
+            lua_pushinteger(L, (glong)dom_document_get_window_property(document, "innerHeight"));
+            return 1;
         default:
             return 0;
     }
