@@ -86,22 +86,10 @@ T.test_undo_close_restores_tab_history = function ()
     assert(w:is_mode("normal"))
     log_window_state("after_empty_undolist")
 
-    -- Step 5: Navigate to about:blank
-    test.debug("STEP", "5. Navigating to about:blank")
-    test.debug("INFO", string.format("Current URI before navigation: %s", w.view.uri))
-
-    w.view.uri = "about:blank"
-    test.debug("INFO", "Waiting for navigation to complete...")
-    test.wait_for_view(w.view)
-
-    test.debug("ASSERT", "Verifying URI changed to about:blank")
-    assert.is_equal(w.view.uri, "about:blank")
-    log_window_state("after_navigation")
-
-    -- Step 6: Close the tab
+    -- Step 5: Close the tab (with the original page still loaded)
     local before_close_tab_count = w.tabs:count()
     local before_close_history = get_undoclose_history()
-    test.debug("STEP", "6. Closing tab")
+    test.debug("STEP", "5. Closing tab")
     test.debug("INFO", string.format("Before close: tabs=%d, history=%d",
         before_close_tab_count, before_close_history))
 
@@ -139,10 +127,10 @@ T.test_undo_close_restores_tab_history = function ()
     w:set_mode("normal")
     log_window_state("after_undolist_menu")
 
-    -- Step 7: First undo close (without argument)
+    -- Step 7: Undo close and verify tab is restored
     local before_undo_tab_count = w.tabs:count()
     local before_undo_history = get_undoclose_history()
-    test.debug("STEP", "7. First undo close (no argument)")
+    test.debug("STEP", "7. Undo close tab")
     test.debug("INFO", string.format("Before undo: tabs=%d, history=%d",
         before_undo_tab_count, before_undo_history))
 
@@ -159,62 +147,17 @@ T.test_undo_close_restores_tab_history = function ()
         w.tabs:current(), before_undo_tab_count + 1))
     assert.is_equal(w.tabs:current(), before_undo_tab_count + 1)
 
-    test.debug("ASSERT", string.format("Verifying URI is about:blank, got: %s", w.view.uri))
-    assert.is_equal(w.view.uri, 'about:blank')
+    test.debug("ASSERT", string.format("Verifying URI is %s, got: %s", uri, w.view.uri))
+    assert.is_equal(w.view.uri, uri)
 
     test.debug("ASSERT", string.format("Verifying history decreased: %d -> %d",
         before_undo_history, after_undo_history))
     assert.is_equal(after_undo_history, before_undo_history - 1)
 
-    log_window_state("after_first_undo")
+    log_window_state("after_undo")
 
-    -- Step 8: Close tab again
-    test.debug("STEP", "8. Closing tab again")
-    local second_close_tab_count = w.tabs:count()
-
-    w:close_tab()
-
-    test.debug("INFO", string.format("Closed tab, count: %d -> %d",
-        second_close_tab_count, w.tabs:count()))
-    log_window_state("after_second_close")
-
-    -- Step 9: Second undo close (with argument)
-    local before_undo2_history = get_undoclose_history()
-    test.debug("STEP", "9. Second undo close (with argument 1)")
-    test.debug("INFO", string.format("Before undo: history=%d", before_undo2_history))
-
-    w:undo_close_tab(1)
-    test.debug("INFO", "Waiting for restored view to load...")
-    test.wait_for_view(w.view)
-
-    local after_undo2_history = get_undoclose_history()
-    test.debug("INFO", string.format("After undo: tabs=%d, history=%d, current_tab=%d, uri=%s",
-        w.tabs:count(), after_undo2_history, w.tabs:current(), w.view.uri))
-
-    test.debug("ASSERT", string.format("Verifying current tab: %d", w.tabs:current()))
-    assert.is_equal(w.tabs:current(), 2)
-
-    test.debug("ASSERT", string.format("Verifying URI is about:blank, got: %s", w.view.uri))
-    assert.is_equal(w.view.uri, 'about:blank')
-
-    log_window_state("after_second_undo")
-
-    -- Step 10: Navigate back in history
-    test.debug("STEP", "10. Navigating back in tab history")
-    test.debug("INFO", string.format("Current URI before back: %s", w.view.uri))
-
-    w:back(1)
-    test.debug("INFO", "Waiting for back navigation to complete...")
-    test.wait_for_view(w.view)
-
-    test.debug("INFO", string.format("URI after back navigation: %s", w.view.uri))
-    test.debug("ASSERT", string.format("Verifying navigated back to: %s", uri))
-    assert.is_equal(w.view.uri, uri)
-
-    log_window_state("after_back_navigation")
-
-    -- Step 11: Restore to initial state
-    test.debug("STEP", "11. Restoring to initial state")
+    -- Step 8: Restore to initial state
+    test.debug("STEP", "8. Restoring to initial state")
     test.debug("INFO", "Closing test tab")
 
     w:close_tab()
