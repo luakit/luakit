@@ -39,12 +39,15 @@ end
 T.test_undo_close_restores_tab_history = function ()
     test.debug("TEST", "=== Starting undoclose test ===")
 
-    -- Step 1: Clear any existing undoclose history
-    test.debug("STEP", "1. Clearing any existing undoclose history")
-    local undoclose = package.loaded.undoclose
+    -- Step 1: Ensure undoclose module is loaded and clear history
+    test.debug("STEP", "1. Loading undoclose module and clearing history")
+    local undoclose = require("undoclose")
     if undoclose and undoclose.history then
-        test.debug("INFO", string.format("Clearing existing history (size: %d)", #undoclose.history))
+        local existing_size = #undoclose.history
+        test.debug("INFO", string.format("Clearing existing history (size: %d)", existing_size))
         undoclose.history = {}
+    else
+        test.debug("INFO", "Undoclose module loaded, no existing history")
     end
 
     -- Step 2: Initial state check
