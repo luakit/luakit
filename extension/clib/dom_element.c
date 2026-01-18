@@ -167,6 +167,78 @@ dom_element_selector(dom_element_t *element)
     return sel;
 }
 
+/* Helper: Get JavaScript context for a DOM element's document */
+static JSCContext *
+dom_element_get_js_context(dom_element_t *element)
+{
+    WebKitDOMDocument *doc = webkit_dom_node_get_owner_document(WEBKIT_DOM_NODE(element->element));
+    if (!doc) return NULL;
+
+    /* Find the WebKitWebPage that owns this document */
+    /* We iterate through all pages - not ideal but functional for now */
+
+    /* Get list of page IDs - we'll need to check each one */
+    /* For now, we'll use a simpler approach: use the document's defaultView to get frame info */
+    /* This is a workaround until we implement proper page tracking */
+
+    /* Alternative: Use webkit_dom_document as key to find the frame */
+    /* For Phase 5, we'll use a direct approach with the main frame of each page */
+
+    /* Simplified approach: Get the frame directly from the extension's current context */
+    /* This works because lua calls happen in the context of a specific page */
+    WebKitFrame *frame = NULL;
+
+    /* Try to find the page by iterating through a small range of possible IDs */
+    /* This is a temporary solution - proper implementation would track page in dom_element_t */
+    for (guint64 id = 1; id < 100; id++) {
+        WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, id);
+        if (!page) continue;
+
+        WebKitDOMDocument *page_doc = webkit_web_page_get_dom_document(page);
+        if (page_doc == doc) {
+            frame = webkit_web_page_get_main_frame(page);
+            break;
+        }
+    }
+
+    if (!frame) return NULL;
+
+    return webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+}
+
+/* Helper: Get JavaScript string property from DOM element */
+static gchar *
+dom_element_get_js_string_property(dom_element_t *element, const char *property)
+{
+    JSCContext *ctx = dom_element_get_js_context(element);
+    if (!ctx) {
+        /* Fallback: return empty string if we can't get JS context */
+        return g_strdup("");
+    }
+
+    /* Build JavaScript code to get the property using a selector */
+    gchar *sel = dom_element_selector(element);
+    gchar *js_code = g_strdup_printf(
+        "(function() {"
+        "  var elem = document.querySelector('%s');"
+        "  return elem ? elem.%s : '';"
+        "})()",
+        sel, property
+    );
+
+    JSCValue *result = jsc_context_evaluate(ctx, js_code, -1);
+    gchar *value = jsc_value_is_string(result) ?
+                   g_strdup(jsc_value_to_string(result)) :
+                   g_strdup("");
+
+    g_object_unref(result);
+    g_object_unref(ctx);
+    g_free(js_code);
+    g_free(sel);
+
+    return value;
+}
+
 JSCValue *
 dom_element_js_ref(page_t *page, dom_element_t *element)
 {
@@ -886,9 +958,27 @@ luaH_dom_element_index(lua_State *L)
     WebKitDOMElement *elem = element->element;
 
     switch(token) {
-        PS_CASE(TAG_NAME, webkit_dom_element_get_tag_name(elem))
-        PS_CASE(TEXT_CONTENT, webkit_dom_node_get_text_content(WEBKIT_DOM_NODE(elem)))
-        PS_CASE(INNER_HTML, webkit_dom_element_get_inner_html(elem))
+        case L_TK_TAG_NAME: {
+            /* Use JavaScript instead of WebKitDOM */
+            gchar *tag = dom_element_get_js_string_property(element, "tagName");
+            lua_pushstring(L, tag);
+            g_free(tag);
+            return 1;
+        }
+        case L_TK_TEXT_CONTENT: {
+            /* Use JavaScript instead of WebKitDOM */
+            gchar *text = dom_element_get_js_string_property(element, "textContent");
+            lua_pushstring(L, text);
+            g_free(text);
+            return 1;
+        }
+        case L_TK_INNER_HTML: {
+            /* Use JavaScript instead of WebKitDOM */
+            gchar *html = dom_element_get_js_string_property(element, "innerHTML");
+            lua_pushstring(L, html);
+            g_free(html);
+            return 1;
+        }
 
         PF_CASE(QUERY, luaH_dom_element_query)
         PF_CASE(APPEND, luaH_dom_element_append)
