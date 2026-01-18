@@ -22,6 +22,7 @@
 #include "extension/clib/page.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
+#include "extension/luajs.h"
 #include "common/tokenize.h"
 #include "common/luautil.h"
 #include "common/luauniq.h"
@@ -165,9 +166,11 @@ luaH_page_eval_js(lua_State *L)
 
     source = source ?: luaH_callerinfo(L);
 
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    guint64 page_id = webkit_web_page_get_id(page->page);
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (!ctx)
+        return luaL_error(L, "page context not available");
 
     JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, script, -1, source, 1);
     JSCException *exception = jsc_context_get_exception(ctx);
@@ -322,9 +325,11 @@ luaH_page_register_js_callback(lua_State *L)
     cb_data->callback_name = g_strdup(name);
 
     /* Register the JavaScript function */
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    guint64 page_id = webkit_web_page_get_id(page->page);
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (!ctx)
+        return;
 
     JSCValue *js_func = jsc_value_new_function_variadic(ctx, name,
                                                          G_CALLBACK(js_callback_handler),

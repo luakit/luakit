@@ -20,6 +20,7 @@
 #include <webkitdom/WebKitDOMDOMWindowUnstable.h>
 
 #include "extension/extension.h"
+#include "extension/luajs.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
 #include "common/tokenize.h"
@@ -90,8 +91,8 @@ dom_document_get_js_context(dom_document_t *document)
 
         WebKitDOMDocument *page_doc = webkit_web_page_get_dom_document(page);
         if (page_doc == doc) {
-            WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-            return webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+            /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+            return js_context_cache_get(id);
         }
     }
 

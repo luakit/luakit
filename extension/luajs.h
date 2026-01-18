@@ -20,11 +20,15 @@
 #define LUAKIT_EXTENSION_LUAJS_H
 
 #include <glib.h>
+#include <jsc/jsc.h>
 
 void web_luajs_init(void);
 void luaJS_register_function(lua_State *L);
 void ipc_recv_lua_js_call(ipc_endpoint_t *from, const guint8 *msg, guint length);
 void ipc_recv_lua_js_register(ipc_endpoint_t *from, const guint8 *msg, guint length);
+
+/* JavaScript context cache (avoids deprecated webkit_web_page_get_main_frame) */
+JSCContext *js_context_cache_get(guint64 page_id);
 
 #endif
 

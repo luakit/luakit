@@ -26,6 +26,7 @@
 #include "extension/clib/dom_document.h"
 #include "common/luauniq.h"
 #include "extension/extension.h"
+#include "extension/luajs.h"
 
 #define REG_KEY "luakit.uniq.registry.dom_element"
 
@@ -184,10 +185,6 @@ dom_element_get_js_context(dom_element_t *element)
     /* Alternative: Use webkit_dom_document as key to find the frame */
     /* For Phase 5, we'll use a direct approach with the main frame of each page */
 
-    /* Simplified approach: Get the frame directly from the extension's current context */
-    /* This works because lua calls happen in the context of a specific page */
-    WebKitFrame *frame = NULL;
-
     /* Try to find the page by iterating through a small range of possible IDs */
     /* This is a temporary solution - proper implementation would track page in dom_element_t */
     for (guint64 id = 1; id < 100; id++) {
@@ -196,14 +193,12 @@ dom_element_get_js_context(dom_element_t *element)
 
         WebKitDOMDocument *page_doc = webkit_web_page_get_dom_document(page);
         if (page_doc == doc) {
-            frame = webkit_web_page_get_main_frame(page);
-            break;
+            /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+            return js_context_cache_get(id);
         }
     }
 
-    if (!frame) return NULL;
-
-    return webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+    return NULL;
 }
 
 /* Helper: Get JavaScript string property from DOM element */
@@ -644,9 +639,13 @@ dom_element_js_ref(page_t *page, dom_element_t *element)
 {
     gchar *sel = dom_element_selector(element);
 
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    guint64 page_id = webkit_web_page_get_id(page->page);
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (!ctx) {
+        g_free(sel);
+        return NULL;  /* Context not available */
+    }
 
     JSCValue *js_global = jsc_context_get_global_object(ctx);
     JSCValue *js_doc = jsc_value_object_get_property(js_global, "document");

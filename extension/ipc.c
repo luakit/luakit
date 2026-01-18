@@ -29,6 +29,7 @@
 #include "extension/clib/luakit.h"
 #include "extension/ipc.h"
 #include "extension/scroll.h"
+#include "extension/luajs.h"
 #include "common/util.h"
 #include "common/luajs.h"
 #include "common/luaserialize.h"
@@ -102,11 +103,17 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
         return;
     }
 
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-    WebKitScriptWorld *world = webkit_script_world_get_default();
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
-    n = luajs_eval_js(L, ctx, script, source, 1, no_return);
-    g_object_unref(ctx);
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (ctx) {
+        n = luajs_eval_js(L, ctx, script, source, 1, no_return);
+        g_object_unref(ctx);
+    } else {
+        /* Context not available yet, push error */
+        lua_pushnil(L);
+        lua_pushstring(L, "page context not available");
+        n = 2;
+    }
     /* Send [page_id, cb, ret] or [page_id, cb, nil, error] */
     ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -n-2, -1);
     lua_settop(L, top);

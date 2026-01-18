@@ -22,6 +22,7 @@
 #include "extension/extension.h"
 #include "extension/scroll.h"
 #include "extension/ipc.h"
+#include "extension/luajs.h"
 
 static void
 send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t subtype)
@@ -74,9 +75,11 @@ scroll_callback_data_free(scroll_callback_data_t *cb_data)
 static void
 web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
-    WebKitFrame *frame = webkit_web_page_get_main_frame(web_page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (!ctx)
+        return;  /* Context not available yet */
 
     /* Register three JavaScript callbacks for different scroll events */
 
@@ -181,10 +184,15 @@ web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gp
 void
 web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
 {
+    /* Get the WebKitWebPage for IPC messaging */
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (!page)
+        return;
+
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    JSCContext *ctx = js_context_cache_get(page_id);
+    if (!ctx)
+        return;  /* Context not available yet */
 
     /* Use JavaScript window.scrollTo() instead of WebKitDOM API */
     gchar *js_code = g_strdup_printf("window.scrollTo(%d, %d);", scroll_x, scroll_y);

@@ -37,6 +37,57 @@ typedef struct _luajs_func_ctx_t {
 
 static gint lua_string_find_ref = LUA_REFNIL;
 
+/* JavaScript context cache: page_id -> JSCContext
+ * This avoids calling the deprecated webkit_web_page_get_main_frame() */
+static GHashTable *page_js_contexts = NULL;
+
+static void
+js_context_cache_init(void)
+{
+    if (page_js_contexts)
+        return;
+
+    page_js_contexts = g_hash_table_new_full(
+        g_direct_hash,
+        g_direct_equal,
+        NULL,
+        (GDestroyNotify)g_object_unref  /* Unref context when removed */
+    );
+}
+
+static void
+js_context_cache_set(guint64 page_id, JSCContext *ctx)
+{
+    g_assert(page_js_contexts);
+    g_assert(ctx);
+
+    g_object_ref(ctx);  /* Cache takes ownership */
+    g_hash_table_replace(page_js_contexts,
+                         GUINT_TO_POINTER(page_id),
+                         ctx);
+}
+
+JSCContext *
+js_context_cache_get(guint64 page_id)
+{
+    if (!page_js_contexts)
+        return NULL;
+
+    JSCContext *ctx = g_hash_table_lookup(page_js_contexts,
+                                          GUINT_TO_POINTER(page_id));
+    if (ctx)
+        g_object_ref(ctx);  /* Caller must unref */
+    return ctx;
+}
+
+static void
+js_context_cache_remove(guint64 page_id)
+{
+    if (!page_js_contexts)
+        return;
+    g_hash_table_remove(page_js_contexts, GUINT_TO_POINTER(page_id));
+}
+
 typedef struct _js_promise_t {
     JSCValue *promise;
     JSCValue *resolve;
@@ -81,8 +132,11 @@ luaJS_promise_resolve_reject(lua_State *L)
     WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
     if (!page || !WEBKIT_IS_WEB_PAGE(page))
         return luaL_error(L, "promise no longer valid (associated page closed)");
-    JSCContext *context = webkit_frame_get_js_context(
-            webkit_web_page_get_main_frame(page));
+
+    /* Get cached JavaScript context (avoids deprecated webkit_web_page_get_main_frame) */
+    JSCContext *context = js_context_cache_get(page_id);
+    if (!context)
+        return luaL_error(L, "promise no longer valid (page context unavailable)");
 
     js_promise_t *promise = (js_promise_t*)lua_topointer(L, lua_upvalueindex(2));
     JSCValue *cb = lua_toboolean(L, lua_upvalueindex(3)) ? promise->resolve : promise->reject;
@@ -213,6 +267,13 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
     if (!webkit_frame_is_main_frame(frame))
         return;
 
+    /* Cache the JavaScript context for this page to avoid calling
+     * the deprecated webkit_web_page_get_main_frame() later */
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    js_context_cache_set(page_id, ctx);
+    g_object_unref(ctx);  /* Cache holds its own reference */
+
     lua_State *L = common.L;
     const gchar *uri = webkit_web_page_get_uri(web_page) ?: "about:blank";
 
@@ -252,11 +313,27 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
     lua_pop(L, 1);
 }
 
+static void
+page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    /* Connect to destroy signal to clean up cached context */
+    g_signal_connect(web_page, "destroy",
+            G_CALLBACK(js_context_cache_remove),
+            GUINT_TO_POINTER(webkit_web_page_get_id(web_page)));
+}
+
 void
 web_luajs_init(void)
 {
+    /* Initialize JavaScript context cache */
+    js_context_cache_init();
+
     g_signal_connect(webkit_script_world_get_default(), "window-object-cleared",
             G_CALLBACK (window_object_cleared_cb), NULL);
+
+    /* Clean up cached contexts when pages are destroyed */
+    g_signal_connect(extension.ext, "page-created",
+            G_CALLBACK(page_created_cb), NULL);
 
     /* Push empty function registration table */
     lua_State *L = common.L;
