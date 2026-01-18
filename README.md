@@ -14,13 +14,25 @@ Vimium or cVim etc, you will find luakit behaves similarly out of the box.
 
 ## Requirements
 
- * GTK+ 3
+ * GTK+ 3 (3.24+)
  * Lua 5.1 or LuaJIT 2
  * lfs (lua file system)
- * webkit2gtk
+ * webkit2gtk-4.1 (2.50+)
  * sqlite3
  * gstreamer (for video playback)
  * lua-socket (for gopher support)
+
+### Checking Library Versions
+
+To check your installed library versions, run:
+
+    $ ./scripts/check-library-versions.sh
+
+This will verify all required dependencies are installed and up-to-date.
+
+For information about library updates and GTK 4 migration planning, see:
+ * `LIBRARY_UPDATE_ANALYSIS.md` - Comprehensive library update analysis
+ * `MIGRATION_COMPLETE.md` - WebKitDOM to JavaScript migration results
 
 
 ## Installing
