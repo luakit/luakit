@@ -47,7 +47,7 @@ function _M.unescape(text)
 end
 
 --- Create a directory.
--- @deprecated use @ref{lfs/mkdir|lfs.mkdir()} or `os.execute()` directly.
+-- @deprecated use `lfs.mkdir()` or `os.execute()` directly.
 -- @tparam string dir The directory.
 -- @treturn number The status code returned by `mkdir`; 0 indicates success.
 function _M.mkdir(dir)
