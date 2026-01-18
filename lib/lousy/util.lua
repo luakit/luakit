@@ -12,7 +12,7 @@
 local rstring = string
 local rtable = table
 local math = require "math"
-local msg = require "msg"
+local msg_loaded, msg = pcall(require, "msg")
 
 local _M = {}
 
@@ -51,8 +51,10 @@ end
 -- @tparam string dir The directory.
 -- @treturn number The status code returned by `mkdir`; 0 indicates success.
 function _M.mkdir(dir)
-    msg.warn("lousy.util.mkdir() is deprecated and will be removed in a future version!")
-    msg.warn("please use lfs.mkdir() or os.execute() directly")
+    if msg_loaded then
+        msg.warn("lousy.util.mkdir() is deprecated and will be removed in a future version!")
+        msg.warn("please use lfs.mkdir() or os.execute() directly")
+    end
     return os.execute(rstring.format("mkdir -p %q",  dir))
 end
 
@@ -61,8 +63,10 @@ end
 -- @tparam string s The string of Lua code to evaluate.
 -- @return The return value of Lua code.
 function _M.eval(s)
-    msg.warn("lousy.util.eval() is deprecated and will be removed in a future version!")
-    msg.warn("please use load() or loadstring() directly")
+    if msg_loaded then
+        msg.warn("lousy.util.eval() is deprecated and will be removed in a future version!")
+        msg.warn("please use load() or loadstring() directly")
+    end
     return assert(loadstring(s))()
 end
 
@@ -73,8 +77,10 @@ end
 -- @treturn function|nil A function if the file was loaded successfully,
 -- and a string with the error otherwise.
 function _M.checkfile(path)
-    msg.warn("lousy.util.checkfile() is deprecated and will be removed in a future version!")
-    msg.warn("please use loadfile() directly with error checking")
+    if msg_loaded then
+        msg.warn("lousy.util.checkfile() is deprecated and will be removed in a future version!")
+        msg.warn("please use loadfile() directly with error checking")
+    end
     local f, e = loadfile(path)
     -- Return function if function, otherwise return error.
     if f then return f end

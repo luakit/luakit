@@ -171,6 +171,19 @@ versions. Migration should be completed before WebKit removes the API.
 
 ---
 
+## Implementation Notes
+
+### Conditional Deprecation Warnings
+
+The deprecation warnings in `lousy.util` functions (`mkdir`, `eval`, `checkfile`)
+are conditionally enabled only when the `msg` module is available. This allows
+`lousy.util` to be loaded in test environments without the C extensions, while
+still showing warnings in normal luakit usage.
+
+This is implemented using `pcall(require, "msg")` at module load time.
+
+---
+
 ## How to Check if You're Using Deprecated Functions
 
 ### For lousy.util Functions
