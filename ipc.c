@@ -122,7 +122,13 @@ web_extension_connect_thread(gpointer UNUSED(data))
     struct sockaddr_un local;
     memset(&local, 0, sizeof(local));
     local.sun_family = AF_UNIX;
-    strcpy(local.sun_path, path);
+
+    /* Safely copy socket path with bounds checking */
+    if (strlen(path) >= sizeof(local.sun_path))
+        fatal("Socket path too long (%zu >= %zu): %s",
+              strlen(path), sizeof(local.sun_path), path);
+    g_strlcpy(local.sun_path, path, sizeof(local.sun_path));
+
     int len = offsetof(struct sockaddr_un, sun_path) + strlen(local.sun_path);
 
     /* Remove any pre-existing socket, before opening */
