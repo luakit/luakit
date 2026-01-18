@@ -81,8 +81,9 @@ js_context_cache_get(guint64 page_id)
 }
 
 static void
-js_context_cache_remove(guint64 page_id)
+js_context_cache_remove(gpointer data, GObject *UNUSED(where_the_object_was))
 {
+    guint64 page_id = GPOINTER_TO_UINT(data);
     if (!page_js_contexts)
         return;
     g_hash_table_remove(page_js_contexts, GUINT_TO_POINTER(page_id));
@@ -316,10 +317,11 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
 static void
 page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
-    /* Connect to destroy signal to clean up cached context */
-    g_signal_connect(web_page, "destroy",
-            G_CALLBACK(js_context_cache_remove),
-            GUINT_TO_POINTER(webkit_web_page_get_id(web_page)));
+    /* Use weak reference to clean up cached context when page is destroyed */
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    g_object_weak_ref(G_OBJECT(web_page),
+                      (GWeakNotify)js_context_cache_remove,
+                      GUINT_TO_POINTER(page_id));
 }
 
 void
