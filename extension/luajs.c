@@ -195,9 +195,22 @@ luaJS_registered_function_callback(GPtrArray *args, struct cb_data *user_data)
         return jsc_value_new_undefined(context);
     }
 
-    /* TODO: handle callback failure? */
+    /* Call Lua callback and handle errors by rejecting the promise */
     luaH_object_push(L, ctx->ref);
-    luaH_dofunction(L, argc + 3, 0);
+    int success = luaH_dofunction(L, argc + 3, 0);
+
+    if (!success && lua_gettop(L) > top) {
+        /* Lua callback failed - reject the promise with error message */
+        const char *error_msg = lua_tostring(L, top + 1);
+        if (error_msg) {
+            JSCValue *error = jsc_value_new_string(context, error_msg);
+            JSCValue *undefined = jsc_value_function_call(promise->reject,
+                                                          JSC_TYPE_VALUE, error,
+                                                          G_TYPE_NONE);
+            g_object_unref(undefined);
+            g_object_unref(error);
+        }
+    }
 
     lua_settop(L, top);
     return promise->promise;

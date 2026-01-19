@@ -24,7 +24,7 @@ luaH_webview_push_history(lua_State *L, WebKitWebView *view)
     /* obtain the history list of the tab and get information about it */
     WebKitBackForwardList *bflist = webkit_web_view_get_back_forward_list(view);
     WebKitBackForwardListItem *item;
-    // TODO do these new GLists need to be freed?
+    /* Lists are owned by WebKitBackForwardList, do not free */
     gint backlen = g_list_length(
             webkit_back_forward_list_get_back_list(bflist));
     gint forwardlen = g_list_length(

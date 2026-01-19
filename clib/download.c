@@ -171,7 +171,7 @@ created_destination_cb(WebKitDownload* UNUSED(dl), gchar *destination, download_
 static void
 failed_cb(WebKitDownload* UNUSED(d), GError *error, download_t *download)
 {
-    // TODO does the GError error need a g_error_free(error)?
+    /* GError is owned by WebKit signal system, do not free */
     /* save error message */
     if (download->error)
         g_free(download->error);
@@ -675,7 +675,7 @@ download_class_setup(lua_State *L)
             (lua_class_propfunc_t) luaH_download_get_error,
             NULL);
 
-// TODO rename token, possibly to L_TK_CONTENT_LENGTH?
+    /* total_size property (WebKit calls this Content-Length) */
     luaH_class_add_property(&download_class, L_TK_TOTAL_SIZE,
             NULL,
             (lua_class_propfunc_t) luaH_download_get_content_length,

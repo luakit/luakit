@@ -208,11 +208,7 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_misc_set_alignment(GTK_MISC(msg_label), 0.0, 0.5);
 #endif
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
-    GValue max_width_chars = G_VALUE_INIT;
-    g_value_init(&max_width_chars, G_TYPE_INT);
-    g_value_set_int(&max_width_chars, 32);
-    /* TODO this is a kludge */
-    g_object_set_property(G_OBJECT(msg_label), "max-width-chars", &max_width_chars);
+    g_object_set(G_OBJECT(msg_label), "max-width-chars", 32, NULL);
     gtk_grid_attach_next_to(GTK_GRID(hbox), GTK_WIDGET(msg_label), icon, GTK_POS_RIGHT, 1, 1);
     gtk_widget_set_hexpand(GTK_WIDGET(msg_label), FALSE);
     gtk_widget_set_vexpand(GTK_WIDGET(msg_label), TRUE);
@@ -253,8 +249,8 @@ session_authenticate(WebKitWebView *UNUSED(web_view), WebKitAuthenticationReques
     const gchar *login = NULL;
     const gchar *password = NULL;
     luakit_find_password(auth_data, &login, &password);
+    /* Strings are Lua-owned, use immediately before stack is modified */
     show_auth_dialog(auth_data, login, password);
-    /* TODO: g_free login and password? */
 
     return TRUE;
 }

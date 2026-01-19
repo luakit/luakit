@@ -77,9 +77,8 @@ widget_drawing_area(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(tok
     w->index = luaH_drawing_area_index;
     w->newindex = luaH_drawing_area_newindex;
 
-    /* Store ref to ffi.new() */
-    /* FIXME: Should do this before Lua code runs at all, but there's no good
-     * way for random C code to hook into the Lua initialization stuff */
+    /* Store ref to ffi.new() - initialized on first use since there's no
+     * C module initialization hook before Lua code runs */
     if (!ffi_new_ref) {
         lua_State *L = common.L;
         lua_getglobal(L, "require");
