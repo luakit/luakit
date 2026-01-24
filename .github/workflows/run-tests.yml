@@ -1,0 +1,417 @@
+name: Run Tests
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+  workflow_dispatch:
+    inputs:
+      test_ubuntu:
+        description: 'Test on Ubuntu'
+        type: boolean
+        default: true
+      test_debian:
+        description: 'Test on Debian'
+        type: boolean
+        default: false
+      test_arch:
+        description: 'Test on Arch Linux'
+        type: boolean
+        default: false
+      test_alpine:
+        description: 'Test on Alpine Linux'
+        type: boolean
+        default: false
+      test_void:
+        description: 'Test on Void Linux'
+        type: boolean
+        default: false
+      test_gentoo:
+        description: 'Test on Gentoo Linux'
+        type: boolean
+        default: false
+      test_freebsd:
+        description: 'Test on FreeBSD'
+        type: boolean
+        default: false
+      test_openbsd:
+        description: 'Test on OpenBSD'
+        type: boolean
+        default: false
+      test_netbsd:
+        description: 'Test on NetBSD'
+        type: boolean
+        default: false
+jobs:
+  ubuntu:
+    if: github.event_name != 'workflow_dispatch' || inputs.test_ubuntu
+    name: Ubuntu
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+      
+    - name: Install dependencies
+      run: |
+        sudo apt-get update
+        sudo apt-get install -y \
+          luajit \
+          libluajit-5.1-dev \
+          libjavascriptcoregtk-4.1-dev \
+          libwebkit2gtk-4.1-dev \
+          libgtk-3-dev \
+          libglib2.0-dev \
+          lua-check \
+          lua-luassert \
+          lua-filesystem \
+          lua-socket \
+          git
+    
+    - name: Built and test
+      run: |
+        make -j1
+        xvfb-run -a make -j1 run-tests
+
+  freebsd:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_freebsd
+    name: FreeBSD
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+    
+    - name: Build and test on FreeBSD
+      uses: cross-platform-actions/action@v0.24.0
+      with:
+        operating_system: freebsd
+        version: '14.0'
+        shell: bash
+        run: |
+          echo "========================================"
+          echo "Installing dependencies on FreeBSD"
+          echo "========================================"
+          
+          sudo pkg install -y \
+            dbus \
+            git \
+            glib \
+            gmake \
+            gtk3 \
+            libsoup3 \
+            lua51-luafilesystem \
+            lua51-luasocket \
+            luajit \
+            sqlite3 \
+            webkit2-gtk_41 \
+            xorg-vfbserver
+          
+          echo ""
+          echo "========================================"
+          echo "Building luakit"
+          echo "========================================"
+          gmake -j1
+          
+          echo ""
+          echo "========================================"
+          echo "Running tests"
+          echo "========================================"
+          xvfb-run -a gmake -j1 run-tests
+
+  openbsd:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_openbsd
+    name: OpenBSD
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+    
+    - name: Build and test on OpenBSD
+      uses: cross-platform-actions/action@v0.24.0
+      with:
+        operating_system: openbsd
+        version: '7.5'
+        shell: bash
+        run: |
+          echo "========================================"
+          echo "Installing dependencies on OpenBSD"
+          echo "========================================"
+          
+          sudo pkg_add \
+            git \
+            glib2 \
+            gmake \
+            gtk+3 \
+            luafs \
+            lua-socket \
+            luajit \
+            luasocket \
+            sqlite3 \
+            webkit \
+            webkitgtk41
+          
+          echo ""
+          echo "========================================"
+          echo "Building luakit"
+          echo "========================================"
+          gmake -j1
+          
+          echo ""
+          echo "========================================"
+          echo "Running tests"
+          echo "========================================"
+          xvfb-run -a gmake -j1 run-tests
+
+  netbsd:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_netbsd
+    name: NetBSD
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+    
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+    
+    - name: Build and test on NetBSD
+      uses: cross-platform-actions/action@v0.24.0
+      with:
+        operating_system: netbsd
+        version: '10.0'
+        shell: bash
+        run: |
+          echo "========================================"
+          echo "Installing dependencies on NetBSD"
+          echo "========================================"
+          
+          sudo pkgin -y install \
+            git \
+            glib2 \
+            gmake \
+            gtk3+ \
+            lua51-filesystem \
+            lua-socket \
+            luajit \
+            sqlite3 \
+            webkit-gtk
+          
+          echo ""
+          echo "========================================"
+          echo "Building luakit"
+          echo "========================================"
+          gmake -j1
+          
+          echo ""
+          echo "========================================"
+          echo "Running tests"
+          echo "========================================"
+          xvfb-run -a gmake -j1 run-tests
+
+
+  debian:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_debian
+    name: Debian Stable
+    runs-on: ubuntu-latest
+    container: debian:stable
+    
+    steps:
+    - name: Install git
+      run: |
+        apt-get update
+        apt-get install -y git
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+      
+    - name: Install dependencies
+      run: |
+        apt-get update
+        apt-get install -y \
+          luajit \
+          libluajit-5.1-dev \
+          libjavascriptcoregtk-4.1-dev \
+          libwebkit2gtk-4.1-dev \
+          libgtk-3-dev \
+          libglib2.0-dev \
+          lua-check \
+          lua-luassert \
+          lua-filesystem \
+          lua-socket \
+          git
+    
+    - name: Built and test
+      run: |
+        make -j1
+        xvfb-run -a make -j1 run-tests
+
+  arch:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_arch
+    name: Arch Linux
+    runs-on: ubuntu-latest
+    container: archlinux:latest
+    
+    steps:
+    - name: Install git
+      run: |
+        pacman -Syu --noconfirm
+        pacman -S --noconfirm git
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+      
+    - name: Install dependencies
+      run: |
+        pacman -S --noconfirm \
+          base-devel \
+          dbus \
+          git \
+          gtk3 \
+          lua51-filesystem \
+          lua51-socket \
+          luassert \
+          luajit \
+          sqlite \
+          webkit2gtk-4.1 \
+          xorg-server-xvfb
+    
+    - name: Built and test
+      run: |
+        make -j1
+        xvfb-run -a make -j1 run-tests
+
+  alpine:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_alpine
+    name: Alpine Linux
+    runs-on: ubuntu-latest
+    container: alpine:latest
+    
+    steps:
+    - name: Install git
+      run: apk add --no-cache git
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+      
+    - name: Install dependencies
+      run: |
+        apk add --no-cache \
+          bash \
+          build-base \
+          dbus \
+          git \
+          glib-dev \
+          gtk+3.0-dev \
+          lua5.1-filesystem \
+          lua5.1-socket \
+          lua5.1-busted \
+          luajit-dev \
+          sqlite-dev \
+          webkit2gtk-4.1-dev \
+          xvfb-run
+    
+    - name: Built and test
+      run: |
+        make -j1
+        xvfb-run -a make -j1 run-tests
+
+  void:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_void
+    name: Void Linux
+    runs-on: ubuntu-latest
+    container: ghcr.io/void-linux/void-linux:latest-full-x86_64
+    
+    steps:
+    - name: Install git
+      run: xbps-install -Syu xbps && xbps-install -y git
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+      
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+      
+    - name: Install dependencies
+      run: |
+        xbps-install -Sy \
+          LuaJIT-devel \
+          base-devel \
+          dbus \
+          glib-devel \
+          gtk+3-devel \
+          lua51-luafilesystem \
+          lua51-socket \
+          sqlite-devel \
+          webkit2gtk-devel \
+          xorg-server-xvfb
+    
+    - name: Built and test
+      run: |
+        make -j1
+        xvfb-run -a make -j1 run-tests
+
+  gentoo:
+    if: github.event_name == 'workflow_dispatch' && inputs.test_gentoo
+    name: Gentoo Linux
+    runs-on: ubuntu-latest
+    container: gentoo/stage3:latest
+    timeout-minutes: 120
+    
+    steps:
+    - name: Setup binary packages and install git
+      run: |
+        # Enable binary packages
+        mkdir -p /etc/portage/binrepos.conf /etc/portage/package.use
+        echo -e "[gentoobinhost]\npriority = 9999\nsync-uri = https://distfiles.gentoo.org/releases/amd64/binpackages/17.1/x86-64/" > /etc/portage/binrepos.conf/gentoobinhost.conf
+        # Enable X USE flag for webkit-gtk
+        echo "net-libs/webkit-gtk X" >> /etc/portage/package.use/webkit-gtk
+        emerge --sync || emerge-webrsync
+        emerge --getbinpkg --ask=n dev-vcs/git
+    
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Configure git safe directory
+      run: git config --global --add safe.directory /__w/luakit/luakit
+      
+    - name: Install dependencies
+      run: |
+        emerge --getbinpkg --ask=n \
+          dev-db/sqlite \
+          dev-lang/luajit \
+          dev-libs/glib \
+          dev-lua/luafilesystem \
+          dev-lua/luasocket \
+          net-libs/webkit-gtk:4.1 \
+          sys-apps/dbus \
+          x11-base/xorg-server \
+          x11-libs/gtk+:3
+    
+    - name: Built and test
+      run: |
+        make -j1
+        Xvfb :99 -screen 0 1024x768x24 &
+        export DISPLAY=:99
+        sleep 2
+        make -j1 run-tests
