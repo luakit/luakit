@@ -233,22 +233,28 @@ luaH_dom_element_rect_index(lua_State *L)
 
     switch (token) {
         case L_TK_WIDTH:
+            {
             JSCValue *offsetWidth = jsc_value_object_get_property(ref, "offsetWidth");
             int offset_width = jsc_value_to_int32(offsetWidth);
             g_object_unref(offsetWidth);
             lua_pushinteger(L, offset_width);
             return 1;
+            }
         case L_TK_HEIGHT:
+            {
             JSCValue *offsetHeight = jsc_value_object_get_property(ref, "offsetHeight");
             int offset_height = jsc_value_to_int32(offsetHeight);
             g_object_unref(offsetHeight);
             lua_pushinteger(L, offset_height);
             return 1;
+            }
         case L_TK_LEFT:
         case L_TK_TOP:
+            {
             dom_element_get_left_and_top(ref, &left, &top);
             lua_pushinteger(L, token == L_TK_LEFT ? left : top);
             return 1;
+            }
         default:
             return 0;
     }
