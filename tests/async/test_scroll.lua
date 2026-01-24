@@ -13,6 +13,7 @@ local window = require "window"
 local w = assert(select(2, next(window.bywidget)))
 
 T.test_scrolling_works = function ()
+    test.wait_for_idle()
     test.wait_for_view(w.view)
 
     -- Fetch height of document body
