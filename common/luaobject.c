@@ -172,10 +172,6 @@ luaH_object_remove_signal(lua_State *L, gint oud,
         const gchar *name, gint ud) {
     luaH_checkfunction(L, ud);
     lua_object_t *obj = lua_touserdata(L, oud);
-    if (!obj) {
-        warn("object remove signal on non object");
-        return;
-    }
     gpointer ref = (gpointer) lua_topointer(L, ud);
     signal_remove(obj->signals, name, ref);
     luaH_object_unref_item(L, oud, ref);
