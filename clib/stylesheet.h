@@ -23,7 +23,7 @@
 
 #include <lua.h>
 #include <glib.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 typedef struct {
     LUA_OBJECT_HEADER

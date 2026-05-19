@@ -238,7 +238,7 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     auth_data->checkbutton = checkbutton;
 
     g_signal_connect(dialog, "response", G_CALLBACK(response_callback), auth_data);
-    gtk_widget_show_all(widget);
+    gtk_widget_show(widget);
 }
 
 static gboolean

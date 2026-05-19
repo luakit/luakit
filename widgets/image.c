@@ -16,7 +16,7 @@
  *
  */
 
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 #include "luah.h"
 #include "widgets/common.h"
@@ -185,8 +185,9 @@ luaH_image_set_favicon_for_uri(lua_State *L)
     widget_t *w = luaH_checkimage(L, 1);
     const gchar *uri = luaL_checkstring(L, 2);
 
-    WebKitWebContext *main_ctx = web_context_get();
-    WebKitFaviconDatabase *main_fdb = webkit_web_context_get_favicon_database(main_ctx);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
+    WebKitFaviconDatabase *main_fdb = webkit_website_data_manager_get_favicon_database(data_manager);
     gchar *f_uri;
     gboolean ok = TRUE;
 

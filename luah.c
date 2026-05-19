@@ -63,11 +63,10 @@ luaH_modifier_table_push(lua_State *L, guint state) {
         MODKEY(SHIFT, "Shift");
         MODKEY(LOCK, "Lock");
         MODKEY(CONTROL, "Control");
-        MODKEY(MOD1, "Mod1");
-        MODKEY(MOD2, "Mod2");
-        MODKEY(MOD3, "Mod3");
-        MODKEY(MOD4, "Mod4");
-        MODKEY(MOD5, "Mod5");
+        MODKEY(ALT, "Mod1");
+        MODKEY(META, "Mod2");
+        MODKEY(SUPER, "Mod4");
+        MODKEY(HYPER, "Mod5");
 
 #undef MODKEY
 

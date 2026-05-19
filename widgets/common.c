@@ -226,7 +226,7 @@ luaH_widget_set_child(lua_State *L, widget_t *w)
 
     /* add new child to container */
     if (child)
-        gtk_container_add(GTK_CONTAINER(w->widget), GTK_WIDGET(child->widget));
+        gtk_box_append(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
     return 0;
 }
 
@@ -298,7 +298,7 @@ luaH_widget_replace(lua_State *L)
     g_object_ref(G_OBJECT(och->widget));
     gtk_container_remove(GTK_CONTAINER(parent), GTK_WIDGET(och->widget));
 
-    gtk_container_add(GTK_CONTAINER(parent), GTK_WIDGET(nch->widget));
+    gtk_box_append(GTK_BOX(parent), GTK_WIDGET(nch->widget));
     for (guint i = 0; i < num_props; i++)
     {
         gtk_container_child_set_property(GTK_CONTAINER(parent),
@@ -366,11 +366,10 @@ luaH_widget_send_key(lua_State *L)
         MODKEY("shift", SHIFT);
         MODKEY("control", CONTROL);
         MODKEY("lock", LOCK);
-        MODKEY("mod1", MOD1);
-        MODKEY("mod2", MOD2);
-        MODKEY("mod3", MOD3);
-        MODKEY("mod4", MOD4);
-        MODKEY("mod5", MOD5);
+        MODKEY("mod1", ALT);
+        MODKEY("mod2", META);
+        MODKEY("mod4", SUPER);
+        MODKEY("mod5", HYPER);
 
 #undef MODKEY
 

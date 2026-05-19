@@ -37,7 +37,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 /* setup luakit module signals */
 static lua_class_t luakit_class;

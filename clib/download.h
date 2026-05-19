@@ -23,7 +23,7 @@
 #define LUAKIT_CLIB_DOWNLOAD_H
 
 #include <lua.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 void download_class_setup(lua_State*);
 gint luaH_download_push(lua_State*, WebKitDownload*);

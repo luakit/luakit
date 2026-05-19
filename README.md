@@ -14,10 +14,10 @@ Vimium or cVim etc, you will find luakit behaves similarly out of the box.
 
 ## Requirements
 
- * GTK+ 3
+ * GTK 4
  * Lua 5.1 or LuaJIT 2
  * lfs (lua file system)
- * webkit2gtk
+ * webkitgtk-6.0
  * sqlite3
  * gstreamer (for video playback)
  * lua-socket (for gopher support)

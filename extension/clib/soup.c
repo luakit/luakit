@@ -25,7 +25,7 @@
 #include "web_context.h"
 
 #include <libsoup/soup.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 static lua_class_t soup_class;
 LUA_CLASS_FUNCS(soup, soup_class);
