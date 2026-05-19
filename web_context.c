@@ -22,14 +22,12 @@
 #include "common/log.h"
 #include "web_context.h"
 
+#include <glib.h>
 #include <webkit/webkit.h>
 
 /** WebKit context common to all web views */
 static WebKitWebContext *web_context;
-/** WebKit process count; default to unlimited */
-static guint process_limit = 0;
-/** Whether the web context startup function has been run */
-static gboolean web_context_started = FALSE;
+static WebKitNetworkSession *net_session;
 
 /** Defined in widgets/webview/downloads.c */
 gboolean download_start_cb(WebKitWebContext *, WebKitDownload *, gpointer);
@@ -41,30 +39,30 @@ web_context_get(void)
     return web_context;
 }
 
-guint
-web_context_process_limit_get(void)
+WebKitNetworkSession *
+web_network_session_get(void)
 {
-    return process_limit;
-}
-
-gboolean
-web_context_process_limit_set(guint limit)
-{
-    if (web_context_started)
-        return FALSE;
-    process_limit = limit;
-    return TRUE;
+    g_assert(net_session);
+    return net_session;
 }
 
 static void
 website_data_manager_init(void)
 {
-    WebKitWebsiteDataManager *data_mgr = webkit_website_data_manager_new(
-            "base-cache-directory", globalconf.cache_dir,
-            "base-data-directory", globalconf.data_dir,
-            NULL);
+    web_context = webkit_web_context_new ();
 
-    web_context = webkit_web_context_new_with_website_data_manager(data_mgr);
+    net_session = webkit_network_session_new(
+        globalconf.data_dir,
+        globalconf.cache_dir);
+
+    WebKitWebsiteDataManager *data_mgr = webkit_network_session_get_website_data_manager(net_session);
+
+    webkit_website_data_manager_set_favicons_enabled(data_mgr, TRUE);
+
+    /* Set default cookie policy: must match default in clib/soup.c */
+    WebKitCookieManager *cookie_mgr = webkit_network_session_get_cookie_manager(net_session);
+    webkit_cookie_manager_set_accept_policy(cookie_mgr, WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY);
+
 
     verbose("base_data_directory:                 %s", webkit_website_data_manager_get_base_data_directory(data_mgr));
     verbose("base_cache_directory:                %s", webkit_website_data_manager_get_base_cache_directory(data_mgr));
@@ -88,30 +86,10 @@ void
 web_context_init(void)
 {
     website_data_manager_init();
-    webkit_web_context_set_favicon_database_directory(web_context, NULL);
     g_signal_connect(G_OBJECT(web_context), "download-started",
             G_CALLBACK(download_start_cb), NULL);
 
-    /* Set default cookie policy: must match default in clib/soup.c */
-    WebKitCookieManager *cookie_mgr = webkit_web_context_get_cookie_manager(web_context);
-    webkit_cookie_manager_set_accept_policy(cookie_mgr, WEBKIT_COOKIE_POLICY_ACCEPT_NO_THIRD_PARTY);
-
     web_context_set_default_spelling_language();
-}
-
-void
-web_context_init_finish(void)
-{
-    if (web_context_started)
-        return;
-
-#if !WEBKIT_CHECK_VERSION(2,26,0)
-    webkit_web_context_set_process_model(web_context, WEBKIT_PROCESS_MODEL_MULTIPLE_SECONDARY_PROCESSES);
-    info("Web process count: %d", process_limit);
-    webkit_web_context_set_web_process_count_limit(web_context, process_limit);
-#endif
-
-    web_context_started = TRUE;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

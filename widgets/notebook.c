@@ -106,7 +106,13 @@ luaH_notebook_set_title(lua_State *L)
     gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_MIDDLE);
     gtk_notebook_set_tab_label(GTK_NOTEBOOK(w->widget),
         child->widget, label);
-    gtk_container_child_set(GTK_CONTAINER(w->widget), label, "tab-expand", TRUE, "tab-fill", TRUE, NULL);
+    GtkNotebookPage *page = gtk_notebook_get_page(GTK_NOTEBOOK(w->widget), child->widget);
+    if (page != NULL) {
+        g_object_set(G_OBJECT(page),
+                    "tab-expand", TRUE,
+                    "tab-fill", TRUE,
+                    NULL);
+    }
     return 0;
 }
 
@@ -155,7 +161,8 @@ luaH_notebook_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
 
       /* push class methods */
       PF_CASE(COUNT,        luaH_notebook_count)
@@ -260,12 +267,13 @@ widget_notebook(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::key-press-event",   G_CALLBACK(key_press_cb),    w,
       "signal::page-added",        G_CALLBACK(page_added_cb),   w,
       "signal::page-removed",      G_CALLBACK(page_removed_cb), w,
       "signal::page-reordered",    G_CALLBACK(reorder_cb),      w,
       "signal::switch-page",       G_CALLBACK(switch_cb),       w,
       NULL);
+
+    LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
 
     gtk_widget_show(w->widget);
     return w;

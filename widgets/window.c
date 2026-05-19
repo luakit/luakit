@@ -84,6 +84,14 @@ luaH_window_set_default_size(lua_State *L)
     return 0;
 }
 
+gint
+luaH_window_destroy(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    gtk_window_destroy(GTK_WINDOW(w->widget));
+    return 0;
+}
+
 static gint
 luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
@@ -91,11 +99,12 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_INDEX_COMMON(w)
 
       /* push window class methods */
+      PF_CASE(DESTROY,      luaH_window_destroy)
       PF_CASE(SET_DEFAULT_SIZE, luaH_window_set_default_size)
+      PF_CASE(SET_DARK_MODE, luaH_window_set_dark_mode)
 
       /* push string properties */
       PS_CASE(TITLE, gtk_window_get_title(d->win))
@@ -105,7 +114,6 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       PB_CASE(URGENCY_HINT,  gtk_window_get_urgency_hint(d->win))
       PB_CASE(FULLSCREEN,    d->state & GDK_WINDOW_STATE_FULLSCREEN)
       PB_CASE(MAXIMIZED,     d->state & GDK_WINDOW_STATE_MAXIMIZED)
-      PF_CASE(SET_DARK_MODE, luaH_window_set_dark_mode)
 
       /* push integer properties */
       PN_CASE(ID,           d->id)
@@ -113,11 +121,7 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 # ifdef GDK_WINDOWING_X11
       case L_TK_ROOT_WIN_XID:
         lua_pushlightuserdata(L, GDK_WINDOW(
-#  if GTK_CHECK_VERSION(3,12,0)
-                gdk_screen_get_root_window(gtk_widget_get_screen(GTK_WIDGET(d->win)))
-#  else
-                gtk_widget_get_root_window(GTK_WIDGET(d->win))
-#  endif
+            gdk_screen_get_root_window(gtk_widget_get_screen(GTK_WIDGET(d->win)))
         ));
         return 1;
 
@@ -141,7 +145,7 @@ luaH_window_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
-      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_NEWINDEX_COMMON(w)
 
       case L_TK_DECORATED:
         gtk_window_set_decorated(d->win, luaH_checkboolean(L, 3));
@@ -237,14 +241,20 @@ widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
 
     g_object_connect(G_OBJECT(w->widget),
-      "signal::destroy",            G_CALLBACK(destroy_win_cb),  w,
+      "signal::destroy",            G_CALLBACK(destroy_win_cb),   w,
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::add",                G_CALLBACK(add_cb),          w,
-      "signal::delete-event",       G_CALLBACK(can_close_cb),    w,
-      "signal::key-press-event",    G_CALLBACK(key_press_cb),    w,
-      "signal::remove",             G_CALLBACK(remove_cb),       w,
-      "signal::window-state-event", G_CALLBACK(window_state_cb), w,
+      "signal::notify::child",      G_CALLBACK(child_changed_cb), w,
+      "signal::delete-event",       G_CALLBACK(can_close_cb),     w,
+      "signal::window-state-event", G_CALLBACK(window_state_cb),  w,
       NULL);
+
+    LUAKIT_EVENT_CONTROLLER_KEY(w->win, w)
+    gtk_event_controller_set_propagation_phase(key_controller, GTK_LIMIT_CAPTURE);
+
+    GtkEventController *motion_controller = gtk_event_controller_motion_new();
+    gtk_event_controller_set_propagation_phase(motion_controller, GTK_LIMIT_CAPTURE);
+    g_signal_connect(motion_controller, "motion", G_CALLBACK(on_lua_mouse_motion_cb), w);
+    gtk_widget_add_controller(w->window, motion_controller);
 
     d->id = ++window_id_next;
 

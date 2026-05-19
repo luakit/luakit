@@ -16,6 +16,8 @@
  *
  */
 
+#include "gtk/gtk.h"
+#include "gtk/gtkshortcut.h"
 #include "luah.h"
 #include "widgets/common.h"
 

@@ -26,7 +26,6 @@ local w_priv = setmetatable({}, { __mode = "k" })
 
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
-local function eventbox() return widget{type="eventbox"} end
 local function hbox()     return widget{type="hbox"}     end
 local function label()    return widget{type="label"}    end
 local function notebook() return widget{type="notebook"} end
@@ -39,24 +38,20 @@ function _M.build(w)
     -- Create a table for widgets and state variables for a window
     local ww = {
         win    = widget{type="window"},
-        ebox   = eventbox(),
         layout = vbox(),
         tabs   = notebook(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
-            ebox   = eventbox(),
             -- Left aligned widgets
             l = {
                 layout = hbox(),
-                ebox   = eventbox(),
             },
             -- Fills space between the left and right aligned widgets
-            sep = eventbox(),
+            sep = hbox(),
             -- Right aligned widgets
             r = {
                 layout = hbox(),
-                ebox   = eventbox(),
             },
         },
 
@@ -64,15 +59,14 @@ function _M.build(w)
         menu = lousy.widget.menu(),
         menu_tabs = overlay(),
 
+        -- Message bar widgets
         mbar = {
-            ebox = eventbox(),
             label = label(),
         },
 
         -- Input bar widgets
         ibar = {
             layout  = hbox(),
-            ebox    = eventbox(),
             prompt  = label(),
             input   = entry(),
         },
@@ -85,36 +79,31 @@ function _M.build(w)
     -- Tablist widget
     w.tablist = lousy.widget.tablist(w.tabs, "horizontal")
 
-    w.ebox.child = w.layout
     w.layout:pack(w.tablist.widget)
     w.menu_tabs.child = w.tabs
 
-    w.win.child = w.ebox
+    w.win.child = w.layout
     w.layout:pack(w.menu_tabs, { expand = true, fill = true })
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout.homogeneous = false;
-    l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout.homogeneous = false;
-    r.ebox.child = r.layout
 
     -- Pack status bar elements
     local s = w.sbar
     s.layout.homogeneous = false;
-    s.layout:pack(l.ebox)
+    s.layout:pack(l.layout)
     s.layout:pack(s.sep, { expand = true, fill = true })
-    s.layout:pack(r.ebox)
-    s.ebox.child = s.layout
-    w.bar_layout:pack(s.ebox)
+    s.layout:pack(r.layout)
+    w.bar_layout:pack(s.layout)
 
     -- Pack message bar
     local m = w.mbar
-    m.ebox.child = m.label
-    w.bar_layout:pack(m.ebox)
+    w.bar_layout:pack(m.label)
 
     -- Pack menu widget
     w.menu_tabs:pack(w.menu.widget, { halign = "fill", valign = "end" })
@@ -125,8 +114,7 @@ function _M.build(w)
     i.layout.homogeneous = false;
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
-    i.ebox.child = i.layout
-    w.bar_layout:pack(i.ebox)
+    w.bar_layout:pack(i.layout)
     i.input.css = "border: 0;"
     i.layout.css = "transition: 0.0s ease-in-out;"
     i.input.css = "transition: 0.0s ease-in-out;"
@@ -229,12 +217,12 @@ local init_funcs = {
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.sbar_bg,
-            [s.r.ebox]   = theme.sbar_bg,
-            [s.sep]      = theme.sbar_bg,
-            [s.ebox]     = theme.sbar_bg,
-            [i.ebox]     = theme.ibar_bg,
-            [i.input]    = theme.input_ibar_bg,
+            [s.l.layout]   = theme.sbar_bg,
+            [s.r.layout]   = theme.sbar_bg,
+            [s.sep]        = theme.sbar_bg,
+            [s.layout]     = theme.sbar_bg,
+            [i.layout]     = theme.ibar_bg,
+            [i.input]      = theme.input_ibar_bg,
         }) do wi.bg = v end
 
         -- Set fonts
@@ -355,11 +343,11 @@ _M.methods = {
             w.bar_layout.visible = false
         end
         if w_priv[w].input_text then
-            w.bar_layout.visible_child = w.ibar.ebox
+            w.bar_layout.visible_child = w.ibar.layout
         elseif w_priv[w].prompt_text then
-            w.bar_layout.visible_child = w.mbar.ebox
+            w.bar_layout.visible_child = w.mbar.layout
         else
-            w.bar_layout.visible_child = w.sbar.ebox
+            w.bar_layout.visible_child = w.sbar.layout
         end
     end,
 

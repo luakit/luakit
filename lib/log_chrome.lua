@@ -278,7 +278,7 @@ end)
 -- Once shown, clicking on the widget will hide it and all other such widgets.
 -- @treturn widget The newly-constructed status bar widget.
 _M.widget = function ()
-    local notif, ebox = widget{type="label"}, widget{type="eventbox"}
+    local notif = widget{type="label"}
     notif:hide()
     notif.fg = theme.sbar_notif_fg
     notif.font = theme.sbar_notif_font
@@ -287,9 +287,8 @@ _M.widget = function ()
         table.remove(widgets, lousy.util.table.hasitem(widgets, notif))
     end)
     update_widgets()
-    ebox.child = notif
-    ebox:add_signal("button-release", widget_click_cb)
-    return ebox
+    notif:add_signal("button-release", widget_click_cb)
+    return notif
 end
 
 modes.add_cmds({

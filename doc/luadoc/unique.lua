@@ -30,7 +30,7 @@
 -- Emitted only on the primary instance when a message is received from
 -- a secondary instance.
 -- @tparam string message The message sent with `unique.send_message()`.
--- @tparam screen screen An opaque piece of data that represents the screen of
+-- @tparam display display An opaque piece of data that represents the display of
 -- the currently focused window of the main instance.
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80

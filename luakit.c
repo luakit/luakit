@@ -117,7 +117,6 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     /* parse command line options */
     context = g_option_context_new("[URI...]");
     g_option_context_add_main_entries(context, entries, NULL);
-    g_option_context_add_group(context, gtk_get_option_group(FALSE));
     g_option_context_parse(context, argc, &argv, NULL);
     g_option_context_free(context);
 
@@ -238,7 +237,7 @@ main(gint argc, gchar *argv[])
         }
     }
 
-    gtk_init(&argc, &argv);
+    // globalconf.application = gtk_application_new("org.luakit.Luakit", G_APPLICATION_DEFAULT_FLAGS);
 
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
@@ -255,8 +254,10 @@ main(gint argc, gchar *argv[])
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file, exiting");
 
-    gtk_main();
-    return EXIT_SUCCESS;
+    // g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
+    // int status = g_application_run(G_APPLICATION(app), argc, argv);
+    // g_object_unref(app);
+    return 1;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

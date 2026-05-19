@@ -2,7 +2,7 @@
 --
 -- DOCMACRO(available:ui)
 --
--- The window widget is the main container for any windows on the screen.
+-- The window widget is the main container for any windows on the display.
 --
 -- @class widget:window
 -- @prefix window
@@ -63,8 +63,8 @@
 -- @type integer
 -- @readonly
 
---- @property screen
--- The screen the window is on.
+--- @property display
+-- The display the window is on.
 -- @type userdata
 -- @readwrite
 

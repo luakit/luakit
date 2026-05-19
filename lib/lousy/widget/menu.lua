@@ -91,7 +91,7 @@ local function update(menu)
             else
                 rbg = (selected and (row.selected_bg or sbg)) or row.bg or bg
             end
-            if rw.ebox.bg ~= rbg then rw.ebox.bg = rbg end
+            if rw.bg ~= rbg then rw.bg = rbg end
 
             for c = 1, math.max(#row, #(rw.cols)) do
                 -- Get column text

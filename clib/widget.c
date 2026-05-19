@@ -34,7 +34,6 @@ static property_t widget_properties[] = {
 
 static widget_info_t widgets_list[] = {
   { L_TK_ENTRY,     "entry",    widget_entry    },
-  { L_TK_EVENTBOX,  "eventbox", widget_eventbox },
   { L_TK_HBOX,      "hbox",     widget_box      },
   { L_TK_HPANED,    "hpaned",   widget_paned    },
   { L_TK_LABEL,     "label",    widget_label    },
@@ -98,7 +97,7 @@ widget_set_css(widget_t *w, const gchar *properties)
 {
     gchar *old_css = gtk_css_provider_to_string(w->provider);
     gchar *css = g_strdup_printf("%s\n#widget { %s }", old_css, properties);
-    gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
+    gtk_css_provider_load_from_string(w->provider, css);
     g_free(css);
     g_free(old_css);
 }

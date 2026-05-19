@@ -128,10 +128,7 @@ luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
-#if !GTK_CHECK_VERSION(3,14,0)
-      case L_TK_PADDING:
-        return luaH_label_get_padding(L, w);
-#endif
+      PF_CASE(DESTROY,              luaH_widget_destroy)
 
       /* push string properties */
       PS_CASE(FG,               g_object_get_data(G_OBJECT(w->widget), "fg"))
@@ -245,7 +242,6 @@ widget_label(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     /* setup default settings */
     gtk_label_set_selectable(GTK_LABEL(w->widget), FALSE);
     gtk_label_set_use_markup(GTK_LABEL(w->widget), TRUE);
-#if GTK_CHECK_VERSION(3,14,0)
     gtk_widget_set_halign(GTK_WIDGET(w->widget), GTK_ALIGN_START);
     gtk_widget_set_valign(GTK_WIDGET(w->widget), GTK_ALIGN_START);
 
@@ -253,15 +249,12 @@ widget_label(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     g_value_init(&margin, G_TYPE_INT);
     g_value_set_int(&margin, 2);
     g_object_set_property(G_OBJECT(w->widget), "margin", &margin);
-#else
-    gtk_misc_set_alignment(GTK_MISC(w->widget), 0, 0);
-    gtk_misc_set_padding(GTK_MISC(w->widget), 2, 2);
-#endif
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::key-press-event",   G_CALLBACK(key_press_cb),  w,
       NULL);
+
+    LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
 
     gtk_widget_show(w->widget);
     return w;

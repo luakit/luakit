@@ -42,8 +42,8 @@ message_cb(GSimpleAction* UNUSED(a), GVariant *message_data, lua_State *L)
         GtkWindow *window = gtk_application_get_active_window(globalconf.application);
         if (!window)
             warn("It's not a window!!!");
-        GdkScreen *screen = gtk_window_get_screen(window);
-        lua_pushlightuserdata(L, screen);
+        GdkDisplay *display = gtk_widget_get_display(GTK_WIDGET(window));
+        lua_pushlightuserdata(L, display);
 
         signal_object_emit(L, unique_class.signals, "message", 2, 0);
     }
@@ -78,11 +78,7 @@ luaH_unique_new(lua_State *L)
 
     GError *error = NULL;
     if (!globalconf.application) {
-#if GLIB_CHECK_VERSION(2,74,0)
         globalconf.application = gtk_application_new(name, G_APPLICATION_DEFAULT_FLAGS);
-#else
-        globalconf.application = gtk_application_new(name, G_APPLICATION_FLAGS_NONE);
-#endif
     }
 
     g_application_register(G_APPLICATION(globalconf.application), NULL, &error);

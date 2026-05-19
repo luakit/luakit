@@ -25,9 +25,7 @@ static gint
 luaH_drawing_area_invalidate(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    guint width = gtk_widget_get_allocated_width(w->widget);
-    guint height = gtk_widget_get_allocated_height(w->widget);
-    gtk_widget_queue_draw_area(w->widget, 0, 0, width, height);
+    gtk_widget_queue_draw(w->widget);
     return 0;
 }
 
@@ -36,7 +34,11 @@ luaH_drawing_area_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-        PF_CASE(INVALIDATE, luaH_drawing_area_invalidate)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
+
+      PF_CASE(INVALIDATE, luaH_drawing_area_invalidate)
+
       default:
         break;
     }
