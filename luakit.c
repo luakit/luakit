@@ -32,7 +32,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 #if !WEBKIT_CHECK_VERSION(2,16,0)
 #error Your version of WebKit is outdated!

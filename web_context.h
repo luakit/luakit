@@ -21,7 +21,7 @@
 #ifndef LUAKIT_WEB_CONTEXT_H
 #define LUAKIT_WEB_CONTEXT_H
 
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 void web_context_init(void);
 void web_context_init_finish(void);

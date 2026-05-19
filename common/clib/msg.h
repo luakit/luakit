@@ -29,7 +29,7 @@
 #include <gtk/gtk.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 static gpointer string_format_ref;
 static gpointer tostring_ref;

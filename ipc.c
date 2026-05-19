@@ -20,7 +20,7 @@
 #include "ipc.h"
 
 #include <assert.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -161,7 +161,7 @@ web_extension_connect_thread(gpointer UNUSED(data))
 }
 
 static void
-initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
+initialize_web_process_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 {
     char *dirs[] = { g_get_current_dir(), LUAKIT_LIB_PATH }, *dir = NULL;
 
@@ -193,8 +193,8 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
     lua_pop(common.L, 3);
 
     GVariant *payload = g_variant_new("(sss)", path, package_path, package_cpath);
-    webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
-    webkit_web_context_set_web_extensions_directory(context, dir);
+    webkit_web_context_set_web_process_extensions_initialization_user_data(context, payload);
+    webkit_web_context_set_web_process_extensions_directory(context, dir);
 
     g_free(dirs[0]);
 }
@@ -215,7 +215,7 @@ ipc_init(void)
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, NULL);
     g_signal_connect(web_context_get(), "initialize-web-extensions",
-            G_CALLBACK (initialize_web_extensions_cb), NULL);
+            G_CALLBACK (initialize_web_process_extensions_cb), NULL);
     atexit(ipc_remove_socket_file);
 }
 

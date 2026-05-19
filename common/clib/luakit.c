@@ -20,7 +20,7 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <time.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 #include "common/clib/luakit.h"
 #include "common/util.h"

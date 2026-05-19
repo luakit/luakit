@@ -25,7 +25,7 @@
 #include "globalconf.h"
 #include "web_context.h"
 
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 #include <glib/gstdio.h>
 
 #define REG_KEY "luakit.uniq.registry.request"
