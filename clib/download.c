@@ -234,7 +234,7 @@ luaH_download_new(lua_State *L)
     if (!uri)
         return luaL_error(L, "download requires a URI");
 
-    WebKitDownload *d = webkit_web_context_download_uri(web_context_get(), uri);
+    WebKitDownload *d = webkit_network_session_download_uri(web_network_session_get(), uri);
     return luaH_download_push(L, d);
 }
 
@@ -333,18 +333,9 @@ luaH_download_set_destination(lua_State *L, download_t *download)
     }
 
     const gchar *destination = luaL_checkstring(L, -1);
-    gchar *uri = g_filename_to_uri(destination, NULL, NULL);
-    if (uri) {
-        download->destination = g_strdup(destination);
-        webkit_download_set_destination(download->webkit_download, uri);
-        g_free(uri);
-        luaH_object_emit_signal(L, -3, "property::destination", 0, 0);
-
-    /* g_filename_to_uri failed on destination path */
-    } else {
-        lua_pushfstring(L, "invalid destination: '%s'", destination);
-        lua_error(L);
-    }
+    download->destination = g_strdup(destination);
+    webkit_download_set_destination(download->webkit_download, destination);
+    luaH_object_emit_signal(L, -3, "property::destination", 0, 0);
     return 0;
 }
 

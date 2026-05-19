@@ -57,19 +57,18 @@ luaH_soup_index(lua_State *L)
 static void
 luaH_soup_set_proxy_uri(lua_State *L)
 {
-    WebKitWebContext *ctx = web_context_get();
-    WebKitWebsiteDataManager *dm = webkit_web_context_get_website_data_manager(ctx);
+    WebKitNetworkSession *net_session = web_network_session_get();
     const gchar *new_proxy_uri = lua_isnil(L, 3) ? "default" : luaL_checkstring(L, 3);
     g_free(proxy_uri);
     proxy_uri = g_strdup(new_proxy_uri);
 
     if (!proxy_uri || g_str_equal(proxy_uri, "default")) {
-        webkit_website_data_manager_set_network_proxy_settings(dm, WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
+        webkit_network_session_set_proxy_settings(net_session, WEBKIT_NETWORK_PROXY_MODE_DEFAULT, NULL);
     } else if (g_str_equal(proxy_uri, "no_proxy")) {
-        webkit_website_data_manager_set_network_proxy_settings(dm, WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
+        webkit_network_session_set_proxy_settings(net_session, WEBKIT_NETWORK_PROXY_MODE_NO_PROXY, NULL);
     } else {
         WebKitNetworkProxySettings *proxy_settings = webkit_network_proxy_settings_new(proxy_uri, NULL);
-        webkit_website_data_manager_set_network_proxy_settings(dm, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
+        webkit_network_session_set_proxy_settings(net_session, WEBKIT_NETWORK_PROXY_MODE_CUSTOM, proxy_settings);
         webkit_network_proxy_settings_free(proxy_settings);
     }
 }
@@ -85,8 +84,8 @@ luaH_soup_set_accept_policy(lua_State *L)
     g_free(accept_policy);
     accept_policy = g_strdup(new_policy);
 
-    WebKitWebContext * web_context = web_context_get();
-    WebKitCookieManager *cookie_mgr = webkit_web_context_get_cookie_manager(web_context);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitCookieManager *cookie_mgr = webkit_network_session_get_cookie_manager(net_session);
     WebKitCookieAcceptPolicy policy;
     if (g_str_equal(new_policy, "always"))
         policy = WEBKIT_COOKIE_POLICY_ACCEPT_ALWAYS;
@@ -113,8 +112,8 @@ luaH_soup_set_cookies_storage(lua_State *L)
         fclose(f);
     }
 
-    WebKitWebContext * web_context = web_context_get();
-    WebKitCookieManager *cookie_mgr = webkit_web_context_get_cookie_manager(web_context);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitCookieManager *cookie_mgr = webkit_network_session_get_cookie_manager(net_session);
     webkit_cookie_manager_set_persistent_storage(cookie_mgr, cookies_storage,
             WEBKIT_COOKIE_PERSISTENT_STORAGE_SQLITE);
 }

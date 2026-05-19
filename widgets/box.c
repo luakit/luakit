@@ -18,6 +18,7 @@
  *
  */
 
+#include "glib-object.h"
 #include "luah.h"
 #include "widgets/common.h"
 
@@ -54,13 +55,17 @@ luaH_box_pack(lua_State *L)
         /* return stack to original state */
         lua_settop(L, top);
     }
+    GtkWidget* child_widget = GTK_WIDGET(child->widget);
+
+    gtk_widget_set_vexpand (child_widget, expand);
+    gtk_widget_set_valign (child_widget, fill);
+    gtk_widget_set_margin_top (child_widget, padding);
+    gtk_widget_set_margin_bottom (child_widget, padding);
 
     if (start)
-        gtk_box_pack_start(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-                expand, fill, padding);
+        gtk_box_append(GTK_BOX(w->widget), child_widget);
     else
-        gtk_box_pack_end(GTK_BOX(w->widget), GTK_WIDGET(child->widget),
-                expand, fill, padding);
+        gtk_box_prepend(GTK_BOX(w->widget), child_widget);
     return 0;
 }
 
@@ -71,7 +76,22 @@ luaH_box_reorder_child(lua_State *L)
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
     gint pos = luaL_checknumber(L, 3);
-    gtk_box_reorder_child(GTK_BOX(w->widget), GTK_WIDGET(child->widget), pos);
+
+    if (pos == 0) {
+        gtk_box_reorder_child_after(GTK_BOX(w->widget), GTK_WIDGET(child->widget), NULL);
+    } else if (pos > 0) {
+        gint current_index = 0;
+        GtkWidget *child_widget = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
+
+        while (child_widget != NULL) {
+            if (current_index == pos) {
+                gtk_box_reorder_child_after(GTK_BOX(w->widget), GTK_WIDGET(child->widget), child_widget);
+            }
+
+            current_index++;
+            child_widget = gtk_widget_get_next_sibling(child_widget);
+        }
+    }
     return 0;
 }
 
@@ -80,7 +100,8 @@ luaH_box_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,      luaH_widget_destroy)
 
       /* push class methods */
       PF_CASE(PACK,         luaH_box_pack)
@@ -143,13 +164,27 @@ widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 
     w->widget = gtk_box_new((token == L_TK_VBOX) ?
             GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL, 0);
+
     gtk_box_set_homogeneous(GTK_BOX(w->widget), (token == L_TK_VBOX) ? FALSE : TRUE);
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::add",        G_CALLBACK(add_cb),        w,
       NULL);
+
+    GListModel *children = gtk_widget_observe_children(GTK_WIDGET(w->widget));
+    g_object_connect (G_OBJECT(children),
+      "signal::items-changed", G_CALLBACK(items_changed_cb), w,
+      NULL);
+    g_object_unref (children);
+
+    GtkEventController *focus_controller = gtk_event_controller_focus_new ();
+    g_object_connect(G_OBJECT(focus_controller),
+      LUAKIT_WIDGET_SIGNAL_FOCUS(w)
+      NULL);
+    gtk_widget_add_controller(w->widget, focus_controller);
+
     gtk_widget_show(w->widget);
+
     return w;
 }
 

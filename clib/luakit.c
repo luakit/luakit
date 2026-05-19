@@ -43,19 +43,23 @@
 static lua_class_t luakit_class;
 LUA_CLASS_FUNCS(luakit, luakit_class)
 
-GtkClipboard *
+GdkClipboard *
 luaH_clipboard_get(lua_State *L, gint idx)
 {
-#define CB_CASE(t) case L_TK_##t: return gtk_clipboard_get(GDK_SELECTION_##t);
+    // Fetch the active GdkDisplay manager context
+    GdkDisplay *display = gdk_display_get_default ();
+    if (!display) {
+        g_critical ("No active windowing system display found.");
+        return NULL;
+    }
+
     switch(l_tokenize(luaL_checkstring(L, idx)))
     {
-      CB_CASE(PRIMARY)
-      CB_CASE(SECONDARY)
-      CB_CASE(CLIPBOARD)
+      case L_TK_PRIMARY: return gdk_display_get_primary_clipboard(display);
+      case L_TK_CLIPBOARD: return gdk_display_get_clipboard(display);
       default: break;
     }
     return NULL;
-#undef CB_CASE
 }
 
 /** __index metamethod for the luakit.selection table which
@@ -69,12 +73,24 @@ luaH_clipboard_get(lua_State *L, gint idx)
 static gint
 luaH_luakit_selection_index(lua_State *L)
 {
-    GtkClipboard *selection = luaH_clipboard_get(L, 2);
-    if (selection) {
-        gchar *text = gtk_clipboard_wait_for_text(selection);
+    GdkClipboard *clipboard = luaH_clipboard_get(L, 2);
+    if (clipboard) {
+        // Initialize a GValue to receive text
+        GValue value = G_VALUE_INIT;
+        g_value_init (&value, G_TYPE_STRING);
+
+        // Get the content provider for the clipboard, and ask it for text
+        GdkContentProvider *provider = gdk_clipboard_get_content (clipboard);
+
+        // If the content provider does not contain text, we are not interested
+        if (!gdk_content_provider_get_value (provider, &value, NULL))
+            return 0;
+
+        char *text = g_value_get_string(&value);
         if (text) {
             lua_pushstring(L, text);
             g_free(text);
+            g_value_unset (&value);
             return 1;
         }
     }
@@ -100,13 +116,13 @@ luaH_luakit_selection_index(lua_State *L)
 static gint
 luaH_luakit_selection_newindex(lua_State *L)
 {
-    GtkClipboard *selection = luaH_clipboard_get(L, 2);
-    if (selection) {
+    GdkClipboard *clipboard = luaH_clipboard_get(L, 2);
+    if (clipboard) {
         const gchar *text = !lua_isnil(L, 3) ? luaL_checkstring(L, 3) : NULL;
         if (text && *text)
-            gtk_clipboard_set_text(selection, text, -1);
+            gdk_clipboard_set_text(clipboard, text);
         else
-            gtk_clipboard_clear(selection);
+            gdk_clipboard_set_content(clipboard, NULL);
     }
     return 0;
 }
@@ -128,8 +144,33 @@ luaH_luakit_selection_table_push(lua_State *L)
     return 1;
 }
 
-/** Shows a Gtk save dialog.
- * \see http://developer.gnome.org/gtk/stable/GtkDialog.html
+static void
+on_save_dialog_complete(GObject *source_object,
+                        GAsyncResult *result,
+                        gpointer user_data)
+{
+    GtkFileDialog *dialog = GTK_FILE_DIALOG(source_object);
+    GError *error = NULL;
+
+    lua_State *L = (lua_State *)user_data;
+
+    GFile *file = gtk_file_dialog_save_finish (dialog, result, &error);
+
+    if (file) {
+        gchar *filename = g_file_get_path (file);
+        lua_pushstring(L, filename);
+        g_free(filename);
+        g_object_unref (file);
+    } else {
+        lua_pushnil(L);
+        g_error_free (error);
+    }
+
+    g_object_unref (dialog);
+}
+
+/** Shows a GtkFileDialog to save a file.
+ * \see https://docs.gtk.org/gtk4/class.FileDialog.html
  *
  * \param L The Lua VM state.
  * \return The number of elements pushed on stack.
@@ -159,35 +200,20 @@ luaH_luakit_save_file(lua_State *L)
     const gchar *default_folder = luaL_checkstring(L, 3);
     const gchar *default_name = luaL_checkstring(L, 4);
 
-#if GTK_CHECK_VERSION(3,10,0)
-    GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
-            parent_window,
-            GTK_FILE_CHOOSER_ACTION_SAVE,
-            "_Cancel", GTK_RESPONSE_CANCEL,
-            "_Save", GTK_RESPONSE_ACCEPT,
-            NULL);
-#else
-    GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
-            parent_window,
-            GTK_FILE_CHOOSER_ACTION_SAVE,
-            GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-            GTK_STOCK_SAVE, GTK_RESPONSE_ACCEPT,
-            NULL);
-#endif
+    GtkFileDialog *dialog = gtk_file_dialog_new();
+    gtk_file_dialog_set_title(dialog, title);
 
-    /* set default folder, name and overwrite confirmation policy */
-    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(dialog), default_folder);
-    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(dialog), default_name);
-    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(dialog), TRUE);
+    gtk_file_dialog_set_initial_name(dialog, default_name);
 
-    if (gtk_dialog_run(GTK_DIALOG(dialog)) == GTK_RESPONSE_ACCEPT) {
-        gchar *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(dialog));
-        lua_pushstring(L, filename);
-        g_free(filename);
-    } else
-        lua_pushnil(L);
+    GFile *initial_dir = g_file_new_for_path (default_folder);
+    gtk_file_dialog_set_initial_folder(dialog, initial_dir);
+    g_object_unref(initial_dir);
 
-    gtk_widget_destroy(dialog);
+    gtk_file_dialog_save(dialog, 
+                         parent_window, 
+                         NULL, // No GCancellable
+                         on_save_dialog_complete, 
+                         L);
     return 1;
 }
 
@@ -413,14 +439,9 @@ luaH_parse_website_data_types_table(lua_State *L, gint idx)
         TYPE(SESSION_STORAGE, session_storage)
         TYPE(LOCAL_STORAGE, local_storage)
         TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
-        TYPE(PLUGIN_DATA, plugin_data)
         TYPE(COOKIES, cookies)
-#if WEBKIT_CHECK_VERSION(2,24,0)
         TYPE(DEVICE_ID_HASH_SALT, device_id_hash_salt)
-#endif
-#if WEBKIT_CHECK_VERSION(2,26,0)
         TYPE(HSTS_CACHE, hsts_cache)
-#endif
         TYPE(ALL, all)
 #undef TYPE
 
@@ -463,14 +484,9 @@ website_data_fetch_finish(WebKitWebsiteDataManager *manager, GAsyncResult *resul
             TYPE(SESSION_STORAGE, session_storage)
             TYPE(LOCAL_STORAGE, local_storage)
             TYPE(INDEXEDDB_DATABASES, indexeddb_databases)
-            TYPE(PLUGIN_DATA, plugin_data)
             TYPE(COOKIES, cookies)
-#if WEBKIT_CHECK_VERSION(2,24,0)
             TYPE(DEVICE_ID_HASH_SALT, device_id_hash_salt)
-#endif
-#if WEBKIT_CHECK_VERSION(2,26,0)
             TYPE(HSTS_CACHE, hsts_cache)
-#endif
 #undef TYPE
             lua_rawset(L, -3);
 
@@ -491,8 +507,8 @@ luaH_luakit_website_data_fetch(lua_State *L)
     if (data_types == 0)
         return luaL_error(L, "no website data types specified");
 
-    WebKitWebContext *web_context = web_context_get();
-    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
     webkit_website_data_manager_fetch(data_manager, data_types, NULL,
             (GAsyncReadyCallback)website_data_fetch_finish, L);
 
@@ -560,8 +576,8 @@ luaH_luakit_website_data_remove_cont(WebKitWebsiteDataManager *manager, GAsyncRe
         return;
     }
 
-    WebKitWebContext *web_context = web_context_get();
-    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
     webkit_website_data_manager_remove(data_manager, wdrt->data_types, items, NULL,
             (GAsyncReadyCallback)website_data_remove_finish, wdrt);
 
@@ -586,8 +602,8 @@ luaH_luakit_website_data_remove(lua_State *L)
     wdrt->domain = g_strdup(domain);
     wdrt->data_types = data_types;
 
-    WebKitWebContext *web_context = web_context_get();
-    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
     webkit_website_data_manager_fetch(data_manager, data_types, NULL,
             (GAsyncReadyCallback)luaH_luakit_website_data_remove_cont, wdrt);
 
@@ -619,8 +635,8 @@ luaH_luakit_website_data_clear(lua_State *L)
         return luaL_error(L, "no website data types specified");
     GTimeSpan timespan = luaL_optinteger(L, 2, 0);
 
-    WebKitWebContext *web_context = web_context_get();
-    WebKitWebsiteDataManager *data_manager = webkit_web_context_get_website_data_manager(web_context);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
     webkit_website_data_manager_clear(data_manager, data_types, timespan, NULL,
             (GAsyncReadyCallback)website_data_clear_finish, L);
 
@@ -694,8 +710,9 @@ luaH_luakit_wch_upper(lua_State *L)
 static gint
 luaH_luakit_clear_favicon_database(lua_State *UNUSED(L))
 {
-    WebKitWebContext *ctx = web_context_get();
-    WebKitFaviconDatabase *fdb = webkit_web_context_get_favicon_database(ctx);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
+    WebKitFaviconDatabase *fdb = webkit_website_data_manager_get_favicon_database(data_manager);
     webkit_favicon_database_clear(fdb);
     return 0;
 }
@@ -748,7 +765,6 @@ luaH_luakit_index(lua_State *L)
       PB_CASE(NOUNIQUE,         globalconf.nounique)
       PB_CASE(ENABLE_SPELL_CHECKING,    webkit_web_context_get_spell_checking_enabled(web_context_get()))
       /* push integer properties */
-      PI_CASE(PROCESS_LIMIT,    web_context_process_limit_get())
       case L_TK_OPTIONS:
         return luaH_luakit_push_options_table(L);
       case L_TK_WEBSITE_DATA:
@@ -821,10 +837,6 @@ luaH_luakit_newindex(lua_State *L)
     luakit_token_t token = l_tokenize(lua_tostring(L, 2));
 
     switch (token) {
-        case L_TK_PROCESS_LIMIT:
-            if (!web_context_process_limit_set(lua_tointeger(L, 3)))
-                return luaL_error(L, "Too late to set WebKit process limit");
-            break;
         case L_TK_ENABLE_SPELL_CHECKING:
             webkit_web_context_set_spell_checking_enabled(web_context_get(),
                     luaH_checkboolean(L, 3));
@@ -859,11 +871,8 @@ luaH_luakit_newindex(lua_State *L)
 static gint
 luaH_luakit_quit(lua_State *UNUSED(L))
 {
-    if (gtk_main_level())
-        gtk_main_quit();
-    else
-        exit(EXIT_SUCCESS);
-    return 0;
+    g_application_quit(G_APPLICATION(globalconf.application));
+    exit(EXIT_SUCCESS);
 }
 
 /** Defined in widgets/webview.c */
@@ -903,8 +912,8 @@ luaH_luakit_allow_certificate(lua_State *L)
         return 2;
     }
 
-    WebKitWebContext *ctx = web_context_get();
-    webkit_web_context_allow_tls_certificate_for_host(ctx, cert, host);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    webkit_network_session_allow_tls_certificate_for_host(net_session, cert, host);
     g_object_unref(G_OBJECT(cert));
 
     lua_pushboolean(L, TRUE);

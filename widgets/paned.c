@@ -40,12 +40,15 @@ luaH_paned_pack(lua_State *L)
     /* get packing position from C closure upvalue */
     luakit_token_t t = (luakit_token_t)lua_tonumber(L, lua_upvalueindex(1));
 
+    GtkPaned *paned = GTK_PANED(w->widget);
+
     if (t == L_TK_PACK1)
-        gtk_paned_pack1(GTK_PANED(w->widget), GTK_WIDGET(child->widget),
-                resize, shrink);
+        gtk_paned_set_start_child(GTK_PANED(paned), GTK_WIDGET(child->widget));
     else
-        gtk_paned_pack2(GTK_PANED(w->widget), GTK_WIDGET(child->widget),
-                resize, shrink);
+        gtk_paned_set_end_child(GTK_PANED(paned), GTK_WIDGET(child->widget));
+
+    gtk_paned_set_resize_end_child(paned, resize);
+    gtk_paned_set_shrink_end_child(paned, shrink);
     return 0;
 }
 
@@ -54,9 +57,9 @@ luaH_paned_get_child(lua_State *L, widget_t *w, gint n)
 {
     GtkWidget *widget = NULL;
     if (n == 1)
-        widget = gtk_paned_get_child1(GTK_PANED(w->widget));
+        widget = gtk_paned_get_start_child(GTK_PANED(w->widget));
     else
-        widget = gtk_paned_get_child2(GTK_PANED(w->widget));
+        widget = gtk_paned_get_end_child(GTK_PANED(w->widget));
 
     if (!widget)
         return 0;
@@ -87,7 +90,8 @@ luaH_paned_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
 
       /* push paned widget methods */
       case L_TK_PACK1:
@@ -141,7 +145,6 @@ widget_paned(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::add",        G_CALLBACK(add_cb),        w,
       NULL);
     gtk_widget_show(w->widget);
     return w;

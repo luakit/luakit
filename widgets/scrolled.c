@@ -143,8 +143,10 @@ luaH_scrolled_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
+
+      LUAKIT_WIDGET_CHILD_INDEX_COMMON(w)
 
       case L_TK_SCROLLBARS:
         return luaH_widget_get_scrollbars(L, w);
@@ -163,7 +165,7 @@ luaH_scrolled_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
-      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_NEWINDEX_COMMON(w)
 
       case L_TK_SCROLLBARS:
         luaH_widget_set_scrollbars(L, w);
@@ -186,9 +188,7 @@ widget_scrolled(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     w->index = luaH_scrolled_index;
     w->newindex = luaH_scrolled_newindex;
 
-#if GTK_CHECK_VERSION(3,2,0)
-    w->widget = gtk_scrolled_window_new(NULL, NULL);
-#endif
+    w->widget = gtk_scrolled_window_new();
 
     g_object_connect(G_OBJECT(w->widget),
         LUAKIT_WIDGET_SIGNAL_COMMON(w)

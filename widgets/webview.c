@@ -21,6 +21,7 @@
 #include <webkit/webkit.h>
 
 #include "globalconf.h"
+#include "gtk/gtk.h"
 #include "widgets/common.h"
 #include "widgets/webview.h"
 #include "common/property.h"
@@ -788,8 +789,11 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      PB_CASE(INSPECTOR,            d->inspector_open);
-      PB_CASE(PRIVATE,              d->private);
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
+
+      PB_CASE(INSPECTOR,            d->inspector_open)
+      PB_CASE(PRIVATE,              d->private)
 
       /* push property methods */
       PF_CASE(CLEAR_SEARCH,         luaH_webview_clear_search)
@@ -1044,7 +1048,7 @@ luaH_push_hit_test(lua_State *L, WebKitWebView* UNUSED(v), widget_t *w)
     return 1;
 }
 
-static gboolean
+gboolean
 webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
 {
     gint ret;
@@ -1304,7 +1308,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
     g_free(sig);
 }
 
-gboolean
+static gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
     /* Give webview a new disconnected IPC endpoint */
@@ -1428,7 +1432,6 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
       "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
       "signal::mouse-target-changed",                 G_CALLBACK(mouse_target_changed_cb),      w,
-      "signal::key-press-event",                      G_CALLBACK(key_press_cb),                 w,
       "signal::decide-policy",                        G_CALLBACK(decide_policy_cb),             w,
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
       "signal::load-changed",                         G_CALLBACK(load_changed_cb),              w,
@@ -1442,13 +1445,15 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::permission-request",                   G_CALLBACK(permission_request_cb),        w,
       NULL);
 
+    LUAKIT_EVENT_CONTROLLER_KEY(GTK_WIDGET(d->view), w)
+
     g_object_connect(G_OBJECT(webkit_web_view_get_find_controller(d->view)),
       "signal::found-text",                           G_CALLBACK(found_text_cb),                w,
       "signal::failed-to-find-text",                  G_CALLBACK(failed_to_find_text_cb),       w,
       NULL);
 
     g_object_connect(G_OBJECT(d->view),
-      "signal::parent-set",                           G_CALLBACK(parent_set_cb),                w,
+      "signal::notify::parent",                           G_CALLBACK(parent_changed_cb),                w,
       NULL);
 
     g_object_connect(G_OBJECT(d->inspector),

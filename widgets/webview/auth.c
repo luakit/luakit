@@ -20,6 +20,7 @@
  */
 
 #include "luah.h"
+#include "web_context.h"
 
 #include <gtk/gtk.h>
 
@@ -77,8 +78,8 @@ response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data
     switch(response_id)
     {
       case GTK_RESPONSE_OK:
-        login = gtk_entry_get_text(GTK_ENTRY(auth_data->login_entry));
-        password = gtk_entry_get_text(GTK_ENTRY(auth_data->password_entry));
+        login = gtk_editable_get_text(GTK_EDITABLE(auth_data->login_entry));
+        password = gtk_editable_get_text(GTK_EDITABLE(auth_data->password_entry));
         credential = webkit_credential_new(login, password, WEBKIT_CREDENTIAL_PERSISTENCE_NONE);
         webkit_authentication_request_authenticate(auth_data->request, credential);
         webkit_credential_free(credential);
@@ -92,7 +93,7 @@ response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data
     }
 
     free_auth_data(auth_data);
-    gtk_widget_destroy(GTK_WIDGET(dialog));
+    gtk_window_destroy(GTK_WINDOW(dialog));
 }
 
 static GtkWidget *
@@ -100,21 +101,17 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
         const gchar *value, gpointer UNUSED(user_data))
 {
     GtkWidget *label = gtk_label_new(label_text);
-#if GTK_CHECK_VERSION(3,14,0)
     GValue align = G_VALUE_INIT;
     g_value_init(&align, G_TYPE_ENUM);
     g_value_set_int(&align, GTK_ALIGN_CENTER);
     g_object_set_property(G_OBJECT(label), "halign", &align);
-#else
-    gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
-#endif
     gtk_widget_set_vexpand(GTK_WIDGET(label), TRUE);
 
     GtkWidget *entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
     if (value)
-        gtk_entry_set_text(GTK_ENTRY(entry), value);
+        gtk_editable_set_text(GTK_EDITABLE(entry), value);
 
     // left,top,width,height
     gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
@@ -139,30 +136,17 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     GtkWindow *window = GTK_WINDOW(widget);
     GtkDialog *dialog = GTK_DIALOG(widget);
 
-#if GTK_CHECK_VERSION(3,10,0)
     gtk_dialog_add_buttons(dialog,
        "_Cancel", GTK_RESPONSE_CANCEL,
        "_OK", GTK_RESPONSE_OK,
        NULL);
-#else
-    gtk_dialog_add_buttons(dialog,
-       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-       GTK_STOCK_OK, GTK_RESPONSE_OK,
-       NULL);
-#endif
 
     /* set dialog properties */
     gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
-#if GTK_CHECK_VERSION(3,12,0)
     GValue button_spacing = G_VALUE_INIT;
     g_value_init(&button_spacing, G_TYPE_INT);
     g_value_set_int(&button_spacing, 6);
     g_object_set_property(G_OBJECT(dialog), "button-spacing", &button_spacing);
-#else
-    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
-    gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
-    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_action_area(dialog)), 6);
-#endif
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
     gtk_window_set_icon_name(window, "dialog-password");
@@ -179,20 +163,12 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_grid_set_column_spacing(GTK_GRID(hbox), 12);
     gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
 
-#if GTK_CHECK_VERSION(3,10,0)
     GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password", GTK_ICON_SIZE_DIALOG);
-#else
-    GtkWidget *icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
-#endif
 
-#if GTK_CHECK_VERSION(3,14,0)
     GValue align = G_VALUE_INIT;
     g_value_init(&align, G_TYPE_ENUM);
     g_value_set_int(&align, GTK_ALIGN_CENTER);
     g_object_set_property(G_OBJECT(hbox), "halign", &align);
-#else
-    gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
-#endif
 
     gtk_grid_attach(GTK_GRID(hbox), icon, 0,0,1,2);
 
@@ -202,11 +178,7 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
             webkit_authentication_request_get_host(auth_data->request));
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
-#if GTK_CHECK_VERSION(3,14,0)
     g_object_set_property(G_OBJECT(msg_label), "halign", &align);
-#else
-    gtk_misc_set_alignment(GTK_MISC(msg_label), 0.0, 0.5);
-#endif
     gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
     GValue max_width_chars = G_VALUE_INIT;
     g_value_init(&max_width_chars, G_TYPE_INT);
