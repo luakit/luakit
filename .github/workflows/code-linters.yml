@@ -1,0 +1,47 @@
+name: Code Linters
+
+on:
+  push:
+    branches: [ "**" ]
+  pull_request:
+    branches: [ "**" ]
+
+jobs:
+  cppcheck:
+    name: Cppcheck (C Static Analysis)
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Install cppcheck
+      run: sudo apt-get update -qq && sudo apt-get install -y -qq cppcheck
+
+    - name: Run cppcheck
+      run: |
+        cppcheck \
+          --enable=warning,performance,portability \
+          --std=c11 \
+          --language=c \
+          --suppressions-list=.cppcheck-suppressions \
+          --error-exitcode=1 \
+          --inline-suppr \
+          --quiet \
+          *.c *.h \
+          common/ \
+          clib/ \
+          widgets/ \
+          extension/
+
+  shellcheck:
+    name: ShellCheck
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Run shellcheck
+      run: |
+        shellcheck --shell=sh --severity=warning \
+          build-utils/getversion.sh \
+          build-utils/getversion-test.sh
