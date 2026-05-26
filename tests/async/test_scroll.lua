@@ -52,16 +52,15 @@ T.test_scrolling_works = function ()
     w:scroll{ y = -1 }
     -- Scrolling to bottom requires a JS roundtrip to get document height
     -- first, so wait until that's finished before continuing...
-    test.wait_until(function () return w.view.scroll.y > 0 end)
+    test.wait_until(function () return w.view.scroll.y > 0 end, 5, 1000)
     assert.is_equal(doc_height - w.view.height, get_scroll_y(),
         "Scrolling to bottom failed")
 
-
     w:scroll{ ypct = 0 }
-    test.wait_until(function () return w.view.scroll.y == 0 end)
+    test.wait_until(function () return w.view.scroll.y == 0 end, 5, 1000)
 
     w:scroll{ ypct = 100 }
-    test.wait_until(function () return w.view.scroll.y > 0 end)
+    test.wait_until(function () return w.view.scroll.y > 0 end, 5, 1000)
     assert.is_equal(doc_height - w.view.height, get_scroll_y(),
         "Scrolling to 100% failed")
 end
