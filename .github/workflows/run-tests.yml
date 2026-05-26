@@ -68,9 +68,9 @@ jobs:
           ccache \
           luajit \
           libluajit-5.1-dev \
-          libjavascriptcoregtk-4.1-dev \
-          libwebkit2gtk-4.1-dev \
-          libgtk-3-dev \
+          libjavascriptcoregtk-6.0-dev \
+          libwebkitgtk-6.0-dev \
+          libgtk-4-dev \
           libglib2.0-dev \
           lua-check \
           lua-luassert \
@@ -80,7 +80,7 @@ jobs:
 
     - name: Configure git safe directory
       run: git config --global --add safe.directory /__w/luakit/luakit
-    
+
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
       with:
@@ -113,12 +113,13 @@ jobs:
       if: steps.build.outcome == 'success'
       run: |
         export LIBGL_ALWAYS_SOFTWARE=1
+        export GDK_BACKEND=x11
         xvfb-run -a make -j1 run-tests
-    
+
     - name: Show ccache statistics
       if: always()
       run: ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -132,7 +133,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -177,14 +178,14 @@ jobs:
             git \
             glib \
             gmake \
-            gtk3 \
+            gtk4 \
             libsoup3 \
             lua51-luafilesystem \
             lua51-luasocket \
             lua51 \
             luajit \
             sqlite3 \
-            webkit2-gtk_41 \
+            webkit2-gtk4 \
             pkgconf \
             xorg-vfbserver
 
@@ -230,14 +231,15 @@ jobs:
           echo "Running tests"
           echo "========================================"
           export LIBGL_ALWAYS_SOFTWARE=1
+          export GDK_BACKEND=x11
           gmake -j1 run-tests || (echo "TEST_FAILED=true" >> $GITHUB_ENV && exit 1)
-          
+
           echo ""
           echo "========================================"
           echo "ccache statistics"
           echo "========================================"
           ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -251,7 +253,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -294,14 +296,14 @@ jobs:
             git \
             glib2 \
             gmake \
-            gtk+3 \
+            gtk4 \
             luafs \
             luasocket \
             luassert \
             luacheck \
             luajit \
             sqlite3 \
-            webkitgtk41
+            webkitgtk60
           
           echo ""
           echo "========================================"
@@ -321,14 +323,15 @@ jobs:
           echo "Running tests"
           echo "========================================"
           export LIBGL_ALWAYS_SOFTWARE=1
+          export GDK_BACKEND=x11
           gmake -j1 run-tests || (echo "TEST_FAILED=true" >> $GITHUB_ENV && exit 1)
-          
+
           echo ""
           echo "========================================"
           echo "ccache statistics"
           echo "========================================"
           ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -342,7 +345,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -412,14 +415,15 @@ jobs:
           echo "Running tests"
           echo "========================================"
           export LIBGL_ALWAYS_SOFTWARE=1
+          export GDK_BACKEND=x11
           gmake -j1 run-tests || (echo "TEST_FAILED=true" >> $GITHUB_ENV && exit 1)
-          
+
           echo ""
           echo "========================================"
           echo "ccache statistics"
           echo "========================================"
           ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -433,7 +437,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -448,9 +452,9 @@ jobs:
 
   debian:
     if: github.event_name != 'workflow_dispatch' || inputs.test_debian
-    name: Debian Stable
+    name: Debian Testing
     runs-on: ubuntu-latest
-    container: debian:stable
+    container: debian:testing
     
     steps:
     - name: Checkout code
@@ -472,9 +476,9 @@ jobs:
           ccache \
           luajit \
           libluajit-5.1-dev \
-          libjavascriptcoregtk-4.1-dev \
-          libwebkit2gtk-4.1-dev \
-          libgtk-3-dev \
+          libjavascriptcoregtk-6.0-dev \
+          libwebkitgtk-6.0-dev \
+          libgtk-4-dev \
           libglib2.0-dev \
           lua-check \
           lua-luassert \
@@ -518,12 +522,13 @@ jobs:
       if: steps.build.outcome == 'success'
       run: |
         export LIBGL_ALWAYS_SOFTWARE=1
+        export GDK_BACKEND=x11
         make -j1 run-tests
-    
+
     - name: Show ccache statistics
       if: always()
       run: ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -537,7 +542,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -582,14 +587,14 @@ jobs:
           ccache \
           dbus \
           git \
-          gtk3 \
+          gtk4 \
           lua51-filesystem \
           lua51-socket \
           lua51-luassert \
           luarocks \
           luajit \
           sqlite \
-          webkit2gtk-4.1 \
+          webkitgtk-6.0 \
           xorg-server-xvfb
         luarocks --lua-version=5.1 install luacheck
     
@@ -625,12 +630,13 @@ jobs:
       if: steps.build.outcome == 'success'
       run: |
         export LIBGL_ALWAYS_SOFTWARE=1
+        export GDK_BACKEND=x11
         make -j1 run-tests
-    
+
     - name: Show ccache statistics
       if: always()
       run: ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -644,7 +650,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -692,14 +698,14 @@ jobs:
           dbus \
           git \
           glib-dev \
-          gtk+3.0-dev \
+          gtk4.0-dev \
           lua5.1-filesystem \
           lua5.1-socket \
           lua5.1-busted \
           luacheck \
           luajit-dev \
           sqlite-dev \
-          webkit2gtk-4.1-dev \
+          webkitgtk-6.0-dev \
           xvfb-run
     
     - name: Setup ccache
@@ -734,6 +740,7 @@ jobs:
       if: steps.build.outcome == 'success'
       run: |
         export LIBGL_ALWAYS_SOFTWARE=1
+        export GDK_BACKEND=x11
         xvfb-run -a make -j1 run-tests
     
     - name: Show ccache statistics
@@ -800,8 +807,8 @@ jobs:
           LuaJIT \
           LuaJIT-devel \
           glib-devel \
-          gtk+3-devel \
-          libwebkit2gtk41-devel \
+          gtk4-devel \
+          libwebkitgtk60-devel \
           lua51 \
           lua51-luafilesystem \
           lua51-luasocket \
@@ -873,12 +880,13 @@ jobs:
       if: steps.build.outcome == 'success'
       run: |
         export LIBGL_ALWAYS_SOFTWARE=1
+        export GDK_BACKEND=x11
         make -j1 run-tests
-    
+
     - name: Show ccache statistics
       if: always()
       run: ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -892,7 +900,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
@@ -956,10 +964,10 @@ jobs:
           dev-lua/luafilesystem \
           dev-lua/luasocket \
           dev-util/ccache \
-          net-libs/webkit-gtk:4.1 \
+          net-libs/webkit-gtk:6 \
           sys-apps/dbus \
           x11-base/xorg-server \
-          x11-libs/gtk+:3
+          gui-libs/gtk:4
     
     - name: Setup ccache
       uses: hendrikmuhs/ccache-action@v1.2
@@ -993,12 +1001,13 @@ jobs:
       if: steps.build.outcome == 'success'
       run: |
         export LIBGL_ALWAYS_SOFTWARE=1
+        export GDK_BACKEND=x11
         make -j1 run-tests
-    
+
     - name: Show ccache statistics
       if: always()
       run: ccache -s
-    
+
     - name: Generate badge JSON
       if: always()
       run: |
@@ -1012,7 +1021,7 @@ jobs:
           echo '{"schemaVersion":1,"label":"build","message":"unknown","color":"lightgrey"}' > badge.json
         fi
         cat badge.json
-    
+
     - name: Upload badge
       if: always()
       uses: actions/upload-artifact@v4
