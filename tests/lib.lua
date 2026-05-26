@@ -77,8 +77,8 @@ function _M.wait_until(func, poll_time, timeout)
 
     shared_lib.traceback = debug.traceback("",2)
 
-    poll_time = poll_time or 5
-    timeout = timeout or 200
+    poll_time = poll_time or 20
+    timeout = timeout or 5000
 
     local t = 0
     repeat
@@ -129,7 +129,7 @@ function _M.wait(timeout)
     shared_lib.traceback = debug.traceback("",2)
 
     waiting = true
-    timeout = timeout or 200
+    timeout = timeout or 500
     return coroutine.yield({timeout=timeout})
 end
 
