@@ -131,8 +131,6 @@ local function spawn_luakit_instance(config, ...)
     local cache_dir = util.getenv("XDG_CACHE_HOME") or (util.getenv("HOME") .. "/")
     local gst_dir = cache_dir .. "/gstreamer-1.0"
     if lfs.attributes(gst_dir, "mode") == "directory" then
-        os.execute("mkdir -p " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0/")
-        os.execute("cp "..gst_dir.."/registry.x86_64.bin " .. env.XDG_CACHE_HOME .. "/gstreamer-1.0")
         os.execute(string.format("mkdir -p %q", env.XDG_CACHE_HOME .. "/gstreamer-1.0/"))
         os.execute(string.format("cp %q %q", gst_dir.."/registry.x86_64.bin", env.XDG_CACHE_HOME .. "/gstreamer-1.0"))
     end
