@@ -2,7 +2,7 @@ name: Code Linters
 
 on:
   push:
-    branches: [ "**" ]
+    branches: [ "develop" ]
   pull_request:
     branches: [ "**" ]
 
