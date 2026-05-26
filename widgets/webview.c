@@ -727,11 +727,7 @@ permission_request_cb(WebKitWebView *UNUSED(v), WebKitPermissionRequest *request
         lua_pushliteral(L, "notification");
     else if (WEBKIT_IS_GEOLOCATION_PERMISSION_REQUEST(request))
         lua_pushliteral(L, "geolocation");
-    else if (WEBKIT_IS_INSTALL_MISSING_MEDIA_PLUGINS_PERMISSION_REQUEST(request)) {
-        lua_pushliteral(L, "install-missing-media-plugins");
-        WebKitInstallMissingMediaPluginsPermissionRequest* ummpr = (WebKitInstallMissingMediaPluginsPermissionRequest*)request;
-        lua_pushstring(L, webkit_install_missing_media_plugins_permission_request_get_description(ummpr));
-    } else if (WEBKIT_IS_USER_MEDIA_PERMISSION_REQUEST(request)) {
+    else if (WEBKIT_IS_USER_MEDIA_PERMISSION_REQUEST(request)) {
         lua_pushliteral(L, "user-media");
         lua_createtable(L, 0, 2);
         WebKitUserMediaPermissionRequest* umpr = (WebKitUserMediaPermissionRequest*)request;
@@ -864,7 +860,6 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
         /* HACK: there's only one exposed property that has an enum type, so we
          * special-case it; this should be refactored if there's more than one */
         switch (webkit_settings_get_hardware_acceleration_policy(webkit_web_view_get_settings(d->view))) {
-            case WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND: lua_pushstring (L, "on-demand"); return 1;
             case WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS: lua_pushstring (L, "always"); return 1;
             case WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER: lua_pushstring (L, "never"); return 1;
             default: g_assert_not_reached();
@@ -949,9 +944,7 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
          * special-case it; this should be refactored if there's more than one */
         const char *str = luaL_checkstring(L, 3);
         WebKitHardwareAccelerationPolicy value;
-        if (g_str_equal(str, "on-demand"))
-            value = WEBKIT_HARDWARE_ACCELERATION_POLICY_ON_DEMAND;
-        else if (g_str_equal(str, "always"))
+        if (g_str_equal(str, "on-demand") || g_str_equal(str, "always"))
             value = WEBKIT_HARDWARE_ACCELERATION_POLICY_ALWAYS;
         else if (g_str_equal(str, "never"))
             value = WEBKIT_HARDWARE_ACCELERATION_POLICY_NEVER;
@@ -972,15 +965,6 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     return luaL_error(L, "cannot set unknown webview property '%s'", lua_tostring(L, 2));
 }
 
-static gboolean
-expose_cb(GtkWidget* UNUSED(widget), cairo_t *UNUSED(e), widget_t *w)
-{
-    lua_State *L = common.L;
-    luaH_object_push(L, w->ref);
-    luaH_object_emit_signal(L, -1, "expose", 0, 0);
-    lua_pop(L, 1);
-    return FALSE;
-}
 
 static void
 mouse_target_changed_cb(WebKitWebView* UNUSED(v), WebKitHitTestResult *htr,
@@ -1048,66 +1032,77 @@ luaH_push_hit_test(lua_State *L, WebKitWebView* UNUSED(v), widget_t *w)
     return 1;
 }
 
-gboolean
-webview_button_cb(GtkWidget *view, GdkEventButton *ev, widget_t *w)
+static void
+webview_button_pressed_cb(GtkGestureClick *gesture, gint n_press, gdouble UNUSED(x), gdouble UNUSED(y), widget_t *w)
 {
+    lua_State *L = common.L;
+    webview_data_t *d = w->data;
+
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(gesture));
+    guint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
+
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, state);
+    lua_pushinteger(L, button);
+    luaH_push_hit_test(L, d->view, w);
+
     gint ret;
-    lua_State *L = common.L;
-    luaH_object_push(L, w->ref);
-    luaH_modifier_table_push(L, ev->state);
-    lua_pushinteger(L, ev->button);
-    /* push webview hit test context */
-    luaH_push_hit_test(L, WEBKIT_WEB_VIEW(view), w);
-
-    switch (ev->type) {
-      case GDK_2BUTTON_PRESS:
+    if (n_press == 2) {
         ret = luaH_object_emit_signal(L, -4, "button-double-click", 3, 1);
-        break;
-      case GDK_BUTTON_RELEASE:
-        ret = luaH_object_emit_signal(L, -4, "button-release", 3, 1);
-        break;
-      default:
+    } else {
         ret = luaH_object_emit_signal(L, -4, "button-press", 3, 1);
-        break;
     }
 
-    /* User responded with TRUE, so do not propagate event any further */
     if (ret && lua_toboolean(L, -1)) {
-        lua_pop(L, ret + 1);
-        return TRUE;
+        gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
     }
     lua_pop(L, ret + 1);
-    /* propagate event further */
-    return FALSE;
-}
-
-static gboolean
-webview_scroll_cb(GtkWidget *view, GdkEventScroll *ev, widget_t *w)
-{
-    double dx, dy;
-    switch (ev->direction) {
-        case GDK_SCROLL_UP:     dx =  0; dy = -1; break;
-        case GDK_SCROLL_DOWN:   dx =  0; dy =  1; break;
-        case GDK_SCROLL_LEFT:   dx = -1; dy =  0; break;
-        case GDK_SCROLL_RIGHT:  dx =  1; dy =  0; break;
-        case GDK_SCROLL_SMOOTH: gdk_event_get_scroll_deltas((GdkEvent*)ev, &dx, &dy); break;
-        default: g_assert_not_reached();
-    }
-
-    lua_State *L = common.L;
-    luaH_object_push(L, w->ref);
-    luaH_modifier_table_push(L, ev->state);
-    lua_pushnumber(L, dx);
-    lua_pushnumber(L, dy);
-    luaH_push_hit_test(L, WEBKIT_WEB_VIEW(view), w);
-
-    gboolean ret = luaH_object_emit_signal(L, -5, "scroll", 4, 1);
-    lua_pop(L, ret + 1);
-    return ret;
 }
 
 static void
-menu_item_cb(GtkAction *action, widget_t *w)
+webview_button_released_cb(GtkGestureClick *gesture, gint UNUSED(n_press), gdouble UNUSED(x), gdouble UNUSED(y), widget_t *w)
+{
+    lua_State *L = common.L;
+    webview_data_t *d = w->data;
+
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(gesture));
+    guint button = gtk_gesture_single_get_current_button(GTK_GESTURE_SINGLE(gesture));
+
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, state);
+    lua_pushinteger(L, button);
+    luaH_push_hit_test(L, d->view, w);
+
+    gint ret = luaH_object_emit_signal(L, -4, "button-release", 3, 1);
+    if (ret && lua_toboolean(L, -1)) {
+        gtk_gesture_set_state(GTK_GESTURE(gesture), GTK_EVENT_SEQUENCE_CLAIMED);
+    }
+    lua_pop(L, ret + 1);
+}
+
+static gboolean
+webview_scroll_controller_cb(GtkEventControllerScroll *controller, gdouble dx, gdouble dy, gpointer user_data)
+{
+    widget_t *w = (widget_t *)user_data;
+    webview_data_t *d = w->data;
+    lua_State *L = common.L;
+
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
+
+    luaH_object_push(L, w->ref);
+    luaH_modifier_table_push(L, state);
+    lua_pushnumber(L, dx);
+    lua_pushnumber(L, dy);
+    luaH_push_hit_test(L, d->view, w);
+
+    gint ret = luaH_object_emit_signal(L, -5, "scroll", 4, 1);
+    gboolean handled = ret && lua_toboolean(L, -1);
+    lua_pop(L, ret + 1);
+    return handled;
+}
+
+static void
+menu_item_cb(GSimpleAction *action, GVariant *UNUSED(parameter), widget_t *w)
 {
     lua_State *L = common.L;
     gpointer ref = g_object_get_data(G_OBJECT(action), "lua_callback");
@@ -1147,14 +1142,11 @@ table_from_context_menu(lua_State *L, WebKitContextMenu *menu, widget_t *w)
         if (webkit_context_menu_item_is_separator(item))
             lua_pushboolean(L, TRUE);
         else {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-            GtkAction *action = webkit_context_menu_item_get_action(item);
+            GAction *action = webkit_context_menu_item_get_gaction(item);
             WebKitContextMenuAction stock_action = webkit_context_menu_item_get_stock_action(item);
             WebKitContextMenu *submenu = webkit_context_menu_item_get_submenu(item);
             lua_createtable(L, 2, 0);
-            lua_pushstring(L, gtk_action_get_label(action));
-#pragma GCC diagnostic pop
+            lua_pushstring(L, webkit_context_menu_item_get_title(item));
             lua_rawseti(L, -2, 1);
             if (submenu)
                 table_from_context_menu(L, submenu, w);
@@ -1201,12 +1193,8 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
 
             /* add context menu item */
             } else if(lua_type(L, -1) == LUA_TFUNCTION) {
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-                GtkAction *action = gtk_action_new(label, label,
-                        NULL, NULL);
-                item = webkit_context_menu_item_new(action);
-#pragma GCC diagnostic pop
+                GSimpleAction *action = g_simple_action_new(label, NULL);
+                item = webkit_context_menu_item_new_from_gaction(G_ACTION(action), label, NULL);
                 ref = luaH_object_ref(L, -1);
                 last_popup.refs = g_slist_prepend(last_popup.refs, ref);
                 g_object_set_data(G_OBJECT(action), "lua_callback", ref);
@@ -1221,11 +1209,8 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
                 webkit_context_menu_append(menu, item);
                 lua_pop(L, 1);
             } else if(lua_type(L, -1) == LUA_TLIGHTUSERDATA) {
-                GtkAction *action = (void*)lua_topointer(L, -1);
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-                item = webkit_context_menu_item_new(action);
-#pragma GCC diagnostic pop
+                GAction *action = (GAction*)lua_topointer(L, -1);
+                item = webkit_context_menu_item_new_from_gaction(action, label, NULL);
                 webkit_context_menu_append(menu, item);
                 lua_pop(L, 1);
             }
@@ -1241,7 +1226,7 @@ context_menu_from_table(lua_State *L, WebKitContextMenu *menu, widget_t *w)
 
 static gboolean
 context_menu_cb(WebKitWebView* UNUSED(v), WebKitContextMenu *menu,
-        GdkEvent* UNUSED(e), WebKitHitTestResult* UNUSED(htr), widget_t *w)
+        WebKitHitTestResult* UNUSED(htr), widget_t *w)
 {
     lua_State *L = common.L;
     g_assert(!context_menu_actions);
@@ -1309,7 +1294,7 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
 }
 
 static gboolean
-webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
+webview_crashed_cb(WebKitWebView *UNUSED(view), WebKitWebProcessTerminationReason UNUSED(reason), widget_t *w)
 {
     /* Give webview a new disconnected IPC endpoint */
     webview_data_t *d = w->data;
@@ -1400,17 +1385,22 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
         globalconf.stylesheets = g_ptr_array_new();
     d->stylesheets = NULL;
 
-    /* Set web process limits if not already set */
-    web_context_init_finish();
 
     /* create widgets */
     d->user_content = webkit_user_content_manager_new();
+    WebKitNetworkSession *session = NULL;
+    if (d->private) {
+        session = webkit_network_session_new_ephemeral();
+    } else {
+        session = web_network_session_get();
+    }
     d->view = g_object_new(WEBKIT_TYPE_WEB_VIEW,
                  "web-context", web_context_get(),
-                 "is-ephemeral", d->private,
+                 "network-session", session,
                  "user-content-manager", d->user_content,
                  related_view ? "related-view" : NULL, related_view,
                  NULL);
+    g_object_unref(session);
     d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
@@ -1425,12 +1415,8 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
 
     g_object_connect(G_OBJECT(d->view),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::button-press-event",                   G_CALLBACK(webview_button_cb),            w,
-      "signal::button-release-event",                 G_CALLBACK(webview_button_cb),            w,
-      "signal::scroll-event",                         G_CALLBACK(webview_scroll_cb),            w,
       "signal::create",                               G_CALLBACK(create_cb),                    w,
-      "signal::web-process-crashed",                  G_CALLBACK(webview_crashed_cb),           w,
-      "signal::draw",                                 G_CALLBACK(expose_cb),                    w,
+      "signal::web-process-terminated",               G_CALLBACK(webview_crashed_cb),           w,
       "signal::mouse-target-changed",                 G_CALLBACK(mouse_target_changed_cb),      w,
       "signal::decide-policy",                        G_CALLBACK(decide_policy_cb),             w,
       "signal::notify",                               G_CALLBACK(notify_cb),                    w,
@@ -1446,6 +1432,16 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       NULL);
 
     LUAKIT_EVENT_CONTROLLER_KEY(GTK_WIDGET(d->view), w)
+
+    GtkGesture *click_gesture = gtk_gesture_click_new();
+    gtk_gesture_single_set_button(GTK_GESTURE_SINGLE(click_gesture), 0);
+    g_signal_connect(click_gesture, "pressed", G_CALLBACK(webview_button_pressed_cb), w);
+    g_signal_connect(click_gesture, "released", G_CALLBACK(webview_button_released_cb), w);
+    gtk_widget_add_controller(GTK_WIDGET(d->view), GTK_EVENT_CONTROLLER(click_gesture));
+
+    GtkEventController *scroll_controller = gtk_event_controller_scroll_new(GTK_EVENT_CONTROLLER_SCROLL_BOTH_AXES);
+    g_signal_connect(scroll_controller, "scroll", G_CALLBACK(webview_scroll_controller_cb), w);
+    gtk_widget_add_controller(GTK_WIDGET(d->view), scroll_controller);
 
     g_object_connect(G_OBJECT(webkit_web_view_get_find_controller(d->view)),
       "signal::found-text",                           G_CALLBACK(found_text_cb),                w,
@@ -1465,7 +1461,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       NULL);
 
     /* show widgets */
-    gtk_widget_show(GTK_WIDGET(d->view));
+    gtk_widget_set_visible(GTK_WIDGET(d->view), TRUE);
 
     return w;
 }

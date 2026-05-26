@@ -100,6 +100,7 @@ luaH_box_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_INDEX_COMMON(w)
 
       PF_CASE(DESTROY,      luaH_widget_destroy)
 
@@ -128,6 +129,7 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_NEWINDEX_COMMON(w)
 
       case L_TK_HOMOGENEOUS:
         gtk_box_set_homogeneous(GTK_BOX(w->widget), luaH_checkboolean(L, 3));
@@ -141,11 +143,7 @@ luaH_box_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         tmp = luaL_checklstring(L, 3, &len);
         if (!gdk_rgba_parse(&c, tmp))
             luaL_argerror(L, 3, "unable to parse colour");
-#if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "background-color", tmp, NULL);
-#else
-        gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
-#endif
         g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
         break;
 

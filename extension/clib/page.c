@@ -168,6 +168,11 @@ luaH_page_eval_js(lua_State *L)
     WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
     WebKitScriptWorld *world = extension.script_world;
     JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (!ctx) {
+        lua_pushnil(L);
+        lua_pushstring(L, "JavaScript context not available");
+        return 2;
+    }
 
     JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, script, -1, source, 1);
     JSCException *exception = jsc_context_get_exception(ctx);
@@ -266,15 +271,30 @@ static int
 luaH_page_new(lua_State *L)
 {
     guint64 page_id = luaL_checknumber(L, -1);
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     return luaH_page_from_web_page(L, page);
 }
 
 static gint
 luaH_page_push_document(lua_State *L, page_t *page)
 {
-    WebKitDOMDocument *doc = webkit_web_page_get_dom_document(page->page);
-    return luaH_dom_document_from_webkit_dom_document(L, doc);
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (!ctx) {
+        lua_pushnil(L);
+        return 1;
+    }
+    JSCValue *js_global = jsc_context_get_global_object(ctx);
+    JSCValue *js_doc = jsc_value_object_get_property(js_global, "document");
+
+    gint ret = luaH_dom_document_from_webkit_dom_document(L, js_doc);
+
+    g_object_unref(js_doc);
+    g_object_unref(js_global);
+    g_object_unref(ctx);
+
+    return ret;
 }
 
 static gint

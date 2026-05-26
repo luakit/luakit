@@ -180,10 +180,21 @@ items_changed_cb(GListModel *model, guint position, guint removed, guint added, 
 }
 
 void
-child_changed_cb(GObject *object, GParamSpec *pspec, widget_t *w)
+child_changed_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
 {
-    GtkFrame *frame = GTK_FRAME(object);
-    GtkWidget *new_child = gtk_frame_get_child(frame);
+    GtkWidget *widget = GTK_WIDGET(object);
+    GtkWidget *new_child = NULL;
+
+    if (GTK_IS_SCROLLED_WINDOW(widget))
+        new_child = gtk_scrolled_window_get_child(GTK_SCROLLED_WINDOW(widget));
+    else if (GTK_IS_WINDOW(widget))
+        new_child = gtk_window_get_child(GTK_WINDOW(widget));
+    else if (GTK_IS_OVERLAY(widget))
+        new_child = gtk_overlay_get_child(GTK_OVERLAY(widget));
+    else if (GTK_IS_FRAME(widget))
+        new_child = gtk_frame_get_child(GTK_FRAME(widget));
+    else
+        new_child = gtk_widget_get_first_child(widget);
 
     if (new_child != NULL) {
         widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(new_child);
@@ -249,17 +260,45 @@ gint
 luaH_widget_set_child(lua_State *L, widget_t *w)
 {
     widget_t *child = luaH_checkwidgetornil(L, 3);
+    GtkWidget *widget = NULL;
+
+    if (GTK_IS_SCROLLED_WINDOW(w->widget))
+        widget = gtk_scrolled_window_get_child(GTK_SCROLLED_WINDOW(w->widget));
+    else if (GTK_IS_WINDOW(w->widget))
+        widget = gtk_window_get_child(GTK_WINDOW(w->widget));
+    else if (GTK_IS_OVERLAY(w->widget))
+        widget = gtk_overlay_get_child(GTK_OVERLAY(w->widget));
+    else
+        widget = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
 
     /* remove old child */
-    GtkWidget *widget = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
     if (widget) {
         g_object_ref(G_OBJECT(widget));
-        gtk_box_remove(GTK_BOX(w->widget), GTK_WIDGET(widget));
+        if (GTK_IS_BOX(w->widget))
+            gtk_box_remove(GTK_BOX(w->widget), GTK_WIDGET(widget));
+        else if (GTK_IS_SCROLLED_WINDOW(w->widget))
+            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(w->widget), NULL);
+        else if (GTK_IS_WINDOW(w->widget))
+            gtk_window_set_child(GTK_WINDOW(w->widget), NULL);
+        else if (GTK_IS_OVERLAY(w->widget))
+            gtk_overlay_set_child(GTK_OVERLAY(w->widget), NULL);
+        else
+            gtk_widget_unparent(GTK_WIDGET(widget));
     }
 
     /* add new child to container */
-    if (child)
-        gtk_box_append(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
+    if (child) {
+        if (GTK_IS_BOX(w->widget))
+            gtk_box_append(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
+        else if (GTK_IS_SCROLLED_WINDOW(w->widget))
+            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(w->widget), GTK_WIDGET(child->widget));
+        else if (GTK_IS_WINDOW(w->widget))
+            gtk_window_set_child(GTK_WINDOW(w->widget), GTK_WIDGET(child->widget));
+        else if (GTK_IS_OVERLAY(w->widget))
+            gtk_overlay_set_child(GTK_OVERLAY(w->widget), GTK_WIDGET(child->widget));
+        else
+            gtk_widget_set_parent(GTK_WIDGET(child->widget), GTK_WIDGET(w->widget));
+    }
     return 0;
 }
 
@@ -267,12 +306,23 @@ luaH_widget_set_child(lua_State *L, widget_t *w)
 gint
 luaH_widget_get_child(lua_State *L, widget_t *w)
 {
-    GtkWidget *widget = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
+    GtkWidget *widget = NULL;
+
+    if (GTK_IS_SCROLLED_WINDOW(w->widget))
+        widget = gtk_scrolled_window_get_child(GTK_SCROLLED_WINDOW(w->widget));
+    else if (GTK_IS_WINDOW(w->widget))
+        widget = gtk_window_get_child(GTK_WINDOW(w->widget));
+    else if (GTK_IS_OVERLAY(w->widget))
+        widget = gtk_overlay_get_child(GTK_OVERLAY(w->widget));
+    else
+        widget = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
 
     if (!widget)
         return 0;
 
     widget_t *child = GOBJECT_TO_LUAKIT_WIDGET(widget);
+    if (!child)
+        return 0;
     luaH_object_push(L, child->ref);
     return 1;
 }
@@ -292,13 +342,31 @@ luaH_widget_get_children(lua_State *L, widget_t *w)
 {
     lua_newtable(L);
     gint i = 1;
-    for (GtkWidget *child = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
-         child != NULL;
-         child = gtk_widget_get_next_sibling(child)) {
 
-        /* push table of the containers children onto the stack */
-        luaH_object_push(L, GOBJECT_TO_LUAKIT_WIDGET(child)->ref);
-        lua_rawseti(L, -2, i++);
+    if (GTK_IS_NOTEBOOK(w->widget)) {
+        gint n = gtk_notebook_get_n_pages(GTK_NOTEBOOK(w->widget));
+        for (gint idx = 0; idx < n; idx++) {
+            GtkWidget *child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), idx);
+            if (child) {
+                widget_t *child_w = GOBJECT_TO_LUAKIT_WIDGET(child);
+                if (child_w) {
+                    luaH_object_push(L, child_w->ref);
+                    lua_rawseti(L, -2, i++);
+                }
+            }
+        }
+    } else {
+        for (GtkWidget *child = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
+             child != NULL;
+             child = gtk_widget_get_next_sibling(child)) {
+
+            widget_t *child_w = GOBJECT_TO_LUAKIT_WIDGET(child);
+            if (child_w) {
+                /* push table of the containers children onto the stack */
+                luaH_object_push(L, child_w->ref);
+                lua_rawseti(L, -2, i++);
+            }
+        }
     }
 
     return 1;
@@ -335,12 +403,18 @@ luaH_widget_replace(lua_State *L)
         gtk_widget_unparent(GTK_WIDGET(och->widget));
 
 
-        gtk_widget_set_parent(nch->widget, parent);
+        if (GTK_IS_BOX(parent)) {
+            gtk_box_append(GTK_BOX(parent), GTK_WIDGET(nch->widget));
+        } else {
+            gtk_widget_set_parent(nch->widget, parent);
+        }
 
-        gtk_box_append(GTK_BOX(parent), GTK_WIDGET(nch->widget));
+        GtkLayoutChild *new_layout_child = gtk_layout_manager_get_layout_child(layout_mgr, GTK_WIDGET(nch->widget));
         for (guint i = 0; i < num_props; i++)
         {
-            g_object_set_property(G_OBJECT(nch->widget), props[i]->name, &values[i]);
+            if (new_layout_child) {
+                g_object_set_property(G_OBJECT(new_layout_child), props[i]->name, &values[i]);
+            }
             g_value_unset(&values[i]);
         }
 
@@ -457,7 +531,7 @@ luaH_widget_send_key(lua_State *L)
     gboolean ret;
     debug("sending key '%s%s' to widget %p", state_string->str, key_name, w->widget);
     g_signal_emit_by_name(key_controller,
-        is_release ? "key-released" : "key-pressed", 
+        is_release ? "key-released" : "key-pressed",
         keyval,        // The key value (e.g., GDK_KEY_Return)
         hardware_keycode,       // Physical hardware keycode code
         state,     // Active modifiers

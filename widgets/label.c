@@ -245,10 +245,10 @@ widget_label(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     gtk_widget_set_halign(GTK_WIDGET(w->widget), GTK_ALIGN_START);
     gtk_widget_set_valign(GTK_WIDGET(w->widget), GTK_ALIGN_START);
 
-    GValue margin = G_VALUE_INIT;
-    g_value_init(&margin, G_TYPE_INT);
-    g_value_set_int(&margin, 2);
-    g_object_set_property(G_OBJECT(w->widget), "margin", &margin);
+    gtk_widget_set_margin_start(GTK_WIDGET(w->widget), 2);
+    gtk_widget_set_margin_end(GTK_WIDGET(w->widget), 2);
+    gtk_widget_set_margin_top(GTK_WIDGET(w->widget), 2);
+    gtk_widget_set_margin_bottom(GTK_WIDGET(w->widget), 2);
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)

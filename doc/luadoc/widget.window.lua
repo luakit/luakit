@@ -69,7 +69,7 @@
 -- @readwrite
 
 --- @property icon
--- Path to an image file to set as the window icon.
+-- Icon name to set as the window icon.
 -- This property can only be set; reading this property always returns `nil`.
 -- @type string
 -- @readwrite

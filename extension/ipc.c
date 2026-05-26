@@ -94,7 +94,7 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     guint64 page_id = lua_tointeger(L, -2);
     /* cb ref is index -1 */
 
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     if (!page) {
         /* Notify UI to free callback ref */
         ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -2, -1);
@@ -102,9 +102,16 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
         return;
     }
 
+    // TODO:  replace depricated function
     WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-    WebKitScriptWorld *world = webkit_script_world_get_default();
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    JSCContext *ctx = webkit_frame_get_js_context(frame);
+    if (!ctx) {
+        lua_pushnil(L);
+        lua_pushstring(L, "JavaScript context not available");
+        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -4, -1);
+        lua_settop(L, top);
+        return;
+    }
     n = luajs_eval_js(L, ctx, script, source, 1, no_return);
     g_object_unref(ctx);
     /* Send [page_id, cb, ret] or [page_id, cb, nil, error] */
@@ -141,7 +148,7 @@ emit_pending_page_creation_ipc(void)
 }
 
 static void
-web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+web_page_created_cb(WebKitWebProcessExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     /* QUEUE until we've fully loaded web modules */
     if (queued_page_ipc)

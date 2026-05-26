@@ -16,8 +16,7 @@
  *
  */
 
-#define WEBKIT_DOM_USE_UNSTABLE_API
-#include <webkitdom/WebKitDOMDOMWindowUnstable.h>
+#include <jsc/jsc.h>
 
 #include "extension/extension.h"
 #include "extension/scroll.h"
@@ -27,7 +26,7 @@ static void
 send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t subtype)
 {
     const ipc_scroll_t data = {
-        .h = h, .v = v,.page_id = webkit_web_page_get_id(web_page), .subtype = subtype
+        .h = h, .v = v, .page_id = webkit_web_page_get_id(web_page), .subtype = subtype
     };
 
     ipc_header_t header = {
@@ -39,64 +38,67 @@ send_scroll_msg(gint h, gint v, WebKitWebPage *web_page, ipc_scroll_subtype_t su
 }
 
 static void
-window_scroll_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
+js_scroll_event_cb(guint64 page_id, gint h, gint v, gint subtype, gpointer UNUSED(user_data))
 {
-    gint h = webkit_dom_dom_window_get_scroll_x(window);
-    gint v = webkit_dom_dom_window_get_scroll_y(window);
-    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_scroll);
-}
-
-static void
-window_resize_cb(WebKitDOMDOMWindow *window, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
-{
-    gint h = webkit_dom_dom_window_get_inner_width(window);
-    gint v = webkit_dom_dom_window_get_inner_height(window);
-    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_winresize);
-}
-
-static gint scroll_width_prev = -1, scroll_height_prev = -1;
-
-static void
-document_resize_cb(WebKitDOMElement *html, WebKitDOMEvent *UNUSED(event), WebKitWebPage *web_page)
-{
-    gint h = webkit_dom_element_get_scroll_width(html);
-    gint v = webkit_dom_element_get_scroll_height(html);
-
-    /* Only send message if the size changes */
-    /* This still isn't that performant... needs a better solution really */
-    if (h == scroll_width_prev && v == scroll_height_prev)
-        return;
-    scroll_width_prev = h;
-    scroll_height_prev = v;
-
-    send_scroll_msg(h, v, web_page, IPC_SCROLL_TYPE_docresize);
+    WebKitWebPage *web_page = webkit_web_process_extension_get_page(extension.ext, page_id);
+    if (web_page) {
+        send_scroll_msg(h, v, web_page, (ipc_scroll_subtype_t)subtype);
+    }
 }
 
 static void
 web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
-    WebKitDOMDocument *document = webkit_web_page_get_dom_document(web_page);
-    WebKitDOMElement *html = webkit_dom_document_get_document_element(document);
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    WebKitFrame *frame = webkit_web_page_get_main_frame(web_page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
 
-    /* Add event listeners... */
+    JSCValue *func = jsc_value_new_function(ctx, NULL, G_CALLBACK(js_scroll_event_cb), NULL, NULL, G_TYPE_NONE, 4, G_TYPE_UINT64, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
+    jsc_context_set_value(ctx, "_luakit_scroll_event", func);
+    g_object_unref(func);
 
-    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
-        "scroll", G_CALLBACK(window_scroll_cb), FALSE, web_page);
-    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(window),
-        "resize", G_CALLBACK(window_resize_cb), FALSE, web_page);
-    webkit_dom_event_target_add_event_listener(WEBKIT_DOM_EVENT_TARGET(html),
-        "DOMSubtreeModified", G_CALLBACK(document_resize_cb), FALSE, web_page);
+    const gchar *script =
+        "(function(page_id) {\n"
+        "    function send(h, v, subtype) {\n"
+        "        _luakit_scroll_event(page_id, h, v, subtype);\n"
+        "    }\n"
+        "    window.addEventListener('scroll', function() {\n"
+        "        send(window.scrollX, window.scrollY, 0);\n"
+        "    });\n"
+        "    window.addEventListener('resize', function() {\n"
+        "        send(window.innerWidth, window.innerHeight, 1);\n"
+        "    });\n"
+        "    var scrollWidthPrev = -1, scrollHeightPrev = -1;\n"
+        "    function checkDocResize() {\n"
+        "        var html = document.documentElement;\n"
+        "        if (!html) return;\n"
+        "        var h = html.scrollWidth;\n"
+        "        var v = html.scrollHeight;\n"
+        "        if (h !== scrollWidthPrev || v !== scrollHeightPrev) {\n"
+        "            scrollWidthPrev = h;\n"
+        "            scrollHeightPrev = v;\n"
+        "            send(h, v, 2);\n"
+        "        }\n"
+        "    }\n"
+        "    if (document.documentElement) {\n"
+        "        document.documentElement.addEventListener('DOMSubtreeModified', checkDocResize);\n"
+        "    }\n"
+        "    send(window.scrollX, window.scrollY, 0);\n"
+        "    send(window.innerWidth, window.innerHeight, 1);\n"
+        "    checkDocResize();\n"
+        "})(%lu);";
 
-    /* ... and make sure initial values are set */
-
-    window_scroll_cb(window, NULL, web_page);
-    window_resize_cb(window, NULL, web_page);
-    document_resize_cb(html, NULL, web_page);
+    gchar *eval_script = g_strdup_printf(script, (unsigned long)page_id);
+    JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, eval_script, -1, NULL, 1);
+    if (res)
+        g_object_unref(res);
+    g_free(eval_script);
+    g_object_unref(ctx);
 }
 
 static void
-web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+web_page_created_cb(WebKitWebProcessExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     g_signal_connect(web_page, "document-loaded", G_CALLBACK(web_page_document_loaded_cb), NULL);
 }
@@ -104,13 +106,19 @@ web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gp
 void
 web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
 {
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
-    WebKitDOMDocument *document = webkit_web_page_get_dom_document(page);
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
+    if (!page)
+        return;
+    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
 
-    /* Scroll, then tell UI process what the new scroll position is */
-    webkit_dom_dom_window_scroll_to(window, scroll_x, scroll_y);
-    window_scroll_cb(window, NULL, page);
+    gchar *script = g_strdup_printf("window.scrollTo(%d, %d);", scroll_x, scroll_y);
+    JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, script, -1, NULL, 1);
+    if (res)
+        g_object_unref(res);
+    g_free(script);
+    g_object_unref(ctx);
 }
 
 void

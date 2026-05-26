@@ -90,7 +90,7 @@ web_lua_init(const char *package_path, const char *package_cpath)
 }
 
 G_MODULE_EXPORT void
-webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant *payload)
+webkit_web_process_extension_initialize_with_user_data(WebKitWebProcessExtension *ext, GVariant *payload)
 {
     gchar *socket_path, *package_path, *package_cpath;
     g_variant_get(payload, "(sss)", &socket_path, &package_path, &package_cpath);

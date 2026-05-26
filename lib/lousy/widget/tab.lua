@@ -53,7 +53,7 @@ local function destroy(tl)
 end
 
 local function update_label(tl)
-    local label = tl.widget
+    local label = data[tl].label
     label.text = string.gsub(_M.label_format, "{([%w_]+)}", function (k)
         return _M.label_subs[k](tl)
     end)
@@ -62,13 +62,14 @@ end
 local function set_current(tl, current)
     local theme = get_theme()
     local priv = data[tl]
-    local label = tl.widget
+    local label = priv.label
+    local ebox = tl.widget
     priv.current = current
     label.fg = (priv.current and theme.tab_selected_fg) or theme.tab_fg
     if priv.view.private then
-        label.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
+        ebox.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
     else
-        label.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
+        ebox.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
     end
     update_label(tl)
 end
@@ -101,12 +102,14 @@ local function new(view, index)
     label.margin_right = 10
 
     local tl = {
-        widget = label,
+        widget = widget{type = "hbox"},
         destroy = destroy,
     }
+    tl.widget.child = label
 
     -- Bind signals to associated view
     data[tl] = {
+        label = label,
         view = view,
         index = index,
         current = false,

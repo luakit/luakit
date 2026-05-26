@@ -113,7 +113,7 @@ luaH_overlay_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
-      LUAKIT_WIDGET_CHILD_INDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_NEWINDEX_COMMON(w)
 
       default:
         return 0;

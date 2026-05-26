@@ -142,11 +142,12 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
        NULL);
 
     /* set dialog properties */
-    gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
-    GValue button_spacing = G_VALUE_INIT;
-    g_value_init(&button_spacing, G_TYPE_INT);
-    g_value_set_int(&button_spacing, 6);
-    g_object_set_property(G_OBJECT(dialog), "button-spacing", &button_spacing);
+    GtkWidget *content_area = gtk_dialog_get_content_area(dialog);
+    gtk_widget_set_margin_start(content_area, 5);
+    gtk_widget_set_margin_end(content_area, 5);
+    gtk_widget_set_margin_top(content_area, 5);
+    gtk_widget_set_margin_bottom(content_area, 5);
+
     gtk_window_set_resizable(window, FALSE);
     gtk_window_set_title(window, "");
     gtk_window_set_icon_name(window, "dialog-password");
@@ -155,15 +156,17 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
 
     /* build contents */
     GtkWidget *hbox = gtk_grid_new();
-    GValue margin = G_VALUE_INIT;
-    g_value_init(&margin, G_TYPE_INT);
-    g_value_set_int(&margin, 5);
-    g_object_set_property(G_OBJECT(hbox), "margin", &margin);
+    gtk_widget_set_margin_start(hbox, 5);
+    gtk_widget_set_margin_end(hbox, 5);
+    gtk_widget_set_margin_top(hbox, 5);
+    gtk_widget_set_margin_bottom(hbox, 5);
 
     gtk_grid_set_column_spacing(GTK_GRID(hbox), 12);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
+    gtk_box_append(GTK_BOX(content_area), hbox);
+    gtk_widget_set_hexpand(hbox, TRUE);
+    gtk_widget_set_vexpand(hbox, TRUE);
 
-    GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password", GTK_ICON_SIZE_DIALOG);
+    GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password");
 
     GValue align = G_VALUE_INIT;
     g_value_init(&align, G_TYPE_ENUM);
@@ -179,7 +182,7 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
     g_object_set_property(G_OBJECT(msg_label), "halign", &align);
-    gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
+    gtk_label_set_wrap(GTK_LABEL(msg_label), TRUE);
     GValue max_width_chars = G_VALUE_INIT;
     g_value_init(&max_width_chars, G_TYPE_INT);
     g_value_set_int(&max_width_chars, 32);
@@ -196,8 +199,6 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_grid_set_row_homogeneous(GTK_GRID(table), FALSE);
     gtk_grid_set_column_spacing(GTK_GRID(table), 12);
     gtk_grid_set_row_spacing(GTK_GRID(table), 6);
-    /* default margin of GtkWidgets is 0; no need to set explicitly */
-    /* default hexpand/vexpand value for table is FALSE */
 
     auth_data->login_entry = table_add_entry(table, 0, "Username:", login, NULL);
     auth_data->password_entry = table_add_entry(table, 1, "Password:", password, NULL);
@@ -205,12 +206,11 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_entry_set_visibility(GTK_ENTRY(auth_data->password_entry), FALSE);
 
     GtkWidget *checkbutton = gtk_check_button_new_with_label("Store password");
-    gtk_label_set_line_wrap(GTK_LABEL(gtk_bin_get_child(GTK_BIN(checkbutton))), TRUE);
     gtk_grid_attach_next_to(GTK_GRID(hbox), checkbutton, table, GTK_POS_BOTTOM, 1, 1);
     auth_data->checkbutton = checkbutton;
 
     g_signal_connect(dialog, "response", G_CALLBACK(response_callback), auth_data);
-    gtk_widget_show(widget);
+    gtk_window_present(window);
 }
 
 static gboolean

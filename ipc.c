@@ -209,7 +209,7 @@ ipc_init(void)
 {
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, NULL);
-    g_signal_connect(web_context_get(), "initialize-web-extensions",
+    g_signal_connect(web_context_get(), "initialize-web-process-extensions",
             G_CALLBACK (initialize_web_process_extensions_cb), NULL);
     atexit(ipc_remove_socket_file);
 }

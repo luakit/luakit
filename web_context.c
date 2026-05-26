@@ -30,7 +30,7 @@ static WebKitWebContext *web_context;
 static WebKitNetworkSession *net_session;
 
 /** Defined in widgets/webview/downloads.c */
-gboolean download_start_cb(WebKitWebContext *, WebKitDownload *, gpointer);
+gboolean download_start_cb(WebKitNetworkSession *, WebKitDownload *, gpointer);
 
 WebKitWebContext *
 web_context_get(void)
@@ -86,7 +86,7 @@ void
 web_context_init(void)
 {
     website_data_manager_init();
-    g_signal_connect(G_OBJECT(web_context), "download-started",
+    g_signal_connect(G_OBJECT(net_session), "download-started",
             G_CALLBACK(download_start_cb), NULL);
 
     web_context_set_default_spelling_language();

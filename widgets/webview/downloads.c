@@ -22,7 +22,7 @@
 #include "clib/luakit.h"
 
 gboolean
-download_start_cb(WebKitWebContext* UNUSED(c), WebKitDownload *dl, gpointer UNUSED(user_data))
+download_start_cb(WebKitNetworkSession* UNUSED(c), WebKitDownload *dl, gpointer UNUSED(user_data))
 {
     WebKitWebView *dl_view = webkit_download_get_web_view(dl);
     widget_t *w = dl_view ? GOBJECT_TO_LUAKIT_WIDGET(dl_view) : NULL;

@@ -18,18 +18,17 @@
  *
  */
 
+#include <gdk/gdk.h>
 #ifdef GDK_WINDOWING_X11
 #include <gdk/x11/gdkx.h>
 #endif
 
-#include <gdk/gdk.h>
 #include "luah.h"
 #include "widgets/common.h"
 
 typedef struct {
     widget_t *widget;
     GtkWindow *win;
-    GdkWindowState state;
     guint id;
 } window_data_t;
 
@@ -53,8 +52,8 @@ destroy_win_cb(GtkWidget* UNUSED(win), widget_t *w)
     g_ptr_array_remove(globalconf.windows, w);
 }
 
-static gint
-can_close_cb(GtkWidget* UNUSED(win), GdkEvent *UNUSED(event), widget_t *w)
+static gboolean
+close_request_cb(GtkWindow *UNUSED(win), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -62,6 +61,24 @@ can_close_cb(GtkWidget* UNUSED(win), GdkEvent *UNUSED(event), widget_t *w)
     gboolean keep_open = ret && !lua_toboolean(L, -1);
     lua_pop(L, ret + 1);
     return keep_open;
+}
+
+static void
+window_maximized_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
+{
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_property_signal(L, -1, L_TK_MAXIMIZED);
+    lua_pop(L, 1);
+}
+
+static void
+window_fullscreen_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
+{
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_property_signal(L, -1, L_TK_FULLSCREEN);
+    lua_pop(L, 1);
 }
 
 static gint
@@ -111,25 +128,37 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
 
       /* push boolean properties */
       PB_CASE(DECORATED,     gtk_window_get_decorated(d->win))
-      PB_CASE(URGENCY_HINT,  gtk_window_get_urgency_hint(d->win))
-      PB_CASE(FULLSCREEN,    d->state & GDK_WINDOW_STATE_FULLSCREEN)
-      PB_CASE(MAXIMIZED,     d->state & GDK_WINDOW_STATE_MAXIMIZED)
+      PB_CASE(URGENCY_HINT,  FALSE)
+      PB_CASE(FULLSCREEN,    gtk_window_is_fullscreen(d->win))
+      PB_CASE(MAXIMIZED,     gtk_window_is_maximized(d->win))
 
       /* push integer properties */
       PN_CASE(ID,           d->id)
 
 # ifdef GDK_WINDOWING_X11
-      case L_TK_ROOT_WIN_XID:
-        lua_pushlightuserdata(L, GDK_WINDOW(
-            gdk_screen_get_root_window(gtk_widget_get_screen(GTK_WIDGET(d->win)))
-        ));
-        return 1;
+      case L_TK_ROOT_WIN_XID: {
+        GdkDisplay *display = gtk_widget_get_display(GTK_WIDGET(d->win));
+        if (display && GDK_IS_X11_DISPLAY(display)) {
+            Display *xdisplay = gdk_x11_display_get_xdisplay(display);
+            int screen = DefaultScreen(xdisplay);
+            lua_pushlightuserdata(L, (void*)(uintptr_t)RootWindow(xdisplay, screen));
+            return 1;
+        }
+        break;
+      }
 
-      PD_CASE(WIN_XID, GDK_WINDOW(gtk_widget_get_window(GTK_WIDGET(d->win))));
+      case L_TK_WIN_XID: {
+        GdkSurface *surface = gtk_native_get_surface(gtk_widget_get_native(GTK_WIDGET(d->win)));
+        if (surface && GDK_IS_X11_SURFACE(surface)) {
+            lua_pushlightuserdata(L, (void*)(uintptr_t)gdk_x11_surface_get_xid(surface));
+            return 1;
+        }
+        break;
+      }
 # endif
 
-      case L_TK_SCREEN:
-        lua_pushlightuserdata(L, gtk_window_get_screen(d->win));
+      case L_TK_DISPLAY:
+        lua_pushlightuserdata(L, gtk_widget_get_display(GTK_WIDGET(d->win)));
         return 1;
 
       default:
@@ -152,7 +181,8 @@ luaH_window_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         break;
 
       case L_TK_URGENCY_HINT:
-        gtk_window_set_urgency_hint(d->win, luaH_checkboolean(L, 3));
+        /* gtk_window_set_urgency_hint is removed in GTK4 */
+        // TODO: can be replaced by notification or similar
         break;
 
       case L_TK_TITLE:
@@ -160,13 +190,14 @@ luaH_window_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         break;
 
       case L_TK_ICON:
-        gtk_window_set_icon_from_file(d->win, luaL_checkstring(L, 3), NULL);
+        /* gtk_window_set_icon_from_file is removed in GTK4 */
+        gtk_window_set_icon_name(GTK_WINDOW(d->win), luaL_checkstring(L, 3));
         break;
 
-      case L_TK_SCREEN:
+      case L_TK_DISPLAY:
         if (!lua_islightuserdata(L, 3))
-            luaL_argerror(L, 3, "expected GdkScreen lightuserdata");
-        gtk_window_set_screen(d->win, (GdkScreen*)lua_touserdata(L, 3));
+            luaL_argerror(L, 3, "expected GdkDisplay lightuserdata");
+        gtk_window_set_display(d->win, (GdkDisplay*)lua_touserdata(L, 3));
         gtk_window_present(d->win);
         break;
 
@@ -191,22 +222,66 @@ luaH_window_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     return luaH_object_property_signal(L, 1, token);
 }
 
-static gboolean
-window_state_cb(GtkWidget* UNUSED(widget), GdkEventWindowState *ev, widget_t *w)
+
+
+static void
+window_surface_size_changed_cb(GdkSurface *surface, GParamSpec *UNUSED(pspec), widget_t *w)
 {
-    window_data_t *d = (window_data_t*)w->data;
-    d->state = ev->new_window_state;
+    int width = gdk_surface_get_width(surface);
+    int height = gdk_surface_get_height(surface);
+
+    if (width == w->prev_width && height == w->prev_height)
+        return;
+    w->prev_width = width;
+    w->prev_height = height;
+
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+    } else {
+        lua_pushinteger(L, width);
+        lua_pushinteger(L, height);
+        luaH_object_emit_signal(L, -3, "resize", 2, 0);
+        lua_pop(L, 1);
+    }
 
-    if (ev->changed_mask & GDK_WINDOW_STATE_MAXIMIZED)
-        luaH_object_property_signal(L, -1, L_TK_MAXIMIZED);
+    /* Also notify all webviews! */
+    if (globalconf.webviews) {
+        for (guint i = 0; i < globalconf.webviews->len; ++i) {
+            widget_t *wv = g_ptr_array_index(globalconf.webviews, i);
+            if (wv->widget && gtk_widget_get_realized(wv->widget)) {
+                GtkAllocation alloc;
+                gtk_widget_get_allocation(wv->widget, &alloc);
+                if (alloc.width > 0 && alloc.height > 0) {
+                    if (alloc.width != wv->prev_width || alloc.height != wv->prev_height) {
+                        wv->prev_width = alloc.width;
+                        wv->prev_height = alloc.height;
+                        luaH_object_push(L, wv->ref);
+                        if (lua_isnil(L, -1)) {
+                            lua_pop(L, 1);
+                        } else {
+                            lua_pushinteger(L, alloc.width);
+                            lua_pushinteger(L, alloc.height);
+                            luaH_object_emit_signal(L, -3, "resize", 2, 0);
+                            lua_pop(L, 1);
+                        }
+                    }
+                }
+            }
+        }
+    }
+}
 
-    if (ev->changed_mask & GDK_WINDOW_STATE_FULLSCREEN)
-        luaH_object_property_signal(L, -1, L_TK_FULLSCREEN);
-
-    lua_pop(L, 1);
-    return FALSE;
+static void
+window_realize_cb(GtkWidget *widget, widget_t *w)
+{
+    GdkSurface *surface = gtk_native_get_surface(gtk_widget_get_native(widget));
+    if (surface) {
+        g_signal_connect(surface, "notify::width", G_CALLBACK(window_surface_size_changed_cb), w);
+        g_signal_connect(surface, "notify::height", G_CALLBACK(window_surface_size_changed_cb), w);
+        window_surface_size_changed_cb(surface, NULL, w);
+    }
 }
 
 static void
@@ -228,33 +303,25 @@ widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     w->data = d;
 
     /* create and setup window widget */
-    w->widget = gtk_window_new(GTK_WINDOW_TOPLEVEL);
+    w->widget = gtk_window_new();
     d->win = GTK_WINDOW(w->widget);
     gtk_window_set_default_size(d->win, 800, 600);
     gtk_window_set_title(d->win, "luakit");
     if (globalconf.application)
         gtk_window_set_application(d->win, globalconf.application);
 
-    GdkGeometry hints;
-    hints.min_width = 1;
-    hints.min_height = 1;
-    gtk_window_set_geometry_hints(d->win, NULL, &hints, GDK_HINT_MIN_SIZE);
-
     g_object_connect(G_OBJECT(w->widget),
       "signal::destroy",            G_CALLBACK(destroy_win_cb),   w,
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
+      "signal::realize",            G_CALLBACK(window_realize_cb),  w,
       "signal::notify::child",      G_CALLBACK(child_changed_cb), w,
-      "signal::delete-event",       G_CALLBACK(can_close_cb),     w,
-      "signal::window-state-event", G_CALLBACK(window_state_cb),  w,
+      "signal::close-request",      G_CALLBACK(close_request_cb), w,
+      "signal::notify::maximized",  G_CALLBACK(window_maximized_cb), w,
+      "signal::notify::fullscreened", G_CALLBACK(window_fullscreen_cb), w,
       NULL);
 
-    LUAKIT_EVENT_CONTROLLER_KEY(w->win, w)
-    gtk_event_controller_set_propagation_phase(key_controller, GTK_LIMIT_CAPTURE);
-
-    GtkEventController *motion_controller = gtk_event_controller_motion_new();
-    gtk_event_controller_set_propagation_phase(motion_controller, GTK_LIMIT_CAPTURE);
-    g_signal_connect(motion_controller, "motion", G_CALLBACK(on_lua_mouse_motion_cb), w);
-    gtk_widget_add_controller(w->window, motion_controller);
+    LUAKIT_EVENT_CONTROLLER_KEY(GTK_WIDGET(d->win), w)
+    gtk_event_controller_set_propagation_phase(key_controller, GTK_PHASE_CAPTURE);
 
     d->id = ++window_id_next;
 

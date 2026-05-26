@@ -50,7 +50,7 @@ ipc_channel_recv(lua_State *L, const gchar *arg, guint arglen)
 
     /* Prepend the page object, or nil */
     if (page_id) {
-        WebKitWebPage *web_page = webkit_web_extension_get_page(extension.ext, page_id);
+        WebKitWebPage *web_page = webkit_web_process_extension_get_page(extension.ext, page_id);
         luaH_page_from_web_page(L, web_page);
     } else
         lua_pushnil(L);

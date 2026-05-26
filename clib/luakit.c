@@ -209,10 +209,10 @@ luaH_luakit_save_file(lua_State *L)
     gtk_file_dialog_set_initial_folder(dialog, initial_dir);
     g_object_unref(initial_dir);
 
-    gtk_file_dialog_save(dialog, 
-                         parent_window, 
+    gtk_file_dialog_save(dialog,
+                         parent_window,
                          NULL, // No GCancellable
-                         on_save_dialog_complete, 
+                         on_save_dialog_complete,
                          L);
     return 1;
 }

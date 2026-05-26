@@ -26,7 +26,7 @@ luaH_stack_pack(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
-    gtk_box_append(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
+    gtk_stack_add_child(GTK_STACK(w->widget), GTK_WIDGET(child->widget));
     return 0;
 }
 

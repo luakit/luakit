@@ -24,11 +24,8 @@
 #include <webkit/webkit.h>
 
 void web_context_init(void);
-void web_context_init_finish(void);
 WebKitWebContext *web_context_get(void);
 WebKitNetworkSession * web_network_session_get(void);
-guint web_context_process_limit_get(void);
-gboolean web_context_process_limit_set(guint limit);
 
 #endif
 

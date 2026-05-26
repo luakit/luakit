@@ -37,14 +37,12 @@ local function update(menu)
         if row and not rw then
             -- Row widget struct
             rw = {
-                ebox = widget{type = "eventbox"},
                 hbox = widget{type = "hbox"},
                 cols = {},
             }
-            rw.ebox.child = rw.hbox
             d.table[i] = rw
             -- Add to main vbox
-            menu.widget:pack(rw.ebox)
+            menu.widget:pack(rw.hbox)
 
         -- Remove row
         elseif not row and rw then
@@ -53,10 +51,8 @@ local function update(menu)
                 rw.hbox:remove(l)
                 l:destroy()
             end
-            rw.ebox:remove(rw.hbox)
+            menu.widget:remove(rw.hbox)
             rw.hbox:destroy()
-            menu.widget:remove(rw.ebox)
-            rw.ebox:destroy()
             d.table[i] = nil
         end
 

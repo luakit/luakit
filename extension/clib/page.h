@@ -19,7 +19,7 @@
 #ifndef LUAKIT_EXTENSION_CLIB_PAGE_H
 #define LUAKIT_EXTENSION_CLIB_PAGE_H
 
-#include <webkit2/webkit-web-extension.h>
+#include <webkit/webkit-web-process-extension.h>
 
 #include "common/util.h"
 #include "common/luaclass.h"

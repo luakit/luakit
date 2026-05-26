@@ -78,13 +78,12 @@ static int
 luaJS_promise_resolve_reject(lua_State *L)
 {
     guint64 page_id = lua_tointeger(L, lua_upvalueindex(1));
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     if (!page || !WEBKIT_IS_WEB_PAGE(page))
         return luaL_error(L, "promise no longer valid (associated page closed)");
-    JSCContext *context = webkit_frame_get_js_context(
-            webkit_web_page_get_main_frame(page));
-
+    JSCContext *context = webkit_frame_get_js_context(webkit_web_page_get_main_frame(page));
     js_promise_t *promise = (js_promise_t*)lua_topointer(L, lua_upvalueindex(2));
+
     JSCValue *cb = lua_toboolean(L, lua_upvalueindex(3)) ? promise->resolve : promise->reject;
 
     JSCValue *ret = luajs_tovalue(L, 1, context);
@@ -117,7 +116,7 @@ luaJS_registered_function_callback(GPtrArray *args, struct cb_data *user_data)
     js_promise_t *promise = g_slice_new(js_promise_t);
     new_promise(context, promise);
 
-    luaH_page_from_web_page(L, webkit_web_extension_get_page(extension.ext, ctx->page_id));
+    luaH_page_from_web_page(L, webkit_web_process_extension_get_page(extension.ext, ctx->page_id));
 
     lua_pushinteger(L, ctx->page_id);
     lua_pushlightuserdata(L, promise);

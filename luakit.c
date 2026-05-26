@@ -237,7 +237,9 @@ main(gint argc, gchar *argv[])
         }
     }
 
-    // globalconf.application = gtk_application_new("org.luakit.Luakit", G_APPLICATION_DEFAULT_FLAGS);
+    gtk_init();
+    if (!gdk_display_get_default())
+        fatal("No default display found. Is a display server running? (Check DISPLAY or WAYLAND_DISPLAY)");
 
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
@@ -254,10 +256,10 @@ main(gint argc, gchar *argv[])
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file, exiting");
 
-    // g_signal_connect(app, "activate", G_CALLBACK(on_activate), NULL);
-    // int status = g_application_run(G_APPLICATION(app), argc, argv);
-    // g_object_unref(app);
-    return 1;
+    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+    g_main_loop_run(loop);
+    g_main_loop_unref(loop);
+    return 0;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
