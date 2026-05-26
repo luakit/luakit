@@ -1,0 +1,102 @@
+name: Create Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      release_type:
+        description: 'Release type'
+        required: true
+        type: choice
+        options:
+          - patch
+          - minor
+          - major
+
+permissions:
+  contents: write
+
+jobs:
+  release:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+    
+    - name: Calculate new version
+      id: version
+      run: |
+        # Get the latest tag
+        LATEST_TAG=$(git describe --tags --abbrev=0 2>/dev/null || echo "0.0.0")
+        echo "Latest tag: $LATEST_TAG"
+        
+        # Remove 'v' prefix if present
+        VERSION=${LATEST_TAG#v}
+        
+        # Split version into components
+        IFS='.' read -r MAJOR MINOR PATCH <<< "$VERSION"
+        
+        # Increment based on release type
+        case "${{ github.event.inputs.release_type }}" in
+          major)
+            MAJOR=$((MAJOR + 1))
+            MINOR=0
+            PATCH=0
+            ;;
+          minor)
+            MINOR=$((MINOR + 1))
+            PATCH=0
+            ;;
+          patch)
+            PATCH=$((PATCH + 1))
+            ;;
+        esac
+        
+        NEW_VERSION="$MAJOR.$MINOR.$PATCH"
+        echo "New version: $NEW_VERSION"
+        echo "version=$NEW_VERSION" >> $GITHUB_OUTPUT
+    
+    - name: Configure git
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+    
+    - name: Update CHANGELOG.md
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        sed -i "s/## \[develop\]/## [$VERSION]/" CHANGELOG.md
+        git add CHANGELOG.md
+        git commit -m "prepare release $VERSION"
+    
+    - name: Create and push tag
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        git tag -a "$VERSION" -m "Release $VERSION"
+        git push origin HEAD:${{ github.ref_name }}
+        git push origin "$VERSION"
+    
+    - name: Extract release notes
+      id: release_notes
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        awk "/## \[$VERSION\]/,/## \[/" CHANGELOG.md | sed '1d;$d' > release_notes.txt
+        echo "notes_file=release_notes.txt" >> $GITHUB_OUTPUT
+    
+    - name: Create release archive
+      run: |
+        VERSION="${{ steps.version.outputs.version }}"
+        git clone --branch "$VERSION" . "luakit-$VERSION"
+        rm -rf "luakit-$VERSION/.git"*
+        tar -czf "luakit-$VERSION.tar.gz" "luakit-$VERSION"
+    
+    - name: Create GitHub Release
+      uses: softprops/action-gh-release@v1
+      with:
+        tag_name: ${{ steps.version.outputs.version }}
+        name: Release ${{ steps.version.outputs.version }}
+        body_path: release_notes.txt
+        files: luakit-${{ steps.version.outputs.version }}.tar.gz
+        draft: false
+        prerelease: false

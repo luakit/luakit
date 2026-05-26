@@ -96,7 +96,6 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     g_variant_get(payload, "(sss)", &socket_path, &package_path, &package_cpath);
 
     common.L = luaL_newstate();
-    common.L = common.L;
     extension.ext = ext;
     extension.ipc = ipc_endpoint_new(g_strdup_printf("Web[%d]", getpid()));
 

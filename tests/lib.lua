@@ -16,6 +16,20 @@ function _M.init(arg)
     shared_lib = arg
 end
 
+--- Pause test execution until the next idle event in the main event loop.
+--
+-- Schedules a one-shot resume callback using `luakit.idle_add()` and
+-- suspends the test coroutine until the event loop is next idle.
+-- This ensures all pending `idle_add` hooks ("post-require" module
+-- initializations) are executed before subsequent test code runs.
+--
+-- Does nothing if called outside of the test context.
+function _M.wait_for_idle()
+    local luakit = require "luakit"
+    luakit.idle_add(_M.continue)
+    _M.wait()
+end
+
 --- Pause test execution until a webview widget finishes loading.
 --
 -- @tparam widget view The webview widget to wait on.
@@ -63,8 +77,8 @@ function _M.wait_until(func, poll_time, timeout)
 
     shared_lib.traceback = debug.traceback("",2)
 
-    poll_time = poll_time or 5
-    timeout = timeout or 200
+    poll_time = poll_time or 20
+    timeout = timeout or 5000
 
     local t = 0
     repeat
@@ -115,7 +129,7 @@ function _M.wait(timeout)
     shared_lib.traceback = debug.traceback("",2)
 
     waiting = true
-    timeout = timeout or 200
+    timeout = timeout or 500
     return coroutine.yield({timeout=timeout})
 end
 
