@@ -15,6 +15,7 @@
 - Fixed a crash when serializing NULL lightuserdata values, which could occur with garbage-collected Lua objects used as weak table keys (fixes #1117).
 - Fixed a buffer overflow in IPC socket handling when socket paths exceed the `AF_UNIX` `sun_path` limit; replaced unsafe `strcpy` with a length-checked copy.
 - Fixed `dom_element.c` to be C99/clang compliant.
+- Fixed `webview.user_agent` not being applied to the first HTTP request after a webview is created; the setting is now resolved on the `navigation-request` signal so it is in effect before WebKit dispatches the request, including for reloads (fixes #886).
 
 ### Contributors to this release:
 

@@ -732,13 +732,21 @@ _M.add_signal("init", function (view)
             set(vv, k, v, match)
         end
     end
-    -- Set domain-specific values on page load
+    -- user_agent must be assigned before WebKit dispatches the request:
+    -- load-status fires after the network request has started.
+    local apply_user_agent = function (v, uri)
+        local val, match = settings.get_setting_for_uri(uri or "", "webview.user_agent")
+        set(v, "webview.user_agent", val, match)
+    end
+    apply_user_agent(view, view.uri)
+    view:add_signal("navigation-request", function (v, uri)
+        apply_user_agent(v, uri)
+    end)
     view:add_signal("load-status", function (v, status)
         if v.uri == "about:blank" then
             return
-        elseif status == "provisional" or status == "redirected" then
-            local val, match = settings.get_setting_for_view(v, "webview.user_agent")
-            set(v, "webview.user_agent", val, match)
+        elseif status == "redirected" then
+            apply_user_agent(v, v.uri)
         elseif status == "committed" then set_all(v) end
     end)
     view:add_signal("web-extension-loaded", function (v)
