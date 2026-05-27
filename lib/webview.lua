@@ -744,7 +744,7 @@ _M.add_signal("init", function (view)
     view:add_signal("web-extension-loaded", function (v)
         -- Explicitly set the zoom, due to a WebKit bug that resets the
         -- apparent zoom level to 100% after a crash
-        set(v, "webview.zoom_level", settings.get_setting("webview.zoom_level"))
+        set(v, "webview.zoom_level", settings.get_setting_for_view(v, "webview.zoom_level"))
     end)
 end)
 
