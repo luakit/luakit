@@ -71,8 +71,9 @@
 -- @readonly
 
 --- @property value
--- The "value" attribute of the element.
--- @type string
+-- The "value" attribute of the element. Integer for `<li>` elements, string
+-- otherwise.
+-- @type integer|string
 -- @readwrite
 
 --- @property checked

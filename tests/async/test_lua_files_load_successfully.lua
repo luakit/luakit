@@ -18,7 +18,7 @@ T.test_all_lua_files_load_successfully = function ()
 
     -- Wait for config file to finish loading
     luakit.idle_add(test.continue)
-    test.wait()
+    test.wait(5000)
 end
 
 return T

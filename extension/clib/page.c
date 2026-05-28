@@ -127,7 +127,6 @@ static gint
 luaH_page_js_func(lua_State *L)
 {
     JSCValue *func = (JSCValue *)lua_topointer(L, lua_upvalueindex(1));
-    page_t *page = luaH_check_page(L, lua_upvalueindex(2));
     JSCContext *ctx = jsc_value_get_context(func);
 
     gint argc = lua_gettop(L);
@@ -138,7 +137,7 @@ luaH_page_js_func(lua_State *L)
          * is defined in common/, which is shared in the main process, and the
          * main process is not aware of the extension/clib/ stuff */
         if (elem)
-            args[i] = dom_element_js_ref(page, elem);
+            args[i] = webkit_frame_get_js_value_for_dom_object(webkit_web_page_get_main_frame(elem->page), WEBKIT_DOM_OBJECT(elem->element));
         else
             args[i] = luajs_tovalue(L, i+1, ctx);
     }
@@ -184,8 +183,7 @@ luaH_page_eval_js(lua_State *L)
 
     if (jsc_value_is_function(res)) {
         lua_pushlightuserdata(L, res);
-        lua_pushvalue(L, 1);
-        lua_pushcclosure(L, luaH_page_js_func, 2);
+        lua_pushcclosure(L, luaH_page_js_func, 1);
         return 1;
     }
 
@@ -274,7 +272,7 @@ static gint
 luaH_page_push_document(lua_State *L, page_t *page)
 {
     WebKitDOMDocument *doc = webkit_web_page_get_dom_document(page->page);
-    return luaH_dom_document_from_webkit_dom_document(L, doc);
+    return luaH_dom_document_from_webkit_dom_document(L, doc, page->page);
 }
 
 static gint

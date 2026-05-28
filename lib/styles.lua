@@ -369,7 +369,7 @@ end
 -- = nil` to turn off the watch.
 -- @tparam string path the path of the watched style.
 _M.watch_styles = function (guard, path)
-    luakit.spawn("bash -c 'inotifywait -t 10 \"" .. path .. "\" || sleep 1'", function ()
+    luakit.spawn(string.format("bash -c 'inotifywait -t 10 %q || sleep 1'", path), function ()
         _M.detect_files()
         if guard[1] then _M.watch_styles(guard, path) end
     end)

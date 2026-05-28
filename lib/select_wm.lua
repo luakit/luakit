@@ -14,8 +14,6 @@ local _M = {}
 
 local ui = ipc_channel("select_wm")
 
-local has_client_rects_api = tonumber(luakit.webkit_version:match("^2%.(%d+)%.")) > 16
-
 -- Label making
 
 -- Calculates the minimum number of characters needed in a hint given a
@@ -185,7 +183,7 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
     -- Find the element bounding box
     local r
 
-    if has_client_rects_api and not element.first_child then
+    if not element.first_child then
         r = element:client_rects()
         for i=#r,1,-1 do
             if r[i].width == 0 or r[i].height == 0 then table.remove(r, i) end
