@@ -6,12 +6,15 @@ local T = {}
 local assert = require("luassert")
 
 uris = {"about:blank"}
+
+local test = require("tests.lib")
 require "config.rc"
 
 local window = require "window"
 local w = assert(select(2, next(window.bywidget)))
 
 T.test_leaving_completion_restores_correct_input_text = function ()
+    test.wait_for_idle()
     local input = w.ibar.input
 
     w:enter_cmd(":tab")

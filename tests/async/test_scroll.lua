@@ -13,6 +13,7 @@ local window = require "window"
 local w = assert(select(2, next(window.bywidget)))
 
 T.test_scrolling_works = function ()
+    test.wait_for_idle()
     test.wait_for_view(w.view)
 
     -- Fetch height of document body
@@ -54,7 +55,6 @@ T.test_scrolling_works = function ()
     test.wait_until(function () return w.view.scroll.y > 0 end)
     assert.is_equal(doc_height - w.view.height, get_scroll_y(),
         "Scrolling to bottom failed")
-
 
     w:scroll{ ypct = 0 }
     test.wait_until(function () return w.view.scroll.y == 0 end)

@@ -15,6 +15,7 @@ local window = require "window"
 local w = assert(select(2, next(window.bywidget)))
 
 T.test_undo_close_restores_tab_history = function ()
+    test.wait_for_idle()
     -- Load page in new tab
     local uri = test.http_server() .. "undoclose_page.html"
     w:new_tab(uri)

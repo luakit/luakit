@@ -30,10 +30,11 @@
 typedef struct _dom_document_t {
     LUA_OBJECT_HEADER
     WebKitDOMDocument *document;
+    WebKitWebPage *page;
 } dom_document_t;
 
 void dom_document_class_setup(lua_State *);
-gint luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc);
+gint luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc, WebKitWebPage *page);
 
 #endif
 

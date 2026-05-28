@@ -529,15 +529,6 @@ local webview_settings = {
             Web pages from one site cannot access data stored in the database by pages from other sites.
         ]=],
     },
-    ["webview.enable_hyperlink_auditing"] = {
-        type = "boolean",
-        default = false,
-        desc = [=[
-            Whether hyperlink auditing is enabled.
-
-            See <https://html.spec.whatwg.org/multipage/links.html#hyperlink-auditing> for more information.
-        ]=],
-    },
     ["webview.enable_java"] = {
         type = "boolean",
         default = true,
