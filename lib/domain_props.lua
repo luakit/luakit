@@ -64,7 +64,6 @@
 --  - `enable_fullscreen`
 --  - `enable_html5_database`
 --  - `enable_html5_local_storage`
---  - `enable_hyperlink_auditing`
 --  - `enable_java`
 --  - `enable_javascript`
 --  - `enable_mediasource`

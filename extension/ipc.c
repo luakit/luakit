@@ -158,7 +158,14 @@ web_extension_connect(const gchar *socket_path)
     struct sockaddr_un remote;
     memset(&remote, 0, sizeof(remote));
     remote.sun_family = AF_UNIX;
-    strcpy(remote.sun_path, socket_path);
+
+    if (strlen(socket_path) >= sizeof(remote.sun_path)) {
+        g_error("Socket path too long (%zu >= %zu): %s",
+                strlen(socket_path), sizeof(remote.sun_path), socket_path);
+        goto fail_socket;
+    }
+    g_strlcpy(remote.sun_path, socket_path, sizeof(remote.sun_path));
+
     int len = offsetof(struct sockaddr_un, sun_path) + strlen(remote.sun_path);
 
     debug("luakit web process: connecting to %s", socket_path);

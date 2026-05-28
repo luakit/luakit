@@ -40,7 +40,7 @@ T.test_sqlite3_exec = function ()
     assert.is_table(ret)
     assert.is_equal(0, #ret)
 
-    ret = db:exec([[INSERT INTO test VALUES(NULL, "google.com", 1234.45)]])
+    ret = db:exec([[INSERT INTO test VALUES(NULL, 'google.com', 1234.45)]])
     assert.is_nil(ret)
 
     ret = db:exec([[SELECT * FROM test;]])
