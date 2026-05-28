@@ -181,6 +181,7 @@ enable_accelerated_2d_canvas
 enable_dns_prefetching
 enable_frame_flattening
 enable_fullscreen
+enable_hyperlink_auditing
 enable_java
 enable_javascript
 enable_media_stream

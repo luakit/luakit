@@ -697,6 +697,24 @@ local webview_settings = {
 --        desc = "Whether zooming the page should affect the size of all elements, or only the text content.",
 --    },
 }
+
+-- enable_hyperlink_auditing was deprecated in WebKitGTK 2.50 and the underlying
+-- setter is a no-op there; only expose it on older versions where it still works.
+do
+    local maj, min = luakit.webkit_version:match("^(%d+)%.(%d+)")
+    if tonumber(maj) * 1000 + tonumber(min) < 2050 then
+        webview_settings["webview.enable_hyperlink_auditing"] = {
+            type = "boolean",
+            default = false,
+            desc = [=[
+                Whether hyperlink auditing is enabled.
+
+                See <https://html.spec.whatwg.org/multipage/links.html#hyperlink-auditing> for more information.
+            ]=],
+        }
+    end
+end
+
 settings.register_settings(webview_settings)
 settings.register_settings({
     ["webview.user_agent"] = {

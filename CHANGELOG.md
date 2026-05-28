@@ -15,6 +15,7 @@
 - Fixed a crash when serializing NULL lightuserdata values, which could occur with garbage-collected Lua objects used as weak table keys (fixes #1117).
 - Fixed a buffer overflow in IPC socket handling when socket paths exceed the `AF_UNIX` `sun_path` limit; replaced unsafe `strcpy` with a length-checked copy.
 - Fixed `dom_element.c` to be C99/clang compliant.
+- Restored the `enable_hyperlink_auditing` setting for builds against WebKitGTK versions prior to 2.50. On newer versions, the setting is not exposed, as it's deprecated and a no-op.
 
 ### Contributors to this release:
 
