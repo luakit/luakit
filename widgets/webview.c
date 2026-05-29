@@ -774,7 +774,11 @@ luaH_webview_set_pdfjs(lua_State *L)
         WebKitFeature *feature = webkit_feature_list_get(features, i);
         if (!strcmp(
                 webkit_feature_get_identifier(feature),
+#if WEBKIT_CHECK_VERSION(2, 43, 1)
+                "PDFJSViewer")) {
+#else
                 "PdfJSViewer")) {
+#endif
             webkit_settings_set_feature_enabled(settings, feature, enabled);
             break;
         }
