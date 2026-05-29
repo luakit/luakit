@@ -159,6 +159,32 @@ luaH_luakit_save_file(lua_State *L)
     const gchar *default_folder = luaL_checkstring(L, 3);
     const gchar *default_name = luaL_checkstring(L, 4);
 
+#if GTK_CHECK_VERSION(3,20,0)
+    GtkFileChooserNative *native;
+    GtkFileChooserAction action = GTK_FILE_CHOOSER_ACTION_SAVE;
+
+    native = gtk_file_chooser_native_new ("Save File",
+            parent_window,
+            action,
+            "_Save",
+            "_Cancel");
+
+    /* set default folder, name and overwrite confirmation policy */
+    gtk_file_chooser_set_current_folder(GTK_FILE_CHOOSER(native), default_folder);
+    gtk_file_chooser_set_current_name(GTK_FILE_CHOOSER(native), default_name);
+    gtk_file_chooser_set_do_overwrite_confirmation(GTK_FILE_CHOOSER(native), TRUE);
+
+    if (gtk_native_dialog_run (GTK_NATIVE_DIALOG (native)) == GTK_RESPONSE_ACCEPT) {
+        gchar *filename = gtk_file_chooser_get_filename(GTK_FILE_CHOOSER(native));
+        lua_pushstring(L, filename);
+        g_free(filename);
+    } else
+        lua_pushnil(L);
+
+    g_object_unref (native);
+    return 1;
+
+#else
 #if GTK_CHECK_VERSION(3,10,0)
     GtkWidget *dialog = gtk_file_chooser_dialog_new(title,
             parent_window,
@@ -189,6 +215,7 @@ luaH_luakit_save_file(lua_State *L)
 
     gtk_widget_destroy(dialog);
     return 1;
+#endif
 }
 
 /** Executes a child synchronously (waits for the child to exit before

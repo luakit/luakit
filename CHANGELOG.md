@@ -5,6 +5,7 @@
 ### Added
 
 - Added GitHub Actions CI workflows with cross-platform testing across Linux distributions (Alpine, Arch, Debian, Ubuntu), BSDs (FreeBSD, OpenBSD, NetBSD), and other systems.
+- Support for GTK native file chooser via XDG Desktop Portal
 
 ### Changed
 
