@@ -67,11 +67,13 @@ modes.add_binds("all", {
             return not w:is_mode("passthrough")
         end },
     { "<Control-[>", "Return to `normal` mode.", function (w) w:set_mode() end },
-    { "<Mouse2>", [[Open link under mouse cursor in new tab or navigate to the
-        contents of `luakit.selection.primary`.]],
+    { "<Mouse2>", [[Insert `luakit.selection.primary` into form fields or open link 
+        under mouse cursor in new tab or navigate to the contents of `luakit.selection.primary`.]],
         function (w, m)
-            -- Ignore button 2 clicks in form fields
-            if not m.context.editable then
+            -- Insert primary clipboard into form fields
+            if  m.context.editable then
+                return false
+            else
                 -- Open hovered uri in new tab
                 local uri = w.view.hovered_uri
                 if uri then
