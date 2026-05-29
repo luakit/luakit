@@ -24,6 +24,7 @@ local _M = {}
 _M.db_path = luakit.data_dir .. "/downloads.db"
 
 local query_insert
+local query_delete
 
 -- Setup signals on downloads module
 lousy.signal.setup(_M, true)
@@ -67,9 +68,14 @@ function _M.init()
         VALUES (?, ?, ?, ?, ?)
     ]]
 
+    query_delete = _M.db:compile [[
+        DELETE FROM downloads
+        WHERE finished_time = (?)
+    ]]
+
     local rows = _M.db:exec("SELECT * FROM downloads")
     for _, row in ipairs(rows) do
-        local d = {uri = rawget(row, "uri"), destination = rawget(row, "destination"),
+        local d = {rowid = rawget(row, "finished_time"), uri = rawget(row, "uri"), destination = rawget(row, "destination"),
                    total_size = rawget(row, "total_size"), status = "finished"}
         local data = {
             created = rawget(row, "created_time"),
@@ -161,7 +167,8 @@ end)
 -- @tparam table opts A table of options.
 function _M.add(uri, opts)
     opts = opts or {}
-    local d = (type(uri) == "string" and download{uri=uri}) or uri
+    local d = uri
+    if type(uri) == "string" then download{uri=uri} return end
 
     assert(type(d) == "download",
         string.format("download.add() expected uri or download object "
@@ -200,6 +207,7 @@ function _M.add(uri, opts)
     end)
 
     d:add_signal("finished", function(dd)
+        if not dd.destination then return end
         query_insert:exec{os.time(), dls[dd].created, dd.uri, dd.destination, dd.total_size}
     end)
 end
@@ -220,6 +228,7 @@ function _M.remove(id)
     local d = assert(_M.to_download(id),
         "download.remove() expected valid download object or id")
     if is_running(d) then _M.cancel(d) end
+        query_delete:exec{d.rowid} 
     _M.emit_signal("removed-download", d, dls[d])
     dls[d] = nil
 end
