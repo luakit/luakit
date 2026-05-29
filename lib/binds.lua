@@ -99,6 +99,7 @@ modes.add_binds("all", {
         scroll_acc = scroll_acc + o.dy
         while scroll_acc < -1.0 do scroll_acc = scroll_acc + 1.0 w:zoom_in() end
         while scroll_acc > 1.0 do scroll_acc = scroll_acc - 1.0 w:zoom_out() end
+        settings.override_setting_for_view(w.view, "webview.zoom_level", w.view.zoom_level * 100)
     end },
     { "<Shift-Scroll>", "Scroll the current page left/right.", function (w, o)
         w:scroll{ xrel = settings.get_setting("window.scroll_step")*o.dy }
@@ -133,17 +134,29 @@ local actions = { scroll = {
 }, zoom = {
     zoom_in = {
         desc = "Zoom in to the current page.",
-        func = function (w, m) w:zoom_in(settings.get_setting("window.zoom_step") * (m.count or 1)) end,
+        func = function (w, m)
+            w:zoom_in(settings.get_setting("window.zoom_step") * (m.count or 1))
+            settings.override_setting_for_view(w.view, "webview.zoom_level", w.view.zoom_level * 100)
+        end,
     },
     zoom_out = {
         desc = "Zoom out from the current page.",
-        func = function (w, m) w:zoom_out(settings.get_setting("window.zoom_step") * (m.count or 1)) end,
+        func = function (w, m)
+            w:zoom_out(settings.get_setting("window.zoom_step") * (m.count or 1))
+            settings.override_setting_for_view(w.view, "webview.zoom_level", w.view.zoom_level * 100)
+        end,
     },
     zoom_set = {
         desc = "Zoom to a specific percentage when specifying a count, and reset the page zoom otherwise.",
         func = function (w, m)
-            local zoom_level = m.count or settings.get_setting_for_view(w.view, "webview.zoom_level")
-            w:zoom_set(zoom_level/100)
+            if m.count then
+                w:zoom_set(m.count / 100)
+                settings.override_setting_for_view(w.view, "webview.zoom_level", m.count)
+            else
+                settings.override_setting_for_view(w.view, "webview.zoom_level", nil)
+                local zoom_level = settings.get_setting_for_view(w.view, "webview.zoom_level")
+                w:zoom_set(zoom_level / 100)
+            end
         end,
     },
 }}
