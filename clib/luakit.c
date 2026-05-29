@@ -247,6 +247,35 @@ luaH_luakit_spawn_sync(lua_State *L)
     return 3;
 }
 
+/*
+ * Reads all the text of the file associated with fd, and stores both the text
+ * read (in *ptr_out) and the amount of read text (*len_out)Add commentMore actions
+ *
+ * It reports back errors to the Lua State
+ *
+ * NOTES:
+ *   - Caller must release the contents of *ptr_out using g_free
+ *   - fd is closed as part of this function, since it reads all the text of
+ *     the file
+ * */
+bool read_proc_output(int fd, lua_State *L, gchar **ptr_out, gsize *len_out) {
+    GIOChannel* g_out = g_io_channel_unix_new(fd);
+    GError *e = NULL;
+    g_io_channel_read_to_end(g_out, ptr_out, len_out, &e);
+    if (e) {
+        lua_pushstring(L, e->message);
+        g_clear_error(&e);
+        g_free(*ptr_out);
+        lua_error(L);
+        g_io_channel_unref(g_out);
+        close(fd);
+        return false;
+    }
+    g_io_channel_unref(g_out);
+    close(fd);
+    return true;
+}
+
 /* Calls the Lua function defined as callback for a (async) spawned process
  * The called Lua function receives 2 arguments:
  * Exit type: one of: "exit" (normal exit), "signal" (terminated by
@@ -255,21 +284,50 @@ luaH_luakit_spawn_sync(lua_State *L)
  *              finished by a signal, the signal number. -1 otherwise.
  */
 void
-async_callback_handler(GPid pid, gint status, gpointer cb_ref)
+async_callback_handler(GPid pid, gint status, gpointer data)
 {
-    g_spawn_close_pid(pid);
-    if (!cb_ref)
+    if (!data) {
+        g_spawn_close_pid(pid);
         return;
+    }
 
     lua_State *L = common.L;
+    proc_callback_data_t * cb = (proc_callback_data_t *)data;
+    gpointer cb_ref = cb->cb_ref;
+    int stdout_fd = cb->stdout_fd;
+    int stderr_fd = cb->stderr_fd;
+
+    // Read stdout
+    gchar *str_stdout = NULL;
+    gsize len_stdout;
+    if(!read_proc_output(stdout_fd, L, &str_stdout, &len_stdout)) {
+        g_spawn_close_pid(pid);
+        return;
+    }
+
+    // Read stderr
+    gchar *str_stderr = NULL;
+    gsize len_stderr;
+    if(!read_proc_output(stderr_fd, L, &str_stderr, &len_stderr)) {
+        g_free(str_stdout);
+        g_spawn_close_pid(pid);
+        return;
+    }
+
+    // Close after reading fds
+    g_spawn_close_pid(pid);
 
     /* push exit reason & exit status onto lua stack */
     if (WIFEXITED(status)) {
         lua_pushliteral(L, "exit");
         lua_pushinteger(L, WEXITSTATUS(status));
+        lua_pushlstring(L, str_stdout, len_stdout);
+        lua_pushlstring(L, str_stderr, len_stderr);
     } else if (WIFSIGNALED(status)) {
         lua_pushliteral(L, "signal");
         lua_pushinteger(L, WTERMSIG(status));
+        lua_pushlstring(L, str_stdout, len_stdout);
+        lua_pushlstring(L, str_stderr, len_stderr);
     } else {
         lua_pushliteral(L, "unknown");
         lua_pushinteger(L, -1);
@@ -277,7 +335,9 @@ async_callback_handler(GPid pid, gint status, gpointer cb_ref)
 
     /* push callback function onto stack */
     luaH_object_push(L, cb_ref);
-    luaH_dofunction(L, 2, 0);
+    luaH_dofunction(L, 4, 0);
+    g_free(str_stdout);
+    g_free(str_stderr);
     luaH_object_unref(L, cb_ref);
 }
 
@@ -313,6 +373,21 @@ async_callback_handler(GPid pid, gint status, gpointer cb_ref)
  *
  * luakit.spawn(string.format("%s %q", editor, filename), editor_callback)
  * \endcode
+ *
+ * \lcode
+ * local editor = "gvim"
+ * local filename = "config"
+ *
+ * function ls_callback(exit_reason, exit_status, stdout, stderr)
+ *     if exit_reason == "exit" then
+ *         print(stdout)
+ *     else
+ *         print("Editor exited with status: " .. exit_status)
+ *     end
+ * end
+ *
+ * luakit.spawn("ls", editor_callback)
+ * \endcode
  */
 static gint
 luaH_luakit_spawn(lua_State *L)
@@ -322,12 +397,18 @@ luaH_luakit_spawn(lua_State *L)
     const gchar *command = luaL_checkstring(L, 1);
     gint argc = 0;
     gchar **argv = NULL;
-    gpointer cb_ref = NULL;
+    // cb_data:
+    //   cb_ref gpointer
+    //   stdout fd
+    //   stderr fd
+    proc_callback_data_t *cb = g_new0(proc_callback_data_t, 1);
 
     /* check callback function type */
     if (lua_gettop(L) > 1 && !lua_isnil(L, 2)) {
         if (lua_isfunction(L, 2))
-            cb_ref = luaH_object_ref(L, 2);
+            cb->cb_ref = luaH_object_ref(L, 2);
+        else if (lua_isfunction(L, 4))
+            cb->cb_ref = luaH_object_ref(L, 4);
         else
             luaL_typerror(L, 2, lua_typename(L, LUA_TFUNCTION));
     }
@@ -336,20 +417,20 @@ luaH_luakit_spawn(lua_State *L)
     if (!g_shell_parse_argv(command, &argc, &argv, &e))
         goto spawn_error;
 
-    /* spawn command */
-    if (!g_spawn_async(NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
-            NULL, &pid, &e))
+    /* spawn command with pipes */
+    if (!g_spawn_async_with_pipes(NULL, argv, NULL, G_SPAWN_DO_NOT_REAP_CHILD | G_SPAWN_SEARCH_PATH, NULL,
+            NULL, &pid, NULL, &(cb->stdout_fd), &(cb->stderr_fd), &e))
         goto spawn_error;
 
     /* call Lua callback (if present), and free GLib resources */
-    g_child_watch_add(pid, async_callback_handler, cb_ref);
+    g_child_watch_add(pid, async_callback_handler, cb);
 
     g_strfreev(argv);
     lua_pushnumber(L, pid);
     return 1;
 
 spawn_error:
-    luaH_object_unref(L, cb_ref);
+    luaH_object_unref(L, cb->cb_ref);
     lua_pushstring(L, e->message);
     g_clear_error(&e);
     g_strfreev(argv);
