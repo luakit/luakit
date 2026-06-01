@@ -263,7 +263,20 @@ local function S_overwrite_table(domain, k, v)
     for kk, vv in pairs(v) do tbl[kk] = vv end
 end
 
-local uri_domain_cache = {}
+local uri_domain_cache = { domains = {} }
+
+local function lookup_setting_by_uri(uri, key)
+    if uri ~= uri_domain_cache.uri then
+        uri_domain_cache.uri = uri
+        uri_domain_cache.domains = (uri and uri ~= "")
+            and lousy.uri.domains_from_uri(uri) or {}
+    end
+    for _, domain in ipairs(uri_domain_cache.domains) do
+        local value = (S.domain[domain] or {})[key]
+        if value ~= nil then return value, domain end
+    end
+    return S.domain[""][key]
+end
 
 --- Retrieve the value of a setting for a webview.
 --
@@ -281,20 +294,51 @@ local uri_domain_cache = {}
 _M.get_setting_for_view = function (view, key)
     assert(type(view) == "widget" and view.type == "webview")
     -- view-specific overrides
-    local tree, uri = S.view_overrides[view], view.uri
+    local tree = S.view_overrides[view]
     if tree and tree[key] then return tree[key] end
-    -- domain-specific values
-    if uri ~= uri_domain_cache.uri then
-        uri_domain_cache.uri = uri
-        uri_domain_cache.domains = lousy.uri.domains_from_uri(uri)
-    end
-    local domains = uri_domain_cache.domains
-    for _, domain in ipairs(domains) do
-        local value = (S.domain[domain] or {})[key]
-        if value ~= nil then return value, domain end
-    end
-    -- non-domain-specific / default value
-    return S.domain[""][key]
+    return lookup_setting_by_uri(view.uri, key)
+end
+
+--- Retrieve the value of a setting for a target URI.
+--
+-- Useful before a navigation has completed, when `view.uri` is still the
+-- previous URI but the setting must reflect the *target* URI's domain.
+-- This function considers, in order:
+--
+-- 1. the setting's domain-specific values for `uri`
+-- 2. the setting's non-domain-specific value
+-- 3. the setting's default value
+--
+-- The settings key must be a valid settings key.
+-- @tparam string uri The target URI.
+-- @tparam string key The key of the setting to retrieve.
+-- @return The value of the setting.
+_M.get_setting_for_uri = function (uri, key)
+    return lookup_setting_by_uri(uri, key)
+end
+
+--- Retrieve the value of a setting for a webview navigating to a given URI.
+--
+-- Like `get_setting_for_view`, but uses `uri` for domain lookup instead of
+-- `view.uri`. Useful at `navigation-request` time, when `view.uri` is still
+-- the previous URI but the target domain's settings should already apply.
+-- This function considers, in order:
+--
+-- 1. any view-specific overrides
+-- 2. the setting's domain-specific values for `uri`
+-- 3. the setting's non-domain-specific value
+-- 4. the setting's default value
+--
+-- The settings key must be a valid settings key.
+-- @tparam widget view The webview.
+-- @tparam string uri The target URI.
+-- @tparam string key The key of the setting to retrieve.
+-- @return The value of the setting.
+_M.get_setting_for_view_at_uri = function (view, uri, key)
+    assert(type(view) == "widget" and view.type == "webview")
+    local tree = S.view_overrides[view]
+    if tree and tree[key] then return tree[key] end
+    return lookup_setting_by_uri(uri, key)
 end
 
 --- Add or remove a view-specific override for a setting.
