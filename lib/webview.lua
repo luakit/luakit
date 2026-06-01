@@ -744,28 +744,30 @@ _M.add_signal("init", function (view)
             wv[k] = v
         end
     end
-    local set_all = function (vv)
+    -- Apply all webview settings for the given URI's domain, respecting any
+    -- view-specific overrides. Used at navigation-request time when view.uri
+    -- is still the previous URI.
+    local set_all_for_uri = function (vv, uri)
         for k in pairs(webview_settings) do
-            local v, match = settings.get_setting_for_view(vv, k)
+            local v, match = settings.get_setting_for_view_at_uri(vv, uri, k)
             set(vv, k, v, match)
         end
+        local val, match = settings.get_setting_for_view_at_uri(vv, uri, "webview.user_agent")
+        set(vv, "webview.user_agent", val, match)
     end
-    -- user_agent must be assigned before WebKit dispatches the request:
-    -- load-status fires after the network request has started.
-    local apply_user_agent = function (v, uri)
-        local val, match = settings.get_setting_for_uri(uri or "", "webview.user_agent")
-        set(v, "webview.user_agent", val, match)
-    end
-    apply_user_agent(view, view.uri)
+    -- Apply all settings eagerly so WebKit defaults are overridden before the
+    -- first navigation.
+    set_all_for_uri(view, view.uri)
+    -- Re-apply all settings for the target URI before WebKit dispatches the
+    -- request. This is the earliest point at which the target domain is known.
     view:add_signal("navigation-request", function (v, uri)
-        apply_user_agent(v, uri)
+        set_all_for_uri(v, uri)
     end)
     view:add_signal("load-status", function (v, status)
-        if v.uri == "about:blank" then
-            return
-        elseif status == "redirected" then
-            apply_user_agent(v, v.uri)
-        elseif status == "committed" then set_all(v) end
+        if v.uri == "about:blank" then return end
+        if status == "redirected" or status == "committed" then
+            set_all_for_uri(v, v.uri)
+        end
     end)
     view:add_signal("web-extension-loaded", function (v)
         -- Explicitly set the zoom, due to a WebKit bug that resets the
