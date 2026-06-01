@@ -60,6 +60,29 @@ T.test_enable_javascript_applied_on_first_navigation = function ()
     assert.is_false(captured_js)
 end
 
+T.test_domain_setting_overrides_global_on_first_navigation = function ()
+    test.wait_for_idle()
+
+    -- For luakit-test://hello_world.html, soup.parse_uri().host == "hello_world.html",
+    -- so that is the domain key used for per-domain lookups.
+    local dom = settings.on["hello_world.html"]
+    settings.webview.user_agent = "GlobalAgent/1.0"
+    dom.webview.user_agent = "DomainAgent/2.0"
+
+    local view = webview.new({})
+    local captured_ua
+    view:add_signal("navigation-request", function (v)
+        captured_ua = v.user_agent
+    end)
+
+    view.uri = test.http_server() .. "hello_world.html"
+    test.wait_for_view(view)
+
+    settings.webview.user_agent = ""
+    dom.webview.user_agent = ""
+    assert.equal("DomainAgent/2.0", captured_ua)
+end
+
 return T
 
 -- vim: et:sw=4:ts=8:sts=4:tw=80
