@@ -113,6 +113,11 @@ static property_t webview_settings_properties[] = {
   { L_TK_ENABLE_FULLSCREEN,                         "enable-fullscreen",                         BOOL,  TRUE },
   { L_TK_ENABLE_HTML5_DATABASE,                     "enable-html5-database",                     BOOL,  TRUE },
   { L_TK_ENABLE_HTML5_LOCAL_STORAGE,                "enable-html5-local-storage",                BOOL,  TRUE },
+#if !WEBKIT_CHECK_VERSION(2,50,0)
+  /* Deprecated in WebKitGTK 2.50; kept for older versions where it still
+   * controls the privacy-invasive hyperlink auditing behavior. */
+  { L_TK_ENABLE_HYPERLINK_AUDITING,                 "enable-hyperlink-auditing",                 BOOL,  TRUE },
+#endif
   { L_TK_ENABLE_JAVA,                               "enable-java",                               BOOL,  TRUE },
   { L_TK_ENABLE_JAVASCRIPT,                         "enable-javascript",                         BOOL,  TRUE },
   { L_TK_ENABLE_MEDIA_STREAM,                       "enable-media-stream",                       BOOL,  TRUE },

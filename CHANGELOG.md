@@ -16,6 +16,7 @@
 - Fixed a buffer overflow in IPC socket handling when socket paths exceed the `AF_UNIX` `sun_path` limit; replaced unsafe `strcpy` with a length-checked copy.
 - Fixed `dom_element.c` to be C99/clang compliant.
 - Fixed `webview.user_agent` not being applied to the first HTTP request after a webview is created; the setting is now resolved on the `navigation-request` signal so it is in effect before WebKit dispatches the request, including for reloads (fixes #886).
+- Restored the `enable_hyperlink_auditing` setting for builds against WebKitGTK versions prior to 2.50. On newer versions, the setting is not exposed, as it's deprecated and a no-op.
 
 ### Contributors to this release:
 
