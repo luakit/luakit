@@ -104,6 +104,7 @@ local _M = {}
 
 msg.warn("domain_props.lua is deprecated, and will be removed in the next release!")
 msg.warn("all functionality (and more!) has been moved to settings.lua")
+msg.warn("enable_hyperlink_auditing no longer works per domain in WebKit 2.50+, only on or off globally")
 
 return _M
 

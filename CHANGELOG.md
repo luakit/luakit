@@ -16,11 +16,13 @@
 - Fixed a buffer overflow in IPC socket handling when socket paths exceed the `AF_UNIX` `sun_path` limit; replaced unsafe `strcpy` with a length-checked copy.
 - Fixed `dom_element.c` to be C99/clang compliant.
 - Restored the `enable_hyperlink_auditing` setting for builds against WebKitGTK versions prior to 2.50. On newer versions, the setting is not exposed, as it's deprecated and a no-op.
+- Added hyperlink_auditing_wm to block tracking pings on WebKit 2.50+
 
 ### Contributors to this release:
 
 - @balejk
 - @c0dev0id
+- @fictitiousexistence
 
 ## [2.4.0]
 
@@ -51,7 +53,7 @@
 
 ### Fixed
 
-- Fixed build in a git worktree checkout 
+- Fixed build in a git worktree checkout
 - Fixed undoclose test sequence issue
 - Fixed luaH_init() implicit prototype warning
 - Fixed refresh being needed for the correct NoScript policy to take effect.
