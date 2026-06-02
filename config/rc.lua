@@ -170,6 +170,14 @@ local go_input = require "go_input"
 local go_next_prev = require "go_next_prev"
 local go_up = require "go_up"
 
+-- Block hyperlink auditing / tracking pings
+do
+    local maj, min = luakit.webkit_version:match("^(%d+)%.(%d+)")
+    if tonumber(maj) * 1000 + tonumber(min) > 2050 then
+        require_web_module("hyperlink_auditing_wm")
+    end
+end
+
 -- Filter Referer HTTP header if page domain does not match Referer domain
 require_web_module("referer_control_wm")
 
