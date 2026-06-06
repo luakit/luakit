@@ -5,10 +5,13 @@
 ### Added
 
 - Added GitHub Actions CI workflows with cross-platform testing across Linux distributions (Alpine, Arch, Debian, Ubuntu), BSDs (FreeBSD, OpenBSD, NetBSD), and other systems.
+- Keys of the `style` property table of instances of the `dom_element` Lua class are now writable.
+- `select_wm` now accepts stylesheets also as tables.
 
 ### Changed
 
 - Rewrote `dom_element` property access, style indexing, attribute table, and `client_rects` to use the JavaScriptCore API instead of the deprecated WebKitDOM API.
+- The default `follow.stylesheet` is now a table whose properties are set inline on hints.
 
 ### Fixed
 
@@ -16,6 +19,7 @@
 - Fixed a buffer overflow in IPC socket handling when socket paths exceed the `AF_UNIX` `sun_path` limit; replaced unsafe `strcpy` with a length-checked copy.
 - Fixed `dom_element.c` to be C99/clang compliant.
 - Restored the `enable_hyperlink_auditing` setting for builds against WebKitGTK versions prior to 2.50. On newer versions, the setting is not exposed, as it's deprecated and a no-op.
+- Follow hints now work again on websites with strict CSP.
 
 ### Contributors to this release:
 
