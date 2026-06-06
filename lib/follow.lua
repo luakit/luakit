@@ -121,38 +121,35 @@ local follow_wm = require_web_module("follow_wm")
 _M.ignore_delay = 200
 
 --- CSS applied to the follow mode overlay.
--- @type string
+-- @type string|table
 -- @readwrite
-_M.stylesheet = [[
-#luakit_select_overlay {
-    position: absolute;
-    left: 0;
-    top: 0;
-    z-index: 2147483647; /* Maximum allowable on WebKit */
+_M.stylesheet = {
+    overlay = {
+        position = "absolute",
+        left = 0,
+        top = 0,
+        zIndex = 2147483647, -- maximum allowable on WebKit
+    },
+    highlight = {
+        display = "block",
+        position = "absolute",
+        ["background-color"] = theme.hint_overlay_bg or "rgba(255, 255, 153, 0.3)",
+        border = theme.hint_overlay_border or "1px dotted #000",
+        opacity = theme.hint_opacity or "0.3",
+    },
+    label = {
+        display = "block",
+        position = "absolute",
+        ["background-color"] = theme.hint_bg or "#000088",
+        border = theme.hint_border or "1px dashed #000",
+        color = theme.hint_fg or "#fff",
+        font = theme.hint_font or "10px monospace, courier, sans-serif",
+    },
+    selected = {
+        ["background-color"] = theme.hint_overlay_selected_bg or "rgba(0, 255, 0, 0.3)",
+        border = theme.hint_overlay_selected_border or "1px dotted #000",
+    },
 }
-
-#luakit_select_overlay .hint_overlay {
-    display: block;
-    position: absolute;
-    background-color: ]] .. (theme.hint_overlay_bg     or "rgba(255,255,153,0.3)") .. [[;
-    border:           ]] .. (theme.hint_overlay_border or "1px dotted #000")       .. [[;
-    opacity:          ]] .. (theme.hint_opacity        or "0.3")                   .. [[;
-}
-
-#luakit_select_overlay .hint_label {
-    display: block;
-    position: absolute;
-    background-color: ]] .. (theme.hint_bg     or "#000088")                             .. [[;
-    border:           ]] .. (theme.hint_border or "1px dashed #000")                     .. [[;
-    color:            ]] .. (theme.hint_fg     or "#fff")                                .. [[;
-    font:             ]] .. (theme.hint_font   or "10px monospace, courier, sans-serif") .. [[;
-}
-
-#luakit_select_overlay .hint_selected {
-    background-color: ]] .. (theme.hint_overlay_selected_bg     or "rgba(0,255,0,0.3)") .. [[ !important;
-    border:           ]] .. (theme.hint_overlay_selected_border or "1px dotted #000")   .. [[;
-}
-]]
 
 -- Lua regex escape function
 local function regex_escape(s)
@@ -282,7 +279,7 @@ new_mode("follow", {
         mode.selector = selector
 
         local stylesheet = mode.stylesheet or _M.stylesheet
-        assert(type(stylesheet) == "string", "invalid stylesheet")
+        assert(type(stylesheet) == "string" or type(stylesheet) == "table", "invalid stylesheet")
         mode.stylesheet = stylesheet
 
         if w.follow_persist then

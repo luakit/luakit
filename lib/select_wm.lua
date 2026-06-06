@@ -307,6 +307,12 @@ local function find_frames(root_frame)
     return frames
 end
 
+local function set_style(element, style)
+    for k, v in pairs(style) do
+        element.style[k] = v
+    end
+end
+
 local page_states = {}
 
 local function init_frame(frame, stylesheet)
@@ -314,10 +320,15 @@ local function init_frame(frame, stylesheet)
     assert(frame.body)
 
     frame.overlay = frame.doc:create_element("div", { id = "luakit_select_overlay" })
-    frame.stylesheet = frame.doc:create_element("style", { id = "luakit_select_stylesheet" }, stylesheet)
-
+    if type(stylesheet) == "table" then
+        set_style(frame.overlay, stylesheet.overlay)
+    end
     frame.body.parent:append(frame.overlay)
-    frame.body.parent:append(frame.stylesheet)
+
+    if type(stylesheet) == "string" then
+        frame.stylesheet = frame.doc:create_element("style", { id = "luakit_select_stylesheet" }, stylesheet)
+        frame.body.parent:append(frame.stylesheet)
+    end
 end
 
 local function cleanup_frame(frame)
@@ -348,15 +359,15 @@ local function filter(state, hint_pat, text_pat)
         end
 
         if not old_hidden and hint.hidden then
-            -- Save old style, set new style to "display: none"
-            hint.overlay_style = hint.overlay_elem.attr.style
-            hint.label_style = hint.label_elem.attr.style
-            hint.overlay_elem.attr.style = "display: none;"
-            hint.label_elem.attr.style = "display: none;"
+            -- Save old display, set "display: none"
+            hint.overlay_display = hint.overlay_elem.style.display
+            hint.label_display = hint.label_elem.style.display
+            hint.overlay_elem.style.display = "none"
+            hint.label_elem.style.display = "none"
         elseif old_hidden and not hint.hidden then
-            -- Restore saved style
-            hint.overlay_elem.attr.style = hint.overlay_style
-            hint.label_elem.attr.style = hint.label_style
+            -- Restore saved display
+            hint.overlay_elem.style.display = hint.overlay_display
+            hint.label_elem.style.display = hint.label_display
         end
     end
 end
@@ -397,12 +408,23 @@ local function focus(state, step)
     -- Save and update class for the new hint
     new_hint.orig_class = new_hint.overlay_elem.attr.class
     new_hint.overlay_elem.attr.class = new_hint.orig_class .. " hint_selected"
+    if new_hint.selected then
+        new_hint.orig_style = {}
+        for k in pairs(new_hint.selected) do
+            new_hint.orig_style[k] = new_hint.overlay_elem.style[k]
+        end
+        set_style(new_hint.overlay_elem, new_hint.selected)
+    end
 
     -- Restore the original class for the old hint
     if last then
         local old_hint = state.hints[last]
         old_hint.overlay_elem.attr.class = old_hint.orig_class
         old_hint.orig_class = nil
+        if old_hint.orig_style then
+            set_style(old_hint.overlay_elem, old_hint.orig_style)
+            old_hint.orig_style = nil
+        end
     end
 
     state.focused = index
@@ -416,14 +438,14 @@ end
 --
 -- @tparam page page The web page in which to enter element selection.
 -- @tparam string|{dom_element} elements A selector to filter elements, or an array of elements.
--- @tparam string stylesheet The stylesheet to apply.
+-- @tparam string|table stylesheet The stylesheet to apply.
 -- @tparam boolean ignore_case `true` if text case should be ignored.
 -- @treturn {...} Table with data for the currently focused hint.
 -- @treturn number The number of currently visible hints.
 function _M.enter(page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
-    assert(type(stylesheet) == "string")
+    assert(type(stylesheet) == "string" or type(stylesheet) == "table")
     local page_id = page.id
     assert(page_states[page_id] == nil)
 
@@ -466,6 +488,9 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         frame.hints = frame_find_hints(client_rects, frame, elements)
         -- Build an array of all hints
         for _, hint in ipairs(frame.hints) do
+            if type(stylesheet) == "table" then
+                hint.selected = stylesheet.selected
+            end
             state.hints[#state.hints+1] = hint
         end
     end
@@ -485,16 +510,20 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         local fsx, fsy = fwr.scroll_x, fwr.scroll_y
         for _, hint in ipairs(frame.hints) do
             -- Append hint elements to overlay
-            local e = hint.elem
             local r = hint.bb
 
-            local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
-            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, fsx), max(r.y-10, fsy), r.w, r.h)
+            local overlay_style = { left = r.x .. "px", top = r.y .. "px", width = r.w .. "px", height = r.h .. "px" }
+            local label_style = { left = max(r.x-10, fsx) .. "px", top = max(r.y-10, fsy) .. "px" }
 
-            local overlay_class = "hint_overlay hint_overlay_" .. e.tag_name
-            local label_class = "hint_label hint_label_" .. e.tag_name
-            hint.overlay_elem = frame.doc:create_element("span", {class = overlay_class, style = overlay_style})
-            hint.label_elem = frame.doc:create_element("span", {class = label_class, style = label_style}, hint.label)
+            hint.overlay_elem = frame.doc:create_element("span", {class = "hint_overlay"})
+            hint.label_elem = frame.doc:create_element("span", {class = "hint_label"}, hint.label)
+
+            if type(stylesheet) == "table" then
+                set_style(hint.overlay_elem, stylesheet.highlight)
+                set_style(hint.label_elem, stylesheet.label)
+            end
+            set_style(hint.overlay_elem, overlay_style)
+            set_style(hint.label_elem, label_style)
 
             frame.overlay:append(hint.overlay_elem)
             frame.overlay:append(hint.label_elem)
