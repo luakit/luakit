@@ -310,8 +310,10 @@ widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     if (globalconf.application)
         gtk_window_set_application(d->win, globalconf.application);
 
+    g_signal_connect(w->widget, "destroy", G_CALLBACK(destroy_win_cb), w);
+
     g_object_connect(G_OBJECT(w->widget),
-      "signal::destroy",            G_CALLBACK(destroy_win_cb),   w,
+      LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::notify::parent",     G_CALLBACK(parent_changed_cb), w,
       "signal::realize",            G_CALLBACK(window_realize_cb),  w,
       "signal::notify::child",      G_CALLBACK(child_changed_cb), w,

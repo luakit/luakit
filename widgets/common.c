@@ -314,9 +314,15 @@ luaH_widget_remove(lua_State *L)
     widget_t *child = luaH_checkwidget(L, 2);
 
     if (child) {
-        g_object_ref(G_OBJECT(child));
+        g_object_ref(G_OBJECT(child->widget));
         if (GTK_IS_BOX(w->widget))
             gtk_box_remove(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
+        else if (GTK_IS_NOTEBOOK(w->widget)) {
+            gint page_num = gtk_notebook_page_num(GTK_NOTEBOOK(w->widget), child->widget);
+            if (page_num >= 0)
+                gtk_notebook_remove_page(GTK_NOTEBOOK(w->widget), page_num);
+        } else if (GTK_IS_STACK(w->widget))
+            gtk_stack_remove(GTK_STACK(w->widget), child->widget);
         else if (GTK_IS_SCROLLED_WINDOW(w->widget))
             gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(w->widget), NULL);
         else if (GTK_IS_WINDOW(w->widget))
@@ -732,7 +738,7 @@ luaH_widget_focus(lua_State *L)
             gtk_window_set_focus(GTK_WINDOW(w->widget), NULL);
             break;
         case L_TK_ENTRY:
-            gtk_entry_grab_focus_without_selecting(GTK_ENTRY(w->widget));
+            gtk_widget_grab_focus(w->widget);
             break;
         default:
             gtk_widget_grab_focus(w->widget);

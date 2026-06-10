@@ -22,6 +22,8 @@ local function update(menu)
     local fg, bg, font = theme.menu_fg, theme.menu_bg, theme.menu_font
     local sfg, sbg = theme.menu_selected_fg, theme.menu_selected_bg
 
+    if menu.widget.bg ~= bg then menu.widget.bg = bg end
+
     -- Hide widget while re-drawing
     menu.widget:hide()
 
@@ -87,7 +89,7 @@ local function update(menu)
             else
                 rbg = (selected and (row.selected_bg or sbg)) or row.bg or bg
             end
-            if rw.bg ~= rbg then rw.bg = rbg end
+            if rw.hbox.bg ~= rbg then rw.hbox.bg = rbg end
 
             for c = 1, math.max(#row, #(rw.cols)) do
                 -- Get column text

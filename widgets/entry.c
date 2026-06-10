@@ -92,8 +92,10 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_TEXT:
+        g_object_set_data(G_OBJECT(w->widget), "setting-text", GINT_TO_POINTER(1));
         gtk_editable_set_text(GTK_EDITABLE(w->widget),
             luaL_checklstring(L, 3, &len));
+        g_object_set_data(G_OBJECT(w->widget), "setting-text", NULL);
         break;
 
       case L_TK_FG:
@@ -144,6 +146,8 @@ activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 static void
 changed_cb(widget_t *w)
 {
+    if (g_object_get_data(G_OBJECT(w->widget), "setting-text"))
+        return;
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "changed", 0, 0);
@@ -185,6 +189,7 @@ widget_entry(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
       NULL);
 
     LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
+    gtk_event_controller_set_propagation_phase(key_controller, GTK_PHASE_CAPTURE);
 
     gtk_widget_show(w->widget);
     return w;
