@@ -179,10 +179,10 @@ local init_funcs = {
     end,
 
     key_press_match = function (w)
-        w.win:add_signal("key-press", function (_, mods, key, synthetic)
-            if synthetic and settings.get_setting("window.act_on_synthetic_keys") then
-                return false
-            end
+        w.win:add_signal("key-press", function (_, mods, key)
+            -- if synthetic and settings.get_setting("window.act_on_synthetic_keys") then
+            --     return false
+            -- end
             -- Match & exec a bind
             local success, match = xpcall(
                 function () return w:hit(mods, key) end,
@@ -361,7 +361,6 @@ _M.methods = {
 
         local function set_widget (prompt)
             prompt.fg = fg
-            prompt.parent.bg = bg
             -- Set text, or hide
             if text then
                 prompt.text = opts.markup and text or lousy.util.escape(text)
@@ -371,7 +370,9 @@ _M.methods = {
             end
         end
         set_widget(w.ibar.prompt)
+        w.ibar.bg = bg
         set_widget(w.mbar.label)
+        w.mbar.bg = bg
         w_priv[w].prompt_text = text
         w:update_sbar_visibility()
     end,
@@ -496,7 +497,7 @@ _M.methods = {
         assert(view == nil or (type(view) == "widget" and view.type == "webview"))
         view = view or w.view
         w:emit_signal("detach-tab", view)
-        view.parent:remove(view)
+        w.tabs:remove(view)
         if settings.get_setting("window.close_with_last_tab") == true and w.tabs:count() == 0 then
             w:close_win()
         end
@@ -767,10 +768,8 @@ end
 -- @treturn table|nil The window class table for the window that contains `w`,
 -- or `nil` if the given widget is not contained within a window.
 function _M.ancestor(w)
-    repeat
-        w = w.parent
-    until w == nil or w.type == "window"
-    return w and _M.bywidget[w] or nil
+    local win = w:ancestor("window")
+    return win and _M.bywidget[win] or nil
 end
 
 settings.register_settings({

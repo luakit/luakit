@@ -186,9 +186,6 @@
 --- @signal destroy
 -- Emitted when the widget is about to be destroyed.
 
---- @signal resize
--- Emitted when the widget has been resized.
-
 --- @signal focus
 -- Emitted when the `webview` widget gains the input focus.
 -- @treturn boolean `true` if the event has been handled and should not be

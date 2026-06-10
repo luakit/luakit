@@ -63,13 +63,13 @@ local function set_current(tl, current)
     local theme = get_theme()
     local priv = data[tl]
     local label = priv.label
-    local ebox = tl.widget
+    local box = tl.widget
     priv.current = current
     label.fg = (priv.current and theme.tab_selected_fg) or theme.tab_fg
     if priv.view.private then
-        ebox.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
+        box.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
     else
-        ebox.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
+        box.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
     end
     update_label(tl)
 end

@@ -21,6 +21,8 @@
 #include <gtk/gtk.h>
 
 #include "clib/widget.h"
+#include "common/tokenize.h"
+#include "glib.h"
 #include "luah.h"
 #include "globalconf.h"
 #include "common/luaobject.h"
@@ -35,7 +37,7 @@ key_press_cb(GtkEventControllerKey *controller, guint keyval, guint keycode,
   luaH_object_push(L, w->ref);
   luaH_modifier_table_push(L, state);
   luaH_keystr_push(L, keyval);
-  gint ret = luaH_object_emit_signal(L, -4, "key-press", 3, 1);
+  gint ret = luaH_object_emit_signal(L, -3, "key-press", 2, 1);
   gboolean catch = ret && lua_toboolean(L, -1) ? TRUE : FALSE;
   lua_pop(L, ret + 1);
   return catch;
@@ -45,8 +47,7 @@ void
 button_pressed_cb(GtkGestureClick *gesture, int n_press, double x, double y, widget_t* w)
 {
     guint button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
-    GdkEvent *event = gtk_event_controller_get_current_event(GTK_EVENT_CONTROLLER(gesture));
-    GdkModifierType state = gdk_event_get_modifier_state(event);
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(gesture));
 
     gint ret;
     lua_State *L = common.L;
@@ -67,8 +68,7 @@ void
 button_released_cb(GtkGestureClick *gesture, int n_press, double x, double y, widget_t *w)
 {
     guint button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
-    GdkEvent *event = gtk_event_controller_get_current_event(GTK_EVENT_CONTROLLER(gesture));
-    GdkModifierType state = gdk_event_get_modifier_state(event);
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(gesture));
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, state);
@@ -81,8 +81,7 @@ button_released_cb(GtkGestureClick *gesture, int n_press, double x, double y, wi
 gboolean
 scroll_cb(GtkEventControllerScroll *controller, double dx, double dy, widget_t *w)
 {
-    GdkEvent *event = gtk_event_controller_get_current_event(GTK_EVENT_CONTROLLER(controller));
-    GdkModifierType state = gdk_event_get_modifier_state(event);
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
 
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -98,8 +97,7 @@ scroll_cb(GtkEventControllerScroll *controller, double dx, double dy, widget_t *
 void
 mouse_enter_cb(GtkEventControllerMotion *controller, double x, double y, widget_t *w)
 {
-    GdkEvent *event = gtk_event_controller_get_current_event(GTK_EVENT_CONTROLLER(controller));
-    GdkModifierType state = gdk_event_get_modifier_state(event);
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, state);
@@ -110,8 +108,7 @@ mouse_enter_cb(GtkEventControllerMotion *controller, double x, double y, widget_
 void
 mouse_leave_cb(GtkEventControllerMotion *controller, double x, double y, widget_t *w)
 {
-    GdkEvent *event = gtk_event_controller_get_current_event(GTK_EVENT_CONTROLLER(controller));
-    GdkModifierType state = gdk_event_get_modifier_state(event);
+    GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_modifier_table_push(L, state);
@@ -137,23 +134,6 @@ focus_leave_cb(GtkEventControllerFocus *controller, widget_t *w)
     lua_pop(L, ret + 1);
 }
 
-
-void
-resize_cb(GtkWidget* UNUSED(win), GdkRectangle *rect, widget_t *w)
-{
-    int width = rect->width, height = rect->height;
-    if (width == w->prev_width && height == w->prev_height)
-        return;
-    w->prev_width = width;
-    w->prev_height = height;
-
-    lua_State *L = common.L;
-    luaH_object_push(L, w->ref);
-    lua_pushinteger(L, width);
-    lua_pushinteger(L, height);
-    luaH_object_emit_signal(L, -3, "resize", 2, 0);
-    lua_pop(L, 1);
-}
 
 void
 items_changed_cb(GListModel *model, guint position, guint removed, guint added, widget_t *w)
@@ -221,7 +201,7 @@ parent_changed_cb(GObject *object, GParamSpec *pspec, widget_t *w)
     GtkWidget *widget = GTK_WIDGET(object);
     GtkWidget *new = gtk_widget_get_parent(widget);
     luaH_object_push(L, w->ref);
-    if (new && (parent = GOBJECT_TO_LUAKIT_WIDGET(new)))
+    if (new != NULL && (parent = GOBJECT_TO_LUAKIT_WIDGET(new)))
         luaH_object_push(L, parent->ref);
     else
         lua_pushnil(L);
@@ -332,8 +312,21 @@ luaH_widget_remove(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
-    g_object_ref(G_OBJECT(child->widget));
-    gtk_widget_unparent(GTK_WIDGET(child->widget));
+
+    if (child) {
+        g_object_ref(G_OBJECT(child));
+        if (GTK_IS_BOX(w->widget))
+            gtk_box_remove(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
+        else if (GTK_IS_SCROLLED_WINDOW(w->widget))
+            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(w->widget), NULL);
+        else if (GTK_IS_WINDOW(w->widget))
+            gtk_window_set_child(GTK_WINDOW(w->widget), NULL);
+        else if (GTK_IS_OVERLAY(w->widget))
+            gtk_overlay_set_child(GTK_OVERLAY(w->widget), NULL);
+        else
+            gtk_widget_unparent(GTK_WIDGET(child->widget));
+    }
+
     return 0;
 }
 
@@ -654,14 +647,47 @@ luaH_widget_get_tooltip(lua_State *L, widget_t *w)
 gint
 luaH_widget_get_parent(lua_State *L, widget_t *w)
 {
-    GtkWidget *widget = gtk_widget_get_parent(GTK_WIDGET(w->widget));
+    GtkWidget *widget = GTK_WIDGET(w->widget);
+    if (widget != NULL && GTK_IS_WIDGET(widget))
+    {
+        GtkWidget *parent = gtk_widget_get_parent(widget);
+        if (parent == NULL)
+            return 0;
 
-    if (!widget)
-        return 0;
+        widget_t *parent_w = GOBJECT_TO_LUAKIT_WIDGET(parent);
+        if (parent_w) {
+            luaH_object_push(L, parent_w->ref);
+            return 1;
+        }
+    }
 
-    widget_t *parent = GOBJECT_TO_LUAKIT_WIDGET(widget);
-    luaH_object_push(L, parent->ref);
-    return 1;
+    return 0;
+}
+
+gint
+luaH_widget_get_ancestor(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    GtkWidget *widget = GTK_WIDGET(w->widget);
+    if (widget != NULL && GTK_IS_WIDGET(widget))
+    {
+        const char *prop = luaL_checkstring(L, 2);
+        //TODO: rewrite to more generic approach, that works for all known types
+        if (g_str_equal(prop, "window"))
+        {
+            GtkWidget *parent = gtk_widget_get_ancestor(widget, GTK_TYPE_WINDOW);
+            if (parent == NULL)
+                return 0;
+
+            widget_t *parent_w = GOBJECT_TO_LUAKIT_WIDGET(parent);
+            if (parent_w) {
+                luaH_object_push(L, parent_w->ref);
+                return 1;
+            }
+        }
+    }
+
+    return 0;
 }
 
 gint
@@ -720,7 +746,16 @@ gint
 luaH_widget_destroy(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_unparent(GTK_WIDGET(w->widget));
+    if (w->widget) {
+        if (GTK_IS_WINDOW(w->widget)) {
+            gtk_window_destroy(GTK_WINDOW(w->widget));
+        } else if (gtk_widget_get_parent(GTK_WIDGET(w->widget))) {
+            gtk_widget_unparent(GTK_WIDGET(w->widget));
+        } else {
+            g_object_ref_sink(G_OBJECT(w->widget));
+            g_object_unref(G_OBJECT(w->widget));
+        }
+    }
     w->widget = NULL;
     return 0;
 }

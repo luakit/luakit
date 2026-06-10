@@ -21,7 +21,11 @@
 
 #include "common/ipc.h"
 
+#include <webkit/webkit.h>
+
+void ipc_init_socket(void);
 void ipc_init(void);
+void ipc_add_sandbox_paths(WebKitWebContext *);
 void ipc_endpoint_remove_from_endpoints(ipc_endpoint_t *);
 void ipc_remove_socket_file(void);
 

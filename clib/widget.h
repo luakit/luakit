@@ -109,6 +109,7 @@ luaH_checkwidgetornil(lua_State *L, gint udx)
     return luaH_checkwidget(L, udx);
 }
 
+
 #define luaH_towidget(L, udx) luaH_toudata(L, udx, &widget_class)
 
 #endif

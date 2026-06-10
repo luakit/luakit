@@ -73,7 +73,7 @@ local function grouptabs(w, g)
 end
 
 local function webview2idx(view)
-    local nb = assert(view.parent)
+    local nb = assert(view:ancestor("notebook"))
     -- should we have separate handling for case when
     -- view.parent is not same as w2groups[w].groups[group]._notebook?
     -- this case means that we messed with webviews somehow and attached it
@@ -84,7 +84,7 @@ end
 
 -- return table with tabgroup info
 local function webview2group(view)
-    local nb = assert(view.parent)
+    local nb = assert(view:ancestor("notebook"))
     local w = assert(window.ancestor(nb))
     for _, gv in pairs(w2groups[w].groups) do
         if gv._notebook == nb then
@@ -166,7 +166,7 @@ end
 local function create_tabgroup(w, group_name)
     if not w2groups[w].groups[group_name] then
         local nt = widget({type="notebook"})
-        w.tabs.parent:insert(nt)
+        w.tabs:ancestor("notebook"):insert(nt)
         nt.show_tabs = false
 
         w2groups[w].groups[group_name] = {
@@ -528,7 +528,8 @@ switch_tabgroup = function  (w, group)
     if group ~= w2groups[w].active then
         local g = w2groups[w].groups[group]
         local nb = g._notebook
-        local group_nb = assert(w.tabs.parent)
+        local group_nb = assert(w.tabs:ancestor("notebook"))
+
         group_nb:switch(group_nb:indexof(nb))
         w.tablist:set_notebook(nb)
         w.tabs = nb
@@ -567,7 +568,7 @@ delete_tabgroup = function (w, group)
         end
 
         local g = w2groups[w].groups[group]
-        w.tabs.parent:remove(g._notebook)
+        w.tabs:ancestor("notebook"):remove(g._notebook)
         table.insert(_deleted_groups, g)
         w2groups[w].groups[group] = nil
 

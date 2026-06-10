@@ -41,6 +41,7 @@ void webview_scroll_recv(void *d, const ipc_scroll_t *ipc);
 void run_javascript_finished(const guint8 *msg, guint length);
 
 static char *socket_path;
+static int server_sock = -1;
 GMutex socket_path_lock;
 GCond socket_path_cond;
 
@@ -100,7 +101,7 @@ retry:
         suffix[i] = base + c;
     }
     gchar *socket_name = g_strdup_printf("luakit-ipc-%d-%s", getpid(), suffix);
-    gchar *socket_path = g_build_filename(g_get_tmp_dir(), socket_name, NULL);
+    gchar *socket_path = g_build_filename(globalconf.cache_dir, socket_name, NULL);
     g_free(socket_name);
 
     if (g_file_test(socket_path, G_FILE_TEST_EXISTS)) {
@@ -110,13 +111,12 @@ retry:
     return socket_path;
 }
 
-static gpointer
-web_extension_connect_thread(gpointer UNUSED(data))
+void
+ipc_init_socket(void)
 {
     gchar *path = build_socket_path();
 
-    int sock;
-    if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    if ((server_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
         fatal("Error calling socket(): %s", strerror(errno));
 
     struct sockaddr_un local;
@@ -128,24 +128,52 @@ web_extension_connect_thread(gpointer UNUSED(data))
     /* Remove any pre-existing socket, before opening */
     unlink(local.sun_path);
 
-    if (bind(sock, (struct sockaddr *)&local, len) == -1)
+    if (bind(server_sock, (struct sockaddr *)&local, len) == -1)
         fatal("Error calling bind() on socket %s: %s", path, strerror(errno));
 
-    if (listen(sock, 5) == -1)
+    if (listen(server_sock, 5) == -1)
         fatal("Error calling listen() on socket %s: %s", path, strerror(errno));
 
     g_mutex_lock(&socket_path_lock);
     socket_path = path;
     g_cond_signal(&socket_path_cond);
     g_mutex_unlock(&socket_path_lock);
+}
 
+void
+ipc_add_sandbox_paths(WebKitWebContext *context)
+{
+    char *dirs[] = { g_get_current_dir(), LUAKIT_LIB_PATH }, *dir = NULL;
+
+    for (unsigned i = 0; !dir && i < LENGTH(dirs); ++i) {
+        char *extension_file = g_build_filename(dirs[i],  "luakit.so", NULL);
+        if (!access(extension_file, R_OK))
+            dir = dirs[i];
+        g_free(extension_file);
+    }
+
+    g_mutex_lock(&socket_path_lock);
+    const char *path = socket_path;
+    g_mutex_unlock(&socket_path_lock);
+
+    if (path)
+        webkit_web_context_add_path_to_sandbox(context, path, FALSE);
+    if (dir)
+        webkit_web_context_add_path_to_sandbox(context, dir, TRUE);
+
+    g_free(dirs[0]);
+}
+
+static gpointer
+web_extension_connect_thread(gpointer UNUSED(data))
+{
     while (TRUE) {
         debug("Waiting for a connection...");
 
         int web_socket;
         struct sockaddr_un remote;
         socklen_t size = sizeof(remote);
-        if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
+        if ((web_socket = accept(server_sock, (struct sockaddr *)&remote, &size)) == -1)
             fatal("Error calling accept(): %s", strerror(errno));
 
         ipc_endpoint_t *ipc = ipc_endpoint_new("UI");

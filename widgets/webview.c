@@ -105,21 +105,16 @@ static property_t webview_settings_properties[] = {
   { L_TK_DEFAULT_FONT_SIZE,                         "default-font-size",                         INT,   TRUE },
   { L_TK_DEFAULT_MONOSPACE_FONT_SIZE,               "default-monospace-font-size",               INT,   TRUE },
   { L_TK_DRAW_COMPOSITING_INDICATORS,               "draw-compositing-indicators",               BOOL,  TRUE },
-  { L_TK_ENABLE_ACCELERATED_2D_CANVAS,              "enable-accelerated-2d-canvas",              BOOL,  TRUE },
   { L_TK_ENABLE_CARET_BROWSING,                     "enable-caret-browsing",                     BOOL,  TRUE },
   { L_TK_ENABLE_DEVELOPER_EXTRAS,                   "enable-developer-extras",                   BOOL,  TRUE },
   { L_TK_ENABLE_DNS_PREFETCHING,                    "enable-dns-prefetching",                    BOOL,  TRUE },
-  { L_TK_ENABLE_FRAME_FLATTENING,                   "enable-frame-flattening",                   BOOL,  TRUE },
   { L_TK_ENABLE_FULLSCREEN,                         "enable-fullscreen",                         BOOL,  TRUE },
   { L_TK_ENABLE_HTML5_DATABASE,                     "enable-html5-database",                     BOOL,  TRUE },
   { L_TK_ENABLE_HTML5_LOCAL_STORAGE,                "enable-html5-local-storage",                BOOL,  TRUE },
-  { L_TK_ENABLE_HYPERLINK_AUDITING,                 "enable-hyperlink-auditing",                 BOOL,  TRUE },
-  { L_TK_ENABLE_JAVA,                               "enable-java",                               BOOL,  TRUE },
   { L_TK_ENABLE_JAVASCRIPT,                         "enable-javascript",                         BOOL,  TRUE },
   { L_TK_ENABLE_MEDIA_STREAM,                       "enable-media-stream",                       BOOL,  TRUE },
   { L_TK_ENABLE_MEDIASOURCE,                        "enable-mediasource",                        BOOL,  TRUE },
   { L_TK_ENABLE_PAGE_CACHE,                         "enable-page-cache",                         BOOL,  TRUE },
-  { L_TK_ENABLE_PLUGINS,                            "enable-plugins",                            BOOL,  TRUE },
   /* replaces resizable-text-areas */
   { L_TK_ENABLE_RESIZABLE_TEXT_AREAS,               "enable-resizable-text-areas",               BOOL,  TRUE },
   { L_TK_ENABLE_SITE_SPECIFIC_QUIRKS,               "enable-site-specific-quirks",               BOOL,  TRUE },
@@ -129,7 +124,6 @@ static property_t webview_settings_properties[] = {
   { L_TK_ENABLE_TABS_TO_LINKS,                      "enable-tabs-to-links",                      BOOL,  TRUE },
   { L_TK_ENABLE_WEBAUDIO,                           "enable-webaudio",                           BOOL,  TRUE },
   { L_TK_ENABLE_WRITE_CONSOLE_MESSAGES_TO_STDOUT,   "enable-write-console-messages-to-stdout",   BOOL,  TRUE },
-  { L_TK_ENABLE_XSS_AUDITOR,                        "enable-xss-auditor",                        BOOL,  TRUE },
   { L_TK_FANTASY_FONT_FAMILY,                       "fantasy-font-family",                       CHAR,  TRUE },
   { L_TK_JAVASCRIPT_CAN_ACCESS_CLIPBOARD,           "javascript-can-access-clipboard",           BOOL,  TRUE },
   { L_TK_JAVASCRIPT_CAN_OPEN_WINDOWS_AUTOMATICALLY, "javascript-can-open-windows-automatically", BOOL,  TRUE },
@@ -1448,10 +1442,6 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::failed-to-find-text",                  G_CALLBACK(failed_to_find_text_cb),       w,
       NULL);
 
-    g_object_connect(G_OBJECT(d->view),
-      "signal::notify::parent",                           G_CALLBACK(parent_changed_cb),                w,
-      NULL);
-
     g_object_connect(G_OBJECT(d->inspector),
       "signal::attach",                               G_CALLBACK(inspector_attach_window_cb),   w,
       "signal::bring-to-front",                       G_CALLBACK(inspector_show_window_cb),     w,
@@ -1459,6 +1449,11 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::detach",                               G_CALLBACK(inspector_detach_window_cb),   w,
       "signal::open-window",                          G_CALLBACK(inspector_open_window_cb),     w,
       NULL);
+
+    gtk_widget_set_hexpand(GTK_WIDGET(d->view), TRUE);
+    gtk_widget_set_vexpand(GTK_WIDGET(d->view), TRUE);
+    gtk_widget_set_halign(GTK_WIDGET(d->view), GTK_ALIGN_FILL);
+    gtk_widget_set_valign(GTK_WIDGET(d->view), GTK_ALIGN_FILL);
 
     /* show widgets */
     gtk_widget_set_visible(GTK_WIDGET(d->view), TRUE);

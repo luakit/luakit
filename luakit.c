@@ -245,6 +245,7 @@ main(gint argc, gchar *argv[])
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
 #endif
     init_directories();
+    ipc_init_socket();
     web_context_init();
     ipc_init();
     luaH_init(uris);

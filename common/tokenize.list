@@ -37,12 +37,10 @@ enable_developer_extras
 enable_html5_database
 enable_html5_local_storage
 enable_page_cache
-enable_plugins
 enable_scripts
 enable_site_specific_quirks
 enable_spatial_navigation
 enable_spell_checking
-enable_xss_auditor
 end
 entry
 error
@@ -176,12 +174,8 @@ is_loading
 allow_modal_dialogs
 default_charset
 draw_compositing_indicators
-enable_accelerated_2d_canvas
 enable_dns_prefetching
-enable_frame_flattening
 enable_fullscreen
-enable_hyperlink_auditing
-enable_java
 enable_javascript
 enable_media_stream
 enable_mediasource
@@ -210,6 +204,7 @@ inner_height
 webkit2
 style
 parent
+ancestor
 inner_html
 src
 href

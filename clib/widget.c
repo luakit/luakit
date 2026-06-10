@@ -147,7 +147,7 @@ luaH_widget_index(lua_State *L)
 
     if (token == L_TK_IS_ALIVE) {
         widget_t *w = luaH_checkudata(L, 1, &widget_class);
-        lua_pushboolean(L, !!w);
+        lua_pushboolean(L, w && w->widget);
         return 1;
     }
 

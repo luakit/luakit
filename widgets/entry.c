@@ -181,14 +181,10 @@ widget_entry(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::activate",                          G_CALLBACK(activate_cb),   w,
       "signal::notify::cursor-position",           G_CALLBACK(position_cb),   w,
+      "swapped-signal::changed",                   G_CALLBACK(changed_cb),    w,
       NULL);
 
     LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
-
-    // Further signal to replace "signal::changed"
-    g_object_connect(G_OBJECT(w->widget),
-      "swapped-signal::changed", G_CALLBACK(changed_cb), w,
-      NULL);
 
     gtk_widget_show(w->widget);
     return w;

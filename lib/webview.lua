@@ -466,14 +466,7 @@ local webview_settings = {
             counter for each; this is mostly useful for debugging.
         ]=],
     },
-    ["webview.enable_accelerated_2d_canvas"] = {
-        type = "boolean",
-        default = false,
-        desc = [=[
-            Whether 2d canvas rendering should use hardware acceleration.
-            This setting requires WebKit support that may not be available.
-        ]=],
-    },
+
     ["webview.enable_caret_browsing"] = {
         type = "boolean",
         default = false,
@@ -493,14 +486,7 @@ local webview_settings = {
             links are clicked, making web browsing faster.
         ]=],
     },
-    ["webview.enable_frame_flattening"] = {
-        type = "boolean",
-        default = false,
-        desc = [=[
-            Whether frame flattening should be enabled. If enabled, the
-            content of all subframes is shown directly in the main page.
-        ]=],
-    },
+
     ["webview.enable_fullscreen"] = {
         type = "boolean",
         default = true,
@@ -529,20 +515,8 @@ local webview_settings = {
             Web pages from one site cannot access data stored in the database by pages from other sites.
         ]=],
     },
-    ["webview.enable_hyperlink_auditing"] = {
-        type = "boolean",
-        default = false,
-        desc = [=[
-            Whether hyperlink auditing is enabled.
 
-            See <https://html.spec.whatwg.org/multipage/links.html#hyperlink-auditing> for more information.
-        ]=],
-    },
-    ["webview.enable_java"] = {
-        type = "boolean",
-        default = true,
-        desc = "Whether the Java plugin is enabled.",
-    },
+
     ["webview.enable_javascript"] = {
         type = "boolean",
         default = true,
@@ -576,11 +550,7 @@ local webview_settings = {
             The default is to pass them on to the OS.  This setting
             only becomes active in new tabs.]=]
     },
-    ["webview.enable_plugins"] = {
-        type = "boolean",
-        default = true,
-        desc = "Whether plugins are enabled."
-    },
+
     ["webview.enable_resizable_text_areas"] = {
         type = "boolean",
         default = true,
@@ -622,13 +592,6 @@ local webview_settings = {
         type = "boolean",
         default = false,
         desc = "Whether console messages from JavaScript should be written to standard output.",
-    },
-    ["webview.enable_xss_auditor"] = {
-        type = "boolean",
-        default = true,
-        desc = [=[
-            Whether XSS auditing should be enabled. This helps protect against some attacks on vulnerable websites.
-        ]=],
     },
     ["webview.fantasy_font_family"] = {
         type = "string",

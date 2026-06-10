@@ -46,10 +46,13 @@ web_network_session_get(void)
     return net_session;
 }
 
+#include "ipc.h"
+
 static void
 website_data_manager_init(void)
 {
     web_context = webkit_web_context_new ();
+    ipc_add_sandbox_paths(web_context);
 
     net_session = webkit_network_session_new(
         globalconf.data_dir,

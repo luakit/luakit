@@ -56,11 +56,23 @@ luaH_box_pack(lua_State *L)
         lua_settop(L, top);
     }
     GtkWidget* child_widget = GTK_WIDGET(child->widget);
+    GtkOrientation orientation = gtk_orientable_get_orientation(GTK_ORIENTABLE(w->widget));
 
-    gtk_widget_set_vexpand (child_widget, expand);
-    gtk_widget_set_valign (child_widget, fill);
-    gtk_widget_set_margin_top (child_widget, padding);
-    gtk_widget_set_margin_bottom (child_widget, padding);
+    if (orientation == GTK_ORIENTATION_HORIZONTAL) {
+        gtk_widget_set_hexpand(child_widget, expand);
+        gtk_widget_set_halign(child_widget, fill ? GTK_ALIGN_FILL : GTK_ALIGN_CENTER);
+        gtk_widget_set_vexpand(child_widget, FALSE);
+        gtk_widget_set_valign(child_widget, GTK_ALIGN_FILL);
+        gtk_widget_set_margin_start(child_widget, padding);
+        gtk_widget_set_margin_end(child_widget, padding);
+    } else {
+        gtk_widget_set_vexpand(child_widget, expand);
+        gtk_widget_set_valign(child_widget, fill ? GTK_ALIGN_FILL : GTK_ALIGN_CENTER);
+        gtk_widget_set_hexpand(child_widget, FALSE);
+        gtk_widget_set_halign(child_widget, GTK_ALIGN_FILL);
+        gtk_widget_set_margin_top(child_widget, padding);
+        gtk_widget_set_margin_bottom(child_widget, padding);
+    }
 
     if (start)
         gtk_box_append(GTK_BOX(w->widget), child_widget);
@@ -170,16 +182,16 @@ widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
       NULL);
 
     GListModel *children = gtk_widget_observe_children(GTK_WIDGET(w->widget));
-    g_object_connect (G_OBJECT(children),
+    g_object_connect(G_OBJECT(children),
       "signal::items-changed", G_CALLBACK(items_changed_cb), w,
       NULL);
     g_object_unref (children);
 
-    GtkEventController *focus_controller = gtk_event_controller_focus_new ();
-    g_object_connect(G_OBJECT(focus_controller),
-      LUAKIT_WIDGET_SIGNAL_FOCUS(w)
-      NULL);
-    gtk_widget_add_controller(w->widget, focus_controller);
+    LUAKIT_EVENT_CONTROLLER_MOTION(w->widget, w);
+
+    LUAKIT_EVENT_CONTROLLER_GESTURE(w->widget, w)
+
+    LUAKIT_EVENT_CONTROLLER_SCROLL(w->widget, w)
 
     gtk_widget_show(w->widget);
 

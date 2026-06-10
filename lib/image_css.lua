@@ -84,7 +84,6 @@ webview.add_signal("init", function (view)
             wm:emit_signal(view, "recalc")
         end
     end
-    view:add_signal("resize", recalc_cb)
     view:add_signal("switched-page", recalc_cb)
     view:add_signal("property::zoom_level", recalc_cb)
 end)
