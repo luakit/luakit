@@ -139,7 +139,11 @@ local restore_file = function (file, delete)
             v:add_signal("switched-page", unblock)
         end
         -- Convert state keys from index to w table
-        if w then state[w] = win end
+        if w then
+            state[w] = win
+            webview.modify_load_block(w.view, "session-restore", false)
+            w.view:emit_signal("switched-page")
+        end
     end
     _M.emit_signal("restore", state)
 

@@ -143,8 +143,9 @@ local function window_notebook_page_switch_cb (nb)
     local w = _M.ancestor(nb)
     if not w or w.tabs ~= nb then return end
 
-    w:set_mode()
     w.view = nil
+    w:set_mode()
+    w.win:focus()
     -- Update widgets after tab switch
     luakit.idle_add(function ()
         -- Cancel if window already destroyed
@@ -748,16 +749,16 @@ function _M.new(args)
         w:new_tab(arg)
     end
 
+    -- Make sure something is loaded
+    if w.tabs:count() == 0 then
+        w:new_tab(settings.get_setting("window.home_page"))
+    end
+
     -- Show window
     w.win:show()
 
     -- Set initial mode
     w:set_mode()
-
-    -- Make sure something is loaded
-    if w.tabs:count() == 0 then
-        w:new_tab(settings.get_setting("window.home_page"), false)
-    end
 
     return w
 end
