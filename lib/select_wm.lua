@@ -188,10 +188,18 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
         for i=#r,1,-1 do
             if r[i].width == 0 or r[i].height == 0 then table.remove(r, i) end
         end
-        if #r == 0 then return nil end
+        if #r == 0 then
+            msg.info("get_element_bb_if_visible: no client rects for element %s", tostring(element.tag_name))
+            return nil
+        end
         r = r[1]
     else
         r = client_rects(element) or element.rect
+    end
+
+    if not r then
+        msg.info("get_element_bb_if_visible: r is nil for element %s", tostring(element.tag_name))
+        return nil
     end
 
     local rbb = {
@@ -201,13 +209,19 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
         h = r.height,
     }
 
-    if rbb.w == 0 or rbb.h == 0 then return nil end
+    if rbb.w == 0 or rbb.h == 0 then
+        msg.info("get_element_bb_if_visible: element %s has 0 size: %dx%d", tostring(element.tag_name), rbb.w, rbb.h)
+        return nil
+    end
 
     local style = element.style
     local display = style.display
     local visibility = style.visibility
 
-    if display == 'none' or visibility == 'hidden' then return nil end
+    if display == 'none' or visibility == 'hidden' then
+        msg.info("get_element_bb_if_visible: element %s is display:none or hidden", tostring(element.tag_name))
+        return nil
+    end
 
     -- Clip bounding box!
     if display == "inline" then
@@ -220,7 +234,11 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
         end
     end
 
-    if not bounding_boxes_intersect(wbb, rbb) then return nil end
+    if not bounding_boxes_intersect(wbb, rbb) then
+        msg.info("get_element_bb_if_visible: element %s doesn't intersect wbb: wbb={x=%d,y=%d,w=%d,h=%d}, rbb={x=%d,y=%d,w=%d,h=%d}",
+            tostring(element.tag_name), wbb.x, wbb.y, wbb.w, wbb.h, rbb.x, rbb.y, rbb.w, rbb.h)
+        return nil
+    end
 
     -- If a link element contains one image, use the image dimensions
     if element.tag_name == "A" then
@@ -237,7 +255,9 @@ local function frame_find_hints(client_rects, frame, elements)
     local hints = {}
 
     if type(elements) == "string" then
+        local selector = elements
         elements = frame.body:query(elements)
+        msg.info("frame_find_hints: selector %q matched %d elements", selector, #elements)
     else
         local elems = {}
         for _, e in ipairs(elements) do
@@ -246,6 +266,7 @@ local function frame_find_hints(client_rects, frame, elements)
             end
         end
         elements = elems
+        msg.info("frame_find_hints: list parameter, matched %d elements in frame.doc", #elements)
     end
 
     -- Find the visible bounding box
@@ -257,10 +278,12 @@ local function frame_find_hints(client_rects, frame, elements)
         h = w.inner_height,
     }
 
+    local visible_count = 0
     for _, element in ipairs(elements) do
         local rbb = get_element_bb_if_visible(element,wbb, client_rects)
 
         if rbb then
+            visible_count = visible_count + 1
             local text = ""
             if element.type ~= "password" then
                 text = element.text_content
@@ -270,6 +293,7 @@ local function frame_find_hints(client_rects, frame, elements)
             hints[#hints+1] = { elem = element, bb = rbb, text = text }
         end
     end
+    msg.info("frame_find_hints: %d/%d elements are visible", visible_count, #elements)
 
     return hints
 end
@@ -459,16 +483,20 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         return rect;
     ]=], {"element"})
 
+    msg.info("select_wm.enter: state.frames length = %d, elements query = %s", #state.frames, tostring(elements))
+
     -- Find all hints in the viewport
-    for _, frame in ipairs(state.frames) do
+    for idx, frame in ipairs(state.frames) do
         -- Set up the frame, and find hints
         init_frame(frame, stylesheet)
         frame.hints = frame_find_hints(client_rects, frame, elements)
+        msg.info("select_wm.enter: frame %d hints count = %d", idx, #frame.hints)
         -- Build an array of all hints
         for _, hint in ipairs(frame.hints) do
             state.hints[#state.hints+1] = hint
         end
     end
+    msg.info("select_wm.enter: total hints count = %d", #state.hints)
 
     -- Sort them by on-screen position, and assign labels
     local labels = make_labels(#state.hints)

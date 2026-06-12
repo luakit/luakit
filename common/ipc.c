@@ -314,6 +314,8 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
 {
     g_assert(orig);
     g_assert(new);
+    if (orig->status == IPC_ENDPOINT_CONNECTED)
+        ipc_endpoint_disconnect(orig);
     g_assert(orig->status == IPC_ENDPOINT_DISCONNECTED);
     g_assert(new->status == IPC_ENDPOINT_CONNECTED);
 

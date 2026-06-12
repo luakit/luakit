@@ -176,7 +176,7 @@ luaH_dom_element_rect_index(lua_State *L)
             "  var r = elem.getBoundingClientRect();\n"
             "  return { left: r.left + window.scrollX, top: r.top + window.scrollY };\n"
             "})", -1, NULL, 1);
-        JSCValue *res = jsc_value_function_call(fn, JSC_TYPE_VALUE, JSC_TYPE_VALUE, element->element, G_TYPE_NONE);
+        JSCValue *res = jsc_value_function_call(fn, JSC_TYPE_VALUE, element->element, G_TYPE_NONE);
         JSCValue *prop_val = jsc_value_object_get_property(res, token == L_TK_LEFT ? "left" : "top");
         val = jsc_value_to_double(prop_val);
         g_object_unref(prop_val);
@@ -515,7 +515,7 @@ luaH_dom_element_add_event_listener(lua_State *L)
             "    }, capture);\n"
             "})", -1, NULL, 1);
 
-        JSCValue *res = jsc_value_function_call(add_listener_fn, G_TYPE_NONE, JSC_TYPE_VALUE, element->element, G_TYPE_STRING, type, G_TYPE_BOOLEAN, capture, G_TYPE_NONE);
+        JSCValue *res = jsc_value_function_call(add_listener_fn, JSC_TYPE_VALUE, element->element, G_TYPE_STRING, type, G_TYPE_BOOLEAN, capture, G_TYPE_NONE);
         if (res) g_object_unref(res);
         g_object_unref(add_listener_fn);
     }
@@ -686,14 +686,21 @@ luaH_dom_element_index(lua_State *L)
             g_object_unref(text);
             return 1;
         }
+        case L_TK_CHILD_COUNT: {
+            JSCValue *count = jsc_value_object_get_property(element->element, "childElementCount");
+            gint32 val = jsc_value_to_int32(count);
+            lua_pushinteger(L, val);
+            g_object_unref(count);
+            return 1;
+        }
         case L_TK_FIRST_CHILD: {
-            JSCValue *first = jsc_value_object_get_property(element->element, "firstChild");
+            JSCValue *first = jsc_value_object_get_property(element->element, "firstElementChild");
             gint ret = luaH_dom_element_from_node(L, first);
             g_object_unref(first);
             return ret;
         }
         case L_TK_NEXT_SIBLING: {
-            JSCValue *next = jsc_value_object_get_property(element->element, "nextSibling");
+            JSCValue *next = jsc_value_object_get_property(element->element, "nextElementSibling");
             gint ret = luaH_dom_element_from_node(L, next);
             g_object_unref(next);
             return ret;

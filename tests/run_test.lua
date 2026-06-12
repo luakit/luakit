@@ -122,7 +122,9 @@ local function spawn_luakit_instance(config, ...)
         XDG_CONFIG_HOME = dir .. "/config",
         XDG_RUNTIME_DIR = dir .. "/runtime",
         XDG_CONFIG_DIRS = "",
-        DISPLAY = xvfb_display
+        DISPLAY         = xvfb_display,
+        LUA_PATH        = util.getenv("LUA_PATH") or "",
+        LUA_CPATH       = util.getenv("LUA_CPATH") or "",
     }
 
     -- HACK: make GStreamer shut up about not finding random .so files
@@ -138,7 +140,7 @@ local function spawn_luakit_instance(config, ...)
     -- Build env prefix
     local cmd = "env -i - "
     for k, v in pairs(env) do
-        cmd = cmd .. k .."=" .. v .. " "
+        cmd = cmd .. k .."=" .. string.format("%q", v) .. " "
     end
 
     cmd = cmd .. "./luakit -U --log=error -c " .. config .. " " .. table.concat({...}, " ")  .. " 2>&1"

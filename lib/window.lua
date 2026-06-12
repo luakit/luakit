@@ -115,15 +115,14 @@ function _M.build(w)
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
     w.bar_layout:pack(i.layout)
-    i.input.css = "border: 0;"
+    i.input.css = "border: 0; transition: 0.0s ease-in-out;"
     i.layout.css = "transition: 0.0s ease-in-out;"
-    i.input.css = "transition: 0.0s ease-in-out;"
 
     m.label.align = { v = "center" }
     i.prompt.align = { v = "center" }
     s.layout.align = { v = "center" }
 
-    w.bar_layout.homogeneous = true
+    w.bar_layout.homogeneous = false
     w.layout:pack(w.bar_layout)
 
     -- Other settings
@@ -345,7 +344,7 @@ _M.methods = {
         if w_priv[w].input_text then
             w.bar_layout.visible_child = w.ibar.layout
         elseif w_priv[w].prompt_text then
-            w.bar_layout.visible_child = w.mbar.layout
+            w.bar_layout.visible_child = w.mbar.label
         else
             w.bar_layout.visible_child = w.sbar.layout
         end

@@ -128,8 +128,9 @@ ipc_recv_crash(ipc_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNU
 static void
 emit_page_created_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
+    guint64 page_id = webkit_web_page_get_id(web_page);
     ipc_page_created_t msg = {
-        .page_id = webkit_web_page_get_id(web_page),
+        .page_id = page_id,
         .pid = getpid(),
     };
 

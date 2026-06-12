@@ -313,6 +313,7 @@ end)
 -- @treturn table|nil The window class table for the window that contains `view`,
 -- or `nil` if `view` is not contained within a window.
 function _M.window(view)
+    if not view.is_alive then return nil end
     assert(type(view) == "widget" and view.type == "webview")
     return window.ancestor(view)
 end

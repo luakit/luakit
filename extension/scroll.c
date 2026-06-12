@@ -41,6 +41,7 @@ static void
 js_scroll_event_cb(guint64 page_id, gint h, gint v, gint subtype, gpointer UNUSED(user_data))
 {
     WebKitWebPage *web_page = webkit_web_process_extension_get_page(extension.ext, page_id);
+    g_print("[Extension Debug] js_scroll_event_cb: h=%d, v=%d, subtype=%d\n", h, v, subtype);
     if (web_page) {
         send_scroll_msg(h, v, web_page, (ipc_scroll_subtype_t)subtype);
     }
@@ -64,7 +65,7 @@ web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
         "        _luakit_scroll_event(page_id, h, v, subtype);\n"
         "    }\n"
         "    window.addEventListener('scroll', function() {\n"
-        "        send(window.scrollX, window.scrollY, 0);\n"
+        "        send(window.scrollX, window.scrollY, 2);\n"
         "    });\n"
         "    window.addEventListener('resize', function() {\n"
         "        send(window.innerWidth, window.innerHeight, 1);\n"
@@ -78,13 +79,13 @@ web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
         "        if (h !== scrollWidthPrev || v !== scrollHeightPrev) {\n"
         "            scrollWidthPrev = h;\n"
         "            scrollHeightPrev = v;\n"
-        "            send(h, v, 2);\n"
+        "            send(h, v, 0);\n"
         "        }\n"
         "    }\n"
         "    if (document.documentElement) {\n"
         "        document.documentElement.addEventListener('DOMSubtreeModified', checkDocResize);\n"
         "    }\n"
-        "    send(window.scrollX, window.scrollY, 0);\n"
+        "    send(window.scrollX, window.scrollY, 2);\n"
         "    send(window.innerWidth, window.innerHeight, 1);\n"
         "    checkDocResize();\n"
         "})(%lu);";
@@ -107,10 +108,11 @@ void
 web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
 {
     WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
+    g_print("[Extension Debug] web_scroll_to: scroll_x=%d, scroll_y=%d\n", scroll_x, scroll_y);
     if (!page)
         return;
     WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-    WebKitScriptWorld *world = extension.script_world;
+    WebKitScriptWorld *world = webkit_script_world_get_default();
     JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
 
     gchar *script = g_strdup_printf("window.scrollTo(%d, %d);", scroll_x, scroll_y);

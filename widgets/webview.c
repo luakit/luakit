@@ -32,6 +32,7 @@
 #include "web_context.h"
 #include "common/ipc.h"
 #include "common/luayield.h"
+#include "ipc.h"
 
 typedef struct {
     /** The parent widget_t struct */
@@ -154,7 +155,7 @@ webview_get_by_id(guint64 view_id)
 {
     for (unsigned i = 0; i < globalconf.webviews->len; i++) {
         widget_t *w = g_ptr_array_index(globalconf.webviews, i);
-        if (webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget)) == view_id)
+        if (w->widget && webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget)) == view_id)
             return w;
     }
     return NULL;
@@ -709,6 +710,12 @@ static void
 uri_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
 {
     update_uri(w, NULL);
+}
+
+static void
+page_id_changed_cb(WebKitWebView* UNUSED(v), GParamSpec *UNUSED(param_spec), widget_t *w)
+{
+    ipc_associate_pending_webview(w);
 }
 
 static gboolean
@@ -1421,6 +1428,7 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::context-menu-dismissed",               G_CALLBACK(hide_popup_cb),                w,
       "signal::notify::favicon",                      G_CALLBACK(favicon_cb),                   w,
       "signal::notify::uri",                          G_CALLBACK(uri_cb),                       w,
+      "signal::notify::page-id",                      G_CALLBACK(page_id_changed_cb),           w,
       "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
       "signal::permission-request",                   G_CALLBACK(permission_request_cb),        w,
       NULL);
