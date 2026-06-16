@@ -216,7 +216,19 @@ function _M.methods.scroll(view, w, new)
     for _, axis in ipairs{ "x", "y" } do
         -- Relative px movement
         if rawget(new, axis.."rel") then
-            s[axis] = s[axis] + new[axis.."rel"]
+            local dir = axis == "x" and "Width" or "Height"
+            local js = string.format([=[
+                Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
+            ]=], dir, dir)
+            w.view:eval_js(js, { callback = function (max)
+                local scroll_to = s[axis] + new[axis.."rel"]
+                if scroll_to > max then
+                    scroll_to = max
+                elseif scroll_to < 0 then
+                    scroll_to = 0
+                end
+                s[axis] = scroll_to
+            end})
 
         -- Relative page movement
         elseif rawget(new, axis .. "pagerel") then
