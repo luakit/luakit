@@ -124,7 +124,7 @@ local build_log_entry_html = function (entry)
     return log_entry_fmt:gsub("{(%w+)}", {
         time = string.format("%012f", entry.time),
         llevel = entry.level,
-        level = entry.level:gsub("^%l", string.upper),
+        level = entry.level:gsub("^%l", function(c) return c:upper() end),
         group = entry.group,
         groupkey = entry.group:gsub("/","-"),
         msg = entry.msg,
@@ -252,7 +252,7 @@ msg.add_signal("log", function (time, level, group, msg)
         time = time,
         level = level,
         group = group,
-        msg = msg:gsub("^%l", string.upper):gsub(string.char(27) .. '%[%d+m', '')
+        msg = msg:gsub("^%l", function(c) return c:upper() end):gsub(string.char(27) .. '%[%d+m', '')
     })
 
     if level == "warn" then

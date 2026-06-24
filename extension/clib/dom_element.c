@@ -19,6 +19,8 @@
 #include "extension/clib/dom_element.h"
 #include "extension/clib/dom_document.h"
 #include "common/luauniq.h"
+#include "common/log.h"
+#include "common/luajs.h"
 #include "extension/extension.h"
 #include "common/tokenize.h"
 
@@ -608,14 +610,40 @@ static gint
 luaH_dom_element_client_rects(lua_State *L)
 {
     dom_element_t *element = luaH_check_dom_element(L, 1);
+    JSCContext *ctx = jsc_value_get_context(element->element);
+
     JSCValue *rects = jsc_value_object_invoke_method(element->element, "getClientRects", G_TYPE_NONE);
+    JSCException *exception = jsc_context_get_exception(ctx);
+    if (exception) {
+        char *e = jsc_exception_to_string(exception);
+        warn("JSC exception in getClientRects: %s", e);
+        g_free(e);
+        jsc_context_clear_exception(ctx);
+        if (rects) g_object_unref(rects);
+        lua_newtable(L);
+        return 1;
+    }
+
+    if (jsc_value_is_null(rects) || jsc_value_is_undefined(rects)) {
+        g_object_unref(rects);
+        lua_newtable(L);
+        return 1;
+    }
+
     JSCValue *len_val = jsc_value_object_get_property(rects, "length");
-    gint num_rects = jsc_value_to_int32(len_val);
+    gint num_rects = 0;
+    if (!jsc_value_is_null(len_val) && !jsc_value_is_undefined(len_val)) {
+        num_rects = jsc_value_to_int32(len_val);
+    }
     g_object_unref(len_val);
 
     lua_createtable(L, num_rects, 0);
     for (gint i = 0; i < num_rects; ++i) {
         JSCValue *rect = jsc_value_object_get_property_at_index(rects, i);
+        if (jsc_value_is_null(rect) || jsc_value_is_undefined(rect)) {
+            g_object_unref(rect);
+            continue;
+        }
         lua_newtable(L);
 
 #define PROP(prop) \
@@ -636,6 +664,9 @@ luaH_dom_element_client_rects(lua_State *L)
         lua_rawseti(L, -2, i+1);
     }
     g_object_unref(rects);
+
+    luajs_log_and_clear_exception(ctx, "getClientRects parsing");
+
     return 1;
 }
 

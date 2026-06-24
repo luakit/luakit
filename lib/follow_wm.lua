@@ -26,16 +26,73 @@ local evaluators = {
             ui:emit_signal("click_a_target_blank", page.id, element.href)
             return
         end
-        -- Find the element directly in the centre of the link
-        if element.child_count > 0 then
-            local r = element.rect
-            local doc = element.owner_document
-            local scroll = page:eval_js([=[ window.scrollX + ' ' + window.scrollY; ]=])
-            local scrollX, scrollY = scroll:match("^(%S+) (%S+)$")
-            element = doc:element_from_point(r.left - scrollX + r.width/2,
-                                             r.top - scrollY + r.height/2) or element
+        -- Find and click the element directly in the centre of the link, with shadow DOM and anchor navigation support
+        local click_func, err = page:wrap_js([=[
+            try {
+                if (element.childElementCount > 0) {
+                    var rects = element.getClientRects();
+                    if (rects && rects.length > 0) {
+                        var r = rects[0];
+                        var x = r.left + r.width / 2;
+                        var y = r.top + r.height / 2;
+                        var point_elem = document.elementFromPoint(x, y);
+                        if (point_elem) {
+                            var is_desc = false;
+                            var curr = point_elem;
+                            while (curr) {
+                                if (curr === element) {
+                                    is_desc = true;
+                                    break;
+                                }
+                                curr = curr.parentNode || curr.host;
+                            }
+                            if (is_desc) {
+                                element = point_elem;
+                            }
+                        }
+                    }
+                }
+            } catch(e) {}
+
+            var anchor = element;
+            while (anchor && (!anchor.tagName || anchor.tagName.toUpperCase() !== 'A')) {
+                if (anchor === document || anchor === window) {
+                    anchor = null;
+                    break;
+                }
+                anchor = anchor.parentNode || anchor.host;
+            }
+
+            if (anchor && anchor !== element) {
+                var event = new MouseEvent('click', {
+                    bubbles: true,
+                    cancelable: true,
+                    view: window
+                });
+                var not_prevented = element.dispatchEvent(event);
+                if (not_prevented && anchor.href && typeof anchor.click === 'function') {
+                    anchor.click();
+                }
+            } else {
+                var clickTarget = element;
+                while (clickTarget && typeof clickTarget.click !== 'function') {
+                    if (clickTarget === document || clickTarget === window) {
+                        clickTarget = null;
+                        break;
+                    }
+                    clickTarget = clickTarget.parentNode || clickTarget.host;
+                }
+                if (clickTarget) {
+                    clickTarget.click();
+                }
+            }
+        ]=], {"element"})
+        if click_func then
+            click_func(element)
+        else
+            msg.warn("wrap_js click failed: %s", err)
+            element:click()
         end
-        element:click()
     end,
     focus = function(element)
         element:focus()
