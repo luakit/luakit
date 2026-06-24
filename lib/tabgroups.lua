@@ -79,7 +79,7 @@ local function webview2idx(view)
     -- this case means that we messed with webviews somehow and attached it
     -- to different notebook manually. hope we don't need to workaroudn
     -- such setups.
-    return nb:indexof(view)
+    return nb and nb:indexof(view)
 end
 
 -- return table with tabgroup info

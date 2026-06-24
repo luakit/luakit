@@ -462,7 +462,7 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     state.hints = {}
     state.ignore_case = ignore_case or false
 
-    local client_rects = page:wrap_js([=[
+    local client_rects, err = page:wrap_js([=[
         var rects = element.getClientRects();
         if (rects.length == 0)
             return undefined;
@@ -482,6 +482,10 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         rect.height = rect.bottom - rect.top;
         return rect;
     ]=], {"element"})
+
+    if not client_rects and err then
+        msg.info("wrap_js failed: %s", err)
+    end
 
     msg.info("select_wm.enter: state.frames length = %d, elements query = %s", #state.frames, tostring(elements))
 
