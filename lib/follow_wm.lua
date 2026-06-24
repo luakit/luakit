@@ -33,7 +33,7 @@ local evaluators = {
             local scroll = page:eval_js([=[ window.scrollX + ' ' + window.scrollY; ]=])
             local scrollX, scrollY = scroll:match("^(%S+) (%S+)$")
             element = doc:element_from_point(r.left - scrollX + r.width/2,
-                                             r.top - scrollY + r.height/2)
+                                             r.top - scrollY + r.height/2) or element
         end
         element:click()
     end,
