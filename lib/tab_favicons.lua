@@ -31,6 +31,21 @@ tab.add_signal("build", function (tl, view)
 
     local update_favicon = function (v)
         local uri = v.uri or "about:blank"
+        if not fav.is_alive then return end
+
+        if v.private then
+            fav:filename("icons/tab-icon-private.png")
+            return
+        end
+        if uri:match("^luakit://") then
+            fav:filename("icons/tab-icon-chrome.png")
+            return
+        end
+        if uri == "about:blank" then
+            fav:filename("icons/tab-icon-page.png")
+            return
+        end
+
         local favicon_js = [=[
             favicon = document.evaluate('//link[(@rel="icon") or (@rel="shortcut icon")]/@href',
                 document, null, XPathResult.STRING_TYPE, null).stringValue || '/favicon.ico';
@@ -40,8 +55,6 @@ tab.add_signal("build", function (tl, view)
             if not fav.is_alive then return end
             favicon_uri = favicon_uri:match("^luakit://(.*)")
             if favicon_uri then fav:filename(favicon_uri)
-            elseif v.private then fav:filename("icons/tab-icon-private.png")
-            elseif uri:match("^luakit://") then fav:filename("icons/tab-icon-chrome.png")
             elseif not fav:set_favicon_for_uri(uri) then
                 fav:filename("icons/tab-icon-page.png")
             end

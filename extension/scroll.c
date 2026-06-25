@@ -51,9 +51,13 @@ static void
 web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     guint64 page_id = webkit_web_page_get_id(web_page);
-    WebKitFrame *frame = webkit_web_page_get_main_frame(web_page);
+    WebKitFrame *frame = web_page_get_main_frame(web_page);
+    if (!frame)
+        return;
     WebKitScriptWorld *world = extension.script_world;
     JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (!ctx)
+        return;
 
     JSCValue *func = jsc_value_new_function(ctx, NULL, G_CALLBACK(js_scroll_event_cb), NULL, NULL, G_TYPE_NONE, 4, G_TYPE_UINT64, G_TYPE_INT, G_TYPE_INT, G_TYPE_INT);
     jsc_context_set_value(ctx, "_luakit_scroll_event", func);
@@ -111,9 +115,13 @@ web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
     g_print("[Extension Debug] web_scroll_to: scroll_x=%d, scroll_y=%d\n", scroll_x, scroll_y);
     if (!page)
         return;
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
+    WebKitFrame *frame = web_page_get_main_frame(page);
+    if (!frame)
+        return;
     WebKitScriptWorld *world = webkit_script_world_get_default();
     JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (!ctx)
+        return;
 
     gchar *script = g_strdup_printf("window.scrollTo(%d, %d);", scroll_x, scroll_y);
     JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, script, -1, NULL, 1);

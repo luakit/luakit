@@ -102,9 +102,8 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
         return;
     }
 
-    // TODO:  replace depricated function
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-    JSCContext *ctx = webkit_frame_get_js_context(frame);
+    WebKitFrame *frame = web_page_get_main_frame(page);
+    JSCContext *ctx = frame ? webkit_frame_get_js_context(frame) : NULL;
     if (!ctx) {
         lua_pushnil(L);
         lua_pushstring(L, "JavaScript context not available");

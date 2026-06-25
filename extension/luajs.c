@@ -81,7 +81,10 @@ luaJS_promise_resolve_reject(lua_State *L)
     WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     if (!page || !WEBKIT_IS_WEB_PAGE(page))
         return luaL_error(L, "promise no longer valid (associated page closed)");
-    JSCContext *context = webkit_frame_get_js_context(webkit_web_page_get_main_frame(page));
+    WebKitFrame *frame = web_page_get_main_frame(page);
+    if (!frame)
+        return luaL_error(L, "promise no longer valid (frame not ready)");
+    JSCContext *context = webkit_frame_get_js_context(frame);
     js_promise_t *promise = (js_promise_t*)lua_topointer(L, lua_upvalueindex(2));
 
     JSCValue *cb = lua_toboolean(L, lua_upvalueindex(3)) ? promise->resolve : promise->reject;
@@ -209,6 +212,10 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
 static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
+    if (webkit_frame_is_main_frame(frame)) {
+        g_object_set_data(G_OBJECT(web_page), "luakit-main-frame", frame);
+    }
+
     if (!webkit_frame_is_main_frame(frame))
         return;
 

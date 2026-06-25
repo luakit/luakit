@@ -43,6 +43,8 @@ typedef struct _extension_t {
 
 extern extension_t extension;
 
+WebKitFrame *web_page_get_main_frame(WebKitWebPage *page);
+
 #endif
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

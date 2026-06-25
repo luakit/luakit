@@ -116,4 +116,11 @@ webkit_web_process_extension_initialize_with_user_data(WebKitWebProcessExtension
     ipc_send(extension.ipc, &header, NULL);
 }
 
+WebKitFrame *
+web_page_get_main_frame(WebKitWebPage *page)
+{
+    g_return_val_if_fail(page != NULL, NULL);
+    return g_object_get_data(G_OBJECT(page), "luakit-main-frame");
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80
