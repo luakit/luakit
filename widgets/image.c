@@ -57,40 +57,16 @@ luaH_image_set_from_file_name(lua_State *L)
         }
     }
 
-    /* Load image into pixbuf */
-    GError *error;
-fallback:
-    error = NULL;
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(x2_path ?: path, &error);
-    if (error)
-        verbose("unable to load image file: %s", error->message);
-    if (error && x2_path) {
-        g_error_free(error);
-        g_free(x2_path);
-        x2_path = NULL;
-        goto fallback;
-    }
+    /* 2. Instantiate a modern GTK 4 texture from the scaled pixbuf */
+    GError *error = NULL;
+    GdkTexture *texture = gdk_texture_new_from_filename(x2_path ?: path, &error);
     if (error) {
         lua_pushstring(L, error->message);
         g_error_free(error);
         g_free(path);
+        g_free(x2_path);
         return luaL_error(L, "unable to load image file: %s", lua_tostring(L, -1));
     }
-
-    if (w->data) {
-        g_cancellable_cancel(w->data);
-        g_clear_object(&w->data);
-    }
-
-    GdkPixbuf *scaled_pixbuf = gdk_pixbuf_scale_simple(
-        pixbuf,
-        scale,
-        scale,
-        GDK_INTERP_BILINEAR
-    );
-
-    /* 2. Instantiate a modern GTK 4 texture from the scaled pixbuf */
-    GdkTexture *texture = gdk_texture_new_for_pixbuf(scaled_pixbuf);
 
     gtk_image_set_from_paintable(GTK_IMAGE(w->widget), GDK_PAINTABLE(texture));
 

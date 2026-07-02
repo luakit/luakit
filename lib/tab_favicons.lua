@@ -60,37 +60,32 @@ tab.add_signal("build", function (tl, view)
             end
         end})
     end
-    view:add_signal("favicon", update_favicon)
     -- luakit:// URIs don't emit favicon signal
-    view:add_signal("property::uri", function (v)
-        if webview.has_load_block(v) then update_favicon(v) return end
-        if v.uri:match("^luakit://") then update_favicon(v) return end
-    end)
+    -- view:add_signal("property::uri", function (v)
+    --     if v.uri:match("^luakit://") then update_favicon(v) return end
+    --     if webview.has_load_block(v) then update_favicon(v) return end
+    -- end)
+    view:add_signal("favicon", update_favicon)
 
-    local is_loading_cb = function (v)
+    local load_status_cb = function (v, status)
         if v.is_loading then
             fav:hide() spin:show()
         else
             fav:show() spin:hide()
         end
-    end
-    view:add_signal("property::is_loading", is_loading_cb)
-
-    local finished_cb = function (v, status)
         if status == "finished" then update_favicon(v) end
     end
-    view:add_signal("load-status", finished_cb)
+    view:add_signal("load-status", load_status_cb)
 
     tl.widget:add_signal("destroy", function ()
         view:remove_signal("favicon", update_favicon)
         view:remove_signal("property::uri", update_favicon)
-        view:remove_signal("property::is_loading", is_loading_cb)
-        view:remove_signal("load-status", finished_cb)
+        view:remove_signal("load-status", load_status_cb)
     end)
 
-    spin:start();
-    (view.is_loading and fav or spin):hide()
-    update_favicon(view)
+    -- spin:start();
+    -- (view.is_loading and fav or spin):hide()
+    -- update_favicon(view)
 end)
 
 -- Remove tab numbers
