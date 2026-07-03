@@ -468,14 +468,14 @@ webview.add_signal("init", function (view)
         new_web_extension_created = nil
     end)
 
-    -- if adblocking is disabled, unblock the tab as soon as it's switched to
-    local function unblock(vv)
+end)
+
+window.add_signal("init", function (w)
+    w.tabs:add_signal("switch-page", function (nb, child)
         if not _M.enabled then
-            webview.modify_load_block(vv, "adblock", false)
+            webview.modify_load_block(child, "adblock", false)
         end
-        vv:remove_signal("switched-page", unblock)
-    end
-    view:add_signal("switched-page", unblock)
+    end)
 end)
 adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     for _, ww in pairs(window.bywidget) do

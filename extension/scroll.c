@@ -54,8 +54,7 @@ web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
     WebKitFrame *frame = web_page_get_main_frame(web_page);
     if (!frame)
         return;
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
     if (!ctx)
         return;
 
@@ -118,8 +117,7 @@ web_scroll_to(guint64 page_id, gint scroll_x, gint scroll_y)
     WebKitFrame *frame = web_page_get_main_frame(page);
     if (!frame)
         return;
-    WebKitScriptWorld *world = webkit_script_world_get_default();
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
     if (!ctx)
         return;
 

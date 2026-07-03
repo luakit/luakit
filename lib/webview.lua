@@ -326,6 +326,7 @@ end)
 -- or `nil` if `view` is not contained within a window.
 function _M.window(view)
     if not view.is_alive then return nil end
+    -- if not view.is_alive then return nil end
     assert(type(view) == "widget" and view.type == "webview")
     return window.ancestor(view)
 end
@@ -405,18 +406,21 @@ end
 -- Insert webview method lookup on window structure
 table.insert(window.indexes, 1, function (w, k)
     if k == "view" then
-        local view = w.tabs[w.tabs:current()]
+        local tabs = w.tabs
+        local view = tabs and tabs:current() and tabs[tabs:current()]
         if view and type(view) == "widget" and view.type == "webview" then
-            w.view = view
             return view
         end
     end
+
     -- Lookup webview method
     local func = _M.methods[k]
-    if not func then return end
-    local view = w.view
-    if view then
-        return function (_, ...) return func(view, w, ...) end
+    if func then
+        local tabs = w.tabs
+        local view = tabs and tabs:current() and tabs[tabs:current()]
+        if view and type(view) == "widget" and view.type == "webview" then
+            return function (_, ...) return func(view, w, ...) end
+        end
     end
 end)
 

@@ -16,18 +16,14 @@ local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
 local tabgroups = require('tabgroups')
 
+local window = require("window")
+
 local widgets = {
     update = function (w,tgname)
         tgname.text = lousy.util.escape('['..tabgroups.current_tabgroup(w)..']')
     end,
 }
 
-webview.add_signal("init", function (view)
-    -- `switch_tabgroup()` and `tabgroup-menu-rename` emit `switched-page`
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
-end)
 
 local function new()
     local tgname = widget{type="label"}

@@ -173,8 +173,7 @@ luaH_page_eval_js(lua_State *L)
         lua_pushstring(L, "JavaScript context not available (frame not ready)");
         return 2;
     }
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
     if (!ctx) {
         lua_pushnil(L);
         lua_pushstring(L, "JavaScript context not available");

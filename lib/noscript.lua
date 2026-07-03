@@ -170,6 +170,10 @@ window.add_signal("init", function (w)
     r.layout:pack(r.noscript)
     r.layout:reorder(r.noscript, 1)
     r.noscript.font = theme.font
+
+    w.tabs:add_signal("switch-page", function (nb, child)
+        noscript_indicator_update(child)
+    end)
 end)
 
 local update_webview_blocking = function (v)
@@ -201,17 +205,13 @@ webview.add_signal("init", function (view)
         update_webview_blocking(v)
     end)
 
-    -- Update on history navigation
     view:add_signal("load-status", function (v, status)
         if status == "committed" then
             update_webview_blocking(v)
         end
     end)
-
-    view:add_signal("switched-page", function (v)
-        noscript_indicator_update(v)
-    end)
 end)
+
 
 
 add_binds("normal", {

@@ -13,12 +13,21 @@ local _M = {}
 -- @tparam table widgets A table of widgets
 -- @tparam widget widget A newly-created widget
 -- @return Returns `widget`, to allow easy chaining.
+local all_widget_groups = {}
+
 _M.add_widget = function (widgets, widget)
     assert(type(widgets) == "table")
     table.insert(widgets, widget)
-    widget:add_signal("destroy", function (wi)
-        table.remove(widgets, lousy.util.table.hasitem(widgets, wi))
-    end)
+    local found = false
+    for _, g in ipairs(all_widget_groups) do
+        if g == widgets then
+            found = true
+            break
+        end
+    end
+    if not found then
+        table.insert(all_widget_groups, widgets)
+    end
     return widget
 end
 
@@ -28,10 +37,19 @@ end
 _M.update_widgets_on_w = function (widgets, w, ...)
     assert(type(widgets) == "table")
     assert(w.win.type == "window")
-    for _, widget in ipairs(widgets) do
-        if window.ancestor(widget) == w then
+    for i = #widgets, 1, -1 do
+        local widget = widgets[i]
+        if not widget.is_alive then
+            table.remove(widgets, i)
+        elseif window.ancestor(widget) == w then
             widgets.update(w, widget, ...)
         end
+    end
+end
+
+_M.update_all_widgets_on_w = function (w, ...)
+    for _, widgets in ipairs(all_widget_groups) do
+        _M.update_widgets_on_w(widgets, w, ...)
     end
 end
 

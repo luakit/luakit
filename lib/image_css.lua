@@ -78,14 +78,18 @@ webview.add_signal("init", function (view)
         end
     end)
 
-    local recalc_cb = function (v)
+    view:add_signal("property::zoom_level", function (v)
         local w = window.ancestor(v)
         if w and w.view == v then
-            wm:emit_signal(view, "recalc")
+            wm:emit_signal(v, "recalc")
         end
-    end
-    view:add_signal("switched-page", recalc_cb)
-    view:add_signal("property::zoom_level", recalc_cb)
+    end)
+end)
+
+window.add_signal("init", function (w)
+    w.tabs:add_signal("switch-page", function (nb, child)
+        wm:emit_signal(child, "recalc")
+    end)
 end)
 
 return _M

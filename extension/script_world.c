@@ -29,7 +29,7 @@ script_world_window_object_cleared_cb(WebKitScriptWorld *UNUSED(world), WebKitWe
 void
 web_script_world_init(void)
 {
-    extension.script_world = webkit_script_world_new();
+    extension.script_world = webkit_script_world_new_with_name("luakit-world");
     WebKitScriptWorld *world = webkit_script_world_get_default();
     g_signal_connect(world, "window-object-cleared",
             G_CALLBACK(script_world_window_object_cleared_cb), NULL);

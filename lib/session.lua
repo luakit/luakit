@@ -130,19 +130,19 @@ local restore_file = function (file, delete)
                 v = w:new_tab(settings.get_setting("window.new_tab_page"), { switch = item.current })
             end
             -- Block the tab load, then set its location
-            webview.modify_load_block(v, "session-restore", true)
+            -- webview.modify_load_block(v, "session-restore", true)
             webview.set_location(v, { session_state = item.session_state, uri = item.uri })
-            local function unblock(vv)
-                webview.modify_load_block(vv, "session-restore", false)
-                vv:remove_signal("switched-page", unblock)
-            end
-            v:add_signal("switched-page", unblock)
+            -- local function unblock(vv)
+            --     webview.modify_load_block(vv, "session-restore", false)
+            --     vv:remove_signal("switched-page", unblock)
+            -- end
+            -- v:add_signal("switched-page", unblock)
         end
         -- Convert state keys from index to w table
         if w then
             state[w] = win
-            webview.modify_load_block(w.view, "session-restore", false)
-            w.view:emit_signal("switched-page")
+            -- webview.modify_load_block(w.view, "session-restore", false)
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
         end
     end
     _M.emit_signal("restore", state)
@@ -237,18 +237,17 @@ window.add_signal("init", function (w)
     w.tabs:add_signal("page-reordered", function ()
         start_timeout()
     end)
+
+    w.tabs:add_signal("switch-page", function ()
+        start_timeout()
+    end)
 end)
 
 webview.add_signal("init", function (view)
-    -- Save session state after page navigation
     view:add_signal("load-status", function (_, status)
         if status == "committed" then
             start_timeout()
         end
-    end)
-    -- Save session state after switching page (session includes current tab)
-    view:add_signal("switched-page", function ()
-        start_timeout()
     end)
 end)
 

@@ -14,8 +14,11 @@ local wc = require("lousy.widget.common")
 local _M = {}
 
 local widgets = {
-    update = function (w, label)
-        w.view:eval_js([=[
+    update = function (w, label, view)
+        view = view or w.view
+        if not view then return end
+
+        view:eval_js([=[
             (function () {
                 var y = window.scrollY;
                 var max = Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0);
@@ -39,14 +42,12 @@ local widgets = {
 webview.add_signal("init", function (view)
     view:add_signal("expose", function (v)
         local w = webview.window(v)
-        if w.view == v then
-            wc.update_widgets_on_w(widgets, w)
+        if w and w.view == v then
+            wc.update_widgets_on_w(widgets, w, v)
         end
     end)
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
 end)
+
 
 local function new()
     local scroll = widget{type="label"}

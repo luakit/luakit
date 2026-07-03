@@ -205,11 +205,6 @@ local function open_new_tab_in_tabgroup (w, group, uri, opts)
         local view = webview.new({ private = opts.private })
         if opts.session_restore then
             webview.modify_load_block(view, "tabgroups-restore", true)
-            local function unblock(vv)
-                webview.modify_load_block(vv, "tabgroups-restore", false)
-                vv:remove_signal("switched-page", unblock)
-            end
-            view:add_signal("switched-page", unblock)
         end
         -- copy/pasted from attach_tab function in window module
         local order = opts.order
@@ -248,6 +243,10 @@ local function _cleaner()
 end
 
 window.add_signal("init", function (w)
+    w.tabs:add_signal("switch-page", function (nb, child)
+        webview.modify_load_block(child, "tabgroups-restore", false)
+    end)
+
     local group_name = _get_next_tabgroup_name(w)
     w2groups[w] = { active = group_name , groups = {},  }
 
@@ -550,7 +549,7 @@ switch_tabgroup = function  (w, group)
         luakit.idle_add(function ()
             -- Cancel if window already destroyed
             if not w.win or not w.view then return end
-            w.view:emit_signal("switched-page")
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
             w:update_win_title()
         end)
     end
@@ -696,7 +695,7 @@ new_mode("tabgroup-menu-rename", {
             if w2groups[w].active == old_name then
                 w2groups[w].active = new_name
             end
-            w.view:emit_signal("switched-page") -- a `tabgroup-changed` signal may be more appropriate,
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current()) -- a `tabgroup-changed` signal may be more appropriate,
                                                 -- (both here, and in `switch_tabgroup` above)..
         end
         w:set_mode('tabgroup-menu')
