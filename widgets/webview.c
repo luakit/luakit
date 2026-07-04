@@ -1312,10 +1312,6 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
 gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
-    /* Give webview a new disconnected IPC endpoint */
-    webview_data_t *d = w->data;
-    d->ipc = ipc_endpoint_new("UI");
-
     /* Emit 'crashed' signal on web view */
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);

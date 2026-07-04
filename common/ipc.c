@@ -84,11 +84,11 @@ ipc_send_thread(gpointer UNUSED(user_data))
 
         if((ipc->channel != NULL) && (ipc->status == IPC_ENDPOINT_CONNECTED))
             g_io_channel_write_chars(ipc->channel, (gchar*)data, header->length, NULL, NULL);
-
-        if((ipc->channel != NULL) && (ipc->status == IPC_ENDPOINT_CONNECTED))
-            ipc_endpoint_decref(ipc);
         else
             error("Trying to send an ipc message, but the endpoint went away.");
+
+        /* Remove keep-alive reference */
+        ipc_endpoint_decref(ipc);
 
         g_free(out);
     }
@@ -153,12 +153,8 @@ ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc)
              *
              * If we do not close the socket, glib will continue to
              * call the G_IO_IN handler.
-             *
-             * We decrement the refcount to 1 here, and when ipc_recv
-             * decrements the refcount to zero, the socket will be
-             * disconnected.
              */
-            g_atomic_int_dec_and_test(&ipc->refcount);
+            ipc_endpoint_disconnect(ipc);
             return;
         case G_IO_STATUS_ERROR:
             if (!g_str_equal(ipc->name, "UI"))
@@ -201,9 +197,11 @@ ipc_recv_and_dispatch_or_enqueue(ipc_endpoint_t *ipc)
 static gboolean
 ipc_recv(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *ipc)
 {
+    /* Keep the endpoint alive while the message is being received */
     if (!ipc_endpoint_incref(ipc))
         return TRUE;
     ipc_recv_and_dispatch_or_enqueue(ipc);
+    /* Remove keep-alive reference */
     ipc_endpoint_decref(ipc);
     return TRUE;
 }
@@ -213,7 +211,7 @@ ipc_hup(GIOChannel *UNUSED(channel), GIOCondition UNUSED(cond), ipc_endpoint_t *
 {
     g_assert(ipc->status == IPC_ENDPOINT_CONNECTED);
     g_assert(ipc->channel);
-    ipc_endpoint_decref(ipc);
+    ipc_endpoint_disconnect(ipc);
     return TRUE;
 }
 
