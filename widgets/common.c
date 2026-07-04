@@ -89,7 +89,7 @@ scroll_cb(GtkEventControllerScroll *controller, double dx, double dy, widget_t *
     lua_pushnumber(L, dx);
     lua_pushnumber(L, dy);
 
-    gboolean ret = luaH_object_emit_signal(L, -4, "scroll", 3, 1);
+    gboolean ret = luaH_object_emit_signal(L, -4, "scroll-input", 3, 1);
     lua_pop(L, ret + 1);
     return ret;
 }

@@ -1096,7 +1096,7 @@ webview_scroll_controller_cb(GtkEventControllerScroll *controller, gdouble dx, g
     lua_pushnumber(L, dy);
     luaH_push_hit_test(L, d->view, w);
 
-    gint ret = luaH_object_emit_signal(L, -5, "scroll", 4, 1);
+    gint ret = luaH_object_emit_signal(L, -5, "scroll-input", 4, 1);
     gboolean handled = ret && lua_toboolean(L, -1);
     lua_pop(L, ret + 1);
     return handled;

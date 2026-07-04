@@ -83,7 +83,7 @@ local init_funcs = {
                 return true
             end
         end)
-        view:add_signal("scroll", function (v, mods, dx, dy, context)
+        view:add_signal("scroll-input", function (v, mods, dx, dy, context)
             local w = _M.window(v)
             if w:hit(mods, "Scroll", { context = context, dx = dx, dy = dy }) then
                 return true

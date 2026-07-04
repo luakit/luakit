@@ -32,14 +32,13 @@ local widgets = {
 }
 
 webview.add_signal("init", function (view)
-    view:add_signal("expose", function (v)
+    view:add_signal("scroll", function (v)
         local w = webview.window(v)
         if w and w.view == v then
             wc.update_widgets_on_w(widgets, w, v)
         end
     end)
 end)
-
 
 local function new()
     local scroll = widget{type="label"}
