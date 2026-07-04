@@ -17,25 +17,17 @@ local widgets = {
     update = function (w, label, view)
         view = view or w.view
         if not view then return end
-
-        view:eval_js([=[
-            (function () {
-                var y = window.scrollY;
-                var max = Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0);
-                return y + " " + max;
-            })()
-        ]=], { callback = function (scroll, err)
-            assert(not err, err)
-            local y, max = scroll:match("^(%S+) (%S+)$")
-            y, max = tonumber(y), tonumber(max)
-            local text
-            if     max == 0   then text = "All"
-            elseif y   <= 2   then text = "Top"
-            elseif y   >= (max - 2) then text = "Bot"
-            else text = string.format("%2d%%", (y / max) * 100)
-            end
-            if label.text ~= text then label.text = text end
-        end })
+        local scroll = view.scroll
+        if not scroll then return end
+        local y, max = scroll.y, scroll.ymax
+        if not y or not max then return end
+        local text
+        if     max <= 0   then text = "All"
+        elseif y   <= 2   then text = "Top"
+        elseif y   >= (max - 2) then text = "Bot"
+        else text = string.format("%2d%%", (y / max) * 100)
+        end
+        if label.text ~= text then label.text = text end
     end,
 }
 
