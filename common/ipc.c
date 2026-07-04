@@ -274,6 +274,7 @@ ipc_endpoint_decref(ipc_endpoint_t *ipc)
     }
     ipc->status = IPC_ENDPOINT_FREED;
     g_slice_free(ipc_endpoint_t, ipc);
+    debug("Freeing IPC endpoint 0x%lx", (unsigned long)ipc);
 }
 
 void
@@ -315,15 +316,16 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
     g_assert(orig->status == IPC_ENDPOINT_DISCONNECTED);
     g_assert(new->status == IPC_ENDPOINT_CONNECTED);
 
-    /* Incref always succeeds because this is called from a message
-     * handler, which holds a temporary ref to the ipc channel  */
-    ipc_endpoint_incref_no_check(new);
-
     /* Send all queued messages */
     if (orig->queue) {
         while (!g_queue_is_empty(orig->queue)) {
             queued_ipc_t *msg = g_queue_pop_head(orig->queue);
             msg->ipc = new;
+            /* When this message was originally added to orig's
+             * queue, the refcount was incremented, so transfer
+             * that reference to new.
+             */
+            ipc_endpoint_decref(orig);
             ipc_endpoint_incref_no_check(new);
             g_async_queue_push(send_queue, msg);
         }
@@ -332,7 +334,14 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
         orig->queue = NULL;
     }
 
+    /* Presumably this will result in orig being freed: */
     ipc_endpoint_decref(orig);
+    /* Meanwhile, new's refcount will come back down to
+     * 1 as the send thread fires off all the messages
+     * we added to the queue. If the owner needs more
+     * references, it can increment the refcount after
+     * this function returns. A priori, 1 is enough.
+     */
     return new;
 }
 
