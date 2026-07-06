@@ -107,6 +107,8 @@ function _M.build(w)
 
     -- Pack menu widget
     w.menu_tabs:pack(w.menu.widget, { halign = "fill", valign = "end" })
+    w.menu.widget.margin_left = 3
+    w.menu.widget.margin_right = 3
     w.menu:hide()
 
     -- Pack input bar

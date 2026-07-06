@@ -105,6 +105,7 @@ local function update(menu)
                     rw.cols[c] = cell
                     cell.font = font
                     cell.textwidth = 1
+                    cell.align = { x = 0 }
 
                 -- Remove row column widget
                 elseif not text and cell then
