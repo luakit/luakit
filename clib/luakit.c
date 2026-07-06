@@ -62,40 +62,7 @@ luaH_clipboard_get(lua_State *L, gint idx)
     return NULL;
 }
 
-/** __index metamethod for the luakit.selection table which
- * returns text from an X selection.
- * \see http://en.wikipedia.org/wiki/X_Window_selection
- * \see http://developer.gnome.org/gtk/stable/gtk-Clipboards.html#gtk-clipboard-wait-for-text
- *
- * \param  L The Lua VM state.
- * \return   The number of elements pushed on stack.
- */
-static gint
-luaH_luakit_selection_index(lua_State *L)
-{
-    GdkClipboard *clipboard = luaH_clipboard_get(L, 2);
-    if (clipboard) {
-        // Initialize a GValue to receive text
-        GValue value = G_VALUE_INIT;
-        g_value_init (&value, G_TYPE_STRING);
 
-        // Get the content provider for the clipboard, and ask it for text
-        GdkContentProvider *provider = gdk_clipboard_get_content (clipboard);
-
-        // If the content provider does not contain text, we are not interested
-        if (!gdk_content_provider_get_value (provider, &value, NULL))
-            return 0;
-
-        char *text = g_value_get_string(&value);
-        if (text) {
-            lua_pushstring(L, text);
-            g_free(text);
-            g_value_unset (&value);
-            return 1;
-        }
-    }
-    return 0;
-}
 
 /** __newindex metamethod for the luakit.selection table which
  * sets an X selection.
@@ -127,16 +94,57 @@ luaH_luakit_selection_newindex(lua_State *L)
     return 0;
 }
 
+static void
+luaH_luakit_selection_get_cb(GObject *src, GAsyncResult *res, gpointer data)
+{
+    gpointer cb_ref = data;
+    lua_State *L = common.L;
+
+    char *text = gdk_clipboard_read_text_finish(GDK_CLIPBOARD(src), res, NULL);
+
+    /* Push callback function onto stack */
+    luaH_object_push(L, cb_ref);
+
+    /* Push callback argument (text or nil) */
+    if (text) {
+        lua_pushstring(L, text);
+        g_free(text);
+    } else {
+        lua_pushnil(L);
+    }
+
+    luaH_dofunction(L, 1, 0);
+    luaH_object_unref(L, cb_ref);
+}
+
+static gint
+luaH_luakit_selection_get(lua_State *L)
+{
+    GdkClipboard *clipboard = luaH_clipboard_get(L, 1);
+    luaL_checktype(L, 2, LUA_TFUNCTION);
+    gpointer cb_ref = luaH_object_ref(L, 2);
+
+    if (clipboard) {
+        gdk_clipboard_read_text_async(clipboard, NULL, luaH_luakit_selection_get_cb, cb_ref);
+    } else {
+        luaH_object_push(L, cb_ref);
+        lua_pushnil(L);
+        luaH_dofunction(L, 1, 0);
+        luaH_object_unref(L, cb_ref);
+    }
+    return 0;
+}
+
 static gint
 luaH_luakit_selection_table_push(lua_State *L)
 {
     /* create selection table */
     lua_newtable(L);
+    lua_pushcfunction(L, luaH_luakit_selection_get);
+    lua_setfield(L, -2, "get");
+
     /* setup metatable */
-    lua_createtable(L, 0, 2);
-    lua_pushliteral(L, "__index");
-    lua_pushcfunction(L, luaH_luakit_selection_index);
-    lua_rawset(L, -3);
+    lua_createtable(L, 0, 1);
     lua_pushliteral(L, "__newindex");
     lua_pushcfunction(L, luaH_luakit_selection_newindex);
     lua_rawset(L, -3);

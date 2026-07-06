@@ -19,14 +19,15 @@ local yank_ring = ""
 local actions =  {
     paste = {
         func = function (w)
-            local str = luakit.selection.primary
-            if not str then return end
-            local i = w.ibar.input
-            local text = i.text
-            local pos = i.position
-            local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
-            i.text = left .. str .. right
-            i.position = pos + #str
+            luakit.selection.get("primary", function (str)
+                if not str then return end
+                local i = w.ibar.input
+                local text = i.text
+                local pos = i.position
+                local left, right = string.sub(text, 1, pos), string.sub(text, pos+1)
+                i.text = left .. str .. right
+                i.position = pos + #str
+            end)
         end,
         desc = "Insert contents of primary selection at cursor position.",
     },
