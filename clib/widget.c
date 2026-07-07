@@ -205,9 +205,7 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
     luakit_token_t tok = l_tokenize(type);
     widget_info_t *winfo;
 
-#if GTK_CHECK_VERSION(3,16,0)
     w->provider = gtk_css_provider_new();
-#endif
 
     for (guint i = 0; i < LENGTH(widgets_list); i++) {
         if (widgets_list[i].tok != tok)
@@ -217,11 +215,8 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         w->info = winfo;
         winfo->wc(L, w, tok);
 
-#if GTK_CHECK_VERSION(3,16,0)
-    gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");
-    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
-    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(w->provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-#endif
+        gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");
+        gtk_style_context_add_provider_for_display(gtk_widget_get_display(GTK_WIDGET(w->widget)), GTK_STYLE_PROVIDER(w->provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         /* store pointer to lua widget struct in gobject data */
         g_object_set_data(G_OBJECT(w->widget),

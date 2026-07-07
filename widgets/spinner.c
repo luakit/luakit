@@ -88,7 +88,7 @@ widget_spinner(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
         LUAKIT_WIDGET_SIGNAL_COMMON(w)
         NULL);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

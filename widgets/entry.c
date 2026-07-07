@@ -172,14 +172,12 @@ widget_entry(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     /* create gtk label widget as main widget */
     w->widget = gtk_entry_new();
 
-    /* setup default settings */
-    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
-    const gchar *inputbar_css = "GtkEntry {border: none; padding: 2px;}";
+    const gchar *inputbar_css = "entry {border: none; padding: 2px;}";
 
     GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(provider, inputbar_css, strlen(inputbar_css));
+    gtk_css_provider_load_from_string(provider, inputbar_css);
 
-    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
+    gtk_style_context_add_provider_for_display(gtk_widget_get_display(w->widget), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
@@ -191,7 +189,7 @@ widget_entry(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
     gtk_event_controller_set_propagation_phase(key_controller, GTK_PHASE_CAPTURE);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

@@ -849,6 +849,10 @@ luaH_webview_index(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_CERTIFICATE:
         return luaH_webview_push_certificate(L, w);
 
+      case L_TK_BG:
+        return g_object_get_data(G_OBJECT(d->view), "bg") ?
+            (lua_pushstring(L, g_object_get_data(G_OBJECT(d->view), "bg")), 1) : 0;
+
       default:
         break;
     }
@@ -922,6 +926,16 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_SESSION_STATE:
         luaH_webview_set_session_state(L, d);
         return 0;
+
+      case L_TK_BG: {
+        const gchar *tmp = luaL_checklstring(L, 3, &len);
+        GdkRGBA c;
+        if (!gdk_rgba_parse(&c, tmp))
+            return luaL_argerror(L, 3, "unable to parse colour");
+        webkit_web_view_set_background_color(d->view, &c);
+        g_object_set_data_full(G_OBJECT(d->view), "bg", g_strdup(tmp), g_free);
+        return 0;
+      }
 
       default:
         break;
@@ -1403,6 +1417,9 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
                  NULL);
     g_object_unref(session);
     d->inspector = webkit_web_view_get_inspector(d->view);
+
+    GdkRGBA transparent = { 0.0, 0.0, 0.0, 0.0 };
+    webkit_web_view_set_background_color(d->view, &transparent);
 
     d->is_committed = FALSE;
 

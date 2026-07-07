@@ -64,7 +64,7 @@ close_request_cb(GtkWindow *UNUSED(win), widget_t *w)
 }
 
 static void
-window_maximized_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
+window_maximized_cb(GObject *UNUSED(object), GParamSpec *UNUSED(pspec), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -73,7 +73,7 @@ window_maximized_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
 }
 
 static void
-window_fullscreen_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
+window_fullscreen_cb(GObject *UNUSED(object), GParamSpec *UNUSED(pspec), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -139,7 +139,10 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_ROOT_WIN_XID: {
         GdkDisplay *display = gtk_widget_get_display(GTK_WIDGET(d->win));
         if (display && GDK_IS_X11_DISPLAY(display)) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             Display *xdisplay = gdk_x11_display_get_xdisplay(display);
+#pragma GCC diagnostic pop
             int screen = DefaultScreen(xdisplay);
             lua_pushlightuserdata(L, (void*)(uintptr_t)RootWindow(xdisplay, screen));
             return 1;
@@ -150,7 +153,10 @@ luaH_window_index(lua_State *L, widget_t *w, luakit_token_t token)
       case L_TK_WIN_XID: {
         GdkSurface *surface = gtk_native_get_surface(gtk_widget_get_native(GTK_WIDGET(d->win)));
         if (surface && GDK_IS_X11_SURFACE(surface)) {
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wdeprecated-declarations"
             lua_pushlightuserdata(L, (void*)(uintptr_t)gdk_x11_surface_get_xid(surface));
+#pragma GCC diagnostic pop
             return 1;
         }
         break;
@@ -251,18 +257,18 @@ window_surface_size_changed_cb(GdkSurface *surface, GParamSpec *UNUSED(pspec), w
         for (guint i = 0; i < globalconf.webviews->len; ++i) {
             widget_t *wv = g_ptr_array_index(globalconf.webviews, i);
             if (wv->widget && gtk_widget_get_realized(wv->widget)) {
-                GtkAllocation alloc;
-                gtk_widget_get_allocation(wv->widget, &alloc);
-                if (alloc.width > 0 && alloc.height > 0) {
-                    if (alloc.width != wv->prev_width || alloc.height != wv->prev_height) {
-                        wv->prev_width = alloc.width;
-                        wv->prev_height = alloc.height;
+                int width = gtk_widget_get_width(wv->widget);
+                int height = gtk_widget_get_height(wv->widget);
+                if (width > 0 && height > 0) {
+                    if (width != wv->prev_width || height != wv->prev_height) {
+                        wv->prev_width = width;
+                        wv->prev_height = height;
                         luaH_object_push(L, wv->ref);
                         if (lua_isnil(L, -1)) {
                             lua_pop(L, 1);
                         } else {
-                            lua_pushinteger(L, alloc.width);
-                            lua_pushinteger(L, alloc.height);
+                            lua_pushinteger(L, width);
+                            lua_pushinteger(L, height);
                             luaH_object_emit_signal(L, -3, "resize", 2, 0);
                             lua_pop(L, 1);
                         }

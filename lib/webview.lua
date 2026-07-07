@@ -255,13 +255,18 @@ function _M.methods.scroll(view, w, new)
 
         -- Absolute percent movement
         elseif rawget(new, axis .. "pct") then
-            local dir = axis == "x" and "Width" or "Height"
-            local js = string.format([=[
-                Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
-            ]=], dir, dir)
-            w.view:eval_js(js, { callback = function (max)
-                s[axis] = math.ceil(max * (new[axis.."pct"]/100))
-            end})
+            local pct = new[axis.."pct"]
+            if pct == 0 then
+                s[axis] = 0
+            else
+                local dir = axis == "x" and "Width" or "Height"
+                local js = string.format([=[
+                    Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
+                ]=], dir, dir)
+                w.view:eval_js(js, { callback = function (max)
+                    s[axis] = math.ceil(max * (pct/100))
+                end})
+            end
         end
     end
 end
@@ -299,6 +304,11 @@ end
 function _M.new(opts)
     assert(opts)
     local view = widget{type = "webview", private = opts.private}
+
+    local theme = lousy.theme.get()
+    if theme.bg then
+        view.bg = theme.bg
+    end
 
     webview_state[view] = { blockers = {} }
     wrap_widget_metatable(view)

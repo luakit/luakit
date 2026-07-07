@@ -102,7 +102,7 @@ widget_drawing_area(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(tok
         "draw", G_CALLBACK(drawing_area_draw_cb), w,
         NULL);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

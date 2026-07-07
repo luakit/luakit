@@ -193,7 +193,7 @@ widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 
     LUAKIT_EVENT_CONTROLLER_SCROLL(w->widget, w)
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
 
     return w;
 }

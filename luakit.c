@@ -202,6 +202,10 @@ glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n
 gint
 main(gint argc, gchar *argv[])
 {
+    /* Force GTK4 to default to OpenGL renderer (GSK_RENDERER=gl) if not already set,
+       preventing buggy Vulkan rendering that causes VK_SUBOPTIMAL_KHR flickering. */
+    g_setenv("GSK_RENDERER", "gl", FALSE);
+
     gboolean *nonblock = NULL;
     globalconf.starttime = l_time();
 

@@ -30,7 +30,7 @@
 #include "widgets/common.h"
 
 gboolean
-key_press_cb(GtkEventControllerKey *controller, guint keyval, guint keycode,
+key_press_cb(GtkEventControllerKey *UNUSED(controller), guint keyval, guint UNUSED(keycode),
     GdkModifierType state, widget_t *w)
 {
   lua_State *L = common.L;
@@ -44,7 +44,7 @@ key_press_cb(GtkEventControllerKey *controller, guint keyval, guint keycode,
 }
 
 void
-button_pressed_cb(GtkGestureClick *gesture, int n_press, double x, double y, widget_t* w)
+button_pressed_cb(GtkGestureClick *gesture, int n_press, double UNUSED(x), double UNUSED(y), widget_t* w)
 {
     guint button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
     GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(gesture));
@@ -65,7 +65,7 @@ button_pressed_cb(GtkGestureClick *gesture, int n_press, double x, double y, wid
 }
 
 void
-button_released_cb(GtkGestureClick *gesture, int n_press, double x, double y, widget_t *w)
+button_released_cb(GtkGestureClick *gesture, int UNUSED(n_press), double UNUSED(x), double UNUSED(y), widget_t *w)
 {
     guint button = gtk_gesture_single_get_current_button (GTK_GESTURE_SINGLE (gesture));
     GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(gesture));
@@ -95,7 +95,7 @@ scroll_cb(GtkEventControllerScroll *controller, double dx, double dy, widget_t *
 }
 
 void
-mouse_enter_cb(GtkEventControllerMotion *controller, double x, double y, widget_t *w)
+mouse_enter_cb(GtkEventControllerMotion *controller, double UNUSED(x), double UNUSED(y), widget_t *w)
 {
     GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
     lua_State *L = common.L;
@@ -106,7 +106,7 @@ mouse_enter_cb(GtkEventControllerMotion *controller, double x, double y, widget_
 }
 
 void
-mouse_leave_cb(GtkEventControllerMotion *controller, double x, double y, widget_t *w)
+mouse_leave_cb(GtkEventControllerMotion *controller, double UNUSED(x), double UNUSED(y), widget_t *w)
 {
     GdkModifierType state = gtk_event_controller_get_current_event_state(GTK_EVENT_CONTROLLER(controller));
     lua_State *L = common.L;
@@ -117,7 +117,7 @@ mouse_leave_cb(GtkEventControllerMotion *controller, double x, double y, widget_
 }
 
 void
-focus_enter_cb(GtkEventControllerFocus *controller, widget_t *w)
+focus_enter_cb(GtkEventControllerFocus *UNUSED(controller), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -126,7 +126,7 @@ focus_enter_cb(GtkEventControllerFocus *controller, widget_t *w)
 }
 
 void
-focus_leave_cb(GtkEventControllerFocus *controller, widget_t *w)
+focus_leave_cb(GtkEventControllerFocus *UNUSED(controller), widget_t *w)
 {
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -194,7 +194,7 @@ child_changed_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
 }
 
 void
-parent_changed_cb(GObject *object, GParamSpec *pspec, widget_t *w)
+parent_changed_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
 {
     lua_State *L = common.L;
     widget_t *parent = NULL;
@@ -435,7 +435,7 @@ gint
 luaH_widget_show(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return 0;
 }
 
@@ -443,7 +443,7 @@ gint
 luaH_widget_hide(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_hide(w->widget);
+    gtk_widget_set_visible(w->widget, FALSE);
     return 0;
 }
 
@@ -716,14 +716,14 @@ luaH_widget_get_visible(lua_State *L, widget_t *w)
 gint
 luaH_widget_get_width(lua_State *L, widget_t *w)
 {
-    lua_pushnumber(L, gtk_widget_get_allocated_width(w->widget));
+    lua_pushnumber(L, gtk_widget_get_width(w->widget));
     return 1;
 }
 
 gint
 luaH_widget_get_height(lua_State *L, widget_t *w)
 {
-    lua_pushnumber(L, gtk_widget_get_allocated_height(w->widget));
+    lua_pushnumber(L, gtk_widget_get_height(w->widget));
     return 1;
 }
 
