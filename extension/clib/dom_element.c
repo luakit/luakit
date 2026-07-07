@@ -534,7 +534,7 @@ luaH_dom_element_add_event_listener(lua_State *L)
 static gint
 luaH_dom_element_remove_event_listener(lua_State *L)
 {
-    dom_element_t *element = luaH_check_dom_element(L, 1);
+    luaH_check_dom_element(L, 1);
     const gchar *type = luaL_checkstring(L, 2);
     gboolean capture = lua_toboolean(L, 3);
     luaH_checkfunction(L, 4);

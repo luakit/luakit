@@ -91,12 +91,16 @@ luaH_widget_new(lua_State *L)
     return 1;
 }
 
-#if GTK_CHECK_VERSION(3,16,0)
 static inline void
 widget_set_css(widget_t *w, const gchar *properties)
 {
     gchar *old_css = gtk_css_provider_to_string(w->provider);
-    gchar *css = g_strdup_printf("%s\n#widget { %s }", old_css, properties);
+    gchar *css;
+    if (g_strrstr(properties, "background-color")) {
+        css = g_strdup_printf("%s\n#widget_%p { background-image: none; %s }", old_css, (void*)w, properties);
+    } else {
+        css = g_strdup_printf("%s\n#widget_%p { %s }", old_css, (void*)w, properties);
+    }
     gtk_css_provider_load_from_string(w->provider, css);
     g_free(css);
     g_free(old_css);
@@ -125,7 +129,6 @@ widget_set_css_properties(widget_t *w, ...)
     widget_set_css(w, css);
     g_free(css);
 }
-#endif
 
 /** Generic widget.
  * \param L The Lua VM state.
@@ -180,12 +183,10 @@ luaH_widget_newindex(lua_State *L)
     /* Then call special widget newindex */
     widget_t *widget = luaH_checkwidget(L, 1);
 
-#if GTK_CHECK_VERSION(3,16,0)
     if (token == L_TK_CSS) {
         widget_set_css(widget, luaL_checkstring(L, 3));
         return 0;
     }
-#endif
 
     /* but only if it's not a GtkWidget property */
     gboolean emit = luaH_gobject_newindex(L, widget_properties, token, 3,
@@ -215,7 +216,10 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         w->info = winfo;
         winfo->wc(L, w, tok);
 
-        gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");
+        gchar *widget_name = g_strdup_printf("widget_%p", w);
+        gtk_widget_set_name(GTK_WIDGET(w->widget), widget_name);
+        g_free(widget_name);
+
         gtk_style_context_add_provider_for_display(gtk_widget_get_display(GTK_WIDGET(w->widget)), GTK_STYLE_PROVIDER(w->provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         /* store pointer to lua widget struct in gobject data */

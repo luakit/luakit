@@ -76,10 +76,8 @@ struct widget_t
     gpointer ref;
     /* Main gtk widget */
     GtkWidget *widget;
-#if GTK_CHECK_VERSION(3,16,0)
     /* CSS provider for this widget */
     GtkCssProvider *provider;
-#endif
     /* Previous width and height, for resize signal */
     gint prev_width, prev_height;
     /* Misc private data */

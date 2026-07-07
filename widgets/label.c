@@ -24,16 +24,8 @@
 static gint
 luaH_label_get_align(lua_State *L, widget_t *w)
 {
-    gfloat xalign, yalign;
-#if GTK_CHECK_VERSION(3,16,0)
-    xalign = gtk_label_get_xalign(GTK_LABEL(w->widget));
-    yalign = gtk_label_get_yalign(GTK_LABEL(w->widget));
-#else
-#  pragma GCC diagnostic push
-#  pragma GCC diagnostic ignored "-Wdeprecated-declarations"
-    gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
-#  pragma GCC diagnostic pop
-#endif
+    gfloat xalign = gtk_label_get_xalign(GTK_LABEL(w->widget));
+    gfloat yalign = gtk_label_get_yalign(GTK_LABEL(w->widget));
     luaH_widget_get_align(L, w);
     /* set align.x */
     lua_pushliteral(L, "x");
@@ -51,73 +43,21 @@ luaH_label_set_align(lua_State *L, widget_t *w)
 {
     luaH_widget_set_align(L, w);
 
-    gfloat xalign, yalign;
     luaH_checktable(L, 3);
-#if !GTK_CHECK_VERSION(3,16,0)
-    /* get old alignment values */
-    gtk_misc_get_alignment(GTK_MISC(w->widget), &xalign, &yalign);
-#endif
     /* get align.x */
     if (luaH_rawfield(L, 3, "x")) {
-        xalign = (gfloat) lua_tonumber(L, -1);
+        gfloat xalign = (gfloat) lua_tonumber(L, -1);
         lua_pop(L, 1);
-#if GTK_CHECK_VERSION(3,16,0)
         gtk_label_set_xalign(GTK_LABEL(w->widget), xalign);
-#endif
     }
     /* get align.y */
     if (luaH_rawfield(L, 3, "y")) {
-        yalign = (gfloat) lua_tonumber(L, -1);
+        gfloat yalign = (gfloat) lua_tonumber(L, -1);
         lua_pop(L, 1);
-#if GTK_CHECK_VERSION(3,16,0)
         gtk_label_set_yalign(GTK_LABEL(w->widget), yalign);
-#endif
     }
-#if !GTK_CHECK_VERSION(3,16,0)
-    gtk_misc_set_alignment(GTK_MISC(w->widget), xalign, yalign);
-#endif
     return 0;
 }
-
-#if !GTK_CHECK_VERSION(3,14,0)
-static gint
-luaH_label_get_padding(lua_State *L, widget_t *w)
-{
-    gint xpad, ypad;
-    gtk_misc_get_padding(GTK_MISC(w->widget), &xpad, &ypad);
-    lua_createtable(L, 0, 2);
-    /* set padding.x */
-    lua_pushliteral(L, "x");
-    lua_pushnumber(L, xpad);
-    lua_rawset(L, -3);
-    /* set padding.y */
-    lua_pushliteral(L, "y");
-    lua_pushnumber(L, ypad);
-    lua_rawset(L, -3);
-    return 1;
-}
-
-static gint
-luaH_label_set_padding(lua_State *L, widget_t *w)
-{
-    luaH_checktable(L, 3);
-    /* get old padding values */
-    gint xpad = 0, ypad = 0;
-    gtk_misc_get_padding(GTK_MISC(w->widget), &xpad, &ypad);
-    /* get padding.x */
-    if (luaH_rawfield(L, 3, "x")) {
-        xpad = (gint) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-    }
-    /* get padding.y */
-    if (luaH_rawfield(L, 3, "y")) {
-        ypad = (gint) lua_tonumber(L, -1);
-        lua_pop(L, 1);
-    }
-    gtk_misc_set_padding(GTK_MISC(w->widget), xpad, ypad);
-    return 0;
-}
-#endif
 
 static gint
 luaH_label_index(lua_State *L, widget_t *w, luakit_token_t token)
@@ -152,7 +92,6 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     size_t len;
     const gchar *tmp;
     GdkRGBA c;
-    PangoFontDescription *font;
 
     if (token == L_TK_ALIGN)
     {
@@ -162,12 +101,6 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
-
-#if !GTK_CHECK_VERSION(3,14,0)
-      case L_TK_PADDING:
-        luaH_label_set_padding(L, w);
-        break;
-#endif
 
       case L_TK_TEXT:
         gtk_label_set_markup(GTK_LABEL(w->widget),
@@ -179,11 +112,7 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         if (!gdk_rgba_parse(&c, tmp))
             luaL_argerror(L, 3, "unable to parse color");
 
-#if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "color", tmp, NULL);
-#else
-        gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
-#endif
         g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
         break;
 
@@ -192,23 +121,13 @@ luaH_label_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         if (!gdk_rgba_parse(&c, tmp))
             luaL_argerror(L, 3, "unable to parse color");
 
-#if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "background-color", tmp, NULL);
-#else
-        gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
-#endif
         g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
         break;
 
       case L_TK_FONT:
         tmp = luaL_checklstring(L, 3, &len);
-        font = pango_font_description_from_string(tmp);
-#if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "font", tmp, NULL);
-#else
-        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
-#endif
-        pango_font_description_free(font);
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
         break;
 

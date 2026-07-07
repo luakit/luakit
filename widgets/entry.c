@@ -84,9 +84,7 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     size_t len;
     const gchar *tmp;
     GdkRGBA c;
-#if !GTK_CHECK_VERSION(3,16,0)
-    PangoFontDescription *font;
-#endif
+
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
