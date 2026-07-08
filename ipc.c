@@ -44,6 +44,8 @@ static char *socket_path;
 GMutex socket_path_lock;
 GCond socket_path_cond;
 
+static GHashTable *pending_page_created_msgs = NULL;
+
 IPC_NO_HANDLER(lua_require_module)
 IPC_NO_HANDLER(web_extension_loaded)
 IPC_NO_HANDLER(crash)
@@ -65,15 +67,15 @@ ipc_recv_lua_ipc(ipc_endpoint_t *UNUSED(ipc), const ipc_lua_ipc_t *msg, guint le
 }
 
 void
-ipc_recv_scroll(ipc_endpoint_t *UNUSED(ipc), ipc_scroll_t *msg, guint UNUSED(length))
-{
-    g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
-}
-
-void
 ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
 {
     run_javascript_finished(msg, length);
+}
+
+void
+free_page_created_msg(gpointer data)
+{
+    g_slice_free(ipc_page_created_t, data);
 }
 
 void
@@ -81,11 +83,38 @@ ipc_recv_page_created(ipc_endpoint_t *ipc, const ipc_page_created_t *msg, guint 
 {
     widget_t *w = webview_get_by_id(msg->page_id);
 
-    /* Page may already have been closed */
-    if (!w) return;
+    if (w) {
+        webview_connect_to_endpoint(w, ipc);
+        webview_set_web_process_id(w, msg->pid);
+    } else {
+        /* If we can't find this page, it's possible that the WebView's page-id
+         * hasn't been updated yet, so we should re-fire this function once that
+         * happens. We can do that once this endpoint receives a scroll message
+         * (which it should once the page is actually rendered).
+         * I think the easiest way of doing this is maintaining a hashmap of
+         * pending page creation messages. The key is simply the IPC endpoint
+         * pointer, using "direct" hashing and equality checks (hence NULL args
+         * to the hashmap constructor), with a corresponding inc/dec of the
+         * refcount when it is added / removed in the hashmap. The value is a
+         * copy of the message itself, which we create with g_slice_dup and free
+         * with g_slice_free.
+         */
+        pending_page_created_msgs = pending_page_created_msgs ?: g_hash_table_new_full(NULL,NULL,(GDestroyNotify)ipc_endpoint_decref,free_page_created_msg);
+        if (!ipc_endpoint_incref(ipc))
+            return;
+        g_hash_table_insert(pending_page_created_msgs, ipc, g_slice_dup(ipc_page_created_t, msg));
+    }
+}
 
-    webview_connect_to_endpoint(w, ipc);
-    webview_set_web_process_id(w, msg->pid);
+void
+ipc_recv_scroll(ipc_endpoint_t *ipc, ipc_scroll_t *msg, guint UNUSED(length))
+{
+    if (pending_page_created_msgs && g_hash_table_contains(pending_page_created_msgs, ipc)) {
+        ipc_page_created_t *pmsg = g_hash_table_lookup(pending_page_created_msgs, ipc);
+        ipc_recv_page_created(ipc, pmsg, sizeof(ipc_page_created_t));
+        g_hash_table_remove(pending_page_created_msgs, ipc);
+    }
+    g_ptr_array_foreach(globalconf.webviews, (GFunc)webview_scroll_recv, msg);
 }
 
 static gchar *

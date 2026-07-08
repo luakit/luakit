@@ -1312,10 +1312,6 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
 gboolean
 webview_crashed_cb(WebKitWebView *UNUSED(view), widget_t *w)
 {
-    /* Give webview a new disconnected IPC endpoint */
-    webview_data_t *d = w->data;
-    d->ipc = ipc_endpoint_new("UI");
-
     /* Emit 'crashed' signal on web view */
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
@@ -1331,8 +1327,16 @@ webview_connect_to_endpoint(widget_t *w, ipc_endpoint_t *ipc)
     g_assert(w->info->tok == L_TK_WEBVIEW);
     g_assert(ipc);
 
-    /* Replace old endpoint with new, sendinq queued data */
+    /* Replace old endpoint with new, sending queued data */
     webview_data_t *d = w->data;
+    if(d->ipc == ipc)
+        return;
+    if(d->ipc->channel)
+        /* Old one has no business being connected at this point;
+         * it probably just hasn't realized that the channel is
+         * broken yet!
+         */
+        ipc_endpoint_disconnect(d->ipc);
     d->ipc = ipc_endpoint_replace(d->ipc, ipc);
 
     lua_State *L = common.L;
