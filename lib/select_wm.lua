@@ -316,7 +316,12 @@ local function find_frames(root_frame)
         return {}
     end
 
-    local subframes = root_frame.body:query("frame, iframe")
+    local subframes = {}
+    for _, frame in ipairs(root_frame.body:query("frame, iframe")) do
+        if frame.document then
+            table.insert(subframes, frame)
+        end
+    end
     local frames = { root_frame }
 
     -- For each frame/iframe element, recurse

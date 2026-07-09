@@ -95,4 +95,19 @@ luaH_webview_close_inspector(lua_State *L)
     return 0;
 }
 
+gboolean
+webview_widget_is_inspector(widget_t *w, GtkWidget *focused)
+{
+    if (w->info->tok != L_TK_WEBVIEW)
+        return FALSE;
+    webview_data_t *d = w->data;
+    if (!d->inspector_open || !d->inspector)
+        return FALSE;
+    WebKitWebViewBase *inspector_wv = webkit_web_inspector_get_web_view(d->inspector);
+    if (!inspector_wv)
+        return FALSE;
+    GtkWidget *inspector_widget = GTK_WIDGET(inspector_wv);
+    return (focused == inspector_widget || gtk_widget_is_ancestor(focused, inspector_widget));
+}
+
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

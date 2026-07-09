@@ -742,6 +742,15 @@ luaH_dom_element_index(lua_State *L)
             g_object_unref(doc);
             return ret;
         }
+        case L_TK_DOCUMENT: {
+            JSCValue *doc = jsc_value_object_get_property(element->element, "contentDocument");
+            gint ret = 0;
+            if (doc && !jsc_value_is_null(doc) && !jsc_value_is_undefined(doc)) {
+                ret = luaH_dom_document_from_webkit_dom_document(L, doc);
+            }
+            if (doc) g_object_unref(doc);
+            return ret;
+        }
         case L_TK_VALUE: return luaH_dom_element_push_value(L);
         case L_TK_SRC: return luaH_dom_element_push_src(L);
         case L_TK_HREF: return luaH_dom_element_push_href(L);

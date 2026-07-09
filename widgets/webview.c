@@ -392,7 +392,18 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 
     if (e == WEBKIT_LOAD_STARTED) {
         ((webview_data_t*) w->data)->is_committed = FALSE;
-    } else if (e == WEBKIT_LOAD_COMMITTED || e == WEBKIT_LOAD_FINISHED) {
+        const gchar *bg = g_object_get_data(G_OBJECT(d->view), "bg");
+        if (bg) {
+            GdkRGBA c;
+            if (gdk_rgba_parse(&c, bg)) {
+                webkit_web_view_set_background_color(d->view, &c);
+            }
+        }
+    } else if (e == WEBKIT_LOAD_COMMITTED) {
+        ((webview_data_t*) w->data)->is_committed = TRUE;
+        GdkRGBA white = { 1.0, 1.0, 1.0, 1.0 };
+        webkit_web_view_set_background_color(d->view, &white);
+    } else if (e == WEBKIT_LOAD_FINISHED) {
         ((webview_data_t*) w->data)->is_committed = TRUE;
     }
 

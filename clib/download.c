@@ -134,7 +134,7 @@ decide_destination_cb(WebKitDownload* UNUSED(dl), gchar *suggested_filename, dow
     /* Prevent segfault when download cancelled without setting destination.
      * https://github.com/aidanholm/luakit/issues/402 */
     if (download->status == LUAKIT_DOWNLOAD_STATUS_CANCELLED)
-        webkit_download_set_destination(download->webkit_download, "/tmp/");
+        webkit_download_set_destination(download->webkit_download, "file:///tmp/");
 
     return handled;
 }
@@ -334,7 +334,13 @@ luaH_download_set_destination(lua_State *L, download_t *download)
 
     const gchar *destination = luaL_checkstring(L, -1);
     download->destination = g_strdup(destination);
-    webkit_download_set_destination(download->webkit_download, destination);
+    gchar *uri = g_filename_to_uri(destination, NULL, NULL);
+    if (!uri) {
+        warn("failed to convert download destination path '%s' to a valid file URI", destination);
+        return 0;
+    }
+    webkit_download_set_destination(download->webkit_download, uri);
+    g_free(uri);
     luaH_object_emit_signal(L, -3, "property::destination", 0, 0);
     return 0;
 }

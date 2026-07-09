@@ -145,9 +145,13 @@ end
 
 local function tablist_nb_page_reordered_cb(tlist, view, idx)
     local tl = data[tlist].tabs[view]
-    local old_idx = tl.index
+    local old_idx = tonumber(tl.index)
     data[tlist].box:reorder(tl.widget, idx-1)
-    regenerate_tab_indices(tlist, math.min(old_idx, idx), math.max(old_idx, idx))
+    if old_idx then
+        regenerate_tab_indices(tlist, math.min(old_idx, idx), math.max(old_idx, idx))
+    else
+        regenerate_tab_indices(tlist)
+    end
     scroll_current_tab_into_view(tlist)
 end
 

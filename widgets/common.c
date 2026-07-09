@@ -28,11 +28,24 @@
 #include "common/luaobject.h"
 #include "common/lualib.h"
 #include "widgets/common.h"
+#include "widgets/webview.h"
 
 gboolean
 key_press_cb(GtkEventControllerKey *UNUSED(controller), guint keyval, guint UNUSED(keycode),
     GdkModifierType state, widget_t *w)
 {
+  if (GTK_IS_WINDOW(w->widget)) {
+      GtkWidget *focused = gtk_window_get_focus(GTK_WINDOW(w->widget));
+      if (focused && globalconf.webviews) {
+          for (guint i = 0; i < globalconf.webviews->len; ++i) {
+              widget_t *wv = g_ptr_array_index(globalconf.webviews, i);
+              if (webview_widget_is_inspector(wv, focused)) {
+                  return FALSE;
+              }
+          }
+      }
+  }
+
   lua_State *L = common.L;
   luaH_object_push(L, w->ref);
   luaH_modifier_table_push(L, state);
