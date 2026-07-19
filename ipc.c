@@ -124,8 +124,12 @@ ipc_recv_page_created(ipc_endpoint_t *ipc, const ipc_page_created_t *msg, guint 
         return;
     }
 
-    webview_connect_to_endpoint(w, ipc);
-    webview_set_web_process_id(w, msg->pid);
+    if (msg->is_main_frame) {
+        webview_connect_to_endpoint(w, ipc);
+        webview_set_web_process_id(w, msg->pid);
+    } else {
+        webview_add_subframe_endpoint(w, ipc);
+    }
 }
 
 static gchar *

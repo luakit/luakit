@@ -312,6 +312,37 @@ luaH_page_push_document(lua_State *L, page_t *page)
 }
 
 static gint
+luaH_page_get_frames(lua_State *L)
+{
+    page_t *page = luaH_check_page(L, 1);
+    GPtrArray *frames = g_object_get_data(G_OBJECT(page->page), "luakit-frames");
+
+    lua_newtable(L);
+    gint idx = 1;
+
+    if (frames) {
+        for (guint i = 0; i < frames->len; i++) {
+            WebKitFrame *frame = g_ptr_array_index(frames, i);
+            JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+            if (ctx) {
+                JSCValue *js_global = jsc_context_get_global_object(ctx);
+                JSCValue *js_doc = jsc_value_object_get_property(js_global, "document");
+
+                /* Wrap the document in our Lua DOM wrapper */
+                if (luaH_dom_document_from_webkit_dom_document(L, js_doc)) {
+                    lua_rawseti(L, -2, idx++);
+                }
+
+                g_object_unref(js_doc);
+                g_object_unref(js_global);
+                g_object_unref(ctx);
+            }
+        }
+    }
+    return 1;
+}
+
+static gint
 luaH_page_index(lua_State *L)
 {
     const char *prop = luaL_checkstring(L, 2);
@@ -327,6 +358,7 @@ luaH_page_index(lua_State *L)
         PI_CASE(ID, webkit_web_page_get_id(page->page));
         PF_CASE(EVAL_JS, luaH_page_eval_js)
         PF_CASE(WRAP_JS, luaH_page_wrap_js)
+        PF_CASE(GET_FRAMES, luaH_page_get_frames)
         case L_TK_DOCUMENT:
             return luaH_page_push_document(L, page);
         default:

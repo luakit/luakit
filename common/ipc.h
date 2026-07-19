@@ -76,6 +76,7 @@ typedef struct _ipc_scroll_t {
 typedef struct _ipc_page_created_t {
     guint64 page_id;
     pid_t pid;
+    gboolean is_main_frame;
 } ipc_page_created_t;
 
 /* Message names */

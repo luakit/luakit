@@ -7,6 +7,8 @@ local select = require("select_wm")
 local lousy = require("lousy")
 local ui = ipc_channel("follow_wm")
 
+local getpid = function() return luakit.web_process_id end
+
 local evaluators = {
     click = function(element, page)
         local tag = element.tag_name
@@ -140,14 +142,22 @@ end
 
 local function follow(page, all)
     -- Build array of hints to follow
-    local hints = all and select.hints(page) or { select.focused_hint(page) }
+    local hints
+    if all then
+        hints = select.hints(page)
+    else
+        local fh = select.focused_hint(page)
+        if not fh then return end
+        hints = { fh }
+    end
     hints = lousy.util.table.filter_array(hints, function (_, hint)
         return not hint.hidden
     end)
+    if #hints == 0 then return end
 
     -- Close hint select UI first if not persisting in follow mode
     local mode = page_mode[page]
-    if not mode.persist then
+    if mode and not mode.persist then
         select.leave(page)
         page_mode[page] = nil
     end
@@ -173,15 +183,35 @@ ui:add_signal("enter", function(_, page, mode, ignore_case)
     select.enter(page, mode.selector, mode.stylesheet, ignore_case)
 
     local num_visible_hints = #(select.hints(page))
-    ui:emit_signal("matches", page.id, num_visible_hints)
+    ui:emit_signal("matches", page.id, getpid(), num_visible_hints)
+end)
+
+ui:add_signal("init_follow", function(_, page, mode, ignore_case)
+    page_mode[page] = mode
+    local num_elements = select.scan(page, mode.selector, ignore_case)
+    ui:emit_signal("ready", page.id, getpid(), num_elements)
+end)
+
+ui:add_signal("start_follow", function(_, page, target_pid, start_idx, count, stylesheet)
+    if getpid() == target_pid then
+        local total_labels_needed = start_idx + count - 1
+        local all_labels = select.make_labels(total_labels_needed)
+        local labels = {}
+        for i = 1, count do
+            labels[i] = all_labels[start_idx + i - 1]
+        end
+        local _, num_visible_hints = select.show_hints(page, labels, stylesheet)
+        ui:emit_signal("matches", page.id, getpid(), num_visible_hints)
+    end
 end)
 
 ui:add_signal("changed", function(_, page, hint_pat, text_pat, text)
     local _, num_visible_hints = select.changed(page, hint_pat, text_pat, text)
-    ui:emit_signal("matches", page.id, num_visible_hints)
-    if num_visible_hints == 1 and text ~= "" then
-        follow(page, false)
-    end
+    ui:emit_signal("matches", page.id, getpid(), num_visible_hints)
+end)
+
+ui:add_signal("trigger_follow", function(_, page, all)
+    follow(page, all)
 end)
 
 ui:add_signal("leave", function (_, page)

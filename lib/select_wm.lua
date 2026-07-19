@@ -307,7 +307,7 @@ local function sort_hints_top_left(a, b)
     end
 end
 
-local function make_labels(num)
+function _M.make_labels(num)
     return label_maker(num)
 end
 
@@ -449,6 +449,113 @@ end
 -- @tparam boolean ignore_case `true` if text case should be ignored.
 -- @treturn {...} Table with data for the currently focused hint.
 -- @treturn number The number of currently visible hints.
+function _M.scan(page, elements, ignore_case)
+    assert(type(page) == "page")
+    assert(type(elements) == "string" or type(elements) == "table")
+    local page_id = page.id
+    if page_states[page_id] then
+        _M.leave(page)
+    end
+
+    local root = page.document
+    local state = {}
+    page_states[page_id] = state
+
+    local frames = {}
+    if root and root.body then
+        table.insert(frames, { doc = root, body = root.body })
+    end
+    local docs = page:get_frames() or {}
+    for _, doc in ipairs(docs) do
+        if doc and doc.body and doc ~= root then
+            table.insert(frames, { doc = doc, body = doc.body })
+        end
+    end
+    state.frames = frames
+    state.focused = nil
+    state.hints = {}
+    state.ignore_case = ignore_case or false
+
+    local client_rects, err = page:wrap_js([=[
+        var rects = element.getClientRects();
+        if (rects.length == 0)
+            return undefined;
+        var rect = {
+            "top": rects[0].top,
+            "bottom": rects[0].bottom,
+            "left": rects[0].left,
+            "right": rects[0].right,
+        };
+        for (var i = 1; i < rects.length; i++) {
+            rect.top = Math.min(rect.top, rects[i].top);
+            rect.bottom = Math.max(rect.bottom, rects[i].bottom);
+            rect.left = Math.min(rect.left, rects[i].left);
+            rect.right = Math.max(rect.right, rects[i].right);
+        }
+        rect.width = rect.right - rect.left;
+        rect.height = rect.bottom - rect.top;
+        return rect;
+    ]=], {"element"})
+
+    -- Find all hints in the viewport
+    for idx, frame in ipairs(state.frames) do
+        frame.hints = frame_find_hints(client_rects, frame, elements)
+        -- Build an array of all hints
+        for _, hint in ipairs(frame.hints) do
+            state.hints[#state.hints+1] = hint
+        end
+    end
+
+    table.sort(state.hints, sort_hints_top_left)
+    return #state.hints
+end
+
+function _M.show_hints(page, labels, stylesheet)
+    assert(type(page) == "page")
+    assert(type(labels) == "table")
+    assert(type(stylesheet) == "string")
+    local page_id = page.id
+    local state = page_states[page_id]
+    assert(state ~= nil)
+
+    assert(#state.hints == #labels)
+
+    for i, hint in ipairs(state.hints) do
+        hint.label = labels[i]
+    end
+
+    for _, frame in ipairs(state.frames) do
+        init_frame(frame, stylesheet)
+        local fwr = frame.doc.window
+        local fsx, fsy = fwr.scroll_x, fwr.scroll_y
+        for _, hint in ipairs(frame.hints) do
+            -- Append hint elements to overlay
+            local e = hint.elem
+            local r = hint.bb
+
+            local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
+            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, fsx), max(r.y-10, fsy), r.w, r.h)
+
+            local overlay_class = "hint_overlay hint_overlay_" .. e.tag_name
+            local label_class = "hint_label hint_label_" .. e.tag_name
+            hint.overlay_elem = frame.doc:create_element("span", {class = overlay_class, style = overlay_style})
+            hint.label_elem = frame.doc:create_element("span", {class = label_class, style = label_style}, hint.label)
+
+            frame.overlay:append(hint.overlay_elem)
+            frame.overlay:append(hint.label_elem)
+        end
+    end
+
+    for _, frame in ipairs(state.frames) do
+        frame.doc:add_signal("destroy", function ()
+            cleanup_frame(frame)
+        end)
+    end
+
+    filter(state, "", "")
+    return focus(state, 0), state.num_visible_hints
+end
+
 function _M.enter(page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
@@ -457,12 +564,19 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     assert(page_states[page_id] == nil)
 
     local root = page.document
-    local root_frame = { doc = root, body = root.body }
-
     local state = {}
     page_states[page_id] = state
 
-    state.frames = find_frames(root_frame)
+    local frames = {}
+    if root and root.body then
+        table.insert(frames, { doc = root, body = root.body })
+    end
+    for _, doc in ipairs(page:get_frames() or {}) do
+        if doc and doc.body and doc ~= root then
+            table.insert(frames, { doc = doc, body = doc.body })
+        end
+    end
+    state.frames = frames
     state.focused = nil
     state.hints = {}
     state.ignore_case = ignore_case or false
@@ -508,7 +622,7 @@ function _M.enter(page, elements, stylesheet, ignore_case)
     msg.info("select_wm.enter: total hints count = %d", #state.hints)
 
     -- Sort them by on-screen position, and assign labels
-    local labels = make_labels(#state.hints)
+    local labels = _M.make_labels(#state.hints)
     assert(#state.hints == #labels)
 
     table.sort(state.hints, sort_hints_top_left)

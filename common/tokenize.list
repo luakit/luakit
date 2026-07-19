@@ -54,6 +54,7 @@ focused
 font
 fullscreen
 get_title
+get_frames
 go_back
 go_forward
 hbox

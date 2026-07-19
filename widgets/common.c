@@ -768,14 +768,23 @@ luaH_widget_destroy(lua_State *L)
     if (w->widget) {
         if (GTK_IS_WINDOW(w->widget)) {
             gtk_window_destroy(GTK_WINDOW(w->widget));
-        } else if (gtk_widget_get_parent(GTK_WIDGET(w->widget))) {
-            gtk_widget_unparent(GTK_WIDGET(w->widget));
-        } else {
-            g_object_ref_sink(G_OBJECT(w->widget));
-            g_object_unref(G_OBJECT(w->widget));
+            return 0;
         }
+
+        GtkWidget *widget = w->widget;
+        g_object_ref(G_OBJECT(widget));
+
+        /* Emit destroy signal, run destructor, etc. */
+        destroy_cb(widget, w);
+
+        if (gtk_widget_get_parent(widget)) {
+            gtk_widget_unparent(widget);
+        } else {
+            g_object_ref_sink(G_OBJECT(widget));
+            g_object_unref(G_OBJECT(widget));
+        }
+        g_object_unref(G_OBJECT(widget));
     }
-    w->widget = NULL;
     return 0;
 }
 

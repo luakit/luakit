@@ -320,7 +320,7 @@ widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::notify::parent",     G_CALLBACK(parent_changed_cb), w,
+      "signal::destroy",            G_CALLBACK(destroy_cb), w,
       "signal::realize",            G_CALLBACK(window_realize_cb),  w,
       "signal::notify::child",      G_CALLBACK(child_changed_cb), w,
       "signal::close-request",      G_CALLBACK(close_request_cb), w,

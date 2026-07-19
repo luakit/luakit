@@ -39,6 +39,7 @@ lua_function_reader(lua_State *UNUSED(L), const guint8** bytes, size_t *sz)
     const char *ret = (const char *)*bytes;
     *bytes += bytecode_len;
     *sz = bytecode_len;
+    bytecode_len = 0;
     return ret;
 }
 

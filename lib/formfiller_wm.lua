@@ -282,7 +282,21 @@ end)
 
 ui:add_signal("enter", function (_, page)
     -- Filter forms to those with valid inputs
-    local forms = page.document.body:query("form")
+    local forms = {}
+    local docs = page:get_frames() or {}
+    local root = page.document
+    if root and root.body then
+        for _, f in ipairs(root.body:query("form")) do
+            table.insert(forms, f)
+        end
+    end
+    for _, doc in ipairs(docs) do
+        if doc and doc.body and doc ~= root then
+            for _, f in ipairs(doc.body:query("form")) do
+                table.insert(forms, f)
+            end
+        end
+    end
     forms = filter(forms, function(_, form)
         local inputs = form:query("input")
         inputs = filter(inputs, function(_, input)
@@ -312,7 +326,17 @@ end)
 
 ui:add_signal("filter", function (_, page, form_specs)
     local matching_form_specs = {}
-    local roots = { page.document.body }
+    local roots = {}
+    local root = page.document
+    if root and root.body then
+        table.insert(roots, root.body)
+    end
+    local docs = page:get_frames() or {}
+    for _, doc in ipairs(docs) do
+        if doc and doc.body and doc ~= root then
+            table.insert(roots, doc.body)
+        end
+    end
     for _, form_spec in ipairs(form_specs) do
         local matches = match("form", {"method", "name", "id", "action", "className"}, form_spec, roots)
         if #matches > 0 then

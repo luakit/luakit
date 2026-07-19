@@ -88,7 +88,6 @@
       break;
 
 #define LUAKIT_WIDGET_SIGNAL_COMMON(w)                       \
-    "signal::destroy",         G_CALLBACK(destroy_cb),    w, \
     "signal::notify::parent",  G_CALLBACK(parent_changed_cb), w,
 
 #define LUAKIT_EVENT_CONTROLLER_KEY(win, w) \
