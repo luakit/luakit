@@ -375,7 +375,9 @@ add_binds("follow", {
 -- @type {[string]=string}
 -- @readwrite
 _M.selectors = {
-    clickable = 'a, area, textarea, select, input:not([type=hidden]), button, label, summary',
+    clickable = 'a, area, textarea, select, input:not([type=hidden]), button, label, summary'
+        .. ', [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="option"]'
+        .. ', [tabindex]:not([tabindex="-1"]), [onclick], [onmousedown], [data-action]',
     -- Elements that can be clicked.
     focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
     -- Elements that can be given input focus.
@@ -396,7 +398,7 @@ _M.selectors = {
 -- @readwrite
 _M.site_specific_selectors = {
     ["github.com"] = {
-        clickable = "svg.js-menu-close, div.select-menu-item"
+        clickable = "button, [data-hotkey], [data-hydro-click], [data-ga-click], [data-targets], [data-action]"
     },
 }
 

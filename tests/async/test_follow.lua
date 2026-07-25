@@ -6,7 +6,6 @@ uris = { test.http_server() .. "test_follow.html" }
 require "config.rc"
 
 local window = require "window"
-local lousy = require "lousy"
 
 T.test_follow_mode_shows_hints = function ()
     test.wait_for_idle()
