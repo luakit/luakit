@@ -212,24 +212,34 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
 static void
 frame_weak_notify(gpointer data, GObject *where_the_object_was)
 {
-    WebKitWebPage *web_page = data;
-    GPtrArray *frames = g_object_get_data(G_OBJECT(web_page), "luakit-frames");
+    GPtrArray *frames = data;
     if (frames) {
         g_ptr_array_remove(frames, where_the_object_was);
     }
 }
 
 static void
+free_frames_array(gpointer data)
+{
+    GPtrArray *frames = data;
+    if (frames) {
+        for (guint i = 0; i < frames->len; i++) {
+            WebKitFrame *frame = g_ptr_array_index(frames, i);
+            if (frame && G_IS_OBJECT(frame)) {
+                g_object_weak_unref(G_OBJECT(frame), (GWeakNotify)frame_weak_notify, frames);
+            }
+        }
+        g_ptr_array_free(frames, TRUE);
+    }
+}
+
+static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
-    if (webkit_frame_is_main_frame(frame)) {
-        g_object_set_data(G_OBJECT(web_page), "luakit-main-frame", frame);
-    }
-
     GPtrArray *frames = g_object_get_data(G_OBJECT(web_page), "luakit-frames");
     if (!frames) {
         frames = g_ptr_array_new_with_free_func(NULL);
-        g_object_set_data_full(G_OBJECT(web_page), "luakit-frames", frames, (GDestroyNotify)g_ptr_array_unref);
+        g_object_set_data_full(G_OBJECT(web_page), "luakit-frames", frames, (GDestroyNotify)free_frames_array);
     }
     gboolean found = FALSE;
     for (guint i = 0; i < frames->len; i++) {
@@ -240,7 +250,7 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
     }
     if (!found) {
         g_ptr_array_add(frames, frame);
-        g_object_weak_ref(G_OBJECT(frame), (GWeakNotify)frame_weak_notify, web_page);
+        g_object_weak_ref(G_OBJECT(frame), (GWeakNotify)frame_weak_notify, frames);
     }
 
     if (!webkit_frame_is_main_frame(frame))

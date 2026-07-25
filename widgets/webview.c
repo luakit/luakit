@@ -1284,6 +1284,18 @@ webview_destructor(widget_t *w)
 
     g_idle_remove_by_data(w);
 
+    if (d->view && G_IS_OBJECT(d->view)) {
+        g_signal_handlers_disconnect_by_data(d->view, w);
+        WebKitFindController *fc = webkit_web_view_get_find_controller(d->view);
+        if (fc && G_IS_OBJECT(fc)) {
+            g_signal_handlers_disconnect_by_data(fc, w);
+        }
+    }
+
+    if (d->inspector && G_IS_OBJECT(d->inspector)) {
+        g_signal_handlers_disconnect_by_data(d->inspector, w);
+    }
+
     g_assert(d->ipc);
     ipc_endpoint_decref(d->ipc);
     d->ipc = NULL;

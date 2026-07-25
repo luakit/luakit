@@ -129,10 +129,10 @@ emit_page_created_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     guint64 page_id = webkit_web_page_get_id(web_page);
     WebKitFrame *frame = web_page_get_main_frame(web_page);
-    g_assert(frame);
     /* In a site-isolated subframe process, the page's root frame is a subframe of the tab.
-     * webkit_frame_is_main_frame checks if this frame is the main frame of the entire tab. */
-    gboolean is_main_frame = webkit_frame_is_main_frame(frame);
+     * webkit_frame_is_main_frame checks if this frame is the main frame of the entire tab.
+     * If frame is not yet registered, default to TRUE for the main tab process. */
+    gboolean is_main_frame = frame ? webkit_frame_is_main_frame(frame) : TRUE;
     ipc_page_created_t msg = {
         .page_id = page_id,
         .pid = getpid(),

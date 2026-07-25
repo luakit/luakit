@@ -248,6 +248,27 @@ luaH_widget_get_type(lua_State *L, widget_t *w)
     return 1;
 }
 
+static gint
+luaH_widget_len(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    if (w->info && w->info->tok == L_TK_NOTEBOOK && w->widget && G_IS_OBJECT(w->widget)) {
+        lua_pushinteger(L, gtk_notebook_get_n_pages(GTK_NOTEBOOK(w->widget)));
+        return 1;
+    }
+
+    lua_getfield(L, 1, "count");
+    if (lua_isfunction(L, -1)) {
+        lua_pushvalue(L, 1);
+        lua_call(L, 1, 1);
+        return 1;
+    }
+    lua_pop(L, 1);
+
+    lua_pushinteger(L, 0);
+    return 1;
+}
+
 void
 widget_class_setup(lua_State *L)
 {
@@ -264,6 +285,7 @@ widget_class_setup(lua_State *L)
         { "__index", luaH_widget_index },
         { "__newindex", luaH_widget_newindex },
         { "__gc", luaH_widget_gc },
+        { "__len", luaH_widget_len },
         { NULL, NULL }
     };
 

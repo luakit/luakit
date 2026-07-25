@@ -99,15 +99,15 @@ webkit_web_process_extension_initialize_with_user_data(WebKitWebProcessExtension
     extension.ext = ext;
     extension.ipc = ipc_endpoint_new(g_strdup_printf("Web[%d]", getpid()));
 
-    if (web_extension_connect(socket_path)) {
-        debug("connecting to UI thread failed");
-        exit(EXIT_FAILURE);
-    }
-
     web_lua_init(package_path, package_cpath);
     web_scroll_init();
     web_luajs_init();
     web_script_world_init();
+
+    if (web_extension_connect(socket_path)) {
+        debug("connecting to UI thread failed");
+        exit(EXIT_FAILURE);
+    }
 
     debug("PID %d", getpid());
     debug("ready for messages");
@@ -119,8 +119,17 @@ webkit_web_process_extension_initialize_with_user_data(WebKitWebProcessExtension
 WebKitFrame *
 web_page_get_main_frame(WebKitWebPage *page)
 {
-    g_return_val_if_fail(page != NULL, NULL);
-    return g_object_get_data(G_OBJECT(page), "luakit-main-frame");
+    if (!page)
+        return NULL;
+    GPtrArray *frames = g_object_get_data(G_OBJECT(page), "luakit-frames");
+    if (frames) {
+        for (guint i = 0; i < frames->len; i++) {
+            WebKitFrame *frame = g_ptr_array_index(frames, i);
+            if (frame && webkit_frame_is_main_frame(frame))
+                return frame;
+        }
+    }
+    return NULL;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

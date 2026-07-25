@@ -24,7 +24,7 @@ T.test_session_save_and_load = function ()
     local initial_tab_count = #w.tabs
     w:new_tab("luakit-test://test_follow.html")
     test.wait_for_view(w.view)
-    
+
     assert.equal(initial_tab_count + 1, #w.tabs)
 
     -- Save session

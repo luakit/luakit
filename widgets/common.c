@@ -231,6 +231,11 @@ destroy_cb(GtkWidget* UNUSED(win), widget_t *w)
     luaH_object_emit_signal(L, -1, "destroy", 0, 0);
     lua_pop(L, 1);
 
+    /* Disconnect GTK widget signal handlers pointing to w */
+    if (w->widget && G_IS_OBJECT(w->widget)) {
+        g_signal_handlers_disconnect_by_data(w->widget, w);
+    }
+
     /* 2. Call widget destructor */
     debug("destroy %p (%s)", w, w->info->name);
     if (w->destructor)
