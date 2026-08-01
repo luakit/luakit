@@ -59,6 +59,7 @@ theme.ibar_fg           = "#000"
 theme.ibar_bg           = "rgba(0,0,0,0)"
 
 -- Tab label
+theme.tab_height        = 28
 theme.tab_fg            = "#888"
 theme.tab_bg            = "#222"
 theme.tab_hover_bg      = "#292929"

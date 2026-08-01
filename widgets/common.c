@@ -286,6 +286,11 @@ luaH_widget_set_child(lua_State *L, widget_t *w)
 
     /* add new child to container */
     if (child) {
+        gtk_widget_set_hexpand(GTK_WIDGET(child->widget), TRUE);
+        gtk_widget_set_vexpand(GTK_WIDGET(child->widget), TRUE);
+        gtk_widget_set_halign(GTK_WIDGET(child->widget), GTK_ALIGN_FILL);
+        gtk_widget_set_valign(GTK_WIDGET(child->widget), GTK_ALIGN_FILL);
+
         if (GTK_IS_BOX(w->widget))
             gtk_box_append(GTK_BOX(w->widget), GTK_WIDGET(child->widget));
         else if (GTK_IS_SCROLLED_WINDOW(w->widget))
@@ -420,10 +425,21 @@ luaH_widget_replace(lua_State *L)
         gtk_widget_unparent(GTK_WIDGET(och->widget));
 
 
+        gtk_widget_set_hexpand(GTK_WIDGET(nch->widget), TRUE);
+        gtk_widget_set_vexpand(GTK_WIDGET(nch->widget), TRUE);
+        gtk_widget_set_halign(GTK_WIDGET(nch->widget), GTK_ALIGN_FILL);
+        gtk_widget_set_valign(GTK_WIDGET(nch->widget), GTK_ALIGN_FILL);
+
         if (GTK_IS_BOX(parent)) {
             gtk_box_append(GTK_BOX(parent), GTK_WIDGET(nch->widget));
+        } else if (GTK_IS_OVERLAY(parent)) {
+            gtk_overlay_set_child(GTK_OVERLAY(parent), GTK_WIDGET(nch->widget));
+        } else if (GTK_IS_WINDOW(parent)) {
+            gtk_window_set_child(GTK_WINDOW(parent), GTK_WIDGET(nch->widget));
+        } else if (GTK_IS_SCROLLED_WINDOW(parent)) {
+            gtk_scrolled_window_set_child(GTK_SCROLLED_WINDOW(parent), GTK_WIDGET(nch->widget));
         } else {
-            gtk_widget_set_parent(nch->widget, parent);
+            gtk_widget_set_parent(GTK_WIDGET(nch->widget), parent);
         }
 
         GtkLayoutChild *new_layout_child = gtk_layout_manager_get_layout_child(layout_mgr, GTK_WIDGET(nch->widget));
@@ -438,12 +454,20 @@ luaH_widget_replace(lua_State *L)
         g_free(props);
         g_free(values);
     } else {
-        // Fallback for single-child containers (e.g., GtkWindow, GtkButton, GtkFrame)
-        // These don't use a multi-child layout manager; simply swap them using the specific setter
+        gtk_widget_set_hexpand(GTK_WIDGET(nch->widget), TRUE);
+        gtk_widget_set_vexpand(GTK_WIDGET(nch->widget), TRUE);
+        gtk_widget_set_halign(GTK_WIDGET(nch->widget), GTK_ALIGN_FILL);
+        gtk_widget_set_valign(GTK_WIDGET(nch->widget), GTK_ALIGN_FILL);
+
+        // Fallback for single-child containers (e.g., GtkWindow, GtkButton, GtkFrame, GtkOverlay)
         if (GTK_IS_WINDOW(parent)) {
             gtk_window_set_child(GTK_WINDOW(parent), GTK_WIDGET(nch->widget));
+        } else if (GTK_IS_OVERLAY(parent)) {
+            gtk_overlay_set_child(GTK_OVERLAY(parent), GTK_WIDGET(nch->widget));
         } else if (GTK_IS_BUTTON(parent)) {
             gtk_button_set_child(GTK_BUTTON(parent), GTK_WIDGET(nch->widget));
+        } else {
+            gtk_widget_set_parent(GTK_WIDGET(nch->widget), parent);
         }
     }
     return 0;
@@ -453,7 +477,10 @@ gint
 luaH_widget_show(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    gtk_widget_set_visible(w->widget, TRUE);
+    if (GTK_IS_WINDOW(w->widget))
+        gtk_window_present(GTK_WINDOW(w->widget));
+    else
+        gtk_widget_set_visible(w->widget, TRUE);
     return 0;
 }
 

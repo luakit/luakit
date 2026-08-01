@@ -203,7 +203,11 @@ end
 
 -- Restore last saved session
 local w = (not luakit.nounique) and (session and session.restore())
-if not w then
+if w then
+    for i, uri in ipairs(uris) do
+        w:new_tab(uri, { switch = i == 1 })
+    end
+else
     print("session w is NOT set")
     -- Or open new window
     window.new(uris)

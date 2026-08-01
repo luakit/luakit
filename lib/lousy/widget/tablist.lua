@@ -17,6 +17,11 @@ local _M = {}
 -- @readwrite
 _M.min_width = 100
 
+--- Fixed height for horizontal tabs (0 for dynamic height based on content).
+-- @type number
+-- @readwrite
+_M.height = 28
+
 local data = setmetatable({}, { __mode = "k" })
 
 local function destroy(tlist)
@@ -102,8 +107,13 @@ local function tablist_nb_page_added_cb(tlist, view, idx)
     data[tlist].tabs[view] = tl
 
     local orientation = data[tlist].orientation
-    if _M.min_width and _M.min_width > 0 and orientation == "horizontal" then
-        tl.widget.min_size = { w = _M.min_width }
+    if orientation == "horizontal" then
+        local theme = get_theme()
+        local height = (_M.height and _M.height > 0) and _M.height or (theme.tab_height or 0)
+        local sz = {}
+        if _M.min_width and _M.min_width > 0 then sz.w = _M.min_width end
+        if height > 0 then sz.h = height end
+        if next(sz) then tl.widget.min_size = sz end
     end
     data[tlist].box:pack(tl.widget, { expand = orientation == "horizontal", fill = true })
     data[tlist].box:reorder(tl.widget, idx-1)

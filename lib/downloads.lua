@@ -167,6 +167,20 @@ function _M.add(uri, opts)
         string.format("download.add() expected uri or download object "
             .. "(got %s)", type(d) or "nil"))
 
+    local set_dest = function(dd, fn)
+        dd.allow_overwrite = true
+        dd:add_signal("created-destination", function(ddd)
+            local data = {
+                created = luakit.time(),
+                id = next_download_id(),
+            }
+            dls[ddd] = data
+            if not status_timer.started then status_timer:start() end
+            _M.emit_signal("download::status", ddd, dls[ddd])
+        end)
+        dd.destination = fn
+    end
+
     d:add_signal("decide-destination", function(dd, suggested_filename)
         -- Emit signal to get initial download location
         local fn = opts.filename or _M.emit_signal("download-location", dd.uri,
@@ -180,24 +194,17 @@ function _M.add(uri, opts)
                 suggested_filename)
         end
 
-        dd.allow_overwrite = true
-
         if fn then
-            dd.destination = fn
-            dd:add_signal("created-destination", function(ddd)
-                local data = {
-                    created = luakit.time(),
-                    id = next_download_id(),
-                }
-                dls[ddd] = data
-                if not status_timer.started then status_timer:start() end
-                _M.emit_signal("download::status", ddd, dls[ddd])
-            end)
+            set_dest(dd, fn)
         else
             dd:cancel()
         end
         return true
     end)
+
+    if opts.filename and not d.destination then
+        set_dest(d, opts.filename)
+    end
 
     d:add_signal("finished", function(dd)
         query_insert:exec{os.time(), dls[dd].created, dd.uri, dd.destination, dd.total_size}

@@ -163,7 +163,8 @@ session.add_signal("restore", function (state)
         closed_tabs[w.tabs] = win.closed
         -- Save view uids for each view, reconstruct view_uids.next
         for i, v in ipairs(w.tabs.children) do
-            local uid = win.open[i].view_uid
+            local item = win.open[i]
+            local uid = item and item.view_uid
             view_uids[v] = uid
             if uid and uid >= view_uids.next then
                 view_uids.next = uid + 1

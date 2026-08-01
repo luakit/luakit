@@ -318,6 +318,14 @@ widget_window(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
 
     g_signal_connect(w->widget, "destroy", G_CALLBACK(destroy_win_cb), w);
 
+
+    GdkSurface *surface = gtk_native_get_surface(gtk_widget_get_native(w->widget));
+    if (surface) {
+        g_signal_connect(surface, "notify::width", G_CALLBACK(window_surface_size_changed_cb), w);
+        g_signal_connect(surface, "notify::height", G_CALLBACK(window_surface_size_changed_cb), w);
+        window_surface_size_changed_cb(surface, NULL, w);
+    }
+
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::destroy",            G_CALLBACK(destroy_cb), w,

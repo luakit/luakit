@@ -112,6 +112,7 @@ luaH_webview_set_session_state(lua_State *L, webview_data_t *d)
     g_bytes_unref(bytes);
     if (!state)
         luaL_error(L, "Invalid session state");
+
     webkit_web_view_restore_session_state(d->view, state);
     webkit_web_view_session_state_unref(state);
 
@@ -119,7 +120,6 @@ luaH_webview_set_session_state(lua_State *L, webview_data_t *d)
     WebKitBackForwardListItem *item = webkit_back_forward_list_get_current_item(bfl);
     if (item) {
         webkit_web_view_go_to_back_forward_list_item(d->view, item);
-        update_uri(d->widget, webkit_back_forward_list_item_get_uri(item));
     }
 }
 

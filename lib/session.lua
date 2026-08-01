@@ -121,27 +121,18 @@ local restore_file = function (file, delete)
     local w
     for _, win in ipairs(wins) do
         w = nil
-        for _, item in ipairs(win.open) do
-            local v
+        for i, item in ipairs(win.open) do
+            local item_state, item_uri = item.session_state, item.uri
             if not w then
-                w = window.new({settings.get_setting("window.new_tab_page")})
-                v = w.view
-            else
-                v = w:new_tab(settings.get_setting("window.new_tab_page"), { switch = item.current })
+                w = window.new({}, { no_initial_tab = true })
             end
-            -- Block the tab load, then set its location
-            -- webview.modify_load_block(v, "session-restore", true)
-            webview.set_location(v, { session_state = item.session_state, uri = item.uri })
-            -- local function unblock(vv)
-            --     webview.modify_load_block(vv, "session-restore", false)
-            --     vv:remove_signal("switched-page", unblock)
-            -- end
-            -- v:add_signal("switched-page", unblock)
+            if item_state or item_uri then
+                local v = w:new_tab({ session_state = item_state }, { switch = item.current, no_reuse = true, no_initial_tab = true, no_initial_url = true })
+            end
         end
         -- Convert state keys from index to w table
         if w then
             state[w] = win
-            -- webview.modify_load_block(w.view, "session-restore", false)
             w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
         end
     end

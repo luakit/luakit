@@ -126,11 +126,10 @@ luaH_image_set_favicon_for_uri_finished(WebKitFaviconDatabase *fdb, GAsyncResult
     if (!texture)
         return;
 
-    float scale = gtk_widget_get_scale_factor(w->widget);
-    float log_sz = 16, dev_sz = log_sz*scale;
+    float log_sz = 16;
 
     gtk_image_set_from_paintable(GTK_IMAGE(w->widget), GDK_PAINTABLE(texture));
-    gtk_widget_set_size_request(GTK_WIDGET(w->widget), dev_sz, dev_sz);
+    gtk_widget_set_size_request(GTK_WIDGET(w->widget), log_sz, log_sz);
     g_object_unref(texture);
 }
 

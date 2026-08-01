@@ -38,6 +38,17 @@
 #error Your version of WebKit is outdated!
 #endif
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+const char *__asan_default_options(void) {
+    return "detect_leaks=0";
+}
+const char *__lsan_default_options(void) {
+    return "detect_leaks=0";
+}
+#endif
+#endif
+
 /* Define two globals of the UI side; their extern declarations are in
 globalconf.h, and clib/widget.h, and so they're visible pretty much
 everywhere; there's also common for lua communication; there's a second

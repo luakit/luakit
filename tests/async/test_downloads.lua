@@ -18,8 +18,8 @@ T.test_download_file = function ()
     local dest = luakit.data_dir .. "/download_test.html"
     os.remove(dest)
 
-    -- Create download object
-    local d = download{uri = "luakit-test://test_follow.html"}
+    -- Create download object (use file:// scheme as WebKitGTK 6.0 NetworkProcess requires a streamable protocol for WebKitDownload)
+    local d = download{uri = "file://" .. os.abspath("tests/html/test_follow.html")}
 
     -- Wait for the download to finish
     d:add_signal("finished", function ()

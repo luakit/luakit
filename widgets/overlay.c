@@ -129,6 +129,10 @@ widget_overlay(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     w->newindex = luaH_overlay_newindex;
 
     w->widget = gtk_overlay_new();
+    gtk_widget_set_hexpand(w->widget, TRUE);
+    gtk_widget_set_vexpand(w->widget, TRUE);
+    gtk_widget_set_halign(w->widget, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(w->widget, GTK_ALIGN_FILL);
 
     g_object_connect(G_OBJECT(w->widget),
         LUAKIT_WIDGET_SIGNAL_COMMON(w)

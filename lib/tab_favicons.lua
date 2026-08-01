@@ -18,6 +18,8 @@ local webview = require("webview")
 tab.add_signal("build", function (tl, view)
     local label = tl.widget.child
     local layout, fav, spin = widget{type = "hbox"}, widget{type="image"}, widget{type="spinner"}
+    fav.min_size = { w = 16, h = 16 }
+    spin.min_size = { w = 16, h = 16 }
     tl.widget.child = layout
     layout.homogeneous = false
     layout:pack(fav)
@@ -69,9 +71,9 @@ tab.add_signal("build", function (tl, view)
 
     local load_status_cb = function (v, status)
         if v.is_loading then
-            fav:hide() spin:show()
+            fav:hide() spin:show() spin:start()
         else
-            fav:show() spin:hide()
+            fav:show() spin:hide() spin:stop()
         end
         if status == "finished" then update_favicon(v) end
     end
@@ -83,9 +85,7 @@ tab.add_signal("build", function (tl, view)
         view:remove_signal("load-status", load_status_cb)
     end)
 
-    -- spin:start();
-    -- (view.is_loading and fav or spin):hide()
-    -- update_favicon(view)
+    load_status_cb(view, "provisional")
 end)
 
 -- Remove tab numbers

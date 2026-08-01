@@ -61,14 +61,16 @@ luaH_box_pack(lua_State *L)
     if (orientation == GTK_ORIENTATION_HORIZONTAL) {
         gtk_widget_set_hexpand(child_widget, expand);
         gtk_widget_set_halign(child_widget, fill ? GTK_ALIGN_FILL : GTK_ALIGN_CENTER);
-        gtk_widget_set_vexpand(child_widget, FALSE);
+        if (expand || fill)
+            gtk_widget_set_vexpand(child_widget, TRUE);
         gtk_widget_set_valign(child_widget, GTK_ALIGN_FILL);
         gtk_widget_set_margin_start(child_widget, padding);
         gtk_widget_set_margin_end(child_widget, padding);
     } else {
         gtk_widget_set_vexpand(child_widget, expand);
         gtk_widget_set_valign(child_widget, fill ? GTK_ALIGN_FILL : GTK_ALIGN_CENTER);
-        gtk_widget_set_hexpand(child_widget, FALSE);
+        if (expand || fill)
+            gtk_widget_set_hexpand(child_widget, TRUE);
         gtk_widget_set_halign(child_widget, GTK_ALIGN_FILL);
         gtk_widget_set_margin_top(child_widget, padding);
         gtk_widget_set_margin_bottom(child_widget, padding);
@@ -174,6 +176,11 @@ widget_box(lua_State *UNUSED(L), widget_t *w, luakit_token_t token)
 
     w->widget = gtk_box_new((token == L_TK_VBOX) ?
             GTK_ORIENTATION_VERTICAL : GTK_ORIENTATION_HORIZONTAL, 0);
+
+    gtk_widget_set_hexpand(w->widget, TRUE);
+    gtk_widget_set_vexpand(w->widget, TRUE);
+    gtk_widget_set_halign(w->widget, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(w->widget, GTK_ALIGN_FILL);
 
     gtk_box_set_homogeneous(GTK_BOX(w->widget), (token == L_TK_VBOX) ? FALSE : TRUE);
 

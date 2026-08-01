@@ -266,7 +266,9 @@ local init_funcs = {
 
     set_default_size = function (w)
         local size = settings.get_setting("window.new_window_size")
-        if string.match(size, "^%d+x%d+$") then
+        if size == "maximized" or size == "maximize" then
+            w.win.maximized = true
+        elseif string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
             msg.warn("invalid window size: %q", size)
@@ -470,7 +472,7 @@ _M.methods = {
             w:attach_tab(view, switch, order)
         end
 
-        if not view and settings.get_setting("window.reuse_new_tab_pages") then
+        if not view and not opts.no_reuse and settings.get_setting("window.reuse_new_tab_pages") then
             for _, tab in ipairs(w.tabs.children) do
                 if tab.uri == settings.get_setting("window.new_tab_page") then
                     msg.verbose("new_tab: using existing blank tab, %s", tab.uri)
@@ -481,12 +483,21 @@ _M.methods = {
         end
 
         if not view then
-            -- Make new webview widget
-            view = webview.new({ private = opts.private })
+            view = webview.new({
+                private = opts.private,
+            })
+
+            if arg and arg.session_state then
+                view.session_state = arg.session_state
+            elseif arg and arg.uri then
+                view.uri = arg and arg.uri
+            end
+
             if not arg and not opts.no_initial_url then
                 view.uri = settings.get_setting("window.new_tab_page")
             end
             w:attach_tab(view, switch, order)
+
         end
 
         if switch ~= false then w.tabs:switch(w.tabs:indexof(view)) end
@@ -495,7 +506,10 @@ _M.methods = {
             w:search_open_navigate(view, arg)
         end
 
-        view:reload()
+        if not opts.no_initial_url then
+            view:reload()
+        end
+
         return view
     end,
 
@@ -740,7 +754,7 @@ _M.add_signal("build", _M.build)
 --- Create a new window table instance.
 -- @tparam table args Array of initial tab arguments.
 -- @treturn table The newly-created window table.
-function _M.new(args)
+function _M.new(args, opts)
     local w = {}
     w_priv[w] = {}
 
@@ -776,12 +790,14 @@ function _M.new(args)
     end
 
     -- Make sure something is loaded
-    if w.tabs:count() == 0 then
+    if w.tabs:count() == 0 and not (opts and opts.no_initial_tab) then
         w:new_tab(settings.get_setting("window.home_page"))
     end
 
     -- Show window
-    w.win:show()
+    if not (opts and opts.show == false) then
+        w.win:show()
+    end
 
     -- Set initial mode
     w:set_mode()
@@ -818,14 +834,15 @@ settings.register_settings({
         type = "string",
         default = "800x600",
         validator = function (v)
+            if v == "maximized" or v == "maximize" then return true end
             local x, y = v:match("^(%d+)x(%d+)$")
             if not x or not y then return false end
             return tonumber(x) > 0 and tonumber(y) > 0
         end,
         desc = [=[
-            The size (in pixels) of newly-opened windows.
+            The size (in pixels) of newly-opened windows, or 'maximized'.
 
-            Must be in the form `WxY`, where `W` and `H` are the width and height respectively.
+            Must be in the form `WxY` (where `W` and `H` are width and height) or `maximized`.
         ]=],
     },
     ["window.home_page"] = {

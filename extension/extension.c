@@ -49,6 +49,17 @@ everywhere in extensions; note that this common is separate
 from the common visible on the UI side. */
 common_t common;
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+const char *__asan_default_options(void) {
+    return "detect_leaks=0";
+}
+const char *__lsan_default_options(void) {
+    return "detect_leaks=0";
+}
+#endif
+#endif
+
 /* Similarly, this is the global definition of extension */
 extension_t extension;
 

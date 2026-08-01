@@ -77,8 +77,6 @@ typedef struct {
     pid_t web_process_id;
 } webview_data_t;
 
-static WebKitWebView *related_view;
-
 #define luaH_checkwvdata(L, udx) ((webview_data_t*)(luaH_checkwebview(L, udx)->data))
 
 static struct {
@@ -368,6 +366,16 @@ luaH_webview_push_source(lua_State *L)
 }
 
 static void
+webview_size_allocated_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
+{
+    GtkWidget *widget = GTK_WIDGET(object);
+    webview_data_t *d = w->data;
+    if (widget) {
+        gtk_widget_set_visible(widget, TRUE);
+    }
+}
+
+static void
 load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 {
     webview_data_t *d = w->data;
@@ -389,21 +397,10 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
         break;
     }
 
-    update_uri(w, NULL);
-
     if (e == WEBKIT_LOAD_STARTED) {
         ((webview_data_t*) w->data)->is_committed = FALSE;
-        const gchar *bg = g_object_get_data(G_OBJECT(d->view), "bg");
-        if (bg) {
-            GdkRGBA c;
-            if (gdk_rgba_parse(&c, bg)) {
-                webkit_web_view_set_background_color(d->view, &c);
-            }
-        }
     } else if (e == WEBKIT_LOAD_COMMITTED) {
         ((webview_data_t*) w->data)->is_committed = TRUE;
-        GdkRGBA white = { 1.0, 1.0, 1.0, 1.0 };
-        webkit_web_view_set_background_color(d->view, &white);
     } else if (e == WEBKIT_LOAD_FINISHED) {
         ((webview_data_t*) w->data)->is_committed = TRUE;
     }
@@ -443,13 +440,10 @@ create_cb(WebKitWebView* v, WebKitNavigationAction* UNUSED(a), widget_t *w)
     WebKitWebView *view = NULL;
     widget_t *new;
 
-    g_assert(!related_view);
-    related_view = v;
     lua_State *L = common.L;
     gint top = lua_gettop(L);
     luaH_object_push(L, w->ref);
     gint ret = luaH_object_emit_signal(L, -1, "create-web-view", 0, 1);
-    related_view = NULL;
 
     /* check for new webview widget */
     if (ret) {
@@ -926,7 +920,18 @@ luaH_webview_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     token = webview_translate_old_token(token);
 
     switch(token) {
-      LUAKIT_WIDGET_NEWINDEX_COMMON(w)
+      case L_TK_VISIBLE:
+        luaH_widget_set_visible(L, w);
+        return 0;
+      case L_TK_TOOLTIP:
+        luaH_widget_set_tooltip(L, w);
+        return 0;
+      case L_TK_MIN_SIZE:
+        luaH_widget_set_min_size(L, w);
+        return 0;
+      case L_TK_ALIGN:
+        luaH_widget_set_align(L, w);
+        return 0;
 
       case L_TK_URI:
         uri = parse_uri(luaL_checklstring(L, 3, &len));
@@ -1443,13 +1448,14 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
                  "web-context", web_context_get(),
                  "network-session", session,
                  "user-content-manager", d->user_content,
-                 related_view ? "related-view" : NULL, related_view,
                  NULL);
     g_object_unref(session);
-    d->inspector = webkit_web_view_get_inspector(d->view);
 
-    GdkRGBA transparent = { 0.0, 0.0, 0.0, 0.0 };
-    webkit_web_view_set_background_color(d->view, &transparent);
+    GdkRGBA orange = { 1.0, 0.5, 0.0, 1.0 };
+    webkit_web_view_set_background_color(d->view, &orange);
+    gtk_widget_set_visible(GTK_WIDGET(d->view), FALSE);
+
+    d->inspector = webkit_web_view_get_inspector(d->view);
 
     d->is_committed = FALSE;
 
@@ -1478,6 +1484,8 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::notify::page-id",                      G_CALLBACK(page_id_changed_cb),           w,
       "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
       "signal::permission-request",                   G_CALLBACK(permission_request_cb),        w,
+      "signal::notify::width",                        G_CALLBACK(webview_size_allocated_cb),     w,
+      "signal::notify::height",                       G_CALLBACK(webview_size_allocated_cb),     w,
       NULL);
 
     LUAKIT_EVENT_CONTROLLER_KEY(GTK_WIDGET(d->view), w)
@@ -1505,13 +1513,14 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::open-window",                          G_CALLBACK(inspector_open_window_cb),     w,
       NULL);
 
+    // /* show widgets */
+    // gtk_widget_set_visible(GTK_WIDGET(d->view), FALSE);
+
+    // gtk_widget_set_size_request(GTK_WIDGET(d->view), width, height);
     gtk_widget_set_hexpand(GTK_WIDGET(d->view), TRUE);
     gtk_widget_set_vexpand(GTK_WIDGET(d->view), TRUE);
     gtk_widget_set_halign(GTK_WIDGET(d->view), GTK_ALIGN_FILL);
     gtk_widget_set_valign(GTK_WIDGET(d->view), GTK_ALIGN_FILL);
-
-    /* show widgets */
-    gtk_widget_set_visible(GTK_WIDGET(d->view), TRUE);
 
     return w;
 }

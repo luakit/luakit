@@ -303,12 +303,13 @@ end
 -- @treturn table The newly-created webview widget.
 function _M.new(opts)
     assert(opts)
-    local view = widget{type = "webview", private = opts.private}
-
+    local view = widget{
+        type = "webview",
+        private = opts.private,
+        width = opts.width,
+        height = opts.height,
+    }
     local theme = lousy.theme.get()
-    if theme.bg then
-        view.bg = theme.bg
-    end
 
     webview_state[view] = { blockers = {} }
     wrap_widget_metatable(view)
@@ -405,7 +406,7 @@ function _M.set_location(view, arg)
 
     if arg.session_state then
         view.session_state = arg.session_state
-        if view.uri == "about:blank" and arg.uri then
+        if arg.uri then
             view.uri = arg.uri
         end
     else
@@ -630,7 +631,7 @@ local webview_settings = {
             ["always"] = { desc = "Always enable hardware acceleration.", label = "Always", },
             ["never"] = { desc = "Always disable hardware acceleration.", label = "Never", },
         },
-        default = "always",
+        default = "on-demand",
         desc = "The policy used to determine when hardware acceleration should be used to render web content.",
     },
     ["webview.javascript_can_access_clipboard"] = {
@@ -754,6 +755,7 @@ _M.add_signal("init", function (view)
         elseif status == "provisional" or status == "redirected" then
             local val, match = settings.get_setting_for_view(v, "webview.user_agent")
             set(v, "webview.user_agent", val, match)
+            v:show()
         elseif status == "committed" then set_all(v) end
     end)
     view:add_signal("web-extension-loaded", function (v)
