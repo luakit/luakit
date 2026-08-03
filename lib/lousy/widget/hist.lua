@@ -32,8 +32,6 @@ _M.back_indicator = "+"
 -- @readwrite
 _M.forward_indicator = "-"
 
-local window = require("window")
-
 local widgets = {
     update = function (w, hist, view)
         view = view or w.view

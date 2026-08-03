@@ -309,7 +309,6 @@ function _M.new(opts)
         width = opts.width,
         height = opts.height,
     }
-    local theme = lousy.theme.get()
 
     webview_state[view] = { blockers = {} }
     wrap_widget_metatable(view)

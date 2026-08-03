@@ -29,18 +29,22 @@ T.test_scrolling_works = function ()
         "Scroll position should start at top.")
 
     w:scroll{ yrel = 100 }
+    test.wait_until(function () return w.view.scroll.y == 100 end)
     assert.is_equal(100, get_scroll_y(),
         "Relative scrolling failed")
 
     w:scroll{ yrel = -100 }
+    test.wait_until(function () return w.view.scroll.y == 0 end)
     assert.is_equal(0, get_scroll_y(),
         "Relative scrolling failed")
 
     w:scroll{ yrel = -100 }
+    test.wait_for_idle()
     assert.is_equal(0, get_scroll_y(),
         "Scrolling didn't stop when already at end")
 
     w:scroll{ yrel = 100 }
+    test.wait_until(function () return w.view.scroll.y == 100 end)
     assert.is_equal(100, get_scroll_y(),
         "Relative scrolling after scrolling against scroll-end failed")
 

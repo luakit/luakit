@@ -171,7 +171,7 @@ window.add_signal("init", function (w)
     r.layout:reorder(r.noscript, 1)
     r.noscript.font = theme.font
 
-    w.tabs:add_signal("switch-page", function (nb, child)
+    w.tabs:add_signal("switch-page", function (_, child)
         noscript_indicator_update(child)
     end)
 end)

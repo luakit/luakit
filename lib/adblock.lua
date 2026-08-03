@@ -189,7 +189,7 @@ local abp_to_pattern = function (s)
 
         if domain_anchor then
             local p = string.sub(s, 3) -- Clip off first two || characters
-            s = { "^https?://" .. p, "^https?://[^/]*%." .. p }
+            s = { "^[%w%-]+://" .. p, "^[%w%-]+://[^/]*%." .. p }
         else
             s = { s }
         end
@@ -456,6 +456,12 @@ _M.whitelist_domain_access = function (domain)
     adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
 end
 
+--- Clear all whitelisted domain access rules for the session.
+_M.clear_page_whitelist = function ()
+    page_whitelist = {}
+    adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
+end
+
 local new_web_extension_created
 
 webview.add_signal("init", function (view)
@@ -471,7 +477,7 @@ webview.add_signal("init", function (view)
 end)
 
 window.add_signal("init", function (w)
-    w.tabs:add_signal("switch-page", function (nb, child)
+    w.tabs:add_signal("switch-page", function (_, child)
         if not _M.enabled then
             webview.modify_load_block(child, "adblock", false)
         end

@@ -7,8 +7,6 @@
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 -- @copyright 2010 Mason Larobina <mason.larobina@gmail.com>
 
-local window = require("window")
-local webview = require("webview")
 local lousy = require("lousy")
 local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
@@ -16,7 +14,7 @@ local wc = require("lousy.widget.common")
 local _M = {}
 
 local widgets = {
-    update = function (w, tabi, view, index)
+    update = function (w, tabi, _, index)
         index = index or w.tabs:current()
         tabi.text = string.format("[%d/%d]", index, w.tabs:count())
     end,

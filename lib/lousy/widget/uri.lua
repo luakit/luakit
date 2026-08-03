@@ -14,8 +14,6 @@ local lousy = require("lousy")
 local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
 
-local window = require("window")
-
 local widgets = {
     update = function (w, uri, link, view)
         local text

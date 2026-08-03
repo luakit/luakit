@@ -243,7 +243,7 @@ local function _cleaner()
 end
 
 window.add_signal("init", function (w)
-    w.tabs:add_signal("switch-page", function (nb, child)
+    w.tabs:add_signal("switch-page", function (_, child)
         webview.modify_load_block(child, "tabgroups-restore", false)
     end)
 
@@ -695,8 +695,8 @@ new_mode("tabgroup-menu-rename", {
             if w2groups[w].active == old_name then
                 w2groups[w].active = new_name
             end
-            w.tabs:emit_signal("switch-page", w.view, w.tabs:current()) -- a `tabgroup-changed` signal may be more appropriate,
-                                                -- (both here, and in `switch_tabgroup` above)..
+            -- a `tabgroup-changed` signal may be more appropriate (both here and in `switch_tabgroup` above)
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
         end
         w:set_mode('tabgroup-menu')
     end,

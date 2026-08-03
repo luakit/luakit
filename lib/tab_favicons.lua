@@ -13,7 +13,6 @@
 local _M = {}
 
 local tab = require("lousy.widget.tab")
-local webview = require("webview")
 
 tab.add_signal("build", function (tl, view)
     local label = tl.widget.child

@@ -4,17 +4,16 @@
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
-local lousy = require("lousy")
 
 local _M = {}
+
+local all_widget_groups = {}
 
 --- Add `widget` to `widgets`, and automatically remove it when `widget` is
 -- destroyed.
 -- @tparam table widgets A table of widgets
 -- @tparam widget widget A newly-created widget
 -- @return Returns `widget`, to allow easy chaining.
-local all_widget_groups = {}
-
 _M.add_widget = function (widgets, widget)
     assert(type(widgets) == "table")
     table.insert(widgets, widget)
@@ -47,6 +46,8 @@ _M.update_widgets_on_w = function (widgets, w, ...)
     end
 end
 
+--- Update all widgets on the given window across all widget groups.
+-- @tparam table w A window table
 _M.update_all_widgets_on_w = function (w, ...)
     for _, widgets in ipairs(all_widget_groups) do
         _M.update_widgets_on_w(widgets, w, ...)

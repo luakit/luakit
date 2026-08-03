@@ -15,6 +15,10 @@ local page_whitelist = {}
 ui:add_signal("enable", function(_, _, e) enabled = e end)
 ui:add_signal("update_rules", function(_, _, r)
     rules = r
+    enabled_rules = {}
+    for name, list in pairs(rules) do
+        enabled_rules[name] = list
+    end
     ui:emit_signal("rules_updated", luakit.web_process_id)
 end)
 ui:add_signal("update_page_whitelist", function(_, _, wl)
@@ -54,7 +58,7 @@ local function third_party_match(domain1, domain2, opts)
 end
 
 local function domain_from_uri(uri)
-    local domain = (uri and string.match(string.lower(uri), "^%a+://([^/]*)/?"))
+    local domain = (uri and string.match(string.lower(uri), "^[%w%-]+://([^/]*)/?"))
     -- Strip leading www. www2. etc
     domain = string.match(domain or "", "^www%d?%.(.+)") or domain
     return domain or ""
@@ -171,7 +175,7 @@ luakit.add_signal("page-created", function(page)
         if uri:match("^adblock%-blocked:") then return end
 
         local allow = filter(p.uri, uri)
-        if allow == false and p.uri == uri then
+        if allow == false and (p.uri == uri or p.uri == "" or p.uri == "about:blank") then
             if not lousy.util.table.hasitem(page_whitelist, lousy.uri.parse(uri).host) then
                 return "adblock-blocked:" .. uri
             end

@@ -14,8 +14,6 @@ local wc = require("lousy.widget.common")
 
 local _M = {}
 
-local window = require("window")
-
 local widgets = {
     update = function (w, ssl, view)
         view = view or w.view

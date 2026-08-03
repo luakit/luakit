@@ -17,7 +17,7 @@ T.test_quickmarks_ops = function ()
 
     -- We'll use a temporary file path for testing quickmarks file operations
     local temp_file = luakit.data_dir .. "/quickmarks_test"
-    
+
     -- Ensure clean state
     quickmarks.delall(false)
 

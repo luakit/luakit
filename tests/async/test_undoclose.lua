@@ -58,6 +58,7 @@ T.test_undo_close_restores_tab_history = function ()
     assert.is_equal(w.view.uri, 'about:blank')
 
     -- Navigate back
+    test.wait_until(function () return w.view:can_go_back() end)
     w:back(1)
     test.wait_for_view(w.view)
     assert.is_equal(w.view.uri, uri)

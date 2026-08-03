@@ -266,6 +266,4 @@ session_authenticate(WebKitWebView *UNUSED(web_view), WebKitAuthenticationReques
     return TRUE;
 }
 
-
-
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

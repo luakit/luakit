@@ -235,8 +235,7 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
     end
 
     if not bounding_boxes_intersect(wbb, rbb) then
-        msg.info("get_element_bb_if_visible: element %s doesn't intersect wbb: wbb={x=%d,y=%d,w=%d,h=%d}, rbb={x=%d,y=%d,w=%d,h=%d}",
-            tostring(element.tag_name), wbb.x, wbb.y, wbb.w, wbb.h, rbb.x, rbb.y, rbb.w, rbb.h)
+        msg.info("get_element_bb_if_visible: element %s doesn't intersect wbb", tostring(element.tag_name))
         return nil
     end
 
@@ -307,11 +306,14 @@ local function sort_hints_top_left(a, b)
     end
 end
 
+--- Make hint labels.
+-- @tparam number num Number of labels
+-- @treturn table Array of label strings
 function _M.make_labels(num)
     return label_maker(num)
 end
 
-local function find_frames(root_frame)
+local function find_frames(root_frame) -- luacheck: ignore 211
     if not root_frame.body then
         return {}
     end
@@ -476,7 +478,7 @@ function _M.scan(page, elements, ignore_case)
     state.hints = {}
     state.ignore_case = ignore_case or false
 
-    local client_rects, err = page:wrap_js([=[
+    local client_rects = page:wrap_js([=[
         var rects = element.getClientRects();
         if (rects.length == 0)
             return undefined;
@@ -498,7 +500,7 @@ function _M.scan(page, elements, ignore_case)
     ]=], {"element"})
 
     -- Find all hints in the viewport
-    for idx, frame in ipairs(state.frames) do
+    for _, frame in ipairs(state.frames) do
         frame.hints = frame_find_hints(client_rects, frame, elements)
         -- Build an array of all hints
         for _, hint in ipairs(frame.hints) do
@@ -510,7 +512,11 @@ function _M.scan(page, elements, ignore_case)
     return #state.hints
 end
 
-function _M.show_hints(page, labels, stylesheet)
+--- Display hint elements on the target page.
+-- @tparam page page Target web page
+-- @tparam table labels Hint label strings
+-- @tparam string stylesheet CSS stylesheet string
+_M.show_hints = function (page, labels, stylesheet)
     assert(type(page) == "page")
     assert(type(labels) == "table")
     assert(type(stylesheet) == "string")
@@ -556,7 +562,12 @@ function _M.show_hints(page, labels, stylesheet)
     return focus(state, 0), state.num_visible_hints
 end
 
-function _M.enter(page, elements, stylesheet, ignore_case)
+--- Enter selection/hint mode on a page.
+-- @tparam page page Target page
+-- @tparam table|string elements Elements query string or table
+-- @tparam string stylesheet CSS stylesheet string
+-- @tparam boolean ignore_case Ignore case when filtering
+_M.enter = function (page, elements, stylesheet, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
     assert(type(stylesheet) == "string")

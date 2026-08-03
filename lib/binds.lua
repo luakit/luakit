@@ -642,8 +642,13 @@ modes.add_cmds({
     }},
     { ":seton", "Change a setting for a specific domain.", {
         func = function (w, o)
-            o.arg = o.arg or ""
-            local domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            local domain = o.domain
+            local key = o.setting
+            local value = o.arg
+            if not (domain and key and value and #domain > 0 and #key > 0 and #value > 0) then
+                o.arg = o.arg or ""
+                domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            end
             if (domain and key and value) == nil then
                 w:error("Usage: ':seton <domain> <setting> <value>'")
                 return

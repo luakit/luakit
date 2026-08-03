@@ -15,28 +15,24 @@ local T = {}
 T.test_download_file = function ()
     test.wait_for_idle()
 
-    local dest = luakit.data_dir .. "/download_test.html"
+    local dest = "/tmp/download_test.html"
     os.remove(dest)
 
-    -- Create download object (use file:// scheme as WebKitGTK 6.0 NetworkProcess requires a streamable protocol for WebKitDownload)
-    local d = download{uri = "file://" .. os.abspath("tests/html/test_follow.html")}
+    local d = downloads.add("data:text/html,Hello%20World", { filename = dest })
 
-    -- Wait for the download to finish
-    d:add_signal("finished", function ()
-        test.continue()
-    end)
-
+    -- Wait for the download to finish if not already completed
     d:add_signal("error", function (_, err)
         assert(false, "Download failed: " .. tostring(err))
     end)
 
-    -- Start the download with specified destination
-    downloads.add(d, { filename = dest })
+    if d.status ~= "finished" then
+        d:add_signal("finished", function ()
+            test.continue()
+        end)
+        test.wait(5000)
+    end
 
-    -- Wait for finished signal
-    test.wait(5000)
-
-    -- Verify file exists and is not empty
+    test.delay(50)
     local f = io.open(dest, "r")
     assert.is_not_nil(f, "Downloaded file not found")
     local content = f:read("*a")

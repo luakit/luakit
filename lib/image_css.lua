@@ -87,7 +87,7 @@ webview.add_signal("init", function (view)
 end)
 
 window.add_signal("init", function (w)
-    w.tabs:add_signal("switch-page", function (nb, child)
+    w.tabs:add_signal("switch-page", function (_, child)
         wm:emit_signal(child, "recalc")
     end)
 end)

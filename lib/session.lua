@@ -121,13 +121,14 @@ local restore_file = function (file, delete)
     local w
     for _, win in ipairs(wins) do
         w = nil
-        for i, item in ipairs(win.open) do
+        for _, item in ipairs(win.open) do
             local item_state, item_uri = item.session_state, item.uri
             if not w then
                 w = window.new({}, { no_initial_tab = true })
             end
             if item_state or item_uri then
-                local v = w:new_tab({ session_state = item_state }, { switch = item.current, no_reuse = true, no_initial_tab = true, no_initial_url = true })
+                local opts = { switch = item.current, no_reuse = true, no_initial_tab = true, no_initial_url = true }
+                w:new_tab({ session_state = item_state }, opts)
             end
         end
         -- Convert state keys from index to w table

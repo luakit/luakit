@@ -250,8 +250,11 @@ update_uri(widget_t *w, const gchar *uri)
 
     if (!uri) {
         uri = webkit_web_view_get_uri(d->view);
-        if (!uri || !uri[0])
+        if (!uri || !uri[0]) {
+            if (d->uri && d->uri[0])
+                return;
             uri = "about:blank";
+        }
     }
 
     /* uris are the same, do nothing */
@@ -363,16 +366,6 @@ luaH_webview_push_source(lua_State *L)
             (GAsyncReadyCallback) webview_get_source_finished, L);
 
     return luaH_yield(L);
-}
-
-static void
-webview_size_allocated_cb(GObject *object, GParamSpec *UNUSED(pspec), widget_t *w)
-{
-    GtkWidget *widget = GTK_WIDGET(object);
-    webview_data_t *d = w->data;
-    if (widget) {
-        gtk_widget_set_visible(widget, TRUE);
-    }
 }
 
 static void
@@ -1326,8 +1319,12 @@ luakit_uri_scheme_request_cb(WebKitURISchemeRequest *request, const gchar *schem
     const gchar *uri = webkit_uri_scheme_request_get_uri(request);
 
     WebKitWebView *view = webkit_uri_scheme_request_get_web_view(request);
-    if (!view)
+    if (!view) {
+        GError *error = g_error_new(G_IO_ERROR, G_IO_ERROR_NOT_FOUND, "No WebKitWebView associated with request");
+        webkit_uri_scheme_request_finish_error(request, error);
+        g_error_free(error);
         return;
+    }
     widget_t *w = GOBJECT_TO_LUAKIT_WIDGET(view);
 
     lua_State *L = common.L;
@@ -1451,9 +1448,9 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
                  NULL);
     g_object_unref(session);
 
-    GdkRGBA orange = { 1.0, 0.5, 0.0, 1.0 };
-    webkit_web_view_set_background_color(d->view, &orange);
-    gtk_widget_set_visible(GTK_WIDGET(d->view), FALSE);
+    GdkRGBA white = { 1.0, 1.0, 1.0, 1.0 };
+    webkit_web_view_set_background_color(d->view, &white);
+    gtk_widget_set_visible(GTK_WIDGET(d->view), TRUE);
 
     d->inspector = webkit_web_view_get_inspector(d->view);
 
@@ -1484,8 +1481,6 @@ widget_webview(lua_State *L, widget_t *w, luakit_token_t UNUSED(token))
       "signal::notify::page-id",                      G_CALLBACK(page_id_changed_cb),           w,
       "signal::authenticate",                         G_CALLBACK(session_authenticate),         w,
       "signal::permission-request",                   G_CALLBACK(permission_request_cb),        w,
-      "signal::notify::width",                        G_CALLBACK(webview_size_allocated_cb),     w,
-      "signal::notify::height",                       G_CALLBACK(webview_size_allocated_cb),     w,
       NULL);
 
     LUAKIT_EVENT_CONTROLLER_KEY(GTK_WIDGET(d->view), w)

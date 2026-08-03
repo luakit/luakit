@@ -16,12 +16,12 @@ local T = {}
 
 T.test_command_open = function ()
     test.wait_for_idle()
-    test.wait_for_view(w.view)
 
-    -- Test :open command with about:blank
-    w:run_cmd(":open about:blank")
+    -- Test :open command
+    local target = test.http_server() .. "test_follow.html"
+    w:run_cmd(":open " .. target)
     test.wait_for_view(w.view)
-    assert.equal("about:blank", w.view.uri)
+    assert.equal(target, w.view.uri)
 end
 
 T.test_command_tabopen_and_close = function ()
@@ -74,10 +74,10 @@ T.test_command_javascript = function ()
 
     -- Test :javascript command
     w:run_cmd(":js window.luakit_test_var = 12345")
-    test.wait_for_idle()
+    test.delay(100)
 
     -- Read back the variable using eval_js
-    w.view:eval_js("window.luakit_test_var", { callback = test.continue })
+    w.view:eval_js("window.luakit_test_var", { callback = function (res) test.continue(res) end })
     local val = test.wait()
     assert.equal(12345, val)
 end

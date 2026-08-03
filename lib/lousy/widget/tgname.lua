@@ -10,13 +10,10 @@
 
 local _M = {}
 
-local webview = require("webview")
 local lousy = require("lousy")
 local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
 local tabgroups = require('tabgroups')
-
-local window = require("window")
 
 local widgets = {
     update = function (w,tgname)

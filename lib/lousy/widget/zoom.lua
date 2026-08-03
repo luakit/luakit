@@ -20,8 +20,6 @@ local _M = {}
 -- @readwrite
 _M.format = "[zoom:%d%%]"
 
-local window = require("window")
-
 local widgets = {
     update = function (w, zoom, view)
         view = view or w.view
