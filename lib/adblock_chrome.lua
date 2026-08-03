@@ -280,7 +280,7 @@ _M.navigation_blocked_css_tmpl = [===[
 luakit.register_scheme("adblock-blocked")
 webview.add_signal("init", function (view)
     view:add_signal("scheme-request::adblock-blocked", function (v, uri, request)
-        uri = uri:gsub("^adblock%-blocked:", "")
+        local target_uri = uri:gsub("^adblock%-blocked:", "")
         error_page.show_error_page(v, {
             style = _M.navigation_blocked_css_tmpl,
             heading = "Page blocked",
@@ -293,11 +293,11 @@ webview.add_signal("init", function (view)
                 label = "Continue anyway",
                 callback = function(vv)
                     webview.modify_load_block(v, "adblock", true)
-                    webview.set_location(vv, uri)
-                    adblock.whitelist_domain_access(lousy.uri.parse(uri).host)
+                    webview.set_location(vv, target_uri)
+                    adblock.whitelist_domain_access(lousy.uri.parse(target_uri).host)
                 end
             }},
-            uri = uri,
+            uri = target_uri,
             request = request,
         })
         return

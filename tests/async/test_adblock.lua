@@ -71,7 +71,7 @@ T.test_adblock_disabled = function ()
     -- Navigate to blocked address with adblock disabled
     w.view.uri = "luakit-test://adserver.com/ad.html"
     test.wait_for_view(w.view)
-    test.delay(50)
+    test.wait_until(function () return w.view.uri == "luakit-test://adserver.com/ad.html" end)
 
     -- Check that it was NOT blocked (it remains on the target URI)
     assert.equal("luakit-test://adserver.com/ad.html", w.view.uri)

@@ -529,6 +529,16 @@ _M.load(nil, nil, true)
 -- @default true
 -- @type boolean
 
+local function update_load_blocks()
+    for _, w in pairs(window.bywidget) do
+        if w.tabs then
+            for _, v in ipairs(w.tabs.children) do
+                webview.modify_load_block(v, "adblock", _M.enabled)
+            end
+        end
+    end
+end
+
 local wrapped = { enabled = true }
 local mt = {
     __index = wrapped,
@@ -537,6 +547,7 @@ local mt = {
             assert(type(v) == "boolean", "property 'enabled' must be boolean")
             wrapped.enabled = v
             adblock_wm:emit_signal("enable", v)
+            update_load_blocks()
             _M.refresh_views()
         end
     end,

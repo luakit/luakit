@@ -428,7 +428,7 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
 
 
 static GtkWidget*
-create_cb(WebKitWebView* v, WebKitNavigationAction* UNUSED(a), widget_t *w)
+create_cb(WebKitWebView* UNUSED(v), WebKitNavigationAction* UNUSED(a), widget_t *w)
 {
     WebKitWebView *view = NULL;
     widget_t *new;
