@@ -37,6 +37,7 @@
 static GPtrArray *queued_page_ipc;
 
 IPC_NO_HANDLER(page_created)
+IPC_NO_HANDLER(page_active)
 IPC_NO_HANDLER(log)
 
 void
@@ -143,6 +144,22 @@ emit_page_created_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
     ipc_send(extension.ipc, &header, &msg);
 }
 
+static void
+emit_page_active_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    WebKitFrame *frame = web_page_get_main_frame(web_page);
+    gboolean is_main_frame = frame ? webkit_frame_is_main_frame(frame) : TRUE;
+    ipc_page_active_t msg = {
+        .page_id = page_id,
+        .pid = getpid(),
+        .is_main_frame = is_main_frame,
+    };
+
+    ipc_header_t header = { .type = IPC_TYPE_page_active, .length = sizeof(msg) };
+    ipc_send(extension.ipc, &header, &msg);
+}
+
 void
 emit_pending_page_creation_ipc(void)
 {
@@ -154,8 +171,17 @@ emit_pending_page_creation_ipc(void)
 }
 
 static void
+web_page_document_loaded_cb(WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    if (!queued_page_ipc)
+        emit_page_active_ipc(web_page, NULL);
+}
+
+static void
 web_page_created_cb(WebKitWebProcessExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
+    g_signal_connect(web_page, "document-loaded", G_CALLBACK(web_page_document_loaded_cb), NULL);
+
     /* QUEUE until we've fully loaded web modules */
     if (queued_page_ipc)
         g_ptr_array_add(queued_page_ipc, web_page);
