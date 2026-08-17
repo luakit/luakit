@@ -35,7 +35,7 @@ T.test_adblock_blocking = function ()
     test.wait_for_idle()
     adblock.clear_page_whitelist()
     adblock.enabled = true
-    test.delay(100) -- Allow rules update to propagate to web process
+    test.delay(300) -- Allow rules update to propagate to web process
 
     -- Navigate to blocked address
     w.view.uri = "luakit-test://adserver.com/ad.html"
@@ -47,12 +47,13 @@ end
 
 T.test_adblock_whitelisting = function ()
     test.wait_for_idle()
+    adblock.clear_page_whitelist()
     adblock.enabled = true
-    test.delay(100)
+    test.delay(300)
 
     -- Whitelist adserver.com
     adblock.whitelist_domain_access("adserver.com")
-    test.delay(100)
+    test.delay(300)
 
     -- Navigate to whitelisted address
     w.view.uri = "luakit-test://adserver.com/whitelist.html"
@@ -65,8 +66,9 @@ end
 
 T.test_adblock_disabled = function ()
     test.wait_for_idle()
+    adblock.clear_page_whitelist()
     adblock.enabled = false
-    test.delay(100)
+    test.delay(300)
 
     -- Navigate to blocked address with adblock disabled
     w.view.uri = "luakit-test://adserver.com/ad.html"

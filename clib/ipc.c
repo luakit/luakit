@@ -36,7 +36,9 @@ ipc_channel_send(lua_State *L)
     widget_t *w = NULL;
 
     /* Optional first argument: view or view id to send message to */
+    gboolean targeted = FALSE;
     if (lua_isuserdata(L, 2)) {
+        targeted = TRUE;
         w = luaH_checkwebview(L, 2);
         if (w->widget) {
             page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
@@ -44,6 +46,7 @@ ipc_channel_send(lua_State *L)
         }
         lua_remove(L, 2);
     } else if (lua_isnumber(L, 2)) {
+        targeted = TRUE;
         page_id = lua_tointeger(L, 2);
         w = webview_get_by_id(page_id);
         if (w) {
@@ -61,7 +64,7 @@ ipc_channel_send(lua_State *L)
         if (w) {
             webview_send_lua_to_subframes(w, L, 2, lua_gettop(L));
         }
-    } else {
+    } else if (!targeted) {
         const GPtrArray *endpoints = ipc_endpoints_get();
         for (unsigned i = 0; i < endpoints->len; i++) {
             ipc_endpoint_t *ipc = g_ptr_array_index(endpoints, i);

@@ -493,12 +493,12 @@ adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     end
 end)
 
-luakit.add_signal("web-extension-created", function (view)
+luakit.add_signal("web-extension-created", function ()
     new_web_extension_created = true
-    adblock_wm:emit_signal(view, "update_rules", _M.rules)
+    adblock_wm:emit_signal("update_rules", _M.rules)
     for name, list in pairs(_M.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
-        adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
+        adblock_wm:emit_signal("list_set_enabled", name, enabled)
     end
 end)
 

@@ -77,10 +77,10 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     run_javascript_finished(msg, length);
 }
 
-static GHashTable *pending_endpoints = NULL;
+static GHashTable *page_endpoints = NULL;
 
 static void
-pending_endpoint_free(gpointer data)
+page_endpoint_free(gpointer data)
 {
     pending_endpoint_t *val = (pending_endpoint_t *)data;
     if (val) {
@@ -92,43 +92,43 @@ pending_endpoint_free(gpointer data)
 void
 ipc_associate_pending_webview(widget_t *w)
 {
-    if (!pending_endpoints)
+    if (!page_endpoints)
         return;
 
     guint64 page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
-    pending_endpoint_t *val = g_hash_table_lookup(pending_endpoints, &page_id);
+    pending_endpoint_t *val = g_hash_table_lookup(page_endpoints, &page_id);
     if (val) {
-        webview_connect_to_endpoint(w, val->ipc);
-        webview_set_web_process_id(w, val->pid);
-        g_hash_table_remove(pending_endpoints, &page_id);
+        if (val->ipc && val->ipc->status == IPC_ENDPOINT_CONNECTED) {
+            webview_connect_to_endpoint(w, val->ipc);
+            webview_set_web_process_id(w, val->pid);
+        }
     }
 }
 
 void
 ipc_recv_page_created(ipc_endpoint_t *ipc, const ipc_page_created_t *msg, guint UNUSED(length))
 {
-    widget_t *w = webview_get_by_id(msg->page_id);
-
-    /* Page may already have been closed */
-    if (!w) {
-        if (!pending_endpoints) {
-            pending_endpoints = g_hash_table_new_full(g_int64_hash, g_int64_equal, g_free, pending_endpoint_free);
-        }
-        guint64 *key = g_new(guint64, 1);
-        *key = msg->page_id;
-        pending_endpoint_t *val = g_new(pending_endpoint_t, 1);
-        val->ipc = ipc;
-        g_assert(ipc_endpoint_incref(ipc));
-        val->pid = msg->pid;
-        g_hash_table_insert(pending_endpoints, key, val);
-        return;
+    if (!page_endpoints) {
+        page_endpoints = g_hash_table_new_full(g_int64_hash, g_int64_equal, g_free, page_endpoint_free);
     }
 
-    if (msg->is_main_frame) {
-        webview_connect_to_endpoint(w, ipc);
-        webview_set_web_process_id(w, msg->pid);
-    } else {
-        webview_add_subframe_endpoint(w, ipc);
+    guint64 *key = g_new(guint64, 1);
+    *key = msg->page_id;
+    pending_endpoint_t *val = g_new(pending_endpoint_t, 1);
+    val->ipc = ipc;
+    g_assert(ipc_endpoint_incref(ipc));
+    val->pid = msg->pid;
+    g_hash_table_replace(page_endpoints, key, val);
+
+    widget_t *w = webview_get_by_id(msg->page_id);
+
+    if (w) {
+        if (msg->is_main_frame) {
+            webview_connect_to_endpoint(w, ipc);
+            webview_set_web_process_id(w, msg->pid);
+        } else {
+            webview_add_subframe_endpoint(w, ipc);
+        }
     }
 }
 

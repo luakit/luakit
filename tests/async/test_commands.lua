@@ -77,7 +77,7 @@ T.test_command_javascript = function ()
     test.delay(100)
 
     -- Read back the variable using eval_js
-    w.view:eval_js("window.luakit_test_var", { callback = function (res) test.continue(res) end })
+    w.view:eval_js("window.luakit_test_var", { callback = function (res, err) test.continue(res, err) end })
     local val = test.wait()
     assert.equal(12345, val)
 end

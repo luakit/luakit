@@ -313,11 +313,14 @@ ipc_endpoint_t *
 ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
 {
     g_assert(orig);
-    g_assert(new);
+    if (!new || new->status != IPC_ENDPOINT_CONNECTED) {
+        warn("cannot replace IPC endpoint: target endpoint is disconnected or NULL");
+        return orig;
+    }
+
     if (orig->status == IPC_ENDPOINT_CONNECTED)
         ipc_endpoint_disconnect(orig);
     g_assert(orig->status == IPC_ENDPOINT_DISCONNECTED);
-    g_assert(new->status == IPC_ENDPOINT_CONNECTED);
 
     /* Incref always succeeds because this is called from a message
      * handler, which holds a temporary ref to the ipc channel  */
@@ -329,6 +332,7 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
             queued_ipc_t *msg = g_queue_pop_head(orig->queue);
             msg->ipc = new;
             ipc_endpoint_incref_no_check(new);
+            ipc_endpoint_decref(orig);
             g_async_queue_push(send_queue, msg);
         }
 
