@@ -495,6 +495,8 @@ end)
 
 luakit.add_signal("web-extension-created", function ()
     new_web_extension_created = true
+    adblock_wm:emit_signal("enable", _M.enabled)
+    adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
     adblock_wm:emit_signal("update_rules", _M.rules)
     for name, list in pairs(_M.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")

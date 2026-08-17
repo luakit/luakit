@@ -24,6 +24,7 @@
 #include "luah.h"
 #include "extension/extension.h"
 #include "extension/luajs.h"
+#include "extension/ipc.h"
 #include "extension/clib/page.h"
 #include "common/ipc.h"
 #include "common/lualib.h"
@@ -234,6 +235,13 @@ free_frames_array(gpointer data)
 }
 
 static void
+page_active_native_cb(gpointer user_data)
+{
+    WebKitWebPage *web_page = WEBKIT_WEB_PAGE(user_data);
+    emit_page_active_ipc(web_page, NULL);
+}
+
+static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
     GPtrArray *frames = g_object_get_data(G_OBJECT(web_page), "luakit-frames");
@@ -255,6 +263,19 @@ window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebK
 
     if (!webkit_frame_is_main_frame(frame))
         return;
+
+    JSCContext *context = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (context) {
+        JSCValue *fn = jsc_value_new_function(context, "__luakit_page_active", G_CALLBACK(page_active_native_cb), web_page, NULL, G_TYPE_NONE, 0, G_TYPE_NONE);
+        jsc_context_set_value(context, "__luakit_page_active", fn);
+        g_object_unref(fn);
+
+        JSCValue *res = jsc_context_evaluate(context,
+            "window.addEventListener('pageshow', function() { if (typeof __luakit_page_active === 'function') { __luakit_page_active(); } });", -1);
+        if (res)
+            g_object_unref(res);
+        g_object_unref(context);
+    }
 
     lua_State *L = common.L;
     const gchar *uri = webkit_web_page_get_uri(web_page) ?: "about:blank";

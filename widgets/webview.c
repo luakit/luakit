@@ -411,8 +411,10 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
             g_object_ref(G_OBJECT(d->cert));
     }
 
-    if (e == WEBKIT_LOAD_COMMITTED)
+    if (e == WEBKIT_LOAD_COMMITTED) {
+        ipc_associate_pending_webview(w);
         webview_update_stylesheets(L, w);
+    }
 
     /* Don't send "finished" signal after "failed" signal */
     if (e == WEBKIT_LOAD_STARTED)

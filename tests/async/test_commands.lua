@@ -74,11 +74,12 @@ T.test_command_javascript = function ()
 
     -- Test :javascript command
     w:run_cmd(":js window.luakit_test_var = 12345")
-    test.delay(100)
+    test.delay(300)
 
     -- Read back the variable using eval_js
     w.view:eval_js("window.luakit_test_var", { callback = function (res, err) test.continue(res, err) end })
-    local val = test.wait()
+    local val, err = test.wait()
+    assert.is_nil(err)
     assert.equal(12345, val)
 end
 

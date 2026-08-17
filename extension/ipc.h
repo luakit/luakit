@@ -23,6 +23,7 @@
 
 int web_extension_connect(const gchar *socket_path);
 void emit_pending_page_creation_ipc(void);
+void emit_page_active_ipc(WebKitWebPage *web_page, gpointer user_data);
 
 void ipc_recv_lua_require_module(ipc_endpoint_t *from, const ipc_lua_require_module_t *msg, guint length);
 void ipc_recv_lua_ipc(ipc_endpoint_t *from, const ipc_lua_ipc_t *msg, guint length);
