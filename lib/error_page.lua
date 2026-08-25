@@ -303,10 +303,13 @@ local function handle_error(v, uri, err)
         ["crash"] = "crash",
     }
     local category = error_category_lut[err.code] or "generic"
+    if category == "ignore" then
+        msg.verbose("ignoring error '%s', code '%s'", err.message, err.code)
+        return
+    end
+
     msg.verbose("showing error page for error '%s', code '%s', category '%s'",
         err.message, err.code, category)
-
-    if category == "ignore" then return end
 
     local error_page_info
     if category == "generic" then

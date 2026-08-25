@@ -20,6 +20,7 @@ local lousy = { util = require "lousy.util" }
 local orig_print = print
 
 local xvfb_display
+local http_port
 
 local current_test_file
 local current_test_name
@@ -122,9 +123,10 @@ local function spawn_luakit_instance(config, ...)
         XDG_CONFIG_HOME = dir .. "/config",
         XDG_RUNTIME_DIR = dir .. "/runtime",
         XDG_CONFIG_DIRS = "",
-        DISPLAY         = xvfb_display,
-        LUA_PATH        = util.getenv("LUA_PATH") or "",
-        LUA_CPATH       = util.getenv("LUA_CPATH") or "",
+        DISPLAY               = xvfb_display,
+        LUA_PATH              = util.getenv("LUA_PATH") or "",
+        LUA_CPATH             = util.getenv("LUA_CPATH") or "",
+        LUAKIT_TEST_HTTP_PORT = http_port and tostring(http_port) or "",
     }
 
     -- HACK: make GStreamer shut up about not finding random .so files
@@ -228,6 +230,20 @@ local pid_xvfb = assert(util.spawn_async({"Xvfb", xvfb_display, "-screen", "0", 
 table.insert(exit_handlers, function ()
     print("Stopping Xvfb")
     util.kill(pid_xvfb)
+end)
+
+-- Find a free TCP port and launch lightweight Lua test HTTP server
+local socket = require "socket"
+local test_sock = assert(socket.bind("0.0.0.0", 0))
+local _, port_num = test_sock:getsockname()
+test_sock:close()
+http_port = port_num
+
+print("Starting test HTTP server on port " .. tostring(http_port))
+local pid_http = assert(util.spawn_async({"luajit", "tests/http_server.lua", tostring(http_port), "tests/html"}))
+table.insert(exit_handlers, function ()
+    print("Stopping test HTTP server")
+    util.kill(pid_http)
 end)
 
 -- Find test files

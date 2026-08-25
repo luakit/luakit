@@ -19,6 +19,7 @@
 #ifndef LUAKIT_EXTENSION_IPC_H
 #define LUAKIT_EXTENSION_IPC_H
 
+#include <webkit/webkit-web-process-extension.h>
 #include "common/ipc.h"
 
 int web_extension_connect(const gchar *socket_path);

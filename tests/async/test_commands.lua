@@ -74,7 +74,8 @@ T.test_command_javascript = function ()
 
     -- Test :javascript command
     w:run_cmd(":js window.luakit_test_var = 12345")
-    test.delay(300)
+    test.wait_for_idle()
+    test.delay(500)
 
     -- Read back the variable using eval_js
     w.view:eval_js("window.luakit_test_var", { callback = function (res, err) test.continue(res, err) end })

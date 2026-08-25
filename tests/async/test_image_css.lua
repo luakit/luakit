@@ -18,23 +18,8 @@ package.loaded.webview = lousy.signal.setup({}, true)
 local image_css = require("image_css")
 package.loaded.webview.emit_signal("init", view)
 
-local view_wait_for_status = function (v, status)
-    repeat
-        local _, s, uri, err = test.wait_for_signal(v, "load-status", 1000)
-        if s == "failed" then
-            local fmt = "tests.wait_for_view() failed loading '%s': %s"
-            local msg = fmt:format(uri, err)
-            assert(false, msg)
-        end
-    until s == status
-end
-
 local function wait_for_view(v)
-    -- mime-type-decision isn't emitted for luakit-test://, so we simulate it
-    view_wait_for_status(v, "provisional")
-    local mime = v.uri:match("%.png$") and "image/png" or "text/html"
-    v:emit_signal("mime-type-decision", v.uri, mime)
-    view_wait_for_status(v, "committed")
+    test.wait_for_view(v)
 end
 
 T.test_image_css = function ()
@@ -53,15 +38,15 @@ T.test_image_css = function ()
     assert.is_true(view.stylesheets[image_ss])
 
     view:go_back(1)
-    wait_for_view(view)
+    test.delay(200)
     assert.is_false(view.stylesheets[image_ss])
 
     view:go_forward(1)
-    wait_for_view(view)
+    test.delay(200)
     assert.is_true(view.stylesheets[image_ss])
 
     view:go_back(1)
-    wait_for_view(view)
+    test.delay(200)
     assert.is_false(view.stylesheets[image_ss])
 end
 

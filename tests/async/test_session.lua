@@ -22,7 +22,8 @@ T.test_session_save_and_load = function ()
 
     -- Make sure we have a known state: two tabs
     local initial_tab_count = #w.tabs
-    w:new_tab("luakit-test://test_follow.html")
+    local target_uri = test.http_server() .. "test_follow.html"
+    w:new_tab(target_uri)
     test.wait_for_view(w.view)
 
     assert.equal(initial_tab_count + 1, #w.tabs)
@@ -49,7 +50,7 @@ T.test_session_save_and_load = function ()
     -- Verify URI of second tab in saved state
     local found_uri = false
     for _, tab_state in ipairs(win_state.open) do
-        if tab_state.uri == "luakit-test://test_follow.html" then
+        if tab_state.uri == target_uri then
             found_uri = true
         end
     end

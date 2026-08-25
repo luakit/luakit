@@ -123,8 +123,14 @@ ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data)
 
     if (ipc->channel)
         g_async_queue_push(send_queue, msg);
-    else
+    else if (ipc->queue)
         g_queue_push_tail(ipc->queue, msg);
+    else {
+        warn("Process '%s': dropped message '%s', endpoint not connected and has no queue",
+                ipc->name, ipc_type_name(header->type));
+        g_free(msg);
+        ipc_endpoint_decref(ipc);
+    }
 }
 
 static void
@@ -317,10 +323,6 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
         warn("cannot replace IPC endpoint: target endpoint is disconnected or NULL");
         return orig;
     }
-
-    if (orig->status == IPC_ENDPOINT_CONNECTED)
-        ipc_endpoint_disconnect(orig);
-    g_assert(orig->status == IPC_ENDPOINT_DISCONNECTED);
 
     /* Incref always succeeds because this is called from a message
      * handler, which holds a temporary ref to the ipc channel  */

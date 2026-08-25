@@ -417,10 +417,14 @@ load_changed_cb(WebKitWebView* UNUSED(v), WebKitLoadEvent e, widget_t *w)
     }
 
     /* Don't send "finished" signal after "failed" signal */
-    if (e == WEBKIT_LOAD_STARTED)
+    if (e == WEBKIT_LOAD_STARTED || e == WEBKIT_LOAD_COMMITTED)
         ((webview_data_t*) w->data)->is_failed = FALSE;
-    if (e == WEBKIT_LOAD_FINISHED && ((webview_data_t*) w->data)->is_failed)
-        return;
+    if (e == WEBKIT_LOAD_FINISHED) {
+        if (((webview_data_t*) w->data)->is_failed) {
+            ((webview_data_t*) w->data)->is_failed = FALSE;
+            return;
+        }
+    }
 
     luaH_object_push(L, w->ref);
     lua_pushstring(L, name);
