@@ -376,10 +376,10 @@ add_binds("follow", {
 -- @readwrite
 _M.selectors = {
     clickable = 'a, area, textarea, select, input:not([type=hidden]), button, label, summary'
-        .. ', [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="option"]'
-        .. ', [tabindex]:not([tabindex="-1"]), [onclick], [onmousedown], [data-action]',
+        .. ', [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="option"], [role="switch"]'
+        .. ', [onclick], [onmousedown], [onmouseup]',
     -- Elements that can be clicked.
-    focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
+    focus = 'a, area, textarea, select, input:not([type=hidden]), button, [tabindex]:not([tabindex="-1"]), body, applet, object',
     -- Elements that can be given input focus.
     uri = 'a, area',
     -- Elements that have a URI (e.g. hyperlinks).
@@ -398,7 +398,7 @@ _M.selectors = {
 -- @readwrite
 _M.site_specific_selectors = {
     ["github.com"] = {
-        clickable = "button, [data-hotkey], [data-hydro-click], [data-ga-click], [data-targets], [data-action]"
+        clickable = "button, [data-hotkey], [data-hydro-click], [data-ga-click], [data-action]"
     },
 }
 
