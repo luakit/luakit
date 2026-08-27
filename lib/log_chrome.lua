@@ -124,7 +124,7 @@ local build_log_entry_html = function (entry)
     return log_entry_fmt:gsub("{(%w+)}", {
         time = string.format("%012f", entry.time),
         llevel = entry.level,
-        level = entry.level:gsub("^%l", string.upper),
+        level = entry.level:gsub("^%l", function(c) return c:upper() end),
         group = entry.group,
         groupkey = entry.group:gsub("/","-"),
         msg = entry.msg,
@@ -252,7 +252,7 @@ msg.add_signal("log", function (time, level, group, msg)
         time = time,
         level = level,
         group = group,
-        msg = msg:gsub("^%l", string.upper):gsub(string.char(27) .. '%[%d+m', '')
+        msg = msg:gsub("^%l", function(c) return c:upper() end):gsub(string.char(27) .. '%[%d+m', '')
     })
 
     if level == "warn" then
@@ -278,7 +278,7 @@ end)
 -- Once shown, clicking on the widget will hide it and all other such widgets.
 -- @treturn widget The newly-constructed status bar widget.
 _M.widget = function ()
-    local notif, ebox = widget{type="label"}, widget{type="eventbox"}
+    local notif = widget{type="label"}
     notif:hide()
     notif.fg = theme.sbar_notif_fg
     notif.font = theme.sbar_notif_font
@@ -287,9 +287,8 @@ _M.widget = function ()
         table.remove(widgets, lousy.util.table.hasitem(widgets, notif))
     end)
     update_widgets()
-    ebox.child = notif
-    ebox:add_signal("button-release", widget_click_cb)
-    return ebox
+    notif:add_signal("button-release", widget_click_cb)
+    return notif
 end
 
 modes.add_cmds({

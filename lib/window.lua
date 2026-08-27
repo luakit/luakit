@@ -26,7 +26,6 @@ local w_priv = setmetatable({}, { __mode = "k" })
 
 -- Widget construction aliases
 local function entry()    return widget{type="entry"}    end
-local function eventbox() return widget{type="eventbox"} end
 local function hbox()     return widget{type="hbox"}     end
 local function label()    return widget{type="label"}    end
 local function notebook() return widget{type="notebook"} end
@@ -39,24 +38,20 @@ function _M.build(w)
     -- Create a table for widgets and state variables for a window
     local ww = {
         win    = widget{type="window"},
-        ebox   = eventbox(),
         layout = vbox(),
         tabs   = notebook(),
         -- Status bar widgets
         sbar = {
             layout = hbox(),
-            ebox   = eventbox(),
             -- Left aligned widgets
             l = {
                 layout = hbox(),
-                ebox   = eventbox(),
             },
             -- Fills space between the left and right aligned widgets
-            sep = eventbox(),
+            sep = hbox(),
             -- Right aligned widgets
             r = {
                 layout = hbox(),
-                ebox   = eventbox(),
             },
         },
 
@@ -64,15 +59,14 @@ function _M.build(w)
         menu = lousy.widget.menu(),
         menu_tabs = overlay(),
 
+        -- Message bar widgets
         mbar = {
-            ebox = eventbox(),
             label = label(),
         },
 
         -- Input bar widgets
         ibar = {
             layout  = hbox(),
-            ebox    = eventbox(),
             prompt  = label(),
             input   = entry(),
         },
@@ -85,39 +79,36 @@ function _M.build(w)
     -- Tablist widget
     w.tablist = lousy.widget.tablist(w.tabs, "horizontal")
 
-    w.ebox.child = w.layout
     w.layout:pack(w.tablist.widget)
     w.menu_tabs.child = w.tabs
 
-    w.win.child = w.ebox
+    w.win.child = w.layout
     w.layout:pack(w.menu_tabs, { expand = true, fill = true })
 
     -- Pack left-aligned statusbar elements
     local l = w.sbar.l
     l.layout.homogeneous = false;
-    l.ebox.child = l.layout
 
     -- Pack right-aligned statusbar elements
     local r = w.sbar.r
     r.layout.homogeneous = false;
-    r.ebox.child = r.layout
 
     -- Pack status bar elements
     local s = w.sbar
     s.layout.homogeneous = false;
-    s.layout:pack(l.ebox)
+    s.layout:pack(l.layout)
     s.layout:pack(s.sep, { expand = true, fill = true })
-    s.layout:pack(r.ebox)
-    s.ebox.child = s.layout
-    w.bar_layout:pack(s.ebox)
+    s.layout:pack(r.layout)
+    w.bar_layout:pack(s.layout)
 
     -- Pack message bar
     local m = w.mbar
-    m.ebox.child = m.label
-    w.bar_layout:pack(m.ebox)
+    w.bar_layout:pack(m.label)
 
     -- Pack menu widget
     w.menu_tabs:pack(w.menu.widget, { halign = "fill", valign = "end" })
+    w.menu.widget.margin_left = 3
+    w.menu.widget.margin_right = 3
     w.menu:hide()
 
     -- Pack input bar
@@ -125,20 +116,19 @@ function _M.build(w)
     i.layout.homogeneous = false;
     i.layout:pack(i.prompt)
     i.layout:pack(i.input, { expand = true, fill = true })
-    i.ebox.child = i.layout
-    w.bar_layout:pack(i.ebox)
-    i.input.css = "border: 0;"
+    w.bar_layout:pack(i.layout)
+    i.input.css = "border: 0; transition: 0.0s ease-in-out;"
     i.layout.css = "transition: 0.0s ease-in-out;"
-    i.input.css = "transition: 0.0s ease-in-out;"
 
     m.label.align = { v = "center" }
     i.prompt.align = { v = "center" }
     s.layout.align = { v = "center" }
 
-    w.bar_layout.homogeneous = true
+    w.bar_layout.homogeneous = false
     w.layout:pack(w.bar_layout)
 
     -- Other settings
+    w.win.decorated = false
     i.input.show_frame = false
     w.tabs.show_tabs = false
     w.sbar.layout.margin_left = 3
@@ -152,30 +142,54 @@ function _M.build(w)
     _M.bywidget[w.win] = w
 end
 
-local function window_notebook_page_switch_cb (nb)
+local function window_notebook_page_switch_cb (nb, child, index)
     local w = _M.ancestor(nb)
     if not w or w.tabs ~= nb then return end
 
     w:set_mode()
-    w.view = nil
-    -- Update widgets after tab switch
+    w.win:focus()
     luakit.idle_add(function ()
         -- Cancel if window already destroyed
         if not w.win then return end
-        w.view:emit_signal("switched-page")
         w:update_win_title()
+        local wc = require("lousy.widget.common")
+        wc.update_all_widgets_on_w(w, child, index)
+    end)
+end
+
+local function window_notebook_page_added_cb (nb)
+    local w = _M.ancestor(nb)
+    if not w or w.tabs ~= nb then return end
+    luakit.idle_add(function ()
+        if not w.win then return end
+        local wc = require("lousy.widget.common")
+        wc.update_all_widgets_on_w(w)
+    end)
+end
+
+local function window_notebook_page_reordered_cb (nb)
+    local w = _M.ancestor(nb)
+    if not w or w.tabs ~= nb then return end
+    luakit.idle_add(function ()
+        if not w.win then return end
+        local wc = require("lousy.widget.common")
+        wc.update_all_widgets_on_w(w)
     end)
 end
 
 local function set_window_notebook(w, nb)
     assert(w_priv[w], "invalid window table")
-    assert(type(nb) == "widget" and nb.type, "invalid notebook widget")
+    assert(type(nb) == "widget" and nb.type == "notebook", "invalid notebook widget")
 
     local old_nb = w_priv[w].tabs
     if old_nb then
         old_nb:remove_signal("switch-page", window_notebook_page_switch_cb)
+        old_nb:remove_signal("page-added", window_notebook_page_added_cb)
+        old_nb:remove_signal("page-reordered", window_notebook_page_reordered_cb)
     end
     nb:add_signal("switch-page", window_notebook_page_switch_cb)
+    nb:add_signal("page-added", window_notebook_page_added_cb)
+    nb:add_signal("page-reordered", window_notebook_page_reordered_cb)
     w_priv[w].tabs = nb
 end
 
@@ -191,10 +205,10 @@ local init_funcs = {
     end,
 
     key_press_match = function (w)
-        w.win:add_signal("key-press", function (_, mods, key, synthetic)
-            if synthetic and settings.get_setting("window.act_on_synthetic_keys") then
-                return false
-            end
+        w.win:add_signal("key-press", function (_, mods, key)
+            -- if synthetic and settings.get_setting("window.act_on_synthetic_keys") then
+            --     return false
+            -- end
             -- Match & exec a bind
             local success, match = xpcall(
                 function () return w:hit(mods, key) end,
@@ -229,12 +243,12 @@ local init_funcs = {
 
         -- Set backgrounds
         for wi, v in pairs({
-            [s.l.ebox]   = theme.sbar_bg,
-            [s.r.ebox]   = theme.sbar_bg,
-            [s.sep]      = theme.sbar_bg,
-            [s.ebox]     = theme.sbar_bg,
-            [i.ebox]     = theme.ibar_bg,
-            [i.input]    = theme.input_ibar_bg,
+            [s.l.layout]   = theme.sbar_bg,
+            [s.r.layout]   = theme.sbar_bg,
+            [s.sep]        = theme.sbar_bg,
+            [s.layout]     = theme.sbar_bg,
+            [i.layout]     = theme.ibar_bg,
+            [i.input]      = theme.input_ibar_bg,
         }) do wi.bg = v end
 
         -- Set fonts
@@ -252,7 +266,9 @@ local init_funcs = {
 
     set_default_size = function (w)
         local size = settings.get_setting("window.new_window_size")
-        if string.match(size, "^%d+x%d+$") then
+        if size == "maximized" or size == "maximize" then
+            w.win.maximized = true
+        elseif string.match(size, "^%d+x%d+$") then
             w.win:set_default_size(string.match(size, "^(%d+)x(%d+)$"))
         else
             msg.warn("invalid window size: %q", size)
@@ -355,11 +371,11 @@ _M.methods = {
             w.bar_layout.visible = false
         end
         if w_priv[w].input_text then
-            w.bar_layout.visible_child = w.ibar.ebox
+            w.bar_layout.visible_child = w.ibar.layout
         elseif w_priv[w].prompt_text then
-            w.bar_layout.visible_child = w.mbar.ebox
+            w.bar_layout.visible_child = w.mbar.label
         else
-            w.bar_layout.visible_child = w.sbar.ebox
+            w.bar_layout.visible_child = w.sbar.layout
         end
     end,
 
@@ -373,7 +389,6 @@ _M.methods = {
 
         local function set_widget (prompt)
             prompt.fg = fg
-            prompt.parent.bg = bg
             -- Set text, or hide
             if text then
                 prompt.text = opts.markup and text or lousy.util.escape(text)
@@ -383,7 +398,9 @@ _M.methods = {
             end
         end
         set_widget(w.ibar.prompt)
+        w.ibar.bg = bg
         set_widget(w.mbar.label)
+        w.mbar.bg = bg
         w_priv[w].prompt_text = text
         w:update_sbar_visibility()
     end,
@@ -455,7 +472,7 @@ _M.methods = {
             w:attach_tab(view, switch, order)
         end
 
-        if not view and settings.get_setting("window.reuse_new_tab_pages") then
+        if not view and not opts.no_reuse and settings.get_setting("window.reuse_new_tab_pages") then
             for _, tab in ipairs(w.tabs.children) do
                 if tab.uri == settings.get_setting("window.new_tab_page") then
                     msg.verbose("new_tab: using existing blank tab, %s", tab.uri)
@@ -466,12 +483,21 @@ _M.methods = {
         end
 
         if not view then
-            -- Make new webview widget
-            view = webview.new({ private = opts.private })
+            view = webview.new({
+                private = opts.private,
+            })
+
+            if arg and arg.session_state then
+                view.session_state = arg.session_state
+            elseif arg and arg.uri then
+                view.uri = arg and arg.uri
+            end
+
             if not arg and not opts.no_initial_url then
                 view.uri = settings.get_setting("window.new_tab_page")
             end
             w:attach_tab(view, switch, order)
+
         end
 
         if switch ~= false then w.tabs:switch(w.tabs:indexof(view)) end
@@ -480,7 +506,10 @@ _M.methods = {
             w:search_open_navigate(view, arg)
         end
 
-        view:reload()
+        if not opts.no_initial_url then
+            view:reload()
+        end
+
         return view
     end,
 
@@ -508,7 +537,7 @@ _M.methods = {
         assert(view == nil or (type(view) == "widget" and view.type == "webview"))
         view = view or w.view
         w:emit_signal("detach-tab", view)
-        view.parent:remove(view)
+        w.tabs:remove(view)
         if settings.get_setting("window.close_with_last_tab") == true and w.tabs:count() == 0 then
             w:close_win()
         end
@@ -725,7 +754,7 @@ _M.add_signal("build", _M.build)
 --- Create a new window table instance.
 -- @tparam table args Array of initial tab arguments.
 -- @treturn table The newly-created window table.
-function _M.new(args)
+function _M.new(args, opts)
     local w = {}
     w_priv[w] = {}
 
@@ -760,16 +789,18 @@ function _M.new(args)
         w:new_tab(arg)
     end
 
+    -- Make sure something is loaded
+    if w.tabs:count() == 0 and not (opts and opts.no_initial_tab) then
+        w:new_tab(settings.get_setting("window.home_page"))
+    end
+
     -- Show window
-    w.win:show()
+    if not (opts and opts.show == false) then
+        w.win:show()
+    end
 
     -- Set initial mode
     w:set_mode()
-
-    -- Make sure something is loaded
-    if w.tabs:count() == 0 then
-        w:new_tab(settings.get_setting("window.home_page"), false)
-    end
 
     return w
 end
@@ -779,10 +810,8 @@ end
 -- @treturn table|nil The window class table for the window that contains `w`,
 -- or `nil` if the given widget is not contained within a window.
 function _M.ancestor(w)
-    repeat
-        w = w.parent
-    until w == nil or w.type == "window"
-    return w and _M.bywidget[w] or nil
+    local win = w:ancestor("window")
+    return win and _M.bywidget[win] or nil
 end
 
 settings.register_settings({
@@ -805,14 +834,15 @@ settings.register_settings({
         type = "string",
         default = "800x600",
         validator = function (v)
+            if v == "maximized" or v == "maximize" then return true end
             local x, y = v:match("^(%d+)x(%d+)$")
             if not x or not y then return false end
             return tonumber(x) > 0 and tonumber(y) > 0
         end,
         desc = [=[
-            The size (in pixels) of newly-opened windows.
+            The size (in pixels) of newly-opened windows, or 'maximized'.
 
-            Must be in the form `WxY`, where `W` and `H` are the width and height respectively.
+            Must be in the form `WxY` (where `W` and `H` are width and height) or `maximized`.
         ]=],
     },
     ["window.home_page"] = {

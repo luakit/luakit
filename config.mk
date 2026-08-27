@@ -96,12 +96,12 @@ endif
 # === Required build packages ================================================
 
 # Packages required to build luakit.
-PKGS += gtk+-3.0
+PKGS += gtk4
 PKGS += gthread-2.0
-PKGS += webkit2gtk-4.1
+PKGS += webkitgtk-6.0
 PKGS += sqlite3
 PKGS += $(LUA_PKG_NAME)
-PKGS += javascriptcoregtk-4.1
+PKGS += javascriptcoregtk-6.0
 
 # Check user has correct packages installed (and found by pkg-config).
 PKGS_OK := $(shell $(PKG_CONFIG) --print-errors --exists $(PKGS) && echo 1)

@@ -83,7 +83,7 @@ local init_funcs = {
                 return true
             end
         end)
-        view:add_signal("scroll", function (v, mods, dx, dy, context)
+        view:add_signal("scroll-input", function (v, mods, dx, dy, context)
             local w = _M.window(v)
             if w:hit(mods, "Scroll", { context = context, dx = dx, dy = dy }) then
                 return true
@@ -216,7 +216,19 @@ function _M.methods.scroll(view, w, new)
     for _, axis in ipairs{ "x", "y" } do
         -- Relative px movement
         if rawget(new, axis.."rel") then
-            s[axis] = s[axis] + new[axis.."rel"]
+            local dir = axis == "x" and "Width" or "Height"
+            local js = string.format([=[
+                Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
+            ]=], dir, dir)
+            w.view:eval_js(js, { callback = function (max)
+                local scroll_to = s[axis] + new[axis.."rel"]
+                if scroll_to > max then
+                    scroll_to = max
+                elseif scroll_to < 0 then
+                    scroll_to = 0
+                end
+                s[axis] = scroll_to
+            end})
 
         -- Relative page movement
         elseif rawget(new, axis .. "pagerel") then
@@ -243,13 +255,18 @@ function _M.methods.scroll(view, w, new)
 
         -- Absolute percent movement
         elseif rawget(new, axis .. "pct") then
-            local dir = axis == "x" and "Width" or "Height"
-            local js = string.format([=[
-                Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
-            ]=], dir, dir)
-            w.view:eval_js(js, { callback = function (max)
-                s[axis] = math.ceil(max * (new[axis.."pct"]/100))
-            end})
+            local pct = new[axis.."pct"]
+            if pct == 0 then
+                s[axis] = 0
+            else
+                local dir = axis == "x" and "Width" or "Height"
+                local js = string.format([=[
+                    Math.max(window.document.documentElement.scroll%s - window.inner%s, 0)
+                ]=], dir, dir)
+                w.view:eval_js(js, { callback = function (max)
+                    s[axis] = math.ceil(max * (pct/100))
+                end})
+            end
         end
     end
 end
@@ -286,7 +303,12 @@ end
 -- @treturn table The newly-created webview widget.
 function _M.new(opts)
     assert(opts)
-    local view = widget{type = "webview", private = opts.private}
+    local view = widget{
+        type = "webview",
+        private = opts.private,
+        width = opts.width,
+        height = opts.height,
+    }
 
     webview_state[view] = { blockers = {} }
     wrap_widget_metatable(view)
@@ -313,6 +335,8 @@ end)
 -- @treturn table|nil The window class table for the window that contains `view`,
 -- or `nil` if `view` is not contained within a window.
 function _M.window(view)
+    if not view.is_alive then return nil end
+    -- if not view.is_alive then return nil end
     assert(type(view) == "widget" and view.type == "webview")
     return window.ancestor(view)
 end
@@ -381,7 +405,7 @@ function _M.set_location(view, arg)
 
     if arg.session_state then
         view.session_state = arg.session_state
-        if view.uri == "about:blank" and arg.uri then
+        if arg.uri then
             view.uri = arg.uri
         end
     else
@@ -392,18 +416,21 @@ end
 -- Insert webview method lookup on window structure
 table.insert(window.indexes, 1, function (w, k)
     if k == "view" then
-        local view = w.tabs[w.tabs:current()]
+        local tabs = w.tabs
+        local view = tabs and tabs:current() and tabs[tabs:current()]
         if view and type(view) == "widget" and view.type == "webview" then
-            w.view = view
             return view
         end
     end
+
     -- Lookup webview method
     local func = _M.methods[k]
-    if not func then return end
-    local view = w.view
-    if view then
-        return function (_, ...) return func(view, w, ...) end
+    if func then
+        local tabs = w.tabs
+        local view = tabs and tabs:current() and tabs[tabs:current()]
+        if view and type(view) == "widget" and view.type == "webview" then
+            return function (_, ...) return func(view, w, ...) end
+        end
     end
 end)
 
@@ -466,14 +493,7 @@ local webview_settings = {
             counter for each; this is mostly useful for debugging.
         ]=],
     },
-    ["webview.enable_accelerated_2d_canvas"] = {
-        type = "boolean",
-        default = false,
-        desc = [=[
-            Whether 2d canvas rendering should use hardware acceleration.
-            This setting requires WebKit support that may not be available.
-        ]=],
-    },
+
     ["webview.enable_caret_browsing"] = {
         type = "boolean",
         default = false,
@@ -493,14 +513,7 @@ local webview_settings = {
             links are clicked, making web browsing faster.
         ]=],
     },
-    ["webview.enable_frame_flattening"] = {
-        type = "boolean",
-        default = false,
-        desc = [=[
-            Whether frame flattening should be enabled. If enabled, the
-            content of all subframes is shown directly in the main page.
-        ]=],
-    },
+
     ["webview.enable_fullscreen"] = {
         type = "boolean",
         default = true,
@@ -528,11 +541,6 @@ local webview_settings = {
 
             Web pages from one site cannot access data stored in the database by pages from other sites.
         ]=],
-    },
-    ["webview.enable_java"] = {
-        type = "boolean",
-        default = true,
-        desc = "Whether the Java plugin is enabled.",
     },
     ["webview.enable_javascript"] = {
         type = "boolean",
@@ -567,11 +575,7 @@ local webview_settings = {
             The default is to pass them on to the OS.  This setting
             only becomes active in new tabs.]=]
     },
-    ["webview.enable_plugins"] = {
-        type = "boolean",
-        default = true,
-        desc = "Whether plugins are enabled."
-    },
+
     ["webview.enable_resizable_text_areas"] = {
         type = "boolean",
         default = true,
@@ -614,13 +618,6 @@ local webview_settings = {
         default = false,
         desc = "Whether console messages from JavaScript should be written to standard output.",
     },
-    ["webview.enable_xss_auditor"] = {
-        type = "boolean",
-        default = true,
-        desc = [=[
-            Whether XSS auditing should be enabled. This helps protect against some attacks on vulnerable websites.
-        ]=],
-    },
     ["webview.fantasy_font_family"] = {
         type = "string",
         default = "serif",
@@ -633,7 +630,7 @@ local webview_settings = {
             ["always"] = { desc = "Always enable hardware acceleration.", label = "Always", },
             ["never"] = { desc = "Always disable hardware acceleration.", label = "Never", },
         },
-        default = "always",
+        default = "on-demand",
         desc = "The policy used to determine when hardware acceleration should be used to render web content.",
     },
     ["webview.javascript_can_access_clipboard"] = {
@@ -757,6 +754,7 @@ _M.add_signal("init", function (view)
         elseif status == "provisional" or status == "redirected" then
             local val, match = settings.get_setting_for_view(v, "webview.user_agent")
             set(v, "webview.user_agent", val, match)
+            v:show()
         elseif status == "committed" then set_all(v) end
     end)
     view:add_signal("web-extension-loaded", function (v)

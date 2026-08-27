@@ -51,14 +51,17 @@
     case L_TK_FOCUS:                                  \
       lua_pushcfunction(L, luaH_widget_focus);        \
       return 1;                                       \
-    case L_TK_DESTROY:                                \
-      lua_pushcfunction(L, luaH_widget_destroy);      \
-      return 1;                                       \
     case L_TK_REPLACE:                                \
       lua_pushcfunction(L, luaH_widget_replace);      \
       return 1;                                       \
+    case L_TK_ANCESTOR:                                \
+      lua_pushcfunction(L, luaH_widget_get_ancestor); \
+      return 1;                                       \
     case L_TK_SEND_KEY:                               \
       lua_pushcfunction(L, luaH_widget_send_key);     \
+      return 1;                                       \
+    case L_TK_REMOVE:                                 \
+      lua_pushcfunction(L, luaH_widget_remove);       \
       return 1;                                       \
 
 #define LUAKIT_WIDGET_NEWINDEX_COMMON(widget)         \
@@ -75,34 +78,74 @@
       luaH_widget_set_align(L, widget);               \
       break;                                          \
 
-#define LUAKIT_WIDGET_BIN_INDEX_COMMON(widget)        \
+#define LUAKIT_WIDGET_CHILD_INDEX_COMMON(widget)        \
     case L_TK_CHILD:                                  \
       return luaH_widget_get_child(L, widget);
 
-#define LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(widget)     \
+#define LUAKIT_WIDGET_CHILD_NEWINDEX_COMMON(widget)     \
     case L_TK_CHILD:                                  \
       luaH_widget_set_child(L, widget);               \
       break;
 
-#define LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(widget)  \
-    case L_TK_REMOVE:                                 \
-      lua_pushcfunction(L, luaH_widget_remove);       \
-      return 1;                                       \
-
 #define LUAKIT_WIDGET_SIGNAL_COMMON(w)                       \
-    "signal::destroy",         G_CALLBACK(destroy_cb),    w, \
-    "signal::size-allocate",   G_CALLBACK(resize_cb),     w, \
-    "signal::focus-in-event",  G_CALLBACK(focus_cb),      w, \
-    "signal::focus-out-event", G_CALLBACK(focus_cb),      w, \
-    "signal::parent-set",      G_CALLBACK(parent_set_cb), w,
+    "signal::notify::parent",  G_CALLBACK(parent_changed_cb), w,
 
-gboolean button_cb(GtkWidget*, GdkEventButton*, widget_t*);
-gboolean scroll_cb(GtkWidget*, GdkEventScroll*, widget_t*);
-gboolean mouse_cb(GtkWidget*, GdkEventCrossing*, widget_t*);
-gboolean focus_cb(GtkWidget*, GdkEventFocus*, widget_t*);
-gboolean key_press_cb(GtkWidget*, GdkEventKey*, widget_t*);
-gboolean key_release_cb(GtkWidget*, GdkEventKey*, widget_t*);
+#define LUAKIT_EVENT_CONTROLLER_KEY(win, w) \
+    GtkEventController *key_controller = gtk_event_controller_key_new(); \
+    g_signal_connect(key_controller, \
+        "key-pressed", G_CALLBACK(key_press_cb), w \
+    );                                             \
+    gtk_widget_add_controller(win, key_controller);
+
+#define LUAKIT_EVENT_CONTROLLER_GESTURE(win, w) \
+    GtkEventController *gesture_controller = GTK_EVENT_CONTROLLER(gtk_gesture_click_new()); \
+    g_signal_connect(gesture_controller, "pressed", G_CALLBACK(button_pressed_cb), w); \
+    g_signal_connect(gesture_controller, "released", G_CALLBACK(button_released_cb), w); \
+    gtk_widget_add_controller(win, gesture_controller);
+
+#define LUAKIT_EVENT_CONTROLLER_FOCUS(win, w) \
+    GtkEventController *focus_controller = gtk_event_controller_focus_new(); \
+    g_object_connect(G_OBJECT(focus_controller), \
+      "signal::enter",  G_CALLBACK(focus_enter_cb),          w, \
+      "signal::leave", G_CALLBACK(focus_leave_cb),           w, \
+      NULL); \
+    gtk_widget_add_controller(win, focus_controller);
+
+#define LUAKIT_EVENT_CONTROLLER_SCROLL(win, w) \
+    GtkEventController *scroll_ctrl = gtk_event_controller_scroll_new( \
+        GTK_EVENT_CONTROLLER_SCROLL_BOTH_AXES); \
+    g_signal_connect(scroll_ctrl, "scroll", G_CALLBACK(scroll_cb), w); \
+    gtk_widget_add_controller(win, scroll_ctrl);
+
+#define LUAKIT_EVENT_CONTROLLER_MOTION(win, w) \
+    GtkEventController *motion_controller = gtk_event_controller_motion_new(); \
+    g_object_connect(G_OBJECT(motion_controller), \
+      "signal::enter",   G_CALLBACK(mouse_enter_cb),      w, \
+      "signal::leave",   G_CALLBACK(mouse_leave_cb),      w, \
+      NULL); \
+    gtk_widget_add_controller(win, motion_controller);
+
+gboolean scroll_cb(GtkEventControllerScroll*, double, double, widget_t*);
+
+void mouse_enter_cb(GtkEventControllerMotion*, double, double, widget_t*);
+void mouse_leave_cb(GtkEventControllerMotion*, double, double, widget_t*);
+
+void focus_enter_cb(GtkEventControllerFocus*, widget_t*);
+void focus_leave_cb(GtkEventControllerFocus*, widget_t*);
+
+gboolean key_press_cb(GtkEventControllerKey*, guint, guint, GdkModifierType, widget_t*);
+
 gboolean true_cb();
+
+void button_pressed_cb(GtkGestureClick*, int, double, double, widget_t*);
+void button_released_cb(GtkGestureClick*, int, double, double, widget_t*);
+
+void child_changed_cb(GObject*, GParamSpec*, widget_t*);
+void items_changed_cb(GListModel *, guint, guint, guint, widget_t*);
+
+void parent_changed_cb(GObject*, GParamSpec*, widget_t*);
+void destroy_cb(GtkWidget* UNUSED(win), widget_t *w);
+void widget_destructor(widget_t*);
 
 gint luaH_widget_destroy(lua_State*);
 gint luaH_widget_focus(lua_State*);
@@ -115,6 +158,7 @@ gint luaH_widget_show(lua_State*);
 gint luaH_widget_replace(lua_State*);
 gint luaH_widget_send_key(lua_State *);
 gint luaH_widget_get_parent(lua_State *L, widget_t *w);
+gint luaH_widget_get_ancestor(lua_State *L);
 gint luaH_widget_get_focused(lua_State *L, widget_t*);
 gint luaH_widget_get_visible(lua_State *L, widget_t*);
 gint luaH_widget_get_width(lua_State *L, widget_t*);
@@ -126,14 +170,6 @@ gint luaH_widget_set_min_size(lua_State *L, widget_t *w);
 gint luaH_widget_get_min_size(lua_State *L, widget_t *w);
 gint luaH_widget_set_align(lua_State *L, widget_t *w);
 gint luaH_widget_get_align(lua_State *L, widget_t *w);
-
-
-void add_cb(GtkContainer*, GtkWidget*, widget_t*);
-void parent_set_cb(GtkWidget*, GtkWidget*, widget_t*);
-void resize_cb(GtkWidget*, GdkRectangle *, widget_t *);
-void remove_cb(GtkContainer*, GtkWidget*, widget_t*);
-void destroy_cb(GtkWidget* UNUSED(win), widget_t *w);
-void widget_destructor(widget_t*);
 
 #endif
 

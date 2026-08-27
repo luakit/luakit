@@ -25,9 +25,7 @@ static gint
 luaH_drawing_area_invalidate(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
-    guint width = gtk_widget_get_allocated_width(w->widget);
-    guint height = gtk_widget_get_allocated_height(w->widget);
-    gtk_widget_queue_draw_area(w->widget, 0, 0, width, height);
+    gtk_widget_queue_draw(w->widget);
     return 0;
 }
 
@@ -36,7 +34,11 @@ luaH_drawing_area_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-        PF_CASE(INVALIDATE, luaH_drawing_area_invalidate)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
+
+      PF_CASE(INVALIDATE, luaH_drawing_area_invalidate)
+
       default:
         break;
     }
@@ -55,11 +57,19 @@ luaH_drawing_area_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     return luaH_object_property_signal(L, 1, token);
 }
 
-static gboolean
-drawing_area_draw_cb(GtkWidget *UNUSED(widget), cairo_t *cr, widget_t *w)
+static void
+drawing_area_draw_cb(GtkDrawingArea *UNUSED(area), cairo_t *cr, int UNUSED(width), int UNUSED(height), gpointer user_data)
 {
+    widget_t *w = user_data;
+    if (!w || !w->ref) return;
+
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
+    if (lua_isnil(L, -1)) {
+        lua_pop(L, 1);
+        return;
+    }
+
     /* Convert cr to a FFI wrapper */
     luaH_object_push(L, ffi_new_ref);
     lua_pushliteral(L, "cairo_t *");
@@ -68,7 +78,6 @@ drawing_area_draw_cb(GtkWidget *UNUSED(widget), cairo_t *cr, widget_t *w)
     g_assert(error == 0);
     luaH_object_emit_signal(L, -2, "draw", 1, 0);
     lua_pop(L, 1);
-    return FALSE;
 }
 
 widget_t *
@@ -94,13 +103,13 @@ widget_drawing_area(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(tok
     }
 
     w->widget = gtk_drawing_area_new();
+    gtk_drawing_area_set_draw_func(GTK_DRAWING_AREA(w->widget), drawing_area_draw_cb, w, NULL);
 
     g_object_connect(G_OBJECT(w->widget),
         LUAKIT_WIDGET_SIGNAL_COMMON(w)
-        "draw", G_CALLBACK(drawing_area_draw_cb), w,
         NULL);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

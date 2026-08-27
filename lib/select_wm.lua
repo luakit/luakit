@@ -188,10 +188,18 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
         for i=#r,1,-1 do
             if r[i].width == 0 or r[i].height == 0 then table.remove(r, i) end
         end
-        if #r == 0 then return nil end
+        if #r == 0 then
+            msg.info("get_element_bb_if_visible: no client rects for element %s", tostring(element.tag_name))
+            return nil
+        end
         r = r[1]
     else
         r = client_rects(element) or element.rect
+    end
+
+    if not r then
+        msg.info("get_element_bb_if_visible: r is nil for element %s", tostring(element.tag_name))
+        return nil
     end
 
     local rbb = {
@@ -201,13 +209,19 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
         h = r.height,
     }
 
-    if rbb.w == 0 or rbb.h == 0 then return nil end
+    if rbb.w == 0 or rbb.h == 0 then
+        msg.info("get_element_bb_if_visible: element %s has 0 size: %dx%d", tostring(element.tag_name), rbb.w, rbb.h)
+        return nil
+    end
 
     local style = element.style
     local display = style.display
     local visibility = style.visibility
 
-    if display == 'none' or visibility == 'hidden' then return nil end
+    if display == 'none' or visibility == 'hidden' then
+        msg.info("get_element_bb_if_visible: element %s is display:none or hidden", tostring(element.tag_name))
+        return nil
+    end
 
     -- Clip bounding box!
     if display == "inline" then
@@ -220,7 +234,10 @@ local function get_element_bb_if_visible(element, wbb, client_rects)
         end
     end
 
-    if not bounding_boxes_intersect(wbb, rbb) then return nil end
+    if not bounding_boxes_intersect(wbb, rbb) then
+        msg.info("get_element_bb_if_visible: element %s doesn't intersect wbb", tostring(element.tag_name))
+        return nil
+    end
 
     -- If a link element contains one image, use the image dimensions
     if element.tag_name == "A" then
@@ -237,7 +254,9 @@ local function frame_find_hints(client_rects, frame, elements)
     local hints = {}
 
     if type(elements) == "string" then
+        local selector = elements
         elements = frame.body:query(elements)
+        msg.info("frame_find_hints: selector %q matched %d elements", selector, #elements)
     else
         local elems = {}
         for _, e in ipairs(elements) do
@@ -246,6 +265,7 @@ local function frame_find_hints(client_rects, frame, elements)
             end
         end
         elements = elems
+        msg.info("frame_find_hints: list parameter, matched %d elements in frame.doc", #elements)
     end
 
     -- Find the visible bounding box
@@ -257,10 +277,12 @@ local function frame_find_hints(client_rects, frame, elements)
         h = w.inner_height,
     }
 
+    local visible_count = 0
     for _, element in ipairs(elements) do
         local rbb = get_element_bb_if_visible(element,wbb, client_rects)
 
         if rbb then
+            visible_count = visible_count + 1
             local text = ""
             if element.type ~= "password" then
                 text = element.text_content
@@ -270,6 +292,7 @@ local function frame_find_hints(client_rects, frame, elements)
             hints[#hints+1] = { elem = element, bb = rbb, text = text }
         end
     end
+    msg.info("frame_find_hints: %d/%d elements are visible", visible_count, #elements)
 
     return hints
 end
@@ -283,16 +306,24 @@ local function sort_hints_top_left(a, b)
     end
 end
 
-local function make_labels(num)
+--- Make hint labels.
+-- @tparam number num Number of labels
+-- @treturn table Array of label strings
+function _M.make_labels(num)
     return label_maker(num)
 end
 
-local function find_frames(root_frame)
+local function find_frames(root_frame) -- luacheck: ignore 211
     if not root_frame.body then
         return {}
     end
 
-    local subframes = root_frame.body:query("frame, iframe")
+    local subframes = {}
+    for _, frame in ipairs(root_frame.body:query("frame, iframe")) do
+        if frame.document then
+            table.insert(subframes, frame)
+        end
+    end
     local frames = { root_frame }
 
     -- For each frame/iframe element, recurse
@@ -420,20 +451,29 @@ end
 -- @tparam boolean ignore_case `true` if text case should be ignored.
 -- @treturn {...} Table with data for the currently focused hint.
 -- @treturn number The number of currently visible hints.
-function _M.enter(page, elements, stylesheet, ignore_case)
+function _M.scan(page, elements, ignore_case)
     assert(type(page) == "page")
     assert(type(elements) == "string" or type(elements) == "table")
-    assert(type(stylesheet) == "string")
     local page_id = page.id
-    assert(page_states[page_id] == nil)
+    if page_states[page_id] then
+        _M.leave(page)
+    end
 
     local root = page.document
-    local root_frame = { doc = root, body = root.body }
-
     local state = {}
     page_states[page_id] = state
 
-    state.frames = find_frames(root_frame)
+    local frames = {}
+    if root and root.body then
+        table.insert(frames, { doc = root, body = root.body })
+    end
+    local docs = page:get_frames() or {}
+    for _, doc in ipairs(docs) do
+        if doc and doc.body and doc ~= root then
+            table.insert(frames, { doc = doc, body = doc.body })
+        end
+    end
+    state.frames = frames
     state.focused = nil
     state.hints = {}
     state.ignore_case = ignore_case or false
@@ -461,8 +501,6 @@ function _M.enter(page, elements, stylesheet, ignore_case)
 
     -- Find all hints in the viewport
     for _, frame in ipairs(state.frames) do
-        -- Set up the frame, and find hints
-        init_frame(frame, stylesheet)
         frame.hints = frame_find_hints(client_rects, frame, elements)
         -- Build an array of all hints
         for _, hint in ipairs(frame.hints) do
@@ -470,8 +508,132 @@ function _M.enter(page, elements, stylesheet, ignore_case)
         end
     end
 
+    table.sort(state.hints, sort_hints_top_left)
+    return #state.hints
+end
+
+--- Display hint elements on the target page.
+-- @tparam page page Target web page
+-- @tparam table labels Hint label strings
+-- @tparam string stylesheet CSS stylesheet string
+_M.show_hints = function (page, labels, stylesheet)
+    assert(type(page) == "page")
+    assert(type(labels) == "table")
+    assert(type(stylesheet) == "string")
+    local page_id = page.id
+    local state = page_states[page_id]
+    assert(state ~= nil)
+
+    assert(#state.hints == #labels)
+
+    for i, hint in ipairs(state.hints) do
+        hint.label = labels[i]
+    end
+
+    for _, frame in ipairs(state.frames) do
+        init_frame(frame, stylesheet)
+        local fwr = frame.doc.window
+        local fsx, fsy = fwr.scroll_x, fwr.scroll_y
+        for _, hint in ipairs(frame.hints) do
+            -- Append hint elements to overlay
+            local e = hint.elem
+            local r = hint.bb
+
+            local overlay_style = string.format("left: %dpx; top: %dpx; width: %dpx; height: %dpx;", r.x, r.y, r.w, r.h)
+            local label_style = string.format("left: %dpx; top: %dpx;", max(r.x-10, fsx), max(r.y-10, fsy), r.w, r.h)
+
+            local overlay_class = "hint_overlay hint_overlay_" .. e.tag_name
+            local label_class = "hint_label hint_label_" .. e.tag_name
+            hint.overlay_elem = frame.doc:create_element("span", {class = overlay_class, style = overlay_style})
+            hint.label_elem = frame.doc:create_element("span", {class = label_class, style = label_style}, hint.label)
+
+            frame.overlay:append(hint.overlay_elem)
+            frame.overlay:append(hint.label_elem)
+        end
+    end
+
+    for _, frame in ipairs(state.frames) do
+        frame.doc:add_signal("destroy", function ()
+            cleanup_frame(frame)
+        end)
+    end
+
+    filter(state, "", "")
+    return focus(state, 0), state.num_visible_hints
+end
+
+--- Enter selection/hint mode on a page.
+-- @tparam page page Target page
+-- @tparam table|string elements Elements query string or table
+-- @tparam string stylesheet CSS stylesheet string
+-- @tparam boolean ignore_case Ignore case when filtering
+_M.enter = function (page, elements, stylesheet, ignore_case)
+    assert(type(page) == "page")
+    assert(type(elements) == "string" or type(elements) == "table")
+    assert(type(stylesheet) == "string")
+    local page_id = page.id
+    assert(page_states[page_id] == nil)
+
+    local root = page.document
+    local state = {}
+    page_states[page_id] = state
+
+    local frames = {}
+    if root and root.body then
+        table.insert(frames, { doc = root, body = root.body })
+    end
+    for _, doc in ipairs(page:get_frames() or {}) do
+        if doc and doc.body and doc ~= root then
+            table.insert(frames, { doc = doc, body = doc.body })
+        end
+    end
+    state.frames = frames
+    state.focused = nil
+    state.hints = {}
+    state.ignore_case = ignore_case or false
+
+    local client_rects, err = page:wrap_js([=[
+        var rects = element.getClientRects();
+        if (rects.length == 0)
+            return undefined;
+        var rect = {
+            "top": rects[0].top,
+            "bottom": rects[0].bottom,
+            "left": rects[0].left,
+            "right": rects[0].right,
+        };
+        for (var i = 1; i < rects.length; i++) {
+            rect.top = Math.min(rect.top, rects[i].top);
+            rect.bottom = Math.max(rect.bottom, rects[i].bottom);
+            rect.left = Math.min(rect.left, rects[i].left);
+            rect.right = Math.max(rect.right, rects[i].right);
+        }
+        rect.width = rect.right - rect.left;
+        rect.height = rect.bottom - rect.top;
+        return rect;
+    ]=], {"element"})
+
+    if not client_rects and err then
+        msg.info("wrap_js failed: %s", err)
+    end
+
+    msg.info("select_wm.enter: state.frames length = %d, elements query = %s", #state.frames, tostring(elements))
+
+    -- Find all hints in the viewport
+    for idx, frame in ipairs(state.frames) do
+        -- Set up the frame, and find hints
+        init_frame(frame, stylesheet)
+        frame.hints = frame_find_hints(client_rects, frame, elements)
+        msg.info("select_wm.enter: frame %d hints count = %d", idx, #frame.hints)
+        -- Build an array of all hints
+        for _, hint in ipairs(frame.hints) do
+            state.hints[#state.hints+1] = hint
+        end
+    end
+    msg.info("select_wm.enter: total hints count = %d", #state.hints)
+
     -- Sort them by on-screen position, and assign labels
-    local labels = make_labels(#state.hints)
+    local labels = _M.make_labels(#state.hints)
     assert(#state.hints == #labels)
 
     table.sort(state.hints, sort_hints_top_left)

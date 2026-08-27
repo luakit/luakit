@@ -26,7 +26,7 @@ luaH_stack_pack(lua_State *L)
 {
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
-    gtk_container_add(GTK_CONTAINER (w->widget), GTK_WIDGET(child->widget));
+    gtk_stack_add_child(GTK_STACK(w->widget), GTK_WIDGET(child->widget));
     return 0;
 }
 
@@ -36,10 +36,13 @@ luaH_stack_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token)
     {
         LUAKIT_WIDGET_INDEX_COMMON(w)
-        LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+        PF_CASE(DESTROY,      luaH_widget_destroy)
 
         PF_CASE(PACK, luaH_stack_pack)
-        PB_CASE(HOMOGENEOUS, gtk_stack_get_homogeneous(GTK_STACK(w->widget)))
+        PB_CASE(HOMOGENEOUS,
+            gtk_stack_get_hhomogeneous(GTK_STACK(w->widget)) &&
+            gtk_stack_get_vhomogeneous(GTK_STACK(w->widget)))
 
         case L_TK_VISIBLE_CHILD:
         {
@@ -64,7 +67,8 @@ luaH_stack_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
         case L_TK_HOMOGENEOUS:
-            gtk_stack_set_homogeneous(GTK_STACK(w->widget), luaH_checkboolean(L, 3));
+            gtk_stack_set_hhomogeneous(GTK_STACK(w->widget), luaH_checkboolean(L, 3));
+            gtk_stack_set_vhomogeneous(GTK_STACK(w->widget), luaH_checkboolean(L, 3));
             break;
 
         case L_TK_VISIBLE_CHILD:
@@ -92,7 +96,7 @@ widget_stack(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
         LUAKIT_WIDGET_SIGNAL_COMMON(w)
     NULL);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

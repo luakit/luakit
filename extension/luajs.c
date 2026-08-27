@@ -24,6 +24,7 @@
 #include "luah.h"
 #include "extension/extension.h"
 #include "extension/luajs.h"
+#include "extension/ipc.h"
 #include "extension/clib/page.h"
 #include "common/ipc.h"
 #include "common/lualib.h"
@@ -78,13 +79,15 @@ static int
 luaJS_promise_resolve_reject(lua_State *L)
 {
     guint64 page_id = lua_tointeger(L, lua_upvalueindex(1));
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     if (!page || !WEBKIT_IS_WEB_PAGE(page))
         return luaL_error(L, "promise no longer valid (associated page closed)");
-    JSCContext *context = webkit_frame_get_js_context(
-            webkit_web_page_get_main_frame(page));
-
+    WebKitFrame *frame = web_page_get_main_frame(page);
+    if (!frame)
+        return luaL_error(L, "promise no longer valid (frame not ready)");
+    JSCContext *context = webkit_frame_get_js_context(frame);
     js_promise_t *promise = (js_promise_t*)lua_topointer(L, lua_upvalueindex(2));
+
     JSCValue *cb = lua_toboolean(L, lua_upvalueindex(3)) ? promise->resolve : promise->reject;
 
     JSCValue *ret = luajs_tovalue(L, 1, context);
@@ -117,7 +120,7 @@ luaJS_registered_function_callback(GPtrArray *args, struct cb_data *user_data)
     js_promise_t *promise = g_slice_new(js_promise_t);
     new_promise(context, promise);
 
-    luaH_page_from_web_page(L, webkit_web_extension_get_page(extension.ext, ctx->page_id));
+    luaH_page_from_web_page(L, webkit_web_process_extension_get_page(extension.ext, ctx->page_id));
 
     lua_pushinteger(L, ctx->page_id);
     lua_pushlightuserdata(L, promise);
@@ -208,10 +211,71 @@ static void register_func(WebKitScriptWorld *world, WebKitWebPage *web_page, Web
 }
 
 static void
+frame_weak_notify(gpointer data, GObject *where_the_object_was)
+{
+    GPtrArray *frames = data;
+    if (frames) {
+        g_ptr_array_remove(frames, where_the_object_was);
+    }
+}
+
+static void
+free_frames_array(gpointer data)
+{
+    GPtrArray *frames = data;
+    if (frames) {
+        for (guint i = 0; i < frames->len; i++) {
+            WebKitFrame *frame = g_ptr_array_index(frames, i);
+            if (frame && G_IS_OBJECT(frame)) {
+                g_object_weak_unref(G_OBJECT(frame), (GWeakNotify)frame_weak_notify, frames);
+            }
+        }
+        g_ptr_array_free(frames, TRUE);
+    }
+}
+
+static void
+page_active_native_cb(gpointer user_data)
+{
+    WebKitWebPage *web_page = WEBKIT_WEB_PAGE(user_data);
+    emit_page_active_ipc(web_page, NULL);
+}
+
+static void
 window_object_cleared_cb(WebKitScriptWorld *world, WebKitWebPage *web_page, WebKitFrame *frame, gpointer UNUSED(user_data))
 {
+    GPtrArray *frames = g_object_get_data(G_OBJECT(web_page), "luakit-frames");
+    if (!frames) {
+        frames = g_ptr_array_new_with_free_func(NULL);
+        g_object_set_data_full(G_OBJECT(web_page), "luakit-frames", frames, (GDestroyNotify)free_frames_array);
+    }
+    gboolean found = FALSE;
+    for (guint i = 0; i < frames->len; i++) {
+        if (g_ptr_array_index(frames, i) == frame) {
+            found = TRUE;
+            break;
+        }
+    }
+    if (!found) {
+        g_ptr_array_add(frames, frame);
+        g_object_weak_ref(G_OBJECT(frame), (GWeakNotify)frame_weak_notify, frames);
+    }
+
     if (!webkit_frame_is_main_frame(frame))
         return;
+
+    JSCContext *context = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (context) {
+        JSCValue *fn = jsc_value_new_function(context, "__luakit_page_active", G_CALLBACK(page_active_native_cb), web_page, NULL, G_TYPE_NONE, 0, G_TYPE_NONE);
+        jsc_context_set_value(context, "__luakit_page_active", fn);
+        g_object_unref(fn);
+
+        JSCValue *res = jsc_context_evaluate(context,
+            "window.addEventListener('pageshow', function() { if (typeof __luakit_page_active === 'function') { __luakit_page_active(); } });", -1);
+        if (res)
+            g_object_unref(res);
+        g_object_unref(context);
+    }
 
     lua_State *L = common.L;
     const gchar *uri = webkit_web_page_get_uri(web_page) ?: "about:blank";

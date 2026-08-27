@@ -2,7 +2,7 @@
 --
 -- DOCMACRO(available:ui)
 --
--- The window widget is the main container for any windows on the screen.
+-- The window widget is the main container for any windows on the display.
 --
 -- @class widget:window
 -- @prefix window
@@ -63,13 +63,13 @@
 -- @type integer
 -- @readonly
 
---- @property screen
--- The screen the window is on.
+--- @property display
+-- The display the window is on.
 -- @type userdata
 -- @readwrite
 
 --- @property icon
--- Path to an image file to set as the window icon.
+-- Icon name to set as the window icon.
 -- This property can only be set; reading this property always returns `nil`.
 -- @type string
 -- @readwrite

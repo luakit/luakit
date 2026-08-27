@@ -39,9 +39,15 @@ webview_scroll_recv(widget_t *w, const ipc_scroll_t *msg)
         case IPC_SCROLL_TYPE_scroll:
             d->scroll_x = msg->h;
             d->scroll_y = msg->v;
+            break;
         default:
             break;
     }
+
+    lua_State *L = common.L;
+    luaH_object_push(L, w->ref);
+    luaH_object_emit_signal(L, -1, "scroll", 0, 0);
+    lua_pop(L, 1);
 }
 
 static gint

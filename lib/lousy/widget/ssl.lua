@@ -15,13 +15,15 @@ local wc = require("lousy.widget.common")
 local _M = {}
 
 local widgets = {
-    update = function (w, ssl)
-        local trusted = w.view:ssl_trusted()
+    update = function (w, ssl, view)
+        view = view or w.view
+        if not view then return end
+        local trusted = view:ssl_trusted()
         if trusted == true then
             ssl.fg = theme.trust_fg
             ssl.text = "(trust)"
             ssl:show()
-        elseif string.sub(w.view.uri or "", 1, 4) == "http" then
+        elseif string.sub(view.uri or "", 1, 4) == "http" then
             -- Display (notrust) on http/https URLs
             ssl.fg = theme.notrust_fg
             ssl.text = "(notrust)"
@@ -37,13 +39,11 @@ webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v, status)
         local w = webview.window(v)
         if status == "committed" and w and w.view == v then
-            wc.update_widgets_on_w(widgets, w)
+            wc.update_widgets_on_w(widgets, w, v)
         end
     end)
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
 end)
+
 
 local function new()
     local ssl = widget{type="label"}

@@ -21,8 +21,10 @@ local _M = {}
 _M.format = "[zoom:%d%%]"
 
 local widgets = {
-    update = function (w, zoom)
-        local zl = w.view.zoom_level
+    update = function (w, zoom, view)
+        view = view or w.view
+        if not view then return end
+        local zl = view.zoom_level
         if zl == settings.get_setting("webview.zoom_level") / 100 then
             zoom:hide()
         else
@@ -37,13 +39,11 @@ webview.add_signal("init", function (view)
     view:add_signal("property::zoom_level", function (v)
         local w = webview.window(v)
         if w and w.view == v then
-            wc.update_widgets_on_w(widgets, w)
+            wc.update_widgets_on_w(widgets, w, v)
         end
     end)
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
 end)
+
 
 local function new()
     local zoom = widget{type="label"}

@@ -4,9 +4,10 @@
 -- @copyright 2017 Aidan Holm <aidanholm@gmail.com>
 
 local window = require("window")
-local lousy = require("lousy")
 
 local _M = {}
+
+local all_widget_groups = {}
 
 --- Add `widget` to `widgets`, and automatically remove it when `widget` is
 -- destroyed.
@@ -16,9 +17,16 @@ local _M = {}
 _M.add_widget = function (widgets, widget)
     assert(type(widgets) == "table")
     table.insert(widgets, widget)
-    widget:add_signal("destroy", function (wi)
-        table.remove(widgets, lousy.util.table.hasitem(widgets, wi))
-    end)
+    local found = false
+    for _, g in ipairs(all_widget_groups) do
+        if g == widgets then
+            found = true
+            break
+        end
+    end
+    if not found then
+        table.insert(all_widget_groups, widgets)
+    end
     return widget
 end
 
@@ -28,10 +36,21 @@ end
 _M.update_widgets_on_w = function (widgets, w, ...)
     assert(type(widgets) == "table")
     assert(w.win.type == "window")
-    for _, widget in ipairs(widgets) do
-        if window.ancestor(widget) == w then
+    for i = #widgets, 1, -1 do
+        local widget = widgets[i]
+        if not widget.is_alive then
+            table.remove(widgets, i)
+        elseif window.ancestor(widget) == w then
             widgets.update(w, widget, ...)
         end
+    end
+end
+
+--- Update all widgets on the given window across all widget groups.
+-- @tparam table w A window table
+_M.update_all_widgets_on_w = function (w, ...)
+    for _, widgets in ipairs(all_widget_groups) do
+        _M.update_widgets_on_w(widgets, w, ...)
     end
 end
 

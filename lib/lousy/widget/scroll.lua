@@ -14,37 +14,29 @@ local wc = require("lousy.widget.common")
 local _M = {}
 
 local widgets = {
-    update = function (w, label)
-        w.view:eval_js([=[
-            (function () {
-                var y = window.scrollY;
-                var max = Math.max(window.document.documentElement.scrollHeight - window.innerHeight, 0);
-                return y + " " + max;
-            })()
-        ]=], { callback = function (scroll, err)
-            assert(not err, err)
-            local y, max = scroll:match("^(%S+) (%S+)$")
-            y, max = tonumber(y), tonumber(max)
-            local text
-            if     max == 0   then text = "All"
-            elseif y   <= 2   then text = "Top"
-            elseif y   >= (max - 2) then text = "Bot"
-            else text = string.format("%2d%%", (y / max) * 100)
-            end
-            if label.text ~= text then label.text = text end
-        end })
+    update = function (w, label, view)
+        view = view or w.view
+        if not view then return end
+        local scroll = view.scroll
+        if not scroll then return end
+        local y, max = scroll.y, scroll.ymax
+        if not y or not max then return end
+        local text
+        if     max <= 0   then text = "All"
+        elseif y   <= 2   then text = "Top"
+        elseif y   >= (max - 2) then text = "Bot"
+        else text = string.format("%2d%%", (y / max) * 100)
+        end
+        if label.text ~= text then label.text = text end
     end,
 }
 
 webview.add_signal("init", function (view)
-    view:add_signal("expose", function (v)
+    view:add_signal("scroll", function (v)
         local w = webview.window(v)
-        if w.view == v then
-            wc.update_widgets_on_w(widgets, w)
+        if w and w.view == v then
+            wc.update_widgets_on_w(widgets, w, v)
         end
-    end)
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
     end)
 end)
 

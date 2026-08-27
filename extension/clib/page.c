@@ -26,6 +26,7 @@
 #include "common/luautil.h"
 #include "common/luauniq.h"
 #include "common/luajs.h"
+#include "common/log.h"
 #include "luah.h"
 
 #define REG_KEY "luakit.uniq.registry.page"
@@ -127,6 +128,7 @@ static gint
 luaH_page_js_func(lua_State *L)
 {
     JSCValue *func = (JSCValue *)lua_topointer(L, lua_upvalueindex(1));
+    page_t *page = luaH_check_page(L, lua_upvalueindex(2));
     JSCContext *ctx = jsc_value_get_context(func);
 
     gint argc = lua_gettop(L);
@@ -137,13 +139,14 @@ luaH_page_js_func(lua_State *L)
          * is defined in common/, which is shared in the main process, and the
          * main process is not aware of the extension/clib/ stuff */
         if (elem)
-            args[i] = webkit_frame_get_js_value_for_dom_object(webkit_web_page_get_main_frame(elem->page), WEBKIT_DOM_OBJECT(elem->element));
+            args[i] = dom_element_js_ref(page, elem);
         else
             args[i] = luajs_tovalue(L, i+1, ctx);
     }
 
     /* Call the function */
     JSCValue *ret = jsc_value_function_callv(func, argc, args);
+    luajs_log_and_clear_exception(ctx, "js_func call");
     return luajs_pushvalue(L, ret);
 }
 
@@ -164,26 +167,40 @@ luaH_page_eval_js(lua_State *L)
 
     source = source ?: luaH_callerinfo(L);
 
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page->page);
-    WebKitScriptWorld *world = extension.script_world;
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    WebKitFrame *frame = web_page_get_main_frame(page->page);
+    if (!frame) {
+        lua_pushnil(L);
+        lua_pushstring(L, "JavaScript context not available (frame not ready)");
+        return 2;
+    }
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+    if (!ctx) {
+        lua_pushnil(L);
+        lua_pushstring(L, "JavaScript context not available");
+        return 2;
+    }
 
+    luajs_log_and_clear_exception(ctx, "eval_js pre-clear");
     JSCValue *res = jsc_context_evaluate_with_source_uri(ctx, script, -1, source, 1);
     JSCException *exception = jsc_context_get_exception(ctx);
-    g_object_unref(ctx);
 
     if (exception) {
         g_object_unref(res);
         char *e = jsc_exception_to_string(exception);
+        warn("JSC page eval exception in %s: %s", source, e);
+        jsc_context_clear_exception(ctx);
+        g_object_unref(ctx);
         lua_pushnil(L);
         lua_pushstring(L, e);
-        free(e);
+        g_free(e);
         return 2;
     }
+    g_object_unref(ctx);
 
     if (jsc_value_is_function(res)) {
         lua_pushlightuserdata(L, res);
-        lua_pushcclosure(L, luaH_page_js_func, 1);
+        lua_pushvalue(L, 1);
+        lua_pushcclosure(L, luaH_page_js_func, 2);
         return 1;
     }
 
@@ -264,15 +281,65 @@ static int
 luaH_page_new(lua_State *L)
 {
     guint64 page_id = luaL_checknumber(L, -1);
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     return luaH_page_from_web_page(L, page);
 }
 
 static gint
 luaH_page_push_document(lua_State *L, page_t *page)
 {
-    WebKitDOMDocument *doc = webkit_web_page_get_dom_document(page->page);
-    return luaH_dom_document_from_webkit_dom_document(L, doc, page->page);
+    WebKitFrame *frame = web_page_get_main_frame(page->page);
+    if (!frame) {
+        lua_pushnil(L);
+        return 1;
+    }
+    WebKitScriptWorld *world = extension.script_world;
+    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    if (!ctx) {
+        lua_pushnil(L);
+        return 1;
+    }
+    JSCValue *js_global = jsc_context_get_global_object(ctx);
+    JSCValue *js_doc = jsc_value_object_get_property(js_global, "document");
+
+    gint ret = luaH_dom_document_from_webkit_dom_document(L, js_doc);
+
+    g_object_unref(js_doc);
+    g_object_unref(js_global);
+    g_object_unref(ctx);
+
+    return ret;
+}
+
+static gint
+luaH_page_get_frames(lua_State *L)
+{
+    page_t *page = luaH_check_page(L, 1);
+    GPtrArray *frames = g_object_get_data(G_OBJECT(page->page), "luakit-frames");
+
+    lua_newtable(L);
+    gint idx = 1;
+
+    if (frames) {
+        for (guint i = 0; i < frames->len; i++) {
+            WebKitFrame *frame = g_ptr_array_index(frames, i);
+            JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, extension.script_world);
+            if (ctx) {
+                JSCValue *js_global = jsc_context_get_global_object(ctx);
+                JSCValue *js_doc = jsc_value_object_get_property(js_global, "document");
+
+                /* Wrap the document in our Lua DOM wrapper */
+                if (luaH_dom_document_from_webkit_dom_document(L, js_doc)) {
+                    lua_rawseti(L, -2, idx++);
+                }
+
+                g_object_unref(js_doc);
+                g_object_unref(js_global);
+                g_object_unref(ctx);
+            }
+        }
+    }
+    return 1;
 }
 
 static gint
@@ -291,6 +358,7 @@ luaH_page_index(lua_State *L)
         PI_CASE(ID, webkit_web_page_get_id(page->page));
         PF_CASE(EVAL_JS, luaH_page_eval_js)
         PF_CASE(WRAP_JS, luaH_page_wrap_js)
+        PF_CASE(GET_FRAMES, luaH_page_get_frames)
         case L_TK_DOCUMENT:
             return luaH_page_push_document(L, page);
         default:

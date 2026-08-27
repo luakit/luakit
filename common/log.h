@@ -50,17 +50,17 @@ typedef enum { LOG_LEVELS } log_level_t;
 
 #define ANSI_COLOR_BG_RED  "\x1b[41m"
 
-#define log(lvl, string, ...) _log(lvl, __FILE__, string, ##__VA_ARGS__)
+#define l_log(lvl, string, ...) _log(lvl, __FILE__, string, ##__VA_ARGS__)
 void _log(log_level_t lvl, const gchar *, const gchar *, ...)
     __attribute__ ((format (printf, 3, 4)));
 void va_log(log_level_t lvl, const gchar *, const gchar *, va_list);
 
-#define fatal(...) log(LOG_LEVEL_fatal, ##__VA_ARGS__)
-#define error(...) log(LOG_LEVEL_error, ##__VA_ARGS__)
-#define warn(...) log(LOG_LEVEL_warn, ##__VA_ARGS__)
-#define info(...) log(LOG_LEVEL_info, ##__VA_ARGS__)
-#define verbose(...) log(LOG_LEVEL_verbose, ##__VA_ARGS__)
-#define debug(...) log(LOG_LEVEL_debug, ##__VA_ARGS__)
+#define fatal(...) l_log(LOG_LEVEL_fatal, ##__VA_ARGS__)
+#define error(...) l_log(LOG_LEVEL_error, ##__VA_ARGS__)
+#define warn(...) l_log(LOG_LEVEL_warn, ##__VA_ARGS__)
+#define info(...) l_log(LOG_LEVEL_info, ##__VA_ARGS__)
+#define verbose(...) l_log(LOG_LEVEL_verbose, ##__VA_ARGS__)
+#define debug(...) l_log(LOG_LEVEL_debug, ##__VA_ARGS__)
 
 #endif
 

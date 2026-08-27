@@ -349,9 +349,6 @@
 --- @signal favicon
 -- Emitted when the favicon for the currently loaded webpage becomes available.
 
---- @signal expose
--- Emitted when the `webview` widget is redrawn.
-
 --- @signal key-press
 -- Emitted when a key is pressed while the `webview` widget has the
 -- input focus.

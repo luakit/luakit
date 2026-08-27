@@ -49,6 +49,17 @@ everywhere in extensions; note that this common is separate
 from the common visible on the UI side. */
 common_t common;
 
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+const char *__asan_default_options(void) {
+    return "detect_leaks=0";
+}
+const char *__lsan_default_options(void) {
+    return "detect_leaks=0";
+}
+#endif
+#endif
+
 /* Similarly, this is the global definition of extension */
 extension_t extension;
 
@@ -90,7 +101,7 @@ web_lua_init(const char *package_path, const char *package_cpath)
 }
 
 G_MODULE_EXPORT void
-webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant *payload)
+webkit_web_process_extension_initialize_with_user_data(WebKitWebProcessExtension *ext, GVariant *payload)
 {
     gchar *socket_path, *package_path, *package_cpath;
     g_variant_get(payload, "(sss)", &socket_path, &package_path, &package_cpath);
@@ -99,21 +110,37 @@ webkit_web_extension_initialize_with_user_data(WebKitWebExtension *ext, GVariant
     extension.ext = ext;
     extension.ipc = ipc_endpoint_new(g_strdup_printf("Web[%d]", getpid()));
 
-    if (web_extension_connect(socket_path)) {
-        debug("connecting to UI thread failed");
-        exit(EXIT_FAILURE);
-    }
-
     web_lua_init(package_path, package_cpath);
     web_scroll_init();
     web_luajs_init();
     web_script_world_init();
+
+    if (web_extension_connect(socket_path)) {
+        debug("connecting to UI thread failed");
+        exit(EXIT_FAILURE);
+    }
 
     debug("PID %d", getpid());
     debug("ready for messages");
 
     ipc_header_t header = { .type = IPC_TYPE_extension_init, .length = 0 };
     ipc_send(extension.ipc, &header, NULL);
+}
+
+WebKitFrame *
+web_page_get_main_frame(WebKitWebPage *page)
+{
+    if (!page)
+        return NULL;
+    GPtrArray *frames = g_object_get_data(G_OBJECT(page), "luakit-frames");
+    if (frames) {
+        for (guint i = 0; i < frames->len; i++) {
+            WebKitFrame *frame = g_ptr_array_index(frames, i);
+            if (frame && webkit_frame_is_main_frame(frame))
+                return frame;
+        }
+    }
+    return NULL;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

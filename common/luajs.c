@@ -17,6 +17,7 @@
  */
 
 #include "common/luajs.h"
+#include "common/log.h"
 
 /*
  * Converts Lua value referenced by idx to the corresponding JavaScript type.
@@ -140,14 +141,17 @@ int luajs_pushvalue(lua_State *L, JSCValue *value)
  */
 int luajs_eval_js(lua_State *L, JSCContext *ctx, const char *code, const char *source, guint line, bool no_return)
 {
+    luajs_log_and_clear_exception(ctx, "eval_js pre-clear");
     JSCValue *result = jsc_context_evaluate_with_source_uri(ctx, code, -1, source, line);
 
     JSCException *exception = jsc_context_get_exception(ctx);
     if (exception) {
         char *e = jsc_exception_to_string(exception);
+        warn("JSC eval exception in %s:%d: %s", source, line, e);
         lua_pushnil(L);
         lua_pushstring(L, e);
-        free(e);
+        g_free(e);
+        jsc_context_clear_exception(ctx);
         return 2;
     }
 
@@ -162,6 +166,17 @@ int luajs_eval_js(lua_State *L, JSCContext *ctx, const char *code, const char *s
         return 2;
     }
     return ret;
+}
+
+void luajs_log_and_clear_exception(JSCContext *ctx, const char *msg)
+{
+    JSCException *exception = jsc_context_get_exception(ctx);
+    if (exception) {
+        char *e = jsc_exception_to_string(exception);
+        warn("JSC exception (%s): %s", msg, e);
+        g_free(e);
+        jsc_context_clear_exception(ctx);
+    }
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

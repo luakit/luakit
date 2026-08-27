@@ -27,6 +27,7 @@
 #include "extension/clib/page.h"
 
 #include <gtk/gtk.h>
+#include <jsc/jsc.h>
 
 #define LUA_DOM_ELEMENT_FUNCS(lua_class, type, prefix)        \
     LUA_CLASS_FUNCS(prefix, lua_class)                        \
@@ -49,12 +50,14 @@
 typedef struct _dom_element_t {
     LUA_OBJECT_HEADER
     signal_t *dom_events;
-    WebKitDOMElement *element;
-    WebKitWebPage *page;
+    JSCValue *element;
 } dom_element_t;
 
+typedef struct _WebKitDOMElement WebKitDOMElement;
+
 void dom_element_class_setup(lua_State *);
-gint luaH_dom_element_from_node(lua_State *L, WebKitDOMElement* node, WebKitWebPage *page);
+gint luaH_dom_element_from_node(lua_State *L, JSCValue* node);
+JSCValue *dom_element_js_ref(page_t *page, dom_element_t *element);
 dom_element_t * luaH_to_dom_element(lua_State *L, gint idx);
 
 #endif

@@ -32,10 +32,21 @@
 #include <stdlib.h>
 #include <sys/wait.h>
 #include <unistd.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 #if !WEBKIT_CHECK_VERSION(2,16,0)
 #error Your version of WebKit is outdated!
+#endif
+
+#if defined(__has_feature)
+#if __has_feature(address_sanitizer) || defined(__SANITIZE_ADDRESS__)
+const char *__asan_default_options(void) {
+    return "detect_leaks=0";
+}
+const char *__lsan_default_options(void) {
+    return "detect_leaks=0";
+}
+#endif
 #endif
 
 /* Define two globals of the UI side; their extern declarations are in
@@ -117,7 +128,6 @@ parseopts(int *argc, gchar *argv[], gboolean **nonblock)
     /* parse command line options */
     context = g_option_context_new("[URI...]");
     g_option_context_add_main_entries(context, entries, NULL);
-    g_option_context_add_group(context, gtk_get_option_group(FALSE));
     g_option_context_parse(context, argc, &argv, NULL);
     g_option_context_free(context);
 
@@ -203,6 +213,10 @@ glib_log_writer(GLogLevelFlags log_level_flags, const GLogField *fields, gsize n
 gint
 main(gint argc, gchar *argv[])
 {
+    /* Force GTK4 to default to OpenGL renderer (GSK_RENDERER=gl) if not already set,
+       preventing buggy Vulkan rendering that causes VK_SUBOPTIMAL_KHR flickering. */
+    g_setenv("GSK_RENDERER", "gl", FALSE);
+
     gboolean *nonblock = NULL;
     globalconf.starttime = l_time();
 
@@ -238,12 +252,15 @@ main(gint argc, gchar *argv[])
         }
     }
 
-    gtk_init(&argc, &argv);
+    gtk_init();
+    if (!gdk_display_get_default())
+        fatal("No default display found. Is a display server running? (Check DISPLAY or WAYLAND_DISPLAY)");
 
 #if GLIB_MAJOR_VERSION == 2 && GLIB_MINOR_VERSION >= 50
     g_log_set_writer_func(glib_log_writer, NULL, NULL);
 #endif
     init_directories();
+    ipc_init_socket();
     web_context_init();
     ipc_init();
     luaH_init(uris);
@@ -255,8 +272,10 @@ main(gint argc, gchar *argv[])
     if (!globalconf.windows->len)
         fatal("no windows spawned by rc file, exiting");
 
-    gtk_main();
-    return EXIT_SUCCESS;
+    GMainLoop *loop = g_main_loop_new(NULL, FALSE);
+    g_main_loop_run(loop);
+    g_main_loop_unref(loop);
+    return 0;
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

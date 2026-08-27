@@ -21,7 +21,18 @@
 
 #include "common/ipc.h"
 
+#include <webkit/webkit.h>
+
+typedef struct {
+    ipc_endpoint_t *ipc;
+    GPid pid;
+} pending_endpoint_t;
+
+struct widget_t;
+void ipc_associate_pending_webview(struct widget_t *w);
+void ipc_init_socket(void);
 void ipc_init(void);
+void ipc_add_sandbox_paths(WebKitWebContext *);
 void ipc_endpoint_remove_from_endpoints(ipc_endpoint_t *);
 void ipc_remove_socket_file(void);
 

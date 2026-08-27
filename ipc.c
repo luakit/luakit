@@ -20,7 +20,7 @@
 #include "ipc.h"
 
 #include <assert.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 #include <sys/socket.h>
 #include <sys/types.h>
 #include <sys/un.h>
@@ -41,6 +41,7 @@ void webview_scroll_recv(void *d, const ipc_scroll_t *ipc);
 void run_javascript_finished(const guint8 *msg, guint length);
 
 static char *socket_path;
+static int server_sock = -1;
 GMutex socket_path_lock;
 GCond socket_path_cond;
 
@@ -76,16 +77,84 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     run_javascript_finished(msg, length);
 }
 
+static GHashTable *page_endpoints = NULL;
+
+static void
+page_endpoint_free(gpointer data)
+{
+    pending_endpoint_t *val = (pending_endpoint_t *)data;
+    if (val) {
+        ipc_endpoint_decref(val->ipc);
+        g_free(val);
+    }
+}
+
+void
+ipc_associate_pending_webview(widget_t *w)
+{
+    if (!page_endpoints)
+        return;
+
+    guint64 page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
+    pending_endpoint_t *val = g_hash_table_lookup(page_endpoints, &page_id);
+    if (val) {
+        if (val->ipc && val->ipc->status == IPC_ENDPOINT_CONNECTED) {
+            webview_connect_to_endpoint(w, val->ipc);
+            webview_set_web_process_id(w, val->pid);
+        }
+    }
+}
+
 void
 ipc_recv_page_created(ipc_endpoint_t *ipc, const ipc_page_created_t *msg, guint UNUSED(length))
 {
+    if (!page_endpoints) {
+        page_endpoints = g_hash_table_new_full(g_int64_hash, g_int64_equal, g_free, page_endpoint_free);
+    }
+
+    guint64 *key = g_new(guint64, 1);
+    *key = msg->page_id;
+    pending_endpoint_t *val = g_new(pending_endpoint_t, 1);
+    val->ipc = ipc;
+    g_assert(ipc_endpoint_incref(ipc));
+    val->pid = msg->pid;
+    g_hash_table_replace(page_endpoints, key, val);
+
     widget_t *w = webview_get_by_id(msg->page_id);
 
-    /* Page may already have been closed */
-    if (!w) return;
+    if (w) {
+        if (msg->is_main_frame) {
+            webview_connect_to_endpoint(w, ipc);
+            webview_set_web_process_id(w, msg->pid);
+        } else {
+            webview_add_subframe_endpoint(w, ipc);
+        }
+    }
+}
 
-    webview_connect_to_endpoint(w, ipc);
-    webview_set_web_process_id(w, msg->pid);
+void
+ipc_recv_page_active(ipc_endpoint_t *ipc, const ipc_page_active_t *msg, guint UNUSED(length))
+{
+    if (!msg->is_main_frame)
+        return;
+
+    if (!page_endpoints) {
+        page_endpoints = g_hash_table_new_full(g_int64_hash, g_int64_equal, g_free, page_endpoint_free);
+    }
+
+    guint64 *key = g_new(guint64, 1);
+    *key = msg->page_id;
+    pending_endpoint_t *val = g_new(pending_endpoint_t, 1);
+    val->ipc = ipc;
+    g_assert(ipc_endpoint_incref(ipc));
+    val->pid = msg->pid;
+    g_hash_table_replace(page_endpoints, key, val);
+
+    widget_t *w = webview_get_by_id(msg->page_id);
+    if (w) {
+        webview_connect_to_endpoint(w, ipc);
+        webview_set_web_process_id(w, msg->pid);
+    }
 }
 
 static gchar *
@@ -100,7 +169,7 @@ retry:
         suffix[i] = base + c;
     }
     gchar *socket_name = g_strdup_printf("luakit-ipc-%d-%s", getpid(), suffix);
-    gchar *socket_path = g_build_filename(g_get_tmp_dir(), socket_name, NULL);
+    gchar *socket_path = g_build_filename(globalconf.cache_dir, socket_name, NULL);
     g_free(socket_name);
 
     if (g_file_test(socket_path, G_FILE_TEST_EXISTS)) {
@@ -110,13 +179,12 @@ retry:
     return socket_path;
 }
 
-static gpointer
-web_extension_connect_thread(gpointer UNUSED(data))
+void
+ipc_init_socket(void)
 {
     gchar *path = build_socket_path();
 
-    int sock;
-    if ((sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
+    if ((server_sock = socket(AF_UNIX, SOCK_STREAM, 0)) == -1)
         fatal("Error calling socket(): %s", strerror(errno));
 
     struct sockaddr_un local;
@@ -133,24 +201,52 @@ web_extension_connect_thread(gpointer UNUSED(data))
     /* Remove any pre-existing socket, before opening */
     unlink(local.sun_path);
 
-    if (bind(sock, (struct sockaddr *)&local, len) == -1)
+    if (bind(server_sock, (struct sockaddr *)&local, len) == -1)
         fatal("Error calling bind() on socket %s: %s", path, strerror(errno));
 
-    if (listen(sock, 5) == -1)
+    if (listen(server_sock, 5) == -1)
         fatal("Error calling listen() on socket %s: %s", path, strerror(errno));
 
     g_mutex_lock(&socket_path_lock);
     socket_path = path;
     g_cond_signal(&socket_path_cond);
     g_mutex_unlock(&socket_path_lock);
+}
 
+void
+ipc_add_sandbox_paths(WebKitWebContext *context)
+{
+    char *dirs[] = { g_get_current_dir(), LUAKIT_LIB_PATH }, *dir = NULL;
+
+    for (unsigned i = 0; !dir && i < LENGTH(dirs); ++i) {
+        char *extension_file = g_build_filename(dirs[i],  "luakit.so", NULL);
+        if (!access(extension_file, R_OK))
+            dir = dirs[i];
+        g_free(extension_file);
+    }
+
+    g_mutex_lock(&socket_path_lock);
+    const char *path = socket_path;
+    g_mutex_unlock(&socket_path_lock);
+
+    if (path)
+        webkit_web_context_add_path_to_sandbox(context, path, FALSE);
+    if (dir)
+        webkit_web_context_add_path_to_sandbox(context, dir, TRUE);
+
+    g_free(dirs[0]);
+}
+
+static gpointer
+web_extension_connect_thread(gpointer UNUSED(data))
+{
     while (TRUE) {
         debug("Waiting for a connection...");
 
         int web_socket;
         struct sockaddr_un remote;
         socklen_t size = sizeof(remote);
-        if ((web_socket = accept(sock, (struct sockaddr *)&remote, &size)) == -1)
+        if ((web_socket = accept(server_sock, (struct sockaddr *)&remote, &size)) == -1)
             fatal("Error calling accept(): %s", strerror(errno));
 
         ipc_endpoint_t *ipc = ipc_endpoint_new("UI");
@@ -161,7 +257,7 @@ web_extension_connect_thread(gpointer UNUSED(data))
 }
 
 static void
-initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
+initialize_web_process_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
 {
     char *dirs[] = { g_get_current_dir(), LUAKIT_LIB_PATH }, *dir = NULL;
 
@@ -193,8 +289,8 @@ initialize_web_extensions_cb(WebKitWebContext *context, gpointer UNUSED(data))
     lua_pop(common.L, 3);
 
     GVariant *payload = g_variant_new("(sss)", path, package_path, package_cpath);
-    webkit_web_context_set_web_extensions_initialization_user_data(context, payload);
-    webkit_web_context_set_web_extensions_directory(context, dir);
+    webkit_web_context_set_web_process_extensions_initialization_user_data(context, payload);
+    webkit_web_context_set_web_process_extensions_directory(context, dir);
 
     g_free(dirs[0]);
 }
@@ -214,8 +310,8 @@ ipc_init(void)
 {
     /* Start web extension connection accept thread */
     g_thread_new("accept_thread", web_extension_connect_thread, NULL);
-    g_signal_connect(web_context_get(), "initialize-web-extensions",
-            G_CALLBACK (initialize_web_extensions_cb), NULL);
+    g_signal_connect(web_context_get(), "initialize-web-process-extensions",
+            G_CALLBACK (initialize_web_process_extensions_cb), NULL);
     atexit(ipc_remove_socket_file);
 }
 

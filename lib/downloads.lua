@@ -43,6 +43,16 @@ _M.default_dir = xdg.download_dir or (os.getenv("HOME") .. "/downloads")
 -- Private data for the download instances (speed tracking)
 local dls = {}
 
+local last_finished_time = 0
+local function unique_finished_time()
+    local now = math.floor(luakit.time() * 1000)
+    if now <= last_finished_time then
+        now = last_finished_time + 1
+    end
+    last_finished_time = now
+    return now
+end
+
 --- Connect to and initialize the downloads database.
 function _M.init()
     -- Return if database handle already open
@@ -161,38 +171,31 @@ end)
 -- @tparam table opts A table of options.
 function _M.add(uri, opts)
     opts = opts or {}
-    local d = (type(uri) == "string" and download{uri=uri}) or uri
-
+    local d = (type(uri) == "string" and download{uri = uri}) or uri
     assert(type(d) == "download",
-        string.format("download.add() expected uri or download object "
-            .. "(got %s)", type(d) or "nil"))
+        string.format("download.add() expected uri or download object (got %s)", type(d) or "nil"))
+
+    local function set_dest(dd, fn)
+        dd.allow_overwrite = true
+        dd:add_signal("created-destination", function(ddd)
+            dls[ddd] = {
+                created = luakit.time(),
+                id = next_download_id(),
+            }
+            if not status_timer.started then status_timer:start() end
+            _M.emit_signal("download::status", ddd, dls[ddd])
+        end)
+        dd.destination = fn
+    end
 
     d:add_signal("decide-destination", function(dd, suggested_filename)
-        -- Emit signal to get initial download location
-        local fn = opts.filename or _M.emit_signal("download-location", dd.uri,
-            opts.suggested_filename or suggested_filename, dd.mime_type)
-        assert(fn == nil or type(fn) == "string" and #fn > 1,
-            string.format("invalid filename: %q", tostring(fn)))
-
-        -- Ask the user where we should download the file to
-        if not fn then
-            fn = luakit.save_file("Save file", opts.window, _M.default_dir,
-                suggested_filename)
-        end
-
-        dd.allow_overwrite = true
+        local fn = opts.filename
+            or _M.emit_signal("download-location", dd.uri, opts.suggested_filename or suggested_filename, dd.mime_type)
+            or luakit.save_file("Save file", opts.window, _M.default_dir, suggested_filename)
 
         if fn then
-            dd.destination = fn
-            dd:add_signal("created-destination", function(ddd)
-                local data = {
-                    created = luakit.time(),
-                    id = next_download_id(),
-                }
-                dls[ddd] = data
-                if not status_timer.started then status_timer:start() end
-                _M.emit_signal("download::status", ddd, dls[ddd])
-            end)
+            assert(type(fn) == "string" and #fn > 1, string.format("invalid filename: %q", tostring(fn)))
+            set_dest(dd, fn)
         else
             dd:cancel()
         end
@@ -200,8 +203,12 @@ function _M.add(uri, opts)
     end)
 
     d:add_signal("finished", function(dd)
-        query_insert:exec{os.time(), dls[dd].created, dd.uri, dd.destination, dd.total_size}
+        if dd.status == "finished" and dls[dd] then
+            query_insert:exec{unique_finished_time(), dls[dd].created, dd.uri, dd.destination, dd.total_size}
+        end
     end)
+
+    return d
 end
 
 --- Cancel a download.

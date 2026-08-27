@@ -21,7 +21,7 @@
 void
 web_script_world_init(void)
 {
-    extension.script_world = webkit_script_world_new();
+    extension.script_world = webkit_script_world_new_with_name("luakit-world");
 }
 
 // vim: ft=c:et:sw=4:ts=8:sts=4:tw=80

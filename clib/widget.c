@@ -26,15 +26,14 @@ static property_t widget_properties[] = {
   { L_TK_MARGIN,            "margin",            INT,    TRUE  },
   { L_TK_MARGIN_TOP,        "margin-top",        INT,    TRUE  },
   { L_TK_MARGIN_BOTTOM,     "margin-bottom",     INT,    TRUE  },
-  { L_TK_MARGIN_LEFT,       "margin-left",       INT,    TRUE  },
-  { L_TK_MARGIN_RIGHT,      "margin-right",      INT,    TRUE  },
+  { L_TK_MARGIN_LEFT,       "margin-start",      INT,    TRUE  },
+  { L_TK_MARGIN_RIGHT,      "margin-end",        INT,    TRUE  },
   { L_TK_CAN_FOCUS,         "can-focus",         BOOL,   TRUE  },
   { 0,                      NULL,                0,      0     },
 };
 
 static widget_info_t widgets_list[] = {
   { L_TK_ENTRY,     "entry",    widget_entry    },
-  { L_TK_EVENTBOX,  "eventbox", widget_eventbox },
   { L_TK_HBOX,      "hbox",     widget_box      },
   { L_TK_HPANED,    "hpaned",   widget_paned    },
   { L_TK_LABEL,     "label",    widget_label    },
@@ -92,13 +91,17 @@ luaH_widget_new(lua_State *L)
     return 1;
 }
 
-#if GTK_CHECK_VERSION(3,16,0)
 static inline void
 widget_set_css(widget_t *w, const gchar *properties)
 {
     gchar *old_css = gtk_css_provider_to_string(w->provider);
-    gchar *css = g_strdup_printf("%s\n#widget { %s }", old_css, properties);
-    gtk_css_provider_load_from_data(w->provider, css, strlen(css), NULL);
+    gchar *css;
+    if (g_strrstr(properties, "background-color")) {
+        css = g_strdup_printf("%s\n#widget_%p { background-image: none; %s }", old_css, (void*)w, properties);
+    } else {
+        css = g_strdup_printf("%s\n#widget_%p { %s }", old_css, (void*)w, properties);
+    }
+    gtk_css_provider_load_from_string(w->provider, css);
     g_free(css);
     g_free(old_css);
 }
@@ -126,7 +129,6 @@ widget_set_css_properties(widget_t *w, ...)
     widget_set_css(w, css);
     g_free(css);
 }
-#endif
 
 /** Generic widget.
  * \param L The Lua VM state.
@@ -148,7 +150,7 @@ luaH_widget_index(lua_State *L)
 
     if (token == L_TK_IS_ALIVE) {
         widget_t *w = luaH_checkudata(L, 1, &widget_class);
-        lua_pushboolean(L, !!w);
+        lua_pushboolean(L, w && w->widget);
         return 1;
     }
 
@@ -181,12 +183,10 @@ luaH_widget_newindex(lua_State *L)
     /* Then call special widget newindex */
     widget_t *widget = luaH_checkwidget(L, 1);
 
-#if GTK_CHECK_VERSION(3,16,0)
     if (token == L_TK_CSS) {
         widget_set_css(widget, luaL_checkstring(L, 3));
         return 0;
     }
-#endif
 
     /* but only if it's not a GtkWidget property */
     gboolean emit = luaH_gobject_newindex(L, widget_properties, token, 3,
@@ -206,9 +206,7 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
     luakit_token_t tok = l_tokenize(type);
     widget_info_t *winfo;
 
-#if GTK_CHECK_VERSION(3,16,0)
     w->provider = gtk_css_provider_new();
-#endif
 
     for (guint i = 0; i < LENGTH(widgets_list); i++) {
         if (widgets_list[i].tok != tok)
@@ -218,11 +216,11 @@ luaH_widget_set_type(lua_State *L, widget_t *w)
         w->info = winfo;
         winfo->wc(L, w, tok);
 
-#if GTK_CHECK_VERSION(3,16,0)
-    gtk_widget_set_name(GTK_WIDGET(w->widget), "widget");
-    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
-    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(w->provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-#endif
+        gchar *widget_name = g_strdup_printf("widget_%p", w);
+        gtk_widget_set_name(GTK_WIDGET(w->widget), widget_name);
+        g_free(widget_name);
+
+        gtk_style_context_add_provider_for_display(gtk_widget_get_display(GTK_WIDGET(w->widget)), GTK_STYLE_PROVIDER(w->provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
         /* store pointer to lua widget struct in gobject data */
         g_object_set_data(G_OBJECT(w->widget),
@@ -250,6 +248,27 @@ luaH_widget_get_type(lua_State *L, widget_t *w)
     return 1;
 }
 
+static gint
+luaH_widget_len(lua_State *L)
+{
+    widget_t *w = luaH_checkwidget(L, 1);
+    if (w->info && w->info->tok == L_TK_NOTEBOOK && w->widget && G_IS_OBJECT(w->widget)) {
+        lua_pushinteger(L, gtk_notebook_get_n_pages(GTK_NOTEBOOK(w->widget)));
+        return 1;
+    }
+
+    lua_getfield(L, 1, "count");
+    if (lua_isfunction(L, -1)) {
+        lua_pushvalue(L, 1);
+        lua_call(L, 1, 1);
+        return 1;
+    }
+    lua_pop(L, 1);
+
+    lua_pushinteger(L, 0);
+    return 1;
+}
+
 void
 widget_class_setup(lua_State *L)
 {
@@ -266,6 +285,7 @@ widget_class_setup(lua_State *L)
         { "__index", luaH_widget_index },
         { "__newindex", luaH_widget_newindex },
         { "__gc", luaH_widget_gc },
+        { "__len", luaH_widget_len },
         { NULL, NULL }
     };
 

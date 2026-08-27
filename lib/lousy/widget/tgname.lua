@@ -10,7 +10,6 @@
 
 local _M = {}
 
-local webview = require("webview")
 local lousy = require("lousy")
 local theme = lousy.theme.get()
 local wc = require("lousy.widget.common")
@@ -22,12 +21,6 @@ local widgets = {
     end,
 }
 
-webview.add_signal("init", function (view)
-    -- `switch_tabgroup()` and `tabgroup-menu-rename` emit `switched-page`
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
-end)
 
 local function new()
     local tgname = widget{type="label"}

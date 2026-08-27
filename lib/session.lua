@@ -122,24 +122,20 @@ local restore_file = function (file, delete)
     for _, win in ipairs(wins) do
         w = nil
         for _, item in ipairs(win.open) do
-            local v
+            local item_state, item_uri = item.session_state, item.uri
             if not w then
-                w = window.new({settings.get_setting("window.new_tab_page")})
-                v = w.view
-            else
-                v = w:new_tab(settings.get_setting("window.new_tab_page"), { switch = item.current })
+                w = window.new({}, { no_initial_tab = true })
             end
-            -- Block the tab load, then set its location
-            webview.modify_load_block(v, "session-restore", true)
-            webview.set_location(v, { session_state = item.session_state, uri = item.uri })
-            local function unblock(vv)
-                webview.modify_load_block(vv, "session-restore", false)
-                vv:remove_signal("switched-page", unblock)
+            if item_state or item_uri then
+                local opts = { switch = item.current, no_reuse = true, no_initial_tab = true, no_initial_url = true }
+                w:new_tab({ session_state = item_state }, opts)
             end
-            v:add_signal("switched-page", unblock)
         end
         -- Convert state keys from index to w table
-        if w then state[w] = win end
+        if w then
+            state[w] = win
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
+        end
     end
     _M.emit_signal("restore", state)
 
@@ -233,18 +229,17 @@ window.add_signal("init", function (w)
     w.tabs:add_signal("page-reordered", function ()
         start_timeout()
     end)
+
+    w.tabs:add_signal("switch-page", function ()
+        start_timeout()
+    end)
 end)
 
 webview.add_signal("init", function (view)
-    -- Save session state after page navigation
     view:add_signal("load-status", function (_, status)
         if status == "committed" then
             start_timeout()
         end
-    end)
-    -- Save session state after switching page (session includes current tab)
-    view:add_signal("switched-page", function ()
-        start_timeout()
     end)
 end)
 

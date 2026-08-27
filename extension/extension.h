@@ -23,7 +23,7 @@
 #pragma GCC diagnostic ignored "-Wunknown-pragmas"
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wtypedef-redefinition"
-#include <webkit2/webkit-web-extension.h>
+#include <webkit/webkit-web-process-extension.h>
 #pragma clang diagnostic pop
 #pragma GCC diagnostic pop
 
@@ -34,7 +34,7 @@
 
 typedef struct _extension_t {
     /** Handle to the WebKit Web Extension */
-    WebKitWebExtension *ext;
+    WebKitWebProcessExtension *ext;
     /** Channel for IPC with ui process */
     ipc_endpoint_t *ipc;
     /** Isolated JavaScript context */
@@ -42,6 +42,8 @@ typedef struct _extension_t {
 } extension_t;
 
 extern extension_t extension;
+
+WebKitFrame *web_page_get_main_frame(WebKitWebPage *page);
 
 #endif
 

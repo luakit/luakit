@@ -61,15 +61,15 @@ end
 
 local function set_current(tl, current)
     local theme = get_theme()
-    local ebox = tl.widget
     local priv = data[tl]
     local label = priv.label
+    local box = tl.widget
     priv.current = current
     label.fg = (priv.current and theme.tab_selected_fg) or theme.tab_fg
     if priv.view.private then
-        ebox.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
+        box.bg = (priv.current and theme.selected_private_tab_bg) or theme.private_tab_bg
     else
-        ebox.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
+        box.bg = (priv.current and theme.tab_selected_bg) or theme.tab_bg
     end
     update_label(tl)
 end
@@ -94,40 +94,40 @@ local function new(view, index)
     assert(type(view) == "widget" and view.type == "webview")
     assert(type(index) == "number")
 
-    local tl = {
-        widget = widget{type = "eventbox"},
-        destroy = destroy,
-    }
-    data[tl] = {
-        label = widget{type = "label"},
-        view = view,
-        index = index,
-        current = false,
-        no_title = false,
-    }
-
+    local label = widget{type = "label"}
     local theme = get_theme()
-    local label = data[tl].label
-    tl.widget.child = label
     label.font = theme.tab_font
     label.align = { x = 0 }
     label.margin_left = 10
     label.margin_right = 10
 
+    local tl = {
+        widget = widget{type = "hbox"},
+        destroy = destroy,
+    }
+    tl.widget.child = label
+
     -- Bind signals to associated view
-    data[tl].view_handlers = {
-        ["property::title"] = function ()
-            data[tl].no_title = false
-            update_title_and_label(tl)
-        end,
-        ["property::uri"] = function ()
-            update_title_and_label(tl)
-        end,
-        ["load-status"] = function (_, status)
-            if status == "provisional" then data[tl].no_title = true end
-            update_title_and_label(tl)
-            update_label(tl)
-        end,
+    data[tl] = {
+        label = label,
+        view = view,
+        index = index,
+        current = false,
+        no_title = false,
+        view_handlers = {
+            ["property::title"] = function ()
+                data[tl].no_title = false
+                update_title_and_label(tl)
+            end,
+            ["property::uri"] = function ()
+                update_title_and_label(tl)
+            end,
+            ["load-status"] = function (_, status)
+                if status == "provisional" then data[tl].no_title = true end
+                update_title_and_label(tl)
+                update_label(tl)
+            end,
+        }
     }
     for sig, func in pairs(data[tl].view_handlers) do
         view:add_signal(sig, func)

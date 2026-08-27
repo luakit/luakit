@@ -37,10 +37,10 @@ function _M.wait_for_view(view)
     assert(type(view) == "widget" and view.type == "webview")
     shared_lib.traceback = debug.traceback("",2)
     repeat
-        local _, status, uri, err = _M.wait_for_signal(view, "load-status", 5000)
+        local _, status = _M.wait_for_signal(view, "load-status", 5000)
         if status == "failed" then
-            local fmt = "tests.wait_for_view() failed loading '%s': %s"
-            local msg = fmt:format(uri, err)
+            local fmt = "tests.wait_for_view() failed loading '%s'"
+            local msg = fmt:format(view.uri or "")
             assert(false, msg)
         end
     until status == "finished"
@@ -150,13 +150,16 @@ end
 
 --- Get the URI prefix for the test HTTP server.
 --
--- The port the test server listens on may not always be the same. This function
--- returns the current URI prefix, which looks like `http://127.0.0.1:8888/`.
---
--- Currently, however, there is no HTTP server; instead, the custom URI scheme
--- `luakit-test://` is used.
+-- Returns the HTTP URI prefix (e.g. `http://127.0.0.1:8991/` or `http://localhost:8991/`
+-- if a domain is provided), or falls back to `luakit-test://` if no server is running.
+-- @tparam[opt] string domain Domain/hostname to use (defaults to "127.0.0.1").
 -- @treturn string The URI prefix for the test HTTP server.
-function _M.http_server()
+function _M.http_server(domain)
+    local port = os.getenv("LUAKIT_TEST_HTTP_PORT")
+    if port and port ~= "" then
+        domain = domain or "127.0.0.1"
+        return string.format("http://%s:%s/", domain, port)
+    end
     return "luakit-test://"
 end
 

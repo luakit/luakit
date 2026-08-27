@@ -57,13 +57,15 @@ luaH_entry_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
 
+      PF_CASE(DESTROY,              luaH_widget_destroy)
+
       /* push class methods */
       PF_CASE(INSERT,           luaH_entry_insert)
       PF_CASE(SELECT_REGION,    luaH_entry_select_region)
       /* push integer properties */
       PI_CASE(POSITION,         gtk_editable_get_position(GTK_EDITABLE(w->widget)))
       /* push string properties */
-      PS_CASE(TEXT,         gtk_entry_get_text(GTK_ENTRY(w->widget)))
+      PS_CASE(TEXT,         gtk_editable_get_text(GTK_EDITABLE(w->widget)))
       PS_CASE(FG,           g_object_get_data(G_OBJECT(w->widget), "fg"))
       PS_CASE(BG,           g_object_get_data(G_OBJECT(w->widget), "bg"))
       PS_CASE(FONT,         g_object_get_data(G_OBJECT(w->widget), "font"))
@@ -82,16 +84,16 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
     size_t len;
     const gchar *tmp;
     GdkRGBA c;
-#if !GTK_CHECK_VERSION(3,16,0)
-    PangoFontDescription *font;
-#endif
+
 
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
 
       case L_TK_TEXT:
-        gtk_entry_set_text(GTK_ENTRY(w->widget),
+        g_object_set_data(G_OBJECT(w->widget), "setting-text", GINT_TO_POINTER(1));
+        gtk_editable_set_text(GTK_EDITABLE(w->widget),
             luaL_checklstring(L, 3, &len));
+        g_object_set_data(G_OBJECT(w->widget), "setting-text", NULL);
         break;
 
       case L_TK_FG:
@@ -100,19 +102,11 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
         if (!gdk_rgba_parse(&c, tmp))
             luaL_argerror(L, 3, "unable to parse color");
         if (token == L_TK_FG) {
-#if GTK_CHECK_VERSION(3,16,0)
             widget_set_css_properties(w, "color", tmp, NULL);
             widget_set_css_properties(w, "caret-color", tmp, NULL);
-#else
-            gtk_widget_override_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
-#endif
             g_object_set_data_full(G_OBJECT(w->widget), "fg", g_strdup(tmp), g_free);
         } else {
-#if GTK_CHECK_VERSION(3,16,0)
             widget_set_css_properties(w, "background-color", tmp, NULL);
-#else
-            gtk_widget_override_background_color(GTK_WIDGET(w->widget), GTK_STATE_FLAG_NORMAL, &c);
-#endif
             g_object_set_data_full(G_OBJECT(w->widget), "bg", g_strdup(tmp), g_free);
         }
         break;
@@ -127,12 +121,7 @@ luaH_entry_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 
       case L_TK_FONT:
         tmp = luaL_checklstring(L, 3, &len);
-#if GTK_CHECK_VERSION(3,16,0)
         widget_set_css_properties(w, "font", tmp, NULL);
-#else
-        font = pango_font_description_from_string(tmp);
-        gtk_widget_override_font(GTK_WIDGET(w->widget), font);
-#endif
         g_object_set_data_full(G_OBJECT(w->widget), "font", g_strdup(tmp), g_free);
         break;
 
@@ -155,6 +144,8 @@ activate_cb(GtkEntry* UNUSED(e), widget_t *w)
 static void
 changed_cb(widget_t *w)
 {
+    if (g_object_get_data(G_OBJECT(w->widget), "setting-text"))
+        return;
     lua_State *L = common.L;
     luaH_object_push(L, w->ref);
     luaH_object_emit_signal(L, -1, "changed", 0, 0);
@@ -179,32 +170,24 @@ widget_entry(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     /* create gtk label widget as main widget */
     w->widget = gtk_entry_new();
 
-    /* setup default settings */
-#if GTK_CHECK_VERSION(3,4,0)
-    GtkStyleContext *context = gtk_widget_get_style_context(GTK_WIDGET(w->widget));
-    const gchar *inputbar_css = "GtkEntry {border: none; padding: 2px;}";
+    const gchar *inputbar_css = "entry {border: none; padding: 2px;}";
 
     GtkCssProvider *provider = gtk_css_provider_new();
-    gtk_css_provider_load_from_data(provider, inputbar_css, strlen(inputbar_css), NULL);
+    gtk_css_provider_load_from_string(provider, inputbar_css);
 
-    gtk_style_context_add_provider(context, GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
-#else
-    gtk_entry_set_inner_border(GTK_ENTRY(w->widget), NULL);
-#endif
+    gtk_style_context_add_provider_for_display(gtk_widget_get_display(w->widget), GTK_STYLE_PROVIDER(provider), GTK_STYLE_PROVIDER_PRIORITY_APPLICATION);
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
       "signal::activate",                          G_CALLBACK(activate_cb),   w,
-      "signal::key-press-event",                   G_CALLBACK(key_press_cb),  w,
       "signal::notify::cursor-position",           G_CALLBACK(position_cb),   w,
+      "swapped-signal::changed",                   G_CALLBACK(changed_cb),    w,
       NULL);
 
-    // Further signal to replace "signal::changed"
-    g_object_connect(G_OBJECT(w->widget),
-      "swapped-signal::changed", G_CALLBACK(changed_cb), w,
-      NULL);
+    LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
+    gtk_event_controller_set_propagation_phase(key_controller, GTK_PHASE_CAPTURE);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

@@ -123,8 +123,14 @@ ipc_send(ipc_endpoint_t *ipc, const ipc_header_t *header, const void *data)
 
     if (ipc->channel)
         g_async_queue_push(send_queue, msg);
-    else
+    else if (ipc->queue)
         g_queue_push_tail(ipc->queue, msg);
+    else {
+        warn("Process '%s': dropped message '%s', endpoint not connected and has no queue",
+                ipc->name, ipc_type_name(header->type));
+        g_free(msg);
+        ipc_endpoint_decref(ipc);
+    }
 }
 
 static void
@@ -290,16 +296,16 @@ ipc_endpoint_connect_to_socket(ipc_endpoint_t *ipc, int sock)
     GIOChannel *channel = g_io_channel_unix_new(sock);
     g_io_channel_set_encoding(channel, NULL, NULL);
     g_io_channel_set_buffered(channel, FALSE);
-    state->watch_in_id = g_io_add_watch(channel, G_IO_IN, (GIOFunc)ipc_recv, ipc);
-    state->watch_hup_id = g_io_add_watch(channel, G_IO_HUP, (GIOFunc)ipc_hup, ipc);
 
     /* Atomically update ipc->channel. This is done because on the web extension
      * thread, logging spawns a message send thread, which may attempt to write
      * to the uninitialized channel after it has been created with
      * g_io_channel_unix_new(), but before it has been set up fully */
     g_atomic_pointer_set(&ipc->channel, channel);
-
     ipc->status = IPC_ENDPOINT_CONNECTED;
+
+    state->watch_in_id = g_io_add_watch(channel, G_IO_IN, (GIOFunc)ipc_recv, ipc);
+    state->watch_hup_id = g_io_add_watch(channel, G_IO_HUP, (GIOFunc)ipc_hup, ipc);
 
     if (!endpoints)
         endpoints = g_ptr_array_sized_new(1);
@@ -313,9 +319,10 @@ ipc_endpoint_t *
 ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
 {
     g_assert(orig);
-    g_assert(new);
-    g_assert(orig->status == IPC_ENDPOINT_DISCONNECTED);
-    g_assert(new->status == IPC_ENDPOINT_CONNECTED);
+    if (!new || new->status != IPC_ENDPOINT_CONNECTED) {
+        warn("cannot replace IPC endpoint: target endpoint is disconnected or NULL");
+        return orig;
+    }
 
     /* Incref always succeeds because this is called from a message
      * handler, which holds a temporary ref to the ipc channel  */
@@ -327,6 +334,7 @@ ipc_endpoint_replace(ipc_endpoint_t *orig, ipc_endpoint_t *new)
             queued_ipc_t *msg = g_queue_pop_head(orig->queue);
             msg->ipc = new;
             ipc_endpoint_incref_no_check(new);
+            ipc_endpoint_decref(orig);
             g_async_queue_push(send_queue, msg);
         }
 

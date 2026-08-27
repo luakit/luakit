@@ -14,9 +14,11 @@ local wc = require("lousy.widget.common")
 local _M = {}
 
 local widgets = {
-    update = function (w, progress)
-        local p = w.view.progress
-        if not w.view.is_loading or p == 1 then
+    update = function (w, progress, view)
+        view = view or w.view
+        if not view then return end
+        local p = view.progress
+        if not view.is_loading or p == 1 then
             progress:hide()
         else
             progress:show()
@@ -31,14 +33,12 @@ webview.add_signal("init", function (view)
         view:add_signal(sig, function (v)
             local w = webview.window(v)
             if w and w.view == v then
-                wc.update_widgets_on_w(widgets, w)
+                wc.update_widgets_on_w(widgets, w, v)
             end
         end)
     end
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
 end)
+
 
 local function new()
     local progress = widget{type="label"}

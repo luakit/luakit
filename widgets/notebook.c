@@ -74,12 +74,26 @@ luaH_notebook_insert(lua_State *L)
         if (pos > 0) pos--; /* correct lua index */
     }
 
+    GtkWidget *page_widget = GTK_WIDGET(luaH_checkwidget(L, idx)->widget);
+    gtk_widget_set_hexpand(page_widget, TRUE);
+    gtk_widget_set_vexpand(page_widget, TRUE);
+    gtk_widget_set_halign(page_widget, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(page_widget, GTK_ALIGN_FILL);
+
     pos = gtk_notebook_insert_page(GTK_NOTEBOOK(w->widget),
-        GTK_WIDGET(luaH_checkwidget(L, idx)->widget), NULL, pos);
+        page_widget, NULL, pos);
 
     /* failed to insert page */
     if (pos == -1)
         return 0;
+
+    GtkNotebookPage *page = gtk_notebook_get_page(GTK_NOTEBOOK(w->widget), page_widget);
+    if (page != NULL) {
+        g_object_set(G_OBJECT(page),
+                    "tab-expand", TRUE,
+                    "tab-fill", TRUE,
+                    NULL);
+    }
 
     /* return new (lua corrected) index */
     lua_pushnumber(L, ++pos);
@@ -106,7 +120,13 @@ luaH_notebook_set_title(lua_State *L)
     gtk_label_set_ellipsize(GTK_LABEL(label), PANGO_ELLIPSIZE_MIDDLE);
     gtk_notebook_set_tab_label(GTK_NOTEBOOK(w->widget),
         child->widget, label);
-    gtk_container_child_set(GTK_CONTAINER(w->widget), label, "tab-expand", TRUE, "tab-fill", TRUE, NULL);
+    GtkNotebookPage *page = gtk_notebook_get_page(GTK_NOTEBOOK(w->widget), child->widget);
+    if (page != NULL) {
+        g_object_set(G_OBJECT(page),
+                    "tab-expand", TRUE,
+                    "tab-fill", TRUE,
+                    NULL);
+    }
     return 0;
 }
 
@@ -128,6 +148,13 @@ luaH_notebook_switch(lua_State *L)
     /* correct index */
     if (i != -1) i--;
     gtk_notebook_set_current_page(GTK_NOTEBOOK(w->widget), i);
+    GtkWidget *current_child = gtk_notebook_get_nth_page(GTK_NOTEBOOK(w->widget), i);
+    if (current_child) {
+        gtk_widget_set_hexpand(current_child, TRUE);
+        gtk_widget_set_vexpand(current_child, TRUE);
+        gtk_widget_set_halign(current_child, GTK_ALIGN_FILL);
+        gtk_widget_set_valign(current_child, GTK_ALIGN_FILL);
+    }
     lua_pushnumber(L, gtk_notebook_get_current_page(GTK_NOTEBOOK(w->widget)));
     return 1;
 }
@@ -155,7 +182,8 @@ luaH_notebook_index(lua_State *L, widget_t *w, luakit_token_t token)
     switch(token)
     {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
 
       /* push class methods */
       PF_CASE(COUNT,        luaH_notebook_count)
@@ -257,17 +285,22 @@ widget_notebook(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     w->widget = gtk_notebook_new();
     gtk_notebook_set_show_border(GTK_NOTEBOOK(w->widget), FALSE);
     gtk_notebook_set_scrollable(GTK_NOTEBOOK(w->widget), TRUE);
+    gtk_widget_set_hexpand(w->widget, TRUE);
+    gtk_widget_set_vexpand(w->widget, TRUE);
+    gtk_widget_set_halign(w->widget, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(w->widget, GTK_ALIGN_FILL);
 
     g_object_connect(G_OBJECT(w->widget),
       LUAKIT_WIDGET_SIGNAL_COMMON(w)
-      "signal::key-press-event",   G_CALLBACK(key_press_cb),    w,
       "signal::page-added",        G_CALLBACK(page_added_cb),   w,
       "signal::page-removed",      G_CALLBACK(page_removed_cb), w,
       "signal::page-reordered",    G_CALLBACK(reorder_cb),      w,
       "signal::switch-page",       G_CALLBACK(switch_cb),       w,
       NULL);
 
-    gtk_widget_show(w->widget);
+    LUAKIT_EVENT_CONTROLLER_KEY(w->widget, w)
+
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

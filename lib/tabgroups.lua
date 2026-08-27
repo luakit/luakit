@@ -73,18 +73,18 @@ local function grouptabs(w, g)
 end
 
 local function webview2idx(view)
-    local nb = assert(view.parent)
+    local nb = assert(view:ancestor("notebook"))
     -- should we have separate handling for case when
     -- view.parent is not same as w2groups[w].groups[group]._notebook?
     -- this case means that we messed with webviews somehow and attached it
     -- to different notebook manually. hope we don't need to workaroudn
     -- such setups.
-    return nb:indexof(view)
+    return nb and nb:indexof(view)
 end
 
 -- return table with tabgroup info
 local function webview2group(view)
-    local nb = assert(view.parent)
+    local nb = assert(view:ancestor("notebook"))
     local w = assert(window.ancestor(nb))
     for _, gv in pairs(w2groups[w].groups) do
         if gv._notebook == nb then
@@ -166,7 +166,7 @@ end
 local function create_tabgroup(w, group_name)
     if not w2groups[w].groups[group_name] then
         local nt = widget({type="notebook"})
-        w.tabs.parent:insert(nt)
+        w.tabs:ancestor("notebook"):insert(nt)
         nt.show_tabs = false
 
         w2groups[w].groups[group_name] = {
@@ -205,11 +205,6 @@ local function open_new_tab_in_tabgroup (w, group, uri, opts)
         local view = webview.new({ private = opts.private })
         if opts.session_restore then
             webview.modify_load_block(view, "tabgroups-restore", true)
-            local function unblock(vv)
-                webview.modify_load_block(vv, "tabgroups-restore", false)
-                vv:remove_signal("switched-page", unblock)
-            end
-            view:add_signal("switched-page", unblock)
         end
         -- copy/pasted from attach_tab function in window module
         local order = opts.order
@@ -248,6 +243,10 @@ local function _cleaner()
 end
 
 window.add_signal("init", function (w)
+    w.tabs:add_signal("switch-page", function (_, child)
+        webview.modify_load_block(child, "tabgroups-restore", false)
+    end)
+
     local group_name = _get_next_tabgroup_name(w)
     w2groups[w] = { active = group_name , groups = {},  }
 
@@ -528,7 +527,8 @@ switch_tabgroup = function  (w, group)
     if group ~= w2groups[w].active then
         local g = w2groups[w].groups[group]
         local nb = g._notebook
-        local group_nb = assert(w.tabs.parent)
+        local group_nb = assert(w.tabs:ancestor("notebook"))
+
         group_nb:switch(group_nb:indexof(nb))
         w.tablist:set_notebook(nb)
         w.tabs = nb
@@ -549,7 +549,7 @@ switch_tabgroup = function  (w, group)
         luakit.idle_add(function ()
             -- Cancel if window already destroyed
             if not w.win or not w.view then return end
-            w.view:emit_signal("switched-page")
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
             w:update_win_title()
         end)
     end
@@ -567,7 +567,7 @@ delete_tabgroup = function (w, group)
         end
 
         local g = w2groups[w].groups[group]
-        w.tabs.parent:remove(g._notebook)
+        w.tabs:ancestor("notebook"):remove(g._notebook)
         table.insert(_deleted_groups, g)
         w2groups[w].groups[group] = nil
 
@@ -695,8 +695,8 @@ new_mode("tabgroup-menu-rename", {
             if w2groups[w].active == old_name then
                 w2groups[w].active = new_name
             end
-            w.view:emit_signal("switched-page") -- a `tabgroup-changed` signal may be more appropriate,
-                                                -- (both here, and in `switch_tabgroup` above)..
+            -- a `tabgroup-changed` signal may be more appropriate (both here and in `switch_tabgroup` above)
+            w.tabs:emit_signal("switch-page", w.view, w.tabs:current())
         end
         w:set_mode('tabgroup-menu')
     end,

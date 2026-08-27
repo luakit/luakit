@@ -332,8 +332,13 @@ end
 -- The settings key must be a valid settings key.
 -- @tparam string key The key of the setting to retrieve.
 -- @return The value of the setting.
-_M.get_setting = function (key)
-    return S_get(nil, key)
+_M.get_setting = function (key, opts)
+    opts = opts or {}
+    local val = S_get(opts.domain, key)
+    if val == nil and opts.domain then
+        val = S_get(nil, key)
+    end
+    return val
 end
 
 --- Assign a value to a setting. Values assigned in this way are persisted to

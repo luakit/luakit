@@ -208,6 +208,7 @@ if w then
         w:new_tab(uri, { switch = i == 1 })
     end
 else
+    print("session w is NOT set")
     -- Or open new window
     window.new(uris)
 end

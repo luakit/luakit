@@ -16,7 +16,7 @@
  *
  */
 
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 #include "clib/widget.h"
 #include "common/ipc.h"
 #include "widgets/webview.h"
@@ -33,17 +33,25 @@ ipc_channel_send(lua_State *L)
     ipc_channel_t *ipc_channel = luaH_check_ipc_channel(L, 1);
     guint64 page_id = 0;
     ipc_endpoint_t *ipc = NULL;
+    widget_t *w = NULL;
 
     /* Optional first argument: view or view id to send message to */
+    gboolean targeted = FALSE;
     if (lua_isuserdata(L, 2)) {
-        widget_t *w = luaH_checkwebview(L, 2);
-        page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
-        ipc = webview_get_endpoint(w);
+        targeted = TRUE;
+        w = luaH_checkwebview(L, 2);
+        if (w->widget) {
+            page_id = webkit_web_view_get_page_id(WEBKIT_WEB_VIEW(w->widget));
+            ipc = webview_get_endpoint(w);
+        }
         lua_remove(L, 2);
     } else if (lua_isnumber(L, 2)) {
+        targeted = TRUE;
         page_id = lua_tointeger(L, 2);
-        widget_t *w = webview_get_by_id(page_id);
-        ipc = webview_get_endpoint(w);
+        w = webview_get_by_id(page_id);
+        if (w) {
+            ipc = webview_get_endpoint(w);
+        }
         lua_remove(L, 2);
     }
 
@@ -51,9 +59,12 @@ ipc_channel_send(lua_State *L)
     lua_pushstring(L, ipc_channel->name);
     lua_pushinteger(L, page_id);
 
-    if (ipc)
+    if (ipc) {
         ipc_send_lua(ipc, IPC_TYPE_lua_ipc, L, 2, lua_gettop(L));
-    else {
+        if (w) {
+            webview_send_lua_to_subframes(w, L, 2, lua_gettop(L));
+        }
+    } else if (!targeted) {
         const GPtrArray *endpoints = ipc_endpoints_get();
         for (unsigned i = 0; i < endpoints->len; i++) {
             ipc_endpoint_t *ipc = g_ptr_array_index(endpoints, i);

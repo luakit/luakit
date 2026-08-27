@@ -30,6 +30,7 @@
     X(eval_js) \
     X(log) \
     X(page_created) \
+    X(page_active) \
     X(crash) \
 
 #define X(name) IPC_TYPE_EXPONENT_##name,
@@ -76,7 +77,14 @@ typedef struct _ipc_scroll_t {
 typedef struct _ipc_page_created_t {
     guint64 page_id;
     pid_t pid;
+    gboolean is_main_frame;
 } ipc_page_created_t;
+
+typedef struct _ipc_page_active_t {
+    guint64 page_id;
+    pid_t pid;
+    gboolean is_main_frame;
+} ipc_page_active_t;
 
 /* Message names */
 static inline const char *

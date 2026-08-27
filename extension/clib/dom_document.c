@@ -16,9 +16,6 @@
  *
  */
 
-#define WEBKIT_DOM_USE_UNSTABLE_API
-#include <webkitdom/WebKitDOMDOMWindowUnstable.h>
-
 #include "extension/extension.h"
 #include "extension/clib/dom_document.h"
 #include "extension/clib/dom_element.h"
@@ -31,54 +28,75 @@ static lua_class_t dom_document_class;
 
 LUA_OBJECT_FUNCS(dom_document_class, dom_document_t, dom_document);
 
+static guint64
+js_value_get_unique_id(JSCValue *val)
+{
+    JSCContext *ctx = jsc_value_get_context(val);
+    JSCValue *js_id = jsc_value_object_get_property(val, "__luakit_id");
+    guint64 id;
+    if (jsc_value_is_undefined(js_id)) {
+        static guint64 next_id = 1;
+        id = next_id++;
+        JSCValue *new_id = jsc_value_new_number(ctx, id);
+        jsc_value_object_set_property(val, "__luakit_id", new_id);
+        g_object_unref(new_id);
+    } else {
+        id = (guint64)jsc_value_to_double(js_id);
+    }
+    g_object_unref(js_id);
+    return id;
+}
+
 static dom_document_t*
 luaH_check_dom_document(lua_State *L, gint udx)
 {
     dom_document_t *document = luaH_checkudata(L, udx, &dom_document_class);
-    if (!document->document || !WEBKIT_DOM_IS_DOCUMENT(document->document))
+    if (!document->document)
         luaL_argerror(L, udx, "DOM document no longer valid");
     return document;
 }
 
-static void
-webkit_dom_document_destroy_cb(dom_document_t *document, GObject *doc)
-{
-    lua_State *L = common.L;
-    luaH_uniq_get_ptr(L, REG_KEY, doc);
-    luaH_object_emit_signal(L, -1, "destroy", 0, 0);
-    lua_pop(L, 1);
-
-    document->document = NULL;
-    luaH_uniq_del_ptr(common.L, REG_KEY, doc);
-}
-
 gint
-luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc, WebKitWebPage *page)
+luaH_dom_document_from_webkit_dom_document(lua_State *L, JSCValue *doc)
 {
-    if (luaH_uniq_get_ptr(L, REG_KEY, doc))
+    if (!doc || jsc_value_is_null(doc) || jsc_value_is_undefined(doc)) {
+        lua_pushnil(L);
+        return 1;
+    }
+
+    guint64 id = js_value_get_unique_id(doc);
+    void *ptr = (void*)(uintptr_t)id;
+
+    if (luaH_uniq_get_ptr(L, REG_KEY, ptr))
         return 1;
 
     dom_document_t *document = dom_document_new(L);
-    document->document = doc;
-    document->page = page;
+    document->document = g_object_ref(doc);
 
-    luaH_uniq_add_ptr(L, REG_KEY, doc, -1);
-    g_object_weak_ref(G_OBJECT(doc), (GWeakNotify)webkit_dom_document_destroy_cb, document);
-
+    luaH_uniq_add_ptr(L, REG_KEY, ptr, -1);
     return 1;
 }
 
 static gint
 luaH_dom_document_gc(lua_State *L)
 {
+    dom_document_t *document = luaH_toudata(L, 1, &dom_document_class);
+    if (document && document->document) {
+        guint64 id = js_value_get_unique_id(document->document);
+        luaH_uniq_del_ptr(L, REG_KEY, (void*)(uintptr_t)id);
+        g_object_unref(document->document);
+        document->document = NULL;
+    }
     return luaH_object_gc(L);
 }
 
 static gint
 luaH_dom_document_push_body(lua_State *L, dom_document_t *document)
 {
-    WebKitDOMHTMLElement* node = webkit_dom_document_get_body(document->document);
-    return luaH_dom_element_from_node(L, WEBKIT_DOM_ELEMENT(node), document->page);
+    JSCValue *body = jsc_value_object_get_property(document->document, "body");
+    gint ret = luaH_dom_element_from_node(L, body);
+    g_object_unref(body);
+    return ret;
 }
 
 static gint
@@ -88,16 +106,27 @@ luaH_dom_document_window_index(lua_State *L)
     const gchar *prop = luaL_checkstring(L, 2);
     luakit_token_t token = l_tokenize(prop);
 
-    WebKitDOMDOMWindow *window = webkit_dom_document_get_default_view(document->document);
+    JSCContext *ctx = jsc_value_get_context(document->document);
+    JSCValue *window = jsc_context_get_value(ctx, "window");
 
+    const gchar *js_prop = NULL;
     switch (token) {
-        PI_CASE(SCROLL_X, webkit_dom_dom_window_get_scroll_x(window));
-        PI_CASE(SCROLL_Y, webkit_dom_dom_window_get_scroll_y(window));
-        PI_CASE(INNER_WIDTH, webkit_dom_dom_window_get_inner_width(window));
-        PI_CASE(INNER_HEIGHT, webkit_dom_dom_window_get_inner_height(window));
+        case L_TK_SCROLL_X: js_prop = "scrollX"; break;
+        case L_TK_SCROLL_Y: js_prop = "scrollY"; break;
+        case L_TK_INNER_WIDTH: js_prop = "innerWidth"; break;
+        case L_TK_INNER_HEIGHT: js_prop = "innerHeight"; break;
         default:
+            g_object_unref(window);
             return 0;
     }
+
+    JSCValue *prop_val = jsc_value_object_get_property(window, js_prop);
+    double val_num = jsc_value_to_double(prop_val);
+    g_object_unref(prop_val);
+    g_object_unref(window);
+
+    lua_pushnumber(L, val_num);
+    return 1;
 }
 
 static gint
@@ -121,12 +150,9 @@ luaH_dom_document_create_element(lua_State *L)
 {
     dom_document_t *document = luaH_check_dom_document(L, 1);
     const char *tagname = luaL_checkstring(L, 2);
-    GError *error = NULL;
 
-    WebKitDOMElement *elem = webkit_dom_document_create_element(document->document, tagname, &error);
-
-    if (error)
-        return luaL_error(L, "create element error: %s", error->message);
+    JSCContext *ctx = jsc_value_get_context(document->document);
+    JSCValue *elem = jsc_value_object_invoke_method(document->document, "createElement", G_TYPE_STRING, tagname, G_TYPE_NONE);
 
     /* Set all attributes */
     if (lua_istable(L, 3)) {
@@ -134,21 +160,23 @@ luaH_dom_document_create_element(lua_State *L)
         while (lua_next(L, 3) != 0) {
             const char *name = luaL_checkstring(L, -2);
             const char *value = luaL_checkstring(L, -1);
-            webkit_dom_element_set_attribute(elem, name, value, &error);
+            JSCValue *ret = jsc_value_object_invoke_method(elem, "setAttribute", G_TYPE_STRING, name, G_TYPE_STRING, value, G_TYPE_NONE);
+            if (ret) g_object_unref(ret);
             lua_pop(L, 1);
-
-            if (error)
-                return luaL_error(L, "set new element attribute error: %s", error->message);
         }
     }
 
     /* Set inner text */
     if (lua_isstring(L, 4)) {
         const char *inner_text = lua_tostring(L, 4);
-        webkit_dom_html_element_set_inner_text(WEBKIT_DOM_HTML_ELEMENT(elem), inner_text, NULL);
+        JSCValue *inner_val = jsc_value_new_string(ctx, inner_text);
+        jsc_value_object_set_property(elem, "innerText", inner_val);
+        g_object_unref(inner_val);
     }
 
-    return luaH_dom_element_from_node(L, elem, document->page);
+    gint ret = luaH_dom_element_from_node(L, elem);
+    g_object_unref(elem);
+    return ret;
 }
 
 static gint
@@ -158,9 +186,10 @@ luaH_dom_document_element_from_point(lua_State *L)
     glong x = luaL_checknumber(L, 2),
           y = luaL_checknumber(L, 3);
 
-    WebKitDOMElement *elem = webkit_dom_document_element_from_point(document->document, x, y);
-
-    return luaH_dom_element_from_node(L, elem, document->page);
+    JSCValue *elem = jsc_value_object_invoke_method(document->document, "elementFromPoint", G_TYPE_INT, x, G_TYPE_INT, y, G_TYPE_NONE);
+    gint ret = luaH_dom_element_from_node(L, elem);
+    g_object_unref(elem);
+    return ret;
 }
 
 static gint

@@ -37,6 +37,7 @@
 static GPtrArray *queued_page_ipc;
 
 IPC_NO_HANDLER(page_created)
+IPC_NO_HANDLER(page_active)
 IPC_NO_HANDLER(log)
 
 void
@@ -94,7 +95,7 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
     guint64 page_id = lua_tointeger(L, -2);
     /* cb ref is index -1 */
 
-    WebKitWebPage *page = webkit_web_extension_get_page(extension.ext, page_id);
+    WebKitWebPage *page = webkit_web_process_extension_get_page(extension.ext, page_id);
     if (!page) {
         /* Notify UI to free callback ref */
         ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -2, -1);
@@ -102,9 +103,15 @@ ipc_recv_eval_js(ipc_endpoint_t *UNUSED(ipc), const guint8 *msg, guint length)
         return;
     }
 
-    WebKitFrame *frame = webkit_web_page_get_main_frame(page);
-    WebKitScriptWorld *world = webkit_script_world_get_default();
-    JSCContext *ctx = webkit_frame_get_js_context_for_script_world(frame, world);
+    WebKitFrame *frame = web_page_get_main_frame(page);
+    JSCContext *ctx = frame ? webkit_frame_get_js_context(frame) : NULL;
+    if (!ctx) {
+        lua_pushnil(L);
+        lua_pushstring(L, "JavaScript context not available");
+        ipc_send_lua(extension.ipc, IPC_TYPE_eval_js, L, -4, -1);
+        lua_settop(L, top);
+        return;
+    }
     n = luajs_eval_js(L, ctx, script, source, 1, no_return);
     g_object_unref(ctx);
     /* Send [page_id, cb, ret] or [page_id, cb, nil, error] */
@@ -121,12 +128,35 @@ ipc_recv_crash(ipc_endpoint_t *UNUSED(ipc), const guint8 *UNUSED(msg), guint UNU
 static void
 emit_page_created_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    WebKitFrame *frame = web_page_get_main_frame(web_page);
+    /* In a site-isolated subframe process, the page's root frame is a subframe of the tab.
+     * webkit_frame_is_main_frame checks if this frame is the main frame of the entire tab.
+     * If frame is not yet registered, default to TRUE for the main tab process. */
+    gboolean is_main_frame = frame ? webkit_frame_is_main_frame(frame) : TRUE;
     ipc_page_created_t msg = {
-        .page_id = webkit_web_page_get_id(web_page),
+        .page_id = page_id,
         .pid = getpid(),
+        .is_main_frame = is_main_frame,
     };
 
     ipc_header_t header = { .type = IPC_TYPE_page_created, .length = sizeof(msg) };
+    ipc_send(extension.ipc, &header, &msg);
+}
+
+void
+emit_page_active_ipc(WebKitWebPage *web_page, gpointer UNUSED(user_data))
+{
+    guint64 page_id = webkit_web_page_get_id(web_page);
+    WebKitFrame *frame = web_page_get_main_frame(web_page);
+    gboolean is_main_frame = frame ? webkit_frame_is_main_frame(frame) : TRUE;
+    ipc_page_active_t msg = {
+        .page_id = page_id,
+        .pid = getpid(),
+        .is_main_frame = is_main_frame,
+    };
+
+    ipc_header_t header = { .type = IPC_TYPE_page_active, .length = sizeof(msg) };
     ipc_send(extension.ipc, &header, &msg);
 }
 
@@ -141,7 +171,7 @@ emit_pending_page_creation_ipc(void)
 }
 
 static void
-web_page_created_cb(WebKitWebExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
+web_page_created_cb(WebKitWebProcessExtension *UNUSED(ext), WebKitWebPage *web_page, gpointer UNUSED(user_data))
 {
     /* QUEUE until we've fully loaded web modules */
     if (queued_page_ipc)

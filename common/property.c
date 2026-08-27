@@ -22,7 +22,7 @@
 #include <lauxlib.h>
 #include "common/property.h"
 
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 #include <libsoup/soup-version.h>
 #if SOUP_CHECK_VERSION(3,0,0)
 #include <libsoup/soup-uri-utils.h>

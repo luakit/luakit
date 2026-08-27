@@ -189,7 +189,7 @@ local abp_to_pattern = function (s)
 
         if domain_anchor then
             local p = string.sub(s, 3) -- Clip off first two || characters
-            s = { "^https?://" .. p, "^https?://[^/]*%." .. p }
+            s = { "^[%w%-]+://" .. p, "^[%w%-]+://[^/]*%." .. p }
         else
             s = { s }
         end
@@ -456,6 +456,12 @@ _M.whitelist_domain_access = function (domain)
     adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
 end
 
+--- Clear all whitelisted domain access rules for the session.
+_M.clear_page_whitelist = function ()
+    page_whitelist = {}
+    adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
+end
+
 local new_web_extension_created
 
 webview.add_signal("init", function (view)
@@ -468,14 +474,14 @@ webview.add_signal("init", function (view)
         new_web_extension_created = nil
     end)
 
-    -- if adblocking is disabled, unblock the tab as soon as it's switched to
-    local function unblock(vv)
+end)
+
+window.add_signal("init", function (w)
+    w.tabs:add_signal("switch-page", function (_, child)
         if not _M.enabled then
-            webview.modify_load_block(vv, "adblock", false)
+            webview.modify_load_block(child, "adblock", false)
         end
-        vv:remove_signal("switched-page", unblock)
-    end
-    view:add_signal("switched-page", unblock)
+    end)
 end)
 adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     for _, ww in pairs(window.bywidget) do
@@ -487,12 +493,14 @@ adblock_wm:add_signal("rules_updated", function (_, web_process_id)
     end
 end)
 
-luakit.add_signal("web-extension-created", function (view)
+luakit.add_signal("web-extension-created", function ()
     new_web_extension_created = true
-    adblock_wm:emit_signal(view, "update_rules", _M.rules)
+    adblock_wm:emit_signal("enable", _M.enabled)
+    adblock_wm:emit_signal("update_page_whitelist", page_whitelist)
+    adblock_wm:emit_signal("update_rules", _M.rules)
     for name, list in pairs(_M.rules) do
         local enabled = util.table.hasitem(list.opts, "Enabled")
-        adblock_wm:emit_signal(view, "list_set_enabled", name, enabled)
+        adblock_wm:emit_signal("list_set_enabled", name, enabled)
     end
 end)
 
@@ -523,6 +531,16 @@ _M.load(nil, nil, true)
 -- @default true
 -- @type boolean
 
+local function update_load_blocks()
+    for _, w in pairs(window.bywidget) do
+        if w.tabs then
+            for _, v in ipairs(w.tabs.children) do
+                webview.modify_load_block(v, "adblock", _M.enabled)
+            end
+        end
+    end
+end
+
 local wrapped = { enabled = true }
 local mt = {
     __index = wrapped,
@@ -531,6 +549,7 @@ local mt = {
             assert(type(v) == "boolean", "property 'enabled' must be boolean")
             wrapped.enabled = v
             adblock_wm:emit_signal("enable", v)
+            update_load_blocks()
             _M.refresh_views()
         end
     end,

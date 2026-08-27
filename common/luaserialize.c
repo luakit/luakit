@@ -39,6 +39,7 @@ lua_function_reader(lua_State *UNUSED(L), const guint8** bytes, size_t *sz)
     const char *ret = (const char *)*bytes;
     *bytes += bytecode_len;
     *sz = bytecode_len;
+    bytecode_len = 0;
     return ret;
 }
 
@@ -100,6 +101,7 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
         }
         case LUA_TFUNCTION: {
             /* Serialize bytecode */
+            index = index > 0 ? index : lua_gettop(L) + 1 + index;
             bytecode_buf = bytecode_buf ?: g_byte_array_new();
             g_byte_array_set_size(bytecode_buf, 0);
             lua_pushvalue(L, index);
@@ -115,9 +117,10 @@ lua_serialize_value(lua_State *L, GByteArray *out, int index)
             lua_getinfo(L, ">u", &ar);
             g_byte_array_append(out, (guint8*)&ar.nups, sizeof(ar.nups));
             for (int i = 1; i <= ar.nups; i++) {
-                lua_getupvalue(L, -1, i);
-                lua_serialize_value(L, out, -1);
-                lua_pop(L, 1);
+                if (lua_getupvalue(L, index, i)) {
+                    lua_serialize_value(L, out, -1);
+                    lua_pop(L, 1);
+                }
             }
             break;
         }

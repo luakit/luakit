@@ -19,22 +19,20 @@
 #ifndef LUAKIT_EXTENSION_CLIB_DOM_DOCUMENT_H
 #define LUAKIT_EXTENSION_CLIB_DOM_DOCUMENT_H
 
-#include <webkit2/webkit-web-extension.h>
+#include <webkit/webkit-web-process-extension.h>
+#include <jsc/jsc.h>
 
-#include "common/util.h"
 #include "common/luaclass.h"
-#include "common/luaobject.h"
 
 #include <gtk/gtk.h>
 
 typedef struct _dom_document_t {
     LUA_OBJECT_HEADER
-    WebKitDOMDocument *document;
-    WebKitWebPage *page;
+    JSCValue *document;
 } dom_document_t;
 
 void dom_document_class_setup(lua_State *);
-gint luaH_dom_document_from_webkit_dom_document(lua_State *L, WebKitDOMDocument *doc, WebKitWebPage *page);
+gint luaH_dom_document_from_webkit_dom_document(lua_State *L, JSCValue *doc);
 
 #endif
 

@@ -77,11 +77,12 @@ modes.add_binds("all", {
                 if uri then
                     w:new_tab(uri, { switch = false, private = w.view.private })
                 else -- Open selection in current tab
-                    uri = luakit.selection.primary
-                    -- Ignore multi-line selection contents
-                    if uri and not string.match(uri, "\n.+") then
-                        w:navigate(uri)
-                    end
+                    luakit.selection.get("primary", function (text)
+                        -- Ignore multi-line selection contents
+                        if text and not string.match(text, "\n.+") then
+                            w:navigate(text)
+                        end
+                    end)
                 end
             end
         end
@@ -245,61 +246,73 @@ modes.add_binds("normal", {
     -- Open primary selection contents.
     { "pp", [[Open URLs based on the current primary selection contents in the current tab.]],
         function (w)
-            local uris = split_uri(luakit.selection.primary or "")
-            if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            local uri1 = table.remove(uris, 1)
-            w:navigate(uri1)
-            for _, uri in ipairs(uris) do
-                w:new_tab(uri)
-            end
+            luakit.selection.get("primary", function (text)
+                local uris = split_uri(text or "")
+                if #uris == 0 then w:notify("Nothing in primary selection...") return end
+                local uri1 = table.remove(uris, 1)
+                w:navigate(uri1)
+                for _, uri in ipairs(uris) do
+                    w:new_tab(uri)
+                end
+            end)
         end },
     { "pt", [[Open URLs based on the current primary selection contents in new tabs.]],
         function (w)
-            local uris = split_uri(luakit.selection.primary or "")
-            if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            for _, uri in ipairs(uris) do
-                w:new_tab(uri)
-            end
+            luakit.selection.get("primary", function (text)
+                local uris = split_uri(text or "")
+                if #uris == 0 then w:notify("Nothing in primary selection...") return end
+                for _, uri in ipairs(uris) do
+                    w:new_tab(uri)
+                end
+            end)
         end },
     { "pw", [[Open URLs based on the current primary selection contents in a new window.]],
         function (w)
-            local uris = split_uri(luakit.selection.primary or "")
-            if #uris == 0 then w:notify("Nothing in primary selection...") return end
-            local uri1 = table.remove(uris, 1)
-            w = window.new({uri1})
-            for _, uri in ipairs(uris) do
-                w:new_tab(uri)
-            end
+            luakit.selection.get("primary", function (text)
+                local uris = split_uri(text or "")
+                if #uris == 0 then w:notify("Nothing in primary selection...") return end
+                local uri1 = table.remove(uris, 1)
+                w = window.new({uri1})
+                for _, uri in ipairs(uris) do
+                    w:new_tab(uri)
+                end
+            end)
         end },
 
     -- Open clipboard contents.
     { "PP", [[Open URLs based on the current clipboard selection contents in the current tab.]],
         function (w)
-            local uris = split_uri(luakit.selection.clipboard or "")
-            if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            local uri1 = table.remove(uris, 1)
-            w:navigate(uri1)
-            for _, uri in ipairs(uris) do
-                w:new_tab(uri)
-            end
+            luakit.selection.get("clipboard", function (text)
+                local uris = split_uri(text or "")
+                if #uris == 0 then w:notify("Nothing in clipboard...") return end
+                local uri1 = table.remove(uris, 1)
+                w:navigate(uri1)
+                for _, uri in ipairs(uris) do
+                    w:new_tab(uri)
+                end
+            end)
         end },
     { "PT", [[Open URLs based on the current clipboard selection contents in new tabs.]],
         function (w)
-            local uris = split_uri(luakit.selection.clipboard or "")
-            if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            for _, uri in ipairs(uris) do
-                w:new_tab(uri)
-            end
+            luakit.selection.get("clipboard", function (text)
+                local uris = split_uri(text or "")
+                if #uris == 0 then w:notify("Nothing in clipboard...") return end
+                for _, uri in ipairs(uris) do
+                    w:new_tab(uri)
+                end
+            end)
         end },
     { "PW", [[Open URLs based on the current clipboard selection contents in a new window.]],
         function (w)
-            local uris = split_uri(luakit.selection.clipboard or "")
-            if #uris == 0 then w:notify("Nothing in clipboard...") return end
-            local uri1 = table.remove(uris, 1)
-            w = window.new({uri1})
-            for _, uri in ipairs(uris) do
-                w:new_tab(uri)
-            end
+            luakit.selection.get("clipboard", function (text)
+                local uris = split_uri(text or "")
+                if #uris == 0 then w:notify("Nothing in clipboard...") return end
+                local uri1 = table.remove(uris, 1)
+                w = window.new({uri1})
+                for _, uri in ipairs(uris) do
+                    w:new_tab(uri)
+                end
+            end)
         end },
 
     -- Yanking
@@ -629,8 +642,13 @@ modes.add_cmds({
     }},
     { ":seton", "Change a setting for a specific domain.", {
         func = function (w, o)
-            o.arg = o.arg or ""
-            local domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            local domain = o.domain
+            local key = o.setting
+            local value = o.arg
+            if not (domain and key and value and #domain > 0 and #key > 0 and #value > 0) then
+                o.arg = o.arg or ""
+                domain, key, value = o.arg:match("^%s*(%S+)%s+(%S+)%s+(.*)$")
+            end
             if (domain and key and value) == nil then
                 w:error("Usage: ':seton <domain> <setting> <value>'")
                 return

@@ -34,15 +34,20 @@ typedef struct widget_t widget_t;
 
 #define GOBJECT_LUAKIT_WIDGET_DATA_KEY "luakit_widget_data"
 
-#define GOBJECT_TO_LUAKIT_WIDGET(gtk_widget) ((widget_t*)g_object_get_data(G_OBJECT(gtk_widget), \
-            GOBJECT_LUAKIT_WIDGET_DATA_KEY))
+static inline widget_t *
+gobject_to_luakit_widget(gpointer gtk_widget) {
+    if (!gtk_widget || !G_IS_OBJECT(gtk_widget))
+        return NULL;
+    return (widget_t*) g_object_get_data(G_OBJECT(gtk_widget), GOBJECT_LUAKIT_WIDGET_DATA_KEY);
+}
+
+#define GOBJECT_TO_LUAKIT_WIDGET(gtk_widget) gobject_to_luakit_widget(gtk_widget)
 
 typedef widget_t *(widget_constructor_t)(lua_State *L, widget_t *, luakit_token_t);
 typedef void (widget_destructor_t)(widget_t *);
 
 widget_constructor_t widget_box;
 widget_constructor_t widget_entry;
-widget_constructor_t widget_eventbox;
 widget_constructor_t widget_label;
 widget_constructor_t widget_notebook;
 widget_constructor_t widget_paned;
@@ -77,10 +82,8 @@ struct widget_t
     gpointer ref;
     /* Main gtk widget */
     GtkWidget *widget;
-#if GTK_CHECK_VERSION(3,16,0)
     /* CSS provider for this widget */
     GtkCssProvider *provider;
-#endif
     /* Previous width and height, for resize signal */
     gint prev_width, prev_height;
     /* Misc private data */
@@ -109,6 +112,7 @@ luaH_checkwidgetornil(lua_State *L, gint udx)
         return NULL;
     return luaH_checkwidget(L, udx);
 }
+
 
 #define luaH_towidget(L, udx) luaH_toudata(L, udx, &widget_class)
 

@@ -20,8 +20,11 @@
  */
 
 #include "luah.h"
+#include "web_context.h"
 
 #include <gtk/gtk.h>
+
+
 
 typedef struct {
     WebKitAuthenticationRequest *request;
@@ -67,7 +70,7 @@ luakit_find_password(LuakitAuthData *auth_data, const gchar **login, const gchar
 }
 
 static void
-response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data)
+response_callback(GtkWindow *window, gint response_id, LuakitAuthData *auth_data)
 {
     const gchar *login;
     const gchar *password;
@@ -77,8 +80,8 @@ response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data
     switch(response_id)
     {
       case GTK_RESPONSE_OK:
-        login = gtk_entry_get_text(GTK_ENTRY(auth_data->login_entry));
-        password = gtk_entry_get_text(GTK_ENTRY(auth_data->password_entry));
+        login = gtk_editable_get_text(GTK_EDITABLE(auth_data->login_entry));
+        password = gtk_editable_get_text(GTK_EDITABLE(auth_data->password_entry));
         credential = webkit_credential_new(login, password, WEBKIT_CREDENTIAL_PERSISTENCE_NONE);
         webkit_authentication_request_authenticate(auth_data->request, credential);
         webkit_credential_free(credential);
@@ -92,7 +95,31 @@ response_callback(GtkDialog *dialog, gint response_id, LuakitAuthData *auth_data
     }
 
     free_auth_data(auth_data);
-    gtk_widget_destroy(GTK_WIDGET(dialog));
+    gtk_window_destroy(window);
+}
+
+static void
+on_cancel_clicked(GtkButton *button, gpointer user_data)
+{
+    LuakitAuthData *auth_data = user_data;
+    GtkWidget *window = GTK_WIDGET(gtk_widget_get_root(GTK_WIDGET(button)));
+    response_callback(GTK_WINDOW(window), GTK_RESPONSE_CANCEL, auth_data);
+}
+
+static void
+on_ok_clicked(GtkButton *button, gpointer user_data)
+{
+    LuakitAuthData *auth_data = user_data;
+    GtkWidget *window = GTK_WIDGET(gtk_widget_get_root(GTK_WIDGET(button)));
+    response_callback(GTK_WINDOW(window), GTK_RESPONSE_OK, auth_data);
+}
+
+static gboolean
+on_close_request(GtkWindow *window, gpointer user_data)
+{
+    LuakitAuthData *auth_data = user_data;
+    response_callback(window, GTK_RESPONSE_CANCEL, auth_data);
+    return TRUE;
 }
 
 static GtkWidget *
@@ -100,21 +127,17 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
         const gchar *value, gpointer UNUSED(user_data))
 {
     GtkWidget *label = gtk_label_new(label_text);
-#if GTK_CHECK_VERSION(3,14,0)
     GValue align = G_VALUE_INIT;
     g_value_init(&align, G_TYPE_ENUM);
     g_value_set_int(&align, GTK_ALIGN_CENTER);
     g_object_set_property(G_OBJECT(label), "halign", &align);
-#else
-    gtk_misc_set_alignment(GTK_MISC(label), 0.0, 0.5);
-#endif
     gtk_widget_set_vexpand(GTK_WIDGET(label), TRUE);
 
     GtkWidget *entry = gtk_entry_new();
     gtk_entry_set_activates_default(GTK_ENTRY(entry), TRUE);
 
     if (value)
-        gtk_entry_set_text(GTK_ENTRY(entry), value);
+        gtk_editable_set_text(GTK_EDITABLE(entry), value);
 
     // left,top,width,height
     gtk_grid_attach(GTK_GRID(table), label, 0, row, 1, 1);
@@ -135,64 +158,34 @@ table_add_entry(GtkWidget *table, gint row, const gchar *label_text,
 static void
 show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *password)
 {
-    GtkWidget *widget = gtk_dialog_new();
-    GtkWindow *window = GTK_WINDOW(widget);
-    GtkDialog *dialog = GTK_DIALOG(widget);
+    GtkWidget *window = gtk_window_new();
+    gtk_window_set_transient_for(GTK_WINDOW(window), GTK_WINDOW(auth_data->w->widget));
+    gtk_window_set_modal(GTK_WINDOW(window), TRUE);
+    gtk_window_set_resizable(GTK_WINDOW(window), FALSE);
+    gtk_window_set_title(GTK_WINDOW(window), "Authentication Required");
+    gtk_window_set_icon_name(GTK_WINDOW(window), "dialog-password");
 
-#if GTK_CHECK_VERSION(3,10,0)
-    gtk_dialog_add_buttons(dialog,
-       "_Cancel", GTK_RESPONSE_CANCEL,
-       "_OK", GTK_RESPONSE_OK,
-       NULL);
-#else
-    gtk_dialog_add_buttons(dialog,
-       GTK_STOCK_CANCEL, GTK_RESPONSE_CANCEL,
-       GTK_STOCK_OK, GTK_RESPONSE_OK,
-       NULL);
-#endif
-
-    /* set dialog properties */
-    gtk_container_set_border_width(GTK_CONTAINER(dialog), 5);
-#if GTK_CHECK_VERSION(3,12,0)
-    GValue button_spacing = G_VALUE_INIT;
-    g_value_init(&button_spacing, G_TYPE_INT);
-    g_value_set_int(&button_spacing, 6);
-    g_object_set_property(G_OBJECT(dialog), "button-spacing", &button_spacing);
-#else
-    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_content_area(dialog)), 2);
-    gtk_container_set_border_width(GTK_CONTAINER(gtk_dialog_get_action_area(dialog)), 5);
-    gtk_box_set_spacing(GTK_BOX(gtk_dialog_get_action_area(dialog)), 6);
-#endif
-    gtk_window_set_resizable(window, FALSE);
-    gtk_window_set_title(window, "");
-    gtk_window_set_icon_name(window, "dialog-password");
-
-    gtk_dialog_set_default_response(dialog, GTK_RESPONSE_OK);
+    GtkWidget *main_box = gtk_box_new(GTK_ORIENTATION_VERTICAL, 0);
+    gtk_window_set_child(GTK_WINDOW(window), main_box);
 
     /* build contents */
     GtkWidget *hbox = gtk_grid_new();
-    GValue margin = G_VALUE_INIT;
-    g_value_init(&margin, G_TYPE_INT);
-    g_value_set_int(&margin, 5);
-    g_object_set_property(G_OBJECT(hbox), "margin", &margin);
+    gtk_widget_set_margin_start(hbox, 10);
+    gtk_widget_set_margin_end(hbox, 10);
+    gtk_widget_set_margin_top(hbox, 10);
+    gtk_widget_set_margin_bottom(hbox, 10);
 
     gtk_grid_set_column_spacing(GTK_GRID(hbox), 12);
-    gtk_box_pack_start(GTK_BOX(gtk_dialog_get_content_area(dialog)), hbox, TRUE, TRUE, 0);
+    gtk_box_append(GTK_BOX(main_box), hbox);
+    gtk_widget_set_hexpand(hbox, TRUE);
+    gtk_widget_set_vexpand(hbox, TRUE);
 
-#if GTK_CHECK_VERSION(3,10,0)
-    GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password", GTK_ICON_SIZE_DIALOG);
-#else
-    GtkWidget *icon = gtk_image_new_from_stock(GTK_STOCK_DIALOG_AUTHENTICATION, GTK_ICON_SIZE_DIALOG);
-#endif
+    GtkWidget *icon = gtk_image_new_from_icon_name("dialog-password");
 
-#if GTK_CHECK_VERSION(3,14,0)
     GValue align = G_VALUE_INIT;
     g_value_init(&align, G_TYPE_ENUM);
     g_value_set_int(&align, GTK_ALIGN_CENTER);
     g_object_set_property(G_OBJECT(hbox), "halign", &align);
-#else
-    gtk_misc_set_alignment(GTK_MISC(icon), 0.5, 0.0);
-#endif
 
     gtk_grid_attach(GTK_GRID(hbox), icon, 0,0,1,2);
 
@@ -202,12 +195,8 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
             webkit_authentication_request_get_host(auth_data->request));
     GtkWidget *msg_label = gtk_label_new(msg);
     g_free(msg);
-#if GTK_CHECK_VERSION(3,14,0)
     g_object_set_property(G_OBJECT(msg_label), "halign", &align);
-#else
-    gtk_misc_set_alignment(GTK_MISC(msg_label), 0.0, 0.5);
-#endif
-    gtk_label_set_line_wrap(GTK_LABEL(msg_label), TRUE);
+    gtk_label_set_wrap(GTK_LABEL(msg_label), TRUE);
     GValue max_width_chars = G_VALUE_INIT;
     g_value_init(&max_width_chars, G_TYPE_INT);
     g_value_set_int(&max_width_chars, 32);
@@ -224,8 +213,6 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_grid_set_row_homogeneous(GTK_GRID(table), FALSE);
     gtk_grid_set_column_spacing(GTK_GRID(table), 12);
     gtk_grid_set_row_spacing(GTK_GRID(table), 6);
-    /* default margin of GtkWidgets is 0; no need to set explicitly */
-    /* default hexpand/vexpand value for table is FALSE */
 
     auth_data->login_entry = table_add_entry(table, 0, "Username:", login, NULL);
     auth_data->password_entry = table_add_entry(table, 1, "Password:", password, NULL);
@@ -233,12 +220,32 @@ show_auth_dialog(LuakitAuthData *auth_data, const char *login, const char *passw
     gtk_entry_set_visibility(GTK_ENTRY(auth_data->password_entry), FALSE);
 
     GtkWidget *checkbutton = gtk_check_button_new_with_label("Store password");
-    gtk_label_set_line_wrap(GTK_LABEL(gtk_bin_get_child(GTK_BIN(checkbutton))), TRUE);
     gtk_grid_attach_next_to(GTK_GRID(hbox), checkbutton, table, GTK_POS_BOTTOM, 1, 1);
     auth_data->checkbutton = checkbutton;
 
-    g_signal_connect(dialog, "response", G_CALLBACK(response_callback), auth_data);
-    gtk_widget_show_all(widget);
+    GtkWidget *separator = gtk_separator_new(GTK_ORIENTATION_HORIZONTAL);
+    gtk_box_append(GTK_BOX(main_box), separator);
+
+    GtkWidget *action_area = gtk_box_new(GTK_ORIENTATION_HORIZONTAL, 6);
+    gtk_widget_set_margin_start(action_area, 10);
+    gtk_widget_set_margin_end(action_area, 10);
+    gtk_widget_set_margin_top(action_area, 6);
+    gtk_widget_set_margin_bottom(action_area, 6);
+    gtk_widget_set_halign(action_area, GTK_ALIGN_END);
+    gtk_box_append(GTK_BOX(main_box), action_area);
+
+    GtkWidget *cancel_button = gtk_button_new_with_mnemonic("_Cancel");
+    g_signal_connect(cancel_button, "clicked", G_CALLBACK(on_cancel_clicked), auth_data);
+    gtk_box_append(GTK_BOX(action_area), cancel_button);
+
+    GtkWidget *ok_button = gtk_button_new_with_mnemonic("_OK");
+    g_signal_connect(ok_button, "clicked", G_CALLBACK(on_ok_clicked), auth_data);
+    gtk_box_append(GTK_BOX(action_area), ok_button);
+
+    gtk_window_set_default_widget(GTK_WINDOW(window), ok_button);
+
+    g_signal_connect(window, "close-request", G_CALLBACK(on_close_request), auth_data);
+    gtk_window_present(GTK_WINDOW(window));
 }
 
 static gboolean

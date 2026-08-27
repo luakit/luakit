@@ -33,8 +33,10 @@ _M.back_indicator = "+"
 _M.forward_indicator = "-"
 
 local widgets = {
-    update = function (w, hist)
-        local back, forward = w.view:can_go_back(), w.view:can_go_forward()
+    update = function (w, hist, view)
+        view = view or w.view
+        if not view then return end
+        local back, forward = view:can_go_back(), view:can_go_forward()
         if back or forward then
             hist.text  = string.gsub(_M.format, "{(%w+)}", {
                 back = back and _M.back_indicator or "",
@@ -52,13 +54,11 @@ webview.add_signal("init", function (view)
     view:add_signal("load-status", function (v)
         local w = webview.window(v)
         if w and w.view == v then
-            wc.update_widgets_on_w(widgets, w)
+            wc.update_widgets_on_w(widgets, w, v)
         end
     end)
-    view:add_signal("switched-page", function (v)
-        wc.update_widgets_on_w(widgets, webview.window(v))
-    end)
 end)
+
 
 local function new()
     local hist = widget{type="label"}

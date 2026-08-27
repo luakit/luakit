@@ -47,7 +47,7 @@ emit_page_created_signal(WebKitWebPage *web_page, lua_State *L)
 }
 
 static void
-page_created_cb(WebKitWebExtension *UNUSED(extension), WebKitWebPage *web_page, lua_State *L)
+page_created_cb(WebKitWebProcessExtension *UNUSED(extension), WebKitWebPage *web_page, lua_State *L)
 {
     /* Since web modules are loaded after the first web page is created, signal
      * handlers bound to the page-created signal will not be called for the

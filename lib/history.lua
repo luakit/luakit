@@ -111,6 +111,7 @@ _M.frozen = setmetatable({}, { __mode = "k" })
 webview.add_signal("init", function (view)
     -- Add items & update visit count
     view:add_signal("load-status", function (_, status)
+        if not view.is_alive then return end
         if view.private then return end
         if _M.frozen[view] then return end
 
@@ -120,6 +121,7 @@ webview.add_signal("init", function (view)
     end)
     -- Update titles
     view:add_signal("property::title", function ()
+        if not view.is_alive then return end
         if view.private then return end
         if _M.frozen[view] then return end
 

@@ -27,6 +27,7 @@
 int luajs_eval_js(lua_State *L, JSCContext *ctx, const char *code, const char *source, guint line, bool no_return);
 int luajs_pushvalue(lua_State *L, JSCValue *value);
 JSCValue *luajs_tovalue(lua_State *L, int idx, JSCContext *ctx);
+void luajs_log_and_clear_exception(JSCContext *ctx, const char *msg);
 
 #endif /* end of include guard: LUAKIT_COMMON_LUAJS_H */
 

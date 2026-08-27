@@ -22,6 +22,8 @@ local function update(menu)
     local fg, bg, font = theme.menu_fg, theme.menu_bg, theme.menu_font
     local sfg, sbg = theme.menu_selected_fg, theme.menu_selected_bg
 
+    if menu.widget.bg ~= bg then menu.widget.bg = bg end
+
     -- Hide widget while re-drawing
     menu.widget:hide()
 
@@ -37,14 +39,12 @@ local function update(menu)
         if row and not rw then
             -- Row widget struct
             rw = {
-                ebox = widget{type = "eventbox"},
                 hbox = widget{type = "hbox"},
                 cols = {},
             }
-            rw.ebox.child = rw.hbox
             d.table[i] = rw
             -- Add to main vbox
-            menu.widget:pack(rw.ebox)
+            menu.widget:pack(rw.hbox)
 
         -- Remove row
         elseif not row and rw then
@@ -53,10 +53,8 @@ local function update(menu)
                 rw.hbox:remove(l)
                 l:destroy()
             end
-            rw.ebox:remove(rw.hbox)
+            menu.widget:remove(rw.hbox)
             rw.hbox:destroy()
-            menu.widget:remove(rw.ebox)
-            rw.ebox:destroy()
             d.table[i] = nil
         end
 
@@ -91,7 +89,7 @@ local function update(menu)
             else
                 rbg = (selected and (row.selected_bg or sbg)) or row.bg or bg
             end
-            if rw.ebox.bg ~= rbg then rw.ebox.bg = rbg end
+            if rw.hbox.bg ~= rbg then rw.hbox.bg = rbg end
 
             for c = 1, math.max(#row, #(rw.cols)) do
                 -- Get column text
@@ -107,6 +105,7 @@ local function update(menu)
                     rw.cols[c] = cell
                     cell.font = font
                     cell.textwidth = 1
+                    cell.align = { x = 0 }
 
                 -- Remove row column widget
                 elseif not text and cell then

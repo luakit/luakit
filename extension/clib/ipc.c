@@ -48,9 +48,14 @@ ipc_channel_recv(lua_State *L, const gchar *arg, guint arglen)
     lua_pop(L, 2);
     n -= 3;
 
-    /* Prepend the page object, or nil */
+    /* Prepend the page object, or drop signal if targeted page no longer exists */
     if (page_id) {
-        WebKitWebPage *web_page = webkit_web_extension_get_page(extension.ext, page_id);
+        WebKitWebPage *web_page = webkit_web_process_extension_get_page(extension.ext, page_id);
+        if (!web_page) {
+            /* Target page was destroyed or cancelled prior to IPC signal delivery; do not invoke handlers */
+            lua_settop(L, top);
+            return;
+        }
         luaH_page_from_web_page(L, web_page);
     } else
         lua_pushnil(L);

@@ -244,9 +244,36 @@ follow_wm:add_signal("follow_func", function(_, page_id, ret)
         if w.view.id == page_id then follow_func_cb(w, ret) end
     end
 end)
-follow_wm:add_signal("matches", function(_, page_id, n)
+follow_wm:add_signal("matches", function(_, page_id, pid, n)
     for _, w in pairs(window.bywidget) do
-        if w.view.id == page_id then matches_cb(w, n) end
+        if w.view.id == page_id and w.follow_state and w.follow_state.process_matches then
+            w.follow_state.process_matches[pid] = n
+
+            local total_matches = 0
+            for _, num in pairs(w.follow_state.process_matches) do
+                total_matches = total_matches + num
+            end
+
+            matches_cb(w, total_matches)
+
+            if total_matches == 1 and w.follow_state.current_text ~= "" then
+                follow_wm:emit_signal(w.view, "trigger_follow", false)
+            end
+        end
+    end
+end)
+follow_wm:add_signal("ready", function(_, page_id, pid, count)
+    for _, w in pairs(window.bywidget) do
+        if w.view.id == page_id and w.follow_state and w.follow_state.ready_processes then
+            local start_idx = 1
+            for _, p in ipairs(w.follow_state.ready_processes) do
+                start_idx = start_idx + p.count
+            end
+            table.insert(w.follow_state.ready_processes, { pid = pid, count = count })
+            if count > 0 then
+                follow_wm:emit_signal(w.view, "start_follow", pid, start_idx, count, w.follow_state.mode.stylesheet)
+            end
+        end
     end
 end)
 follow_wm:add_signal("click_a_target_blank", function(_, page_id, href)
@@ -293,6 +320,9 @@ new_mode("follow", {
         w.follow_state = {
             mode = mode, view = view,
             evaluator = mode.evaluator,
+            ready_processes = {},
+            process_matches = {},
+            current_text = "",
         }
 
         if mode.prompt then
@@ -307,12 +337,15 @@ new_mode("follow", {
         -- Cut func out of mode, since we can't send functions
         local func = mode.func
         mode.func = nil
-        follow_wm:emit_signal(w.view, "enter", mode, _M.ignore_case)
+
+        follow_wm:emit_signal(w.view, "init_follow", mode, _M.ignore_case)
+
         mode.func = func
     end,
 
     changed = function (w, text)
         local mode = w.follow_state.mode
+        w.follow_state.current_text = text
 
         -- Make the hint label/text matching patterns
         local pattern_maker = mode.pattern_maker or _M.pattern_maker
@@ -342,9 +375,11 @@ add_binds("follow", {
 -- @type {[string]=string}
 -- @readwrite
 _M.selectors = {
-    clickable = 'a, area, textarea, select, input:not([type=hidden]), button, label, summary',
+    clickable = 'a, area, textarea, select, input:not([type=hidden]), button, label, summary'
+        .. ', [role="button"], [role="link"], [role="menuitem"], [role="tab"], [role="option"], [role="switch"]'
+        .. ', [onclick], [onmousedown], [onmouseup]',
     -- Elements that can be clicked.
-    focus = 'a, area, textarea, select, input:not([type=hidden]), button, body, applet, object',
+    focus = 'a, area, textarea, select, input:not([type=hidden]), button, [tabindex]:not([tabindex="-1"]), body, applet, object',
     -- Elements that can be given input focus.
     uri = 'a, area',
     -- Elements that have a URI (e.g. hyperlinks).
@@ -363,7 +398,7 @@ _M.selectors = {
 -- @readwrite
 _M.site_specific_selectors = {
     ["github.com"] = {
-        clickable = "svg.js-menu-close, div.select-menu-item"
+        clickable = "button, [data-hotkey], [data-hydro-click], [data-ga-click], [data-action]"
     },
 }
 

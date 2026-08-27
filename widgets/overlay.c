@@ -38,7 +38,7 @@ luaH_overlay_pack(lua_State *L)
                 case L_TK_START:    halign = GTK_ALIGN_START;    break;
                 case L_TK_END:      halign = GTK_ALIGN_END;      break;
                 case L_TK_CENTER:   halign = GTK_ALIGN_CENTER;   break;
-                case L_TK_BASELINE: halign = GTK_ALIGN_BASELINE; break;
+                case L_TK_BASELINE: halign = GTK_ALIGN_BASELINE_FILL; break;
                 default:
                     return luaL_error(L, "Bad alignment value (expected fill, start, end, center, or baseline)");
             }
@@ -49,7 +49,7 @@ luaH_overlay_pack(lua_State *L)
                 case L_TK_START:    valign = GTK_ALIGN_START;    break;
                 case L_TK_END:      valign = GTK_ALIGN_END;      break;
                 case L_TK_CENTER:   valign = GTK_ALIGN_CENTER;   break;
-                case L_TK_BASELINE: valign = GTK_ALIGN_BASELINE; break;
+                case L_TK_BASELINE: valign = GTK_ALIGN_BASELINE_FILL; break;
                 default:
                     return luaL_error(L, "Bad alignment value (expected fill, start, end, center, or baseline)");
             }
@@ -70,7 +70,21 @@ luaH_overlay_reorder_child(lua_State *L)
     widget_t *w = luaH_checkwidget(L, 1);
     widget_t *child = luaH_checkwidget(L, 2);
     gint pos = luaL_checknumber(L, 3);
-    gtk_overlay_reorder_overlay(GTK_OVERLAY(w->widget), GTK_WIDGET(child->widget), pos);
+    if (pos == 0) {
+        gtk_widget_insert_after(GTK_WIDGET(child->widget), GTK_WIDGET(w->widget), NULL);
+    } else if (pos > 0) {
+        gint current_index = 0;
+        GtkWidget *child_widget = gtk_widget_get_first_child(GTK_WIDGET(w->widget));
+
+        while (child_widget != NULL) {
+            if (current_index == pos) {
+                gtk_widget_insert_after(GTK_WIDGET(child->widget), GTK_WIDGET(w->widget), child_widget);
+            }
+
+            current_index++;
+            child_widget = gtk_widget_get_next_sibling(child_widget);
+        }
+    }
     return 0;
 }
 
@@ -79,8 +93,10 @@ luaH_overlay_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
-      LUAKIT_WIDGET_BIN_INDEX_COMMON(w)
-      LUAKIT_WIDGET_CONTAINER_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
+
+      LUAKIT_WIDGET_CHILD_INDEX_COMMON(w)
 
       /* push class methods */
       PF_CASE(PACK,         luaH_overlay_pack)
@@ -97,7 +113,7 @@ luaH_overlay_newindex(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_NEWINDEX_COMMON(w)
-      LUAKIT_WIDGET_BIN_NEWINDEX_COMMON(w)
+      LUAKIT_WIDGET_CHILD_NEWINDEX_COMMON(w)
 
       default:
         return 0;
@@ -112,15 +128,17 @@ widget_overlay(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
     w->index = luaH_overlay_index;
     w->newindex = luaH_overlay_newindex;
 
-#if GTK_CHECK_VERSION(3,2,0)
     w->widget = gtk_overlay_new();
-#endif
+    gtk_widget_set_hexpand(w->widget, TRUE);
+    gtk_widget_set_vexpand(w->widget, TRUE);
+    gtk_widget_set_halign(w->widget, GTK_ALIGN_FILL);
+    gtk_widget_set_valign(w->widget, GTK_ALIGN_FILL);
 
     g_object_connect(G_OBJECT(w->widget),
         LUAKIT_WIDGET_SIGNAL_COMMON(w)
         NULL);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

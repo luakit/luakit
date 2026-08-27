@@ -25,7 +25,7 @@
 #define LUAKIT_CLIB_REQUEST_H
 
 #include <lua.h>
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
 void request_class_setup(lua_State*);
 gint luaH_request_push_uri_scheme_request(lua_State*, WebKitURISchemeRequest*);

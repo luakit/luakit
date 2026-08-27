@@ -16,8 +16,10 @@
  *
  */
 
-#include <webkit2/webkit2.h>
+#include <webkit/webkit.h>
 
+#include "gdk/gdk.h"
+#include "gtk/gtk.h"
 #include "luah.h"
 #include "widgets/common.h"
 #include "web_context.h"
@@ -55,52 +57,18 @@ luaH_image_set_from_file_name(lua_State *L)
         }
     }
 
-    /* Load image into pixbuf */
-    GError *error;
-fallback:
-    error = NULL;
-    GdkPixbuf *pixbuf = gdk_pixbuf_new_from_file(x2_path ?: path, &error);
-    if (error)
-        verbose("unable to load image file: %s", error->message);
-    if (error && x2_path) {
-        g_error_free(error);
-        g_free(x2_path);
-        x2_path = NULL;
-        goto fallback;
-    }
+    /* 2. Instantiate a modern GTK 4 texture from the scaled pixbuf */
+    GError *error = NULL;
+    GdkTexture *texture = gdk_texture_new_from_filename(x2_path ?: path, &error);
     if (error) {
         lua_pushstring(L, error->message);
         g_error_free(error);
         g_free(path);
+        g_free(x2_path);
         return luaL_error(L, "unable to load image file: %s", lua_tostring(L, -1));
     }
 
-    if (w->data) {
-        g_cancellable_cancel(w->data);
-        g_clear_object(&w->data);
-    }
-
-    /* Convert to cairo surface, and scale */
-    cairo_surface_t *source = gdk_cairo_surface_create_from_pixbuf(pixbuf, 1, 0);
-    g_object_unref(G_OBJECT(pixbuf));
-
-    float src_w = cairo_image_surface_get_width(source);
-    float src_h = cairo_image_surface_get_height(source);
-
-    cairo_surface_t *target = cairo_surface_create_similar(source,
-            CAIRO_CONTENT_COLOR_ALPHA, src_w, src_h);
-    cairo_surface_set_device_scale(target, scale, scale);
-
-    cairo_t *cr = cairo_create(target);
-    cairo_scale(cr, 1/scale, 1/scale);
-    cairo_set_source_surface(cr, source, 0, 0);
-    cairo_surface_set_device_offset(source, 0, 0);
-    cairo_paint(cr);
-
-    gtk_image_set_from_surface(GTK_IMAGE(w->widget), target);
-    cairo_surface_destroy(source);
-    cairo_surface_destroy(target);
-    cairo_destroy(cr);
+    gtk_image_set_from_paintable(GTK_IMAGE(w->widget), GDK_PAINTABLE(texture));
 
     g_free(path);
     g_free(x2_path);
@@ -112,12 +80,13 @@ luaH_image_set_from_icon_name(lua_State *L)
 {
     widget_t *w = luaH_checkimage(L, 1);
 
-    GtkIconSize size;
-    switch (luaL_checkint(L, 3)) {
-        case 16: size = GTK_ICON_SIZE_SMALL_TOOLBAR; break;
-        case 24: size = GTK_ICON_SIZE_LARGE_TOOLBAR; break;
-        case 32: size = GTK_ICON_SIZE_DND; break;
-        case 48: size = GTK_ICON_SIZE_DIALOG; break;
+    gint size = luaL_checkint(L, 3);
+    switch (size) {
+        case 16:
+        case 24:
+        case 32:
+        case 48:
+            break;
         default:
             return luaL_error(L, "Bad icon size: must be 16, 24, 32, or 48.");
     }
@@ -127,7 +96,8 @@ luaH_image_set_from_icon_name(lua_State *L)
         g_clear_object(&w->data);
     }
 
-    gtk_image_set_from_icon_name(GTK_IMAGE(w->widget), luaL_checkstring(L, 2), size);
+    gtk_image_set_from_icon_name(GTK_IMAGE(w->widget), luaL_checkstring(L, 2));
+    gtk_image_set_pixel_size(GTK_IMAGE(w->widget), size);
 
     return 0;
 }
@@ -141,11 +111,10 @@ luaH_image_scale(lua_State *L)
     if (width <= 0 || height <= 0)
         return luaL_error(L, "Image dimensions must be positive");
 
-    GdkPixbuf *pixbuf = gtk_image_get_pixbuf(GTK_IMAGE(w->widget));
-    GdkPixbuf *scaled_pixbuf = gdk_pixbuf_scale_simple(pixbuf, width, height, GDK_INTERP_BILINEAR);
-    g_object_unref(pixbuf);
-    gtk_image_set_from_pixbuf(GTK_IMAGE(w->widget), scaled_pixbuf);
-    g_object_unref(scaled_pixbuf);
+    GdkPaintable *paintable = gtk_image_get_paintable(GTK_IMAGE(w->widget));
+    gtk_image_set_from_paintable(GTK_IMAGE(w->widget), paintable);
+    gtk_widget_set_size_request(GTK_WIDGET(w->widget), width, height);
+    g_object_unref(paintable);
 
     return 0;
 }
@@ -153,30 +122,15 @@ luaH_image_scale(lua_State *L)
 void
 luaH_image_set_favicon_for_uri_finished(WebKitFaviconDatabase *fdb, GAsyncResult *res, widget_t *w)
 {
-    cairo_surface_t *source = webkit_favicon_database_get_favicon_finish(fdb, res, NULL);
-    if (!source)
+    GdkTexture *texture = webkit_favicon_database_get_favicon_finish(fdb, res, NULL);
+    if (!texture)
         return;
 
-    /* Source width/height, scale factor, target logical size, target device size */
-    float src_w = cairo_image_surface_get_width(source);
-    float src_h = cairo_image_surface_get_height(source);
-    float scale = gtk_widget_get_scale_factor(w->widget);
-    float log_sz = 16, dev_sz = log_sz*scale;
+    float log_sz = 16;
 
-    cairo_surface_t *target = cairo_surface_create_similar(source,
-            CAIRO_CONTENT_COLOR_ALPHA, dev_sz, dev_sz);
-    cairo_surface_set_device_scale(target, scale, scale);
-
-    cairo_t *cr = cairo_create(target);
-    cairo_scale(cr, log_sz/src_w, log_sz/src_h);
-    cairo_set_source_surface(cr, source, 0, 0);
-    cairo_surface_set_device_offset(source, 0, 0);
-    cairo_paint(cr);
-
-    gtk_image_set_from_surface(GTK_IMAGE(w->widget), target);
-    cairo_surface_destroy(source);
-    cairo_surface_destroy(target);
-    cairo_destroy(cr);
+    gtk_image_set_from_paintable(GTK_IMAGE(w->widget), GDK_PAINTABLE(texture));
+    gtk_widget_set_size_request(GTK_WIDGET(w->widget), log_sz, log_sz);
+    g_object_unref(texture);
 }
 
 static gint
@@ -185,8 +139,9 @@ luaH_image_set_favicon_for_uri(lua_State *L)
     widget_t *w = luaH_checkimage(L, 1);
     const gchar *uri = luaL_checkstring(L, 2);
 
-    WebKitWebContext *main_ctx = web_context_get();
-    WebKitFaviconDatabase *main_fdb = webkit_web_context_get_favicon_database(main_ctx);
+    WebKitNetworkSession *net_session = web_network_session_get();
+    WebKitWebsiteDataManager *data_manager = webkit_network_session_get_website_data_manager(net_session);
+    WebKitFaviconDatabase *main_fdb = webkit_website_data_manager_get_favicon_database(data_manager);
     gchar *f_uri;
     gboolean ok = TRUE;
 
@@ -213,6 +168,8 @@ luaH_image_index(lua_State *L, widget_t *w, luakit_token_t token)
 {
     switch(token) {
       LUAKIT_WIDGET_INDEX_COMMON(w)
+
+      PF_CASE(DESTROY,              luaH_widget_destroy)
 
       PF_CASE(FILENAME, luaH_image_set_from_file_name)
       PF_CASE(ICON, luaH_image_set_from_icon_name)
@@ -251,7 +208,7 @@ widget_image(lua_State *UNUSED(L), widget_t *w, luakit_token_t UNUSED(token))
         LUAKIT_WIDGET_SIGNAL_COMMON(w)
         NULL);
 
-    gtk_widget_show(w->widget);
+    gtk_widget_set_visible(w->widget, TRUE);
     return w;
 }
 

@@ -49,7 +49,7 @@ if unique.is_running() then
     luakit.quit()
 end
 
-unique.add_signal("message", function (message, screen)
+unique.add_signal("message", function (message, display)
     msg.verbose("received message from secondary instance")
     local lousy, window = require "lousy", require "window"
     local cmd, arg = string.match(message, "^(%S+)%s*(.*)")
@@ -75,7 +75,7 @@ unique.add_signal("message", function (message, screen)
     elseif cmd == "winopen" then
         w = window.new((arg ~= "") and { arg } or {})
     end
-    w.win.screen = screen
+    w.win.display = display
     w.win.urgency_hint = true
 end)
 
